@@ -1,6 +1,10 @@
+use std::borrow::Cow;
+
 use lazy_regex::{Regex, RegexBuilder};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_str::JSStr;
 
 /// Always returns `true`.
 ///
@@ -77,6 +81,26 @@ where
         .map(|pattern| RegexBuilder::new(&pattern).build())
         .collect::<Result<Vec<_>, _>>()
         .map_err(D::Error::custom)
+}
+
+/// Produce the text to match rule-configuration patterns against.
+///
+/// Regex patterns from rule configuration are always valid UTF-8 because serde_json rejects
+/// lone-surrogate escapes. Matching against a copy of the value in which each lone surrogate
+/// half is the replacement character U+FFFD therefore agrees with ESLint's UTF-16 matching
+/// for every expressible pattern, except a pattern that literally matches the replacement
+/// character.
+pub fn regex_match_text(value: JSStr<'_>) -> Cow<'_, str> {
+    value.to_str_lossy()
+}
+
+/// Produce the text to show a value in a diagnostic.
+///
+/// A value without lone surrogates is borrowed as is. Otherwise the value is shown in its
+/// Debug form, which escapes each lone surrogate instead of replacing it, so the message
+/// still says which surrogate the value holds.
+pub fn diagnostic_text(value: JSStr<'_>) -> Cow<'_, str> {
+    value.as_str().map_or_else(|| Cow::Owned(format!("{value:?}")), Cow::Borrowed)
 }
 
 pub fn deserialize_required_regex_option<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>

@@ -48,10 +48,6 @@ fn test() {
         (r"test('foo \uD800 bar', () => {});", None),
         (r"test('\uD800test foo', () => {});", None),
         (
-            r"test('\uD800 correct', () => {});",
-            Some(serde_json::json!([{ "disallowedWords": ["correct"] }])),
-        ),
-        (
             "it('correctly sets the value', () => {});",
             Some(serde_json::json!([
               { "ignoreTypeOfDescribeName": false, "disallowedWords": ["correct"] },
@@ -238,6 +234,12 @@ fn test() {
     ];
 
     let fail = vec![
+        // The disallowed word matches through the lossy text beside the lone
+        // surrogate.
+        (
+            r"test('\uD800 correct', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["correct"] }])),
+        ),
         ("const String = { raw: () => 'foo' }; it(String.raw`foo`, () => {})", None),
         (
             "test('the correct way to properly handle all things', () => {});",

@@ -15,6 +15,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::regex_match_text,
 };
 
 fn no_unassigned_import_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
@@ -97,12 +98,9 @@ impl Rule for NoUnassignedImport {
                 if import_decl.specifiers.is_some() {
                     return;
                 }
-                if import_decl
-                    .source
-                    .value
-                    .as_str()
-                    .is_none_or(|source| !self.is_match_allow_globs(source))
-                {
+                // Allow globs match against the lossy text, like the regex
+                // allow patterns in the other import rules.
+                if !self.is_match_allow_globs(&regex_match_text(import_decl.source.value)) {
                     ctx.diagnostic(no_unassigned_import_diagnostic(
                         import_decl.span,
                         "Imported module should be assigned",
@@ -120,8 +118,7 @@ impl Rule for NoUnassignedImport {
                 let Argument::StringLiteral(source_str) = first_arg else {
                     return;
                 };
-                if source_str.value.as_str().is_none_or(|source| !self.is_match_allow_globs(source))
-                {
+                if !self.is_match_allow_globs(&regex_match_text(source_str.value)) {
                     ctx.diagnostic(no_unassigned_import_diagnostic(
                         call_expr.span,
                         "A `require()` style import is forbidden.",
@@ -145,6 +142,9 @@ fn test() {
     use serde_json::json;
 
     let pass = vec![
+        // The allow glob matches through the lossy text beside the lone
+        // surrogate.
+        (r"import './\uD800.css'", Some(json!([{ "allow": ["**"]}]))),
         ("import _ from 'foo'", None),
         ("import foo from 'foo'", None),
         ("import foo, { bar } from 'foo'", None),
@@ -168,6 +168,7 @@ fn test() {
     ];
 
     let fail = vec![
+        (r"import './\uD800.css'", Some(json!([{ "allow": ["**/*.js"]}]))),
         ("require('should')", None),
         ("import 'foo'", None),
         ("import './styles/app.css'", Some(json!([{ "allow": ["styles/*.css"]}]))),

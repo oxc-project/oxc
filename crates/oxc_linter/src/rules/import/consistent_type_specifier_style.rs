@@ -10,6 +10,7 @@ use oxc_codegen::{Context, Gen};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{FileExtension, GetSpan, SPAN, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -314,8 +315,9 @@ fn gen_type_import_declaration<'c, 'a: 'c>(
 }
 
 fn is_declaration_file_import(import_decl: &ImportDeclaration) -> bool {
-    let Some(source) = import_decl.source.value.as_str() else {
-        return false;
+    let value = import_decl.source.value;
+    let Some(source) = value.as_str() else {
+        return is_declaration_file_js_path(value);
     };
     // Relatively fast check to avoid unnecessary Path and extension parsing
     // if it doesn't even look like a declaration file import
@@ -333,12 +335,28 @@ fn is_declaration_file_import(import_decl: &ImportDeclaration) -> bool {
     }
 }
 
+/// `is_declaration_file_import` for a source with a lone surrogate, which
+/// `std::path` cannot hold. The extension is ASCII, so suffix checks decide
+/// the same way `FileExtension::is_ts_declaration` does.
+fn is_declaration_file_js_path(source: JSStr) -> bool {
+    if source.ends_with(".ts") {
+        source.rfind(".d.").is_some_and(|i| i != 0)
+    } else if source.ends_with(".mts") || source.ends_with(".cts") {
+        source.len() > 6 && (source.ends_with(".d.mts") || source.ends_with(".d.cts"))
+    } else {
+        false
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
     use serde_json::json;
 
     let pass = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r"import type { Foo } from './\uD800.d.ts';", Some(json!(["prefer-inline"]))),
+        (r"import type { Foo } from './\uDC00.d.mts';", Some(json!(["prefer-inline"]))),
         ("import Foo from 'Foo'", None),
         ("import type Foo from 'Foo'", None),
         ("import { Foo } from 'Foo';", None),
@@ -415,6 +433,8 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r"import type { Foo } from './\uD800.ts';", Some(json!(["prefer-inline"]))),
         ("import { type Foo, type Bar } from 'Foo'", None),
         ("import type { Foo } from 'Foo'", Some(json!(["prefer-inline"]))),
         ("import { type Foo as Bar } from 'Foo';", None),

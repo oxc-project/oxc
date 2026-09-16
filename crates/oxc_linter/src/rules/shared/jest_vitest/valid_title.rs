@@ -16,7 +16,7 @@ use crate::{
     context::LintContext,
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, is_string_raw_member_expression,
-        parse_general_jest_fn_call,
+        parse_general_jest_fn_call, regex_match_text,
     },
 };
 
@@ -403,11 +403,9 @@ fn validate_title(
     }
 
     if let Some(disallowed_words_reg) = &config.disallowed_words_reg {
-        // Regular expressions match UTF-8 only; a title with a lone surrogate
-        // skips this check.
-        if let Some(title) = title.as_str()
-            && let Some(matched) = disallowed_words_reg.find(title)
-        {
+        // Configured patterns match against the lossy text, like the allow
+        // patterns in the import rules.
+        if let Some(matched) = disallowed_words_reg.find(&regex_match_text(title)) {
             ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
         }
         return;
@@ -446,11 +444,10 @@ fn validate_title(
         return;
     };
 
-    // Regular expressions match UTF-8 only; a title with a lone surrogate
-    // skips the pattern checks.
-    let Some(title) = title.as_str() else {
-        return;
-    };
+    // Configured patterns match against the lossy text, like the allow
+    // patterns in the import rules.
+    let title = regex_match_text(title);
+    let title = title.as_ref();
 
     if let Some((regex, message)) = config.must_match_patterns.get(&jest_fn_name)
         && !regex.is_match(title)

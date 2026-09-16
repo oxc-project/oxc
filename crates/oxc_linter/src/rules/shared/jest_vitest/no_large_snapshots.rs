@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{CompactStr, JSStr};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,9 @@ use serde::{Deserialize, Serialize};
 use crate::{
     context::LintContext,
     rule::DefaultRuleConfig,
-    utils::{PossibleJestNode, iter_possible_jest_call_node, parse_expect_jest_fn_call},
+    utils::{
+        PossibleJestNode, iter_possible_jest_call_node, parse_expect_jest_fn_call, regex_match_text,
+    },
 };
 
 fn no_snapshot(line_count: u32, span: Span) -> OxcDiagnostic {
@@ -282,7 +284,7 @@ impl NoLargeSnapshotsConfig {
         member_expr: &MemberExpression,
         ctx: &LintContext,
     ) -> bool {
-        let Some(snapshot_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
+        let Some(snapshot_name) = member_expr.static_property_name() else {
             return false;
         };
         let Some(file_name) = ctx.file_path().to_str() else {
@@ -293,7 +295,8 @@ impl NoLargeSnapshotsConfig {
             return false;
         };
 
-        allowed_snapshots_in_file.iter().any(|matcher| matcher.is_match(snapshot_name))
+        let snapshot_name = regex_match_text(snapshot_name);
+        allowed_snapshots_in_file.iter().any(|matcher| matcher.is_match(&snapshot_name))
     }
 
     #[expect(clippy::cast_possible_truncation)] // the line count can't be over u32::MAX, because the source code is already limited by u32::MAX.
@@ -322,6 +325,35 @@ mod test {
         assert!(!matchers[0].is_match("other snapshot 42"));
         assert!(matchers[1].is_match("snapshot [literal"));
         assert!(!matchers[1].is_match("snapshot literal"));
+    }
+
+    #[test]
+    fn allowed_snapshot_matchers_with_lone_surrogate_name() {
+        use oxc_allocator::Allocator;
+        use oxc_str::JSStrBuilder;
+
+        use crate::utils::regex_match_text;
+
+        let config = NoLargeSnapshotsConfig::from_configuration(serde_json::json!([{
+            "allowedSnapshots": {
+                "/test.snap": [r"large snapshot \d+$"]
+            }
+        }]))
+        .unwrap();
+        let matchers = &config.allowed_snapshots["/test.snap"];
+
+        // A snapshot name containing a lone surrogate is matched through its
+        // lossy conversion, so the parts around the surrogate still match.
+        let allocator = Allocator::default();
+        let mut builder = JSStrBuilder::new_in(&allocator);
+        builder.push_str("a");
+        builder.push_code_unit(0xD800);
+        builder.push_str(" large snapshot 42");
+        let name = regex_match_text(builder.into_js_str());
+
+        assert_eq!(name.as_ref(), "a\u{FFFD} large snapshot 42");
+        assert!(matchers[0].is_match(&name));
+        assert!(!matchers[0].is_match("a\u{FFFD} large snapshot"));
     }
 
     #[test]

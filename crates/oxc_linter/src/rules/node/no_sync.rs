@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -15,13 +13,12 @@ use crate::{
     ast_util::get_enclosing_function,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::diagnostic_text,
 };
 
 fn no_sync_diagnostic(span: Span, property_name: JSStr<'_>) -> OxcDiagnostic {
     // Debug supplies a quoted, escaped name when it contains a lone surrogate.
-    let property_name = property_name
-        .as_str()
-        .map_or_else(|| Cow::Owned(format!("{property_name:?}")), Cow::Borrowed);
+    let property_name = diagnostic_text(property_name);
     OxcDiagnostic::warn(format!("Unexpected sync method: '{property_name}'.")).with_label(span)
 }
 

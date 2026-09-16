@@ -4,6 +4,20 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(yoda): Require or disallow "Yoda" conditions
    ╭─[yoda.tsx:1:5]
+ 1 │ if ("\uDBFF" <= x && x <= "\uD800") {}
+   ·     ─────────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if ("\uFFFF" <= x && x <= "\uD83D\uDE00") {}
+   ·     ─────────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
  1 │ if (x <= 'foo' || 'bar' < x) {}
    ·     ──────────
    ╰────
