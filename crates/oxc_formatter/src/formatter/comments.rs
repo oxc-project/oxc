@@ -521,6 +521,15 @@ impl<'a> Comments<'a> {
         self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
     }
 
+    /// Whether the last printed comment is a line comment starting after `pos`:
+    /// a pending `line_suffix` the printer flushed past an operator (`const a = // c`, `(foo // c\n) as T`).
+    /// For layout decisions that run after the left side printed, where cursor-based queries no longer see it.
+    pub fn has_printed_line_comment_after(&self, pos: u32) -> bool {
+        self.printed_comments()
+            .last()
+            .is_some_and(|comment| comment.is_line() && comment.span.start > pos)
+    }
+
     /// Index into [`Self::unprinted_comments`] of the first cast comment
     /// ([`Self::is_type_cast_comment_followed_by_paren`]) before the given span.
     /// Cursor-based on purpose: printing peels nested casts one per pass (see `utils/typecast.rs`).
