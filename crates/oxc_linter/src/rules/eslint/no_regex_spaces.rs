@@ -114,7 +114,7 @@ impl NoRegexSpaces {
         let Some(Argument::StringLiteral(pattern)) = args.first() else {
             return None;
         };
-        if !Self::has_double_space(pattern.value.as_str()?) {
+        if !pattern.value.contains("  ") {
             return None;
         }
 
@@ -275,6 +275,8 @@ fn test() {
         "var foo = /[[    ]    ]    /v;",
         "var foo = new RegExp('[   ]  ');",
         "var foo = new RegExp('[[    ]    ]    ', 'v');",
+        r"var foo = RegExp('\uD800  bar');",
+        r"var foo = new RegExp('bar  \uDC00');",
     ];
 
     let fix = vec![
@@ -308,6 +310,8 @@ fn test() {
             "var foo = new RegExp('[[    ] {4}]    ', 'v');",
             None,
         ),
+        (r"var foo = RegExp('\uD800  bar');", r"var foo = RegExp('\uD800 {2}bar');", None),
+        (r"var foo = new RegExp('bar  \uDC00');", r"var foo = new RegExp('bar {2}\uDC00');", None),
     ];
 
     Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::PLUGIN, pass, fail)

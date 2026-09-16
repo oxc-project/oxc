@@ -42,6 +42,13 @@ fn test() {
         ("it.each()", None),
         ("it.each()(1)", None),
         ("randomFunction()", None),
+        (r"it('\uD800', function () {})", None),
+        (r"it('\uD800 Foo', function () {})", None),
+        (r"it('foo \uD800 Bar', function () {})", None),
+        (
+            r"it('GET \uD800', function () {})",
+            Some(serde_json::json!([{ "allowedPrefixes": ["GET"] }])),
+        ),
         ("foo.bar()", None),
         ("it()", None),
         ("it(' ', function () {})", None),
@@ -168,6 +175,12 @@ fn test() {
 
     let fail = vec![
         ("it('Foo', function () {})", None),
+        (r"it('Foo \uD800', function () {})", None),
+        (r"it(`Foo \uDC00`, function () {})", None),
+        (
+            r"it('\uD800 Foo', function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
         ("xit('Foo', function () {})", None),
         ("it(\"Foo\", function () {})", None),
         ("it(`Foo`, function () {})", None),

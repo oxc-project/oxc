@@ -61,3 +61,15 @@ source: crates/oxc_linter/src/tester.rs
  1 │ () => {fs.fooSync();}
    ·        ────────────
    ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: '"\ud800Sync"'.
+   ╭─[no_sync.tsx:1:1]
+ 1 │ fs["\uD800Sync"]();
+   · ──────────────────
+   ╰────
+
+  ⚠ node(no-sync): Unexpected sync method: '"a\udc00bSync"'.
+   ╭─[no_sync.tsx:1:1]
+ 1 │ fs["a\uDC00bSync"]();
+   · ────────────────────
+   ╰────
