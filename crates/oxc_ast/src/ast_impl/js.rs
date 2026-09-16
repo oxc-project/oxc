@@ -1,14 +1,13 @@
-use std::{
-    borrow::Cow,
-    fmt::{self, Display},
-};
+use std::fmt::{self, Display};
 
 use oxc_allocator::Box as ArenaBox;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSStr};
-use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
+use oxc_syntax::{
+    number::ToJsString, operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId,
+};
 
-use crate::ast::*;
+use crate::{StaticPropertyName, ast::*};
 
 impl Program<'_> {
     /// Returns `true` if this program has no statements or directives.
@@ -463,17 +462,19 @@ impl<'a> PropertyKey<'a> {
     /// - `#a: 1` in `class C { #a: 1 }` would return `None`
     /// - `'a': 1` in `{ 'a': 1 }` would return `a`
     /// - `[a]: 1` in `{ [a]: 1 }` would return `None`
-    pub fn static_name(&self) -> Option<Cow<'a, str>> {
+    pub fn static_name(&self) -> Option<StaticPropertyName<'a>> {
         match self {
-            Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
-            Self::StringLiteral(lit) => lit.value.as_str().map(Cow::Borrowed),
-            Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
-            Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
-            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
-            Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => {
-                lit.single_quasi().and_then(JSStr::as_str).map(Cow::Borrowed)
+            Self::StaticIdentifier(ident) => Some(StaticPropertyName::from(ident.name)),
+            Self::StringLiteral(lit) => Some(StaticPropertyName::from(lit.value)),
+            Self::RegExpLiteral(lit) => Some(StaticPropertyName::Owned(lit.regex.to_string())),
+            // ECMAScript Number::toString, so `1e21` gets the name "1e+21" like
+            // the runtime property key.
+            Self::NumericLiteral(lit) => {
+                Some(StaticPropertyName::Owned(lit.value.to_js_string()))
             }
+            Self::BigIntLiteral(lit) => Some(StaticPropertyName::from(lit.value.as_str())),
+            Self::NullLiteral(_) => Some(StaticPropertyName::from("null")),
+            Self::TemplateLiteral(lit) => lit.single_quasi().map(StaticPropertyName::from),
             _ => None,
         }
     }
@@ -516,9 +517,9 @@ impl<'a> PropertyKey<'a> {
     /// - `a: 1` in `{ a: 1 }` would return `a`
     /// - `'a': 1` in `{ 'a': 1 }` would return `a`
     /// - `[a]: 1` in `{ [a]: 1 }` would return `None`
-    pub fn name(&self) -> Option<Cow<'a, str>> {
+    pub fn name(&self) -> Option<StaticPropertyName<'a>> {
         if self.is_private_identifier() {
-            self.private_name().map(|name| Cow::Borrowed(name.as_str()))
+            self.private_name().map(StaticPropertyName::from)
         } else {
             self.static_name()
         }
@@ -1806,7 +1807,7 @@ impl<'a> ClassElement<'a> {
 
     /// Try to get the statically known name of this [`ClassElement`]. Handles
     /// computed members that use literals.
-    pub fn static_name(&self) -> Option<Cow<'a, str>> {
+    pub fn static_name(&self) -> Option<StaticPropertyName<'a>> {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => def.key.static_name(),

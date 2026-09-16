@@ -774,3 +774,45 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                             }
  10 │                             
     ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {"\uDC00": 1, "\uD800": 2}
+   ·           ──────────────────────────
+   ╰────
+  help: Replace `"\uDC00": 1, "\uD800": 2` with `"\uD800": 2, "\uDC00": 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {"\uD800": 1, "a": 2}
+   ·           ─────────────────────
+   ╰────
+  help: Replace `"\uD800": 1, "a": 2` with `"a": 2, "\uD800": 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {"\uD800\uDC00": 1, "\uD800": 2}
+   ·           ────────────────────────────────
+   ╰────
+  help: Replace `"\uD800\uDC00": 1, "\uD800": 2` with `"\uD800": 2, "\uD800\uDC00": 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {"\uD800": 1, "\uDC00": 2}
+   ·           ──────────────────────────
+   ╰────
+  help: Replace `"\uD800": 1, "\uDC00": 2` with `"\uDC00": 2, "\uD800": 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {"a1": 1, "\uD800": 2}
+   ·           ──────────────────────
+   ╰────
+  help: Replace `"a1": 1, "\uD800": 2` with `"\uD800": 2, "a1": 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {"\uD800": 1, "b": 2, "A": 3}
+   ·           ─────────────────────────────
+   ╰────
+  help: Replace `"\uD800": 1, "b": 2, "A": 3` with `"A": 3, "b": 2, "\uD800": 1`.

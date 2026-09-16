@@ -2,6 +2,24 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ eslint(no-dupe-keys): Duplicate key '1e+21'
+   ╭─[no_dupe_keys.tsx:1:11]
+ 1 │ var x = { 1e21: 1, "1e+21": 2 };
+   ·           ──┬─     ───┬───
+   ·             │         ╰── and duplicated here
+   ·             ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key '1e-7'
+   ╭─[no_dupe_keys.tsx:1:11]
+ 1 │ var x = { 1e-7: 1, "1e-7": 2 };
+   ·           ──┬─     ───┬──
+   ·             │         ╰── and duplicated here
+   ·             ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
   ⚠ eslint(no-dupe-keys): Duplicate key 'a'
    ╭─[no_dupe_keys.tsx:1:11]
  1 │ var x = { a: b, ['a']: b };
@@ -201,5 +219,32 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ┬     ┬
    ·                            │     ╰── and duplicated here
    ·                            ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key '\uD800'
+   ╭─[no_dupe_keys.tsx:1:11]
+ 1 │ var x = { "\uD800": 1, "\uD800": 2 };
+   ·           ────┬───     ────┬───
+   ·               │            ╰── and duplicated here
+   ·               ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key '\uDC00'
+   ╭─[no_dupe_keys.tsx:1:11]
+ 1 │ var x = { "\uDC00": 1, ["\uDC00"]: 2 };
+   ·           ────┬───      ────┬───
+   ·               │             ╰── and duplicated here
+   ·               ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key '`a\uD800b`'
+   ╭─[no_dupe_keys.tsx:1:11]
+ 1 │ var x = { "a\uD800b": 1, [`a\uD800b`]: 2 };
+   ·           ─────┬────      ─────┬────
+   ·                │               ╰── and duplicated here
+   ·                ╰── Key is first defined here
    ╰────
   help: Consider removing the duplicated key

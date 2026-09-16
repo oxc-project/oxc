@@ -450,3 +450,19 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                ──────
  4 │ </script>
    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key '\uD800'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:66]
+ 2 │ <script>
+ 3 │ export default { props: { "\uD800": String }, data () { return { "\uD800": 1 } } }
+   ·                                                                  ────────
+ 4 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'a\uD800b'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:52]
+ 2 │ <script>
+ 3 │ export default { props: ["a\uD800b"], computed: { [`a\uD800b`] () { return 1 } } }
+   ·                                                    ──────────
+ 4 │ </script>
+   ╰────

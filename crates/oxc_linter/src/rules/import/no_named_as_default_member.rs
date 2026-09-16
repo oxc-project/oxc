@@ -154,7 +154,9 @@ impl Rule for NoNamedAsDefaultMember {
                     };
 
                     for prop in &*object_pattern.properties {
-                        let Some(name) = prop.key.static_name() else {
+                        let Some(name) =
+                            prop.key.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+                        else {
                             continue;
                         };
                         if let Some(module_name) =

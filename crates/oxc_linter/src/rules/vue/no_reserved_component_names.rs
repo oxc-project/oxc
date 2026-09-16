@@ -133,7 +133,11 @@ impl NoReservedComponentNames {
         };
         for entry in &components_obj.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = entry else { continue };
-            let Some(name) = prop.key.static_name() else { continue };
+            let Some(name) =
+                prop.key.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+            else {
+                continue;
+            };
             self.report_if_reserved(name.as_ref(), prop.key.span(), ctx);
         }
     }

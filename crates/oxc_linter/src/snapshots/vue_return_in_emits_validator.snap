@@ -112,3 +112,11 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                     }
  7 │                       }
    ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "\uD800" emits validator.
+   ╭─[return_in_emits_validator.tsx:5:30]
+ 4 │                       emits: {
+ 5 │ ╭─▶                     "\uD800" () {
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────
