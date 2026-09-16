@@ -65,7 +65,9 @@ pub fn run_once(ctx: &LintContext) {
             return;
         };
 
-        if string_literal.value.as_str().is_some_and(contains_mocks_dir) {
+        // A path component with a lone surrogate reads back with a
+        // replacement character and cannot equal the mocks directory.
+        if contains_mocks_dir(&string_literal.value.to_str_lossy()) {
             ctx.diagnostic(no_mocks_import_diagnostic(string_literal.span));
         }
     }

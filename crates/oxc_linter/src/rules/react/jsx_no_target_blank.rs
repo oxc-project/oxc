@@ -11,6 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -253,7 +254,7 @@ impl Rule for JsxNoTargetBlank {
     }
 }
 
-fn check_is_external_link(link: &str) -> bool {
+fn check_is_external_link(link: JSStr<'_>) -> bool {
     link.contains("//")
 }
 
@@ -264,7 +265,7 @@ fn match_href_expression(
 ) {
     match expr {
         Expression::StringLiteral(str) => {
-            *is_external_link = str.value.as_str().is_some_and(check_is_external_link);
+            *is_external_link = check_is_external_link(str.value);
         }
         Expression::Identifier(_) => *is_dynamic_link = true,
         Expression::ConditionalExpression(expr) => {
@@ -285,7 +286,7 @@ fn check_href(
         matches!(enforce_dynamic_links, EnforceDynamicLinksEnum::Never);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            is_external_link = str.value.as_str().is_some_and(check_is_external_link);
+            is_external_link = check_is_external_link(str.value);
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {
@@ -311,22 +312,17 @@ fn check_href(
 }
 
 fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
-    let Some(value) = str.value.as_str() else {
-        return false;
-    };
-    let mut splits = value.split(' ');
     if allow_referrer {
-        return splits.any(|str| {
-            if str == "noopener" {
-                return true;
-            }
-            if str == "noreferrer" {
-                return true;
-            }
-            false
-        });
+        return any_rel_token(str.value, |token| token == "noopener" || token == "noreferrer");
     }
-    splits.any(|str| str.eq_ignore_ascii_case("noreferrer"))
+    any_rel_token(str.value, |token| token.eq_ignore_ascii_case("noreferrer"))
+}
+
+/// Split `rel` on spaces and test each token. A token that contains a lone
+/// surrogate reads back with a replacement character and cannot equal a
+/// link type.
+fn any_rel_token(value: JSStr<'_>, is_match: impl FnMut(&str) -> bool) -> bool {
+    value.to_str_lossy().split(' ').any(is_match)
 }
 
 fn match_rel_expression<'a>(
@@ -420,6 +416,19 @@ fn test() {
         (r#"<a href="foobar" target="_blank" rel={"noreferrer"}></a>"#, None, None),
         (r#"<a href={"foobar"} target={"_blank"} rel={"noopener noreferrer"}></a>"#, None, None),
         (r#"<a href={"foobar"} target={"_blank"} rel={"noreferrer"}></a>"#, None, None),
+        // Lone surrogates elsewhere in `rel` do not hide a valid token.
+        (
+            r#"<a href={"https://x/\uD800"} target="_blank" rel={"\uD800 noreferrer"}></a>"#,
+            None,
+            None,
+        ),
+        (r#"<a href={"//x/\uDC00"} target="_blank" rel={"noreferrer \uDC00"}></a>"#, None, None),
+        (
+            r#"<a href={"https://x/\uD83D\uDE00"} target="_blank" rel={"noopener \uD83D noreferrer"}></a>"#,
+            None,
+            None,
+        ),
+        (r#"<a href={"\uD800"} target="_blank"></a>"#, None, None),
         (r"<a href={'foobar'} target={'_blank'} rel={'noopener noreferrer'}></a>", None, None),
         (r"<a href={'foobar'} target={'_blank'} rel={'noreferrer'}></a>", None, None),
         (r"<a href={`foobar`} target={`_blank`} rel={`noopener noreferrer`}></a>", None, None),
@@ -607,6 +616,14 @@ fn test() {
 
     let fail = vec![
         (r#"<a target="_blank" href="https://example.com/1"></a>"#, None, None),
+        // A lone surrogate in the link does not make it internal.
+        (r#"<a target="_blank" href={"https://x/\uD800"}></a>"#, None, None),
+        (r#"<a target="_blank" href={"//x/\uDC00"} rel={"\uDC00"}></a>"#, None, None),
+        (
+            r#"<a target="_blank" href={"https://x/\uD83D\uDE00"} rel={"noreferrer\uD800"}></a>"#,
+            None,
+            None,
+        ),
         (r#"<a target="_blank" rel="" href="https://example.com/2"></a>"#, None, None),
         (r#"<a target="_blank" rel={0} href="https://example.com/3"></a>"#, None, None),
         (r#"<a target="_blank" rel={1} href="https://example.com/3"></a>"#, None, None),

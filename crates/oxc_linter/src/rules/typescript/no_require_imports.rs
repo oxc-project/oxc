@@ -16,7 +16,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::deserialize_regex_vec,
+    utils::{deserialize_regex_vec, regex_match_text},
 };
 
 fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
@@ -157,9 +157,10 @@ impl Rule for NoRequireImports {
                             }
                         }
                         Argument::StringLiteral(string_literal)
-                            if string_literal.value.as_str().is_some_and(|value| {
-                                match_argument_value_with_regex(&self.allow, value)
-                            }) =>
+                            if match_argument_value_with_regex(
+                                &self.allow,
+                                &regex_match_text(string_literal.value),
+                            ) =>
                         {
                             return;
                         }
@@ -176,9 +177,10 @@ impl Rule for NoRequireImports {
                     }
 
                     if !self.allow.is_empty()
-                        && mod_ref.expression.value.as_str().is_some_and(|value| {
-                            match_argument_value_with_regex(&self.allow, value)
-                        })
+                        && match_argument_value_with_regex(
+                            &self.allow,
+                            &regex_match_text(mod_ref.expression.value),
+                        )
                     {
                         return;
                     }
@@ -257,6 +259,15 @@ fn test() {
         (
             "import pkg = require('some-package');",
             Some(serde_json::json!([{ "allow": ["^some-package$"] }])),
+        ),
+        // The `\uD800` escape is a lone surrogate in the imported path.
+        (
+            r"const pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["\\.json$"] }])),
+        ),
+        (
+            r"import pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["\\.json$"] }])),
         ),
         ("import foo = require('foo');", Some(serde_json::json!([{ "allowAsImport": true }]))),
         (
@@ -356,6 +367,11 @@ fn test() {
         (
             "import pkg = require('./package.json');",
             Some(serde_json::json!([{ "allow": ["^some-package$"] }])),
+        ),
+        // The `\uD800` escape is a lone surrogate; the allow pattern does not match the path.
+        (
+            r"const pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["^foo"] }])),
         ),
         ("var foo = require?.('foo');", Some(serde_json::json!([{ "allowAsImport": true }]))),
         (
