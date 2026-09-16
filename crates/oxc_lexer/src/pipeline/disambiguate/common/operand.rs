@@ -21,15 +21,11 @@
 //! [`operator`]: super::super::operator
 //! [`type_context`]: super::super::type_context
 
-use crate::{opmap::OP_KIND_BASE, tables::Tables};
+use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
 
-use super::super::super::{
-    BIGINT, IDENT, IDENT_ESC, JEND, JTEXT, NUM, REGEX, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB,
-    TMPL_TAIL, bitmap::bm_next1,
-};
+use super::super::super::bitmap::bm_next1;
 
 use super::{
-    KW_AS, KW_EXTENDS, KW_IN, KW_IS,
     constructs::{
         CLASS_WALK_STOP_WORDS, bang_is_postfix, binder_outside_paren_head, class_like_walk,
         conditional_type_question, declarator_without_init, function_keyword_before_params,
@@ -185,10 +181,10 @@ unsafe fn operand_position_at(
     let p = q as usize;
     if kind_at(kind, p) < OP_KIND_BASE {
         let k = kind_at(kind, p);
-        if k == TMPL_HEAD || k == TMPL_MIDDLE {
+        if k == tk!(TemplateHead) || k == tk!(TemplateMiddle) {
             return true;
         }
-        if k == IDENT && !prop_name(src, p) {
+        if k == tk!(Ident) && !prop_name(src, p) {
             if ident_is(src, p, b"void") {
                 return !(ts && void_is_type_position(t, src, st, kind, n, p, depth));
             }
@@ -222,7 +218,7 @@ unsafe fn operand_position_at(
             if ident_is(src, p, b"default") && *src.add(pos) == b'{' {
                 let e = bm_prev_sig(st, kind, p);
                 return e >= 0
-                    && kind_at(kind, e as usize) == IDENT
+                    && kind_at(kind, e as usize) == tk!(Ident)
                     && !prop_name(src, e as usize)
                     && ident_is(src, e as usize, b"export");
             }
@@ -297,7 +293,7 @@ unsafe fn decorator_start(
             if c != b'.' {
                 return None;
             }
-        } else if kk != IDENT {
+        } else if kk != tk!(Ident) {
             return None;
         }
         q = bm_prev_sig(st, kind, w);
@@ -353,7 +349,7 @@ unsafe fn void_is_type_position(
             _ => false,
         };
     }
-    k == IDENT
+    k == tk!(Ident)
         && !prop_name(src, w)
         && word_is_any(src, w, &[b"implements", b"extends"])
         && class_like_walk(src, st, kind, w)
@@ -451,7 +447,7 @@ pub unsafe fn brace_opens_object_literal(
         }
         return false;
     }
-    ts && kind_at(kind, p) == IDENT
+    ts && kind_at(kind, p) == tk!(Ident)
         && !prop_name(src, p)
         && (ident_is(src, p, b"as") || ident_is(src, p, b"satisfies"))
         && tail_or_brace_before(t, src, st, kind, n, p)
@@ -477,7 +473,7 @@ unsafe fn ts_gt_brace(
         return GtBrace::Value;
     }
     let bp = b as usize;
-    if kind_at(kind, bp) != IDENT {
+    if kind_at(kind, bp) != tk!(Ident) {
         return GtBrace::Value;
     }
     let Some(head) = chain_head(src, st, kind, bp) else {
@@ -489,7 +485,7 @@ unsafe fn ts_gt_brace(
     }
     let tp = tq as usize;
     let tk = kind_at(kind, tp);
-    if tk == IDENT && !prop_name(src, tp) {
+    if tk == tk!(Ident) && !prop_name(src, tp) {
         if ident_is(src, tp, b"class") {
             return body(operand_position(t, src, st, kind, n, tp, true, depth));
         }
@@ -567,7 +563,7 @@ unsafe fn class_walk_from(
                     return false;
                 }
                 let np = nx as usize;
-                if kind_at(kind, np) != IDENT
+                if kind_at(kind, np) != tk!(Ident)
                     || prop_name(src, np)
                     || !ident_is(src, np, b"extends")
                 {
@@ -601,7 +597,7 @@ unsafe fn class_walk_from(
             if c != b'.' && c != b'?' {
                 return false;
             }
-        } else if kk == IDENT {
+        } else if kk == tk!(Ident) {
             if !prop_name(src, w) {
                 if word_is_any(src, w, CLASS_WALK_STOP_WORDS) {
                     return false;
@@ -616,7 +612,10 @@ unsafe fn class_walk_from(
                     pending_comma = false;
                 }
             }
-        } else if !matches!(kk, NUM | BIGINT | STR | REGEX | TMPL_NOSUB) {
+        } else if !matches!(
+            kk,
+            tk!(Number) | tk!(BigInt) | tk!(String) | tk!(RegExp) | tk!(TemplateNoSub)
+        ) {
             return false;
         }
         q = bm_prev_sig(st, kind, w);
@@ -740,9 +739,9 @@ pub unsafe fn type_annotation_asi(
                 }
                 _ => return false,
             }
-        } else if kk == IDENT || kk == IDENT_ESC {
+        } else if kk == tk!(Ident) || kk == tk!(IdentEscaped) {
             let kw = t.kwts.lookup(src.add(w), word_len(src, w)) as u8;
-            if matches!(kw, KW_EXTENDS | KW_IS | KW_IN | KW_AS) {
+            if matches!(kw, tk!(KwExtends) | tk!(KwIs) | tk!(KwIn) | tk!(KwAs)) {
                 ends = false;
                 starts = false;
             } else if type_prefix_kind(kw) {
@@ -752,16 +751,16 @@ pub unsafe fn type_annotation_asi(
                 ends = true;
                 starts = true;
             }
-        } else if matches!(kk, NUM | BIGINT | STR | TMPL_NOSUB) {
+        } else if matches!(kk, tk!(Number) | tk!(BigInt) | tk!(String) | tk!(TemplateNoSub)) {
             ends = true;
             starts = true;
-        } else if kk == TMPL_HEAD {
+        } else if kk == tk!(TemplateHead) {
             ends = false;
             starts = true;
-        } else if kk == TMPL_MIDDLE {
+        } else if kk == tk!(TemplateMiddle) {
             ends = false;
             starts = false;
-        } else if kk == TMPL_TAIL {
+        } else if kk == tk!(TemplateTail) {
             ends = true;
             starts = false;
         } else {
@@ -795,7 +794,7 @@ pub unsafe fn annotation_colon_is_declaration(
     }
     let w = q as usize;
     let kk = kind_at(kind, w);
-    if kk == IDENT {
+    if kk == tk!(Ident) {
         return declarator_without_init(src, st, kind, w);
     }
     if kk >= OP_KIND_BASE {
@@ -806,7 +805,7 @@ pub unsafe fn annotation_colon_is_declaration(
         if c == b'!' && *src.add(w + 1) != b'=' {
             let q2 = bm_prev_sig(st, kind, w);
             return q2 >= 0
-                && kind_at(kind, q2 as usize) == IDENT
+                && kind_at(kind, q2 as usize) == tk!(Ident)
                 && declarator_without_init(src, st, kind, q2 as usize);
         }
         if c == b']' || c == b'}' {
@@ -842,7 +841,7 @@ unsafe fn jsx_container_or_object_brace(
     }
     let w = q as usize;
     let k = kind_at(kind, w);
-    if k == JTEXT || k == JEND {
+    if k == tk!(JsxText) || k == tk!(JsxTagEnd) {
         return true;
     }
     if k >= OP_KIND_BASE {

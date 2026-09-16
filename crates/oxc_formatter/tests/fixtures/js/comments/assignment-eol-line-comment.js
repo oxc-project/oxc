@@ -23,3 +23,36 @@ class C {
 // Breaking right-hand side: Prettier keeps the order here too (no divergence)
 const v3 = // c
   someLongFunctionCall(argumentOne, argumentTwo, argumentThree, argumentFours);
+
+// Block comments glued after the operator stay after it, in order, before the
+// riding line comment (Prettier moves the block across the line comment:
+// `const b1 = // d` + `/* c */ foo(a, b)`)
+const b1 = /* c */ // d
+  foo(a, b);
+b2 = /* c */ /* e */ // d
+  foo(a, b);
+const o2 = {
+  p: /* c */ // d
+    1,
+};
+class C2 {
+  f = /* c */ // d
+    1;
+}
+// Before the operator they trail the left side
+const b3 /* c */ = // d
+  1;
+// A line comment before the operator trails the left side and breaks after the operator the same way
+// (Prettier flushes it past a fitting value)
+const b4 // c
+  = 1;
+const b5 // c
+  = foo(b);
+const o3 = {
+  p // c
+    : 1,
+};
+class C3 {
+  f // c
+    = 1;
+}

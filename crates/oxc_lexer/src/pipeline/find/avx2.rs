@@ -1,4 +1,4 @@
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
 use super::super::chunk::{load256, mm, veq};
 
@@ -88,7 +88,7 @@ macro_rules! define_find_function {
         $(#[$attr])*
         #[inline]
         pub unsafe fn $name(src: *const u8, n: usize, mut i: usize) -> usize {
-            use core::arch::x86_64::_mm256_or_si256;
+            use std::arch::x86_64::_mm256_or_si256;
             use super::super::chunk::{load256, veq, mm};
             use super::avx2::vor;
 

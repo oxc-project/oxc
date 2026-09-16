@@ -9136,14 +9136,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-object-pattern/input.js:2:14]
+  × Using declarations may not have binding patterns.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-object-pattern/input.js:2:15]
  1 │ async function f() {
  2 │   await using { foo } = f();
-   ·              ▲
+   ·               ───────
  3 │ }
    ╰────
-  help: Try inserting a semicolon here
 
   × Using declarations may not have binding patterns.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/disallow-destructuring/input.js:1:17]
@@ -15732,11 +15731,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-await-using/input.ts:2:14]
+  × Missing initializer in destructuring declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-await-using/input.ts:2:15]
  1 │ {
  2 │   await using {}! = {};
-   ·              ▲
+   ·               ──
+ 3 │ }
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations may not have binding patterns.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-await-using/input.ts:2:15]
+ 1 │ {
+ 2 │   await using {}! = {};
+   ·               ──
+ 3 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-await-using/input.ts:2:17]
+ 1 │ {
+ 2 │   await using {}! = {};
+   ·                 ▲
  3 │ }
    ╰────
   help: Try inserting a semicolon here

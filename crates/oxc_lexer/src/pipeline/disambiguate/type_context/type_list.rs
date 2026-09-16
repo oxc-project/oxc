@@ -13,23 +13,16 @@
 use crate::{
     opmap::OP_KIND_BASE,
     tables::{Tables, is_digit, is_id_start},
+    token::tk,
 };
 
 use super::super::super::{
-    BCOM, BIGINT, IDENT, IDENT_ESC, LCOM, NUM, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL,
-    WS,
     bitmap::{bm_get, bm_next1},
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
 };
 
-use super::super::common::{
-    KW_AWAIT, KW_BREAK, KW_CASE, KW_CATCH, KW_CLASS, KW_CONST, KW_CONTINUE, KW_DEBUGGER,
-    KW_DEFAULT, KW_DELETE, KW_DO, KW_ELSE, KW_ENUM, KW_EXPORT, KW_EXTENDS, KW_FINALLY, KW_FOR,
-    KW_FUNCTION, KW_IF, KW_IN, KW_INSTANCEOF, KW_IS, KW_LET, KW_RETURN, KW_SUPER, KW_SWITCH,
-    KW_THIS, KW_THROW, KW_TRY, KW_VAR, KW_WHILE, KW_WITH, KW_YIELD, kind_at, lt_in_range,
-    type_prefix_kind, word_is_any, word_len,
-};
+use super::super::common::{kind_at, lt_in_range, type_prefix_kind, word_is_any, word_len};
 
 use super::bytes::skip_ws_fwd;
 
@@ -178,7 +171,7 @@ pub(super) unsafe fn type_list_legal(
     let mut w = bm_next1(st, lo, hi);
     while w < hi {
         let k = kind_at(kind, w);
-        if w == skip || k == WS || k == LCOM || k == BCOM {
+        if w == skip || k == tk!(Whitespace) || k == tk!(LineComment) || k == tk!(BlockComment) {
             w = bm_next1(st, w + 1, hi);
             continue;
         }
@@ -186,26 +179,31 @@ pub(super) unsafe fn type_list_legal(
         let mut ok_paren = false;
         let was_this = this_head;
         this_head = false;
-        if k == IDENT || k == IDENT_ESC {
+        if k == tk!(Ident) || k == tk!(IdentEscaped) {
             let kk = t.kwts.lookup(src.add(w), word_len(src, w)) as u8;
-            this_head = kk == KW_THIS;
-            if !start && brc == 0 && !matches!(kk, KW_EXTENDS | KW_IS | KW_IN) {
+            this_head = kk == tk!(KwThis);
+            if !start && brc == 0 && !matches!(kk, tk!(KwExtends) | tk!(KwIs) | tk!(KwIn)) {
                 return false;
             }
             if type_illegal_kind(kk) {
                 return false;
             }
-            if kk == KW_EXTENDS {
+            if kk == tk!(KwExtends) {
                 cond_ok = true;
             }
             start = type_prefix_kind(kk);
-        } else if k == NUM || k == BIGINT || k == STR || k == TMPL_NOSUB || k == TMPL_TAIL {
-            if !start && brc == 0 && k != TMPL_TAIL {
+        } else if k == tk!(Number)
+            || k == tk!(BigInt)
+            || k == tk!(String)
+            || k == tk!(TemplateNoSub)
+            || k == tk!(TemplateTail)
+        {
+            if !start && brc == 0 && k != tk!(TemplateTail) {
                 return false;
             }
             start = false;
-        } else if k == TMPL_HEAD || k == TMPL_MIDDLE {
-            if k == TMPL_HEAD && !start && brc == 0 {
+        } else if k == tk!(TemplateHead) || k == tk!(TemplateMiddle) {
+            if k == tk!(TemplateHead) && !start && brc == 0 {
                 return false;
             }
             start = true;
@@ -334,34 +332,34 @@ pub(super) unsafe fn type_list_legal(
 fn type_illegal_kind(k: u8) -> bool {
     matches!(
         k,
-        KW_AWAIT
-            | KW_YIELD
-            | KW_DELETE
-            | KW_FUNCTION
-            | KW_CLASS
-            | KW_INSTANCEOF
-            | KW_SUPER
-            | KW_SWITCH
-            | KW_CASE
-            | KW_RETURN
-            | KW_THROW
-            | KW_VAR
-            | KW_LET
-            | KW_CONST
-            | KW_IF
-            | KW_ELSE
-            | KW_FOR
-            | KW_WHILE
-            | KW_DO
-            | KW_BREAK
-            | KW_CONTINUE
-            | KW_WITH
-            | KW_TRY
-            | KW_CATCH
-            | KW_FINALLY
-            | KW_DEBUGGER
-            | KW_DEFAULT
-            | KW_EXPORT
-            | KW_ENUM
+        tk!(KwAwait)
+            | tk!(KwYield)
+            | tk!(KwDelete)
+            | tk!(KwFunction)
+            | tk!(KwClass)
+            | tk!(KwInstanceof)
+            | tk!(KwSuper)
+            | tk!(KwSwitch)
+            | tk!(KwCase)
+            | tk!(KwReturn)
+            | tk!(KwThrow)
+            | tk!(KwVar)
+            | tk!(KwLet)
+            | tk!(KwConst)
+            | tk!(KwIf)
+            | tk!(KwElse)
+            | tk!(KwFor)
+            | tk!(KwWhile)
+            | tk!(KwDo)
+            | tk!(KwBreak)
+            | tk!(KwContinue)
+            | tk!(KwWith)
+            | tk!(KwTry)
+            | tk!(KwCatch)
+            | tk!(KwFinally)
+            | tk!(KwDebugger)
+            | tk!(KwDefault)
+            | tk!(KwExport)
+            | tk!(KwEnum)
     )
 }

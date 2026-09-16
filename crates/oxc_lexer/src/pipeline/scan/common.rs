@@ -1,4 +1,4 @@
-use core::slice;
+use std::slice;
 
 use crate::tables::{hex_val, is_digit, is_word};
 

@@ -1,7 +1,6 @@
-use crate::{error::diag_code, lanes::Lanes, tables::is_id_start};
+use crate::{error::diag_code, lanes::Lanes, tables::is_id_start, token::tk};
 
 use super::super::{
-    IDENT_ESC, PRIV_IDENT, PRIV_IDENT_ESC, WS,
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
     find::unicode_ws_len,
     scan::scan_ident_esc,
@@ -85,7 +84,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 }
                 let len = unicode_ws_len(src, p);
                 if len != 0 {
-                    *kind.add(p) = WS;
+                    *kind.add(p) = tk!(Whitespace);
                     bm_clear_range(word, p, p + len - 1);
                     bm_set(st, p);
                     bm_clear_range(st, p + 1, p + len - 1);
@@ -116,10 +115,10 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 }
                 let e0 = bm_next0(word, p + 1, n);
                 let e = if *src.add(e0) == b'\\' && *src.add(e0 + 1) == b'u' {
-                    *kind.add(p) = PRIV_IDENT_ESC;
+                    *kind.add(p) = tk!(PrivateIdentEscaped);
                     scan_ident_esc(src, n, e0)
                 } else {
-                    *kind.add(p) = PRIV_IDENT;
+                    *kind.add(p) = tk!(PrivateIdent);
                     e0
                 };
                 bm_clear_range(st, p + 1, e - 1);
@@ -127,7 +126,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 if *src.add(p + 1) != b'u' {
                     continue;
                 }
-                *kind.add(p) = IDENT_ESC;
+                *kind.add(p) = tk!(IdentEscaped);
                 nesc += 1;
                 let e = scan_ident_esc(src, n, p);
                 bm_clear_range(st, p + 1, e - 1);

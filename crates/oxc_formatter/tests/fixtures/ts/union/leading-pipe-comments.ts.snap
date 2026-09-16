@@ -37,6 +37,14 @@ type MultilineBlock =
   comment
   */ A
   | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+// A `*`-aligned one re-aligns under its `/*` behind the `|` (printed by the member, inside its alignment)
+type MultilineAlignable =
+  /**
+   * comment
+   */ A
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+type MultilineAlignableMid = /* multi
+ * line */ A | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
 
 // A comment that ENDS its source line stays before the `|`:
 // moving it behind would force a break between the `|` and its member.
@@ -90,6 +98,16 @@ type MultilineBlock =
   comment
   */ A
   | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+// A `*`-aligned one re-aligns under its `/*` behind the `|` (printed by the member, inside its alignment)
+type MultilineAlignable =
+  | /**
+     * comment
+     */ A
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+type MultilineAlignableMid =
+  | /* multi
+     * line */ A
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
 
 // A comment that ENDS its source line stays before the `|`:
 // moving it behind would force a break between the `|` and its member.
@@ -133,6 +151,16 @@ type MultilineBlock =
   | /**
   comment
   */ A
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+// A `*`-aligned one re-aligns under its `/*` behind the `|` (printed by the member, inside its alignment)
+type MultilineAlignable =
+  | /**
+     * comment
+     */ A
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+type MultilineAlignableMid =
+  | /* multi
+     * line */ A
   | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
 
 // A comment that ENDS its source line stays before the `|`:
