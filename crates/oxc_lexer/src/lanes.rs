@@ -11,6 +11,8 @@
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use core::arch::x86_64::*;
 
+use oxc_ast::ast::RegExpFlags;
+
 use crate::error::{Diagnostic, diag_code, diag_severity};
 use crate::token::StringSpan;
 
@@ -57,14 +59,14 @@ impl Lanes {
         let mut f: u8 = 0;
         for (k, &c) in src[fs..fe].iter().enumerate() {
             let bit: u8 = match c {
-                b'g' => 1,
-                b'i' => 2,
-                b'm' => 4,
-                b's' => 8,
-                b'u' => 16,
-                b'y' => 32,
-                b'd' => 64,
-                b'v' => 128,
+                b'g' => RegExpFlags::G.bits(),
+                b'i' => RegExpFlags::I.bits(),
+                b'm' => RegExpFlags::M.bits(),
+                b's' => RegExpFlags::S.bits(),
+                b'u' => RegExpFlags::U.bits(),
+                b'y' => RegExpFlags::Y.bits(),
+                b'd' => RegExpFlags::D.bits(),
+                b'v' => RegExpFlags::V.bits(),
                 _ => 0,
             };
             // Unknown or repeated flag: diagnostic. At most 8 flag chars.

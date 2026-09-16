@@ -37,6 +37,43 @@ macro_rules! define_token_kind {
                 }
             }
         }
+
+        /// Constants used by `tk!` macro.
+        #[doc(hidden)]
+        #[allow(unused, clippy::allow_attributes)]
+        #[expect(non_upper_case_globals)]
+        pub(crate) mod __kind_u8 {
+            use super::TokenKind;
+
+            $(
+                pub const $variant: u8 = TokenKind::$variant as u8;
+            )+
+        }
+
+        /// Get the numeric (`u8`) value of a [`TokenKind`].
+        ///
+        /// # Example
+        ///
+        /// ```ignore
+        /// let ident: u8 = tk!(Ident);
+        /// assert_eq!(ident, TokenKind::Ident as u8);
+        /// ```
+        ///
+        /// # Implementation detail
+        ///
+        /// Uses `const`s as intermediaries so that `tk!` can be used in match arms e.g.:
+        ///
+        /// ```ignore
+        /// match kind {
+        ///   tk!(Ident) => do_something(),
+        ///   tk!(PrivateIdent) => do_something_else(),
+        /// }
+        /// ```
+        macro_rules! tk {
+            ($kind:ident) => { $crate::token::__kind_u8::$kind };
+        }
+
+        pub(crate) use tk;
     };
 }
 
@@ -182,7 +219,7 @@ define_token_kind! {
 
     // TS-mode contextual keywords (`LexOptions::ts`) plus the strict-mode
     // reserved words; JS mode lexes all of these spellings as IDENT.
-    // Contiguous after the JS block so `>= KW_BASE` range checks cover both.
+    // Contiguous after the JS block so `>= KW_KIND_BASE` range checks cover both.
     KwAbstract = 172 => "abstract",
     KwAccessor = 173 => "accessor",
     KwAny = 174 => "any",
@@ -222,9 +259,9 @@ define_token_kind! {
     Invalid = 255 => "INVALID",
 }
 
-/// First keyword kind: every kind `>= KW_BASE` other than [`TokenKind::Invalid`] is a keyword.
-pub const KW_BASE: u8 = TokenKind::KwBreak as u8;
-pub(crate) const KW_MAX: u8 = TokenKind::KwUsing as u8;
+/// First keyword kind: every kind `>= KW_KIND_BASE` other than [`TokenKind::Invalid`] is a keyword.
+pub const KW_KIND_BASE: u8 = tk!(KwBreak);
+pub(crate) const KW_KIND_MAX: u8 = tk!(KwUsing);
 
 impl TokenKind {
     #[inline]
@@ -254,7 +291,7 @@ impl TokenKind {
     #[inline]
     #[must_use]
     pub const fn is_keyword(self) -> bool {
-        (self as u8) >= KW_BASE && (self as u8) <= KW_MAX
+        (self as u8) >= KW_KIND_BASE && (self as u8) <= KW_KIND_MAX
     }
 
     #[inline]
@@ -347,8 +384,8 @@ pub(crate) fn debug_assert_kind_bytes(bytes: &[u8]) {
 
 pub const SPAN_SENTINELS: usize = 8;
 
-pub const TRIVIA_MIN: u8 = TokenKind::LineComment as u8;
-pub const TRIVIA_MAX: u8 = TokenKind::LineTerminator as u8;
+pub const TRIVIA_MIN: u8 = tk!(LineComment);
+pub const TRIVIA_MAX: u8 = tk!(LineTerminator);
 
 /// [`TokenKind::is_trivia`] on a raw kind byte, for the pipeline's `u8` lanes.
 #[inline]
@@ -371,8 +408,8 @@ pub mod token_flags {
     pub const ASI_RESTRICTED: u16 = 1 << 10;
 }
 
-const _: () = assert!(TokenKind::Hashbang as u8 > TokenKind::LineComment as u8);
-const _: () = assert!((TokenKind::Hashbang as u8) < TokenKind::LineTerminator as u8);
+const _: () = assert!(tk!(Hashbang) > tk!(LineComment));
+const _: () = assert!(tk!(Hashbang) < tk!(LineTerminator));
 
 /// Bit 31 of a `starts` entry: reserved "newline before this token" flag.
 /// The lexer does not set it yet, but consumers must still read offsets
@@ -459,7 +496,7 @@ impl StringSpan {
 
 #[cfg(test)]
 mod tests {
-    use super::{KW_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
+    use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
     use crate::{LexOptions, Lexer, PAD};
 
     #[test]
@@ -500,13 +537,16 @@ mod tests {
         for &kind in TokenKind::VARIANTS {
             let byte = kind as u8;
             if kind.is_keyword() {
-                assert!(byte >= KW_BASE, "{} below KW_BASE", kind.name());
+                assert!(byte >= KW_KIND_BASE, "{} below KW_KIND_BASE", kind.name());
             }
             if kind.is_trivia() {
                 assert!((TRIVIA_MIN..=TRIVIA_MAX).contains(&byte), "{}", kind.name());
             }
         }
-        assert!(TokenKind::LBrace as u8 >= 32 && (TokenKind::At as u8) < KW_BASE);
+        #[expect(clippy::assertions_on_constants)]
+        {
+            assert!(tk!(LBrace) >= 32 && tk!(At) < KW_KIND_BASE);
+        }
         assert!(!TokenKind::Invalid.is_keyword());
         assert!(TokenKind::Hashbang.is_trivia());
     }

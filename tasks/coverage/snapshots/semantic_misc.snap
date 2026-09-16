@@ -1,10 +1,18 @@
 semantic_misc Summary:
-AST Parsed     : 110/110 (100.00%)
-Positive Passed: 105/110 (95.45%)
+AST Parsed     : 111/111 (100.00%)
+Positive Passed: 105/111 (94.59%)
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/misc/pass/import-equals-modifiers.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["A", "Ambient", "Exported", "ExportedExternal", "ExportedType"]
+rebuilt        : ScopeId(0): ["A", "Exported", "ExportedExternal"]
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(4)]
 
 semantic Error: tasks/coverage/misc/pass/oxc-11593.ts
 Scope parent mismatch:

@@ -204,11 +204,14 @@ pub fn write_trailing_comments_inside_parens<'a>(
 }
 
 /// Prints the comments sitting right before the closing source paren after `end`,
-/// inside the parentheses, for a node that re-prints them.
-pub fn write_comments_before_closing_paren(f: &mut JsFormatter<'_, '_>, end: u32) {
-    if let Some(comments) = f.context().comments().comments_before_closing_paren(end) {
-        write!(f, FormatTrailingComments::Comments(comments));
-    }
+/// inside the parentheses, for a node that re-prints them; returns the printed run.
+pub fn write_comments_before_closing_paren<'a>(
+    f: &mut JsFormatter<'_, 'a>,
+    end: u32,
+) -> Option<&'a [Comment]> {
+    let comments = f.context().comments().comments_before_closing_paren(end)?;
+    write!(f, FormatTrailingComments::Comments(comments));
+    Some(comments)
 }
 
 /// Formats `content` followed by an `OptionalSemicolon`,
@@ -310,17 +313,15 @@ pub fn suppressed_statement_content_end(
     f: &JsFormatter<'_, '_>,
 ) -> Option<u32> {
     let span = stmt.span();
-    let with_parens =
-        |content_end: u32| f.comments().end_including_source_parens(content_end, span.end);
-    match stmt {
-        Statement::ExpressionStatement(s) => Some(with_parens(s.expression.span().end)),
-        Statement::ReturnStatement(s) => {
-            Some(s.argument.as_ref().map_or(span.start + RETURN_KEYWORD_LEN, |argument| {
-                with_parens(argument.span().end)
-            }))
-        }
-        Statement::ThrowStatement(s) => Some(with_parens(s.argument.span().end)),
-        Statement::DoWhileStatement(s) => Some(with_parens(s.test.span().end)),
+    let content_end = match stmt {
+        Statement::ExpressionStatement(s) => Some(s.expression.span().end),
+        Statement::ReturnStatement(s) => Some(
+            s.argument
+                .as_ref()
+                .map_or(span.start + RETURN_KEYWORD_LEN, |argument| argument.span().end),
+        ),
+        Statement::ThrowStatement(s) => Some(s.argument.span().end),
+        Statement::DoWhileStatement(s) => Some(s.test.span().end),
         Statement::DebuggerStatement(_) => Some(span.start + DEBUGGER_KEYWORD_LEN),
         Statement::BreakStatement(s) => {
             Some(s.label.as_ref().map_or(span.start + BREAK_KEYWORD_LEN, |label| label.span.end))
@@ -348,10 +349,10 @@ pub fn suppressed_statement_content_end(
             }
             ExportDefaultDeclarationKind::ClassDeclaration(_)
             | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => None,
-            expression => Some(with_parens(expression.span().end)),
+            expression => Some(expression.span().end),
         },
         Statement::ExportDeclaration(s) => declaration_content_end(&s.declaration, f),
-        Statement::TSExportAssignment(s) => Some(with_parens(s.expression.span().end)),
+        Statement::TSExportAssignment(s) => Some(s.expression.span().end),
         Statement::TSNamespaceExportDeclaration(s) => Some(s.id.span.end),
         Statement::IfStatement(s) => {
             suppressed_statement_content_end(s.alternate.as_ref().unwrap_or(&s.consequent), f)
@@ -363,18 +364,18 @@ pub fn suppressed_statement_content_end(
         Statement::ForOfStatement(s) => suppressed_statement_content_end(&s.body, f),
         Statement::LabeledStatement(s) => suppressed_statement_content_end(&s.body, f),
         _ => stmt.as_declaration().and_then(|declaration| declaration_content_end(declaration, f)),
-    }
+    };
+    // Extended once here for every kind (a no-op where no `)` can follow the content),
+    // so no arm has to remember it.
+    content_end.map(|end| f.comments().end_including_source_parens(end, span.end))
 }
 
 /// [`suppressed_statement_content_end`] for a declaration (also behind `export`):
 /// the last declarator, a type alias's type, a bodyless (`declare`) function's signature, a bodyless `declare module "m"`.
 fn declaration_content_end(declaration: &Declaration<'_>, f: &JsFormatter<'_, '_>) -> Option<u32> {
     match declaration {
-        Declaration::VariableDeclaration(s) => {
-            // `VariableDeclaration` always has at least one declarator
-            let declarations_end = s.declarations.last().unwrap().span.end;
-            Some(f.comments().end_including_source_parens(declarations_end, s.span.end))
-        }
+        // `VariableDeclaration` always has at least one declarator
+        Declaration::VariableDeclaration(s) => Some(s.declarations.last().unwrap().span.end),
         Declaration::FunctionDeclaration(function) => function_content_end(function, f),
         Declaration::TSTypeAliasDeclaration(s) => Some(s.type_annotation.span().end),
         Declaration::TSImportEqualsDeclaration(s) => Some(s.module_reference.span().end),
