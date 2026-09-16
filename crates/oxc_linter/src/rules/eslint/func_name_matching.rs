@@ -1,4 +1,5 @@
-use std::borrow::Cow;
+use oxc_ast::StaticPropertyName;
+use oxc_str::JSStr;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -13,7 +14,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::JSStr;
 use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword};
 
 use crate::{
@@ -23,7 +23,7 @@ use crate::{
 };
 
 fn func_name_matching_diagnostic(
-    name: &str,
+    name: impl std::fmt::Display,
     func_name: &str,
     is_property: bool,
     mode: FuncNameMatchingMode,
@@ -212,7 +212,7 @@ impl Rule for FuncNameMatching {
                 };
                 let Some(func_name) = function_expression_name(init) else { return };
 
-                self.report_if_should_warn(name, &func_name, false, ctx);
+                self.report_if_should_warn(name.into(), &func_name, false, ctx);
             }
             AstKind::AssignmentExpression(assign_expr) => {
                 let Some(func_name) = function_expression_name(&assign_expr.right) else { return };
@@ -230,7 +230,7 @@ impl Rule for FuncNameMatching {
                     return;
                 }
 
-                self.report_if_should_warn(name, &func_name, is_property, ctx);
+                self.report_if_should_warn(name.into(), &func_name, is_property, ctx);
             }
             AstKind::ObjectProperty(property) => {
                 self.check_object_property(property, node, ctx);
@@ -244,7 +244,7 @@ impl Rule for FuncNameMatching {
 }
 
 impl FuncNameMatching {
-    fn should_warn(&self, name: &str, func_name: &str) -> bool {
+    fn should_warn(&self, name: JSStr<'_>, func_name: &str) -> bool {
         match self.0.0 {
             FuncNameMatchingMode::Always => name != func_name,
             FuncNameMatchingMode::Never => name == func_name,
@@ -253,14 +253,14 @@ impl FuncNameMatching {
 
     fn report_if_should_warn(
         &self,
-        name: &str,
+        name: JSStr<'_>,
         func_name: &FunctionName<'_>,
         is_property: bool,
         ctx: &LintContext,
     ) {
         if self.should_warn(name, func_name.name) {
             ctx.diagnostic(func_name_matching_diagnostic(
-                name,
+                StaticPropertyName::Borrowed(name),
                 func_name.name,
                 is_property,
                 self.0.0,
@@ -285,7 +285,7 @@ impl FuncNameMatching {
                 match property_descriptor_name(node, ctx) {
                     DescriptorName::Name(descriptor_name) => {
                         self.report_if_should_warn(
-                            descriptor_name.as_ref(),
+                            descriptor_name.as_js_str(),
                             &function_name,
                             true,
                             ctx,
@@ -293,11 +293,11 @@ impl FuncNameMatching {
                     }
                     DescriptorName::Unresolved => {}
                     DescriptorName::NotDescriptor => {
-                        self.report_if_should_warn("value", &function_name, true, ctx);
+                        self.report_if_should_warn("value".into(), &function_name, true, ctx);
                     }
                 }
             } else {
-                self.report_if_should_warn(property_name.as_ref(), &function_name, true, ctx);
+                self.report_if_should_warn(property_name.as_js_str(), &function_name, true, ctx);
             }
 
             return;
@@ -306,7 +306,7 @@ impl FuncNameMatching {
         if let Some(property_name) = string_literal_key_name(&property.key)
             && is_valid_identifier(property_name)
         {
-            self.report_if_should_warn(property_name, &function_name, true, ctx);
+            self.report_if_should_warn(property_name.into(), &function_name, true, ctx);
         }
     }
 
@@ -321,14 +321,14 @@ impl FuncNameMatching {
         if property_key_is_identifier(&property.key) && !property.computed {
             let Some(property_name) = property.key.static_name() else { return };
 
-            self.report_if_should_warn(property_name.as_ref(), &function_name, true, ctx);
+            self.report_if_should_warn(property_name.as_js_str(), &function_name, true, ctx);
             return;
         }
 
         if let Some(property_name) = string_literal_key_name(&property.key)
             && is_valid_identifier(property_name)
         {
-            self.report_if_should_warn(property_name, &function_name, true, ctx);
+            self.report_if_should_warn(property_name.into(), &function_name, true, ctx);
         }
     }
 }
@@ -392,7 +392,7 @@ fn property_descriptor_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> De
 }
 
 enum DescriptorName<'a> {
-    Name(Cow<'a, str>),
+    Name(StaticPropertyName<'a>),
     Unresolved,
     NotDescriptor,
 }

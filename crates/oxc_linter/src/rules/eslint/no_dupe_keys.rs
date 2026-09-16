@@ -1,5 +1,7 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -85,7 +87,7 @@ impl Rule for NoDupeKeys {
             let Some(name) = prop.key.static_name() else {
                 continue;
             };
-            if is_proto_setter_property(prop, &name) {
+            if is_proto_setter_property(prop, name.as_js_str()) {
                 continue;
             }
             if let Some((prev_kind, prev_span)) = map.insert(name, (prop.kind, prop.key.span()))
@@ -94,13 +96,13 @@ impl Rule for NoDupeKeys {
                     || prev_kind == prop.kind)
             {
                 let name = prop_key_name(&prop.key, ctx);
-                ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span(), name));
+                ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span(), &name));
             }
         }
     }
 }
 
-fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &str) -> bool {
+fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: oxc_str::JSStr<'_>) -> bool {
     name == "__proto__"
         && prop.kind == PropertyKind::Init
         && !prop.computed
@@ -108,17 +110,20 @@ fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &str) -> bool {
         && !prop.method
 }
 
-fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> &'a str {
+/// Display spelling for the diagnostic. Key identity uses
+/// `StaticPropertyName`; never compare these values.
+fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> Cow<'a, str> {
     match key {
-        PropertyKey::Identifier(ident) => ident.name.as_str(),
-        PropertyKey::StaticIdentifier(ident) => ident.name.as_str(),
-        PropertyKey::PrivateIdentifier(ident) => ident.name.as_str(),
-        PropertyKey::StringLiteral(lit) => {
-            // The caller has already obtained `Some` from `PropertyKey::static_name`.
-            lit.value.as_str().expect("static string key must be UTF-8")
-        }
-        PropertyKey::NumericLiteral(lit) => lit.raw.as_ref().unwrap().as_str(),
-        _ => ctx.source_range(key.span()),
+        PropertyKey::Identifier(ident) => Cow::Borrowed(ident.name.as_str()),
+        PropertyKey::StaticIdentifier(ident) => Cow::Borrowed(ident.name.as_str()),
+        PropertyKey::PrivateIdentifier(ident) => Cow::Borrowed(ident.name.as_str()),
+        PropertyKey::StringLiteral(lit) => match lit.value.as_str() {
+            Some(name) => Cow::Borrowed(name),
+            // Escape lone surrogates for display.
+            None => Cow::Owned(StaticPropertyName::from(lit.value).to_string()),
+        },
+        PropertyKey::NumericLiteral(lit) => Cow::Borrowed(lit.raw.as_ref().unwrap().as_str()),
+        _ => Cow::Borrowed(ctx.source_range(key.span())),
     }
 }
 #[test]
@@ -141,6 +146,9 @@ fn test() {
         "var x = ({ null: 1, [/(?<zero>0)/]: 2 })", // { "ecmaVersion": 2018 },
         "var {a, a} = obj",          // { "ecmaVersion": 6 },
         "var x = { 012: 1, 12: 2 };",
+        // Number::toString gives 1e21 the name "1e+21", so the digit string is
+        // a different key.
+        "var x = { 1e21: 1, \"1000000000000000000000\": 2 };",
         "var x = { 1_0: 1, 1: 2 };", // { "ecmaVersion": 2021 },
         "var x = { __proto__: null, ['__proto__']: null };", // { "ecmaVersion": 6 },
         "var x = { ['__proto__']: null, __proto__: null };", // { "ecmaVersion": 6 },
@@ -154,9 +162,17 @@ fn test() {
         "var x = { get __proto__() {}, __proto__: null };", // { "ecmaVersion": 6 },
         "var x = { __proto__: null, set __proto__(value) {} };", // { "ecmaVersion": 6 },
         "var x = { set __proto__(value) {}, __proto__: null };", // { "ecmaVersion": 6 }
+        // Lone surrogates are distinct property names.
+        r#"var x = { "\uD800": 1, "\uDC00": 2 };"#,
+        r#"var x = { "\uD800": 1, "\uD800\uDC00": 2 };"#,
+        r#"var x = { "\uD800": 1, "\\uD800": 2 };"#,
     ];
 
     let fail = vec![
+        // Number::toString uses exponent form beyond 1e21, matching the
+        // runtime property key.
+        r#"var x = { 1e21: 1, "1e+21": 2 };"#,
+        r#"var x = { 1e-7: 1, "1e-7": 2 };"#,
         "var x = { a: b, ['a']: b };", // { "ecmaVersion": 6 },
         "var x = { y: 1, y: 2 };",
         "var x = { '': 1, '': 2 };",
@@ -182,6 +198,10 @@ fn test() {
         "var x = { ['__proto__']: null, get __proto__() {} };", // { "ecmaVersion": 6 },
         "var x = { ['__proto__']: null, set __proto__(value) {} };", // { "ecmaVersion": 6 },
         "var x = { __proto__: null, a: 5, a: 6 };", // { "ecmaVersion": 6 }
+        // Lone surrogates keep their identity across key syntaxes.
+        r#"var x = { "\uD800": 1, "\uD800": 2 };"#,
+        r#"var x = { "\uDC00": 1, ["\uDC00"]: 2 };"#,
+        r#"var x = { "a\uD800b": 1, [`a\uD800b`]: 2 };"#,
     ];
 
     Tester::new(NoDupeKeys::NAME, NoDupeKeys::PLUGIN, pass, fail).test_and_snapshot();
