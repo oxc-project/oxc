@@ -14,20 +14,13 @@
 //! [`walk`]: super::walk
 //! [`operand`]: super::operand
 
-use crate::{opmap::OP_KIND_BASE, tables::Tables};
+use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
 
-use super::super::super::{
-    BIGINT, IDENT, IDENT_ESC, NUM, PRIV_IDENT, REGEX, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB,
-    TMPL_TAIL, bitmap::bm_next1,
-};
+use super::super::super::bitmap::bm_next1;
 
-use super::{
-    KW_ABSTRACT, KW_AS, KW_ASSERTS, KW_EXTENDS, KW_IMPORT, KW_IN, KW_INFER, KW_IS, KW_KEYOF,
-    KW_NEW, KW_READONLY, KW_TYPEOF, KW_UNIQUE,
-    walk::{
-        AngleMatch, angle_match_back, bm_prev_sig, chain_head, ident_is, kind_at, lt_in_range,
-        match_delim_back, prop_name, word_is_any,
-    },
+use super::walk::{
+    AngleMatch, angle_match_back, bm_prev_sig, chain_head, ident_is, kind_at, lt_in_range,
+    match_delim_back, prop_name, word_is_any,
 };
 
 pub(super) const CLASS_WALK_STOP_WORDS: &[&[u8]] = &[
@@ -139,13 +132,19 @@ pub unsafe fn return_type_signature_paren(
                 b'.' | b'|' | b'&' | b'?' | b',' => {}
                 _ => return None,
             }
-        } else if k == IDENT {
+        } else if k == tk!(Ident) {
             if !prop_name(src, w) && word_is_any(src, w, RETURN_TYPE_STOP_WORDS) {
                 return None;
             }
         } else if !matches!(
             k,
-            NUM | BIGINT | STR | TMPL_NOSUB | TMPL_HEAD | TMPL_MIDDLE | TMPL_TAIL
+            tk!(Number)
+                | tk!(BigInt)
+                | tk!(String)
+                | tk!(TemplateNoSub)
+                | tk!(TemplateHead)
+                | tk!(TemplateMiddle)
+                | tk!(TemplateTail)
         ) {
             return None;
         }
@@ -173,7 +172,7 @@ pub(super) unsafe fn type_literal_brace_opener(
             _ => false,
         };
     }
-    k == IDENT && !prop_name(src, w) && word_is_any(src, w, TYPE_LITERAL_HEAD_WORDS)
+    k == tk!(Ident) && !prop_name(src, w) && word_is_any(src, w, TYPE_LITERAL_HEAD_WORDS)
 }
 
 pub unsafe fn conditional_type_question(
@@ -269,7 +268,10 @@ pub unsafe fn extends_precedes_question(
                 }
                 _ => {}
             }
-        } else if kind_at(kind, w) == IDENT && !prop_name(src, w) && ident_is(src, w, b"extends") {
+        } else if kind_at(kind, w) == tk!(Ident)
+            && !prop_name(src, w)
+            && ident_is(src, w, b"extends")
+        {
             return true;
         }
         q = bm_prev_sig(st, kind, w);
@@ -291,7 +293,7 @@ pub unsafe fn of_is_forof_keyword(
     }
     let tp = q as usize;
     let tk = *kind.add(tp);
-    if tk == IDENT || tk == IDENT_ESC {
+    if tk == tk!(Ident) || tk == tk!(IdentEscaped) {
         let e = bm_next1(st, tp + 1, n);
         if !prop_name(src, tp) && t.is_regex_keyword(src.add(tp), e - tp) {
             return false;
@@ -319,13 +321,13 @@ pub unsafe fn of_is_forof_keyword(
                 b'(' => {
                     if par == 0 && brk == 0 && brc == 0 {
                         let h = bm_prev_sig(st, kind, p);
-                        if h < 0 || *kind.add(h as usize) != IDENT {
+                        if h < 0 || *kind.add(h as usize) != tk!(Ident) {
                             return false;
                         }
                         let mut hp = h as usize;
                         if ident_is(src, hp, b"await") {
                             let h2 = bm_prev_sig(st, kind, hp);
-                            if h2 < 0 || *kind.add(h2 as usize) != IDENT {
+                            if h2 < 0 || *kind.add(h2 as usize) != tk!(Ident) {
                                 return false;
                             }
                             hp = h2 as usize;
@@ -348,7 +350,7 @@ pub unsafe fn of_is_forof_keyword(
                 }
                 _ => {}
             }
-        } else if kk == IDENT
+        } else if kk == tk!(Ident)
             && par == 0
             && brk == 0
             && brc == 0
@@ -359,7 +361,7 @@ pub unsafe fn of_is_forof_keyword(
             if b >= 0 {
                 let bp = b as usize;
                 let bk = *kind.add(bp);
-                let tail = if bk == IDENT || bk == IDENT_ESC {
+                let tail = if bk == tk!(Ident) || bk == tk!(IdentEscaped) {
                     let be = bm_next1(st, bp + 1, n);
                     prop_name(src, bp) || !t.is_regex_keyword(src.add(bp), be - bp)
                 } else {
@@ -388,8 +390,16 @@ pub unsafe fn incdec_is_postfix(
     }
     let v = q as usize;
     let vk = kind_at(kind, v);
-    let value = matches!(vk, IDENT | IDENT_ESC | NUM | BIGINT | STR | TMPL_NOSUB | TMPL_TAIL)
-        || (vk >= OP_KIND_BASE && matches!(*src.add(v), b')' | b']'));
+    let value = matches!(
+        vk,
+        tk!(Ident)
+            | tk!(IdentEscaped)
+            | tk!(Number)
+            | tk!(BigInt)
+            | tk!(String)
+            | tk!(TemplateNoSub)
+            | tk!(TemplateTail)
+    ) || (vk >= OP_KIND_BASE && matches!(*src.add(v), b')' | b']'));
     value && !lt_in_range(src, bm_next1(st, v + 1, n), first)
 }
 
@@ -406,8 +416,16 @@ pub unsafe fn bang_is_postfix(
     }
     let v = q as usize;
     let vk = kind_at(kind, v);
-    let value = matches!(vk, IDENT | PRIV_IDENT | NUM | BIGINT | STR | TMPL_NOSUB | TMPL_TAIL)
-        || (vk >= OP_KIND_BASE && matches!(*src.add(v), b')' | b']' | b'}'));
+    let value = matches!(
+        vk,
+        tk!(Ident)
+            | tk!(PrivateIdent)
+            | tk!(Number)
+            | tk!(BigInt)
+            | tk!(String)
+            | tk!(TemplateNoSub)
+            | tk!(TemplateTail)
+    ) || (vk >= OP_KIND_BASE && matches!(*src.add(v), b')' | b']' | b'}'));
     value && !lt_in_range(src, bm_next1(st, v + 1, n), bang)
 }
 
@@ -421,7 +439,7 @@ pub unsafe fn class_like_walk(
     while q >= 0 {
         let w = q as usize;
         let k = kind_at(kind, w);
-        if k == IDENT || k == IDENT_ESC {
+        if k == tk!(Ident) || k == tk!(IdentEscaped) {
             if !prop_name(src, w) {
                 if word_is_any(src, w, &[b"class", b"interface", b"enum"]) {
                     return true;
@@ -455,7 +473,7 @@ pub unsafe fn class_like_walk(
                 }
                 _ => return false,
             }
-        } else if !matches!(k, STR | NUM | TMPL_NOSUB) {
+        } else if !matches!(k, tk!(String) | tk!(Number) | tk!(TemplateNoSub)) {
             return false;
         }
         q = bm_prev_sig(st, kind, w);
@@ -481,12 +499,12 @@ pub unsafe fn type_alias_head(src: *const u8, st: *const u64, kind: *const u8, e
             _ => return false,
         }
     }
-    if kind_at(kind, w) != IDENT || prop_name(src, w) {
+    if kind_at(kind, w) != tk!(Ident) || prop_name(src, w) {
         return false;
     }
     let p = bm_prev_sig(st, kind, w);
     p >= 0
-        && kind_at(kind, p as usize) == IDENT
+        && kind_at(kind, p as usize) == tk!(Ident)
         && !prop_name(src, p as usize)
         && ident_is(src, p as usize, b"type")
 }
@@ -495,19 +513,19 @@ pub unsafe fn type_alias_head(src: *const u8, st: *const u64, kind: *const u8, e
 pub fn type_prefix_kind(k: u8) -> bool {
     matches!(
         k,
-        KW_KEYOF
-            | KW_TYPEOF
-            | KW_READONLY
-            | KW_UNIQUE
-            | KW_INFER
-            | KW_ABSTRACT
-            | KW_NEW
-            | KW_ASSERTS
-            | KW_IMPORT
-            | KW_EXTENDS
-            | KW_IS
-            | KW_IN
-            | KW_AS
+        tk!(KwKeyof)
+            | tk!(KwTypeof)
+            | tk!(KwReadonly)
+            | tk!(KwUnique)
+            | tk!(KwInfer)
+            | tk!(KwAbstract)
+            | tk!(KwNew)
+            | tk!(KwAsserts)
+            | tk!(KwImport)
+            | tk!(KwExtends)
+            | tk!(KwIs)
+            | tk!(KwIn)
+            | tk!(KwAs)
     )
 }
 
@@ -566,7 +584,7 @@ pub unsafe fn declarator_without_init(
 
 #[inline]
 pub unsafe fn is_binder_keyword(src: *const u8, kind: *const u8, w: usize) -> bool {
-    kind_at(kind, w) == IDENT
+    kind_at(kind, w) == tk!(Ident)
         && !prop_name(src, w)
         && (ident_is(src, w, b"let")
             || ident_is(src, w, b"const")
@@ -649,7 +667,7 @@ pub unsafe fn as_type_operand(src: *const u8, st: *const u64, kind: *const u8, p
         return false;
     }
     let w = q as usize;
-    *kind.add(w) == IDENT
+    *kind.add(w) == tk!(Ident)
         && !prop_name(src, w)
         && (ident_is(src, w, b"as") || ident_is(src, w, b"satisfies"))
 }
@@ -663,7 +681,7 @@ pub unsafe fn as_gated_type_ref(
     lt: usize,
 ) -> bool {
     let b = bm_prev_sig(st, kind, lt);
-    if b < 0 || *kind.add(b as usize) != IDENT {
+    if b < 0 || *kind.add(b as usize) != tk!(Ident) {
         return false;
     }
     let Some(head) = chain_head(src, st, kind, b as usize) else {
@@ -674,7 +692,7 @@ pub unsafe fn as_gated_type_ref(
         return false;
     }
     let ap = a as usize;
-    if *kind.add(ap) != IDENT
+    if *kind.add(ap) != tk!(Ident)
         || prop_name(src, ap)
         || !(ident_is(src, ap, b"as") || ident_is(src, ap, b"satisfies"))
     {
@@ -726,9 +744,18 @@ pub unsafe fn tail_before(
     if sk >= OP_KIND_BASE {
         return matches!(*src.add(sp), b')' | b']');
     }
-    if sk == IDENT {
+    if sk == tk!(Ident) {
         let e = bm_next1(st, sp + 1, n);
         return prop_name(src, sp) || !t.is_regex_keyword(src.add(sp), e - sp);
     }
-    matches!(sk, NUM | BIGINT | STR | TMPL_NOSUB | TMPL_TAIL | REGEX | PRIV_IDENT)
+    matches!(
+        sk,
+        tk!(Number)
+            | tk!(BigInt)
+            | tk!(String)
+            | tk!(TemplateNoSub)
+            | tk!(TemplateTail)
+            | tk!(RegExp)
+            | tk!(PrivateIdent)
+    )
 }

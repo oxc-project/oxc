@@ -24,19 +24,15 @@
 //! [`constructs`]: super::constructs
 //! [`operand`]: super::operand
 
-use core::cell::{Cell, RefCell};
+use std::cell::{Cell, RefCell};
 
 use crate::{
     opmap::OP_KIND_BASE,
     tables::is_word,
-    token::{KW_BASE, KW_MAX},
+    token::{KW_KIND_BASE, KW_KIND_MAX, tk},
 };
 
-use super::super::super::{
-    BCOM, BIGINT, HASHBANG, IDENT, IDENT_ESC, LCOM, NUM, PRIV_IDENT_ESC, STR, TMPL_HEAD,
-    TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL, WS,
-    bitmap::{bm_next1, bm_prev1},
-};
+use super::super::super::bitmap::{bm_next1, bm_prev1};
 
 const ANGLE_MATCH_CAP: u32 = 4096;
 
@@ -92,15 +88,15 @@ pub unsafe fn angle_match_back(
         let w = q as usize;
         let kk = kind_at(kind, w);
         if tmpl > 0 {
-            if kk == TMPL_TAIL {
+            if kk == tk!(TemplateTail) {
                 tmpl += 1;
-            } else if kk == TMPL_HEAD {
+            } else if kk == tk!(TemplateHead) {
                 tmpl -= 1;
             }
             q = bm_prev_sig(st, kind, w);
             continue;
         }
-        if kk == TMPL_TAIL {
+        if kk == tk!(TemplateTail) {
             tmpl = 1;
             q = bm_prev_sig(st, kind, w);
             continue;
@@ -140,8 +136,16 @@ pub unsafe fn angle_match_back(
                 b'.' | b',' | b'|' | b'&' | b'?' | b':' | b'=' | b'+' | b'-' => {}
                 _ => return AngleMatch::NotType,
             }
-        } else if !matches!(kk, IDENT | IDENT_ESC | NUM | BIGINT | STR | TMPL_NOSUB) {
-            if kk == TMPL_HEAD || kk == TMPL_MIDDLE {
+        } else if !matches!(
+            kk,
+            tk!(Ident)
+                | tk!(IdentEscaped)
+                | tk!(Number)
+                | tk!(BigInt)
+                | tk!(String)
+                | tk!(TemplateNoSub)
+        ) {
+            if kk == tk!(TemplateHead) || kk == tk!(TemplateMiddle) {
                 return AngleMatch::Unknown;
             }
             return AngleMatch::NotType;
@@ -168,7 +172,7 @@ pub unsafe fn chain_head(
             return None;
         }
         let op = o as usize;
-        if kind_at(kind, op) == IDENT {
+        if kind_at(kind, op) == tk!(Ident) {
             head = op;
             continue;
         }
@@ -176,7 +180,7 @@ pub unsafe fn chain_head(
             let lp = match_delim_back(src, st, kind, op, b'(', b')')?;
             let im = bm_prev_sig(st, kind, lp);
             if im >= 0
-                && kind_at(kind, im as usize) == IDENT
+                && kind_at(kind, im as usize) == tk!(Ident)
                 && ident_is(src, im as usize, b"import")
             {
                 return Some(im as usize);
@@ -340,7 +344,11 @@ pub unsafe fn bm_prev_sig(st: *const u64, kind: *const u8, pos: usize) -> i64 {
     let mut q = bm_prev1(st, pos);
     while q >= 0 {
         let k = *kind.add(q as usize);
-        if k == WS || k == LCOM || k == BCOM || k == HASHBANG {
+        if k == tk!(Whitespace)
+            || k == tk!(LineComment)
+            || k == tk!(BlockComment)
+            || k == tk!(Hashbang)
+        {
             q = bm_prev1(st, q as usize);
             continue;
         }
@@ -352,11 +360,11 @@ pub unsafe fn bm_prev_sig(st: *const u64, kind: *const u8, pos: usize) -> i64 {
 #[inline(always)]
 pub unsafe fn kind_at(kind: *const u8, w: usize) -> u8 {
     let k = *kind.add(w);
-    if k >= KW_BASE && k <= KW_MAX {
-        return IDENT;
+    if k >= KW_KIND_BASE && k <= KW_KIND_MAX {
+        return tk!(Ident);
     }
-    if k == IDENT_ESC || k == PRIV_IDENT_ESC {
-        return k & !(IDENT_ESC ^ IDENT);
+    if k == tk!(IdentEscaped) || k == tk!(PrivateIdentEscaped) {
+        return k & !(tk!(IdentEscaped) ^ tk!(Ident));
     }
     k
 }

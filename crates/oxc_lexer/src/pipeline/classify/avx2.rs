@@ -1,16 +1,13 @@
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
 use crate::{
-    opmap::PUNCT1_KIND_UNKNOWN,
     tables::{PH_A, PH_B, PH_T0, PH_T1, Tables},
+    token::tk,
 };
 
-use super::super::{
-    IDENT, NUM, WS,
-    chunk::{load256, mm, veq},
-};
+use super::super::chunk::{load256, mm, veq};
 
-pub unsafe fn classify(
+pub(super) unsafe fn classify_impl(
     t: &Tables,
     ts: bool,
     src: *const u8,
@@ -41,10 +38,10 @@ pub unsafe fn classify(
     let v_phb = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_B.as_ptr() as *const __m128i));
     let v_pht0 = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_T0.as_ptr() as *const __m128i));
     let v_pht1 = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_T1.as_ptr() as *const __m128i));
-    let v_96 = _mm256_set1_epi8(PUNCT1_KIND_UNKNOWN as i8);
-    let v_ws = _mm256_set1_epi8(WS as i8);
-    let v_ident = _mm256_set1_epi8(IDENT as i8);
-    let v_num = _mm256_set1_epi8(NUM as i8);
+    let v_96 = _mm256_set1_epi8(tk!(Invalid) as i8);
+    let v_ws = _mm256_set1_epi8(tk!(Whitespace) as i8);
+    let v_ident = _mm256_set1_epi8(tk!(Ident) as i8);
+    let v_num = _mm256_set1_epi8(tk!(Number) as i8);
     let v_mlo = _mm256_broadcastsi128_si256(_mm_loadu_si128(mrg_lo.as_ptr() as *const __m128i));
     let v_mhi = _mm256_broadcastsi128_si256(_mm_loadu_si128(t.mrg_hi.as_ptr() as *const __m128i));
     let v_wblo = _mm256_broadcastsi128_si256(_mm_loadu_si128(t.wb_lo.as_ptr() as *const __m128i));
