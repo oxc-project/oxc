@@ -7,7 +7,7 @@ use crate::{
 
 use super::super::chunk::{load256, mm, veq};
 
-pub unsafe fn classify(
+pub(super) unsafe fn classify_impl(
     t: &Tables,
     ts: bool,
     src: *const u8,

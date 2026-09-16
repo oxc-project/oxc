@@ -63,7 +63,7 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     t
 }
 
-pub unsafe fn classify(
+pub(super) unsafe fn classify_impl(
     _t: &Tables,
     ts: bool,
     src: *const u8,
