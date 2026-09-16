@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, TSEnumMember},
@@ -5,6 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -26,7 +29,9 @@ fn no_duplicate_enum_values_diagnostic(
     OxcDiagnostic::warn(format!("Duplicate enum value `{value}`"))
         .with_help(format!(
             "Give {} a unique value",
-            second_name.as_str().map_or_else(|| format!("{second_name:?}"), str::to_owned)
+            second_name
+                .as_str()
+                .map_or_else(|| Cow::Owned(format!("{second_name:?}")), Cow::Borrowed)
         ))
         .with_labels([
             first_init_span.label(format!("{value} is first used as an initializer here")),
@@ -100,7 +105,7 @@ impl Rule for NoDuplicateEnumValues {
             return;
         };
         let mut seen_number_values: Vec<(f64, Span)> = vec![];
-        let mut seen_string_values: FxHashMap<oxc_str::JSStr, Span> = FxHashMap::default();
+        let mut seen_string_values: FxHashMap<JSStr, Span> = FxHashMap::default();
         for enum_member in &enum_body.members {
             let Some(initializer) = &enum_member.initializer else {
                 continue;
@@ -121,8 +126,8 @@ impl Rule for NoDuplicateEnumValues {
                 }
                 Expression::StringLiteral(s) => {
                     if let Some(old_span) = seen_string_values.insert(s.value, s.span) {
-                        // Formatting here for prettier messages. This makes it
-                        // look like "Duplicate enum value 'A'"
+                        // Preserve the existing single-quoted UTF-8 diagnostic;
+                        // Debug supplies a quoted, escaped name for lone surrogates.
                         let v = s
                             .value
                             .as_str()

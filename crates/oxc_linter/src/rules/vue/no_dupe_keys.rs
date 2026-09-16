@@ -15,6 +15,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::number::ToJsString;
 
 use crate::{
@@ -320,7 +321,7 @@ fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
     match expr {
         Expression::StringLiteral(s) => s.value.as_str().map(Cow::Borrowed),
         Expression::TemplateLiteral(t) => {
-            t.single_quasi().and_then(oxc_str::JSStr::as_str).map(Cow::Borrowed)
+            t.single_quasi().and_then(JSStr::as_str).map(Cow::Borrowed)
         }
         Expression::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
         Expression::BooleanLiteral(b) => {

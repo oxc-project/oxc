@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -154,7 +155,7 @@ fn string_literal_value(expr: &Expression<'_>) -> Option<String> {
     match expr {
         Expression::StringLiteral(lit) => lit.value.as_str().map(str::to_owned),
         Expression::TemplateLiteral(tpl) => {
-            tpl.single_quasi().and_then(oxc_str::JSStr::as_str).map(str::to_owned)
+            tpl.single_quasi().and_then(JSStr::as_str).map(str::to_owned)
         }
         _ => None,
     }

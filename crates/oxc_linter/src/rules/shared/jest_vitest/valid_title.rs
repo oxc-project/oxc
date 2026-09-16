@@ -10,7 +10,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 
 use crate::{
     context::LintContext,
@@ -247,16 +247,12 @@ impl ValidTitleConfig {
                     return;
                 }
 
-                if let Some(quasi) =
-                    tagged_template.quasi.single_quasi().and_then(oxc_str::JSStr::as_str)
-                {
+                if let Some(quasi) = tagged_template.quasi.single_quasi().and_then(JSStr::as_str) {
                     validate_title(quasi, tagged_template.span, config, &jest_fn_call.name, ctx);
                 }
             }
             Argument::TemplateLiteral(template_literal) => {
-                if let Some(quasi) =
-                    template_literal.single_quasi().and_then(oxc_str::JSStr::as_str)
-                {
+                if let Some(quasi) = template_literal.single_quasi().and_then(JSStr::as_str) {
                     validate_title(quasi, template_literal.span, config, &jest_fn_call.name, ctx);
                 }
             }

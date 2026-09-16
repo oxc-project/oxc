@@ -561,6 +561,8 @@ impl<'a> VisitJs<'a> for State<'a> {
                 && let Some(Argument::StringLiteral(lit)) = expr.arguments.first()
             {
                 pushed = true;
+                // This is a generated comment, so represent non-UTF-8 text with
+                // escaped Debug output rather than treating it as a rule name.
                 self.group_comment_stack.push(
                     lit.value.as_str().map_or_else(|| format!("{:?}", lit.value), str::to_owned),
                 );

@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule};
@@ -195,7 +196,7 @@ fn get_property_key_info(
         }
         PropertyKey::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => tpl
             .single_quasi()
-            .and_then(oxc_str::JSStr::as_str)
+            .and_then(JSStr::as_str)
             .map(|s| (s.to_owned(), tpl.span, false, KeyType::TemplateLiteral)),
         _ => None,
     }

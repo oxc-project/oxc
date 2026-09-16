@@ -7,7 +7,7 @@ use std::ptr::NonNull;
 
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::GetSpan;
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr, Str};
 
 use super::{AstKind, AstType, ast::*};
 
@@ -371,6 +371,15 @@ impl AstKind<'_> {
     pub fn debug_name(&self) -> std::borrow::Cow<'_, str> {
         use std::borrow::Cow;
 
+        fn debug_string(kind: &str, value: JSStr<'_>) -> String {
+            // Preserve the existing unquoted UTF-8 names. Debug quotes distinguish
+            // escaped surrogate text from a literal backslash in the source value.
+            match value.as_str() {
+                Some(value) => format!("{kind}({value})"),
+                None => format!("{kind}({value:?})"),
+            }
+        }
+
         const COMPUTED: &str = "<computed>";
         const ANONYMOUS: &str = "<anonymous>";
         const DESTRUCTURE: &str = "<destructure>";
@@ -420,23 +429,14 @@ impl AstKind<'_> {
             Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
 
             Self::NumericLiteral(n) => format!("NumericLiteral({})", n.value).into(),
-            Self::StringLiteral(s) => match s.value.as_str() {
-                Some(value) => format!("StringLiteral({value})").into(),
-                None => format!("StringLiteral({:?})", s.value).into(),
-            },
+            Self::StringLiteral(s) => debug_string("StringLiteral", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
             Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.value).into(),
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
-                t.single_quasi().map_or_else(
-                    || "None".into(),
-                    |q| match q.as_str() {
-                        Some(q) => format!("Some({q})"),
-                        None => format!("Some({q:?})"),
-                    }
-                )
+                t.single_quasi().map_or_else(|| "None".into(), |q| debug_string("Some", q))
             )
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),
@@ -522,10 +522,7 @@ impl AstKind<'_> {
 
             Self::ImportDeclaration(_) => "ImportDeclaration".into(),
             Self::ImportSpecifier(i) => format!("ImportSpecifier({})", i.local.name).into(),
-            Self::ExportSpecifier(e) => match e.local.name().as_str() {
-                Some(name) => format!("ExportSpecifier({name})").into(),
-                None => format!("ExportSpecifier({:?})", e.local.name()).into(),
-            },
+            Self::ExportSpecifier(e) => debug_string("ExportSpecifier", e.local.name()).into(),
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
             Self::ImportAttribute(_) => "ImportAttribute".into(),
@@ -602,10 +599,9 @@ impl AstKind<'_> {
             Self::TSQualifiedName(n) => format!("TSQualifiedName({n})").into(),
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
-            Self::TSExternalModuleDeclaration(m) => match m.id.value.as_str() {
-                Some(value) => format!("TSExternalModuleDeclaration({value})").into(),
-                None => format!("TSExternalModuleDeclaration({:?})", m.id.value).into(),
-            },
+            Self::TSExternalModuleDeclaration(m) => {
+                debug_string("TSExternalModuleDeclaration", m.id.value).into()
+            }
             Self::TSNamespaceDeclaration(m) => format!("TSNamespaceDeclaration({})", m.id).into(),
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration".into(),
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),
@@ -683,7 +679,7 @@ impl<'a> MemberExpressionKind<'a> {
                         lit.quasis[0]
                             .value
                             .cooked
-                            .and_then(oxc_str::JSStr::as_str)
+                            .and_then(JSStr::as_str)
                             .map(|cooked| (lit.span, cooked))
                     } else {
                         None
