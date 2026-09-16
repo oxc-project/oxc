@@ -16,8 +16,8 @@ use oxc_ast::ast::*;
 use oxc_syntax::number::ToJsString;
 
 use crate::{
-    StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
-    StringSubstring, ToInt32, ToJsString as ToJsStringTrait, ToUint32,
+    StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf, ToInt32,
+    ToJsString as ToJsStringTrait, ToUint32,
     constant_evaluation::url_encoding::{
         decode_uri_chars, encode_uri_chars, is_uri_always_unescaped,
     },
@@ -187,6 +187,13 @@ fn try_fold_string_substring_or_slice<'a>(
         }
         None => None,
     };
+    // A NaN end cannot be folded: the number alone no longer says whether the
+    // argument was `undefined` (end of string) or NaN (index zero), and for
+    // `slice` a zero end must not swap with the start. A NaN start folds the
+    // same as zero through the clamp below either way.
+    if end_idx.is_some_and(f64::is_nan) {
+        return None;
+    }
     if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
         || end_idx.is_some_and(|end| end > s.value.len() as f64 || end < 0.0)
     {
@@ -197,8 +204,38 @@ fn try_fold_string_substring_or_slice<'a>(
     {
         return None;
     }
-
-    Some(ConstantValue::String(Cow::Owned(s.value.as_str()?.substring(start_idx, end_idx))))
+    let value = s.value.as_str()?;
+    // The guards above leave ordered, in-range, non-NaN positions, so the
+    // result is a plain slice of the value. A boundary inside a surrogate
+    // pair has no `str` result and declines; otherwise the slice borrows
+    // the arena without allocating.
+    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let to_unit = |position: Option<f64>, default: usize| {
+        position.map_or(default, |p| if p.is_nan() { 0 } else { p.trunc().max(0.0) as usize })
+    };
+    let start = to_unit(start_idx, 0);
+    let end = to_unit(end_idx, usize::MAX).max(start);
+    // Resolve both UTF-16 positions to byte offsets in one pass; a position
+    // past the end clamps to the end of the string.
+    let mut units = 0;
+    let mut from = None;
+    let mut to = None;
+    for (offset, c) in value.char_indices() {
+        if units == start && from.is_none() {
+            from = Some(offset);
+        }
+        if units == end {
+            to = Some(offset);
+            break;
+        }
+        units += c.len_utf16();
+        if (from.is_none() && units > start) || units > end {
+            return None;
+        }
+    }
+    let from = from.unwrap_or(value.len());
+    let to = to.unwrap_or(value.len());
+    Some(ConstantValue::String(Cow::Borrowed(&value[from..to])))
 }
 
 fn try_fold_string_char_at<'a>(
