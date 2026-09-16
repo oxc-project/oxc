@@ -430,8 +430,7 @@ fn validate_title(
         return;
     }
 
-    // Regular expressions match UTF-8 only.
-    // A title with a lone surrogate skips this check.
+    // A title with a lone surrogate matches no disallowed word.
     if let Some(disallowed_words_reg) = &config.disallowed_words_reg
         && let Some(utf8_title) = title.as_str()
         && let Some(matched) = disallowed_words_reg.find(utf8_title)
@@ -484,14 +483,11 @@ fn validate_title(
         return;
     };
 
-    // Regular expressions match UTF-8 only.
-    // A title with a lone surrogate skips the pattern checks.
-    let Some(title) = title.as_str() else {
-        return;
-    };
+    // A title with a lone surrogate matches no configured pattern.
+    let title = title.as_str();
 
     if let Some((regex, message)) = config.must_match_patterns.get(&jest_fn_name)
-        && !regex.is_match(title)
+        && !title.is_some_and(|title| regex.is_match(title))
     {
         let raw_pattern = regex.as_str();
         let message = match message.as_ref() {
@@ -502,7 +498,7 @@ fn validate_title(
     }
 
     if let Some((regex, message)) = config.must_not_match_patterns.get(&jest_fn_name)
-        && regex.is_match(title)
+        && title.is_some_and(|title| regex.is_match(title))
     {
         let raw_pattern = regex.as_str();
         let message = match message.as_ref() {

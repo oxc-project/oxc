@@ -165,25 +165,19 @@ impl Rule for ImgRedundantAlt {
 
         match alt_attribute {
             JSXAttributeValue::StringLiteral(lit) => {
-                let alt_text = lit.value.as_str();
-
-                if alt_text.is_some_and(|text| self.is_redundant_alt_text(text)) {
+                if self.is_redundant_alt_text(lit.value.as_bytes()) {
                     ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                 }
             }
             JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
                 JSXExpression::StringLiteral(lit) => {
-                    let alt_text = lit.value.as_str();
-
-                    if alt_text.is_some_and(|text| self.is_redundant_alt_text(text)) {
+                    if self.is_redundant_alt_text(lit.value.as_bytes()) {
                         ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                     }
                 }
                 JSXExpression::TemplateLiteral(lit) => {
                     for quasi in &lit.quasis {
-                        let alt_text = quasi.value.raw.as_str();
-
-                        if self.is_redundant_alt_text(alt_text) {
+                        if self.is_redundant_alt_text(quasi.value.raw.as_bytes()) {
                             ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                         }
                     }
@@ -203,20 +197,29 @@ impl ImgRedundantAlt {
         starts_boundary && ends_boundary
     }
 
+    /// Whether `alt_text` contains a configured word, ignoring ASCII case.
+    ///
+    /// `alt_text` may be WTF-8. A word is UTF-8, so it never matches part of a lone surrogate,
+    /// and a lone surrogate is not a word character.
     #[inline]
-    fn is_redundant_alt_text(&self, alt_text: &str) -> bool {
-        let alt_text = alt_text.cow_to_ascii_lowercase();
-        let alt_text_bytes = alt_text.as_bytes();
+    fn is_redundant_alt_text(&self, alt_text: &[u8]) -> bool {
+        let lowercase;
+        let alt_text = if alt_text.iter().any(u8::is_ascii_uppercase) {
+            lowercase = alt_text.to_ascii_lowercase();
+            lowercase.as_slice()
+        } else {
+            alt_text
+        };
 
-        for word in &self.words {
-            for (index, _) in alt_text.match_indices(word.as_ref()) {
-                let end = index + word.len();
-                if Self::is_word_boundary(alt_text_bytes, index, end) {
-                    return true;
-                }
-            }
-        }
-        false
+        self.words.iter().any(|word| {
+            memchr::memmem::find_iter(alt_text, word.as_bytes()).any(|index| {
+                // Like `str::match_indices`, match only at a character boundary. Only an empty
+                // word can match elsewhere.
+                let at_char_boundary =
+                    alt_text.get(index).is_none_or(|byte| !matches!(byte, 0x80..=0xBF));
+                at_char_boundary && Self::is_word_boundary(alt_text, index, index + word.len())
+            })
+        })
     }
 }
 
@@ -243,6 +246,13 @@ fn test() {
 
     let pass = vec![
         (r"<img alt='foo' />;", None, None),
+        // A lone surrogate is not part of a word.
+        (r#"<img alt={"\uD800"} />;"#, None, None),
+        // An empty word matches only at character boundaries.
+        (r#"<img alt="aéb" />;"#, Some(serde_json::json!([{ "words": [""] }])), None),
+        (r#"<img alt={"a\uD800b"} />;"#, Some(serde_json::json!([{ "words": [""] }])), None),
+        (r#"<img alt={"\uD800 imagery"} />;"#, None, None),
+        (r#"<img alt={"photos\uDC00"} />;"#, None, None),
         (r"<img alt='picture of me taking a photo of an image' aria-hidden />", None, None),
         (r"<img aria-hidden alt='photo of image' />", None, None),
         (r"<img ALt='foo' />;", None, None),
@@ -280,6 +290,11 @@ fn test() {
 
     let fail = vec![
         (r"<img alt='Photo of friend.' />;", None, None),
+        (r#"<img alt={"\uD83D\uDE00 picture"} />;"#, None, None),
+        // A lone surrogate is not part of a word.
+        (r#"<img alt={"image \uD800"} />;"#, None, None),
+        (r#"<img alt={"\uDC00 Photo"} />;"#, None, None),
+        (r#"<img alt={"\uD800image"} />;"#, None, None),
         (r"<img alt='Picture of friend.' />;", None, None),
         (r"<img alt='Image of friend.' />;", None, None),
         (

@@ -48,10 +48,12 @@ fn test() {
         (r"test('\uD800', () => {});", None),
         (r"test('foo \uD800 bar', () => {});", None),
         (r"test('\uD800test foo', () => {});", None),
+        // A title with a lone surrogate matches no disallowed word or configured pattern.
         (
             r"test('\uD800 correct', () => {});",
             Some(serde_json::json!([{ "disallowedWords": ["correct"] }])),
         ),
+        (r"test('\uD800 foo', () => {});", Some(serde_json::json!([{ "mustNotMatch": "^\\W" }]))),
         (
             "it('correctly sets the value', () => {});",
             Some(serde_json::json!([
@@ -248,6 +250,8 @@ fn test() {
     ];
 
     let fail = vec![
+        // A title with a lone surrogate matches no configured pattern.
+        (r"test('\uD800 foo', () => {});", Some(serde_json::json!([{ "mustMatch": "^\\W" }]))),
         ("const String = { raw: () => 'foo' }; it(String.raw`foo`, () => {})", None),
         (
             "test('the correct way to properly handle all things', () => {});",
