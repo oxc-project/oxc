@@ -2224,9 +2224,22 @@ fn ox_codegen_base_instruction_value<'a>(
             };
             Ok(OxValue::Expression(wrapped))
         }
-        InstructionValue::JSXText { value, .. } => Ok(OxValue::JsxText(
-            oxc_ast::ast::JSXText::boxed(span, ox_str(&cx.ast, value), None, &cx.ast),
-        )),
+        InstructionValue::JSXText { value, .. } => Ok(match value.as_str() {
+            Some(value) => OxValue::JsxText(oxc_ast::ast::JSXText::boxed(
+                span,
+                ox_str(&cx.ast, value),
+                None,
+                &cx.ast,
+            )),
+            // JSX text cannot spell a lone surrogate, so emit it as a string
+            // expression, which the JSX child codegen wraps in a container.
+            None => OxValue::Expression(oxc_ast::ast::Expression::new_string_literal(
+                span,
+                value.clone_in(cx.ast.allocator()),
+                None,
+                &cx.ast,
+            )),
+        }),
         InstructionValue::JsxExpression {
             tag,
             props,

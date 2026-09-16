@@ -2,7 +2,8 @@
 
 use phf::{Map, phf_map};
 
-use oxc_allocator::{Allocator, ArenaStringBuilder};
+use oxc_allocator::Allocator;
+use oxc_str::{JSChar, JSStrBuilder};
 
 /// XML Entities
 ///
@@ -264,6 +265,26 @@ pub const XML_ENTITIES: Map<&'static str, char> = phf_map! {
     "diams" => '\u{2666}',
 };
 
+/// Decode one entity name, the text between `&` and `;`.
+///
+/// Numeric references may name a lone surrogate, as in `&#xD800;`, because JSX
+/// text and attribute values are JavaScript strings. Only lowercase `x` selects
+/// hexadecimal, matching Babel. Unknown names and out-of-range values return `None`.
+pub fn decode_entity(word: &str) -> Option<JSChar> {
+    if let Some(number) = word.strip_prefix('#') {
+        if let Some(hex) = number.strip_prefix('x') {
+            // `&#x0123;`
+            u32::from_str_radix(hex, 16).ok().and_then(JSChar::from_u32)
+        } else {
+            // `&#0123;`
+            number.parse::<u32>().ok().and_then(JSChar::from_u32)
+        }
+    } else {
+        // e.g. `&quot;`, `&amp;`
+        XML_ENTITIES.get(word).map(|&c| JSChar::from(c))
+    }
+}
+
 /// Replace entities like `&nbsp;`, `&#123;`, and `&#xDEADBEEF;` with the characters they
 /// encode.
 ///
@@ -271,12 +292,15 @@ pub const XML_ENTITIES: Map<&'static str, char> = phf_map! {
 /// string is appended to `acc`. Otherwise, `acc` remains `None`, allowing callers to reuse the
 /// original string without copying.
 ///
+/// The accumulator is a [`JSStrBuilder`] because a numeric reference can name a lone
+/// surrogate, and two references such as `&#xD83D;&#xDE00;` form one surrogate pair.
+///
 /// See <https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references>.
 /// Adapted from TypeScript's JSX transformer:
 /// <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617-L635>.
 pub fn decode_entities<'a>(
     s: &str,
-    acc: &mut Option<ArenaStringBuilder<'a>>,
+    acc: &mut Option<JSStrBuilder<'a>>,
     text_len: usize,
     allocator: &'a Allocator,
 ) {
@@ -295,35 +319,20 @@ pub fn decode_entities<'a>(
                 }
             }
             if let Some(end) = end {
-                let buffer = acc.get_or_insert_with(|| {
-                    ArenaStringBuilder::with_capacity_in(text_len, allocator)
-                });
+                let buffer =
+                    acc.get_or_insert_with(|| JSStrBuilder::with_capacity_in(text_len, allocator));
 
                 buffer.push_str(&s[prev..start]);
                 prev = end + 1;
                 let word = &s[start + 1..end];
-                if let Some(decimal) = word.strip_prefix('#') {
-                    if let Some(hex) = decimal.strip_prefix('x') {
-                        if let Some(c) = u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
-                        {
-                            // `&#x0123;`
-                            buffer.push(c);
-                            continue;
-                        }
-                    } else if let Some(c) = decimal.parse::<u32>().ok().and_then(char::from_u32) {
-                        // `&#0123;`
-                        buffer.push(c);
-                        continue;
-                    }
-                } else if let Some(c) = XML_ENTITIES.get(word) {
-                    // e.g. `&quote;`, `&amp;`
-                    buffer.push(*c);
-                    continue;
+                if let Some(c) = decode_entity(word) {
+                    buffer.push_js_char(c);
+                } else {
+                    // Fallback
+                    buffer.push('&');
+                    buffer.push_str(word);
+                    buffer.push(';');
                 }
-                // Fallback
-                buffer.push('&');
-                buffer.push_str(word);
-                buffer.push(';');
             } else {
                 // Reached end of text without finding a `;` after the `&`.
                 // No point searching for a further `&`, so exit the loop.
@@ -340,15 +349,94 @@ pub fn decode_entities<'a>(
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
+    use oxc_str::{JSChar, JSStr, JSStrBuilder};
 
-    use super::decode_entities;
+    use super::{decode_entities, decode_entity};
+
+    fn decode<'a>(input: &str, allocator: &'a Allocator) -> Option<JSStr<'a>> {
+        let mut acc = None;
+        decode_entities(input, &mut acc, input.len(), allocator);
+        acc.map(JSStrBuilder::into_js_str)
+    }
+
+    fn utf16(value: JSStr<'_>) -> Vec<u16> {
+        value.encode_utf16().collect()
+    }
 
     #[test]
     fn entity_after_stray_amp() {
         let allocator = Allocator::default();
-        let input = "& &amp;";
-        let mut acc = None;
-        decode_entities(input, &mut acc, input.len(), &allocator);
-        assert_eq!(acc.as_ref().unwrap().as_str(), "& &");
+        assert_eq!(decode("& &amp;", &allocator).unwrap().as_str(), Some("& &"));
+    }
+
+    #[test]
+    fn no_entities_leaves_accumulator_empty() {
+        let allocator = Allocator::default();
+        assert!(decode("plain & text", &allocator).is_none());
+        assert!(decode("", &allocator).is_none());
+    }
+
+    #[test]
+    fn named_and_numeric_entities() {
+        let allocator = Allocator::default();
+        assert_eq!(
+            decode("&quot;&#65;&#x41;&#x1F600;&#128512;&", &allocator).unwrap().as_str(),
+            Some("\"AA\u{1F600}\u{1F600}&")
+        );
+    }
+
+    #[test]
+    fn unknown_or_invalid_entities_are_kept() {
+        let allocator = Allocator::default();
+        let input = "&donkey; &#x110000; &#xFFFFFF; &#xG; &#X41; &#1114112; &#C; &euro xxx";
+        assert_eq!(decode(input, &allocator).unwrap().as_str(), Some(input));
+    }
+
+    #[test]
+    fn lone_surrogates() {
+        let allocator = Allocator::default();
+        assert_eq!(utf16(decode("&#xD800;", &allocator).unwrap()), [0xD800]);
+        assert_eq!(utf16(decode("&#xdc00;", &allocator).unwrap()), [0xDC00]);
+        assert_eq!(utf16(decode("&#56320;", &allocator).unwrap()), [0xDC00]);
+        assert_eq!(
+            utf16(decode("x&#xDC00;y", &allocator).unwrap()),
+            [b'x'.into(), 0xDC00, b'y'.into()]
+        );
+        // A trailing surrogate before a leading one does not pair.
+        assert_eq!(utf16(decode("&#xDC00;&#xD800;", &allocator).unwrap()), [0xDC00, 0xD800]);
+    }
+
+    #[test]
+    fn adjacent_references_form_a_pair() {
+        let allocator = Allocator::default();
+        assert_eq!(decode("&#xD83D;&#xDE00;", &allocator).unwrap().as_str(), Some("\u{1F600}"));
+        assert_eq!(decode("&#55357;&#56832;", &allocator).unwrap().as_str(), Some("\u{1F600}"));
+        assert_eq!(
+            decode("&#xFFFD;&#55357;&#56832;", &allocator).unwrap().as_str(),
+            Some("\u{FFFD}\u{1F600}")
+        );
+        // Text between the references keeps both lone.
+        assert_eq!(
+            utf16(decode("&#xD83D;x&#xDE00;", &allocator).unwrap()),
+            [0xD83D, b'x'.into(), 0xDE00]
+        );
+        assert_eq!(
+            utf16(decode("&#xD83D;&amp;&#xDE00;", &allocator).unwrap()),
+            [0xD83D, b'&'.into(), 0xDE00]
+        );
+        // The second reference of a pair is not combined with a following lone surrogate.
+        assert_eq!(
+            utf16(decode("&#xD800;&#xDC00;&#xD800;", &allocator).unwrap()),
+            [0xD800, 0xDC00, 0xD800]
+        );
+    }
+
+    #[test]
+    fn single_entity() {
+        assert_eq!(decode_entity("amp"), Some(JSChar::from('&')));
+        assert_eq!(decode_entity("#xD800"), JSChar::from_u32(0xD800));
+        assert_eq!(decode_entity("#XD800"), None);
+        assert_eq!(decode_entity("#x110000"), None);
+        assert_eq!(decode_entity("nope"), None);
     }
 }
