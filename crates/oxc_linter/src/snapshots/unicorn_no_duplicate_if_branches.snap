@@ -1,0 +1,207 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:1:14]
+ 1 │ ╭──▶ if (isAdmin) {
+ 2 │ │                    showDashboard();
+ 3 │ │                    loadStats();
+ 4 │ ├──▶             } else {
+   · ╰───── the previous branch is here
+ 5 │ │                    showDashboard();
+ 6 │ │                    loadStats();
+ 7 │ ├──▶             }
+   · ╰───── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:1:10]
+ 1 │ ╭──▶ if (foo) {
+ 2 │ │                    bar();
+ 3 │ ├──▶             } else if (baz) {
+   · ╰───── the previous branch is here
+ 4 │ │                    bar();
+ 5 │ ├──▶             }
+   · ╰───── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:1:10]
+ 1 │ ╭──▶ if (foo) {
+ 2 │ │                    bar();
+ 3 │ ├──▶             } else if (baz) {
+   · ╰───── the previous branch is here
+ 4 │ │                    bar();
+ 5 │ ├──▶             } else {
+   · ╰───── this branch has the same body
+ 6 │                      bar();
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:3:29]
+ 2 │                      bar();
+ 3 │ ╭──▶             } else if (baz) {
+ 4 │ │                    bar();
+ 5 │ ├──▶             } else {
+   · ╰───── the previous branch is here
+ 6 │ │                    bar();
+ 7 │ ├──▶             }
+   · ╰───── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:3:29]
+ 2 │                      bar();
+ 3 │ ╭──▶             } else if (baz) {
+ 4 │ │                    qux();
+ 5 │ ├──▶             } else {
+   · ╰───── the previous branch is here
+ 6 │ │                    qux();
+ 7 │ ├──▶             }
+   · ╰───── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:3:21]
+ 2 │                 if (foo)
+ 3 │                     return bar();
+   ·                     ──────┬──────
+   ·                           ╰── the previous branch is here
+ 4 │                 else
+ 5 │                     return bar();
+   ·                     ──────┬──────
+   ·                           ╰── this branch has the same body
+ 6 │             }
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:2:17]
+ 1 │     if (foo)
+ 2 │                     bar();
+   ·                     ───┬──
+   ·                        ╰── the previous branch is here
+ 3 │ ╭─▶             else {
+ 4 │ │                   bar();
+ 5 │ ├─▶             }
+   · ╰──── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:2:17]
+ 1 │ if (foo)
+ 2 │                 bar();
+   ·                 ───┬──
+   ·                    ╰── the previous branch is here
+ 3 │             else
+ 4 │                 bar()
+   ·                 ──┬──
+   ·                   ╰── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:1:10]
+ 1 │ ╭──▶ if (foo) {
+ 2 │ │                    // Comment does not make the branch different.
+ 3 │ │                    bar();
+ 4 │ ├──▶             } else {
+   · ╰───── the previous branch is here
+ 5 │ │                    bar();
+ 6 │ ├──▶             }
+   · ╰───── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:1:10]
+ 1 │ ╭──▶ if (foo) {
+ 2 │ │                    bar(
+ 3 │ │                        baz
+ 4 │ │                    );
+ 5 │ ├──▶             } else {
+   · ╰───── the previous branch is here
+ 6 │ │                    bar(baz);
+ 7 │ ├──▶             }
+   · ╰───── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:2:26]
+ 1 │      function unicorn() {
+ 2 │ ╭──▶                 if (foo) {
+ 3 │ │                        return bar();
+ 4 │ ├──▶                 } else {
+   · ╰───── the previous branch is here
+ 5 │ │                        return bar()
+ 6 │ ├──▶                 }
+   · ╰───── this branch has the same body
+ 7 │                  }
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+    ╭─[no_duplicate_if_branches.tsx:2:26]
+  1 │      function unicorn() {
+  2 │ ╭──▶                 if (foo) {
+  3 │ │                        do {
+  4 │ │                            bar();
+  5 │ │                        } while (baz);
+  6 │ ├──▶                 } else {
+    · ╰───── the previous branch is here
+  7 │ │                        do {
+  8 │ │                            bar();
+  9 │ │                        } while (baz)
+ 10 │ ├──▶                 }
+    · ╰───── this branch has the same body
+ 11 │                  }
+    ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:1:10]
+ 1 │ ╭──▶ if (foo) {
+ 2 │ │                    const bar = value as string;
+ 3 │ │                    baz(bar);
+ 4 │ ├──▶             } else {
+   · ╰───── the previous branch is here
+ 5 │ │                    const bar = value as string;
+ 6 │ │                    baz(bar);
+ 7 │ ├──▶             }
+   · ╰───── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:1:10]
+ 1 │ ╭──▶ if (foo) {
+ 2 │ │                    const bar = value satisfies string;
+ 3 │ │                    baz(bar!);
+ 4 │ ├──▶             } else {
+   · ╰───── the previous branch is here
+ 5 │ │                    const bar = value satisfies string;
+ 6 │ │                    baz(bar!);
+ 7 │ ├──▶             }
+   · ╰───── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.
+
+  ⚠ unicorn(no-duplicate-if-branches): This branch has the same body as the previous branch.
+   ╭─[no_duplicate_if_branches.tsx:1:10]
+ 1 │ ╭──▶ if (foo) {
+ 2 │ │                    const value = 'unicorn';
+ 3 │ ├──▶             } else {
+   · ╰───── the previous branch is here
+ 4 │ │                    const value = "unicorn";
+ 5 │ ├──▶             }
+   · ╰───── this branch has the same body
+   ╰────
+  help: Combine the conditions or remove the duplicate branch.

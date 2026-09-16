@@ -1567,6 +1567,7 @@ export interface DummyRuleMap {
   "unicorn/no-confusing-array-with"?: RuleNoConfig;
   "unicorn/no-console-spaces"?: RuleNoConfig;
   "unicorn/no-document-cookie"?: RuleNoConfig;
+  "unicorn/no-duplicate-if-branches"?: RuleNoConfig;
   "unicorn/no-empty-file"?: RuleNoConfig;
   "unicorn/no-hex-escape"?: RuleNoConfig;
   "unicorn/no-immediate-mutation"?: RuleNoConfig;
