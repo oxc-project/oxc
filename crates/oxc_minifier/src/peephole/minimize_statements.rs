@@ -591,10 +591,10 @@ impl<'a> PeepholeOptimizations {
             }
 
             let can_merge_with_alternate = match &if_stmt.consequent {
-                Statement::BlockStatement(block) => block.body.last().is_some_and(|last| {
-                    last.is_jump_statement() && Self::can_remove_termination_statement(last, ctx)
+                Statement::BlockStatement(block) => block.body.last().is_some_and(|last_stmt| {
+                    Self::can_remove_termination_statement(last_stmt, ctx)
                 }),
-                e => e.is_jump_statement() && Self::can_remove_termination_statement(e, ctx),
+                stmt => Self::can_remove_termination_statement(stmt, ctx),
             };
             if can_merge_with_alternate {
                 // Don't do this transformation if the branch condition could
