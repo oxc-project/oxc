@@ -49,10 +49,6 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
 const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] =
     &["TSUnionType", "ExpressionStatement"];
 
-// A trailing suppression comment counts like a leading one, and the outermost node ending there claims it.
-// A union leaves it to its member instead, like Prettier (`handleUnionTypeComments`); see `format_union_types`.
-const AST_NODE_WITHOUT_TRAILING_SUPPRESSION_LIST: &[&str] = &["TSUnionType"];
-
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
     "TSInferType",
@@ -201,32 +197,26 @@ fn generate_struct_implementation(
                 | "ExportDeclaration"
                 | "ExportDefaultDeclaration"
         ))
-        .then(|| {
-            if AST_NODE_WITHOUT_TRAILING_SUPPRESSION_LIST.contains(&struct_name) {
-                quote! { let is_suppressed = f.comments().is_suppressed(self.span().start); }
-            } else {
-                quote! { let is_suppressed = f.comments().is_span_suppressed(self.span()); }
-            }
-        });
+        .then(|| quote! { let is_suppressed = f.comments().is_span_suppressed(self.span()); });
 
         // Expression-shaped nodes (formatter parens + own comment printing) hand the whole suppressed sequence to one owner,
         // so the cast-target decision is made once while every comment is still unprinted (see `write_suppressed_expression`).
+        // A node that prints its own leading comments never runs its `write` when suppressed, so it takes the same path.
         let suppressed_expression_return =
-            (suppressed_check.is_some() && needs_parentheses && !do_not_print_leading_comment)
-                .then(|| {
-                    quote! {
-                        if is_suppressed {
-                            write_suppressed_expression(
-                                self.span(),
-                                self.leading_comments_start(),
-                                self.needs_parentheses(f),
-                                f,
-                            );
-                            self.format_trailing_comments(f);
-                            return;
-                        }
+            (suppressed_check.is_some() && needs_parentheses).then(|| {
+                quote! {
+                    if is_suppressed {
+                        write_suppressed_expression(
+                            self.span(),
+                            self.leading_comments_start(),
+                            self.needs_parentheses(f),
+                            f,
+                        );
+                        self.format_trailing_comments(f);
+                        return;
                     }
-                });
+                }
+            });
 
         let write_implementation =
             if suppressed_check.is_none() || suppressed_expression_return.is_some() {
@@ -268,17 +258,9 @@ fn generate_struct_implementation(
                     quote! { false }
                 };
 
-            // With the suppressed early return above, the flag is trivially false here
-            let suppressed_check_for_typecast = (suppressed_check.is_some()
-                && suppressed_expression_return.is_none())
-            .then(|| {
-                quote! {
-                    !is_suppressed &&
-                }
-            });
-
+            // A suppressed node returned above, so no guard is needed here
             quote! {
-                if #suppressed_check_for_typecast format_type_cast_comment_node(self, #is_object_or_array_argument, f) {
+                if format_type_cast_comment_node(self, #is_object_or_array_argument, f) {
                     return;
                 }
             }
