@@ -175,6 +175,8 @@ fn test() {
 
     let fail = vec![
         ("it('Foo', function () {})", None),
+        ("it(\"Foo's bar\", function () {})", None),
+        ("it('Foo \"bar\"', function () {})", None),
         (r"it('Foo \uD800', function () {})", None),
         (r"it(`Foo \uDC00`, function () {})", None),
         (
