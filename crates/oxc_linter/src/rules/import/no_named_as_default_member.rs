@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{BindingPattern, Expression, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -154,7 +154,9 @@ impl Rule for NoNamedAsDefaultMember {
                     };
 
                     for prop in &*object_pattern.properties {
-                        let Some(name) = prop.key.static_name() else {
+                        let name =
+                            prop.key.static_name().and_then(StaticPropertyName::into_cow_str);
+                        let Some(name) = name else {
                             continue;
                         };
                         if let Some(module_name) =

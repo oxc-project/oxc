@@ -3,7 +3,7 @@ use lazy_regex::Regex;
 use schemars::JsonSchema;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         ArrowFunctionExpression, Expression, Function, ObjectExpression, ObjectProperty,
         ObjectPropertyKind, PropertyKind,
@@ -354,14 +354,18 @@ fn check_longform_methods<'a>(
 ) {
     if rule.ignore_constructors
         && property.key.is_identifier()
-        && property.key.name().is_some_and(is_constructor)
+        && property
+            .key
+            .name()
+            .and_then(StaticPropertyName::into_cow_str)
+            .is_some_and(|name| is_constructor(&name))
     {
         return;
     }
 
-    if let (Some(pattern), Some(static_name)) =
-        (rule.methods_ignore_pattern.as_ref(), property.key.static_name())
-        && pattern.is_match(static_name.as_ref())
+    if let Some(pattern) = rule.methods_ignore_pattern.as_ref()
+        && let Some(static_name) = property.key.static_name()
+        && static_name.as_str().is_some_and(|name| pattern.is_match(name))
     {
         return;
     }
@@ -385,7 +389,7 @@ fn check_longform_methods<'a>(
 }
 
 fn check_shorthand_properties<'a>(ctx: &LintContext<'a>, property: &ObjectProperty<'a>) {
-    if let Some(property_name) = property.key.name() {
+    if let Some(property_name) = property.key.name().and_then(StaticPropertyName::into_cow_str) {
         ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
             fixer.replace(property.span, format!("{property_name}: {property_name}"))
         });
@@ -414,7 +418,7 @@ fn check_longform_properties<'a>(
         return;
     }
 
-    if let Some(property_name) = property.key.name()
+    if let Some(property_name) = property.key.name().and_then(StaticPropertyName::into_cow_str)
         && property_name == value_identifier.name
     {
         ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
@@ -591,7 +595,9 @@ fn is_redundant_property(property: &ObjectProperty) -> bool {
     match &property.value {
         Expression::FunctionExpression(func) => func.id.is_none(),
         Expression::Identifier(value_identifier) => {
-            if let Some(property_name) = property.key.name() {
+            if let Some(property_name) =
+                property.key.name().and_then(StaticPropertyName::into_cow_str)
+            {
                 property_name == value_identifier.name
             } else {
                 false

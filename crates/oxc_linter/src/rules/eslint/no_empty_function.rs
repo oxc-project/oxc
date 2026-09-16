@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use bitflags::bitflags;
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         Expression, FormalParameter, Function, IdentifierName, IdentifierReference,
         MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKind, TSAccessibility,
@@ -20,13 +20,13 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_empty_function_diagnostic<S: AsRef<str>>(
+fn no_empty_function_diagnostic<S: std::fmt::Display>(
     span: Span,
     fn_kind: &str,
     fn_name: Option<S>,
 ) -> OxcDiagnostic {
     let message = match fn_name {
-        Some(name) => Cow::Owned(format!("Unexpected empty {fn_kind} `{}`", name.as_ref())),
+        Some(name) => Cow::Owned(format!("Unexpected empty {fn_kind} `{name}`")),
         None => Cow::Borrowed("Unexpected empty function"),
     };
     OxcDiagnostic::warn(message)
@@ -336,9 +336,9 @@ impl Rule for NoEmptyFunction {
 }
 
 #[derive(Default, Debug, Clone)]
-struct ViolationInfo<'a>(pub Option<(&'static str, Option<Cow<'a, str>>)>);
-impl<'a> From<(&'static str, Option<Cow<'a, str>>)> for ViolationInfo<'a> {
-    fn from(value: (&'static str, Option<Cow<'a, str>>)) -> Self {
+struct ViolationInfo<'a>(pub Option<(&'static str, Option<StaticPropertyName<'a>>)>);
+impl<'a> From<(&'static str, Option<StaticPropertyName<'a>>)> for ViolationInfo<'a> {
+    fn from(value: (&'static str, Option<StaticPropertyName<'a>>)) -> Self {
         debug_assert!(!value.0.is_empty());
         Self(Some(value))
     }
@@ -366,7 +366,7 @@ impl NoEmptyFunction {
                         } else {
                             "function"
                         };
-                        return (kind, Some(name.into())).into();
+                        return (kind, Some(StaticPropertyName::from(name))).into();
                     }
                     if f.is_expression()
                         && self.is_allowed_function_expression(f)
@@ -388,7 +388,7 @@ impl NoEmptyFunction {
                 }
                 AstKind::IdentifierName(IdentifierName { name, .. })
                 | AstKind::IdentifierReference(IdentifierReference { name, .. }) => {
-                    return ("function", Some(Cow::Borrowed(name.as_str()))).into();
+                    return ("function", Some(StaticPropertyName::from(*name))).into();
                 }
                 AstKind::PropertyDefinition(prop) => {
                     if self.allow_decorated_function() && !prop.decorators.is_empty() {
@@ -438,7 +438,11 @@ impl NoEmptyFunction {
                             _ => {}
                         }
                     }
-                    return ("function", decl.id.get_identifier_name().map(Into::into)).into();
+                    return (
+                        "function",
+                        decl.id.get_identifier_name().map(StaticPropertyName::from),
+                    )
+                        .into();
                 }
                 _ => return ("function", None).into(),
             }

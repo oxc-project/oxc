@@ -51,10 +51,10 @@
 //! * Babel implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-async-to-generator>
 //! * Async / Await TC39 proposal: <https://github.com/tc39/proposal-async-await>
 
-use std::{borrow::Cow, mem};
+use std::mem;
 
 use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, TakeIn};
-use oxc_ast::ast::*;
+use oxc_ast::{StaticPropertyName, ast::*};
 use oxc_ast_visit::VisitJs;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
@@ -619,7 +619,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             }
             // infer `foo` from `({ foo: async function() {} })`
             Ancestor::ObjectPropertyValue(property) if !*property.method() => {
-                property.key().static_name().map(|key| Self::normalize_function_name(&key, ctx))
+                property.key().static_name().map(|key| Self::normalize_function_name(key, ctx))
             }
             _ => None,
         }
@@ -636,23 +636,32 @@ impl<'a> AsyncGeneratorExecutor<'a> {
     ///   // Reserved keyword
     /// * `this` -> `_this`
     /// * `arguments` -> `_arguments`
-    fn normalize_function_name(input: &Cow<'a, str>, ctx: &TraverseCtx<'a>) -> Ident<'a> {
-        let input_str = input.as_ref();
-        if !is_reserved_keyword(input_str) && is_identifier_name(input_str) {
-            return Ident::from_cow_in(input, ctx);
+    fn normalize_function_name(input: StaticPropertyName<'a>, ctx: &TraverseCtx<'a>) -> Ident<'a> {
+        let input_str = input.into_js_str_in(ctx);
+        if let Some(name) = input_str.as_str()
+            && !is_reserved_keyword(name)
+            && is_identifier_name(name)
+        {
+            return Ident::from(name);
         }
 
         let mut name = ArenaStringBuilder::with_capacity_in(input_str.len() + 1, ctx.allocator());
         let mut capitalize_next = false;
 
         let mut chars = input_str.chars();
-        if let Some(first) = chars.next()
+        let first = chars.next();
+        let drops_lone_surrogate_start = first.is_some_and(|first| first.to_char().is_none());
+        if let Some(first) = first.and_then(oxc_str::JSChar::to_char)
             && is_identifier_start(first)
         {
             name.push(first);
         }
 
-        for c in chars {
+        for ch in chars {
+            let Some(c) = ch.to_char() else {
+                capitalize_next = true;
+                continue;
+            };
             if c == ' ' {
                 name.push('_');
             } else if !is_identifier_part(c) {
@@ -669,7 +678,11 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             return static_ident!("_");
         }
 
-        if is_reserved_keyword(name.as_str()) {
+        // A dropped leading lone surrogate can leave a name that starts with an identifier part,
+        // such as `1` from `"\uD8001"`.
+        let starts_identifier = name.as_str().chars().next().is_some_and(is_identifier_start);
+        if (drops_lone_surrogate_start && !starts_identifier) || is_reserved_keyword(name.as_str())
+        {
             name.push_ascii_byte_start(b'_');
         }
 

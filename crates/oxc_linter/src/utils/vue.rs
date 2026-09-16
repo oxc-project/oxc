@@ -210,7 +210,7 @@ pub fn is_in_vue_component_instance_method(node: &AstNode<'_>, ctx: &LintContext
         return false;
     };
 
-    matches!(container_name.as_ref(), "computed" | "methods" | "watch")
+    matches!(container_name.as_str(), Some("computed" | "methods" | "watch"))
         && is_vue_component_options_object(
             ctx.nodes().parent_node(container_property_node.id()),
             ctx,
