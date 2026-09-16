@@ -129,18 +129,6 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// It also ignores functions that contain `JSXElement` references:
-    ///
-    /// ```jsx
-    /// function doFoo(FooComponent) {
-    ///   function Bar() {
-    ///     return <FooComponent/>;
-    ///   }
-    ///
-    ///   return Bar;
-    /// };
-    /// ```
-    ///
     /// [Immediately invoked function expressions (IIFE)](https://en.wikipedia.org/wiki/Immediately_invoked_function_expression) are ignored:
     ///
     /// ```js
@@ -316,11 +304,6 @@ struct ReferencesFinder {
 impl<'a> Visit<'a> for ReferencesFinder {
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         self.references.push(it.reference_id());
-    }
-
-    fn visit_jsx_element_name(&mut self, _it: &JSXElementName<'a>) {
-        // Ignore references in JSX elements e.g. `Foo` in `<Foo>`.
-        // No need to walk children as only references they may contain are also JSX identifiers.
     }
 
     fn visit_this_expression(&mut self, _: &ThisExpression) {
@@ -577,6 +560,28 @@ fn test() {
         ("function doFoo() { return function doBar() {}; }", None),
         ("function doFoo(Foo) { function doBar() { return new Foo(); } return doBar; };", None),
         ("function doFoo(FooComponent) { return <FooComponent />; } ", None),
+        (
+            "function doFoo(FooComponent) { function Bar() { return <FooComponent />; } return Bar; };",
+            Some(serde_json::json!([{ "checkArrowFunctions": false }])),
+        ),
+        (
+            "function doFoo(Components) { function Bar() { return <Components.Item />; } return Bar; };",
+            None,
+        ),
+        ("function doFoo() { const bar = () => <this.Component />; return bar; };", None),
+        (
+            "function doFoo() { const bar = () => <div />; return bar; };",
+            Some(serde_json::json!([{ "checkArrowFunctions": false }])),
+        ),
+        (
+            "function doFoo(UI) { function Bar() { return <UI.Forms.Button />; } return Bar; };",
+            None,
+        ),
+        ("function doFoo(Component) { const bar = () => <Component />; return bar; };", None),
+        (
+            "function doFoo(Component) { const bar = () => <Component />; return bar; };",
+            Some(serde_json::json!([{ "checkArrowFunctions": false }])),
+        ),
         ("const foo = <JSX/>;", None),
         ("function foo() { function bar() { return <JSX a={foo()}/>; } }", None),
         ("function doFoo(Foo) { const doBar = () => this; return doBar(); };", None),
@@ -791,15 +796,6 @@ fn test() {
             None,
         ),
         (
-            "function doFoo(FooComponent) {
-                function Bar() {
-                    return <FooComponent />;
-                }
-                return Bar;
-            };",
-            None,
-        ),
-        (
             "function Foo() {
                 function Bar () {
                     return <div />
@@ -818,6 +814,9 @@ fn test() {
             }",
             None,
         ),
+        ("function doFoo() { function Bar() { return <div />; } return Bar; };", None),
+        ("function doFoo(div) { function Bar() { return <div />; } return Bar; };", None),
+        ("function doFoo() { function Bar() { return <this.Component />; } return Bar; };", None),
         // end of cases that eslint-plugin-unicorn passes, but we fail.
         (
             "function doFoo(foo) {
