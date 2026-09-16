@@ -168,7 +168,7 @@ impl Codegen<'_> {
                 '\r' => self.print_str("\\r"),
                 '\x1B' => self.print_str("\\x1B"),
                 '\\' => self.print_str("\\\\"),
-                '\u{A0}' => self.print_str("\\xA0"),
+                '\u{A0}' if !self.options.ascii_only => self.print_str("\\xA0"),
                 '\u{2028}' => self.print_str("\\u2028"),
                 '\u{2029}' => self.print_str("\\u2029"),
                 ch if ch == char::from(quote as u8) => {
@@ -816,4 +816,67 @@ pub fn is_script_close_tag(slice: &[u8]) -> bool {
         *byte |= 32;
     }
     bytes == *b"</script"
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_str::JSStr;
+
+    use super::Quote;
+    use crate::{Codegen, CodegenOptions};
+
+    #[test]
+    fn utf8_and_wtf8_printers_agree() {
+        let mut inputs: Vec<String> = [
+            "",
+            "\0",
+            "\0\u{a0}",
+            "\x001",
+            "</script>",
+            "</ScRiPt",
+            "${}",
+            "é漢😀\u{2028}\u{2029}",
+        ]
+        .into_iter()
+        .map(str::to_owned)
+        .collect();
+        inputs.extend((0..=255).map(|value| char::from_u32(value).unwrap().to_string()));
+        // Cover quote costs, ties, and lookahead at each position.
+        for a in ['a', '\'', '"', '`', '\n', '$', '{'] {
+            for b in ['a', '\'', '"', '`', '\n', '$', '{'] {
+                for c in ['a', '\'', '"', '`', '\n', '$', '{'] {
+                    inputs.push(format!("{a}{b}{c}"));
+                }
+            }
+        }
+        for input in inputs {
+            for ascii_only in [false, true] {
+                for allow_backtick in [false, true] {
+                    for quote in
+                        [None, Some(Quote::Single), Some(Quote::Double), Some(Quote::Backtick)]
+                    {
+                        let options = CodegenOptions { ascii_only, ..CodegenOptions::default() };
+                        let mut fast = Codegen::new().with_options(options.clone());
+                        let mut slow = Codegen::new().with_options(options);
+                        if let Some(quote) = quote {
+                            quote.print(&mut fast);
+                            quote.print(&mut slow);
+                        }
+                        fast.print_utf8_string_body(&input, quote, allow_backtick);
+                        slow.print_wtf8_string_body(
+                            JSStr::from(input.as_str()),
+                            quote,
+                            allow_backtick,
+                        );
+                        assert_eq!(
+                            fast.into_source_text(),
+                            slow.into_source_text(),
+                            "{input:?}, ascii_only={ascii_only}, allow_backtick={allow_backtick}, quote={:?}",
+                            quote.map(|quote| quote as u8),
+                        );
+                    }
+                }
+            }
+        }
+    }
 }

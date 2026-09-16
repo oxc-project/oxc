@@ -1149,10 +1149,11 @@ fn js_str_round_trip() {
         &[0x61, 0xD800, 0x62, 0xDC00, 0x63],
         &[0xFFFD, 0x64, 0x38, 0x30, 0x30],
         &[0xD800, 0xFFFD, 0xD83D, 0xDE0E, 0x6F22],
+        &[0xA0, 0xD800, 0xA0],
         &[0x22, 0x27, 0x5C, 0xD800, 0, 0x31, 0x0A, 0x2028, 0x2029],
     ];
     for &units in cases {
-        for minify in [false, true] {
+        for (minify, ascii_only) in [(false, false), (false, true), (true, false), (true, true)] {
             let mut parsed = Parser::new(&allocator, "consume('');", source_type).parse();
             assert!(parsed.diagnostics.is_empty());
             let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
@@ -1170,7 +1171,7 @@ fn js_str_round_trip() {
             literal.raw = None;
 
             let output = Codegen::new()
-                .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+                .with_options(CodegenOptions { minify, ascii_only, ..CodegenOptions::default() })
                 .build(&parsed.program)
                 .code;
             let reparsed = Parser::new(&allocator, &output, source_type).parse();
