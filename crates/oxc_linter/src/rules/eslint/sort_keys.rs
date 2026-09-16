@@ -1,12 +1,13 @@
-use std::{borrow::Cow, cmp::Ordering, str::Chars};
+use std::{borrow::Cow, cmp::Ordering};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSChar;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -133,7 +134,7 @@ impl Rule for SortKeys {
 }
 
 struct FixableProperty<'a> {
-    key: Cow<'a, str>,
+    key: StaticPropertyName<'a>,
     span: Span,
     text: Cow<'a, str>,
     /// `text` already includes the inter-property `,` (lifted with a same-line `// ...` comment).
@@ -148,7 +149,7 @@ fn is_object_sorted(
     sort_order: &SortOrder,
     options: &SortKeysOptions,
 ) -> bool {
-    let mut prev_key: Option<Cow<'_, str>> = None;
+    let mut prev_key: Option<StaticPropertyName<'_>> = None;
 
     for (i, prop) in object.properties.iter().enumerate() {
         match prop {
@@ -191,14 +192,48 @@ fn is_object_sorted(
 }
 
 /// Compare two keys according to sort options, without allocating.
-fn compare_keys(a: &str, b: &str, options: &SortKeysOptions) -> Ordering {
+fn compare_keys(
+    a: &StaticPropertyName<'_>,
+    b: &StaticPropertyName<'_>,
+    options: &SortKeysOptions,
+) -> Ordering {
+    let (a, b) = (a.as_js_str(), b.as_js_str());
+    if !options.natural
+        && let (Some(a), Some(b)) = (a.as_str(), b.as_str())
+    {
+        return if options.case_sensitive {
+            a.cmp(b)
+        } else {
+            a.bytes().map(|b| b.to_ascii_lowercase()).cmp(b.bytes().map(|b| b.to_ascii_lowercase()))
+        };
+    }
+    // Code point order equals the byte order above for UTF-8 and canonical WTF-8,
+    // so keys containing lone surrogates sort consistently with every other key.
+    let a = a.chars().map(JSChar::to_u32);
+    let b = b.chars().map(JSChar::to_u32);
     if options.natural {
         natural_compare(a, b, options.case_sensitive)
     } else if options.case_sensitive {
         a.cmp(b)
     } else {
-        a.bytes().map(|b| b.to_ascii_lowercase()).cmp(b.bytes().map(|b| b.to_ascii_lowercase()))
+        a.map(ascii_lowercase).cmp(b.map(ascii_lowercase))
     }
+}
+
+fn ascii_lowercase(code_point: u32) -> u32 {
+    if (u32::from(b'A')..=u32::from(b'Z')).contains(&code_point) {
+        code_point + u32::from(b'a' - b'A')
+    } else {
+        code_point
+    }
+}
+
+fn is_alphanumeric(code_point: u32) -> bool {
+    char::from_u32(code_point).is_some_and(char::is_alphanumeric)
+}
+
+fn to_digit(code_point: u32) -> Option<u32> {
+    char::from_u32(code_point).and_then(|c| c.to_digit(10))
 }
 
 /// Count contiguous groups of statically-named properties, separated by
@@ -440,9 +475,13 @@ fn build_property_text<'a>(
     Cow::Owned(format!("{before_value}{replacement}{after_value}"))
 }
 
-fn natural_compare(a: &str, b: &str, case_sensitive: bool) -> Ordering {
-    let mut a_chars = a.chars();
-    let mut b_chars = b.chars();
+/// Natural ordering over code points, so it also accepts lone surrogates.
+fn natural_compare(
+    mut a_chars: impl Iterator<Item = u32>,
+    mut b_chars: impl Iterator<Item = u32>,
+    case_sensitive: bool,
+) -> Ordering {
+    const LEFT_BRACKET: u32 = '[' as u32;
 
     loop {
         let a_next = a_chars.next();
@@ -453,30 +492,30 @@ fn natural_compare(a: &str, b: &str, case_sensitive: bool) -> Ordering {
             (Some(_), None) => return Ordering::Greater,
             (None, Some(_)) => return Ordering::Less,
             (Some(a_raw), Some(b_raw)) => {
-                let a_char = if case_sensitive { a_raw } else { a_raw.to_ascii_lowercase() };
-                let b_char = if case_sensitive { b_raw } else { b_raw.to_ascii_lowercase() };
+                let a_char = if case_sensitive { a_raw } else { ascii_lowercase(a_raw) };
+                let b_char = if case_sensitive { b_raw } else { ascii_lowercase(b_raw) };
 
                 if a_char == b_char {
                     continue;
                 }
-                if a_char.is_ascii_digit() && b_char.is_ascii_digit() {
-                    let n1 = take_numeric(&mut a_chars, a_char);
-                    let n2 = take_numeric(&mut b_chars, b_char);
+                if let (Some(a_digit), Some(b_digit)) = (to_digit(a_char), to_digit(b_char)) {
+                    let n1 = take_numeric(&mut a_chars, a_digit);
+                    let n2 = take_numeric(&mut b_chars, b_digit);
                     match n1.cmp(&n2) {
                         Ordering::Equal => continue,
                         ord => return ord,
                     }
                 }
-                if a_char.is_alphanumeric() && !b_char.is_alphanumeric() {
+                if is_alphanumeric(a_char) && !is_alphanumeric(b_char) {
                     return Ordering::Greater;
                 }
-                if !a_char.is_alphanumeric() && b_char.is_alphanumeric() {
+                if !is_alphanumeric(a_char) && is_alphanumeric(b_char) {
                     return Ordering::Less;
                 }
-                if a_char == '[' && b_char.is_alphanumeric() {
+                if a_char == LEFT_BRACKET && is_alphanumeric(b_char) {
                     return Ordering::Greater;
                 }
-                if a_char.is_alphanumeric() && b_char == '[' {
+                if is_alphanumeric(a_char) && b_char == LEFT_BRACKET {
                     return Ordering::Less;
                 }
                 return a_char.cmp(&b_char);
@@ -485,10 +524,10 @@ fn natural_compare(a: &str, b: &str, case_sensitive: bool) -> Ordering {
     }
 }
 
-fn take_numeric(iter: &mut Chars, first: char) -> u32 {
-    let mut sum = first.to_digit(10).unwrap();
+fn take_numeric(iter: &mut impl Iterator<Item = u32>, first: u32) -> u32 {
+    let mut sum = first;
     for c in iter.by_ref() {
-        if let Some(digit) = c.to_digit(10) {
+        if let Some(digit) = to_digit(c) {
             sum = sum * 10 + digit;
         } else {
             break;
@@ -940,6 +979,25 @@ fn test() {
         ), // { "ecmaVersion": 2018 }
     ];
 
+    // Lone surrogates order by code point, like every other key.
+    let pass = pass
+        .into_iter()
+        .chain([
+            (r#"var obj = {"\uD800": 1, "\uDC00": 2}"#, None),
+            (r#"var obj = {"a": 1, "\uD800": 2}"#, None),
+            (r#"var obj = {"\uD800": 1, "\uD800\uDC00": 2}"#, None),
+            (r#"var obj = {"\uDC00": 1, "\uD800": 2}"#, Some(serde_json::json!(["desc"]))),
+            (
+                r#"var obj = {"\uD800": 1, "a1": 2, "a2": 3}"#,
+                Some(serde_json::json!(["asc", { "natural": true }])),
+            ),
+            (
+                r#"var obj = {"A": 1, "b": 2, "\uD800": 3}"#,
+                Some(serde_json::json!(["asc", { "caseSensitive": false }])),
+            ),
+        ])
+        .collect::<Vec<_>>();
+
     let fail = vec![
         ("var obj = {a:1, '':2} // default", None),
         ("var obj = {a:1, [``]:2} // default", None), // { "ecmaVersion": 6 },
@@ -1280,9 +1338,31 @@ fn test() {
         ), // { "ecmaVersion": 2018 }
     ];
 
+    // Lone surrogates order by code point, like every other key.
+    let fail = fail
+        .into_iter()
+        .chain([
+            (r#"var obj = {"\uDC00": 1, "\uD800": 2}"#, None),
+            (r#"var obj = {"\uD800": 1, "a": 2}"#, None),
+            (r#"var obj = {"\uD800\uDC00": 1, "\uD800": 2}"#, None),
+            (r#"var obj = {"\uD800": 1, "\uDC00": 2}"#, Some(serde_json::json!(["desc"]))),
+            (
+                r#"var obj = {"a1": 1, "\uD800": 2}"#,
+                Some(serde_json::json!(["asc", { "natural": true }])),
+            ),
+            (
+                r#"var obj = {"\uD800": 1, "b": 2, "A": 3}"#,
+                Some(serde_json::json!(["asc", { "caseSensitive": false }])),
+            ),
+        ])
+        .collect::<Vec<_>>();
+
     // Add comprehensive fixer tests: the rule now advertises conditional fixes,
     // so provide expect_fix cases.
     let fix = vec![
+        // Lone surrogates keep their source spelling.
+        (r#"var obj = {"\uDC00": 1, "\uD800": 2}"#, r#"var obj = {"\uD800": 2, "\uDC00": 1}"#),
+        (r#"var obj = {"\uD800": 1, a: 2}"#, r#"var obj = {a: 2, "\uD800": 1}"#),
         // Basic alphabetical sorting
         ("var obj = {b:1, a:2}", "var obj = {a:2, b:1}"),
         // Case sensitivity - lowercase comes after uppercase, so a:2 should come after B:1

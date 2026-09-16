@@ -489,7 +489,8 @@ impl AstKind<'_> {
             Self::PrivateInExpression(_) => "PrivateInExpression".into(),
 
             Self::ObjectProperty(p) => {
-                format!("ObjectProperty({})", p.key.name().as_deref().unwrap_or(COMPUTED)).into()
+                format!("ObjectProperty({})", p.key.name().unwrap_or_else(|| COMPUTED.into()))
+                    .into()
             }
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),

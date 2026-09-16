@@ -144,7 +144,7 @@ fn collect_computed_names<'a>(options: &ObjectExpression<'a>) -> FxHashSet<&'a s
             ObjectPropertyKind::ObjectProperty(prop) if !prop.computed => Some(prop),
             _ => None,
         })
-        .filter_map(|prop| match prop.key.static_name()? {
+        .filter_map(|prop| match prop.key.static_name()?.into_utf8()? {
             Cow::Borrowed(name) => Some(name),
             // Computed keys backed by literals (e.g. `0: foo`) produce an owned
             // string; they are not valid identifiers to reference via `this`, so skip.

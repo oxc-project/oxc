@@ -23,7 +23,7 @@ use crate::{
 const NATIVE_TYPES: [&str; 7] =
     ["String", "Number", "Boolean", "Function", "Object", "Array", "Symbol"];
 
-fn require_default_prop_diagnostic(span: Span, prop_name: &str) -> OxcDiagnostic {
+fn require_default_prop_diagnostic(span: Span, prop_name: impl std::fmt::Display) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prop '{prop_name}' requires default value to be set."))
         .with_label(span)
 }
@@ -210,12 +210,12 @@ fn check_object_props<'a>(
             match &name {
                 // A computed key whose name is unknown is ignored under a destructure.
                 None => continue,
-                Some(name) if has_destructure_default(destructure, name.as_ref()) => continue,
+                Some(name) if has_destructure_default(destructure, name) => continue,
                 _ => {}
             }
         }
         if let Some(name) = &name {
-            ctx.diagnostic(require_default_prop_diagnostic(prop.span(), name.as_ref()));
+            ctx.diagnostic(require_default_prop_diagnostic(prop.span(), name));
         } else {
             let display = format!("[{}]", prop.key.span().source_text(ctx.source_text()));
             ctx.diagnostic(require_default_prop_diagnostic(prop.span(), &display));
@@ -223,17 +223,20 @@ fn check_object_props<'a>(
     }
 }
 
-fn has_destructure_default(pattern: &ObjectPattern, name: &str) -> bool {
+fn has_destructure_default(
+    pattern: &ObjectPattern,
+    name: &oxc_ast::StaticPropertyName<'_>,
+) -> bool {
     pattern.properties.iter().any(|prop| {
         matches!(prop.value, BindingPattern::AssignmentPattern(_))
-            && prop.key.static_name().as_deref() == Some(name)
+            && prop.key.static_name().is_some_and(|key| key == *name)
     })
 }
 
-fn object_has_key(obj: &ObjectExpression, name: &str) -> bool {
+fn object_has_key(obj: &ObjectExpression, name: &oxc_ast::StaticPropertyName<'_>) -> bool {
     obj.properties.iter().any(|prop| {
         matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
-            if prop.key.static_name().as_deref() == Some(name))
+            if prop.key.static_name().is_some_and(|key| key == *name))
     })
 }
 
@@ -260,14 +263,13 @@ fn check_type_signature<'a>(
     if !pc.has_with_defaults && pc.destructure.is_none() {
         return;
     }
-    if pc.with_defaults.is_some_and(|defaults| object_has_key(defaults, name.as_ref())) {
+    if pc.with_defaults.is_some_and(|defaults| object_has_key(defaults, &name)) {
         return;
     }
-    if pc.destructure.is_some_and(|destructure| has_destructure_default(destructure, name.as_ref()))
-    {
+    if pc.destructure.is_some_and(|destructure| has_destructure_default(destructure, &name)) {
         return;
     }
-    ctx.diagnostic(require_default_prop_diagnostic(signature.span(), name.as_ref()));
+    ctx.diagnostic(require_default_prop_diagnostic(signature.span(), &name));
 }
 
 /// Mirrors upstream `isWithoutDefaultValue`. The value is already unwrapped of
@@ -288,7 +290,7 @@ fn is_without_default_value(value: &Expression) -> bool {
 fn prop_is_required(obj: &ObjectExpression) -> bool {
     obj.properties.iter().any(|prop| {
         matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
-            if prop.key.static_name().as_deref() == Some("required")
+            if prop.key.is_specific_static_name("required")
                 && matches!(prop.value.get_inner_expression(), Expression::BooleanLiteral(lit) if lit.value))
     })
 }
@@ -296,7 +298,7 @@ fn prop_is_required(obj: &ObjectExpression) -> bool {
 fn prop_has_default(obj: &ObjectExpression) -> bool {
     obj.properties.iter().any(|prop| {
         matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
-            if prop.key.static_name().as_deref() == Some("default"))
+            if prop.key.is_specific_static_name("default"))
     })
 }
 

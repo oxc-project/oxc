@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         Argument, CallExpression, ClassBody, ClassElement, Expression, MethodDefinitionKind,
         ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSMethodSignatureKind,
@@ -169,8 +169,8 @@ impl AccessorPairs {
         }
     }
 
-    fn check_object_expression(&self, obj: &ObjectExpression, ctx: &LintContext) {
-        let mut accessors: FxHashMap<String, AccessorInfo> = FxHashMap::default();
+    fn check_object_expression<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
+        let mut accessors: FxHashMap<StaticPropertyName<'a>, AccessorInfo> = FxHashMap::default();
         let mut computed_accessors: Vec<(&PropertyKey, PropertyKind, Span)> = vec![];
 
         for prop in &obj.properties {
@@ -184,7 +184,7 @@ impl AccessorPairs {
             }
 
             if let Some(name) = prop.key.static_name() {
-                let info = accessors.entry(name.into_owned()).or_default();
+                let info = accessors.entry(name).or_default();
                 if kind == PropertyKind::Get {
                     info.getter = Some(prop.key.span());
                 } else {
@@ -200,10 +200,12 @@ impl AccessorPairs {
         self.check_computed_accessors(&computed_accessors, ctx);
     }
 
-    fn check_class_body(&self, class_body: &ClassBody, ctx: &LintContext) {
+    fn check_class_body<'a>(&self, class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
         // Track static and instance accessors separately
-        let mut instance_accessors: FxHashMap<String, AccessorInfo> = FxHashMap::default();
-        let mut static_accessors: FxHashMap<String, AccessorInfo> = FxHashMap::default();
+        let mut instance_accessors: FxHashMap<StaticPropertyName<'a>, AccessorInfo> =
+            FxHashMap::default();
+        let mut static_accessors: FxHashMap<StaticPropertyName<'a>, AccessorInfo> =
+            FxHashMap::default();
         let mut computed_instance: Vec<(&PropertyKey, MethodDefinitionKind, Span)> = vec![];
         let mut computed_static: Vec<(&PropertyKey, MethodDefinitionKind, Span)> = vec![];
 
@@ -224,7 +226,7 @@ impl AccessorPairs {
                 if method.r#static { &mut computed_static } else { &mut computed_instance };
 
             if let Some(name) = method.key.static_name() {
-                let info = accessors.entry(name.into_owned()).or_default();
+                let info = accessors.entry(name).or_default();
                 if kind == MethodDefinitionKind::Get {
                     info.getter = Some(method.key.span());
                 } else {
@@ -283,7 +285,7 @@ impl AccessorPairs {
 
     fn report_accessor_issues(
         &self,
-        accessors: &FxHashMap<String, AccessorInfo>,
+        accessors: &FxHashMap<StaticPropertyName<'_>, AccessorInfo>,
         ctx: &LintContext,
     ) {
         for info in accessors.values() {
@@ -384,7 +386,9 @@ impl AccessorPairs {
                 continue;
             };
 
-            let Some(name) = prop.key.static_name() else {
+            let Some(name) =
+                prop.key.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+            else {
                 continue;
             };
 
@@ -409,8 +413,8 @@ impl AccessorPairs {
         }
     }
 
-    fn check_ts_signatures(&self, signatures: &[TSSignature], ctx: &LintContext) {
-        let mut accessors: FxHashMap<String, AccessorInfo> = FxHashMap::default();
+    fn check_ts_signatures<'a>(&self, signatures: &[TSSignature<'a>], ctx: &LintContext<'a>) {
+        let mut accessors: FxHashMap<StaticPropertyName<'a>, AccessorInfo> = FxHashMap::default();
         let mut computed_accessors: Vec<(&PropertyKey, TSMethodSignatureKind, Span)> = vec![];
 
         for sig in signatures {
@@ -424,7 +428,7 @@ impl AccessorPairs {
             }
 
             if let Some(name) = method.key.static_name() {
-                let info = accessors.entry(name.into_owned()).or_default();
+                let info = accessors.entry(name).or_default();
                 if kind == TSMethodSignatureKind::Get {
                     info.getter = Some(method.key.span());
                 } else {
@@ -439,8 +443,8 @@ impl AccessorPairs {
         self.report_computed_ts_accessor_issues(&computed_accessors, ctx);
     }
 
-    fn check_ts_type_literal(&self, type_literal: &TSTypeLiteral, ctx: &LintContext) {
-        let mut accessors: FxHashMap<String, AccessorInfo> = FxHashMap::default();
+    fn check_ts_type_literal<'a>(&self, type_literal: &TSTypeLiteral<'a>, ctx: &LintContext<'a>) {
+        let mut accessors: FxHashMap<StaticPropertyName<'a>, AccessorInfo> = FxHashMap::default();
         let mut computed_accessors: Vec<(&PropertyKey, TSMethodSignatureKind, Span)> = vec![];
 
         for member in &type_literal.members {
@@ -454,7 +458,7 @@ impl AccessorPairs {
             }
 
             if let Some(name) = method.key.static_name() {
-                let info = accessors.entry(name.into_owned()).or_default();
+                let info = accessors.entry(name).or_default();
                 if kind == TSMethodSignatureKind::Get {
                     info.getter = Some(method.key.span());
                 } else {
@@ -1888,6 +1892,34 @@ fn test() {
             Some(serde_json::json!([{ "enforceForTSTypes": true, "getWithoutSet": true }])),
         ),
     ];
+
+    let both = Some(serde_json::json!([{ "setWithoutGet": true, "getWithoutSet": true }]));
+    let both_ts = Some(serde_json::json!([
+        { "setWithoutGet": true, "getWithoutSet": true, "enforceForTSTypes": true }
+    ]));
+    // Lone surrogates pair by identity across key syntaxes.
+    let pass = pass
+        .into_iter()
+        .chain([
+            (r#"var o = { get "\uD800"() {}, set "\uD800"(v) {} };"#, both.clone()),
+            (r#"var o = { get "\uDC00"() {}, set ["\uDC00"](v) {} };"#, both.clone()),
+            (r#"var o = { get "a\uD800b"() {}, set [`a\uD800b`](v) {} };"#, both.clone()),
+            (r#"class C { get "\uD800"() {} set "\uD800"(v) {} }"#, both.clone()),
+            (r#"class C { static get "\uD800"() {} static set "\uD800"(v) {} }"#, both.clone()),
+            (r#"interface I { get "\uD800"(): any; set "\uD800"(v: any); }"#, both_ts.clone()),
+        ])
+        .collect::<Vec<_>>();
+    // Different lone surrogates are different accessors.
+    let fail = fail
+        .into_iter()
+        .chain([
+            (r#"var o = { get "\uD800"() {}, set "\uDC00"(v) {} };"#, both.clone()),
+            (r#"var o = { get "\uD800"() {}, set "\uD800\uDC00"(v) {} };"#, both.clone()),
+            (r#"var o = { set "\uD800"(v) {} };"#, None),
+            (r#"class C { get "\uD800"() {} static set "\uD800"(v) {} }"#, both),
+            (r#"type T = { get "\uD800"(): any; set "\uDC00"(v: any); }"#, both_ts),
+        ])
+        .collect::<Vec<_>>();
 
     Tester::new(AccessorPairs::NAME, AccessorPairs::PLUGIN, pass, fail).test_and_snapshot();
 }

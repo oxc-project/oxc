@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_dupe_class_members_diagnostic(
-    member_name: &str, /*Class member name */
+    member_name: impl std::fmt::Debug, /*Class member name */
     decl_span: Span,
     re_decl_span: Span,
 ) -> OxcDiagnostic {
@@ -139,6 +139,16 @@ fn test() {
         "class Foo { foo(a: string): string; foo(a: number): number; foo(a: any): any {} }",
     ];
 
+    // Lone surrogates are distinct member names.
+    let pass = pass
+        .into_iter()
+        .chain([
+            r#"class A { "\uD800"() {}  "\uDC00"() {} }"#,
+            r#"class A { "\uD800"() {}  "\uD800\uDC00"() {} }"#,
+            r#"class A { "\uD800"() {}  static "\uD800"() {} }"#,
+        ])
+        .collect::<Vec<_>>();
+
     let fail = vec![
         "class A { foo() {} foo() {} }",
         "!class A { foo() {} foo() {} };",
@@ -179,6 +189,10 @@ fn test() {
         "class A { set foo(value) {}  foo() {}}",
         "class A { foo;  foo = 42;}",
         "class A { foo;  foo() {}}",
+        // Lone surrogates keep their identity across key syntaxes.
+        r#"class A { "\uD800"() {}  "\uD800"() {} }"#,
+        r#"class A { "\uDC00"() {}  ["\uDC00"]() {} }"#,
+        r#"class A { "a\uD800b"() {}  [`a\uD800b`]() {} }"#,
     ];
 
     Tester::new(NoDupeClassMembers::NAME, NoDupeClassMembers::PLUGIN, pass, fail)

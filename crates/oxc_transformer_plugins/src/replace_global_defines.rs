@@ -326,7 +326,7 @@ pub struct ReplaceGlobalDefines<'a> {
     /// Destructuring keys from the parent `VariableDeclarator` when its `id` is an
     /// `ObjectPattern`. Used to optimize object expression replacements by only keeping needed
     /// keys.
-    destructuring_keys: Option<FxHashSet<CompactStr>>,
+    destructuring_keys: Option<FxHashSet<oxc_ast::StaticPropertyName<'a>>>,
 }
 
 impl<'a> VisitJsMut<'a> for ReplaceGlobalDefines<'a> {
@@ -418,7 +418,7 @@ impl<'a> VisitJsMut<'a> for ReplaceGlobalDefines<'a> {
             let mut all_static = true;
             for prop in &pat.properties {
                 if let Some(key) = prop.key.name() {
-                    keys.insert(CompactStr::from(key.as_ref()));
+                    keys.insert(key);
                 } else {
                     all_static = false;
                     break;
@@ -1022,7 +1022,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 ObjectPropertyKind::ObjectProperty(prop) => {
                     // not static key just preserve it
                     if let Some(name) = prop.key.name() {
-                        needed_keys.contains(CompactStr::from(name.as_ref()).as_str())
+                        needed_keys.contains(&name)
                     } else {
                         true
                     }

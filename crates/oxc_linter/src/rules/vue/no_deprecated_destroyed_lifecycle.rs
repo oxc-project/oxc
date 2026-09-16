@@ -112,7 +112,9 @@ fn check_object_properties<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContex
         let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
             continue;
         };
-        if let Some(name) = obj_prop.key.static_name() {
+        if let Some(name) =
+            obj_prop.key.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+        {
             existing_keys.insert(name.into_owned());
         }
     }

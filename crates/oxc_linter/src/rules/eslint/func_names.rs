@@ -462,11 +462,19 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
             }
             AstKind::ObjectProperty(prop) => {
                 // Stop here - we found the direct property context
-                return prop.key.static_name().filter(|name| is_valid_identifier_name(name));
+                return prop
+                    .key
+                    .static_name()
+                    .and_then(oxc_ast::StaticPropertyName::into_utf8)
+                    .filter(|name| is_valid_identifier_name(name));
             }
             AstKind::PropertyDefinition(prop_def) => {
                 // Stop here - we found the direct class property context
-                return prop_def.key.static_name().filter(|name| is_valid_identifier_name(name));
+                return prop_def
+                    .key
+                    .static_name()
+                    .and_then(oxc_ast::StaticPropertyName::into_utf8)
+                    .filter(|name| is_valid_identifier_name(name));
             }
             _ => {}
         }

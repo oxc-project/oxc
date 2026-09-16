@@ -396,6 +396,7 @@ impl<'a> LegacyDecorator<'a> {
                 let key_name = accessor
                     .key
                     .name()
+                    .and_then(oxc_ast::StaticPropertyName::into_utf8)
                     .unwrap_or_else(|| Cow::Owned(get_var_name_from_node(&accessor.key)));
                 let storage_name =
                     Str::from_strs_array_in(["_", &key_name, "_accessor_storage"], ctx);

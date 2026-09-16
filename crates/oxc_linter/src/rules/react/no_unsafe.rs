@@ -99,7 +99,8 @@ impl Rule for NoUnsafe {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::MethodDefinition(method_def) => {
-                if let Some(name) = method_def.key.static_name()
+                if let Some(name) =
+                    method_def.key.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8)
                     && is_unsafe_method(name.as_ref(), self.0.check_aliases, ctx)
                     && get_parent_component(node, ctx).is_some()
                 {
@@ -107,7 +108,8 @@ impl Rule for NoUnsafe {
                 }
             }
             AstKind::ObjectProperty(obj_prop) => {
-                if let Some(name) = obj_prop.key.static_name()
+                if let Some(name) =
+                    obj_prop.key.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8)
                     && is_unsafe_method(name.as_ref(), self.0.check_aliases, ctx)
                 {
                     for ancestor in ctx.nodes().ancestors(node.id()) {

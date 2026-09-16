@@ -386,7 +386,11 @@ fn function_like_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<Strin
         AstKind::VariableDeclarator(decl) => {
             decl.id.get_identifier_name().map(|name| name.to_string())
         }
-        AstKind::ObjectProperty(prop) => prop.key.static_name().map(std::borrow::Cow::into_owned),
+        AstKind::ObjectProperty(prop) => prop
+            .key
+            .static_name()
+            .and_then(oxc_ast::StaticPropertyName::into_utf8)
+            .map(std::borrow::Cow::into_owned),
         AstKind::AssignmentExpression(assign) => {
             assign.left.get_identifier_name().map(ToString::to_string)
         }
@@ -510,7 +514,10 @@ fn direct_object_property_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Opt
     let AstKind::ObjectProperty(prop) = parent.kind() else {
         return None;
     };
-    prop.key.static_name().map(std::borrow::Cow::into_owned)
+    prop.key
+        .static_name()
+        .and_then(oxc_ast::StaticPropertyName::into_utf8)
+        .map(std::borrow::Cow::into_owned)
 }
 
 fn is_direct_jsx_child_render_prop(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {

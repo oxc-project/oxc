@@ -12,7 +12,7 @@ use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
-fn require_type_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
+fn require_type_diagnostic(span: Span, name: impl std::fmt::Display) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prop \"{name}\" should define at least its type."))
         .with_label(span)
 }
@@ -235,7 +235,7 @@ impl RequirePropTypes {
             };
 
             if is_invalid {
-                ctx.diagnostic(require_type_diagnostic(p.span(), key.as_ref()));
+                ctx.diagnostic(require_type_diagnostic(p.span(), &key));
             }
         }
     }

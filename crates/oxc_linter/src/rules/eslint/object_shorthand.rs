@@ -354,14 +354,19 @@ fn check_longform_methods<'a>(
 ) {
     if rule.ignore_constructors
         && property.key.is_identifier()
-        && property.key.name().is_some_and(is_constructor)
+        && property
+            .key
+            .name()
+            .and_then(oxc_ast::StaticPropertyName::into_utf8)
+            .is_some_and(is_constructor)
     {
         return;
     }
 
-    if let (Some(pattern), Some(static_name)) =
-        (rule.methods_ignore_pattern.as_ref(), property.key.static_name())
-        && pattern.is_match(static_name.as_ref())
+    if let (Some(pattern), Some(static_name)) = (
+        rule.methods_ignore_pattern.as_ref(),
+        property.key.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8),
+    ) && pattern.is_match(static_name.as_ref())
     {
         return;
     }
@@ -385,7 +390,9 @@ fn check_longform_methods<'a>(
 }
 
 fn check_shorthand_properties<'a>(ctx: &LintContext<'a>, property: &ObjectProperty<'a>) {
-    if let Some(property_name) = property.key.name() {
+    if let Some(property_name) =
+        property.key.name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+    {
         ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
             fixer.replace(property.span, format!("{property_name}: {property_name}"))
         });
@@ -414,7 +421,8 @@ fn check_longform_properties<'a>(
         return;
     }
 
-    if let Some(property_name) = property.key.name()
+    if let Some(property_name) =
+        property.key.name().and_then(oxc_ast::StaticPropertyName::into_utf8)
         && property_name == value_identifier.name
     {
         ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
@@ -591,7 +599,9 @@ fn is_redundant_property(property: &ObjectProperty) -> bool {
     match &property.value {
         Expression::FunctionExpression(func) => func.id.is_none(),
         Expression::Identifier(value_identifier) => {
-            if let Some(property_name) = property.key.name() {
+            if let Some(property_name) =
+                property.key.name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+            {
                 property_name == value_identifier.name
             } else {
                 false
