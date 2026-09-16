@@ -233,10 +233,13 @@ impl ValidTitleConfig {
 
         match arg {
             Argument::StringLiteral(string_literal) => {
-                let Some(value) = string_literal.value.as_str() else {
-                    return;
-                };
-                validate_title(value, string_literal.span, config, &jest_fn_call.name, ctx);
+                validate_title(
+                    string_literal.value,
+                    string_literal.span,
+                    config,
+                    &jest_fn_call.name,
+                    ctx,
+                );
             }
             // Handle String.raw`foo`
             Argument::TaggedTemplateExpression(tagged_template) => {
@@ -247,12 +250,12 @@ impl ValidTitleConfig {
                     return;
                 }
 
-                if let Some(quasi) = tagged_template.quasi.single_quasi().and_then(JSStr::as_str) {
+                if let Some(quasi) = tagged_template.quasi.single_quasi() {
                     validate_title(quasi, tagged_template.span, config, &jest_fn_call.name, ctx);
                 }
             }
             Argument::TemplateLiteral(template_literal) => {
-                if let Some(quasi) = template_literal.single_quasi().and_then(JSStr::as_str) {
+                if let Some(quasi) = template_literal.single_quasi() {
                     validate_title(quasi, template_literal.span, config, &jest_fn_call.name, ctx);
                 }
             }
@@ -388,7 +391,7 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
 }
 
 fn validate_title(
-    title: &str,
+    title: JSStr<'_>,
     span: Span,
     config: &ValidTitleConfig,
     name: &str,
@@ -400,14 +403,19 @@ fn validate_title(
     }
 
     if let Some(disallowed_words_reg) = &config.disallowed_words_reg {
-        if let Some(matched) = disallowed_words_reg.find(title) {
+        // Regular expressions match UTF-8 only; a title with a lone surrogate
+        // skips this check.
+        if let Some(title) = title.as_str()
+            && let Some(matched) = disallowed_words_reg.find(title)
+        {
             ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
         }
         return;
     }
 
-    let trimmed_title = title.trim();
-    if !config.ignore_spaces && trimmed_title != title {
+    if !config.ignore_spaces
+        && (title.starts_with(char::is_whitespace) || title.ends_with(char::is_whitespace))
+    {
         ctx.diagnostic_with_fix(accidental_space_diagnostic(span), |fixer| {
             let inner_span = span.shrink(1);
             let raw_text = fixer.source_range(inner_span);
@@ -417,11 +425,10 @@ fn validate_title(
     }
 
     let un_prefixed_name = name.trim_start_matches(['f', 'x']);
-    let Some(first_word) = title.split(' ').next() else {
-        return;
-    };
+    // The first word is the text before the first space, or the whole title.
+    let first_word_len = title.find(' ').unwrap_or(title.len());
 
-    if first_word == un_prefixed_name {
+    if first_word_len == un_prefixed_name.len() && title.starts_with(un_prefixed_name) {
         ctx.diagnostic_with_fix(duplicate_prefix_diagnostic(span), |fixer| {
             // Use raw source text to preserve escape sequences
             let inner_span = span.shrink(1);
@@ -436,6 +443,12 @@ fn validate_title(
     }
 
     let Some(jest_fn_name) = MatchKind::from(un_prefixed_name) else {
+        return;
+    };
+
+    // Regular expressions match UTF-8 only; a title with a lone surrogate
+    // skips the pattern checks.
+    let Some(title) = title.as_str() else {
         return;
     };
 
