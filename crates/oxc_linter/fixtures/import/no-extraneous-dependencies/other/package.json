@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "not-a-dependency": "*"
+  },
+  "bundleDependencies": {
+    "@generated/bar": "*"
+  },
+  "name": "workspace-lib"
+}

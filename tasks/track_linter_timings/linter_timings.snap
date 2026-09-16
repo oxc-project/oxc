@@ -202,6 +202,7 @@ import/no-default-export                                   |      7
 import/no-duplicates                                       |      7
 import/no-dynamic-require                                  |  62623
 import/no-empty-named-blocks                               |    103
+import/no-extraneous-dependencies                          |      7
 import/no-mutable-exports                                  |     64
 import/no-named-as-default                                 |      7
 import/no-named-as-default-member                          |      7

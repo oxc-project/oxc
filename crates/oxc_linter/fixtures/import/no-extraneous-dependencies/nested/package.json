@@ -1,0 +1,7 @@
+{
+  "name": "nested-project",
+  "dependencies": {
+    "react": "*",
+    "workspace-lib": "workspace:*"
+  }
+}
