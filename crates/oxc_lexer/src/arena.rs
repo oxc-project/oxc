@@ -1,4 +1,4 @@
-use core::{mem, ptr, slice};
+use std::{mem, ptr, slice};
 
 use oxc_span::Span;
 

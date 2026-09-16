@@ -1,4 +1,4 @@
-use core::ptr;
+use std::ptr;
 
 use crate::tables::{is_word, is_ws};
 

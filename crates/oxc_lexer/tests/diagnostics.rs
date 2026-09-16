@@ -8,7 +8,7 @@
     reason = "test helpers: lengths fit u32; the fuzz PRNG uses raw constants"
 )]
 
-use core::str;
+use std::str;
 
 use oxc_lexer::{Diagnostic, LexOptions, PAD, TokenKind, diag_code, lex_utf8};
 

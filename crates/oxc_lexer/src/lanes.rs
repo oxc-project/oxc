@@ -8,10 +8,10 @@
     clippy::collapsible_match
 )]
 
-use core::{ptr, str};
+use std::{ptr, str};
 
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
 use oxc_ast::ast::RegExpFlags;
 

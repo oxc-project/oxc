@@ -1,4 +1,4 @@
-use core::ptr;
+use std::ptr;
 
 use crate::{opmap::KwSet, token::tk};
 
@@ -73,7 +73,7 @@ unsafe fn kw_verify_batch<const TS_KEY: bool>(
 fn bzhi(x: u64, n: u32) -> u64 {
     #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
     unsafe {
-        core::arch::x86_64::_bzhi_u64(x, n)
+        std::arch::x86_64::_bzhi_u64(x, n)
     }
 
     #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]

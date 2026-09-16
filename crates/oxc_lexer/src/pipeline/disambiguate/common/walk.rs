@@ -24,7 +24,7 @@
 //! [`constructs`]: super::constructs
 //! [`operand`]: super::operand
 
-use core::cell::{Cell, RefCell};
+use std::cell::{Cell, RefCell};
 
 use crate::{
     opmap::OP_KIND_BASE,

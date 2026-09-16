@@ -1,4 +1,4 @@
-use core::{ptr, slice};
+use std::{ptr, slice};
 
 use crate::{
     error::diag_code,
@@ -350,7 +350,7 @@ unsafe fn munch_walk(
 fn prefetch(p: *const u8) {
     #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
     unsafe {
-        use core::arch::x86_64;
+        use std::arch::x86_64;
         x86_64::_mm_prefetch(p as *const i8, x86_64::_MM_HINT_T0)
     }
 

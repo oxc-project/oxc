@@ -1,4 +1,4 @@
-use core::ptr;
+use std::ptr;
 
 use crate::{
     opmap::{PUNCT1, PUNCT1_NKNOWN},

@@ -8,7 +8,7 @@
     clippy::collapsible_match
 )]
 
-use core::ptr;
+use std::ptr;
 
 use crate::token::{TokenKind, tk};
 

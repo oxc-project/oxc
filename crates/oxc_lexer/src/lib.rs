@@ -20,7 +20,7 @@ pub use options::LexOptions;
 pub use pipeline::Lexer;
 pub use token::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
 
-use core::{cell::RefCell, mem, ptr, slice};
+use std::{cell::RefCell, mem, ptr, slice};
 
 pub const PAD: usize = 64;
 

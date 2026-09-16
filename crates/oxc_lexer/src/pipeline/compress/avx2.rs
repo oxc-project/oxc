@@ -1,4 +1,4 @@
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
 use oxc_span::Span;
 
