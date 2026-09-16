@@ -632,9 +632,11 @@ impl<'a> PeepholeOptimizations {
 
                     if let Statement::BlockStatement(block) = &mut if_stmt.consequent {
                         ctx.drop_statement(&block.body.pop().unwrap());
-
+                        // after removal check if there is one remaining stmt and if it requires block
+                        // IfStatement is excluded as we would add it afterward in `try_minimize_if`
                         if block.body.len() == 1
-                            && matches!(&block.body[0], Statement::ExpressionStatement(_))
+                            && !matches!(&block.body[0], Statement::IfStatement(_))
+                            && !Self::statement_cares_about_scope(&block.body[0])
                         {
                             let new_stmt = block.body.remove(0);
                             ctx.replace_statement(&mut if_stmt.consequent, new_stmt);
