@@ -84,9 +84,6 @@ impl Generator for AstBuilderGenerator {
             //! monomorphized over the [`AstBuild`] type (of which there are few), rather than over every
             //! [`GetAstBuilder`] type the method is called with (of which there may be many).
 
-            //!@@line_break
-            #![expect(clippy::default_trait_access)]
-
             ///@@line_break
             use std::cell::Cell;
 
@@ -409,7 +406,15 @@ fn get_struct_fn_params_and_fields(
                 return Some(&param.fn_param);
             }
 
-            fields.push(quote!( #param_ident: Default::default() ));
+            // ID cells (`Cell<Option<ScopeId>>` etc.) are assigned by the builder,
+            // so it can count scopes, symbols, and references.
+            let value = match param.field.type_def(schema).innermost_type(schema).name() {
+                "ScopeId" => quote!(Cell::new(builder.scope_id())),
+                "SymbolId" => quote!(Cell::new(builder.symbol_id())),
+                "ReferenceId" => quote!(Cell::new(builder.reference_id())),
+                _ => quote!(Default::default()),
+            };
+            fields.push(quote!( #param_ident: #value ));
             return None;
         }
 
