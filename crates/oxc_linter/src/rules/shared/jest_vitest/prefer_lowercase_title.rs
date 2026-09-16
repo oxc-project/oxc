@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSChar, JSStr};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -13,7 +13,9 @@ use crate::{
     },
 };
 
-fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
+fn prefer_lowercase_title_diagnostic(title: JSStr<'_>, span: Span) -> OxcDiagnostic {
+    // `JSStr` Debug quotes and escapes like `str` Debug, so UTF-8 titles read
+    // as before and a lone surrogate shows as `\ud800`.
     OxcDiagnostic::warn("Enforce lowercase test names")
         .with_help(format!("`{title:?}`s should begin with lowercase"))
         .with_label(span)
@@ -186,28 +188,25 @@ impl PreferLowercaseTitleConfig {
         };
 
         if let Argument::StringLiteral(string_expr) = arg {
-            if let Some(value) = string_expr.value.as_str() {
-                self.lint_string(ctx, value, string_expr.span);
-            }
+            self.lint_string(ctx, string_expr.value, string_expr.span);
         } else if let Argument::TemplateLiteral(template_expr) = arg {
             let Some(template_string) = template_expr.single_quasi() else {
                 return;
             };
-            if let Some(value) = template_string.as_str() {
-                self.lint_string(ctx, value, template_expr.span);
-            }
+            self.lint_string(ctx, template_string, template_expr.span);
         }
     }
 
-    fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
-        if literal.is_empty()
-            || self.allowed_prefixes.iter().any(|name| literal.starts_with(name.as_str()))
+    fn lint_string<'a>(&self, ctx: &LintContext<'a>, title: JSStr<'a>, span: Span) {
+        if title.is_empty()
+            || self.allowed_prefixes.iter().any(|name| title.starts_with(name.as_str()))
         {
             return;
         }
 
         if self.lowercase_first_character_only {
-            let Some(first_char) = literal.chars().next() else {
+            // A lone surrogate has no case, so a title starting with one is fine.
+            let Some(first_char) = title.chars().next().and_then(JSChar::to_char) else {
                 return;
             };
 
@@ -215,9 +214,16 @@ impl PreferLowercaseTitleConfig {
             if first_char == lower {
                 return;
             }
-        } else if !literal.bytes().any(|b| b.is_ascii_uppercase()) {
+        } else if !title.contains(|c: char| c.is_ascii_uppercase()) {
             return;
         }
+
+        // The fix rewrites the title as UTF-8 source text, which cannot hold
+        // a lone surrogate. Still report the title.
+        let Some(literal) = title.as_str() else {
+            ctx.diagnostic(prefer_lowercase_title_diagnostic(title, span));
+            return;
+        };
 
         let replacement = if self.lowercase_first_character_only {
             cow_utils::CowUtils::cow_to_ascii_lowercase(&literal.chars().as_str()[0..1])
@@ -228,7 +234,7 @@ impl PreferLowercaseTitleConfig {
         #[expect(clippy::cast_possible_truncation)]
         let replacement_len = replacement.len() as u32;
 
-        ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
+        ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(title, span), |fixer| {
             fixer.replace(Span::sized(span.start + 1, replacement_len), replacement.into_owned())
         });
     }

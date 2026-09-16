@@ -610,3 +610,31 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Replace your title with a string
+
+  ⚠ jest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:6]
+ 1 │ test(' \uD800 ', () => {});
+   ·      ──────────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ jest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:10]
+ 1 │ describe(`\uDC00 `, () => {});
+   ·          ─────────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ jest(valid-title): Should not have duplicate prefix
+   ╭─[valid_title.tsx:1:6]
+ 1 │ test('test \uD800', () => {});
+   ·      ─────────────
+   ╰────
+  help: The function name already has the prefix, try to remove the duplicate prefix
+
+  ⚠ jest(valid-title): Should not have duplicate prefix
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it('it \uD800 foo', () => {});
+   ·    ───────────────
+   ╰────
+  help: The function name already has the prefix, try to remove the duplicate prefix
