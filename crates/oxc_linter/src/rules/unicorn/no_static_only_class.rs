@@ -1,4 +1,6 @@
-use oxc_ast::{AstKind, ast::ClassElement};
+use std::borrow::Cow;
+
+use oxc_ast::{AstKind, StaticPropertyName, ast::ClassElement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -139,8 +141,14 @@ impl Rule for NoStaticOnlyClass {
                         let name = if v.computed {
                             format!("[{}]", ctx.source_range(key.span()))
                         } else {
-                            let Some(name) = key.static_name() else { return fixer.noop() };
-                            name.to_string()
+                            let name = key
+                                .static_name()
+                                .and_then(StaticPropertyName::into_cow_str)
+                                .map(Cow::into_owned);
+                            let Some(name) = name else {
+                                return fixer.noop();
+                            };
+                            name
                         };
 
                         // we need to check is there have a trailing semicolon
@@ -171,8 +179,14 @@ impl Rule for NoStaticOnlyClass {
                         let name = if v.computed {
                             format!("[{}]", ctx.source_range(key.span()))
                         } else {
-                            let Some(name) = key.static_name() else { return fixer.noop() };
-                            name.to_string()
+                            let name = key
+                                .static_name()
+                                .and_then(StaticPropertyName::into_cow_str)
+                                .map(Cow::into_owned);
+                            let Some(name) = name else {
+                                return fixer.noop();
+                            };
+                            name
                         };
                         let value_str = if value.is_none() {
                             "undefined"
