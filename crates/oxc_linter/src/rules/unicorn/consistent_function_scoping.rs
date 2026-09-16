@@ -441,8 +441,11 @@ fn private_reference_scopes(ctx: &LintContext) -> FxHashMap<NodeId, ScopeId> {
     for (class_id, &node_id) in ctx.classes().iter_enumerated() {
         let AstKind::Class(class) = ctx.nodes().kind(node_id) else { continue };
         for element in &ctx.classes().elements[class_id] {
-            if element.is_private {
-                private_definitions.insert((class_id, element.name.as_ref()), class.scope_id());
+            // Private names are identifiers, so they always convert.
+            if element.is_private
+                && let Some(name) = element.name.as_str()
+            {
+                private_definitions.insert((class_id, name), class.scope_id());
             }
         }
     }
