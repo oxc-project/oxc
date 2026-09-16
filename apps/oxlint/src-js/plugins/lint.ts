@@ -43,6 +43,8 @@ const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
  * Register a buffer received from Rust, or get the already-registered buffer with this ID.
  *
  * Rust sends each buffer over only once. Later it sends only the `bufferId`.
+ * Buffer IDs are unique within one `AllocatorPool`. The linter's pool and `RuleTester`'s pool
+ * both number from 0, so one JS realm must not use both.
  *
  * @param bufferId - ID of buffer
  * @param buffer - Buffer, or `null` if buffer with this ID was previously sent to JS
@@ -154,6 +156,7 @@ export function lintFileImpl(
   // if there's an error.
   // TODO: Is this enough to guarantee soundness?
   buffer = registerBuffer(bufferId, buffer);
+  typeAssertIs<BufferWithArrays>(buffer);
 
   // Debug asserts that input is valid
   debugAssert(

@@ -12,15 +12,15 @@ use oxc_napi::get_source_type;
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
 use oxc_semantic::SemanticBuilder;
 
-use super::external_linter::get_buffer;
+use crate::generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE};
 
 thread_local! {
     /// Pool holding the single fixed-size `Allocator` that `parse_raw_sync` parses into.
     ///
-    /// Rust owns the buffer, and shares it with JS via `get_buffer`, the same as the linter does
-    /// for JS plugins. JS never allocates or writes the buffer itself. This avoids the 6 GiB
-    /// `ArrayBuffer` JS would otherwise need to obtain a 4 GiB-aligned 2 GiB region, which Bun
-    /// (4 GiB `ArrayBuffer` limit) cannot provide, and lets Windows commit the block lazily.
+    /// Rust owns the buffer for the life of the thread, and JS reads it through views obtained
+    /// from `get_raw_transfer_buffer`. JS never allocates or writes the buffer itself. This avoids
+    /// the 6 GiB `ArrayBuffer` JS would otherwise need to obtain a 4 GiB-aligned 2 GiB region,
+    /// which Bun (4 GiB `ArrayBuffer` limit) cannot provide, and lets Windows commit the block lazily.
     ///
     /// Thread-local because `Allocator` is not `Sync`, and test runners may execute `RuleTester`
     /// on several threads, each with its own JS realm and its own `buffers` array.
@@ -49,13 +49,34 @@ pub struct ParserOptions {
     pub ignore_non_fatal_errors: Option<bool>,
 }
 
-/// Return value of [`parse_raw_sync`].
-#[napi(object)]
-pub struct ParseRawReturn {
-    /// ID of the buffer the AST was written into
-    pub buffer_id: u32,
-    /// The buffer, if it has not previously been sent to JS. `undefined` if JS already holds it.
-    pub buffer: Option<Uint8Array>,
+/// Get a `Uint8Array` view of this thread's raw transfer buffer.
+///
+/// The view covers the allocatable region plus `RawTransferMetadata`, the same region the linter
+/// shares with JS plugins. JS must only read from it.
+///
+/// Rust keeps ownership of the memory: the view has no finalizer, and the block is freed when
+/// the thread's `ALLOCATOR_POOL` is dropped. JS may call this more than once (a test runner that
+/// resets its module registry obtains a fresh view of the same memory).
+#[napi]
+pub fn get_raw_transfer_buffer() -> Uint8Array {
+    ALLOCATOR_POOL.with(|pool| {
+        let allocator = pool.get();
+
+        // Get pointer to start of allocator chunk.
+        // SAFETY: Fixed-size allocators have their chunk aligned on `BLOCK_ALIGN`, and size less than `BLOCK_ALIGN`.
+        // So we can get pointer to start of `Allocator` chunk by rounding down to next multiple of `BLOCK_ALIGN`.
+        // That can't go out of bounds of the backing allocation.
+        let chunk_ptr = unsafe {
+            let ptr = allocator.fixed_size_metadata_ptr().cast::<u8>();
+            let offset = ptr.addr().get() % BLOCK_ALIGN;
+            ptr.sub(offset)
+        };
+
+        // SAFETY: Range of memory starting at `chunk_ptr` and encompassing `BUFFER_SIZE` is all within
+        // the allocation backing the `Allocator`, which lives as long as `ALLOCATOR_POOL`.
+        // JS side does not mutate the data in the buffer. The no-op finalizer leaves ownership with Rust.
+        unsafe { Uint8Array::with_external_data(chunk_ptr.as_ptr(), BUFFER_SIZE, |_ptr, _len| {}) }
+    })
 }
 
 /// Parse source text into this thread's raw transfer buffer, synchronously.
@@ -63,9 +84,11 @@ pub struct ParseRawReturn {
 /// The source text is copied into the buffer, and the AST is written after it.
 /// The offset of `Program` within the buffer is written into the buffer's `RawTransferMetadata` slot.
 ///
-/// Caller can deserialize data from the buffer on JS side.
+/// Caller can deserialize data from the buffer on JS side, via the view from `get_raw_transfer_buffer`.
 ///
 /// The buffer's contents remain valid until the next call to `parse_raw_sync` on the same thread.
+///
+/// Returns the ID of the buffer the AST was written into.
 ///
 /// # Panics
 ///
@@ -76,20 +99,19 @@ pub fn parse_raw_sync(
     filename: String,
     source_text: String,
     options: Option<ParserOptions>,
-) -> ParseRawReturn {
+) -> u32 {
     ALLOCATOR_POOL.with(|pool| {
         let allocator = pool.get();
         parse_raw_impl(&filename, &allocator, &source_text, options);
-        // SAFETY: `allocator` was obtained from a fixed-size `AllocatorPool`
-        let (buffer_id, buffer) = unsafe { get_buffer(&allocator) };
-        ParseRawReturn { buffer_id, buffer }
+        // SAFETY: `allocator` was obtained from a fixed-size `AllocatorPool`, so it has a
+        // `FixedSizeAllocatorMetadata`. Only an immutable reference is created.
+        unsafe { allocator.fixed_size_metadata_ptr().as_ref().id }
     })
 }
 
 /// Parse source text into `allocator`, and write `RawTransferMetadata` into its metadata slot.
 ///
 /// `allocator` must have been obtained from a fixed-size `AllocatorPool`.
-#[allow(clippy::items_after_statements, clippy::allow_attributes)]
 fn parse_raw_impl(
     filename: &str,
     allocator: &Allocator,
@@ -200,7 +222,6 @@ fn parse_raw_impl(
 
     // Write metadata into the buffer's `RawTransferMetadata` slot, which sits immediately before
     // `FixedSizeAllocatorMetadata` at the end of the buffer. Same as the linter does for JS plugins.
-    #[allow(clippy::cast_possible_truncation)]
     let metadata = RawTransferMetadata::new(
         program_offset,
         source_type.is_typescript(),

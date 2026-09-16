@@ -53,6 +53,18 @@ export declare const enum Severity {
  */
 export declare function applyFixes(sourceText: string, fixesJson: string): string | null
 
+/**
+ * Get a `Uint8Array` view of this thread's raw transfer buffer.
+ *
+ * The view covers the allocatable region plus `RawTransferMetadata`, the same region the linter
+ * shares with JS plugins. JS must only read from it.
+ *
+ * Rust keeps ownership of the memory: the view has no finalizer, and the block is freed when
+ * the thread's `ALLOCATOR_POOL` is dropped. JS may call this more than once (a test runner that
+ * resets its module registry obtains a fresh view of the same memory).
+ */
+export declare function getRawTransferBuffer(): Uint8Array
+
 /** JS callback to create a workspace. */
 export type JsCreateWorkspaceCb = ((arg: string) => Promise<undefined>)
 
@@ -87,29 +99,23 @@ export type JsSetupRuleConfigsCb = ((arg: string) => string | null)
  */
 export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb): Promise<boolean>
 
-/** Return value of [`parse_raw_sync`]. */
-export interface ParseRawReturn {
-  /** ID of the buffer the AST was written into */
-  bufferId: number
-  /** The buffer, if it has not previously been sent to JS. `undefined` if JS already holds it. */
-  buffer?: Uint8Array
-}
-
 /**
  * Parse source text into this thread's raw transfer buffer, synchronously.
  *
  * The source text is copied into the buffer, and the AST is written after it.
  * The offset of `Program` within the buffer is written into the buffer's `RawTransferMetadata` slot.
  *
- * Caller can deserialize data from the buffer on JS side.
+ * Caller can deserialize data from the buffer on JS side, via the view from `get_raw_transfer_buffer`.
  *
  * The buffer's contents remain valid until the next call to `parse_raw_sync` on the same thread.
+ *
+ * Returns the ID of the buffer the AST was written into.
  *
  * # Panics
  *
  * Panics if source text and AST take more memory than is available in the buffer.
  */
-export declare function parseRawSync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): ParseRawReturn
+export declare function parseRawSync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): number
 
 export interface ParserOptions {
   /** Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`. */

@@ -30,10 +30,9 @@ function parse(filename: string, sourceText: string, options?: ParseOptions): Pr
   setupFileContext(path);
 
   // Parse source, writing source text and AST into buffer
-  parseRaw(path, sourceText, options);
+  const bufferId = parseRaw(path, sourceText, options);
 
-  // Set buffer (`parseRaw` adds buffer containing AST to `buffers` at index 0)
-  const buffer = buffers[0];
+  const buffer = buffers[bufferId];
   debugAssertIsNonNull(buffer);
   setupSourceForFile(buffer, /* hasBOM */ false);
 

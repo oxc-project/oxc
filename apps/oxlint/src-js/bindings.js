@@ -716,9 +716,10 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { Severity, applyFixes, lint, parseRawSync, rawTransferSupported } = nativeBinding
+const { Severity, applyFixes, getRawTransferBuffer, lint, parseRawSync, rawTransferSupported } = nativeBinding
 export { Severity }
 export { applyFixes }
+export { getRawTransferBuffer }
 export { lint }
 export { parseRawSync }
 export { rawTransferSupported }
