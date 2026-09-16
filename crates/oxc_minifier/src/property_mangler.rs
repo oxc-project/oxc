@@ -14,7 +14,7 @@ use oxc_ast_visit::{Visit, VisitMut, walk, walk_mut};
 use oxc_ecmascript::StringToNumber;
 use oxc_mangler::base54;
 use oxc_span::Span;
-use oxc_str::{ArenaIdentHashMap, ArenaIdentHashSet, CompactStr, Ident, Str, format_ident};
+use oxc_str::{ArenaIdentHashMap, ArenaIdentHashSet, CompactStr, Ident, JSStr, Str, format_ident};
 use oxc_syntax::{identifier::is_identifier_name, number::ToJsString};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -291,7 +291,7 @@ impl<'o, 'a> PropertyCollector<'o, 'a> {
                 if template.expressions.is_empty() && self.special_literal(template.span) => {}
             Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
                 if let [quasi] = template.quasis.as_slice()
-                    && let Some(cooked) = quasi.value.cooked.and_then(oxc_str::JSStr::as_str)
+                    && let Some(cooked) = quasi.value.cooked.and_then(JSStr::as_str)
                 {
                     self.quoted(Ident::from(cooked));
                 }
@@ -401,7 +401,7 @@ impl<'a> Visit<'a> for PropertyCollector<'_, 'a> {
     fn visit_template_literal(&mut self, template: &TemplateLiteral<'a>) {
         if template.expressions.is_empty()
             && let [quasi] = template.quasis.as_slice()
-            && let Some(cooked) = quasi.value.cooked.and_then(oxc_str::JSStr::as_str)
+            && let Some(cooked) = quasi.value.cooked.and_then(JSStr::as_str)
         {
             self.observe_literal(template.span, Ident::from(cooked));
         }
@@ -534,7 +534,7 @@ impl<'a, 'p> PropertyRewriter<'a, '_, 'p> {
             return;
         }
         if let [quasi] = template.quasis.as_mut_slice()
-            && let Some(cooked) = quasi.value.cooked.and_then(oxc_str::JSStr::as_str)
+            && let Some(cooked) = quasi.value.cooked.and_then(JSStr::as_str)
             && let Some(target) = self.target(Ident::from(cooked))
         {
             let target = Str::from_str_in(target.as_str(), &self.ast);

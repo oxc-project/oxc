@@ -18,6 +18,7 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan as _, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -422,14 +423,7 @@ impl JsxCurlyBracePresence {
             }
             JSXAttributeValue::StringLiteral(string) => {
                 if self.props.is_always() {
-                    report_missing_curly_for_string_attribute_value(
-                        ctx,
-                        string.span,
-                        string
-                            .value
-                            .as_str()
-                            .unwrap_or_else(|| ctx.source_range(string.span.shrink(1))),
-                    );
+                    report_missing_curly_for_string_attribute_value(ctx, string.span, string.value);
                 }
             }
         }
@@ -488,7 +482,7 @@ impl JsxCurlyBracePresence {
             Expression::TemplateLiteral(template)
                 if allowed.is_never() && template.is_no_substitution_template() =>
             {
-                let Some(string) = template.single_quasi().and_then(oxc_str::JSStr::as_str) else {
+                let Some(string) = template.single_quasi().and_then(JSStr::as_str) else {
                     return;
                 };
                 if !parent_is_attribute && contains_quote_characters(string)
@@ -591,8 +585,7 @@ fn report_unnecessary_curly<'a>(
         match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => {
                 let mut fix = fixer.codegen();
-                let Some(value) = template_lit.single_quasi().and_then(oxc_str::JSStr::as_str)
-                else {
+                let Some(value) = template_lit.single_quasi().and_then(JSStr::as_str) else {
                     return fixer.noop();
                 };
                 fix.print_str(value);
@@ -662,9 +655,12 @@ fn report_missing_curly_for_expression(ctx: &LintContext, span: Span) {
 fn report_missing_curly_for_string_attribute_value(
     ctx: &LintContext,
     span: Span,
-    string_value: &str,
+    string_value: JSStr<'_>,
 ) {
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_necessary_diagnostic(span), |fixer| {
+        let Some(string_value) = string_value.as_str() else {
+            return fixer.noop();
+        };
         let mut replace = fixer.codegen().with_options(CodegenOptions::default());
 
         replace.print_string(string_value);

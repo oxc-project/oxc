@@ -15,7 +15,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 
 use crate::{
     AstNode,
@@ -418,7 +418,7 @@ fn expression_property_name<'a>(expression: &'a Expression<'a>) -> Option<Cow<'a
         }
         Expression::NullLiteral(_) => Some(Cow::Borrowed("null")),
         Expression::TemplateLiteral(literal) if literal.quasis.len() == 1 => {
-            literal.quasis[0].value.cooked.and_then(oxc_str::JSStr::as_str).map(Cow::Borrowed)
+            literal.quasis[0].value.cooked.and_then(JSStr::as_str).map(Cow::Borrowed)
         }
         _ => None,
     }

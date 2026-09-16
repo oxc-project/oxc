@@ -106,6 +106,8 @@ trait EscapeTable {
 }
 
 /// Escape table for standard strings (`impl ESTree for str`).
+// Retain the escape-table structure during the JSStr migration; removing its
+// single-implementation abstraction is a separate serializer cleanup.
 struct StandardEscapeTable;
 
 impl EscapeTable for StandardEscapeTable {

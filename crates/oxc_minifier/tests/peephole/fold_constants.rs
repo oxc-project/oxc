@@ -1489,6 +1489,14 @@ fn test_inline_values_in_template_literal() {
     fold_same("foo`foo${1}bar`");
 }
 
+#[test]
+fn template_concatenation_preserves_surrogates() {
+    fold(r"`${a}\uD800` + `\uDC00${b}`", r"`${a}\uD800\uDC00${b}`");
+    fold(r"`${a}\uD800` + 'x'", r"`${a}\uD800x`");
+    fold(r"'x' + `\uDC00${a}`", r"`x\uDC00${a}`");
+    fold(r"`\uD800${'x'}\uDC00${a}`", r"`\uD800x\uDC00${a}`");
+}
+
 // Regression: when `fold_object_exp` drops or folds a spread, the dropped
 // subtree must be walked through `drop_expression` so identifier references
 // inside don't leak across passes. The discriminating signal is an
