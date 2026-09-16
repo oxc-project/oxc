@@ -377,7 +377,9 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         let Some(id) = prop else {
             return false;
         };
-        if let Some(Cow::Borrowed(name)) = id.static_name() {
+        if let Some(Cow::Borrowed(name)) =
+            id.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+        {
             self.target_symbol =
                 Some(TargetSymbol { span: id.span(), name, kind: TargetSymbolKind::Property });
             true
@@ -478,7 +480,9 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             let ClassElement::MethodDefinition(method) = element else {
                 continue;
             };
-            let Some(method_name) = method.key.static_name() else {
+            let Some(method_name) =
+                method.key.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+            else {
                 continue;
             };
             if method.value.is_typescript_syntax() {
@@ -493,7 +497,9 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             if method.value.is_typescript_syntax() {
                 continue;
             }
-            let Some(method_name) = method.key.static_name() else {
+            let Some(method_name) =
+                method.key.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+            else {
                 continue;
             };
             if overload_keys.contains(&(method.r#static, CompactStr::from(method_name.as_ref()))) {
@@ -723,7 +729,10 @@ impl<'a> VisitJs<'a> for ExplicitTypesChecker<'a, '_> {
         {
             return;
         }
-        if self.rule.is_some_allowed_name(el.static_name()) {
+        if self
+            .rule
+            .is_some_allowed_name(el.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8))
+        {
             return;
         }
 

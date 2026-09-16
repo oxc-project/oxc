@@ -45,7 +45,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-display-name/src/index.ts>
 
-use oxc_ast::ast::*;
+use oxc_ast::{StaticPropertyName, ast::*};
 use oxc_span::SPAN;
 use oxc_str::{Ident, JSStr, static_ident};
 use oxc_traverse::{Ancestor, Traverse};
@@ -107,10 +107,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                     // Babel only handles static identifiers e.g. `{foo: React.createClass({})}`,
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
-                    if let Some(name) = prop.key().static_name() {
-                        break JSStr::from_str_in(&name, ctx);
+                    match prop.key().static_name() {
+                        Some(StaticPropertyName::Borrowed(name)) => break name,
+                        Some(StaticPropertyName::Owned(name)) => {
+                            break JSStr::from_str_in(&name, ctx);
+                        }
+                        None => return,
                     }
-                    return;
                 }
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.

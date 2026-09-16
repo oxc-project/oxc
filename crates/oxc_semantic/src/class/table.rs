@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use oxc_ast::StaticPropertyName;
 
 use rustc_hash::FxHashMap;
 
@@ -12,7 +12,7 @@ use oxc_syntax::{
 
 #[derive(Debug)]
 pub struct Element<'a> {
-    pub name: Cow<'a, str>,
+    pub name: StaticPropertyName<'a>,
     pub span: Span,
     pub is_private: bool,
     pub r#static: bool,
@@ -21,7 +21,7 @@ pub struct Element<'a> {
 
 impl<'a> Element<'a> {
     pub fn new(
-        name: Cow<'a, str>,
+        name: StaticPropertyName<'a>,
         span: Span,
         r#static: bool,
         is_private: bool,
@@ -88,7 +88,7 @@ impl<'a> ClassTable<'a> {
     ) -> Vec<ElementId> {
         let mut element_ids = vec![];
         for (element_id, element) in self.elements[class_id].iter_enumerated() {
-            if element.name == name && element.is_private == is_private {
+            if element.name == name.as_str() && element.is_private == is_private {
                 element_ids.push(element_id);
 
                 // Property or Accessor only has 1 element
@@ -107,7 +107,7 @@ impl<'a> ClassTable<'a> {
     }
 
     pub fn has_private_definition(&self, class_id: ClassId, name: Ident<'_>) -> bool {
-        self.elements[class_id].iter().any(|p| p.is_private && p.name == name)
+        self.elements[class_id].iter().any(|p| p.is_private && p.name == name.as_str())
     }
 
     pub fn declare_class(&mut self, parent_id: Option<ClassId>, node_id: NodeId) -> ClassId {

@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::ClassElement};
+use oxc_ast::{AstKind, StaticPropertyName, ast::ClassElement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -139,8 +139,13 @@ impl Rule for NoStaticOnlyClass {
                         let name = if v.computed {
                             format!("[{}]", ctx.source_range(key.span()))
                         } else {
-                            let Some(name) = key.static_name() else { return fixer.noop() };
-                            name.to_string()
+                            // Decline the fix when the key has no UTF-8 spelling.
+                            let Some(name) =
+                                key.static_name().and_then(StaticPropertyName::into_utf8)
+                            else {
+                                return fixer.noop();
+                            };
+                            name.into_owned()
                         };
 
                         // we need to check is there have a trailing semicolon
@@ -171,8 +176,13 @@ impl Rule for NoStaticOnlyClass {
                         let name = if v.computed {
                             format!("[{}]", ctx.source_range(key.span()))
                         } else {
-                            let Some(name) = key.static_name() else { return fixer.noop() };
-                            name.to_string()
+                            // Decline the fix when the key has no UTF-8 spelling.
+                            let Some(name) =
+                                key.static_name().and_then(StaticPropertyName::into_utf8)
+                            else {
+                                return fixer.noop();
+                            };
+                            name.into_owned()
                         };
                         let value_str = if value.is_none() {
                             "undefined"
