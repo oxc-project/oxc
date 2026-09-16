@@ -1,3 +1,5 @@
+use std::ptr;
+
 use crate::{opmap::KwSet, token::tk};
 
 pub const KWB: usize = 64;
@@ -40,7 +42,7 @@ unsafe fn kw_verify_batch<const TS_KEY: bool>(
     let wb = word as *const u8;
     for ix in 0..k {
         let p = *pos.add(ix) as usize;
-        let x = core::ptr::read_unaligned(wb.add(p >> 3) as *const u64) >> (p & 7);
+        let x = ptr::read_unaligned(wb.add(p >> 3) as *const u64) >> (p & 7);
         let len = (!x).trailing_zeros() as usize;
         if len > 8 {
             let kk = kw.lookup(src.add(p), len);
@@ -49,7 +51,7 @@ unsafe fn kw_verify_batch<const TS_KEY: bool>(
             }
             continue;
         }
-        let w8 = core::ptr::read_unaligned(src.add(p) as *const u64);
+        let w8 = ptr::read_unaligned(src.add(p) as *const u64);
         let z = bzhi(w8, (len << 3) as u32);
         let key = if TS_KEY {
             // Last char comes off the bzhi'd word: bits above len*8 are
@@ -71,7 +73,7 @@ unsafe fn kw_verify_batch<const TS_KEY: bool>(
 fn bzhi(x: u64, n: u32) -> u64 {
     #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
     unsafe {
-        core::arch::x86_64::_bzhi_u64(x, n)
+        std::arch::x86_64::_bzhi_u64(x, n)
     }
 
     #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]

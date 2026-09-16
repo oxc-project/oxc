@@ -1,4 +1,4 @@
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
 use crate::{
     tables::{PH_A, PH_B, PH_T0, PH_T1, Tables},

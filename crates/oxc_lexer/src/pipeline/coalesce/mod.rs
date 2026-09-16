@@ -1,3 +1,5 @@
+use std::{ptr, slice};
+
 use crate::{
     error::diag_code,
     lanes::Lanes,
@@ -124,7 +126,7 @@ pub unsafe fn coalesce(
             } else {
                 let y2 = (op >> bit) | ((opnext << (63 - bit)) << 1);
                 let run = (!y2).trailing_zeros() as usize;
-                let q = core::ptr::read_unaligned(src.add(p) as *const u32);
+                let q = ptr::read_unaligned(src.add(p) as *const u32);
                 let b0 = q as u8;
                 let b1 = (q >> 8) as u8;
                 // In TS, `>` may close nested type args including `Foo<T>= 1`, so fusing can diverge.
@@ -236,7 +238,7 @@ unsafe fn glue_number(
         // is a spec-invalid adjacency. Never true on valid input, so the
         // whole arm is cold.
         if is_word(c) {
-            let srcs = core::slice::from_raw_parts(src, n);
+            let srcs = slice::from_raw_parts(src, n);
             if c < 0x80 {
                 // A surviving `n` is a misplaced bigint suffix; scan_number
                 // consumes legal ones. Token spans are unchanged either way.
@@ -259,7 +261,7 @@ unsafe fn glue_number(
                 // ending in `.` is that dot-run's first dot).
                 if *src.add(e2 - 1) != b'.' {
                     let wb = word as *const u8;
-                    let x = core::ptr::read_unaligned(wb.add(e2 >> 3) as *const u64) >> (e2 & 7);
+                    let x = ptr::read_unaligned(wb.add(e2 >> 3) as *const u64) >> (e2 & 7);
                     let kk = kw.lookup(src.add(e2), (!x).trailing_zeros() as usize);
                     if kk != 0 {
                         *kind.add(e2) = kk as u8;
@@ -348,7 +350,8 @@ unsafe fn munch_walk(
 fn prefetch(p: *const u8) {
     #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
     unsafe {
-        core::arch::x86_64::_mm_prefetch(p as *const i8, core::arch::x86_64::_MM_HINT_T0)
+        use std::arch::x86_64;
+        x86_64::_mm_prefetch(p as *const i8, x86_64::_MM_HINT_T0)
     }
 
     #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]

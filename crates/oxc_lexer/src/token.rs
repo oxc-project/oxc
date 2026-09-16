@@ -1,3 +1,8 @@
+use std::{
+    fmt::{self, Display},
+    mem, slice,
+};
+
 macro_rules! define_token_kind {
     ($( $variant:ident = $value:literal => $name:literal ),+ $(,)?) => {
         /// A lexed token kind.
@@ -270,7 +275,7 @@ impl TokenKind {
         self as u8
     }
 
-    /// # Safety
+    /// # SAFETY
     ///
     /// `byte` must be a declared discriminant, i.e. `TokenKind::from_u8(byte).is_some()`.
     #[inline]
@@ -279,7 +284,7 @@ impl TokenKind {
         debug_assert!(Self::from_u8(byte).is_some(), "not a declared TokenKind discriminant");
         // SAFETY: the caller guarantees `byte` is a declared discriminant, and
         // `TokenKind` is `#[repr(u8)]`, so it shares `u8`'s layout.
-        unsafe { core::mem::transmute::<u8, Self>(byte) }
+        unsafe { mem::transmute::<u8, Self>(byte) }
     }
 
     #[inline]
@@ -352,15 +357,15 @@ impl TokenKind {
     }
 }
 
-impl core::fmt::Display for TokenKind {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
 
 /// Reinterpret raw kind bytes written by the pipeline as [`TokenKind`]s.
 ///
-/// # Safety
+/// # SAFETY
 ///
 /// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
 /// pipeline only ever writes kinds that came from [`crate::opmap`]'s tables or
@@ -371,7 +376,7 @@ pub(crate) const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
     // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and
     // alignment as `u8`, and the caller guarantees every byte is a declared
     // discriminant.
-    unsafe { core::slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
+    unsafe { slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
 }
 
 #[inline]

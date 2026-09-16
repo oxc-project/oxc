@@ -1,3 +1,5 @@
+use std::ptr;
+
 use crate::{
     opmap::{PUNCT1, PUNCT1_NKNOWN},
     tables::{Tables, is_digit, is_kw_init, is_kw_init_ts, is_op_char, is_word, is_ws},
@@ -95,7 +97,7 @@ pub unsafe fn classify(
                 kw |= (v & 0xff) << (j * 8);
                 j += 1;
             }
-            core::ptr::write_unaligned(kind.add(p) as *mut u64, kw);
+            ptr::write_unaligned(kind.add(p) as *mut u64, kw);
             let sh = (g * 8) as u32;
             mw |= pk(fw, FL_WORD) << sh;
             ms |= pk(fw, FL_WS) << sh;
