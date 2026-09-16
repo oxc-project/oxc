@@ -14,7 +14,7 @@ use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
     ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-    LintFileFailure, LintFileOutput, LintFileResult, LoadPluginResult,
+    LintFileFailure, LintFileOutput, LoadPluginResult,
 };
 
 use crate::{
@@ -141,10 +141,8 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
 /// Result returned by `lintFile` JS callback.
 #[derive(Clone, Debug, Deserialize)]
 pub enum LintFileReturnValue {
-    Success(Vec<LintFileResult>),
-    Failure(String),
-    SuccessWithTimings(LintFileOutput),
-    FailureWithTimings(LintFileFailure),
+    Success(LintFileOutput),
+    Failure(LintFileFailure),
 }
 
 /// Wrap `lintFile` JS callback as a normal Rust function.
@@ -208,13 +206,9 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                     Ok(Ok(Some(json))) => {
                         match serde_json::from_str(&json) {
                             // Linting succeeded
-                            Ok(LintFileReturnValue::Success(diagnostics)) => {
-                                Ok(LintFileOutput { diagnostics, ..LintFileOutput::default() })
-                            }
-                            Ok(LintFileReturnValue::SuccessWithTimings(output)) => Ok(output),
+                            Ok(LintFileReturnValue::Success(output)) => Ok(output),
                             // Error occurred on JS side
-                            Ok(LintFileReturnValue::Failure(message)) => Err(message.into()),
-                            Ok(LintFileReturnValue::FailureWithTimings(failure)) => Err(failure),
+                            Ok(LintFileReturnValue::Failure(failure)) => Err(failure),
                             // JSON deserialization failure.
                             // Possible if rule produces fixes/suggestions with out of range offsets.
                             Err(err) => Err(format!(

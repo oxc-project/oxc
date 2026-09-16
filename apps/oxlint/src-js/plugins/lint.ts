@@ -88,12 +88,12 @@ export function lintFile(
 
     if (timings !== null) {
       const runtimeMs = performance.now() - start;
-      ret = JSON.stringify({ SuccessWithTimings: { diagnostics, timings, runtimeMs } });
+      ret = JSON.stringify({ Success: { diagnostics, timings: { rules: timings, runtimeMs } } });
     } else if (diagnostics.length !== 0) {
       // Avoid JSON serialization in common case that there are no diagnostics to report
       // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side, but we assume it's cheaper to leave it
       // in place and let `serde` skip over it on Rust side, than to iterate over all diagnostics and remove it here.
-      ret = JSON.stringify({ Success: diagnostics });
+      ret = JSON.stringify({ Success: { diagnostics } });
     }
 
     // Empty `diagnostics` array, so it starts empty when linting next file
@@ -104,12 +104,10 @@ export function lintFile(
   } catch (err) {
     runAfterHooks(false);
 
-    const runtimeMs = timings === null ? 0 : performance.now() - start;
+    const timingOutput =
+      timings === null ? undefined : { rules: timings, runtimeMs: performance.now() - start };
     const message = getErrorMessage(err);
-    const failure =
-      timings === null
-        ? { Failure: message }
-        : { FailureWithTimings: { message, timings, runtimeMs } };
+    const failure = { Failure: { message, timings: timingOutput } };
 
     clearStateAfterError();
 

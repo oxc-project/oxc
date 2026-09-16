@@ -89,22 +89,27 @@ pub struct LintFileResult {
 #[serde(rename_all = "camelCase")]
 pub struct LintFileOutput {
     pub diagnostics: Vec<LintFileResult>,
-    pub timings: Vec<LintFileTiming>,
-    pub runtime_ms: Option<f64>,
+    pub timings: Option<LintFileTimings>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LintFileFailure {
     pub message: String,
-    pub timings: Vec<LintFileTiming>,
-    pub runtime_ms: Option<f64>,
+    pub timings: Option<LintFileTimings>,
 }
 
 impl From<String> for LintFileFailure {
     fn from(message: String) -> Self {
-        Self { message, timings: vec![], runtime_ms: None }
+        Self { message, timings: None }
     }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LintFileTimings {
+    pub rules: Vec<LintFileTiming>,
+    pub runtime_ms: f64,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize)]

@@ -78,8 +78,8 @@ pub use crate::{
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-        JsFix, LintFileFailure, LintFileOutput, LintFileResult, LintFileTiming, LoadPluginResult,
-        convert_and_merge_js_fixes,
+        JsFix, LintFileFailure, LintFileOutput, LintFileResult, LintFileTiming, LintFileTimings,
+        LoadPluginResult, convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Fixer, Message, PossibleFixes, oxc_code_short_canonical_name},
@@ -875,13 +875,8 @@ impl Linter {
             allocator,
         );
         match result {
-            Ok(LintFileOutput { diagnostics, timings, runtime_ms }) => {
-                self.record_external_timings(
-                    rule_timing_store,
-                    external_rules,
-                    timings,
-                    runtime_ms,
-                );
+            Ok(LintFileOutput { diagnostics, timings }) => {
+                self.record_external_timings(rule_timing_store, external_rules, timings);
 
                 for diagnostic in diagnostics {
                     // Convert UTF-16 offsets back to UTF-8.
@@ -964,13 +959,8 @@ impl Linter {
                     ));
                 }
             }
-            Err(LintFileFailure { message: error, timings, runtime_ms }) => {
-                self.record_external_timings(
-                    rule_timing_store,
-                    external_rules,
-                    timings,
-                    runtime_ms,
-                );
+            Err(LintFileFailure { message: error, timings }) => {
+                self.record_external_timings(rule_timing_store, external_rules, timings);
 
                 let message =
                     format!("Error running JS plugin.\nFile path: {path_string}\n{error}");
@@ -986,16 +976,18 @@ impl Linter {
         &self,
         rule_timing_store: Option<&RuleTimingStore>,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
-        timings: Vec<LintFileTiming>,
-        runtime_ms: Option<f64>,
+        timings: Option<LintFileTimings>,
     ) {
         let Some(rule_timing_store) = rule_timing_store else { return };
 
-        if let Some(duration) = runtime_ms.and_then(Self::duration_from_millis) {
+        let Some(timings) = timings else { return };
+
+        if let Some(duration) = Self::duration_from_millis(timings.runtime_ms) {
             rule_timing_store.record_js_plugin_runtime(duration);
         }
         rule_timing_store.merge(
             timings
+                .rules
                 .into_iter()
                 .filter_map(|timing| self.external_rule_timing_record(external_rules, timing)),
         );
