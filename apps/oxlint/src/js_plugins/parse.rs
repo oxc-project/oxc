@@ -1,4 +1,4 @@
-use std::ptr;
+use std::{ptr, sync::Mutex};
 
 use napi::bindgen_prelude::Uint8Array;
 use napi_derive::napi;
@@ -15,17 +15,48 @@ use oxc_semantic::SemanticBuilder;
 use super::external_linter::fixed_size_chunk_ptr;
 use crate::generated::raw_transfer_constants::BUFFER_SIZE;
 
+/// Fixed-size allocator pools of threads that have exited, kept for reuse by later threads.
+///
+/// A pool's block is never unmapped. Test runners that give each test file its own worker thread
+/// would otherwise map and unmap a 2 GiB block per file; more importantly, a view that JS moved
+/// off its thread (`ArrayBuffer.prototype.transfer` then `postMessage`) can never dangle.
+/// Memory is bounded by the peak number of threads that ever ran `RuleTester` at once.
+static IDLE_POOLS: Mutex<Vec<AllocatorPool>> = Mutex::new(Vec::new());
+
+/// This thread's pool. Returned to `IDLE_POOLS` when the thread exits.
+struct ThreadPool(Option<AllocatorPool>);
+
+impl ThreadPool {
+    fn take_or_create() -> Self {
+        let pool =
+            IDLE_POOLS.lock().unwrap().pop().unwrap_or_else(|| AllocatorPool::new_fixed_size(1));
+        Self(Some(pool))
+    }
+
+    fn pool(&self) -> &AllocatorPool {
+        self.0.as_ref().unwrap()
+    }
+}
+
+impl Drop for ThreadPool {
+    fn drop(&mut self) {
+        if let Some(pool) = self.0.take() {
+            IDLE_POOLS.lock().unwrap().push(pool);
+        }
+    }
+}
+
 thread_local! {
     /// Pool holding the single fixed-size `Allocator` that `parse_raw_sync` parses into.
     ///
-    /// Rust owns the buffer for the life of the thread, and JS reads it through views obtained
-    /// from `get_raw_transfer_buffer`. JS never allocates or writes the buffer itself. This avoids
-    /// the 6 GiB `ArrayBuffer` JS would otherwise need to obtain a 4 GiB-aligned 2 GiB region,
-    /// which Bun (4 GiB `ArrayBuffer` limit) cannot provide, and lets Windows commit the block lazily.
+    /// Rust owns the buffer, and JS reads it through views obtained from `get_raw_transfer_buffer`.
+    /// JS never allocates the buffer itself. This avoids the 6 GiB `ArrayBuffer` JS would otherwise
+    /// need to obtain a 4 GiB-aligned 2 GiB region, which Bun (4 GiB `ArrayBuffer` limit) cannot
+    /// provide, and lets Windows commit the block lazily.
     ///
-    /// Thread-local because `Allocator` is not `Sync`, and test runners may execute `RuleTester`
-    /// on several threads, each with its own JS realm and its own `buffers` array.
-    static ALLOCATOR_POOL: AllocatorPool = AllocatorPool::new_fixed_size(1);
+    /// Thread-local because test runners may execute `RuleTester` on several threads, each with its
+    /// own JS realm and its own `buffers` array. See `IDLE_POOLS` for what happens at thread exit.
+    static ALLOCATOR_POOL: ThreadPool = ThreadPool::take_or_create();
 }
 
 /// Sentinel value for program offset to indicate parsing failed.
@@ -54,13 +85,15 @@ pub struct ParserOptions {
 ///
 /// The view covers the allocatable region plus `RawTransferMetadata`, the same region the linter
 /// shares with JS plugins. JS reads the AST from it; the only bytes JS writes are the per-comment
-/// and per-token "deserialized" flags, which Rust rewrites on every parse.
+/// and per-token "deserialized" flags, which Rust rewrites on every parse (the comment content byte
+/// explicitly, the token bytes because every token is written afresh).
 ///
-/// Rust keeps ownership of the memory. The view has no finalizer, and the `is_double_owned` flag
-/// used by the linter's `get_buffer` is never set, so the block is freed only when the thread's
-/// `ALLOCATOR_POOL` is dropped at thread exit, after the thread's JS realm is gone. JS may call this
-/// more than once: a test runner that resets its module registry obtains a fresh view of the same
-/// memory. Callers should keep one view per module instance.
+/// Rust keeps ownership of the memory, and the block is never unmapped (see `IDLE_POOLS`), so the
+/// view has no finalizer and the `is_double_owned` flag used by the linter's `get_buffer` is never
+/// set. A view always points at mapped memory; after the next parse on its thread it reads that
+/// parse's data, the same contract as the linter's shared buffers. JS may call this more than once:
+/// a test runner that resets its module registry obtains a fresh view of the same memory. Callers
+/// should keep one view per module instance.
 ///
 /// # Panics
 ///
@@ -68,18 +101,15 @@ pub struct ParserOptions {
 /// (see `AllocatorPool::new_fixed_size`).
 #[napi]
 pub fn get_raw_transfer_buffer() -> Uint8Array {
-    ALLOCATOR_POOL.with(|pool| {
-        let allocator = pool.get();
+    ALLOCATOR_POOL.with(|thread_pool| {
+        let allocator = thread_pool.pool().get();
 
-        // SAFETY: `ALLOCATOR_POOL` is a fixed-size pool, so `allocator` has a `FixedSizeAllocatorMetadata`
-        let chunk_ptr = unsafe {
-            let metadata_ptr = allocator.fixed_size_metadata_ptr();
-            fixed_size_chunk_ptr(metadata_ptr)
-        };
+        // SAFETY: `ALLOCATOR_POOL` holds a fixed-size pool, so `allocator` has a `FixedSizeAllocatorMetadata`
+        let chunk_ptr = unsafe { fixed_size_chunk_ptr(allocator.fixed_size_metadata_ptr()) };
 
         // SAFETY: Range of memory starting at `chunk_ptr` and encompassing `BUFFER_SIZE` is all within
-        // the allocation backing the `Allocator`, which lives as long as `ALLOCATOR_POOL` (thread lifetime).
-        // The no-op finalizer leaves ownership with Rust; see doc comment above for the aliasing contract.
+        // the allocation backing the pool's `Allocator`, which is never freed (see `IDLE_POOLS`).
+        // See doc comment above for the aliasing contract.
         unsafe { Uint8Array::with_external_data(chunk_ptr.as_ptr(), BUFFER_SIZE, |_ptr, _len| {}) }
     })
 }
@@ -105,8 +135,8 @@ pub fn parse_raw_sync(
     source_text: String,
     options: Option<ParserOptions>,
 ) -> u32 {
-    ALLOCATOR_POOL.with(|pool| {
-        let allocator = pool.get();
+    ALLOCATOR_POOL.with(|thread_pool| {
+        let allocator = thread_pool.pool().get();
         parse_raw_impl(&filename, &allocator, &source_text, options);
         // SAFETY: `allocator` was obtained from a fixed-size `AllocatorPool`, so it has a
         // `FixedSizeAllocatorMetadata`. Only an immutable reference is created.

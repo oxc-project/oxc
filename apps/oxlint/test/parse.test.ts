@@ -1,4 +1,5 @@
 import { join as pathJoin } from "node:path";
+import { Worker } from "node:worker_threads";
 import { describe, expect, it, vi } from "vitest";
 
 const path = pathJoin(import.meta.dirname, "dummy.js");
@@ -27,5 +28,19 @@ describe("parse", () => {
     sourceCode.initSourceText();
     expect(sourceCode.sourceText).toBe("let b = 2;");
     sourceCode.resetSourceAndAst();
+  });
+
+  it("keeps a view alive after the thread that created it has exited", async () => {
+    // `ArrayBuffer.prototype.transfer` turns the external view into a transferable buffer that still
+    // aliases Rust's memory. The block must outlive the worker thread that allocated it.
+    const worker = new Worker(pathJoin(import.meta.dirname, "parse_worker.mjs"));
+    const exited = new Promise<void>((resolve) => worker.once("exit", () => resolve()));
+    const laundered = await new Promise<ArrayBuffer>((resolve, reject) => {
+      worker.once("message", resolve);
+      worker.once("error", reject);
+    });
+    await exited;
+
+    expect(new Uint8Array(laundered)[4096]).toBe(0x5a);
   });
 });

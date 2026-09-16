@@ -58,13 +58,15 @@ export declare function applyFixes(sourceText: string, fixesJson: string): strin
  *
  * The view covers the allocatable region plus `RawTransferMetadata`, the same region the linter
  * shares with JS plugins. JS reads the AST from it; the only bytes JS writes are the per-comment
- * and per-token "deserialized" flags, which Rust rewrites on every parse.
+ * and per-token "deserialized" flags, which Rust rewrites on every parse (the comment content byte
+ * explicitly, the token bytes because every token is written afresh).
  *
- * Rust keeps ownership of the memory. The view has no finalizer, and the `is_double_owned` flag
- * used by the linter's `get_buffer` is never set, so the block is freed only when the thread's
- * `ALLOCATOR_POOL` is dropped at thread exit, after the thread's JS realm is gone. JS may call this
- * more than once: a test runner that resets its module registry obtains a fresh view of the same
- * memory. Callers should keep one view per module instance.
+ * Rust keeps ownership of the memory, and the block is never unmapped (see `IDLE_POOLS`), so the
+ * view has no finalizer and the `is_double_owned` flag used by the linter's `get_buffer` is never
+ * set. A view always points at mapped memory; after the next parse on its thread it reads that
+ * parse's data, the same contract as the linter's shared buffers. JS may call this more than once:
+ * a test runner that resets its module registry obtains a fresh view of the same memory. Callers
+ * should keep one view per module instance.
  *
  * # Panics
  *
