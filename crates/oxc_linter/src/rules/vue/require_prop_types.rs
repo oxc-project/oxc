@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
@@ -246,7 +247,7 @@ impl RequirePropTypes {
                 Expression::StringLiteral(lit) => lit.value.as_str(),
                 Expression::Identifier(id) => Some(id.name.as_str()),
                 Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
-                    lit.quasis.first().and_then(|q| q.value.cooked.and_then(oxc_str::JSStr::as_str))
+                    lit.quasis.first().and_then(|q| q.value.cooked.and_then(JSStr::as_str))
                 }
                 _ => None,
             }

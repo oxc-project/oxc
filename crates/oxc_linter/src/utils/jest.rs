@@ -279,6 +279,8 @@ pub fn get_node_name<'a>(expr: &'a Expression<'a>) -> CompactStr {
     chain.join(".").into()
 }
 
+// Keep non-UTF-8 segments as escaped Debug text. Dropping them could make an
+// unrelated property chain match a known Jest name.
 pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> SmallVec<[Cow<'a, str>; 4]> {
     let mut chain: SmallVec<[Cow<'a, str>; 4]> = SmallVec::new();
 

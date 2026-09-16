@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -234,7 +235,7 @@ fn single_quasi_value<'a>(tpl: &'a TemplateLiteral<'a>) -> Option<&'a str> {
     if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
         return None;
     }
-    tpl.quasis[0].value.cooked.and_then(oxc_str::JSStr::as_str)
+    tpl.quasis[0].value.cooked.and_then(JSStr::as_str)
 }
 
 fn lower_first_char(name: &str) -> Option<String> {

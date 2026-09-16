@@ -114,7 +114,8 @@ fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> &'a str {
         PropertyKey::StaticIdentifier(ident) => ident.name.as_str(),
         PropertyKey::PrivateIdentifier(ident) => ident.name.as_str(),
         PropertyKey::StringLiteral(lit) => {
-            lit.value.as_str().unwrap_or_else(|| ctx.source_range(lit.span))
+            // The caller has already obtained `Some` from `PropertyKey::static_name`.
+            lit.value.as_str().expect("static string key must be UTF-8")
         }
         PropertyKey::NumericLiteral(lit) => lit.raw.as_ref().unwrap().as_str(),
         _ => ctx.source_range(key.span()),

@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaVec, GetAllocator, TakeIn};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     GlobalContext, ToJsString,
@@ -7,7 +7,7 @@ use oxc_ecmascript::{
     with_number_literal,
 };
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::{JSStr, JSStrBuilder};
+use oxc_str::JSStr;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
 use crate::TraverseCtx;
@@ -611,13 +611,7 @@ impl<'a> PeepholeOptimizations {
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    let mut builder = JSStrBuilder::with_capacity_in(
-                        cooked1.len() + cooked2.len(),
-                        ctx.allocator(),
-                    );
-                    builder.push_js_str(cooked1);
-                    builder.push_js_str(cooked2);
-                    Some(builder.into_js_str())
+                    Some(JSStr::from_js_strs_array_in([cooked1, cooked2], ctx))
                 } else {
                     None
                 };
@@ -643,13 +637,7 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 );
                 let new_cooked = last_quasi.value.cooked.map(|cooked| {
-                    let mut builder = JSStrBuilder::with_capacity_in(
-                        cooked.len() + right_str.len(),
-                        ctx.allocator(),
-                    );
-                    builder.push_js_str(cooked);
-                    builder.push_str(&right_str);
-                    builder.into_js_str()
+                    JSStr::from_js_strs_array_in([cooked, JSStr::from(right_str.as_ref())], ctx)
                 });
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx));
@@ -670,13 +658,7 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 );
                 let new_cooked = first_quasi.value.cooked.map(|cooked| {
-                    let mut builder = JSStrBuilder::with_capacity_in(
-                        left_str.len() + cooked.len(),
-                        ctx.allocator(),
-                    );
-                    builder.push_str(&left_str);
-                    builder.push_js_str(cooked);
-                    builder.into_js_str()
+                    JSStr::from_js_strs_array_in([JSStr::from(left_str.as_ref()), cooked], ctx)
                 });
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx));
@@ -1042,16 +1024,10 @@ impl<'a> PeepholeOptimizations {
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
-                let mut builder = JSStrBuilder::with_capacity_in(
-                    cooked1.len() + str.len() + cooked2.map_or(0, JSStr::len),
-                    ctx.allocator(),
-                );
-                builder.push_js_str(cooked1);
-                builder.push_str(&str);
-                if let Some(cooked2) = cooked2 {
-                    builder.push_js_str(cooked2);
-                }
-                Some(builder.into_js_str())
+                Some(JSStr::from_js_strs_array_in(
+                    [cooked1, JSStr::from(str.as_ref()), cooked2.unwrap_or(JSStr::empty())],
+                    ctx,
+                ))
             } else {
                 None
             };

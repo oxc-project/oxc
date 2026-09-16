@@ -6,7 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -112,7 +112,7 @@ impl Rule for NoNodejsModules {
             _ => return,
         };
 
-        let Some(module_name) = module_name.and_then(oxc_str::JSStr::as_str) else {
+        let Some(module_name) = module_name.and_then(JSStr::as_str) else {
             return;
         };
 

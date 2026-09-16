@@ -241,7 +241,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                         true
                     }
                 } else {
-                    // Next byte is '`', `\r`, `\`, or first byte of lossy replacement character.
+                    // Next byte is '`', `\r`, or `\`.
                     // Add chunk up to before this char to `str`.
                     // SAFETY: Caller guarantees `chunk_start` is not after `pos` at start of
                     // this function. `pos` only increases during searching.
@@ -358,6 +358,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 mod test {
     use oxc_allocator::Allocator;
     use oxc_span::SourceType;
+    use oxc_str::JSStr;
 
     use crate::config::NoTokensLexerConfig;
 
@@ -407,7 +408,7 @@ mod test {
                 if is_only_part { Kind::NoSubstitutionTemplate } else { Kind::TemplateHead }
             );
             let escaped = lexer.escaped_templates[&token.start()];
-            assert_eq!(escaped.and_then(oxc_str::JSStr::as_str), Some(expected_escaped.as_str()));
+            assert_eq!(escaped.and_then(JSStr::as_str), Some(expected_escaped.as_str()));
         }
 
         for (source_fragment, escaped_fragment) in escapes {
