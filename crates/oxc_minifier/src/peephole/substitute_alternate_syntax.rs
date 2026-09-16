@@ -1402,28 +1402,31 @@ impl<'a> PeepholeOptimizations {
                 *computed = false;
             }
             PropertyKey::StringLiteral(s) => {
-                let Some(value) = s.value.as_str() else { return };
-                if is_identifier_name_patched(value) {
-                    // Bool field flip on an existing AST node, not a slot replacement.
-                    *computed = false;
-                    let new_key = PropertyKey::new_static_identifier(s.span, value, ctx);
-                    ctx.replace_property_key(key, new_key);
-                    return;
-                }
-                if let Some(value) = TraverseCtx::string_to_equivalent_number_value(value)
-                    && value >= 0.0
-                {
-                    // Bool field flip on an existing AST node, not a slot replacement.
-                    *computed = false;
-                    let new_key = PropertyKey::new_numeric_literal(
-                        s.span,
-                        value,
-                        None,
-                        NumberBase::Decimal,
-                        ctx,
-                    );
-                    ctx.replace_property_key(key, new_key);
-                    return;
+                // A key with a lone surrogate is neither an identifier name nor a number.
+                // Only the computed brackets can be dropped for it.
+                if let Some(value) = s.value.as_str() {
+                    if is_identifier_name_patched(value) {
+                        // Bool field flip on an existing AST node, not a slot replacement.
+                        *computed = false;
+                        let new_key = PropertyKey::new_static_identifier(s.span, value, ctx);
+                        ctx.replace_property_key(key, new_key);
+                        return;
+                    }
+                    if let Some(value) = TraverseCtx::string_to_equivalent_number_value(value)
+                        && value >= 0.0
+                    {
+                        // Bool field flip on an existing AST node, not a slot replacement.
+                        *computed = false;
+                        let new_key = PropertyKey::new_numeric_literal(
+                            s.span,
+                            value,
+                            None,
+                            NumberBase::Decimal,
+                            ctx,
+                        );
+                        ctx.replace_property_key(key, new_key);
+                        return;
+                    }
                 }
                 if *computed {
                     // Bool field flip on an existing AST node, not a slot replacement.

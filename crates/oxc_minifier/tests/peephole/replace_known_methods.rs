@@ -1067,6 +1067,11 @@ fn test_fold_integer_index_access() {
     test_same("v = '😀'[0]"); // surrogate pairs cannot be represented by rust string
     test_same("v = '😀'[1]"); // surrogate pairs cannot be represented by rust string
     test_same("v = '😀'[2]");
+    test("v = 'a\\uD800b'[0]", "v = 'a'");
+    test("v = 'b1$\\uD800'[1]", "v = '1'");
+    test("v = 'a\\uD800b'[1]", "v = '\\uD800'");
+    test("v = '\\uD800😀'[1]", "v = '\\uD83D'");
+    test_same("v = 'a\\uD800b'[3]");
     test_same("v = (foo(), 'a')[1]"); // can be fold into `v = (foo(), 'a')`
 
     test_same("v = [][0]");

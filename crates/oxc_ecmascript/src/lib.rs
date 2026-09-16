@@ -19,7 +19,6 @@ mod string_char_at;
 mod string_char_code_at;
 mod string_index_of;
 mod string_last_index_of;
-mod string_substring;
 mod string_to_big_int;
 mod string_to_number;
 mod to_big_int;
@@ -55,7 +54,6 @@ pub use self::{
     string_char_code_at::StringCharCodeAt,
     string_index_of::StringIndexOf,
     string_last_index_of::StringLastIndexOf,
-    string_substring::StringSubstring,
     string_to_big_int::StringToBigInt,
     string_to_number::StringToNumber,
     to_big_int::ToBigInt,
