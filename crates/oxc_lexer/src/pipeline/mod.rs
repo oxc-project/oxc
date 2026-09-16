@@ -132,7 +132,7 @@ impl Lexer {
     /// diagnostics into `self.lanes`. Returns the significant token count,
     /// excluding the sentinels.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// - `src` must extend at least [`PAD`] zeroed bytes past `n`.
     /// - `out_kinds` must be valid for `n + PAD + SPAN_SENTINELS` byte writes

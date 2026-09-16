@@ -275,7 +275,7 @@ impl TokenKind {
         self as u8
     }
 
-    /// # Safety
+    /// # SAFETY
     ///
     /// `byte` must be a declared discriminant, i.e. `TokenKind::from_u8(byte).is_some()`.
     #[inline]
@@ -365,7 +365,7 @@ impl Display for TokenKind {
 
 /// Reinterpret raw kind bytes written by the pipeline as [`TokenKind`]s.
 ///
-/// # Safety
+/// # SAFETY
 ///
 /// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
 /// pipeline only ever writes kinds that came from [`crate::opmap`]'s tables or
