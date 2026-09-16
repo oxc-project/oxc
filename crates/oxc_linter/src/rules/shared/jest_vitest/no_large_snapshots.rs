@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{CompactStr, JSStr};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -282,7 +282,7 @@ impl NoLargeSnapshotsConfig {
         member_expr: &MemberExpression,
         ctx: &LintContext,
     ) -> bool {
-        let Some(snapshot_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
+        let Some(snapshot_name) = member_expr.static_property_name() else {
             return false;
         };
         let Some(file_name) = ctx.file_path().to_str() else {
@@ -293,6 +293,9 @@ impl NoLargeSnapshotsConfig {
             return false;
         };
 
+        let Some(snapshot_name) = snapshot_name.as_str() else {
+            return false;
+        };
         allowed_snapshots_in_file.iter().any(|matcher| matcher.is_match(snapshot_name))
     }
 
@@ -322,6 +325,58 @@ mod test {
         assert!(!matchers[0].is_match("other snapshot 42"));
         assert!(matchers[1].is_match("snapshot [literal"));
         assert!(!matchers[1].is_match("snapshot literal"));
+    }
+
+    #[test]
+    fn external_snapshot_allow_list_requires_a_match() {
+        use std::{rc::Rc, sync::Arc};
+
+        use oxc_allocator::Allocator;
+        use oxc_ast::AstKind;
+        use oxc_parser::Parser;
+        use oxc_semantic::SemanticBuilder;
+        use oxc_span::SourceType;
+
+        use crate::{
+            LintOptions, ModuleRecord,
+            context::{ContextHost, ContextSubHost, ContextSubHostOptions},
+        };
+
+        let allocator = Allocator::default();
+        let source = r#"exports["bar\uD800"] = ``; exports["foo"] = ``;"#;
+        let parsed = Parser::new(&allocator, source, SourceType::default()).parse();
+        assert!(parsed.diagnostics.is_empty());
+        let semantic =
+            SemanticBuilder::new_linter().build(allocator.alloc(parsed.program)).semantic;
+        let ctx = Rc::new(ContextHost::new(
+            "/test.snap",
+            vec![ContextSubHost::new(
+                semantic,
+                Arc::new(ModuleRecord::default()),
+                0,
+                ContextSubHostOptions::default(),
+            )],
+            &allocator,
+            LintOptions::default(),
+            Arc::default(),
+        ))
+        .spawn_for_test();
+
+        for allowed in [serde_json::json!([]), serde_json::json!(["^foo"])] {
+            let config = NoLargeSnapshotsConfig::from_configuration(serde_json::json!([{
+                "allowedSnapshots": { "/test.snap": allowed }
+            }]))
+            .unwrap();
+            for node in ctx.nodes().iter() {
+                if let AstKind::AssignmentExpression(assignment) = node.kind()
+                    && let Some(member) = assignment.left.as_member_expression()
+                {
+                    let expected = !allowed.as_array().unwrap().is_empty()
+                        && member.static_property_name().is_some_and(|name| name == "foo");
+                    assert_eq!(config.check_allowed_in_snapshots(member, &ctx), expected);
+                }
+            }
+        }
     }
 
     #[test]

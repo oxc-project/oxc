@@ -485,3 +485,9 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────
    ╰────
   help: Replace `(await promise).getAttribute("data-foo")` with `(await promise).dataset.foo`.
+
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+   ╭─[prefer_dom_node_dataset.mjs:1:4]
+ 1 │ el.setAttribute("data-\uD800", "x");
+   ·    ────────────
+   ╰────

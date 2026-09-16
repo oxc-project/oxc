@@ -2,6 +2,18 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ node(no-mixed-requires): Do not mix core, module, file and computed requires.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var fs = require('fs'), a = require('\uD800')
+   · ─────────────────────────────────────────────
+   ╰────
+
+  ⚠ node(no-mixed-requires): Do not mix core, module, file and computed requires.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var a = require('./\uD83D\uDE00'), b = require('foo')
+   · ─────────────────────────────────────────────────────
+   ╰────
+
   ⚠ node(no-mixed-requires): Do not mix 'require' and other declarations.
    ╭─[no_mixed_requires.tsx:1:1]
  1 │ var fs = require('fs'), foo = 42

@@ -344,3 +344,31 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+
+  ⚠ unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
+   ╭─[no_console_spaces.tsx:1:14]
+ 1 │ console.log("\uD800 ", "def");
+   ·              ───────
+   ╰────
+  help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+
+  ⚠ unicorn(no-console-spaces): Do not use leading spaces with `console.log` parameters
+   ╭─[no_console_spaces.tsx:1:21]
+ 1 │ console.log("abc", " \uDC00");
+   ·                     ───────
+   ╰────
+  help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+
+  ⚠ unicorn(no-console-spaces): Do not use leading spaces with `console.log` parameters
+   ╭─[no_console_spaces.tsx:1:19]
+ 1 │ console.log("_", " \uD83D\uDE00 ", "_");
+   ·                   ──────────────
+   ╰────
+  help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+
+  ⚠ unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
+   ╭─[no_console_spaces.tsx:1:19]
+ 1 │ console.log("_", " \uD83D\uDE00 ", "_");
+   ·                   ──────────────
+   ╰────
+  help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.

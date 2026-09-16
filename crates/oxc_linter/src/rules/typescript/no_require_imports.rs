@@ -320,6 +320,26 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            r"const pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["\\.json$"] }])),
+        ),
+        (
+            r"import pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["\\.json$"] }])),
+        ),
+        (
+            r"const pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["^foo"] }])),
+        ),
+        (
+            r"import pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["^foo"] }])),
+        ),
+        (
+            r"const pkg = require(`a\uD800b.json`);",
+            Some(serde_json::json!([{ "allow": ["^foo"] }])),
+        ),
         ("var lib = require('lib');", None),
         ("let lib2 = require('lib2');", None),
         (

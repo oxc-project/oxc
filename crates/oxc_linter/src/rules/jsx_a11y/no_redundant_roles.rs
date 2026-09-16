@@ -9,7 +9,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 
 use crate::{
     AstNode,
@@ -196,14 +196,14 @@ fn get_select_implicit_role(jsx_el: &JSXOpeningElement) -> &'static str {
     }
 }
 
-fn get_static_string_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
+fn get_static_string_prop_value<'a>(item: &JSXAttributeItem<'a>) -> Option<JSStr<'a>> {
     match get_prop_value(item)? {
-        JSXAttributeValue::StringLiteral(lit) => lit.value.as_str(),
+        JSXAttributeValue::StringLiteral(lit) => Some(lit.value),
         JSXAttributeValue::ExpressionContainer(container) => {
             let Expression::StringLiteral(lit) = container.expression.as_expression()? else {
                 return None;
             };
-            lit.value.as_str()
+            Some(lit.value)
         }
         _ => None,
     }
@@ -240,6 +240,7 @@ fn get_input_implicit_role(
 ) -> Option<&'static str> {
     let input_type = has_jsx_prop_ignore_case(jsx_el, "type")
         .and_then(get_static_string_prop_value)
+        .and_then(JSStr::as_str)
         .unwrap_or("text");
     let has_list = has_jsx_prop_ignore_case(jsx_el, "list").is_some();
 
@@ -350,6 +351,7 @@ fn test() {
             Some(serde_json::json!([{ "ul": ["list"], "ol": ["list"] }])),
             None,
         ),
+        (r#"<img src={"a\uD800.svg"} role="img" />"#, None, None),
         (r#"<li role="listitem" />"#, Some(serde_json::json!([{ "li": ["listitem"] }])), None),
         // Ancestor-dependent elements: implicit role cannot be determined
         // from a single opening element, so do not flag. See #22743.

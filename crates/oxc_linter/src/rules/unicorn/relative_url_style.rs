@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, NewExpression},
@@ -103,17 +105,18 @@ impl Rule for RelativeUrlStyle {
 
         match first_arg {
             Argument::StringLiteral(str_lit) => {
-                let Some(url) = str_lit.value.as_str() else {
-                    return;
-                };
-
                 match self.0 {
                     RelativeUrlStyleConfig::Never => {
-                        let raw = str_lit.raw.as_ref().map_or(url, |r| {
+                        let raw = if let Some(r) = &str_lit.raw {
                             let s = r.as_str();
                             // remove surrounding quotes
                             &s[1..s.len() - 1]
-                        });
+                        } else {
+                            let Some(url) = str_lit.value.as_str() else {
+                                return;
+                            };
+                            url
+                        };
 
                         if can_remove_dot_slash(raw, new_expr) {
                             ctx.diagnostic_with_fix(never_diagnostic(str_lit.span), |fixer| {
@@ -126,7 +129,15 @@ impl Rule for RelativeUrlStyle {
                         }
                     }
                     RelativeUrlStyleConfig::Always => {
-                        if can_add_dot_slash(url, new_expr) {
+                        // `URL` takes a USVString, which replaces lone surrogates with U+FFFD.
+                        // The fix only inserts `./` into the source text.
+                        let url: Cow<str> = match str_lit.value.as_str() {
+                            Some(url) => Cow::Borrowed(url),
+                            None => char::decode_utf16(str_lit.value.encode_utf16())
+                                .map(|c| c.unwrap_or(char::REPLACEMENT_CHARACTER))
+                                .collect(),
+                        };
+                        if can_add_dot_slash(&url, new_expr) {
                             ctx.diagnostic_with_fix(always_diagnostic(str_lit.span), |fixer| {
                                 let insert_pos = str_lit.span.start + 1;
                                 let insert_span = Span::new(insert_pos, insert_pos);
@@ -301,6 +312,8 @@ fn test() {
         (r#"new URL("foo", base)"#, Some(serde_json::json!(["always"]))),
         (r"new URL('foo', base)", Some(serde_json::json!(["always"]))),
         (r#"new URL("", "https://example.com/a/b/")"#, Some(serde_json::json!(["always"]))),
+        (r#"new URL("./a\uD800", "https://x.com/")"#, None),
+        (r#"new URL("a\uD800", "https://x.com/")"#, Some(serde_json::json!(["always"]))),
     ];
 
     let fix = vec![
@@ -322,6 +335,16 @@ fn test() {
         (
             r#"new URL("", "https://example.com/a/b/")"#,
             r#"new URL("./", "https://example.com/a/b/")"#,
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            r#"new URL("./a\uD800", "https://x.com/")"#,
+            r#"new URL("a\uD800", "https://x.com/")"#,
+            None,
+        ),
+        (
+            r#"new URL("a\uD800", "https://x.com/")"#,
+            r#"new URL("./a\uD800", "https://x.com/")"#,
             Some(serde_json::json!(["always"])),
         ),
     ];
