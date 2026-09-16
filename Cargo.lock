@@ -2625,6 +2625,7 @@ version = "0.150.0"
 dependencies = [
  "compact_str",
  "hashbrown 0.17.1",
+ "memchr",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_data_structures",

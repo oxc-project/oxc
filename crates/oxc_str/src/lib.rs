@@ -22,7 +22,7 @@ pub use compact_str::{CompactStr, MAX_INLINE_LEN};
 pub use ident::{ArenaIdentHashMap, ArenaIdentHashSet, Ident, IdentHashMap, IdentHashSet};
 pub use ident_hasher::{IdentBuildHasher, IdentHasher};
 pub use js_char::JSChar;
-pub use js_str::JSStr;
+pub use js_str::{JSStr, JSStrPattern};
 pub use js_str_builder::JSStrBuilder;
 pub use str::{Str, Str as ArenaStr};
 
