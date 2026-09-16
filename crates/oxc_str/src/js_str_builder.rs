@@ -104,12 +104,18 @@ impl<'a> JSStrBuilder<'a> {
     }
 
     /// Append one UTF-16 code unit.
+    ///
+    /// Use this for input from a UTF-16 API; use [`push_js_char`](Self::push_js_char)
+    /// for an already decoded JavaScript code point.
     #[inline]
     pub fn push_code_unit(&mut self, unit: u16) {
         self.push_js_char(JSChar::from_code_unit(unit));
     }
 
     /// Append potentially ill-formed UTF-16.
+    ///
+    /// This accepts code-unit buffers from UTF-16 APIs without replacing lone
+    /// surrogates. A pair may span consecutive calls, including empty buffers.
     #[inline]
     pub fn push_utf16(&mut self, units: &[u16]) {
         for &unit in units {
@@ -131,6 +137,12 @@ impl<'a> JSStrBuilder<'a> {
     }
 
     fn push_js_str_slow(&mut self, value: JSStr<'_>) {
+        // A surrogate's WTF-8 encoding is 0xED, then two continuation bytes
+        // holding the low twelve bits.
+        fn decode_surrogate(second: u8, third: u8) -> u16 {
+            0xD000 | (u16::from(second & 0x3F) << 6) | u16::from(third & 0x3F)
+        }
+
         debug_assert!(value.has_lone_surrogate());
 
         let mut bytes = value.as_bytes();
@@ -141,8 +153,7 @@ impl<'a> JSStrBuilder<'a> {
         if let Some(lead) = self.pending_lead_surrogate
             && let [0xED, second @ 0xB0..=0xBF, third, ..] = bytes
         {
-            let trail = 0xD000 | (u16::from(*second & 0x3F) << 6) | u16::from(*third & 0x3F);
-            self.append_pair(lead, trail);
+            self.append_pair(lead, decode_surrogate(*second, *third));
             self.pending_lead_surrogate = None;
             bytes = &bytes[3..];
             trimmed = true;
@@ -151,8 +162,7 @@ impl<'a> JSStrBuilder<'a> {
         }
 
         if let [.., 0xED, second @ 0xA0..=0xAF, third] = bytes {
-            self.pending_lead_surrogate =
-                Some(0xD000 | (u16::from(*second & 0x3F) << 6) | u16::from(*third & 0x3F));
+            self.pending_lead_surrogate = Some(decode_surrogate(*second, *third));
             bytes = &bytes[..bytes.len() - 3];
             trimmed = true;
         }

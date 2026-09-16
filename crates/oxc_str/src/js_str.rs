@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{
     fmt::{self, Write},
     hash::{Hash, Hasher},
@@ -9,7 +10,7 @@ use std::{
 
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, GetAllocator};
 
-use crate::{JSChar, Str};
+use crate::{JSChar, JSStrBuilder, Str};
 
 /// An immutable JavaScript string borrowed from source text or arena memory.
 ///
@@ -70,6 +71,8 @@ use crate::{JSChar, Str};
 /// println!("{value:?}");
 /// ```
 #[derive(Clone, Copy)]
+// The C layout gives the pointer, length, and flag fixed offsets, which the
+// generated raw transfer deserializers read directly.
 #[repr(C)]
 pub struct JSStr<'a> {
     ptr: NonNull<u8>,
@@ -106,6 +109,29 @@ impl<'a> JSStr<'a> {
         JSStr::from(value).clone_in(allocator.allocator())
     }
 
+    /// Concatenate JavaScript strings into an arena.
+    ///
+    /// Leading and trailing surrogates pair across string boundaries, including
+    /// empty strings between them. Inputs are copied into the destination arena.
+    ///
+    /// # Panics
+    /// Panics if the sum of input byte lengths exceeds `u32::MAX` or `isize::MAX`.
+    #[inline]
+    pub fn from_js_strs_array_in<const N: usize>(
+        strings: [JSStr<'_>; N],
+        allocator: &impl GetAllocator<'a>,
+    ) -> Self {
+        let capacity = strings
+            .iter()
+            .try_fold(0usize, |len, value| len.checked_add(value.len()))
+            .expect("JavaScript string capacity overflow");
+        let mut builder = JSStrBuilder::with_capacity_in(capacity, allocator.allocator());
+        for value in strings {
+            builder.push_js_str(value);
+        }
+        builder.into_js_str()
+    }
+
     /// Borrow the value as UTF-8, or return `None` if it contains a lone surrogate.
     ///
     /// This checks the cached flag in O(1); it does not scan the bytes.
@@ -117,6 +143,21 @@ impl<'a> JSStr<'a> {
             // SAFETY: By `JSStr`'s invariant, canonical WTF-8 with a false
             // surrogate flag is valid UTF-8.
             Some(unsafe { str::from_utf8_unchecked(self.as_bytes()) })
+        }
+    }
+
+    /// Convert to UTF-8, replacing each lone surrogate with U+FFFD.
+    ///
+    /// A value without lone surrogates borrows in O(1). Use this where a
+    /// caller needs `str` and accepts the replacement, such as matching
+    /// user-configured patterns; diagnostics that should show the surrogate
+    /// use the Debug form instead, which escapes it.
+    pub fn to_str_lossy(self) -> Cow<'a, str> {
+        match self.as_str() {
+            Some(value) => Cow::Borrowed(value),
+            None => Cow::Owned(
+                self.chars().map(|c| c.to_char().unwrap_or(char::REPLACEMENT_CHARACTER)).collect(),
+            ),
         }
     }
 
@@ -165,17 +206,26 @@ impl<'a> JSStr<'a> {
         EncodeUtf16 { chars: JSChars { remaining: self.as_bytes() }, pending: 0 }
     }
 
+    /// Borrow the underlying canonical WTF-8 bytes.
+    ///
+    /// Together with [`has_lone_surrogate`](Self::has_lone_surrogate), the
+    /// bytes are a complete representation: storage held outside an arena can
+    /// keep them and borrow the value back with
+    /// [`from_bytes_unchecked`](Self::from_bytes_unchecked).
     #[inline]
-    pub(super) fn as_bytes(self) -> &'a [u8] {
+    pub fn as_bytes(self) -> &'a [u8] {
         // SAFETY: `JSStr`'s pointer references `len` initialized bytes, valid
         // and immutable for `'a`, including the zero-length case.
         unsafe { slice::from_raw_parts(self.ptr.as_ptr(), self.len()) }
     }
 
-    /// Borrow bytes whose encoding and metadata have already been established.
+    /// Borrow bytes whose encoding and metadata have already been established,
+    /// such as bytes previously taken from [`as_bytes`](Self::as_bytes)
+    /// together with the value's surrogate flag.
     ///
     /// # Safety
-    /// * `bytes` must be canonical WTF-8.
+    /// * `bytes` must be canonical WTF-8: valid WTF-8 in which a lead
+    ///   surrogate encoding is never followed by a trail surrogate encoding.
     /// * `has_lone_surrogate` must exactly describe whether they encode a lone surrogate.
     /// * `bytes.len()` must fit in `u32`.
     ///
@@ -183,10 +233,7 @@ impl<'a> JSStr<'a> {
     /// and the `isize::MAX` bound.
     #[inline]
     #[expect(clippy::cast_possible_truncation, reason = "the caller guarantees the length fits")]
-    pub(super) const unsafe fn from_bytes_unchecked(
-        bytes: &'a [u8],
-        has_lone_surrogate: bool,
-    ) -> Self {
+    pub const unsafe fn from_bytes_unchecked(bytes: &'a [u8], has_lone_surrogate: bool) -> Self {
         Self {
             ptr: NonNull::from_ref(bytes).cast(),
             len: bytes.len() as u32,
