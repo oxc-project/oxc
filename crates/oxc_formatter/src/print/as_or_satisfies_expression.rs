@@ -5,7 +5,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{prelude::*, trivia::FormatTrailingComments},
-    print::{FormatNodeWithoutTrailingComments, FormatWrite},
+    print::{FormatNodeWithoutTrailingComments, FormatWrite, union_prints_itself},
     write,
 };
 
@@ -80,7 +80,7 @@ fn format_as_or_satisfies_expression<'a>(
         // A union claims the after-operator run and the moved pre-operator comments as its leading comments
         // and places them itself (see the cast arms of `should_indent` in `union_type.rs`);
         // this site then breaks only for a riding line comment before the operator.
-        let is_union = matches!(type_annotation.as_ref(), TSType::TSUnionType(_));
+        let is_union = union_prints_itself(type_annotation.as_ref(), f.comments());
 
         let after_operator_comments = &comments[before_operator_count..];
         // The run still on the operator's line;

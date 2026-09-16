@@ -29,9 +29,18 @@ use crate::{
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // A suppression comment before the union covers the whole union,
+        // decided by the generated `fmt` like any other node (AGENTS.md "Suppression", DIVERGENCES.md#union-suppression-whole);
+        // one inside, after a `|`, covers that member (`format_union_types`).
         let types = self.types();
-
         let is_alias_level = matches!(self.parent(), AstNodes::TSTypeAliasDeclaration(_));
+        // `type A = | "VALUE"` is a single-member union that is not parenthesized or nested;
+        // a candidate for the hug shortcut.
+        let is_single_plain_member = self.types.len() == 1
+            && !matches!(
+                self.types.first(),
+                Some(TSType::TSParenthesizedType(_) | TSType::TSUnionType(_))
+            );
 
         // ```ts
         // {
@@ -44,14 +53,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             // type-alias level has own-line leading comments.
             // Those comments must be handled by the normal union formatting path,
             // so they are printed with correct indentation.
-
-            // `type A = | "VALUE"` is a single-member union that is not
-            // parenthesized or nested — a candidate for the hug shortcut.
-            let is_single_plain_member = self.types.len() == 1
-                && !matches!(
-                    self.types.first(),
-                    Some(TSType::TSParenthesizedType(_) | TSType::TSUnionType(_))
-                );
             // ```ts
             // type A =
             //   /** JSDoc */
@@ -88,15 +89,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         // we consider the current union type as having leading comments
         // For a single plain member at the alias level, also collect comments
         // between `|` and the member (see the hug-shortcut guard above).
-        let is_single_plain_member = self.types.len() == 1
-            && !matches!(
-                self.types.first(),
-                Some(TSType::TSParenthesizedType(_) | TSType::TSUnionType(_))
-            );
-        let leading_comments = if is_alias_level && is_single_plain_member {
-            f.context().comments().comments_before(self.types[0].span().start)
+        // A suppression comment there covers the member (`= | /* c */ A`);
+        // one before the union never reaches here (the generated `fmt` printed the union verbatim).
+        let (leading_comments, suppressed_node_span) = if is_alias_level && is_single_plain_member {
+            let comments = f.context().comments().comments_before(self.types[0].span().start);
+            let is_suppressed =
+                comments.iter().any(|comment| f.comments().is_suppression_comment(comment));
+            (comments, if is_suppressed { self.types[0].span() } else { Span::default() })
         } else {
-            f.context().comments().comments_before(self.span().start)
+            (f.context().comments().comments_before(self.span().start), Span::default())
         };
         let mut union_type_at_top = self;
         while let AstNodes::TSUnionType(parent) = union_type_at_top.parent()
@@ -184,10 +185,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                 // and breaks + indents itself only for a riding line comment before the operator
                 // (`as_or_satisfies_expression.rs`), printed by now.
                 AstNodes::TSAsExpression(cast) => {
-                    !f.comments().has_printed_line_comment_after(cast.expression.span().end)
+                    f.comments().printed_line_comment_after(cast.expression.span().end).is_none()
                 }
                 AstNodes::TSSatisfiesExpression(cast) => {
-                    !f.comments().has_printed_line_comment_after(cast.expression.span().end)
+                    f.comments().printed_line_comment_after(cast.expression.span().end).is_none()
                 }
                 AstNodes::TSTypeAssertion(_)
                 | AstNodes::TSTupleType(_)
@@ -201,14 +202,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         };
 
         let types = format_with(|f| {
-            let is_suppressed = leading_comments
-                .iter()
-                .rev()
-                .any(|comment| f.comments().is_suppression_comment(comment));
-
-            let suppressed_node_span =
-                if is_suppressed { self.types.first().unwrap().span() } else { Span::default() };
-
             let leading_soft_line_break_or_space = should_indent && before_pipe_comments.is_empty();
 
             let separator = format_with(|f| {
@@ -325,6 +318,13 @@ pub fn is_line_ending_trailing_jsdoc_comment(comment: &Comment) -> bool {
         && comment.followed_by_newline()
 }
 
+/// Whether `ty` is a union that runs this printer.
+/// A suppressed one prints verbatim through the generic path,
+/// and its parent lays it out like any other type (`AssignmentLike`, the cast site).
+pub fn union_prints_itself(ty: &TSType<'_>, comments: &Comments) -> bool {
+    matches!(ty, TSType::TSUnionType(union) if !comments.is_span_suppressed(union.span))
+}
+
 /// End of a type alias's left-hand side:
 /// after the type parameters when present, after the name otherwise.
 pub fn type_alias_left_end(decl: &TSTypeAliasDeclaration) -> u32 {
@@ -397,12 +397,23 @@ fn format_union_types<'a>(
         }
 
         if let Some(next_node_span) = node_iter.peek().map(GetSpan::span) {
-            if f.comments().is_suppressed(next_node_span.start) {
+            let comments_before_separator =
+                f.context().comments().comments_before_character(element_span.end, b'|');
+
+            // The next member's suppression comment: own-line before its `|` (hoisted below) or after it.
+            // Not this member's same-line trailing run (`| A // prettier-ignore`), which is A's;
+            // both views start at the same cursor, so the run is the leading slice of the next member's comments.
+            let same_line_trailing_count =
+                comments_before_separator.iter().take_while(|c| !c.preceded_by_newline()).count();
+            let comments = f.context().comments();
+            if comments
+                .comments_before_iter(next_node_span.start)
+                .skip(same_line_trailing_count)
+                .any(|comment| comments.is_suppression_comment(comment))
+            {
                 suppressed_node_span = next_node_span;
             }
 
-            let comments_before_separator =
-                f.context().comments().comments_before_character(element_span.end, b'|');
             FormatTrailingComments::Comments(comments_before_separator).fmt(f);
 
             // ```ts

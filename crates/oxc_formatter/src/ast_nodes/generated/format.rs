@@ -4767,18 +4767,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConditionalType<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnionType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.span().start);
-        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
+        if is_suppressed {
+            write_suppressed_expression(
+                self.span(),
+                self.leading_comments_start(),
+                self.needs_parentheses(f),
+                f,
+            );
+            self.format_trailing_comments(f);
+            return;
+        }
+        if format_type_cast_comment_node(self, false, f) {
             return;
         }
         let needs_parentheses = self.needs_parentheses(f);
         format_outer_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
-        if is_suppressed {
-            format_leading_comments(self.span()).fmt(f);
-            FormatSuppressedNode(self.span()).fmt(f);
-        } else {
-            self.write(f);
-        }
+        self.write(f);
         if needs_parentheses {
             ")".fmt(f);
         }
