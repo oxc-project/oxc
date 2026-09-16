@@ -8,9 +8,12 @@
     clippy::collapsible_match
 )]
 
-use crate::opmap::{
-    KEYWORDS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, KW_KIND_BASE, KwSet, OPMAP_NOPS,
-    OPMAP_OPS, OpMap, PUNCT1_KIND_UNKNOWN, PUNCT1_LIST, PUNCT1_NKNOWN, PUNCT1_TOK, op_key,
+use crate::{
+    opmap::{
+        KEYWORDS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, KwSet, OPMAP_NOPS, OPMAP_OPS,
+        OpMap, PUNCT1_LIST, PUNCT1_NKNOWN, PUNCT1_TOK, op_key,
+    },
+    token::{KW_KIND_BASE, tk},
 };
 
 #[inline(always)]
@@ -71,7 +74,7 @@ pub const PH_T1: [u8; 16] = [40, 255, 43, 50, 64, 61, 255, 255, 35, 36, 80, 89, 
 #[inline(always)]
 pub fn punct1_hash(c: u8) -> u8 {
     if c < 0x20 {
-        return PUNCT1_KIND_UNKNOWN;
+        return tk!(Invalid);
     }
     let h = (PH_A[(c & 15) as usize] ^ PH_B[((c >> 4) & 15) as usize]) & 31;
     if h < 16 { PH_T0[h as usize] } else { PH_T1[(h & 15) as usize] }
@@ -83,7 +86,7 @@ pub struct PairLuts {
     pub lutpad: [[u8; 32]; 256],
 }
 
-const _: () = assert!(core::mem::size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
+const _: () = assert!(size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
 
 pub struct Tables {
     pub op: OpMap,
@@ -350,7 +353,7 @@ fn opch_selfcheck() {
 }
 
 fn punct1_hash_selfcheck() {
-    let mut punct1_ord = [PUNCT1_KIND_UNKNOWN; 256];
+    let mut punct1_ord = [tk!(Invalid); 256];
     for i in 0..PUNCT1_NKNOWN {
         punct1_ord[PUNCT1_LIST[i] as usize] = PUNCT1_TOK[i];
     }

@@ -123,6 +123,7 @@ pub struct CommentSnapshot {
     printed_count: usize,
     last_handled_type_cast_comment: usize,
     type_cast_node_span: Span,
+    operator_suppressed_start: Option<u32>,
     view_limit: Option<usize>,
 }
 
@@ -143,6 +144,8 @@ pub struct Comments<'a> {
     /// Used to prevent duplicate processing of special TypeScript type cast comments.
     last_handled_type_cast_comment: usize,
     type_cast_node_span: Span,
+    /// See [`Self::mark_suppressed_after_operator`].
+    operator_suppressed_start: Option<u32>,
     /// Optional limit for the unprinted_comments view.
     ///
     /// When set, [`Self::unprinted_comments()`] will only return comments up to this index,
@@ -159,6 +162,7 @@ impl<'a> Comments<'a> {
             printed_count: 0,
             last_handled_type_cast_comment: 0,
             type_cast_node_span: Span::default(),
+            operator_suppressed_start: None,
             view_limit: None,
         }
     }
@@ -242,6 +246,7 @@ impl<'a> Comments<'a> {
             printed_count: self.printed_count,
             last_handled_type_cast_comment: self.last_handled_type_cast_comment,
             type_cast_node_span: self.type_cast_node_span,
+            operator_suppressed_start: self.operator_suppressed_start,
             view_limit: self.view_limit,
         }
     }
@@ -254,6 +259,7 @@ impl<'a> Comments<'a> {
         self.printed_count = snapshot.printed_count;
         self.last_handled_type_cast_comment = snapshot.last_handled_type_cast_comment;
         self.type_cast_node_span = snapshot.type_cast_node_span;
+        self.operator_suppressed_start = snapshot.operator_suppressed_start;
         self.view_limit = snapshot.view_limit;
     }
 }
@@ -521,6 +527,22 @@ impl<'a> Comments<'a> {
         self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
     }
 
+    /// The last printed comment when it is a line comment starting after `pos`:
+    /// a pending `line_suffix` the printer flushes past an operator.
+    /// ```ts
+    /// const a // c
+    /// = 1
+    ///
+    /// (foo // c
+    /// ) as T
+    /// ```
+    /// For layout decisions that run after the left side printed, where cursor-based queries no longer see it.
+    pub fn printed_line_comment_after(&self, pos: u32) -> Option<&'a Comment> {
+        self.printed_comments()
+            .last()
+            .filter(|comment| comment.is_line() && comment.span.start > pos)
+    }
+
     /// Index into [`Self::unprinted_comments`] of the first cast comment
     /// ([`Self::is_type_cast_comment_followed_by_paren`]) before the given span.
     /// Cursor-based on purpose: printing peels nested casts one per pass (see `utils/typecast.rs`).
@@ -533,9 +555,27 @@ impl<'a> Comments<'a> {
         !self.end_of_line_comments_after(pos).is_empty()
     }
 
-    /// Checks if the node has a suppression comment.
+    /// Checks if the node has a suppression comment:
+    /// an unprinted one before it, or the one its operator's line printed ([`Self::mark_suppressed_after_operator`]).
     pub fn is_suppressed(&self, start: u32) -> bool {
-        self.comments_before_iter(start).any(|comment| self.is_suppression_comment(comment))
+        self.operator_suppressed_start == Some(start)
+            || self.comments_before_iter(start).any(|comment| self.is_suppression_comment(comment))
+    }
+
+    /// ```ts
+    /// const a = // oxfmt-ignore
+    ///   1+2;
+    /// ```
+    /// In this case, suppression line comment ending the operator's line is:
+    /// - printed right after the operator for placement (it keeps its line)
+    /// - and still targets the right-hand side
+    ///
+    /// `AssignmentLike` marks the node it targets after printing the operator's comment run,
+    /// and the node's own `fmt` then takes the suppressed path.
+    /// The mark is never cleared: no ancestor shares the right-hand side's start (it follows the operator),
+    /// its descendants are not visited after the verbatim print, and a re-format of the same node must answer the same.
+    pub fn mark_suppressed_after_operator(&mut self, start: u32) {
+        self.operator_suppressed_start = Some(start);
     }
 
     /// Checks if there is a trailing suppression comment on the same line.

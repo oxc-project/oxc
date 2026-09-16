@@ -8,8 +8,12 @@
     clippy::collapsible_match
 )]
 
+use std::{ptr, str};
+
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
+
+use oxc_ast::ast::RegExpFlags;
 
 use crate::error::{Diagnostic, diag_code, diag_severity};
 use crate::token::StringSpan;
@@ -57,14 +61,14 @@ impl Lanes {
         let mut f: u8 = 0;
         for (k, &c) in src[fs..fe].iter().enumerate() {
             let bit: u8 = match c {
-                b'g' => 1,
-                b'i' => 2,
-                b'm' => 4,
-                b's' => 8,
-                b'u' => 16,
-                b'y' => 32,
-                b'd' => 64,
-                b'v' => 128,
+                b'g' => RegExpFlags::G.bits(),
+                b'i' => RegExpFlags::I.bits(),
+                b'm' => RegExpFlags::M.bits(),
+                b's' => RegExpFlags::S.bits(),
+                b'u' => RegExpFlags::U.bits(),
+                b'y' => RegExpFlags::Y.bits(),
+                b'd' => RegExpFlags::D.bits(),
+                b'v' => RegExpFlags::V.bits(),
                 _ => 0,
             };
             // Unknown or repeated flag: diagnostic. At most 8 flag chars.
@@ -178,7 +182,7 @@ impl Lanes {
             unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags) }
         } else {
             unsafe {
-                core::ptr::copy_nonoverlapping(
+                ptr::copy_nonoverlapping(
                     src.as_ptr().add(bs as usize),
                     base.add(ss as usize),
                     body_len,
@@ -234,7 +238,7 @@ impl Lanes {
         self.cooked.reserve(body_len + 8);
         unsafe {
             let base = self.cooked.as_mut_ptr();
-            core::ptr::copy_nonoverlapping(src.as_ptr().add(bs), base.add(ss as usize), body_len);
+            ptr::copy_nonoverlapping(src.as_ptr().add(bs), base.add(ss as usize), body_len);
             self.cooked.set_len(ss as usize + body_len);
         }
         let we = ss + body_len as u32;
@@ -391,7 +395,7 @@ impl Lanes {
         let len = e - s;
         if len.wrapping_sub(1) <= 7 && !(len > 1 && src[s] == b'0') {
             let keep = KEEP[len];
-            let raw = unsafe { core::ptr::read_unaligned(src.as_ptr().add(s) as *const u64) };
+            let raw = unsafe { ptr::read_unaligned(src.as_ptr().add(s) as *const u64) };
             let w = raw & keep;
             let f0 = 0xF0F0_F0F0_F0F0_F0F0 & keep;
             let three = 0x3030_3030_3030_3030 & keep;
@@ -532,7 +536,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     };
     if plain {
         unsafe {
-            core::ptr::copy_nonoverlapping(
+            ptr::copy_nonoverlapping(
                 src.as_ptr().add(bs as usize),
                 base.add(ss as usize),
                 body_len,
@@ -610,11 +614,11 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
 pub(crate) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
     let end = (i + 4).min(s.len());
     let slice = s.get(i..end)?;
-    match core::str::from_utf8(slice) {
+    match str::from_utf8(slice) {
         Ok(t) => t.chars().next(),
         // a multi-byte char cut at `end` still has a decodable valid prefix
         Err(e) if e.valid_up_to() > 0 => {
-            core::str::from_utf8(&slice[..e.valid_up_to()]).ok()?.chars().next()
+            str::from_utf8(&slice[..e.valid_up_to()]).ok()?.chars().next()
         }
         Err(_) => None,
     }
@@ -713,7 +717,7 @@ fn parse_number(src: &[u8], s: usize, e: usize) -> f64 {
         buf[bl] = c;
         bl += 1;
     }
-    core::str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
+    str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
 }
 
 #[inline]
