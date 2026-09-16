@@ -14,6 +14,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────
    ╰────
 
+  ⚠ react(no-namespace): React component "ns:\ud800" must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("ns:\uD800")
+   ·                     ───────────
+   ╰────
+
+  ⚠ react(no-namespace): React component "\udc00:testcomponent" must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("\uDC00:testcomponent")
+   ·                     ──────────────────────
+   ╰────
+
+  ⚠ react(no-namespace): React component "😀:\ud800" must not be in a namespace, as React does not support them.
+   ╭─[no_namespace.tsx:1:21]
+ 1 │ React.createElement("\uD83D\uDE00:\uD800")
+   ·                     ─────────────────────
+   ╰────
+
   ⚠ react(no-namespace): React component ns:testComponent must not be in a namespace, as React does not support them.
    ╭─[no_namespace.tsx:1:2]
  1 │ <ns:testComponent />

@@ -27,6 +27,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r"require('./\uD800__mocks__/x')", None),
+        (r"require('./__mocks__\uDC00/x')", None),
         ("import something from 'something'", None),
         ("require('somethingElse')", None),
         ("require('./__mocks__.js')", None),
@@ -40,6 +43,10 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r"require('./__mocks__/\uD800')", None),
+        (r"require('\uDC00/__mocks__/x')", None),
+        (r"require('./\uD83D\uDE00/__mocks__')", None),
         ("require('./__mocks__')", None),
         ("require('./__mocks__/')", None),
         ("require('./__mocks__/index')", None),

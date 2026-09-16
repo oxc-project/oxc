@@ -1,6 +1,10 @@
+use std::borrow::Cow;
+
 use lazy_regex::{Regex, RegexBuilder};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_str::JSStr;
 
 /// Always returns `true`.
 ///
@@ -77,6 +81,20 @@ where
         .map(|pattern| RegexBuilder::new(&pattern).build())
         .collect::<Result<Vec<_>, _>>()
         .map_err(D::Error::custom)
+}
+
+/// Produce the text to match rule-configuration patterns against.
+///
+/// Regex patterns from rule configuration are always valid UTF-8 because serde_json rejects
+/// lone-surrogate escapes. Matching against a copy of the value in which each lone surrogate
+/// half is the replacement character U+FFFD therefore agrees with ESLint's UTF-16 matching
+/// for every expressible pattern, except a pattern that literally matches the replacement
+/// character.
+pub fn regex_match_text(value: JSStr<'_>) -> Cow<'_, str> {
+    match value.as_str() {
+        Some(text) => Cow::Borrowed(text),
+        None => Cow::Owned(value.chars().map(|c| c.to_char().unwrap_or('\u{FFFD}')).collect()),
+    }
 }
 
 pub fn deserialize_required_regex_option<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>

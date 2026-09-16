@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
+use oxc_str::{JSChar, JSStr};
 
 use crate::context::LintContext;
 
@@ -65,7 +66,8 @@ pub fn run_once(ctx: &LintContext) {
             return;
         };
 
-        if string_literal.value.as_str().is_some_and(contains_mocks_dir) {
+        let value = string_literal.value;
+        if value.as_str().map_or_else(|| js_path_contains_mocks_dir(value), contains_mocks_dir) {
             ctx.diagnostic(no_mocks_import_diagnostic(string_literal.span));
         }
     }
@@ -76,4 +78,27 @@ fn contains_mocks_dir(value: &str) -> bool {
         std::path::Component::Normal(p) => p == std::ffi::OsStr::new("__mocks__"),
         _ => false,
     })
+}
+
+/// `contains_mocks_dir` for a specifier with a lone surrogate, which
+/// `std::path` cannot hold. Split on path separators and compare each
+/// component as code points; a surrogate never equals a separator.
+fn js_path_contains_mocks_dir(value: JSStr) -> bool {
+    const MOCKS_DIR: &str = "__mocks__";
+    let mut component = String::new();
+    let mut component_has_surrogate = false;
+    for c in value.chars().map(JSChar::to_char).chain(std::iter::once(Some('/'))) {
+        match c {
+            Some(c) if std::path::is_separator(c) => {
+                if !component_has_surrogate && component == MOCKS_DIR {
+                    return true;
+                }
+                component.clear();
+                component_has_surrogate = false;
+            }
+            Some(c) => component.push(c),
+            None => component_has_surrogate = true,
+        }
+    }
+    false
 }

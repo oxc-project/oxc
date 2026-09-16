@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use lazy_regex::Regex;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -9,7 +11,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSChar, JSStr};
 
 use crate::{
     AstNode,
@@ -503,6 +505,7 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
         }
         Expression::ComputedMemberExpression(expression) => {
             let (prop_name, _) = get_computed_member_name(expression)?;
+            let prop_name = debug_if_not_utf8(prop_name);
             let obj_name =
                 extract_name_deep_from_expression(expression.object.without_parentheses());
 
@@ -511,7 +514,7 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
                 return Some(CompactStr::new(&new_name));
             }
 
-            Some(prop_name.into())
+            Some(CompactStr::new(&prop_name))
         }
         Expression::ChainExpression(chain) => match &chain.expression {
             ChainElement::CallExpression(call) => extract_name_deep_from_expression(&call.callee),
@@ -532,6 +535,7 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
             }
             ChainElement::ComputedMemberExpression(expression) => {
                 let (prop_name, _) = get_computed_member_name(expression)?;
+                let prop_name = debug_if_not_utf8(prop_name);
                 let obj_name =
                     extract_name_deep_from_expression(expression.object.without_parentheses());
 
@@ -540,7 +544,7 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
                     return Some(CompactStr::new(&new_name));
                 }
 
-                Some(prop_name.into())
+                Some(CompactStr::new(&prop_name))
             }
             ChainElement::PrivateFieldExpression(_) => None,
         },
@@ -550,33 +554,31 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
 
 fn get_computed_member_name<'a>(
     computed_member: &ComputedMemberExpression<'a>,
-) -> Option<(&'a str, Span)> {
+) -> Option<(JSStr<'a>, Span)> {
     let expression = computed_member.expression.without_parentheses();
 
     match &expression {
-        Expression::StringLiteral(lit) if !lit.value.is_empty() => {
-            Some((lit.value.as_str()?, lit.span))
-        }
+        Expression::StringLiteral(lit) if !lit.value.is_empty() => Some((lit.value, lit.span)),
         Expression::TemplateLiteral(lit)
             if lit.expressions.is_empty()
                 && lit.quasis.len() == 1
                 && !lit.quasis[0].value.raw.is_empty() =>
         {
-            Some((lit.quasis[0].value.raw.as_str(), lit.span))
+            Some((JSStr::from(lit.quasis[0].value.raw), lit.span))
         }
-        Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|x| (x.as_str(), lit.span)),
+        Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (JSStr::from(raw), lit.span)),
         _ => None,
     }
 }
 
-fn extract_name_from_expression<'a>(expression: &Expression<'a>) -> Option<(&'a str, Span)> {
+fn extract_name_from_expression<'a>(expression: &Expression<'a>) -> Option<(JSStr<'a>, Span)> {
     if let Some(identifier) = expression.get_identifier_reference() {
-        return Some((identifier.name.as_str(), identifier.span));
+        return Some((JSStr::from(identifier.name), identifier.span));
     }
 
     match expression.without_parentheses() {
         Expression::StaticMemberExpression(expression) => {
-            Some((expression.property.name.as_str(), expression.property.span))
+            Some((JSStr::from(expression.property.name), expression.property.span))
         }
         Expression::ComputedMemberExpression(expression) => get_computed_member_name(expression),
         Expression::ChainExpression(chain) => match &chain.expression {
@@ -585,7 +587,7 @@ fn extract_name_from_expression<'a>(expression: &Expression<'a>) -> Option<(&'a 
                 extract_name_from_expression(&non_null.expression)
             }
             ChainElement::StaticMemberExpression(expression) => {
-                Some((expression.property.name.as_str(), expression.property.span))
+                Some((JSStr::from(expression.property.name), expression.property.span))
             }
             ChainElement::ComputedMemberExpression(expression) => {
                 get_computed_member_name(expression)
@@ -596,8 +598,14 @@ fn extract_name_from_expression<'a>(expression: &Expression<'a>) -> Option<(&'a 
     }
 }
 
+/// A name with a lone surrogate cannot equal a configured exception. Its Debug
+/// form (quoted, escaped) keeps the deep name comparable and displayable.
+fn debug_if_not_utf8(name: JSStr<'_>) -> Cow<'_, str> {
+    name.as_str().map_or_else(|| Cow::Owned(format!("{name:?}")), Cow::Borrowed)
+}
+
 fn is_cap_allowed_expression<'a, I>(
-    short_name: &str,
+    short_name: JSStr<'_>,
     name: &CompactStr,
     exceptions: I,
     patterns: Option<&Regex>,
@@ -606,7 +614,7 @@ where
     I: Iterator<Item = &'a str>,
 {
     for exception in exceptions {
-        if exception == name.as_str() || exception == short_name {
+        if exception == name.as_str() || short_name == exception {
             return true;
         }
     }
@@ -629,8 +637,12 @@ enum GetCapResult {
     NonAlpha,
 }
 
-fn get_cap(string: &str) -> GetCapResult {
-    let first_char = string.chars().next().unwrap();
+fn get_cap(name: JSStr) -> GetCapResult {
+    // A lone surrogate has no case (`toUpperCase` leaves it unchanged), so
+    // ESLint classifies such a name as non-alphabetic.
+    let Some(first_char) = name.chars().next().and_then(JSChar::to_char) else {
+        return GetCapResult::NonAlpha;
+    };
 
     if !first_char.is_alphabetic() {
         return GetCapResult::NonAlpha;
@@ -648,6 +660,10 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r#"var x = new o["\uD800a"]();"#, None),
+        (r#"var x = new o["a\uD800"]();"#, Some(serde_json::json!([{ "properties": false }]))),
+        (r#"var x = new o["A\uD83D\uDE00"]();"#, None),
         ("var x = new Constructor();", None),
         ("var x = new a.b.Constructor();", None),
         ("var x = new a.b['Constructor']();", None),
@@ -738,6 +754,9 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r#"var x = new o["a\uD800"]();"#, None),
+        (r#"var x = o["A\uDC00"]();"#, None),
         ("var x = new c();", None),
         ("var x = new φ;", None),
         ("var x = new a.b.c;", None),

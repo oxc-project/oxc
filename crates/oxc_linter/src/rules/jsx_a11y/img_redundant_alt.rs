@@ -8,7 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use schemars::JsonSchema;
 use serde_json::Value;
 
@@ -164,17 +164,13 @@ impl Rule for ImgRedundantAlt {
 
         match alt_attribute {
             JSXAttributeValue::StringLiteral(lit) => {
-                let alt_text = lit.value.as_str();
-
-                if alt_text.is_some_and(|text| self.is_redundant_alt_text(text)) {
+                if self.is_redundant_alt_value(lit.value) {
                     ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                 }
             }
             JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
                 JSXExpression::StringLiteral(lit) => {
-                    let alt_text = lit.value.as_str();
-
-                    if alt_text.is_some_and(|text| self.is_redundant_alt_text(text)) {
+                    if self.is_redundant_alt_value(lit.value) {
                         ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                     }
                 }
@@ -195,6 +191,38 @@ impl Rule for ImgRedundantAlt {
 }
 
 impl ImgRedundantAlt {
+    /// [`Self::is_redundant_alt_text`] for a JavaScript string. A value with a lone
+    /// surrogate is searched as UTF-16 code units; the surrogate is a word boundary.
+    fn is_redundant_alt_value(&self, alt_text: JSStr<'_>) -> bool {
+        if let Some(alt_text) = alt_text.as_str() {
+            return self.is_redundant_alt_text(alt_text);
+        }
+        let units: Vec<u16> = alt_text
+            .encode_utf16()
+            .map(|unit| {
+                u8::try_from(unit).map_or(unit, |byte| u16::from(byte.to_ascii_lowercase()))
+            })
+            .collect();
+        let is_alphanumeric =
+            |unit: u16| u8::try_from(unit).is_ok_and(|byte| byte.is_ascii_alphanumeric());
+        for word in &self.words {
+            let word: Vec<u16> = word.encode_utf16().collect();
+            if word.is_empty() || word.len() > units.len() {
+                continue;
+            }
+            for (start, window) in units.windows(word.len()).enumerate() {
+                let end = start + word.len();
+                if window == word
+                    && (start == 0 || !is_alphanumeric(units[start - 1]))
+                    && (end == units.len() || !is_alphanumeric(units[end]))
+                {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
     #[inline]
     fn is_word_boundary(text: &[u8], start: usize, end: usize) -> bool {
         let starts_boundary = start == 0 || !text[start - 1].is_ascii_alphanumeric();
@@ -242,6 +270,10 @@ fn test() {
 
     let pass = vec![
         (r"<img alt='foo' />;", None, None),
+        // Lone surrogates do not form redundant words or hide them.
+        (r#"<img alt={"\uD800"} />;"#, None, None),
+        (r#"<img alt={"\uD800 imagery"} />;"#, None, None),
+        (r#"<img alt={"photos\uDC00"} />;"#, None, None),
         (r"<img alt='picture of me taking a photo of an image' aria-hidden />", None, None),
         (r"<img aria-hidden alt='photo of image' />", None, None),
         (r"<img ALt='foo' />;", None, None),
@@ -279,6 +311,10 @@ fn test() {
 
     let fail = vec![
         (r"<img alt='Photo of friend.' />;", None, None),
+        (r#"<img alt={"image \uD800"} />;"#, None, None),
+        (r#"<img alt={"\uDC00 Photo"} />;"#, None, None),
+        (r#"<img alt={"\uD83D\uDE00 picture"} />;"#, None, None),
+        (r#"<img alt={"\uD800image"} />;"#, None, None),
         (r"<img alt='Picture of friend.' />;", None, None),
         (r"<img alt='Image of friend.' />;", None, None),
         (

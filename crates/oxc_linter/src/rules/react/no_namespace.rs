@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, JSXElementName},
@@ -67,10 +69,13 @@ impl Rule for NoNamespace {
                     return;
                 };
 
-                if let Some(value) = str_lit.value.as_str()
-                    && value.contains(':')
-                {
-                    ctx.diagnostic(no_namespace_diagnostic(str_lit.span, value));
+                let value = str_lit.value;
+                if value.contains(':') {
+                    // Debug output escapes a lone surrogate for the message.
+                    let name = value
+                        .as_str()
+                        .map_or_else(|| Cow::Owned(format!("{value:?}")), Cow::Borrowed);
+                    ctx.diagnostic(no_namespace_diagnostic(str_lit.span, &name));
                 }
             }
             _ => {}
@@ -108,6 +113,8 @@ fn test() {
         "<Object.TestComponent />",
         r#"React.createElement("Object.TestComponent")"#,
         "React.createElement(null)",
+        r#"React.createElement("a\uD800b")"#,
+        r#"React.createElement("\uDC00")"#,
         "React.createElement(true)",
         "React.createElement({})",
     ];
@@ -115,6 +122,10 @@ fn test() {
     let fail = vec![
         "<ns:testcomponent />",
         r#"React.createElement("ns:testcomponent")"#,
+        // Lone surrogates beside the namespace separator are still namespaced names.
+        r#"React.createElement("ns:\uD800")"#,
+        r#"React.createElement("\uDC00:testcomponent")"#,
+        r#"React.createElement("\uD83D\uDE00:\uD800")"#,
         "<ns:testComponent />",
         r#"React.createElement("ns:testComponent")"#,
         "<ns:test_component />",

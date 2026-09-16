@@ -11,6 +11,27 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
    ╭─[jsx_no_target_blank.tsx:1:11]
+ 1 │ <a target="_blank" href={"https://x/\uD800"}></a>
+   ·           ────────
+   ╰────
+  help: add rel=`noreferrer` to the element
+
+  ⚠ react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
+ 1 │ <a target="_blank" href={"//x/\uDC00"} rel={"\uDC00"}></a>
+   ·           ────────
+   ╰────
+  help: add rel=`noreferrer` to the element
+
+  ⚠ react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
+ 1 │ <a target="_blank" href={"https://x/\uD83D\uDE00"} rel={"noreferrer\uD800"}></a>
+   ·           ────────
+   ╰────
+  help: add rel=`noreferrer` to the element
+
+  ⚠ react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" rel="" href="https://example.com/2"></a>
    ·           ────────
    ╰────
