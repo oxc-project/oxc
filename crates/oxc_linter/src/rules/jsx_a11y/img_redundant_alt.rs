@@ -8,7 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use schemars::JsonSchema;
 use serde_json::Value;
 
@@ -164,17 +164,13 @@ impl Rule for ImgRedundantAlt {
 
         match alt_attribute {
             JSXAttributeValue::StringLiteral(lit) => {
-                let alt_text = lit.value.as_str();
-
-                if alt_text.is_some_and(|text| self.is_redundant_alt_text(text)) {
+                if self.is_redundant_alt_value(lit.value) {
                     ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                 }
             }
             JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
                 JSXExpression::StringLiteral(lit) => {
-                    let alt_text = lit.value.as_str();
-
-                    if alt_text.is_some_and(|text| self.is_redundant_alt_text(text)) {
+                    if self.is_redundant_alt_value(lit.value) {
                         ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                     }
                 }
@@ -195,6 +191,12 @@ impl Rule for ImgRedundantAlt {
 }
 
 impl ImgRedundantAlt {
+    /// [`Self::is_redundant_alt_text`] for a JavaScript string. A value with
+    /// a lone surrogate is not matched against the configured words.
+    fn is_redundant_alt_value(&self, alt_text: JSStr<'_>) -> bool {
+        alt_text.as_str().is_some_and(|alt_text| self.is_redundant_alt_text(alt_text))
+    }
+
     #[inline]
     fn is_word_boundary(text: &[u8], start: usize, end: usize) -> bool {
         let starts_boundary = start == 0 || !text[start - 1].is_ascii_alphanumeric();
@@ -242,6 +244,13 @@ fn test() {
 
     let pass = vec![
         (r"<img alt='foo' />;", None, None),
+        // A value with a lone surrogate is not matched against the configured words.
+        (r#"<img alt={"\uD800"} />;"#, None, None),
+        (r#"<img alt={"\uD800 imagery"} />;"#, None, None),
+        (r#"<img alt={"photos\uDC00"} />;"#, None, None),
+        (r#"<img alt={"image \uD800"} />;"#, None, None),
+        (r#"<img alt={"\uDC00 Photo"} />;"#, None, None),
+        (r#"<img alt={"\uD800image"} />;"#, None, None),
         (r"<img alt='picture of me taking a photo of an image' aria-hidden />", None, None),
         (r"<img aria-hidden alt='photo of image' />", None, None),
         (r"<img ALt='foo' />;", None, None),
@@ -279,6 +288,7 @@ fn test() {
 
     let fail = vec![
         (r"<img alt='Photo of friend.' />;", None, None),
+        (r#"<img alt={"\uD83D\uDE00 picture"} />;"#, None, None),
         (r"<img alt='Picture of friend.' />;", None, None),
         (r"<img alt='Image of friend.' />;", None, None),
         (

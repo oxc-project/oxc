@@ -157,6 +157,27 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Each child in a list should have a unique 'key' prop
 
+  ⚠ react(jsx-key): Duplicate key '"\ud800"' found in JSX elements
+   ╭─[jsx_key.tsx:1:46]
+ 1 │ const spans = [<span key={"\uD800"}/>, <span key={"\uD800"}/>];
+   ·                                              ──────────────
+   ╰────
+  help: Each child in a list should have a unique 'key' prop
+
+  ⚠ react(jsx-key): Duplicate key 'a\uDC00' found in JSX elements
+   ╭─[jsx_key.tsx:1:47]
+ 1 │ const spans = [<span key={`a\uDC00`}/>, <span key={`a\uDC00`}/>];
+   ·                                               ───────────────
+   ╰────
+  help: Each child in a list should have a unique 'key' prop
+
+  ⚠ react(jsx-key): Duplicate key '😀' found in JSX elements
+   ╭─[jsx_key.tsx:1:52]
+ 1 │ const div = <div><span key={"\uD83D\uDE00"}/><span key={"\uD83D\uDE00"}/></div>;
+   ·                                                    ────────────────────
+   ╰────
+  help: Each child in a list should have a unique 'key' prop
+
   ⚠ react(jsx-key): Duplicate key 'notunique' found in JSX elements
    ╭─[jsx_key.tsx:5:31]
  4 │                         <span key="notunique"/>

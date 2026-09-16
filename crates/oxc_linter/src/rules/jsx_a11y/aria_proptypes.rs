@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
@@ -156,7 +156,8 @@ fn is_valid_value_for_aria_prop_type(
             {
                 return true;
             }
-            parse_aria_prop_value_as_string(value, false).is_some()
+            // Any string is valid, including one containing a lone surrogate.
+            string_literal_value(value).is_some()
         }
         AriaPropType::Integer | AriaPropType::Number => {
             if let Some(value_string) = parse_aria_prop_value_as_string(value, false) {
@@ -179,11 +180,13 @@ fn is_valid_value_for_aria_prop_type(
                 return true;
             }
 
-            let Some(value_string) = parse_aria_prop_value_as_string(value, false) else {
+            let Some(value_string) = string_literal_value(value) else {
                 return false;
             };
 
-            value_string.split_whitespace().next().is_some()
+            // At least one ID: a code point that is not whitespace. A lone surrogate
+            // is not whitespace.
+            value_string.chars().any(|c| c.to_char().is_none_or(|c| !c.is_whitespace()))
         }
         AriaPropType::Token(valid_tokens) => {
             let Some(value_string) = parse_aria_prop_value_as_string(value, true) else {
@@ -205,6 +208,20 @@ fn is_valid_value_for_aria_prop_type(
             }
             count > 0
         }
+    }
+}
+
+/// The value of a string-shaped attribute: a string literal, a string literal in an
+/// expression container, or a template literal without substitutions.
+fn string_literal_value<'a>(value: &JSXAttributeValue<'a>) -> Option<JSStr<'a>> {
+    match value {
+        JSXAttributeValue::StringLiteral(string_lit) => Some(string_lit.value),
+        JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
+            JSXExpression::StringLiteral(string_lit) => Some(string_lit.value),
+            JSXExpression::TemplateLiteral(template_lit) => template_lit.single_quasi(),
+            _ => None,
+        },
+        _ => None,
     }
 }
 
@@ -408,6 +425,13 @@ fn test() {
         "<div aria-label={`Hello ${foo}`} />",
         "<div aria-label={`foo-${id}`} />",
         "<div aria-label={`foo-${id} bar`} />",
+        // A string containing a lone surrogate is still a string.
+        r#"<div aria-label={"\uD800"} />"#,
+        r#"<div aria-label={"\uDC00 close"} />"#,
+        r"<div aria-label={`\uD83D\uDE00`} />",
+        r#"<div aria-labelledby={"\uD800"} />"#,
+        r#"<div aria-labelledby={"a \uDC00"} />"#,
+        r"<div aria-controls={`\uD83D\uDE00`} />",
         "<div aria-label={foo} />",
         "<div aria-label={foo.bar} />",
         "<div aria-label={null} />",
@@ -537,6 +561,10 @@ fn test() {
     ];
 
     let fail = vec![
+        // A lone surrogate never matches a token.
+        r#"<div aria-invalid={"\uD800"} />"#,
+        r#"<div aria-checked={"true\uDC00"} />"#,
+        r#"<div aria-level={"\uD83D\uDE00"} />"#,
         r#"<div aria-hidden="yes" />"#,
         r#"<div aria-hidden="no" />"#,
         "<div aria-hidden={1234} />",

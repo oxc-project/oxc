@@ -156,8 +156,9 @@ impl Rule for NoRequireImports {
                                 return;
                             }
                         }
+                        // A path with a lone surrogate is not matched against the allow patterns and is allowed.
                         Argument::StringLiteral(string_literal)
-                            if string_literal.value.as_str().is_some_and(|value| {
+                            if string_literal.value.as_str().is_none_or(|value| {
                                 match_argument_value_with_regex(&self.allow, value)
                             }) =>
                         {
@@ -169,25 +170,28 @@ impl Rule for NoRequireImports {
 
                 ctx.diagnostic(no_require_imports_diagnostic(call_expr.span));
             }
-            AstKind::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
-                TSModuleReference::ExternalModuleReference(mod_ref) => {
-                    if self.allow_as_import {
-                        return;
-                    }
+            AstKind::TSImportEqualsDeclaration(decl) => {
+                match &decl.module_reference {
+                    TSModuleReference::ExternalModuleReference(mod_ref) => {
+                        if self.allow_as_import {
+                            return;
+                        }
 
-                    if !self.allow.is_empty()
-                        && mod_ref.expression.value.as_str().is_some_and(|value| {
-                            match_argument_value_with_regex(&self.allow, value)
-                        })
-                    {
-                        return;
-                    }
+                        // A path with a lone surrogate is not matched against the allow patterns and is allowed.
+                        if !self.allow.is_empty()
+                            && mod_ref.expression.value.as_str().is_none_or(|value| {
+                                match_argument_value_with_regex(&self.allow, value)
+                            })
+                        {
+                            return;
+                        }
 
-                    ctx.diagnostic(no_require_imports_diagnostic(decl.span));
+                        ctx.diagnostic(no_require_imports_diagnostic(decl.span));
+                    }
+                    TSModuleReference::IdentifierReference(_)
+                    | TSModuleReference::QualifiedName(_) => {}
                 }
-                TSModuleReference::IdentifierReference(_) | TSModuleReference::QualifiedName(_) => {
-                }
-            },
+            }
             _ => {}
         }
     }
@@ -257,6 +261,19 @@ fn test() {
         (
             "import pkg = require('some-package');",
             Some(serde_json::json!([{ "allow": ["^some-package$"] }])),
+        ),
+        // A path with a lone surrogate is not matched against the allow patterns.
+        (
+            r"const pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["\\.json$"] }])),
+        ),
+        (
+            r"import pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["\\.json$"] }])),
+        ),
+        (
+            r"const pkg = require('a\uD800b.json');",
+            Some(serde_json::json!([{ "allow": ["^foo"] }])),
         ),
         ("import foo = require('foo');", Some(serde_json::json!([{ "allowAsImport": true }]))),
         (

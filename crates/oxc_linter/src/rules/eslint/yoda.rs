@@ -9,6 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBigInt, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -404,7 +405,8 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
         if let (Some(left_left), Some(right_right)) =
             (get_string_literal(left_left), get_string_literal(right_right))
         {
-            return left_left <= right_right;
+            // JavaScript orders strings by UTF-16 code unit.
+            return left_left.encode_utf16().le(right_right.encode_utf16());
         }
 
         if let (Some(left_left), Some(right_right)) =
@@ -438,7 +440,8 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
         if let (Some(left_right), Some(right_left)) =
             (get_string_literal(left_right), get_string_literal(right_left))
         {
-            return left_right <= right_left;
+            // JavaScript orders strings by UTF-16 code unit.
+            return left_right.encode_utf16().le(right_left.encode_utf16());
         }
 
         if let (Some(left_right), Some(right_left)) =
@@ -468,15 +471,15 @@ fn is_target_literal(expr: &Expression) -> bool {
     get_string_literal(expr).is_some() || is_number(expr)
 }
 
-fn get_string_literal<'a>(expr: &'a Expression) -> Option<&'a str> {
+fn get_string_literal<'a>(expr: &Expression<'a>) -> Option<JSStr<'a>> {
     match expr {
-        Expression::StringLiteral(string) => string.value.as_str(),
+        Expression::StringLiteral(string) => Some(string.value),
         Expression::TemplateLiteral(template) => {
             if template.quasis.len() != 1 {
                 return None;
             }
 
-            template.quasis.first().map(|e| e.value.raw.as_str())
+            template.quasis.first().map(|e| JSStr::from(e.value.raw))
         }
         _ => None,
     }
@@ -523,6 +526,19 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (
+            r#"if ("\uD800" <= x && x <= "\uDBFF") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
+        (
+            r#"if ("\uDC00" <= x && x <= "\uDFFF") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
+        (
+            r#"if ("a\uD800" <= x && x <= "b") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
         (r#"if (value === "red") {}"#, Some(serde_json::json!(["never"]))),
         ("if (value === value) {}", Some(serde_json::json!(["never"]))),
         ("if (value != 5) {}", Some(serde_json::json!(["never"]))),
@@ -699,6 +715,15 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (
+            r#"if ("\uDBFF" <= x && x <= "\uD800") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
+        (
+            r#"if ("\uFFFF" <= x && x <= "\uD83D\uDE00") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
         (
             "if (x <= 'foo' || 'bar' < x) {}",
             Some(serde_json::json!(["always", { "exceptRange": true }])),

@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{CompactStr, JSStr};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -282,7 +282,7 @@ impl NoLargeSnapshotsConfig {
         member_expr: &MemberExpression,
         ctx: &LintContext,
     ) -> bool {
-        let Some(snapshot_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
+        let Some(snapshot_name) = member_expr.static_property_name() else {
             return false;
         };
         let Some(file_name) = ctx.file_path().to_str() else {
@@ -293,6 +293,10 @@ impl NoLargeSnapshotsConfig {
             return false;
         };
 
+        // A snapshot name with a lone surrogate is not matched against the allow list and is allowed.
+        let Some(snapshot_name) = snapshot_name.as_str() else {
+            return true;
+        };
         allowed_snapshots_in_file.iter().any(|matcher| matcher.is_match(snapshot_name))
     }
 

@@ -97,11 +97,12 @@ impl Rule for NoUnassignedImport {
                 if import_decl.specifiers.is_some() {
                     return;
                 }
-                if import_decl
+                // A source with a lone surrogate is not matched against the allow globs and is allowed.
+                if !import_decl
                     .source
                     .value
                     .as_str()
-                    .is_none_or(|source| !self.is_match_allow_globs(source))
+                    .is_none_or(|source| self.is_match_allow_globs(source))
                 {
                     ctx.diagnostic(no_unassigned_import_diagnostic(
                         import_decl.span,
@@ -120,7 +121,7 @@ impl Rule for NoUnassignedImport {
                 let Argument::StringLiteral(source_str) = first_arg else {
                     return;
                 };
-                if source_str.value.as_str().is_none_or(|source| !self.is_match_allow_globs(source))
+                if !source_str.value.as_str().is_none_or(|source| self.is_match_allow_globs(source))
                 {
                     ctx.diagnostic(no_unassigned_import_diagnostic(
                         call_expr.span,
@@ -145,6 +146,9 @@ fn test() {
     use serde_json::json;
 
     let pass = vec![
+        // A source with a lone surrogate is not matched against the allow globs.
+        (r"import './\uD800.css'", Some(json!([{ "allow": ["**"]}]))),
+        (r"import './\uD800.css'", Some(json!([{ "allow": ["**/*.js"]}]))),
         ("import _ from 'foo'", None),
         ("import foo from 'foo'", None),
         ("import foo, { bar } from 'foo'", None),

@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_ast::{
     AstKind,
     ast::{Expression, TSEnumMember},
@@ -14,6 +12,7 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
+    utils::diagnostic_text,
 };
 
 fn no_duplicate_enum_values_diagnostic(
@@ -27,12 +26,7 @@ fn no_duplicate_enum_values_diagnostic(
     let second_init_span = second_member.initializer.as_ref().map(GetSpan::span).unwrap();
 
     OxcDiagnostic::warn(format!("Duplicate enum value `{value}`"))
-        .with_help(format!(
-            "Give {} a unique value",
-            second_name
-                .as_str()
-                .map_or_else(|| Cow::Owned(format!("{second_name:?}")), Cow::Borrowed)
-        ))
+        .with_help(format!("Give {} a unique value", diagnostic_text(second_name)))
         .with_labels([
             first_init_span.label(format!("{value} is first used as an initializer here")),
             second_init_span.label("and is re-used here"),

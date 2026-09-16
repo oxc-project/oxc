@@ -403,8 +403,7 @@ fn validate_title(
     }
 
     if let Some(disallowed_words_reg) = &config.disallowed_words_reg {
-        // Regular expressions match UTF-8 only; a title with a lone surrogate
-        // skips this check.
+        // A title with a lone surrogate is not matched against configured patterns.
         if let Some(title) = title.as_str()
             && let Some(matched) = disallowed_words_reg.find(title)
         {
@@ -446,8 +445,7 @@ fn validate_title(
         return;
     };
 
-    // Regular expressions match UTF-8 only; a title with a lone surrogate
-    // skips the pattern checks.
+    // A title with a lone surrogate is not matched against configured patterns.
     let Some(title) = title.as_str() else {
         return;
     };

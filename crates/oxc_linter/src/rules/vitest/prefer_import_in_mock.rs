@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -11,10 +12,16 @@ use crate::{
     utils::{PossibleJestNode, parse_general_jest_fn_call},
 };
 
-fn prefer_import_in_mock_diagnostic(span: Span, path: &str) -> OxcDiagnostic {
-    let help = format!(
-        "Dynamic import improves the type information and IntelliSense. Substitute `{path}` with `import('{path}')`"
-    );
+fn prefer_import_in_mock_diagnostic(span: Span, path: JSStr) -> OxcDiagnostic {
+    // Debug supplies a quoted, escaped spelling when the path has a lone surrogate.
+    let help = match path.as_str() {
+        Some(path) => format!(
+            "Dynamic import improves the type information and IntelliSense. Substitute `{path}` with `import('{path}')`"
+        ),
+        None => format!(
+            "Dynamic import improves the type information and IntelliSense. Substitute `{path:?}` with `import({path:?})`"
+        ),
+    };
 
     OxcDiagnostic::warn("Mocked modules must be dynamic imported.").with_help(help).with_label(span)
 }
@@ -118,13 +125,18 @@ impl PreferImportInMock {
             return;
         };
 
-        let Some(value) = import_value.value.as_str() else { return };
+        let value = import_value.value;
         ctx.diagnostic_with_fix(
             prefer_import_in_mock_diagnostic(call_expr.arguments_span().unwrap(), value),
             |fixer| {
                 if !self.fixable {
                     return fixer.noop();
                 }
+                // The fix writes the path as Rust text, so a path with a lone
+                // surrogate is reported without it.
+                let Some(value) = value.as_str() else {
+                    return fixer.noop();
+                };
 
                 fixer.replace(import_value.span, format!("import('{value}')"))
             },
@@ -151,6 +163,9 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r#"vi.mock("\uD800")"#, None),
+        (r#"vi.doMock("a\uDC00b", () => ({}))"#, None),
         ("vi.mock('foo', () => {})", Some(serde_json::json!([ { "fixable": false, }, ]))),
         (r#"vi.mock("node:fs/promises")"#, Some(serde_json::json!([ { "fixable": false, }, ]))),
         (
@@ -190,6 +205,8 @@ fn test() {
     ];
 
     let fix = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r#"vi.mock("\uD800")"#, r#"vi.mock("\uD800")"#),
         ("vi.mock('foo', () => {})", "vi.mock(import('foo'), () => {})"),
         (r#"vi.mock("node:fs/promises")"#, "vi.mock(import('node:fs/promises'))"),
         (

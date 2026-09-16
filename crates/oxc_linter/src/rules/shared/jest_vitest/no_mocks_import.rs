@@ -65,6 +65,7 @@ pub fn run_once(ctx: &LintContext) {
             return;
         };
 
+        // A path with a lone surrogate is not checked.
         if string_literal.value.as_str().is_some_and(contains_mocks_dir) {
             ctx.diagnostic(no_mocks_import_diagnostic(string_literal.span));
         }

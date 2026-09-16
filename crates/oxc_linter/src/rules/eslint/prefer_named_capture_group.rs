@@ -11,6 +11,7 @@ use oxc_regular_expression::{
     visit::{RegExpAstKind, Visit},
 };
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -110,20 +111,24 @@ fn check_static_arguments(arg0: Option<&Argument>, arg1: Option<&Argument>, ctx:
         return;
     };
 
-    let Some(pattern_text) = static_string_value(pattern_expr) else {
+    // The regexp parser takes UTF-8 text; a pattern containing a lone surrogate is skipped.
+    let Some(pattern_text) =
+        static_string_value(pattern_expr, ctx.allocator()).and_then(JSStr::as_str)
+    else {
         return;
     };
 
     let flags_text = arg1
         .and_then(Argument::as_expression)
         .map(Expression::get_inner_expression)
-        .and_then(static_string_value);
+        .and_then(|expr| static_string_value(expr, ctx.allocator()))
+        .and_then(JSStr::as_str);
 
     let allocator = Allocator::default();
     let Ok(pattern) = LiteralParser::new(
         &allocator,
-        &pattern_text,
-        flags_text.as_deref(),
+        pattern_text,
+        flags_text,
         Options { pattern_span_offset: pattern_expr.span().start, flags_span_offset: 0 },
     )
     .parse() else {

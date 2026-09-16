@@ -47,6 +47,7 @@ fn test() {
         (r"test('\uD800', () => {});", None),
         (r"test('foo \uD800 bar', () => {});", None),
         (r"test('\uD800test foo', () => {});", None),
+        // A title with a lone surrogate is not matched against configured patterns.
         (
             r"test('\uD800 correct', () => {});",
             Some(serde_json::json!([{ "disallowedWords": ["correct"] }])),
