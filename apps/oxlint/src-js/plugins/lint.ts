@@ -40,6 +40,33 @@ const afterHooks: AfterHook[] = [];
 const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
 
 /**
+ * Register a buffer received from Rust, or get the already-registered buffer with this ID.
+ *
+ * Rust sends each buffer over only once. Later it sends only the `bufferId`.
+ *
+ * @param bufferId - ID of buffer
+ * @param buffer - Buffer, or `null` if buffer with this ID was previously sent to JS
+ * @returns Buffer, with `int32` and `float64` views attached
+ */
+export function registerBuffer(bufferId: number, buffer: Uint8Array | null): BufferWithArrays {
+  if (buffer === null) {
+    // Rust will only send a `bufferId` alone, if it previously sent a buffer with this same ID
+    return buffers[bufferId]!;
+  }
+
+  typeAssertIs<BufferWithArrays>(buffer);
+  const { buffer: arrayBuffer, byteOffset } = buffer;
+  buffer.int32 = new Int32Array(arrayBuffer, byteOffset);
+  buffer.float64 = new Float64Array(arrayBuffer, byteOffset);
+
+  for (let i = bufferId - buffers.length; i >= 0; i--) {
+    buffers.push(null);
+  }
+  buffers[bufferId] = buffer;
+  return buffer;
+}
+
+/**
  * Lint a file.
  *
  * Main logic is in separate function `lintFileImpl`, because V8 cannot optimize functions containing try/catch.
@@ -126,21 +153,7 @@ export function lintFileImpl(
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
   // TODO: Is this enough to guarantee soundness?
-  if (buffer === null) {
-    // Rust will only send a `bufferId` alone, if it previously sent a buffer with this same ID
-    buffer = buffers[bufferId]!;
-  } else {
-    typeAssertIs<BufferWithArrays>(buffer);
-    const { buffer: arrayBuffer, byteOffset } = buffer;
-    buffer.int32 = new Int32Array(arrayBuffer, byteOffset);
-    buffer.float64 = new Float64Array(arrayBuffer, byteOffset);
-
-    for (let i = bufferId - buffers.length; i >= 0; i--) {
-      buffers.push(null);
-    }
-    buffers[bufferId] = buffer;
-  }
-  typeAssertIs<BufferWithArrays>(buffer);
+  buffer = registerBuffer(bufferId, buffer);
 
   // Debug asserts that input is valid
   debugAssert(

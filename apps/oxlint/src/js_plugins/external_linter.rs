@@ -243,7 +243,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 ///
 /// # SAFETY
 /// `allocator` must have been created via `FixedSizeAllocator`
-unsafe fn get_buffer(
+pub(super) unsafe fn get_buffer(
     allocator: &Allocator,
 ) -> (
     u32,                // Buffer ID

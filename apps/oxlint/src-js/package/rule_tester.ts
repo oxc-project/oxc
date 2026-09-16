@@ -1254,7 +1254,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     const optionsId = setupOptions(test, cwd);
 
     // Parse file into buffer
-    parse(path, test.code, parseOptions);
+    const bufferId = parse(path, test.code, parseOptions);
 
     // In conformance tests, set `context.languageOptions.ecmaVersion`.
     // This is not supported outside of conformance tests.
@@ -1265,8 +1265,8 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     const settingsJSON = JSON.stringify(test.settings ?? {});
 
     // Lint file.
-    // Buffer is stored already, at index 0. No need to pass it.
-    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON, globalsJSON, null);
+    // Buffer is already registered by `parse`. No need to pass it.
+    lintFileImpl(path, bufferId, null, [0], [optionsId], settingsJSON, globalsJSON, null);
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
