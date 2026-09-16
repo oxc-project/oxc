@@ -1191,3 +1191,49 @@ fn js_str_round_trip() {
         }
     }
 }
+
+#[test]
+fn jsx_attribute_with_lone_surrogate_value() {
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    use oxc_str::JSStrBuilder;
+
+    // JSX attribute strings have no escape syntax, so a decoded value holding a lone
+    // surrogate can only be printed as a string expression. Values that are valid
+    // UTF-8, including surrogate pairs, keep the quoted form.
+    let allocator = Allocator::new();
+    let source_type = SourceType::jsx();
+    let mut parsed = Parser::new(&allocator, "<div a=\"x\" b=\"y\" />;", source_type).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
+        panic!("expected expression statement");
+    };
+    let Expression::JSXElement(element) = &mut statement.expression else {
+        panic!("expected JSX element");
+    };
+    let values: [&[u16]; 2] = [&[0x61, 0xD800, 0x62], &[0x61, 0xD83D, 0xDE00, 0x22]];
+    for (attribute, units) in element.opening_element.attributes.iter_mut().zip(values) {
+        let JSXAttributeItem::Attribute(attribute) = attribute else {
+            panic!("expected attribute");
+        };
+        let Some(JSXAttributeValue::StringLiteral(literal)) = &mut attribute.value else {
+            panic!("expected string attribute value");
+        };
+        let mut builder = JSStrBuilder::new_in(&allocator);
+        builder.push_utf16(units);
+        literal.value = builder.into_js_str();
+        literal.raw = None;
+    }
+
+    let output = Codegen::new().build(&parsed.program).code;
+    assert_eq!(output, "<div a={\"a\\ud800b\"} b='a😀\"' />;\n");
+    let minified = Codegen::new()
+        .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+        .build(&parsed.program)
+        .code;
+    assert_eq!(minified, "<div a={\"a\\ud800b\"} b='a😀\"'/>;");
+
+    let reparsed = Parser::new(&allocator, &output, source_type).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{output}");
+    assert_eq!(Codegen::new().build(&reparsed.program).code, output);
+}

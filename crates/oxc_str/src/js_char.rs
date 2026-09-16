@@ -7,6 +7,30 @@
 #[repr(transparent)]
 pub struct JSChar(u32);
 
+impl From<char> for JSChar {
+    /// Every Unicode scalar value is a JavaScript code point.
+    #[inline]
+    fn from(value: char) -> Self {
+        Self(u32::from(value))
+    }
+}
+
+impl PartialEq<char> for JSChar {
+    /// Code points are equal by value. A `char` cannot be a lone surrogate,
+    /// so a lone-surrogate code point never equals any `char`.
+    #[inline]
+    fn eq(&self, other: &char) -> bool {
+        self.0 == u32::from(*other)
+    }
+}
+
+impl PartialEq<JSChar> for char {
+    #[inline]
+    fn eq(&self, other: &JSChar) -> bool {
+        other == self
+    }
+}
+
 impl JSChar {
     /// Construct a code point, returning `None` if `value > 0x10_FFFF`.
     #[inline]
@@ -50,6 +74,17 @@ impl JSChar {
         self.0 >= 0xD800 && self.0 <= 0xDFFF
     }
 
+    /// Byte length of this code point as stored in a [`JSStr`](crate::JSStr).
+    #[inline]
+    pub const fn len_bytes(self) -> usize {
+        match self.0 {
+            0..=0x7F => 1,
+            0x80..=0x7FF => 2,
+            0x800..=0xFFFF => 3,
+            _ => 4,
+        }
+    }
+
     /// Encode one code point. The caller handles pairing adjacent surrogates.
     #[inline]
     #[expect(clippy::cast_possible_truncation, reason = "each byte is masked or range-checked")]
@@ -80,5 +115,27 @@ impl JSChar {
             }
         };
         &buffer[..len]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::JSChar;
+
+    #[test]
+    fn len_bytes_matches_storage_width() {
+        assert_eq!(JSChar::from('a').len_bytes(), 1);
+        assert_eq!(JSChar::from('\u{00E9}').len_bytes(), 2);
+        assert_eq!(JSChar::from_u32(0xD800).unwrap().len_bytes(), 3);
+        assert_eq!(JSChar::from('\u{1F600}').len_bytes(), 4);
+    }
+
+    #[test]
+    fn compares_to_char_by_code_point() {
+        assert_eq!(JSChar::from('\r'), '\r');
+        assert_eq!('\r', JSChar::from('\r'));
+        assert_ne!(JSChar::from('\r'), '\n');
+        let lead = JSChar::from_u32(0xD800).unwrap();
+        assert_ne!(lead, '\u{FFFD}');
     }
 }
