@@ -6,7 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{CompactStr, JSStr};
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -112,16 +112,26 @@ impl Rule for NoNodejsModules {
             _ => return,
         };
 
-        let Some(module_name) = module_name.and_then(JSStr::as_str) else {
+        let Some(module_name) = module_name else {
             return;
         };
 
-        if self.allow.contains(module_name) {
+        let Some(name) = module_name.as_str() else {
+            // A name with a lone surrogate matches neither the `allow` list nor a
+            // builtin, but the `node:` scheme still marks a Node.js module.
+            if module_name.starts_with("node:") {
+                let name = format!("{module_name:?}");
+                ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), &name));
+            }
+            return;
+        };
+
+        if self.allow.contains(name) {
             return;
         }
 
-        if module_name.starts_with("node:") || is_nodejs_builtin_module(module_name) {
-            ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), module_name));
+        if name.starts_with("node:") || is_nodejs_builtin_module(name) {
+            ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), name));
         }
     }
 }
@@ -131,6 +141,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r#"import x from "\uD800""#, None),
+        (r#"var x = require("\uDC00")"#, None),
         // Non Node.js modules
         (r#"import _ from "lodash""#, None),
         (r#"import find from "lodash.find""#, None),
@@ -184,6 +197,10 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r#"import x from "node:\uD800""#, None),
+        (r#"var x = require("node:\uDC00")"#, None),
+        (r#"import x from "node:\uD83D\uDE00""#, None),
         // Node.js builtin modules
         (r#"import path from "path""#, None),
         (r#"import fs from "fs""#, None),

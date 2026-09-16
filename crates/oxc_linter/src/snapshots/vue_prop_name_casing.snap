@@ -2,6 +2,30 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ vue(prop-name-casing): Prop '"greeting-\ud800"' is not in camelCase.
+   ╭─[prop_name_casing.tsx:4:31]
+ 3 │                     export default {
+ 4 │                       props: ["greeting-\uD800"]
+   ·                               ─────────────────
+ 5 │                     }
+   ╰────
+
+  ⚠ vue(prop-name-casing): Prop '"\udc00_text"' is not in camelCase.
+   ╭─[prop_name_casing.tsx:4:32]
+ 3 │                     export default {
+ 4 │                       props: { "\uDC00_text": String }
+   ·                                ─────────────
+ 5 │                     }
+   ╰────
+
+  ⚠ vue(prop-name-casing): Prop 'Greeting😀' is not in camelCase.
+   ╭─[prop_name_casing.tsx:4:33]
+ 3 │                     export default {
+ 4 │                       props: { [`Greeting\uD83D\uDE00`]: String }
+   ·                                 ──────────────────────
+ 5 │                     }
+   ╰────
+
   ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {

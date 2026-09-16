@@ -2,6 +2,27 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ import(first): Relative imports before absolute imports are prohibited
+   ╭─[index.ts:1:49]
+ 1 │ import { x } from './\uD800'; import { y } from 'bar'
+   ·                                                 ─────
+   ╰────
+  help: Move absolute import above relative import
+
+  ⚠ import(first): Relative imports before absolute imports are prohibited
+   ╭─[index.ts:1:50]
+ 1 │ import { x } from '../\uDC00'; import { y } from 'bar'
+   ·                                                  ─────
+   ╰────
+  help: Move absolute import above relative import
+
+  ⚠ import(first): Relative imports before absolute imports are prohibited
+   ╭─[index.ts:1:54]
+ 1 │ import { x } from '/\uD83D\uDE00'; import { y } from 'bar'
+   ·                                                      ─────
+   ╰────
+  help: Move absolute import above relative import
+
   ⚠ import(first): Import statements must come first
    ╭─[index.ts:3:15]
  2 │               export { x };
