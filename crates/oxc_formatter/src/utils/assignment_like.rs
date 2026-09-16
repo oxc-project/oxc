@@ -7,7 +7,7 @@ use crate::{
     formatter::{
         Comments, JsFormatter,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
-        trivia::FormatTrailingComments,
+        trivia::{FormatTrailingComments, is_alignable_block_comment},
     },
     print::{
         BinaryLikeExpression, FormatWrite, alias_union_breaks_after_operator,
@@ -418,6 +418,10 @@ impl<'a> AssignmentLike<'a, '_> {
             return layout;
         }
 
+        if self.right_has_leading_alignable_block_comment(f) {
+            return AssignmentLikeLayout::BreakAfterOperator;
+        }
+
         if let Some(Expression::CallExpression(call_expression)) = right_shape
             && call_expression
                 .callee
@@ -476,6 +480,23 @@ impl<'a> AssignmentLike<'a, '_> {
         self.get_right_expression()
             .filter(|expr| !is_cast_target(expr.span(), f))
             .map(AsRef::as_ref)
+    }
+
+    /// A leading multi-line `*`-aligned block comment on the right-hand side
+    /// breaks after the operator ahead of every shape rule (prettier/prettier#19180).
+    /// Reads the unprinted view, so it runs after `write_left` (like `left_printed_eol_line_comment`).
+    /// An alias-level union sees the same comment and hands its indent over (`alias_union_breaks_after_operator`).
+    fn right_has_leading_alignable_block_comment(&self, f: &JsFormatter<'_, 'a>) -> bool {
+        let right_start = match self {
+            AssignmentLike::TSTypeAliasDeclaration(decl) => decl.type_annotation.span().start,
+            _ => match self.get_right_expression() {
+                Some(expr) => expr.span().start,
+                None => return false,
+            },
+        };
+        f.comments()
+            .comments_before_iter(right_start)
+            .any(|comment| is_alignable_block_comment(comment, f.source_text()))
     }
 
     fn get_right_expression(&self) -> Option<&AstNode<'a, Expression<'a>>> {

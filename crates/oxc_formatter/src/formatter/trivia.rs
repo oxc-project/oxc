@@ -80,6 +80,7 @@
 //! 4. Advances cursor for processed comments
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::{Comment, CommentContent, CommentKind};
+use oxc_formatter_core::SourceText;
 use oxc_span::Span;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
@@ -642,6 +643,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentBeforeContent<'_> {
 ///  */
 /// "#)));
 /// ```
-pub fn is_alignable_comment(lines: &str) -> bool {
+fn is_alignable_comment(lines: &str) -> bool {
     LineTerminatorSplitter::new(lines).skip(1).all(|line| line.trim_start().starts_with('*'))
+}
+
+/// A multi-line block comment that [`is_alignable_comment`].
+pub fn is_alignable_block_comment(comment: &Comment, source_text: SourceText) -> bool {
+    comment.is_multiline_block() && is_alignable_comment(source_text.text_for(&comment.span))
 }
