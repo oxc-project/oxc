@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, iter};
 
 use cow_utils::CowUtils;
 use oxc_ast::{
@@ -8,7 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSChar, JSStr};
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -166,7 +166,7 @@ impl Rule for NoNoninteractiveElementInteractions {
         let role_value = role_value(jsx_el);
         if is_content_editable(jsx_el)
             || is_hidden_from_screen_reader(ctx, jsx_el)
-            || role_value.is_some_and(|role| {
+            || role_value.and_then(JSStr::as_str).is_some_and(|role| {
                 let role = role.cow_to_lowercase();
                 matches!(role.as_ref(), "presentation" | "none")
             })
@@ -174,7 +174,7 @@ impl Rule for NoNoninteractiveElementInteractions {
             return;
         }
 
-        if role_value.is_some_and(|role| {
+        if role_value.and_then(JSStr::as_str).is_some_and(|role| {
             let role = role.cow_to_lowercase();
             is_abstract_role_name(role.as_ref())
         }) {
@@ -253,12 +253,12 @@ fn is_content_editable(jsx_el: &JSXOpeningElement) -> bool {
         .is_some_and(|value| value == "true")
 }
 
-fn role_value<'b>(jsx_el: &'b JSXOpeningElement<'_>) -> Option<&'b str> {
+fn role_value<'a>(jsx_el: &JSXOpeningElement<'a>) -> Option<JSStr<'a>> {
     has_jsx_prop_ignore_case(jsx_el, "role").and_then(get_prop_value).and_then(
         |value| match value {
-            JSXAttributeValue::StringLiteral(role) => role.value.as_str(),
+            JSXAttributeValue::StringLiteral(role) => Some(role.value),
             JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-                JSXExpression::StringLiteral(role) => role.value.as_str(),
+                JSXExpression::StringLiteral(role) => Some(role.value),
                 _ => None,
             },
             _ => None,
@@ -314,11 +314,28 @@ fn is_focusable(jsx_el: &JSXOpeningElement, element_type: &str) -> bool {
     }
 }
 
-fn first_recognized_role(role_value: &str) -> Option<Cow<'_, str>> {
-    role_value.split_whitespace().find_map(|role| {
-        let role = role.cow_to_lowercase();
-        is_recognized_role(role.as_ref()).then_some(role)
-    })
+/// Split the value on whitespace like `str::split_whitespace`
+/// and return the first token that is a recognized role.
+fn first_recognized_role(role_value: JSStr<'_>) -> Option<Cow<'_, str>> {
+    let bytes = role_value.as_bytes();
+    let mut token_start = 0;
+    let mut offset = 0;
+    for c in role_value.chars().chain(iter::once(JSChar::from(' '))) {
+        if c.to_char().is_some_and(char::is_whitespace) {
+            // A token with a lone surrogate is not UTF-8 and is never a recognized role.
+            if let Ok(token) = std::str::from_utf8(&bytes[token_start..offset])
+                && !token.is_empty()
+            {
+                let role = token.cow_to_lowercase();
+                if is_recognized_role(role.as_ref()) {
+                    return Some(role);
+                }
+            }
+            token_start = offset + c.len_bytes();
+        }
+        offset += c.len_bytes();
+    }
+    None
 }
 
 fn is_recognized_role(role: &str) -> bool {
@@ -400,6 +417,7 @@ fn test() {
         (r#"<div role="presentation" onClick={() => void 0} />"#, None, None).into(),
         (r#"<main role={"button"} onClick={() => void 0} />"#, None, None).into(),
         (r#"<main role="unknown button" onClick={() => void 0} />"#, None, None).into(),
+        (r#"<li onClick={() => void 0} role={"\uD800 button"} />"#, None, None).into(),
         (
             r#"<div role="separator" tabIndex={0} aria-valuenow={50} onClick={() => void 0} />"#,
             None,

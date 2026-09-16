@@ -111,10 +111,12 @@ impl Rule for PreferDomNodeDataset {
             return;
         };
 
-        let Some(dataset_property_name) = string_lit.value.as_str().and_then(strip_data_prefix)
-        else {
+        let value = string_lit.value;
+        if !value.starts_with("data-") && !value.starts_with("DATA-") {
             return;
-        };
+        }
+        // The fix writes the rest of the name as text, so it is skipped for a lone surrogate.
+        let dataset_property_name = value.as_str().and_then(strip_data_prefix);
 
         match method_name {
             "setAttribute" => {
@@ -126,6 +128,9 @@ impl Rule for PreferDomNodeDataset {
                         return fixer.noop();
                     }
 
+                    let Some(dataset_property_name) = dataset_property_name else {
+                        return fixer.noop();
+                    };
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -146,6 +151,9 @@ impl Rule for PreferDomNodeDataset {
                         return fixer.noop();
                     }
 
+                    let Some(dataset_property_name) = dataset_property_name else {
+                        return fixer.noop();
+                    };
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -168,6 +176,9 @@ impl Rule for PreferDomNodeDataset {
                         return fixer.noop();
                     }
 
+                    let Some(dataset_property_name) = dataset_property_name else {
+                        return fixer.noop();
+                    };
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -187,6 +198,9 @@ impl Rule for PreferDomNodeDataset {
                         return fixer.noop();
                     }
 
+                    let Some(dataset_property_name) = dataset_property_name else {
+                        return fixer.noop();
+                    };
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -453,6 +467,7 @@ fn test() {
         r#"element.optional?.getAttribute("data-unicorn")?.length;"#,
         r#"element.getAttribute("data-unicorn").toString()"#,
         r#"(await promise).getAttribute("data-foo")"#,
+        r#"el.setAttribute("data-\uD800", "x");"#,
     ];
 
     let fix = vec![
@@ -595,6 +610,7 @@ fn test() {
             r"element.dataset.unicorn.toString()",
         ),
         (r#"(await promise).getAttribute("data-foo")"#, r"(await promise).dataset.foo"),
+        (r#"el.setAttribute("data-\uD800", "x");"#, r#"el.setAttribute("data-\uD800", "x");"#),
     ];
 
     Tester::new(PreferDomNodeDataset::NAME, PreferDomNodeDataset::PLUGIN, pass, fail)

@@ -143,6 +143,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group.
 
   ⚠ eslint(prefer-named-capture-group): Capture group should be named.
+   ╭─[prefer_named_capture_group.tsx:1:12]
+ 1 │ new RegExp("(a)" + "\uD800");
+   ·            ────────────────
+   ╰────
+  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group.
+
+  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
    ╭─[prefer_named_capture_group.tsx:1:8]
  1 │ RegExp('(a)'+'')
    ·        ────────

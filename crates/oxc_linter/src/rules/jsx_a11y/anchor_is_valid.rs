@@ -11,7 +11,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 
 use crate::{
     AstNode,
@@ -249,19 +249,17 @@ impl AnchorIsValid {
     fn check_value(value: &JSXAttributeValue) -> HrefValueKind {
         match value {
             JSXAttributeValue::Element(_) => HrefValueKind::Valid,
-            JSXAttributeValue::StringLiteral(str_lit) => str_lit
-                .value
-                .as_str()
-                .map_or(HrefValueKind::Valid, Self::href_value_kind_from_string),
+            JSXAttributeValue::StringLiteral(str_lit) => {
+                Self::href_value_kind_from_string(str_lit.value)
+            }
             JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
                 JSXExpression::Identifier(ident) if ident.name == "undefined" => {
                     HrefValueKind::Nullish
                 }
                 JSXExpression::NullLiteral(_) => HrefValueKind::Nullish,
-                JSXExpression::StringLiteral(str_lit) => str_lit
-                    .value
-                    .as_str()
-                    .map_or(HrefValueKind::Valid, Self::href_value_kind_from_string),
+                JSXExpression::StringLiteral(str_lit) => {
+                    Self::href_value_kind_from_string(str_lit.value)
+                }
                 JSXExpression::TemplateLiteral(temp_lit) => {
                     if !temp_lit.expressions.is_empty() {
                         return HrefValueKind::Valid;
@@ -270,7 +268,7 @@ impl AnchorIsValid {
                     let Some(quasi) = temp_lit.single_quasi() else {
                         return HrefValueKind::Valid;
                     };
-                    quasi.as_str().map_or(HrefValueKind::Valid, Self::href_value_kind_from_string)
+                    Self::href_value_kind_from_string(quasi)
                 }
                 _ => HrefValueKind::Valid,
             },
@@ -278,14 +276,15 @@ impl AnchorIsValid {
         }
     }
 
-    fn href_value_kind_from_string(href: &str) -> HrefValueKind {
+    fn href_value_kind_from_string(href: JSStr<'_>) -> HrefValueKind {
         if Self::is_invalid_href(href) { HrefValueKind::Invalid } else { HrefValueKind::Valid }
     }
 
-    fn is_invalid_href(href: &str) -> bool {
-        let href_without_leading_non_word =
-            href.trim_start_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_');
-        href.is_empty() || href == "#" || href_without_leading_non_word.starts_with("javascript:")
+    fn is_invalid_href(href: JSStr<'_>) -> bool {
+        // A lone surrogate is a non-word character, and the predicate never matches one.
+        let word_start =
+            href.find(|c: char| c.is_ascii_alphanumeric() || c == '_').unwrap_or(href.len());
+        href.is_empty() || href == "#" || href.as_bytes()[word_start..].starts_with(b"javascript:")
     }
 }
 
@@ -592,6 +591,8 @@ fn test() {
         (r"<a href='#' onClick={() => void 0} />", None, None),
         (r"<a href='javascript:void(0)' onClick={() => void 0} />", None, None),
         (r"<a href={'javascript:void(0)'} onClick={() => void 0} />", None, None),
+        (r#"<a href={"javascript:void(0)\uD800"} />"#, None, None),
+        (r"<a href={`\uD800javascript:void(0)`} />", None, None),
         (r"<Link />", Some(components()), None),
         (r"<Link href={undefined} />", Some(components()), None),
         (r"<Link href={null} />", Some(components()), None),

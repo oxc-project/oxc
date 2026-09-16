@@ -114,6 +114,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
+  ⚠ vue(no-reserved-keys): Key `"_\ud800"` is reserved in `data` group.
+   ╭─[no_reserved_keys.tsx:4:34]
+ 3 │                 new Vue({
+ 4 │                   data: () => ({ "_\uD800": 1 })
+   ·                                  ─────────
+ 5 │                 })
+   ╰────
+
   ⚠ vue(no-reserved-keys): Key `bar` is reserved.
    ╭─[no_reserved_keys.tsx:4:26]
  3 │                 new Vue({

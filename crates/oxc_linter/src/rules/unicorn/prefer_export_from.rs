@@ -9,7 +9,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingPattern, ExportFromDeclaration, ExportSpecifier, ImportAttributeKey,
-        ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, Program, Statement,
+        ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, Statement,
         VariableDeclarationKind, VariableDeclarator, WithClause, WithClauseKeyword,
     },
 };
@@ -147,8 +147,11 @@ impl PreferExportFrom {
 
         let re_export_decl = find_corresponding_export(ctx, import_decl);
 
-        let Some(source) = import_decl.source.value.as_str() else {
-            return;
+        // The fix writes the module specifier in single quotes.
+        // A value with a lone surrogate cannot be written as text, so its source text is copied.
+        let source = match import_decl.source.value.as_str() {
+            Some(source) => format!("'{source}'"),
+            None => ctx.source_range(import_decl.source.span).to_string(),
         };
         let with_clause = import_decl.with_clause.as_ref().map(|with_clause| {
             let keyword = match with_clause.keyword {
@@ -187,7 +190,7 @@ impl PreferExportFrom {
                 symbol_to_specifier,
                 import_decl,
                 re_export_decl,
-                source,
+                &source,
                 with_clause.as_deref(),
                 replace_span,
                 true,
@@ -202,7 +205,7 @@ impl PreferExportFrom {
                 symbol_to_specifier,
                 import_decl,
                 re_export_decl,
-                source,
+                &source,
                 with_clause.as_deref(),
                 replace_span,
                 false,
@@ -760,7 +763,7 @@ impl PreferExportFrom {
     }
 
     fn format_export_statement(exports: &str, source: &str, with_clause: Option<&str>) -> String {
-        let mut result = format!("export {{ {exports} }} from '{source}'");
+        let mut result = format!("export {{ {exports} }} from {source}");
 
         if let Some(clause) = with_clause {
             result.push(' ');
@@ -782,7 +785,7 @@ impl PreferExportFrom {
         let formatted_name =
             if is_typescript_type { format!("type {name}") } else { name.to_string() };
 
-        let mut result = format!("export {formatted_name} from '{source}'");
+        let mut result = format!("export {formatted_name} from {source}");
 
         if let Some(clause) = with_clause {
             result.push(' ');
@@ -1146,19 +1149,15 @@ fn find_corresponding_export<'a>(
     ctx: &LintContext<'a>,
     import_decl: &'a ImportDeclaration<'a>,
 ) -> Option<&'a ExportFromDeclaration<'a>> {
-    let source = import_decl.source.value.as_str()?;
     let program = ctx.nodes().program();
 
-    for requested_module in ctx.module_record().requested_modules.get(source)? {
-        if requested_module.is_import {
-            continue;
-        }
-
-        let Some(export_decl) =
-            find_export_named_declaration_by_span(program, requested_module.statement_span)
-        else {
+    for statement in &program.body {
+        let Statement::ExportFromDeclaration(export_decl) = statement else {
             continue;
         };
+        if export_decl.source.value != import_decl.source.value {
+            continue;
+        }
 
         if is_matching_export_kind(import_decl, export_decl)
             && has_matching_with_clause(
@@ -1172,18 +1171,6 @@ fn find_corresponding_export<'a>(
     }
 
     None
-}
-
-fn find_export_named_declaration_by_span<'a>(
-    program: &'a Program<'a>,
-    span: Span,
-) -> Option<&'a ExportFromDeclaration<'a>> {
-    program.body.iter().find_map(|statement| {
-        let Statement::ExportFromDeclaration(export_decl) = statement else {
-            return None;
-        };
-        (export_decl.span() == span).then_some(export_decl.as_ref())
-    })
 }
 
 fn is_matching_export_kind(
@@ -1498,6 +1485,8 @@ fn test() {
         "import {foo} from './foo.json';
             export {foo};
                 export {bar} from './foo.json' with { type: 'unknown' };",
+        "import {a} from \"\\uD800\";\nexport {a};",
+        "import {a} from \"\\uD800\";\nexport {a};\nexport {b} from \"\\uD800\";",
     ];
 
     let fix = vec![
@@ -1951,6 +1940,11 @@ fn test() {
             export {foo};
             export {bar,} from 'foo';",
             "export {bar, default as foo,} from 'foo';",
+        ),
+        ("import {a} from \"\\uD800\";\nexport {a};", "export { a } from \"\\uD800\";\n"),
+        (
+            "import {a} from \"\\uD800\";\nexport {a};\nexport {b} from \"\\uD800\";",
+            "export {b, a} from \"\\uD800\";",
         ),
     ];
     Tester::new(PreferExportFrom::NAME, PreferExportFrom::PLUGIN, pass, fail)
