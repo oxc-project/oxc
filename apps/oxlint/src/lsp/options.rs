@@ -69,6 +69,11 @@ pub enum Run {
 pub struct LintOptions {
     /// If your editor does not support `textDocument/diagnostic`,
     /// this option handles when diagnostics are sent to the client.
+    ///
+    /// This option only applies to clients which use the push model. Clients which support
+    /// `textDocument/diagnostic` ask for diagnostics themselves (the pull model), so `run`
+    /// currently has no effect for them.
+    /// See [#26613](https://github.com/oxc-project/oxc/issues/26613)
     #[schemars(with = "Option<Run>")]
     pub run: Run,
     /// Path to the config file. Similar to `--config` CLI option.

@@ -2,14 +2,13 @@ use crate::{
     comment_meta,
     error::diag_code,
     lanes::Lanes,
-    opmap::OP_SLASH_EQ,
     tables::{Tables, hex_val},
+    token::tk,
 };
 
 use super::super::{
-    BCOM, LCOM, REGEX, STR,
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
-    disambiguate::prev_is_regex,
+    disambiguate::not_operator_position,
     scan::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
 };
 
@@ -35,7 +34,7 @@ pub(super) unsafe fn lex_string(
     } else if e >= n {
         lanes.push_diag(s as u32, (n - s) as u32, diag_code::UNTERMINATED_STRING);
     }
-    *kind.add(s) = STR;
+    *kind.add(s) = tk!(String);
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
     }
@@ -101,11 +100,11 @@ pub(super) unsafe fn lex_slash(
         lex_line_comment(src, srcs, n, st, kind, s, lanes)
     } else if d == b'*' {
         lex_block_comment(src, srcs, n, st, kind, s, lanes)
-    } else if prev_is_regex(t, src, st, kind, word, digit, n, s, ts, lanes.module) {
+    } else if not_operator_position(t, src, st, kind, word, digit, n, s, ts, lanes.module) {
         lex_regex(src, srcs, n, st, kind, word, s, lanes)
     } else if s + 1 < n && *src.add(s + 1) == b'=' {
         // `/=`: absorb the `=`.
-        *kind.add(s) = OP_SLASH_EQ;
+        *kind.add(s) = tk!(SlashEq);
         bm_clear(st, s + 1);
         bm_clear(opch, s + 1);
         s + 2
@@ -126,7 +125,7 @@ pub(super) unsafe fn lex_line_comment(
     lanes: &mut Lanes,
 ) -> usize {
     let (end, lic_q) = scan_line_comment(src, n, s + 2);
-    *kind.add(s) = LCOM;
+    *kind.add(s) = tk!(LineComment);
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
     }
@@ -162,7 +161,7 @@ pub(super) unsafe fn lex_block_comment(
     if e >= n {
         lanes.push_diag(s as u32, (n - s) as u32, diag_code::UNTERMINATED_BLOCK_COMMENT);
     }
-    *kind.add(s) = BCOM;
+    *kind.add(s) = tk!(BlockComment);
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
     }
@@ -210,7 +209,7 @@ unsafe fn lex_regex(
     if end < n && bm_get(word, end) {
         end = bm_next0(word, end, n);
     }
-    *kind.add(s) = REGEX;
+    *kind.add(s) = tk!(RegExp);
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
     }

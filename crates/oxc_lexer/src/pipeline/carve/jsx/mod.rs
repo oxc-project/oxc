@@ -2,13 +2,12 @@ use crate::{
     error::diag_code,
     lanes::Lanes,
     tables::{Tables, is_digit, is_id_start, is_word, is_ws},
-    token::TokenKind,
+    token::tk,
 };
 
 use super::super::{
-    HASHBANG, JEND, JSX_LT, JTEXT, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL,
     bitmap::{bm_clear, bm_clear_range, bm_set},
-    disambiguate::{bm_prev_sig, prev_is_regex},
+    disambiguate::{bm_prev_sig, not_operator_position},
     find::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2,
@@ -92,7 +91,7 @@ pub(super) unsafe fn carve_jsx(
     let mut i = 0usize;
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
         let end = find_line_terminator(src, n, 2);
-        *kind = HASHBANG;
+        *kind = tk!(Hashbang);
         bm_clear_range(st, 1, end - 1);
         if end < n {
             bm_set(st, end);
@@ -120,7 +119,15 @@ pub(super) unsafe fn carve_jsx(
                     }
                     b'`' => {
                         let (end, opened_sub) = lex_template_segment(
-                            src, srcs, n, st, kind, s, TMPL_HEAD, TMPL_NOSUB, lanes,
+                            src,
+                            srcs,
+                            n,
+                            st,
+                            kind,
+                            s,
+                            tk!(TemplateHead),
+                            tk!(TemplateNoSub),
+                            lanes,
                         );
                         if opened_sub {
                             stack.push(JFrame {
@@ -160,8 +167,8 @@ pub(super) unsafe fn carve_jsx(
                                 st,
                                 kind,
                                 s,
-                                TMPL_MIDDLE,
-                                TMPL_TAIL,
+                                tk!(TemplateMiddle),
+                                tk!(TemplateTail),
                                 lanes,
                             );
                             if opened_sub {
@@ -198,7 +205,7 @@ pub(super) unsafe fn carve_jsx(
                         } else if c1 == b'=' || is_digit(c1) {
                             // `<=` / `a<5`: leave for coalesce.
                             i = s + 1;
-                        } else if prev_is_regex(
+                        } else if not_operator_position(
                             t,
                             src,
                             st,
@@ -234,7 +241,7 @@ pub(super) unsafe fn carve_jsx(
                             let tc = if tpos < n { *src.add(tpos) } else { 0 };
                             if tc == b'>' {
                                 // fragment `<>`
-                                jsx_punct(kind, opch, s, JSX_LT);
+                                jsx_punct(kind, opch, s, tk!(JsxLt));
                                 stack.push(JFrame {
                                     kind: JFrameKind::JsxTag,
                                     parent: JMode::Js,
@@ -250,7 +257,7 @@ pub(super) unsafe fn carve_jsx(
                             {
                                 // Element — unless `.tsx` says this is a
                                 // type-parameter list, which stays a less-than.
-                                jsx_punct(kind, opch, s, JSX_LT);
+                                jsx_punct(kind, opch, s, tk!(JsxLt));
                                 stack.push(JFrame {
                                     kind: JFrameKind::JsxTag,
                                     parent: JMode::Js,
@@ -287,7 +294,7 @@ pub(super) unsafe fn carve_jsx(
                     let q = bm_prev_sig(st, kind, s);
                     if q >= 0 && *src.add(q as usize) == b'=' {
                         let tpos = jsx_skip_trivia(src, n, s + 1);
-                        jsx_punct(kind, opch, s, JSX_LT);
+                        jsx_punct(kind, opch, s, tk!(JsxLt));
                         stack.push(JFrame {
                             kind: JFrameKind::JsxTag,
                             parent: JMode::Tag,
@@ -310,7 +317,7 @@ pub(super) unsafe fn carve_jsx(
                 if ts && c == b'<' {
                     let mut depth = 1i32;
                     let mut p = s + 1;
-                    jsx_punct(kind, opch, s, TokenKind::Lt as u8);
+                    jsx_punct(kind, opch, s, tk!(Lt));
                     // Open template substitutions, each counting its own
                     // nested braces — the same shape `carve` keeps in its
                     // `depth` vector, sized so this path allocates nothing.
@@ -329,13 +336,13 @@ pub(super) unsafe fn carve_jsx(
                         match *src.add(q) {
                             b'<' => {
                                 depth += 1;
-                                jsx_punct(kind, opch, q, TokenKind::Lt as u8);
+                                jsx_punct(kind, opch, q, tk!(Lt));
                                 p = q + 1;
                             }
                             b'>' => {
                                 if !(q > 0 && *src.add(q - 1) == b'=') {
                                     depth -= 1;
-                                    jsx_punct(kind, opch, q, TokenKind::Gt as u8);
+                                    jsx_punct(kind, opch, q, tk!(Gt));
                                 }
                                 p = q + 1;
                             }
@@ -344,7 +351,15 @@ pub(super) unsafe fn carve_jsx(
                             }
                             b'`' => {
                                 let (end, opened) = lex_template_segment(
-                                    src, srcs, n, st, kind, q, TMPL_HEAD, TMPL_NOSUB, lanes,
+                                    src,
+                                    srcs,
+                                    n,
+                                    st,
+                                    kind,
+                                    q,
+                                    tk!(TemplateHead),
+                                    tk!(TemplateNoSub),
+                                    lanes,
                                 );
                                 p = end;
                                 if opened {
@@ -380,8 +395,8 @@ pub(super) unsafe fn carve_jsx(
                                     st,
                                     kind,
                                     q,
-                                    TMPL_MIDDLE,
-                                    TMPL_TAIL,
+                                    tk!(TemplateMiddle),
+                                    tk!(TemplateTail),
                                     lanes,
                                 );
                                 p = end;
@@ -425,7 +440,7 @@ pub(super) unsafe fn carve_jsx(
                             );
                         }
                         let end = if e < n { e + 1 } else { n };
-                        *kind.add(s) = STR;
+                        *kind.add(s) = tk!(String);
                         if end > s + 1 {
                             bm_clear_range(st, s + 1, end - 1);
                         }
@@ -470,7 +485,7 @@ pub(super) unsafe fn carve_jsx(
                                 None
                             };
                             if let Some(gp) = gp {
-                                jsx_punct(kind, opch, gp, JEND);
+                                jsx_punct(kind, opch, gp, tk!(JsxTagEnd));
                                 let parent = stack.last().map_or(JMode::Js, |f| f.parent);
                                 stack.pop();
                                 mode = parent;
@@ -490,7 +505,7 @@ pub(super) unsafe fn carve_jsx(
                         {
                             f.kind = JFrameKind::JsxElem;
                         }
-                        jsx_punct(kind, opch, s, TokenKind::Gt as u8);
+                        jsx_punct(kind, opch, s, tk!(Gt));
                         mode = JMode::Text;
                         text_start = s + 1;
                         i = s + 1;
@@ -507,7 +522,7 @@ pub(super) unsafe fn carve_jsx(
                     // One JTEXT token for the run; neutralize its start byte
                     // against coalesce/keywords and clear the interior.
                     bm_set(st, text_start);
-                    *kind.add(text_start) = JTEXT;
+                    *kind.add(text_start) = tk!(JsxText);
                     bm_clear(opch, text_start);
                     bm_clear(digit, text_start);
                     bm_clear(dot, text_start);
@@ -567,9 +582,9 @@ pub(super) unsafe fn carve_jsx(
                             // always part of the JSXIdentifier.
                             jsx_glue_hyphens(src, n, st, opch, word, tpos + 1, gp);
                         }
-                        jsx_punct(kind, opch, s, JSX_LT);
+                        jsx_punct(kind, opch, s, tk!(JsxLt));
                         if gp < n {
-                            jsx_punct(kind, opch, gp, JEND);
+                            jsx_punct(kind, opch, gp, tk!(JsxTagEnd));
                         }
                         let after = if gp < n { gp + 1 } else { n };
                         if gp >= n {
@@ -602,7 +617,7 @@ pub(super) unsafe fn carve_jsx(
                         i = after;
                     } else if tc == b'>' || is_id_start(tc) {
                         // child element / fragment
-                        jsx_punct(kind, opch, s, JSX_LT);
+                        jsx_punct(kind, opch, s, tk!(JsxLt));
                         stack.push(JFrame {
                             kind: JFrameKind::JsxTag,
                             parent: JMode::Text,

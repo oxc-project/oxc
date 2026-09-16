@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.150.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- 8ca76da parser: Reject `accessor` modifiers on methods (#26617) (camc314)
+- 1916f31 parser: Reject `readonly` modifier on constructors (#26612) (camc314)
+- 1c42008 parser: Handle escaped let in for loops (#26583) (camc314)
+- d21d5cf parser: Recognize annotated empty arrows in conditionals (#26537) (camc314)
+- d7713ad parser: Classify Unicode line breaks in block comments (#26536) (camc314)
+- b32d25d parser: Reject escaped import-phase keywords (#26534) (camc314)
+- 47b8311 parser: Recognize contextual binding names in type lookaheads (#26532) (camc314)
+- d6b6705 parser: Require arrow separator in TypeScript function types (#26529) (camc314)
+- e98beef parser: Disambiguate await using in for initializers (#26527) (camc314)
+- 92afee6 parser: Allow parenthesized JSX comma expressions with preserve_parens=false (#26524) (camc314)
+- 31508b1 parser: Reject return types on constructor overloads (#26523) (camc314)
+- a091fc4 parser: Validate await context for await using declarations (#26495) (camc314)
+- 5501e86 parser: Disallow in expressions in using for-loop initializers (#26490) (camc314)
+- c8e5fa7 parser: Allow escaped type names in import and export specifiers (#26487) (camc314)
+- 2dcee2f parser: Reject async modifiers on class fields (#26486) (camc314)
+- 973d58e parser: Require comma after TypeScript this parameter (#26480) (camc314)
+- cfa47ab parser: Allow `in` expressions in class static blocks (#26423) (camc314)
+- d61e3bf parser: Validate TS named tuple rest elements (#26419) (camc314)
+- 10521b2 parser: Allow escaped type default import bindings (#26409) (camc314)
+- 72cb5e3 parser: Reject rest parameters in getters (#26400) (camc314)
+- 4e76602 parser: Allow `in` in arrow block bodies within `for` initializers (#26395) (camc314)
+- b20fc19 parser: Reject partially parenthesized mixed coalesce expressions (#26394) (camc314)
+
 ## [0.149.0] - 2026-09-07
 
 ### 💥 BREAKING CHANGES

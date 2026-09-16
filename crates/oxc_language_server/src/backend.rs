@@ -232,19 +232,17 @@ impl LanguageServer for Backend {
             // will only be filled when using push diagnostic model
             let mut new_diagnostics = Vec::new();
 
-            for (index, worker) in needed_configurations.values().copied().enumerate() {
+            for (index, worker) in needed_configurations.values().enumerate() {
                 // get the configuration from the response and start the worker
                 let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 debug!("starting worker in initialize with options: {configuration:?}");
                 client_messages.extend(worker.start_worker(configuration.clone()).await);
+            }
 
-                // run diagnostics for all known files in the workspace of the worker.
-                // This is necessary because the worker was not started before.
-                // On Pull diagnostic model, we will ask the client to refresh diagnostics instead of sending them all.
-                if capabilities.diagnostic_mode != DiagnosticMode::Push {
-                    continue;
-                }
-
+            // run diagnostics for all known files in the workspace of the worker.
+            // This is necessary because the worker was not started before.
+            // On Pull diagnostic model, we will ask the client to refresh diagnostics instead of sending them all.
+            if capabilities.diagnostic_mode == DiagnosticMode::Push {
                 for uri in &known_uris {
                     // Check if this worker is the most specific one for this URI
                     let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {

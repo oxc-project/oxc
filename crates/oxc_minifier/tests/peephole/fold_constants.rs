@@ -448,6 +448,28 @@ fn js_typeof() {
     fold_same("x = typeof[1,[foo()]]");
     fold_same("x = typeof{bathwater:baby()}");
     fold_same("x = typeof class { static { foo() } }");
+
+    fold("typeof NaN", "'number'");
+    fold("typeof Infinity", "'number'");
+    fold("typeof Math.E", "'number'");
+    fold("typeof Math.LN10", "'number'");
+    fold("typeof Math.LN2", "'number'");
+    fold("typeof Math.LOG10E", "'number'");
+    fold("typeof Math.LOG2E", "'number'");
+    fold("typeof Math.PI", "'number'");
+    fold("typeof Math.SQRT1_2", "'number'");
+    fold("typeof Math.SQRT2", "'number'");
+    fold_same("typeof Math.missing");
+
+    fold("typeof Number.POSITIVE_INFINITY", "'number'");
+    fold("typeof Number.NEGATIVE_INFINITY", "'number'");
+    fold("typeof Number.EPSILON", "'number'");
+    fold("typeof Number.NaN", "'number'");
+    fold("typeof Number.MAX_VALUE", "'number'");
+    fold("typeof Number.MIN_VALUE", "'number'");
+    fold("typeof Number.MAX_SAFE_INTEGER", "'number'");
+    fold("typeof Number.MIN_SAFE_INTEGER", "'number'");
+    fold_same("typeof Number.UNKNOWN");
 }
 
 #[test]

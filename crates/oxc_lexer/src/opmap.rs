@@ -8,11 +8,10 @@
     clippy::collapsible_match
 )]
 
-use crate::token::TokenKind;
+use crate::token::{TokenKind, tk};
 
 pub const KW_COUNT_JS: usize = 46;
 pub const KW_COUNT_TS: usize = 81;
-pub const KW_KIND_BASE: u8 = crate::token::KW_BASE;
 
 /// Keyword spellings and the token kind each rewrites to (the JS set).
 /// `get`/`set` map to IDENT (contextual, never keywords at lex time) but
@@ -124,7 +123,8 @@ const fn keywords_ts() -> [(&'static str, TokenKind); KW_COUNT_TS] {
 pub static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] = keywords_ts();
 
 /// First punctuator kind — the token-kind space reserves [32, 128) for them.
-pub const OP_KIND_BASE: u8 = TokenKind::LBrace as u8;
+pub const OP_KIND_BASE: u8 = tk!(LBrace);
+pub const OP_KIND_MAX: u8 = tk!(At);
 pub const OPMAP_NOPS: usize = 33;
 
 pub struct OpDef {
@@ -133,52 +133,49 @@ pub struct OpDef {
     pub kind: TokenKind,
 }
 
-macro_rules! op {
-    ($t:literal, $k:expr) => {
-        OpDef { txt: $t, len: $t.len() as u8, kind: $k }
-    };
+impl OpDef {
+    const fn new(txt: &'static str, kind: TokenKind) -> Self {
+        assert!(txt.len() <= 255);
+        Self { txt: txt.as_bytes(), len: txt.len() as u8, kind }
+    }
 }
 
 pub static OPMAP_OPS: [OpDef; OPMAP_NOPS] = [
-    op!(b"<=", TokenKind::Le),
-    op!(b">=", TokenKind::Ge),
-    op!(b"==", TokenKind::EqEq),
-    op!(b"!=", TokenKind::BangEq),
-    op!(b"===", TokenKind::EqEqEq),
-    op!(b"!==", TokenKind::BangEqEq),
-    op!(b"**", TokenKind::StarStar),
-    op!(b"++", TokenKind::PlusPlus),
-    op!(b"--", TokenKind::MinusMinus),
-    op!(b"<<", TokenKind::LShift),
-    op!(b">>", TokenKind::RShift),
-    op!(b">>>", TokenKind::URShift),
-    op!(b"&&", TokenKind::AmpAmp),
-    op!(b"||", TokenKind::PipePipe),
-    op!(b"??", TokenKind::Nullish),
-    op!(b"?.", TokenKind::OptionalChain),
-    op!(b"=>", TokenKind::Arrow),
-    op!(b"+=", TokenKind::PlusEq),
-    op!(b"-=", TokenKind::MinusEq),
-    op!(b"*=", TokenKind::StarEq),
-    op!(b"%=", TokenKind::PercentEq),
-    op!(b"<<=", TokenKind::LShiftEq),
-    op!(b">>=", TokenKind::RShiftEq),
-    op!(b">>>=", TokenKind::URShiftEq),
-    op!(b"&=", TokenKind::AmpEq),
-    op!(b"|=", TokenKind::PipeEq),
-    op!(b"^=", TokenKind::CaretEq),
-    op!(b"&&=", TokenKind::AmpAmpEq),
-    op!(b"||=", TokenKind::PipePipeEq),
-    op!(b"??=", TokenKind::NullishEq),
-    op!(b"**=", TokenKind::StarStarEq),
-    op!(b"...", TokenKind::Ellipsis),
-    op!(b"/=", TokenKind::SlashEq),
+    OpDef::new("<=", TokenKind::Le),
+    OpDef::new(">=", TokenKind::Ge),
+    OpDef::new("==", TokenKind::EqEq),
+    OpDef::new("!=", TokenKind::BangEq),
+    OpDef::new("===", TokenKind::EqEqEq),
+    OpDef::new("!==", TokenKind::BangEqEq),
+    OpDef::new("**", TokenKind::StarStar),
+    OpDef::new("++", TokenKind::PlusPlus),
+    OpDef::new("--", TokenKind::MinusMinus),
+    OpDef::new("<<", TokenKind::LShift),
+    OpDef::new(">>", TokenKind::RShift),
+    OpDef::new(">>>", TokenKind::URShift),
+    OpDef::new("&&", TokenKind::AmpAmp),
+    OpDef::new("||", TokenKind::PipePipe),
+    OpDef::new("??", TokenKind::Nullish),
+    OpDef::new("?.", TokenKind::OptionalChain),
+    OpDef::new("=>", TokenKind::Arrow),
+    OpDef::new("+=", TokenKind::PlusEq),
+    OpDef::new("-=", TokenKind::MinusEq),
+    OpDef::new("*=", TokenKind::StarEq),
+    OpDef::new("%=", TokenKind::PercentEq),
+    OpDef::new("<<=", TokenKind::LShiftEq),
+    OpDef::new(">>=", TokenKind::RShiftEq),
+    OpDef::new(">>>=", TokenKind::URShiftEq),
+    OpDef::new("&=", TokenKind::AmpEq),
+    OpDef::new("|=", TokenKind::PipeEq),
+    OpDef::new("^=", TokenKind::CaretEq),
+    OpDef::new("&&=", TokenKind::AmpAmpEq),
+    OpDef::new("||=", TokenKind::PipePipeEq),
+    OpDef::new("??=", TokenKind::NullishEq),
+    OpDef::new("**=", TokenKind::StarStarEq),
+    OpDef::new("...", TokenKind::Ellipsis),
+    OpDef::new("/=", TokenKind::SlashEq),
 ];
 
-pub const OP_QDOT: u8 = TokenKind::OptionalChain as u8;
-pub const OP_SLASH_EQ: u8 = TokenKind::SlashEq as u8;
-
-pub const PUNCT1_KIND_UNKNOWN: u8 = TokenKind::Invalid as u8;
 pub const PUNCT1_NKNOWN: usize = 26;
 
 /// Single-char punctuators and their kinds. `#` maps to UNKNOWN: a bare `#`
@@ -474,7 +471,7 @@ impl KwSet {
 impl OpMap {
     pub fn new() -> OpMap {
         let mut m =
-            OpMap { opmap_mul: 0, opmap_slot: [0xFF; 256], punct1_ord: [PUNCT1_KIND_UNKNOWN; 256] };
+            OpMap { opmap_mul: 0, opmap_slot: [0xFF; 256], punct1_ord: [tk!(Invalid); 256] };
         m.opmap_init();
         m.punct1_init();
         m.self_check();
@@ -485,7 +482,9 @@ impl OpMap {
         for i in 0..OPMAP_NOPS {
             let a = &OPMAP_OPS[i];
             assert!(
-                a.len as usize == a.txt.len() && a.kind as u8 >= OP_KIND_BASE && a.kind as u8 <= 89,
+                a.len as usize == a.txt.len()
+                    && a.kind as u8 >= OP_KIND_BASE
+                    && a.kind as u8 <= OP_KIND_MAX,
                 "opmap.rs: bad OpDef {i}"
             );
             for j in (i + 1)..OPMAP_NOPS {
@@ -531,7 +530,7 @@ impl OpMap {
     }
 
     fn punct1_init(&mut self) {
-        self.punct1_ord = [PUNCT1_KIND_UNKNOWN; 256];
+        self.punct1_ord = [tk!(Invalid); 256];
         for i in 0..PUNCT1_NKNOWN {
             self.punct1_ord[PUNCT1_LIST[i] as usize] = PUNCT1_TOK[i];
         }
@@ -576,11 +575,11 @@ impl OpMap {
         }
         assert!(
             self.opmap_lookup(b'.', b'.', 0, 0, 2) == 0
-                && self.opmap_lookup(b'<', b'<', 0, 0, 2) == 83
-                && self.opmap_lookup(b'<', b'=', 0, 0, 2) == 49
-                && self.opmap_lookup(b'>', b'>', b'>', 0, 3) == 87
-                && self.opmap_lookup(b'>', b'>', b'=', 0, 3) == 86
-                && self.opmap_lookup(b'=', b'=', 0, 0, 2) == 53
+                && self.opmap_lookup(b'<', b'<', 0, 0, 2) == tk!(LShift) as u32
+                && self.opmap_lookup(b'<', b'=', 0, 0, 2) == tk!(Le) as u32
+                && self.opmap_lookup(b'>', b'>', b'>', 0, 3) == tk!(URShift) as u32
+                && self.opmap_lookup(b'>', b'>', b'=', 0, 3) == tk!(RShiftEq) as u32
+                && self.opmap_lookup(b'=', b'=', 0, 0, 2) == tk!(EqEq) as u32
                 && self.opmap_lookup(b'=', b'/', 0, 0, 2) == 0,
             "opmap self-check: op spot-checks failed"
         );
@@ -597,20 +596,20 @@ impl OpMap {
             let ord = self.punct1_ord[b];
             let is_known = PUNCT1_LIST.contains(&(b as u8));
             assert!(
-                is_known || ord == PUNCT1_KIND_UNKNOWN,
+                is_known || ord == tk!(Invalid),
                 "opmap self-check: PUNCT1_ORD should be unknown"
             );
         }
         assert!(
-            self.punct1_ord[b'(' as usize] == 34
-                && self.punct1_ord[b'#' as usize] == 255
-                && self.punct1_ord[b'a' as usize] == 255
-                && self.punct1_ord[b'"' as usize] == 255
-                && self.punct1_ord[b'`' as usize] == 255
-                && self.punct1_ord[b'\\' as usize] == 255
-                && self.punct1_ord[b'$' as usize] == 255
-                && self.punct1_ord[b' ' as usize] == 255
-                && self.punct1_ord[0] == 255,
+            self.punct1_ord[b'(' as usize] == tk!(LParen)
+                && self.punct1_ord[b'#' as usize] == tk!(Invalid)
+                && self.punct1_ord[b'a' as usize] == tk!(Invalid)
+                && self.punct1_ord[b'"' as usize] == tk!(Invalid)
+                && self.punct1_ord[b'`' as usize] == tk!(Invalid)
+                && self.punct1_ord[b'\\' as usize] == tk!(Invalid)
+                && self.punct1_ord[b'$' as usize] == tk!(Invalid)
+                && self.punct1_ord[b' ' as usize] == tk!(Invalid)
+                && self.punct1_ord[0] == tk!(Invalid),
             "opmap self-check: PUNCT1 spot-checks failed"
         );
     }

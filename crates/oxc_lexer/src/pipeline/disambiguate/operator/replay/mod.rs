@@ -1,11 +1,25 @@
-use crate::{opmap::OP_KIND_BASE, tables::Tables};
+//! Is `yield` or `await` a keyword at this position?
+//!
+//! Outside modules, `yield` and `await` are keywords in some places, and ordinary identifiers elsewhere.
+//! That decides whether a `/` after one starts a regex (`yield /re/`) or is division (`yield / 2`).
+//!
+//! - `yield` is a keyword inside a generator, and in strict mode code.
+//! - `await` is a keyword inside an async function.
+//! - Both are reserved inside a class's `static` block.
+//!
+//! That depends on every enclosing function, which is hard to see by walking backwards.
+//! So [`replay_is_keyword`] replays the tokens forwards from the start of the file,
+//! keeping a stack of the functions, classes and object literals it's inside.
+//! A `"use strict"` directive or a class body makes the code inside strict.
+//!
+//! This only runs when `yield` or `await` comes directly before a `/`, or before a `<` in a JSX file.
+//! That is rare, so replaying from the start of the file is affordable.
 
-use super::super::{
-    BCOM, HASHBANG, IDENT, IDENT_ESC, LCOM, NUM, PRIV_IDENT, PRIV_IDENT_ESC, STR, TMPL_HEAD,
-    TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL, WS, bitmap::bm_next1,
-};
+use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
 
-use super::{
+use super::super::super::bitmap::bm_next1;
+
+use super::super::common::{
     AngleMatch, angle_match_back, bm_prev_sig, ident_is, lt_in_range, match_delim_back,
     operand_position, prop_name, return_type_signature_paren, tail_before,
 };
@@ -102,7 +116,11 @@ pub(super) unsafe fn replay_is_keyword(
                 };
             }
             let k = *kind.add(i);
-            if k == WS || k == LCOM || k == BCOM || k == HASHBANG {
+            if k == tk!(Whitespace)
+                || k == tk!(LineComment)
+                || k == tk!(BlockComment)
+                || k == tk!(Hashbang)
+            {
                 i += 1;
                 continue;
             }
@@ -115,7 +133,7 @@ pub(super) unsafe fn replay_is_keyword(
         prev_end = bm_next1(st, pos + 1, n);
 
         if prologue != 0 {
-            if k == STR {
+            if k == tk!(String) {
                 let e = bm_next1(st, pos + 1, n).min(site);
                 let mut j = e;
                 let confirmed;
@@ -126,7 +144,7 @@ pub(super) unsafe fn replay_is_keyword(
                         break;
                     }
                     let jk = *kind.add(j);
-                    if jk == WS || jk == LCOM || jk == BCOM {
+                    if jk == tk!(Whitespace) || jk == tk!(LineComment) || jk == tk!(BlockComment) {
                         j += 1;
                         continue;
                     }
@@ -157,11 +175,11 @@ pub(super) unsafe fn replay_is_keyword(
         }
 
         if k < OP_KIND_BASE {
-            if k == IDENT && !prop_name(src, pos) && ident_is(src, pos, b"class") {
+            if k == tk!(Ident) && !prop_name(src, pos) && ident_is(src, pos, b"class") {
                 pending_class.push((par, brk, brc));
-            } else if k == TMPL_HEAD {
+            } else if k == tk!(TemplateHead) {
                 tdepth += 1;
-            } else if k == TMPL_MIDDLE || k == TMPL_TAIL {
+            } else if k == tk!(TemplateMiddle) || k == tk!(TemplateTail) {
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
                     if top.pop == POP_CONCISE && top.tdep == tdepth {
@@ -170,7 +188,7 @@ pub(super) unsafe fn replay_is_keyword(
                     }
                     break;
                 }
-                if k == TMPL_TAIL {
+                if k == tk!(TemplateTail) {
                     tdepth -= 1;
                 }
             }
@@ -270,7 +288,7 @@ pub(super) unsafe fn replay_is_keyword(
                         }
                     }
                     if !opened_body
-                        && pk == IDENT
+                        && pk == tk!(Ident)
                         && enc.is_class
                         && !prop_name(src, p)
                         && ident_is(src, p, b"static")
@@ -281,7 +299,7 @@ pub(super) unsafe fn replay_is_keyword(
                     }
                     if !opened_body
                         && !pending_class.is_empty()
-                        && pk == IDENT
+                        && pk == tk!(Ident)
                         && !prop_name(src, p)
                         && ident_is(src, p, b"extends")
                     {
@@ -330,7 +348,7 @@ pub(super) unsafe fn replay_is_keyword(
                         break;
                     }
                     let jk = *kind.add(j);
-                    if jk == WS || jk == LCOM || jk == BCOM {
+                    if jk == tk!(Whitespace) || jk == tk!(LineComment) || jk == tk!(BlockComment) {
                         j += 1;
                         continue;
                     }
@@ -469,12 +487,12 @@ unsafe fn continues_expression(src: *const u8, kind: *const u8, pos: usize, ts: 
                 | b'}'
         );
     }
-    if k == IDENT {
+    if k == tk!(Ident) {
         return ident_is(src, pos, b"in")
             || ident_is(src, pos, b"instanceof")
             || (ts && (ident_is(src, pos, b"as") || ident_is(src, pos, b"satisfies")));
     }
-    matches!(k, TMPL_HEAD | TMPL_NOSUB)
+    matches!(k, tk!(TemplateHead) | tk!(TemplateNoSub))
 }
 
 unsafe fn asi_tail_before(
@@ -538,7 +556,7 @@ unsafe fn header_kind(
     }
     if *kind.add(p) >= OP_KIND_BASE && *src.add(p) == b'*' {
         let f = bm_prev_sig(st, kind, p);
-        if f >= 0 && *kind.add(f as usize) == IDENT && ident_is(src, f as usize, b"function") {
+        if f >= 0 && *kind.add(f as usize) == tk!(Ident) && ident_is(src, f as usize, b"function") {
             let a = bm_prev_sig(st, kind, f as usize);
             let asyn = a >= 0 && async_modifier(src, st, kind, n, a as usize, f as usize);
             return Some((true, asyn));
@@ -555,7 +573,7 @@ unsafe fn header_kind(
         } else {
             return None;
         }
-    } else if *kind.add(p) == IDENT {
+    } else if *kind.add(p) == tk!(Ident) {
         if ident_is(src, p, b"function") && !prop_name(src, p) && !(in_class || in_obj) {
             let a = bm_prev_sig(st, kind, p);
             let asyn = a >= 0 && async_modifier(src, st, kind, n, a as usize, p);
@@ -564,7 +582,8 @@ unsafe fn header_kind(
         let f = bm_prev_sig(st, kind, p);
         if f >= 0 {
             let fp = f as usize;
-            if *kind.add(fp) == IDENT && !prop_name(src, fp) && ident_is(src, fp, b"function") {
+            if *kind.add(fp) == tk!(Ident) && !prop_name(src, fp) && ident_is(src, fp, b"function")
+            {
                 let a = bm_prev_sig(st, kind, fp);
                 let asyn = a >= 0 && async_modifier(src, st, kind, n, a as usize, fp);
                 return Some((false, asyn));
@@ -572,7 +591,7 @@ unsafe fn header_kind(
             if *kind.add(fp) >= OP_KIND_BASE && *src.add(fp) == b'*' {
                 let g = bm_prev_sig(st, kind, fp);
                 if g >= 0
-                    && *kind.add(g as usize) == IDENT
+                    && *kind.add(g as usize) == tk!(Ident)
                     && ident_is(src, g as usize, b"function")
                 {
                     let a = bm_prev_sig(st, kind, g as usize);
@@ -583,7 +602,14 @@ unsafe fn header_kind(
         }
         true
     } else {
-        matches!(*kind.add(p), STR | NUM | PRIV_IDENT | IDENT_ESC | PRIV_IDENT_ESC)
+        matches!(
+            *kind.add(p),
+            tk!(String)
+                | tk!(Number)
+                | tk!(PrivateIdent)
+                | tk!(IdentEscaped)
+                | tk!(PrivateIdentEscaped)
+        )
     };
     if !named || !(in_class || in_obj) {
         return None;
@@ -605,7 +631,7 @@ unsafe fn header_kind(
             }
             break;
         }
-        if *kind.add(mp) == IDENT && !prop_name(src, mp) {
+        if *kind.add(mp) == tk!(Ident) && !prop_name(src, mp) {
             if !asyn && async_modifier(src, st, kind, n, mp, cur) {
                 asyn = true;
                 cur = mp;
@@ -637,7 +663,7 @@ unsafe fn header_kind(
             }
         }
         if !method_pos {
-            if *kind.add(p) == IDENT && !prop_name(src, p) && ident_is(src, p, b"function") {
+            if *kind.add(p) == tk!(Ident) && !prop_name(src, p) && ident_is(src, p, b"function") {
                 let a = bm_prev_sig(st, kind, p);
                 let asy = a >= 0 && async_modifier(src, st, kind, n, a as usize, p);
                 return Some((false, asy));
@@ -660,7 +686,7 @@ unsafe fn arrow_is_async(
         return false;
     }
     let hp = h as usize;
-    if *kind.add(hp) == IDENT {
+    if *kind.add(hp) == tk!(Ident) {
         let a = bm_prev_sig(st, kind, hp);
         if a >= 0 && async_modifier(src, st, kind, n, a as usize, hp) {
             return true;
@@ -688,7 +714,7 @@ unsafe fn async_modifier(
     pos: usize,
     next: usize,
 ) -> bool {
-    if *kind.add(pos) != IDENT || prop_name(src, pos) || !ident_is(src, pos, b"async") {
+    if *kind.add(pos) != tk!(Ident) || prop_name(src, pos) || !ident_is(src, pos, b"async") {
         return false;
     }
     let e = bm_next1(st, pos + 1, n);

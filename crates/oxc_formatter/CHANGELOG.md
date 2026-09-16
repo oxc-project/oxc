@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.68.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- d7e0c82 formatter: Keep an enum member's trailing suppress comment (#26549) (leaysgur)
+- d2fe01e formatter: Unify suppress comment behavior (#26547) (leaysgur)
+- 9dbddca formatter: Keep group flat for own-line comment in JSX (#26475) (leaysgur)
+- bf1d3f6 formatter: Check `this_param` for simple parameters test (#26474) (leaysgur)
+- 33cdc84 formatter: Keep cast-target assignment and commented parameter patterns (#26429) (leaysgur)
+
+### 📚 Documentation
+
+- 66fda4f formatter: Update AGENTS.md comment handling (#26551) (leaysgur)
+- 41abcba formatter: Note why jsx-test-suite snippets stay off (#26515) (leaysgur)
+
 ## [0.67.0] - 2026-09-07
 
 ### 🐛 Bug Fixes

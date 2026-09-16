@@ -27,7 +27,7 @@ use crate::PAD;
 use crate::lanes::Lanes;
 use crate::options::LexOptions;
 use crate::tables::Tables;
-use crate::token::SPAN_SENTINELS;
+use crate::token::{SPAN_SENTINELS, tk};
 
 use carve::carve;
 use classify::classify;
@@ -37,33 +37,8 @@ use misc::{misc_post, misc_pre};
 
 use crate::token::TokenKind;
 
-// Short kind aliases for the pipeline, tied to `token_kind` so they can't drift.
-pub(crate) const WS: u8 = TokenKind::Whitespace as u8;
-pub(crate) const IDENT: u8 = TokenKind::Ident as u8;
-pub(crate) const NUM: u8 = TokenKind::Number as u8;
-pub(crate) const BIGINT: u8 = TokenKind::BigInt as u8;
-pub(crate) const STR: u8 = TokenKind::String as u8;
-pub(crate) const LCOM: u8 = TokenKind::LineComment as u8;
-pub(crate) const BCOM: u8 = TokenKind::BlockComment as u8;
-pub(crate) const REGEX: u8 = TokenKind::RegExp as u8;
-pub(crate) const TMPL_NOSUB: u8 = TokenKind::TemplateNoSub as u8;
-pub(crate) const TMPL_HEAD: u8 = TokenKind::TemplateHead as u8;
-pub(crate) const TMPL_MIDDLE: u8 = TokenKind::TemplateMiddle as u8;
-pub(crate) const TMPL_TAIL: u8 = TokenKind::TemplateTail as u8;
-pub(crate) const HASHBANG: u8 = TokenKind::Hashbang as u8;
-pub(crate) const IDENT_ESC: u8 = TokenKind::IdentEscaped as u8;
-pub(crate) const PRIV_IDENT: u8 = TokenKind::PrivateIdent as u8;
-pub(crate) const PRIV_IDENT_ESC: u8 = TokenKind::PrivateIdentEscaped as u8;
-pub(crate) const EOF: u8 = TokenKind::Eof as u8;
-
-// JSX coarse kinds, written only by `carve_jsx`. `JEND`/`JSX_LT` read as
-// values in `prev_is_regex` (after a completed element, `/` is division).
-pub(crate) const JTEXT: u8 = TokenKind::JsxText as u8;
-pub(crate) const JEND: u8 = TokenKind::JsxTagEnd as u8;
-pub(crate) const JSX_LT: u8 = TokenKind::JsxLt as u8;
-
 // `glue_number` computes the kind as `NUM + is_bigint` — keep them adjacent.
-const _: () = assert!(BIGINT == NUM + 1);
+const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
 
 pub struct Lexer {
     word: Vec<u64>,
