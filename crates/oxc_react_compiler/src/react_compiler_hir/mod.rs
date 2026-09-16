@@ -692,7 +692,8 @@ pub enum InstructionValue<'a> {
         span: Option<Span>,
     },
     JSXText {
-        value: Str<'a>,
+        /// Decoded text. Entities can name lone surrogates.
+        value: JSStr<'a>,
         span: Option<Span>,
     },
     BinaryExpression {
