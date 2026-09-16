@@ -11,6 +11,20 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it("Foo's bar", function () {})
+   ·    ───────────
+   ╰────
+  help: `"Foo's bar"`s should begin with lowercase
+
+  ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it('Foo "bar"', function () {})
+   ·    ───────────
+   ╰────
+  help: `"Foo \"bar\""`s should begin with lowercase
+
+  ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
  1 │ it('Foo \uD800', function () {})
    ·    ────────────
    ╰────

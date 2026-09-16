@@ -209,13 +209,19 @@ fn rfind_char(haystack: JSStr<'_>, mut matches: impl FnMut(char) -> bool) -> Opt
     if let Some(haystack) = haystack.as_str() {
         return haystack.rfind(matches);
     }
-    let mut last = None;
-    for (offset, c) in char_offsets(haystack) {
-        if c.to_char().is_some_and(&mut matches) {
-            last = Some(offset);
+    // Walk code points from the end, as `str::rfind` does, so the predicate
+    // sees them in the same order. Each non-continuation byte starts a code
+    // point, and the bytes up to the previous start are exactly that point.
+    let bytes = haystack.as_bytes();
+    let mut end = bytes.len();
+    while let Some(start) = bytes[..end].iter().rposition(|&byte| byte & 0xC0 != 0x80) {
+        let c = JSChars { remaining: &bytes[start..end] }.next();
+        if c.and_then(JSChar::to_char).is_some_and(&mut matches) {
+            return Some(start);
         }
+        end = start;
     }
-    last
+    None
 }
 
 fn first_char_matches(haystack: JSStr<'_>, matches: impl FnMut(char) -> bool) -> bool {

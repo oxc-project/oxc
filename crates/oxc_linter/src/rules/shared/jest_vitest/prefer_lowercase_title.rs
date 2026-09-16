@@ -14,8 +14,6 @@ use crate::{
 };
 
 fn prefer_lowercase_title_diagnostic(title: JSStr<'_>, span: Span) -> OxcDiagnostic {
-    // `JSStr` Debug quotes and escapes like `str` Debug, so UTF-8 titles read
-    // as before and a lone surrogate shows as `\ud800`.
     OxcDiagnostic::warn("Enforce lowercase test names")
         .with_help(format!("`{title:?}`s should begin with lowercase"))
         .with_label(span)
@@ -214,7 +212,7 @@ impl PreferLowercaseTitleConfig {
             if first_char == lower {
                 return;
             }
-        } else if !title.contains(|c: char| c.is_ascii_uppercase()) {
+        } else if !title.as_bytes().iter().any(u8::is_ascii_uppercase) {
             return;
         }
 
