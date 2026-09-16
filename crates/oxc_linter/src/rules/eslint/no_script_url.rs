@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::starts_with_ignore_case};
 
@@ -45,10 +46,7 @@ impl Rule for NoScriptUrl {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StringLiteral(literal)
-                if literal
-                    .value
-                    .as_str()
-                    .is_some_and(|value| starts_with_ignore_case(value, "javascript:")) =>
+                if js_starts_with_ignore_case(literal.value, "javascript:") =>
             {
                 ctx.diagnostic(no_script_url_diagnostic(literal.span));
             }
@@ -65,6 +63,14 @@ impl Rule for NoScriptUrl {
             _ => {}
         }
     }
+}
+
+/// Like `starts_with_ignore_case`, for a JavaScript string value. `prefix` is
+/// ASCII, and no WTF-8 byte of a multi-byte sequence ASCII-case-equals an
+/// ASCII byte, so comparing bytes is exact.
+fn js_starts_with_ignore_case(value: JSStr<'_>, prefix: &str) -> bool {
+    let bytes = value.as_bytes();
+    bytes.len() >= prefix.len() && bytes[..prefix.len()].eq_ignore_ascii_case(prefix.as_bytes())
 }
 
 fn is_tagged_template_expression(ctx: &LintContext, node: &AstNode, literal_span: Span) -> bool {
@@ -88,6 +94,8 @@ fn test() {
         "var a = 'js:';",
         "var url = `js:`",
         "var a = 'über cool stuff';",
+        r"var a = '\uD800javascript:';",
+        r"var a = 'javascript\uD800:';",
     ];
 
     let fail = vec![
@@ -95,6 +103,8 @@ fn test() {
         "var a = 'javascript:';",
         "var a = `javascript:`;",
         "var a = `JavaScript:`;",
+        r"var a = 'javascript:\uD800';",
+        r"var a = 'JAVASCRIPT:void(\uDC00)';",
     ];
 
     Tester::new(NoScriptUrl::NAME, NoScriptUrl::PLUGIN, pass, fail).test_and_snapshot();

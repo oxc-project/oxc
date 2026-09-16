@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -15,7 +17,11 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_sync_diagnostic(span: Span, property_name: &str) -> OxcDiagnostic {
+fn no_sync_diagnostic(span: Span, property_name: JSStr<'_>) -> OxcDiagnostic {
+    // Debug supplies a quoted, escaped name when it contains a lone surrogate.
+    let property_name = property_name
+        .as_str()
+        .map_or_else(|| Cow::Owned(format!("{property_name:?}")), Cow::Borrowed);
     OxcDiagnostic::warn(format!("Unexpected sync method: '{property_name}'.")).with_label(span)
 }
 
@@ -85,7 +91,7 @@ impl Rule for NoSync {
             return;
         };
 
-        if self.0.ignores.contains(property_name) {
+        if property_name.as_str().is_some_and(|name| self.0.ignores.contains(name)) {
             return;
         }
 
@@ -97,20 +103,20 @@ impl Rule for NoSync {
     }
 }
 
-fn get_sync_property_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
+fn get_sync_property_name<'a>(expr: &'a Expression<'a>) -> Option<JSStr<'a>> {
     match expr.get_inner_expression() {
         Expression::Identifier(ident) if ident.name.as_str().ends_with("Sync") => {
-            Some(ident.name.as_str())
+            Some(JSStr::from(ident.name))
         }
         Expression::StaticMemberExpression(member) => {
             if member.property.name.as_str().ends_with("Sync") {
-                Some(member.property.name.as_str())
+                Some(JSStr::from(member.property.name))
             } else {
                 get_sync_property_name(&member.object)
             }
         }
         Expression::ComputedMemberExpression(member) => {
-            if let Some(name) = member.static_property_name().and_then(JSStr::as_str)
+            if let Some(name) = member.static_property_name()
                 && name.ends_with("Sync")
             {
                 return Some(name);
@@ -135,6 +141,8 @@ fn test() {
         ("if (true) {fs.fooSync();}", Some(serde_json::json!([{ "allowAtRootLevel": true }]))),
         ("if (true) {fooSync();}", Some(serde_json::json!([{ "allowAtRootLevel": true }]))),
         ("fooSync();", Some(serde_json::json!([{ "ignores": ["fooSync"] }]))),
+        (r#"fs["\uD800sync"]();"#, None),
+        (r#"fs["Sync\uDC00"]();"#, None),
     ];
 
     let fail = vec![
@@ -157,6 +165,8 @@ fn test() {
             "() => {fs.fooSync();}",
             Some(serde_json::json!([{ "allowAtRootLevel": true, "ignores": ["barSync"] }])),
         ),
+        (r#"fs["\uD800Sync"]();"#, None),
+        (r#"fs["a\uDC00bSync"]();"#, Some(serde_json::json!([{ "ignores": ["abSync"] }]))),
     ];
 
     Tester::new(NoSync::NAME, NoSync::PLUGIN, pass, fail).test_and_snapshot();
