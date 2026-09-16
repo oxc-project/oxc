@@ -74,6 +74,7 @@ pub(crate) mod eslint {
     pub mod max_nested_callbacks;
     pub mod max_params;
     pub mod max_statements;
+    pub mod multiline_comment_style;
     pub mod new_cap;
     pub mod no_alert;
     pub mod no_array_constructor;

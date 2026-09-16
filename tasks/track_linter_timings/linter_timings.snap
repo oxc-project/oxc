@@ -30,6 +30,7 @@ eslint/max-lines-per-function                              |  16812
 eslint/max-nested-callbacks                                |  16812
 eslint/max-params                                          |  17279
 eslint/max-statements                                      |      7
+eslint/multiline-comment-style                             |      7
 eslint/new-cap                                             |  64027
 eslint/no-alert                                            |  62606
 eslint/no-array-constructor                                |  64027

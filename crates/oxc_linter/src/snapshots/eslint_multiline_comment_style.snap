@@ -1,0 +1,1027 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 // these are
+ 3 │ ╰─▶                 // line comments
+ 4 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 //foo
+ 3 │ ╰─▶                 ///bar
+ 4 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 // foo
+ 3 │ ╰─▶                 // bar
+ 4 │     
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:5:17]
+ 4 │     
+ 5 │ ╭─▶                 // baz
+ 6 │ ╰─▶                 // qux
+ 7 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 //  foo
+ 3 │ │                   // bar
+ 4 │ │                   //    baz
+ 5 │ ╰─▶                 // qux
+ 6 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 //  foo
+ 3 │ │                   //
+ 4 │ │                   //    baz
+ 5 │ ╰─▶                 // qux
+ 6 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 //    foo
+ 3 │ │                        // bar
+ 4 │ │              //  baz
+ 5 │ ╰─▶                 // qux
+ 6 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak after '/*'.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /* this block
+   ·                 ──
+ 3 │                  * is missing a newline at the start
+   ╰────
+  help: Move the comment text onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak after '/*'.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /** this JSDoc comment
+   ·                 ──
+ 3 │                  * is missing a newline at the start
+   ╰────
+  help: Move the comment text onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak after '/*'.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*! this Exclamation comment
+   ·                 ──
+ 3 │                  * is missing a newline
+   ╰────
+  help: Move the comment text onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak after '/*'.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*! this Exclamation comment is missing a newline at the start
+   ·                 ──
+ 3 │                  */
+   ╰────
+  help: Move the comment text onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak before '*/'.
+   ╭─[multiline_comment_style.tsx:4:51]
+ 3 │                  * this block
+ 4 │                  * is missing a newline at the end*/
+   ·                                                   ──
+ 5 │             
+   ╰────
+  help: Move the closing delimiter onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                  * the following line
+ 4 │                    is missing a '*' at the start
+   · ────────────────────────────────────────────────
+ 5 │                  */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                  * the following line
+ 4 │                  is missing a '*' at the start
+   · ──────────────────────────────────────────────
+ 5 │                  */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                  * the following line
+ 4 │                 is missing a '*' at the start
+   · ─────────────────────────────────────────────
+ 5 │                  */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                  * the following line
+ 4 │                       * has a '*' with the wrong offset at the start
+   · ────────────────────────────────────────────────────────────────────
+ 5 │                  */
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                    * the following line
+ 4 │                  * has a '*' with the wrong offset at the start
+   · ───────────────────────────────────────────────────────────────
+ 5 │                    */
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:5:1]
+ 4 │                  * is misaligned
+ 5 │                    */
+   · ─────────────────────
+ 6 │             
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                  * the following line
+ 4 │                 *
+   · ─────────────────
+ 5 │                  * is blank
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                  * the following line
+ 4 │                   *
+   · ───────────────────
+ 5 │                  * is blank
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:5:1]
+ 4 │                  * is misaligned
+ 5 │                    */ foo
+   · ─────────────────────────
+ 6 │             
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  * foo
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /**
+   ·                 ──
+ 3 │                  * JSDoc
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*!
+   ·                 ──
+ 3 │                  * Exclamation
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /* foo
+   ·                 ──
+ 3 │                  *bar
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 // foo
+ 3 │ ╰─▶                 // bar
+ 4 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 // foo
+ 3 │ │                   //
+ 4 │ ╰─▶                 // bar
+ 5 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 //foo
+ 3 │ ╰─▶                 //bar
+ 4 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 //   foo
+ 3 │ ╰─▶                 //   bar
+ 4 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 // foo
+ 3 │ ╰─▶               // bar
+ 4 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 //    foo
+ 3 │ │                        // bar
+ 4 │ │              //  baz
+ 5 │ ╰─▶                 // qux
+ 6 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment without padding stars.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                 * foo
+   ╰────
+  help: Remove the `*` at the start of each line of this block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment without padding stars.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                 *foo
+   ╰────
+  help: Remove the `*` at the start of each line of this block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment without padding stars.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                 *   foo
+   ╰────
+  help: Remove the `*` at the start of each line of this block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment without padding stars.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                 * foo
+   ╰────
+  help: Remove the `*` at the start of each line of this block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment without padding stars.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  *    foo
+   ╰────
+  help: Remove the `*` at the start of each line of this block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:2:1]
+ 1 │ /*
+ 2 │ {
+   · ─
+ 3 │     "foo": 1,
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │ {
+ 3 │     "foo": 1,
+   · ─────────────
+ 4 │     "bar": 2
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │     "foo": 1,
+ 4 │     "bar": 2
+   · ────────────
+ 5 │ }
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:5:1]
+ 4 │     "bar": 2
+ 5 │ }
+   · ─
+ 6 │ */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:6:1]
+ 5 │ }
+ 6 │ */
+   · ──
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │                 /*
+ 3 │                 {
+   · ─────────────────
+ 4 │                     "foo": 1,
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                 {
+ 4 │                     "foo": 1,
+   · ─────────────────────────────
+ 5 │                     "bar": 2
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:5:1]
+ 4 │                     "foo": 1,
+ 5 │                     "bar": 2
+   · ────────────────────────────
+ 6 │                 }
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:6:1]
+ 5 │                     "bar": 2
+ 6 │                 }
+   · ─────────────────
+ 7 │                 */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:7:1]
+ 6 │                 }
+ 7 │                 */
+   · ──────────────────
+ 8 │             
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:2:1]
+ 1 │ /*
+ 2 │ {
+   · ─
+ 3 │       "foo": 1,
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │ {
+ 3 │       "foo": 1,
+   · ───────────────
+ 4 │       "bar": 2
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │       "foo": 1,
+ 4 │       "bar": 2
+   · ──────────────
+ 5 │ }
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:5:1]
+ 4 │       "bar": 2
+ 5 │ }
+   · ─
+ 6 │ */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:6:1]
+ 5 │ }
+ 6 │ */
+   · ──
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │                 /*
+ 3 │                 {
+   · ─────────────────
+ 4 │                 "foo": 1,
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                 {
+ 4 │                 "foo": 1,
+   · ─────────────────────────
+ 5 │                 "bar": 2
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:5:1]
+ 4 │                 "foo": 1,
+ 5 │                 "bar": 2
+   · ────────────────────────
+ 6 │                 }
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:6:1]
+ 5 │                 "bar": 2
+ 6 │                 }
+   · ─────────────────
+ 7 │                 */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:7:1]
+ 6 │                 }
+ 7 │                 */
+   · ──────────────────
+ 8 │             
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │                      /*
+ 3 │                             {
+   · ─────────────────────────────
+ 4 │                         "foo": 1,
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                             {
+ 4 │                         "foo": 1,
+   · ─────────────────────────────────
+ 5 │                        "bar": 2
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:5:1]
+ 4 │                         "foo": 1,
+ 5 │                        "bar": 2
+   · ───────────────────────────────
+ 6 │                 }
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:6:1]
+ 5 │                        "bar": 2
+ 6 │                 }
+   · ─────────────────
+ 7 │                 */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:7:1]
+ 6 │                 }
+ 7 │                 */
+   · ──────────────────
+ 8 │             
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 //{
+ 3 │ │                   //    "foo": 1,
+ 4 │ │                   //    "bar": 2
+ 5 │ ╰─▶                 //}
+ 6 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  * {
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  *
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment without padding stars.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  *
+   ╰────
+  help: Remove the `*` at the start of each line of this block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment without padding stars.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  *
+   ╰────
+  help: Remove the `*` at the start of each line of this block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  *{
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  *   {
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │             *{
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  *   {
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                 {
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /* {
+   ·                 ──
+ 3 │                        "foo": 1,
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  * foo
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  * foo
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment without padding stars.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  * foo
+   ╰────
+  help: Remove the `*` at the start of each line of this block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment without padding stars.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /*
+   ·                 ──
+ 3 │                  * foo
+   ╰────
+  help: Remove the `*` at the start of each line of this block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 // foo
+ 3 │ │                   //
+ 4 │ ╰─▶                 // bar
+ 5 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 // foo
+ 3 │ │                   // 
+ 4 │ ╰─▶                 // bar
+ 5 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 // foo
+ 3 │ │                   // 
+ 4 │ ╰─▶                 // bar
+ 5 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /* foo
+   ·                 ──
+ 3 │ 
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected multiple line comments instead of a block comment.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /* foo
+   ·                 ──
+ 3 │                    
+   ╰────
+  help: Split this block comment into consecutive line comments.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak after '/*'.
+   ╭─[multiline_comment_style.tsx:1:1]
+ 1 │ /* foo
+   · ──
+ 2 │ 
+   ╰────
+  help: Move the comment text onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak before '*/'.
+   ╭─[multiline_comment_style.tsx:3:8]
+ 2 │ 
+ 3 │    bar */
+   ·        ──
+   ╰────
+  help: Move the closing delimiter onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:2:1]
+ 1 │ /* foo
+ 2 │ 
+   · ▲
+ 3 │    bar */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │ 
+ 3 │    bar */
+   · ─────────
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak after '/*'.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │ 
+ 2 │                 /* foo
+   ·                 ──
+ 3 │                    
+   ╰────
+  help: Move the comment text onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak before '*/'.
+   ╭─[multiline_comment_style.tsx:4:24]
+ 3 │                    
+ 4 │                    bar */
+   ·                        ──
+ 5 │             
+   ╰────
+  help: Move the closing delimiter onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │                 /* foo
+ 3 │                    
+   · ───────────────────
+ 4 │                    bar */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │                    
+ 4 │                    bar */
+   · ─────────────────────────
+ 5 │             
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak after '/*'.
+   ╭─[multiline_comment_style.tsx:1:1]
+ 1 │ /*foo
+   · ──
+ 2 │ 
+   ╰────
+  help: Move the comment text onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak before '*/'.
+   ╭─[multiline_comment_style.tsx:3:7]
+ 2 │ 
+ 3 │   bar */
+   ·       ──
+   ╰────
+  help: Move the closing delimiter onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:2:1]
+ 1 │ /*foo
+ 2 │ 
+   · ▲
+ 3 │   bar */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │ 
+ 3 │   bar */
+   · ────────
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak after '/*'.
+   ╭─[multiline_comment_style.tsx:1:1]
+ 1 │ /*foo
+   · ──
+ 2 │    
+   ╰────
+  help: Move the comment text onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a linebreak before '*/'.
+   ╭─[multiline_comment_style.tsx:3:7]
+ 2 │    
+ 3 │   bar */
+   ·       ──
+   ╰────
+  help: Move the closing delimiter onto its own line.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:2:1]
+ 1 │ /*foo
+ 2 │    
+   · ───
+ 3 │   bar */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │    
+ 3 │   bar */
+   · ────────
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:2:1]
+ 1 │ /*
+ 2 │  // a line comment
+   · ──────────────────
+ 3 │  some.code();
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │  // a line comment
+ 3 │  some.code();
+   · ─────────────
+ 4 │  */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │                 /*
+ 3 │                  // a line comment
+   · ──────────────────────────────────
+ 4 │                  * some.code();
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 ////This comment is in
+ 3 │ ╰─▶                 //`separate-lines` format.
+ 4 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 // // This comment is in
+ 3 │ ╰─▶                 // `separate-lines` format.
+ 4 │                 
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:2:1]
+ 1 │ /*
+ 2 │ {
+   · ─
+ 3 │     "foo": 1,
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │ {
+ 3 │     "foo": 1,
+   · ─────────────
+ 4 │     //"bar": 2
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │     "foo": 1,
+ 4 │     //"bar": 2
+   · ──────────────
+ 5 │ }
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:5:1]
+ 4 │     //"bar": 2
+ 5 │ }
+   · ─
+ 6 │ */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:6:1]
+ 5 │ }
+ 6 │ */
+   · ──
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:1:1]
+ 1 │ ╭─▶ // This is
+ 2 │ ╰─▶ // a multiline comment
+ 3 │     // @ts-expect-error TS(2322) some message
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:1:1]
+ 1 │ ╭─▶ // This is
+ 2 │ ╰─▶ // a multiline comment
+ 3 │     // @ts-expect-error: TS(2322) some message
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:1:1]
+ 1 │ ╭─▶ // Top A
+ 2 │ ╰─▶ // Top B
+ 3 │     // @ts-ignore some message
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:4:1]
+ 3 │     // @ts-ignore some message
+ 4 │ ╭─▶ // Bottom A
+ 5 │ ╰─▶ // Bottom B
+ 6 │     foo();
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a block comment instead of consecutive line comments.
+   ╭─[multiline_comment_style.tsx:1:1]
+ 1 │ ╭─▶ // prettier-ignorement
+ 2 │ │   // v8 ignored next
+ 3 │ │   // node:coverage ignored next
+ 4 │ ╰─▶ // webpackChunkNameExtra: "chunk"
+   ╰────
+  help: Merge these line comments into a single block comment.
+
+  ⚠ eslint(multiline-comment-style): Expected a '*' at the start of this line.
+   ╭─[multiline_comment_style.tsx:2:1]
+ 1 │ /*
+ 2 │ 
+   · ▲
+ 3 │ */
+   ╰────
+  help: Add a `*` aligned with the `*` of the opening delimiter.
+
+  ⚠ eslint(multiline-comment-style): Expected this line to be aligned with the start of the comment.
+   ╭─[multiline_comment_style.tsx:3:1]
+ 2 │ 
+ 3 │ */
+   · ──
+   ╰────
+  help: Align the `*` of this line with the `*` of the opening delimiter.

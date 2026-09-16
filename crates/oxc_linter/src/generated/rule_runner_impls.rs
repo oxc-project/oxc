@@ -460,6 +460,11 @@ impl RuleRunner for crate::rules::eslint::max_statements::MaxStatements {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
+impl RuleRunner for crate::rules::eslint::multiline_comment_style::MultilineCommentStyle {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
 impl RuleRunner for crate::rules::eslint::new_cap::NewCap {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]));

@@ -1459,6 +1459,34 @@
       },
       "additionalProperties": false
     },
+    "CommentStyle": {
+      "oneOf": [
+        {
+          "description": "Block comments with an aligned `*` at the start of every line.",
+          "type": "string",
+          "enum": [
+            "starred-block"
+          ],
+          "markdownDescription": "Block comments with an aligned `*` at the start of every line."
+        },
+        {
+          "description": "Block comments without padding stars.",
+          "type": "string",
+          "enum": [
+            "bare-block"
+          ],
+          "markdownDescription": "Block comments without padding stars."
+        },
+        {
+          "description": "Consecutive line comments.",
+          "type": "string",
+          "enum": [
+            "separate-lines"
+          ],
+          "markdownDescription": "Consecutive line comments."
+        }
+      ]
+    },
     "CompareType": {
       "oneOf": [
         {
@@ -4375,6 +4403,29 @@
                 }
               ],
               "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "multiline-comment-style": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CommentStyle"
+                },
+                {
+                  "$ref": "#/definitions/SeparateLinesOptionsJson"
+                }
+              ],
+              "maxItems": 3,
               "minItems": 2
             }
           ]
@@ -13400,6 +13451,21 @@
       },
       "additionalProperties": false
     },
+    "MultilineCommentStyleOptions": {
+      "description": "Configuration for the `multiline-comment-style` rule.\n\nThe first element selects the comment style. When it is `\"separate-lines\"`, a\nsecond element may supply additional options.",
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/CommentStyle"
+        },
+        {
+          "$ref": "#/definitions/SeparateLinesOptionsJson"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2,
+      "markdownDescription": "Configuration for the `multiline-comment-style` rule.\n\nThe first element selects the comment style. When it is `\"separate-lines\"`, a\nsecond element may supply additional options."
+    },
     "NameSpecifier": {
       "description": "Name specifier that can be a single string or array of strings",
       "anyOf": [
@@ -19024,6 +19090,24 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to enforce self-closing for native HTML elements."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SeparateLinesOptionsJson": {
+      "type": "object",
+      "properties": {
+        "checkExclamation": {
+          "description": "Whether to also apply `\"separate-lines\"` to exclamation comments (`/*! ... */`).",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to also apply `\"separate-lines\"` to exclamation comments (`/*! ... */`)."
+        },
+        "checkJSDoc": {
+          "description": "Whether to also apply `\"separate-lines\"` to JSDoc comments (`/** ... */`).",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to also apply `\"separate-lines\"` to JSDoc comments (`/** ... */`)."
         }
       },
       "additionalProperties": false

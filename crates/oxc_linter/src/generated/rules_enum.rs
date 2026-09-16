@@ -42,6 +42,7 @@ pub use crate::rules::eslint::max_lines_per_function::MaxLinesPerFunction as Esl
 pub use crate::rules::eslint::max_nested_callbacks::MaxNestedCallbacks as EslintMaxNestedCallbacks;
 pub use crate::rules::eslint::max_params::MaxParams as EslintMaxParams;
 pub use crate::rules::eslint::max_statements::MaxStatements as EslintMaxStatements;
+pub use crate::rules::eslint::multiline_comment_style::MultilineCommentStyle as EslintMultilineCommentStyle;
 pub use crate::rules::eslint::new_cap::NewCap as EslintNewCap;
 pub use crate::rules::eslint::no_alert::NoAlert as EslintNoAlert;
 pub use crate::rules::eslint::no_array_constructor::NoArrayConstructor as EslintNoArrayConstructor;
@@ -955,6 +956,7 @@ pub enum RuleEnum {
     EslintMaxNestedCallbacks(EslintMaxNestedCallbacks),
     EslintMaxParams(EslintMaxParams),
     EslintMaxStatements(EslintMaxStatements),
+    EslintMultilineCommentStyle(EslintMultilineCommentStyle),
     EslintNewCap(EslintNewCap),
     EslintNoAlert(EslintNoAlert),
     EslintNoArrayConstructor(EslintNoArrayConstructor),
@@ -1834,7 +1836,8 @@ const ESLINT_MAX_LINES_PER_FUNCTION_ID: usize = ESLINT_MAX_LINES_ID + 1usize;
 const ESLINT_MAX_NESTED_CALLBACKS_ID: usize = ESLINT_MAX_LINES_PER_FUNCTION_ID + 1usize;
 const ESLINT_MAX_PARAMS_ID: usize = ESLINT_MAX_NESTED_CALLBACKS_ID + 1usize;
 const ESLINT_MAX_STATEMENTS_ID: usize = ESLINT_MAX_PARAMS_ID + 1usize;
-const ESLINT_NEW_CAP_ID: usize = ESLINT_MAX_STATEMENTS_ID + 1usize;
+const ESLINT_MULTILINE_COMMENT_STYLE_ID: usize = ESLINT_MAX_STATEMENTS_ID + 1usize;
+const ESLINT_NEW_CAP_ID: usize = ESLINT_MULTILINE_COMMENT_STYLE_ID + 1usize;
 const ESLINT_NO_ALERT_ID: usize = ESLINT_NEW_CAP_ID + 1usize;
 const ESLINT_NO_ARRAY_CONSTRUCTOR_ID: usize = ESLINT_NO_ALERT_ID + 1usize;
 const ESLINT_NO_ASYNC_PROMISE_EXECUTOR_ID: usize = ESLINT_NO_ARRAY_CONSTRUCTOR_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -2814,6 +2817,7 @@ static RULE_NAMES: [&str; 870usize] = [
     EslintMaxNestedCallbacks::NAME,
     EslintMaxParams::NAME,
     EslintMaxStatements::NAME,
+    EslintMultilineCommentStyle::NAME,
     EslintNewCap::NAME,
     EslintNoAlert::NAME,
     EslintNoArrayConstructor::NAME,
@@ -3690,6 +3694,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(_) => ESLINT_MAX_NESTED_CALLBACKS_ID,
             Self::EslintMaxParams(_) => ESLINT_MAX_PARAMS_ID,
             Self::EslintMaxStatements(_) => ESLINT_MAX_STATEMENTS_ID,
+            Self::EslintMultilineCommentStyle(_) => ESLINT_MULTILINE_COMMENT_STYLE_ID,
             Self::EslintNewCap(_) => ESLINT_NEW_CAP_ID,
             Self::EslintNoAlert(_) => ESLINT_NO_ALERT_ID,
             Self::EslintNoArrayConstructor(_) => ESLINT_NO_ARRAY_CONSTRUCTOR_ID,
@@ -4697,6 +4702,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::CATEGORY,
             Self::EslintMaxParams(_) => EslintMaxParams::CATEGORY,
             Self::EslintMaxStatements(_) => EslintMaxStatements::CATEGORY,
+            Self::EslintMultilineCommentStyle(_) => EslintMultilineCommentStyle::CATEGORY,
             Self::EslintNewCap(_) => EslintNewCap::CATEGORY,
             Self::EslintNoAlert(_) => EslintNoAlert::CATEGORY,
             Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::CATEGORY,
@@ -5744,6 +5750,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::FIX,
             Self::EslintMaxParams(_) => EslintMaxParams::FIX,
             Self::EslintMaxStatements(_) => EslintMaxStatements::FIX,
+            Self::EslintMultilineCommentStyle(_) => EslintMultilineCommentStyle::FIX,
             Self::EslintNewCap(_) => EslintNewCap::FIX,
             Self::EslintNoAlert(_) => EslintNoAlert::FIX,
             Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::FIX,
@@ -6741,6 +6748,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::documentation(),
             Self::EslintMaxParams(_) => EslintMaxParams::documentation(),
             Self::EslintMaxStatements(_) => EslintMaxStatements::documentation(),
+            Self::EslintMultilineCommentStyle(_) => EslintMultilineCommentStyle::documentation(),
             Self::EslintNewCap(_) => EslintNewCap::documentation(),
             Self::EslintNoAlert(_) => EslintNoAlert::documentation(),
             Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::documentation(),
@@ -8097,6 +8105,10 @@ impl RuleEnum {
                 .or_else(|| EslintMaxParams::schema(generator)),
             Self::EslintMaxStatements(_) => EslintMaxStatements::config_schema(generator)
                 .or_else(|| EslintMaxStatements::schema(generator)),
+            Self::EslintMultilineCommentStyle(_) => {
+                EslintMultilineCommentStyle::config_schema(generator)
+                    .or_else(|| EslintMultilineCommentStyle::schema(generator))
+            }
             Self::EslintNewCap(_) => {
                 EslintNewCap::config_schema(generator).or_else(|| EslintNewCap::schema(generator))
             }
@@ -10494,6 +10506,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(_) => "eslint",
             Self::EslintMaxParams(_) => "eslint",
             Self::EslintMaxStatements(_) => "eslint",
+            Self::EslintMultilineCommentStyle(_) => "eslint",
             Self::EslintNewCap(_) => "eslint",
             Self::EslintNoAlert(_) => "eslint",
             Self::EslintNoArrayConstructor(_) => "eslint",
@@ -11432,6 +11445,9 @@ impl RuleEnum {
             Self::EslintMaxStatements(_) => {
                 Ok(Self::EslintMaxStatements(EslintMaxStatements::from_configuration(value)?))
             }
+            Self::EslintMultilineCommentStyle(_) => Ok(Self::EslintMultilineCommentStyle(
+                EslintMultilineCommentStyle::from_configuration(value)?,
+            )),
             Self::EslintNewCap(_) => {
                 Ok(Self::EslintNewCap(EslintNewCap::from_configuration(value)?))
             }
@@ -12502,6 +12518,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(rule) => rule.run(node, ctx),
             Self::EslintMaxParams(rule) => rule.run(node, ctx),
             Self::EslintMaxStatements(rule) => rule.run(node, ctx),
+            Self::EslintMultilineCommentStyle(rule) => rule.run(node, ctx),
             Self::EslintNewCap(rule) => rule.run(node, ctx),
             Self::EslintNoAlert(rule) => rule.run(node, ctx),
             Self::EslintNoArrayConstructor(rule) => rule.run(node, ctx),
@@ -13389,6 +13406,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(rule) => rule.run_once(ctx),
             Self::EslintMaxParams(rule) => rule.run_once(ctx),
             Self::EslintMaxStatements(rule) => rule.run_once(ctx),
+            Self::EslintMultilineCommentStyle(rule) => rule.run_once(ctx),
             Self::EslintNewCap(rule) => rule.run_once(ctx),
             Self::EslintNoAlert(rule) => rule.run_once(ctx),
             Self::EslintNoArrayConstructor(rule) => rule.run_once(ctx),
@@ -14279,6 +14297,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintMaxParams(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintMaxStatements(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintMultilineCommentStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNewCap(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoAlert(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoArrayConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15281,6 +15300,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(rule) => rule.should_run(ctx),
             Self::EslintMaxParams(rule) => rule.should_run(ctx),
             Self::EslintMaxStatements(rule) => rule.should_run(ctx),
+            Self::EslintMultilineCommentStyle(rule) => rule.should_run(ctx),
             Self::EslintNewCap(rule) => rule.should_run(ctx),
             Self::EslintNoAlert(rule) => rule.should_run(ctx),
             Self::EslintNoArrayConstructor(rule) => rule.should_run(ctx),
@@ -16163,6 +16183,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::IS_TSGOLINT_RULE,
             Self::EslintMaxParams(_) => EslintMaxParams::IS_TSGOLINT_RULE,
             Self::EslintMaxStatements(_) => EslintMaxStatements::IS_TSGOLINT_RULE,
+            Self::EslintMultilineCommentStyle(_) => EslintMultilineCommentStyle::IS_TSGOLINT_RULE,
             Self::EslintNewCap(_) => EslintNewCap::IS_TSGOLINT_RULE,
             Self::EslintNoAlert(_) => EslintNoAlert::IS_TSGOLINT_RULE,
             Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::IS_TSGOLINT_RULE,
@@ -17421,6 +17442,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::VERSION,
             Self::EslintMaxParams(_) => EslintMaxParams::VERSION,
             Self::EslintMaxStatements(_) => EslintMaxStatements::VERSION,
+            Self::EslintMultilineCommentStyle(_) => EslintMultilineCommentStyle::VERSION,
             Self::EslintNewCap(_) => EslintNewCap::VERSION,
             Self::EslintNoAlert(_) => EslintNoAlert::VERSION,
             Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::VERSION,
@@ -18472,6 +18494,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::HAS_CONFIG,
             Self::EslintMaxParams(_) => EslintMaxParams::HAS_CONFIG,
             Self::EslintMaxStatements(_) => EslintMaxStatements::HAS_CONFIG,
+            Self::EslintMultilineCommentStyle(_) => EslintMultilineCommentStyle::HAS_CONFIG,
             Self::EslintNewCap(_) => EslintNewCap::HAS_CONFIG,
             Self::EslintNoAlert(_) => EslintNoAlert::HAS_CONFIG,
             Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::HAS_CONFIG,
@@ -19558,6 +19581,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::INFO,
             Self::EslintMaxParams(_) => EslintMaxParams::INFO,
             Self::EslintMaxStatements(_) => EslintMaxStatements::INFO,
+            Self::EslintMultilineCommentStyle(_) => EslintMultilineCommentStyle::INFO,
             Self::EslintNewCap(_) => EslintNewCap::INFO,
             Self::EslintNoAlert(_) => EslintNoAlert::INFO,
             Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::INFO,
@@ -20551,6 +20575,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(rule) => rule.types_info(),
             Self::EslintMaxParams(rule) => rule.types_info(),
             Self::EslintMaxStatements(rule) => rule.types_info(),
+            Self::EslintMultilineCommentStyle(rule) => rule.types_info(),
             Self::EslintNewCap(rule) => rule.types_info(),
             Self::EslintNoAlert(rule) => rule.types_info(),
             Self::EslintNoArrayConstructor(rule) => rule.types_info(),
@@ -21425,6 +21450,7 @@ impl RuleEnum {
             Self::EslintMaxNestedCallbacks(rule) => rule.run_info(),
             Self::EslintMaxParams(rule) => rule.run_info(),
             Self::EslintMaxStatements(rule) => rule.run_info(),
+            Self::EslintMultilineCommentStyle(rule) => rule.run_info(),
             Self::EslintNewCap(rule) => rule.run_info(),
             Self::EslintNoAlert(rule) => rule.run_info(),
             Self::EslintNoArrayConstructor(rule) => rule.run_info(),
@@ -22321,6 +22347,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintMaxNestedCallbacks(EslintMaxNestedCallbacks::default()),
         RuleEnum::EslintMaxParams(EslintMaxParams::default()),
         RuleEnum::EslintMaxStatements(EslintMaxStatements::default()),
+        RuleEnum::EslintMultilineCommentStyle(EslintMultilineCommentStyle::default()),
         RuleEnum::EslintNewCap(EslintNewCap::default()),
         RuleEnum::EslintNoAlert(EslintNoAlert::default()),
         RuleEnum::EslintNoArrayConstructor(EslintNoArrayConstructor::default()),

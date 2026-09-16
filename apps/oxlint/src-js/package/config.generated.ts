@@ -121,6 +121,7 @@ export type MaxNestedCallbacksConfigEnum = number | MaxNestedCallbacks;
 export type MaxParamsConfigEnum = number | MaxParamsConfig;
 export type CountThis = "always" | "never" | "except-void";
 export type MaxStatementsConfigEnum = number | MaxStatementsConfig;
+export type CommentStyle = "starred-block" | "bare-block" | "separate-lines";
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
 export type CheckLoops = "all" | "allExceptWhileTrue" | "none";
@@ -1092,6 +1093,8 @@ export interface DummyRuleMap {
   "max-nested-callbacks"?: RuleNoConfig | [AllowWarnDeny, MaxNestedCallbacksConfigEnum];
   "max-params"?: RuleNoConfig | [AllowWarnDeny, MaxParamsConfigEnum];
   "max-statements"?: RuleNoConfig | [AllowWarnDeny, MaxStatementsConfigEnum];
+  "multiline-comment-style"?:
+    RuleNoConfig | [AllowWarnDeny, CommentStyle] | [AllowWarnDeny, CommentStyle, SeparateLinesOptionsJson];
   "new-cap"?: RuleNoConfig | [AllowWarnDeny, NewCapConfig];
   "nextjs/google-font-display"?: RuleNoConfig;
   "nextjs/google-font-preconnect"?: RuleNoConfig;
@@ -1905,6 +1908,8 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, MaxNestedCallbacksConfigEnum]
     | [AllowWarnDeny, MaxParamsConfigEnum]
     | [AllowWarnDeny, MaxStatementsConfigEnum]
+    | [AllowWarnDeny, CommentStyle]
+    | [AllowWarnDeny, CommentStyle, SeparateLinesOptionsJson]
     | [AllowWarnDeny, NewCapConfig]
     | [AllowWarnDeny, NoBitwiseConfig]
     | [AllowWarnDeny, NoCondAssignConfig]
@@ -3375,6 +3380,16 @@ export interface MaxStatementsConfig {
    * Maximum number of statements allowed per function.
    */
   max?: number;
+}
+export interface SeparateLinesOptionsJson {
+  /**
+   * Whether to also apply `"separate-lines"` to exclamation comments (`/*! ... * /`).
+   */
+  checkExclamation?: boolean;
+  /**
+   * Whether to also apply `"separate-lines"` to JSDoc comments (`/** ... * /`).
+   */
+  checkJSDoc?: boolean;
 }
 export interface NewCapConfig {
   /**
