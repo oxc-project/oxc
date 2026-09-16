@@ -17,6 +17,15 @@ describe("parse", () => {
     const bufferId = second.parse(path, "let b = 2;");
 
     const { buffers } = await import("../src-js/plugins/lint.ts");
-    expect(buffers[bufferId]).toBeDefined();
+    const buffer = buffers[bufferId];
+    expect(buffer).toBeDefined();
+
+    // The view registered by the second instance holds the second parse
+    const sourceCode = await import("../src-js/plugins/source_code.ts");
+    sourceCode.resetSourceAndAst();
+    sourceCode.setupSourceForFile(buffer!, false);
+    sourceCode.initSourceText();
+    expect(sourceCode.sourceText).toBe("let b = 2;");
+    sourceCode.resetSourceAndAst();
   });
 });

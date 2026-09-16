@@ -42,7 +42,8 @@ const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
 /**
  * Register a buffer received from Rust, or get the already-registered buffer with this ID.
  *
- * Rust sends each buffer over only once. Later it sends only the `bufferId`.
+ * The linter's Rust path sends each buffer over only once, then only its `bufferId`.
+ * `RuleTester`'s path asks Rust for a view whenever this registry lacks the ID.
  * Buffer IDs are unique within one `AllocatorPool`. The linter's pool and `RuleTester`'s pool
  * both number from 0, so one JS realm must not use both.
  *

@@ -12,7 +12,8 @@ use oxc_napi::get_source_type;
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
 use oxc_semantic::SemanticBuilder;
 
-use crate::generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE};
+use super::external_linter::fixed_size_chunk_ptr;
+use crate::generated::raw_transfer_constants::BUFFER_SIZE;
 
 thread_local! {
     /// Pool holding the single fixed-size `Allocator` that `parse_raw_sync` parses into.
@@ -52,29 +53,33 @@ pub struct ParserOptions {
 /// Get a `Uint8Array` view of this thread's raw transfer buffer.
 ///
 /// The view covers the allocatable region plus `RawTransferMetadata`, the same region the linter
-/// shares with JS plugins. JS must only read from it.
+/// shares with JS plugins. JS reads the AST from it; the only bytes JS writes are the per-comment
+/// and per-token "deserialized" flags, which Rust rewrites on every parse.
 ///
-/// Rust keeps ownership of the memory: the view has no finalizer, and the block is freed when
-/// the thread's `ALLOCATOR_POOL` is dropped. JS may call this more than once (a test runner that
-/// resets its module registry obtains a fresh view of the same memory).
+/// Rust keeps ownership of the memory. The view has no finalizer, and the `is_double_owned` flag
+/// used by the linter's `get_buffer` is never set, so the block is freed only when the thread's
+/// `ALLOCATOR_POOL` is dropped at thread exit, after the thread's JS realm is gone. JS may call this
+/// more than once: a test runner that resets its module registry obtains a fresh view of the same
+/// memory. Callers should keep one view per module instance.
+///
+/// # Panics
+///
+/// Panics on the thread's first call if the fixed-size allocation cannot be made
+/// (see `AllocatorPool::new_fixed_size`).
 #[napi]
 pub fn get_raw_transfer_buffer() -> Uint8Array {
     ALLOCATOR_POOL.with(|pool| {
         let allocator = pool.get();
 
-        // Get pointer to start of allocator chunk.
-        // SAFETY: Fixed-size allocators have their chunk aligned on `BLOCK_ALIGN`, and size less than `BLOCK_ALIGN`.
-        // So we can get pointer to start of `Allocator` chunk by rounding down to next multiple of `BLOCK_ALIGN`.
-        // That can't go out of bounds of the backing allocation.
+        // SAFETY: `ALLOCATOR_POOL` is a fixed-size pool, so `allocator` has a `FixedSizeAllocatorMetadata`
         let chunk_ptr = unsafe {
-            let ptr = allocator.fixed_size_metadata_ptr().cast::<u8>();
-            let offset = ptr.addr().get() % BLOCK_ALIGN;
-            ptr.sub(offset)
+            let metadata_ptr = allocator.fixed_size_metadata_ptr();
+            fixed_size_chunk_ptr(metadata_ptr)
         };
 
         // SAFETY: Range of memory starting at `chunk_ptr` and encompassing `BUFFER_SIZE` is all within
-        // the allocation backing the `Allocator`, which lives as long as `ALLOCATOR_POOL`.
-        // JS side does not mutate the data in the buffer. The no-op finalizer leaves ownership with Rust.
+        // the allocation backing the `Allocator`, which lives as long as `ALLOCATOR_POOL` (thread lifetime).
+        // The no-op finalizer leaves ownership with Rust; see doc comment above for the aliasing contract.
         unsafe { Uint8Array::with_external_data(chunk_ptr.as_ptr(), BUFFER_SIZE, |_ptr, _len| {}) }
     })
 }
@@ -84,7 +89,7 @@ pub fn get_raw_transfer_buffer() -> Uint8Array {
 /// The source text is copied into the buffer, and the AST is written after it.
 /// The offset of `Program` within the buffer is written into the buffer's `RawTransferMetadata` slot.
 ///
-/// Caller can deserialize data from the buffer on JS side, via the view from `get_raw_transfer_buffer`.
+/// Caller can deserialize data from the buffer on JS side, via the view from `getRawTransferBuffer`.
 ///
 /// The buffer's contents remain valid until the next call to `parse_raw_sync` on the same thread.
 ///

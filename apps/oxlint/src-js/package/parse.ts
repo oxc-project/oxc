@@ -1,16 +1,10 @@
 import { getRawTransferBuffer, parseRawSync, rawTransferSupported } from "../bindings.js";
-import { registerBuffer } from "../plugins/lint.ts";
+import { buffers, registerBuffer } from "../plugins/lint.ts";
 import { DATA_POINTER_POS_32 } from "../generated/constants.ts";
 
-import type { BufferWithArrays } from "../plugins/types.ts";
 import type { ParserOptions as ParseOptions } from "../bindings.js";
 
 export type { ParseOptions };
-
-// View of the raw transfer buffer, obtained from Rust on first use.
-// Rust owns the buffer. A test runner that resets the module registry gets a fresh view of the
-// same memory from Rust, so the view and the `buffers` registry always belong to the same module instance.
-let buffer: BufferWithArrays | null = null;
 
 /**
  * Parse source text into a buffer, ready for `lintFileImpl`.
@@ -33,7 +27,9 @@ export function parse(path: string, sourceText: string, options?: ParseOptions):
 
   const bufferId = parseRawSync(path, sourceText, options);
 
-  if (buffer === null) buffer = registerBuffer(bufferId, getRawTransferBuffer());
+  // Get a view of the buffer from Rust the first time this module instance sees its ID.
+  // A test runner that resets the module registry starts with an empty `buffers` and asks again.
+  const buffer = buffers[bufferId] ?? registerBuffer(bufferId, getRawTransferBuffer());
 
   // Check parsing succeeded.
   // 0 is used as sentinel value to indicate parsing failed.

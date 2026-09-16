@@ -57,11 +57,19 @@ export declare function applyFixes(sourceText: string, fixesJson: string): strin
  * Get a `Uint8Array` view of this thread's raw transfer buffer.
  *
  * The view covers the allocatable region plus `RawTransferMetadata`, the same region the linter
- * shares with JS plugins. JS must only read from it.
+ * shares with JS plugins. JS reads the AST from it; the only bytes JS writes are the per-comment
+ * and per-token "deserialized" flags, which Rust rewrites on every parse.
  *
- * Rust keeps ownership of the memory: the view has no finalizer, and the block is freed when
- * the thread's `ALLOCATOR_POOL` is dropped. JS may call this more than once (a test runner that
- * resets its module registry obtains a fresh view of the same memory).
+ * Rust keeps ownership of the memory. The view has no finalizer, and the `is_double_owned` flag
+ * used by the linter's `get_buffer` is never set, so the block is freed only when the thread's
+ * `ALLOCATOR_POOL` is dropped at thread exit, after the thread's JS realm is gone. JS may call this
+ * more than once: a test runner that resets its module registry obtains a fresh view of the same
+ * memory. Callers should keep one view per module instance.
+ *
+ * # Panics
+ *
+ * Panics on the thread's first call if the fixed-size allocation cannot be made
+ * (see `AllocatorPool::new_fixed_size`).
  */
 export declare function getRawTransferBuffer(): Uint8Array
 
@@ -105,7 +113,7 @@ export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, se
  * The source text is copied into the buffer, and the AST is written after it.
  * The offset of `Program` within the buffer is written into the buffer's `RawTransferMetadata` slot.
  *
- * Caller can deserialize data from the buffer on JS side, via the view from `get_raw_transfer_buffer`.
+ * Caller can deserialize data from the buffer on JS side, via the view from `getRawTransferBuffer`.
  *
  * The buffer's contents remain valid until the next call to `parse_raw_sync` on the same thread.
  *
