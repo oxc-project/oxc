@@ -24,13 +24,6 @@ impl PartialEq<char> for JSChar {
     }
 }
 
-impl PartialEq<JSChar> for char {
-    #[inline]
-    fn eq(&self, other: &JSChar) -> bool {
-        other == self
-    }
-}
-
 impl JSChar {
     /// Construct a code point, returning `None` if `value > 0x10_FFFF`.
     #[inline]
@@ -133,7 +126,6 @@ mod tests {
     #[test]
     fn compares_to_char_by_code_point() {
         assert_eq!(JSChar::from('\r'), '\r');
-        assert_eq!('\r', JSChar::from('\r'));
         assert_ne!(JSChar::from('\r'), '\n');
         let lead = JSChar::from_u32(0xD800).unwrap();
         assert_ne!(lead, '\u{FFFD}');
