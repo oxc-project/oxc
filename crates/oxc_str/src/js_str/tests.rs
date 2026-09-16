@@ -67,6 +67,32 @@ fn layouts_and_traits() {
 }
 
 #[test]
+fn concatenate_js_strings_across_arenas() {
+    let allocator = Allocator::new();
+    let value = {
+        let input_allocator = Allocator::new();
+        let units = [0xDC00, 0x61, 0xD800, 0xDC00, 0x62, 0xD800];
+        for split in 0..=units.len() {
+            let left = from_utf16_in(&units[..split], &input_allocator);
+            let right = from_utf16_in(&units[split..], &input_allocator);
+            let value = JSStr::from_js_strs_array_in([left, JSStr::empty(), right], &&allocator);
+            assert_value(value, &units);
+        }
+        let lead = from_utf16_in(&[0xD800], &input_allocator);
+        let trail = from_utf16_in(&[0xDC00], &input_allocator);
+        JSStr::from_js_strs_array_in([lead, trail], &&allocator)
+    };
+    assert_value(value, &[0xD800, 0xDC00]);
+    assert_eq!(value.as_str(), Some("𐀀"));
+    assert_value(JSStr::from_js_strs_array_in([], &&allocator), &[]);
+    assert_eq!(
+        JSStr::from_js_strs_array_in([JSStr::from("hello"), JSStr::from("é")], &&allocator)
+            .as_str(),
+        Some("helloé")
+    );
+}
+
+#[test]
 fn js_char_range_and_encoding() {
     assert_eq!(JSChar::from_u32(0x11_0000), None);
     assert_eq!(JSChar::from_u32(u32::MAX), None);
@@ -104,7 +130,7 @@ fn borrowing_and_arena_conversions() {
     assert_eq!(value, source.as_str());
     assert_eq!(source.as_str(), value);
     assert_eq!(value, *source.as_str());
-    assert_eq!(*source.as_str(), value);
+    assert_eq!(value, source.as_str());
     let allocator = Allocator::new();
     let copied = JSStr::from_str_in(&source, &&allocator);
     assert_eq!(copied, value);
@@ -339,4 +365,40 @@ fn debug_matches_str_for_utf8() {
     ] {
         assert_eq!(format!("{:?}", JSStr::from(text)), format!("{text:?}"));
     }
+}
+
+#[test]
+fn to_str_lossy_borrows_or_replaces() {
+    use std::borrow::Cow;
+
+    let value = JSStr::from("plain");
+    assert!(matches!(value.to_str_lossy(), Cow::Borrowed("plain")));
+
+    let allocator = Allocator::new();
+    let mut builder = JSStrBuilder::new_in(&allocator);
+    builder.push_utf16(&[0x61, 0xD800, 0x62, 0xDFFF]);
+    let value = builder.into_js_str();
+    assert_eq!(value.to_str_lossy(), "a\u{FFFD}b\u{FFFD}");
+    assert!(matches!(value.to_str_lossy(), Cow::Owned(_)));
+}
+
+#[test]
+fn bytes_round_trip_through_owned_storage() {
+    let allocator = Allocator::new();
+    let mut builder = JSStrBuilder::new_in(&allocator);
+    builder.push_utf16(&[0x61, 0xD800, 0xD83D, 0xDE00]);
+    let value = builder.into_js_str();
+
+    let stored: Box<[u8]> = value.as_bytes().into();
+    let flag = value.has_lone_surrogate();
+    // SAFETY: the bytes and flag come from an existing `JSStr`.
+    let restored = unsafe { JSStr::from_bytes_unchecked(&stored, flag) };
+    assert_eq!(restored, value);
+    assert_eq!(restored.has_lone_surrogate(), flag);
+    assert_eq!(restored.len_utf16(), 4);
+
+    let plain = JSStr::from("plain");
+    // SAFETY: UTF-8 is canonical WTF-8 without lone surrogates.
+    let restored = unsafe { JSStr::from_bytes_unchecked(plain.as_bytes(), false) };
+    assert_eq!(restored.as_str(), Some("plain"));
 }
