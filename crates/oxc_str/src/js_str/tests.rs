@@ -67,6 +67,32 @@ fn layouts_and_traits() {
 }
 
 #[test]
+fn concatenate_js_strings_across_arenas() {
+    let allocator = Allocator::new();
+    let value = {
+        let input_allocator = Allocator::new();
+        let units = [0xDC00, 0x61, 0xD800, 0xDC00, 0x62, 0xD800];
+        for split in 0..=units.len() {
+            let left = from_utf16_in(&units[..split], &input_allocator);
+            let right = from_utf16_in(&units[split..], &input_allocator);
+            let value = JSStr::from_js_strs_array_in([left, JSStr::empty(), right], &&allocator);
+            assert_value(value, &units);
+        }
+        let lead = from_utf16_in(&[0xD800], &input_allocator);
+        let trail = from_utf16_in(&[0xDC00], &input_allocator);
+        JSStr::from_js_strs_array_in([lead, trail], &&allocator)
+    };
+    assert_value(value, &[0xD800, 0xDC00]);
+    assert_eq!(value.as_str(), Some("𐀀"));
+    assert_value(JSStr::from_js_strs_array_in([], &&allocator), &[]);
+    assert_eq!(
+        JSStr::from_js_strs_array_in([JSStr::from("hello"), JSStr::from("é")], &&allocator)
+            .as_str(),
+        Some("helloé")
+    );
+}
+
+#[test]
 fn js_char_range_and_encoding() {
     assert_eq!(JSChar::from_u32(0x11_0000), None);
     assert_eq!(JSChar::from_u32(u32::MAX), None);

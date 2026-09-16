@@ -104,12 +104,18 @@ impl<'a> JSStrBuilder<'a> {
     }
 
     /// Append one UTF-16 code unit.
+    ///
+    /// Use this for input from a UTF-16 API; use [`push_js_char`](Self::push_js_char)
+    /// for an already decoded JavaScript code point.
     #[inline]
     pub fn push_code_unit(&mut self, unit: u16) {
         self.push_js_char(JSChar::from_code_unit(unit));
     }
 
     /// Append potentially ill-formed UTF-16.
+    ///
+    /// This accepts code-unit buffers from UTF-16 APIs without replacing lone
+    /// surrogates. A pair may span consecutive calls, including empty buffers.
     #[inline]
     pub fn push_utf16(&mut self, units: &[u16]) {
         for &unit in units {

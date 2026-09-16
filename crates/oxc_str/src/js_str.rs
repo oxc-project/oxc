@@ -9,7 +9,7 @@ use std::{
 
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, GetAllocator};
 
-use crate::{JSChar, Str};
+use crate::{JSChar, JSStrBuilder, Str};
 
 /// An immutable JavaScript string borrowed from source text or arena memory.
 ///
@@ -104,6 +104,29 @@ impl<'a> JSStr<'a> {
     pub fn from_str_in(value: &str, allocator: &impl GetAllocator<'a>) -> Self {
         // Check the length before allocating or copying.
         JSStr::from(value).clone_in(allocator.allocator())
+    }
+
+    /// Concatenate JavaScript strings into an arena.
+    ///
+    /// Leading and trailing surrogates pair across string boundaries, including
+    /// empty strings between them. Inputs are copied into the destination arena.
+    ///
+    /// # Panics
+    /// Panics if the sum of input byte lengths exceeds `u32::MAX` or `isize::MAX`.
+    #[inline]
+    pub fn from_js_strs_array_in<const N: usize>(
+        strings: [JSStr<'_>; N],
+        allocator: &impl GetAllocator<'a>,
+    ) -> Self {
+        let capacity = strings
+            .iter()
+            .try_fold(0usize, |len, value| len.checked_add(value.len()))
+            .expect("JavaScript string capacity overflow");
+        let mut builder = JSStrBuilder::with_capacity_in(capacity, allocator.allocator());
+        for value in strings {
+            builder.push_js_str(value);
+        }
+        builder.into_js_str()
     }
 
     /// Borrow the value as UTF-8, or return `None` if it contains a lone surrogate.
