@@ -7,7 +7,7 @@ import { PACKAGE_ROOT_PATH } from "./utils.ts";
 
 const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, "dist/cli.js");
 
-async function runTimings(fixtureName: string): Promise<string> {
+async function runTimings(fixtureName: string, args: string[] = []): Promise<string> {
   const fixturePath = pathJoin(PACKAGE_ROOT_PATH, "test/fixtures", fixtureName);
 
   const { stdout } = await execa(
@@ -21,6 +21,7 @@ async function runTimings(fixtureName: string): Promise<string> {
       "default",
       "--threads",
       "1",
+      ...args,
       "files",
     ],
     { cwd: fixturePath, reject: false },
@@ -28,43 +29,38 @@ async function runTimings(fixtureName: string): Promise<string> {
   return stdout;
 }
 
-it("reports per-rule timings for JS plugins", async () => {
-  const stdout = await runTimings("basic_multiple_rules");
+it.each(["basic_multiple_rules", "basic_no_errors", "createOnce_hook_errors"])(
+  "snapshots normalized JS plugin timings for %s",
+  async (fixtureName) => {
+    const stdout = await runTimings(fixtureName, ["--warn", "eslint/no-unused-vars"]);
+    if (fixtureName === "basic_no_errors") {
+      expect(stdout).toContain("Found 0 warnings and 0 errors");
+    } else if (fixtureName === "createOnce_hook_errors") {
+      expect(stdout).toContain("Error running JS plugin");
+    }
 
-  expect(stdout).toMatch(
-    /basic-custom-plugin\/no-debugger\s+\d+\.\d{3}\s+\d+\.\d%\s+2\s+js-plugin/,
-  );
-  expect(stdout).toMatch(
-    /basic-custom-plugin\/no-debugger-2\s+\d+\.\d{3}\s+\d+\.\d%\s+2\s+js-plugin/,
-  );
-  expect(stdout).toMatch(
-    /basic-custom-plugin\/no-identifiers-named-foo\s+\d+\.\d{3}\s+\d+\.\d%\s+2\s+js-plugin/,
-  );
-  expect(stdout).toMatch(
-    /JS plugin runtime:\n  Total:\s+\d+\.\d{3}ms\n  Rule callbacks:\s+\d+\.\d{3}ms\n  Shared overhead:\s+\d+\.\d{3}ms/,
-  );
-});
+    const timingsStart = stdout.indexOf("Rule timings:\n");
+    expect(timingsStart).toBeGreaterThanOrEqual(0);
 
-it("reports JS plugin timings when rules produce no diagnostics", async () => {
-  const stdout = await runTimings("basic_no_errors");
+    // Diagnostics have their own fixture snapshots. Snapshot the complete timing output here.
+    const lines = stdout.slice(timingsStart).trim().split("\n");
+    const tableEnd = lines.indexOf("");
+    expect(tableEnd).toBeGreaterThan(3);
 
-  expect(stdout).toMatch(/Found 0 warnings and 0 errors/);
-  expect(stdout).toMatch(
-    /basic-custom-plugin\/no-debugger\s+\d+\.\d{3}\s+\d+\.\d%\s+1\s+js-plugin/,
-  );
-});
+    // Rules are ordered by measured duration, so sort by name before snapshotting.
+    const normalized = [
+      ...lines.slice(0, 3),
+      ...lines.slice(3, tableEnd).sort(),
+      ...lines.slice(tableEnd),
+    ]
+      .map((line) =>
+        line
+          // Preserve the width of each value so the original columns stay aligned.
+          .replace(/\d+\.\d{3}/g, (value) => "0.000".padStart(value.length))
+          .replace(/\d+\.\d%/g, (value) => "0.0%".padStart(value.length)),
+      )
+      .join("\n");
 
-it("reports JS plugin timings when a rule throws", async () => {
-  const stdout = await runTimings("createOnce_hook_errors");
-
-  expect(stdout).toContain("Error running JS plugin");
-  expect(stdout).toMatch(
-    /create-once-errors-plugin\/throw-in-before\s+\d+\.\d{3}\s+\d+\.\d%\s+\d+\s+js-plugin/,
-  );
-  expect(stdout).toMatch(
-    /create-once-errors-plugin\/throw-in-visit\s+\d+\.\d{3}\s+\d+\.\d%\s+\d+\s+js-plugin/,
-  );
-  expect(stdout).toMatch(
-    /create-once-errors-plugin\/throw-in-after\s+\d+\.\d{3}\s+\d+\.\d%\s+\d+\s+js-plugin/,
-  );
-});
+    expect(normalized).toMatchSnapshot();
+  },
+);
