@@ -1490,6 +1490,31 @@ fn test_inline_values_in_template_literal() {
 }
 
 #[test]
+fn string_method_folds_use_utf16_positions() {
+    // An astral character is two UTF-16 code units but one Rust `char` and
+    // four bytes; positions and results must count code units.
+    fold(r#"x = "a\u{1F600}b".indexOf("b")"#, "x = 3");
+    fold(r#"x = "\u{1F600}\u{1F600}".indexOf("\u{1F600}", 1)"#, "x = 2");
+    fold(r#"x = "a\u{1F600}b".lastIndexOf("b")"#, "x = 3");
+    fold(r#"x = "a\u{1F600}b".slice(1, 3)"#, r#"x = "\u{1F600}""#);
+    // A NaN or undefined end never folds: the evaluated number no longer says
+    // whether it was `undefined` (end of string) or NaN (index zero), and
+    // `slice` must not swap a zero end with the start.
+    fold_same(r#"x = "abc".slice(1, NaN)"#);
+    fold(r#"x = "abc".slice(1, undefined)"#, r#"x = "abc".slice(1, void 0)"#);
+    fold(r#"x = "abc".substring(1, undefined)"#, r#"x = "abc".substring(1, void 0)"#);
+    fold(r#"x = "a\u{1F600}b".slice(3)"#, r#"x = "b""#);
+    fold(r#"x = "a\u{1F600}b".substring(1, 3)"#, r#"x = "\u{1F600}""#);
+    fold(r#"x = "a\u{1F600}b".substring(3, 4)"#, r#"x = "b""#);
+    // A result that would split the surrogate pair has no `str` form; the
+    // call is left alone instead of folding to the wrong text.
+    fold_same(r#"x = "a\u{1F600}b".substring(1, 2)"#);
+    fold_same(r#"x = "a\u{1F600}b".slice(2, 4)"#);
+    // A position beyond `i32` clamps instead of wrapping to a small index.
+    fold(r#"x = "aa".indexOf("a", 3e9)"#, "x = -1");
+}
+
+#[test]
 fn template_concatenation_preserves_surrogates() {
     fold(r"`${a}\uD800` + `\uDC00${b}`", r"`${a}\uD800\uDC00${b}`");
     fold(r"`${a}\uD800` + 'x'", r"`${a}\uD800x`");
