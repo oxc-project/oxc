@@ -148,7 +148,10 @@ The `as`/`satisfies` operator gap follows the same policy (`as_or_satisfies_expr
   `=`/`:` reach the same outputs through `AssignmentLike` (DIVERGENCES.md#eol-comment-after-assign-colon);
   the head-body `write_*` helpers split on `preceded_by_newline` alone and do not promote
 - a union type claims the after-operator comments itself, the same placement as after a type alias's `=` (`union_type.rs`);
-  the operator side breaks only for a riding line comment before the operator
+  the operator side breaks only for a riding line comment before the operator.
+  A suppressed union never runs that printer, so the cast site and `AssignmentLike` lay it out like any other type
+- an assignment-like's `=` / `:` (`AssignmentLike`): the left side's trailing run stops at the operator (comments past it are hidden while it prints);
+  a glued run ending in a line comment prints right after the operator (`operator_line_run`), a block-ending one leads the right-hand side
 
 Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`);
 their rustdocs cover how the head's generic trailing pass is kept from claiming the gap.
@@ -158,8 +161,7 @@ their rustdocs cover how the head's generic trailing pass is kept from claiming 
 A suppression comment protects content; the token classes above still apply to what the node prints around it.
 
 - Target: a trailing suppression comment counts like a leading one for every node (`is_span_suppressed` in the generated `fmt`), and the outermost node ending there claims it.
-  A union is a list without a delimiter: a comment starting on the operator's line is the union's (as before a `[`), an own-line one at member indentation or a trailing one is that member's
-- Placement and target are separate questions: a suppression line comment ending the `=` line (or a property's `:` line) keeps its line as the left side's trailing run and still targets the right-hand side
+- Placement and target are separate questions: a suppression line comment ending the `=` line (or a property's `:` line) keeps its line (printed right after the operator) and targets the right-hand side
 - Statements and class members: content verbatim, terminator per `semi` (`write_suppressed_statement`, `FormatClassElementWithSemicolon`);
   a node without a terminator of its own prints its whole span.
   Prettier re-adds a statement's `;` only when the source had one and prints class members whole (DIVERGENCES.md#suppressed-terminator-per-semi)
@@ -196,6 +198,8 @@ The second line of each item is the drift symptom.
   - the generic verbatim path prints the source `;` regardless of `semi`
 - `AssignmentLike::right_start` (the node `mark_suppressed_after_operator` keys on) ⇄ the `span().start` that node's generated `fmt` asks `is_suppressed` with
   - the right-hand side after `= // prettier-ignore` is reformatted
+- `union_prints_itself` (the layout arms of `AssignmentLike` and the cast site) ⇄ the union's generated `fmt` suppression check
+  - a suppressed union prints from column 0, its leading comment hoisted onto the operator's line
 
 ### Open debts
 
@@ -206,6 +210,9 @@ Behavior that follows Prettier where our own rules want one answer. Not accepted
   The fix is a `FormatContentWithSemicolon` adoption each
 - An own-line comment claimed mid-line inlines onto that line (`const // c` + break), violating "own-line comments stay own-line".
   See the NOTE in `FormatLeadingComments` (`formatter/trivia.rs`)
+- A type annotation's `:` has no operator-line rule of its own: after `let a: // c` the type prints from column 0 (Prettier too),
+  while `type A = // c` breaks + indents (`AssignmentLike`) and only a union indents itself there (`union_type.rs`).
+  The fix is the `=` rule at the `TSTypeAnnotation` site (break + indent after a line comment), which also aligns a suppressed union with `type =`
 
 The flat JSX arrow body is a limitation, not a debt: the paren decision is a group fit, unknowable at comment time (DIVERGENCES.md#paren-comment-fixpoint).
 

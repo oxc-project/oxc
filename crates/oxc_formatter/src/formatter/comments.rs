@@ -528,7 +528,14 @@ impl<'a> Comments<'a> {
     }
 
     /// The last printed comment when it is a line comment starting after `pos`:
-    /// a pending `line_suffix` the printer flushed past an operator (`const a = // c`, `(foo // c\n) as T`).
+    /// a pending `line_suffix` the printer flushes past an operator.
+    /// ```ts
+    /// const a // c
+    /// = 1
+    ///
+    /// (foo // c
+    /// ) as T
+    /// ```
     /// For layout decisions that run after the left side printed, where cursor-based queries no longer see it.
     pub fn printed_line_comment_after(&self, pos: u32) -> Option<&'a Comment> {
         self.printed_comments()
@@ -560,10 +567,11 @@ impl<'a> Comments<'a> {
     ///   1+2;
     /// ```
     /// In this case, suppression line comment ending the operator's line is:
-    /// - the left side's trailing run for placement (it keeps its line)
+    /// - printed right after the operator for placement (it keeps its line)
     /// - and still targets the right-hand side
     ///
-    /// `AssignmentLike::write_right` marks the node it targets, whose own `fmt` then takes the suppressed path.
+    /// `AssignmentLike` marks the node it targets after printing the operator's comment run,
+    /// and the node's own `fmt` then takes the suppressed path.
     /// The mark is never cleared: no ancestor shares the right-hand side's start (it follows the operator),
     /// its descendants are not visited after the verbatim print, and a re-format of the same node must answer the same.
     pub fn mark_suppressed_after_operator(&mut self, start: u32) {
@@ -636,26 +644,6 @@ impl<'a> Comments<'a> {
     /// Position-based variant of [`Self::comments_before`].
     pub fn all_comments_before(&self, pos: u32) -> &'a [Comment] {
         &self.inner[..self.inner.partition_point(|comment| comment.span.end <= pos)]
-    }
-
-    /// The comments directly before `pos`, printed or not: only whitespace and `(` between each and the next
-    /// (the only bytes a leading comment's gap to its node can hold).
-    /// For a node whose leading comments may already be printed when it decides
-    /// (a formatter paren's outside comments print before `TSUnionType::write` runs).
-    pub fn all_comments_directly_before(&self, pos: u32) -> &'a [Comment] {
-        let all = self.all_comments_before(pos);
-        let mut gap_end = pos;
-        let mut len = 0;
-        for comment in all.iter().rev() {
-            if !self.source_text.all_bytes_match(comment.span.end, gap_end, |b| {
-                b.is_ascii_whitespace() || b == b'('
-            }) {
-                break;
-            }
-            gap_end = comment.span.start;
-            len += 1;
-        }
-        &all[all.len() - len..]
     }
 
     /// Position-based variant of [`Self::comments_after`].

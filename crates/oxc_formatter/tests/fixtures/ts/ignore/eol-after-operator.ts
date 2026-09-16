@@ -1,5 +1,6 @@
-// A suppression line comment ending the `=` / `:` line keeps its line (the left side's trailing run)
-// and still targets the right-hand side, at every assignment-like site.
+// A suppression comment on the `=` / `:` line keeps its line (printed right after the operator)
+// and targets the right-hand side, at every assignment-like site; a type annotation before the
+// operator is not its target.
 // Prettier keeps the target only for type aliases and object properties
 // (see DIVERGENCES.md#eol-suppression-after-assign-colon).
 type T1 = // prettier-ignore
@@ -27,3 +28,11 @@ type U = // prettier-ignore
   | Bbbb<X,Y>;
 type H = // prettier-ignore
   { a:1 } | null;
+// A block suppression comment followed by a riding line comment
+const b = /* prettier-ignore */ // c
+  foo( a,b );
+type UB = /* oxfmt-ignore */ // c
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+let d: Foo = // prettier-ignore
+  foo( a,b );

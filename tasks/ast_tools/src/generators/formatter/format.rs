@@ -184,8 +184,7 @@ fn generate_struct_implementation(
         };
 
         // `Program` can't be suppressed.
-        // `JSXElement`, `JSXFragment` and `TSUnionType` implement suppression formatting in their formatting logic
-        // (a union decides between itself and its first member, see `TSUnionType::write`).
+        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic.
         // Statements are decided before their own `fmt`
         // (the `Statement` fmt below hands them to `write_suppressed_statement` first, which owns their terminator);
         // the two export kinds are skipped here as well because their ignored range starts at a pre-`export` decorator,
@@ -195,7 +194,6 @@ fn generate_struct_implementation(
             "Program"
                 | "JSXElement"
                 | "JSXFragment"
-                | "TSUnionType"
                 | "ExportDeclaration"
                 | "ExportDefaultDeclaration"
         ))
@@ -203,22 +201,22 @@ fn generate_struct_implementation(
 
         // Expression-shaped nodes (formatter parens + own comment printing) hand the whole suppressed sequence to one owner,
         // so the cast-target decision is made once while every comment is still unprinted (see `write_suppressed_expression`).
+        // A node that prints its own leading comments never runs its `write` when suppressed, so it takes the same path.
         let suppressed_expression_return =
-            (suppressed_check.is_some() && needs_parentheses && !do_not_print_leading_comment)
-                .then(|| {
-                    quote! {
-                        if is_suppressed {
-                            write_suppressed_expression(
-                                self.span(),
-                                self.leading_comments_start(),
-                                self.needs_parentheses(f),
-                                f,
-                            );
-                            self.format_trailing_comments(f);
-                            return;
-                        }
+            (suppressed_check.is_some() && needs_parentheses).then(|| {
+                quote! {
+                    if is_suppressed {
+                        write_suppressed_expression(
+                            self.span(),
+                            self.leading_comments_start(),
+                            self.needs_parentheses(f),
+                            f,
+                        );
+                        self.format_trailing_comments(f);
+                        return;
                     }
-                });
+                }
+            });
 
         let write_implementation =
             if suppressed_check.is_none() || suppressed_expression_return.is_some() {
@@ -260,17 +258,9 @@ fn generate_struct_implementation(
                     quote! { false }
                 };
 
-            // With the suppressed early return above, the flag is trivially false here
-            let suppressed_check_for_typecast = (suppressed_check.is_some()
-                && suppressed_expression_return.is_none())
-            .then(|| {
-                quote! {
-                    !is_suppressed &&
-                }
-            });
-
+            // A suppressed node returned above, so no guard is needed here
             quote! {
-                if #suppressed_check_for_typecast format_type_cast_comment_node(self, #is_object_or_array_argument, f) {
+                if format_type_cast_comment_node(self, #is_object_or_array_argument, f) {
                     return;
                 }
             }
