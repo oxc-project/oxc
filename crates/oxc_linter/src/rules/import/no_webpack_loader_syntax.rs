@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, StringLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -76,10 +76,11 @@ impl Rule for NoWebpackLoaderSyntax {
                         return;
                     }
 
-                    if let Some(value) = ident.value.as_str()
-                        && value.contains('!')
-                    {
-                        ctx.diagnostic(no_named_as_default_diagnostic(value, ident.span));
+                    if ident.value.contains('!') {
+                        ctx.diagnostic(no_named_as_default_diagnostic(
+                            source_display(ctx, ident),
+                            ident.span,
+                        ));
                     }
                 }
             }
@@ -89,15 +90,22 @@ impl Rule for NoWebpackLoaderSyntax {
                     return;
                 }
 
-                if let Some(value) = import_decl.source.value.as_str()
-                    && value.contains('!')
-                {
-                    ctx.diagnostic(no_named_as_default_diagnostic(value, import_decl.source.span));
+                if import_decl.source.value.contains('!') {
+                    ctx.diagnostic(no_named_as_default_diagnostic(
+                        source_display(ctx, &import_decl.source),
+                        import_decl.source.span,
+                    ));
                 }
             }
             _ => {}
         }
     }
+}
+
+/// The decoded value, or its source spelling when it contains a lone
+/// surrogate that a UTF-8 message cannot hold.
+fn source_display<'a>(ctx: &LintContext<'a>, literal: &StringLiteral<'a>) -> &'a str {
+    literal.value.as_str().unwrap_or_else(|| ctx.source_range(literal.span.shrink(1)))
 }
 
 #[test]
@@ -116,6 +124,8 @@ fn test() {
         "var foo = require('foo')",
         "var foo = require('./')",
         "var foo = require('@scope/foo')",
+        r"import foo from '\uD800'",
+        r"var foo = require('\uDC00/foo')",
     ];
 
     let fail = vec![
@@ -127,6 +137,8 @@ fn test() {
         "var find = require('-babel-loader!lodash.find')",
         "var foo = require('style!css!./foo.css')",
         "var data = require('json!@scope/my-package/data.json')",
+        r"import foo from 'babel!\uD800'",
+        r"var foo = require('\uDC00!lodash')",
     ];
 
     Tester::new(NoWebpackLoaderSyntax::NAME, NoWebpackLoaderSyntax::PLUGIN, pass, fail)

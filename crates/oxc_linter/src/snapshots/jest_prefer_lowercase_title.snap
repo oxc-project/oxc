@@ -10,6 +10,27 @@ source: crates/oxc_linter/src/tester.rs
   help: `"Foo"`s should begin with lowercase
 
   ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it('Foo \uD800', function () {})
+   ·    ────────────
+   ╰────
+  help: `"Foo \ud800"`s should begin with lowercase
+
+  ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it(`Foo \uDC00`, function () {})
+   ·    ────────────
+   ╰────
+  help: `"Foo \udc00"`s should begin with lowercase
+
+  ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it('\uD800 Foo', function () {})
+   ·    ────────────
+   ╰────
+  help: `"\ud800 Foo"`s should begin with lowercase
+
+  ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:5]
  1 │ xit('Foo', function () {})
    ·     ─────
