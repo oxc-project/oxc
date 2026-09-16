@@ -8,6 +8,55 @@ import {
 import { createContext as __emnapiCreateContext } from '@emnapi/runtime'
 
 
+export const __napiBindingTarget = 'wasm32-wasi'
+function __napiStampBindingTarget(exportsObject, target) {
+  if (
+    Object.prototype.hasOwnProperty.call(exportsObject, '__napiBindingTarget')
+  ) {
+    if (exportsObject.__napiBindingTarget === target) {
+      // Already ours: the root entry aliases the object it loaded, so a WASI
+      // fallback candidate — or a `NAPI_RS_NATIVE_LIBRARY_PATH` override that
+      // is a generated loader — arrives already stamped with this same value.
+      return target
+    }
+    const error = new Error(
+      '`__napiBindingTarget` is reserved by the generated binding loader, but the loaded binding already exports it. Rename the export, e.g. #[napi(js_name = "...")].',
+    )
+    error.code = 'ERR_NAPI_BINDING_TARGET_CONFLICT'
+    throw error
+  }
+  if (!Object.isExtensible(exportsObject)) {
+    // A `#[napi(module_exports)]` hook may seal or freeze this object
+    // (`Object::seal` / `Object::freeze`). Reporting the artifact is metadata,
+    // never a reason to fail an otherwise successful load, so the stamp is
+    // skipped. What a consumer still sees then follows the entry point: the
+    // browser and deferred loaders declare `__napiBindingTarget` at module
+    // level and go on reporting it, while the CommonJS entries hand back this
+    // very object as `module.exports`, so there the value is absent.
+    return target
+  }
+  try {
+    // [[Define]], not [[Set]]: an ordinary assignment walks the prototype
+    // chain, so an inherited accessor could swallow the value or throw and
+    // fail an otherwise successful load. The descriptor is what a successful
+    // assignment would have produced.
+    Object.defineProperty(exportsObject, '__napiBindingTarget', {
+      configurable: true,
+      enumerable: true,
+      value: target,
+      writable: true,
+    })
+  } catch {
+    // Same rule as the non-extensible skip above: reporting the artifact is
+    // metadata, never a reason to fail an otherwise successful load. An exotic
+    // object (a Proxy whose defineProperty trap refuses) is skipped, not
+    // thrown over.
+  }
+  // The CommonJS loaders assign this return value so `cjs-module-lexer` — and
+  // therefore Node's CJS -> ESM named export detection — can see
+  // `__napiBindingTarget` statically.
+  return target
+}
 
 const __wasi = new __WASI({
   version: 'preview1',
@@ -42,10 +91,40 @@ let __emnapiContext
 
 const __wasiDisposeSymbol = Symbol.for('napi.rs.wasi.dispose')
 const __wasiWorkers = new Set()
+// The thread manager has to be reachable *before* anything that can throw
+// during load or registration. Initialization can fail after the pool has
+// already spawned workers, and the rollback still has to mark their
+// terminations as expected — but `__napiModule` is assigned only when
+// instantiation RETURNS, so on exactly that path it is still undefined. A
+// plugin factory runs while the emnapi module is being created, before the
+// wasm is loaded and before any registration function runs, and its context
+// carries the very same manager instance.
+let __wasiThreadManager
+
+function __captureWasiThreadManager(context) {
+  if (context && context.PThread) {
+    __wasiThreadManager = context.PThread
+  }
+  return {}
+}
+
+function __getWasiThreadManager() {
+  const manager =
+    __wasiThreadManager !== undefined
+      ? __wasiThreadManager
+      : __napiModule
+        ? __napiModule.PThread
+        : undefined
+  if (manager && typeof manager.terminateWorker === 'function') {
+    return manager
+  }
+  return undefined
+}
 let __napiInstance
 let __emnapiContextDestroyed = false
 let __emnapiContextDestroyPromise
 let __emnapiWasmEnvCleanupPrepared = false
+let __emnapiWasmEnvCleanupPreparing = false
 let __emnapiWasmEnvCleanupRan = false
 let __emnapiWasmEnvCleanupDrained = false
 let __emnapiWasmEnvCleanupDrainPromise
@@ -119,13 +198,58 @@ function __attachCleanupErrors(error, cleanupErrors) {
   return aggregate
 }
 
+function __wrapEmnapiContextDestroyForSettlement(
+  context,
+  prepareEnvCleanup,
+  isPreparingEnvCleanup,
+) {
+  let destroy
+  try {
+    destroy = context.destroy
+  } catch {
+    return context
+  }
+  if (typeof destroy !== 'function') {
+    return context
+  }
+  try {
+    Object.defineProperty(context, 'destroy', {
+      configurable: true,
+      enumerable: false,
+      writable: true,
+      value: function () {
+        // Reentered from a promise hook that fired inside the barrier: the
+        // frame running it destroys as soon as it returns.
+        if (isPreparingEnvCleanup?.()) {
+          return
+        }
+        prepareEnvCleanup?.()
+        return Reflect.apply(destroy, this, arguments)
+      },
+    })
+  } catch {}
+  return context
+}
+
+function __isPreparingWasmEnvCleanup() {
+  return __emnapiWasmEnvCleanupPreparing
+}
+
 function __prepareWasmEnvCleanup() {
-  if (__emnapiWasmEnvCleanupPrepared) {
+  if (__emnapiWasmEnvCleanupPrepared || __emnapiWasmEnvCleanupPreparing) {
     return
   }
   const prepare = __napiInstance?.exports?.napi_prepare_wasm_env_cleanup
   if (typeof prepare === 'function') {
-    prepare()
+    // The addon settles the promises it cancels synchronously, under a
+    // non-reentrant lifecycle mutex: anything a promise hook calls from in
+    // here must not reach this export again.
+    __emnapiWasmEnvCleanupPreparing = true
+    try {
+      prepare()
+    } finally {
+      __emnapiWasmEnvCleanupPreparing = false
+    }
     __emnapiWasmEnvCleanupRan = true
   }
   __emnapiWasmEnvCleanupPrepared = true
@@ -318,13 +442,80 @@ function __destroyEmnapiContext() {
   return destroyPromise
 }
 
+/**
+ * Holds the event loop open until `work` settles.
+ *
+ * Nothing else can: the pool workers are deliberately unreferenced so an idle
+ * binding cannot keep a process alive, and referencing them again for the
+ * termination does not hold either — emnapi unreferences a worker the moment it
+ * reports `async-thread-ready`, which for a worker that was still starting
+ * lands *after* the termination began. Without a handle of its own, an
+ * `await dispose()` with nothing else pending exits the process with its
+ * promise unsettled, and everything after the `await` is skipped.
+ *
+ * The timer is cleared as soon as the work settles, so this never outlives the
+ * disposal that asked for it.
+ */
+function __keepEventLoopAliveUntil(work) {
+  const setTimer = globalThis.setInterval
+  const clearTimer = globalThis.clearInterval
+  if (typeof setTimer !== 'function' || typeof clearTimer !== 'function') {
+    return work
+  }
+  let timer
+  try {
+    timer = setTimer(function () {}, 50)
+  } catch {
+    return work
+  }
+  const release = function () {
+    try {
+      clearTimer(timer)
+    } catch {}
+  }
+  return work.then(
+    (value) => {
+      release()
+      return value
+    },
+    (error) => {
+      release()
+      throw error
+    },
+  )
+}
+
+/**
+ * `@emnapi/wasi-threads` counts a worker exit as expected only when its own
+ * thread manager performed the termination. A bare `worker.terminate()` reaches
+ * the manager's `exit` listener instead, which reports
+ * `worker (tid = N) sent an error! ... stopped with exit code 1` and rethrows
+ * inside the emit — aborting the `once('exit')` that backs the terminate
+ * promise, so disposal never settles and the process dies with an uncaught
+ * exception. Mark the termination through the manager first.
+ *
+ * The manager comes from `__getWasiThreadManager`, not from `__napiModule`:
+ * the initialization rollback runs on the one path where instantiation never
+ * returned, so `__napiModule` is still undefined there while the workers it
+ * spawned are already registered and loaded.
+ *
+ * Not `terminateAllThreads()`: that one recreates the pool it just shut down.
+ */
 function __terminateWasiWorkers() {
   const cleanupErrors = []
   const pending = []
+  const threadManager = __getWasiThreadManager()
 
   for (const worker of __wasiWorkers) {
     let result
     try {
+      if (threadManager) {
+        threadManager.terminateWorker(worker)
+        // `terminateWorker` leaves behind a reporter that logs every message
+        // still queued on the port, which Node flushes on exit. Nothing is
+        // listening for those any more.
+        worker.onmessage = undefined
+      }
       result = worker.terminate()
     } catch (error) {
       cleanupErrors.push(error)
@@ -354,7 +545,9 @@ function __terminateWasiWorkers() {
       )
     }
   }
-  return pending.length > 0 ? Promise.all(pending).then(finish) : finish()
+  return pending.length > 0
+    ? __keepEventLoopAliveUntil(Promise.all(pending)).then(finish)
+    : finish()
 }
 
 function __finishWasiDisposal() {
@@ -555,7 +748,11 @@ let __wasiModule
 let __napiModule
 
 try {
-  __emnapiContext = __emnapiCreateContext({ autoDestroy: false })
+  __emnapiContext = __wrapEmnapiContextDestroyForSettlement(
+    __emnapiCreateContext({ autoDestroy: false }),
+    __prepareWasmEnvCleanup,
+    __isPreparingWasmEnvCleanup,
+  )
   __emnapiContext.suppressDestroy()
   
   ;({
@@ -566,7 +763,7 @@ try {
     context: __emnapiContext,
     asyncWorkPoolSize: __asyncWorkPoolSize,
     reuseWorker: false,
-    plugins: [__emnapiAsyncWorkPlugin, __emnapiTSFNPlugin],
+    plugins: [__captureWasiThreadManager, __emnapiAsyncWorkPlugin, __emnapiTSFNPlugin],
     wasi: __wasi,
     onCreateWorker() {
       const worker = new Worker(new URL('./wasi-worker-browser.mjs', import.meta.url), {
@@ -596,6 +793,12 @@ try {
     },
   }))
   __publishWasiDispose(__napiModule.exports)
+  // The default export hands out this object; a named module export does not
+  // travel with it, so carry the marker on the binding itself too. After the
+  // host install, which hands the same object to addon-provided registration
+  // functions that may put anything on it, and inside this `try`, so a claimed
+  // name fails the load through the rollback below rather than past it.
+  __napiStampBindingTarget(__napiModule.exports, __napiBindingTarget)
 } catch (error) {
   const cleanupErrors = await __rollbackWasiInitialization()
   throw __attachCleanupErrors(error, cleanupErrors)
