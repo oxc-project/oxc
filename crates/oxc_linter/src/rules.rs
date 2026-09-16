@@ -611,6 +611,7 @@ pub(crate) mod unicorn {
     pub mod no_process_exit;
     pub mod no_single_promise_in_promise_methods;
     pub mod no_static_only_class;
+    pub mod no_subtraction_comparison;
     pub mod no_thenable;
     pub mod no_this_assignment;
     pub mod no_typeof_undefined;
