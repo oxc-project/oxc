@@ -632,13 +632,20 @@ impl<'a> PeepholeOptimizations {
 
                     if let Statement::BlockStatement(block) = &mut if_stmt.consequent {
                         ctx.drop_statement(&block.body.pop().unwrap());
+
+                        if block.body.len() == 1
+                            && matches!(&block.body[0], Statement::ExpressionStatement(_))
+                        {
+                            let new_stmt = block.body.remove(0);
+                            ctx.replace_statement(&mut if_stmt.consequent, new_stmt);
+                        }
                         if_stmt.alternate = Some(alternate);
                     } else {
                         ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
                             Self::minimize_not(test.span(), test, ctx, true)
                         });
                         ctx.replace_statement(&mut if_stmt.consequent, alternate);
-                    };
+                    }
 
                     let mut if_stmt = Statement::IfStatement(if_stmt);
                     Self::try_minimize_if(&mut if_stmt, ctx);
