@@ -141,44 +141,10 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
 /// Result returned by `lintFile` JS callback.
 #[derive(Clone, Debug, Deserialize)]
 pub enum LintFileReturnValue {
-    Success(LintFileSuccessPayload),
-    Failure(LintFileFailurePayload),
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(untagged)]
-pub enum LintFileSuccessPayload {
-    // Legacy diagnostics-only payload.
-    Diagnostics(Vec<LintFileResult>),
-    Output(LintFileOutput),
-}
-
-impl LintFileSuccessPayload {
-    fn into_output(self) -> LintFileOutput {
-        match self {
-            Self::Diagnostics(diagnostics) => {
-                LintFileOutput { diagnostics, timings: vec![], runtime_ms: None }
-            }
-            Self::Output(output) => output,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(untagged)]
-pub enum LintFileFailurePayload {
-    // Legacy message-only payload.
-    Message(String),
-    Output(LintFileFailure),
-}
-
-impl LintFileFailurePayload {
-    fn into_failure(self) -> LintFileFailure {
-        match self {
-            Self::Message(message) => message.into(),
-            Self::Output(failure) => failure,
-        }
-    }
+    Success(Vec<LintFileResult>),
+    Failure(String),
+    SuccessWithTimings(LintFileOutput),
+    FailureWithTimings(LintFileFailure),
 }
 
 /// Wrap `lintFile` JS callback as a normal Rust function.
@@ -242,11 +208,13 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                     Ok(Ok(Some(json))) => {
                         match serde_json::from_str(&json) {
                             // Linting succeeded
-                            Ok(LintFileReturnValue::Success(output)) => Ok(output.into_output()),
-                            // Error occurred on JS side
-                            Ok(LintFileReturnValue::Failure(failure)) => {
-                                Err(failure.into_failure())
+                            Ok(LintFileReturnValue::Success(diagnostics)) => {
+                                Ok(LintFileOutput { diagnostics, ..LintFileOutput::default() })
                             }
+                            Ok(LintFileReturnValue::SuccessWithTimings(output)) => Ok(output),
+                            // Error occurred on JS side
+                            Ok(LintFileReturnValue::Failure(message)) => Err(message.into()),
+                            Ok(LintFileReturnValue::FailureWithTimings(failure)) => Err(failure),
                             // JSON deserialization failure.
                             // Possible if rule produces fixes/suggestions with out of range offsets.
                             Err(err) => Err(format!(

@@ -88,7 +88,7 @@ export function lintFile(
 
     if (timings !== null) {
       const runtimeMs = performance.now() - start;
-      ret = JSON.stringify({ Success: { diagnostics, timings, runtimeMs } });
+      ret = JSON.stringify({ SuccessWithTimings: { diagnostics, timings, runtimeMs } });
     } else if (diagnostics.length !== 0) {
       // Avoid JSON serialization in common case that there are no diagnostics to report
       // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side, but we assume it's cheaper to leave it
@@ -106,11 +106,14 @@ export function lintFile(
 
     const runtimeMs = timings === null ? 0 : performance.now() - start;
     const message = getErrorMessage(err);
-    const failure = timings === null ? message : { message, timings, runtimeMs };
+    const failure =
+      timings === null
+        ? { Failure: message }
+        : { FailureWithTimings: { message, timings, runtimeMs } };
 
     clearStateAfterError();
 
-    return JSON.stringify({ Failure: failure });
+    return JSON.stringify(failure);
   }
 }
 
