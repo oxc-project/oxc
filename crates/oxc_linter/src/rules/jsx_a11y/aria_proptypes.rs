@@ -76,7 +76,7 @@ impl Rule for AriaProptypes {
         // Only `aria-*` attributes resolve to an `AriaProperty`. Check the prefix without
         // allocating so non-ARIA attributes (including camelCase names that would
         // otherwise allocate a lowercased copy) short-circuit before the lowercasing.
-        if !starts_with_ignore_case(&name, "aria-") {
+        if !starts_with_ignore_case(name.as_bytes(), "aria-") {
             return;
         }
         let name = name.cow_to_ascii_lowercase();

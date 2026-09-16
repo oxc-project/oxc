@@ -45,10 +45,7 @@ impl Rule for NoScriptUrl {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StringLiteral(literal)
-                if literal
-                    .value
-                    .as_str()
-                    .is_some_and(|value| starts_with_ignore_case(value, "javascript:")) =>
+                if starts_with_ignore_case(literal.value.as_bytes(), "javascript:") =>
             {
                 ctx.diagnostic(no_script_url_diagnostic(literal.span));
             }
@@ -56,7 +53,7 @@ impl Rule for NoScriptUrl {
                 if !is_tagged_template_expression(ctx, node, literal.span)
                     && literal.quasis.len() == 1
                     && starts_with_ignore_case(
-                        &literal.quasis.first().unwrap().value.raw,
+                        literal.quasis.first().unwrap().value.raw.as_bytes(),
                         "javascript:",
                     ) =>
             {
@@ -88,6 +85,8 @@ fn test() {
         "var a = 'js:';",
         "var url = `js:`",
         "var a = 'über cool stuff';",
+        r"var a = '\uD800javascript:';",
+        r"var a = 'javascript\uD800:';",
     ];
 
     let fail = vec![
@@ -95,6 +94,8 @@ fn test() {
         "var a = 'javascript:';",
         "var a = `javascript:`;",
         "var a = `JavaScript:`;",
+        r"var a = 'javascript:\uD800';",
+        r"var a = 'JAVASCRIPT:void(\uDC00)';",
     ];
 
     Tester::new(NoScriptUrl::NAME, NoScriptUrl::PLUGIN, pass, fail).test_and_snapshot();

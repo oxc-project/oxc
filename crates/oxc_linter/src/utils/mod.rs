@@ -131,12 +131,8 @@ pub fn is_string_raw_member_expression(expr: &Expression, scoping: &Scoping) -> 
 }
 
 /// Checks if `haystack` starts with `prefix`, ignoring ASCII case.
-pub fn starts_with_ignore_case(haystack: &str, prefix: &str) -> bool {
-    let len = prefix.len();
-    if haystack.len() < len {
-        return false;
-    }
-    haystack.as_bytes()[..len].eq_ignore_ascii_case(prefix.as_bytes())
+pub fn starts_with_ignore_case(haystack: &[u8], prefix: &str) -> bool {
+    haystack.get(..prefix.len()).is_some_and(|start| start.eq_ignore_ascii_case(prefix.as_bytes()))
 }
 
 /// Reads the content of a path and returns it.
