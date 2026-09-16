@@ -1,4 +1,4 @@
-use core::ptr;
+use core::{mem, ptr, slice};
 
 use oxc_span::Span;
 
@@ -40,7 +40,7 @@ macro_rules! lane_accessor {
                 return &[];
             }
             // SAFETY: the lex that produced `self` initialized exactly `$count` elements (count <= capacity asserted at the copy site).
-            unsafe { core::slice::from_raw_parts(arena.$field, self.$count as usize) }
+            unsafe { slice::from_raw_parts(arena.$field, self.$count as usize) }
         }
     };
 }
@@ -52,7 +52,7 @@ impl LexResult {
             return &[];
         }
         // SAFETY: the lex that produced `self` copied `diagnostic_count` diagnostics into this buffer.
-        unsafe { core::slice::from_raw_parts(self.diagnostics, self.diagnostic_count as usize) }
+        unsafe { slice::from_raw_parts(self.diagnostics, self.diagnostic_count as usize) }
     }
 
     #[must_use]
@@ -62,7 +62,7 @@ impl LexResult {
         }
         let n = self.token_count as usize;
         // SAFETY: the lexer wrote `token_count` kinds plus the EOF sentinels.
-        let bytes = unsafe { core::slice::from_raw_parts(arena.tok_kinds, n + SPAN_SENTINELS) };
+        let bytes = unsafe { slice::from_raw_parts(arena.tok_kinds, n + SPAN_SENTINELS) };
         crate::token::debug_assert_kind_bytes(bytes);
         // SAFETY: every kind the pipeline writes is a declared discriminant.
         unsafe { crate::token::kinds_from_bytes(bytes) }
@@ -75,7 +75,7 @@ impl LexResult {
         }
         let n = self.token_count as usize;
         // SAFETY: the lexer wrote `token_count` spans plus the EOF sentinels.
-        unsafe { core::slice::from_raw_parts(arena.tok_spans, n + SPAN_SENTINELS) }
+        unsafe { slice::from_raw_parts(arena.tok_spans, n + SPAN_SENTINELS) }
     }
 
     lane_accessor!(numbers, numbers, numbers_count, f64);
@@ -189,7 +189,7 @@ fn alloc_uninit<T>(cap: u32) -> *mut T {
     }
     let mut v = Vec::<T>::with_capacity(cap as usize);
     let p = v.as_mut_ptr();
-    core::mem::forget(v);
+    mem::forget(v);
     p
 }
 

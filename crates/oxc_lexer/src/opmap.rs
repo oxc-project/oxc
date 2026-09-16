@@ -8,6 +8,8 @@
     clippy::collapsible_match
 )]
 
+use core::ptr;
+
 use crate::token::{TokenKind, tk};
 
 pub const KW_COUNT_JS: usize = 46;
@@ -405,12 +407,12 @@ impl KwSet {
         if self.kw_len[idx] as usize != len {
             return 0;
         }
-        let w = core::ptr::read_unaligned(p as *const u64);
+        let w = ptr::read_unaligned(p as *const u64);
         if (w & self.mask_tab[if len < 8 { len } else { 8 }]) != self.kw_first8[idx] {
             return 0;
         }
         if len > 8 {
-            let e = core::ptr::read_unaligned(p.add(8) as *const u16);
+            let e = ptr::read_unaligned(p.add(8) as *const u16);
             let emask: u16 = if len == 9 { 0x00FF } else { 0xFFFF };
             if (e & emask) != self.kw_ext[idx] {
                 return 0;

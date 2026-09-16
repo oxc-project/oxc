@@ -1,11 +1,14 @@
 //! Diagnostic coverage for every code class. Each positive test has a
 //! `*_never_flagged` counterpart: valid input must emit nothing.
+
 #![cfg(target_endian = "little")]
 #![expect(
     clippy::cast_possible_truncation,
     clippy::unreadable_literal,
     reason = "test helpers: lengths fit u32; the fuzz PRNG uses raw constants"
 )]
+
+use core::str;
 
 use oxc_lexer::{Diagnostic, LexOptions, PAD, TokenKind, diag_code, lex_utf8};
 
@@ -465,7 +468,7 @@ fn utf8_fuzz_against_std() {
         }
         let d = diags_bytes(&buf);
         let first6 = d.iter().find(|d| d.code == D::INVALID_UTF8);
-        match core::str::from_utf8(&buf) {
+        match str::from_utf8(&buf) {
             Ok(_) => assert!(first6.is_none(), "false positive on valid UTF-8 {buf:?}"),
             Err(e) => {
                 let d6 = first6.unwrap_or_else(|| panic!("missed invalid UTF-8 in {buf:?}"));

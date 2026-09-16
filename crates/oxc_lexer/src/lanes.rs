@@ -8,6 +8,8 @@
     clippy::collapsible_match
 )]
 
+use core::{ptr, str};
+
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use core::arch::x86_64::*;
 
@@ -180,7 +182,7 @@ impl Lanes {
             unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags) }
         } else {
             unsafe {
-                core::ptr::copy_nonoverlapping(
+                ptr::copy_nonoverlapping(
                     src.as_ptr().add(bs as usize),
                     base.add(ss as usize),
                     body_len,
@@ -236,7 +238,7 @@ impl Lanes {
         self.cooked.reserve(body_len + 8);
         unsafe {
             let base = self.cooked.as_mut_ptr();
-            core::ptr::copy_nonoverlapping(src.as_ptr().add(bs), base.add(ss as usize), body_len);
+            ptr::copy_nonoverlapping(src.as_ptr().add(bs), base.add(ss as usize), body_len);
             self.cooked.set_len(ss as usize + body_len);
         }
         let we = ss + body_len as u32;
@@ -393,7 +395,7 @@ impl Lanes {
         let len = e - s;
         if len.wrapping_sub(1) <= 7 && !(len > 1 && src[s] == b'0') {
             let keep = KEEP[len];
-            let raw = unsafe { core::ptr::read_unaligned(src.as_ptr().add(s) as *const u64) };
+            let raw = unsafe { ptr::read_unaligned(src.as_ptr().add(s) as *const u64) };
             let w = raw & keep;
             let f0 = 0xF0F0_F0F0_F0F0_F0F0 & keep;
             let three = 0x3030_3030_3030_3030 & keep;
@@ -534,7 +536,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     };
     if plain {
         unsafe {
-            core::ptr::copy_nonoverlapping(
+            ptr::copy_nonoverlapping(
                 src.as_ptr().add(bs as usize),
                 base.add(ss as usize),
                 body_len,
@@ -612,11 +614,11 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
 pub(crate) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
     let end = (i + 4).min(s.len());
     let slice = s.get(i..end)?;
-    match core::str::from_utf8(slice) {
+    match str::from_utf8(slice) {
         Ok(t) => t.chars().next(),
         // a multi-byte char cut at `end` still has a decodable valid prefix
         Err(e) if e.valid_up_to() > 0 => {
-            core::str::from_utf8(&slice[..e.valid_up_to()]).ok()?.chars().next()
+            str::from_utf8(&slice[..e.valid_up_to()]).ok()?.chars().next()
         }
         Err(_) => None,
     }
@@ -715,7 +717,7 @@ fn parse_number(src: &[u8], s: usize, e: usize) -> f64 {
         buf[bl] = c;
         bl += 1;
     }
-    core::str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
+    str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
 }
 
 #[inline]

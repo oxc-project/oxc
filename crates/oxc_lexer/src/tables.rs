@@ -86,7 +86,7 @@ pub struct PairLuts {
     pub lutpad: [[u8; 32]; 256],
 }
 
-const _: () = assert!(core::mem::size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
+const _: () = assert!(size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
 
 pub struct Tables {
     pub op: OpMap,
