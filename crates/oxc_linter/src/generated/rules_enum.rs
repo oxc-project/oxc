@@ -652,6 +652,7 @@ pub use crate::rules::unicorn::no_array_reverse::NoArrayReverse as UnicornNoArra
 pub use crate::rules::unicorn::no_array_sort::NoArraySort as UnicornNoArraySort;
 pub use crate::rules::unicorn::no_await_expression_member::NoAwaitExpressionMember as UnicornNoAwaitExpressionMember;
 pub use crate::rules::unicorn::no_await_in_promise_methods::NoAwaitInPromiseMethods as UnicornNoAwaitInPromiseMethods;
+pub use crate::rules::unicorn::no_break_in_nested_loop::NoBreakInNestedLoop as UnicornNoBreakInNestedLoop;
 pub use crate::rules::unicorn::no_confusing_array_with::NoConfusingArrayWith as UnicornNoConfusingArrayWith;
 pub use crate::rules::unicorn::no_console_spaces::NoConsoleSpaces as UnicornNoConsoleSpaces;
 pub use crate::rules::unicorn::no_document_cookie::NoDocumentCookie as UnicornNoDocumentCookie;
@@ -1400,6 +1401,7 @@ pub enum RuleEnum {
     UnicornNoArraySort(UnicornNoArraySort),
     UnicornNoAwaitExpressionMember(UnicornNoAwaitExpressionMember),
     UnicornNoAwaitInPromiseMethods(UnicornNoAwaitInPromiseMethods),
+    UnicornNoBreakInNestedLoop(UnicornNoBreakInNestedLoop),
     UnicornNoConfusingArrayWith(UnicornNoConfusingArrayWith),
     UnicornNoConsoleSpaces(UnicornNoConsoleSpaces),
     UnicornNoDocumentCookie(UnicornNoDocumentCookie),
@@ -2336,7 +2338,8 @@ const UNICORN_NO_ARRAY_SORT_ID: usize = UNICORN_NO_ARRAY_REVERSE_ID + 1usize;
 const UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID: usize = UNICORN_NO_ARRAY_SORT_ID + 1usize;
 const UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID: usize =
     UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID + 1usize;
-const UNICORN_NO_CONFUSING_ARRAY_WITH_ID: usize = UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID + 1usize;
+const UNICORN_NO_BREAK_IN_NESTED_LOOP_ID: usize = UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID + 1usize;
+const UNICORN_NO_CONFUSING_ARRAY_WITH_ID: usize = UNICORN_NO_BREAK_IN_NESTED_LOOP_ID + 1usize;
 const UNICORN_NO_CONSOLE_SPACES_ID: usize = UNICORN_NO_CONFUSING_ARRAY_WITH_ID + 1usize;
 const UNICORN_NO_DOCUMENT_COOKIE_ID: usize = UNICORN_NO_CONSOLE_SPACES_ID + 1usize;
 const UNICORN_NO_EMPTY_FILE_ID: usize = UNICORN_NO_DOCUMENT_COOKIE_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3257,6 +3260,7 @@ static RULE_NAMES: [&str; 870usize] = [
     UnicornNoArraySort::NAME,
     UnicornNoAwaitExpressionMember::NAME,
     UnicornNoAwaitInPromiseMethods::NAME,
+    UnicornNoBreakInNestedLoop::NAME,
     UnicornNoConfusingArrayWith::NAME,
     UnicornNoConsoleSpaces::NAME,
     UnicornNoDocumentCookie::NAME,
@@ -4213,6 +4217,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UNICORN_NO_ARRAY_SORT_ID,
             Self::UnicornNoAwaitExpressionMember(_) => UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID,
             Self::UnicornNoAwaitInPromiseMethods(_) => UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID,
+            Self::UnicornNoBreakInNestedLoop(_) => UNICORN_NO_BREAK_IN_NESTED_LOOP_ID,
             Self::UnicornNoConfusingArrayWith(_) => UNICORN_NO_CONFUSING_ARRAY_WITH_ID,
             Self::UnicornNoConsoleSpaces(_) => UNICORN_NO_CONSOLE_SPACES_ID,
             Self::UnicornNoDocumentCookie(_) => UNICORN_NO_DOCUMENT_COOKIE_ID,
@@ -5244,6 +5249,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::CATEGORY,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::CATEGORY,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::CATEGORY,
+            Self::UnicornNoBreakInNestedLoop(_) => UnicornNoBreakInNestedLoop::CATEGORY,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::CATEGORY,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::CATEGORY,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::CATEGORY,
@@ -6263,6 +6269,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::FIX,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::FIX,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::FIX,
+            Self::UnicornNoBreakInNestedLoop(_) => UnicornNoBreakInNestedLoop::FIX,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::FIX,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::FIX,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::FIX,
@@ -7394,6 +7401,7 @@ impl RuleEnum {
             Self::UnicornNoAwaitInPromiseMethods(_) => {
                 UnicornNoAwaitInPromiseMethods::documentation()
             }
+            Self::UnicornNoBreakInNestedLoop(_) => UnicornNoBreakInNestedLoop::documentation(),
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::documentation(),
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::documentation(),
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::documentation(),
@@ -9372,6 +9380,10 @@ impl RuleEnum {
                 UnicornNoAwaitInPromiseMethods::config_schema(generator)
                     .or_else(|| UnicornNoAwaitInPromiseMethods::schema(generator))
             }
+            Self::UnicornNoBreakInNestedLoop(_) => {
+                UnicornNoBreakInNestedLoop::config_schema(generator)
+                    .or_else(|| UnicornNoBreakInNestedLoop::schema(generator))
+            }
             Self::UnicornNoConfusingArrayWith(_) => {
                 UnicornNoConfusingArrayWith::config_schema(generator)
                     .or_else(|| UnicornNoConfusingArrayWith::schema(generator))
@@ -10937,6 +10949,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => "unicorn",
             Self::UnicornNoAwaitExpressionMember(_) => "unicorn",
             Self::UnicornNoAwaitInPromiseMethods(_) => "unicorn",
+            Self::UnicornNoBreakInNestedLoop(_) => "unicorn",
             Self::UnicornNoConfusingArrayWith(_) => "unicorn",
             Self::UnicornNoConsoleSpaces(_) => "unicorn",
             Self::UnicornNoDocumentCookie(_) => "unicorn",
@@ -12945,6 +12958,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.run(node, ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run(node, ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run(node, ctx),
+            Self::UnicornNoBreakInNestedLoop(rule) => rule.run(node, ctx),
             Self::UnicornNoConfusingArrayWith(rule) => rule.run(node, ctx),
             Self::UnicornNoConsoleSpaces(rule) => rule.run(node, ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run(node, ctx),
@@ -13832,6 +13846,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.run_once(ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run_once(ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run_once(ctx),
+            Self::UnicornNoBreakInNestedLoop(rule) => rule.run_once(ctx),
             Self::UnicornNoConfusingArrayWith(rule) => rule.run_once(ctx),
             Self::UnicornNoConsoleSpaces(rule) => rule.run_once(ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run_once(ctx),
@@ -14798,6 +14813,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoBreakInNestedLoop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoConfusingArrayWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoConsoleSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15724,6 +15740,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.should_run(ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.should_run(ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.should_run(ctx),
+            Self::UnicornNoBreakInNestedLoop(rule) => rule.should_run(ctx),
             Self::UnicornNoConfusingArrayWith(rule) => rule.should_run(ctx),
             Self::UnicornNoConsoleSpaces(rule) => rule.should_run(ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.should_run(ctx),
@@ -16816,6 +16833,7 @@ impl RuleEnum {
             Self::UnicornNoAwaitInPromiseMethods(_) => {
                 UnicornNoAwaitInPromiseMethods::IS_TSGOLINT_RULE
             }
+            Self::UnicornNoBreakInNestedLoop(_) => UnicornNoBreakInNestedLoop::IS_TSGOLINT_RULE,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::IS_TSGOLINT_RULE,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::IS_TSGOLINT_RULE,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::IS_TSGOLINT_RULE,
@@ -17968,6 +17986,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::VERSION,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::VERSION,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::VERSION,
+            Self::UnicornNoBreakInNestedLoop(_) => UnicornNoBreakInNestedLoop::VERSION,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::VERSION,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::VERSION,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::VERSION,
@@ -19039,6 +19058,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::HAS_CONFIG,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::HAS_CONFIG,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::HAS_CONFIG,
+            Self::UnicornNoBreakInNestedLoop(_) => UnicornNoBreakInNestedLoop::HAS_CONFIG,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::HAS_CONFIG,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::HAS_CONFIG,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::HAS_CONFIG,
@@ -20077,6 +20097,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::INFO,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::INFO,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::INFO,
+            Self::UnicornNoBreakInNestedLoop(_) => UnicornNoBreakInNestedLoop::INFO,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::INFO,
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::INFO,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::INFO,
@@ -20994,6 +21015,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.types_info(),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.types_info(),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.types_info(),
+            Self::UnicornNoBreakInNestedLoop(rule) => rule.types_info(),
             Self::UnicornNoConfusingArrayWith(rule) => rule.types_info(),
             Self::UnicornNoConsoleSpaces(rule) => rule.types_info(),
             Self::UnicornNoDocumentCookie(rule) => rule.types_info(),
@@ -21868,6 +21890,7 @@ impl RuleEnum {
             Self::UnicornNoArraySort(rule) => rule.run_info(),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run_info(),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run_info(),
+            Self::UnicornNoBreakInNestedLoop(rule) => rule.run_info(),
             Self::UnicornNoConfusingArrayWith(rule) => rule.run_info(),
             Self::UnicornNoConsoleSpaces(rule) => rule.run_info(),
             Self::UnicornNoDocumentCookie(rule) => rule.run_info(),
@@ -22840,6 +22863,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoArraySort(UnicornNoArraySort::default()),
         RuleEnum::UnicornNoAwaitExpressionMember(UnicornNoAwaitExpressionMember::default()),
         RuleEnum::UnicornNoAwaitInPromiseMethods(UnicornNoAwaitInPromiseMethods::default()),
+        RuleEnum::UnicornNoBreakInNestedLoop(UnicornNoBreakInNestedLoop::default()),
         RuleEnum::UnicornNoConfusingArrayWith(UnicornNoConfusingArrayWith::default()),
         RuleEnum::UnicornNoConsoleSpaces(UnicornNoConsoleSpaces::default()),
         RuleEnum::UnicornNoDocumentCookie(UnicornNoDocumentCookie::default()),
