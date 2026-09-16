@@ -290,7 +290,6 @@ impl<'a> JSStr<'a> {
         pattern.rfind_in(self)
     }
 
-
     /// Borrow the underlying canonical WTF-8 bytes.
     ///
     /// Together with [`has_lone_surrogate`](Self::has_lone_surrogate), the

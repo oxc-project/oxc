@@ -575,3 +575,28 @@ fn bytes_round_trip_through_owned_storage() {
     let restored = unsafe { JSStr::from_bytes_unchecked(plain.as_bytes(), false) };
     assert_eq!(restored.as_str(), Some("plain"));
 }
+
+#[test]
+fn rfind_calls_the_predicate_from_the_end() {
+    let allocator = Allocator::new();
+    let mut builder = JSStrBuilder::new_in(&allocator);
+    builder.push_utf16(&[0xD800, 0x61, 0x62]);
+    let value = builder.into_js_str();
+
+    let mut calls = Vec::new();
+    assert_eq!(
+        value.rfind(|c: char| {
+            calls.push(c);
+            false
+        }),
+        None
+    );
+    assert_eq!(calls, ['b', 'a']);
+
+    // Like `str::rfind`, a predicate that matches on its first call finds the
+    // last code point.
+    let mut first = true;
+    assert_eq!(value.rfind(|_: char| std::mem::take(&mut first)), Some(4));
+    let mut first = true;
+    assert_eq!("ab".rfind(|_: char| std::mem::take(&mut first)), Some(1));
+}

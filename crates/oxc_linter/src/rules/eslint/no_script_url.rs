@@ -2,7 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::{JSChar, JSStr};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::starts_with_ignore_case};
 
@@ -66,12 +66,11 @@ impl Rule for NoScriptUrl {
 }
 
 /// Like `starts_with_ignore_case`, for a JavaScript string value. `prefix` is
-/// ASCII, so a lone surrogate in the value can only appear after the prefix.
+/// ASCII, and no WTF-8 byte of a multi-byte sequence ASCII-case-equals an
+/// ASCII byte, so comparing bytes is exact.
 fn js_starts_with_ignore_case(value: JSStr<'_>, prefix: &str) -> bool {
-    let mut chars = value.chars();
-    prefix.chars().all(|expected| {
-        chars.next().and_then(JSChar::to_char).is_some_and(|c| c.eq_ignore_ascii_case(&expected))
-    })
+    let bytes = value.as_bytes();
+    bytes.len() >= prefix.len() && bytes[..prefix.len()].eq_ignore_ascii_case(prefix.as_bytes())
 }
 
 fn is_tagged_template_expression(ctx: &LintContext, node: &AstNode, literal_span: Span) -> bool {
