@@ -3,7 +3,7 @@ commit: b465fdbf
 parser_typescript Summary:
 AST Parsed     : 9783/9783 (100.00%)
 Positive Passed: 9783/9783 (100.00%)
-Negative Passed: 1649/2636 (62.56%)
+Negative Passed: 1651/2636 (62.63%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -201,8 +201,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUnsafeImportSymbolName.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingTypeAlias1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declareModifierOnImport1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/decoratorsOnComputedProperties.ts
 
@@ -449,8 +447,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAndVar
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAssertionsDeprecated.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithClassModifiers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importTypeAssertionDeprecation.ts
 
@@ -5863,6 +5859,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Remove the duplicate modifier.
 
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[typescript/tests/cases/compiler/declareModifierOnImport1.ts:1:1]
+ 1 │ declare import a = b;
+   · ───────
+   ╰────
+
   × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/decoratorInJsFile.ts:3:10]
  2 │ class SomeClass {
@@ -7774,11 +7776,46 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Wrap this with quotes
 
+  × 'public' modifier cannot be used here.
+   ╭─[typescript/tests/cases/compiler/importDeclWithClassModifiers.ts:5:8]
+ 4 │ }
+ 5 │ export public import a = x.c;
+   ·        ──────
+ 6 │ export private import b = x.c;
+   ╰────
+  help: Only 'export' modifier is allowed here.
+
+  × 'private' modifier cannot be used here.
+   ╭─[typescript/tests/cases/compiler/importDeclWithClassModifiers.ts:6:8]
+ 5 │ export public import a = x.c;
+ 6 │ export private import b = x.c;
+   ·        ───────
+ 7 │ export static import c = x.c;
+   ╰────
+  help: Only 'export' modifier is allowed here.
+
+  × 'static' modifier cannot be used here.
+   ╭─[typescript/tests/cases/compiler/importDeclWithClassModifiers.ts:7:8]
+ 6 │ export private import b = x.c;
+ 7 │ export static import c = x.c;
+   ·        ──────
+ 8 │ var b: a;
+   ╰────
+  help: Only 'export' modifier is allowed here.
+
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifier.ts:5:9]
  4 │ }
  5 │ declare export import a = x.c;
    ·         ──────
+ 6 │ var b: a;
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifier.ts:5:1]
+ 4 │ }
+ 5 │ declare export import a = x.c;
+   · ───────
  6 │ var b: a;
    ╰────
 
@@ -7791,6 +7828,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifierInAmbientContext.ts:6:5]
+ 5 │     }
+ 6 │     declare export import a = x.c;
+   ·     ───────
+ 7 │     var b: a;
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
    ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifierInAmbientContext.ts:6:5]
  5 │     }
  6 │     declare export import a = x.c;
@@ -17751,6 +17796,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  34 │ accessor import "x";
     ╰────
   help: Allowed modifiers are: declare, async
+
+  × 'accessor' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:34:1]
+ 33 │ accessor function F1() {}
+ 34 │ accessor import "x";
+    · ────────
+ 35 │ accessor import {} from "x";
+    ╰────
+  help: Only 'export' modifier is allowed here.
 
   × Unexpected token
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:34:17]
@@ -28910,14 +28964,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │                 c = null;
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:16]
+  × Using declarations may not have binding patterns.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:17]
  1 │ {
  2 │     await using {a} = null;
-   ·                ▲
+   ·                 ───
  3 │ }
    ╰────
-  help: Try inserting a semicolon here
 
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.7.ts:3:17]
@@ -28954,12 +29007,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Did you mean to use a for...of statement?
 
-  × Expected `;` but found `{`
+  × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:2:22]
  1 │ async function main() {
  2 │     for (await using {} of []) {
-   ·                      ┬
-   ·                      ╰── `;` expected
+   ·                      ──
  3 │     }
    ╰────
 

@@ -2,7 +2,8 @@
 // the sequence's span but leads the sequence, not the element: it prints
 // outside the formatter-added parentheses.
 // (Prettier 3.9 prints it inside on its first pass and moves it out on the
-// second; oxfmt prints that fixpoint directly, see prettier#19894)
+// second; DIVERGES: oxfmt prints that fixpoint directly,
+// see DIVERGENCES.md#paren-comment-fixpoint)
 ((/* c */ a), b);
 ((/* c1 */ /* c2 */ a), b);
 ((

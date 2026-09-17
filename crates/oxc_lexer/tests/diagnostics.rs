@@ -1,5 +1,6 @@
 //! Diagnostic coverage for every code class. Each positive test has a
 //! `*_never_flagged` counterpart: valid input must emit nothing.
+
 #![cfg(target_endian = "little")]
 #![expect(
     clippy::cast_possible_truncation,
@@ -7,13 +8,15 @@
     reason = "test helpers: lengths fit u32; the fuzz PRNG uses raw constants"
 )]
 
-use oxc_lexer::{Diagnostic, PAD, TokenKind, default_options, diag_code, lex_utf8};
+use std::str;
+
+use oxc_lexer::{Diagnostic, LexOptions, PAD, TokenKind, diag_code, lex_utf8};
 
 fn diags(code: &str) -> Vec<Diagnostic> {
     let mut buf = code.as_bytes().to_vec();
     let len = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0); // lexer over-reads up to PAD bytes past `len`
-    let (res, _arena) = lex_utf8(&buf, len, default_options());
+    let (res, _arena) = lex_utf8(&buf, len, LexOptions::default());
     res.diagnostics().to_vec()
 }
 
@@ -25,8 +28,7 @@ fn codes_jsx(code: &str) -> Vec<u16> {
     let mut buf = code.as_bytes().to_vec();
     let len = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
-    let mut opts = default_options();
-    opts.jsx = true;
+    let opts = LexOptions { jsx: true, ..Default::default() };
     let (res, _arena) = lex_utf8(&buf, len, opts);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
@@ -35,9 +37,7 @@ fn codes_tsx(code: &str) -> Vec<u16> {
     let mut buf = code.as_bytes().to_vec();
     let len = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
-    let mut opts = default_options();
-    opts.jsx = true;
-    opts.ts = true;
+    let opts = LexOptions { jsx: true, ts: true, ..Default::default() };
     let (res, _arena) = lex_utf8(&buf, len, opts);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
@@ -399,8 +399,7 @@ fn diags_bytes(code: &[u8]) -> Vec<Diagnostic> {
     let mut buf = code.to_vec();
     let len = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
-    let mut opts = default_options();
-    opts.validate_utf8 = true;
+    let opts = LexOptions { validate_utf8: true, ..Default::default() };
     let (res, _arena) = lex_utf8(&buf, len, opts);
     res.diagnostics().to_vec()
 }
@@ -469,7 +468,7 @@ fn utf8_fuzz_against_std() {
         }
         let d = diags_bytes(&buf);
         let first6 = d.iter().find(|d| d.code == D::INVALID_UTF8);
-        match core::str::from_utf8(&buf) {
+        match str::from_utf8(&buf) {
             Ok(_) => assert!(first6.is_none(), "false positive on valid UTF-8 {buf:?}"),
             Err(e) => {
                 let d6 = first6.unwrap_or_else(|| panic!("missed invalid UTF-8 in {buf:?}"));
@@ -660,7 +659,7 @@ fn template_cooked_invalid_marker() {
         let mut buf = code.as_bytes().to_vec();
         let len = buf.len() as u32;
         buf.resize(buf.len() + PAD, 0);
-        let (res, arena) = lex_utf8(&buf, len, default_options());
+        let (res, arena) = lex_utf8(&buf, len, LexOptions::default());
         res.templates(&arena).iter().map(|t| t.cooked_invalid()).collect()
     };
     assert_eq!(get(r"t = `\uZZ`;"), vec![true]); // bad unicode escape
@@ -754,8 +753,7 @@ fn diags_jsx(code: &str) -> Vec<Diagnostic> {
     let mut buf = code.as_bytes().to_vec();
     let len = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
-    let mut opts = default_options();
-    opts.jsx = true;
+    let opts = LexOptions { jsx: true, ..Default::default() };
     let (res, _arena) = lex_utf8(&buf, len, opts);
     res.diagnostics().to_vec()
 }
@@ -875,8 +873,7 @@ fn value_lanes_hold_exactly_one_entry_per_value_token() {
         let mut buf = code.as_bytes().to_vec();
         let len = buf.len() as u32;
         buf.resize(buf.len() + PAD, 0);
-        let mut opts = default_options();
-        opts.ts = ts;
+        let opts = LexOptions { ts, ..Default::default() };
         let (res, _arena) = lex_utf8(&buf, len, opts);
         assert_eq!(res.numbers_count, numbers, "numbers lane for {code:?}");
         assert_eq!(res.atoms_count, atoms, "atoms lane for {code:?}");
@@ -900,7 +897,7 @@ fn block_comment_star_plus_slash_is_not_a_terminator() {
         let mut buf = code.as_bytes().to_vec();
         let len = buf.len() as u32;
         buf.resize(buf.len() + PAD, 0);
-        let (res, arena) = lex_utf8(&buf, len, default_options());
+        let (res, arena) = lex_utf8(&buf, len, LexOptions::default());
         let kinds = res.tok_kinds(&arena);
         let non_trivia = kinds.iter().filter(|k| !k.is_trivia() && **k != TokenKind::Eof).count();
         assert_eq!(non_trivia, tokens, "{code:?}: {kinds:?}");

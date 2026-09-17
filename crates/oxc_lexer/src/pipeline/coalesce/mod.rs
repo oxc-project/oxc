@@ -1,12 +1,14 @@
+use std::{ptr, slice};
+
 use crate::{
     error::diag_code,
     lanes::Lanes,
-    opmap::{KwSet, OP_QDOT},
+    opmap::KwSet,
     tables::{Tables, is_digit, is_op_char, is_word, is_ws},
+    token::tk,
 };
 
 use super::{
-    NUM,
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     disambiguate::{gt_run_split, lt_run_split},
     scan::scan_number,
@@ -124,7 +126,7 @@ pub unsafe fn coalesce(
             } else {
                 let y2 = (op >> bit) | ((opnext << (63 - bit)) << 1);
                 let run = (!y2).trailing_zeros() as usize;
-                let q = core::ptr::read_unaligned(src.add(p) as *const u32);
+                let q = ptr::read_unaligned(src.add(p) as *const u32);
                 let b0 = q as u8;
                 let b1 = (q >> 8) as u8;
                 // In TS, `>` may close nested type args including `Foo<T>= 1`, so fusing can diverge.
@@ -153,7 +155,7 @@ pub unsafe fn coalesce(
                     let want = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
                     let mut ok = ((pack ^ want) & 0x00FF_FFFF) == 0;
                     let kk = (pack >> 24) as u8;
-                    ok &= !((kk == OP_QDOT) && is_digit((q >> 16) as u8));
+                    ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8));
                     let hm: u8 = 0u8.wrapping_sub(ok as u8);
                     *kind.add(p) = (*kind.add(p) & !hm) | (kk & hm);
                     let clr = (ok as u64) << ((p + 1) & 63);
@@ -175,13 +177,13 @@ pub unsafe fn coalesce(
                 let wanta = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
                 let ka = (pa >> 24) as u8;
                 let mut ok2a = ((pa ^ wanta) & 0x00FF_FFFF) == 0;
-                ok2a &= !((ka == OP_QDOT) && is_digit(b2));
+                ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
                 let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
                 let pb = t.op2_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let wantb = 2u32 | ((b1 as u32) << 8) | ((b2 as u32) << 16);
                 let kb = (pb >> 24) as u8;
                 let mut ok2b = ((pb ^ wantb) & 0x00FF_FFFF) == 0;
-                ok2b &= !((kb == OP_QDOT) && is_digit((q >> 24) as u8));
+                ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8));
                 let sel3 = ok3;
                 let sel2a = !ok3 && ok2a;
                 let sel2b = !ok3 && !ok2a && ok2b;
@@ -222,7 +224,7 @@ unsafe fn glue_number(
 ) -> usize {
     loop {
         let e2 = scan_number(src, n, p);
-        *kind.add(p) = NUM + (*src.add(e2 - 1) == b'n') as u8;
+        *kind.add(p) = tk!(Number) + (*src.add(e2 - 1) == b'n') as u8;
         if e2 > p + 1 {
             bm_clear_range(st, p + 1, e2 - 1);
             bm_clear_range(opch, p, e2 - 1);
@@ -236,7 +238,7 @@ unsafe fn glue_number(
         // is a spec-invalid adjacency. Never true on valid input, so the
         // whole arm is cold.
         if is_word(c) {
-            let srcs = core::slice::from_raw_parts(src, n);
+            let srcs = slice::from_raw_parts(src, n);
             if c < 0x80 {
                 // A surviving `n` is a misplaced bigint suffix; scan_number
                 // consumes legal ones. Token spans are unchanged either way.
@@ -259,7 +261,7 @@ unsafe fn glue_number(
                 // ending in `.` is that dot-run's first dot).
                 if *src.add(e2 - 1) != b'.' {
                     let wb = word as *const u8;
-                    let x = core::ptr::read_unaligned(wb.add(e2 >> 3) as *const u64) >> (e2 & 7);
+                    let x = ptr::read_unaligned(wb.add(e2 >> 3) as *const u64) >> (e2 & 7);
                     let kk = kw.lookup(src.add(e2), (!x).trailing_zeros() as usize);
                     if kk != 0 {
                         *kind.add(e2) = kk as u8;
@@ -317,7 +319,9 @@ unsafe fn munch_walk(
         let mut l = lmax;
         while l >= 2 {
             let k = t.op.opmap_lookup(b0, b1, b2, b3, l);
-            if k != 0 && !(k == OP_QDOT as u32 && pos + 2 < n && is_digit(*src.add(pos + 2))) {
+            if k != 0
+                && !(k == tk!(OptionalChain) as u32 && pos + 2 < n && is_digit(*src.add(pos + 2)))
+            {
                 opk = k;
                 opl = l;
                 break;
@@ -346,7 +350,8 @@ unsafe fn munch_walk(
 fn prefetch(p: *const u8) {
     #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
     unsafe {
-        core::arch::x86_64::_mm_prefetch(p as *const i8, core::arch::x86_64::_MM_HINT_T0)
+        use std::arch::x86_64;
+        x86_64::_mm_prefetch(p as *const i8, x86_64::_MM_HINT_T0)
     }
 
     #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]

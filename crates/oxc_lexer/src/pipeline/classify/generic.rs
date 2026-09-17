@@ -1,9 +1,10 @@
-use crate::{
-    opmap::{PUNCT1, PUNCT1_KIND_UNKNOWN, PUNCT1_NKNOWN},
-    tables::{Tables, is_digit, is_kw_init, is_kw_init_ts, is_op_char, is_word, is_ws},
-};
+use std::ptr;
 
-use super::super::{IDENT, NUM, WS};
+use crate::{
+    opmap::{PUNCT1, PUNCT1_NKNOWN},
+    tables::{Tables, is_digit, is_kw_init, is_kw_init_ts, is_op_char, is_word, is_ws},
+    token::tk,
+};
 
 const FL_WORD: u32 = 0;
 const FL_WS: u32 = 1;
@@ -17,7 +18,7 @@ static CLS_JS: [u16; 256] = cls_table(false);
 static CLS_TS: [u16; 256] = cls_table(true);
 
 const fn cls_table(ts: bool) -> [u16; 256] {
-    let mut punct = [PUNCT1_KIND_UNKNOWN; 256];
+    let mut punct = [tk!(Invalid); 256];
     let mut i = 0;
     while i < PUNCT1_NKNOWN {
         punct[PUNCT1[i].0 as usize] = PUNCT1[i].1 as u8;
@@ -50,9 +51,9 @@ const fn cls_table(ts: bool) -> [u16; 256] {
             f |= 1 << FL_MISC;
         }
         let kd = if is_ws(b) {
-            WS
+            tk!(Whitespace)
         } else if is_word(b) {
-            if is_digit(b) { NUM } else { IDENT }
+            if is_digit(b) { tk!(Number) } else { tk!(Ident) }
         } else {
             punct[c]
         };
@@ -62,7 +63,7 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     t
 }
 
-pub unsafe fn classify(
+pub(super) unsafe fn classify_impl(
     _t: &Tables,
     ts: bool,
     src: *const u8,
@@ -96,7 +97,7 @@ pub unsafe fn classify(
                 kw |= (v & 0xff) << (j * 8);
                 j += 1;
             }
-            core::ptr::write_unaligned(kind.add(p) as *mut u64, kw);
+            ptr::write_unaligned(kind.add(p) as *mut u64, kw);
             let sh = (g * 8) as u32;
             mw |= pk(fw, FL_WORD) << sh;
             ms |= pk(fw, FL_WS) << sh;

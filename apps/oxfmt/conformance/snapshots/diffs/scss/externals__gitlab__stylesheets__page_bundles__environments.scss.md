@@ -1,7 +1,5 @@
 # externals/gitlab/stylesheets/page_bundles/environments.scss
 
-> media-query operator spacing. See crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing
-
 ## Option 1
 
 `````json

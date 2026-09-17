@@ -3,7 +3,7 @@
 //! must separate the pairs the JS key cannot.
 #![cfg(target_endian = "little")]
 
-use oxc_lexer::{Lexer, PAD, TokenKind, default_options};
+use oxc_lexer::{LexOptions, Lexer, PAD, TokenKind};
 
 /// All 35 TS-mode additions, mirroring `KEYWORDS_TS_EXTRA` (kept literal so
 /// a table typo cannot hide behind shared constants).
@@ -50,9 +50,7 @@ fn kinds(code: &str, ts: bool, jsx: bool) -> Vec<TokenKind> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
-    let mut opts = default_options();
-    opts.ts = ts;
-    opts.jsx = jsx;
+    let opts = LexOptions { jsx, ts, ..Default::default() };
     let mut lx = Lexer::new();
     let count = lx.lex(&buf, n, opts);
     lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()

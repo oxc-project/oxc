@@ -4,7 +4,7 @@ use lazy_regex::Regex;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, Comment};
+use oxc_ast::{AstKind, AstType, Comment};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -93,6 +93,9 @@ impl Rule for NoInlineComments {
         let source_text = ctx.source_text();
 
         let jsx_empty_expr_spans = LazyCell::new(|| {
+            if !ctx.nodes().contains(AstType::JSXEmptyExpression) {
+                return Vec::new();
+            }
             ctx.nodes()
                 .iter()
                 .filter_map(|node| {
