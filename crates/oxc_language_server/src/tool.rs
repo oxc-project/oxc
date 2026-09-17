@@ -147,6 +147,20 @@ pub struct ClientMessage {
     pub r#type: MessageType,
 }
 
+impl std::hash::Hash for ClientMessage {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.message.hash(state);
+        let type_id = match self.r#type {
+            MessageType::ERROR => 1u8,
+            MessageType::WARNING => 2u8,
+            MessageType::INFO => 3u8,
+            MessageType::LOG => 4u8,
+            _ => 0u8,
+        };
+        type_id.hash(state);
+    }
+}
+
 pub struct ToolBuildResult {
     /// The tool that was started (linter, formatter).
     /// It should always be started and on internal errors, fallback to the default configuration of the tool.
