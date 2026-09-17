@@ -1,7 +1,16 @@
+use oxc_str::JSStr;
 use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 
 pub trait StringToNumber {
     fn string_to_number(&self) -> f64;
+}
+
+impl StringToNumber for JSStr<'_> {
+    fn string_to_number(&self) -> f64 {
+        // A string containing a lone surrogate can never be a
+        // StringNumericLiteral, so it converts to NaN.
+        self.as_str().map_or(f64::NAN, |value| value.string_to_number())
+    }
 }
 
 /// `StringToNumber`

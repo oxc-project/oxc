@@ -3,13 +3,15 @@ use std::borrow::Cow;
 use num_bigint::BigInt;
 use num_traits::Zero;
 
+use oxc_str::JSStr;
+
 use crate::{GlobalContext, ToBoolean, ToJsString, ToNumber, ValueType};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ConstantValue<'a> {
     Number(f64),
     BigInt(BigInt),
-    String(Cow<'a, str>),
+    String(JSStr<'a>),
     Boolean(bool),
     Undefined,
     Null,
@@ -51,7 +53,7 @@ impl<'a> ConstantValue<'a> {
         }
     }
 
-    pub fn into_string(self) -> Option<Cow<'a, str>> {
+    pub fn into_string(self) -> Option<JSStr<'a>> {
         match self {
             Self::String(s) => Some(s),
             _ => None,
@@ -89,7 +91,10 @@ impl<'a> ToJsString<'a> for ConstantValue<'a> {
             }
             // https://tc39.es/ecma262/#sec-numeric-types-bigint-tostring
             Self::BigInt(n) => Some(Cow::Owned(n.to_string())),
-            Self::String(s) => Some(s.clone()),
+            // This analysis returns UTF-8. A value containing a lone
+            // surrogate is handled by the fold paths that consume the
+            // `JSStr` payload directly.
+            Self::String(s) => s.as_str().map(Cow::Borrowed),
             Self::Boolean(b) => Some(Cow::Borrowed(if *b { "true" } else { "false" })),
             Self::Undefined => Some(Cow::Borrowed("undefined")),
             Self::Null => Some(Cow::Borrowed("null")),
@@ -103,7 +108,7 @@ impl<'a> ToNumber<'a> for ConstantValue<'a> {
         match self {
             Self::Number(n) => Some(*n),
             Self::BigInt(_) => None,
-            Self::String(s) => Some(s.as_ref().string_to_number()),
+            Self::String(s) => Some(s.string_to_number()),
             Self::Boolean(true) => Some(1.0),
             Self::Boolean(false) | Self::Null => Some(0.0),
             Self::Undefined => Some(f64::NAN),
@@ -116,7 +121,7 @@ impl<'a> ToBoolean<'a> for ConstantValue<'a> {
         match self {
             Self::Number(n) => Some(!n.is_nan() && *n != 0.0),
             Self::BigInt(n) => Some(*n != BigInt::zero()),
-            Self::String(s) => Some(!s.as_ref().is_empty()),
+            Self::String(s) => Some(!s.is_empty()),
             Self::Boolean(b) => Some(*b),
             Self::Null | Self::Undefined => Some(false),
         }

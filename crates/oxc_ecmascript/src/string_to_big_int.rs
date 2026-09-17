@@ -1,11 +1,21 @@
 use num_bigint::BigInt;
 use num_traits::{Num, Zero};
 
+use oxc_str::JSStr;
+
 /// `StringToBigInt`
 ///
 /// <https://tc39.es/ecma262/#sec-stringtobigint>
 pub trait StringToBigInt<'a> {
     fn string_to_big_int(&self) -> Option<BigInt>;
+}
+
+impl StringToBigInt<'_> for JSStr<'_> {
+    fn string_to_big_int(&self) -> Option<BigInt> {
+        // A string containing a lone surrogate is not a StringIntegerLiteral,
+        // so it converts to undefined like any other non-numeric text.
+        self.as_str().and_then(|value| value.string_to_big_int())
+    }
 }
 
 impl StringToBigInt<'_> for &str {

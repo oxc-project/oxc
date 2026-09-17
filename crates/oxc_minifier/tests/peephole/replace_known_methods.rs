@@ -251,8 +251,8 @@ fn test_fold_string_char_at() {
     test_same("x = 'abcde'.charAt(y)");
     test("x = 'abcde'.charAt(null)", "x = 'a'");
     test("x = 'abcde'.charAt(!0)", "x = 'b'");
-    test_same("x = '\\ud834\\udd1e'.charAt(0)"); // or x = '\\ud834'
-    test_same("x = '\\ud834\\udd1e'.charAt(1)"); // or x = '\\udd1e'
+    test("x = '\\ud834\\udd1e'.charAt(0)", "x = '\\ud834'");
+    test("x = '\\ud834\\udd1e'.charAt(1)", "x = '\\udd1e'");
 
     // Template strings
     test("x = `abcdef`.charAt(0)", "x = 'a'");
@@ -945,7 +945,8 @@ fn test_fold_string_from_char_code() {
     test("x = String.fromCharCode(0)", "x = '\\0'");
     test("x = String.fromCharCode(120)", "x = 'x'");
     test("x = String.fromCharCode(120, 121)", "x = 'xy'");
-    test_same("x = String.fromCharCode(55358, 56768)");
+    test("x = String.fromCharCode(55358, 56768)", "x = '\u{1F9C0}'");
+    test("x = String.fromCharCode(55296)", "x = '\\ud800'");
     test("x = String.fromCharCode(0x10000)", "x = '\\0'");
     test("x = String.fromCharCode(0x10078, 0x10079)", "x = 'xy'");
     test("x = String.fromCharCode(0x1_0000_FFFF)", "x = '\u{ffff}'");
