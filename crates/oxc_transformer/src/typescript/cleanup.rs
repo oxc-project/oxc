@@ -1,7 +1,10 @@
 //! Record semantic data in erased syntax before its AST nodes are discarded.
 
 use oxc_allocator::{BitSet, GetAllocator};
-use oxc_ast::ast::{BindingIdentifier, IdentifierReference, TSInterfaceHeritage, TSTypeReference};
+use oxc_ast::ast::{
+    BindingIdentifier, IdentifierReference, TSInterfaceDeclaration, TSInterfaceHeritage,
+    TSTypeAliasDeclaration, TSTypeParameter, TSTypeReference,
+};
 use oxc_ast_visit::Visit;
 use oxc_span::Span;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
@@ -49,6 +52,33 @@ impl TypeScriptCleanup {
 pub(super) struct Erase<'c, 'a>(pub &'c mut TraverseCtx<'a>);
 
 impl<'a> Visit<'a> for Erase<'_, 'a> {
+    // Scoping removes these declarations using their individual declaration flags,
+    // including when they are merged with runtime declarations. Only their contents
+    // need visiting here; recording the binding again adds redundant cleanup work.
+    fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
+        if let Some(parameters) = &decl.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+        self.visit_ts_type(&decl.type_annotation);
+    }
+
+    fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
+        if let Some(parameters) = &decl.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+        self.visit_ts_interface_heritages(&decl.extends);
+        self.visit_ts_interface_body(&decl.body);
+    }
+
+    fn visit_ts_type_parameter(&mut self, parameter: &TSTypeParameter<'a>) {
+        if let Some(constraint) = &parameter.constraint {
+            self.visit_ts_type(constraint);
+        }
+        if let Some(default) = &parameter.default {
+            self.visit_ts_type(default);
+        }
+    }
+
     // These names contain only type references, which the final filter already
     // removes. Still walk type arguments: computed keys and signature parameters
     // can contain value references and bindings that need explicit erasure.
