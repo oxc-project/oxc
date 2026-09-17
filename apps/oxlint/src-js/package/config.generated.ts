@@ -1597,6 +1597,7 @@ export interface DummyRuleMap {
   "unicorn/no-unreadable-array-destructuring"?: RuleNoConfig;
   "unicorn/no-unreadable-iife"?: RuleNoConfig;
   "unicorn/no-useless-collection-argument"?: RuleNoConfig;
+  "unicorn/no-useless-else"?: RuleNoConfig;
   "unicorn/no-useless-error-capture-stack-trace"?: RuleNoConfig;
   "unicorn/no-useless-fallback-in-spread"?: RuleNoConfig;
   "unicorn/no-useless-iterator-to-array"?: RuleNoConfig;
