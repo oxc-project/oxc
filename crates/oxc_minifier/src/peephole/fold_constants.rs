@@ -567,7 +567,7 @@ impl<'a> PeepholeOptimizations {
                     .span()
                     .merge_within(e.right.span(), e.span)
                     .unwrap_or(SPAN);
-                let value = Str::from_strs_array_in([&left_str, &right_str], ctx);
+                let value = JSStr::from_js_strs_array_in([left_str, right_str], ctx);
                 let right = Expression::new_string_literal(span, value, None, ctx);
                 let left = left_binary_expr.left.take_in(ctx);
                 return Some(Expression::new_binary_expression(
@@ -625,26 +625,35 @@ impl<'a> PeepholeOptimizations {
             }
 
             // "`${x}y` + 'z'" => "`${x}yz`"
-            if let Some(right_str) = right_expr.get_side_free_string_value(ctx) {
+            // The merged quasi needs UTF-8 source text for `raw`, so a value
+            // containing a lone surrogate stays unmerged.
+            if let Some(right_str) = right_expr.get_side_free_string_value(ctx)
+                && let Some(right_text) = right_str.as_str()
+            {
                 left.span = left.span.merge_within(right_expr.span(), parent_span).unwrap_or(SPAN);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
                 last_quasi.value.raw = Str::from_strs_array_in(
                     [
                         last_quasi.value.raw.as_str(),
-                        Self::escape_string_for_template_literal(&right_str).as_ref(),
+                        Self::escape_string_for_template_literal(right_text).as_ref(),
                     ],
                     ctx,
                 );
-                let new_cooked = last_quasi.value.cooked.map(|cooked| {
-                    JSStr::from_js_strs_array_in([cooked, JSStr::from(right_str.as_ref())], ctx)
-                });
+                let new_cooked = last_quasi
+                    .value
+                    .cooked
+                    .map(|cooked| JSStr::from_js_strs_array_in([cooked, right_str], ctx));
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx));
             }
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
-            if let Some(left_str) = left_expr.get_side_free_string_value(ctx) {
+            // The merged quasi needs UTF-8 source text for `raw`, so a value
+            // containing a lone surrogate stays unmerged.
+            if let Some(left_str) = left_expr.get_side_free_string_value(ctx)
+                && let Some(left_text) = left_str.as_str()
+            {
                 right.span = right.span.merge_within(left_expr.span(), parent_span).unwrap_or(SPAN);
                 let first_quasi = right
                     .quasis
@@ -652,14 +661,15 @@ impl<'a> PeepholeOptimizations {
                     .expect("template literal must have at least one quasi");
                 first_quasi.value.raw = Str::from_strs_array_in(
                     [
-                        Self::escape_string_for_template_literal(&left_str).as_ref(),
+                        Self::escape_string_for_template_literal(left_text).as_ref(),
                         first_quasi.value.raw.as_str(),
                     ],
                     ctx,
                 );
-                let new_cooked = first_quasi.value.cooked.map(|cooked| {
-                    JSStr::from_js_strs_array_in([JSStr::from(left_str.as_ref()), cooked], ctx)
-                });
+                let new_cooked = first_quasi
+                    .value
+                    .cooked
+                    .map(|cooked| JSStr::from_js_strs_array_in([left_str, cooked], ctx));
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx));
             }
