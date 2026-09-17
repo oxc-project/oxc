@@ -2,6 +2,7 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
+# DIVERGES: the more-indented line is kept intact (Prettier wraps it at the print width); see DIVERGENCES.md#folded-more-indented-reflow
 folded-keeps-more-indented:
   - >
     First Line.
@@ -12,6 +13,7 @@ folded-keeps-more-indented:
 ------------------
 { printWidth: 80 }
 ------------------
+# DIVERGES: the more-indented line is kept intact (Prettier wraps it at the print width); see DIVERGENCES.md#folded-more-indented-reflow
 folded-keeps-more-indented:
   - >
     First Line.
@@ -21,6 +23,7 @@ folded-keeps-more-indented:
 -------------------
 { printWidth: 100 }
 -------------------
+# DIVERGES: the more-indented line is kept intact (Prettier wraps it at the print width); see DIVERGENCES.md#folded-more-indented-reflow
 folded-keeps-more-indented:
   - >
     First Line.
@@ -30,6 +33,7 @@ folded-keeps-more-indented:
 ---------------------------------------
 { printWidth: 80, proseWrap: "always" }
 ---------------------------------------
+# DIVERGES: the more-indented line is kept intact (Prettier wraps it at the print width); see DIVERGENCES.md#folded-more-indented-reflow
 folded-keeps-more-indented:
   - >
     First Line.
@@ -39,6 +43,7 @@ folded-keeps-more-indented:
 ----------------------------------------
 { printWidth: 100, proseWrap: "always" }
 ----------------------------------------
+# DIVERGES: the more-indented line is kept intact (Prettier wraps it at the print width); see DIVERGENCES.md#folded-more-indented-reflow
 folded-keeps-more-indented:
   - >
     First Line.
@@ -48,6 +53,7 @@ folded-keeps-more-indented:
 --------------------------------------
 { printWidth: 80, proseWrap: "never" }
 --------------------------------------
+# DIVERGES: the more-indented line is kept intact (Prettier wraps it at the print width); see DIVERGENCES.md#folded-more-indented-reflow
 folded-keeps-more-indented:
   - >
     First Line.
@@ -57,6 +63,7 @@ folded-keeps-more-indented:
 ---------------------------------------
 { printWidth: 100, proseWrap: "never" }
 ---------------------------------------
+# DIVERGES: the more-indented line is kept intact (Prettier wraps it at the print width); see DIVERGENCES.md#folded-more-indented-reflow
 folded-keeps-more-indented:
   - >
     First Line.
