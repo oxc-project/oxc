@@ -12,7 +12,7 @@ import {
 } from "node:fs";
 import { join, relative } from "node:path";
 import prettier from "prettier";
-// @ts-expect-error: the plugin ships no type declarations; it is only a comparison oracle
+// @ts-expect-error: the plugin ships no type declarations; it is only the reference output for gjs/gts
 import * as emberPlugin from "prettier-plugin-ember-template-tag";
 import * as sveltePlugin from "prettier-plugin-svelte";
 import { format } from "../dist/index.js";
@@ -180,6 +180,7 @@ const categories: Category[] = [
         ext: ".gts",
         excludes: ["invalid-template"],
       },
+      { dir: join(FIXTURES_DIR, "edge-cases", "ember") },
     ],
     optionSets: [
       { printWidth: 80, ember: true },

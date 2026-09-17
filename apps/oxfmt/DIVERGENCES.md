@@ -140,6 +140,7 @@ so its template stays verbatim; Prettier still formats it. Deprecated API, not w
 
 - Why: uniform-rule (same construct, same output: as-expression)
 - Pin: `conformance/fixtures/edge-cases/ember/statement-terminator.gts`
+- Conformance: `externals/plugin-ember-template-tag/gts/implied-export-default-satisfies.gts`
 
 A template tag in statement position is the module's default export, so it is a declaration and
 takes neither a terminator nor an `export default` spelling. Prettier core cannot parse these files,
@@ -161,4 +162,30 @@ export default <template>x</template>;
 <template>x</template>
 <template>x</template> as Foo
 <template>x</template> satisfies Foo;
+```
+
+## suppressed-declaration-terminator
+
+- Why: uniform-rule (same construct, same output: a suppressed statement keeps the formatter's terminator)
+- Pin: `conformance/fixtures/edge-cases/ember/suppressed-terminator.gjs`
+- Conformance: `externals/plugin-ember-template-tag/gjs/prettier-ignore/exported-mod-var.gjs`, `externals/plugin-ember-template-tag/gjs/prettier-ignore/multiple-declarations.gjs`, `externals/plugin-ember-template-tag/gjs/prettier-ignore/one-line.gjs`, `externals/plugin-ember-template-tag/gts/prettier-ignore/exported-mod-var-with-as.gts`, `externals/plugin-ember-template-tag/gts/prettier-ignore/exported-mod-var.gts`, `externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations-with-as.gts`, `externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations.gts`, `externals/plugin-ember-template-tag/gts/prettier-ignore/one-line.gts`
+
+A suppressed declaration prints its source up to its content and then the formatter's terminator per
+`semi`, as in plain JS, where Prettier does the same. A template tag inside the declaration does not
+change that. The plugin prints the source verbatim, so a declaration written without `;` stays without
+one. A statement that is itself a template tag takes no terminator, suppressed or not (see
+DIVERGENCES.md#template-tag-statement-terminator).
+
+```js
+/* input */
+// prettier-ignore
+const a = <template>  a  </template>
+
+/* ours */
+// prettier-ignore
+const a = <template>  a  </template>;
+
+/* plugin */
+// prettier-ignore
+const a = <template>  a  </template>
 ```

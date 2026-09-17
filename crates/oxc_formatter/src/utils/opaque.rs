@@ -105,6 +105,26 @@ mod tests {
     }
 
     #[test]
+    fn suppressed_region_statement_gains_no_terminator() {
+        // `<<<HERE>>>` and `__________` are both 10 bytes.
+        let at = |start: u32| {
+            [OpaqueRegion { span: oxc_span::Span::new(start, start + 10), language: "unserved" }]
+        };
+        assert_eq!(
+            format("// oxfmt-ignore\n<<<HERE>>>\n", "// oxfmt-ignore\n__________\n", &at(16)),
+            "// oxfmt-ignore\n<<<HERE>>>\n"
+        );
+        assert_eq!(
+            format(
+                "// oxfmt-ignore\nexport default <<<HERE>>>\n",
+                "// oxfmt-ignore\nexport default __________\n",
+                &at(31)
+            ),
+            "// oxfmt-ignore\nexport default <<<HERE>>>\n"
+        );
+    }
+
+    #[test]
     fn surrounding_code_is_still_formatted() {
         assert_eq!(
             format(

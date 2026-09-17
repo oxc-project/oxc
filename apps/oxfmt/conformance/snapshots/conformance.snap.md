@@ -234,35 +234,63 @@
 
 ## ember
 
-### Option 1: 49/55 (89.09%)
+### Option 1: 46/57 (80.70%)
 
 ```json
 {"printWidth":80,"ember":true}
 ```
 
-| File | Note |
-| :--- | :--- |
-| [externals/plugin-ember-template-tag/gjs/prettier-ignore/multiple-declarations.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__multiple-declarations.gjs.md) |  |
-| [externals/plugin-ember-template-tag/gjs/prettier-ignore/one-line.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__one-line.gjs.md) |  |
-| [externals/plugin-ember-template-tag/gts/implied-export-default-satisfies.gts](diffs/ember/externals__plugin-ember-template-tag__gts__implied-export-default-satisfies.gts.md) |  |
-| [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations-with-as.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations-with-as.gts.md) |  |
-| [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations.gts.md) |  |
-| [externals/plugin-ember-template-tag/gts/prettier-ignore/one-line.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__one-line.gts.md) |  |
+- [edge-cases/ember/statement-terminator.gts](diffs/ember/edge-cases__ember__statement-terminator.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#template-tag-statement-terminator
+- [edge-cases/ember/suppressed-terminator.gjs](diffs/ember/edge-cases__ember__suppressed-terminator.gjs.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gjs/prettier-ignore/exported-mod-var.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__exported-mod-var.gjs.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gjs/prettier-ignore/multiple-declarations.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__multiple-declarations.gjs.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gjs/prettier-ignore/one-line.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__one-line.gjs.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gts/implied-export-default-satisfies.gts](diffs/ember/externals__plugin-ember-template-tag__gts__implied-export-default-satisfies.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#template-tag-statement-terminator
+- [externals/plugin-ember-template-tag/gts/prettier-ignore/exported-mod-var-with-as.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__exported-mod-var-with-as.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gts/prettier-ignore/exported-mod-var.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__exported-mod-var.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations-with-as.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations-with-as.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gts/prettier-ignore/one-line.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__one-line.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
 
-### Option 2: 49/55 (89.09%)
+### Option 2: 46/57 (80.70%)
 
 ```json
 {"printWidth":120,"singleQuote":true,"ember":true}
 ```
 
-| File | Note |
-| :--- | :--- |
-| [externals/plugin-ember-template-tag/gjs/prettier-ignore/multiple-declarations.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__multiple-declarations.gjs.md) |  |
-| [externals/plugin-ember-template-tag/gjs/prettier-ignore/one-line.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__one-line.gjs.md) |  |
-| [externals/plugin-ember-template-tag/gts/implied-export-default-satisfies.gts](diffs/ember/externals__plugin-ember-template-tag__gts__implied-export-default-satisfies.gts.md) |  |
-| [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations-with-as.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations-with-as.gts.md) |  |
-| [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations.gts.md) |  |
-| [externals/plugin-ember-template-tag/gts/prettier-ignore/one-line.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__one-line.gts.md) |  |
+- [edge-cases/ember/statement-terminator.gts](diffs/ember/edge-cases__ember__statement-terminator.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#template-tag-statement-terminator
+- [edge-cases/ember/suppressed-terminator.gjs](diffs/ember/edge-cases__ember__suppressed-terminator.gjs.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gjs/prettier-ignore/exported-mod-var.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__exported-mod-var.gjs.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gjs/prettier-ignore/multiple-declarations.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__multiple-declarations.gjs.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gjs/prettier-ignore/one-line.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__one-line.gjs.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gts/implied-export-default-satisfies.gts](diffs/ember/externals__plugin-ember-template-tag__gts__implied-export-default-satisfies.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#template-tag-statement-terminator
+- [externals/plugin-ember-template-tag/gts/prettier-ignore/exported-mod-var-with-as.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__exported-mod-var-with-as.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gts/prettier-ignore/exported-mod-var.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__exported-mod-var.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations-with-as.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations-with-as.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
+- [externals/plugin-ember-template-tag/gts/prettier-ignore/one-line.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__one-line.gts.md)
+  - apps/oxfmt/DIVERGENCES.md#suppressed-declaration-terminator
 
 ## graphql
 
