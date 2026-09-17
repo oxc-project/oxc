@@ -2,7 +2,8 @@
 source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-// A comment after a trailing hole stays inside the brackets, like Prettier
+// DIVERGES: a comment after a trailing hole stays after the hole (Prettier moves `f`'s back to the last real element);
+// see DIVERGENCES.md#array-hole-trailing-comment
 const a = [,, /* comment */];
 const b = [
   , /* comment */
@@ -15,12 +16,15 @@ const d = [,, // line
 ];
 // Comments trailing a real element are unaffected
 const e = [1, 2 /* t */];
+// A real element before the hole (the entry's shape)
+const f = [1, , /* comment */];
 
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
-// A comment after a trailing hole stays inside the brackets, like Prettier
+// DIVERGES: a comment after a trailing hole stays after the hole (Prettier moves `f`'s back to the last real element);
+// see DIVERGENCES.md#array-hole-trailing-comment
 const a = [, ,/* comment */];
 const b = [,/* comment */];
 const c = [, ,/* comment */];
@@ -31,11 +35,14 @@ const d = [
 ];
 // Comments trailing a real element are unaffected
 const e = [1, 2 /* t */];
+// A real element before the hole (the entry's shape)
+const f = [1, ,/* comment */];
 
 -------------------
 { printWidth: 100 }
 -------------------
-// A comment after a trailing hole stays inside the brackets, like Prettier
+// DIVERGES: a comment after a trailing hole stays after the hole (Prettier moves `f`'s back to the last real element);
+// see DIVERGENCES.md#array-hole-trailing-comment
 const a = [, ,/* comment */];
 const b = [,/* comment */];
 const c = [, ,/* comment */];
@@ -46,5 +53,7 @@ const d = [
 ];
 // Comments trailing a real element are unaffected
 const e = [1, 2 /* t */];
+// A real element before the hole (the entry's shape)
+const f = [1, ,/* comment */];
 
 ===================== End =====================

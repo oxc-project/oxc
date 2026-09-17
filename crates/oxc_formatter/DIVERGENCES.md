@@ -481,7 +481,10 @@ The shapes, each pinned by its fixture:
 ## union-annotation-flat-retry
 
 - Why: style-hold (oxc#25841)
-- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts` (also tracked by oxfmt's conformance suite, e.g. vue-vben-admin `api-component.vue`, webawesome `*.ts`)
+- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`
+- Oxfmt: `externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue`, `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`,
+  `externals/webawesome/badge/badge.ts`, `externals/webawesome/button/button.ts`, `externals/webawesome/callout/callout.ts`, `externals/webawesome/checkbox/checkbox.ts`, `externals/webawesome/color-picker/color-picker.ts`, `externals/webawesome/copy-button/copy-button.ts`, `externals/webawesome/details/details.ts`, `externals/webawesome/dropdown/dropdown.ts`, `externals/webawesome/dropdown-item/dropdown-item.ts`, `externals/webawesome/format-number/format-number.ts`, `externals/webawesome/icon/icon.ts`, `externals/webawesome/input/input.ts`,
+  `externals/webawesome/number-input/number-input.ts`, `externals/webawesome/page/page.ts`, `externals/webawesome/popup/popup.ts`, `externals/webawesome/qr-code/qr-code.ts`, `externals/webawesome/radio/radio.ts`, `externals/webawesome/radio-group/radio-group.ts`, `externals/webawesome/rating/rating.ts`, `externals/webawesome/select/select.ts`, `externals/webawesome/slider/slider.ts`, `externals/webawesome/switch/switch.ts`, `externals/webawesome/tag/tag.ts`, `externals/webawesome/textarea/textarea.ts`
 - Drop when: the wait-and-see on Prettier 3.9's union style resolves (follow, or re-classify)
 
 ```ts
@@ -642,6 +645,7 @@ we reuse the reprint path's split (`write_leading_comments_with_asi_guard`, call
 
 - Why: semantics (Prettier's placement rebinds the cast to the added parens; verified with tsc; prettier/prettier#19645, fixed on main by prettier/prettier#19652)
 - Pin: `tests/fixtures/js/comments/type-cast-comment-inside-added-parens.js`
+- Oxfmt: `externals/svelte/internal/client/dom/css.js`
 
 ```js
 // input
