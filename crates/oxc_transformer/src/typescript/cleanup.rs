@@ -11,8 +11,8 @@ use crate::context::TraverseCtx;
 
 #[derive(Default)]
 pub struct TypeScriptCleanup {
-    declarations: FxHashSet<(SymbolId, Span)>,
-    references: FxHashSet<ReferenceId>,
+    declarations: Vec<(SymbolId, Span)>,
+    references: Vec<ReferenceId>,
 }
 
 impl TypeScriptCleanup {
@@ -23,8 +23,18 @@ impl TypeScriptCleanup {
             if self.declarations.is_empty() { 0 } else { scoping.symbols_len() },
             allocator,
         );
-        for (id, _) in &self.declarations {
-            erased_symbols.set_bit(id.index());
+        let mut merged_symbols = BitSet::new_in(erased_symbols.capacity(), allocator);
+        let mut merged_declarations = FxHashSet::default();
+        for (id, span) in self.declarations {
+            // Classify after import/export retention, which can promote a surviving
+            // declaration or collapse a merge. Only a matching sole declaration can
+            // be removed by symbol ID; other records still need their binding span.
+            if scoping.symbol_redeclarations(id).is_empty() && scoping.symbol_span(id) == span {
+                erased_symbols.set_bit(id.index());
+            } else {
+                merged_symbols.set_bit(id.index());
+                merged_declarations.insert((id, span));
+            }
         }
         let mut erased_references = BitSet::new_in(
             if self.references.is_empty() { 0 } else { scoping.references_len() },
@@ -35,7 +45,9 @@ impl TypeScriptCleanup {
         }
         scoping.delete_typescript_bindings_with(
             |id, span| {
-                erased_symbols.contains(id.index()) && self.declarations.contains(&(id, span))
+                erased_symbols.contains(id.index())
+                    || (merged_symbols.contains(id.index())
+                        && merged_declarations.contains(&(id, span)))
             },
             |id| erased_references.contains(id.index()),
         );
@@ -64,13 +76,13 @@ impl<'a> Visit<'a> for Erase<'_, 'a> {
 
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
         if let Some(id) = ident.symbol_id.get() {
-            self.0.state.typescript_cleanup.declarations.insert((id, ident.span));
+            self.0.state.typescript_cleanup.declarations.push((id, ident.span));
         }
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         if let Some(id) = ident.reference_id.get() {
-            self.0.state.typescript_cleanup.references.insert(id);
+            self.0.state.typescript_cleanup.references.push(id);
         }
     }
 }
