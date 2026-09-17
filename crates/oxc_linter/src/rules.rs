@@ -801,6 +801,7 @@ pub(crate) mod jsdoc {
     pub mod check_tag_names;
     pub mod empty_tags;
     pub mod implements_on_classes;
+    pub mod multiline_blocks;
     pub mod no_blank_blocks;
     pub mod no_defaults;
     pub mod require_param;

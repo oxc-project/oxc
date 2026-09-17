@@ -295,6 +295,7 @@ pub use crate::rules::jsdoc::check_property_names::CheckPropertyNames as JsdocCh
 pub use crate::rules::jsdoc::check_tag_names::CheckTagNames as JsdocCheckTagNames;
 pub use crate::rules::jsdoc::empty_tags::EmptyTags as JsdocEmptyTags;
 pub use crate::rules::jsdoc::implements_on_classes::ImplementsOnClasses as JsdocImplementsOnClasses;
+pub use crate::rules::jsdoc::multiline_blocks::MultilineBlocks as JsdocMultilineBlocks;
 pub use crate::rules::jsdoc::no_blank_blocks::NoBlankBlocks as JsdocNoBlankBlocks;
 pub use crate::rules::jsdoc::no_defaults::NoDefaults as JsdocNoDefaults;
 pub use crate::rules::jsdoc::require_param::RequireParam as JsdocRequireParam;
@@ -1602,6 +1603,7 @@ pub enum RuleEnum {
     JsdocCheckTagNames(JsdocCheckTagNames),
     JsdocEmptyTags(JsdocEmptyTags),
     JsdocImplementsOnClasses(JsdocImplementsOnClasses),
+    JsdocMultilineBlocks(JsdocMultilineBlocks),
     JsdocNoBlankBlocks(JsdocNoBlankBlocks),
     JsdocNoDefaults(JsdocNoDefaults),
     JsdocRequireParam(JsdocRequireParam),
@@ -2568,7 +2570,8 @@ const JSDOC_CHECK_PROPERTY_NAMES_ID: usize = JSDOC_CHECK_ACCESS_ID + 1usize;
 const JSDOC_CHECK_TAG_NAMES_ID: usize = JSDOC_CHECK_PROPERTY_NAMES_ID + 1usize;
 const JSDOC_EMPTY_TAGS_ID: usize = JSDOC_CHECK_TAG_NAMES_ID + 1usize;
 const JSDOC_IMPLEMENTS_ON_CLASSES_ID: usize = JSDOC_EMPTY_TAGS_ID + 1usize;
-const JSDOC_NO_BLANK_BLOCKS_ID: usize = JSDOC_IMPLEMENTS_ON_CLASSES_ID + 1usize;
+const JSDOC_MULTILINE_BLOCKS_ID: usize = JSDOC_IMPLEMENTS_ON_CLASSES_ID + 1usize;
+const JSDOC_NO_BLANK_BLOCKS_ID: usize = JSDOC_MULTILINE_BLOCKS_ID + 1usize;
 const JSDOC_NO_DEFAULTS_ID: usize = JSDOC_NO_BLANK_BLOCKS_ID + 1usize;
 const JSDOC_REQUIRE_PARAM_ID: usize = JSDOC_NO_DEFAULTS_ID + 1usize;
 const JSDOC_REQUIRE_PARAM_DESCRIPTION_ID: usize = JSDOC_REQUIRE_PARAM_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3455,6 +3458,7 @@ static RULE_NAMES: [&str; 870usize] = [
     JsdocCheckTagNames::NAME,
     JsdocEmptyTags::NAME,
     JsdocImplementsOnClasses::NAME,
+    JsdocMultilineBlocks::NAME,
     JsdocNoBlankBlocks::NAME,
     JsdocNoDefaults::NAME,
     JsdocRequireParam::NAME,
@@ -4447,6 +4451,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JSDOC_CHECK_TAG_NAMES_ID,
             Self::JsdocEmptyTags(_) => JSDOC_EMPTY_TAGS_ID,
             Self::JsdocImplementsOnClasses(_) => JSDOC_IMPLEMENTS_ON_CLASSES_ID,
+            Self::JsdocMultilineBlocks(_) => JSDOC_MULTILINE_BLOCKS_ID,
             Self::JsdocNoBlankBlocks(_) => JSDOC_NO_BLANK_BLOCKS_ID,
             Self::JsdocNoDefaults(_) => JSDOC_NO_DEFAULTS_ID,
             Self::JsdocRequireParam(_) => JSDOC_REQUIRE_PARAM_ID,
@@ -5488,6 +5493,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::CATEGORY,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::CATEGORY,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::CATEGORY,
+            Self::JsdocMultilineBlocks(_) => JsdocMultilineBlocks::CATEGORY,
             Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::CATEGORY,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::CATEGORY,
             Self::JsdocRequireParam(_) => JsdocRequireParam::CATEGORY,
@@ -6491,6 +6497,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::FIX,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::FIX,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::FIX,
+            Self::JsdocMultilineBlocks(_) => JsdocMultilineBlocks::FIX,
             Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::FIX,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::FIX,
             Self::JsdocRequireParam(_) => JsdocRequireParam::FIX,
@@ -7698,6 +7705,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::documentation(),
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::documentation(),
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::documentation(),
+            Self::JsdocMultilineBlocks(_) => JsdocMultilineBlocks::documentation(),
             Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::documentation(),
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::documentation(),
             Self::JsdocRequireParam(_) => JsdocRequireParam::documentation(),
@@ -9969,6 +9977,8 @@ impl RuleEnum {
                 .or_else(|| JsdocEmptyTags::schema(generator)),
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::config_schema(generator)
                 .or_else(|| JsdocImplementsOnClasses::schema(generator)),
+            Self::JsdocMultilineBlocks(_) => JsdocMultilineBlocks::config_schema(generator)
+                .or_else(|| JsdocMultilineBlocks::schema(generator)),
             Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::config_schema(generator)
                 .or_else(|| JsdocNoBlankBlocks::schema(generator)),
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::config_schema(generator)
@@ -11135,6 +11145,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => "jsdoc",
             Self::JsdocEmptyTags(_) => "jsdoc",
             Self::JsdocImplementsOnClasses(_) => "jsdoc",
+            Self::JsdocMultilineBlocks(_) => "jsdoc",
             Self::JsdocNoBlankBlocks(_) => "jsdoc",
             Self::JsdocNoDefaults(_) => "jsdoc",
             Self::JsdocRequireParam(_) => "jsdoc",
@@ -12221,6 +12232,9 @@ impl RuleEnum {
             Self::JsdocEmptyTags(_) => {
                 Ok(Self::JsdocEmptyTags(JsdocEmptyTags::from_configuration(value)?))
             }
+            Self::JsdocMultilineBlocks(_) => {
+                Ok(Self::JsdocMultilineBlocks(JsdocMultilineBlocks::from_configuration(value)?))
+            }
             Self::JsdocNoBlankBlocks(_) => {
                 Ok(Self::JsdocNoBlankBlocks(JsdocNoBlankBlocks::from_configuration(value)?))
             }
@@ -13143,6 +13157,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.run(node, ctx),
             Self::JsdocEmptyTags(rule) => rule.run(node, ctx),
             Self::JsdocImplementsOnClasses(rule) => rule.run(node, ctx),
+            Self::JsdocMultilineBlocks(rule) => rule.run(node, ctx),
             Self::JsdocNoBlankBlocks(rule) => rule.run(node, ctx),
             Self::JsdocNoDefaults(rule) => rule.run(node, ctx),
             Self::JsdocRequireParam(rule) => rule.run(node, ctx),
@@ -14030,6 +14045,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.run_once(ctx),
             Self::JsdocEmptyTags(rule) => rule.run_once(ctx),
             Self::JsdocImplementsOnClasses(rule) => rule.run_once(ctx),
+            Self::JsdocMultilineBlocks(rule) => rule.run_once(ctx),
             Self::JsdocNoBlankBlocks(rule) => rule.run_once(ctx),
             Self::JsdocNoDefaults(rule) => rule.run_once(ctx),
             Self::JsdocRequireParam(rule) => rule.run_once(ctx),
@@ -15026,6 +15042,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsdocEmptyTags(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsdocImplementsOnClasses(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JsdocMultilineBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsdocNoBlankBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsdocNoDefaults(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsdocRequireParam(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15922,6 +15939,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.should_run(ctx),
             Self::JsdocEmptyTags(rule) => rule.should_run(ctx),
             Self::JsdocImplementsOnClasses(rule) => rule.should_run(ctx),
+            Self::JsdocMultilineBlocks(rule) => rule.should_run(ctx),
             Self::JsdocNoBlankBlocks(rule) => rule.should_run(ctx),
             Self::JsdocNoDefaults(rule) => rule.should_run(ctx),
             Self::JsdocRequireParam(rule) => rule.should_run(ctx),
@@ -17120,6 +17138,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::IS_TSGOLINT_RULE,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::IS_TSGOLINT_RULE,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::IS_TSGOLINT_RULE,
+            Self::JsdocMultilineBlocks(_) => JsdocMultilineBlocks::IS_TSGOLINT_RULE,
             Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::IS_TSGOLINT_RULE,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::IS_TSGOLINT_RULE,
             Self::JsdocRequireParam(_) => JsdocRequireParam::IS_TSGOLINT_RULE,
@@ -18212,6 +18231,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::VERSION,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::VERSION,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::VERSION,
+            Self::JsdocMultilineBlocks(_) => JsdocMultilineBlocks::VERSION,
             Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::VERSION,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::VERSION,
             Self::JsdocRequireParam(_) => JsdocRequireParam::VERSION,
@@ -19293,6 +19313,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::HAS_CONFIG,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::HAS_CONFIG,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::HAS_CONFIG,
+            Self::JsdocMultilineBlocks(_) => JsdocMultilineBlocks::HAS_CONFIG,
             Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::HAS_CONFIG,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::HAS_CONFIG,
             Self::JsdocRequireParam(_) => JsdocRequireParam::HAS_CONFIG,
@@ -20305,6 +20326,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::INFO,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::INFO,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::INFO,
+            Self::JsdocMultilineBlocks(_) => JsdocMultilineBlocks::INFO,
             Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::INFO,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::INFO,
             Self::JsdocRequireParam(_) => JsdocRequireParam::INFO,
@@ -21192,6 +21214,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.types_info(),
             Self::JsdocEmptyTags(rule) => rule.types_info(),
             Self::JsdocImplementsOnClasses(rule) => rule.types_info(),
+            Self::JsdocMultilineBlocks(rule) => rule.types_info(),
             Self::JsdocNoBlankBlocks(rule) => rule.types_info(),
             Self::JsdocNoDefaults(rule) => rule.types_info(),
             Self::JsdocRequireParam(rule) => rule.types_info(),
@@ -22066,6 +22089,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.run_info(),
             Self::JsdocEmptyTags(rule) => rule.run_info(),
             Self::JsdocImplementsOnClasses(rule) => rule.run_info(),
+            Self::JsdocMultilineBlocks(rule) => rule.run_info(),
             Self::JsdocNoBlankBlocks(rule) => rule.run_info(),
             Self::JsdocNoDefaults(rule) => rule.run_info(),
             Self::JsdocRequireParam(rule) => rule.run_info(),
@@ -23068,6 +23092,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsdocCheckTagNames(JsdocCheckTagNames::default()),
         RuleEnum::JsdocEmptyTags(JsdocEmptyTags::default()),
         RuleEnum::JsdocImplementsOnClasses(JsdocImplementsOnClasses::default()),
+        RuleEnum::JsdocMultilineBlocks(JsdocMultilineBlocks::default()),
         RuleEnum::JsdocNoBlankBlocks(JsdocNoBlankBlocks::default()),
         RuleEnum::JsdocNoDefaults(JsdocNoDefaults::default()),
         RuleEnum::JsdocRequireParam(JsdocRequireParam::default()),
