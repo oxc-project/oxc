@@ -1282,10 +1282,6 @@ impl Scoping {
         });
 
         let mut removed = BitSet::new_in(self.symbols_len(), allocator);
-        let mut merged = BitSet::new_in(self.symbols_len(), allocator);
-        for id in self.cell.borrow_dependent().symbol_redeclarations.keys() {
-            merged.set_bit(id.index());
-        }
         let erased_flags = SymbolFlags::Ambient
             | SymbolFlags::TypeAlias
             | SymbolFlags::Interface
@@ -1302,18 +1298,26 @@ impl Scoping {
                     cell.resolved_references[index].clear();
                 });
             }
-            // Most symbols have one declaration. Avoid looking up redeclaration
-            // metadata or promoting declarations on this path.
-            let survives = if merged.has_bit(index) {
-                self.retain_symbol_declarations(symbol_id, |span, flags| {
-                    !flags.intersects(erased_flags) && !is_erased(symbol_id, span)
-                })
-            } else {
-                !flags.intersects(erased_flags)
-                    && !is_erased(symbol_id, self.symbol_span(symbol_id))
-            };
-            if !survives {
+            // This is provisional for merged symbols. Correct those below before
+            // removing any bindings; combined flags cannot decide their survival.
+            if flags.intersects(erased_flags) || is_erased(symbol_id, self.symbol_span(symbol_id)) {
                 removed.set_bit(index);
+            }
+        }
+        // Promotion can remove entries from the redeclaration map. Copy its keys,
+        // which are usually empty or sparse, instead of testing a merged-symbol
+        // bitset for every symbol in the program.
+        let merged = ArenaVec::from_iter_in(
+            self.cell.borrow_dependent().symbol_redeclarations.keys().copied(),
+            &allocator,
+        );
+        for symbol_id in merged {
+            if self.retain_symbol_declarations(symbol_id, |span, flags| {
+                !flags.intersects(erased_flags) && !is_erased(symbol_id, span)
+            }) {
+                removed.unset_bit(symbol_id.index());
+            } else {
+                removed.set_bit(symbol_id.index());
             }
         }
         self.remove_bindings_and_resolve_references_by_bits(&removed);
