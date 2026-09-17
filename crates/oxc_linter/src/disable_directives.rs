@@ -245,9 +245,10 @@ impl RuleCommentRule {
             .with_kind(FixKind::Suggestion);
         }
 
-        unreachable!(
-            "A `RuleCommentRule` should have another rule in the same directive, because only one rule should be RuleCommentType::All"
-        );
+        // Last remaining named rule: remove the whole directive comment.
+        // Named all-unused comments are `Single` so rule names appear in the
+        // diagnostic (#26764); only blanket `eslint-disable` stays `All`.
+        Fix::delete(comment_span).with_kind(FixKind::Suggestion)
     }
 
     fn previous_token_is_rule(&self, text: &str) -> bool {
@@ -420,7 +421,13 @@ impl DisableDirectives {
                     return None;
                 }
 
-                if rules.len() == group_vec.len() {
+                // Blanket `eslint-disable` (no rule names) stays `All` so the
+                // diagnostic remains the bare ESLint wording. Named directives
+                // that are entirely unused must stay `Single` so each rule is
+                // listed — collapsing them to `All` dropped the names (#26764).
+                let is_blanket_all = rules.iter().all(|rule| rule.rule_name == "all")
+                    && group_vec.iter().all(|interval| matches!(interval.val, DisabledRule::All { .. }));
+                if is_blanket_all {
                     return Some(DisableRuleComment {
                         directive_prefix: group_vec[0].val.directive_prefix(),
                         span: *comment_span,
@@ -1693,7 +1700,13 @@ mod tests {
                     );
                 }
 
-                assert_eq!(comment.r#type, RuleCommentType::All);
+                match &comment.r#type {
+                    RuleCommentType::Single(rules) => {
+                        let names: Vec<_> = rules.iter().map(|r| r.rule_name.as_str()).collect();
+                        assert_eq!(names, ["no-console", "no-debugger"]);
+                    }
+                    other => panic!("expected Single with named rules, got {other:?}"),
+                }
             },
         );
     }
@@ -1913,22 +1926,19 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "A `RuleCommentRule` should have another rule in the same directive, because only one rule should be RuleCommentType::All"
-    )]
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    fn test_rule_comment_rule_create_fix_panic() {
-        // This test is expected to panic because it is a standalone rule.
-        // Standalone rules should be `RuleCommentType::All`.
+    fn test_rule_comment_rule_create_fix_last_named_rule_deletes_comment() {
         let source_text = "// eslint-disable-next-line max-params";
         let comment_span = Span::new(0, source_text.len() as u32);
 
-        RuleCommentRule {
+        let fix = RuleCommentRule {
             directive_prefix: DirectivePrefix::Eslint,
             rule_name: "max-params".to_string(),
             name_span: Span::sized(28, 10),
         }
         .create_fix(source_text, comment_span);
+
+        assert_eq!(fix.span, comment_span);
     }
 
     #[test]
