@@ -650,11 +650,24 @@ impl Scoping {
         if removed.is_empty() {
             return;
         }
+        let allocator = Allocator::new();
+        let mut bits = BitSet::new_in(self.symbols_len(), &allocator);
+        for id in removed {
+            bits.set_bit(id.index());
+        }
+        self.remove_bindings_and_resolve_references_by_bits(&bits);
+    }
+
+    fn remove_bindings_and_resolve_references_by_bits(&mut self, removed: &BitSet<'_>) {
+        if removed.is_empty() {
+            return;
+        }
         self.cell.with_dependent_mut(|allocator, cell| {
             for bindings in &mut cell.bindings {
-                bindings.retain(|_, id| !removed.contains(id));
+                bindings.retain(|_, id| !removed.has_bit(id.index()));
             }
-            for &symbol_id in removed {
+            for index in removed.ones() {
+                let symbol_id = SymbolId::from_usize(index);
                 let name = cell.symbol_names[symbol_id.index()];
                 let reference_ids = mem::replace(
                     &mut cell.resolved_references[symbol_id.index()],
@@ -1210,16 +1223,19 @@ impl Scoping {
 
     /// Remove bindings that exist only in TypeScript syntax.
     pub fn delete_typescript_bindings(&mut self) {
-        self.delete_typescript_bindings_with(|_, _| false);
+        self.delete_typescript_bindings_with(|_, _| false, |_| false);
     }
 
     /// Remove TypeScript bindings and additional declarations erased by a transform.
     ///
     /// `is_erased` identifies declarations by symbol and binding span. All bindings
     /// are removed before any remaining value references are resolved again.
+    /// `is_reference_erased` identifies references in discarded syntax; these are
+    /// filtered together with type-only references in a single pass.
     pub fn delete_typescript_bindings_with(
         &mut self,
         mut is_erased: impl FnMut(SymbolId, Span) -> bool,
+        mut is_reference_erased: impl FnMut(ReferenceId) -> bool,
     ) {
         #[expect(
             clippy::inline_always,
@@ -1235,42 +1251,58 @@ impl Scoping {
 
         self.cell.with_dependent_mut(|_allocator, cell| {
             for reference_ids in &mut cell.resolved_references {
-                reference_ids
-                    .retain(|reference_id| !is_typescript_reference(&references[*reference_id]));
+                reference_ids.retain(|reference_id| {
+                    !is_typescript_reference(&references[*reference_id])
+                        && !is_reference_erased(*reference_id)
+                });
             }
 
             cell.root_unresolved_references.retain(|_name, reference_ids| {
-                reference_ids
-                    .retain(|reference_id| !is_typescript_reference(&references[*reference_id]));
+                reference_ids.retain(|reference_id| {
+                    !is_typescript_reference(&references[*reference_id])
+                        && !is_reference_erased(*reference_id)
+                });
                 !reference_ids.is_empty()
             });
         });
 
-        let mut removed = FxHashSet::default();
+        let allocator = Allocator::new();
+        let mut removed = BitSet::new_in(self.symbols_len(), &allocator);
+        let mut merged = BitSet::new_in(self.symbols_len(), &allocator);
+        for id in self.cell.borrow_dependent().symbol_redeclarations.keys() {
+            merged.set_bit(id.index());
+        }
+        let erased_flags = SymbolFlags::Ambient
+            | SymbolFlags::TypeAlias
+            | SymbolFlags::Interface
+            | SymbolFlags::TypeParameter
+            | SymbolFlags::EnumMember
+            | SymbolFlags::NamespaceModule;
         for index in 0..self.symbols_len() {
             let symbol_id = SymbolId::from_usize(index);
+            let flags = self.symbol_flags(symbol_id);
             // Enum lowering replaces member references with property accesses or
             // constants. They are not live references to a disappearing lexical binding.
-            if self.symbol_flags(symbol_id).contains(SymbolFlags::EnumMember) {
+            if flags.contains(SymbolFlags::EnumMember) {
                 self.cell.with_dependent_mut(|_, cell| {
-                    cell.resolved_references[symbol_id.index()].clear();
+                    cell.resolved_references[index].clear();
                 });
             }
-            if !self.retain_symbol_declarations(symbol_id, |span, flags| {
-                !is_erased(symbol_id, span)
-                    && !flags.intersects(
-                        SymbolFlags::Ambient
-                            | SymbolFlags::TypeAlias
-                            | SymbolFlags::Interface
-                            | SymbolFlags::TypeParameter
-                            | SymbolFlags::EnumMember
-                            | SymbolFlags::NamespaceModule,
-                    )
-            }) {
-                removed.insert(symbol_id);
+            // Most symbols have one declaration. Avoid looking up redeclaration
+            // metadata or promoting declarations on this path.
+            let survives = if merged.has_bit(index) {
+                self.retain_symbol_declarations(symbol_id, |span, flags| {
+                    !flags.intersects(erased_flags) && !is_erased(symbol_id, span)
+                })
+            } else {
+                !flags.intersects(erased_flags)
+                    && !is_erased(symbol_id, self.symbol_span(symbol_id))
+            };
+            if !survives {
+                removed.set_bit(index);
             }
         }
-        self.remove_bindings_and_resolve_references(&removed);
+        self.remove_bindings_and_resolve_references_by_bits(&removed);
     }
 }
 

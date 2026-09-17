@@ -107,3 +107,23 @@ fn cleanup_preserves_flags_introduced_by_lowering() {
     assert!(scoping.symbol_redeclarations(id).is_empty());
     assert_eq!(scoping.get_resolved_reference_ids(id).len(), 1);
 }
+
+#[test]
+fn erased_and_type_references_are_filtered_together() {
+    let tester = SemanticTester::ts("let x = 1; x; x; missing; missing; type T = typeof x;");
+    let mut scoping = tester.build().into_scoping();
+    let x = scoping.get_binding(scoping.root_scope_id(), "x".into()).unwrap();
+    let refs = scoping.get_resolved_reference_ids(x).to_vec();
+    assert_eq!(refs.len(), 3);
+    let missing = scoping.root_unresolved_references().get("missing").unwrap().to_vec();
+    let erased = FxHashSet::from_iter([refs[0], missing[0]]);
+    for _ in 0..2 {
+        scoping.delete_typescript_bindings_with(|_, _| false, |id| erased.contains(&id));
+        assert_eq!(scoping.get_resolved_reference_ids(x), [refs[1]]);
+        assert_eq!(
+            scoping.root_unresolved_references().get("missing").unwrap().as_slice(),
+            [missing[1]]
+        );
+        assert!(scoping.get_binding(scoping.root_scope_id(), "T".into()).is_none());
+    }
+}
