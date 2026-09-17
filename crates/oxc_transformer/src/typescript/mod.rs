@@ -1,6 +1,5 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
 use oxc_traverse::Traverse;
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -76,7 +75,7 @@ impl<'a> TypeScript<'a> {
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.source_type_is_typescript_definition {
-            cleanup::Erase(ctx).visit_program(program);
+            ctx.scoping_mut().clear_bindings_and_references();
             // Output empty file for TS definitions
             program.directives.clear();
             program.hashbang = None;
@@ -89,6 +88,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.source_type_is_typescript_definition {
+            return;
+        }
         self.annotations.exit_program(program, ctx);
         self.module.exit_program(program, ctx);
         std::mem::take(&mut ctx.state.typescript_cleanup).finish(ctx);

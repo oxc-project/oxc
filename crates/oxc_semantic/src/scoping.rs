@@ -1234,6 +1234,22 @@ impl Scoping {
         });
     }
 
+    /// Clear binding and reference indexes when an entire program is discarded.
+    /// Symbol, scope, and reference table IDs remain stable. References in erased
+    /// syntax are discarded from the indexes, rather than made unresolved.
+    pub fn clear_bindings_and_references(&mut self) {
+        self.cell.with_dependent_mut(|_, cell| {
+            for bindings in &mut cell.bindings {
+                bindings.clear();
+            }
+            for references in &mut cell.resolved_references {
+                references.clear();
+            }
+            cell.root_unresolved_references.clear();
+            cell.symbol_redeclarations.clear();
+        });
+    }
+
     /// Remove bindings that exist only in TypeScript syntax.
     pub fn delete_typescript_bindings(&mut self) {
         self.delete_typescript_bindings_with(&Allocator::new(), |_, _| false, |_| false);

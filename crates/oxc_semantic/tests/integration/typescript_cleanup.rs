@@ -141,3 +141,24 @@ fn erased_and_type_references_are_filtered_together() {
         assert!(scoping.get_binding(scoping.root_scope_id(), "T".into()).is_none());
     }
 }
+
+#[test]
+fn discarded_program_clears_indexes_without_changing_ids() {
+    let tester = SemanticTester::ts("declare var x: number; var x = 1; { let y = x; y; missing; }");
+    let mut scoping = tester.build().into_scoping();
+    let symbols = scoping.symbols_len();
+    let scopes = scoping.scopes_len();
+    let references = scoping.references_len();
+    for _ in 0..2 {
+        scoping.clear_bindings_and_references();
+        assert_eq!(scoping.symbols_len(), symbols);
+        assert_eq!(scoping.scopes_len(), scopes);
+        assert_eq!(scoping.references_len(), references);
+        assert!(scoping.iter_bindings().all(|(_, bindings)| bindings.is_empty()));
+        assert!(scoping.symbol_ids().all(|id| {
+            scoping.get_resolved_reference_ids(id).is_empty()
+                && scoping.symbol_redeclarations(id).is_empty()
+        }));
+        assert!(scoping.root_unresolved_references().is_empty());
+    }
+}
