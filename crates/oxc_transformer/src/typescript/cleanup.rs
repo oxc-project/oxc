@@ -26,19 +26,22 @@ impl TypeScriptCleanup {
         for (id, _) in &self.declarations {
             erased_symbols.set_bit(id.index());
         }
-        let mut erased_references = BitSet::new_in(
-            if self.references.is_empty() { 0 } else { scoping.references_len() },
-            allocator,
-        );
-        for id in self.references {
-            erased_references.set_bit(id.index());
+        let is_erased = |id: SymbolId, span| {
+            erased_symbols.contains(id.index()) && self.declarations.contains(&(id, span))
+        };
+        if self.references.is_empty() {
+            // Most files erase only type references, which scoping already filters.
+            // Specialize this path to avoid an extra lookup for every value reference.
+            scoping.delete_typescript_bindings_with(is_erased, |_| false);
+        } else {
+            let mut erased_references = BitSet::new_in(scoping.references_len(), allocator);
+            for id in self.references {
+                erased_references.set_bit(id.index());
+            }
+            scoping.delete_typescript_bindings_with(is_erased, |id| {
+                erased_references.contains(id.index())
+            });
         }
-        scoping.delete_typescript_bindings_with(
-            |id, span| {
-                erased_symbols.contains(id.index()) && self.declarations.contains(&(id, span))
-            },
-            |id| erased_references.contains(id.index()),
-        );
     }
 }
 
