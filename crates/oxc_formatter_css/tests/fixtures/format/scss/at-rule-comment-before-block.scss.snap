@@ -5,7 +5,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 // A comment glued to the end of a prelude stays on that line; a `//` there ends the line,
 // so `{` starts the next one. Own-line comments keep their line before the `{`.
 // Prettier agrees for `@page` / `@keyframes` / `@font-face` / `@if`, but moves the `//`
-// past the `{` for `@media` / `@supports` / `@mixin` / `@include` (`{ // c`, DIVERGENCES.md "line-comment-before-block").
+// past the `{` for `@media` / `@supports` / `@mixin` / `@include` (`{ // c`, DIVERGENCES.md#line-comment-before-block).
 @page :first // c
 {
   margin: 1px;
@@ -74,7 +74,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 // A comment glued to the end of a prelude stays on that line; a `//` there ends the line,
 // so `{` starts the next one. Own-line comments keep their line before the `{`.
 // Prettier agrees for `@page` / `@keyframes` / `@font-face` / `@if`, but moves the `//`
-// past the `{` for `@media` / `@supports` / `@mixin` / `@include` (`{ // c`, DIVERGENCES.md "line-comment-before-block").
+// past the `{` for `@media` / `@supports` / `@mixin` / `@include` (`{ // c`, DIVERGENCES.md#line-comment-before-block).
 @page :first // c
 {
   margin: 1px;
@@ -142,7 +142,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 // A comment glued to the end of a prelude stays on that line; a `//` there ends the line,
 // so `{` starts the next one. Own-line comments keep their line before the `{`.
 // Prettier agrees for `@page` / `@keyframes` / `@font-face` / `@if`, but moves the `//`
-// past the `{` for `@media` / `@supports` / `@mixin` / `@include` (`{ // c`, DIVERGENCES.md "line-comment-before-block").
+// past the `{` for `@media` / `@supports` / `@mixin` / `@include` (`{ // c`, DIVERGENCES.md#line-comment-before-block).
 @page :first // c
 {
   margin: 1px;
