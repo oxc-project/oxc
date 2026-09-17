@@ -36,7 +36,7 @@ const sources = [
     repo: "sveltejs/prettier-plugin-svelte/test/formatting/samples",
     version: `prettier-plugin-svelte@${pkg.dependencies["prettier-plugin-svelte"]}`,
   },
-  // gjs/gts. The plugin is a dev-only conformance oracle, not a runtime dependency:
+  // gjs/gts. The plugin is only the dev-time reference output, not a runtime dependency:
   // Oxfmt formats these files itself.
   {
     name: "plugin-ember-template-tag",

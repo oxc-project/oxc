@@ -84,7 +84,7 @@ pub enum Route {
     /// the pure build preserves it as-is.
     Prettier(PrettierLanguage),
     /// An Ember template tag: the `<template>` … `</template>` wrapper is ours to print,
-    /// the body inside it is Handlebars and goes to [`PrettierLanguage::Glimmer`].
+    /// the body inside it is Glimmer and goes to [`PrettierLanguage::Glimmer`].
     EmberTemplateTag,
     /// No formatter anywhere: the part deliberately stays as-is in every build.
     Unsupported,
@@ -384,7 +384,7 @@ fn format_native<'a, E: std::fmt::Display>(
 }
 
 /// Print one Ember template tag: our `<template>` … `</template>` wrapper around the
-/// Handlebars body, which Prettier's `glimmer` formats.
+/// Glimmer body, which Prettier's `glimmer` formats.
 ///
 /// The wrapper is printed here rather than by the glimmer formatter because glimmer also
 /// serves bare `.hbs`, which has no wrapper. Anything that stops the body being formatted
@@ -454,9 +454,9 @@ fn has_element_tag(body: &str) -> bool {
     body.split_once('<').is_some_and(|(_, rest)| rest.contains('>'))
 }
 
-/// Force whatever group holds a Handlebars comment to break.
+/// Force whatever group holds a Glimmer comment to break.
 ///
-/// Prettier's Handlebars printer keeps `{{! … }}` inline while it fits, which parks a
+/// Prettier's `glimmer` printer keeps `{{! … }}` inline while it fits, which parks a
 /// comment on the same line as the attributes it annotates and detaches directives like
 /// `{{! @glint-expect-error }}` from the attribute they refer to. An `ExpandParent` beside
 /// the comment makes the enclosing group break, which is the layout

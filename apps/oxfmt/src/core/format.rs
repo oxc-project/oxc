@@ -708,9 +708,6 @@ impl SourceFormatter {
     }
 }
 
-/// The JS root's session wiring (registry dispatcher installed / off-gate honored),
-/// which the registry-level tests in `embed::dispatcher` cannot see.
-/// The napi build runs on `ExternalServices::dummy()` (native branches never call JS).
 /// Identifies a stand-in for an island. Must stay short enough to fit the smallest island
 /// any registry row can report, today an Ember `<template></template>` at 21 bytes.
 const ISLAND_PLACEHOLDER: &str = "__oxfmtIsland";
@@ -786,6 +783,9 @@ fn has_leaked_placeholder(code: &str) -> bool {
     code.contains(ISLAND_PLACEHOLDER)
 }
 
+/// The JS root's session wiring (registry dispatcher installed / off-gate honored),
+/// which the registry-level tests in `embed::dispatcher` cannot see.
+/// The napi build runs on `ExternalServices::dummy()` (native branches never call JS).
 #[cfg(test)]
 mod tests {
     use super::*;

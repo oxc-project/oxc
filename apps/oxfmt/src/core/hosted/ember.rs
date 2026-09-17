@@ -4,8 +4,8 @@
 //! The grammar is narrow, as verified against `content-tag` (the reference preprocessor):
 //!
 //! - the open tag is exactly `<template>`; attributes and self-closing forms are errors
-//! - the first `</template>` always closes it, even inside an attribute, a Handlebars
-//!   string, or a comment, so the body needs no Handlebars knowledge to delimit
+//! - the first `</template>` always closes it, even inside an attribute, a mustache,
+//!   or a comment, so the body needs no Glimmer knowledge to delimit
 //! - tags do not nest
 //!
 //! What the scan does need is JavaScript lexical state, so that a `<template>` inside a
@@ -342,7 +342,7 @@ mod tests {
 
     #[test]
     fn preserves_body_verbatim() {
-        // The body is Handlebars and must not be interpreted while delimiting.
+        // The body is Glimmer and must not be interpreted while delimiting.
         let source = "<template>\n  <div class=\"a\">{{x}}</div>\n</template>";
         assert_eq!(scan_text(source)[0].1, "\n  <div class=\"a\">{{x}}</div>\n");
     }
@@ -350,9 +350,35 @@ mod tests {
     #[test]
     fn first_close_tag_wins() {
         // Verified against content-tag: a `</template>` inside the body still closes,
-        // which is why the scan needs no Handlebars knowledge.
+        // which is why the scan needs no Glimmer knowledge.
         let source = r#"<template><div title="</template>"></div></template>"#;
         assert_eq!(scan_text(source)[0].0, r#"<template><div title="</template>"#);
+    }
+
+    #[test]
+    fn first_close_tag_wins_inside_glimmer_syntax() {
+        // content-tag rejects each of these files: the inner `</template>` closes the tag and
+        // leaves the rest to the JavaScript parser. The scan ends the tag at the same place.
+        for (source, tag) in [
+            (
+                "<template>{{!-- <template></template> --}}</template>",
+                "<template>{{!-- <template></template>",
+            ),
+            ("<template>{{ </template> }}</template>", "<template>{{ </template>"),
+            (
+                r#"<template><template shadowrootmode="open"></template></template>"#,
+                r#"<template><template shadowrootmode="open"></template>"#,
+            ),
+        ] {
+            assert_eq!(scan_text(source)[0].0, tag, "wrong tag end in: {source}");
+        }
+    }
+
+    #[test]
+    fn open_tag_in_body_does_not_nest() {
+        // Accepted by content-tag: only a close tag ends the body.
+        let source = "<template>{{! <template> }}</template>";
+        assert_eq!(scan_text(source), [(source, "{{! <template> }}")]);
     }
 
     #[test]

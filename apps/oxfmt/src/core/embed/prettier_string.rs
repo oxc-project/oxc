@@ -58,8 +58,8 @@ pub fn build_string_embedder(
             Route::Prettier(prettier_language) => prettier_language.parser(),
             // NOTE: Do not return `Ok(original)` here.
             // We need to keep unsupported content as-is.
-            // A template tag is a whole-file construct, not a fence language, so it joins
-            // the unsupported arm rather than getting a fence spelling of its own.
+            // `ember-template-tag` names a `<template>` island inside a `.gjs`/`.gts` host,
+            // not a fence language; a `gjs`/`gts` fence would need the whole hosted pipeline.
             Route::EmberTemplateTag | Route::Unsupported => {
                 return Err(format!("Unsupported language: {language}"));
             }

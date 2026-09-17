@@ -89,7 +89,7 @@ export interface Oxfmtrc {
    * Pass `true` to enable them, or `false` (handy in overrides) / omit to disable.
    * The JavaScript is formatted by Oxfmt itself, so `sortImports`,
    * `oxfmt-ignore` and the rest apply inside these files; each `<template>` body is
-   * formatted as Handlebars.
+   * formatted as Glimmer.
    *
    * - Languages: Ember Template Tag
    * - Default: Disabled
@@ -438,7 +438,7 @@ export interface FormatConfig {
    * Pass `true` to enable them, or `false` (handy in overrides) / omit to disable.
    * The JavaScript is formatted by Oxfmt itself, so `sortImports`,
    * `oxfmt-ignore` and the rest apply inside these files; each `<template>` body is
-   * formatted as Handlebars.
+   * formatted as Glimmer.
    *
    * - Languages: Ember Template Tag
    * - Default: Disabled
