@@ -1,8 +1,5 @@
 # externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue
 
-> `<T = any,>` comma removed like plain `.ts`. See apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
-> union out of its `:`/`as` position expands to leading-`|` right away. See crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
-
 ## Option 1
 
 `````json
