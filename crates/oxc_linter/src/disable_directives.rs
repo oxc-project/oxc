@@ -426,7 +426,9 @@ impl DisableDirectives {
                 // that are entirely unused must stay `Single` so each rule is
                 // listed — collapsing them to `All` dropped the names (#26764).
                 let is_blanket_all = rules.iter().all(|rule| rule.rule_name == "all")
-                    && group_vec.iter().all(|interval| matches!(interval.val, DisabledRule::All { .. }));
+                    && group_vec
+                        .iter()
+                        .all(|interval| matches!(interval.val, DisabledRule::All { .. }));
                 if is_blanket_all {
                     return Some(DisableRuleComment {
                         directive_prefix: group_vec[0].val.directive_prefix(),
