@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# DIVERGENCE (prettier#15528): a blank line right after a node is preserved
+# DIVERGENCE (DIVERGENCES.md#blank-lines; prettier#15528): a blank line right after a node is preserved
 # (normalized to one) for every node kind alike, and never invented.
 - a
 - b
@@ -32,7 +32,7 @@ last: value # trailing
 ------------------
 { printWidth: 80 }
 ------------------
-# DIVERGENCE (prettier#15528): a blank line right after a node is preserved
+# DIVERGENCE (DIVERGENCES.md#blank-lines; prettier#15528): a blank line right after a node is preserved
 # (normalized to one) for every node kind alike, and never invented.
 - a
 - b
@@ -58,7 +58,7 @@ last: value # trailing
 -------------------
 { printWidth: 100 }
 -------------------
-# DIVERGENCE (prettier#15528): a blank line right after a node is preserved
+# DIVERGENCE (DIVERGENCES.md#blank-lines; prettier#15528): a blank line right after a node is preserved
 # (normalized to one) for every node kind alike, and never invented.
 - a
 - b

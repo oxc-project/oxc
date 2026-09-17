@@ -610,17 +610,18 @@ impl<'a> PeepholeOptimizations {
                     Self::minimize_statements(&mut body, ctx);
                     let span =
                         if body.is_empty() { if_stmt.consequent.span() } else { body[0].span() };
-                    let test = if_stmt.unbox().test;
-                    let test = Self::minimize_not(test.span(), test, ctx, true);
+                    ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
+                        Self::minimize_not(test.span(), test, ctx, true)
+                    });
                     let consequent = if body.len() == 1 {
                         body.remove(0)
                     } else {
                         let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
                         Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
                     };
-                    let mut if_stmt = IfStatement::new(test.span(), test, consequent, None, ctx);
-                    let if_stmt = Self::try_minimize_if(&mut if_stmt, ctx)
-                        .unwrap_or_else(|| Statement::IfStatement(ArenaBox::new_in(if_stmt, ctx)));
+                    ctx.replace_statement(&mut if_stmt.consequent, consequent);
+                    let mut if_stmt = Statement::IfStatement(if_stmt);
+                    Self::try_minimize_if(&mut if_stmt, ctx);
                     ctx.notice_change();
                     Self::minimize_statement(if_stmt, stmts, result, ctx);
                     return;

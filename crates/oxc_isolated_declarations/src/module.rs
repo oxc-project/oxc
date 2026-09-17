@@ -1,7 +1,7 @@
 use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::Str;
+use oxc_str::{Ident, Str};
 
 use crate::{IsolatedDeclarations, diagnostics::default_export_inferred};
 
@@ -43,13 +43,13 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn create_unique_name(&self, name: &str) -> Str<'a> {
-        let mut binding = Str::from_str_in(name, self);
+        let mut binding = Ident::from_str_in(name, self);
         let mut i = 1;
-        while self.scope.has_reference(&binding) {
-            binding = Str::from_str_in(format!("{name}_{i}").as_str(), self);
+        while self.scope.has_reference(binding) {
+            binding = Ident::from_str_in(format!("{name}_{i}").as_str(), self);
             i += 1;
         }
-        binding
+        binding.into()
     }
 
     pub(crate) fn transform_export_default_declaration(
@@ -157,13 +157,13 @@ impl<'a> IsolatedDeclarations<'a> {
         specifiers.iter().for_each(|specifier| {
             let is_referenced = match specifier {
                 ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                    self.scope.has_reference(&specifier.local.name)
+                    self.scope.has_reference(specifier.local.name)
                 }
                 ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                    self.scope.has_reference(&specifier.local.name)
+                    self.scope.has_reference(specifier.local.name)
                 }
                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                    self.scope.has_reference(&specifier.name())
+                    self.scope.has_reference(specifier.name())
                 }
             };
             if is_referenced {

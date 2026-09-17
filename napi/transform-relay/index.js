@@ -7,6 +7,10 @@ const require = createRequire(import.meta.url)
 
 const { readFileSync } = require('fs')
 let nativeBinding = null
+// Which artifact actually loaded. The WASI fallback chain overwrites it with
+// the flavor it resolved; the late native retry below leaves it alone because
+// it only runs while no WASI candidate has been loaded.
+let __napiLoadedBindingTarget = 'native'
 const loadErrors = []
 
 const isMusl = () => {
@@ -65,7 +69,16 @@ const isMuslFromChildProcess = () => {
 function requireNative() {
   if (process.env.NAPI_RS_NATIVE_LIBRARY_PATH) {
     try {
-      return require(process.env.NAPI_RS_NATIVE_LIBRARY_PATH)
+      const overrideBinding = require(process.env.NAPI_RS_NATIVE_LIBRARY_PATH)
+      // The override may be a generated WASI loader, which already reports its
+      // own flavor. Adopt it: `module.exports` aliases this object, so claiming
+      // 'native' would both misreport the artifact and overwrite the loader's
+      // marker through the alias.
+      __napiLoadedBindingTarget =
+        overrideBinding && typeof overrideBinding.__napiBindingTarget === 'string'
+          ? overrideBinding.__napiBindingTarget
+          : 'native'
+      return overrideBinding
     } catch (err) {
       loadErrors.push(err)
     }
@@ -79,8 +92,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-android-arm64')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-android-arm64/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -95,8 +108,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-android-arm-eabi')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-android-arm-eabi/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -116,8 +129,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-win32-x64-gnu')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-win32-x64-gnu/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -132,8 +145,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-win32-x64-msvc')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-win32-x64-msvc/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -149,8 +162,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-win32-ia32-msvc')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-win32-ia32-msvc/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -165,8 +178,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-win32-arm64-msvc')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-win32-arm64-msvc/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -184,8 +197,8 @@ function requireNative() {
     try {
       const binding = require('@oxc-transform-relay/binding-darwin-universal')
       const bindingPackageVersion = require('@oxc-transform-relay/binding-darwin-universal/package.json').version
-      if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-        throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+      if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
       }
       return binding
     } catch (e) {
@@ -200,8 +213,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-darwin-x64')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-darwin-x64/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -216,8 +229,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-darwin-arm64')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-darwin-arm64/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -236,8 +249,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-freebsd-x64')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-freebsd-x64/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -252,8 +265,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-freebsd-arm64')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-freebsd-arm64/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -273,8 +286,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-linux-x64-musl')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-x64-musl/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -289,8 +302,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-linux-x64-gnu')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-x64-gnu/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -307,8 +320,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-linux-arm64-musl')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-arm64-musl/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -323,8 +336,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-linux-arm64-gnu')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-arm64-gnu/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -341,8 +354,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-linux-arm-musleabihf')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-arm-musleabihf/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -357,8 +370,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-linux-arm-gnueabihf')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-arm-gnueabihf/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -375,8 +388,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-linux-loong64-musl')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-loong64-musl/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -391,8 +404,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-linux-loong64-gnu')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-loong64-gnu/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -409,8 +422,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-linux-riscv64-musl')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-riscv64-musl/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -425,8 +438,8 @@ function requireNative() {
         try {
           const binding = require('@oxc-transform-relay/binding-linux-riscv64-gnu')
           const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-riscv64-gnu/package.json').version
-          if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -442,8 +455,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-linux-ppc64-gnu')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-ppc64-gnu/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -458,8 +471,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-linux-s390x-gnu')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-linux-s390x-gnu/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -478,8 +491,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-openharmony-arm64')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-openharmony-arm64/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -494,8 +507,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-openharmony-x64')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-openharmony-x64/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -510,8 +523,8 @@ function requireNative() {
       try {
         const binding = require('@oxc-transform-relay/binding-openharmony-arm')
         const bindingPackageVersion = require('@oxc-transform-relay/binding-openharmony-arm/package.json').version
-        if (bindingPackageVersion !== '0.149.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.150.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -630,6 +643,7 @@ if (!nativeBinding || forceWasi) {
       if (!candidateFailed) {
         wasiBinding = require('./transform-relay.wasi.cjs')
         nativeBinding = wasiBinding
+        __napiLoadedBindingTarget = 'wasm32-wasi'
         wasiBindingLoaded = true
       }
     } catch (err) {
@@ -650,12 +664,13 @@ if (!nativeBinding || forceWasi) {
       if (!candidateFailed) {
         if (process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           const bindingPackageVersion = require('@oxc-transform-relay/binding-wasm32-wasi/package.json').version
-          if (bindingPackageVersion !== '0.149.0') {
-            throw new Error(`WASI binding package version mismatch, expected 0.149.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.150.0') {
+            throw new Error(`WASI binding package version mismatch, expected 0.150.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
         }
         wasiBinding = require('@oxc-transform-relay/binding-wasm32-wasi')
         nativeBinding = wasiBinding
+        __napiLoadedBindingTarget = 'wasm32-wasi'
         wasiBindingLoaded = true
       }
     } catch (err) {
@@ -713,3 +728,4 @@ const { Severity, transform, transformSync } = nativeBinding
 export { Severity }
 export { transform }
 export { transformSync }
+export const __napiBindingTarget = __napiLoadedBindingTarget

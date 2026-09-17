@@ -587,7 +587,12 @@ impl CliRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
             oxlint_suppression_file_action,
-            rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
+            rule_timings: rule_timing_store.as_ref().map(|store| {
+                crate::output_formatter::RuleTimings {
+                    records: store.collect(),
+                    js_plugin_runtime: store.js_plugin_runtime(),
+                }
+            }),
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -2061,6 +2066,12 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_tuple_rules".into())
             .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_no_js_runtime() {
+        let args = &[];
+        Tester::new().with_cwd("fixtures/cli/no_js_runtime".into()).test_and_snapshot(args);
     }
 }
 

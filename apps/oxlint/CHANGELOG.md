@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.83.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- 72bc7f2 oxlint: Replace backlashes path for "no js runtime" diagnostic (#26599) (Sysix)
+
 ## [1.82.0] - 2026-09-07
 
 ### 🚀 Features

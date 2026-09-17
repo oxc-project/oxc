@@ -1,7 +1,40 @@
 parser_misc Summary:
-AST Parsed     : 107/107 (100.00%)
-Positive Passed: 107/107 (100.00%)
-Negative Passed: 215/215 (100.00%)
+AST Parsed     : 111/111 (100.00%)
+Positive Passed: 111/111 (100.00%)
+Negative Passed: 234/234 (100.00%)
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
+ 1 │ abstract class C { abstract accessor x(): void; }
+   ·                             ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-async-method.ts:1:11]
+ 1 │ class C { accessor async x() {} }
+   ·           ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-getter.ts:1:18]
+ 1 │ class C { static accessor get x() { return 0; } }
+   ·                  ────────
+   ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-method.ts:1:18]
+ 1 │ class C { static accessor x() {} }
+   ·                  ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-setter.ts:1:18]
+ 1 │ class C { static accessor set x(value: number) {} }
+   ·                  ────────
+   ╰────
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -705,6 +738,27 @@ Negative Passed: 215/215 (100.00%)
  3 │ }
    ╰────
 
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x = 0;;);
+   ·               ┬
+   ·               ╰── `;` expected
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-in-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x in {});
+   ·               ┬
+   ·               ╰── `;` expected
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-of-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x of []);
+   ·               ┬
+   ·               ╰── `;` expected
+   ╰────
+
   × The left-hand side of a for...in statement cannot be an using declaration.
    ╭─[misc/fail/for-using-in-initializer.js:1:6]
  1 │ for (using x = a in b;;);
@@ -880,6 +934,62 @@ Negative Passed: 215/215 (100.00%)
  1 │ import defer 'module';
    ·              ────┬───
    ·                  ╰── `from` expected
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-abstract-type-require.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ abstract import type X = require("external");
+   · ────────
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-abstract.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ abstract import X = A.B;
+   · ────────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-declare-abstract.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ declare abstract import X = A.B;
+   · ───────
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-declare-abstract.ts:2:9]
+ 1 │ namespace A { export class B {} }
+ 2 │ declare abstract import X = A.B;
+   ·         ────────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-declare-require.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ declare import X = require("external");
+   · ───────
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-export-abstract.ts:2:8]
+ 1 │ namespace A { export class B {} }
+ 2 │ export abstract import X = A.B;
+   ·        ────────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-export-declare-type-require.ts:2:8]
+ 1 │ namespace A { export class B {} }
+ 2 │ export declare import type X = require("external");
+   ·        ───────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-export-declare.ts:2:8]
+ 1 │ namespace A { export class B {} }
+ 2 │ export declare import X = A.B;
+   ·        ───────
    ╰────
 
   × Identifier expected. 'this' is a reserved word that cannot be used here.
@@ -4742,6 +4852,32 @@ Negative Passed: 215/215 (100.00%)
  1 │ class A {constructor(public constructor){}}
  2 │ class B {constructor(readonly constructor){}}
    ·                               ───────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-ambient.ts:1:19]
+ 1 │ declare class C { readonly constructor(); }
+   ·                   ────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-overload.ts:2:3]
+ 1 │ class C {
+ 2 │   readonly constructor(value: number);
+   ·   ────────
+ 3 │   constructor(value: number) {}
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-quoted.ts:1:18]
+ 1 │ class C { public readonly "constructor"() {} }
+   ·                  ────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor.ts:1:11]
+ 1 │ class C { readonly constructor() {} }
+   ·           ────────
    ╰────
 
   × Invalid rest element target in destructuring assignment

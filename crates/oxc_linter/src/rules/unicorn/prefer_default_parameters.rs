@@ -70,9 +70,6 @@ impl Rule for PreferDefaultParameters {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator != AssignmentOperator::Assign {
-                    return;
-                }
                 if let AssignmentTarget::AssignmentTargetIdentifier(left_ident) = &assign_expr.left
                 {
                     let statement_span = ctx
@@ -81,15 +78,31 @@ impl Rule for PreferDefaultParameters {
                         .kind()
                         .as_expression_statement()
                         .map(|stmt| stmt.span);
-                    check_expression(
-                        ctx,
-                        node,
-                        &left_ident.name,
-                        &assign_expr.right,
-                        true,
-                        assign_expr.span,
-                        statement_span,
-                    );
+                    match assign_expr.operator {
+                        AssignmentOperator::Assign => {
+                            check_expression(
+                                ctx,
+                                node,
+                                &left_ident.name,
+                                &assign_expr.right,
+                                true,
+                                assign_expr.span,
+                                statement_span,
+                            );
+                        }
+                        AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish => {
+                            check_logical_assignment(
+                                ctx,
+                                node,
+                                &left_ident.name,
+                                left_ident.span,
+                                &assign_expr.right,
+                                assign_expr.span,
+                                statement_span,
+                            );
+                        }
+                        _ => {}
+                    }
                 }
             }
             AstKind::VariableDeclaration(var_decl) => {
@@ -117,6 +130,32 @@ impl Rule for PreferDefaultParameters {
     }
 }
 
+fn check_logical_assignment<'a>(
+    ctx: &LintContext<'a>,
+    node: &AstNode<'a>,
+    left_name: &str,
+    left_span: Span,
+    right: &Expression<'a>,
+    stmt_span: Span,
+    statement_span: Option<Span>,
+) {
+    if !right.get_inner_expression().is_literal() {
+        return;
+    }
+    check_parameter_default(
+        ctx,
+        node,
+        left_name,
+        left_name,
+        ctx.source_range(right.span()),
+        true,
+        stmt_span,
+        statement_span,
+        Some(left_span),
+        true,
+    );
+}
+
 fn check_expression<'a>(
     ctx: &LintContext<'a>,
     node: &AstNode<'a>,
@@ -139,7 +178,6 @@ fn check_expression<'a>(
     };
 
     let param_name = param_ident.name.as_str();
-    let default_value_text = ctx.source_range(logical_expr.right.span());
     if !logical_expr.right.get_inner_expression().is_literal() {
         return;
     }
@@ -148,6 +186,32 @@ fn check_expression<'a>(
         return;
     }
 
+    check_parameter_default(
+        ctx,
+        node,
+        param_name,
+        left_name,
+        ctx.source_range(logical_expr.right.span()),
+        is_assignment,
+        stmt_span,
+        statement_span,
+        Some(param_ident.span),
+        false,
+    );
+}
+
+fn check_parameter_default<'a>(
+    ctx: &LintContext<'a>,
+    node: &AstNode<'a>,
+    param_name: &str,
+    left_name: &str,
+    default_value_text: &str,
+    is_assignment: bool,
+    stmt_span: Span,
+    statement_span: Option<Span>,
+    param_ident_span: Option<Span>,
+    logical_assignment: bool,
+) {
     let Some((function_id, function_body_id)) = find_enclosing_function(ctx, node) else {
         return;
     };
@@ -185,11 +249,18 @@ fn check_expression<'a>(
         return;
     }
 
-    if is_assignment {
-        if !check_no_extra_references_assignment(ctx, param_ident.span, param) {
+    let Some(read_span) = param_ident_span else {
+        return;
+    };
+    if logical_assignment {
+        if !check_logical_assignment_is_first_reference(ctx, read_span, param) {
             return;
         }
-    } else if !check_no_extra_references(ctx, param_ident.span, param) {
+    } else if is_assignment {
+        if !check_no_extra_references_assignment(ctx, read_span, param) {
+            return;
+        }
+    } else if !check_no_extra_references(ctx, read_span, param) {
         return;
     }
 
@@ -439,6 +510,23 @@ fn check_no_extra_references_assignment<'a>(
     writes == 1 && has_matching_read
 }
 
+fn check_logical_assignment_is_first_reference<'a>(
+    ctx: &LintContext<'a>,
+    param_ident_span: Span,
+    param: &FormalParameter<'a>,
+) -> bool {
+    let BindingPattern::BindingIdentifier(binding_ident) = &param.pattern else {
+        return false;
+    };
+
+    let symbol_id = binding_ident.symbol_id();
+    let Some(reference_id) = ctx.scoping().get_resolved_reference_ids(symbol_id).first() else {
+        return false;
+    };
+
+    ctx.semantic().reference_span(ctx.scoping().get_reference(*reference_id)) == param_ident_span
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -608,6 +696,11 @@ fn test() {
                     value = value ?? '';
                 }
             };",
+        r"function example(value) {
+    const before = value;
+    value ||= false;
+    return before;
+}",
     ];
 
     let fail = vec![
@@ -729,6 +822,19 @@ fn test() {
         r"function abc(foo) {
     const bar = function() {};
     foo = foo || 123;
+}",
+        r"function example(value) {
+    value ??= false;
+    return value;
+}",
+        r"function example(value) {
+    value ||= false;
+    return value;
+}",
+        r"function example(value) {
+    value ||= false;
+    value = true;
+    return value;
 }",
     ];
 
@@ -991,6 +1097,35 @@ bar(); baz();
 }",
             r"function abc(foo = 123) {
     const bar = function() {};
+}",
+        ),
+        (
+            r"function example(value) {
+    value ??= false;
+    return value;
+}",
+            r"function example(value = false) {
+    return value;
+}",
+        ),
+        (
+            r"function example(value) {
+    value ||= false;
+    return value;
+}",
+            r"function example(value = false) {
+    return value;
+}",
+        ),
+        (
+            r"function example(value) {
+    value ||= false;
+    value = true;
+    return value;
+}",
+            r"function example(value = false) {
+    value = true;
+    return value;
 }",
         ),
         (

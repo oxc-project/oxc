@@ -4,6 +4,7 @@ use std::{
     sync::{Arc, mpsc},
 };
 
+use cow_utils::CowUtils;
 use ignore::DirEntry;
 
 use oxc_config::{
@@ -709,7 +710,7 @@ pub fn build_nested_configs(
 fn js_config_not_supported_diagnostic(path: &Path) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "JavaScript/TypeScript config file ({}) found but JS runtime not available.",
-        path.display()
+        path.to_string_lossy().cow_replace('\\', "/")
     ))
     .with_help("Run oxlint via the npm package, or use JSON config files (.oxlintrc.json or .oxlintrc.jsonc).")
 }
