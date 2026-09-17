@@ -99,13 +99,13 @@ impl<'a> PeepholeOptimizations {
                 _ => {}
             }
         }
-        if !left.is_boolean() || !e.operator.is_equality() || e.right.may_have_side_effects(ctx) {
+        if !left.is_boolean() || e.right.may_have_side_effects(ctx) {
             return;
         }
         let Some(mut b) = e.right.evaluate_value(ctx).and_then(ConstantValue::into_boolean) else {
             return;
         };
-        if matches!(e.operator, BinaryOperator::Inequality | BinaryOperator::StrictInequality) {
+        if matches!(e.operator, BinaryOperator::Inequality) {
             b = !b;
         }
 
