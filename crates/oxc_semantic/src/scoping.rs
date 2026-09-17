@@ -1260,25 +1260,6 @@ impl Scoping {
             (flags.is_type() && !flags.is_value()) || flags.is_value_as_type()
         }
 
-        let references = &self.references;
-
-        self.cell.with_dependent_mut(|_allocator, cell| {
-            for reference_ids in &mut cell.resolved_references {
-                reference_ids.retain(|reference_id| {
-                    !is_typescript_reference(&references[*reference_id])
-                        && !is_reference_erased(*reference_id)
-                });
-            }
-
-            cell.root_unresolved_references.retain(|_name, reference_ids| {
-                reference_ids.retain(|reference_id| {
-                    !is_typescript_reference(&references[*reference_id])
-                        && !is_reference_erased(*reference_id)
-                });
-                !reference_ids.is_empty()
-            });
-        });
-
         let allocator = Allocator::new();
         let mut removed = BitSet::new_in(self.symbols_len(), &allocator);
         let mut merged = BitSet::new_in(self.symbols_len(), &allocator);
@@ -1291,27 +1272,46 @@ impl Scoping {
             | SymbolFlags::TypeParameter
             | SymbolFlags::EnumMember
             | SymbolFlags::NamespaceModule;
-        for index in 0..self.symbols_len() {
-            let symbol_id = SymbolId::from_usize(index);
-            let flags = self.symbol_flags(symbol_id);
-            // Enum lowering replaces member references with property accesses or
-            // constants. They are not live references to a disappearing lexical binding.
-            if flags.contains(SymbolFlags::EnumMember) {
-                self.cell.with_dependent_mut(|_, cell| {
-                    cell.resolved_references[index].clear();
-                });
+        let references = &self.references;
+        let symbols = &self.symbol_table;
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            // Filter references and classify single declarations together. Merged
+            // declarations need promotion and are handled separately below.
+            for (index, reference_ids) in cell.resolved_references.iter_mut().enumerate() {
+                let symbol_id = SymbolId::from_usize(index);
+                let flags = *symbols.symbol_flags(symbol_id);
+                // Enum lowering replaces member references with property accesses or
+                // constants. None need filtering or lexical reference repair.
+                if flags.contains(SymbolFlags::EnumMember) {
+                    reference_ids.clear();
+                } else {
+                    reference_ids.retain(|reference_id| {
+                        !is_typescript_reference(&references[*reference_id])
+                            && !is_reference_erased(*reference_id)
+                    });
+                }
+                if !merged.has_bit(index)
+                    && (flags.intersects(erased_flags)
+                        || is_erased(symbol_id, *symbols.symbol_spans(symbol_id)))
+                {
+                    removed.set_bit(index);
+                }
             }
-            // Most symbols have one declaration. Avoid looking up redeclaration
-            // metadata or promoting declarations on this path.
-            let survives = if merged.has_bit(index) {
-                self.retain_symbol_declarations(symbol_id, |span, flags| {
-                    !flags.intersects(erased_flags) && !is_erased(symbol_id, span)
-                })
-            } else {
-                !flags.intersects(erased_flags)
-                    && !is_erased(symbol_id, self.symbol_span(symbol_id))
-            };
-            if !survives {
+
+            cell.root_unresolved_references.retain(|_name, reference_ids| {
+                reference_ids.retain(|reference_id| {
+                    !is_typescript_reference(&references[*reference_id])
+                        && !is_reference_erased(*reference_id)
+                });
+                !reference_ids.is_empty()
+            });
+        });
+
+        for index in merged.ones() {
+            let symbol_id = SymbolId::from_usize(index);
+            if !self.retain_symbol_declarations(symbol_id, |span, flags| {
+                !flags.intersects(erased_flags) && !is_erased(symbol_id, span)
+            }) {
                 removed.set_bit(index);
             }
         }
