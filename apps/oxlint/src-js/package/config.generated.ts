@@ -407,7 +407,6 @@ export type Destructure = "only-when-assigned" | "always" | "never";
 export type NextTickOption = "promise" | "callback";
 export type CaseType2 = "camelCase" | "snake_case";
 export type AllowYoda = "never" | "always";
-export type OxlintOverrides = OxlintOverride[];
 export type JestVersionSchema = number | string;
 export type TagNamePreference =
   | string
@@ -434,6 +433,7 @@ export type CustomComponent =
       name: string;
       [k: string]: unknown | undefined;
     };
+export type OxlintOverrides = OxlintOverride[];
 
 /**
  * Oxlint Configuration File
@@ -880,6 +880,11 @@ export interface OxlintOverride {
    */
   plugins?: LintPlugins;
   rules?: DummyRuleMap;
+  /**
+   * Shared settings for plugins. When provided, these settings are
+   * deep-merged with top-level settings for files matching this override.
+   */
+  settings?: OxlintPluginSettings;
 }
 /**
  * See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
