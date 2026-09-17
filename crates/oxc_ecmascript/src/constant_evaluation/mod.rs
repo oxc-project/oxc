@@ -14,6 +14,7 @@ use num_bigint::BigInt;
 use num_traits::{ToPrimitive, Zero};
 use oxc_allocator::GetAllocator;
 use oxc_ast::{ast::*, builder::GetAstBuilder};
+use oxc_str::JSStr;
 
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
 
@@ -66,11 +67,11 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     }
 
     /// Evaluate the expression to a constant value and convert it to a string.
-    fn evaluate_value_to_string(
-        &self,
-        ctx: &impl ConstantEvaluationCtx<'a>,
-    ) -> Option<Cow<'a, str>> {
-        self.evaluate_value_to(ctx, Some(ValueType::String))?.to_js_string(ctx)
+    fn evaluate_value_to_string(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<JSStr<'a>> {
+        match self.evaluate_value_to(ctx, Some(ValueType::String))? {
+            ConstantValue::String(s) => Some(s),
+            value => value.to_js_string(ctx).map(|s| js_str_from_cow(s, ctx)),
+        }
     }
 
     fn get_side_free_number_value(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<f64> {
@@ -95,9 +96,34 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     fn get_side_free_string_value(
         &self,
         ctx: &impl ConstantEvaluationCtx<'a>,
-    ) -> Option<Cow<'a, str>> {
+    ) -> Option<JSStr<'a>> {
         let value = self.evaluate_value_to_string(ctx)?;
         (!self.may_have_side_effects(ctx)).then_some(value)
+    }
+}
+
+/// Bridge a UTF-8 evaluation result into the arena string type.
+fn js_str_from_cow<'a>(value: Cow<'a, str>, ctx: &impl ConstantEvaluationCtx<'a>) -> JSStr<'a> {
+    match value {
+        Cow::Borrowed(s) => JSStr::from(s),
+        Cow::Owned(s) => JSStr::from_str_in(&s, ctx),
+    }
+}
+
+/// `ToString` of an expression as a WTF-8 value, so string literals that
+/// contain lone surrogates evaluate instead of declining.
+fn evaluate_to_js_string<'a>(
+    expr: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<JSStr<'a>> {
+    match expr {
+        Expression::StringLiteral(lit) => Some(lit.value),
+        // A template with no substitutions has a single quasi, whose cooked
+        // value is already the WTF-8 string.
+        Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+            lit.quasis.first().and_then(|quasi| quasi.value.cooked)
+        }
+        _ => expr.to_js_string(ctx).map(|value| js_str_from_cow(value, ctx)),
     }
 }
 
@@ -145,7 +171,7 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             Some(ValueType::Boolean) => self.to_boolean(ctx).map(ConstantValue::Boolean),
             Some(ValueType::Number) => self.to_number(ctx).map(ConstantValue::Number),
             Some(ValueType::BigInt) => self.to_big_int(ctx).map(ConstantValue::BigInt),
-            Some(ValueType::String) => self.to_js_string(ctx).map(ConstantValue::String),
+            Some(ValueType::String) => evaluate_to_js_string(self, ctx).map(ConstantValue::String),
             _ => None,
         };
         if result.is_some() {
@@ -161,11 +187,7 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             Expression::NullLiteral(_) => Some(ConstantValue::Null),
             Expression::BooleanLiteral(lit) => Some(ConstantValue::Boolean(lit.value)),
             Expression::BigIntLiteral(lit) => lit.to_big_int(ctx).map(ConstantValue::BigInt),
-            Expression::StringLiteral(lit) => {
-                // The constant-value cache currently owns UTF-8 strings. Leave
-                // expressions it cannot represent for runtime evaluation.
-                Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str()?)))
-            }
+            Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value)),
             Expression::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::ComputedMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::CallExpression(e) => e.evaluate_value_to(ctx, target_ty),
@@ -219,7 +241,12 @@ fn binary_operation_evaluate_value_to<'a>(
             {
                 let lval = left.evaluate_value_to_string(ctx)?;
                 let rval = right.evaluate_value_to_string(ctx)?;
-                return Some(ConstantValue::String(lval + rval));
+                // Concatenation repairs a surrogate pair split across the
+                // operand boundary.
+                return Some(ConstantValue::String(JSStr::from_js_strs_array_in(
+                    [lval, rval],
+                    ctx,
+                )));
             }
             let left_to_numeric_type = left_to_primitive.to_numeric(ctx);
             let right_to_numeric_type = right_to_primitive.to_numeric(ctx);
@@ -475,7 +502,7 @@ impl<'a> ConstantEvaluation<'a> for UnaryExpression<'a> {
                         _ => return None,
                     },
                 };
-                Some(ConstantValue::String(Cow::Borrowed(s)))
+                Some(ConstantValue::String(JSStr::from(s)))
             }
             UnaryOperator::Void => Some(ConstantValue::Undefined),
             UnaryOperator::LogicalNot => {
@@ -550,7 +577,7 @@ fn evaluate_value_length<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if let Some(ConstantValue::String(s)) = object.evaluate_value(ctx) {
-        Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
+        Some(ConstantValue::Number(s.len_utf16().to_f64().unwrap()))
     } else if let Expression::ArrayExpression(arr) = object {
         if arr.elements.iter().any(|e| matches!(e, ArrayExpressionElement::SpreadElement(_))) {
             None
