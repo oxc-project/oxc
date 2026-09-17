@@ -19,7 +19,7 @@ pub struct TypeScriptCleanup {
 }
 
 impl TypeScriptCleanup {
-    pub fn finish(self, ctx: &mut TraverseCtx<'_>) {
+    pub fn finish(mut self, ctx: &mut TraverseCtx<'_>) {
         let allocator = ctx.allocator();
         let scoping = ctx.scoping_mut();
         let mut erased_symbols = BitSet::new_in(
@@ -32,19 +32,15 @@ impl TypeScriptCleanup {
         let is_erased = |id: SymbolId, span| {
             erased_symbols.contains(id.index()) && self.declarations.contains(&(id, span))
         };
-        if self.references.is_empty() {
-            // Most files erase only type references, which scoping already filters.
-            // Specialize this path to avoid an extra lookup for every value reference.
-            scoping.delete_typescript_bindings_with(is_erased, |_| false);
-        } else {
-            let mut erased_references = BitSet::new_in(scoping.references_len(), allocator);
-            for id in self.references {
-                erased_references.set_bit(id.index());
-            }
-            scoping.delete_typescript_bindings_with(is_erased, |id| {
-                erased_references.contains(id.index())
-            });
-        }
+        // Type-only references are already removed by scoping. Explicit value
+        // erasures are sparse, so remove them from the affected reference lists
+        // instead of adding a membership test to every reference in the program.
+        self.references.retain(|id| {
+            let flags = scoping.get_reference(*id).flags();
+            (flags.is_value() || !flags.is_type()) && !flags.is_value_as_type()
+        });
+        scoping.remove_references(&self.references);
+        scoping.delete_typescript_bindings_with(is_erased, |_| false);
     }
 }
 

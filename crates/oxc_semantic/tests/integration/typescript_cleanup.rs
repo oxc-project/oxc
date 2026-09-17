@@ -63,16 +63,26 @@ fn erased_bindings_resolve_through_all_erased_scopes() {
 
 #[test]
 fn removing_references_cleans_both_indexes() {
-    let tester = SemanticTester::ts("let x = 1; x; missing;");
+    let tester = SemanticTester::ts("let x = 1, y = 2; x; x; y; missing; missing; other;");
     let mut scoping = tester.build().into_scoping();
     let id = scoping.get_binding(scoping.root_scope_id(), "x".into()).unwrap();
-    let resolved = scoping.get_resolved_reference_ids(id)[0];
-    let unresolved = scoping.root_unresolved_references().get("missing").unwrap()[0];
-    let removed = FxHashSet::from_iter([resolved, unresolved]);
-    scoping.remove_references(&removed);
+    let y = scoping.get_binding(scoping.root_scope_id(), "y".into()).unwrap();
+    let resolved = scoping.get_resolved_reference_ids(id).to_vec();
+    let unresolved = scoping.root_unresolved_references().get("missing").unwrap().to_vec();
+    let removed = FxHashSet::from_iter([resolved[0], unresolved[0]]);
+    for _ in 0..2 {
+        scoping.remove_references(&removed);
+        assert_eq!(scoping.get_resolved_reference_ids(id), [resolved[1]]);
+        assert_eq!(scoping.get_resolved_reference_ids(y).len(), 1);
+        assert_eq!(
+            scoping.root_unresolved_references().get("missing").unwrap().as_slice(),
+            [unresolved[1]]
+        );
+        assert_eq!(scoping.root_unresolved_references().get("other").unwrap().len(), 1);
+    }
+    scoping.remove_references(&FxHashSet::from_iter([resolved[1], unresolved[1]]));
     assert!(scoping.get_resolved_reference_ids(id).is_empty());
-    assert!(scoping.root_unresolved_references().is_empty());
-    scoping.remove_references(&removed);
+    assert!(!scoping.root_unresolved_references().contains_key("missing"));
 }
 
 #[test]

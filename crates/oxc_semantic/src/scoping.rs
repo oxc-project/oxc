@@ -821,18 +821,31 @@ impl Scoping {
     }
 
     /// Remove references belonging to erased syntax from both reference indexes.
+    /// Only scans resolved-reference lists for affected symbols, and scans the
+    /// unresolved-reference index only when removing unresolved references.
     pub fn remove_references(&mut self, removed: &FxHashSet<ReferenceId>) {
         if removed.is_empty() {
             return;
         }
-        self.cell.with_dependent_mut(|_allocator, cell| {
-            for ids in &mut cell.resolved_references {
-                ids.retain(|id| !removed.contains(id));
+        let mut symbols = FxHashSet::default();
+        let mut has_unresolved = false;
+        for id in removed {
+            if let Some(symbol_id) = self.references[*id].symbol_id() {
+                symbols.insert(symbol_id);
+            } else {
+                has_unresolved = true;
             }
-            cell.root_unresolved_references.retain(|_, ids| {
-                ids.retain(|id| !removed.contains(id));
-                !ids.is_empty()
-            });
+        }
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            for symbol_id in symbols {
+                cell.resolved_references[symbol_id.index()].retain(|id| !removed.contains(id));
+            }
+            if has_unresolved {
+                cell.root_unresolved_references.retain(|_, ids| {
+                    ids.retain(|id| !removed.contains(id));
+                    !ids.is_empty()
+                });
+            }
         });
     }
 
