@@ -251,8 +251,8 @@ fn test_fold_string_char_at() {
     test_same("x = 'abcde'.charAt(y)");
     test("x = 'abcde'.charAt(null)", "x = 'a'");
     test("x = 'abcde'.charAt(!0)", "x = 'b'");
-    test_same("x = '\\ud834\\udd1e'.charAt(0)"); // or x = '\\ud834'
-    test_same("x = '\\ud834\\udd1e'.charAt(1)"); // or x = '\\udd1e'
+    test("x = '\\ud834\\udd1e'.charAt(0)", "x = '\\ud834'");
+    test("x = '\\ud834\\udd1e'.charAt(1)", "x = '\\udd1e'");
 
     // Template strings
     test("x = `abcdef`.charAt(0)", "x = 'a'");
@@ -850,9 +850,9 @@ fn test_fold_concat_chaining() {
     test("x = ''.concat('a', ' ').concat('b').split(/[\\s\\n]+/)", "x = 'a b'.split(/[\\s\\n]+/)");
     test_same("x = ''.split().concat(1)");
 
-    test("var x, y; v = ''.concat(x).concat(y)", "var x, y; v = `${x}${y}`");
-    test("var y; v = ''.concat(x).concat(y)", "var y; v = `${x}${y}`"); // x might have a getter that updates y, but that side effect is preserved correctly
-    test("var x; v = ''.concat(x.a).concat(x)", "var x; v = `${x.a}${x}`"); // x.a might have a getter that updates x, but that side effect is preserved correctly
+    test("var x, y; v = ''.concat(x).concat(y)", "var x, y; v = 'undefinedundefined'");
+    test_same("var y; v = ''.concat(x).concat(y)"); // Keep coercion before reading the next argument.
+    test_same("var x; v = ''.concat(x.a).concat(x)"); // Keep coercion before reading the next argument.
 
     // other
     test("x = []['concat'](1)", "x = [1]");
@@ -945,7 +945,8 @@ fn test_fold_string_from_char_code() {
     test("x = String.fromCharCode(0)", "x = '\\0'");
     test("x = String.fromCharCode(120)", "x = 'x'");
     test("x = String.fromCharCode(120, 121)", "x = 'xy'");
-    test_same("x = String.fromCharCode(55358, 56768)");
+    test("x = String.fromCharCode(55358, 56768)", "x = '\u{1F9C0}'");
+    test("x = String.fromCharCode(55296)", "x = '\\ud800'");
     test("x = String.fromCharCode(0x10000)", "x = '\\0'");
     test("x = String.fromCharCode(0x10078, 0x10079)", "x = 'xy'");
     test("x = String.fromCharCode(0x1_0000_FFFF)", "x = '\u{ffff}'");
@@ -964,10 +965,13 @@ fn test_fold_string_from_char_code() {
 
 #[test]
 fn test_fold_string_concat() {
+    test_same(r#"x = "\uD800".concat(a, b)"#);
+    test_same(r#"x = "\uD800".concat(a).concat(b())"#);
+    test_same("x = 'ordinary'.concat(a, b())");
     test_same("x = ''.concat()");
-    test("x = ''.concat(a, b)", "x = `${a}${b}`");
-    test("x = ''.concat(a, b, c)", "x = `${a}${b}${c}`");
-    test("x = ''.concat(a, b, c, d)", "x = `${a}${b}${c}${d}`");
+    test_same("x = ''.concat(a, b)");
+    test_same("x = ''.concat(a, b, c)");
+    test_same("x = ''.concat(a, b, c, d)");
     test_same("x = ''.concat(a, b, c, d, e)");
     test("x = ''.concat('a')", "x = 'a'");
     test("x = ''.concat('a', 'b')", "x = 'ab'");
@@ -976,11 +980,10 @@ fn test_fold_string_concat() {
     test("x = ''.concat('a', 'b', 'c', 'd', 'e')", "x = 'abcde'");
     test("x = ''.concat(a, 'b')", "x = `${a}b`");
     test("x = ''.concat('a', b)", "x = `a${b}`");
-    test("x = ''.concat(a, 'b', c)", "x = `${a}b${c}`");
+    test_same("x = ''.concat(a, 'b', c)");
     test("x = ''.concat('a', b, 'c')", "x = `a${b}c`");
-    test(
+    test_same(
         "x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)",
-        "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`",
     );
     test("x = ''.concat(a, 1)", "x = `${a}1`");
 

@@ -1,9 +1,9 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Write, mem};
 
 use cow_utils::CowUtils;
 
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     ToBigInt, ToIntegerIndex,
@@ -11,7 +11,7 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
-use oxc_str::JSStrBuilder;
+use oxc_str::{JSStr, JSStrBuilder};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -145,24 +145,6 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
 
-            // We don't need to check if the arguments has a side effect here.
-            //
-            // The only side effect Array::concat / String::concat can cause is throwing an error when the created array is too long.
-            // With the compressor assumption, that error can be moved.
-            //
-            // For example, if we have `[].concat(a).concat(b)`, the steps before the compression is:
-            // 1. evaluate `a`
-            // 2. `[].concat(a)` creates `[a]`
-            // 3. evaluate `b`
-            // 4. `.concat(b)` creates `[a, b]`
-            //
-            // The steps after the compression (`[].concat(a, b)`) is:
-            // 1. evaluate `a`
-            // 2. evaluate `b`
-            // 3. `[].concat(a, b)` creates `[a, b]`
-            //
-            // The error that has to be thrown in the second step before the compression will be thrown in the third step.
-
             let CallExpression { callee, arguments, .. } = ce.as_mut();
             collected_arguments.push(arguments);
 
@@ -184,6 +166,17 @@ impl<'a> PeepholeOptimizations {
         }
 
         if collected_arguments.len() <= 1 {
+            return;
+        }
+
+        // String concat coerces each call's arguments before evaluating the next call.
+        // Only combine calls when every argument has a known, side-effect-free string value.
+        if let Expression::StaticMemberExpression(member) = &*new_root_callee
+            && matches!(member.object, Expression::StringLiteral(_))
+            && !collected_arguments.iter().flat_map(|args| args.iter()).all(|arg| {
+                arg.is_expression() && arg.to_expression().get_side_free_string_value(ctx).is_some()
+            })
+        {
             return;
         }
 
@@ -277,93 +270,80 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
 
-                let base_value = base_str.value.as_str()?;
-                if args.iter().any(|arg| matches!(arg, Argument::StringLiteral(lit) if lit.value.has_lone_surrogate())) {
-                    return None;
+                // Fold constant coercions before deciding whether substitutions can move safely.
+                for argument in args.iter_mut() {
+                    if !matches!(argument, Argument::StringLiteral(_))
+                        && let Some(value) =
+                            argument.to_expression().get_side_free_string_value(ctx)
+                    {
+                        let replacement = Expression::new_string_literal(SPAN, value, None, ctx);
+                        ctx.replace_expression(argument.to_expression_mut(), replacement);
+                    }
                 }
                 let expression_count =
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
-                let string_count = args.len() - expression_count;
-
-                // whether it is shorter to use `String::concat`
-                if ".concat()".len() + args.len() + "''".len() * string_count
-                    < "${}".len() * expression_count
-                {
+                // Calls evaluate every argument before any coercion. Multiple substitutions would
+                // interleave evaluation and coercion, so retain those calls.
+                if expression_count > 1 {
                     return None;
                 }
 
-                // Borrow the arena builder field directly.
-                // It's disjoint from `&mut ctx.state` below, so the two can coexist.
                 let ast = &ctx.ast;
-
-                // Reuse a scratch `String` held on `MinifierState` across calls
-                // to accumulate the cooked text of the in-progress quasi. On
-                // flush we copy the text into the arena and clear the scratch.
-                //
-                // INVARIANT: every flush must end with `scratch.clear()` so
-                // the next string-arg `push_str` starts a fresh quasi. Two
-                // expressions in a row rely on this — the second one's flush
-                // sees an empty `scratch`, producing the required empty
-                // separator quasi without a state-machine flag.
-                let scratch = &mut ctx.state.concat_scratch;
-                scratch.clear();
-                scratch.push_str(base_value);
-
                 let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
                 let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
-
+                let mut cooked = JSStrBuilder::new_in(ctx);
+                cooked.push_js_str(base_str.value);
                 for argument in args.drain(..) {
-                    if let Argument::StringLiteral(str_lit) = argument {
-                        // Append onto the in-progress quasi.
-                        // Checked before draining the arguments.
-                        scratch.push_str(str_lit.value.as_str().unwrap());
+                    if let Argument::StringLiteral(lit) = argument {
+                        cooked.push_js_str(lit.value);
                     } else {
-                        // Flush the current quasi (possibly empty) before
-                        // pushing the next expression.
-                        let cooked = Str::from_str_in(scratch, ast);
-                        let raw_cow = Self::escape_string_for_template_literal(scratch);
-                        let raw = Str::from_str_in(&raw_cow, ast);
-                        // `raw` is already escaped
-                        quasis.push(TemplateElement::new(
-                            SPAN,
-                            TemplateElementValue { raw, cooked: Some(cooked.into()) },
-                            false,
-                            ast,
-                        ));
-                        scratch.clear(); // maintains INVARIANT above
-                        // checked that all the arguments are expression above
+                        let quasi = mem::replace(&mut cooked, JSStrBuilder::new_in(ctx));
+                        quasis.push(Self::template_element(quasi.into_js_str(), false, ast));
                         expressions.push(argument.into_expression());
                     }
                 }
-
+                let tail = cooked.into_js_str();
                 if expressions.is_empty() {
-                    debug_assert_eq!(quasis.len(), 0);
-                    let s = Str::from_str_in(scratch, ast);
-                    return Some(Expression::new_string_literal(span, s, None, ast));
+                    return Some(Expression::new_string_literal(span, tail, None, ast));
                 }
-
-                // Flush the trailing quasi. If the last arg was an expression
-                // `scratch` is empty, giving the required trailing empty
-                // quasi; otherwise it holds the accumulated tail text.
-                let cooked = Str::from_str_in(scratch, ast);
-                let raw_cow = Self::escape_string_for_template_literal(scratch);
-                let raw = Str::from_str_in(&raw_cow, ast);
-                // `raw` is already escaped
-                quasis.push(TemplateElement::new(
-                    SPAN,
-                    TemplateElementValue { raw, cooked: Some(cooked.into()) },
-                    true, /* tail */
-                    ast,
-                ));
-
-                debug_assert_eq!(quasis.len(), expressions.len() + 1);
+                quasis.push(Self::template_element(tail, true, ast));
                 Some(Expression::new_template_literal(span, quasis, expressions, ast))
             }
             _ => None,
         }
     }
 
-    pub fn escape_string_for_template_literal(s: &str) -> Cow<'_, str> {
+    /// A template quasi holding `cooked`.
+    /// The raw text borrows the cooked value when nothing needs escaping.
+    fn template_element(
+        cooked: JSStr<'a>,
+        tail: bool,
+        ast: &AstBuilder<'a>,
+    ) -> TemplateElement<'a> {
+        let raw = Str::from_cow_in(&Self::escape_string_for_template_literal(cooked), ast);
+        TemplateElement::new(SPAN, TemplateElementValue { raw, cooked: Some(cooked) }, tail, ast)
+    }
+
+    /// Escape a string value as template literal raw text.
+    /// Raw text is source, so a lone surrogate is written as a `\u` escape.
+    pub fn escape_string_for_template_literal(value: JSStr<'_>) -> Cow<'_, str> {
+        let Some(s) = value.as_str() else {
+            let mut raw = String::with_capacity(value.len());
+            for c in value.chars() {
+                match c.to_char() {
+                    Some(c @ ('\\' | '`' | '$')) => {
+                        raw.push('\\');
+                        raw.push(c);
+                    }
+                    Some('\r') => raw.push_str("\\r"),
+                    Some(c) => raw.push(c),
+                    None => {
+                        let _ = write!(raw, "\\u{:04x}", c.to_u32());
+                    }
+                }
+            }
+            return Cow::Owned(raw);
+        };
         if s.contains(['\\', '`', '$', '\r']) {
             Cow::Owned(
                 s.cow_replace("\\", "\\\\")

@@ -79,7 +79,7 @@ impl<'a> PeepholeOptimizations {
         match cv {
             ConstantValue::Boolean(b) => !b,
             ConstantValue::Number(n) => n.is_nan() || *n == 0.0,
-            ConstantValue::String(s) => s.as_ref().is_empty(),
+            ConstantValue::String(s) => s.is_empty(),
             ConstantValue::Null | ConstantValue::Undefined => true,
             ConstantValue::BigInt(_) => false,
         }

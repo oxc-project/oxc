@@ -1,3 +1,4 @@
+import { runInNewContext } from "node:vm";
 import { Worker } from "node:worker_threads";
 import { describe, expect, it } from "vitest";
 
@@ -367,4 +368,35 @@ describe("worker", () => {
     });
     expect(code).toBe(0);
   });
+});
+
+describe("string concat coercion order", () => {
+  for (const base of ["ordinary", "\uD800"]) {
+    const receiver = JSON.stringify(base);
+    it.each([
+      `let x = 0;
+       const a = { toString() { x = 1; return "A"; } };
+       console.log(JSON.stringify(${receiver}.concat(a, x)));`,
+      `const log = [];
+       const a = { toString() { log.push("coerce"); return "A"; } };
+       function b() { log.push("evaluate"); return "B"; }
+       console.log(${receiver}.concat(a, b()), log.join(","));`,
+      `const log = [];
+       const a = { toString() { log.push("coerce"); return "A"; } };
+       function b() { log.push("evaluate"); return "B"; }
+       console.log(${receiver}.concat(a).concat(b()), log.join(","));`,
+      `const log = [];
+       function b() { log.push("evaluate"); return "B"; }
+       try { ${receiver}.concat(Symbol(), b()); } catch (e) { console.log(e.name, log.join(",")); }`,
+    ])("preserves runtime behavior for %s", (source) => {
+      const execute = (code: string) => {
+        const output: unknown[][] = [];
+        runInNewContext(code, { console: { log: (...args: unknown[]) => output.push(args) } });
+        return output;
+      };
+      const result = minifySync("input.js", source, { mangle: false });
+      expect(result.errors).toEqual([]);
+      expect(execute(result.code)).toEqual(execute(source));
+    });
+  }
 });
