@@ -172,6 +172,9 @@ pub struct ContextHost<'a> {
     pub(crate) fix: FixKind,
     /// Path to the file being linted.
     pub(super) file_path: Box<Path>,
+    /// Working directory used to resolve linted file paths relative to the
+    /// project root, if known.
+    pub(super) cwd: Option<Box<Path>>,
     /// Extension of the file being linted.
     file_extension: Option<Box<OsStr>>,
     /// Global linter configuration, such as globals to include and the target
@@ -198,6 +201,7 @@ impl<'a> ContextHost<'a> {
     /// If `sub_hosts` is empty.
     pub fn new<P: AsRef<Path>>(
         file_path: P,
+        cwd: Option<&Path>,
         sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
         options: LintOptions,
@@ -211,6 +215,7 @@ impl<'a> ContextHost<'a> {
         );
 
         let file_path = file_path.as_ref().to_path_buf().into_boxed_path();
+        let cwd = cwd.map(|cwd| cwd.to_path_buf().into_boxed_path());
         let file_extension = file_path.extension().map(|ext| ext.to_owned().into_boxed_os_str());
 
         Self {
@@ -220,6 +225,7 @@ impl<'a> ContextHost<'a> {
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
             file_path,
+            cwd,
             file_extension,
             config,
             frameworks: options.framework_hints,
@@ -290,6 +296,13 @@ impl<'a> ContextHost<'a> {
     #[inline]
     pub fn file_path(&self) -> &Path {
         &self.file_path
+    }
+
+    /// Working directory used to resolve linted file paths relative to the
+    /// project root, if known.
+    #[inline]
+    pub fn cwd(&self) -> Option<&Path> {
+        self.cwd.as_deref()
     }
 
     /// Extension of the file currently being linted, without the leading dot.
