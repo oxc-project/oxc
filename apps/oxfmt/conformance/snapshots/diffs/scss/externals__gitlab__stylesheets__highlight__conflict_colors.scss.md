@@ -1,7 +1,5 @@
 # externals/gitlab/stylesheets/highlight/conflict_colors.scss
 
-> blank lines in maps with paren values are preserved. See crates/oxc_formatter_css/DIVERGENCES.md#map-paren-value-blank-lines
-
 ## Option 1
 
 `````json

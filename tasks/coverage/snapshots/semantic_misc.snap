@@ -1,10 +1,18 @@
 semantic_misc Summary:
-AST Parsed     : 107/107 (100.00%)
-Positive Passed: 103/107 (96.26%)
+AST Parsed     : 111/111 (100.00%)
+Positive Passed: 105/111 (94.59%)
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/misc/pass/import-equals-modifiers.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["A", "Ambient", "Exported", "ExportedExternal", "ExportedType"]
+rebuilt        : ScopeId(0): ["A", "Exported", "ExportedExternal"]
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(4)]
 
 semantic Error: tasks/coverage/misc/pass/oxc-11593.ts
 Scope parent mismatch:
@@ -84,6 +92,11 @@ rebuilt        : [ReferenceId(187), ReferenceId(193), ReferenceId(300), Referenc
 Unresolved reference IDs mismatch for "Object":
 after transform: [ReferenceId(166), ReferenceId(170), ReferenceId(174), ReferenceId(185), ReferenceId(226), ReferenceId(228), ReferenceId(265), ReferenceId(267), ReferenceId(304), ReferenceId(306), ReferenceId(343), ReferenceId(345), ReferenceId(382), ReferenceId(386), ReferenceId(425), ReferenceId(427), ReferenceId(464), ReferenceId(468), ReferenceId(507), ReferenceId(509), ReferenceId(546), ReferenceId(550), ReferenceId(589), ReferenceId(591), ReferenceId(628), ReferenceId(632), ReferenceId(671), ReferenceId(673), ReferenceId(839), ReferenceId(843), ReferenceId(876), ReferenceId(880), ReferenceId(891), ReferenceId(895)]
 rebuilt        : [ReferenceId(169), ReferenceId(173), ReferenceId(177), ReferenceId(182), ReferenceId(291), ReferenceId(295), ReferenceId(364), ReferenceId(368), ReferenceId(437), ReferenceId(441), ReferenceId(625), ReferenceId(632), ReferenceId(777), ReferenceId(781), ReferenceId(810), ReferenceId(814), ReferenceId(819), ReferenceId(823)]
+
+semantic Error: tasks/coverage/misc/pass/readonly-constructor.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "D", "E", "_defineProperty"]
+rebuilt        : ScopeId(0): ["C", "D", "_defineProperty"]
 
 semantic Error: tasks/coverage/misc/pass/reserved-kw-ambient-context.ts
 Bindings mismatch:

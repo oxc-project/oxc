@@ -1,16 +1,34 @@
+//! Is a position directly after a complete value?
+//!
+//! [`not_operator_position`] answers this for `carve`, to tell a regex from division,
+//! and a JSX element from less-than. Its doc comment explains the question in detail.
+//!
+//! It looks at the token before the position, and for most tokens that settles it.
+//! The rest of this file handles the tokens which don't:
+//!
+//! - Operators and numbers such as `x++`, `a?.b` and `1.5e+3` aren't formed into their final tokens
+//!   until `coalesce`, which runs later. [`prev_regex_sim`] lexes such a stretch of source itself,
+//!   to find the last token.
+//! - After `)` or `}`, it depends on what the brackets closed.
+//!   `if (c) /re/` has a regex, but `f(c) / 2` has a division.
+//! - A line break can end a statement, so the next token starts a new one,
+//!   e.g. after `let x` or `break label`.
+//! - Outside modules, whether `yield` and `await` are keywords depends on the enclosing functions.
+//!   [`replay`] works that out.
+//! - TypeScript adds more cases, e.g. a postfix `!`, or a `>` closing type arguments.
+
 use crate::{
-    opmap::{OP_KIND_BASE, OP_QDOT},
+    opmap::OP_KIND_BASE,
     tables::{Tables, is_digit, is_glue_join, is_word, is_ws},
+    token::tk,
 };
 
 use super::super::{
-    BCOM, BIGINT, HASHBANG, IDENT, IDENT_ESC, JEND, JSX_LT, LCOM, NUM, PRIV_IDENT, PRIV_IDENT_ESC,
-    REGEX, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL, WS,
     bitmap::{bm_next0, bm_next1, bm_prev1},
     scan::scan_number,
 };
 
-use super::{
+use super::common::{
     AngleMatch, LT_OPERAND_WORDS, angle_match_back, as_gated_type_ref, as_type_operand,
     bm_prev_sig, brace_opens_value, declarator_without_init, ident_is, kind_at, lt_in_range,
     match_delim_back, of_is_forof_keyword, prop_name, signature_return_type, trivia_at,
@@ -52,7 +70,7 @@ enum RunEnd {
 /// A `/` there starts a regex, so this function returns `true`.
 /// But a `{` there opens a block, not an object literal, so `operand_position` returns `false`.
 ///
-/// [`operand_position`]: super::operand_position
+/// [`operand_position`]: super::common::operand_position
 pub unsafe fn not_operator_position(
     t: &Tables,
     src: *const u8,
@@ -69,11 +87,15 @@ pub unsafe fn not_operator_position(
     while q >= 0 {
         let qi = q as usize;
         let k = *kind.add(qi);
-        if k == WS || k == LCOM || k == BCOM || k == HASHBANG {
+        if k == tk!(Whitespace)
+            || k == tk!(LineComment)
+            || k == tk!(BlockComment)
+            || k == tk!(Hashbang)
+        {
             q = bm_prev1(st, qi);
             continue;
         }
-        if k == STR {
+        if k == tk!(String) {
             let e = bm_next1(st, qi + 1, n);
             if !lt_in_range(src, e, p) {
                 return false;
@@ -81,18 +103,23 @@ pub unsafe fn not_operator_position(
             return module_specifier_asi(src, st, kind, qi)
                 || (ts && type_annotation_asi(t, src, st, kind, n, qi, 0));
         }
-        if k == TMPL_NOSUB || k == TMPL_TAIL {
+        if k == tk!(TemplateNoSub) || k == tk!(TemplateTail) {
             return ts
                 && lt_in_range(src, bm_next1(st, qi + 1, n), p)
                 && type_annotation_asi(t, src, st, kind, n, qi, 0);
         }
-        if k == REGEX || k == PRIV_IDENT || k == PRIV_IDENT_ESC || k == JEND || k == JSX_LT {
+        if k == tk!(RegExp)
+            || k == tk!(PrivateIdent)
+            || k == tk!(PrivateIdentEscaped)
+            || k == tk!(JsxTagEnd)
+            || k == tk!(JsxLt)
+        {
             return false;
         }
-        if k == TMPL_HEAD || k == TMPL_MIDDLE {
+        if k == tk!(TemplateHead) || k == tk!(TemplateMiddle) {
             return true;
         }
-        if k == NUM {
+        if k == tk!(Number) {
             let we = bm_next0(word, qi, n);
             let de = bm_next0(digit, qi, n);
             if de >= we {
@@ -108,7 +135,7 @@ pub unsafe fn not_operator_position(
                 && lt_in_range(src, we, p)
                 && type_annotation_asi(t, src, st, kind, n, qi, 0);
         }
-        if k == IDENT || k == IDENT_ESC {
+        if k == tk!(Ident) || k == tk!(IdentEscaped) {
             let e = bm_next1(st, qi + 1, n);
             if prop_name(src, qi) {
                 return ts
@@ -122,7 +149,7 @@ pub unsafe fn not_operator_position(
                     continue;
                 }
             };
-            if k == IDENT && t.is_regex_keyword(src.add(ws), we - ws) {
+            if k == tk!(Ident) && t.is_regex_keyword(src.add(ws), we - ws) {
                 if ts
                     && we - ws == 4
                     && ws == qi
@@ -141,7 +168,7 @@ pub unsafe fn not_operator_position(
                 }
                 return true;
             }
-            if k == IDENT && we - ws == 2 && *src.add(ws) == b'o' && *src.add(ws + 1) == b'f' {
+            if k == tk!(Ident) && we - ws == 2 && *src.add(ws) == b'o' && *src.add(ws + 1) == b'f' {
                 return of_is_forof_keyword(t, src, st, kind, n, qi);
             }
             if lt_in_range(src, e, p) {
@@ -244,7 +271,7 @@ unsafe fn module_specifier_asi(
         return false;
     }
     let w = q as usize;
-    *kind.add(w) == IDENT
+    *kind.add(w) == tk!(Ident)
         && !prop_name(src, w)
         && (ident_is(src, w, b"from") || ident_is(src, w, b"import"))
 }
@@ -286,7 +313,7 @@ unsafe fn prev_regex_sim(
         let nk: i32;
         if is_digit(c) || (c == b'.' && pos + 1 < n && is_digit(*src.add(pos + 1))) {
             e = scan_number(src, n, pos);
-            nk = NUM as i32;
+            nk = tk!(Number) as i32;
         } else if is_word(c) {
             let mut w = pos;
             while w < n && is_word(*src.add(w)) {
@@ -300,16 +327,16 @@ unsafe fn prev_regex_sim(
                     }
                     RunEnd::Seg(ss, _, _) if is_digit(*src.add(ss)) => {
                         e = scan_number(src, n, ss);
-                        nk = NUM as i32;
+                        nk = tk!(Number) as i32;
                     }
                     RunEnd::Seg(..) => {
                         e = w;
-                        nk = IDENT as i32;
+                        nk = tk!(Ident) as i32;
                     }
                 }
             } else {
                 e = w;
-                nk = IDENT as i32;
+                nk = tk!(Ident) as i32;
             }
         } else if c == b'.' || c == b'+' || c == b'-' || c == b'?' {
             let b1 = *src.add(pos + 1);
@@ -324,7 +351,7 @@ unsafe fn prev_regex_sim(
                 if kk == 0 {
                     continue;
                 }
-                if kk == OP_QDOT as u32 && pos + 2 < n && is_digit(*src.add(pos + 2)) {
+                if kk == tk!(OptionalChain) as u32 && pos + 2 < n && is_digit(*src.add(pos + 2)) {
                     continue;
                 }
                 opl = l as usize;
@@ -346,10 +373,10 @@ unsafe fn prev_regex_sim(
     if lastk == -1 {
         return true;
     }
-    if lastk == NUM as i32 {
+    if lastk == tk!(Number) as i32 {
         return false;
     }
-    if lastk == IDENT as i32 {
+    if lastk == tk!(Ident) as i32 {
         if prop_name(src, ls) {
             return false;
         }
@@ -362,9 +389,9 @@ unsafe fn prev_regex_sim(
         && *src.add(ls + 1) == *src.add(ls)
         && (*src.add(ls) == b'+' || *src.add(ls) == b'-')
     {
-        let tail = if prevk == NUM as i32 {
+        let tail = if prevk == tk!(Number) as i32 {
             true
-        } else if prevk == IDENT as i32 {
+        } else if prevk == tk!(Ident) as i32 {
             match word_run_end(src, pls, ple) {
                 RunEnd::Seg(ss, se, false) => {
                     prop_name(src, pls)
@@ -410,18 +437,18 @@ unsafe fn anchor_seed_tail(
             let ch = *src.add(sp);
             return ch == b')' || ch == b']';
         }
-        if kk == IDENT
-            || kk == IDENT_ESC
-            || kk == PRIV_IDENT
-            || kk == PRIV_IDENT_ESC
-            || kk == NUM
-            || kk == BIGINT
+        if kk == tk!(Ident)
+            || kk == tk!(IdentEscaped)
+            || kk == tk!(PrivateIdent)
+            || kk == tk!(PrivateIdentEscaped)
+            || kk == tk!(Number)
+            || kk == tk!(BigInt)
         {
             let e = bm_next1(st, sp + 1, n);
             match word_run_end(src, sp, e) {
                 RunEnd::Seg(_, _, true) => return false,
                 RunEnd::Seg(ss, se, false) => {
-                    if kk == NUM || kk == BIGINT {
+                    if kk == tk!(Number) || kk == tk!(BigInt) {
                         return true;
                     }
                     if prop_name(src, sp) || prop_name(src, ss) {
@@ -444,7 +471,10 @@ unsafe fn anchor_seed_tail(
                 }
             }
         }
-        return matches!(kk, STR | REGEX | TMPL_NOSUB | TMPL_TAIL | JEND);
+        return matches!(
+            kk,
+            tk!(String) | tk!(RegExp) | tk!(TemplateNoSub) | tk!(TemplateTail) | tk!(JsxTagEnd)
+        );
     }
     false
 }
@@ -492,7 +522,7 @@ unsafe fn label_after_restricted(
         return false;
     }
     let w = q as usize;
-    *kind.add(w) == IDENT
+    *kind.add(w) == tk!(Ident)
         && !prop_name(src, w)
         && (ident_is(src, w, b"break") || ident_is(src, w, b"continue"))
         && !lt_in_range(src, bm_next1(st, w + 1, n), label)
@@ -526,12 +556,12 @@ unsafe fn paren_close_is_regex(src: *const u8, st: *const u64, kind: *const u8, 
         return false;
     }
     let mut w = q as usize;
-    if *kind.add(w) != IDENT {
+    if *kind.add(w) != tk!(Ident) {
         return false;
     }
     if ident_is(src, w, b"await") {
         let q2 = bm_prev_sig(st, kind, w);
-        if q2 < 0 || *kind.add(q2 as usize) != IDENT {
+        if q2 < 0 || *kind.add(q2 as usize) != tk!(Ident) {
             return false;
         }
         w = q2 as usize;
@@ -551,7 +581,7 @@ unsafe fn this_type_head_before(
     lt: usize,
 ) -> bool {
     let b = bm_prev_sig(st, kind, lt);
-    if b < 0 || kind_at(kind, b as usize) != IDENT || prop_name(src, b as usize) {
+    if b < 0 || kind_at(kind, b as usize) != tk!(Ident) || prop_name(src, b as usize) {
         return false;
     }
     if !ident_is(src, b as usize, b"this") {
@@ -566,7 +596,7 @@ unsafe fn this_type_head_before(
     if pk >= OP_KIND_BASE {
         return matches!(*src.add(pw), b'|' | b'&') && *src.add(pw + 1) != *src.add(pw);
     }
-    pk == IDENT && !prop_name(src, pw) && word_is_any(src, pw, &[b"as", b"satisfies"])
+    pk == tk!(Ident) && !prop_name(src, pw) && word_is_any(src, pw, &[b"as", b"satisfies"])
 }
 
 #[inline(never)]
@@ -582,7 +612,7 @@ unsafe fn type_args_head_before(
     }
     let bw = b as usize;
     let bk = *kind.add(bw);
-    if bk == IDENT || bk == IDENT_ESC {
+    if bk == tk!(Ident) || bk == tk!(IdentEscaped) {
         return prop_name(src, bw) || !word_is_any(src, bw, LT_OPERAND_WORDS);
     }
     bk >= OP_KIND_BASE && matches!(*src.add(bw), b')' | b']')

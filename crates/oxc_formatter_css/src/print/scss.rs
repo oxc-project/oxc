@@ -386,7 +386,7 @@ pub(super) fn write_sass_map<'a>(
             }
         }
         // NOTE: Comment presence never changes the comma (Prettier drops it after a leading comment on the FIRST item);
-        // see DIVERGENCES.md "map-leading-comment-layout".
+        // see DIVERGENCES.md#map-leading-comment-layout.
         if trailing {
             write!(f, ",");
         }

@@ -16,11 +16,11 @@ pub mod token;
 pub use arena::{Arena, LexResult, LineEntry};
 pub use error::{Diagnostic, diag_code, diag_severity};
 pub use lanes::Lanes;
-pub use options::{LexOptions, default_options};
+pub use options::LexOptions;
 pub use pipeline::Lexer;
-pub use token::{KW_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
+pub use token::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
 
-use core::cell::RefCell;
+use std::{cell::RefCell, mem, ptr, slice};
 
 pub const PAD: usize = 64;
 
@@ -33,7 +33,7 @@ thread_local! {
     static SCRATCH: RefCell<Lexer> = RefCell::new(Lexer::new());
 }
 
-const _: () = assert!(core::mem::size_of::<oxc_ast::ast::RegExpFlags>() == 1);
+const _: () = assert!(size_of::<oxc_ast::ast::RegExpFlags>() == 1);
 
 /// # Panics
 /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `len`,
@@ -98,8 +98,8 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
             // SAFETY: `lex_raw` wrote `k` kinds and `k` spans.
             let (kind_bytes, spans_all) = unsafe {
                 (
-                    core::slice::from_raw_parts(arena.tok_kinds, k),
-                    core::slice::from_raw_parts(arena.tok_spans, k),
+                    slice::from_raw_parts(arena.tok_kinds, k),
+                    slice::from_raw_parts(arena.tok_spans, k),
                 )
             };
             token::debug_assert_kind_bytes(kind_bytes);
@@ -152,7 +152,7 @@ fn resolve_unicode_leads(
     spans_all: &[oxc_span::Span],
 ) {
     let k = kinds_all.len();
-    let mut leads = core::mem::take(&mut lanes.unicode_leads);
+    let mut leads = mem::take(&mut lanes.unicode_leads);
     let mut ti = 0usize;
     for &off in &leads {
         while ti + 1 < k && spans_all[ti].end <= off {
@@ -238,7 +238,7 @@ fn copy_lane<T: Copy>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
     );
     // SAFETY: `dst` is non-null with capacity >= srcv.len(), asserted above.
     unsafe {
-        core::ptr::copy_nonoverlapping(srcv.as_ptr(), dst, srcv.len());
+        ptr::copy_nonoverlapping(srcv.as_ptr(), dst, srcv.len());
     }
     srcv.len() as u32
 }

@@ -27,7 +27,7 @@ use crate::PAD;
 use crate::lanes::Lanes;
 use crate::options::LexOptions;
 use crate::tables::Tables;
-use crate::token::SPAN_SENTINELS;
+use crate::token::{SPAN_SENTINELS, tk};
 
 use carve::carve;
 use classify::classify;
@@ -37,33 +37,8 @@ use misc::{misc_post, misc_pre};
 
 use crate::token::TokenKind;
 
-// Short kind aliases for the pipeline, tied to `token_kind` so they can't drift.
-pub(crate) const WS: u8 = TokenKind::Whitespace as u8;
-pub(crate) const IDENT: u8 = TokenKind::Ident as u8;
-pub(crate) const NUM: u8 = TokenKind::Number as u8;
-pub(crate) const BIGINT: u8 = TokenKind::BigInt as u8;
-pub(crate) const STR: u8 = TokenKind::String as u8;
-pub(crate) const LCOM: u8 = TokenKind::LineComment as u8;
-pub(crate) const BCOM: u8 = TokenKind::BlockComment as u8;
-pub(crate) const REGEX: u8 = TokenKind::RegExp as u8;
-pub(crate) const TMPL_NOSUB: u8 = TokenKind::TemplateNoSub as u8;
-pub(crate) const TMPL_HEAD: u8 = TokenKind::TemplateHead as u8;
-pub(crate) const TMPL_MIDDLE: u8 = TokenKind::TemplateMiddle as u8;
-pub(crate) const TMPL_TAIL: u8 = TokenKind::TemplateTail as u8;
-pub(crate) const HASHBANG: u8 = TokenKind::Hashbang as u8;
-pub(crate) const IDENT_ESC: u8 = TokenKind::IdentEscaped as u8;
-pub(crate) const PRIV_IDENT: u8 = TokenKind::PrivateIdent as u8;
-pub(crate) const PRIV_IDENT_ESC: u8 = TokenKind::PrivateIdentEscaped as u8;
-pub(crate) const EOF: u8 = TokenKind::Eof as u8;
-
-// JSX coarse kinds, written only by `carve_jsx`. `JEND`/`JSX_LT` read as
-// values in `not_operator_position` (after a completed element, `/` is division).
-pub(crate) const JTEXT: u8 = TokenKind::JsxText as u8;
-pub(crate) const JEND: u8 = TokenKind::JsxTagEnd as u8;
-pub(crate) const JSX_LT: u8 = TokenKind::JsxLt as u8;
-
 // `glue_number` computes the kind as `NUM + is_bigint` — keep them adjacent.
-const _: () = assert!(BIGINT == NUM + 1);
+const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
 
 pub struct Lexer {
     word: Vec<u64>,
@@ -157,7 +132,7 @@ impl Lexer {
     /// diagnostics into `self.lanes`. Returns the significant token count,
     /// excluding the sentinels.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// - `src` must extend at least [`PAD`] zeroed bytes past `n`.
     /// - `out_kinds` must be valid for `n + PAD + SPAN_SENTINELS` byte writes
@@ -201,15 +176,7 @@ impl Lexer {
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
-        classify(t, ts, sp, n, word, st, kwinit, opch, digit, dot, misc, kind);
-        *word.add(nb) = 0;
-        *st.add(nb) = 0;
-        *kwinit.add(nb) = 0;
-        *opch.add(nb) = 0;
-        *digit.add(nb) = 0;
-        *dot.add(nb) = 0;
-        *misc.add(nb) = 0;
-
+        classify(t, ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind);
         let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes);
         carve(t, src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
         coalesce(t, sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);

@@ -1,5 +1,5 @@
 /*
- * Divergence: Prettier double-indents a function call that directly follows
+ * DIVERGES (see DIVERGENCES.md#call-after-line-comment-indent): Prettier double-indents a function call that directly follows
  * a `//` inline comment in nested-args position.
  *
  * Prettier marks this case as a bug (prettier/prettier#4878 was filed and

@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.150.0] - 2026-09-14
+
+### 🚀 Features
+
+- ca649e0 ecma: Define math constants as known globals and resolve their types (#26585) (Armano)
+- 80a76a0 minifier: Negate binary comparison for `typeof x < 'u'` (#26367) (Armano)
+
+### ⚡ Performance
+
+- a242469 minfiier: Reduce allocs when creating indirect access (#26601) (Armano)
+- 5b4787f minifier: Update chain expressions in place (#26544) (Armano)
+- 0bc1661 minifier: Try merging before creating new expression statements (#26556) (Armano)
+- c78d707 minifier: Process newly created stmt in handle_if_statement (#26541) (Armano)
+- 029c84b minfier: Update expressions in place when substituting alternate syntax (#26460) (Armano)
+
 ## [0.149.0] - 2026-09-07
 
 ### 💥 BREAKING CHANGES

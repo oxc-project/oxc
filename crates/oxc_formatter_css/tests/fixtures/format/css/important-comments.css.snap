@@ -4,7 +4,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ==================== Input ====================
 /* A comment between `!` and `important` stays there, printed once.
    The keyword is still normalized: `y` and `v` DIVERGE from Prettier,
-   which keeps such a run verbatim (DIVERGENCES.md "important-comment-run"). */
+   which keeps such a run verbatim (DIVERGENCES.md#important-comment-run). */
 a {
   color: red ! /* typed declaration */ important;
   x: .foo > bar ! /* raw declaration */ important;
@@ -22,7 +22,7 @@ $var: red ! /* postcss-simple-vars */ important;
 ------------------
 /* A comment between `!` and `important` stays there, printed once.
    The keyword is still normalized: `y` and `v` DIVERGE from Prettier,
-   which keeps such a run verbatim (DIVERGENCES.md "important-comment-run"). */
+   which keeps such a run verbatim (DIVERGENCES.md#important-comment-run). */
 a {
   color: red ! /* typed declaration */ important;
   x: .foo > bar ! /* raw declaration */ important;
@@ -39,7 +39,7 @@ $var: red ! /* postcss-simple-vars */ important;
 -------------------
 /* A comment between `!` and `important` stays there, printed once.
    The keyword is still normalized: `y` and `v` DIVERGE from Prettier,
-   which keeps such a run verbatim (DIVERGENCES.md "important-comment-run"). */
+   which keeps such a run verbatim (DIVERGENCES.md#important-comment-run). */
 a {
   color: red ! /* typed declaration */ important;
   x: .foo > bar ! /* raw declaration */ important;
