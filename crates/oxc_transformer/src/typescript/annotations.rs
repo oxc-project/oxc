@@ -554,7 +554,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
 impl<'a> TypeScriptAnnotations<'a> {
     #[inline]
-    fn should_keep_declaration(&self, decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    fn should_keep_declaration(&self, decl: &Declaration<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match decl {
             // Remove type aliases, interfaces, global declarations, and external modules.
             Declaration::TSTypeAliasDeclaration(_)
@@ -583,16 +583,12 @@ impl<'a> TypeScriptAnnotations<'a> {
             Declaration::TSEnumDeclaration(enum_decl) => !enum_decl.declare,
             // Remove unused import-equals (used ones are transformed by module transform)
             Declaration::TSImportEqualsDeclaration(import_equals) => {
-                let keep = import_equals.import_kind.is_value()
+                import_equals.import_kind.is_value()
                     && (self.only_remove_type_imports
                         || !ctx
                             .scoping()
                             .get_resolved_references(import_equals.id.symbol_id())
-                            .all(Reference::is_type));
-                if !keep {
-                    Erase(ctx).visit_ts_import_equals_declaration(import_equals);
-                }
-                keep
+                            .all(Reference::is_type))
             }
         }
     }

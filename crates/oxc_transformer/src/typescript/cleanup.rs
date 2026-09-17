@@ -40,7 +40,7 @@ impl TypeScriptCleanup {
             (flags.is_value() || !flags.is_type()) && !flags.is_value_as_type()
         });
         scoping.remove_references(&self.references);
-        scoping.delete_typescript_bindings_with(is_erased, |_| false);
+        scoping.delete_typescript_bindings_with(allocator, is_erased, |_| false);
     }
 }
 

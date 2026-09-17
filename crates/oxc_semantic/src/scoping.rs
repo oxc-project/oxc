@@ -1236,7 +1236,7 @@ impl Scoping {
 
     /// Remove bindings that exist only in TypeScript syntax.
     pub fn delete_typescript_bindings(&mut self) {
-        self.delete_typescript_bindings_with(|_, _| false, |_| false);
+        self.delete_typescript_bindings_with(&Allocator::new(), |_, _| false, |_| false);
     }
 
     /// Remove TypeScript bindings and additional declarations erased by a transform.
@@ -1245,8 +1245,10 @@ impl Scoping {
     /// are removed before any remaining value references are resolved again.
     /// `is_reference_erased` identifies references in discarded syntax; these are
     /// filtered together with type-only references in a single pass.
+    /// `allocator` stores temporary bitsets, allowing transforms to reuse their arena.
     pub fn delete_typescript_bindings_with(
         &mut self,
+        allocator: &Allocator,
         mut is_erased: impl FnMut(SymbolId, Span) -> bool,
         mut is_reference_erased: impl FnMut(ReferenceId) -> bool,
     ) {
@@ -1260,9 +1262,8 @@ impl Scoping {
             (flags.is_type() && !flags.is_value()) || flags.is_value_as_type()
         }
 
-        let allocator = Allocator::new();
-        let mut removed = BitSet::new_in(self.symbols_len(), &allocator);
-        let mut merged = BitSet::new_in(self.symbols_len(), &allocator);
+        let mut removed = BitSet::new_in(self.symbols_len(), allocator);
+        let mut merged = BitSet::new_in(self.symbols_len(), allocator);
         for id in self.cell.borrow_dependent().symbol_redeclarations.keys() {
             merged.set_bit(id.index());
         }

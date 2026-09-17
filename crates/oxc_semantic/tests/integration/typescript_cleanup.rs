@@ -128,7 +128,11 @@ fn erased_and_type_references_are_filtered_together() {
     let missing = scoping.root_unresolved_references().get("missing").unwrap().to_vec();
     let erased = FxHashSet::from_iter([refs[0], missing[0]]);
     for _ in 0..2 {
-        scoping.delete_typescript_bindings_with(|_, _| false, |id| erased.contains(&id));
+        scoping.delete_typescript_bindings_with(
+            &oxc_allocator::Allocator::new(),
+            |_, _| false,
+            |id| erased.contains(&id),
+        );
         assert_eq!(scoping.get_resolved_reference_ids(x), [refs[1]]);
         assert_eq!(
             scoping.root_unresolved_references().get("missing").unwrap().as_slice(),
