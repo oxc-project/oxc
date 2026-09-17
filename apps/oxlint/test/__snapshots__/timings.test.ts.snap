@@ -1,0 +1,47 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapshots normalized JS plugin timings for basic_multiple_rules 1`] = `
+"Rule timings:
+Rule                                           Time (ms)  Relative  Calls  Source
+--------------------------------------------  ----------  --------  -----  ---------
+basic-custom-plugin/no-debugger                    0.000      0.0%      2  js-plugin
+basic-custom-plugin/no-debugger-2                  0.000      0.0%      2  js-plugin
+basic-custom-plugin/no-identifiers-named-foo       0.000      0.0%      2  js-plugin
+eslint/no-debugger                                 0.000      0.0%      1  native
+eslint/no-unused-vars                              0.000      0.0%      1  native
+
+JS plugin runtime:
+  Total:                0.000ms
+  Rule callbacks:       0.000ms
+  Shared overhead:      0.000ms"
+`;
+
+exports[`snapshots normalized JS plugin timings for basic_no_errors 1`] = `
+"Rule timings:
+Rule                              Time (ms)  Relative  Calls  Source
+-------------------------------  ----------  --------  -----  ---------
+basic-custom-plugin/no-debugger       0.000      0.0%      1  js-plugin
+eslint/no-unused-vars                 0.000      0.0%      1  native
+
+JS plugin runtime:
+  Total:                0.000ms
+  Rule callbacks:       0.000ms
+  Shared overhead:      0.000ms"
+`;
+
+exports[`snapshots normalized JS plugin timings for createOnce_hook_errors 1`] = `
+"Rule timings:
+Rule                                              Time (ms)  Relative  Calls  Source
+-----------------------------------------------  ----------  --------  -----  ---------
+create-once-errors-plugin/before-and-after            0.000      0.0%      8  js-plugin
+create-once-errors-plugin/before-and-after-late       0.000      0.0%     14  js-plugin
+create-once-errors-plugin/throw-in-after              0.000      0.0%      3  js-plugin
+create-once-errors-plugin/throw-in-before             0.000      0.0%      1  js-plugin
+create-once-errors-plugin/throw-in-visit              0.000      0.0%      3  js-plugin
+eslint/no-unused-vars                                 0.000      0.0%      6  native
+
+JS plugin runtime:
+  Total:                0.000ms
+  Rule callbacks:       0.000ms
+  Shared overhead:      0.000ms"
+`;
