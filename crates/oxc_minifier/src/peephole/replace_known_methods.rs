@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Write, mem};
 
 use cow_utils::CowUtils;
 
@@ -11,6 +11,7 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
+use oxc_str::{JSStr, JSStrBuilder};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -276,10 +277,6 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
 
-                let base_value = base_str.value.as_str()?;
-                if args.iter().any(|arg| matches!(arg, Argument::StringLiteral(lit) if lit.value.has_lone_surrogate())) {
-                    return None;
-                }
                 let expression_count =
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
                 let string_count = args.len() - expression_count;
@@ -290,6 +287,20 @@ impl<'a> PeepholeOptimizations {
                 {
                     return None;
                 }
+
+                let Some(base_value) = base_str.value.as_str().filter(|_| {
+                    !args.iter().any(|arg| {
+                        matches!(arg, Argument::StringLiteral(lit) if lit.value.has_lone_surrogate())
+                    })
+                }) else {
+                    return Some(Self::concat_with_lone_surrogates(
+                        span,
+                        base_str.value,
+                        args,
+                        expression_count,
+                        ctx,
+                    ));
+                };
 
                 // Borrow the arena builder field directly.
                 // It's disjoint from `&mut ctx.state` below, so the two can coexist.
@@ -319,16 +330,8 @@ impl<'a> PeepholeOptimizations {
                     } else {
                         // Flush the current quasi (possibly empty) before
                         // pushing the next expression.
-                        let cooked = Str::from_str_in(scratch, ast);
-                        let raw_cow = Self::escape_string_for_template_literal(scratch);
-                        let raw = Str::from_str_in(&raw_cow, ast);
-                        // `raw` is already escaped
-                        quasis.push(TemplateElement::new(
-                            SPAN,
-                            TemplateElementValue { raw, cooked: Some(cooked.into()) },
-                            false,
-                            ast,
-                        ));
+                        let cooked = Str::from_str_in(scratch, ast).into();
+                        quasis.push(Self::template_element(cooked, false, ast));
                         scratch.clear(); // maintains INVARIANT above
                         // checked that all the arguments are expression above
                         expressions.push(argument.into_expression());
@@ -344,16 +347,8 @@ impl<'a> PeepholeOptimizations {
                 // Flush the trailing quasi. If the last arg was an expression
                 // `scratch` is empty, giving the required trailing empty
                 // quasi; otherwise it holds the accumulated tail text.
-                let cooked = Str::from_str_in(scratch, ast);
-                let raw_cow = Self::escape_string_for_template_literal(scratch);
-                let raw = Str::from_str_in(&raw_cow, ast);
-                // `raw` is already escaped
-                quasis.push(TemplateElement::new(
-                    SPAN,
-                    TemplateElementValue { raw, cooked: Some(cooked.into()) },
-                    true, /* tail */
-                    ast,
-                ));
+                let cooked = Str::from_str_in(scratch, ast).into();
+                quasis.push(Self::template_element(cooked, true, ast));
 
                 debug_assert_eq!(quasis.len(), expressions.len() + 1);
                 Some(Expression::new_template_literal(span, quasis, expressions, ast))
@@ -362,7 +357,73 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn escape_string_for_template_literal(s: &str) -> Cow<'_, str> {
+    /// `concat` on a string literal whose value or string arguments hold a lone
+    /// surrogate. Each quasi is built as a JavaScript string, so a lead
+    /// surrogate and a trail surrogate in adjacent arguments join into one
+    /// character, as at runtime.
+    fn concat_with_lone_surrogates(
+        span: Span,
+        base: JSStr<'a>,
+        args: &mut Arguments<'a>,
+        expression_count: usize,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let ast = &ctx.ast;
+        let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
+        let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
+        let mut cooked = JSStrBuilder::new_in(ctx.allocator());
+        cooked.push_js_str(base);
+        for argument in args.drain(..) {
+            if let Argument::StringLiteral(lit) = argument {
+                cooked.push_js_str(lit.value);
+            } else {
+                let quasi = mem::replace(&mut cooked, JSStrBuilder::new_in(ctx.allocator()));
+                quasis.push(Self::template_element(quasi.into_js_str(), false, ast));
+                expressions.push(argument.into_expression());
+            }
+        }
+        let tail = cooked.into_js_str();
+        if expressions.is_empty() {
+            return Expression::new_string_literal(span, tail, None, ast);
+        }
+        quasis.push(Self::template_element(tail, true, ast));
+        Expression::new_template_literal(span, quasis, expressions, ast)
+    }
+
+    /// A template quasi holding `cooked`. The raw text borrows the cooked
+    /// value when nothing needs escaping.
+    fn template_element(
+        cooked: JSStr<'a>,
+        tail: bool,
+        ast: &oxc_ast::builder::AstBuilder<'a>,
+    ) -> TemplateElement<'a> {
+        let raw = match Self::escape_string_for_template_literal(cooked) {
+            Cow::Borrowed(raw) => Str::from(raw),
+            Cow::Owned(raw) => Str::from_str_in(&raw, ast),
+        };
+        TemplateElement::new(SPAN, TemplateElementValue { raw, cooked: Some(cooked) }, tail, ast)
+    }
+
+    /// Escape a string value as template literal raw text. Raw text is source,
+    /// so a lone surrogate is written as a `\u` escape.
+    pub fn escape_string_for_template_literal(value: JSStr<'_>) -> Cow<'_, str> {
+        let Some(s) = value.as_str() else {
+            let mut raw = String::with_capacity(value.len());
+            for c in value.chars() {
+                match c.to_char() {
+                    Some(c @ ('\\' | '`' | '$')) => {
+                        raw.push('\\');
+                        raw.push(c);
+                    }
+                    Some('\r') => raw.push_str("\\r"),
+                    Some(c) => raw.push(c),
+                    None => {
+                        let _ = write!(raw, "\\u{:04x}", c.to_u32());
+                    }
+                }
+            }
+            return Cow::Owned(raw);
+        };
         if s.contains(['\\', '`', '$', '\r']) {
             Cow::Owned(
                 s.cow_replace("\\", "\\\\")
