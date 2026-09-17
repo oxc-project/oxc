@@ -9,10 +9,10 @@
 //! the heuristic doesn't recognise, Node silently drops the affected exports
 //! and downstream `import { x } from "cjs-pkg"` fails at runtime.
 //!
-//! In practice every breakage we've hit comes from the same root cause:
-//! `print_string_literal`'s `allow_backtick: true` tie-breaker in
-//! `calculate_quote_maybe_backtick` prefers backtick on equal cost, turning
-//! `"default"` into `` `default` ``. The lexer's pattern matcher accepts only
+//! In practice every breakage we've hit comes from `print_string_literal`
+//! choosing a template literal (`allow_backtick: true` in
+//! `calculate_quote_maybe_backtick`) when that is the cheaper quoting, e.g. for a
+//! name containing both quote kinds. The lexer's pattern matcher accepts only
 //! plain string literals at the positions below, so we hand-print those
 //! positions with `allow_backtick: false`.
 //!
