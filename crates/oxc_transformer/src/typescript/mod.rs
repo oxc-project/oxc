@@ -6,6 +6,7 @@ use crate::{context::TraverseCtx, state::TransformState};
 
 mod annotations;
 mod class;
+pub mod cleanup;
 mod diagnostics;
 mod r#enum;
 mod module;
@@ -74,6 +75,7 @@ impl<'a> TypeScript<'a> {
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.source_type_is_typescript_definition {
+            ctx.scoping_mut().clear_bindings_and_references();
             // Output empty file for TS definitions
             program.directives.clear();
             program.hashbang = None;
@@ -86,9 +88,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.source_type_is_typescript_definition {
+            return;
+        }
         self.annotations.exit_program(program, ctx);
         self.module.exit_program(program, ctx);
-        ctx.scoping.delete_typescript_bindings();
+        std::mem::take(&mut ctx.state.typescript_cleanup).finish(ctx);
     }
 
     fn enter_arrow_function_expression(

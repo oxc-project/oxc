@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::{VisitJsMut, walk_js_mut};
+use oxc_ast_visit::{Visit, VisitJsMut, walk_js_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
@@ -15,6 +15,8 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
+
+use super::cleanup::Erase;
 
 use crate::{context::TraverseCtx, state::TransformState};
 
@@ -63,7 +65,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
             return;
         }
 
-        let parent_scope_id = ctx.current_scope_id();
         let mut has_removable_enum = false;
 
         // Transform or remove deferred enum declarations.
@@ -83,18 +84,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
             return;
         }
 
-        let mut names_to_remove = Vec::new();
         stmts.retain(|stmt| {
             if let Statement::TSEnumDeclaration(decl) = stmt {
-                names_to_remove.push(decl.id.name);
+                Erase(ctx).visit_ts_enum_declaration(decl);
                 return false;
             }
             true
         });
-
-        for name in names_to_remove {
-            ctx.scoping_mut().remove_binding(parent_scope_id, name);
-        }
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -233,8 +229,10 @@ impl<'a> TypeScriptEnum {
 
         // Foo[Foo["X"] = 0] = "X";
         let redeclarations = ctx.scoping().symbol_redeclarations(enum_symbol_id);
-        let is_already_declared =
-            redeclarations.first().map_or_else(|| false, |rd| rd.span != decl.id.span);
+        let is_already_declared = redeclarations
+            .iter()
+            .find(|rd| rd.flags.is_value() && !rd.flags.is_ambient())
+            .is_some_and(|rd| rd.span != decl.id.span);
 
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
@@ -265,6 +263,7 @@ impl<'a> TypeScriptEnum {
         );
 
         if is_already_declared {
+            Erase(ctx).visit_binding_identifier(&decl.id);
             // The lowered output assigns to the existing runtime binding — drop only the
             // enum bits and keep the flags describing that binding. Updating flags
             // mid-traversal doesn't break member inlining — see `resolve_enum_member`.
@@ -288,6 +287,8 @@ impl<'a> TypeScriptEnum {
         };
         // The symbol flags now describe the emitted `var`/`let` binding.
         *ctx.scoping_mut().symbol_flags_mut(enum_symbol_id) = flags;
+        ctx.scoping_mut().set_symbol_span(enum_symbol_id, decl.id.span);
+        ctx.scoping_mut().set_symbol_declaration_flags(enum_symbol_id, decl.id.span, flags);
         let decls = {
             let binding = BindingPattern::new_binding_identifier_with_symbol_id(
                 decl.id.span,

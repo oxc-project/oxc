@@ -1,5 +1,6 @@
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::{GetSpan, SPAN, Span};
@@ -11,6 +12,8 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 use oxc_traverse::Traverse;
+
+use super::cleanup::Erase;
 
 use crate::{TypeScriptOptions, context::TraverseCtx, state::TransformState};
 
@@ -73,7 +76,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                         true
                     } else {
                         decl.specifiers
-                            .retain(|specifier| Self::can_retain_export_specifier(specifier, ctx));
+                            .retain(|specifier| {
+                                let keep = Self::can_retain_export_specifier(specifier, ctx);
+                                if !keep {
+                                    Erase(ctx).visit_export_specifier(specifier);
+                                }
+                                keep
+                            });
                         // Keep the export declaration if there are still specifiers after removing type exports
                         !decl.specifiers.is_empty()
                     }
@@ -85,7 +94,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                         true
                     } else {
                         decl.specifiers
-                            .retain(|specifier| Self::can_retain_export_specifier(specifier, ctx));
+                            .retain(|specifier| {
+                                let keep = Self::can_retain_export_specifier(specifier, ctx);
+                                if !keep {
+                                    Erase(ctx).visit_export_specifier(specifier);
+                                }
+                                keep
+                            });
                         !decl.specifiers.is_empty()
                     }
                 }
@@ -164,6 +179,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 no_modules_remaining = false;
             } else {
                 some_modules_deleted = true;
+                Erase(ctx).visit_statement(stmt);
             }
 
             need_retain
@@ -228,7 +244,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         func.this_param = None;
     }
 
-    fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         // Remove TypeScript annotations from class declarations
         // Note: declare flag is preserved for exit_statements to handle declaration removal
         class.type_parameters = None;
@@ -239,30 +255,39 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         class.r#abstract = false;
 
         // Remove type only members
-        class.body.body.retain(|elem| match elem {
-            ClassElement::MethodDefinition(method) => {
-                matches!(method.r#type, MethodDefinitionType::MethodDefinition)
-                    && !method.value.is_typescript_syntax()
+        class.body.body.retain(|elem| {
+            let keep = match elem {
+                ClassElement::MethodDefinition(method) => {
+                    matches!(method.r#type, MethodDefinitionType::MethodDefinition)
+                        && !method.value.is_typescript_syntax()
+                }
+                ClassElement::PropertyDefinition(prop) => {
+                    matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition)
+                }
+                ClassElement::AccessorProperty(prop) => {
+                    matches!(prop.r#type, AccessorPropertyType::AccessorProperty)
+                }
+                ClassElement::TSIndexSignature(_) => false,
+                ClassElement::StaticBlock(_) => true,
+            };
+            if !keep {
+                Erase(ctx).visit_class_element(elem);
             }
-            ClassElement::PropertyDefinition(prop) => {
-                matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition)
-            }
-            ClassElement::AccessorProperty(prop) => {
-                matches!(prop.r#type, AccessorPropertyType::AccessorProperty)
-            }
-            ClassElement::TSIndexSignature(_) => false,
-            ClassElement::StaticBlock(_) => true,
+            keep
         });
     }
 
-    fn exit_class(&mut self, class: &mut Class<'a>, _: &mut TraverseCtx<'a>) {
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         // Remove `declare` properties from the class body, other ts-only properties have been removed in `enter_class`.
         // The reason that removing `declare` properties here because the legacy-decorator plugin needs to transform
         // `declare` field in the `exit_class` phase, so we have to ensure this step is run after the legacy-decorator plugin.
-        class
-            .body
-            .body
-            .retain(|elem| !matches!(elem, ClassElement::PropertyDefinition(prop) if prop.declare));
+        class.body.body.retain(|elem| {
+            let keep = !matches!(elem, ClassElement::PropertyDefinition(prop) if prop.declare);
+            if !keep {
+                Erase(ctx).visit_class_element(elem);
+            }
+            keep
+        });
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -390,7 +415,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // Remove TS-only statements early to avoid traversing their children
         stmts.retain(|stmt| match stmt {
             match_declaration!(Statement) => {
-                self.should_keep_declaration(stmt.to_declaration(), ctx)
+                let keep = self.should_keep_declaration(stmt.to_declaration(), ctx);
+                if !keep {
+                    Erase(ctx).visit_statement(stmt);
+                }
+                keep
             }
             _ => true,
         });
@@ -455,7 +484,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
         Self::replace_with_empty_block_if_ts(&mut stmt.consequent, ctx.current_scope_id(), ctx);
 
-        if stmt.alternate.as_ref().is_some_and(Statement::is_typescript_syntax) {
+        if let Some(alternate) = &stmt.alternate
+            && alternate.is_typescript_syntax()
+        {
+            Erase(ctx).visit_statement(alternate);
             stmt.alternate = None;
         }
     }
@@ -522,7 +554,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
 impl<'a> TypeScriptAnnotations<'a> {
     #[inline]
-    fn should_keep_declaration(&self, decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    fn should_keep_declaration(&self, decl: &Declaration<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match decl {
             // Remove type aliases, interfaces, global declarations, and external modules.
             Declaration::TSTypeAliasDeclaration(_)
@@ -551,17 +583,12 @@ impl<'a> TypeScriptAnnotations<'a> {
             Declaration::TSEnumDeclaration(enum_decl) => !enum_decl.declare,
             // Remove unused import-equals (used ones are transformed by module transform)
             Declaration::TSImportEqualsDeclaration(import_equals) => {
-                let keep = import_equals.import_kind.is_value()
+                import_equals.import_kind.is_value()
                     && (self.only_remove_type_imports
                         || !ctx
                             .scoping()
                             .get_resolved_references(import_equals.id.symbol_id())
-                            .all(Reference::is_type));
-                if !keep {
-                    let scope_id = ctx.current_scope_id();
-                    ctx.scoping_mut().remove_binding(scope_id, import_equals.id.name);
-                }
-                keep
+                            .all(Reference::is_type))
             }
         }
     }
@@ -585,15 +612,17 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 
     fn remove_binding(ident: &BindingIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
+        Erase(ctx).visit_binding_identifier(ident);
+
         let symbol_id = ident.symbol_id();
         let flags = ctx.scoping().symbol_flags(symbol_id);
         if (flags - SymbolFlags::Import - SymbolFlags::TypeImport).is_value() {
-            ctx.scoping_mut().remove_symbol_declaration(symbol_id, ident.span);
-            return;
+            // Export retention must see the surviving declarations of a merged
+            // binding. In particular, an erased type import must not make an
+            // ambient value look like a runtime export. Binding removal and
+            // reference repair are still deferred until program exit.
+            ctx.scoping_mut().retain_symbol_declarations(symbol_id, |span, _| span != ident.span);
         }
-
-        let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
-        ctx.scoping_mut().remove_binding(scope_id, ident.name);
     }
 
     /// Check if the given name is a JSX pragma or fragment pragma import
@@ -626,6 +655,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if stmt.is_typescript_syntax() {
+            Erase(ctx).visit_statement(stmt);
             let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
             *stmt = Statement::new_block_statement_with_scope_id(stmt.span(), [], scope_id, ctx);
         }

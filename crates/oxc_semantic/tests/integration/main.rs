@@ -6,4 +6,5 @@ pub mod enum_values;
 pub mod modules;
 pub mod scopes;
 pub mod symbols;
+pub mod typescript_cleanup;
 pub mod util;
