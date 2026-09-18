@@ -190,6 +190,7 @@ unsafe fn member_or_param_colon_in_type(
                 }
                 b';' => return false,
                 b'?' => {
+                    #[expect(clippy::collapsible_match)]
                     if *src.add(w + 1) != b'?'
                         && *src.add(w + 1) != b'.'
                         && (w == 0 || *src.add(w - 1) != b'?')

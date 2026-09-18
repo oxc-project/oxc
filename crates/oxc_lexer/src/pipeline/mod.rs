@@ -3,7 +3,7 @@
 // style lints fight the SIMD idiom. API modules keep the full workspace bar.
 #![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::pedantic, clippy::nursery)]
-#![allow(clippy::needless_range_loop, clippy::manual_range_contains, clippy::collapsible_match)]
+#![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
 
 use oxc_span::Span;
 

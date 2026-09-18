@@ -132,6 +132,7 @@ pub(super) unsafe fn carve_js(
             }
             b'>' => {
                 // Annex B B.1.3: `-->` begins a line comment, but only at
+                #[expect(clippy::collapsible_match)]
                 if s >= 2
                     && *src.add(s - 1) == b'-'
                     && *src.add(s - 2) == b'-'

@@ -934,6 +934,7 @@ pub(super) unsafe fn ternary_colon(
                 }
                 b':' => debt += 1,
                 b'?' => {
+                    #[expect(clippy::collapsible_match)]
                     if *src.add(w + 1) != b'?'
                         && *src.add(w + 1) != b'.'
                         && (w == 0 || *src.add(w - 1) != b'?')
