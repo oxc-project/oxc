@@ -469,9 +469,7 @@ impl<'a> PropertyKey<'a> {
             Self::RegExpLiteral(lit) => Some(StaticPropertyName::Owned(lit.regex.to_string())),
             // ECMAScript Number::toString, so `1e21` gets the name "1e+21" like
             // the runtime property key.
-            Self::NumericLiteral(lit) => {
-                Some(StaticPropertyName::Owned(lit.value.to_js_string()))
-            }
+            Self::NumericLiteral(lit) => Some(StaticPropertyName::Owned(lit.value.to_js_string())),
             Self::BigIntLiteral(lit) => Some(StaticPropertyName::from(lit.value.as_str())),
             Self::NullLiteral(_) => Some(StaticPropertyName::from("null")),
             Self::TemplateLiteral(lit) => lit.single_quasi().map(StaticPropertyName::from),
