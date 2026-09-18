@@ -15,8 +15,10 @@ use std::arch::x86_64::*;
 
 use oxc_ast::ast::RegExpFlags;
 
-use crate::error::{Diagnostic, diag_code, diag_severity};
-use crate::token::StringSpan;
+use crate::{
+    error::{Diagnostic, diag_code, diag_severity},
+    token::StringSpan,
+};
 
 #[derive(Default)]
 pub struct Lanes {

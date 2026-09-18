@@ -451,8 +451,9 @@ pub fn to_oxc_diagnostics(diags: &[Diagnostic], source: &str) -> Vec<OxcDiagnost
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::error::diag_code;
+
+    use super::*;
 
     fn d(code: u16, off: u32, len: u32) -> Diagnostic {
         Diagnostic { off, len, code, severity: diag_severity::ERROR }

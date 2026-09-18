@@ -2,8 +2,7 @@ use std::{mem, ptr, slice};
 
 use oxc_span::Span;
 
-use crate::error::Diagnostic;
-use crate::token::SPAN_SENTINELS;
+use crate::{error::Diagnostic, token::SPAN_SENTINELS};
 
 #[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]

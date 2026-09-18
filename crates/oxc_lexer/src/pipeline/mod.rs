@@ -10,6 +10,16 @@
     clippy::collapsible_match
 )]
 
+use oxc_span::Span;
+
+use crate::{
+    PAD,
+    lanes::Lanes,
+    options::LexOptions,
+    tables::Tables,
+    token::{SPAN_SENTINELS, TokenKind, tk},
+};
+
 mod bitmap;
 mod carve;
 mod chunk;
@@ -21,21 +31,11 @@ mod find;
 mod misc;
 mod scan;
 
-use oxc_span::Span;
-
-use crate::PAD;
-use crate::lanes::Lanes;
-use crate::options::LexOptions;
-use crate::tables::Tables;
-use crate::token::{SPAN_SENTINELS, tk};
-
 use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, write_sentinels};
 use misc::{misc_post, misc_pre};
-
-use crate::token::TokenKind;
 
 // `glue_number` computes the kind as `NUM + is_bigint` — keep them adjacent.
 const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);

@@ -501,8 +501,9 @@ impl StringSpan {
 
 #[cfg(test)]
 mod tests {
-    use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
     use crate::{LexOptions, Lexer, PAD};
+
+    use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
 
     #[test]
     fn from_u8_round_trips_every_variant() {

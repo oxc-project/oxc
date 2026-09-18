@@ -189,11 +189,12 @@ pub fn meta_byte_exact(src: &[u8], start: u32, end: u32, is_block: bool) -> u8 {
 
 #[cfg(test)]
 mod tests {
+    use oxc_ast::ast::CommentContent;
+
     use super::{
         CONTENT_COVERAGE_IGNORE, CONTENT_COVERAGE_IGNORE_FILE, CONTENT_NONE, CONTENT_PROPERTY_KEY,
         classify, content_from_ordinal,
     };
-    use oxc_ast::ast::CommentContent;
 
     #[test]
     fn coverage_ignore_file() {

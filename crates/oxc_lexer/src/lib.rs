@@ -1,6 +1,8 @@
 #![cfg(target_endian = "little")]
 #![allow(unsafe_code)]
 
+use std::{cell::RefCell, mem, ptr, slice};
+
 pub mod arena;
 mod comment_meta;
 #[cfg(feature = "oxc_diagnostics")]
@@ -19,8 +21,6 @@ pub use lanes::Lanes;
 pub use options::LexOptions;
 pub use pipeline::Lexer;
 pub use token::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
-
-use std::{cell::RefCell, mem, ptr, slice};
 
 pub const PAD: usize = 64;
 
