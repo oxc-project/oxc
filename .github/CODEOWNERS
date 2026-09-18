@@ -33,6 +33,7 @@ pnpm-lock.yaml
 /crates/oxc_formatter_graphql @leaysgur
 /crates/oxc_formatter_css @leaysgur
 /crates/oxc_formatter_yaml @leaysgur
+/crates/oxc_formatter_markdown @leaysgur
 /crates/oxc_formatter_tests @leaysgur
 /crates/oxc_jsdoc @leaysgur
 /crates/oxc_regular_expression @leaysgur

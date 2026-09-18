@@ -1706,6 +1706,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc-markdown-parser"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e396d52161ecde3ba200f45b682ef14da5a8948378c4504deb31ee1842cfd78"
+dependencies = [
+ "oxc_allocator",
+]
+
+[[package]]
 name = "oxc-schemars"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2130,6 +2139,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_formatter_markdown"
+version = "0.68.0"
+dependencies = [
+ "cow-utils",
+ "insta",
+ "oxc-markdown-parser",
+ "oxc_allocator",
+ "oxc_diagnostics",
+ "oxc_formatter_core",
+ "oxc_formatter_tests",
+ "oxc_span",
+ "oxc_tasks_common",
+ "pico-args",
+ "serde_json",
+]
+
+[[package]]
 name = "oxc_formatter_tests"
 version = "0.62.0"
 dependencies = [
@@ -2453,6 +2479,7 @@ dependencies = [
 name = "oxc_playground_napi"
 version = "0.0.1"
 dependencies = [
+ "lazy-regex",
  "napi",
  "napi-build",
  "napi-derive",

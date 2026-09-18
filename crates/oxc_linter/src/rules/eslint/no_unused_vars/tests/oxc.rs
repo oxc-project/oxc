@@ -1953,3 +1953,31 @@ fn test_remove_array_element_before_rest() {
         .expect_fix(fix)
         .test();
 }
+
+#[test]
+fn removing_an_import_preserves_comments_before_the_separator() {
+    let fix = vec![
+        (
+            "import {unused /* comment */, used} from \"m\"; console.log(used);",
+            "import { /* comment */ used} from \"m\"; console.log(used);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import {used, unused /* , */, other} from \"m\"; console.log(used, other);",
+            "import {used,  /* , */ other} from \"m\"; console.log(used, other);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import {unused // comment\n, used} from \"m\"; console.log(used);",
+            "import { // comment\n used} from \"m\"; console.log(used);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, Vec::<&str>::new(), Vec::<&str>::new())
+        .expect_fix(fix)
+        .test();
+}
