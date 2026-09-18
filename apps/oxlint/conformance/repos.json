@@ -53,5 +53,10 @@
     "repoUrl": "https://github.com/ota-meshi/eslint-plugin-regexp",
     "commitSha": "788787a7e9e820c40321fe2f1095d00d4a486866",
     "version": "v3.1.0"
+  },
+  "tanstack_query": {
+    "repoUrl": "https://github.com/TanStack/query",
+    "commitSha": "2969edf32f7e0c48e2a108d84712d6e01edfde21",
+    "version": "5.102.8"
   }
 }
