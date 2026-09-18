@@ -483,7 +483,9 @@ impl Tool for ServerLinter {
         };
         let mut watchers = match options.config_path.as_deref() {
             Some("") | None => {
-                config_file_names().into_iter().map(|name| format!("**/{name}")).collect()
+                // Watch subdirectories too only when nested config discovery is on.
+                let prefix = if options.use_nested_configs() { "**/" } else { "" };
+                config_file_names().into_iter().map(|name| format!("{prefix}{name}")).collect()
             }
             Some(v) => vec![normalize_user_config_path_to_watch_pattern(v)],
         };

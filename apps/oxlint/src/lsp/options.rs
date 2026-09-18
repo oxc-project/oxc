@@ -188,8 +188,10 @@ impl From<LintFixKindFlag> for FixKind {
 }
 
 impl LintOptions {
+    /// Nested config search: off with `disableNestedConfig`, off with an explicit `configPath`.
+    /// An empty `configPath` counts as unset, as in `ServerLinterBuilder::build`.
     pub fn use_nested_configs(&self) -> bool {
-        !self.disable_nested_config && self.config_path.is_none()
+        !self.disable_nested_config && self.config_path.as_deref().is_none_or(str::is_empty)
     }
 }
 
@@ -399,6 +401,10 @@ mod test {
         let options =
             LintOptions { config_path: Some("config.json".to_string()), ..Default::default() };
         assert!(!options.use_nested_configs());
+
+        // An empty `configPath` is treated as unset.
+        let options = LintOptions { config_path: Some(String::new()), ..Default::default() };
+        assert!(options.use_nested_configs());
 
         let options = LintOptions { disable_nested_config: true, ..Default::default() };
         assert!(!options.use_nested_configs());
