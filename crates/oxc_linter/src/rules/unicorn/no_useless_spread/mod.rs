@@ -13,7 +13,7 @@ use oxc_span::{GetSpan, SPAN, Span};
 
 mod const_eval;
 
-use const_eval::{ConstEval, is_array_from, is_new_typed_array};
+use const_eval::{ConstEval, is_array_from, is_call_on_known_non_array, is_new_typed_array};
 
 use crate::{
     AstNode,
@@ -407,6 +407,13 @@ fn check_useless_clone<'a>(
     let hint = target.const_eval();
     let hint_matches_expr = if is_array { hint.is_array() } else { hint.is_object() };
     if hint_matches_expr {
+        // `[...string.slice(1)]` converts a string into an array of its characters: `String#slice`
+        // and `String#concat` share their names with the array methods inferred below but return a
+        // string, so the spread is load-bearing.
+        if is_array && is_call_on_known_non_array(target, ctx) {
+            return;
+        }
+
         let name = diagnostic_name(ctx, target);
 
         // `[...new Array(1)]` -> `new Array(1).fill()`
@@ -636,6 +643,15 @@ fn test() {
         "[...new Float64Array(buf).slice(0)]",
         "[...new BigInt64Array(buf).slice(0)]",
         "[...new BigUint64Array(buf).slice(0)]",
+        // Issue: <https://github.com/oxc-project/oxc/issues/26159>
+        // `String#slice` and `String#concat` return a string, so the spread converts the string
+        // into an array of its characters and is not a useless clone.
+        "[...'abcdef'.slice(1)]",
+        "[...`ab${1}cd`.slice(1)]",
+        r"const str = 'abcdef'; [...str.slice(1)]",
+        r"const str = 'abcdef'; [...str.concat('x')]",
+        // `new Foo()` is known not to be an array
+        "[...new Foo().slice(1)]",
     ];
 
     #[expect(clippy::literal_string_with_formatting_args)]
@@ -721,6 +737,10 @@ fn test() {
         r"[...foo.map(bar)]",
         r"[...foo.slice(1)]",
         r"[...foo.splice(1)]",
+        // A `let` binding may be reassigned, and a parameter may be anything, so the receiver is
+        // not known to be a non-array and the call is still reported (same as eslint-plugin-unicorn)
+        r"let str = 'abcdef'; [...str.slice(1)]",
+        r"function f(str) { return [...str.slice(1)] }",
         r"[...foo.toReversed()]",
         r"[...foo.toSorted()]",
         r"[...foo.toSpliced(0, 1)]",
