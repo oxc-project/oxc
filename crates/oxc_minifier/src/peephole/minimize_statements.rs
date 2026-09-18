@@ -1881,25 +1881,21 @@ impl<'a> PeepholeOptimizations {
             // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, `while`, `do...while` body.
             Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
                 matches!(
-                    ctx.ancestors().nth(1),
-                    Some(
-                        Ancestor::ForStatementBody(_)
-                            | Ancestor::ForInStatementBody(_)
-                            | Ancestor::ForOfStatementBody(_)
-                            | Ancestor::WhileStatementBody(_)
-                            | Ancestor::DoWhileStatementBody(_)
-                    )
+                    ctx.ancestor(1),
+                    Ancestor::ForStatementBody(_)
+                        | Ancestor::ForInStatementBody(_)
+                        | Ancestor::ForOfStatementBody(_)
+                        | Ancestor::WhileStatementBody(_)
+                        | Ancestor::DoWhileStatementBody(_)
                 )
             }
             // unlabeled `break;` that terminates a `do...while` body if test is false.
-            Statement::BreakStatement(stmt) if stmt.label.is_none() => {
-                match ctx.ancestors().nth(1) {
-                    Some(Ancestor::DoWhileStatementBody(do_while)) => {
-                        do_while.test().get_side_free_boolean_value(ctx) == Some(false)
-                    }
-                    _ => false,
+            Statement::BreakStatement(stmt) if stmt.label.is_none() => match ctx.ancestor(1) {
+                Ancestor::DoWhileStatementBody(do_while) => {
+                    do_while.test().get_side_free_boolean_value(ctx) == Some(false)
                 }
-            }
+                _ => false,
+            },
             // bare `return;` in function-body scope.
             Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
                 ctx.parent().is_function_body()
