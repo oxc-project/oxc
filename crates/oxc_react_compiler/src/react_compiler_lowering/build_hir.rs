@@ -3587,6 +3587,10 @@ fn lower_expression<'a>(
             value: PrimitiveValue::String(lit.value),
             span: Some(lit.span),
         }),
+        oxc::Expression::BigIntLiteral(lit) => Ok(InstructionValue::Primitive {
+            value: PrimitiveValue::BigInt { value: lit.value, raw: lit.raw, base: lit.base },
+            span: Some(lit.span),
+        }),
         oxc::Expression::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
             pattern: regexp.regex.pattern.text,
             flags: Str::from_str_in(
@@ -4282,11 +4286,6 @@ fn lower_expression<'a>(
         ),
         oxc::Expression::AssignmentExpression(assign) => {
             lower_assignment_expression(builder, assign)
-        }
-        _ => {
-            // not-yet-ported arms bail to undefined (differential green-set grows as arms land)
-            let span = Some(expr.span());
-            Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
     }
 }
