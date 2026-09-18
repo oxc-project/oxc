@@ -137,7 +137,13 @@ impl<'a> PeepholeOptimizations {
                 if !lval && op.is_and() && is_cjs_module_exports_hint(&logical_expr.right) {
                     return;
                 }
-                ctx.replace_expression_with(expr, Self::unfold_left_from_logical_expression);
+                ctx.drop_expression(&logical_expr.right);
+                ctx.replace_expression_with(expr, |e, _ctx| {
+                    let Expression::LogicalExpression(e) = e else {
+                        unreachable!();
+                    };
+                    e.unbox().left
+                });
                 return;
             }
             ctx.replace_expression_with(expr, Self::unfold_right_from_logical_expression);
@@ -211,10 +217,10 @@ impl<'a> PeepholeOptimizations {
         let Expression::LogicalExpression(e) = e else {
             unreachable!();
         };
-        let e = e.unbox();
-        if e.left.may_have_side_effects(ctx) {
+        let mut e = e.unbox();
+        if !Self::remove_unused_expression(&mut e.left, ctx) {
             // `(a(), V) OP 1` => `(a(), V, 1)`
-            Expression::new_sequence_expression(e.span, [e.left, e.right], ctx)
+            Self::join_sequence(e.left, e.right, ctx)
         } else if Self::should_keep_indirect_access(&e.right, ctx) {
             // `(V OP o.f)` => `(0, o.f)`
             ctx.drop_expression(&e.left);
