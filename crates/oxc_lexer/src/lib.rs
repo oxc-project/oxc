@@ -1,5 +1,4 @@
 #![cfg(target_endian = "little")]
-#![allow(unsafe_code)]
 
 use std::{cell::RefCell, mem, ptr, slice};
 
