@@ -27684,14 +27684,13 @@ Negative Passed: 4651/4651 (100.00%)
  18 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-objectbindingpattern.js:17:14]
+  × Using declarations may not have binding patterns.
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-objectbindingpattern.js:17:15]
  16 │ async function f() {
  17 │   await using {} = null;
-    ·              ▲
+    ·               ──
  18 │ }
     ╰────
-  help: Try inserting a semicolon here
 
   × 'await using' declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-switchstatement-caseclause.js:22:7]

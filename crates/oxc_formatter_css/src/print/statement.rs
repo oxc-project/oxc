@@ -483,7 +483,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             let _ = f.context().comments().take_before(value_end);
         } else if decl.value_is_raw && is_custom_property {
             // Text the typed grammar could not read (`--z: */;`, `--x: 1px !foo;`, // Scss `--x: // (\n);`):
-            // verbatim in every variant (DIVERGENCES.md "custom-property-raw-verbatim").
+            // verbatim in every variant (DIVERGENCES.md#custom-property-raw-verbatim).
             value::write_verbatim_value(Span::new(value_start, value_end), f);
         } else {
             // Typed values, plus a normal property's raw `<any-value>` fallback:

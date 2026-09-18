@@ -9,7 +9,7 @@ $typed-tail-comment: red /* keep typed tail */;
 /* A $var declaration keeps Css's <any-value> raw fallback.
    `$raw-close` and `$raw-paren` DIVERGE from Prettier:
    textual substitution makes raw bytes semantic
-   (DIVERGENCES.md "postcss-simple-var-raw-verbatim"). */
+   (DIVERGENCES.md#postcss-simple-var-raw-verbatim). */
 $raw-close: */;
 $raw-tail-comment: */ /* keep raw tail */;
 $raw-selector: .foo > bar;

@@ -42,6 +42,7 @@ pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use semicolon::write_comments_before_closing_paren;
 pub use union_type::{
     alias_union_breaks_after_operator, is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
+    union_prints_itself,
 };
 
 use cow_utils::CowUtils;
@@ -1358,6 +1359,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAnnotation<'a>> {
                 write!(f, [self.type_annotation()]);
             }
             _ => {
+                // Line comment after the `:` drops the type to column 0 (`let v: // c` + `Foo`, Prettier too);
+                // a break + indent as after `=` would keep it under the name.
+                // See AGENTS.md "Open debts".
                 write!(f, [":", space(), self.type_annotation()]);
             }
         }
