@@ -912,13 +912,15 @@ impl<'a> JsxImpl<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
                 let mut decoded = None;
-                decode_entities(s.value.as_str(), &mut decoded, s.value.len(), ctx.allocator());
+                if let Some(value) = s.value.as_str() {
+                    decode_entities(value, &mut decoded, value.len(), ctx.allocator());
+                }
                 let jsx_text = if let Some(decoded) = decoded {
                     // Text contains HTML entities which were decoded.
                     // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Str`.
-                    Str::from(decoded)
+                    Str::from(decoded).into()
                 } else {
-                    // No HTML entities needed to be decoded. Use the original `Str` without copying.
+                    // No HTML entities needed to be decoded. Use the original value without copying.
                     s.value
                 };
                 Expression::new_string_literal(s.span, jsx_text, None, ctx)

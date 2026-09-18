@@ -200,19 +200,26 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
+        self.module_record.has_module_syntax = true;
+        // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
+        let Some(source) = decl.source.value.as_str() else { return };
+        let module_request = NameSpan::new(source.into(), decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
                 let (import_name, local_name, is_type) = match specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => (
-                        ImportImportName::Name(NameSpan::new(
-                            specifier.imported.name(),
-                            specifier.imported.span(),
-                        )),
-                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
-                        decl.import_kind.is_type() || specifier.import_kind.is_type(),
-                    ),
+                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                        // Invalid export names were diagnosed while parsing the specifier.
+                        let Some(name) = specifier.imported.name().as_str() else { continue };
+                        (
+                            ImportImportName::Name(NameSpan::new(
+                                name.into(),
+                                specifier.imported.span(),
+                            )),
+                            NameSpan::new(specifier.local.name.into(), specifier.local.span),
+                            decl.import_kind.is_type() || specifier.import_kind.is_type(),
+                        )
+                    }
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
                         ImportImportName::NamespaceObject,
                         NameSpan::new(specifier.local.name.into(), specifier.local.span),
@@ -242,28 +249,34 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_import: true,
             },
         );
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
-        let export_entry = ExportEntry {
-            statement_span: decl.span,
-            span: decl.span,
-            module_request: Some(module_request.clone()),
-            import_name: decl
-                .exported
-                .as_ref()
-                .map_or(ExportImportName::AllButDefault, |_| ExportImportName::All),
-            export_name: decl.exported.as_ref().map_or(ExportExportName::Null, |exported_name| {
-                ExportExportName::Name(NameSpan::new(exported_name.name(), exported_name.span()))
-            }),
-            local_name: ExportLocalName::default(),
-            is_type: decl.export_kind.is_type(),
-        };
-        self.add_export_entry(export_entry);
-        if let Some(exported_name) = &decl.exported {
-            self.add_export_binding(exported_name.name(), exported_name.span());
+        self.module_record.has_module_syntax = true;
+        // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
+        let Some(source) = decl.source.value.as_str() else { return };
+        let module_request = NameSpan::new(source.into(), decl.source.span);
+        let exported = decl.exported.as_ref().and_then(|name| {
+            name.name().as_str().map(|value| NameSpan::new(value.into(), name.span()))
+        });
+        // Keep invalid names in the recovered AST, but omit their module-record entries.
+        if decl.exported.is_none() || exported.is_some() {
+            if let Some(exported) = &exported {
+                self.add_export_binding(exported.name, exported.span);
+            }
+            self.add_export_entry(ExportEntry {
+                statement_span: decl.span,
+                span: decl.span,
+                module_request: Some(module_request.clone()),
+                import_name: if exported.is_some() {
+                    ExportImportName::All
+                } else {
+                    ExportImportName::AllButDefault
+                },
+                export_name: exported.map_or(ExportExportName::Null, ExportExportName::Name),
+                local_name: ExportLocalName::default(),
+                is_type: decl.export_kind.is_type(),
+            });
         }
         self.add_module_request(
             module_request.name,
@@ -274,7 +287,6 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_import: false,
             },
         );
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn visit_export_default_declaration(
@@ -337,10 +349,11 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
         for specifier in &decl.specifiers {
-            let export_name = ExportExportName::Name(NameSpan::new(
-                specifier.exported.name(),
-                specifier.exported.span(),
-            ));
+            // These names must be well-formed Unicode; the parser reports invalid names.
+            let Some(exported) = specifier.exported.name().as_str() else { continue };
+            let Some(local) = specifier.local.name().as_str() else { continue };
+            let export_name =
+                ExportExportName::Name(NameSpan::new(exported.into(), specifier.exported.span()));
             let export_entry = ExportEntry {
                 statement_span: decl.span,
                 span: specifier.span,
@@ -348,19 +361,22 @@ impl<'a> ModuleRecordBuilder<'a> {
                 import_name: ExportImportName::Null,
                 export_name,
                 local_name: ExportLocalName::Name(NameSpan::new(
-                    specifier.local.name(),
+                    local.into(),
                     specifier.local.span(),
                 )),
                 is_type: specifier.export_kind.is_type() || decl.export_kind.is_type(),
             };
             self.add_export_entry(export_entry);
-            self.add_export_binding(specifier.exported.name(), specifier.exported.span());
+            self.add_export_binding(exported.into(), specifier.exported.span());
         }
         self.module_record.has_module_syntax = true;
     }
 
     pub fn visit_export_from_declaration(&mut self, decl: &ExportFromDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
+        self.module_record.has_module_syntax = true;
+        // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
+        let Some(source) = decl.source.value.as_str() else { return };
+        let module_request = NameSpan::new(source.into(), decl.source.span);
         self.add_module_request(
             module_request.name,
             RequestedModule {
@@ -372,14 +388,13 @@ impl<'a> ModuleRecordBuilder<'a> {
         );
 
         for specifier in &decl.specifiers {
-            let export_name = ExportExportName::Name(NameSpan::new(
-                specifier.exported.name(),
-                specifier.exported.span(),
-            ));
-            let import_name = ExportImportName::Name(NameSpan::new(
-                specifier.local.name(),
-                specifier.local.span(),
-            ));
+            // These names must be well-formed Unicode; the parser reports invalid names.
+            let Some(exported) = specifier.exported.name().as_str() else { continue };
+            let Some(local) = specifier.local.name().as_str() else { continue };
+            let export_name =
+                ExportExportName::Name(NameSpan::new(exported.into(), specifier.exported.span()));
+            let import_name =
+                ExportImportName::Name(NameSpan::new(local.into(), specifier.local.span()));
             let export_entry = ExportEntry {
                 statement_span: decl.span,
                 span: specifier.span,
@@ -390,10 +405,8 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_type: specifier.export_kind.is_type() || decl.export_kind.is_type(),
             };
             self.add_export_entry(export_entry);
-            self.add_export_binding(specifier.exported.name(), specifier.exported.span());
+            self.add_export_binding(exported.into(), specifier.exported.span());
         }
-
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn set_module_syntax(&mut self) {

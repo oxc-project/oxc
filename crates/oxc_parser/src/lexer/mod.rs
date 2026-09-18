@@ -12,6 +12,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::RegExpFlags;
 use oxc_span::{SourceType, Span};
+use oxc_str::JSStr;
 
 use crate::{
     UniquePromise,
@@ -102,12 +103,12 @@ pub struct Lexer<'a, C: Config> {
 
     pub(crate) trivia_builder: TriviaBuilder<'a>,
 
-    /// Data store for escaped strings, indexed by [Token::start] when [Token::escaped] is true
-    pub escaped_strings: FxHashMap<u32, &'a str>,
+    /// Decoded identifiers and string literals, indexed by [Token::start] when [Token::escaped] is true.
+    pub escaped_strings: FxHashMap<u32, JSStr<'a>>,
 
     /// Data store for escaped templates, indexed by [Token::start] when [Token::escaped] is true
     /// `None` is saved when the string contains an invalid escape sequence.
-    pub escaped_templates: FxHashMap<u32, Option<&'a str>>,
+    pub escaped_templates: FxHashMap<u32, Option<JSStr<'a>>>,
 
     /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,

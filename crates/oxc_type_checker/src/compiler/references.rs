@@ -17,6 +17,7 @@ use oxc_ast::ast::{
 use oxc_ast_visit::{Visit, walk};
 use oxc_span::GetSpan;
 use oxc_str::CompactStr;
+use oxc_str::JSStr;
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::tspath::is_external_module_name_relative;
@@ -168,19 +169,19 @@ impl Collector {
                     &decl.module_reference
                 {
                     let name = &reference.expression;
-                    self.add_static(name.span.start, &name.value, in_ambient_module);
+                    self.add_static(name.span.start, name.value, in_ambient_module);
                 }
             }
             // Top-level imports/re-exports are already in the module record; only the ones
             // nested inside ambient module bodies need collecting here.
             Statement::ImportDeclaration(decl) => {
                 if in_ambient_module {
-                    self.add_static(decl.source.span.start, &decl.source.value, true);
+                    self.add_static(decl.source.span.start, decl.source.value, true);
                 }
             }
             Statement::ExportFromDeclaration(decl) => {
                 if in_ambient_module {
-                    self.add_static(decl.source.span.start, &decl.source.value, true);
+                    self.add_static(decl.source.span.start, decl.source.value, true);
                 }
             }
             Statement::ExportDeclaration(decl) => {
@@ -190,12 +191,12 @@ impl Collector {
                         &decl.module_reference
                 {
                     let name = &reference.expression;
-                    self.add_static(name.span.start, &name.value, in_ambient_module);
+                    self.add_static(name.span.start, name.value, in_ambient_module);
                 }
             }
             Statement::ExportAllDeclaration(decl) => {
                 if in_ambient_module {
-                    self.add_static(decl.source.span.start, &decl.source.value, true);
+                    self.add_static(decl.source.span.start, decl.source.value, true);
                 }
             }
             Statement::TSExternalModuleDeclaration(decl) => {
@@ -206,11 +207,12 @@ impl Collector {
                 // Ambient module declarations can be interpreted as augmentations of existing
                 // external modules: in an external module file, any of them; in a script file,
                 // the non-relative ones immediately nested in a top-level ambient module.
-                if self.is_external_module
-                    || (in_ambient_module && !is_external_module_name_relative(&name.value))
-                {
-                    self.module_augmentations.push(CompactStr::from(name.value.as_str()));
-                } else if !in_ambient_module {
+                if self.is_external_module || in_ambient_module {
+                    let Some(value) = name.value.as_str() else { return };
+                    if self.is_external_module || !is_external_module_name_relative(value) {
+                        self.module_augmentations.push(CompactStr::from(value));
+                    }
+                } else {
                     // A top-level ambient module declaration in a script file *declares* the
                     // module — nothing to resolve, but its body may reference other modules.
                     if let Some(block) = &decl.body {
@@ -226,7 +228,9 @@ impl Collector {
 
     /// Record a statically referenced module name. Inside an ambient module, relative names
     /// cannot reference other external modules (TypeScript 1.0 spec §12.1.6).
-    fn add_static(&mut self, start: u32, name: &str, in_ambient_module: bool) {
+    fn add_static(&mut self, start: u32, name: JSStr<'_>, in_ambient_module: bool) {
+        // The filesystem resolver accepts only UTF-8 paths.
+        let Some(name) = name.as_str() else { return };
         if !name.is_empty() && (!in_ambient_module || !is_external_module_name_relative(name)) {
             self.statics.push((start, CompactStr::from(name)));
         }
@@ -248,16 +252,20 @@ impl CallCollector<'_> {
     fn add_string_literal_like(&mut self, expression: &Expression<'_>) {
         match expression {
             Expression::StringLiteral(literal) => {
-                if !literal.value.is_empty() {
-                    self.dynamics
-                        .push((literal.span.start, CompactStr::from(literal.value.as_str())));
+                if let Some(value) = literal.value.as_str()
+                    && !value.is_empty()
+                {
+                    self.dynamics.push((literal.span.start, CompactStr::from(value)));
                 }
             }
             Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
-                let value = template.quasis[0].value.cooked.as_ref().map_or_else(
-                    || template.quasis[0].value.raw.as_str(),
-                    |cooked| cooked.as_str(),
-                );
+                let value = match template.quasis[0].value.cooked {
+                    Some(cooked) => {
+                        let Some(value) = cooked.as_str() else { return };
+                        value
+                    }
+                    None => template.quasis[0].value.raw.as_str(),
+                };
                 if !value.is_empty() {
                     self.dynamics.push((template.span.start, CompactStr::from(value)));
                 }
@@ -274,8 +282,10 @@ impl<'a> Visit<'a> for CallCollector<'_> {
     }
 
     fn visit_ts_import_type(&mut self, it: &TSImportType<'a>) {
-        if !it.source.value.is_empty() {
-            self.dynamics.push((it.source.span.start, CompactStr::from(it.source.value.as_str())));
+        if let Some(value) = it.source.value.as_str()
+            && !value.is_empty()
+        {
+            self.dynamics.push((it.source.span.start, CompactStr::from(value)));
         }
         // Type arguments may nest further import types.
         walk::walk_ts_import_type(self, it);
@@ -293,5 +303,36 @@ impl<'a> Visit<'a> for CallCollector<'_> {
             self.add_string_literal_like(argument);
         }
         walk::walk_call_expression(self, it);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    use super::collect_external_module_references;
+
+    #[test]
+    fn ambient_module_name_does_not_hide_body_references() {
+        for name in ["normal", r"\uD800", r"\uDC00", r"a\uD800b"] {
+            let allocator = Allocator::default();
+            let source = format!(
+                r#"declare module "{name}" {{
+                    import "package";
+                    import "./relative";
+                    export * from "other";
+                    module "nested" {{}}
+                    module "\uD800" {{}}
+                }}"#
+            );
+            let parsed = Parser::new(&allocator, &source, SourceType::ts()).parse();
+            assert!(parsed.diagnostics.is_empty(), "{name}: {:?}", parsed.diagnostics);
+            let references =
+                collect_external_module_references(&parsed.program, &parsed.module_record, false);
+            assert_eq!(references.imports, ["package", "other"], "{name}");
+            assert_eq!(references.module_augmentations, ["nested"], "{name}");
+        }
     }
 }
