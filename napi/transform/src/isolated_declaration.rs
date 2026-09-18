@@ -46,19 +46,34 @@ fn isolated_declaration_impl(
     options: Option<IsolatedDeclarationsOptions>,
 ) -> IsolatedDeclarationsResult {
     let source_path = Path::new(filename);
-    let source_type = SourceType::from_path(source_path).unwrap_or_default().with_typescript(true);
     let allocator = Allocator::default();
     let options = options.unwrap_or_default();
+    let id_options = oxc::isolated_declarations::IsolatedDeclarationsOptions {
+        strip_internal: options.strip_internal.unwrap_or(false),
+    };
 
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let is_json = source_path.extension().is_some_and(|ext| ext.eq_ignore_ascii_case("json"));
 
-    let transformed_ret = IsolatedDeclarations::new(
-        &allocator,
-        oxc::isolated_declarations::IsolatedDeclarationsOptions {
-            strip_internal: options.strip_internal.unwrap_or(false),
-        },
-    )
-    .build(&ret.program);
+    // JSON files are treated as modules whose default export is the JSON value,
+    // matching TypeScript's isolated declarations behavior.
+    let (transformed_ret, parse_diagnostics) = if is_json {
+        match Parser::new(&allocator, source_text, SourceType::mjs()).parse_expression() {
+            Ok(expression) => (
+                IsolatedDeclarations::new(&allocator, id_options)
+                    .build_json(&expression, source_text),
+                oxc::diagnostics::Diagnostics::default(),
+            ),
+            Err(diagnostics) => {
+                let errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
+                return IsolatedDeclarationsResult { code: String::new(), map: None, errors };
+            }
+        }
+    } else {
+        let source_type =
+            SourceType::from_path(source_path).unwrap_or_default().with_typescript(true);
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        (IsolatedDeclarations::new(&allocator, id_options).build(&ret.program), ret.diagnostics)
+    };
 
     let source_map_path = match options.sourcemap {
         Some(true) => Some(source_path.to_path_buf()),
@@ -73,7 +88,7 @@ fn isolated_declaration_impl(
         .build(&transformed_ret.program);
 
     let diagnostics =
-        ret.diagnostics.into_iter().chain(transformed_ret.diagnostics).collect::<Vec<_>>();
+        parse_diagnostics.into_iter().chain(transformed_ret.diagnostics).collect::<Vec<_>>();
     let errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
 
     IsolatedDeclarationsResult {
