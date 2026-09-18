@@ -53,5 +53,10 @@
     "repoUrl": "https://github.com/ota-meshi/eslint-plugin-regexp",
     "commitSha": "788787a7e9e820c40321fe2f1095d00d4a486866",
     "version": "v3.1.0"
+  },
+  "no_secrets": {
+    "repoUrl": "https://github.com/nickdeis/eslint-plugin-no-secrets",
+    "commitSha": "fe95b10ac26be814327bb58ab97935c392adc4a1",
+    "version": "2.3.3"
   }
 }
