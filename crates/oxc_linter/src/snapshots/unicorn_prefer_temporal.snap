@@ -1,0 +1,311 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date()`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date()
+   · ──────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date()`
+   ╭─[prefer_temporal.tsx:1:13]
+ 1 │ const now = new Date();
+   ·             ──────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date()`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date
+   · ────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(1_724_198_400_000)
+   · ───────────────────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(0)
+   · ───────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(-1000)
+   · ───────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:18]
+ 1 │ const ms = 1000; new Date(ms);
+   ·                  ────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date("2024-08-16")
+   · ──────────────────────
+   ╰────
+  help: Date string parsing is inconsistent across implementations. Use `Temporal.PlainDate.from()` instead.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:30]
+ 1 │ const string = "2024-08-16"; new Date(string);
+   ·                              ────────────────
+   ╰────
+  help: Date string parsing is inconsistent across implementations. Use `Temporal.PlainDate.from()` instead.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(`2024-08-16`)
+   · ──────────────────────
+   ╰────
+  help: Date string parsing is inconsistent across implementations. Use `Temporal.PlainDate.from()` instead.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(2024, 0, 1)
+   · ────────────────────
+   ╰────
+  help: The month argument of `Date` is zero-indexed, which is error-prone. Use `Temporal.PlainDate.from({year, month, day})` instead.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(2024, 11, 25, 10, 30)
+   · ──────────────────────────────
+   ╰────
+  help: The month argument of `Date` is zero-indexed, which is error-prone. Use `Temporal.PlainDate.from({year, month, day})` instead.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(input)
+   · ───────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:48]
+ 1 │ const modes = new Set(['foo']); modes.clear(); new Date(modes.size ? 0 : '2020-01-01')
+   ·                                                ───────────────────────────────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:48]
+ 1 │ const modes = new Set(['foo']); modes.clear(); new Date((modes.size && 0) || timestamp)
+   ·                                                ────────────────────────────────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:94]
+ 1 │ const object = {value: true}; Object.defineProperty(object, 'value', {get() { return 0; }}); new Date(object.value ? 0 : timestamp)
+   ·                                                                                              ──────────────────────────────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(NaN)
+   · ─────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(Number.POSITIVE_INFINITY)
+   · ──────────────────────────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(1.5)
+   · ─────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(9_000_000_000_000_000)
+   · ───────────────────────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(1e21)
+   · ──────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(0n)
+   · ────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(...timestamps)
+   · ───────────────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(/* epoch */ 1000)
+   · ──────────────────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date.parse(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ Date.parse("2024-08-16")
+   · ────────────────────────
+   ╰────
+  help: Date string parsing is inconsistent across implementations. Use `Temporal.PlainDate.from()` instead.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date.UTC(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ Date.UTC(2000, 11, 25)
+   · ──────────────────────
+   ╰────
+  help: The month argument of `Date` is zero-indexed, which is error-prone. Use `Temporal.PlainDate.from({year, month, day})` instead.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date()`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ Date()
+   · ──────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date(x as number)
+   · ─────────────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date.now()`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ Date.now()
+   · ──────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date.now()`
+   ╭─[prefer_temporal.tsx:1:15]
+ 1 │ const start = Date.now();
+   ·               ──────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date.now()`
+   ╭─[prefer_temporal.tsx:1:18]
+ 1 │ const duration = Date.now() - start;
+   ·                  ──────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date.now()`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ Date["now"]()
+   · ─────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date.now()`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ Date?.now()
+   · ───────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date.now()`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ globalThis.Date.now()
+   · ─────────────────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date`
+   ╭─[prefer_temporal.tsx:1:14]
+ 1 │ x instanceof Date
+   ·              ────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date`
+   ╭─[prefer_temporal.tsx:1:11]
+ 1 │ const d = Date;
+   ·           ────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date`
+   ╭─[prefer_temporal.tsx:1:5]
+ 1 │ foo(Date)
+   ·     ────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date`
+   ╭─[prefer_temporal.tsx:1:2]
+ 1 │ [Date]
+   ·  ────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date`
+   ╭─[prefer_temporal.tsx:1:8]
+ 1 │ typeof Date === "function"
+   ·        ────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date()`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date()
+   · ──────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date.parse(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ Date.parse("2024-08-16")
+   · ────────────────────────
+   ╰────
+  help: Date string parsing is inconsistent across implementations. Use `Temporal.PlainDate.from()` instead.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date.parse(…)`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ (Date).parse("2024-08-16")
+   · ──────────────────────────
+   ╰────
+  help: Date string parsing is inconsistent across implementations. Use `Temporal.PlainDate.from()` instead.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `Date`
+   ╭─[prefer_temporal.tsx:1:12]
+ 1 │ const d = (Date);
+   ·            ────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
+
+  ⚠ unicorn(prefer-temporal): Prefer `Temporal` over `new Date()`
+   ╭─[prefer_temporal.tsx:1:1]
+ 1 │ new Date().getFullYear();
+   · ──────────
+   ╰────
+  help: Use the `Temporal` API to hold a date or a time.
