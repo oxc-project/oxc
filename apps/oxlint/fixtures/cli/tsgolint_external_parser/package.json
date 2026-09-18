@@ -1,0 +1,9 @@
+{
+  "name": "oxlint-tsgolint-external-parser-fixture",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@glimmer/component": "^2.1.1",
+    "ember-content-mapper": "0.3.1"
+  }
+}

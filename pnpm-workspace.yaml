@@ -61,3 +61,5 @@ minimumReleaseAgeExclude:
   - vite
   - vite-plus
   - vitest
+  - ember-eslint-parser@0.14.6
+  - ember-estree@0.6.11

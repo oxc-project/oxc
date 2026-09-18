@@ -1,0 +1,15 @@
+{
+  "overrides": [
+    {
+      "files": ["**/*.custom"],
+      "jsPlugins": ["./plugin.ts"],
+      "languageOptions": {
+        "parser": "./parser.mjs"
+      },
+      "rules": {
+        "custom-parser-plugin/no-template": "error",
+        "custom-parser-plugin/source-code-check": "warn"
+      }
+    }
+  ]
+}

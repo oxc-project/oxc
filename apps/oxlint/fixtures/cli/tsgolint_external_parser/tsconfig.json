@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es2022",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "contentMappers": [
+    { "package": "ember-content-mapper", "extensions": [".gts", ".gjs"] }
+  ],
+  "include": ["files"]
+}

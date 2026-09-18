@@ -148,6 +148,7 @@ pub struct LintRunnerBuilder {
     regular_linter: Linter,
     type_aware_enabled: bool,
     type_check: bool,
+    run_external_code: bool,
     lint_service_options: LintServiceOptions,
     silent: bool,
     fix_kind: FixKind,
@@ -162,6 +163,7 @@ impl LintRunnerBuilder {
             regular_linter: linter,
             type_aware_enabled: false,
             type_check: false,
+            run_external_code: false,
             lint_service_options,
             silent: false,
             fix_kind: FixKind::None,
@@ -180,6 +182,12 @@ impl LintRunnerBuilder {
     #[must_use]
     pub fn with_type_check(mut self, enabled: bool) -> Self {
         self.type_check = enabled;
+        self
+    }
+
+    #[must_use]
+    pub fn with_run_external_code(mut self, enabled: bool) -> Self {
+        self.run_external_code = enabled;
         self
     }
 
@@ -228,6 +236,7 @@ impl LintRunnerBuilder {
                     state
                         .with_silent(self.silent)
                         .with_type_check(self.type_check)
+                        .with_run_external_code(self.run_external_code)
                         .with_timings(self.timings)
                         .with_ignore_fixes(self.with_ignore_fixes),
                 ),
@@ -330,6 +339,11 @@ impl LintRunner {
     /// Get the directives coordinator for external use
     pub fn directives_coordinator(&self) -> &DirectivesStore {
         &self.directives_store
+    }
+
+    /// Returns `true` if an external (JS) parser is configured for the file at `path`.
+    pub fn has_external_parser(&self, path: &Path) -> bool {
+        self.lint_service.has_external_parser(path)
     }
 
     /// Check if type-aware linting is enabled
