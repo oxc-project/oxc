@@ -53,5 +53,10 @@
     "repoUrl": "https://github.com/ota-meshi/eslint-plugin-regexp",
     "commitSha": "788787a7e9e820c40321fe2f1095d00d4a486866",
     "version": "v3.1.0"
+  },
+  "sdl": {
+    "repoUrl": "https://github.com/microsoft/eslint-plugin-sdl",
+    "commitSha": "98439dcebd0d6a1c267d927e1c7d3b7df5675499",
+    "version": "1.1.0"
   }
 }
