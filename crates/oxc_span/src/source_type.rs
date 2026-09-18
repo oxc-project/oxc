@@ -116,7 +116,7 @@ impl ContentEq for SourceType {
 }
 
 /// Valid file extensions.
-pub const VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
+pub const VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx", "astro"];
 
 /// Valid file extension.
 #[ast]
@@ -139,6 +139,8 @@ pub enum FileExtension {
     Cts = 6,
     /// `.tsx` file extension
     Tsx = 7,
+    /// `.astro` file extension
+    Astro = 8,
 }
 
 impl FileExtension {
@@ -184,6 +186,7 @@ impl FromStr for FileExtension {
             "mts" => Ok(FileExtension::Mts),
             "cts" => Ok(FileExtension::Cts),
             "tsx" => Ok(FileExtension::Tsx),
+            "astro" => Ok(FileExtension::Astro),
             _ => Err(UnknownExtension::new("Unknown extension.")),
         }
     }
