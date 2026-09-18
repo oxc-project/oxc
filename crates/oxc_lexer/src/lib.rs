@@ -183,18 +183,13 @@ fn resolve_unicode_leads(
         }
         let code = if ch == '\u{FFFD}' {
             // oxc_parser treats a code-level replacement char as a binary file.
-            error::DiagCode::InvalidUtf8
+            DiagCode::InvalidUtf8
         } else {
-            error::DiagCode::UnexpectedCharacter
+            DiagCode::UnexpectedCharacter
         };
         #[expect(clippy::cast_possible_truncation, reason = "char lengths are 1..=4")]
         let len = ch.len_utf8() as u32;
-        lanes.diags.push(error::Diagnostic {
-            off,
-            len,
-            code,
-            severity: error::DiagSeverity::Error,
-        });
+        lanes.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
     }
     leads.clear();
     lanes.unicode_leads = leads;
