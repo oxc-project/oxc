@@ -53,12 +53,6 @@ pub struct Lexer {
     tables: Box<Tables>,
 }
 
-impl Default for Lexer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Lexer {
     pub fn new() -> Lexer {
         Lexer {
@@ -83,38 +77,35 @@ impl Lexer {
         }
     }
 
-    /// The kinds written by the last [`Lexer::lex`], including the trailing
-    /// [`SPAN_SENTINELS`] EOF entries.
-    #[must_use]
-    pub fn kinds(&self) -> &[TokenKind] {
-        let bytes = &self.sig_kinds[..self.sig_len + SPAN_SENTINELS];
-        debug_assert_kind_bytes(bytes);
-        // SAFETY: `lex_raw` wrote `sig_len` kinds plus the sentinels, all of
-        // them declared discriminants.
-        unsafe { kinds_from_bytes(bytes) }
-    }
-
-    fn ensure(&mut self, n: usize) {
-        let nb = n.div_ceil(64) + 1;
-        if self.nb_cap < nb {
-            self.word.resize(nb, 0);
-            self.st.resize(nb, 0);
-            self.kwinit.resize(nb, 0);
-            self.opch.resize(nb, 0);
-            self.digit.resize(nb, 0);
-            self.dot.resize(nb, 0);
-            self.misc.resize(nb, 0);
-            self.kind.resize(nb * 64, 0);
-            self.nb_cap = nb;
-        }
-        if self.kwpos.is_empty() {
-            self.kwpos.resize(KWB * 64 + 8, 0);
-        }
-        let need = n + PAD;
-        if self.out_cap < need {
-            self.spans.resize(need + SPAN_SENTINELS, Span::new(0, 0));
-            self.sig_kinds.resize(need + SPAN_SENTINELS, 0);
-            self.out_cap = need;
+    /// Lex `src[..n]` into the internal `spans`/`sig_kinds` buffers (mode from
+    /// `options`), returning the significant token count. Test/bench entry;
+    /// the arena API is [`lex_utf8`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `n`.
+    ///
+    /// [`lex_utf8`]: crate::lex_utf8
+    pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions) -> usize {
+        assert!(
+            src.len() >= n + PAD,
+            "lexer: src must have >= {PAD} bytes of padding past len {n} (got {})",
+            src.len()
+        );
+        self.ensure(n);
+        let kinds = self.sig_kinds.as_mut_ptr();
+        let spans = self.spans.as_mut_ptr();
+        unsafe {
+            self.lex_raw(
+                src,
+                n,
+                kinds,
+                spans,
+                options.jsx,
+                options.ts,
+                options.source_type_module,
+                options.validate_utf8,
+            )
         }
     }
 
@@ -190,35 +181,44 @@ impl Lexer {
         w
     }
 
-    /// Lex `src[..n]` into the internal `spans`/`sig_kinds` buffers (mode from
-    /// `options`), returning the significant token count. Test/bench entry;
-    /// the arena API is [`lex_utf8`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `n`.
-    ///
-    /// [`lex_utf8`]: crate::lex_utf8
-    pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions) -> usize {
-        assert!(
-            src.len() >= n + PAD,
-            "lexer: src must have >= {PAD} bytes of padding past len {n} (got {})",
-            src.len()
-        );
-        self.ensure(n);
-        let kinds = self.sig_kinds.as_mut_ptr();
-        let spans = self.spans.as_mut_ptr();
-        unsafe {
-            self.lex_raw(
-                src,
-                n,
-                kinds,
-                spans,
-                options.jsx,
-                options.ts,
-                options.source_type_module,
-                options.validate_utf8,
-            )
+    fn ensure(&mut self, n: usize) {
+        let nb = n.div_ceil(64) + 1;
+        if self.nb_cap < nb {
+            self.word.resize(nb, 0);
+            self.st.resize(nb, 0);
+            self.kwinit.resize(nb, 0);
+            self.opch.resize(nb, 0);
+            self.digit.resize(nb, 0);
+            self.dot.resize(nb, 0);
+            self.misc.resize(nb, 0);
+            self.kind.resize(nb * 64, 0);
+            self.nb_cap = nb;
         }
+        if self.kwpos.is_empty() {
+            self.kwpos.resize(KWB * 64 + 8, 0);
+        }
+        let need = n + PAD;
+        if self.out_cap < need {
+            self.spans.resize(need + SPAN_SENTINELS, Span::new(0, 0));
+            self.sig_kinds.resize(need + SPAN_SENTINELS, 0);
+            self.out_cap = need;
+        }
+    }
+
+    /// The kinds written by the last [`Lexer::lex`], including the trailing
+    /// [`SPAN_SENTINELS`] EOF entries.
+    #[must_use]
+    pub fn kinds(&self) -> &[TokenKind] {
+        let bytes = &self.sig_kinds[..self.sig_len + SPAN_SENTINELS];
+        debug_assert_kind_bytes(bytes);
+        // SAFETY: `lex_raw` wrote `sig_len` kinds plus the sentinels, all of
+        // them declared discriminants.
+        unsafe { kinds_from_bytes(bytes) }
+    }
+}
+
+impl Default for Lexer {
+    fn default() -> Self {
+        Self::new()
     }
 }
