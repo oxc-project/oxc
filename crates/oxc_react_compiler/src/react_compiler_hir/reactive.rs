@@ -181,6 +181,7 @@ pub enum ReactiveTerminal<'a> {
     },
     For {
         init: ReactiveValue<'a>,
+        init_is_direct_expression: bool,
         test: ReactiveValue<'a>,
         update: Option<ReactiveValue<'a>>,
         loop_block: ReactiveBlock<'a>,
@@ -427,16 +428,23 @@ impl<'a> CloneIn<'a> for ReactiveTerminal<'a> {
                     id: *id,
                 }
             }
-            ReactiveTerminal::For { init, test, update, loop_block, loop_block_span, id } => {
-                ReactiveTerminal::For {
-                    init: init.clone_in_impl(sem, alloc),
-                    test: test.clone_in_impl(sem, alloc),
-                    update: update.as_ref().map(|value| value.clone_in_impl(sem, alloc)),
-                    loop_block: clone_reactive_block_in(loop_block, sem, alloc),
-                    loop_block_span: *loop_block_span,
-                    id: *id,
-                }
-            }
+            ReactiveTerminal::For {
+                init,
+                init_is_direct_expression,
+                test,
+                update,
+                loop_block,
+                loop_block_span,
+                id,
+            } => ReactiveTerminal::For {
+                init: init.clone_in_impl(sem, alloc),
+                init_is_direct_expression: *init_is_direct_expression,
+                test: test.clone_in_impl(sem, alloc),
+                update: update.as_ref().map(|value| value.clone_in_impl(sem, alloc)),
+                loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                loop_block_span: *loop_block_span,
+                id: *id,
+            },
             ReactiveTerminal::ForOf {
                 init,
                 test,
