@@ -1013,6 +1013,29 @@ fn test_string_add() {
 }
 
 #[test]
+fn test_nested_string_addition() {
+    fold("'a' + ('?b=' + Date.now())", "'a?b=' + Date.now()");
+    fold("'a' + ('b' + value)", "'ab' + value");
+    fold("'a' + ('b' + ('c' + value))", "'abc' + value");
+    fold("'a' + ('b' + value) + 1", "'ab' + value + 1");
+    fold("'é' + ('🙂' + value)", "'é🙂' + value");
+    fold("'a' + ('b' + (first(), second()))", "'ab' + (first(), second())");
+
+    // Preserve numeric addition and coercions outside two literal string prefixes.
+    fold_same("'a' + (1 + value)");
+    fold_same("'a' + (value + 'b')");
+    fold_same("'a' + ('b' - value)");
+    fold_same("prefix() + ('b' + value)");
+    fold("'a' + ((first(), 'b') + value)", "'a' + (first(), 'b' + value)");
+    fold("(first(), 'a') + ('b' + value)", "(first(), 'ab' + value)");
+
+    // The escaped representation of lone surrogates cannot be concatenated as UTF-8.
+    fold_same("'\\ud800' + ('b' + value)");
+    fold_same("'a' + ('\\udc00' + value)");
+    fold_same("'\\ud800' + ('\\udc00' + value)");
+}
+
+#[test]
 fn test_fold_arithmetic() {
     fold("1n+ +1n", "1n + +1n");
     fold("1n- -1n", "1n - -1n");

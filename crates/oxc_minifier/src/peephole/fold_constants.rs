@@ -549,6 +549,23 @@ impl<'a> PeepholeOptimizations {
             return Some(expr);
         }
 
+        // 'a' + ('b' + x) -> 'ab' + x. Literal string prefixes preserve both
+        // the evaluation order and the single coercion of x.
+        if let Expression::StringLiteral(left) = &e.left
+            && let Expression::BinaryExpression(right) = &mut e.right
+            && right.operator == BinaryOperator::Addition
+            && let Expression::StringLiteral(right_left) = &right.left
+            && !left.lone_surrogates
+            && !right_left.lone_surrogates
+        {
+            let span = left.span.merge_within(right_left.span, e.span).unwrap_or(SPAN);
+            let value =
+                Str::from_strs_array_in([left.value.as_str(), right_left.value.as_str()], ctx);
+            let left = Expression::new_string_literal(span, value, None, ctx);
+            let right = right.right.take_in(ctx);
+            return Some(Expression::new_binary_expression(e.span, left, e.operator, right, ctx));
+        }
+
         // a + 'b' + 'c' -> a + 'bc'
         // Only sound when the inner operator is also `+`: for e.g. `(x - 'b') + 'c'` the inner
         // string operand is numerically coerced (`x - 'b'` is `x - NaN`), so the literals must
