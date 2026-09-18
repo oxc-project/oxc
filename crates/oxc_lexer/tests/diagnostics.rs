@@ -53,8 +53,8 @@ fn unterminated_string() {
 
 #[test]
 fn unterminated_template() {
-    assert_eq!(codes("x = `abc"), vec![DiagCode::UnterminatedTemplate]);
-    assert_eq!(codes("x = `a${b}c"), vec![DiagCode::UnterminatedTemplate]);
+    assert_eq!(codes("x = `abc"), [DiagCode::UnterminatedTemplate]);
+    assert_eq!(codes("x = `a${b}c"), [DiagCode::UnterminatedTemplate]);
     // An open substitution at EOF is a parser-level error; oxc_parser's
     // lexer is also silent here.
     assert!(codes("x = `a${b").is_empty());
@@ -62,31 +62,31 @@ fn unterminated_template() {
 
 #[test]
 fn unterminated_block_comment() {
-    assert_eq!(codes("x /* abc"), vec![DiagCode::UnterminatedBlockComment]);
+    assert_eq!(codes("x /* abc"), [DiagCode::UnterminatedBlockComment]);
 }
 
 #[test]
 fn unterminated_regex() {
-    assert_eq!(codes("x = /abc"), vec![DiagCode::UnterminatedRegexp]);
+    assert_eq!(codes("x = /abc"), [DiagCode::UnterminatedRegexp]);
 }
 
 #[test]
 fn unterminated_in_jsx_path() {
     // carve_jsx must detect the same unterminated literals as carve
-    assert_eq!(codes_jsx("const x = 'abc"), vec![DiagCode::UnterminatedString]);
-    assert_eq!(codes_jsx("const x = `abc"), vec![DiagCode::UnterminatedTemplate]);
-    assert_eq!(codes_jsx("const x = 1 /* abc"), vec![DiagCode::UnterminatedBlockComment]);
-    assert_eq!(codes_jsx("const x = /abc"), vec![DiagCode::UnterminatedRegexp]);
+    assert_eq!(codes_jsx("const x = 'abc"), [DiagCode::UnterminatedString]);
+    assert_eq!(codes_jsx("const x = `abc"), [DiagCode::UnterminatedTemplate]);
+    assert_eq!(codes_jsx("const x = 1 /* abc"), [DiagCode::UnterminatedBlockComment]);
+    assert_eq!(codes_jsx("const x = /abc"), [DiagCode::UnterminatedRegexp]);
     assert!(codes_jsx("const el = <div className='x'>hi</div>;").is_empty());
 }
 
 #[test]
 fn numeric_separator_and_empty_radix() {
-    assert_eq!(codes("x = 1_000_"), vec![DiagCode::InvalidNumericSeparator]); // trailing
-    assert_eq!(codes("x = 1__2"), vec![DiagCode::InvalidNumericSeparator]); // double
-    assert_eq!(codes("x = 0x_1"), vec![DiagCode::InvalidNumericSeparator]); // after prefix
-    assert_eq!(codes("x = 0xAB_"), vec![DiagCode::InvalidNumericSeparator]); // trailing in hex
-    assert_eq!(codes("x = 0x;"), vec![DiagCode::InvalidNumericLiteral]); // empty radix
+    assert_eq!(codes("x = 1_000_"), [DiagCode::InvalidNumericSeparator]); // trailing
+    assert_eq!(codes("x = 1__2"), [DiagCode::InvalidNumericSeparator]); // double
+    assert_eq!(codes("x = 0x_1"), [DiagCode::InvalidNumericSeparator]); // after prefix
+    assert_eq!(codes("x = 0xAB_"), [DiagCode::InvalidNumericSeparator]); // trailing in hex
+    assert_eq!(codes("x = 0x;"), [DiagCode::InvalidNumericLiteral]); // empty radix
 }
 
 #[test]
@@ -94,14 +94,14 @@ fn legacy_octal_like_decimal() {
     // Leading `0` + digit: no separators, no bigint suffix, and an exponent
     // only as lowercase `e` after an 8/9 (oxc_parser's read_legacy_octal
     // quirk).
-    assert_eq!(codes("x = 0_0;"), vec![DiagCode::InvalidNumericSeparator]);
-    assert_eq!(codes("x = 00_0;"), vec![DiagCode::InvalidNumericSeparator]);
-    assert_eq!(codes("x = 08_0;"), vec![DiagCode::InvalidNumericSeparator]);
-    assert_eq!(codes("x = 00n;"), vec![DiagCode::InvalidBigint]);
-    assert_eq!(codes("x = 08n;"), vec![DiagCode::InvalidBigint]);
-    assert_eq!(codes("x = 0008n;"), vec![DiagCode::InvalidBigint]);
-    assert_eq!(codes("x = 00e1;"), vec![DiagCode::InvalidNumericLiteral]);
-    assert_eq!(codes("x = 08E1;"), vec![DiagCode::InvalidNumericLiteral]);
+    assert_eq!(codes("x = 0_0;"), [DiagCode::InvalidNumericSeparator]);
+    assert_eq!(codes("x = 00_0;"), [DiagCode::InvalidNumericSeparator]);
+    assert_eq!(codes("x = 08_0;"), [DiagCode::InvalidNumericSeparator]);
+    assert_eq!(codes("x = 00n;"), [DiagCode::InvalidBigint]);
+    assert_eq!(codes("x = 08n;"), [DiagCode::InvalidBigint]);
+    assert_eq!(codes("x = 0008n;"), [DiagCode::InvalidBigint]);
+    assert_eq!(codes("x = 00e1;"), [DiagCode::InvalidNumericLiteral]);
+    assert_eq!(codes("x = 08E1;"), [DiagCode::InvalidNumericLiteral]);
 }
 
 #[test]
@@ -147,14 +147,14 @@ fn numeric_adjacency() {
     assert_eq!(d.len(), 1);
     assert_eq!(d[0].code, DiagCode::InvalidBigint);
     assert_eq!((d[0].off, d[0].len), (7, 1));
-    assert_eq!(codes("x = 1e3n;"), vec![DiagCode::InvalidBigint]);
+    assert_eq!(codes("x = 1e3n;"), [DiagCode::InvalidBigint]);
     // digit invalid for the radix: span = that digit only (a digit is not an
     // identifier start, so the parser's run stops after one char)
     let d = diags("x = 0b12;");
     assert_eq!(d.len(), 1);
     assert_eq!(d[0].code, DiagCode::InvalidNumericLiteral);
     assert_eq!((d[0].off, d[0].len), (7, 1));
-    assert_eq!(codes("x = 0o18;"), vec![DiagCode::InvalidNumericLiteral]);
+    assert_eq!(codes("x = 0o18;"), [DiagCode::InvalidNumericLiteral]);
     // number followed by an identifier: span covers the ident run
     let d = diags("x = 3in y;");
     assert_eq!(d.len(), 1);
@@ -162,9 +162,9 @@ fn numeric_adjacency() {
     assert_eq!((d[0].off, d[0].len), (5, 2)); // `in`
     let d = diags("x = 123abc;");
     assert_eq!((d[0].off, d[0].len), (7, 3)); // `abc`
-    assert_eq!(codes("x = 0xFFg;"), vec![DiagCode::InvalidNumericLiteral]);
+    assert_eq!(codes("x = 0xFFg;"), [DiagCode::InvalidNumericLiteral]);
     // coalesce is shared by all four modes, so the jsx path fires too
-    assert_eq!(codes_jsx("x = 1.5n;"), vec![DiagCode::InvalidBigint]);
+    assert_eq!(codes_jsx("x = 1.5n;"), [DiagCode::InvalidBigint]);
 }
 
 #[test]
@@ -205,32 +205,29 @@ fn valid_numeric_adjacency_never_flagged() {
 
 #[test]
 fn regex_flags() {
-    assert_eq!(codes("r = /x/q;"), vec![DiagCode::InvalidRegexpFlag]); // unknown flag
-    assert_eq!(codes("r = /x/gg;"), vec![DiagCode::DuplicateRegexpFlag]); // duplicate
+    assert_eq!(codes("r = /x/q;"), [DiagCode::InvalidRegexpFlag]); // unknown flag
+    assert_eq!(codes("r = /x/gg;"), [DiagCode::DuplicateRegexpFlag]); // duplicate
     assert!(codes("r = /x/gimsuydv;").is_empty()); // all valid flags, once each
     assert!(codes("r = /x/;").is_empty()); // no flags
 }
 
 #[test]
 fn unexpected_character() {
-    assert_eq!(codes("a\u{1}b"), vec![DiagCode::UnexpectedCharacter]);
-    assert_eq!(codes("x = 1\u{7} 2"), vec![DiagCode::UnexpectedCharacter]);
-    assert_eq!(
-        codes("\u{1}\u{2}"),
-        vec![DiagCode::UnexpectedCharacter, DiagCode::UnexpectedCharacter]
-    );
+    assert_eq!(codes("a\u{1}b"), [DiagCode::UnexpectedCharacter]);
+    assert_eq!(codes("x = 1\u{7} 2"), [DiagCode::UnexpectedCharacter]);
+    assert_eq!(codes("\u{1}\u{2}"), [DiagCode::UnexpectedCharacter, DiagCode::UnexpectedCharacter]);
 }
 
 #[test]
 fn line_terminator_in_string() {
-    assert_eq!(codes("x = 'a\nb';"), vec![DiagCode::LineTerminatorInString]);
-    assert_eq!(codes("x = 'a\r\nb';"), vec![DiagCode::LineTerminatorInString]);
+    assert_eq!(codes("x = 'a\nb';"), [DiagCode::LineTerminatorInString]);
+    assert_eq!(codes("x = 'a\r\nb';"), [DiagCode::LineTerminatorInString]);
     // escaped line terminators are legal continuations, CRLF as one sequence
     assert!(codes("x = 'a\\\nb';").is_empty());
     assert!(codes("x = 'a\\\rb';").is_empty());
     assert!(codes("x = 'a\\\r\nb';").is_empty());
     // escaped backslash followed by a raw terminator is invalid
-    assert_eq!(codes("x = 'a\\\\\r\nb';"), vec![DiagCode::LineTerminatorInString]);
+    assert_eq!(codes("x = 'a\\\\\r\nb';"), [DiagCode::LineTerminatorInString]);
 
     // Span parity: opener through the first unescaped terminator; for CRLF
     // only the CR (the parser consumes one char, then reports).
@@ -255,15 +252,15 @@ fn line_terminator_in_regexp() {
     assert_eq!(d[0].code, DiagCode::LineTerminatorInRegexp);
     assert_eq!((d[0].off, d[0].len), (4, 3)); // `/a<CR>`: one diag, span past the CR
     // escaped terminators and terminators inside `[...]` are also invalid
-    assert_eq!(codes("x = /a\\\nb/;"), vec![DiagCode::LineTerminatorInRegexp]);
-    assert_eq!(codes("x = /a\\\r\nb/;"), vec![DiagCode::LineTerminatorInRegexp]);
+    assert_eq!(codes("x = /a\\\nb/;"), [DiagCode::LineTerminatorInRegexp]);
+    assert_eq!(codes("x = /a\\\r\nb/;"), [DiagCode::LineTerminatorInRegexp]);
     // backslash at EOF: the escape peek must not read pad bytes and
     // fabricate a terminator
-    assert_eq!(codes("x = /a\\"), vec![DiagCode::UnterminatedRegexp]);
-    assert_eq!(codes("x = /a[\n]b/;"), vec![DiagCode::LineTerminatorInRegexp]);
+    assert_eq!(codes("x = /a\\"), [DiagCode::UnterminatedRegexp]);
+    assert_eq!(codes("x = /a[\n]b/;"), [DiagCode::LineTerminatorInRegexp]);
     // newline then EOF: the parser stops at the terminator first
-    assert_eq!(codes("x = /abc\n"), vec![DiagCode::LineTerminatorInRegexp]);
-    assert_eq!(codes_jsx("x = /a\nb/;"), vec![DiagCode::LineTerminatorInRegexp]);
+    assert_eq!(codes("x = /abc\n"), [DiagCode::LineTerminatorInRegexp]);
+    assert_eq!(codes_jsx("x = /a\nb/;"), [DiagCode::LineTerminatorInRegexp]);
     assert!(codes("x = /a\\nb/g;").is_empty()); // `\n` as two chars
     assert!(codes("x = a / b\nc / d;").is_empty()); // division across lines
     assert!(codes("x = /a[b-z]+/;").is_empty());
@@ -293,7 +290,7 @@ fn invalid_unicode_escape_in_string() {
     let d = diags(r#"x = "\u{1100000}";"#);
     assert_eq!((d[0].off, d[0].len), (5, 9)); // `\u{110000`
     // u32 wrap-around: `\u{100000041}` wraps back into range
-    assert_eq!(codes(r#"x = "\u{100000041}";"#), vec![DiagCode::InvalidUnicodeEscape]);
+    assert_eq!(codes(r#"x = "\u{100000041}";"#), [DiagCode::InvalidUnicodeEscape]);
     let d = diags(r#"x = "\u{0041ZZZ}";"#); // non-hex break, in-range value
     assert_eq!((d[0].off, d[0].len), (5, 7)); // `\u{0041`
     let d = diags(r#"x = "\u004";"#); // truncated at the closing quote
@@ -343,7 +340,7 @@ fn template_invalid_escapes_stay_silent() {
 
 #[test]
 fn invalid_unicode_escape_jsx_path() {
-    assert_eq!(codes_jsx(r#"const x = "\uZZZZ";"#), vec![DiagCode::InvalidUnicodeEscape]);
+    assert_eq!(codes_jsx(r#"const x = "\uZZZZ";"#), [DiagCode::InvalidUnicodeEscape]);
     // JSX attribute strings have no escapes - the value is verbatim source.
     assert!(codes_jsx(r#"const el = <div a="\uZZ">x</div>;"#).is_empty());
 }
@@ -362,11 +359,11 @@ fn invalid_unicode_character() {
     let d = diags("var x\u{2E2F} = 1;");
     assert_eq!(d.len(), 1);
     assert_eq!((d[0].off, d[0].len, d[0].code), (5, 3, DiagCode::UnexpectedCharacter));
-    assert_eq!(codes("var \u{180E}x = 1;"), vec![DiagCode::UnexpectedCharacter]);
-    assert_eq!(codes("let a = \u{1F600};"), vec![DiagCode::UnexpectedCharacter]);
+    assert_eq!(codes("var \u{180E}x = 1;"), [DiagCode::UnexpectedCharacter]);
+    assert_eq!(codes("let a = \u{1F600};"), [DiagCode::UnexpectedCharacter]);
     // A raw U+FFFD at code level is oxc_parser's binary-file error, distinct
     // from opt-in UTF-8 validation.
-    assert_eq!(codes("var \u{FFFD} = 1;"), vec![DiagCode::InvalidUtf8]);
+    assert_eq!(codes("var \u{FFFD} = 1;"), [DiagCode::InvalidUtf8]);
 }
 
 #[test]
@@ -481,7 +478,7 @@ fn invalid_identifier_escape_bare() {
     let d = diags(r"x = \");
     assert_eq!((d[0].off, d[0].len, d[0].code), (5, 0, DiagCode::InvalidIdentifierEscape));
     // control bytes keep their own code
-    assert_eq!(codes("a\u{1}b"), vec![DiagCode::UnexpectedCharacter]);
+    assert_eq!(codes("a\u{1}b"), [DiagCode::UnexpectedCharacter]);
 }
 
 #[test]
@@ -556,9 +553,9 @@ fn empty_exponent() {
     assert_eq!((d[0].off, d[0].len, d[0].code), (4, 2, DiagCode::InvalidNumericLiteral));
     let d = diags("x = 1e+;");
     assert_eq!((d[0].off, d[0].len, d[0].code), (4, 3, DiagCode::InvalidNumericLiteral));
-    assert_eq!(codes("x = .5e;"), vec![DiagCode::InvalidNumericLiteral]);
-    assert_eq!(codes("x = 0e;"), vec![DiagCode::InvalidNumericLiteral]);
-    assert_eq!(codes("x = 08e;"), vec![DiagCode::InvalidNumericLiteral]);
+    assert_eq!(codes("x = .5e;"), [DiagCode::InvalidNumericLiteral]);
+    assert_eq!(codes("x = 0e;"), [DiagCode::InvalidNumericLiteral]);
+    assert_eq!(codes("x = 08e;"), [DiagCode::InvalidNumericLiteral]);
     // `1en`: empty exponent and misplaced bigint suffix both fire - unlike
     // the parser, we don't abort at the first error
     let cs = codes("x = 1en;");
@@ -577,7 +574,7 @@ fn unicode_ident_after_number() {
     assert_eq!((d[0].off, d[0].len, d[0].code), (5, 2, DiagCode::InvalidNumericLiteral));
     let d = diags("x = 123abcπ;");
     assert_eq!((d[0].off, d[0].len), (7, 5)); // `abc` + 2-byte pi
-    assert_eq!(codes("x = 1.5π;"), vec![DiagCode::InvalidNumericLiteral]);
+    assert_eq!(codes("x = 1.5π;"), [DiagCode::InvalidNumericLiteral]);
     // unicode whitespace after a number stays clean
     assert!(codes("x = 1\u{a0}+ 2;").is_empty());
     assert!(codes("x = 1\u{2028}y = 2;").is_empty());
@@ -595,7 +592,7 @@ fn escaped_char_not_identifier() {
     // mid-identifier escapes use is_identifier_part: digits fine there,
     assert!(codes(r"let a\u{30}b = 1;").is_empty());
     // whitespace not
-    assert_eq!(codes(r"let a\u0020b = 1;"), vec![DiagCode::UnexpectedCharacter]);
+    assert_eq!(codes(r"let a\u0020b = 1;"), [DiagCode::UnexpectedCharacter]);
     for src in [r"let \u0041 = 1;", r"let \u{24} = 1;", r"let a\u{5F}b = 1;"] {
         assert!(codes(src).is_empty(), "false positive on `{src}`");
     }
@@ -608,7 +605,7 @@ fn line_separator_in_regexp() {
     let d = diags("x = /a\u{2028}b/;");
     assert_eq!(d.len(), 1);
     assert_eq!((d[0].off, d[0].len, d[0].code), (4, 5, DiagCode::LineTerminatorInRegexp));
-    assert_eq!(codes("x = /a\u{2029}b/;"), vec![DiagCode::LineTerminatorInRegexp]);
+    assert_eq!(codes("x = /a\u{2029}b/;"), [DiagCode::LineTerminatorInRegexp]);
     let d = diags("x = /a\\\u{2028}b/;"); // escaped LS: still invalid
     assert_eq!(d.len(), 1);
     assert_eq!((d[0].off, d[0].len), (4, 6));
@@ -646,15 +643,15 @@ fn template_cooked_invalid_marker() {
         let (res, arena) = lex_utf8(&buf, len, LexOptions::default());
         res.templates(&arena).iter().map(|t| t.cooked_invalid()).collect()
     };
-    assert_eq!(get(r"t = `\uZZ`;"), vec![true]); // bad unicode escape
-    assert_eq!(get(r"t = `\xG`;"), vec![true]); // bad hex escape
-    assert_eq!(get(r"t = `\u{110000}`;"), vec![true]); // out of range
-    assert_eq!(get(r"t = `\101`;"), vec![true]); // octal
-    assert_eq!(get(r"t = `\8`;"), vec![true]); // NonOctalDecimalEscape
-    assert_eq!(get(r"t = `\n`;"), vec![false]); // ordinary escape
-    assert_eq!(get(r"t = `\0`;"), vec![false]); // NUL, no digit after
-    assert_eq!(get("t = `abc`;"), vec![false]); // no escapes
-    assert_eq!(get(r"t = `a${b}c`;"), vec![false, false]); // head + tail
+    assert_eq!(get(r"t = `\uZZ`;"), [true]); // bad unicode escape
+    assert_eq!(get(r"t = `\xG`;"), [true]); // bad hex escape
+    assert_eq!(get(r"t = `\u{110000}`;"), [true]); // out of range
+    assert_eq!(get(r"t = `\101`;"), [true]); // octal
+    assert_eq!(get(r"t = `\8`;"), [true]); // NonOctalDecimalEscape
+    assert_eq!(get(r"t = `\n`;"), [false]); // ordinary escape
+    assert_eq!(get(r"t = `\0`;"), [false]); // NUL, no digit after
+    assert_eq!(get("t = `abc`;"), [false]); // no escapes
+    assert_eq!(get(r"t = `a${b}c`;"), [false, false]); // head + tail
     // still zero diagnostics, matching oxc_parser's silent lexer
     assert!(codes(r"t = `\101`;").is_empty());
     assert!(codes(r"t = `\uZZ`;").is_empty());
@@ -664,8 +661,8 @@ fn template_cooked_invalid_marker() {
 
 #[test]
 fn unterminated_jsx_element() {
-    assert_eq!(codes_tsx("var a = <T>(x: T) => x;"), vec![DiagCode::UnterminatedJsxElement]);
-    assert_eq!(codes_tsx("f(<T>(x: T) => x);"), vec![DiagCode::UnterminatedJsxElement]);
+    assert_eq!(codes_tsx("var a = <T>(x: T) => x;"), [DiagCode::UnterminatedJsxElement]);
+    assert_eq!(codes_tsx("f(<T>(x: T) => x);"), [DiagCode::UnterminatedJsxElement]);
 }
 
 #[test]
@@ -688,22 +685,22 @@ fn sorted_codes_tsx(code: &str) -> Vec<DiagCode> {
 
 #[test]
 fn unterminated_jsx() {
-    assert_eq!(codes_tsx("const a = <div>"), vec![DiagCode::UnterminatedJsxElement]);
-    assert_eq!(codes_tsx("const a = <div>hi"), vec![DiagCode::UnterminatedJsxElement]);
-    assert_eq!(codes_tsx("const a = <div><b>x</b>"), vec![DiagCode::UnterminatedJsxElement]);
-    assert_eq!(codes_tsx("const a = <div attr"), vec![DiagCode::UnterminatedJsxTag]);
-    assert_eq!(codes_tsx("const a = <"), vec![]);
-    assert_eq!(codes_tsx("const a = <div>{x"), vec![DiagCode::UnterminatedJsxContainer]);
-    assert_eq!(codes_tsx("const a = <div>{x}</div"), vec![DiagCode::UnterminatedJsxTag]);
+    assert_eq!(codes_tsx("const a = <div>"), [DiagCode::UnterminatedJsxElement]);
+    assert_eq!(codes_tsx("const a = <div>hi"), [DiagCode::UnterminatedJsxElement]);
+    assert_eq!(codes_tsx("const a = <div><b>x</b>"), [DiagCode::UnterminatedJsxElement]);
+    assert_eq!(codes_tsx("const a = <div attr"), [DiagCode::UnterminatedJsxTag]);
+    assert_eq!(codes_tsx("const a = <"), []);
+    assert_eq!(codes_tsx("const a = <div>{x"), [DiagCode::UnterminatedJsxContainer]);
+    assert_eq!(codes_tsx("const a = <div>{x}</div"), [DiagCode::UnterminatedJsxTag]);
     let mut want = vec![DiagCode::UnterminatedString, DiagCode::UnterminatedJsxTag];
     want.sort_unstable();
     assert_eq!(sorted_codes_tsx("const a = <div attr=\"x"), want);
-    assert_eq!(codes_tsx("const a = <div></span>;"), vec![DiagCode::JsxClosingTagMismatch]);
-    assert_eq!(codes_tsx("const a = <></div>;"), vec![DiagCode::JsxClosingTagMismatch]);
-    assert_eq!(codes_tsx("const a = <div></>;"), vec![DiagCode::JsxClosingTagMismatch]);
-    assert_eq!(codes_tsx("const a = <A.B></A.C>;"), vec![DiagCode::JsxClosingTagMismatch]);
-    assert_eq!(codes_jsx("const a = <div>{x"), vec![DiagCode::UnterminatedJsxContainer]);
-    assert_eq!(codes_jsx("const a = <div>{x}"), vec![DiagCode::UnterminatedJsxElement]);
+    assert_eq!(codes_tsx("const a = <div></span>;"), [DiagCode::JsxClosingTagMismatch]);
+    assert_eq!(codes_tsx("const a = <></div>;"), [DiagCode::JsxClosingTagMismatch]);
+    assert_eq!(codes_tsx("const a = <div></>;"), [DiagCode::JsxClosingTagMismatch]);
+    assert_eq!(codes_tsx("const a = <A.B></A.C>;"), [DiagCode::JsxClosingTagMismatch]);
+    assert_eq!(codes_jsx("const a = <div>{x"), [DiagCode::UnterminatedJsxContainer]);
+    assert_eq!(codes_jsx("const a = <div>{x}"), [DiagCode::UnterminatedJsxElement]);
 }
 
 #[test]
@@ -750,7 +747,7 @@ fn bare_gt_or_rbrace_in_jsx_text() {
     let d = diags_jsx("let x = <div>}</div>;");
     assert_eq!(d.len(), 1, "{d:?}");
     assert_eq!((d[0].code, d[0].off, d[0].len), (DiagCode::JsxTextInvalidCharacter, 13, 1));
-    assert_eq!(codes_tsx("let x = <div>a>b</div>;"), vec![DiagCode::JsxTextInvalidCharacter]);
+    assert_eq!(codes_tsx("let x = <div>a>b</div>;"), [DiagCode::JsxTextInvalidCharacter]);
     for code in
         ["let x = <div>{'>'}</div>;", "let x = <div>a &gt; b</div>;", "let x = <div>{x}</div>;"]
     {
@@ -770,9 +767,9 @@ fn jsx_closing_names_compare_across_trivia() {
     ] {
         assert!(codes_tsx(code).is_empty(), "{code:?}: {:?}", codes_tsx(code));
     }
-    assert_eq!(codes_tsx("x = <A.B>t</A.C>;"), vec![DiagCode::JsxClosingTagMismatch]);
-    assert_eq!(codes_tsx("x = <a-b>t</a-c>;"), vec![DiagCode::JsxClosingTagMismatch]);
-    assert_eq!(codes_tsx("x = <A.B>t</A>;"), vec![DiagCode::JsxClosingTagMismatch]);
+    assert_eq!(codes_tsx("x = <A.B>t</A.C>;"), [DiagCode::JsxClosingTagMismatch]);
+    assert_eq!(codes_tsx("x = <a-b>t</a-c>;"), [DiagCode::JsxClosingTagMismatch]);
+    assert_eq!(codes_tsx("x = <A.B>t</A>;"), [DiagCode::JsxClosingTagMismatch]);
 }
 
 #[test]
@@ -783,8 +780,8 @@ fn id_continue_only_character_cannot_start_an_identifier() {
     let d = diags("var \u{200c} = [];");
     assert_eq!(d.len(), 1, "{d:?}");
     assert_eq!((d[0].code, d[0].off, d[0].len), (DiagCode::UnexpectedCharacter, 4, 3));
-    assert_eq!(codes("var \u{200d} = [];"), vec![DiagCode::UnexpectedCharacter]);
-    assert_eq!(codes("class C { #\u{203f} = 1 }"), vec![DiagCode::UnexpectedCharacter]);
+    assert_eq!(codes("var \u{200d} = [];"), [DiagCode::UnexpectedCharacter]);
+    assert_eq!(codes("class C { #\u{203f} = 1 }"), [DiagCode::UnexpectedCharacter]);
     for code in ["a\u{203f} = 10;", "a\u{200c}b = 1;", "var x = \"\u{203f}\";", "x = a.\u{e9};"] {
         assert!(codes(code).is_empty(), "{code:?}: {:?}", codes(code));
     }
@@ -792,9 +789,9 @@ fn id_continue_only_character_cannot_start_an_identifier() {
 
 #[test]
 fn legacy_octal_adjacency_diagnostics() {
-    assert_eq!(codes("x = 010e5;"), vec![DiagCode::InvalidNumericLiteral]);
-    assert_eq!(codes("x = 010n;"), vec![DiagCode::InvalidBigint]);
-    assert_eq!(codes("x = 08n;"), vec![DiagCode::InvalidBigint]);
+    assert_eq!(codes("x = 010e5;"), [DiagCode::InvalidNumericLiteral]);
+    assert_eq!(codes("x = 010n;"), [DiagCode::InvalidBigint]);
+    assert_eq!(codes("x = 08n;"), [DiagCode::InvalidBigint]);
     for code in ["x = 010.5;", "x = 010.toString();", "x = 08.5;", "x = 09e1;"] {
         assert!(codes(code).is_empty(), "{code:?}: {:?}", codes(code));
     }

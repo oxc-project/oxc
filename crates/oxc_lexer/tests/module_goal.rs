@@ -46,9 +46,9 @@ fn module_html_open_comment_at_line_start_diagnosed() {
     let src = "<!-- c\nx;";
     let ks = kinds_of(src, true);
     assert!(!ks.contains(&TokenKind::Lt), "line-start form stays a comment: {ks:?}");
-    assert_eq!(diag_codes(src, true), vec![DiagCode::HtmlCommentInModule]);
+    assert_eq!(diag_codes(src, true), [DiagCode::HtmlCommentInModule]);
     let src = "x;\n<!-- c\ny;";
-    assert_eq!(diag_codes(src, true), vec![DiagCode::HtmlCommentInModule]);
+    assert_eq!(diag_codes(src, true), [DiagCode::HtmlCommentInModule]);
     assert!(diag_codes(src, false).is_empty(), "script form is silent");
 }
 
