@@ -939,6 +939,7 @@ impl LanguageServer for Backend {
                 Ok(Some(edits))
             }
             Err(err) => {
+                error!(err);
                 Err(Error { code: ErrorCode::ServerError(1), message: Cow::Owned(err), data: None })
             }
         }
