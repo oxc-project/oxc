@@ -10,11 +10,7 @@
 //!
 //! The AST design follows ECMAScript specifications while providing
 //! clear distinctions between different identifier types for better type safety.
-#![expect(
-    missing_docs, // TODO: document individual struct fields
-    clippy::enum_variant_names,
-    clippy::struct_field_names,
-)]
+#![expect(clippy::enum_variant_names, clippy::struct_field_names)]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools`. See docs in that crate.
