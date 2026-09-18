@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+---
+
+A document that opens with a thematic break.
+
+---
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+***
+
+A document that opens with a thematic break.
+
+---
+
+-------------------
+{ printWidth: 100 }
+-------------------
+***
+
+A document that opens with a thematic break.
+
+---
+
+===================== End =====================
