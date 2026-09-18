@@ -1328,6 +1328,24 @@ mod test {
             "@await export class C {}",
             "@decorator(await) export default class C {}",
             "@decorator export default class C { x = await + 1 }",
+            "var await = 1; export {};",
+            "var aw\\u0061it = 1; export {};",
+            "let await; export {};",
+            "const await = 1; export {};",
+            "const [await] = values; export {};",
+            "const { await } = value; export {};",
+            "const { await = 1 } = value; export {};",
+            "const { value: await } = object; export {};",
+            "function await() {} export {};",
+            "class await {} export {};",
+            "try {} catch (await) {} export {};",
+            "for (var await of values) {} export {};",
+            "label: { break await; } export {};",
+            "label: while (true) { continue await; } export {};",
+            "import await from 'mod';",
+            "import * as await from 'mod';",
+            "import { value as await } from 'mod';",
+            "import { await } from 'mod';",
         ] {
             assert_reparse_matches_module(source, || NoTokensParserConfig);
             assert_reparse_matches_module(source, || TokensParserConfig);
@@ -1396,18 +1414,26 @@ mod test {
 
     #[test]
     fn unambiguous_await_keeps_script_goal() {
-        let allocator = Allocator::default();
-        let source = "await /a(); b(); c()/g;";
-        let result = Parser::new(&allocator, source, SourceType::unambiguous()).parse();
-        let script = Parser::new(&allocator, source, SourceType::script()).parse();
-        assert!(result.program.source_type.is_script());
-        assert!(!result.fatal_error);
-        assert!(result.diagnostics.is_empty());
-        assert_eq!(result.program.body.len(), 3);
-        assert_eq!(
-            result.program.to_pretty_estree_json(false, false),
-            script.program.to_pretty_estree_json(false, false)
-        );
+        for (source, statements) in [
+            ("await /a(); b(); c()/g;", 3),
+            ("var await = 1;", 1),
+            ("const { await } = value;", 1),
+            ("function await() {}", 1),
+            ("await: while (false) { break await; }", 1),
+        ] {
+            let allocator = Allocator::default();
+            let result = Parser::new(&allocator, source, SourceType::unambiguous()).parse();
+            let script = Parser::new(&allocator, source, SourceType::script()).parse();
+            assert!(result.program.source_type.is_script(), "{source}");
+            assert!(!result.fatal_error, "{source}");
+            assert!(result.diagnostics.is_empty(), "{source}");
+            assert_eq!(result.program.body.len(), statements, "{source}");
+            assert_eq!(
+                result.program.to_pretty_estree_json(false, false),
+                script.program.to_pretty_estree_json(false, false),
+                "{source}"
+            );
+        }
     }
 
     #[test]

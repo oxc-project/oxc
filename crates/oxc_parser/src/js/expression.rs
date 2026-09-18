@@ -85,10 +85,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !kind.is_identifier_reference(false, false) {
             return self.unexpected();
         }
-        // Track await identifier for potential reparsing in unambiguous mode
-        if kind == Kind::Await && !self.ctx.has_await() {
-            self.state.encountered_await_identifier = true;
-        }
         self.check_identifier(kind, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         IdentifierReference::new(span, name, self)
@@ -159,9 +155,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn check_identifier_with_span(&mut self, kind: Kind, ctx: Context, span: Span) {
         match kind {
-            // It is a Syntax Error if this production has an [Await] parameter.
-            Kind::Await if ctx.has_await() => {
-                self.error(diagnostics::identifier_async("await", span));
+            Kind::Await => {
+                // It is a Syntax Error if this production has an [Await] parameter.
+                if ctx.has_await() {
+                    self.error(diagnostics::identifier_async("await", span));
+                } else {
+                    // Track references, bindings, and labels for reparsing in unambiguous mode.
+                    self.state.encountered_await_identifier = true;
+                }
             }
             // It is a Syntax Error if this production has a [Yield] parameter.
             Kind::Yield if ctx.has_yield() => {
