@@ -461,3 +461,76 @@ See [[the `first second` note]] for details.
 
 In a paragraph printed as written for wiki link risk (Prettier's `riskyParagraphPositions`, `[[` ... `]]`),
 a code span keeps its line break too; Prettier joins it, and the one-line `[[...]]` is a wiki link on the next parse.
+
+## leading-dashes
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/leading-dashes-paragraph.md`
+
+```markdown
+<!-- input -->
+
+---:::a
+text
+---[x]: /u
+
+<!-- ours -->
+\---:::a
+text
+---[x]: /u
+
+<!-- prettier -->
+---:::a
+text
+---[x]: /u
+```
+
+A document whose first block is a paragraph (or setext heading) starting with `---` / `+++` gets that
+delimiter escaped when a later line could close it as front matter (a line starting with the delimiter,
+or a thematic break, which prints `---`): the next parse (Prettier's and ours) would read the block as front matter.
+Prettier prints it as written (the leading blank line that kept it out of front matter is dropped).
+
+## autolink-cjk-space
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/prose-wrap/autolink-cjk-space.md`
+
+```markdown
+<!-- input, proseWrap always -->
+見て http://x.y2.
+。次
+
+<!-- ours -->
+見て http://x.y2. 。次
+
+<!-- prettier -->
+見て http://x.y2.。次
+```
+
+A line break right after the trailing punctuation of an autolink literal stays a space, whatever the
+Chinese / Japanese rules would make of it: the literal runs to the next whitespace, so joined to `。次`
+it becomes `http://x.y2.。次` on the next parse (`autolink_stretch`).
+Prettier drops the break between the two punctuation characters and the link changes.
+
+## wiki-link-risk-link-text
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/prose-wrap/wiki-link-risk-link-text.md`
+
+```markdown
+<!-- input -->
+[[a], b]] [*y*-b](#c)
+
+<!-- ours -->
+[[a], b]] [_y_-b](#c)
+
+<!-- prettier -->
+[[a], b]] [_y_
+
+-b](#c)
+```
+
+In a paragraph printed as written for wiki link risk (`[[` ... `]]`), Prettier splits an inline link's text
+after an emphasis followed by `-` into two paragraphs, which breaks the link (d3's READMEs).
+Ours keeps the line.
+

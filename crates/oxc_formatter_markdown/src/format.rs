@@ -47,9 +47,10 @@ pub struct ParsedMarkdown<'a> {
     pub root: &'a Root<'a>,
     /// Every logical blank line, in source order.
     pub blanks: &'a [Span],
-    /// Normalized arena source every span indexes into.
+    /// Normalized arena source every span indexes into, the front matter blanked
+    /// (what the parser saw; a verbatim slice overlapping it prints the blanks, as Prettier's does).
     pub source: &'a str,
-    /// The leading `---` / `+++` block, blanked before parsing (it is not markdown).
+    /// The leading `---` / `+++` block (it is not markdown), sliced from the unblanked source.
     pub front_matter: Option<FrontMatter<'a>>,
     has_bom: bool,
 }
@@ -118,17 +119,22 @@ fn parse_root<'a>(
     // the printer slices verbatim text from the source in many places (html, code, liquid, math),
     // and the IR forbids `\r`.
     let source_text = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
-    let source: &'a str = allocator.alloc_str(&source_text);
+    let unblanked: &'a str = allocator.alloc_str(&source_text);
 
     // Front matter is not markdown (`---` would be a thematic break, its body a setext heading):
-    // blanked for the parser so every span still indexes into `source`, printed by `write_document`.
-    let front_matter = parse_front_matter(source);
-    let parse_source: &'a str = match &front_matter {
-        Some(fm) => allocator.alloc_str(&blank_front_matter(source, fm.raw.len())),
-        None => source,
+    // blanked, byte for byte, for the parser and the printer alike, and printed from `fm.raw` by `write_document`.
+    // Blanked rather than cut off because the body may start on the closing line (`---<div>`),
+    // where its column is syntax (an HTML block's indent, indented code),
+    // and because every span, `blanks` and `fm.raw` then share one offset space.
+    // The printer slices the blanked copy too, so that such a body line prints as the parser read it (`   <div>`),
+    // not as the delimiter again.
+    let front_matter = parse_front_matter(unblanked);
+    let source: &'a str = match &front_matter {
+        Some(fm) => allocator.alloc_str(&blank_front_matter(unblanked, fm.raw.len())),
+        None => unblanked,
     };
 
-    let ret = Parser::new(allocator, parse_source).parse();
+    let ret = Parser::new(allocator, source).parse();
     if let Some(diagnostic) = ret.diagnostics.first() {
         return Err(OxcDiagnostic::error(format!("Syntax error: {diagnostic}"))
             .with_label(oxc_span::Span::new(diagnostic.span.start, diagnostic.span.end)));

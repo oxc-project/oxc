@@ -1707,9 +1707,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-markdown-parser"
-version = "0.0.0"
+version = "0.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "198e25a5dfc6aabe79614588816ec57612622d25e1eff291aae0542f7a0e3c18"
+checksum = "5e396d52161ecde3ba200f45b682ef14da5a8948378c4504deb31ee1842cfd78"
 dependencies = [
  "oxc_allocator",
 ]

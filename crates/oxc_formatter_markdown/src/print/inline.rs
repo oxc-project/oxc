@@ -22,7 +22,7 @@ use crate::{
 use super::{
     HTML_WHITESPACE, MarkdownFormatter, backticks, escape, is_split_whitespace, join_pieces,
     line_shape::{
-        is_line_shape_start, line_opens_block, line_or_prefix_opens_block, line_shape,
+        is_line_shape_start, line_from, line_opens_block, line_or_prefix_opens_block, line_shape,
         printed_line_opens_block, source_line_at,
     },
     link,
@@ -43,6 +43,9 @@ pub struct InlineParent {
     /// The paragraph is the first block of a blockquote
     /// (`[!NOTE]` on its first line is an alert marker).
     pub first_in_container: bool,
+    /// The paragraph is the document's first block and its `---` / `+++` first line would be read as
+    /// front matter on the next parse (`block::front_matter_risk`), so it is escaped.
+    pub first_in_document: bool,
     /// The paragraph follows a task list checkbox on its line: its first line is not a line start.
     pub after_checkbox: bool,
     /// Nothing follows the parent node on its source line (its last child ends the line).
@@ -56,6 +59,7 @@ impl Default for InlineParent {
             delimiter: None,
             strong_neighbor: None,
             first_in_container: false,
+            first_in_document: false,
             after_checkbox: false,
             ends_line: true,
         }
@@ -258,10 +262,11 @@ pub fn collect_inlines<'a>(
     f: &mut MarkdownFormatter<'_, 'a>,
 ) {
     let last = children.len().wrapping_sub(1);
-    // Raw text is switched per source line of a top-level paragraph:
+    // Raw text is switched per source line:
     // every line when wiki links are at risk, else the lines starting with a dialect shape.
-    // Nested content (emphasis, links) inherits the line's setting through the context.
-    let raw_paragraph = parent.paragraph && f.context().raw_text().get() != Raw::No;
+    // Nested content (emphasis, links) inherits the line's setting through the context
+    // and switches it at its own line breaks; only a paragraph's first line is a first line.
+    let raw_paragraph = f.context().raw_text().get() != Raw::No;
     let raw_for = |shape: bool| {
         if shape {
             Raw::Line
@@ -272,10 +277,8 @@ pub fn collect_inlines<'a>(
         }
     };
     let raw_line = |j: usize, f: &MarkdownFormatter<'_, 'a>| -> Raw {
-        raw_for(
-            parent.paragraph
-                && line_shape(children, j, j == 0, j == 0 && parent.first_in_container, f),
-        )
+        let first_line = parent.paragraph && j == 0;
+        raw_for(line_shape(children, j, first_line, first_line && parent.first_in_container, f))
     };
     if parent.paragraph {
         f.context().raw_text().set(raw_line(0, f));
@@ -348,7 +351,9 @@ pub fn collect_inlines<'a>(
                 if i == 0
                     && parent.paragraph
                     && !parent.after_checkbox
-                    && line_opens_block(source_line_at(children, t.span.start, f).1, false)
+                    && (line_opens_block(source_line_at(children, t.span.start, f).1, false)
+                        || (parent.first_in_document
+                            && (raw.starts_with("---") || raw.starts_with("+++"))))
                 {
                     let digits = raw.bytes().take_while(u8::is_ascii_digit).count();
                     if digits > 0 && matches!(raw.as_bytes().get(digits), Some(b'.' | b')')) {
@@ -357,15 +362,7 @@ pub fn collect_inlines<'a>(
                     }
                     parts.push_str("\\");
                 }
-                // Trailing punctuation after an autolink literal is where the link may still extend
-                let autolink_stretch = if matches!(
-                    children.get(i.wrapping_sub(1)),
-                    Some(Inline::AutolinkLiteral(_))
-                ) {
-                    raw.find(|c: char| unicode::is_whitespace(c) || c == '<').unwrap_or(raw.len())
-                } else {
-                    0
-                };
+                let autolink_stretch = autolink_stretch(children, i, raw);
                 let cx = words::TextContext {
                     autolink_stretch,
                     first_of_delimiter: parent.delimiter.filter(|_| i == 0),
@@ -376,6 +373,7 @@ pub fn collect_inlines<'a>(
                         children.get(i.wrapping_sub(1)),
                         Some(Inline::SoftBreak(_))
                     ),
+                    after_liquid: follows_liquid(children, i),
                     before_soft_break: matches!(children.get(i + 1), Some(Inline::SoftBreak(_))),
                     ends_line: ends_line(children, i, parent.ends_line),
                     next_word: next_word_of(children, i, parent.delimiter, f),
@@ -390,9 +388,7 @@ pub fn collect_inlines<'a>(
             Inline::SoftBreak(_) => {
                 let next_raw = raw_line(i + 1, f);
                 let keep = f.context().raw_text().get() != Raw::No || next_raw != Raw::No;
-                if parent.paragraph {
-                    f.context().raw_text().set(next_raw);
-                }
+                f.context().raw_text().set(next_raw);
                 last_break_kept = keep;
                 if keep {
                     // A separator, not content: the next line is measured on its own
@@ -402,8 +398,10 @@ pub fn collect_inlines<'a>(
                         .get_or_insert_with(|| sentence_cj_spaces_at(children, i, f));
                     let cx = words::TextContext {
                         next_word: next_word_of(children, i, parent.delimiter, f),
-                        // Only the CJK rules look back (a trailing `\` was escaped by the text)
-                        prev_word: if cj_spaces.is_some() {
+                        after_liquid: follows_liquid(children, i),
+                        // Only the CJK rules look back (a trailing `\` was escaped by the text);
+                        // a word glued to an autolink literal is part of it, the break after it stays a space
+                        prev_word: if cj_spaces.is_some() && !glued_to_autolink(children, i, f) {
                             prev_word_of(children, i, f)
                         } else {
                             None
@@ -425,9 +423,7 @@ pub fn collect_inlines<'a>(
                         parts.push_atom(Atom::HardLine);
                     }
                 }
-                if parent.paragraph {
-                    f.context().raw_text().set(raw_line(i + 1, f));
-                }
+                f.context().raw_text().set(raw_line(i + 1, f));
                 last_break_kept = true;
             }
             Inline::Emphasis(e) => {
@@ -482,10 +478,13 @@ pub fn collect_inlines<'a>(
                 let raw = f.context().slice(child.span());
                 // A code span joins its lines: no newline in its printed text
                 let mut code_span_joined = false;
+                // The last line of a multi-line code span as printed (its fence is recomputed)
+                let mut code_span_tail = None;
                 match child {
                     Inline::CodeSpan(c) => {
                         let printed = print_code_span(c, f);
                         code_span_joined = !printed.contains('\n');
+                        code_span_tail = printed.rsplit('\n').next();
                         parts.push_lines(printed, Atom::VerbatimLine);
                     }
                     Inline::Image(img) => link::collect_image(img, parts, f),
@@ -525,9 +524,14 @@ pub fn collect_inlines<'a>(
                     && let Some(newline) = raw.rfind('\n')
                 {
                     let line_start = child.span().start + u32::try_from(newline).unwrap_or(0) + 1;
-                    let (base, line) = source_line_at(children, line_start, f);
-                    let risky = is_line_shape_start(line)
-                        || line_or_prefix_opens_block(line, base, true, f);
+                    let line = line_from(
+                        children,
+                        line_start,
+                        code_span_tail.map(|tail| (tail, child.span().end)),
+                        f,
+                    );
+                    let risky = is_line_shape_start(&line.text)
+                        || line_or_prefix_opens_block(&line, true, f);
                     f.context().raw_text().set(raw_for(risky));
                 }
             }
@@ -593,7 +597,11 @@ fn next_word_of<'a>(
         return None;
     }
     // The word runs across nodes (`[^1]:` is a footnote reference and a text)
-    let (word, alone_on_line) = first_word_at(children, next.span().start, f)?;
+    let (mut word, alone_on_line) = first_word_at(children, next.span().start, f)?;
+    // A code span's fence is recomputed: the page shows the printed one, not the source's
+    if let Inline::CodeSpan(c) = next {
+        word = print_code_span(c, f).split(is_split_whitespace).next().unwrap_or(word);
+    }
     // A text's leading run after a soft break is escaped inside emphasis
     // (as `push_text` decides: a space before it, and after it the text's next character or the node edge)
     let escaped = matches!(next, Inline::Text(_))
@@ -684,6 +692,32 @@ fn prev_word_of<'a>(
     f.context().slice(t.span).rsplit(is_split_whitespace).find(|w| !w.is_empty())
 }
 
+/// Bytes at the start of text `i` (`raw`) that may still extend the autolink literal before it,
+/// its trailing punctuation stretch: up to the first whitespace or `<`; 0 after any other node.
+fn autolink_stretch(children: &[Inline<'_>], i: usize, raw: &str) -> usize {
+    if matches!(children.get(i.wrapping_sub(1)), Some(Inline::AutolinkLiteral(_))) {
+        raw.find(|c: char| unicode::is_whitespace(c) || c == '<').unwrap_or(raw.len())
+    } else {
+        0
+    }
+}
+
+/// The text before node `i` is one word in an autolink literal's stretch (`http://x.y2` + `.`):
+/// what follows the break must not glue to it (`push_text` makes the same call for its first word).
+fn glued_to_autolink<'a>(
+    children: &'a [Inline<'a>],
+    i: usize,
+    f: &MarkdownFormatter<'_, 'a>,
+) -> bool {
+    let Some(Inline::Text(t)) = children.get(i.wrapping_sub(1)) else { return false };
+    let raw = f.context().slice(t.span);
+    !raw.contains(is_split_whitespace) && autolink_stretch(children, i - 1, raw) > 0
+}
+
+fn follows_liquid(children: &[Inline<'_>], i: usize) -> bool {
+    matches!(children.get(i.wrapping_sub(1)), Some(Inline::Liquid(_)))
+}
+
 /// `usesCJSpaces` of the sentence (run of texts and soft breaks) containing node `i`;
 /// `None` without CJK text, which is the common case and skips the scan and the CJK rules.
 fn sentence_cj_spaces_at<'a>(
@@ -725,7 +759,7 @@ fn has_word_neighbor<'a>(
 /// A space pads content that starts / ends with a backtick or is surrounded by spaces (CommonMark strips one).
 /// Inside a table cell a `|` is `\|` in the source and stays so
 /// (the raw slice already carries the escape Prettier re-adds to its decoded value).
-fn print_code_span<'a>(code: &'a CodeSpan<'a>, f: &MarkdownFormatter<'_, 'a>) -> &'a str {
+pub fn print_code_span<'a>(code: &'a CodeSpan<'a>, f: &MarkdownFormatter<'_, 'a>) -> &'a str {
     let joined = join_pieces(&code.pieces, f);
     // Raw text keeps its line breaks: joining `[[\`a\nb\`]]` onto one line would form a wiki link
     let value: Cow<'_, str> = if f.options().prose_wrap == ProseWrap::Preserve

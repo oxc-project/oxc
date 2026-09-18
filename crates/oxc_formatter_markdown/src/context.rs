@@ -23,6 +23,9 @@ pub struct MarkdownFormatContext<'a> {
     /// Enclosing `Emphasis` or `Strong` nodes (delimiter-run escaping applies inside).
     delimiter_depth: Cell<u32>,
     /// How the current source line's text is printed (see `Raw`).
+    /// Switched by `collect_inlines` at every line break it meets, in every recursion (nested content sees its own breaks):
+    /// a line's mode is decided where the walk reaches it, so a new inline construct or recursion site must switch it too,
+    /// or lines inside it keep the mode of the line they started on.
     raw_text: Cell<Raw>,
     /// Per code span of the current phrasing content (by span start, sorted):
     /// the backtick run lengths (bit `n - 1` for a run of `n`) that are literal text before it;

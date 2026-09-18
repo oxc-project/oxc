@@ -55,6 +55,10 @@ pub struct TextContext<'a> {
     pub edge_next: Option<char>,
     /// The previous sibling is a soft break (the text starts a source line).
     pub after_soft_break: bool,
+    /// The whitespace follows a liquid tag: under `always` it never breaks.
+    /// With no break before a tag either (`prevents_break`), a tag never stands alone on a line,
+    /// where it would be a flow tag.
+    pub after_liquid: bool,
     /// The next sibling is a soft break (the text ends a source line).
     pub before_soft_break: bool,
     /// Nothing follows the text on its source line (a node glued after it would be part of the line).
@@ -90,6 +94,8 @@ pub fn push_text<'a>(
     let mut is_first = true;
     let leading_ws = raw.starts_with(is_split_whitespace);
     let mut prev_word: Option<&'a str> = None;
+    // `prev_word` is the text's first word
+    let mut prev_is_first = false;
     loop {
         // Whitespace before the next word (leading, or the run after the previous word).
         let after_ws = rest.trim_start_matches(is_split_whitespace);
@@ -113,7 +119,14 @@ pub fn push_text<'a>(
                 };
                 Some(NextWord { word, alone_on_line: is_first && alone, escaped })
             };
-            let cx = TextContext { next_word: next, prev_word, ..cx };
+            let cx = TextContext {
+                next_word: next,
+                // The first word inside an autolink literal's stretch is part of the link:
+                // the whitespace after it stays a space (a CJ neighbor must not glue to the link)
+                prev_word: prev_word.filter(|_| !(cx.autolink_stretch > 0 && prev_is_first)),
+                after_liquid: is_first && cx.after_liquid,
+                ..cx
+            };
             // A line break right after an unescaped `\` would be a hard break
             // (the text's last word gets its `\` escaped instead, and may break)
             if prev_word.is_some_and(ends_with_unescaped_backslash) {
@@ -126,6 +139,7 @@ pub fn push_text<'a>(
             break;
         }
         prev_word = Some(word);
+        prev_is_first = is_first;
         let printed: Cow<'a, str> = if in_delimiter {
             let prev = if is_first { cx.edge_prev } else { Some(' ') };
             let next = if is_last { cx.edge_next } else { Some(' ') };
@@ -171,6 +185,12 @@ pub fn push_whitespace<'a>(
     f: &MarkdownFormatter<'_, 'a>,
 ) {
     let options = f.options();
+    // Never a break right after a liquid tag under `always` (nor before one):
+    // alone on a line it would be a flow tag.
+    if cx.after_liquid && options.prose_wrap == ProseWrap::Always {
+        parts.push_str(" ");
+        return;
+    }
     // A space only matters where it may become a break (`always`)
     let prose_wrap = if !cx.is_link
         && (newline || options.prose_wrap == ProseWrap::Always)

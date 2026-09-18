@@ -5,13 +5,15 @@
 //! These predicates ask the parser (`lexical::line_start`) about the line the printer is about to produce.
 //! The dialect line shapes (AGENTS.md "Dialects") live here too.
 
+use std::borrow::Cow;
+
 use cow_utils::CowUtils;
 
 use oxc_markdown_parser::{Constructs, ast::Inline, lexical};
 
 use crate::{context::Raw, options::ProseWrap};
 
-use super::{HTML_WHITESPACE, MarkdownFormatter, is_split_whitespace};
+use super::{HTML_WHITESPACE, MarkdownFormatter, inline::print_code_span, is_split_whitespace};
 
 /// HTML whitespace: `\t\n\f\r` and space.
 /// Dialect line shapes (see AGENTS.md "Dialects"):
@@ -30,7 +32,8 @@ pub fn line_shape<'a>(
         return false;
     }
     // The whole source line from this node on (a liquid tag, a tag, text: whatever starts it)
-    let (base, raw) = source_line_at(children, inline.span().start, f);
+    let line = printed_line_at(children, j, f);
+    let raw: &str = &line.text;
     // The shapes, an alert, and a line that is not a block only because of what follows on it
     // (`[label]: dest text`, ``` ```a `b` ```, `$$x $y$`, `</span> text` on a first line):
     // a wrap inside it would leave the block behind.
@@ -39,9 +42,79 @@ pub fn line_shape<'a>(
     is_line_shape_start(raw)
         || (alert && raw.starts_with("[!"))
         || is_unfinished_block_shape(raw, matches!(inline, Inline::Text(_)), first_line)
-        || (first_line
-            && !line_opens_block(raw, false)
-            && line_prefix_opens_block(raw, base, false, f))
+        || (first_line && !line_opens_block(raw, false) && line_prefix_opens_block(&line, false, f))
+}
+
+/// A source line as it prints: a code span at its start in its printed form
+/// (the fence is recomputed, so ```` ```x``` ```` prints as `` `x` ``,
+/// and next to stray backticks `` `x` `` as ```` ```x```` ````), the rest as in the source.
+///
+/// A code span is the only inline whose printed form can open a block where its source does not (or the reverse),
+/// so this is the one substitution the source-based guards need.
+/// Should a second one ever be needed, run the guards over the collected `Parts` instead
+/// (the printed text, as `pairing::consistent` already does) rather than splicing again here.
+pub struct PrintedLine<'a> {
+    /// Source offset of the line's first byte.
+    base: u32,
+    pub text: Cow<'a, str>,
+    /// The leading `printed` bytes of `text` stand for `source` bytes of the source line.
+    printed: usize,
+    source: usize,
+}
+
+impl<'a> PrintedLine<'a> {
+    /// `printed` (possibly empty) in place of the first `source` bytes of the source line, then `tail`.
+    fn spliced(base: u32, printed: &str, tail: Cow<'a, str>, source: usize) -> Self {
+        if printed.is_empty() {
+            Self { base, text: tail, printed: 0, source: 0 }
+        } else {
+            Self {
+                base,
+                text: Cow::Owned(format!("{printed}{tail}")),
+                printed: printed.len(),
+                source,
+            }
+        }
+    }
+
+    /// The source offset of byte `at` of `text`
+    /// (inside the replaced span, its start: the span is opaque as a whole).
+    fn offset(&self, at: usize) -> u32 {
+        let at = if at < self.printed { 0 } else { at - self.printed + self.source };
+        self.base + u32::try_from(at).unwrap_or(u32::MAX)
+    }
+}
+
+/// The source line starting at offset `start` (as `source_line_at`),
+/// its leading bytes up to `source_end` replaced by `printed` when given.
+pub fn line_from<'a>(
+    children: &[Inline<'_>],
+    start: u32,
+    replace: Option<(&'a str, u32)>,
+    f: &MarkdownFormatter<'_, 'a>,
+) -> PrintedLine<'a> {
+    let (base, line) = source_line_at(children, start, f);
+    let (printed, source) = replace.map_or(("", 0), |(printed, source_end)| {
+        (printed, (source_end.saturating_sub(base) as usize).min(line.len()))
+    });
+    PrintedLine::spliced(base, printed, Cow::Borrowed(&line[source..]), source)
+}
+
+/// The source line from node `j` on, as it prints ([`line_from`]).
+pub fn printed_line_at<'a>(
+    children: &'a [Inline<'a>],
+    j: usize,
+    f: &MarkdownFormatter<'_, 'a>,
+) -> PrintedLine<'a> {
+    let node = &children[j];
+    let replace = match node {
+        Inline::CodeSpan(code) => {
+            let printed = print_code_span(code, f);
+            Some((printed.split('\n').next().unwrap_or(printed), code.span.end))
+        }
+        _ => None,
+    };
+    line_from(children, node.span().start, replace, f)
 }
 
 /// The source line starting at offset `start` (nodes after it on the line included),
@@ -61,30 +134,41 @@ pub fn source_line_at<'a>(
 
 /// Whether the line, or any prefix wrapping may cut it to, opens a block.
 pub fn line_or_prefix_opens_block(
-    line: &str,
-    base: u32,
+    line: &PrintedLine<'_>,
     in_paragraph: bool,
     f: &MarkdownFormatter<'_, '_>,
 ) -> bool {
-    line_opens_block(line, in_paragraph) || line_prefix_opens_block(line, base, in_paragraph, f)
+    line_opens_block(&line.text, in_paragraph) || line_prefix_opens_block(line, in_paragraph, f)
 }
 
-/// Whether a proper prefix of the line, cut at a whitespace outside opaque nodes
-/// (a code span is one atom), opens a block. `base`: the line's source offset.
+/// Whether a proper prefix of the line, cut at a whitespace wrapping may break
+/// (outside opaque nodes, a code span being one atom, and not right after a leading liquid tag,
+/// which `push_whitespace` glues to its next word), opens a block.
+/// Only `always` wraps, so only it has prefixes.
 pub fn line_prefix_opens_block(
-    line: &str,
-    base: u32,
+    line: &PrintedLine<'_>,
     in_paragraph: bool,
     f: &MarkdownFormatter<'_, '_>,
 ) -> bool {
-    if !line.as_bytes().first().is_some_and(|&b| may_open_block(b)) {
+    let text: &str = &line.text;
+    if f.options().prose_wrap != ProseWrap::Always
+        || !text.as_bytes().first().is_some_and(|&b| may_open_block(b))
+    {
         return false;
     }
+    // A prefix that is exactly a leading liquid tag: the whitespace after it never breaks
+    let glued_tag = |prefix: &str| {
+        let tag = prefix.trim_end_matches(is_split_whitespace);
+        (tag.ends_with("%}") || tag.ends_with("}}"))
+            && lexical::line_start(&Constructs::markdown(), tag, in_paragraph)
+                == Some(lexical::LineStart::Liquid)
+    };
     let opaque = f.context().opaque_spans().borrow();
-    line.match_indices(is_split_whitespace).any(|(at, _)| {
-        let offset = base + u32::try_from(at).unwrap_or(u32::MAX);
+    text.match_indices(is_split_whitespace).any(|(at, _)| {
+        let offset = line.offset(at);
         !opaque.iter().any(|(span, _)| span.contains(offset))
-            && line_opens_block(&line[..at], in_paragraph)
+            && !glued_tag(&text[..at])
+            && line_opens_block(&text[..at], in_paragraph)
     })
 }
 
@@ -114,13 +198,13 @@ pub fn printed_line_opens_block<'a>(
 ) -> bool {
     // The source line runs to the line end
     // (through a backslash hard break: `---\` is no thematic break)
-    let (_, line) = source_line_at(children, children[i].span().start, f);
-    if !line.as_bytes().first().is_some_and(|&b| may_open_block(b)) {
+    let line = printed_line_at(children, i, f);
+    if !line.text.as_bytes().first().is_some_and(|&b| may_open_block(b)) {
         return false;
     }
     let prose_wrap = f.options().prose_wrap;
     if prose_wrap == ProseWrap::Preserve || f.context().raw_text().get() != Raw::No {
-        return line_opens_block(line, true);
+        return line_opens_block(&line.text, true);
     }
     let start = children[i].span().start;
     let end = children
@@ -133,14 +217,25 @@ pub fn printed_line_opens_block<'a>(
             _ => None,
         })
         .unwrap_or_else(|| children[children.len() - 1].span().end);
-    let segment = f.context().source_text().slice_range(start, end);
-    let trimmed = segment.trim_start_matches(HTML_WHITESPACE);
-    let joined = trimmed.cow_replace('\n', " ");
+    // A leading code span prints joined too (`print_code_span`);
+    // the rest is the source, lines joined.
+    let (head, rest_start) = match &children[i] {
+        Inline::CodeSpan(code) => (print_code_span(code, f), code.span.end.min(end)),
+        _ => ("", start),
+    };
+    let segment = f.context().source_text().slice_range(rest_start, end.max(rest_start));
+    let trimmed =
+        if head.is_empty() { segment.trim_start_matches(HTML_WHITESPACE) } else { segment };
+    let line = PrintedLine::spliced(
+        start + u32::try_from(segment.len() - trimmed.len()).unwrap_or(0),
+        head,
+        trimmed.cow_replace('\n', " "),
+        (rest_start - start) as usize,
+    );
     if prose_wrap == ProseWrap::Always {
-        let base = start + u32::try_from(segment.len() - trimmed.len()).unwrap_or(0);
-        line_or_prefix_opens_block(&joined, base, true, f)
+        line_or_prefix_opens_block(&line, true, f)
     } else {
-        line_opens_block(&joined, true)
+        line_opens_block(&line.text, true)
     }
 }
 
@@ -157,7 +252,8 @@ pub fn line_opens_block(line: &str, in_paragraph: bool) -> bool {
 
 /// A line that is not a block only because of what follows on it:
 /// a fence or math opener whose info has a backtick or a `$` (they interrupt a paragraph, so any line counts),
-/// a liquid tag, and on a paragraph's first line a definition (`[label]: dest text`; one cannot interrupt).
+/// a liquid tag not closed on the line (a later line may close it; one closed here with text after it is paragraph text),
+/// and on a paragraph's first line a definition (`[label]: dest text`; one cannot interrupt).
 /// `is_text`: the line starts with text (a code span or math span is one atom and never wraps inside).
 fn is_unfinished_block_shape(raw: &str, is_text: bool, first_line: bool) -> bool {
     (is_text
@@ -167,8 +263,9 @@ fn is_unfinished_block_shape(raw: &str, is_text: bool, first_line: bool) -> bool
             || raw.starts_with("```")
             || raw.starts_with("~~~")
             || raw.starts_with("$$")))
-        || raw.starts_with("{%")
-        || raw.starts_with("{{")
+        || ((raw.starts_with("{%") || raw.starts_with("{{"))
+            && lexical::line_start(&Constructs::markdown(), raw, false)
+                == Some(lexical::LineStart::Liquid))
 }
 
 /// Every block start (and line shape) begins with one of these bytes.

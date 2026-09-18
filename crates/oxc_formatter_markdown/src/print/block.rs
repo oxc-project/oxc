@@ -7,7 +7,7 @@ use oxc_formatter_core::{
         soft_line_break_or_space, space, text, token,
     },
     format_args,
-    spec::is_suppression_marker,
+    spec::{is_suppression_marker, parse_front_matter},
     write,
 };
 use oxc_markdown_parser::ast::{
@@ -220,12 +220,13 @@ pub fn write_block<'a>(
             let parent = inline::InlineParent {
                 paragraph: true,
                 first_in_container: parent == Parent::Container && index == 0,
+                first_in_document: front_matter_risk(parent, siblings, index, f),
                 after_checkbox: matches!(parent, Parent::ListItem { after_checkbox: true, .. }),
                 ..inline::InlineParent::default()
             };
             inline::write_inlines(&p.children, parent, f);
         }
-        Block::Heading(h) => write_heading(h, f),
+        Block::Heading(h) => write_heading(h, front_matter_risk(parent, siblings, index, f), f),
         Block::ThematicBreak(_) => write_thematic_break(index, parent, f),
         Block::CodeBlock(c) => code::write_code_block(c, f),
         Block::HtmlBlock(h) => {
@@ -238,14 +239,24 @@ pub fn write_block<'a>(
         Block::MathBlock(m) => write_math_block(m, f),
         Block::Liquid(l) => write_liquid_block(l, f),
         Block::ContainerDirective(d) => {
-            // Fence lines are verbatim (dialects disagree on their grammar); children are markdown
+            // Fence lines are verbatim (dialects disagree on their grammar); children are markdown.
+            // A blank line after the opener / before the closer stays (Docusaurus style).
+            let blank_between = |a: u32, b: u32| f.context().has_blank_between(a, b);
+            let after_opening = d
+                .children
+                .first()
+                .is_some_and(|first| blank_between(d.opening.end, first.span().start));
+            let before_closing = d.closing.is_some_and(|closing| {
+                let before = d.children.last().map_or(d.opening.end, |last| last.span().end);
+                blank_between(before, closing.start)
+            });
             write_verbatim(d.opening, f);
             if !d.children.is_empty() {
-                write!(f, hard_line_break());
+                super::write_gap(after_opening, f);
                 write_blocks(&d.children, Parent::Container, f);
             }
             if let Some(closing) = d.closing {
-                write!(f, hard_line_break());
+                super::write_gap(before_closing, f);
                 write_verbatim(closing, f);
             }
         }
@@ -258,9 +269,33 @@ pub fn write_block<'a>(
     }
 }
 
+/// `siblings[index]` is the document's first block,
+/// and printed from its first line on it would be read as front matter on the next parse:
+/// `spec::parse_front_matter` closes it on the source's later lines,
+/// or a `---` thematic break sibling closes it once printed.
+fn front_matter_risk(
+    parent: Parent,
+    siblings: &[Block<'_>],
+    index: usize,
+    f: &MarkdownFormatter<'_, '_>,
+) -> bool {
+    if parent != Parent::Root || index != 0 {
+        return false;
+    }
+    let source = f.context().source_text().as_str();
+    let head = &source[siblings[0].span().start as usize..];
+    parse_front_matter(head).is_some()
+        || (head.starts_with("---")
+            && siblings.iter().skip(1).any(|b| matches!(b, Block::ThematicBreak(_))))
+}
+
 /// ATX headings normalize to `#`s + one space;
 /// setext headings keep their underline verbatim (length included).
-fn write_heading<'a>(heading: &'a Heading<'a>, f: &mut MarkdownFormatter<'_, 'a>) {
+fn write_heading<'a>(
+    heading: &'a Heading<'a>,
+    first_in_document: bool,
+    f: &mut MarkdownFormatter<'_, 'a>,
+) {
     match &heading.kind {
         HeadingKind::Atx => {
             const HASHES: &str = "######";
@@ -273,8 +308,11 @@ fn write_heading<'a>(heading: &'a Heading<'a>, f: &mut MarkdownFormatter<'_, 'a>
         }
         HeadingKind::Setext { underline, .. } => {
             // Multi-line like a paragraph: its source lines get the paragraph's line rules
-            let parent =
-                inline::InlineParent { paragraph: true, ..inline::InlineParent::default() };
+            let parent = inline::InlineParent {
+                paragraph: true,
+                first_in_document,
+                ..inline::InlineParent::default()
+            };
             inline::write_inlines(&heading.children, parent, f);
             let raw = f.context().slice(*underline);
             write!(f, [hard_line_break(), text(raw.trim_end())]);

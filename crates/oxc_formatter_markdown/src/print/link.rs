@@ -32,11 +32,19 @@ pub fn collect_link<'a>(
     parts.push_str("[");
     match &link.kind {
         LinkKind::Inline { .. } | LinkKind::Reference { kind: ReferenceKind::Full, .. } => {
-            // Link text never wraps; its delimiter runs pair on their own (bracket level)
+            // The text's delimiter runs pair on their own (bracket level).
+            // A full reference's text wraps like any text: its `][label]` tail is short.
+            // An inline link's does not: its `](url)` tail is unbreakable and usually what overflows,
+            // so a break inside the text would only split it without fitting the line.
+            let inner = InlineParent { ends_line: false, ..InlineParent::default() };
             let text_start = parts.len();
-            with_depth(f, MarkdownFormatContext::no_wrap_depth, |f| {
-                collect_inlines(&link.children, InlineParent::default(), parts, f);
-            });
+            if matches!(link.kind, LinkKind::Inline { .. }) {
+                with_depth(f, MarkdownFormatContext::no_wrap_depth, |f| {
+                    collect_inlines(&link.children, inner, parts, f);
+                });
+            } else {
+                collect_inlines(&link.children, inner, parts, f);
+            }
             let text_end = parts.len();
             push_target(&link.kind, parts, f);
             parts.mark(Mark::Group { start: text_start, end: text_end });
