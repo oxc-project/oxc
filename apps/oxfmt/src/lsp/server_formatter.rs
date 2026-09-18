@@ -134,9 +134,9 @@ impl ServerFormatterBuilder {
 /// in-flight readers clone the `Arc` and continue using the old snapshot,
 /// while subsequent reads see the new one.
 struct FormatterState {
-    /// Workspace-root resolver.
-    /// Used as the fallback when no nested config matches.
-    root_resolver: Arc<ConfigResolver>,
+    /// Workspace-root resolver, or the config error to report on format requests.
+    /// Rebuilt on watched-file changes so correcting the config restores formatting.
+    root_resolver: Result<Arc<ConfigResolver>, String>,
     /// Lazy nested-config probe cache.
     /// Each ancestor directory is loaded at most once for the lifetime of this state.
     nested_ctx: NestedConfigCtx,
@@ -249,7 +249,7 @@ impl Tool for ServerFormatter {
                 &file_content
             };
 
-            let Some(result) = self.format_file(&path, source_text) else {
+            let Some(result) = self.format_file(&path, source_text)? else {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
@@ -261,7 +261,7 @@ impl Tool for ServerFormatter {
                 .ok_or_else(|| "In-memory formatting requires content".to_string())?;
 
             let Some(result) =
-                self.format_in_memory(document.uri, source_text, &document.language_id)
+                self.format_in_memory(document.uri, source_text, &document.language_id)?
             else {
                 return Ok(vec![]); // currently not supported
             };
@@ -336,21 +336,18 @@ impl ServerFormatter {
             editorconfig_path.as_deref().map(Arc::from),
             Some(JsConfigLoaderCb::clone(js_config_loader)),
         );
-        FormatterState { root_resolver: Arc::new(root_resolver), nested_ctx }
+        FormatterState { root_resolver: root_resolver.map(Arc::new), nested_ctx }
     }
 
-    /// Load the workspace-root resolver,
-    /// falling back to the default empty config on any load or validation error.
-    ///
-    /// LSP must keep editing usable even when the user's config is broken,
-    /// so we surface a warning instead of bubbling the error up.
+    /// Load and validate the workspace-root resolver.
+    /// Keep config errors so formatting cannot silently use different settings.
     fn load_root_resolver(
         root_path: &Path,
         explicit_config_path: Option<&Path>,
         editorconfig_path: Option<&Path>,
         js_config_loader: &JsConfigLoaderCb,
-    ) -> ConfigResolver {
-        let result = ConfigResolver::from_config(
+    ) -> Result<ConfigResolver, String> {
+        ConfigResolver::from_config(
             root_path,
             explicit_config_path,
             editorconfig_path,
@@ -359,50 +356,39 @@ impl ServerFormatter {
         .and_then(|mut resolver| {
             resolver.build_and_validate()?;
             Ok(resolver)
-        });
-
-        result.unwrap_or_else(|err| {
-            warn!(
-                "Failed to load config at {}: {err}, falling back to default",
-                root_path.display()
-            );
-            let mut resolver = ConfigResolver::from_json_config(None, None)
-                .expect("Default ConfigResolver should never fail");
-            resolver
-                .build_and_validate()
-                .expect("Default ConfigResolver validation should never fail");
-            resolver
+        })
+        .map_err(|err| {
+            format!("Failed to load formatter configuration for {}: {err}", root_path.display())
         })
     }
 
     /// Resolve config and format a file at the given path.
-    /// Returns `None` if the file is unsupported or ignored.
-    fn resolve_and_format(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+    /// Returns `Ok(None)` if the file is unsupported or ignored, and an error for invalid config.
+    fn resolve_and_format(
+        &self,
+        path: &Path,
+        source_text: &str,
+    ) -> Result<Option<FormatResult>, String> {
         // Snapshot the current state.
         // In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
         let state = Arc::clone(&self.state.read().expect("state rwlock poisoned"));
+        let root_resolver = state.root_resolver.as_ref().map_err(Clone::clone)?;
 
         // Passing `None` tells `resolve_file_scope_config` to bypass nested probing
         let nested_ctx = self.use_nested_config.then_some(&state.nested_ctx);
-        let resolver = match resolve_file_scope_config(path, &state.root_resolver, nested_ctx) {
-            Ok(r) => r,
-            Err(err) => {
-                warn!(
-                    "Failed to resolve nested config for {}: {err}, falling back to root",
-                    path.display()
-                );
-                Arc::clone(&state.root_resolver)
-            }
-        };
+        let resolver =
+            resolve_file_scope_config(path, root_resolver, nested_ctx).map_err(|err| {
+                format!("Failed to load formatter configuration for {}: {err}", path.display())
+            })?;
 
         if resolver.is_path_ignored(path, path.is_dir()) {
             debug!("File is ignored by config ignorePatterns: {}", path.display());
-            return None;
+            return Ok(None);
         }
 
         let Some(kind) = classify_file_kind(Arc::from(path)) else {
             debug!("Unsupported file type for formatting: {}", path.display());
-            return None;
+            return Ok(None);
         };
         let strategy = match resolver.resolve(kind) {
             Ok(ResolveOutcome::Format(strategy)) => strategy,
@@ -411,25 +397,29 @@ impl ServerFormatter {
                     "Skipping `.{plugin}`: `{plugin}` plugin is not enabled in resolved config: {}",
                     path.display()
                 );
-                return None;
+                return Ok(None);
             }
             Err(err) => {
-                debug!("Config resolve error for {}: {err}", path.display());
-                return None;
+                return Err(format!(
+                    "Failed to resolve formatter configuration for {}: {err}",
+                    path.display()
+                ));
             }
         };
         debug!("strategy = {strategy:?}");
 
-        Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, strategy)))
+        Ok(Some(tokio::task::block_in_place(|| {
+            self.source_formatter.format(source_text, strategy)
+        })))
     }
 
-    fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+    fn format_file(&self, path: &Path, source_text: &str) -> Result<Option<FormatResult>, String> {
         if self.prettierignore_glob.as_ref().is_some_and(|glob| {
             path.starts_with(glob.path())
                 && glob.matched_path_or_any_parents(path, path.is_dir()).is_ignore()
         }) {
             debug!("File is ignored by .prettierignore: {}", path.display());
-            return None;
+            return Ok(None);
         }
         self.resolve_and_format(path, source_text)
     }
@@ -439,11 +429,11 @@ impl ServerFormatter {
         uri: &Uri,
         source_text: &str,
         language_id: &LanguageId,
-    ) -> Option<FormatResult> {
+    ) -> Result<Option<FormatResult>, String> {
         let Some(path) = create_fake_file_path_from_language_id(language_id, &self.root_path, uri)
         else {
             debug!("Unsupported language id for in-memory formatting: {language_id:?}");
-            return None;
+            return Ok(None);
         };
         self.resolve_and_format(&path, source_text)
     }
@@ -538,8 +528,13 @@ fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod tests_builder {
+    use std::{fs, sync::Arc};
+
+    use tower_lsp_server::ls_types::Uri;
+
+    use oxc_language_server::{Capabilities, LanguageId, TextDocument, Tool, ToolBuilder};
+
     use crate::lsp::server_formatter::ServerFormatterBuilder;
-    use oxc_language_server::{Capabilities, ToolBuilder};
 
     #[test]
     fn test_server_capabilities() {
@@ -551,6 +546,48 @@ mod tests_builder {
         builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         assert_eq!(capabilities.document_formatting_provider, Some(OneOf::Left(true)));
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_invalid_config_recovers_after_watched_file_change() {
+        let directory = tempfile::tempdir().unwrap();
+        let config_path = directory.path().join(".oxfmtrc.json");
+        fs::write(&config_path, r#"{"sortImports":{"partitionByNewline":true}}"#).unwrap();
+        let root_uri = Uri::from_file_path(directory.path()).unwrap();
+        let config_uri = Uri::from_file_path(&config_path).unwrap();
+        let file_uri = Uri::from_file_path(directory.path().join("example.ts")).unwrap();
+        let builder = ServerFormatterBuilder::dummy();
+        let (formatter, _) = builder.build(&root_uri, serde_json::json!({}));
+        let document = || {
+            TextDocument::new(
+                &file_uri,
+                LanguageId::new("typescript".into()),
+                Some(Arc::from("const value = 1;")),
+            )
+        };
+
+        let error = formatter.run_format(document()).unwrap_err();
+        assert!(error.contains("partitionByNewline"), "{error}");
+
+        fs::write(&config_path, r#"{"semi":false}"#).unwrap();
+        formatter.handle_watched_file_change(
+            &builder,
+            &config_uri,
+            &root_uri,
+            serde_json::json!({}),
+        );
+        let edits = formatter.run_format(document()).unwrap();
+        assert_eq!(edits.len(), 1);
+        assert_eq!(edits[0].new_text, "\n");
+
+        fs::write(&config_path, "{").unwrap();
+        formatter.handle_watched_file_change(
+            &builder,
+            &config_uri,
+            &root_uri,
+            serde_json::json!({}),
+        );
+        assert!(formatter.run_format(document()).is_err());
     }
 }
 
