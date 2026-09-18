@@ -39,6 +39,8 @@ pub struct TsGoLintState {
     fix: bool,
     /// If `true`, request that suggestions be returned from `tsgolint`.
     fix_suggestions: bool,
+    /// If `true`, apply returned fixes and write changed source files.
+    apply_fixes: bool,
     /// If `true`, include TypeScript compiler syntactic and semantic diagnostics.
     type_check: bool,
     /// If `true`, request that per-rule debug timings be returned from `tsgolint`.
@@ -59,6 +61,7 @@ impl TsGoLintState {
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
+            apply_fixes: fix_kind.is_some(),
             type_check: false,
             timings: false,
             with_ignore_fixes: false,
@@ -83,10 +86,18 @@ impl TsGoLintState {
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
+            apply_fixes: fix_kind.is_some(),
             type_check: false,
             timings: false,
             with_ignore_fixes: false,
         })
+    }
+
+    /// Set whether requested fixes are applied to source files.
+    #[must_use]
+    pub fn with_apply_fixes(mut self, yes: bool) -> Self {
+        self.apply_fixes = yes;
+        self
     }
 
     /// Set to `true` to skip file system reads.
@@ -161,9 +172,10 @@ impl TsGoLintState {
             paths_buff
         };
 
-        let should_fix = self.fix || self.fix_suggestions;
+        let collect_fixes = self.fix || self.fix_suggestions;
+        let apply_fixes = self.apply_fixes;
         let cwd = self.cwd.clone();
-        let sender_for_fixes = error_sender.clone();
+        let sender_for_collected = error_sender.clone();
 
         let diff_manager_clone_to_ts_go = Arc::<DiffManager>::clone(diff_manager);
 
@@ -177,8 +189,12 @@ impl TsGoLintState {
                 let disable_directives_map =
                     disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
 
-                let mut diagnostic_handler =
-                    DiagnosticHandler::new(self.cwd.clone(), self.silent, should_fix, error_sender);
+                let mut diagnostic_handler = DiagnosticHandler::new(
+                    self.cwd.clone(),
+                    self.silent,
+                    collect_fixes,
+                    error_sender,
+                );
                 let mut timings = vec![];
 
                 let msg_iter = TsGoLintMessageStream::new(stdout);
@@ -288,52 +304,77 @@ impl TsGoLintState {
                 }
 
                 for (path, source_text, messages) in messages_requiring_fixes {
-                    let source_type = SourceType::from_path(&path)
-                        .ok()
-                        .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st });
-                    let fix_result = Fixer::new(&source_text, messages, source_type).fix();
+                    if apply_fixes {
+                        let source_type = SourceType::from_path(&path)
+                            .ok()
+                            .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st });
+                        let fix_result = Fixer::new(&source_text, messages, source_type).fix();
 
-                    if fix_result.fixed
-                        && let Err(error) = file_system.write_file(&path, &fix_result.fixed_code)
-                    {
-                        sender_for_fixes
-                            .send(vec![
-                                OxcDiagnostic::error(format!(
-                                    "Failed to write file {} with error \"{error}\"",
-                                    path.display()
-                                ))
-                                .into(),
-                            ])
-                            .expect("Failed to send diagnostics");
-                    }
+                        if fix_result.fixed
+                            && let Err(error) =
+                                file_system.write_file(&path, &fix_result.fixed_code)
+                        {
+                            sender_for_collected
+                                .send(vec![
+                                    OxcDiagnostic::error(format!(
+                                        "Failed to write file {} with error \"{error}\"",
+                                        path.display()
+                                    ))
+                                    .into(),
+                                ])
+                                .expect("Failed to send diagnostics");
+                        }
 
-                    if fix_result.messages.is_empty() {
-                        diff_manager.collect_empty_file(path.as_path(), &cwd);
+                        if fix_result.messages.is_empty() {
+                            diff_manager.collect_empty_file(path.as_path(), &cwd);
+                        } else {
+                            let source_for_diagnostics: &str = if fix_result.fixed {
+                                &fix_result.fixed_code
+                            } else {
+                                &source_text
+                            };
+
+                            let filtered_messages: Vec<OxcDiagnostic> = if diff_manager.skip() {
+                                fix_result.messages.into_iter().map(Into::into).collect()
+                            } else {
+                                diff_manager
+                                    .collect_file(
+                                        path.as_path(),
+                                        &cwd,
+                                        fix_result.messages.into_iter().collect(),
+                                    )
+                                    .into_iter()
+                                    .map(Into::into)
+                                    .collect()
+                            };
+
+                            let diagnostics = DiagnosticService::wrap_diagnostics(
+                                &cwd,
+                                &path,
+                                source_for_diagnostics,
+                                filtered_messages,
+                            );
+                            sender_for_collected
+                                .send(diagnostics)
+                                .expect("Failed to send diagnostics");
+                        }
                     } else {
-                        let source_for_diagnostics: &str =
-                            if fix_result.fixed { &fix_result.fixed_code } else { &source_text };
-
                         let filtered_messages: Vec<OxcDiagnostic> = if diff_manager.skip() {
-                            fix_result.messages.into_iter().map(Into::into).collect()
+                            messages.into_iter().map(Into::into).collect()
                         } else {
                             diff_manager
-                                .collect_file(
-                                    path.as_path(),
-                                    &cwd,
-                                    fix_result.messages.into_iter().collect(),
-                                )
+                                .collect_file(path.as_path(), &cwd, messages)
                                 .into_iter()
                                 .map(Into::into)
                                 .collect()
                         };
-
                         let diagnostics = DiagnosticService::wrap_diagnostics(
                             &cwd,
                             &path,
-                            source_for_diagnostics,
+                            &source_text,
                             filtered_messages,
                         );
-                        sender_for_fixes.send(diagnostics).expect("Failed to send diagnostics");
+                        sender_for_collected.send(diagnostics).expect("Failed to send diagnostics");
                     }
                 }
                 Ok(())
@@ -1030,7 +1071,7 @@ struct TsGoLintOutput {
 struct DiagnosticHandler {
     cwd: PathBuf,
     silent: bool,
-    should_fix: bool,
+    collect_fixes: bool,
     source_text_cache: SourceTextCache,
     error_sender: DiagnosticSender,
     /// Messages requiring fixes, grouped by file path: messages.
@@ -1039,11 +1080,16 @@ struct DiagnosticHandler {
 }
 
 impl DiagnosticHandler {
-    fn new(cwd: PathBuf, silent: bool, should_fix: bool, error_sender: DiagnosticSender) -> Self {
+    fn new(
+        cwd: PathBuf,
+        silent: bool,
+        collect_fixes: bool,
+        error_sender: DiagnosticSender,
+    ) -> Self {
         Self {
             cwd,
             silent,
-            should_fix,
+            collect_fixes,
             source_text_cache: SourceTextCache::default(),
             error_sender,
             messages_requiring_fixes: FxHashMap::default(),
@@ -1052,7 +1098,7 @@ impl DiagnosticHandler {
     }
 
     fn get_source_text(&mut self, path: &Path) -> &str {
-        if self.silent && !self.should_fix {
+        if self.silent && !self.collect_fixes {
             // The source text is not needed in silent mode, the diagnostic isn't printed.
             ""
         } else {
@@ -1067,11 +1113,11 @@ impl DiagnosticHandler {
         ignore_suppression: bool,
     ) {
         let path = diagnostic.file_path.clone();
-        let has_fixes =
-            self.should_fix && (!diagnostic.fixes.is_empty() || !diagnostic.suggestions.is_empty());
+        let has_fixes = self.collect_fixes
+            && (!diagnostic.fixes.is_empty() || !diagnostic.suggestions.is_empty());
 
         if has_fixes {
-            // Collect for later fix application
+            // Collect for later reporting or application
             let mut message =
                 Message::from_tsgo_lint_diagnostic(diagnostic, self.get_source_text(&path));
             message.error.severity =
@@ -1135,13 +1181,14 @@ impl DiagnosticHandler {
         diff_manager: &Arc<DiffManager>,
         paths: Vec<PathBuf>,
     ) -> Vec<(PathBuf, String, Vec<Message>)> {
-        let Self { messages_requiring_fixes, mut source_text_cache, should_fix, silent, .. } = self;
+        let Self { messages_requiring_fixes, mut source_text_cache, collect_fixes, silent, .. } =
+            self;
 
         if !diff_manager.skip() {
             for path in paths {
                 if let Some(messages) = self.messages_not_requiring_fixes.get(&path) {
                     let source_text = source_text_cache.0.remove(&path).unwrap_or_else(|| {
-                        if !silent || should_fix {
+                        if !silent || collect_fixes {
                             read_to_string(&path).unwrap_or_default()
                         } else {
                             String::new()
@@ -1190,7 +1237,7 @@ impl DiagnosticHandler {
             .into_iter()
             .map(|(path, messages)| {
                 let source_text = source_text_cache.0.remove(&path).unwrap_or_else(|| {
-                    if !silent || should_fix {
+                    if !silent || collect_fixes {
                         read_to_string(&path).unwrap_or_default()
                     } else {
                         String::new()

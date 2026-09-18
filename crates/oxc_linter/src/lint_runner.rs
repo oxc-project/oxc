@@ -151,6 +151,7 @@ pub struct LintRunnerBuilder {
     lint_service_options: LintServiceOptions,
     silent: bool,
     fix_kind: FixKind,
+    apply_fixes: bool,
     type_check_only: bool,
     timings: bool,
     with_ignore_fixes: bool,
@@ -165,6 +166,7 @@ impl LintRunnerBuilder {
             lint_service_options,
             silent: false,
             fix_kind: FixKind::None,
+            apply_fixes: false,
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
@@ -192,6 +194,15 @@ impl LintRunnerBuilder {
     #[must_use]
     pub fn with_fix_kind(mut self, fix_kind: FixKind) -> Self {
         self.fix_kind = fix_kind;
+        self.apply_fixes = fix_kind.is_some();
+        self
+    }
+
+    /// Request fixes from all linters for diagnostic reporting without applying them.
+    #[must_use]
+    pub fn with_fix_for_report(mut self, fix_kind: FixKind) -> Self {
+        self.fix_kind = fix_kind;
+        self.apply_fixes = false;
         self
     }
 
@@ -227,6 +238,7 @@ impl LintRunnerBuilder {
                 Ok(state) => Some(
                     state
                         .with_silent(self.silent)
+                        .with_apply_fixes(self.apply_fixes)
                         .with_type_check(self.type_check)
                         .with_timings(self.timings)
                         .with_ignore_fixes(self.with_ignore_fixes),
