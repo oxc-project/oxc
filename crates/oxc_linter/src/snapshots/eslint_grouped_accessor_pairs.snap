@@ -326,21 +326,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'a' and setter 'a' should be grouped.
-   ╭─[grouped_accessor_pairs.tsx:1:4]
- 1 │ ({ get a(){}, b: 1, set a(foo){}, set c(foo){}, d(){}, get c(){} })
-   ·    ──┬──            ──┬──
-   ·      │                ╰── setter 'a' is here
-   ·      ╰── getter 'a' is here
-   ╰────
-  help: Require grouped accessor pairs in object literals and classes
-
   ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'c' and setter 'c' should be grouped.
    ╭─[grouped_accessor_pairs.tsx:1:35]
  1 │ ({ get a(){}, b: 1, set a(foo){}, set c(foo){}, d(){}, get c(){} })
    ·                                   ──┬──                ──┬──
    ·                                     │                    ╰── getter 'c' is here
    ·                                     ╰── setter 'c' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'a' and setter 'a' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:4]
+ 1 │ ({ get a(){}, b: 1, set a(foo){}, set c(foo){}, d(){}, get c(){} })
+   ·    ──┬──            ──┬──
+   ·      │                ╰── setter 'a' is here
+   ·      ╰── getter 'a' is here
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
@@ -425,21 +425,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'a' and setter 'a' should be grouped.
-   ╭─[grouped_accessor_pairs.tsx:1:11]
- 1 │ class A { get a(){} constructor (){} set a(foo){} get b(){} static c(){} set b(bar){} }
-   ·           ──┬──                      ──┬──
-   ·             │                          ╰── setter 'a' is here
-   ·             ╰── getter 'a' is here
-   ╰────
-  help: Require grouped accessor pairs in object literals and classes
-
   ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'b' and setter 'b' should be grouped.
    ╭─[grouped_accessor_pairs.tsx:1:51]
  1 │ class A { get a(){} constructor (){} set a(foo){} get b(){} static c(){} set b(bar){} }
    ·                                                   ──┬──                  ──┬──
    ·                                                     │                      ╰── setter 'b' is here
    ·                                                     ╰── getter 'b' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'a' and setter 'a' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:11]
+ 1 │ class A { get a(){} constructor (){} set a(foo){} get b(){} static c(){} set b(bar){} }
+   ·           ──┬──                      ──┬──
+   ·             │                          ╰── setter 'a' is here
+   ·             ╰── getter 'a' is here
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
@@ -480,20 +480,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Require grouped accessor pairs in object literals and classes
 
   ⚠ eslint(grouped-accessor-pairs): Accessor pair getter and setter should be grouped.
-   ╭─[grouped_accessor_pairs.tsx:1:10]
- 1 │ (class { set [a+b](foo){} get [a-b](){} get [a+b](){} set [a-b](bar){} })
-   ·          ────┬───                       ────┬───
-   ·              │                              ╰── getter is here
-   ·              ╰── setter is here
-   ╰────
-  help: Require grouped accessor pairs in object literals and classes
-
-  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter and setter should be grouped.
    ╭─[grouped_accessor_pairs.tsx:1:27]
  1 │ (class { set [a+b](foo){} get [a-b](){} get [a+b](){} set [a-b](bar){} })
    ·                           ────┬───                    ────┬───
    ·                               │                           ╰── setter is here
    ·                               ╰── getter is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter and setter should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:10]
+ 1 │ (class { set [a+b](foo){} get [a-b](){} get [a+b](){} set [a-b](bar){} })
+   ·          ────┬───                       ────┬───
+   ·              │                              ╰── getter is here
+   ·              ╰── setter is here
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
@@ -785,5 +785,41 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──┬──         ──┬──
    ·              │             ╰── setter 'a' is here
    ·              ╰── getter 'a' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter '\uD800' and setter '\uD800' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:4]
+ 1 │ ({ get "\uD800"() {}, a: 1, set "\uD800"(v) {} })
+   ·    ──────┬─────             ──────┬─────
+   ·          │                        ╰── setter '\uD800' is here
+   ·          ╰── getter '\uD800' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter '\uDC00' and setter '\uDC00' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:4]
+ 1 │ ({ get "\uDC00"() {}, a: 1, set ["\uDC00"](v) {} })
+   ·    ──────┬─────             ──────┬──────
+   ·          │                        ╰── setter '\uDC00' is here
+   ·          ╰── getter '\uDC00' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'a\uD800b' and setter 'a\uD800b' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:11]
+ 1 │ class A { get "a\uD800b"() {} a() {} set [`a\uD800b`](v) {} }
+   ·           ───────┬──────             ───────┬───────
+   ·                  │                          ╰── setter 'a\uD800b' is here
+   ·                  ╰── getter 'a\uD800b' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter '\uD800' and setter '\uD800' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:15]
+ 1 │ interface I { get "\uD800"(): any, between: true, set "\uD800"(value: any) }
+   ·               ──────┬─────                        ──────┬─────
+   ·                     │                                   ╰── setter '\uD800' is here
+   ·                     ╰── getter '\uD800' is here
    ╰────
   help: Require grouped accessor pairs in object literals and classes

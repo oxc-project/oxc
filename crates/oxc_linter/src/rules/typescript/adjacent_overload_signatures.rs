@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         ClassElement, Declaration, ExportDefaultDeclarationKind, FunctionType, ModuleDeclaration,
         PropertyKey, Statement, TSSignature, match_expression,
@@ -8,7 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
@@ -21,8 +20,8 @@ fn adjacent_overload_signatures_diagnostic(
     first: Option<Span>,
     second: Span,
 ) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!("All {fn_name:?} signatures should be adjacent."))
-        .with_help(format!("Move all {fn_name:?} overload signatures together, placing them consecutively before any other members."))
+    let mut d = OxcDiagnostic::warn(format!("All {fn_name} signatures should be adjacent."))
+        .with_help(format!("Move all {fn_name} overload signatures together, placing them consecutively before any other members."))
         .with_note("Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.");
     if let Some(span) = first {
         d = d.and_label(span);
@@ -113,15 +112,15 @@ fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
 }
 
 #[derive(Debug)]
-struct Method {
-    name: CompactStr,
+struct Method<'a> {
+    name: StaticPropertyName<'a>,
     r#static: bool,
     call_signature: bool,
     kind: MethodKind,
     span: Span,
 }
 
-impl Method {
+impl Method<'_> {
     fn is_same_method(&self, other: Option<&Self>) -> bool {
         other.is_some_and(|other| {
             self.name == other.name
@@ -132,15 +131,15 @@ impl Method {
     }
 }
 
-trait GetMethod {
-    fn get_method(&self) -> Option<Method>;
+trait GetMethod<'a> {
+    fn get_method(&self) -> Option<Method<'a>>;
 }
 
-impl GetMethod for ClassElement<'_> {
-    fn get_method(&self) -> Option<Method> {
+impl<'a> GetMethod<'a> for ClassElement<'a> {
+    fn get_method(&self) -> Option<Method<'a>> {
         match self {
             ClassElement::MethodDefinition(def) => def.key.static_name().map(|name| Method {
-                name: name.into(),
+                name,
                 r#static: def.r#static,
                 call_signature: false,
                 kind: get_kind_from_key(&def.key),
@@ -151,11 +150,11 @@ impl GetMethod for ClassElement<'_> {
     }
 }
 
-impl GetMethod for TSSignature<'_> {
-    fn get_method(&self) -> Option<Method> {
+impl<'a> GetMethod<'a> for TSSignature<'a> {
+    fn get_method(&self) -> Option<Method<'a>> {
         match self {
             TSSignature::TSMethodSignature(sig) => sig.key.static_name().map(|name| Method {
-                name: name.into(),
+                name,
                 r#static: false,
                 call_signature: false,
                 kind: get_kind_from_key(&sig.key),
@@ -180,8 +179,8 @@ impl GetMethod for TSSignature<'_> {
     }
 }
 
-impl GetMethod for ModuleDeclaration<'_> {
-    fn get_method(&self) -> Option<Method> {
+impl<'a> GetMethod<'a> for ModuleDeclaration<'a> {
+    fn get_method(&self) -> Option<Method<'a>> {
         match self {
             ModuleDeclaration::ExportDefaultDeclaration(default_decl) => {
                 let decl_kind = &default_decl.declaration;
@@ -193,7 +192,7 @@ impl GetMethod for ModuleDeclaration<'_> {
                             FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction
                         ) {
                             func_decl.id.as_ref().map(|id| Method {
-                                name: id.name.to_compact_str(),
+                                name: id.name.into(),
                                 r#static: false,
                                 call_signature: false,
                                 kind: MethodKind::Normal,
@@ -209,7 +208,7 @@ impl GetMethod for ModuleDeclaration<'_> {
             ModuleDeclaration::ExportDeclaration(export_decl) => {
                 if let Declaration::FunctionDeclaration(func_decl) = &export_decl.declaration {
                     return func_decl.id.as_ref().map(|id| Method {
-                        name: id.name.to_compact_str(),
+                        name: id.name.into(),
                         r#static: false,
                         call_signature: false,
                         kind: MethodKind::Normal,
@@ -223,8 +222,8 @@ impl GetMethod for ModuleDeclaration<'_> {
     }
 }
 
-impl GetMethod for Declaration<'_> {
-    fn get_method(&self) -> Option<Method> {
+impl<'a> GetMethod<'a> for Declaration<'a> {
+    fn get_method(&self) -> Option<Method<'a>> {
         match self {
             Declaration::FunctionDeclaration(func_decl) => {
                 if matches!(
@@ -232,7 +231,7 @@ impl GetMethod for Declaration<'_> {
                     FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction
                 ) {
                     func_decl.id.as_ref().map(|id| Method {
-                        name: id.name.to_compact_str(),
+                        name: id.name.into(),
                         r#static: false,
                         call_signature: false,
                         kind: MethodKind::Normal,
@@ -247,8 +246,8 @@ impl GetMethod for Declaration<'_> {
     }
 }
 
-impl GetMethod for Statement<'_> {
-    fn get_method(&self) -> Option<Method> {
+impl<'a> GetMethod<'a> for Statement<'a> {
+    fn get_method(&self) -> Option<Method<'a>> {
         if let Some(decl) = self.as_module_declaration() {
             decl.get_method()
         } else if let Some(decl) = self.as_declaration() {
@@ -259,7 +258,7 @@ impl GetMethod for Statement<'_> {
     }
 }
 
-fn check_and_report<T: GetMethod>(members: &[T], ctx: &LintContext<'_>) {
+fn check_and_report<'a, T: GetMethod<'a>>(members: &[T], ctx: &LintContext<'_>) {
     // A violation needs at least two members, so bail out before doing any work.
     if members.len() < 2 {
         return;
@@ -290,11 +289,12 @@ fn check_and_report<T: GetMethod>(members: &[T], ctx: &LintContext<'_>) {
         };
 
         if let Some(last_same_span) = last_same_method {
-            let name = if method.r#static {
-                format!("static {0}", method.name)
-            } else {
-                method.name.to_string()
-            };
+            // The name's Debug form escapes lone surrogates once and adds the
+            // surrounding quotes; the static prefix goes inside them.
+            let mut name = format!("{:?}", method.name);
+            if method.r#static {
+                name.insert_str(1, "static ");
+            }
 
             ctx.diagnostic(adjacent_overload_signatures_diagnostic(
                 &name,
@@ -761,7 +761,40 @@ fn test() {
         #private(arg: number): void {}
         '#private'(arg: number): void {}
       }",
+        // Lone surrogates keep their identity across key syntaxes.
+        r#"class Foo {
+        "\uD800"(): void;
+        bar(): void;
+        "\uD800"(a: number): void;
+      }"#,
+        r#"class Foo {
+        "\uDC00"(): void;
+        bar(): void;
+        ["\uDC00"](a: number): void;
+      }"#,
+        r#"interface Foo {
+        "a\uD800b"(): void;
+        bar(): void;
+        "a\uD800b"(a: number): void;
+      }"#,
     ];
+
+    // Lone surrogates are distinct method names.
+    let pass = pass
+        .into_iter()
+        .chain([
+            r#"class Foo {
+        "\uD800"(): void;
+        bar(): void;
+        "\uDC00"(a: number): void;
+      }"#,
+            r#"class Foo {
+        "\uD800"(): void;
+        bar(): void;
+        "\uD800\uDC00"(a: number): void;
+      }"#,
+        ])
+        .collect::<Vec<_>>();
 
     Tester::new(AdjacentOverloadSignatures::NAME, AdjacentOverloadSignatures::PLUGIN, pass, fail)
         .test_and_snapshot();

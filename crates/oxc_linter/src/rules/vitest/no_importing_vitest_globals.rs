@@ -251,7 +251,9 @@ fn process_declaration<'a>(
     let mut non_global_imports: Vec<String> = vec![];
 
     for property in &obj.properties {
-        let Some(property_name) = property.key.static_name() else {
+        let Some(property_name) =
+            property.key.static_name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+        else {
             continue;
         };
 

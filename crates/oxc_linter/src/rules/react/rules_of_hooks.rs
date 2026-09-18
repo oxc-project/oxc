@@ -957,7 +957,9 @@ fn get_declaration_identifier<'a>(
                 }
                 // { useHook: () => {} }
                 // { useHook() {} }
-                AstKind::ObjectProperty(prop) => prop.key.name(),
+                AstKind::ObjectProperty(prop) => {
+                    prop.key.name().and_then(oxc_ast::StaticPropertyName::into_utf8)
+                }
                 _ => None,
             }
         }

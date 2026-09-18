@@ -1,8 +1,6 @@
-use std::borrow::Cow;
-
 use oxc_allocator::ArenaBox;
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         ClassElement, Expression, MethodDefinition, MethodDefinitionKind, ObjectProperty,
         ObjectPropertyKind, PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature,
@@ -195,7 +193,7 @@ impl Rule for GroupedAccessorPairs {
         match node.kind() {
             AstKind::ObjectExpression(obj_expr) => {
                 let mut prop_map = FxHashMap::<
-                    (String, bool),
+                    (StaticPropertyName<'a>, bool),
                     Vec<(usize, &ArenaBox<'_, ObjectProperty<'_>>)>,
                 >::default();
                 let properties = &obj_expr.properties;
@@ -254,7 +252,7 @@ impl Rule for GroupedAccessorPairs {
             AstKind::ClassBody(class_body) => {
                 let method_defines = &class_body.body;
                 let mut prop_map = FxHashMap::<
-                    (String, bool, bool, bool),
+                    (StaticPropertyName<'a>, bool, bool, bool),
                     Vec<(usize, &ArenaBox<'_, MethodDefinition<'_>>)>,
                 >::default();
 
@@ -347,7 +345,7 @@ impl GroupedAccessorPairs {
 
     fn check_ts_signatures<'a>(&self, signatures: &[TSSignature<'a>], ctx: &LintContext<'a>) {
         let mut prop_map = FxHashMap::<
-            (String, bool),
+            (StaticPropertyName<'a>, bool),
             Vec<(usize, &ArenaBox<'_, TSMethodSignature<'_>>)>,
         >::default();
 
@@ -398,13 +396,12 @@ impl GroupedAccessorPairs {
 fn get_key_name_and_check_literal<'a>(
     ctx: &LintContext<'a>,
     prop_key: &PropertyKey<'a>,
-) -> (String, bool) {
-    let key_name = prop_key
-        .name()
-        .unwrap_or_else(|| {
-            Cow::Borrowed(prop_key.as_expression().unwrap().span().source_text(ctx.source_text()))
-        })
-        .to_string();
+) -> (StaticPropertyName<'a>, bool) {
+    let key_name = prop_key.name().unwrap_or_else(|| {
+        StaticPropertyName::from(
+            prop_key.as_expression().unwrap().span().source_text(ctx.source_text()),
+        )
+    });
     let is_literal =
         if matches!(prop_key, PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_))
         {
@@ -426,7 +423,7 @@ fn get_key_name_and_check_literal<'a>(
 
 fn get_diagnostic_access_name(
     access_word: &str,
-    base_key: &str,
+    base_key: &StaticPropertyName<'_>,
     is_computed: bool,
     is_static: bool,
     is_private: bool,
@@ -840,6 +837,29 @@ fn test() {
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
     ];
+
+    // Lone surrogates pair by identity; an escaped spelling is a different key.
+    let pass = pass
+        .into_iter()
+        .chain([
+            (r#"({ get "\uD800"() {}, set "\uD800"(v) {} })"#, None),
+            (r#"({ get "\uD800"() {}, a: 1, set "\\uD800"(v) {} })"#, None),
+            (r#"({ get "\uD800"() {}, a: 1, set "\uDC00"(v) {} })"#, None),
+            (r#"class A { get "\uD800"() {} a() {} static set "\uD800"(v) {} }"#, None),
+        ])
+        .collect::<Vec<_>>();
+    let fail = fail
+        .into_iter()
+        .chain([
+            (r#"({ get "\uD800"() {}, a: 1, set "\uD800"(v) {} })"#, None),
+            (r#"({ get "\uDC00"() {}, a: 1, set ["\uDC00"](v) {} })"#, None),
+            (r#"class A { get "a\uD800b"() {} a() {} set [`a\uD800b`](v) {} }"#, None),
+            (
+                r#"interface I { get "\uD800"(): any, between: true, set "\uD800"(value: any) }"#,
+                Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
+            ),
+        ])
+        .collect::<Vec<_>>();
 
     Tester::new(GroupedAccessorPairs::NAME, GroupedAccessorPairs::PLUGIN, pass, fail)
         .test_and_snapshot();

@@ -211,7 +211,7 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
         if let ClassElement::PropertyDefinition(property) = element
             && let Some(value) = literal_readonly_property_value(property)
         {
-            if let Some(name) = property.key.name()
+            if let Some(name) = property.key.name().and_then(oxc_ast::StaticPropertyName::into_utf8)
                 && excluded_properties.contains(&*name)
             {
                 continue;
