@@ -155,10 +155,8 @@ fn try_fold_string_index_of<'a>(
     };
 
     let result = match name {
-        "indexOf" => s.value.as_str()?.index_of(search_value.as_deref(), search_start_index),
-        "lastIndexOf" => {
-            s.value.as_str()?.last_index_of(search_value.as_deref(), search_start_index)
-        }
+        "indexOf" => s.value.index_of(search_value.as_deref(), search_start_index),
+        "lastIndexOf" => s.value.last_index_of(search_value.as_deref(), search_start_index),
         _ => unreachable!(),
     };
     Some(ConstantValue::Number(result as f64))
@@ -284,7 +282,7 @@ fn try_fold_string_char_code_at<'a>(
         None => None,
     };
 
-    let value = s.value.as_str()?.char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
+    let value = s.value.char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
     Some(ConstantValue::Number(value))
 }
 
