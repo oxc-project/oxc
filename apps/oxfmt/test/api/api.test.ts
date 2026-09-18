@@ -57,4 +57,38 @@ describe("format() API", () => {
     });
     expect(errors.length).toBe(1);
   });
+
+  describe("`language` option", () => {
+    it("routes an unknown extension to the given language", async () => {
+      const source = '{"a":1,  // comment\n}\n';
+      const unsupported = await format("app.conf", source);
+      expect(unsupported.errors.map((e) => e.message)).toStrictEqual([
+        "Unsupported file type: app.conf",
+      ]);
+
+      const result = await format("app.conf", source, { language: "jsonc" });
+      expect(result.code).toBe('{\n  "a": 1, // comment\n}\n');
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("overrides extension-based detection", async () => {
+      const source = "<div>\n@if (ok) {\n<p>yes</p>\n}\n</div>\n";
+      const asAngular = await format("user.html", source, { language: "angular" });
+      expect(asAngular.errors).toStrictEqual([]);
+      expect(asAngular.code).toBe("<div>\n  @if (ok) {\n    <p>yes</p>\n  }\n</div>\n");
+
+      const asHtml = await format("user.html", source);
+      expect(asHtml.errors).toStrictEqual([]);
+      expect(asHtml.code).not.toBe(asAngular.code);
+    });
+
+    it("rejects an unknown language", async () => {
+      const { errors } = await format("a.svg", "<svg/>", {
+        // @ts-expect-error: Test invalid language is validated
+        language: "xml",
+      });
+      expect(errors.length).toBe(1);
+      expect(errors[0].message).toContain("xml");
+    });
+  });
 });

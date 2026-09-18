@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use oxc_config::GlobSet;
 
-use crate::core::utils;
+use crate::core::{support::Language, utils};
 
 /// Configuration options for the Oxfmt.
 ///
@@ -42,6 +42,15 @@ pub struct OxfmtOverrideConfig {
     /// Glob patterns to exclude from this override.
     #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
     pub exclude_files: GlobSet,
+    /// Format matched files as this language, instead of detecting the language from the file name.
+    ///
+    /// Use it for custom extensions (`"*.wxml"` as `"html"`) or dialects sharing an extension (`"*.html"` as `"angular"`).
+    /// When several overrides with `language` match a file, the later one takes precedence.
+    /// This selects the formatter rather than tuning it, so it sits beside `options`, not inside.
+    ///
+    /// - Default: detect from the file name
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<Language>,
     /// Format options to apply for matched files.
     /// Accepts the same options as the top-level format options.
     #[serde(default)]
@@ -1025,5 +1034,58 @@ mod tests_reject_experimental {
         }"#;
         let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
         assert!(err.to_string().contains("experimentalTernaries"));
+    }
+}
+
+// ---
+
+#[cfg(test)]
+mod tests_override_language_parsing {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn language_is_optional_and_sits_beside_options() {
+        let raw = json!({
+            "overrides": [
+                { "files": ["*.wxml"], "language": "html" },
+                { "files": ["*.ts"], "options": { "semi": false } },
+                { "files": ["*.conf"], "language": "jsonc", "options": { "tabWidth": 4 } }
+            ]
+        });
+        let overrides = Oxfmtrc::deserialize(&raw).unwrap().overrides.unwrap();
+        assert_eq!(overrides[0].language, Some(Language::Html));
+        assert_eq!(overrides[1].language, None);
+        assert_eq!(overrides[2].language, Some(Language::Jsonc));
+        assert_eq!(overrides[2].options.tab_width, Some(4));
+    }
+
+    #[test]
+    fn language_round_trips_and_is_omitted_when_unset() {
+        let raw = json!({
+            "overrides": [
+                { "files": ["*.html"], "language": "angular", "options": {} },
+                { "files": ["*.ts"], "options": {} }
+            ]
+        });
+        let config = Oxfmtrc::deserialize(&raw).unwrap();
+        let overrides = serde_json::to_value(&config).unwrap()["overrides"].clone();
+        assert_eq!(overrides[0]["language"], "angular");
+        assert!(overrides[1].get("language").is_none());
+    }
+
+    #[test]
+    fn language_rejects_unknown_id() {
+        let raw = json!({ "overrides": [{ "files": ["*.svg"], "language": "xml" }] });
+        let err = Oxfmtrc::deserialize(&raw).unwrap_err().to_string();
+        assert!(err.contains("xml"), "{err}");
+    }
+
+    #[test]
+    fn language_rejects_prettier_parser_names() {
+        // Oxfmt IDs name the language, not Prettier's parser (`glimmer`, `babel`, ...)
+        let raw = json!({ "overrides": [{ "files": ["*.hbs"], "language": "glimmer" }] });
+        assert!(Oxfmtrc::deserialize(&raw).is_err());
     }
 }

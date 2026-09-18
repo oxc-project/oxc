@@ -1,0 +1,7 @@
+{
+  "overrides": [
+    { "files": ["**/*.html"], "excludeFiles": ["index.html"], "language": "angular" },
+    { "files": ["*.wxml"], "language": "html" },
+    { "files": ["*.conf"], "language": "jsonc", "options": { "tabWidth": 4 } }
+  ]
+}
