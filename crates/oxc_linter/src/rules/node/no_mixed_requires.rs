@@ -235,14 +235,12 @@ fn infer_module_type(init: &Expression) -> ModuleType {
         return ModuleType::Computed;
     };
 
-    let Some(value) = arg.as_expression().and_then(|expr| match expr {
-        Expression::StringLiteral(lit) => lit.value.as_str(),
-        _ => None,
-    }) else {
+    let Some(Expression::StringLiteral(lit)) = arg.as_expression() else {
         return ModuleType::Computed;
     };
+    let value = lit.value;
 
-    if BUILTIN_MODULES.contains(&value) {
+    if value.as_str().is_some_and(|value| BUILTIN_MODULES.contains(&value)) {
         return ModuleType::Core;
     }
 
@@ -309,6 +307,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r"var a = require('./\uD800'), b = require('../x')", Some(serde_json::json!([true]))),
+        (r"var a = require('\uDC00'), b = require('foo')", Some(serde_json::json!([true]))),
         ("var a, b = 42, c = doStuff()", Some(serde_json::json!([false]))),
         (
             "var a = require(42), b = require(), c = require('y'), d = require(doStuff())",
@@ -340,6 +341,9 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r"var fs = require('fs'), a = require('\uD800')", Some(serde_json::json!([true]))),
+        (r"var a = require('./\uD83D\uDE00'), b = require('foo')", Some(serde_json::json!([true]))),
         ("var fs = require('fs'), foo = 42", Some(serde_json::json!([false]))),
         ("var fs = require('fs'), foo", Some(serde_json::json!([false]))),
         (

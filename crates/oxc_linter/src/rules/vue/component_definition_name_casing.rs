@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -8,6 +10,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -142,21 +145,25 @@ impl ComponentDefinitionNameCasing {
         self.check_name_node(&prop.value, ctx);
     }
 
-    fn check_name_node(&self, expr: &Expression<'_>, ctx: &LintContext<'_>) {
+    fn check_name_node<'a>(&self, expr: &Expression<'a>, ctx: &LintContext<'a>) {
         let inner = expr.get_inner_expression();
         let Some((value, inner_span)) = extract_convertible(inner) else { return };
 
         let case_type = self.0;
-        if check_case(&value, case_type) {
+        if check_case(value, case_type) {
             return;
         }
 
         let report_span = inner.span();
         let case_type_str = case_type.as_str();
+        // Debug output escapes a lone surrogate for the message.
+        let display =
+            value.as_str().map_or_else(|| Cow::Owned(format!("{value:?}")), Cow::Borrowed);
         let diagnostic =
-            component_definition_name_casing_diagnostic(report_span, value.as_str(), case_type_str);
+            component_definition_name_casing_diagnostic(report_span, &display, case_type_str);
 
-        if let Some(converted) = exact_convert(&value, case_type) {
+        // The case converters take UTF-8 text; a name with a lone surrogate gets no fix.
+        if let Some(converted) = value.as_str().and_then(|value| exact_convert(value, case_type)) {
             ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(inner_span, converted));
         } else {
             ctx.diagnostic(diagnostic);
@@ -168,26 +175,26 @@ impl ComponentDefinitionNameCasing {
 /// simple template literal (no expressions, single quasi). `inner_span`
 /// is the range of the literal *contents* (excluding the quotes / backticks),
 /// suitable as a fix target.
-fn extract_convertible(expr: &Expression<'_>) -> Option<(String, Span)> {
+fn extract_convertible<'a>(expr: &Expression<'a>) -> Option<(JSStr<'a>, Span)> {
     match expr {
         Expression::StringLiteral(lit) => {
             let inner = Span::new(lit.span.start + 1, lit.span.end - 1);
-            Some((lit.value.as_str()?.to_owned(), inner))
+            Some((lit.value, inner))
         }
         Expression::TemplateLiteral(tpl) => {
             if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
                 return None;
             }
             let quasi = tpl.quasis.first()?;
-            let cooked = quasi.value.cooked.as_ref()?;
+            let cooked = quasi.value.cooked?;
             let inner = Span::new(tpl.span.start + 1, tpl.span.end - 1);
-            Some((cooked.as_str()?.to_owned(), inner))
+            Some((cooked, inner))
         }
         _ => None,
     }
 }
 
-fn check_case(s: &str, case_type: CaseType) -> bool {
+fn check_case(s: JSStr<'_>, case_type: CaseType) -> bool {
     match case_type {
         CaseType::PascalCase => vue_casing::is_pascal_case(s),
         CaseType::KebabCase => vue_casing::is_kebab_case(s),
@@ -204,7 +211,7 @@ fn exact_convert(s: &str, case_type: CaseType) -> Option<String> {
         CaseType::PascalCase => vue_casing::pascal_case(s),
         CaseType::KebabCase => vue_casing::kebab_case(s),
     };
-    if check_case(&converted, case_type) { Some(converted) } else { None }
+    if check_case(JSStr::from(converted.as_str()), case_type) { Some(converted) } else { None }
 }
 
 #[test]
@@ -222,6 +229,36 @@ fn test() {
                     }
                     </script>",
             None,
+            None,
+            vue(),
+        ),
+        (
+            r#"<script>
+                    export default {
+                      name: "Foo\uD800"
+                    }
+                    </script>"#,
+            None,
+            None,
+            vue(),
+        ),
+        (
+            r"<script>
+                    export default {
+                      name: `\uDC00Foo`
+                    }
+                    </script>",
+            None,
+            None,
+            vue(),
+        ),
+        (
+            r#"<script>
+                    export default {
+                      name: "foo-\uD83D\uDE00"
+                    }
+                    </script>"#,
+            Some(serde_json::json!(["kebab-case"])),
             None,
             vue(),
         ),
@@ -345,6 +382,38 @@ fn test() {
     ];
 
     let fail = vec![
+        // A lone surrogate is neither a letter nor a separator, so the surrounding
+        // casing decides; the fix is declined because the converters need UTF-8.
+        (
+            r#"<script>
+                    export default {
+                      name: "foo-\uD800"
+                    }
+                    </script>"#,
+            None,
+            None,
+            vue(),
+        ),
+        (
+            r"<script>
+                    export default {
+                      name: `\uDC00_bar`
+                    }
+                    </script>",
+            None,
+            None,
+            vue(),
+        ),
+        (
+            r#"<script>
+                    export default {
+                      name: "Foo\uD83D\uDE00"
+                    }
+                    </script>"#,
+            Some(serde_json::json!(["kebab-case"])),
+            None,
+            vue(),
+        ),
         (
             "<script>
                     export default {

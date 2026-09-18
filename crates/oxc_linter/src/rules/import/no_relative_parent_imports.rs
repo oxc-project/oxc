@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::{JSChar, JSStr};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -56,26 +57,26 @@ impl Rule for NoRelativeParentImports {
         match node.kind() {
             // ESM import declarations
             AstKind::ImportDeclaration(import_decl)
-                if import_decl.source.value.as_str().is_some_and(is_parent_import) =>
+                if is_parent_import(import_decl.source.value) =>
             {
                 ctx.diagnostic(no_relative_parent_imports_diagnostic(import_decl.source.span));
             }
             // ESM export { } from '...'
             AstKind::ExportFromDeclaration(export_decl) => {
-                if export_decl.source.value.as_str().is_some_and(is_parent_import) {
+                if is_parent_import(export_decl.source.value) {
                     ctx.diagnostic(no_relative_parent_imports_diagnostic(export_decl.source.span));
                 }
             }
             // ESM export * from '...'
             AstKind::ExportAllDeclaration(export_decl)
-                if export_decl.source.value.as_str().is_some_and(is_parent_import) =>
+                if is_parent_import(export_decl.source.value) =>
             {
                 ctx.diagnostic(no_relative_parent_imports_diagnostic(export_decl.source.span));
             }
             // Dynamic import expressions: import('../foo')
             AstKind::ImportExpression(import_expr) => {
                 if let Expression::StringLiteral(str_literal) = &import_expr.source
-                    && str_literal.value.as_str().is_some_and(is_parent_import)
+                    && is_parent_import(str_literal.value)
                 {
                     ctx.diagnostic(no_relative_parent_imports_diagnostic(str_literal.span));
                 }
@@ -83,7 +84,7 @@ impl Rule for NoRelativeParentImports {
             // CommonJS require() calls
             AstKind::CallExpression(call_expr) => {
                 if let Some(str_literal) = call_expr.common_js_require()
-                    && str_literal.value.as_str().is_some_and(is_parent_import)
+                    && is_parent_import(str_literal.value)
                 {
                     ctx.diagnostic(no_relative_parent_imports_diagnostic(str_literal.span));
                 }
@@ -95,12 +96,23 @@ impl Rule for NoRelativeParentImports {
 
 /// Check if the import path is a relative parent import.
 /// Matches paths like `../foo`, `..`, `./../foo`, etc.
-fn is_parent_import(path: &str) -> bool {
-    let mut normalized = path;
-    while let Some(rest) = normalized.strip_prefix("./") {
-        normalized = rest;
+fn is_parent_import(path: JSStr) -> bool {
+    if let Some(path) = path.as_str() {
+        let mut normalized = path;
+        while let Some(rest) = normalized.strip_prefix("./") {
+            normalized = rest;
+        }
+        return normalized == ".." || normalized.starts_with("../");
     }
-    normalized == ".." || normalized.starts_with("../")
+
+    // A lone surrogate later in the path must not hide the `../` prefix.
+    // Walk the value as code points; a surrogate never equals `.` or `/`.
+    let chars: Vec<Option<char>> = path.chars().map(JSChar::to_char).collect();
+    let mut rest = chars.as_slice();
+    while let [Some('.'), Some('/'), tail @ ..] = rest {
+        rest = tail;
+    }
+    matches!(rest, [Some('.'), Some('.')] | [Some('.'), Some('.'), Some('/'), ..])
 }
 
 #[test]
@@ -108,6 +120,10 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        r#"import foo from "./\uD800""#,
+        r#"import foo from "\uD800/../x""#,
+        r#"require("./\uDC00/..x")"#,
         // ESLint test cases
         r#"import foo from "./internal.js""#,
         r#"import foo from "./app/index.js""#,
@@ -127,6 +143,12 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        r#"import foo from "../\uD800""#,
+        r#"import foo from "./../\uDC00.js""#,
+        r#"require("../\uD83D\uDE00")"#,
+        r#"import("../\uD800")"#,
+        r#"export * from "..\u002F\uDC00""#,
         // ESLint test cases
         r#"import foo from "../plugin.js""#,
         r#"import foo from "./../plugin.js""#,

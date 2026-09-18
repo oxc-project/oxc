@@ -2,6 +2,7 @@ use oxc_ast::ast::{Statement, TSModuleReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -84,7 +85,7 @@ declare_oxc_lint!(
     short_description = "Forbids any non-import statements before imports except directives.",
 );
 
-fn is_relative_path(path: &str) -> bool {
+fn is_relative_path(path: JSStr) -> bool {
     // A path is considered relative if it starts with "/", "./", or "../"
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#module_specifier_resolution
     path.starts_with("./") || path.starts_with("../") || path.starts_with('/')
@@ -107,7 +108,7 @@ impl Rule for First {
                 Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
                     TSModuleReference::ExternalModuleReference(mod_ref) => {
                         if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
-                            if mod_ref.expression.value.as_str().is_some_and(is_relative_path) {
+                            if is_relative_path(mod_ref.expression.value) {
                                 any_relative = true;
                             } else if any_relative {
                                 ctx.diagnostic(absolute_first_diagnostic(mod_ref.expression.span));
@@ -122,7 +123,7 @@ impl Rule for First {
                 },
                 Statement::ImportDeclaration(decl) => {
                     if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
-                        if decl.source.value.as_str().is_some_and(is_relative_path) {
+                        if is_relative_path(decl.source.value) {
                             any_relative = true;
                         } else if any_relative {
                             ctx.diagnostic(absolute_first_diagnostic(decl.source.span));
@@ -147,6 +148,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r"import { y } from 'bar'; import { x } from './\uD800'", Some(json!(["absolute-first"]))),
         (
             r"import { x } from './foo'; import { y } from './bar';
             export { x, y }",
@@ -186,6 +189,16 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value; a search or prefix check must still see the rest.
+        (r"import { x } from './\uD800'; import { y } from 'bar'", Some(json!(["absolute-first"]))),
+        (
+            r"import { x } from '../\uDC00'; import { y } from 'bar'",
+            Some(json!(["absolute-first"])),
+        ),
+        (
+            r"import { x } from '/\uD83D\uDE00'; import { y } from 'bar'",
+            Some(json!(["absolute-first"])),
+        ),
         (
             r"import { x } from './foo';
               export { x };

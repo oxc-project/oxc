@@ -3,6 +3,7 @@
 //! prop name, etc.) is in a particular casing.
 
 use convert_case::{Boundary, Case, Converter};
+use oxc_str::{JSChar, JSStr};
 
 /// Returns true if `s` contains any character that is not allowed in any of
 /// the casings recognised by eslint-plugin-vue.
@@ -10,8 +11,15 @@ use convert_case::{Boundary, Case, Converter};
 /// Mirrors upstream `hasSymbols`. The character class excludes ` `, `$`,
 /// `-`, `_` deliberately — `-` and `_` are case-specific word separators
 /// and `$` is allowed in JavaScript identifiers (e.g. `$actionEl`).
-pub fn has_symbols(s: &str) -> bool {
-    s.chars().any(|c| {
+///
+/// A lone surrogate is not a symbol, so it is treated like any other non-ASCII
+/// code point.
+pub fn has_symbols(s: JSStr<'_>) -> bool {
+    s.contains(is_symbol)
+}
+
+fn is_symbol(c: char) -> bool {
+    {
         matches!(
             c,
             '!' | '"'
@@ -42,44 +50,49 @@ pub fn has_symbols(s: &str) -> bool {
                 | '|'
                 | '}'
         )
-    })
+    }
 }
 
 /// Returns true if `s` contains any ASCII uppercase letter.
-pub fn has_upper(s: &str) -> bool {
-    s.chars().any(|c| c.is_ascii_uppercase())
+pub fn has_upper(s: JSStr<'_>) -> bool {
+    s.contains(|c: char| c.is_ascii_uppercase())
 }
 
-pub fn is_pascal_case(s: &str) -> bool {
+pub fn is_pascal_case(s: JSStr<'_>) -> bool {
     !has_symbols(s)
-        && !s.chars().next().is_some_and(|c| c.is_ascii_lowercase())
-        && !s.chars().any(|c| matches!(c, '-' | '_') || c.is_whitespace())
+        && !s.starts_with(|c: char| c.is_ascii_lowercase())
+        && !s.chars().any(is_separator_or_whitespace)
 }
 
-pub fn is_kebab_case(s: &str) -> bool {
+pub fn is_kebab_case(s: JSStr<'_>) -> bool {
     if has_upper(s) || has_symbols(s) || s.starts_with('-') {
         return false;
     }
-    if s.contains('_') || s.contains("--") || s.chars().any(char::is_whitespace) {
+    if s.contains('_') || s.contains("--") || s.contains(char::is_whitespace) {
         return false;
     }
     true
 }
 
-pub fn is_camel_case(s: &str) -> bool {
+pub fn is_camel_case(s: JSStr<'_>) -> bool {
     !has_symbols(s)
-        && !s.chars().next().is_some_and(|c| c.is_ascii_uppercase())
-        && !s.chars().any(|c| matches!(c, '-' | '_') || c.is_whitespace())
+        && !s.starts_with(|c: char| c.is_ascii_uppercase())
+        && !s.chars().any(is_separator_or_whitespace)
 }
 
-pub fn is_snake_case(s: &str) -> bool {
+pub fn is_snake_case(s: JSStr<'_>) -> bool {
     if has_upper(s) || has_symbols(s) {
         return false;
     }
-    if s.contains('-') || s.contains("__") || s.chars().any(char::is_whitespace) {
+    if s.contains('-') || s.contains("__") || s.contains(char::is_whitespace) {
         return false;
     }
     true
+}
+
+/// `-`, `_`, or whitespace. A lone surrogate is none of these.
+fn is_separator_or_whitespace(c: JSChar) -> bool {
+    c.to_char().is_some_and(|c| matches!(c, '-' | '_') || c.is_whitespace())
 }
 
 pub fn capitalize(s: &str) -> String {
@@ -108,7 +121,7 @@ fn regex_word_before_upper(graphemes: &[&str]) -> bool {
 /// - if input is already PascalCase: lowercase the first char
 /// - else: replace `[-_](\w)` with `\w` uppercased
 pub fn camel_case(s: &str) -> String {
-    if is_pascal_case(s) {
+    if is_pascal_case(JSStr::from(s)) {
         let mut chars = s.chars();
         return match chars.next() {
             Some(c) => c.to_lowercase().collect::<String>() + chars.as_str(),

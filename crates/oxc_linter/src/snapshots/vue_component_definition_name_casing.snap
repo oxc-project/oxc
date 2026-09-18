@@ -2,6 +2,31 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ vue(component-definition-name-casing): Property name ""foo-\ud800"" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:3:29]
+ 2 │                     export default {
+ 3 │                       name: "foo-\uD800"
+   ·                             ────────────
+ 4 │                     }
+   ╰────
+
+  ⚠ vue(component-definition-name-casing): Property name ""\udc00_bar"" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:3:29]
+ 2 │                     export default {
+ 3 │                       name: `\uDC00_bar`
+   ·                             ────────────
+ 4 │                     }
+   ╰────
+
+  ⚠ vue(component-definition-name-casing): Property name "Foo😀" is not kebab-case.
+   ╭─[component_definition_name_casing.tsx:3:29]
+ 2 │                     export default {
+ 3 │                       name: "Foo\uD83D\uDE00"
+   ·                             ─────────────────
+ 4 │                     }
+   ╰────
+  help: Replace `Foo\uD83D\uDE00` with `foo😀`.
+
   ⚠ vue(component-definition-name-casing): Property name "foo-bar" is not PascalCase.
    ╭─[component_definition_name_casing.tsx:3:29]
  2 │                     export default {

@@ -116,6 +116,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Do not use CommonJS `require` calls
 
   ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
+   ╭─[no_require_imports.ts:1:13]
+ 1 │ const pkg = require('a\uD800b.json');
+   ·             ────────────────────────
+   ╰────
+  help: Do not use CommonJS `require` calls
+
+  ⚠ typescript(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:11]
  1 │ var foo = require?.('foo');
    ·           ────────────────

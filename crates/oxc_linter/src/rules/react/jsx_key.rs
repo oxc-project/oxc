@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{borrow::Cow, ops::Deref};
 
 use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
@@ -16,6 +16,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -46,7 +47,10 @@ fn key_prop_must_be_placed_before_spread(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn duplicate_key_prop(key_value: &str, span: Span) -> OxcDiagnostic {
+fn duplicate_key_prop(key_value: JSStr<'_>, span: Span) -> OxcDiagnostic {
+    // Debug output escapes a lone surrogate for the message.
+    let key_value =
+        key_value.as_str().map_or_else(|| Cow::Owned(format!("{key_value:?}")), Cow::Borrowed);
     OxcDiagnostic::warn(format!("Duplicate key '{key_value}' found in JSX elements"))
         .with_help("Each child in a list should have a unique 'key' prop")
         .with_label(span)
@@ -389,7 +393,10 @@ fn gen_diagnostic(span: Span, outer: &InsideArrayOrIterator) -> OxcDiagnostic {
     }
 }
 
-fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
+fn get_jsx_element_key_value<'a>(
+    jsx_elem: &JSXElement<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<(JSStr<'a>, Span)> {
     for attr in &jsx_elem.opening_element.attributes {
         if let JSXAttributeItem::Attribute(attr) = attr
             && let JSXAttributeName::Identifier(ident) = &attr.name
@@ -399,21 +406,23 @@ fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
             if let Some(value) = &attr.value {
                 match value {
                     JSXAttributeValue::StringLiteral(lit) => {
-                        return Some((lit.value.as_str()?.to_owned(), attr.span));
+                        return Some((lit.value, attr.span));
                     }
                     JSXAttributeValue::ExpressionContainer(container) => {
                         // JSXExpression inherits from Expression, so we match the Expression variants directly
                         match &container.expression {
                             JSXExpression::StringLiteral(lit) => {
-                                return Some((lit.value.as_str()?.to_owned(), attr.span));
+                                return Some((lit.value, attr.span));
                             }
                             JSXExpression::NumericLiteral(lit) => {
-                                return Some((lit.value.to_string(), attr.span));
+                                let value =
+                                    JSStr::from_str_in(&lit.value.to_string(), &ctx.allocator());
+                                return Some((value, attr.span));
                             }
                             JSXExpression::TemplateLiteral(lit)
                                 if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
                             {
-                                return Some((lit.quasis[0].value.raw.to_string(), attr.span));
+                                return Some((lit.quasis[0].value.raw.into(), attr.span));
                             }
                             _ => {}
                         }
@@ -427,28 +436,28 @@ fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
 }
 
 fn check_duplicate_keys_in_array<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintContext<'a>) {
-    let mut seen_keys: FxHashSet<String> = FxHashSet::default();
+    let mut seen_keys: FxHashSet<JSStr<'a>> = FxHashSet::default();
 
     for element in &array_expr.elements {
         // ArrayExpressionElement also inherits from Expression
         if let ArrayExpressionElement::JSXElement(jsx_elem) = element
-            && let Some((key_value, span)) = get_jsx_element_key_value(jsx_elem)
-            && !seen_keys.insert(key_value.clone())
+            && let Some((key_value, span)) = get_jsx_element_key_value(jsx_elem, ctx)
+            && !seen_keys.insert(key_value)
         {
-            ctx.diagnostic(duplicate_key_prop(&key_value, span));
+            ctx.diagnostic(duplicate_key_prop(key_value, span));
         }
     }
 }
 
 fn check_duplicate_keys_in_children<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    let mut seen_keys: FxHashSet<String> = FxHashSet::default();
+    let mut seen_keys: FxHashSet<JSStr<'a>> = FxHashSet::default();
 
     for child in &jsx_elem.children {
         if let JSXChild::Element(child_elem) = child
-            && let Some((key_value, span)) = get_jsx_element_key_value(child_elem)
-            && !seen_keys.insert(key_value.clone())
+            && let Some((key_value, span)) = get_jsx_element_key_value(child_elem, ctx)
+            && !seen_keys.insert(key_value)
         {
-            ctx.diagnostic(duplicate_key_prop(&key_value, span));
+            ctx.diagnostic(duplicate_key_prop(key_value, span));
         }
     }
 }
@@ -466,6 +475,17 @@ fn test() {
         (r"[1, 2, 3].map(x => <App key={x} />);", None, None),
         (r"[1, 2 ,3].map(x => x && <App x={x} key={x} />);", None, None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} key="1" /> : <OtherApp x={x} key="2" />);"#, None, None),
+        // Different lone surrogates, and a pair versus its lead, are different keys.
+        (
+            r#"const spans = [<span key={"\uD800"}/>, <span key={"\uDC00"}/>];"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        (
+            r#"const div = <div><span key={"\uD83D\uDE00"}/><span key={"\uD83D"}/></div>;"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
         (r"[1, 2, 3].map(x => { return <App key={x} /> });", None, None),
         (r"Array.from([1, 2, 3], function(x) { return <App key={x} /> });", None, None),
         (r"Array.from([1, 2, 3], (x => <App key={x} />));", None, None),
@@ -648,6 +668,22 @@ fn test() {
                       <span key="notunique"/>,
                     ];
                   "#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        // Keys containing lone surrogates are compared by their JavaScript value.
+        (
+            r#"const spans = [<span key={"\uD800"}/>, <span key={"\uD800"}/>];"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        (
+            r"const spans = [<span key={`a\uDC00`}/>, <span key={`a\uDC00`}/>];",
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        (
+            r#"const div = <div><span key={"\uD83D\uDE00"}/><span key={"\uD83D\uDE00"}/></div>;"#,
             Some(serde_json::json!([{ "warnOnDuplicates": true }])),
             None,
         ),
