@@ -123,10 +123,12 @@ unsafe fn type_list_head_is_relational(
         }
         return ctx_after_token(t, src, st, opch, kind, n, p, After::Head, 0) == Ctx::Type;
     }
-    if hk >= OP_KIND_BASE && *src.add(hw) == b'>' && !(hw > 0 && *src.add(hw - 1) == b'=') {
-        if let AngleMatch::Found(lt2) = angle_match_back(src, st, kind, hw) {
-            return as_gated_type_ref(t, src, st, kind, n, lt2);
-        }
+    if hk >= OP_KIND_BASE
+        && *src.add(hw) == b'>'
+        && !(hw > 0 && *src.add(hw - 1) == b'=')
+        && let AngleMatch::Found(lt2) = angle_match_back(src, st, kind, hw)
+    {
+        return as_gated_type_ref(t, src, st, kind, n, lt2);
     }
     hk == tk!(Ident)
         && !prop_name(src, hw)

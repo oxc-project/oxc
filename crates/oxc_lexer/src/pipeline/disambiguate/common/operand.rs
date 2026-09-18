@@ -109,22 +109,19 @@ pub unsafe fn brace_opens_value(
         {
             return true;
         }
-        if ch == b')' {
-            if let Some(lp) = match_delim_back(src, st, kind, p, b'(', b')') {
-                if let Some(fk) = function_keyword_before_params(src, st, kind, lp) {
-                    if operand_position(t, src, st, kind, n, fk, ts, depth) {
-                        return true;
-                    }
-                }
-            }
+        if ch == b')'
+            && let Some(lp) = match_delim_back(src, st, kind, p, b'(', b')')
+            && let Some(fk) = function_keyword_before_params(src, st, kind, lp)
+            && operand_position(t, src, st, kind, n, fk, ts, depth)
+        {
+            return true;
         }
     }
-    if ts {
-        if let Some(lp) = return_type_signature_paren(src, st, kind, brace) {
-            if let Some(fk) = function_keyword_before_params(src, st, kind, lp) {
-                return operand_position(t, src, st, kind, n, fk, ts, depth);
-            }
-        }
+    if ts
+        && let Some(lp) = return_type_signature_paren(src, st, kind, brace)
+        && let Some(fk) = function_keyword_before_params(src, st, kind, lp)
+    {
+        return operand_position(t, src, st, kind, n, fk, ts, depth);
     }
     class_brace_is_value(t, src, st, kind, n, brace, ts, depth)
 }
@@ -262,10 +259,10 @@ unsafe fn operand_position_at(
     if ch == b':' {
         return colon_marks_value(t, src, st, kind, n, p, ts, depth);
     }
-    if ch == b')' {
-        if let Some(at) = decorator_start(src, st, kind, p) {
-            return operand_position_at(t, src, st, kind, n, at, ts, depth, hops + 1);
-        }
+    if ch == b')'
+        && let Some(at) = decorator_start(src, st, kind, p)
+    {
+        return operand_position_at(t, src, st, kind, n, at, ts, depth, hops + 1);
     }
     false
 }

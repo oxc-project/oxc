@@ -143,11 +143,10 @@ pub unsafe fn coalesce(
                     }
                 }
                 // Mirror case: `Array<<T>(x: T) => T>` opens two lists, not `<<` shift-left.
-                if b0 == b'<' && b1 == b'<' && kw.ts_key {
-                    if lt_run_split(src, st, opch, kind, n, p) {
-                        cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
-                        continue;
-                    }
+                if b0 == b'<' && b1 == b'<' && kw.ts_key && lt_run_split(src, st, opch, kind, n, p)
+                {
+                    cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
+                    continue;
                 }
                 if run == 2 {
                     let key = (q & 0xFFFF) | (2u32 << 24);

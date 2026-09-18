@@ -262,30 +262,27 @@ pub(super) unsafe fn replay_is_keyword(
                             s.asyn = arrow_is_async(src, st, kind, n, p);
                             s.reserved = false;
                             opened_body = true;
-                        } else if pb == b')' {
-                            if let Some(lp) = match_delim_back(src, st, kind, p, b'(', b')') {
-                                if let Some((g, a)) =
-                                    header_kind(src, st, kind, n, lp, enc.is_class, enc.is_obj)
-                                {
-                                    s.is_gen = g;
-                                    s.asyn = a;
-                                    s.reserved = false;
-                                    opened_body = true;
-                                }
-                            }
+                        } else if pb == b')'
+                            && let Some(lp) = match_delim_back(src, st, kind, p, b'(', b')')
+                            && let Some((g, a)) =
+                                header_kind(src, st, kind, n, lp, enc.is_class, enc.is_obj)
+                        {
+                            s.is_gen = g;
+                            s.asyn = a;
+                            s.reserved = false;
+                            opened_body = true;
                         }
                     }
-                    if !opened_body && ts {
-                        if let Some(lp) = return_type_signature_paren(src, st, kind, pos) {
-                            if let Some((g, a)) =
-                                header_kind(src, st, kind, n, lp, enc.is_class, enc.is_obj)
-                            {
-                                s.is_gen = g;
-                                s.asyn = a;
-                                s.reserved = false;
-                                opened_body = true;
-                            }
-                        }
+                    if !opened_body
+                        && ts
+                        && let Some(lp) = return_type_signature_paren(src, st, kind, pos)
+                        && let Some((g, a)) =
+                            header_kind(src, st, kind, n, lp, enc.is_class, enc.is_obj)
+                    {
+                        s.is_gen = g;
+                        s.asyn = a;
+                        s.reserved = false;
+                        opened_body = true;
                     }
                     if !opened_body
                         && pk == tk!(Ident)
@@ -376,17 +373,14 @@ pub(super) unsafe fn replay_is_keyword(
                 if *src.add(pos + 1) != b'?'
                     && *src.add(pos + 1) != b'.'
                     && (pos == 0 || *src.add(pos - 1) != b'?')
+                    && let Some(top) = scopes.last_mut()
+                    && top.pop == POP_CONCISE
+                    && top.par == par
+                    && top.brk == brk
+                    && top.brc == brc
+                    && top.tdep == tdepth
                 {
-                    if let Some(top) = scopes.last_mut() {
-                        if top.pop == POP_CONCISE
-                            && top.par == par
-                            && top.brk == brk
-                            && top.brc == brc
-                            && top.tdep == tdepth
-                        {
-                            top.qdebt += 1;
-                        }
-                    }
+                    top.qdebt += 1;
                 }
             }
             b',' | b';' | b':' => {
@@ -691,12 +685,13 @@ unsafe fn arrow_is_async(
         if a >= 0 && async_modifier(src, st, kind, n, a as usize, hp) {
             return true;
         }
-    } else if *kind.add(hp) >= OP_KIND_BASE && *src.add(hp) == b')' {
-        if let Some(lp) = match_delim_back(src, st, kind, hp, b'(', b')') {
-            let a = bm_prev_sig(st, kind, lp);
-            if a >= 0 && async_modifier(src, st, kind, n, a as usize, lp) {
-                return true;
-            }
+    } else if *kind.add(hp) >= OP_KIND_BASE
+        && *src.add(hp) == b')'
+        && let Some(lp) = match_delim_back(src, st, kind, hp, b'(', b')')
+    {
+        let a = bm_prev_sig(st, kind, lp);
+        if a >= 0 && async_modifier(src, st, kind, n, a as usize, lp) {
+            return true;
         }
     }
     if let Some(lp) = return_type_signature_paren(src, st, kind, gt.saturating_sub(1)) {

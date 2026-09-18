@@ -429,10 +429,10 @@ pub(super) unsafe fn lt_head_is_operand(
     if k >= OP_KIND_BASE {
         let c = *src.add(w);
         if c == b')' {
-            if let Some(lp) = match_delim_back(src, st, kind, w, b'(', b')') {
-                if paren_is_statement_head(src, st, kind, lp) {
-                    return true;
-                }
+            if let Some(lp) = match_delim_back(src, st, kind, w, b'(', b')')
+                && paren_is_statement_head(src, st, kind, lp)
+            {
+                return true;
             }
             return asi_head(t);
         }
@@ -849,10 +849,10 @@ unsafe fn colon_context(
         if c == b'?' && !matches!(*src.add(v + 1), b'?' | b'.') {
             return Ctx::Type;
         }
-        if c == b')' {
-            if let Some(ctx) = signature_colon(src, st, kind, v) {
-                return ctx;
-            }
+        if c == b')'
+            && let Some(ctx) = signature_colon(src, st, kind, v)
+        {
+            return ctx;
         }
         if c == b']' || c == b'}' {
             let open = if c == b']' { b'[' } else { b'{' };

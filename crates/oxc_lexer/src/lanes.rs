@@ -1,12 +1,7 @@
 // Kernel lint policy — see the note in `pipeline/mod.rs`.
 #![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::pedantic, clippy::nursery)]
-#![allow(
-    clippy::needless_range_loop,
-    clippy::manual_range_contains,
-    clippy::collapsible_if,
-    clippy::collapsible_match
-)]
+#![allow(clippy::needless_range_loop, clippy::manual_range_contains, clippy::collapsible_match)]
 
 use std::{ptr, str};
 
@@ -361,18 +356,14 @@ impl Lanes {
                 && src[k + 1] == b'u'
             {
                 let (l1, e2) = hex4(src, k + 2, be);
-                if let Some(low) = l1 {
-                    if (0xDC00..=0xDFFF).contains(&low) {
-                        // A well-formed pair is still invalid in identifiers:
-                        // one diag over both escapes.
-                        self.push_diag(
-                            start as u32,
-                            (e2 - start) as u32,
-                            D::INVALID_IDENTIFIER_ESCAPE,
-                        );
-                        i = e2;
-                        continue;
-                    }
+                if let Some(low) = l1
+                    && (0xDC00..=0xDFFF).contains(&low)
+                {
+                    // A well-formed pair is still invalid in identifiers:
+                    // one diag over both escapes.
+                    self.push_diag(start as u32, (e2 - start) as u32, D::INVALID_IDENTIFIER_ESCAPE);
+                    i = e2;
+                    continue;
                 }
                 // Not a valid low: fall through — the parser rewinds and
                 // reports the first escape alone.

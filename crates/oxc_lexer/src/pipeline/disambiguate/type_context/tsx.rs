@@ -161,12 +161,12 @@ unsafe fn member_or_param_colon_in_type(
                                 return true;
                             }
                         }
-                        if c == b'(' && pc == b']' {
-                            if let Some(lb) = match_delim_back(src, st, kind, pp, b'[', b']') {
-                                if member_start_before(src, st, kind, lb, true) {
-                                    return true;
-                                }
-                            }
+                        if c == b'('
+                            && pc == b']'
+                            && let Some(lb) = match_delim_back(src, st, kind, pp, b'[', b']')
+                            && member_start_before(src, st, kind, lb, true)
+                        {
+                            return true;
                         }
                     }
                     if type_head_keyword(src, st, kind, pp, c) {
