@@ -488,10 +488,10 @@ impl<'a> Symbol<'_, 'a> {
                 {
                     return false;
                 }
-                // A computed member consumes the value used for its object or
-                // property. In particular, `obj[a++]` uses the value produced
-                // by `a++` as the property key.
-                AstKind::ComputedMemberExpression(_) => {
+                // Member access consumes its receiver and, when computed, its key.
+                AstKind::ComputedMemberExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_) => {
                     is_used_by_others = true;
                 }
                 // When symbol is being assigned a new value, we flag the reference
@@ -792,7 +792,12 @@ impl<'a> Symbol<'_, 'a> {
                 }
                 // Reading a property consumes its object and key, even if the
                 // member expression's result is discarded.
-                (AstKind::ComputedMemberExpression(_), _) => return false,
+                (
+                    AstKind::ComputedMemberExpression(_)
+                    | AstKind::StaticMemberExpression(_)
+                    | AstKind::PrivateFieldExpression(_),
+                    _,
+                ) => return false,
                 // x instanceof Foo && (a = x)
                 (AstKind::BinaryExpression(expr), _)
                     if expr.operator.is_relational()

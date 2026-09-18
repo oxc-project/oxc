@@ -1986,6 +1986,10 @@ fn removing_an_import_preserves_comments_before_the_separator() {
 fn consumed_update_values_are_usages() {
     let pass = vec![
         "let a = 0; new Foo(a++);",
+        "let a = 0; (a++).toString();",
+        "let a = 0; ((a++).toString, 0);",
+        "let a = 0; (a = a + 1).toString();",
+        "class C { #value; next = this; static f() { let a = new C(); ((a = a.next).#value, 0); } } C.f();",
         "let a = 0; (a++ && foo(), 0);",
         "let a = 0; (a++ || foo(), 0);",
         "let a = 0; (a++ ?? foo(), 0);",
@@ -2009,6 +2013,9 @@ fn consumed_update_values_are_usages() {
         "let a = 0; (a++, 0) && foo();",
         // A right-hand logical operand does not control evaluation.
         "let a = 0; flag && a++;",
+        "let a = 0; (a++, 0).toString();",
+        "let a = 0; ((a++, 0).toString, 0);",
+        "let a = 0; a = (a++).toString();",
         "let a = 0; (flag && a++, 0);",
         "let a = 0; ((a++, 0) && foo(), 0);",
         "let a = 0; (object[(a++, 0)], 0);",
