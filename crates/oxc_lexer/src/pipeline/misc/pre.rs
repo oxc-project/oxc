@@ -1,4 +1,4 @@
-use crate::{error::diag_code, lanes::Lanes, tables::is_id_start, token::tk};
+use crate::{error::DiagCode, lanes::Lanes, tables::is_id_start, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
@@ -76,7 +76,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                         utf8_bad = true;
                         // Span = the maximal invalid subpart; one diag per
                         // file, context-free (fires inside strings too).
-                        lanes.push_diag(p as u32, (1 + cont) as u32, diag_code::INVALID_UTF8);
+                        lanes.push_diag(p as u32, (1 + cont) as u32, DiagCode::InvalidUtf8);
                         continue;
                     } else {
                         continue;

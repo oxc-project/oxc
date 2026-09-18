@@ -19,7 +19,7 @@ mod tables;
 pub mod token;
 
 pub use arena::{Arena, LexResult, LineEntry};
-pub use error::{Diagnostic, diag_code, diag_severity};
+pub use error::{DiagCode, Diagnostic, diag_severity};
 pub use lanes::Lanes;
 pub use options::LexOptions;
 pub use pipeline::Lexer;
@@ -183,9 +183,9 @@ fn resolve_unicode_leads(
         }
         let code = if ch == '\u{FFFD}' {
             // oxc_parser treats a code-level replacement char as a binary file.
-            error::diag_code::INVALID_UTF8
+            error::DiagCode::InvalidUtf8
         } else {
-            error::diag_code::UNEXPECTED_CHARACTER
+            error::DiagCode::UnexpectedCharacter
         };
         #[expect(clippy::cast_possible_truncation, reason = "char lengths are 1..=4")]
         let len = ch.len_utf8() as u32;

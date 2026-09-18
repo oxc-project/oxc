@@ -1,4 +1,4 @@
-use crate::{comment_meta, error::diag_code, lanes::Lanes, tables::Tables, token::tk};
+use crate::{comment_meta, error::DiagCode, lanes::Lanes, tables::Tables, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
@@ -102,7 +102,7 @@ pub(super) unsafe fn carve_js(
                     && *src.add(s + 3) == b'-';
                 if html && (!lanes.module || html_close_at_line_start(srcs, s)) {
                     if lanes.module {
-                        lanes.push_diag(s as u32, 4, diag_code::HTML_COMMENT_IN_MODULE);
+                        lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
                     }
                     let end = find_line_terminator(src, n, s + 4);
                     *kind.add(s) = tk!(LineComment);

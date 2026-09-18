@@ -1,7 +1,7 @@
 use std::{ptr, slice};
 
 use crate::{
-    error::diag_code,
+    error::DiagCode,
     lanes::Lanes,
     opmap::KwSet,
     tables::{Tables, is_digit, is_op_char, is_word, is_ws},
@@ -245,9 +245,9 @@ unsafe fn glue_number(
                 // A surviving `n` is a misplaced bigint suffix; scan_number
                 // consumes legal ones. Token spans are unchanged either way.
                 let code = if c == b'n' {
-                    diag_code::INVALID_BIGINT
+                    DiagCode::InvalidBigint
                 } else {
-                    diag_code::INVALID_NUMERIC_LITERAL
+                    DiagCode::InvalidNumericLiteral
                 };
                 lanes.push_num_end_diag(srcs, e2, code);
                 if is_digit(c) {

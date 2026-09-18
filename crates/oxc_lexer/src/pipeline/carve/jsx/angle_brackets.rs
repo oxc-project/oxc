@@ -1,5 +1,5 @@
 use crate::{
-    error::diag_code,
+    error::DiagCode,
     lanes::Lanes,
     tables::{Tables, is_id_start, is_word, is_ws},
 };
@@ -159,7 +159,7 @@ unsafe fn jsx_ambiguous_site(
     }
     if generic_fn_type_after(src, n, lp) {
         if jsx_site_is_expression(t, src, st, opch, kind, n, lt) {
-            lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, diag_code::UNTERMINATED_JSX_ELEMENT);
+            lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
         }
         return false;
     }
