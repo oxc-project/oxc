@@ -13,7 +13,7 @@ use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
     comment_meta,
-    error::{DiagCode, Diagnostic, diag_severity},
+    error::{DiagCode, DiagSeverity, Diagnostic},
     token::StringSpan,
 };
 
@@ -86,7 +86,7 @@ impl Lanes {
     #[cold]
     #[inline(never)]
     pub fn push_diag(&mut self, off: u32, len: u32, code: DiagCode) {
-        self.diags.push(Diagnostic { off, len, code, severity: diag_severity::ERROR });
+        self.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
     }
 
     /// Line terminator in a string, with oxc_parser's exact span: opener
@@ -904,7 +904,7 @@ fn push_escape_diag(diags: &mut Vec<Diagnostic>, off: u32, end: u32) {
         off,
         len: end - off,
         code: DiagCode::InvalidUnicodeEscape,
-        severity: diag_severity::ERROR,
+        severity: DiagSeverity::Error,
     });
 }
 

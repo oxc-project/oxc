@@ -1,15 +1,10 @@
-pub mod diag_severity {
-    pub const ERROR: u16 = 0;
-    pub const WARNING: u16 = 1;
-}
-
 #[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Diagnostic {
     pub off: u32,
     pub len: u32,
     pub code: DiagCode,
-    pub severity: u16,
+    pub severity: DiagSeverity,
 }
 
 #[repr(u16)]
@@ -42,4 +37,12 @@ pub enum DiagCode {
     UnterminatedJsxContainer = 23,
     JsxClosingTagMismatch = 24,
     JsxTextInvalidCharacter = 25,
+}
+
+#[repr(u16)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Debug)]
+pub enum DiagSeverity {
+    #[default]
+    Error = 0,
+    Warning = 1,
 }

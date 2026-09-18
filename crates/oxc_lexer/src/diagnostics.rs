@@ -5,7 +5,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
-use crate::error::{DiagCode as Code, Diagnostic, diag_severity};
+use crate::error::{DiagCode as Code, DiagSeverity, Diagnostic};
 
 /// The diagnostic's span: the lexer stores `(off, len)`, oxc `(start, end)`.
 #[inline]
@@ -44,8 +44,8 @@ fn decode_escape_ending_at(source: &str, end: u32) -> Option<char> {
 
 /// Honor the POD severity (every current code is an error).
 #[inline]
-fn diag(severity: u16, message: impl Into<Cow<'static, str>>) -> OxcDiagnostic {
-    if severity == diag_severity::WARNING {
+fn diag(severity: DiagSeverity, message: impl Into<Cow<'static, str>>) -> OxcDiagnostic {
+    if severity == DiagSeverity::Warning {
         OxcDiagnostic::warn(message)
     } else {
         OxcDiagnostic::error(message)
@@ -304,7 +304,7 @@ impl NumericWalk<'_> {
 
 /// Re-walk the numeric literal at `off` and reproduce oxc_parser's first
 /// diagnostic for it; `None` when the walk finds nothing wrong.
-fn parser_numeric_first_error(source: &str, off: u32, sev: u16) -> Option<OxcDiagnostic> {
+fn parser_numeric_first_error(source: &str, off: u32, sev: DiagSeverity) -> Option<OxcDiagnostic> {
     let mut walk = NumericWalk { src: source, i: off as usize };
 
     #[expect(
@@ -461,7 +461,7 @@ mod tests {
     use super::*;
 
     fn d(code: DiagCode, off: u32, len: u32) -> Diagnostic {
-        Diagnostic { off, len, code, severity: diag_severity::ERROR }
+        Diagnostic { off, len, code, severity: DiagSeverity::Error }
     }
 
     #[test]
