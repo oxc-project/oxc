@@ -215,6 +215,9 @@ convert_case = "0.12.0" # Case conversion
 cow-utils = "0.1.3" # Copy-on-write utilities
 criterion2 = { version = "3.0.4", default-features = false } # Benchmarking
 dragonbox_ecma = "0.1.12" # Fast float formatting
+
+jolt = { git = "https://github.com/camc314/jolt" }
+
 editorconfig-parser = "0.0.4" # EditorConfig parsing
 encoding_rs = "0.8.35" # Character encoding
 encoding_rs_io = "0.1.7" # Encoding I/O
