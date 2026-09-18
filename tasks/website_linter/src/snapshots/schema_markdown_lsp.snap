@@ -107,6 +107,15 @@ currently has no effect for them.
 See [#26613](https://github.com/oxc-project/oxc/issues/26613)
 
 
+## suppressedViolationSeverity
+
+type: `"hint" | "info" | "warn" | "error" | "off"`
+
+
+Severity used to render bulk-suppressed violations. Defaults to `warn`. Set to `off` to
+hide them.
+
+
 ## tsConfigPath
 
 type: `string`
