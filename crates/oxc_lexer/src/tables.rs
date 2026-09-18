@@ -167,7 +167,8 @@ impl Tables {
             "debugger",
             "instanceof",
         ];
-        // block, offsets < 64), so the mask is set-independent.
+        // Indexed by kind offset from `KW_KIND_BASE`.
+        // Every `RX` word sits in the JS kind block (offsets < 64), so the mask is set-independent.
         let mut mask = 0u64;
         for r in RX.iter() {
             let mut found: i32 = -1;
