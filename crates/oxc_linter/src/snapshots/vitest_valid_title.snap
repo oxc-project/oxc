@@ -624,3 +624,11 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────────────────
    ╰────
   help: Replace your title with a string
+
+  ⚠ vitest(valid-title): Should not have an empty title
+    ╭─[valid_title.tsx:14:18]
+ 13 │ 
+ 14 │             test('', () => {})
+    ·                  ──
+    ╰────
+  help: Write a meaningful title for your test

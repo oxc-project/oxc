@@ -205,23 +205,6 @@ fn test() {
             None,
         ),
         ("const localTest = test.extend({})", None),
-        (
-            "import { it } from 'vitest'
-
-            const test = it.extend({
-                fixture: [
-                    async ({}, use) => {
-                        setup()
-                        await use()
-                        teardown()
-                    },
-                    { auto: true }
-                ],
-            })
-
-            test('', () => {})",
-            None,
-        ),
         ("it(String.raw`foo`, () => {})", None),
         (
             "test('fooobar', () => {});",
@@ -585,6 +568,23 @@ fn test() {
         ("it(abc, function () {})", None),
         // Vitest-specific fail test with allowArguments: false
         ("test(bar, () => {});", Some(serde_json::json!([{ "allowArguments": false }]))),
+        (
+            "import { it } from 'vitest'
+
+            const test = it.extend({
+                fixture: [
+                    async ({}, use) => {
+                        setup()
+                        await use()
+                        teardown()
+                    },
+                    { auto: true }
+                ],
+            })
+
+            test('', () => {})",
+            None,
+        ),
     ];
 
     let fix = vec![
