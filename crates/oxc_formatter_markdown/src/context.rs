@@ -1,6 +1,6 @@
 use std::cell::{Cell, RefCell};
 
-use oxc_formatter_core::{FormatContext, SourceText};
+use oxc_formatter_core::{FormatContext, SourceText, TailwindCollector};
 use oxc_markdown_parser::Span;
 
 use crate::options::MarkdownFormatOptions;
@@ -127,6 +127,18 @@ impl<'a> MarkdownFormatContext<'a> {
 
     pub fn literal_markers(&self) -> &Cell<bool> {
         &self.literal_markers
+    }
+}
+
+/// A dispatched child's classes would remap into this host's index space (`DispatchPayload::into_doc`);
+/// the only child today, front matter yaml, returns none.
+// TODO: Once fenced code dispatches to html / vue / svelte (whose Tailwind sorter returns classes),
+// collect them as `JsFormatContext` does for its html-in-js children
+// (`tailwind_classes` + `add_class` / `take_tailwind_classes`; the root sorts them via
+// `session.sort_tailwind_classes`, `format_to_ir` returns them in `EmbeddedIr`).
+impl TailwindCollector for MarkdownFormatContext<'_> {
+    fn add_class(&mut self, _class: String) -> usize {
+        unreachable!("no embedded child of Markdown collects Tailwind classes")
     }
 }
 

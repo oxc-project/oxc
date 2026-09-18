@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_markdown/tests/conformance.rs
 expression: report
 ---
-markdown compatibility: 1246/1262 (98.73%), 0 files skipped
+markdown compatibility: 1245/1261 (98.73%), 0 files skipped
 
 # Failed
 

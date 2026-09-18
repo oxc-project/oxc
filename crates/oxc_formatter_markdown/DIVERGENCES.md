@@ -14,7 +14,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 text
 
----
+***
 
 <!-- ours -->
 ***
@@ -32,7 +32,8 @@ text
 ```
 
 A document whose first block is a thematic break gets `***`, never `---`:
-Prettier's own next run would read `---` ... `---` as front matter and swallow `text` into it.
+the next run (Prettier's and ours) would read `---` ... `---` as front matter and swallow `text` into it,
+which is what the input itself would be with a `---` at the end (`front-matter.md`).
 Prettier `main` prints `***` since #19839; the pin (3.9.6) still prints `---`.
 
 ## url-escaping

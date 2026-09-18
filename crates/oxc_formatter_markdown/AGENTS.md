@@ -32,7 +32,8 @@ that is what keeps `snake_case`, `:emoji:`, `{#id}` attributes and `<Comp @click
 Source is normalized to `\n` before parsing (verbatim slices go straight into the IR), the configured line ending is re-emitted at print time,
 a leading BOM is preserved.
 
-Front matter (`---` / `+++`) is not handled (`oxc_formatter_core::spec::parse_front_matter` + `envelope::write_front_matter`, as CSS does).
+Front matter (`---` / `+++`, `oxc_formatter_core::spec::parse_front_matter`) is blanked before parsing and printed by `envelope::write_front_matter` as CSS does:
+its yaml formats through the session's dispatcher when there is one, anything else stays verbatim; a blank line separates it from the body.
 
 ## Dialects
 

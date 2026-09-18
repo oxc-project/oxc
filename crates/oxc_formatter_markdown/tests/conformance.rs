@@ -28,18 +28,16 @@ const CONFIG: ConformanceConfig = ConformanceConfig {
         "markdown/cursor/",
         // Exercises Prettier's plugin loader.
         "markdown/broken-plugins/",
-        // Front matter and embedded languages need the dispatcher; covered by oxfmt's E2E conformance.
-        "markdown/front-matter/",
-        "markdown/yaml/",
-        "markdown/toml/",
+        // Embedded languages need the dispatcher; covered by oxfmt's E2E conformance.
         "markdown/multiparser-css/",
         "markdown/multiparser-js/",
         "markdown/multiparser-json/",
         "markdown/jsx-semi/",
-        // Prettier reads the leading `---` block as (empty) front matter and keeps it verbatim;
-        // CommonMark alone sees a thematic break + setext heading. Recovered with the front matter pre-pass.
-        "markdown/commonmark-test-suite/snippet: example-96.md",
-        "markdown/commonmark-test-suite/snippet: example-98.md",
+        // Test the front matter's body, which the dispatcher formats (`front-matter/` covers the envelope itself).
+        "markdown/yaml/",
+        "markdown/toml/",
+        // Mostly fences Prettier formats through its embed; the fence itself is covered by the commonmark suite.
+        "markdown/code/",
         // Fenced blocks whose only difference is Prettier formatting the embedded language (js / ts / css / json / html / markdown).
         "markdown/blockquote/code.md",
         // Also the `always`-only trailing `>` line: DIVERGENCES.md#ignored-block-trailing-quote-line.
@@ -48,32 +46,6 @@ const CONFIG: ConformanceConfig = ConformanceConfig {
         "markdown/list/parser-regression/issue-11202.md",
         "markdown/markdown/real-world-case.md",
         "markdown/markdown/test-case.md",
-        "markdown/code/0-indent-js.md",
-        "markdown/code/format.md",
-        "markdown/code/mdn-auth-api.md",
-        "markdown/code/mdn-background-1.md",
-        "markdown/code/mdn-background-2.md",
-        "markdown/code/mdn-background-3.md",
-        "markdown/code/mdn-background-4.md",
-        "markdown/code/mdn-background-5.md",
-        "markdown/code/mdn-background-6.md",
-        "markdown/code/mdn-background-7.md",
-        "markdown/code/mdn-background-8.md",
-        "markdown/code/mdn-background-9.md",
-        "markdown/code/mdn-filter-1.md",
-        "markdown/code/mdn-filter-2.md",
-        "markdown/code/mdn-font-face-1.md",
-        "markdown/code/mdn-font-face-2.md",
-        "markdown/code/mdn-grid-auto-columns.md",
-        "markdown/code/mdn-import.md",
-        "markdown/code/mdn-mask-image.md",
-        "markdown/code/mdn-padding-1.md",
-        "markdown/code/mdn-padding-2.md",
-        "markdown/code/mdn-transform.md",
-        "markdown/code/mdn-unicode-range.md",
-        "markdown/code/ts-trailing-comma.md",
-        "markdown/code/angular/",
-        "markdown/code/lwc/",
     ],
     skip_spec: None,
 };

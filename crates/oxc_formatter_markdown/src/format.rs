@@ -1,13 +1,18 @@
 use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, FormatSession, FormatState, Formatted, Formatter, VecBuffer,
-    builders::{hard_line_break, text},
-    write,
+    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, VecBuffer,
+    builders::{empty_line, hard_line_break, text},
+    spec::{FrontMatter, blank_front_matter, parse_front_matter},
+    write, write_front_matter,
 };
 use oxc_markdown_parser::{Parser, Span, ast::Root};
 
-use crate::{context::MarkdownFormatContext, options::MarkdownFormatOptions, print};
+use crate::{
+    context::MarkdownFormatContext,
+    options::MarkdownFormatOptions,
+    print::{self, MarkdownFormatter},
+};
 
 /// Parse `source_text` as a Markdown document and build its formatter IR.
 ///
@@ -21,21 +26,20 @@ pub fn format<'a>(
     options: MarkdownFormatOptions,
 ) -> Result<Formatted<'a, MarkdownFormatContext<'a>>, OxcDiagnostic> {
     let parsed = parse_for_format(allocator, source_text)?;
+
     let context = MarkdownFormatContext::new(options, parsed.source, parsed.blanks);
     let mut state = FormatState::new(context, allocator);
+    // TODO: Pre-allocate
     let mut buffer = VecBuffer::new(&mut state);
-    let f = &mut Formatter::new(&mut buffer);
-    if parsed.has_bom {
-        write!(f, text("\u{feff}"));
-    }
-    // Prettier prints an empty document as the empty string, not `\n`.
-    if !parsed.root.children.is_empty() {
-        print::write_root(parsed.root, f);
-        // POSIX convention: every formatted file ends with a newline.
-        write!(f, hard_line_break());
-    }
+
+    write!(&mut buffer, FormatMarkdownRoot { parsed: &parsed });
+
     let elements = buffer.into_vec();
-    Ok(Formatted::new(Document::new(elements, Vec::new()), state.into_context()))
+    let context = state.into_context();
+
+    let ir = Document::new(elements, Vec::new());
+
+    Ok(Formatted::new(ir, context))
 }
 
 /// [`parse_for_format`] output: the AST, plus the envelope [`format()`] prints around it.
@@ -45,6 +49,8 @@ pub struct ParsedMarkdown<'a> {
     pub blanks: &'a [Span],
     /// Normalized arena source every span indexes into.
     pub source: &'a str,
+    /// The leading `---` / `+++` block, blanked before parsing (it is not markdown).
+    pub front_matter: Option<FrontMatter<'a>>,
     has_bom: bool,
 }
 
@@ -61,8 +67,7 @@ pub fn parse_for_format<'a>(
     source_text: &str,
 ) -> Result<ParsedMarkdown<'a>, OxcDiagnostic> {
     let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
-    let (root, source, blanks) = parse_root(allocator, source_text)?;
-    Ok(ParsedMarkdown { root, blanks, source, has_bom })
+    parse_root(allocator, source_text, has_bom)
 }
 
 /// Parse `source_text` and build the formatter IR for embedding into another
@@ -80,15 +85,23 @@ pub fn format_to_ir<'a>(
     options: MarkdownFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
-    let (root, source, blanks) = parse_root(allocator, source_text)?;
+    // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part
+    let parsed = parse_root(allocator, source_text, false)?;
+    if parsed.front_matter.is_some() && !session.input_kind().owns_front_matter() {
+        // A fragment (a JSDoc fence) never acquires file envelope semantics:
+        // refuse the whole child instead of partially treating its head as front matter.
+        return Err(OxcDiagnostic::error(
+            "Front matter in a Markdown fragment; the part is preserved as-is",
+        ));
+    }
 
-    let context = MarkdownFormatContext::new(options, source, blanks);
+    let context = MarkdownFormatContext::new(options, parsed.source, parsed.blanks);
     let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = VecBuffer::new(&mut state);
-    // No BOM, no final newline: the parent document owns the surrounding layout.
-    print::write_root(root, &mut Formatter::new(&mut buffer));
 
-    // Markdown never collects Tailwind classes.
+    write!(&mut buffer, FormatMarkdownEmbedded { parsed: &parsed });
+
+    // No child of Markdown collects Tailwind classes yet (see `TailwindCollector` in `context.rs`)
     Ok(EmbeddedIr { ir: buffer.into_vec(), tailwind_classes: Vec::new() })
 }
 
@@ -99,14 +112,23 @@ pub fn format_to_ir<'a>(
 fn parse_root<'a>(
     allocator: &'a Allocator,
     source_text: &str,
-) -> Result<(&'a Root<'a>, &'a str, &'a [Span]), OxcDiagnostic> {
+    has_bom: bool,
+) -> Result<ParsedMarkdown<'a>, OxcDiagnostic> {
     // Normalize line endings BEFORE parsing:
     // the printer slices verbatim text from the source in many places (html, code, liquid, math),
     // and the IR forbids `\r`.
     let source_text = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
     let source: &'a str = allocator.alloc_str(&source_text);
 
-    let ret = Parser::new(allocator, source).parse();
+    // Front matter is not markdown (`---` would be a thematic break, its body a setext heading):
+    // blanked for the parser so every span still indexes into `source`, printed by `write_document`.
+    let front_matter = parse_front_matter(source);
+    let parse_source: &'a str = match &front_matter {
+        Some(fm) => allocator.alloc_str(&blank_front_matter(source, fm.raw.len())),
+        None => source,
+    };
+
+    let ret = Parser::new(allocator, parse_source).parse();
     if let Some(diagnostic) = ret.diagnostics.first() {
         return Err(OxcDiagnostic::error(format!("Syntax error: {diagnostic}"))
             .with_label(oxc_span::Span::new(diagnostic.span.start, diagnostic.span.end)));
@@ -115,5 +137,49 @@ fn parse_root<'a>(
     let root = allocator.alloc(ret.root);
     let blanks: &'a [Span] = allocator.alloc_slice_copy(&ret.blanks);
 
-    Ok((root, source, blanks))
+    Ok(ParsedMarkdown { root, blanks, source, front_matter, has_bom })
+}
+
+/// Emits the front matter and the blocks with the final newline.
+struct FormatMarkdownRoot<'b, 'a> {
+    parsed: &'b ParsedMarkdown<'a>,
+}
+
+impl<'a> Format<'a, MarkdownFormatContext<'a>> for FormatMarkdownRoot<'_, 'a> {
+    fn fmt(&self, f: &mut MarkdownFormatter<'_, 'a>) {
+        if self.parsed.has_bom {
+            write!(f, text("\u{feff}"));
+        }
+
+        write_document(self.parsed, f);
+
+        // Prettier prints an empty document as the empty string, not `\n`.
+        // POSIX convention otherwise: every formatted file ends with a newline.
+        if self.parsed.front_matter.is_some() || !self.parsed.root.children.is_empty() {
+            write!(f, hard_line_break());
+        }
+    }
+}
+
+/// Emits the front matter and the blocks only;
+/// no BOM, no final newline (the parent document owns the surrounding layout).
+struct FormatMarkdownEmbedded<'b, 'a> {
+    parsed: &'b ParsedMarkdown<'a>,
+}
+
+impl<'a> Format<'a, MarkdownFormatContext<'a>> for FormatMarkdownEmbedded<'_, 'a> {
+    fn fmt(&self, f: &mut MarkdownFormatter<'_, 'a>) {
+        write_document(self.parsed, f);
+    }
+}
+
+/// The front matter (a blank line after it when a body follows) and the blocks.
+fn write_document<'a>(parsed: &ParsedMarkdown<'a>, f: &mut MarkdownFormatter<'_, 'a>) {
+    if let Some(fm) = &parsed.front_matter {
+        write_front_matter(fm, &["yaml", "toml"], f);
+        if !parsed.root.children.is_empty() {
+            write!(f, empty_line());
+        }
+    }
+    print::write_root(parsed.root, f);
 }
