@@ -1,0 +1,16 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
+---
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useMyEffect has a missing dependency: 'props.foo'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useMyEffect(() => {
+ 3 │             console.log(props.foo);
+   ·                         ──┬──
+   ·                           ╰── useMyEffect uses `props.foo` here
+ 4 │           }, []);
+   ·              ──
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
