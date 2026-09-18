@@ -280,6 +280,8 @@ fn check_deep_namespace_for_node(
         _ => return None,
     };
 
+    // Module records currently only contain UTF-8 export names.
+    let name = name.as_str()?;
     if let Some(module_source) = get_module_request_name(name, module) {
         let parent_node = ctx.nodes().parent_node(node.id());
         let module_record = module.get_loaded_module(module_source.as_str())?;

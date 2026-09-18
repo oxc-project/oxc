@@ -57,7 +57,7 @@ impl Rule for NoDeprecatedVueConfigKeycodes {
         };
         let Some(middle) = middle else { return };
 
-        if middle.static_property_name() != Some("config") {
+        if middle.static_property_name().is_none_or(|name| name != "config") {
             return;
         }
 

@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -106,13 +107,13 @@ impl Rule for PreferNumberProperties {
                 if !GLOBAL_OBJECT_NAMES.contains(&ident_name.name.as_str()) {
                     return;
                 }
-                let Some(name) = member_expr.static_property_name() else {
+                let Some(name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
                     return;
                 };
                 if (name == "NaN" && self.check_nan) || (name == "Infinity" && self.check_infinity)
                 {
                     ctx.diagnostic_with_fix(
-                        prefer_number_properties_diagnostic(member_expr.span(), name.as_str()),
+                        prefer_number_properties_diagnostic(member_expr.span(), name),
                         |fixer| fixer.replace(ident_name.span, "Number"),
                     );
                 }
@@ -275,7 +276,7 @@ fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str
             };
 
             if GLOBAL_OBJECT_NAMES.contains(&ident_name.name.as_str()) {
-                member_expr.static_property_name()
+                member_expr.static_property_name().and_then(JSStr::as_str)
             } else {
                 None
             }
