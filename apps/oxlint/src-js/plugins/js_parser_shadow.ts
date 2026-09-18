@@ -237,7 +237,7 @@ function detectInjectables(
     if (thisCountable && (type === "ThisExpression" || type === "ThisHead")) {
       usesThis = true;
     } else if (type === "PrivateIdentifier") {
-      const name = (node as { name?: unknown }).name;
+      const { name } = node as { name?: unknown };
       if (typeof name === "string" && privateNames.size < MAX_REFS_PER_REGION) {
         privateNames.add(name);
       }
@@ -300,11 +300,11 @@ function hasThisContext(root: JsParserNode): boolean {
 function enclosingClassDeclaresPrivate(root: JsParserNode, name: string): boolean {
   for (let cur = root.parent; cur != null; cur = cur.parent) {
     if (cur.type !== "ClassBody") continue;
-    const body = (cur as { body?: unknown }).body;
+    const { body } = cur as { body?: unknown };
     if (!Array.isArray(body)) continue;
     for (const element of body) {
       if (!isNode(element)) continue;
-      const key = (element as { key?: unknown }).key;
+      const { key } = element as { key?: unknown };
       if (
         isNode(key)
         && key.type === "PrivateIdentifier"
