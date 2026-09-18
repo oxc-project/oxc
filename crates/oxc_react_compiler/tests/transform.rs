@@ -717,3 +717,34 @@ export default Component;\n";
     assert!(output.contains("// keep: trailing"), "trailing comment lost:\n{output}");
     assert!(!output.contains("// drop: inner"), "inner comment should not be recovered:\n{output}");
 }
+
+#[test]
+fn compiles_recursive_named_function_expressions() {
+    for source in [
+        // The function's private name is only referenced in a nested callback.
+        "export const ExportedName = function Node() { return <Tree renderItem={() => <Node />} />; };",
+        // Capture both the private name and a prop through multiple closures.
+        "export const ExportedName = function Node({ value }) { return <Tree renderItem={() => () => <Node value={value} />} />; };",
+        // A direct recursive reference also has no instruction declaring it.
+        "export const ExportedName = function Node() { return <Node />; };",
+        // Returning the private name itself makes it an escaping value.
+        r#"export const useExported = function useRecursive() { "use memo"; return useRecursive; };"#,
+    ] {
+        let allocator = Allocator::default();
+        let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+        assert!(result.diagnostics.is_empty(), "{source}\n{:?}", result.diagnostics);
+        assert!(!result.fatal, "{source}");
+        assert!(result.changed, "recursive component or hook should compile: {source}");
+        let output = Codegen::new().build(&program).code;
+        let parsed = Parser::new(&allocator, &output, SourceType::tsx()).parse();
+        assert!(parsed.diagnostics.is_empty(), "{output}\n{:?}", parsed.diagnostics);
+        let semantic = SemanticBuilder::new().with_check_syntax_error(true).build(&parsed.program);
+        assert!(semantic.diagnostics.is_empty(), "{output}\n{:?}", semantic.diagnostics);
+        let unresolved = semantic.semantic.scoping().root_unresolved_references();
+        assert!(
+            !unresolved.contains_key("Node") && !unresolved.contains_key("useRecursive"),
+            "the private recursive name must remain bound: {output}"
+        );
+    }
+}
