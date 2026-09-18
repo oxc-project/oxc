@@ -55,7 +55,7 @@ fn diag(severity: u16, message: impl Into<Cow<'static, str>>) -> OxcDiagnostic {
 /// Is `off` the start of a numeric literal rather than an adjacency anchor
 /// inside one? Adjacency diags (`1.5n`, `0b12`) anchor right after a number
 /// char, so a number/identifier byte before `off` declines; so does a
-/// non-ASCII one (conservative — the fallback rendering applies).
+/// non-ASCII one (conservative - the fallback rendering applies).
 fn at_numeric_literal_start(source: &str, off: u32) -> bool {
     let b = source.as_bytes();
     let i = off as usize;
@@ -131,7 +131,7 @@ impl NumericWalk<'_> {
             Some(b'b' | b'B') => self.non_decimal(|c| matches!(c, b'0' | b'1')),
             Some(b'o' | b'O') => self.non_decimal(|c| matches!(c, b'0'..=b'7')),
             Some(b'x' | b'X') => self.non_decimal(u8::is_ascii_hexdigit),
-            // `0e...`: the parser returns straight out of the exponent read —
+            // `0e...`: the parser returns straight out of the exponent read -
             // no trailing-char check on this path.
             Some(b'e' | b'E') => {
                 self.bump();

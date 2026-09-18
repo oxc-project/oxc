@@ -92,7 +92,7 @@ fn js_keywords_identical_in_both_modes() {
 
 #[test]
 fn ts_key_separates_narrow_key_collisions() {
-    // These pairs share (c0, c1, len) — the JS key cannot tell them apart,
+    // These pairs share (c0, c1, len) - the JS key cannot tell them apart,
     // the TS (c0, c1, last, len) key must.
     assert_eq!(first_kind("static", true), TokenKind::KwStatic);
     assert_eq!(first_kind("string", true), TokenKind::KwString);

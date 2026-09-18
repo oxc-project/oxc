@@ -124,8 +124,8 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
     AngleVerdict::Jsx
 }
 
-/// Byte length of the whitespace at `p` — ASCII, or the multi-byte
-/// ECMAScript whitespace `misc_pre` marked as a token boundary — else 0.
+/// Byte length of the whitespace at `p` - ASCII, or the multi-byte
+/// ECMAScript whitespace `misc_pre` marked as a token boundary - else 0.
 #[inline(always)]
 unsafe fn head_ws_len(src: &[u8], p: usize) -> usize {
     let c = src[p];

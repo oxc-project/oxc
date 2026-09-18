@@ -255,7 +255,7 @@ pub(super) unsafe fn carve_jsx(
                                     t, src, srcs, st, opch, kind, word, n, s, tpos, ts, lanes,
                                 )
                             {
-                                // Element — unless `.tsx` says this is a
+                                // Element - unless `.tsx` says this is a
                                 // type-parameter list, which stays a less-than.
                                 jsx_punct(kind, opch, s, tk!(JsxLt));
                                 stack.push(JFrame {
@@ -319,7 +319,7 @@ pub(super) unsafe fn carve_jsx(
                     let mut p = s + 1;
                     jsx_punct(kind, opch, s, tk!(Lt));
                     // Open template substitutions, each counting its own
-                    // nested braces — the same shape `carve` keeps in its
+                    // nested braces - the same shape `carve` keeps in its
                     // `depth` vector, sized so this path allocates nothing.
                     let mut sub = [0u32; TYPE_ARG_TMPL_CAP];
                     let mut nsub = 0usize;
@@ -375,7 +375,7 @@ pub(super) unsafe fn carve_jsx(
                             }
                             // Braces only reach here through `find_opener6`,
                             // which is only selected while a substitution is
-                            // open — the guards say so rather than leaving it
+                            // open - the guards say so rather than leaving it
                             // to the finder choice.
                             b'{' if nsub != 0 => {
                                 sub[nsub - 1] += 1;
@@ -494,7 +494,7 @@ pub(super) unsafe fn carve_jsx(
                                 }
                                 i = gp + 1;
                             } else {
-                                // lone `/` (malformed) — stays a slash.
+                                // lone `/` (malformed) - stays a slash.
                                 i = s + 1;
                             }
                         }
@@ -628,7 +628,7 @@ pub(super) unsafe fn carve_jsx(
                         mode = JMode::Tag;
                         i = s + 1;
                     } else {
-                        // malformed lone `<` in text — clear opch, no `<<` fusion
+                        // malformed lone `<` in text - clear opch, no `<<` fusion
                         bm_clear(opch, s);
                         text_start = s + 1;
                         i = s + 1;

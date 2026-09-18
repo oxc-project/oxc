@@ -177,7 +177,7 @@ fn valid_numeric_adjacency_never_flagged() {
         "x = 123n;",           // decimal bigint
         "x = 1_000n;",         // bigint with separators
         "x = 0b101;",          // valid binary
-        "x = 1..toString();",  // number `1.` then `.` property access — dot is legal
+        "x = 1..toString();",  // number `1.` then `.` property access - dot is legal
         "x = 1.e3;",           // exponent directly after the dot
         "x = 1.5.toString();", // float then member access
         "let abc123def = 1;",  // digits inside an identifier never glue as numbers
@@ -318,7 +318,7 @@ fn valid_escapes_never_flagged() {
         r#""\u{0}""#,
         r#""\u{10FFFF}""#,     // boundary: strictly-greater check
         r#""\u{0000000041}""#, // leading zeros never cross the limit
-        r#""\z""#,             // NonEscapeCharacter — valid, cooks to `z`
+        r#""\z""#,             // NonEscapeCharacter - valid, cooks to `z`
         r#""\\n""#,            // escaped backslash + literal n
         r#""\0""#,
         r#""\01""#, // legacy octal: parser/strict-mode territory
@@ -350,7 +350,7 @@ fn template_invalid_escapes_stay_silent() {
 fn invalid_unicode_escape_jsx_path() {
     use diag_code as D;
     assert_eq!(codes_jsx(r#"const x = "\uZZZZ";"#), vec![D::INVALID_UNICODE_ESCAPE]);
-    // JSX attribute strings have no escapes — the value is verbatim source.
+    // JSX attribute strings have no escapes - the value is verbatim source.
     assert!(codes_jsx(r#"const el = <div a="\uZZ">x</div>;"#).is_empty());
 }
 
@@ -523,7 +523,7 @@ fn invalid_identifier_escape_payload() {
     let d = diags(&src);
     assert_eq!(d.len(), 1);
     assert_eq!((d[0].off, d[0].len), (5, 11));
-    // high + invalid low: the parser rewinds — two independent diagnostics
+    // high + invalid low: the parser rewinds - two independent diagnostics
     let src = ["var ", r"\uD800", r"\uD800", " = 1"].concat();
     let d = diags(&src);
     assert_eq!(d.len(), 2);
@@ -571,7 +571,7 @@ fn empty_exponent() {
     assert_eq!(codes("x = .5e;"), vec![D::INVALID_NUMERIC_LITERAL]);
     assert_eq!(codes("x = 0e;"), vec![D::INVALID_NUMERIC_LITERAL]);
     assert_eq!(codes("x = 08e;"), vec![D::INVALID_NUMERIC_LITERAL]);
-    // `1en`: empty exponent and misplaced bigint suffix both fire — unlike
+    // `1en`: empty exponent and misplaced bigint suffix both fire - unlike
     // the parser, we don't abort at the first error
     let cs = codes("x = 1en;");
     assert!(cs.contains(&D::INVALID_NUMERIC_LITERAL));

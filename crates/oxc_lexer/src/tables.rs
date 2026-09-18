@@ -1,4 +1,4 @@
-// Kernel lint policy — see the note in `pipeline/mod.rs`.
+// Kernel lint policy - see the note in `pipeline/mod.rs`.
 #![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
@@ -145,7 +145,7 @@ impl Tables {
 
     fn build_regex_kw_mask(&mut self) {
         // `of` is deliberately absent: it precedes a regex only in a for-of
-        // head (never written — a RegExp isn't iterable), while `instance/of/g`
+        // head (never written - a RegExp isn't iterable), while `instance/of/g`
         // style division is real code. Matches es-module-lexer/SWC/RESS.
         const RX: [&str; 18] = [
             "in",

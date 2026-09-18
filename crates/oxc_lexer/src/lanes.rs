@@ -1,4 +1,4 @@
-// Kernel lint policy — see the note in `pipeline/mod.rs`.
+// Kernel lint policy - see the note in `pipeline/mod.rs`.
 #![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
@@ -147,7 +147,7 @@ impl Lanes {
     }
 
     #[inline]
-    /// `EMIT`: report malformed escapes while cooking — strings only, since
+    /// `EMIT`: report malformed escapes while cooking - strings only, since
     /// template escapes are legal when tagged (the parser owns that error).
     /// `CRLF`: normalize raw CRLF/CR to LF per the template TV rule
     /// (ECMA-262 12.9.6.1). Monomorphized out of copies that don't need them.
@@ -365,7 +365,7 @@ impl Lanes {
                     i = e2;
                     continue;
                 }
-                // Not a valid low: fall through — the parser rewinds and
+                // Not a valid low: fall through - the parser rewinds and
                 // reports the first escape alone.
             }
             self.push_diag(start as u32, (k - start) as u32, D::INVALID_IDENTIFIER_ESCAPE);
@@ -611,7 +611,7 @@ pub(crate) fn decode_char_at(s: &[u8], i: usize) -> Option<char> {
     }
 }
 
-/// End of the run of IdentifierStart chars beginning at `i` — the tail of
+/// End of the run of IdentifierStart chars beginning at `i` - the tail of
 /// oxc_parser's `invalid_number_end` span (a digit ends the run).
 fn ident_start_run_end(s: &[u8], mut i: usize) -> usize {
     while i < s.len() {
@@ -719,7 +719,7 @@ fn radix_digit(c: u8) -> Option<u8> {
 
 /// First error code for the numeric literal `src[s..e]`, or `diag_code::OK`.
 /// Conservative by design: it must never flag a valid number, so anything
-/// ambiguous returns OK. Covers what survives as one token span — separator
+/// ambiguous returns OK. Covers what survives as one token span - separator
 /// misplacement, empty radix (`0x`), legacy-octal-like decimals with a
 /// separator/bigint suffix/bad exponent. Shapes the scanner pre-splits
 /// (`0b12`, `1.5n`, `3in`) are detected at the adjacency in coalesce, not
@@ -772,7 +772,7 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> u16 {
         }
 
         // Legacy-octal-like decimal (leading `0` + digit/`_`): oxc_parser
-        // consumes only `[0-9]` here — no separators, no bigint suffix — and
+        // consumes only `[0-9]` here - no separators, no bigint suffix - and
         // accepts an exponent only as lowercase `e` after an `8`/`9` flipped
         // the run to NonOctalDecimal (`08e1` valid; `00e1` and `08E1` not).
         // Bare `00`/`08` are valid sloppy-mode Annex B, and `.` never flags.
@@ -813,7 +813,7 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> u16 {
         }
     }
     // Empty exponent (`1e`, `1e+`, `.5e`): the marker and optional sign were
-    // consumed but no digits followed — never true for a valid literal.
+    // consumed but no digits followed - never true for a valid literal.
     if let Some(ep) = exp_at {
         let mut k = ep + 1;
         if matches!(body.get(k), Some(&s) if s == b'+' || s == b'-') {
@@ -1352,7 +1352,7 @@ mod tests {
         body.extend_from_slice("\u{2029}".as_bytes());
         body.extend_from_slice(b"c");
         assert_eq!(cook(&body).0, b"abc");
-        // a raw LS/PS is content, not a continuation — it must survive
+        // a raw LS/PS is content, not a continuation - it must survive
         let mut raw = Vec::new();
         raw.extend_from_slice(b"a");
         raw.extend_from_slice("\u{2028}".as_bytes());

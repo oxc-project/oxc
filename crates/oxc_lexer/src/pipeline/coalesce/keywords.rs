@@ -26,8 +26,8 @@ pub(super) unsafe fn kw_flush(
 /// Resolve a batch of keyword candidates (positions collected by
 /// `coalesce`): exact match against the perfect-hash tables, patching
 /// `kind` from IDENT to the keyword kind on hit. `TS_KEY` selects the
-/// active set's hash key — `(c0, c1, len)` for JS, `(c0, c1, last, len)`
-/// for TS — monomorphized so the JS copy carries none of the wider key.
+/// active set's hash key - `(c0, c1, len)` for JS, `(c0, c1, last, len)`
+/// for TS - monomorphized so the JS copy carries none of the wider key.
 /// Kept out of line: inlining would double both variants into each of
 /// coalesce's flush sites, and one call per KWB words is free.
 #[inline(never)]

@@ -67,7 +67,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     if ok {
                         // Consume the verified continuation bits so they are
                         // not re-visited; a continuation still visible to the
-                        // walk had no valid lead — that is the stray-
+                        // walk had no valid lead - that is the stray-
                         // continuation check.
                         let cm: u128 = (((1u128 << cont) - 1) << 1) << (p & 63);
                         m &= !(cm as u64);

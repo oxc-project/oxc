@@ -1,4 +1,4 @@
-// Kernel lint policy — see the note in `pipeline/mod.rs`.
+// Kernel lint policy - see the note in `pipeline/mod.rs`.
 #![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
@@ -119,7 +119,7 @@ const fn keywords_ts() -> [(&'static str, TokenKind); KW_COUNT_TS] {
 /// The TS-mode keyword set: [`KEYWORDS`] followed by [`KEYWORDS_TS_EXTRA`].
 pub static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] = keywords_ts();
 
-/// First punctuator kind — the token-kind space reserves [32, 128) for them.
+/// First punctuator kind - the token-kind space reserves [32, 128) for them.
 pub const OP_KIND_BASE: u8 = tk!(LBrace);
 pub const OP_KIND_MAX: u8 = tk!(At);
 pub const OPMAP_NOPS: usize = 33;
@@ -238,19 +238,19 @@ pub struct OpMap {
 
 pub const KW_MAX: usize = KW_COUNT_TS;
 
-/// Slot count of the keyword hash tables — must cover the smallest shift a
+/// Slot count of the keyword hash tables - must cover the smallest shift a
 /// set may search (JS shift 25 → 128 slots, TS shift 23 → 512).
 pub const KW_SLOTS: usize = 512;
 
 /// Verified first-try hints for the deterministic perfect-hash searches
 /// below (checked for injectivity before use, so a word-list edit can never
-/// ship a stale constant — it just falls back to the search).
+/// ship a stale constant - it just falls back to the search).
 pub const KW_HASH_HINT_JS: (u32, u32) = (0x0058_DC65, 25);
 pub const KW_HASH_HINT_TS: (u32, u32) = (0x000B_385B, 23);
 
 /// One keyword-recognition table set: spellings, perfect hash, and the
-/// verify patterns `kw_verify_batch` compares against. `Tables` holds two —
-/// the JS set and the TS set — and `lex_raw` selects by `LexOptions::ts`.
+/// verify patterns `kw_verify_batch` compares against. `Tables` holds two -
+/// the JS set and the TS set - and `lex_raw` selects by `LexOptions::ts`.
 ///
 /// The hash key differs per set. JS keys on `(c0, c1, len)`; the TS set
 /// keys on `(c0, c1, last, len)` because the wider list has pairs the

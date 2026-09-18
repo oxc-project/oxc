@@ -186,7 +186,7 @@ pub unsafe fn not_operator_position(
         }
         if k >= OP_KIND_BASE {
             let ch = *src.add(qi);
-            // TS postfix non-null `!`: `x! / 2` is division, not a regex —
+            // TS postfix non-null `!`: `x! / 2` is division, not a regex -
             // look through the `!`, unless a newline sits before it (ASI
             // makes it a prefix `!/re/`).
             if ts && ch == b'!' {

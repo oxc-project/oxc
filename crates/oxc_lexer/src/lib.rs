@@ -69,7 +69,7 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
         arena.tok_kinds_capacity as usize >= n + PAD
             && arena.tok_spans_capacity as usize >= n + PAD,
         "lexer: arena token capacity too small for source len {n} (tok_kinds={}, tok_spans={}); need >= n + {PAD} \
-         — build_spans writes a full 4-lane group past the last token and the pipeline appends EOF sentinels",
+         - build_spans writes a full 4-lane group past the last token and the pipeline appends EOF sentinels",
         arena.tok_kinds_capacity,
         arena.tok_spans_capacity
     );
@@ -237,7 +237,7 @@ fn copy_lane<T: Copy>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
 
     assert!(
         srcv.len() <= cap as usize,
-        "lexer: lane overflow ({} entries, capacity {cap}) — arena lane sizing out of date",
+        "lexer: lane overflow ({} entries, capacity {cap}) - arena lane sizing out of date",
         srcv.len()
     );
 

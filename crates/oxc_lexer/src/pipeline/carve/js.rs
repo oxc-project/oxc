@@ -173,7 +173,7 @@ pub(super) unsafe fn carve_js(
     }
 }
 
-/// Annex B B.1.3: a `-->` close-comment counts only at line start — scanning
+/// Annex B B.1.3: a `-->` close-comment counts only at line start - scanning
 /// back must reach a LineTerminator (or start of input) crossing nothing but
 /// whitespace and block comments; a newline inside a crossed block comment
 /// also qualifies. Cold: called only on a literal `-->`.

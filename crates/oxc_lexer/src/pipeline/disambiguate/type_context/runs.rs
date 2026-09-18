@@ -31,7 +31,7 @@ use super::{
 
 /// `coalesce` entry for a `>`-run (`>>`, `>>>`, and a `>` glued to `=`): the
 /// number of leading `>` bytes to leave unfused, or 0 to fuse as today. Cold
-/// by construction — `>>` occurs once per ~110 KB of production TypeScript.
+/// by construction - `>>` occurs once per ~110 KB of production TypeScript.
 ///
 /// A balanced region is necessary but not sufficient: TypeScript's
 /// speculative type-argument parse in expression position also needs the
@@ -137,7 +137,7 @@ unsafe fn type_list_head_is_relational(
 }
 
 /// `coalesce` entry for a `<<` run: true when the two `<` must stay separate
-/// tokens. Cold — `<<` is shift-left everywhere except this one shape.
+/// tokens. Cold - `<<` is shift-left everywhere except this one shape.
 #[inline(never)]
 pub unsafe fn lt_run_split(
     src: *const u8,

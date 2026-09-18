@@ -30,7 +30,7 @@ pub(super) unsafe fn classify_impl(
     let mut b = 0usize;
     // Process ceil(n/64) blocks. When n is not a multiple of 64 the final
     // block overreads up to 63 bytes into the caller-guaranteed zeroed PAD
-    // and is masked below — this replaces the byte-at-a-time scalar tail,
+    // and is masked below - this replaces the byte-at-a-time scalar tail,
     // which cost ~18 cyc per tail byte (up to ~1.1k cyc when n mod 64 is
     // near 63) and dominated small-file lexing.
     let nb_ceil = n.div_ceil(64);
@@ -114,7 +114,7 @@ pub(super) unsafe fn classify_impl(
     // other six bitmaps are already 0 for a zero byte, but masking all seven
     // makes the last word bit-identical to the old scalar tail's output (real
     // bits [0, rem), zeros above) regardless of LUT contents. `kind` past `n`
-    // is never read — `compress` only visits masked `st` starts — so it needs
+    // is never read - `compress` only visits masked `st` starts - so it needs
     // no fixup.
     let rem = n & 63;
     if rem != 0 {
