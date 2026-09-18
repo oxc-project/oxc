@@ -1324,6 +1324,10 @@ mod test {
             "await /x/u; export default 1; export default 2;",
             "await /x/u; const value = (1); return value; export {};",
             "await /x/u;\u{a0}export {};",
+            "@await export default class C {}",
+            "@await export class C {}",
+            "@decorator(await) export default class C {}",
+            "@decorator export default class C { x = await + 1 }",
         ] {
             assert_reparse_matches_module(source, || NoTokensParserConfig);
             assert_reparse_matches_module(source, || TokensParserConfig);

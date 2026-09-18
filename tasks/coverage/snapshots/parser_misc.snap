@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 112/112 (100.00%)
 Positive Passed: 112/112 (100.00%)
-Negative Passed: 234/234 (100.00%)
+Negative Passed: 235/235 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -4615,6 +4615,19 @@ Negative Passed: 234/234 (100.00%)
    ·                    ───
  7 │ }
    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/oxc-26742.js:1:2]
+ 1 │ @await export default class C {}
+   ·  ─────
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[misc/fail/oxc-26742.js:1:2]
+ 1 │ @await export default class C {}
+   ·  ─────
+   ╰────
+  note: The identifier `await` is reserved in module code
 
   × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]

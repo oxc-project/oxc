@@ -70,13 +70,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
 
-            // A module declaration already committed to the Module goal while parsing,
-            // so it does not require another parse.
-            // e.g. `@foo export default class C { x = await + 1 }`
-            if track_statement
-                && self.state.encountered_await_identifier
-                && !stmt.is_module_declaration()
-            {
+            // Decorators can contain an `await` identifier before an export commits
+            // to the Module goal. Include module declarations in the full retry.
+            if track_statement && self.state.encountered_await_identifier {
                 self.state.needs_await_reparse = true;
             }
 
