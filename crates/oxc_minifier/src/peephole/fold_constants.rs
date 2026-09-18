@@ -149,10 +149,13 @@ impl<'a> PeepholeOptimizations {
         {
             // `a || false || b` => `a || b`
             // `a && true && b` => `a && b`
-            ctx.replace_expression_with(
-                &mut logical_expr.left,
-                Self::unfold_left_from_logical_expression,
-            );
+            ctx.drop_expression(&left_child.right);
+            ctx.replace_expression_with(&mut logical_expr.left, |e, _ctx| {
+                let Expression::LogicalExpression(e) = e else {
+                    unreachable!();
+                };
+                e.unbox().left
+            });
         }
     }
 
