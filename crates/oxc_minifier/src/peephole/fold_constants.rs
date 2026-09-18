@@ -211,10 +211,10 @@ impl<'a> PeepholeOptimizations {
         let Expression::LogicalExpression(e) = e else {
             unreachable!();
         };
-        let e = e.unbox();
-        if e.left.may_have_side_effects(ctx) {
+        let mut e = e.unbox();
+        if !Self::remove_unused_expression(&mut e.left, ctx) {
             // `(a(), V) OP 1` => `(a(), V, 1)`
-            Expression::new_sequence_expression(e.span, [e.left, e.right], ctx)
+            Self::join_sequence(e.left, e.right, ctx)
         } else if Self::should_keep_indirect_access(&e.right, ctx) {
             // `(V OP o.f)` => `(0, o.f)`
             ctx.drop_expression(&e.left);

@@ -205,7 +205,7 @@ impl<'a> PeepholeOptimizations {
         ctx.replace_expression_with(target, |b, ctx| Self::join_sequence(a, b, ctx));
     }
 
-    fn join_sequence(
+    pub fn join_sequence(
         a: Expression<'a>,
         b: Expression<'a>,
         ctx: &TraverseCtx<'a>,
