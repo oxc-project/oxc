@@ -477,6 +477,23 @@ impl<'a> Symbol<'_, 'a> {
                 {
                     return false;
                 }
+                // The value produced by an update expression is consumed when
+                // it is passed as a constructor argument. This is the same as
+                // the call-expression case above, but `NewExpression` has its
+                // own AST type.
+                AstKind::NewExpression(new_expr)
+                    if new_expr.arguments_span().is_some_and(|span| {
+                        span.contains_inclusive(self.nodes().get_node(reference.node_id()).span())
+                    }) =>
+                {
+                    return false;
+                }
+                // A computed member consumes the value used for its object or
+                // property. In particular, `obj[a++]` uses the value produced
+                // by `a++` as the property key.
+                AstKind::ComputedMemberExpression(_) => {
+                    is_used_by_others = true;
+                }
                 // When symbol is being assigned a new value, we flag the reference
                 // as only affecting itself until proven otherwise.
                 AstKind::UpdateExpression(UpdateExpression { argument, .. })
@@ -560,6 +577,23 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::WhileStatement(WhileStatement { test, .. })
                 | AstKind::DoWhileStatement(DoWhileStatement { test, .. })
                     if test.span().contains_inclusive(ref_span) =>
+                {
+                    return false;
+                }
+                // These expressions consume their test/discriminant values,
+                // even when the resulting expression is itself discarded.
+                AstKind::ConditionalExpression(expr)
+                    if expr.test.span().contains_inclusive(ref_span) =>
+                {
+                    is_used_by_others = true;
+                }
+                AstKind::LogicalExpression(expr)
+                    if expr.left.span().contains_inclusive(ref_span) =>
+                {
+                    is_used_by_others = true;
+                }
+                AstKind::SwitchStatement(stmt)
+                    if stmt.discriminant.span().contains_inclusive(ref_span) =>
                 {
                     return false;
                 }

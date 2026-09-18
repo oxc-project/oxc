@@ -1981,3 +1981,43 @@ fn removing_an_import_preserves_comments_before_the_separator() {
         .expect_fix(fix)
         .test();
 }
+
+#[test]
+fn consumed_update_values_are_usages() {
+    let pass = vec![
+        "let a = 0; new Foo(a++);",
+        "let a = 0; object[a++];",
+        "let a = 0; switch (a++) {}",
+        "let a = 0; a++ ? foo() : bar();",
+        "let a = 0; a++ && foo();",
+        "let a = 0; a++ || foo();",
+        "let a = 0; a++ ?? foo();",
+        "let a = 0; new Foo(a = a + 1);",
+        "let a = 0; object[a = a + 1];",
+    ];
+    let fail = vec![
+        // The update value is discarded by the expression statement.
+        "let a = 0; a++;",
+        // The update is in a discarded, non-final sequence position.
+        "let a = 0; (a++, 0);",
+        "let a = 0; (a++, 0) && foo();",
+        // A right-hand logical operand does not control evaluation.
+        "let a = 0; flag && a++;",
+        "let a = 0; flag || a++;",
+        "let a = 0; flag ?? a++;",
+        "let a = 0; flag ? a++ : foo();",
+        "let a = 0; flag ? foo() : a++;",
+        "let a = 0; new Foo((a++, 0));",
+        "let a = 0; object[(a++, 0)];",
+        "let a = 0; switch ((a++, 0)) {}",
+        // Consuming an intermediate value does not make an outer self-assignment used.
+        "let a = 0; a = a || 1;",
+        "let a = 0; a = a ? 1 : 2;",
+        "let a = 0; a = a++ || 1;",
+        "let a = 0; a = object[a++];",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
