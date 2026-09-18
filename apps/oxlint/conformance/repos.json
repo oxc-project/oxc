@@ -53,5 +53,10 @@
     "repoUrl": "https://github.com/ota-meshi/eslint-plugin-regexp",
     "commitSha": "788787a7e9e820c40321fe2f1095d00d4a486866",
     "version": "v3.1.0"
+  },
+  "nx": {
+    "repoUrl": "https://github.com/nrwl/nx",
+    "commitSha": "816ceee2bb83529b2c8f85b2455977ba874ec727",
+    "version": "23.2.1"
   }
 }

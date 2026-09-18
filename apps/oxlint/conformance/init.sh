@@ -272,3 +272,21 @@ npm install
 
 # Return to `submodules` directory
 cd ..
+
+###############################################################################
+# Nx
+###############################################################################
+
+clone_repo nx
+
+# Install the matching published Nx dependencies in isolation. The upstream
+# workspace includes unrelated framework packages and requires building Nx.
+# Rule implementations and test fixtures are loaded from the pinned source.
+mkdir .oxlint-conformance
+printf '%s\n' '{"private":true,"type":"commonjs"}' > .oxlint-conformance/package.json
+npm install --prefix .oxlint-conformance --save-exact \
+  @nx/eslint-plugin@23.2.1 @typescript-eslint/parser@8.58.2 \
+  eslint@9.39.4 jest@30.3.0 memfs@3.6.0 typescript@6.0.3
+ln -s .oxlint-conformance/node_modules node_modules
+
+cd ..
