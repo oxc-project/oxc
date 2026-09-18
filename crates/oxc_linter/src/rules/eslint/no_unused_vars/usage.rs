@@ -783,13 +783,16 @@ impl<'a> Symbol<'_, 'a> {
                 {
                     return false;
                 }
-                // x && (a = x)
+                // The left operand controls whether the right operand is evaluated,
+                // even if the logical expression's result is discarded.
                 (AstKind::LogicalExpression(expr), _)
-                    if expr.left.span().contains_inclusive(ref_span())
-                        && expr.right.get_inner_expression().is_assignment() =>
+                    if expr.left.span().contains_inclusive(ref_span()) =>
                 {
                     return false;
                 }
+                // Reading a property consumes its object and key, even if the
+                // member expression's result is discarded.
+                (AstKind::ComputedMemberExpression(_), _) => return false,
                 // x instanceof Foo && (a = x)
                 (AstKind::BinaryExpression(expr), _)
                     if expr.operator.is_relational()
