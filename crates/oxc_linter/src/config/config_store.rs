@@ -75,6 +75,9 @@ pub struct Config {
 
     /// An optional set of overrides to apply to the base state depending on the file being linted.
     pub(crate) overrides: ResolvedOxlintOverrides,
+
+    /// Explicit filters take precedence over all matching file overrides.
+    pub(crate) filter_rules: Vec<(RuleEnum, AllowWarnDeny)>,
 }
 
 impl Config {
@@ -108,6 +111,7 @@ impl Config {
             base_rules: rules,
             categories,
             overrides,
+            filter_rules: Vec::new(),
         }
     }
 
@@ -228,10 +232,9 @@ impl Config {
             }
 
             for (rule, severity) in &override_config.rules.builtin_rules {
-                if *severity == AllowWarnDeny::Allow {
-                    rules.remove(rule);
-                } else {
-                    let _ = rules.remove(rule);
+                // Keep disabled rule options only when an explicit filter may enable them.
+                let _ = rules.remove(rule);
+                if severity.is_warn_deny() || !self.filter_rules.is_empty() {
                     rules.insert(rule.clone(), *severity);
                 }
             }
@@ -264,6 +267,18 @@ impl Config {
             config.settings = settings;
             Arc::new(config)
         };
+
+        for (rule, severity) in &self.filter_rules {
+            if LintPlugins::try_from(rule.plugin_name())
+                .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
+            {
+                if let Some(value) = rules.get_mut(rule) {
+                    *value = *severity;
+                } else if severity.is_warn_deny() {
+                    rules.insert(rule.clone(), *severity);
+                }
+            }
+        }
 
         let rules =
             rules.into_iter().filter(|(_, severity)| severity.is_warn_deny()).collect::<Vec<_>>();
@@ -349,6 +364,23 @@ impl ConfigStore {
                 if severity.is_warn_deny() {
                     external_rules.insert(*rule_id);
                 }
+            }
+        }
+
+        let plugins = self
+            .base
+            .overrides
+            .iter()
+            .filter_map(|config| config.plugins)
+            .fold(self.base.plugins(), |plugins, override_plugins| plugins | override_plugins);
+        for (rule, severity) in &self.base.filter_rules {
+            if severity.is_allow() {
+                builtin_rules.remove(rule);
+            } else if (type_aware_enabled || !rule.is_tsgolint_rule())
+                && LintPlugins::try_from(rule.plugin_name())
+                    .is_ok_and(|plugin| plugins.contains(plugin))
+            {
+                builtin_rules.insert(rule.clone());
             }
         }
 
