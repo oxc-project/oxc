@@ -949,9 +949,7 @@ fn test_fold_bit_shifts() {
 #[test]
 fn test_string_add() {
     fold("x = 'a' + 'bc'", "x = 'abc'");
-    // Lone surrogates are stored escaped in the string value; folding would
-    // materialize the escape encoding as literal text.
-    fold_same("x = '\\ud800' + 'y'");
+    fold("x = '\\ud800' + 'y'", "x = '\\ud800y'");
     fold("x = 'a' + 5", "x = 'a5'");
     fold("x = 5 + 'a'", "x = '5a'");
     fold("x = 'a' + 5n", "x = 'a5'");
@@ -1506,10 +1504,9 @@ fn string_method_folds_use_utf16_positions() {
     fold(r#"x = "a\u{1F600}b".slice(3)"#, r#"x = "b""#);
     fold(r#"x = "a\u{1F600}b".substring(1, 3)"#, r#"x = "\u{1F600}""#);
     fold(r#"x = "a\u{1F600}b".substring(3, 4)"#, r#"x = "b""#);
-    // A result that would split the surrogate pair has no `str` form; the
-    // call is left alone instead of folding to the wrong text.
-    fold_same(r#"x = "a\u{1F600}b".substring(1, 2)"#);
-    fold_same(r#"x = "a\u{1F600}b".slice(2, 4)"#);
+    // A result that splits the surrogate pair keeps the lone half.
+    fold(r#"x = "a\u{1F600}b".substring(1, 2)"#, r#"x = "\uD83D""#);
+    fold(r#"x = "a\u{1F600}b".slice(2, 4)"#, r#"x = "\uDE00b""#);
     // A position beyond `i32` clamps instead of wrapping to a small index.
     fold(r#"x = "aa".indexOf("a", 3e9)"#, "x = -1");
 }
@@ -1531,10 +1528,56 @@ fn string_method_folds_handle_lone_surrogates() {
     fold(r#"x = "a\uD800b".charCodeAt(1)"#, "x = 55296");
     fold(r#"x = "a\uD800b".charCodeAt(2)"#, "x = 98");
     fold(r#"x = "a\uD800b".charCodeAt(3)"#, "x = NaN");
-    // A search value with a lone surrogate is not a constant string and
-    // stays unfolded.
-    fold_same(r#"x = "a\uD800b".indexOf("\uD800")"#);
-    fold_same(r#"x = "a\uD800b".lastIndexOf("\uD800")"#);
+    // A search value with a lone surrogate matches its code unit, including
+    // the same half of a formed pair.
+    fold(r#"x = "a\uD800b".indexOf("\uD800")"#, "x = 1");
+    fold(r#"x = "a\uD800b".lastIndexOf("\uD800")"#, "x = 1");
+    fold(r#"x = "a\u{1F600}b".indexOf("\uD83D")"#, "x = 1");
+    fold(r#"x = "a\u{1F600}b".indexOf("\uDE00")"#, "x = 2");
+    fold(r#"x = "a\u{1F600}b".lastIndexOf("\uD83D")"#, "x = 1");
+}
+
+#[test]
+fn string_folds_produce_lone_surrogates() {
+    // Concatenation repairs a pair split across the operands and keeps
+    // unmatched halves as lone units.
+    fold(r#"x = "\uD800" + "\uDC00""#, r#"x = "\u{10000}""#);
+    fold(r#"x = "a\uD83D" + "\uDE00b""#, r#"x = "a\u{1F600}b""#);
+    fold(r#"x = "\uD800" + "y""#, r#"x = "\uD800y""#);
+    fold(r#"x = "x" + "\uDC00""#, r#"x = "x\uDC00""#);
+    // A lone surrogate is one UTF-16 code unit of the length.
+    fold(r#"x = "a\uD800b".length"#, "x = 3");
+    fold(r#"x = "abc\uD800".length"#, "x = 4");
+    fold(r#"x = "a\u{1F600}b".length"#, "x = 4");
+    // Substring folds may split a pair or slice around a lone unit.
+    fold(r#"x = "a\uD800b".substring(1, 2)"#, r#"x = "\uD800""#);
+    fold(r#"x = "a\uD800b".slice(1)"#, r#"x = "\uD800b""#);
+    fold(r#"x = "a\u{1F600}b".charAt(1)"#, r#"x = "\uD83D""#);
+    fold(r#"x = "a\u{1F600}b".charAt(2)"#, r#"x = "\uDE00""#);
+    fold(r#"x = "a\uD800b".charAt(1)"#, r#"x = "\uD800""#);
+    fold(r#"x = "a\uD800b".charAt(9)"#, r#"x = """#);
+    // `fromCharCode` keeps surrogate units and forms adjacent pairs.
+    fold("x = String.fromCharCode(55296)", r#"x = "\uD800""#);
+    fold("x = String.fromCharCode(55357, 56832)", r#"x = "\u{1F600}""#);
+    // Comparisons order and compare by code units.
+    fold(r#"x = "\uD800" < "\uD801""#, "x = !0");
+    fold(r#"x = "\uDC00" < "\uD800""#, "x = !1");
+    fold(r#"x = "a\uD800" === "a\uD800""#, "x = !0");
+    fold(r#"x = "\uD800" === "\uDC00""#, "x = !1");
+}
+
+#[test]
+fn string_folds_decline_lone_surrogates() {
+    // encodeURI and encodeURIComponent throw a URIError on a lone surrogate
+    // at runtime, so folding them would change behavior.
+    fold_same(r#"x = encodeURI("a\uD800")"#);
+    fold_same(r#"x = encodeURIComponent("\uD800")"#);
+    fold_same(r#"x = decodeURI("a\uD800")"#);
+    fold_same(r#"x = decodeURIComponent("a\uD800")"#);
+    // The replace and casing machinery is UTF-8 and stays unfolded.
+    fold_same(r#"x = "a\uD800b".replace("a", "x")"#);
+    fold_same(r#"x = "ab".replace("a", "\uD800")"#);
+    fold_same(r#"x = "A\uD800".toLowerCase()"#);
 }
 
 #[test]
