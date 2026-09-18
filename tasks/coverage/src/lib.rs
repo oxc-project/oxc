@@ -290,10 +290,6 @@ pub fn snapshot_results(name: &str, test_root: &Path, results: &[CoverageResult]
         }
     }
 
-    // Use the upcoming TypeScript fixture layout in snapshots while still loading the old layout.
-    // Normalize the complete output so paths embedded in diagnostics are updated too.
-    let out = out.replace("typescript/tests/", "typescript/tsc/testdata/tests/");
-
     let path = snap_root().join(format!("{}.snap", name.to_lowercase()));
     snapshot.save(&path, &out);
 }
@@ -312,7 +308,7 @@ pub struct AppArgs {
 
 const TEST262_PATH: &str = "test262/test";
 const BABEL_PATH: &str = "babel/packages/babel-parser/test/fixtures";
-const TYPESCRIPT_PATH: &str = "typescript/tests/cases";
+const TYPESCRIPT_PATH: &str = typescript::CASES_PATH;
 const MISC_PATH: &str = "misc";
 const ESTREE_ACORN_JSX_PATH: &str = "estree-conformance/tests/acorn-jsx";
 

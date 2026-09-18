@@ -1,9 +1,9 @@
-commit: be13516f
+commit: 419d3e0a
 
 parser_test262 Summary:
-AST Parsed     : 47435/47435 (100.00%)
-Positive Passed: 47435/47435 (100.00%)
-Negative Passed: 4651/4651 (100.00%)
+AST Parsed     : 47440/47440 (100.00%)
+Positive Passed: 47440/47440 (100.00%)
+Negative Passed: 4653/4653 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -24443,6 +24443,14 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
+  × Invalid regular expression: Numbers out of order in braced quantifier
+    ╭─[test262/test/language/literals/regexp/invalid-quantifier-out-of-order.js:26:3]
+ 25 │ 
+ 26 │ /a{2,1}/;
+    ·   ─────
+    ╰────
+  help: In `{n,m}`, the minimum `n` must be less than or equal to the maximum `m`
+
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/invalid-range-lookbehind.js:21:9]
  20 │ 
@@ -25066,6 +25074,14 @@ Negative Passed: 4651/4651 (100.00%)
     ·         ─
     ╰────
   help: Quantifiers must follow an expression. To match literally, escape it with `\`
+
+  × Invalid regular expression: Numbers out of order in braced quantifier
+    ╭─[test262/test/language/literals/regexp/u-invalid-quantifier-out-of-order.js:23:3]
+ 22 │ 
+ 23 │ /a{2,1}/u;
+    ·   ─────
+    ╰────
+  help: In `{n,m}`, the minimum `n` must be less than or equal to the maximum `m`
 
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-range-lookahead.js:21:8]

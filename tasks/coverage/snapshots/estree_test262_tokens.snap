@@ -1,5 +1,5 @@
-commit: be13516f
+commit: 419d3e0a
 
 estree_test262_tokens Summary:
-AST Parsed     : 47170/47170 (100.00%)
-Positive Passed: 47170/47170 (100.00%)
+AST Parsed     : 47175/47175 (100.00%)
+Positive Passed: 47175/47175 (100.00%)
