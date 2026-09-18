@@ -1939,3 +1939,17 @@ fn test_ambient_export_modifiers() {
 //         .with_snapshot_suffix("<replace>")
 //         .test_and_snapshot();
 // }
+
+#[test]
+fn test_remove_array_element_before_rest() {
+    let fix = vec![(
+        "const [used, unused, ...rest] = [1, 2, 3]; console.log(used, rest);",
+        "const [used, ,...rest] = [1, 2, 3]; console.log(used, rest);",
+        None,
+        FixKind::DangerousSuggestion,
+    )];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, Vec::<&str>::new(), vec![])
+        .expect_fix(fix)
+        .test();
+}
