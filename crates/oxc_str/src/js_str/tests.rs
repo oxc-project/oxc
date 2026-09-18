@@ -347,6 +347,179 @@ fn cloned_iterators_and_fused_end() {
 }
 
 #[test]
+fn searches_agree_with_str_for_utf8() {
+    let haystacks = [
+        "",
+        "a",
+        "ab",
+        "abc",
+        "aXbXc",
+        "é漢😀x",
+        "  pad  ",
+        "${a}",
+        "\n",
+        "a\nb",
+        "😀😀",
+        "javascript:x",
+    ];
+    let texts =
+        ["", "a", "b", "ab", "bc", "X", "é", "漢", "😀", "😀x", "${", "}", "\n", "  ", "z", "abcd"];
+    let chars = ['a', 'X', 'é', '漢', '😀', '\n', ' ', 'z'];
+    let predicates: [fn(char) -> bool; 3] =
+        [char::is_whitespace, char::is_alphanumeric, |c| c > '\u{7f}'];
+    for haystack in haystacks {
+        let value = JSStr::from(haystack);
+        for text in texts {
+            assert_eq!(value.contains(text), haystack.contains(text), "{haystack:?} {text:?}");
+            assert_eq!(
+                value.starts_with(text),
+                haystack.starts_with(text),
+                "{haystack:?} {text:?}"
+            );
+            assert_eq!(value.ends_with(text), haystack.ends_with(text), "{haystack:?} {text:?}");
+            assert_eq!(value.find(text), haystack.find(text), "{haystack:?} {text:?}");
+            assert_eq!(value.rfind(text), haystack.rfind(text), "{haystack:?} {text:?}");
+        }
+        for c in chars {
+            assert_eq!(value.contains(c), haystack.contains(c), "{haystack:?} {c:?}");
+            assert_eq!(value.starts_with(c), haystack.starts_with(c), "{haystack:?} {c:?}");
+            assert_eq!(value.ends_with(c), haystack.ends_with(c), "{haystack:?} {c:?}");
+            assert_eq!(value.find(c), haystack.find(c), "{haystack:?} {c:?}");
+            assert_eq!(value.rfind(c), haystack.rfind(c), "{haystack:?} {c:?}");
+        }
+        for predicate in predicates {
+            assert_eq!(value.contains(predicate), haystack.contains(predicate), "{haystack:?}");
+            assert_eq!(
+                value.starts_with(predicate),
+                haystack.starts_with(predicate),
+                "{haystack:?}"
+            );
+            assert_eq!(value.ends_with(predicate), haystack.ends_with(predicate), "{haystack:?}");
+            assert_eq!(value.find(predicate), haystack.find(predicate), "{haystack:?}");
+            assert_eq!(value.rfind(predicate), haystack.rfind(predicate), "{haystack:?}");
+        }
+    }
+}
+
+/// Byte offset of UTF-16 unit index `index` in a value built from `units`.
+fn byte_offset(units: &[u16], index: usize) -> usize {
+    let allocator = Allocator::new();
+    from_utf16_in(&units[..index], &allocator).len()
+}
+
+#[test]
+fn text_searches_around_lone_surrogates_match_utf16_model() {
+    let allocator = Allocator::new();
+    let haystacks: [&[u16]; 10] = [
+        &[],
+        &[0xD800],
+        &[0xDC00],
+        &[0x61, 0xD800, 0x62],
+        &[0xD800, 0x61, 0xDC00],
+        &[0xDC00, 0xD800],
+        &[0x20, 0xD800, 0x20],
+        &[0xD83D, 0xDE00, 0x61],
+        &[0x61, 0xD83D, 0xDE00],
+        &[0xD83D, 0xD83D, 0xDE00, 0xDE00],
+    ];
+    let needles = ["", "a", "b", "ab", " ", "😀", "😀a", "a😀", "aa"];
+    for units in haystacks {
+        let value = from_utf16_in(units, &allocator);
+        for needle in needles {
+            let needle_units: Vec<u16> = needle.encode_utf16().collect();
+            let positions: Vec<usize> =
+                (0..=units.len()).filter(|&i| units[i..].starts_with(&needle_units)).collect();
+            let expected_first = positions.first().map(|&i| byte_offset(units, i));
+            let expected_last = positions.last().map(|&i| byte_offset(units, i));
+            assert_eq!(value.contains(needle), !positions.is_empty(), "{units:x?} {needle:?}");
+            assert_eq!(value.starts_with(needle), units.starts_with(&needle_units), "{units:x?}");
+            assert_eq!(value.ends_with(needle), units.ends_with(&needle_units), "{units:x?}");
+            assert_eq!(value.find(needle), expected_first, "{units:x?} {needle:?}");
+            assert_eq!(value.rfind(needle), expected_last, "{units:x?} {needle:?}");
+        }
+    }
+}
+
+#[test]
+fn char_searches_never_match_lone_surrogates() {
+    let allocator = Allocator::new();
+    let haystacks: [&[u16]; 8] = [
+        &[],
+        &[0xD800],
+        &[0xDC00, 0xD800],
+        &[0x20, 0xD800, 0x20, 0x61, 0xDC00, 0x0A],
+        &[0x61, 0xD800],
+        &[0xD800, 0x61],
+        &[0xD83D, 0xDE00, 0xD800],
+        &[0xD800, 0xD83D, 0xDE00],
+    ];
+    let predicates: [fn(char) -> bool; 4] =
+        [char::is_whitespace, char::is_alphabetic, |_| true, |c| c == '😀'];
+    for units in haystacks {
+        let value = from_utf16_in(units, &allocator);
+        // Decode independently: `Err` marks a lone surrogate, which no `char`
+        // predicate can match. Track WTF-8 byte offsets alongside.
+        let decoded: Vec<(usize, Option<char>)> = {
+            let mut offset = 0;
+            char::decode_utf16(units.iter().copied())
+                .map(|result| {
+                    let start = offset;
+                    let c = result.ok();
+                    offset += c.map_or(3, char::len_utf8);
+                    (start, c)
+                })
+                .collect()
+        };
+        for predicate in predicates {
+            let matches: Vec<usize> = decoded
+                .iter()
+                .filter(|(_, c)| c.is_some_and(predicate))
+                .map(|(offset, _)| *offset)
+                .collect();
+            assert_eq!(value.contains(predicate), !matches.is_empty(), "{units:x?}");
+            assert_eq!(value.find(predicate), matches.first().copied(), "{units:x?}");
+            assert_eq!(value.rfind(predicate), matches.last().copied(), "{units:x?}");
+            assert_eq!(
+                value.starts_with(predicate),
+                decoded.first().is_some_and(|(_, c)| c.is_some_and(predicate)),
+                "{units:x?}"
+            );
+            assert_eq!(
+                value.ends_with(predicate),
+                decoded.last().is_some_and(|(_, c)| c.is_some_and(predicate)),
+                "{units:x?}"
+            );
+        }
+        for c in ['a', ' ', '😀', '\n'] {
+            let expected: Vec<usize> =
+                decoded.iter().filter(|(_, d)| *d == Some(c)).map(|(o, _)| *o).collect();
+            assert_eq!(value.find(c), expected.first().copied(), "{units:x?} {c:?}");
+            assert_eq!(value.rfind(c), expected.last().copied(), "{units:x?} {c:?}");
+        }
+    }
+
+    // The documented predicate limitation: a value that is only a lone
+    // surrogate has no `char`, so even a negated predicate sees nothing.
+    let lone = from_utf16_in(&[0xD800], &allocator);
+    assert!(!lone.contains(|c: char| !c.is_whitespace()));
+    assert!(lone.chars().any(|c| c.to_char().is_none()));
+    // Text patterns still see the surrounding text.
+    let text = from_utf16_in(&[0x20, 0xD800, 0x20, 0x61, 0xDC00, 0x0A], &allocator);
+    assert_eq!(text.find(' '), Some(0));
+    assert_eq!(text.rfind(' '), Some(4));
+    assert_eq!(text.find('a'), Some(5));
+    assert_eq!(text.rfind('\n'), Some(9));
+    assert!(text.starts_with(char::is_whitespace));
+    assert!(text.ends_with(char::is_whitespace));
+    assert!(!text.contains("a\n"));
+    assert_eq!(text.find(""), Some(0));
+    assert_eq!(text.rfind(""), Some(text.len()));
+    assert_eq!(JSStr::empty().find(""), Some(0));
+    assert_eq!(JSStr::empty().rfind(""), Some(0));
+    assert!(!JSStr::empty().ends_with(char::is_whitespace));
+}
+
+#[test]
 #[should_panic(expected = "capacity overflow")]
 fn reject_capacity_overflow() {
     let allocator = Allocator::new();
