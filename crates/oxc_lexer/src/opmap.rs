@@ -5,6 +5,8 @@
 
 use std::ptr;
 
+use constcat::concat_slices;
+
 use crate::token::{TokenKind, tk};
 
 pub const KW_COUNT_JS: usize = 46;
@@ -64,7 +66,7 @@ pub const KEYWORDS: [(&str, TokenKind); KW_COUNT_JS] = [
 
 /// TS-mode additions: TypeScript's contextual keywords plus the strict-mode
 /// reserved words. JS mode lexes every one of these spellings as IDENT.
-pub const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
+const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
     ("abstract", TokenKind::KwAbstract),
     ("accessor", TokenKind::KwAccessor),
     ("any", TokenKind::KwAny),
@@ -102,22 +104,9 @@ pub const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
     ("using", TokenKind::KwUsing),
 ];
 
-const fn keywords_ts() -> [(&'static str, TokenKind); KW_COUNT_TS] {
-    let mut out = [("", TokenKind::Eof); KW_COUNT_TS];
-    let mut i = 0;
-    while i < KW_COUNT_JS {
-        out[i] = KEYWORDS[i];
-        i += 1;
-    }
-    while i < KW_COUNT_TS {
-        out[i] = KEYWORDS_TS_EXTRA[i - KW_COUNT_JS];
-        i += 1;
-    }
-    out
-}
-
 /// The TS-mode keyword set: [`KEYWORDS`] followed by [`KEYWORDS_TS_EXTRA`].
-pub static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] = keywords_ts();
+pub static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
+    *concat_slices!([(&str, TokenKind)]: &KEYWORDS, &KEYWORDS_TS_EXTRA);
 
 /// First punctuator kind - the token-kind space reserves [32, 128) for them.
 pub const OP_KIND_BASE: u8 = tk!(LBrace);
