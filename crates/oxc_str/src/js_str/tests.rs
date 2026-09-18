@@ -520,6 +520,46 @@ fn char_searches_never_match_lone_surrogates() {
 }
 
 #[test]
+fn encode_utf16_size_hint_brackets_remaining_units() {
+    let allocator = Allocator::new();
+    let inputs: [&[u16]; 8] = [
+        &[],
+        &[0x61, 0x62, 0x63],
+        &[0xE9, 0x3B1],
+        &[0x4E2D, 0xFFFD, 0xFFFF],
+        &[0xD800],
+        &[0xDC00, 0xD800],
+        &[0xD83D, 0xDE00, 0xD800, 0xDC00],
+        &[0x61, 0xD800, 0xE9, 0xD83D, 0xDE00, 0xDFFF, 0x4E2D, 0x62],
+    ];
+    for units in inputs {
+        let value = from_utf16_in(units, &allocator);
+        let mut iter = value.encode_utf16();
+        let mut remaining = units.len();
+        loop {
+            let (lower, upper) = iter.size_hint();
+            assert!(lower <= remaining, "{units:?}: lower {lower} > remaining {remaining}");
+            assert!(upper.unwrap() >= remaining, "{units:?}: upper {upper:?} < {remaining}");
+            if iter.next().is_none() {
+                assert_eq!(remaining, 0, "{units:?}");
+                assert_eq!(iter.size_hint(), (0, Some(0)));
+                break;
+            }
+            remaining -= 1;
+        }
+        assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units);
+    }
+    // Exact when the string is pure ASCII, and after a lead has been emitted
+    // the pending trail counts once in both bounds.
+    assert_eq!(JSStr::from("abc").encode_utf16().size_hint(), (1, Some(3)));
+    let pair = from_utf16_in(&[0xD83D, 0xDE00], &allocator);
+    let mut iter = pair.encode_utf16();
+    assert_eq!(iter.size_hint(), (2, Some(4)));
+    iter.next();
+    assert_eq!(iter.size_hint(), (1, Some(1)));
+}
+
+#[test]
 #[should_panic(expected = "capacity overflow")]
 fn reject_capacity_overflow() {
     let allocator = Allocator::new();

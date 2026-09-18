@@ -541,6 +541,15 @@ impl Iterator for EncodeUtf16<'_> {
             Some(0xD800 | (offset >> 10) as u16)
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // Every byte yields at most one code unit. The fewest units come from
+        // 3-byte sequences, which yield one unit each; a 4-byte sequence yields
+        // two. A pending trailing surrogate is one more unit.
+        let len = self.chars.remaining.len();
+        let pending = usize::from(self.pending != 0);
+        (len.div_ceil(3) + pending, Some(len + pending))
+    }
 }
 
 impl FusedIterator for EncodeUtf16<'_> {}
