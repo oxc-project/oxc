@@ -271,8 +271,6 @@ impl Lanes {
     #[cold]
     #[inline(never)]
     fn validate_ident_escapes(&mut self, src: &[u8], bs: usize, be: usize) {
-        use DiagCode as D;
-
         fn hex4(src: &[u8], mut k: usize, be: usize) -> (Option<u32>, usize) {
             let mut v = 0u32;
             for _ in 0..4 {
@@ -298,7 +296,11 @@ impl Lanes {
             if start >= be || src[start] != b'u' {
                 // Unreachable via scan_ident_esc, but mirror the parser
                 // defensively: consume one char, span = it.
-                self.push_diag(start as u32, u32::from(start < be), D::InvalidIdentifierEscape);
+                self.push_diag(
+                    start as u32,
+                    u32::from(start < be),
+                    DiagCode::InvalidIdentifierEscape,
+                );
                 i = start + 1;
                 continue;
             }
@@ -325,21 +327,29 @@ impl Lanes {
                         self.push_diag(
                             start as u32,
                             (k - start) as u32,
-                            D::InvalidIdentifierEscape,
+                            DiagCode::InvalidIdentifierEscape,
                         );
                     } else {
                         self.check_escaped_ident_char(value, at_start, k);
                     }
                 } else {
                     // overflow / no digits / missing `}`: end = parser stop
-                    self.push_diag(start as u32, (k - start) as u32, D::InvalidIdentifierEscape);
+                    self.push_diag(
+                        start as u32,
+                        (k - start) as u32,
+                        DiagCode::InvalidIdentifierEscape,
+                    );
                 }
                 i = k;
                 continue;
             }
             let (h1, e1) = hex4(src, k, be);
             let Some(high) = h1 else {
-                self.push_diag(start as u32, (e1 - start) as u32, D::InvalidIdentifierEscape);
+                self.push_diag(
+                    start as u32,
+                    (e1 - start) as u32,
+                    DiagCode::InvalidIdentifierEscape,
+                );
                 i = e1;
                 continue;
             };
@@ -361,14 +371,18 @@ impl Lanes {
                 {
                     // A well-formed pair is still invalid in identifiers:
                     // one diag over both escapes.
-                    self.push_diag(start as u32, (e2 - start) as u32, D::InvalidIdentifierEscape);
+                    self.push_diag(
+                        start as u32,
+                        (e2 - start) as u32,
+                        DiagCode::InvalidIdentifierEscape,
+                    );
                     i = e2;
                     continue;
                 }
                 // Not a valid low: fall through - the parser rewinds and
                 // reports the first escape alone.
             }
-            self.push_diag(start as u32, (k - start) as u32, D::InvalidIdentifierEscape);
+            self.push_diag(start as u32, (k - start) as u32, DiagCode::InvalidIdentifierEscape);
             i = k;
         }
     }
@@ -726,14 +740,12 @@ fn radix_digit(c: u8) -> Option<u8> {
 /// here. Detection only; `parse_number` still produces a lenient value.
 #[inline(never)]
 fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
-    use DiagCode as D;
-
     let bytes = &src[s..e];
-    let Some((&last, head)) = bytes.split_last() else { return D::Ok };
+    let Some((&last, head)) = bytes.split_last() else { return DiagCode::Ok };
     let is_bigint = last == b'n';
     let body = if is_bigint { head } else { bytes };
     if body.is_empty() {
-        return D::Ok;
+        return DiagCode::Ok;
     }
 
     // Radix-prefixed integer: separator placement and the empty-radix case.
@@ -752,23 +764,23 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
             for &c in &body[2..] {
                 if c == b'_' {
                     if prev_us {
-                        return D::InvalidNumericSeparator;
+                        return DiagCode::InvalidNumericSeparator;
                     }
                     prev_us = true;
                 } else if matches!(radix_digit(c), Some(v) if v < radix) {
                     any = true;
                     prev_us = false;
                 } else {
-                    return D::InvalidNumericLiteral;
+                    return DiagCode::InvalidNumericLiteral;
                 }
             }
             if any && prev_us {
-                return D::InvalidNumericSeparator; // trailing '_'
+                return DiagCode::InvalidNumericSeparator; // trailing '_'
             }
             if !any {
-                return D::InvalidNumericLiteral; // empty radix, e.g. `0x`
+                return DiagCode::InvalidNumericLiteral; // empty radix, e.g. `0x`
             }
-            return D::Ok;
+            return DiagCode::Ok;
         }
 
         // Legacy-octal-like decimal (leading `0` + digit/`_`): oxc_parser
@@ -778,17 +790,17 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
         // Bare `00`/`08` are valid sloppy-mode Annex B, and `.` never flags.
         if matches!(body[1], b'0'..=b'9' | b'_') {
             if bytes.contains(&b'_') {
-                return D::InvalidNumericSeparator;
+                return DiagCode::InvalidNumericSeparator;
             }
             if is_bigint {
-                return D::InvalidBigint;
+                return DiagCode::InvalidBigint;
             }
             let run = bytes.iter().take_while(|c| c.is_ascii_digit()).count();
             match bytes.get(run) {
                 // `08e1`: valid NonOctalDecimal exponent; its digits are
                 // still checked below (`08e` stays flagged).
                 Some(&b'e') if bytes[..run].iter().any(|&c| c >= b'8') => {}
-                Some(&b'e' | &b'E') => return D::InvalidNumericLiteral,
+                Some(&b'e' | &b'E') => return DiagCode::InvalidNumericLiteral,
                 _ => {}
             }
             // fall through: the valid shapes still get the generic checks
@@ -802,7 +814,7 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
         if c == b'_' {
             let next_digit = matches!(body.get(i + 1), Some(&d) if d.is_ascii_digit());
             if !prev_digit || !next_digit {
-                return D::InvalidNumericSeparator;
+                return DiagCode::InvalidNumericSeparator;
             }
             prev_digit = false;
         } else {
@@ -820,10 +832,10 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
             k += 1;
         }
         if !matches!(body.get(k), Some(d) if d.is_ascii_digit()) {
-            return D::InvalidNumericLiteral;
+            return DiagCode::InvalidNumericLiteral;
         }
     }
-    D::Ok
+    DiagCode::Ok
 }
 
 #[inline]

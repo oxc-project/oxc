@@ -5,7 +5,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
-use crate::error::{DiagCode as Code, DiagSeverity, Diagnostic};
+use crate::error::{DiagCode, DiagSeverity, Diagnostic};
 
 /// The diagnostic's span: the lexer stores `(off, len)`, oxc `(start, end)`.
 #[inline]
@@ -339,7 +339,9 @@ pub fn to_oxc_diagnostic(d: &Diagnostic, source: &str) -> OxcDiagnostic {
     // through to the static arms.
     if matches!(
         d.code,
-        Code::InvalidNumericSeparator | Code::InvalidBigint | Code::InvalidNumericLiteral
+        DiagCode::InvalidNumericSeparator
+            | DiagCode::InvalidBigint
+            | DiagCode::InvalidNumericLiteral
     ) && at_numeric_literal_start(source, d.off)
         && let Some(exact) = parser_numeric_first_error(source, d.off, sev)
     {
@@ -352,15 +354,15 @@ pub fn to_oxc_diagnostic(d: &Diagnostic, source: &str) -> OxcDiagnostic {
     )]
     match d.code {
         // Exact 1:1 with oxc_parser/src/diagnostics.rs.
-        Code::UnterminatedString => diag(sev, "Unterminated string").with_label(span),
-        Code::UnterminatedBlockComment => {
+        DiagCode::UnterminatedString => diag(sev, "Unterminated string").with_label(span),
+        DiagCode::UnterminatedBlockComment => {
             diag(sev, "Unterminated multiline comment").with_label(span)
         }
-        Code::UnterminatedRegexp => diag(sev, "Unterminated regular expression").with_label(span),
+        DiagCode::UnterminatedRegexp => diag(sev, "Unterminated regular expression").with_label(span),
         // The parser's string-escape message; "Invalid Unicode escape
         // sequence" belongs to identifier escapes below.
-        Code::InvalidUnicodeEscape => diag(sev, "Invalid escape sequence").with_label(span),
-        Code::UnexpectedCharacter => {
+        DiagCode::InvalidUnicodeEscape => diag(sev, "Invalid escape sequence").with_label(span),
+        DiagCode::UnexpectedCharacter => {
             // The len-0 shape is an escaped non-identifier char: the message
             // embeds the decoded char, recovered from the escape text ending
             // at `off`.
@@ -371,13 +373,13 @@ pub fn to_oxc_diagnostic(d: &Diagnostic, source: &str) -> OxcDiagnostic {
             };
             diag(sev, format!("Invalid Character `{ch}`")).with_label(span)
         }
-        Code::InvalidRegexpFlag => diag(
+        DiagCode::InvalidRegexpFlag => diag(
             sev,
             format!("Unexpected flag {} in regular expression literal", offending_char(source, d)),
         )
         .with_label(span)
         .with_help(format!("The allowed flags are `{REGEXP_FLAGS_LIST}`")),
-        Code::DuplicateRegexpFlag => diag(
+        DiagCode::DuplicateRegexpFlag => diag(
             sev,
             format!(
                 "Flag {} is mentioned twice in regular expression literal",
@@ -389,61 +391,61 @@ pub fn to_oxc_diagnostic(d: &Diagnostic, source: &str) -> OxcDiagnostic {
         // A misplaced bigint suffix (`1.5n`) also reaches oxc_parser's
         // `invalid_number_end` (its float path never consumes the `n`), so
         // BIGINT collapses to the same message and span.
-        Code::InvalidNumericLiteral | Code::InvalidBigint => {
+        DiagCode::InvalidNumericLiteral | DiagCode::InvalidBigint => {
             diag(sev, "Invalid characters after number").with_label(span)
         }
 
         // The parser does not distinguish unterminated template from string,
         // and reports newline-in-literal as "unterminated".
-        Code::UnterminatedTemplate => diag(sev, "Unterminated string").with_label(span),
-        Code::LineTerminatorInString => diag(sev, "Unterminated string").with_label(span),
-        Code::LineTerminatorInRegexp => {
+        DiagCode::UnterminatedTemplate => diag(sev, "Unterminated string").with_label(span),
+        DiagCode::LineTerminatorInString => diag(sev, "Unterminated string").with_label(span),
+        DiagCode::LineTerminatorInRegexp => {
             diag(sev, "Unterminated regular expression").with_label(span)
         }
         // The parser-side `invalid_number` message.
-        Code::InvalidNumericSeparator => {
+        DiagCode::InvalidNumericSeparator => {
             diag(sev, format!("Invalid Number {}", lexeme(source, d))).with_label(span)
         }
         // The parser's identifier-escape message, distinct from the
         // string-escape one above.
-        Code::InvalidIdentifierEscape => {
+        DiagCode::InvalidIdentifierEscape => {
             diag(sev, "Invalid Unicode escape sequence").with_label(span)
         }
 
         // The parser consumes valid &str, so its closest analog to bad UTF-8
         // is the binary-file error, which carries no label.
-        Code::InvalidUtf8 => diag(sev, "File appears to be binary.").with_error_code("TS", "1490"),
-        Code::InvalidHashbangPosition => {
+        DiagCode::InvalidUtf8 => diag(sev, "File appears to be binary.").with_error_code("TS", "1490"),
+        DiagCode::InvalidHashbangPosition => {
             diag(sev, format!("Invalid Character `{}`", offending_char(source, d))).with_label(span)
         }
-        Code::InvalidRegexpGrammar => diag(sev, "Invalid regular expression").with_label(span),
-        Code::HtmlCommentInModule => {
+        DiagCode::InvalidRegexpGrammar => diag(sev, "Invalid regular expression").with_label(span),
+        DiagCode::HtmlCommentInModule => {
             diag(sev, "HTML comments are not allowed in modules").with_label(span)
         }
-        Code::UnterminatedJsxElement => {
+        DiagCode::UnterminatedJsxElement => {
             diag(sev, "JSX element has no corresponding closing tag")
                 .with_label(span)
                 .with_help("In a `.tsx` file `<T>(...) =>` opens a JSX element; write `<T,>(...) =>` for a generic arrow function")
         }
-        Code::JsxTextInvalidCharacter => {
+        DiagCode::JsxTextInvalidCharacter => {
             let (ch, entity) = if lexeme(source, d) == "}" { ('}', "rbrace") } else { ('>', "gt") };
             diag(sev, format!("Unexpected token. Did you mean `{{'{ch}'}}` or `&{entity};`?"))
                 .with_label(span)
         }
-        Code::UnterminatedJsxTag => diag(sev, "Unterminated JSX tag").with_label(span),
-        Code::UnterminatedJsxContainer => {
+        DiagCode::UnterminatedJsxTag => diag(sev, "Unterminated JSX tag").with_label(span),
+        DiagCode::UnterminatedJsxContainer => {
             diag(sev, "Unterminated JSX expression container").with_label(span)
         }
-        Code::JsxClosingTagMismatch => diag(
+        DiagCode::JsxClosingTagMismatch => diag(
             sev,
             format!("Expected corresponding JSX closing tag, found `{}`", lexeme(source, d)),
         )
         .with_label(span),
-        Code::OracleDepthExceeded => diag(sev, "Nesting depth limit exceeded").with_label(span),
-        Code::AllocationLimitExceeded => diag(sev, "Source length exceeds 4 GiB limit"),
+        DiagCode::OracleDepthExceeded => diag(sev, "Nesting depth limit exceeded").with_label(span),
+        DiagCode::AllocationLimitExceeded => diag(sev, "Source length exceeds 4 GiB limit"),
 
         // `Ok` never appears in the buffer; unknown codes get a fallback.
-        Code::Ok => diag(sev, "Lexer error").with_label(span),
+        DiagCode::Ok => diag(sev, "Lexer error").with_label(span),
     }
 }
 
@@ -501,25 +503,38 @@ mod tests {
 
     #[test]
     fn numeric_diags_reproduce_parser_walk() {
-        use DiagCode as C;
         // (source, POD code, POD off, POD len, parser message, parser label)
         type Case = (&'static str, DiagCode, u32, u32, &'static str, (u32, u32));
         let cases: &[Case] = &[
-            ("x = 0b2;", C::InvalidNumericLiteral, 4, 2, "Invalid Character `2`", (6, 0)),
-            ("0b0_n;", C::InvalidNumericSeparator, 0, 5, "Invalid Character `n`", (4, 0)),
-            ("1__03;", C::InvalidNumericSeparator, 0, 5, "Invalid Character `_`", (2, 0)),
-            ("1_000_", C::InvalidNumericSeparator, 0, 6, "Unexpected end of file", (6, 0)),
-            ("0_0;", C::InvalidNumericSeparator, 0, 3, "Invalid characters after number", (1, 1)),
-            ("00n;", C::InvalidBigint, 0, 3, "Invalid characters after number", (2, 1)),
+            ("x = 0b2;", DiagCode::InvalidNumericLiteral, 4, 2, "Invalid Character `2`", (6, 0)),
+            ("0b0_n;", DiagCode::InvalidNumericSeparator, 0, 5, "Invalid Character `n`", (4, 0)),
+            ("1__03;", DiagCode::InvalidNumericSeparator, 0, 5, "Invalid Character `_`", (2, 0)),
+            ("1_000_", DiagCode::InvalidNumericSeparator, 0, 6, "Unexpected end of file", (6, 0)),
+            (
+                "0_0;",
+                DiagCode::InvalidNumericSeparator,
+                0,
+                3,
+                "Invalid characters after number",
+                (1, 1),
+            ),
+            ("00n;", DiagCode::InvalidBigint, 0, 3, "Invalid characters after number", (2, 1)),
             (
                 "10._e1;",
-                C::InvalidNumericSeparator,
+                DiagCode::InvalidNumericSeparator,
                 0,
                 6,
                 "Invalid characters after number",
                 (3, 2),
             ),
-            ("00e1;", C::InvalidNumericLiteral, 0, 4, "Invalid characters after number", (2, 1)),
+            (
+                "00e1;",
+                DiagCode::InvalidNumericLiteral,
+                0,
+                4,
+                "Invalid characters after number",
+                (2, 1),
+            ),
         ];
         for &(src, code, off, len, msg, lab) in cases {
             let g = to_oxc_diagnostic(&d(code, off, len), src);
