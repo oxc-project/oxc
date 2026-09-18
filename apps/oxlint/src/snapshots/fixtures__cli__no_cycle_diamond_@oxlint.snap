@@ -1,0 +1,89 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/no_cycle_diamond
+----------
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[a.ts:1:19]
+ 1 | import { b } from "./b";
+   :                   ^^^^^
+ 2 | import { c } from "./c";
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./b (fixtures/cli/no_cycle_diamond/b.ts)
+           │         ⬇ imports
+           │    ./d (fixtures/cli/no_cycle_diamond/d.ts)
+           │         ⬇ imports
+           │    ./a (fixtures/cli/no_cycle_diamond/a.ts)
+           ╰─────────╯ imports the current file
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[a.ts:2:19]
+ 1 | import { b } from "./b";
+ 2 | import { c } from "./c";
+   :                   ^^^^^
+ 3 | 
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./c (fixtures/cli/no_cycle_diamond/c.ts)
+           │         ⬇ imports
+           │    ./d (fixtures/cli/no_cycle_diamond/d.ts)
+           │         ⬇ imports
+           │    ./a (fixtures/cli/no_cycle_diamond/a.ts)
+           ╰─────────╯ imports the current file
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[b.ts:1:19]
+ 1 | import { d } from "./d";
+   :                   ^^^^^
+ 2 | 
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./d (fixtures/cli/no_cycle_diamond/d.ts)
+           │         ⬇ imports
+           │    ./a (fixtures/cli/no_cycle_diamond/a.ts)
+           │         ⬇ imports
+           │    ./b (fixtures/cli/no_cycle_diamond/b.ts)
+           ╰─────────╯ imports the current file
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[c.ts:1:19]
+ 1 | import { d } from "./d";
+   :                   ^^^^^
+ 2 | 
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./d (fixtures/cli/no_cycle_diamond/d.ts)
+           │         ⬇ imports
+           │    ./a (fixtures/cli/no_cycle_diamond/a.ts)
+           │         ⬇ imports
+           │    ./c (fixtures/cli/no_cycle_diamond/c.ts)
+           ╰─────────╯ imports the current file
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[d.ts:1:19]
+ 1 | import { a } from "./a";
+   :                   ^^^^^
+ 2 | 
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./a (fixtures/cli/no_cycle_diamond/a.ts)
+           │         ⬇ imports
+           │    ./b (fixtures/cli/no_cycle_diamond/b.ts)
+           │         ⬇ imports
+           │    ./d (fixtures/cli/no_cycle_diamond/d.ts)
+           ╰─────────╯ imports the current file
+
+Found 0 warnings and 5 errors.
+Finished in <variable>ms on 4 files with 60 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

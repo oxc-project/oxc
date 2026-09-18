@@ -1,0 +1,26 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/no_cycle_disabled_subdir
+----------
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[reported.ts:1:25]
+ 1 | import { relayed } from "./off-folder/relay";
+   :                         ^^^^^^^^^^^^^^^^^^^^
+ 2 | 
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./off-folder/relay (fixtures/cli/no_cycle_disabled_subdir/off-folder/relay.ts)
+           │         ⬇ imports
+           │    ../reported (fixtures/cli/no_cycle_disabled_subdir/reported.ts)
+           ╰─────────╯ imports the current file
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 4 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

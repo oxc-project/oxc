@@ -6,6 +6,7 @@ use std::{
     mem::take,
     path::{Path, PathBuf},
     sync::{Arc, Mutex, mpsc},
+    time::Instant,
 };
 
 use indexmap::IndexSet;
@@ -28,11 +29,13 @@ use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_str::CompactStr;
 
 use crate::{
-    Fixer, Linter, Message, PossibleFixes, RuleTimingStore,
-    context::{ContextSubHost, ContextSubHostOptions},
+    Fixer, Linter, Message, PossibleFixes, RuleTimingRecord, RuleTimingSource, RuleTimingStore,
+    context::{ContextSubHost, ContextSubHostOptions, ProjectLintContext, diagnostics_to_messages},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
+    rule::RuleRunFunctionsImplemented,
+    rules::RULES,
     suppression::DiffManager,
     utils::read_to_arena_str,
 };
@@ -612,6 +615,7 @@ impl Runtime {
     ) {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+        let source_text_before_fixes: Mutex<FxHashMap<PathBuf, String>> = Mutex::default();
 
         rayon::scope(|scope| {
             self.resolve_modules(
@@ -620,7 +624,7 @@ impl Runtime {
                 scope,
                 true,
                 Some(tx_error),
-                move |me, mut module_to_lint| {
+                |me, mut module_to_lint| {
                     module_to_lint.content.with_dependent_mut(|allocator_guard, dep| {
                         // If there are fixes, we will accumulate all of them and write to the file at the end.
                         // This means we do not write multiple times to the same file if there are multiple sources
@@ -698,6 +702,12 @@ impl Runtime {
                             )
                             .fix();
                             if fix_result.fixed {
+                                if me.path_has_project_rule(path) {
+                                    source_text_before_fixes
+                                        .lock()
+                                        .expect("source_text_before_fixes mutex poisoned")
+                                        .insert(path.to_path_buf(), dep.source_text.to_string());
+                                }
                                 // write to file, replacing only the changed part
                                 let start = 0;
                                 let end = start + dep.source_text.len();
@@ -743,6 +753,13 @@ impl Runtime {
                 },
             );
         });
+
+        self.send_project_rule_diagnostics(
+            &paths_set,
+            source_text_before_fixes.into_inner().expect("source_text_before_fixes mutex poisoned"),
+            tx_error,
+            rule_timing_store,
+        );
     }
 
     // language_server: the language server needs line and character position
@@ -759,6 +776,7 @@ impl Runtime {
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         let messages = Mutex::new(Vec::<Message>::new());
+        let linted_source_text: Mutex<FxHashMap<PathBuf, String>> = Mutex::default();
         rayon::scope(|scope| {
             self.resolve_modules(
                 file_system,
@@ -769,7 +787,7 @@ impl Runtime {
                 |me, mut module_to_lint| {
                     module_to_lint.content.with_dependent_mut(
                         |allocator_guard,
-                         ModuleContentDependent { source_text: _, section_contents }| {
+                         ModuleContentDependent { source_text, section_contents }| {
                             assert_eq!(
                                 module_to_lint.section_module_records.len(),
                                 section_contents.len()
@@ -827,6 +845,12 @@ impl Runtime {
                                     .expect("disable_directives_map mutex poisoned")
                                     .insert(path.to_path_buf(), disable_directives);
                             }
+                            if me.linter.options().with_ignore_fixes {
+                                linted_source_text
+                                    .lock()
+                                    .expect("linted_source_text mutex poisoned")
+                                    .insert(path.to_path_buf(), (*source_text).to_string());
+                            }
 
                             messages.lock().unwrap().extend(section_messages);
                         },
@@ -835,7 +859,11 @@ impl Runtime {
             );
         });
 
-        messages.into_inner().unwrap()
+        let mut messages = messages.into_inner().unwrap();
+        messages.extend(
+            self.project_rule_messages(&paths_set, &linted_source_text.into_inner().unwrap()),
+        );
+        messages
     }
 
     pub(super) fn collect_parse_diagnostics(
@@ -953,14 +981,30 @@ impl Runtime {
                             return;
                         }
 
-                        messages.lock().unwrap().extend(
-                            me.linter.run(Path::new(&module.path), context_sub_hosts, allocator_guard),
-                        );
+                        let path = Path::new(&module.path);
+                        let (section_messages, disable_directives) = me
+                            .linter
+                            .run_with_disable_directives::<false>(
+                                path,
+                                context_sub_hosts,
+                                allocator_guard,
+                                me.js_allocator_pool(),
+                                None,
+                            );
+                        if let Some(disable_directives) = disable_directives {
+                            me.disable_directives_map
+                                .lock()
+                                .expect("disable_directives_map mutex poisoned")
+                                .insert(path.to_path_buf(), disable_directives);
+                        }
+                        messages.lock().unwrap().extend(section_messages);
                     });
                 },
             );
         });
-        messages.into_inner().unwrap()
+        let mut messages = messages.into_inner().unwrap();
+        messages.extend(self.project_rule_messages(&paths_set, &FxHashMap::default()));
+        messages
     }
 
     fn process_path<'a>(
@@ -1084,6 +1128,7 @@ impl Runtime {
         for section_source in section_sources {
             match self.process_source_section(
                 path,
+                section_source.start,
                 allocator,
                 section_source.source_text,
                 section_source.source_type,
@@ -1128,6 +1173,7 @@ impl Runtime {
     fn process_source_section<'a>(
         &self,
         path: &Path,
+        source_text_offset: u32,
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
@@ -1159,7 +1205,8 @@ impl Runtime {
         let mut semantic = semantic_ret.semantic;
         semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
 
-        let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
+        let module_record =
+            Arc::new(ModuleRecord::new(path, source_text_offset, &ret.module_record, &semantic));
 
         let tokens = ret.tokens.into_boxed_slice();
 
@@ -1181,5 +1228,87 @@ impl Runtime {
                 .collect();
         }
         Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic, tokens))
+    }
+}
+
+// project rules
+impl Runtime {
+    fn send_project_rule_diagnostics(
+        &self,
+        paths_set: &IndexSet<Arc<OsStr>, FxBuildHasher>,
+        mut source_text_before_fixes: FxHashMap<PathBuf, String>,
+        tx_error: &DiagnosticSender,
+        rule_timing_store: Option<&RuleTimingStore>,
+    ) {
+        let diagnostics = self.run_project_rules(paths_set, rule_timing_store);
+
+        for (path, diagnostics) in diagnostics {
+            // files that are fixes are stored in memory. unfixed files are read from disk
+            let source_text = source_text_before_fixes
+                .remove(&path)
+                .unwrap_or_else(|| fs::read_to_string(&path).unwrap_or_default());
+
+            let wrapped =
+                DiagnosticService::wrap_diagnostics(&self.cwd, &path, &source_text, diagnostics);
+            tx_error.send(wrapped).expect("failed to send project rule diagnostics");
+        }
+    }
+
+    fn project_rule_messages(
+        &self,
+        paths_set: &IndexSet<Arc<OsStr>, FxBuildHasher>,
+        linted_source_text: &FxHashMap<PathBuf, String>,
+    ) -> Vec<Message> {
+        diagnostics_to_messages(
+            self.run_project_rules(paths_set, None),
+            self.linter.options().with_ignore_fixes,
+            linted_source_text,
+        )
+    }
+
+    fn path_has_project_rule(&self, path: &Path) -> bool {
+        self.linter
+            .config
+            .resolve(path)
+            .rules
+            .iter()
+            .any(|(rule, _)| rule.run_info() == RuleRunFunctionsImplemented::ProjectOnly)
+    }
+
+    fn run_project_rules(
+        &self,
+        paths_set: &IndexSet<Arc<OsStr>, FxBuildHasher>,
+        rule_timing_store: Option<&RuleTimingStore>,
+    ) -> FxHashMap<PathBuf, Vec<OxcDiagnostic>> {
+        let modules_guard = self.modules_by_path.pin();
+        let modules = modules_guard
+            .iter()
+            .map(|(path, records)| (Path::new(path.as_ref()), records.as_slice()))
+            .collect();
+        let project_ctx = ProjectLintContext::new(
+            &modules,
+            &self.disable_directives_map,
+            &self.linter.config,
+            paths_set,
+        );
+
+        let mut result: FxHashMap<PathBuf, Vec<OxcDiagnostic>> = FxHashMap::default();
+        for rule in RULES.iter() {
+            let start = Instant::now();
+            let Some(diagnostics) = rule.run_on_project(&project_ctx) else { continue };
+            if let Some(store) = rule_timing_store {
+                store.merge([RuleTimingRecord {
+                    source: RuleTimingSource::Native,
+                    plugin_name: rule.plugin_name().to_string(),
+                    rule_name: rule.name().to_string(),
+                    duration: start.elapsed(),
+                    calls: 1,
+                }]);
+            }
+            for (path, mut diags) in diagnostics {
+                result.entry(path).or_default().append(&mut diags);
+            }
+        }
+        result
     }
 }

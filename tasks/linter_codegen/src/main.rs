@@ -8,7 +8,7 @@ use crate::{
     member_expression_kinds::get_member_expression_kinds,
     node_type_set::NodeTypeSet,
     rules::{RuleEntry, find_rule_source_file, get_all_rules},
-    utils::{executable_stmts, find_impl_function, find_rule_impl_block},
+    utils::{executable_stmts, find_impl_function, find_rule_impl_block, implements_project_rule},
 };
 use rustc_hash::FxHashSet;
 use std::{
@@ -64,6 +64,7 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
         // Try to open the rule source file and use syn to detect node types
         let mut detected_types: NodeTypeSet = NodeTypeSet::new();
         let mut rule_run_info: FxHashSet<String> = FxHashSet::default();
+        let mut is_project_rule = false;
 
         if let Some(src_path) = find_rule_source_file(&root, rule)
             && let Ok(src_contents) = fs::read_to_string(&src_path)
@@ -74,6 +75,7 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
             }
 
             rule_run_info.extend(detect_rule_run_implementations(&file, rule));
+            is_project_rule = implements_project_rule(&file, &rule.rule_struct_name());
         }
 
         let node_types_init = if detected_types.is_empty() {
@@ -91,6 +93,8 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
                 }
                 _ => "RuleRunFunctionsImplemented::Unknown".to_string(),
             }
+        } else if rule_run_info.is_empty() && is_project_rule {
+            "RuleRunFunctionsImplemented::ProjectOnly".to_string()
         } else {
             "RuleRunFunctionsImplemented::Unknown".to_string()
         };
@@ -141,6 +145,7 @@ pub fn generate_rules_enum_file() -> io::Result<()> {
             find_impl_function(rule_impl, "from_configuration").is_some();
         rule.has_custom_to_configuration =
             find_impl_function(rule_impl, "to_configuration").is_some();
+        rule.is_project_rule = implements_project_rule(&file, &rule.rule_struct_name());
     }
 
     let out = rules_enum::generate_rules_enum(&rule_entries);
