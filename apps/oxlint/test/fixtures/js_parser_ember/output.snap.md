@@ -65,7 +65,7 @@
    `----
 
 Found 0 warnings and 7 errors.
-Finished in Xms on 7 files with 98 rules using X threads.
+Finished in Xms on 7 files with 99 rules using X threads.
 ```
 
 # stderr

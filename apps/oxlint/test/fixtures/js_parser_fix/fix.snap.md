@@ -32,7 +32,7 @@
   help: Consider removing this declaration.
 
 Found 3 warnings and 0 errors.
-Finished in Xms on 1 file with 96 rules using X threads.
+Finished in Xms on 1 file with 97 rules using X threads.
 ```
 
 # stderr

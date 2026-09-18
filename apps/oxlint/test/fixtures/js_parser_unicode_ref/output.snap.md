@@ -14,7 +14,7 @@
   help: Consider removing this declaration.
 
 Found 0 warnings and 1 error.
-Finished in Xms on 1 file with 95 rules using X threads.
+Finished in Xms on 1 file with 96 rules using X threads.
 ```
 
 # stderr

@@ -55,7 +55,7 @@
   help: Consider removing this declaration.
 
 Found 4 warnings and 2 errors.
-Finished in Xms on 1 file with 97 rules using X threads.
+Finished in Xms on 1 file with 98 rules using X threads.
 ```
 
 # stderr
