@@ -18,6 +18,9 @@ mod keywords;
 pub use keywords::KWB;
 use keywords::kw_flush;
 
+/// [`glue_number`] computes the kind as `NUM + is_bigint` - keep them adjacent.
+const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
+
 pub unsafe fn coalesce(
     t: &Tables,
     src: *const u8,

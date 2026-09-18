@@ -12,7 +12,7 @@ use crate::{
     lanes::Lanes,
     options::LexOptions,
     tables::Tables,
-    token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes, tk},
+    token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };
 
 mod bitmap;
@@ -31,9 +31,6 @@ use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, write_sentinels};
 use misc::{misc_post, misc_pre};
-
-// `glue_number` computes the kind as `NUM + is_bigint` — keep them adjacent.
-const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
 
 pub struct Lexer {
     word: Vec<u64>,
