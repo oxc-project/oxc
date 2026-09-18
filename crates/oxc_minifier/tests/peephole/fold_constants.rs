@@ -1682,6 +1682,57 @@ mod bigint {
         fold("({ ...{ __proto__() {} } })", "({ __proto__() {} })");
         fold("({ ...{ ['__proto__']: null } })", "({ ['__proto__']: null })");
     }
+
+    #[test]
+    fn test_fold_object_spread_preserves_super() {
+        fold_same(
+            "((inner, outer) => ({ __proto__: outer, ...{ __proto__: inner, method() { return super.x; } } }))",
+        );
+        for method in [
+            "method() { return super.x; }",
+            "method() { return super[key]; }",
+            "method() { super.x = value; }",
+            "method() { return () => super.x; }",
+            "method(value = super.x) { return value; }",
+            "async method() { return super.x; }",
+            "*method() { yield super.x; }",
+            "method() { return eval('super.x'); }",
+            "method() { return () => eval('super.x'); }",
+            "method() { return class extends super.x {}; }",
+            "method() { return { [super.x]() {} }; }",
+            "method() { return class { [super.x]() {} }; }",
+            "[key]() { return super.x; }",
+        ] {
+            fold_same(&format!("({{ __proto__: outer, ...{{ __proto__: null, {method} }} }})"));
+            // The outer object's prototype can differ even without an inner __proto__.
+            fold_same(&format!("({{ __proto__: outer, ...{{ {method} }} }})"));
+        }
+    }
+
+    #[test]
+    fn test_fold_object_spread_without_method_super() {
+        fold(
+            "({ ...{ __proto__: null, method() { return this.x; } } })",
+            "({ method() { return this.x; } })",
+        );
+        fold(
+            "({ ...{ method() { return { method() { return super.x; } }; } } })",
+            "({ method() { return { method() { return super.x; } }; } })",
+        );
+        fold(
+            "({ ...{ method() { return class { method() { return super.x; } }; } } })",
+            "({ method() { return class { method() { return super.x; } }; } })",
+        );
+        // A computed key is evaluated outside the moved method's environment.
+        fold(
+            "({ method() { return { ...{ [super.x]() {} } }; } })",
+            "({ method() { return { [super.x]() {} }; } })",
+        );
+        fold(
+            "({ method() { return { ...{ value: () => super.x } }; } })",
+            "({ method() { return { value: () => super.x }; } })",
+        );
+    }
 }
 
 /// Rotating `(k1 op x) op right` into `x op (k1 op right)` drops `k1` and

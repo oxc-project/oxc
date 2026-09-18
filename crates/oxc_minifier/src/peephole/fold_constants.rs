@@ -1,5 +1,6 @@
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{
     GlobalContext, ToJsString,
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
@@ -7,7 +8,10 @@ use oxc_ecmascript::{
     with_number_literal,
 };
 use oxc_span::{GetSpan, SPAN};
-use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
+use oxc_syntax::{
+    operator::{AssignmentOperator, BinaryOperator, LogicalOperator},
+    scope::ScopeFlags,
+};
 
 use crate::TraverseCtx;
 
@@ -943,6 +947,20 @@ impl<'a> PeepholeOptimizations {
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,
             ObjectPropertyKind::ObjectProperty(p) => {
+                if p.method
+                    && let Expression::FunctionExpression(function) = &p.value
+                {
+                    // Moving a method changes its [[HomeObject]]. Direct eval can also
+                    // access super, including through an arrow's lexical environment.
+                    if ctx.scoping().scope_flags(function.scope_id()).contains_direct_eval() {
+                        return false;
+                    }
+                    let mut finder = FindSuper::default();
+                    walk_js::walk_function(&mut finder, function, ScopeFlags::Function);
+                    if finder.found {
+                        return false;
+                    }
+                }
                 // getters are evaluated when spreading
                 matches!(p.kind, PropertyKind::Init)
                     && (
@@ -1027,6 +1045,27 @@ impl<'a> PeepholeOptimizations {
                 quasi.tail = true;
             }
         }
+    }
+}
+
+#[derive(Default)]
+struct FindSuper {
+    found: bool,
+}
+
+impl<'a> VisitJs<'a> for FindSuper {
+    fn visit_super(&mut self, _it: &Super) {
+        self.found = true;
+    }
+
+    fn visit_expression(&mut self, it: &Expression<'a>) {
+        if !self.found {
+            walk_js::walk_expression(self, it);
+        }
+    }
+
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
+        // Nested functions do not capture this method's super binding. Arrows do.
     }
 }
 
