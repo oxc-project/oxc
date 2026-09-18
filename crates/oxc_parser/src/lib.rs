@@ -89,7 +89,7 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    ast::{Expression, Program, Statement},
+    ast::{Expression, Program},
     builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_diagnostics::Diagnostics;
@@ -98,9 +98,7 @@ use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
-    config::{
-        LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
-    },
+    config::{NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig},
     context::{Context, StatementContext},
     diagnostics::ParserDiagnostic,
     error_handler::FatalError,
@@ -333,7 +331,8 @@ mod parser_parse {
     ///
     /// `ParserImpl::new`, `Lexer::new` and `lexer::Source::new` all require a `UniquePromise`
     /// to be provided to them. `UniquePromise::new` is not visible outside this module, so only
-    /// `Parser::parse` can create one, and it only calls `ParserImpl::new` once.
+    /// `Parser::parse` can create one. A module reparse constructs a second parser only
+    /// after the first parser (including its lexer and source) has been dropped.
     /// This enforces the invariant throughout the entire parser.
     ///
     /// `UniquePromise` is a zero-sized type and has no runtime cost. It's purely for the type-checker.
@@ -401,15 +400,13 @@ mod parser_parse {
             } else {
                 // User-defined `ParserConfig`. Generic codegen here, monomorphized per consuming crate.
                 // Users using custom configs would need to perform the monomorphization themselves.
-                ParserImpl::<C>::new(
+                parse_with_config(
                     self.allocator,
                     self.source_text,
                     self.source_type,
                     self.options,
-                    self.config,
-                    UniquePromise::new(),
+                    &self.config,
                 )
-                .parse()
             }
         }
 
@@ -465,7 +462,7 @@ mod parser_parse {
                     self.source_text,
                     self.source_type,
                     self.options,
-                    self.config,
+                    &self.config,
                     UniquePromise::new(),
                 )
                 .parse_expression()
@@ -507,15 +504,7 @@ mod parser_parse {
         source_type: SourceType,
         options: ParseOptions,
     ) -> ParserReturn<'a> {
-        ParserImpl::<NoTokensParserConfig>::new(
-            allocator,
-            source_text,
-            source_type,
-            options,
-            NoTokensParserConfig,
-            UniquePromise::new(),
-        )
-        .parse()
+        parse_with_config(allocator, source_text, source_type, options, &NoTokensParserConfig)
     }
 
     #[inline(never)]
@@ -525,15 +514,7 @@ mod parser_parse {
         source_type: SourceType,
         options: ParseOptions,
     ) -> ParserReturn<'a> {
-        ParserImpl::<TokensParserConfig>::new(
-            allocator,
-            source_text,
-            source_type,
-            options,
-            TokensParserConfig,
-            UniquePromise::new(),
-        )
-        .parse()
+        parse_with_config(allocator, source_text, source_type, options, &TokensParserConfig)
     }
 
     #[inline(never)]
@@ -544,7 +525,20 @@ mod parser_parse {
         options: ParseOptions,
         config: RuntimeParserConfig,
     ) -> ParserReturn<'a> {
-        ParserImpl::<RuntimeParserConfig>::new(
+        parse_with_config(allocator, source_text, source_type, options, &config)
+    }
+
+    // Keep the config outside ParserImpl so a retry preserves custom configurations without
+    // requiring them to implement Clone. ParserImpl::parse consumes and drops the first parser
+    // before we create another UniquePromise.
+    fn parse_with_config<'a, C: ParserConfig>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        config: &C,
+    ) -> ParserReturn<'a> {
+        if let Some(result) = ParserImpl::<C>::new(
             allocator,
             source_text,
             source_type,
@@ -553,6 +547,20 @@ mod parser_parse {
             UniquePromise::new(),
         )
         .parse()
+        {
+            return result;
+        }
+
+        ParserImpl::<C>::new(
+            allocator,
+            source_text,
+            source_type.with_module(true),
+            options,
+            config,
+            UniquePromise::new(),
+        )
+        .parse()
+        .expect("An explicit module parse cannot request reparsing")
     }
 
     #[inline(never)]
@@ -567,7 +575,7 @@ mod parser_parse {
             source_text,
             source_type,
             options,
-            NoTokensParserConfig,
+            &NoTokensParserConfig,
             UniquePromise::new(),
         )
         .parse_expression()
@@ -585,7 +593,7 @@ mod parser_parse {
             source_text,
             source_type,
             options,
-            TokensParserConfig,
+            &TokensParserConfig,
             UniquePromise::new(),
         )
         .parse_expression()
@@ -604,7 +612,7 @@ mod parser_parse {
             source_text,
             source_type,
             options,
-            config,
+            &config,
             UniquePromise::new(),
         )
         .parse_expression()
@@ -669,13 +677,12 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
     /// on a single thread at one time.
     #[inline]
-    #[expect(clippy::needless_pass_by_value)]
     pub fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
-        config: C,
+        config: &C,
         unique: UniquePromise,
     ) -> Self {
         Self {
@@ -700,9 +707,22 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     ///
     /// Returns an empty `Program` on unrecoverable error,
     /// Recoverable errors are stored inside `errors`.
+    /// Returns `None` when unambiguous parsing must restart with the Module goal.
     #[inline]
-    pub fn parse(mut self) -> ParserReturn<'a> {
+    pub fn parse(mut self) -> Option<ParserReturn<'a>> {
         let mut program = self.parse_program();
+
+        // Changing `await` from an identifier to a keyword can change tokenization beyond
+        // the original statement. Restart with a fresh lexer and parser so no statements,
+        // comments, diagnostics, or module records from the first parse survive.
+        // Preserve an initial fatal error instead of retrying past it.
+        if self.fatal_error.is_none()
+            && self.source_type.is_unambiguous()
+            && self.module_record_builder.has_module_syntax()
+            && self.state.needs_await_reparse
+        {
+            return None;
+        }
         let mut has_fatal_error = false;
 
         if let Some(fatal_error) = self.fatal_error.take() {
@@ -778,7 +798,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         program.comments = self.lexer.trivia_builder.comments;
 
-        ParserReturn {
+        Some(ParserReturn {
             program,
             module_record,
             diagnostics: errors,
@@ -786,7 +806,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             tokens,
             fatal_error: has_fatal_error,
             is_flow_language,
-        }
+        })
     }
 
     pub fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
@@ -821,21 +841,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         let hashbang = self.parse_hashbang();
         self.ctx |= Context::TopLevel;
-        let (directives, mut statements) =
+        let (directives, statements) =
             self.parse_directives_and_statements(/* in_ts_namespace_body */ false);
-
-        // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
-        // we need to reparse statements that were originally parsed with `await` as identifier.
-        // TypeScript's behavior: initially parse `await /x/` as division, then reparse as
-        // await expression with regex when ESM is detected.
-        // Preserve a fatal error from the initial parse instead of rewinding past it.
-        if self.fatal_error.is_none()
-            && self.source_type.is_unambiguous()
-            && self.module_record_builder.has_module_syntax()
-            && !self.state.potential_await_reparse.is_empty()
-        {
-            self.reparse_potential_top_level_awaits(&mut statements);
-        }
 
         let span = Span::new(0, self.source_text.len() as u32);
         Program::new(
@@ -849,107 +856,6 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             statements,
             self,
         )
-    }
-
-    /// Reparse statements that may contain top-level await expressions.
-    ///
-    /// In unambiguous mode, statements like `await /x/u` are initially parsed as
-    /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
-    /// we need to reparse them with the await context enabled.
-    fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
-        let original_tokens =
-            if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
-        let original = original_tokens.as_ref().map_or(&[][..], |tokens| tokens.as_slice());
-        let mut original_index = 0;
-        let mut replacements = ArenaVec::new_in(self);
-
-        let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
-        // Ranges refer to the original tokens and to the flat replacement buffer
-        let mut edits = ArenaVec::with_capacity_in(
-            if self.lexer.config.tokens() { checkpoints.len() } else { 0 },
-            self,
-        );
-        for (stmt_index, checkpoint) in checkpoints {
-            self.rewind(checkpoint);
-            let replacement_start = replacements.len();
-
-            if self.lexer.config.tokens() {
-                original_index += original[original_index..]
-                    .iter()
-                    .position(|token| token.start() >= self.token.start())
-                    .unwrap_or(original.len() - original_index);
-                // The checkpoint's current token has already been lexed
-                replacements.push(self.token);
-                self.lexer.set_tokens(std::mem::replace(&mut replacements, ArenaVec::new_in(self)));
-            }
-            let edit_start = original_index;
-
-            // Parse the statement with await context enabled (TopLevel context is already set)
-            let stmt = self.context_add(Context::Await, |p| {
-                p.parse_statement_list_item(StatementContext::StatementList)
-            });
-
-            // Replace the statement if the index is valid
-            if stmt_index < statements.len() {
-                statements[stmt_index] = stmt;
-            }
-
-            if self.lexer.config.tokens() {
-                replacements = self.lexer.take_tokens();
-                // Exclude the next statement's token (or EOF)
-                replacements.pop();
-                // An earlier reparse can consume a later candidate, as in `await\nawait /x/u`.
-                // Record overlapping source ranges only once.
-                let end = replacements[..replacement_start].last().map_or(0, Token::end);
-                let overlap_len =
-                    replacements[replacement_start..].partition_point(|token| token.start() < end);
-                if overlap_len != 0 {
-                    replacements.copy_within(replacement_start + overlap_len.., replacement_start);
-                    let len = replacements.len() - overlap_len;
-                    replacements.truncate(len);
-                }
-                original_index += original[original_index..]
-                    .iter()
-                    .position(|token| token.start() >= self.token.start())
-                    .unwrap_or(original.len() - original_index);
-                edits.push((edit_start..original_index, replacement_start..replacements.len()));
-            }
-        }
-
-        if let Some(mut tokens) = original_tokens {
-            let mut read = 0;
-            if edits.iter().all(|(range, replacement)| replacement.len() <= range.len()) {
-                // Compact in place. Original indices remain valid because the write cursor
-                // never overtakes the read cursor.
-                let mut write = 0;
-                for (range, replacement) in edits {
-                    tokens.copy_within(read..range.start, write);
-                    write += range.start - read;
-                    let replacement = &replacements[replacement];
-                    tokens[write..write + replacement.len()].copy_from_slice(replacement);
-                    write += replacement.len();
-                    read = range.end;
-                }
-                let tail_len = tokens.len() - read;
-                tokens.copy_within(read.., write);
-                tokens.truncate(write + tail_len);
-                self.lexer.set_tokens(tokens);
-            } else {
-                // A growing replacement could overwrite unread tokens.
-                // Use a separate output buffer, still applying all edits in one forward pass.
-                let len = edits.iter().fold(tokens.len(), |len, (range, replacement)| {
-                    len - range.len() + replacement.len()
-                });
-                let mut output = ArenaVec::with_capacity_in(len, self);
-                for (range, replacement) in edits {
-                    output.extend_from_slice(&tokens[read..range.start]);
-                    output.extend_from_slice(&replacements[replacement]);
-                    read = range.end;
-                }
-                output.extend_from_slice(&tokens[read..]);
-                self.lexer.set_tokens(output);
-            }
-        }
     }
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
@@ -1394,8 +1300,9 @@ mod test {
     }
 
     #[test]
-    fn tokens_after_unambiguous_await_reparse() {
+    fn output_after_unambiguous_await_reparse() {
         for source in [
+            "await /a(); b(); c(); d(); e(); f()/g; export {}",
             "await /x/u; export {};",
             // Reparsing merges `/a/`, but splits `/b/g`, increasing the token count.
             "await /a/ /b/g; export {};",
@@ -1410,16 +1317,110 @@ mod test {
             "await /x/u, import.meta;",
             "#!/usr/bin/env node\n'use strict';\nawait /* regexp */ /x/u; export {};",
             "export {}; await /x/u;",
+            "await /a(); b(); c()/g; after(); export {}; tail();",
+            "await /a(); b()/g; await /c(); d()/g; export {};",
+            "await /* before */ /a(); b()/g; /* after */ export {};",
+            "await /x/u; import value from 'mod'; export { value }; import('dynamic');",
+            "await /x/u; export default 1; export default 2;",
+            "await /x/u; const value = (1); return value; export {};",
+            "await /x/u;\u{a0}export {};",
         ] {
+            assert_reparse_matches_module(source, || NoTokensParserConfig);
+            assert_reparse_matches_module(source, || TokensParserConfig);
+            for tokens in [false, true] {
+                assert_reparse_matches_module(source, || RuntimeParserConfig::new(tokens));
+            }
+        }
+    }
+
+    fn assert_reparse_matches_module<C: ParserConfig>(source: &str, make_config: impl Fn() -> C) {
+        for typescript in [false, true] {
             let allocator = Allocator::default();
-            let parse = |source_type| {
-                Parser::new(&allocator, source, source_type)
-                    .with_config(config::TokensParserConfig)
+            let parse = |source_type: SourceType| {
+                Parser::new(&allocator, source, source_type.with_typescript(typescript))
+                    .with_config(make_config())
+                    .with_options(ParseOptions {
+                        preserve_parens: false,
+                        allow_return_outside_function: true,
+                        ..ParseOptions::default()
+                    })
                     .parse()
             };
             let unambiguous = parse(SourceType::unambiguous());
             let module = parse(SourceType::mjs());
+            assert_eq!(unambiguous.fatal_error, module.fatal_error, "{source}");
             assert_eq!(unambiguous.tokens.as_slice(), module.tokens.as_slice(), "{source}");
+            assert_eq!(
+                unambiguous.program.to_pretty_estree_json(typescript, false),
+                module.program.to_pretty_estree_json(typescript, false),
+                "{source}"
+            );
+            assert_eq!(unambiguous.program.comments, module.program.comments, "{source}");
+            assert_eq!(unambiguous.irregular_whitespaces, module.irregular_whitespaces, "{source}");
+            assert_eq!(
+                format!("{:?}", unambiguous.module_record),
+                format!("{:?}", module.module_record),
+                "{source}"
+            );
+            assert_eq!(unambiguous.diagnostics, module.diagnostics, "{source}");
+        }
+    }
+
+    #[test]
+    fn unambiguous_await_reparse_preserves_custom_config() {
+        // Deliberately neither Copy nor Clone, with a default different from the tested value.
+        #[derive(Default)]
+        struct CustomConfig(bool);
+
+        impl ParserConfig for CustomConfig {
+            type LexerConfig = config::RuntimeLexerConfig;
+
+            fn lexer_config(&self) -> Self::LexerConfig {
+                config::RuntimeLexerConfig::new(self.0)
+            }
+        }
+
+        let source = "await /a(); b(); c()/g; export {};";
+        assert_reparse_matches_module(source, || CustomConfig(true));
+        let allocator = Allocator::default();
+        let result = Parser::new(&allocator, source, SourceType::unambiguous())
+            .with_config(CustomConfig(true))
+            .parse();
+        assert!(!result.tokens.is_empty());
+        assert_eq!(result.program.body.len(), 2);
+    }
+
+    #[test]
+    fn unambiguous_await_keeps_script_goal() {
+        let allocator = Allocator::default();
+        let source = "await /a(); b(); c()/g;";
+        let result = Parser::new(&allocator, source, SourceType::unambiguous()).parse();
+        let script = Parser::new(&allocator, source, SourceType::script()).parse();
+        assert!(result.program.source_type.is_script());
+        assert!(!result.fatal_error);
+        assert!(result.diagnostics.is_empty());
+        assert_eq!(result.program.body.len(), 3);
+        assert_eq!(
+            result.program.to_pretty_estree_json(false, false),
+            script.program.to_pretty_estree_json(false, false)
+        );
+    }
+
+    #[test]
+    fn unambiguous_await_preserves_initial_fatal_error() {
+        let allocator = Allocator::default();
+        for source in [
+            "await /x/u; export {}; const = 1;",
+            // This fails before module detection; do not broaden the retry to initial fatal errors.
+            "await { then() {} }; await getPromise; export {};",
+        ] {
+            let result = Parser::new(&allocator, source, SourceType::unambiguous())
+                .with_config(TokensParserConfig)
+                .parse();
+            assert!(result.fatal_error, "{source}");
+            assert!(!result.diagnostics.is_empty(), "{source}");
+            assert!(result.program.body.is_empty(), "{source}");
+            assert!(result.tokens.is_empty(), "{source}");
         }
     }
 

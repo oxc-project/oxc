@@ -3,8 +3,6 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_ast::ast::AssignmentExpression;
 use oxc_span::Span;
 
-use crate::cursor::ParserCheckpoint;
-
 pub struct ParserState<'a> {
     pub not_parenthesized_arrow: FxHashSet<u32>,
 
@@ -17,17 +15,12 @@ pub struct ParserState<'a> {
     /// Keyed by the expression start and consumed when checked.
     pub trailing_commas: FxHashMap<u32, Span>,
 
-    /// Statements that may need reparsing when `sourceType` is `unambiguous`.
-    ///
-    /// In unambiguous mode, we initially parse top-level `await ...` as
-    /// `await(...)` (identifier/function call). But if ESM syntax is detected
-    /// later, we need to reparse these as await expressions.
-    ///
-    /// Each entry contains: (statement_index, checkpoint_before_statement)
-    pub potential_await_reparse: Vec<(usize, ParserCheckpoint<'a>)>,
+    /// Whether a statement parsed before module syntax contained an `await` identifier.
+    /// If the file resolves to a module, parse it again with the await context enabled.
+    pub needs_await_reparse: bool,
 
     /// Flag to track if an `await` identifier was encountered during statement parsing.
-    /// Used to determine if a statement needs to be stored for potential reparsing
+    /// Used to determine if the program needs reparsing
     /// in unambiguous mode.
     pub encountered_await_identifier: bool,
 }
@@ -38,7 +31,7 @@ impl ParserState<'_> {
             not_parenthesized_arrow: FxHashSet::default(),
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
-            potential_await_reparse: Vec::new(),
+            needs_await_reparse: false,
             encountered_await_identifier: false,
         }
     }

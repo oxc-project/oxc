@@ -54,30 +54,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             // Commit once module syntax is detected (`export` commits eagerly in
             // `parse_export_declaration`; `has_module_syntax()` excludes TS's
-            // script-compatible `import x = ns.foo`). Until committed, checkpoint each
-            // statement so an `await` identifier in it can be reparsed.
-            let checkpoint = if track_await_reparse && !self.ctx.has_await() {
+            // script-compatible `import x = ns.foo`). Until committed, track statements
+            // containing an `await` identifier so the program can be reparsed.
+            let track_statement = if track_await_reparse && !self.ctx.has_await() {
                 if self.module_record_builder.has_module_syntax() {
                     self.ctx = self.ctx.and_await(true);
-                    None
+                    false
                 } else {
                     self.state.encountered_await_identifier = false;
-                    Some((statements.len(), self.checkpoint()))
+                    true
                 }
             } else {
-                None
+                false
             };
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
 
-            // Don't reparse a module declaration: `export` already committed to the
-            // Module goal while parsing, so reparsing would record the export twice.
+            // A module declaration already committed to the Module goal while parsing,
+            // so it does not require another parse.
             // e.g. `@foo export default class C { x = await + 1 }`
-            if let Some((stmt_index, checkpoint)) = checkpoint
+            if track_statement
                 && self.state.encountered_await_identifier
                 && !stmt.is_module_declaration()
             {
-                self.state.potential_await_reparse.push((stmt_index, checkpoint));
+                self.state.needs_await_reparse = true;
             }
 
             // Section 11.2.1 Directive Prologue

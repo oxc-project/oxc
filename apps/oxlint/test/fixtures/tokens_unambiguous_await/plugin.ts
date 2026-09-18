@@ -12,6 +12,13 @@ const plugin: Plugin = {
             // The .js file reparses two script statements as nested awaits.
             // The .mjs control parses the same source directly as a module.
             const { sourceCode } = context;
+            assert.deepEqual(
+              node.body.map(({ type, range }) => [type, range]),
+              [
+                ["ExpressionStatement", [0, 17]],
+                ["ExportNamedDeclaration", [18, 28]],
+              ],
+            );
             const expected = [
               ["Identifier", "await", [0, 5]],
               ["Identifier", "await", [6, 11]],
