@@ -9,7 +9,7 @@ macro_rules! define_token_kind {
         ///
         /// The discriminants are load-bearing: `[32, 128)` is reserved for
         /// punctuators and `>= 128` for keywords, so the pipeline can classify
-        /// with range checks and SIMD compares. They are *not* dense â€” the
+        /// with range checks and SIMD compares. They are *not* dense - the
         /// pipeline computes kinds arithmetically and blends them in SIMD
         /// registers, so it works on the raw `u8` and only the crate boundary
         /// is typed.
