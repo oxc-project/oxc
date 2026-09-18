@@ -106,7 +106,7 @@ impl ServerLinterBuilder {
             }
         }
 
-        let config_path = options.config_path.as_ref().filter(|p| !p.is_empty()).map(PathBuf::from);
+        let config_path = options.config_path.as_ref().map(PathBuf::from);
         let loader = ConfigLoader::new(
             external_linter,
             &mut external_plugin_store,
@@ -481,13 +481,12 @@ impl Tool for ServerLinter {
                 LSPLintOptions::default()
             }
         };
-        let mut watchers = match options.config_path.as_deref() {
-            Some("") | None => {
-                // Watch subdirectories too only when nested config discovery is on.
-                let prefix = if options.use_nested_configs() { "**/" } else { "" };
-                config_file_names().into_iter().map(|name| format!("{prefix}{name}")).collect()
-            }
-            Some(v) => vec![normalize_user_config_path_to_watch_pattern(v)],
+        let mut watchers = if let Some(config_path) = options.config_path.as_deref() {
+            vec![normalize_user_config_path_to_watch_pattern(config_path)]
+        } else {
+            // Watch subdirectories too only when nested config discovery is on.
+            let prefix = if options.use_nested_configs() { "**/" } else { "" };
+            config_file_names().into_iter().map(|name| format!("{prefix}{name}")).collect()
         };
 
         for path in &self.extended_paths {
@@ -981,23 +980,6 @@ mod test_watchers {
         fn test_default_options() {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
-
-            assert_eq!(patterns.len(), 4);
-            assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
-            assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
-        }
-
-        #[test]
-        fn test_empty_string_config_path() {
-            let patterns = Tester::new(
-                "fixtures/lsp/watchers/default",
-                json!({
-                    "configPath": ""
-                }),
-            )
-            .get_watcher_patterns();
 
             assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());

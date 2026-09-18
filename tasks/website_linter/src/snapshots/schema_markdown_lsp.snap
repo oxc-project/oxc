@@ -55,6 +55,7 @@ type: `string`
 
 Path to the config file. Similar to `--config` CLI option.
 If set, it disables searching for config files.
+An empty string is treated as unset.
 
 
 ## disableNestedConfig
@@ -114,6 +115,7 @@ type: `string`
 
 Path to the tsconfig file. Similar to `--tsconfig` CLI option.
 If set, it disables auto discovery for tsconfig files.
+An empty string is treated as unset.
 
 
 ## typeAware
