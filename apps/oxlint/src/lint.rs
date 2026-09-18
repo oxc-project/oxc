@@ -1627,6 +1627,13 @@ mod test {
     }
 
     #[test]
+    fn test_categories_with_override_only_plugins() {
+        Tester::new()
+            .with_cwd("fixtures/cli/issue_19779".into())
+            .test_and_snapshot(&["-c", ".oxlintrc.json"]);
+    }
+
+    #[test]
     fn test_jsx_a11y_label_has_associated_control() {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/cli/issue_11644".into()).test_and_snapshot(args);

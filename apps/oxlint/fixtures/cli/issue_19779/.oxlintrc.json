@@ -1,0 +1,14 @@
+{
+  "plugins": [],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "style": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts"],
+      "plugins": ["vitest"]
+    }
+  ]
+}
