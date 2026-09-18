@@ -1,8 +1,8 @@
-commit: 419d3e0a
+commit: 35d56660
 
 parser_test262 Summary:
-AST Parsed     : 47440/47440 (100.00%)
-Positive Passed: 47440/47440 (100.00%)
+AST Parsed     : 47445/47445 (100.00%)
+Positive Passed: 47445/47445 (100.00%)
 Negative Passed: 4653/4653 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated

@@ -1,8 +1,8 @@
-commit: 419d3e0a
+commit: 35d56660
 
 semantic_test262 Summary:
-AST Parsed     : 47440/47440 (100.00%)
-Positive Passed: 47322/47440 (99.75%)
+AST Parsed     : 47445/47445 (100.00%)
+Positive Passed: 47327/47445 (99.75%)
 semantic Error: tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-computed-property-name-from-arrow-function-expression.js
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)

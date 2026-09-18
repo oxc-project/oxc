@@ -1,8 +1,8 @@
-commit: f3b04fe0
+commit: c975de50
 
 semantic_typescript Summary:
-AST Parsed     : 5567/5567 (100.00%)
-Positive Passed: 4072/5567 (73.15%)
+AST Parsed     : 5575/5575 (100.00%)
+Positive Passed: 4073/5575 (73.06%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -1732,6 +1732,150 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["c"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/comparisonAnonymousMappedTypes.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["homomorphic", "homomorphicValues", "mapped", "mappedValues", "object", "objectValues", "reversedHomomorphicValues", "reversedMappedValues"]
+rebuilt        : ScopeId(0): ["homomorphicValues", "mappedValues", "objectValues", "reversedHomomorphicValues", "reversedMappedValues"]
+Reference symbol mismatch for "mapped":
+after transform: SymbolId(0) "mapped"
+rebuilt        : <None>
+Reference symbol mismatch for "mapped":
+after transform: SymbolId(0) "mapped"
+rebuilt        : <None>
+Reference symbol mismatch for "mapped":
+after transform: SymbolId(0) "mapped"
+rebuilt        : <None>
+Reference symbol mismatch for "object":
+after transform: SymbolId(3) "object"
+rebuilt        : <None>
+Reference symbol mismatch for "object":
+after transform: SymbolId(3) "object"
+rebuilt        : <None>
+Reference symbol mismatch for "object":
+after transform: SymbolId(3) "object"
+rebuilt        : <None>
+Reference symbol mismatch for "mapped":
+after transform: SymbolId(0) "mapped"
+rebuilt        : <None>
+Reference symbol mismatch for "mapped":
+after transform: SymbolId(0) "mapped"
+rebuilt        : <None>
+Reference symbol mismatch for "mapped":
+after transform: SymbolId(0) "mapped"
+rebuilt        : <None>
+Reference symbol mismatch for "homomorphic":
+after transform: SymbolId(5) "homomorphic"
+rebuilt        : <None>
+Reference symbol mismatch for "homomorphic":
+after transform: SymbolId(5) "homomorphic"
+rebuilt        : <None>
+Reference symbol mismatch for "homomorphic":
+after transform: SymbolId(5) "homomorphic"
+rebuilt        : <None>
+Reference symbol mismatch for "homomorphic":
+after transform: SymbolId(5) "homomorphic"
+rebuilt        : <None>
+Reference symbol mismatch for "homomorphic":
+after transform: SymbolId(5) "homomorphic"
+rebuilt        : <None>
+Reference symbol mismatch for "homomorphic":
+after transform: SymbolId(5) "homomorphic"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["homomorphic", "mapped", "object"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/comparisonReverseMappedTypes.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["booleans", "identity", "nested", "numbers", "reversed", "sameSource", "strings", "unbox", "values"]
+rebuilt        : ScopeId(0): ["reversed", "sameSource", "values"]
+Reference symbol mismatch for "unbox":
+after transform: SymbolId(0) "unbox"
+rebuilt        : <None>
+Reference symbol mismatch for "numbers":
+after transform: SymbolId(5) "numbers"
+rebuilt        : <None>
+Reference symbol mismatch for "unbox":
+after transform: SymbolId(0) "unbox"
+rebuilt        : <None>
+Reference symbol mismatch for "strings":
+after transform: SymbolId(4) "strings"
+rebuilt        : <None>
+Reference symbol mismatch for "unbox":
+after transform: SymbolId(0) "unbox"
+rebuilt        : <None>
+Reference symbol mismatch for "booleans":
+after transform: SymbolId(6) "booleans"
+rebuilt        : <None>
+Reference symbol mismatch for "unbox":
+after transform: SymbolId(0) "unbox"
+rebuilt        : <None>
+Reference symbol mismatch for "booleans":
+after transform: SymbolId(6) "booleans"
+rebuilt        : <None>
+Reference symbol mismatch for "unbox":
+after transform: SymbolId(0) "unbox"
+rebuilt        : <None>
+Reference symbol mismatch for "strings":
+after transform: SymbolId(4) "strings"
+rebuilt        : <None>
+Reference symbol mismatch for "unbox":
+after transform: SymbolId(0) "unbox"
+rebuilt        : <None>
+Reference symbol mismatch for "numbers":
+after transform: SymbolId(5) "numbers"
+rebuilt        : <None>
+Reference symbol mismatch for "identity":
+after transform: SymbolId(9) "identity"
+rebuilt        : <None>
+Reference symbol mismatch for "nested":
+after transform: SymbolId(13) "nested"
+rebuilt        : <None>
+Reference symbol mismatch for "unbox":
+after transform: SymbolId(0) "unbox"
+rebuilt        : <None>
+Reference symbol mismatch for "nested":
+after transform: SymbolId(13) "nested"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["booleans", "identity", "nested", "numbers", "strings", "unbox"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/comparisonSameNamedAliases.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["A", "B", "a", "b", "c", "reversed", "shuffled", "values"]
+rebuilt        : ScopeId(0): ["reversed", "shuffled", "values"]
+Reference symbol mismatch for "a":
+after transform: SymbolId(9) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(10) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(11) "c"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(11) "c"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(10) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(9) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(10) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(9) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(11) "c"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["a", "b", "c"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/complexNarrowingWithAny.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -8765,6 +8909,41 @@ Bindings mismatch:
 after transform: ScopeId(0): ["a1", "a10", "a11", "a12", "a13", "a14", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "f1", "f10", "f11", "f12", "f13", "f14", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "x1", "x10", "x11", "x12", "x13", "x14", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9"]
 rebuilt        : ScopeId(0): ["a1", "a10", "a11", "a12", "a13", "a14", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9"]
 
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/isolatedModulesMergedImportAlias.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["a", "b", "c", "d", "e"]
+rebuilt        : ScopeId(0): ["a", "d"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_a"]
+rebuilt        : ScopeId(1): ["A", "_a"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_d"]
+rebuilt        : ScopeId(2): ["A", "_d"]
+Symbol reference IDs mismatch for "a":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(6), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4)]
+Symbol flags mismatch for "A":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | TypeAlias)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol redeclarations mismatch for "A":
+after transform: SymbolId(1): [Span { start: 32, end: 33 }, Span { start: 57, end: 58 }]
+rebuilt        : SymbolId(2): []
+Symbol reference IDs mismatch for "d":
+after transform: SymbolId(7): [ReferenceId(3), ReferenceId(10), ReferenceId(11)]
+rebuilt        : SymbolId(3): [ReferenceId(8), ReferenceId(9)]
+Symbol flags mismatch for "A":
+after transform: SymbolId(8): SymbolFlags(FunctionScopedVariable | TypeAlias)
+rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
+Symbol redeclarations mismatch for "A":
+after transform: SymbolId(8): [Span { start: 194, end: 195 }, Span { start: 219, end: 220 }]
+rebuilt        : SymbolId(5): []
+Reference symbol mismatch for "c":
+after transform: SymbolId(4) "c"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["x"]
+rebuilt        : ["c", "x"]
+
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/isolatedModulesPlainFile-CommonJS.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["run"]
@@ -12261,6 +12440,35 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["opt1", "opt2", "opt3"]
 
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/recursiveTypeInference.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Activity", "Node1", "NodeArray", "Post", "User", "_c", "_u", "array", "nullable", "object", "optional", "string", "z"]
+rebuilt        : ScopeId(0): ["Activity", "Category", "Node1", "NodeArray", "Post", "User", "_c", "_u", "z"]
+Symbol flags mismatch for "Category":
+after transform: SymbolId(58): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol redeclarations mismatch for "Category":
+after transform: SymbolId(58): [Span { start: 3469, end: 3477 }, Span { start: 3579, end: 3587 }]
+rebuilt        : SymbolId(1): []
+Reference symbol mismatch for "string":
+after transform: SymbolId(14) "string"
+rebuilt        : <None>
+Reference symbol mismatch for "array":
+after transform: SymbolId(19) "array"
+rebuilt        : <None>
+Reference symbol mismatch for "object":
+after transform: SymbolId(54) "object"
+rebuilt        : <None>
+Reference symbol mismatch for "optional":
+after transform: SymbolId(26) "optional"
+rebuilt        : <None>
+Reference symbol mismatch for "nullable":
+after transform: SymbolId(33) "nullable"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["array", "nullable", "object", "optional", "string"]
+
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reexportNameAliasedAndHoisted.ts
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -12544,6 +12752,17 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["create", "test1", "test2", "test4"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reverseMappedTypeConditionalTemplateInference.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["createSchema", "refined", "schema"]
+rebuilt        : ScopeId(0): ["refined", "schema"]
+Reference symbol mismatch for "createSchema":
+after transform: SymbolId(0) "createSchema"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["createSchema"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reverseMappedTypeContextualTypesPerElementOfTupleConstraint.ts
 Bindings mismatch:
@@ -16868,6 +17087,11 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["Mixed1", "Mixed2", "Mixed3", "Mixed4", "Mixed5"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/mixinWithBaseDependingOnSelfNoCrash1.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["BaseItem", "ClientDocumentMixin", "Document", "Item"]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty5.ts
 Bindings mismatch:

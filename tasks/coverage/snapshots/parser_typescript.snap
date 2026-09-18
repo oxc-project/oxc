@@ -1,9 +1,9 @@
-commit: f3b04fe0
+commit: c975de50
 
 parser_typescript Summary:
-AST Parsed     : 9649/9657 (99.92%)
-Positive Passed: 9642/9657 (99.84%)
-Negative Passed: 1686/2758 (61.13%)
+AST Parsed     : 9658/9666 (99.92%)
+Positive Passed: 9651/9666 (99.84%)
+Negative Passed: 1687/2759 (61.15%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -6168,6 +6168,21 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                 ─────────────────────────────────
  47 │ }
     ╰────
+
+  × TS(1070): 'private' modifier cannot appear on a type member.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateMethodSignatures.ts:1:18]
+ 1 │ interface A<T> { private a(): boolean {} }
+   ·                  ───────
+ 2 │ 
+   ╰────
+  help: Only 'readonly' modifier is allowed here.
+
+  × Unexpected token
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateMethodSignatures.ts:1:39]
+ 1 │ interface A<T> { private a(): boolean {} }
+   ·                                       ─
+ 2 │ 
+   ╰────
 
   × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitSetAccessorNoParameter.ts:2:10]
