@@ -119,6 +119,19 @@ fn test_with_options_source_type(
 }
 
 #[test]
+fn preserves_indirect_eval() {
+    test(
+        "export function f(script) { const alias = eval; return alias(script); }",
+        "export function f(script) { return (0, eval)(script); }",
+    );
+    test_source_type(
+        "function f(eval, script, x) { const alias = eval; return [x, alias(script)]; }",
+        "function f(eval, script, x) { return [x, (0, eval)(script)]; }",
+        SourceType::cjs().with_script(true),
+    );
+}
+
+#[test]
 fn dce_if_statement() {
     test("if (true) { foo }", "foo");
     test("if (true) { foo } else { bar }", "foo");
