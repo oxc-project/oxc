@@ -237,6 +237,7 @@ let __emnapiWasmEnvCleanupRan = false
 let __emnapiWasmEnvCleanupDrained = false
 let __emnapiWasmEnvCleanupDrainPromise
 let __wasiDisposed = false
+let __wasiAsyncWorkDrainPromise
 let __wasiDisposePromise
 let __completeWasiDisposal = function () {}
 // Overridden by loader flavors that have a last-resort reclaim for a rollback
@@ -393,6 +394,24 @@ const __scheduleMacrotask = (function () {
     setTimeout(callback, 0)
   }
 })()
+
+// A real, *referenced* timer, for waits that must let the whole host make
+// progress between looks — the async-work drain polls the addon rather than
+// interleaving with the @emnapi/core dispatch, so a zero-delay macrotask there
+// would spin the loop instead of yielding it. Falls back to the macrotask
+// scheduler on a host without timers.
+function __scheduleTimer(callback, delay) {
+  const setTimer = globalThis.setTimeout
+  if (typeof setTimer !== 'function') {
+    __scheduleMacrotask(callback)
+    return
+  }
+  try {
+    setTimer(callback, delay)
+  } catch {
+    __scheduleMacrotask(callback)
+  }
+}
 
 // Turns to wait for while the addon still reports queued settlements. Reaching
 // zero is the only success. A counter still nonzero at this bound rejects the
@@ -593,6 +612,135 @@ function __keepEventLoopAliveUntil(work) {
   )
 }
 
+// How often to re-read `napi_wasm_async_work_pending` while waiting. The wait
+// ends when the addon reports zero, so this only decides how promptly disposal
+// notices — not how long it waits.
+const __WASI_ASYNC_WORK_POLL_INTERVAL_MS = 1
+
+/**
+ * Settles this addon's outstanding `napi_async_work` before the teardown that
+ * would strand it.
+ *
+ * `napi_prepare_wasm_env_cleanup` does not cover async work, and nothing about
+ * it is observable from JavaScript: the threadless archive resolves
+ * `napi_*_async_work` through the `@emnapi/core` plugins, but the threaded one
+ * links the C `async_work.c` on the uv threadpool, so there the wasm neither
+ * imports nor exports those symbols and the only brackets a loader could watch
+ * (`_emnapi_ctx_*_waiting_request_counter`) are shared with threadsafe
+ * functions. The addon is the one place both flavors go through, so it answers
+ * for both, through the same kind of handshake the settlement drain uses:
+ *
+ *   - `napi_wasm_cancel_pending_async_work()` cancels what no thread has
+ *     started. Those completion callbacks run with `napi_cancelled`, which
+ *     napi-rs turns into a promise rejected with an `AbortError`.
+ *   - `napi_wasm_async_work_pending()` counts what is still owed a completion
+ *     callback. Work already executing refuses cancellation and stays counted
+ *     until it finishes normally — which it can, because this runs before the
+ *     barrier, before `Context.destroy()` and before anything is terminated.
+ *
+ * Both exports are optional: an addon built against a napi crate that predates
+ * them drains nothing and keeps the previous behavior, exactly as the
+ * `napi_wasm_env_cleanup_pending` handshake degrades.
+ *
+ * Returns nothing when there is nothing outstanding, which keeps disposal
+ * synchronous in the common case. The promise it returns otherwise never
+ * rejects.
+ *
+ * The wait has no deadline, and that is the point: giving up would destroy the
+ * environment with a completion callback still owed, which is the stranding
+ * this exists to prevent. A task whose `execute` never returns already keeps an
+ * *undisposed* process alive in exactly the same way, so disposal inherits that
+ * rather than inventing a bound it cannot honor.
+ *
+ * Safe to call from inside a completion callback, which is reachable: settling
+ * a task runs addon code that can re-enter JavaScript — a setter on the value
+ * being handed back, a threadsafe-function callback — and that JavaScript can
+ * call `dispose()`. Two things make it terminate rather than wait on itself:
+ *
+ *   - The addon keeps a work registered until its completion callback
+ *     *finishes*, so the count read here is at least one and this takes the
+ *     polling path instead of declaring the environment drained and tearing it
+ *     down from inside the frame that is still settling a promise.
+ *   - The poll is a timer, so it cannot run until the callback has returned to
+ *     the host — by which time that work has left the registry. The count the
+ *     next poll reads is the one taken after the callback finished.
+ *
+ * `__disposeWasiBinding` hands every caller the same in-flight promise, so the
+ * nested call joins this disposal rather than starting a second one.
+ */
+function __drainWasiAsyncWork() {
+  if (__wasiAsyncWorkDrainPromise !== undefined) {
+    return __wasiAsyncWorkDrainPromise
+  }
+  const exports = __napiInstance?.exports
+  const pending = exports?.napi_wasm_async_work_pending
+  const cancelPending = exports?.napi_wasm_cancel_pending_async_work
+  if (typeof pending !== 'function' || typeof cancelPending !== 'function') {
+    return
+  }
+
+  const readPending = () => {
+    try {
+      return pending()
+    } catch (error) {
+      // A trap is the only way this call fails: it reads a counter and cannot
+      // allocate or call back into JavaScript. A trapped instance can no longer
+      // run anything, so its outstanding work is unreachable by definition —
+      // there is nothing left to wait for, and refusing to dispose would only
+      // keep a dead instance and its stuck counter alive. Best-effort here is
+      // the honest answer, and it is what disposal did before this drain
+      // existed.
+      //
+      // Only a trap. Anything else means the export is not what this loader
+      // thinks it is, which is a defect worth surfacing rather than disposing
+      // over.
+      if (error instanceof globalThis.WebAssembly.RuntimeError) {
+        return 0
+      }
+      throw error
+    }
+  }
+
+  if (!readPending()) {
+    return
+  }
+  try {
+    cancelPending()
+  } catch {
+    // Cancellation is an optimization: it bounds the wait by the work already
+    // executing. Failing it only means waiting for the whole queue instead.
+  }
+  if (!readPending()) {
+    return
+  }
+
+  const drainPromise = __keepEventLoopAliveUntil(
+    (async () => {
+      while (readPending()) {
+        await new Promise((resolve) => {
+          __scheduleTimer(resolve, __WASI_ASYNC_WORK_POLL_INTERVAL_MS)
+        })
+      }
+    })(),
+  ).then(
+    () => {
+      __wasiAsyncWorkDrainPromise = undefined
+    },
+    (error) => {
+      // A wait that could not run is not a wait that finished. The only way
+      // here is a host whose timers and macrotask primitives all refuse, and
+      // the work is still outstanding — reporting success would destroy the
+      // environment over it, which is the stranding this exists to prevent.
+      // Reject instead: disposal stays retryable, and the context is not
+      // destroyed. Clearing the memo first is what makes the retry re-run this.
+      __wasiAsyncWorkDrainPromise = undefined
+      throw error
+    },
+  )
+  __wasiAsyncWorkDrainPromise = drainPromise
+  return drainPromise
+}
+
 /**
  * `@emnapi/wasi-threads` counts a worker exit as expected only when its own
  * thread manager performed the termination. A bare `worker.terminate()` reaches
@@ -674,7 +822,7 @@ function __continueWasiDisposal() {
   return __finishWasiDisposal()
 }
 
-function __startWasiDisposal() {
+function __cleanUpWasmEnvForWasiDisposal() {
   // Run the pre-teardown barrier, then let the settlements it queued actually
   // reach JavaScript, and only then destroy the environment. Doing these two
   // back to back is what strands them.
@@ -684,6 +832,21 @@ function __startWasiDisposal() {
     return Promise.resolve(drainResult).then(__continueWasiDisposal)
   }
   return __continueWasiDisposal()
+}
+
+function __startWasiDisposal() {
+  // Outstanding `napi_async_work` goes first, while the environment is still
+  // completely live: the completion callbacks run addon code, and everything
+  // after this point takes that away from them — the barrier shuts the async
+  // runtime down, `Context.destroy()` stops JavaScript calls, and terminating
+  // the pool threads removes what would have reported the work finished.
+  const asyncWorkResult = __drainWasiAsyncWork()
+  if (__isThenable(asyncWorkResult)) {
+    return Promise.resolve(asyncWorkResult).then(
+      __cleanUpWasmEnvForWasiDisposal,
+    )
+  }
+  return __cleanUpWasmEnvForWasiDisposal()
 }
 
 /**
@@ -827,29 +990,60 @@ function __retainFailedWasiRollback(cleanupErrors) {
  * bug with no upper bound, while the retained bookkeeping is bounded by the page.
  */
 function __rollbackWasiInitialization() {
-  const cleanupErrors = []
-  let drainResult
-  let settlementsUnreached = false
-  try {
-    __prepareWasmEnvCleanup()
-    drainResult = __drainWasmEnvCleanup()
-  } catch (cleanupError) {
-    cleanupErrors.push(cleanupError)
-    settlementsUnreached = true
+  // The environment teardown this rollback performs, kept nested so it cannot
+  // be reached without the async-work drain below running first.
+  function __rollbackWasmEnvForWasiInitialization() {
+    const cleanupErrors = []
+    let drainResult
+    let settlementsUnreached = false
+    try {
+      __prepareWasmEnvCleanup()
+      drainResult = __drainWasmEnvCleanup()
+    } catch (cleanupError) {
+      cleanupErrors.push(cleanupError)
+      settlementsUnreached = true
+    }
+    if (__isThenable(drainResult)) {
+      return Promise.resolve(drainResult).then(
+        () => __destroyContextForWasiRollback(cleanupErrors),
+        (cleanupError) => {
+          cleanupErrors.push(cleanupError)
+          return __retainFailedWasiRollback(cleanupErrors)
+        },
+      )
+    }
+    if (settlementsUnreached) {
+      return __retainFailedWasiRollback(cleanupErrors)
+    }
+    return __destroyContextForWasiRollback(cleanupErrors)
   }
-  if (__isThenable(drainResult)) {
-    return Promise.resolve(drainResult).then(
-      () => __destroyContextForWasiRollback(cleanupErrors),
-      (cleanupError) => {
-        cleanupErrors.push(cleanupError)
-        return __retainFailedWasiRollback(cleanupErrors)
-      },
+
+  // Same reason as `__startWasiDisposal`: a module-init hook can start async
+  // work before the load goes on to fail, and this rollback tears down exactly
+  // what those completions need. Settle them while everything is still live,
+  // before the barrier and the teardown above take that away.
+  //
+  // A drain that could not finish leaves async work possibly outstanding, and
+  // destroying the context over it would strand exactly what this rollback is
+  // there to settle. Stop short and retain instead — the same trade
+  // `__rollbackWasmEnvForWasiInitialization` makes for the settlement drain, so
+  // the context stays reclaimable by a retry or by this flavor's own
+  // last-resort teardown.
+  const __retainAfterAsyncWorkDrainFailure = (cleanupError) =>
+    __retainFailedWasiRollback([cleanupError])
+  let asyncWorkResult
+  try {
+    asyncWorkResult = __drainWasiAsyncWork()
+  } catch (cleanupError) {
+    return __retainAfterAsyncWorkDrainFailure(cleanupError)
+  }
+  if (__isThenable(asyncWorkResult)) {
+    return Promise.resolve(asyncWorkResult).then(
+      __rollbackWasmEnvForWasiInitialization,
+      __retainAfterAsyncWorkDrainFailure,
     )
   }
-  if (settlementsUnreached) {
-    return __retainFailedWasiRollback(cleanupErrors)
-  }
-  return __destroyContextForWasiRollback(cleanupErrors)
+  return __rollbackWasmEnvForWasiInitialization()
 }
 
 const __wasiRollbackRegistrySymbol = Symbol.for('napi.rs.wasi.rollback.registry.v1')
@@ -1057,7 +1251,11 @@ try {
       }
     })(),
     reuseWorker: true,
-    plugins: [__captureWasiThreadManager, __emnapiAsyncWorkPlugin, __emnapiTSFNPlugin],
+    plugins: [
+      __captureWasiThreadManager,
+      __emnapiAsyncWorkPlugin,
+      __emnapiTSFNPlugin,
+    ],
     wasi: __wasi,
     onCreateWorker() {
       const worker = __createWasiWorker(__nodePath.join(__dirname, 'wasi-worker.mjs'))
