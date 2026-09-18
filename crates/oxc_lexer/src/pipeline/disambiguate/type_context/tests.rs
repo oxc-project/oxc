@@ -1,12 +1,12 @@
 use crate::{error::diag_code, token::TokenKind};
 
-use super::super::tests::{
-    diag_codes_of, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, stream,
+use crate::pipeline::disambiguate::tests::{
+    FileType, diag_codes_of, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, stream,
 };
 
 // Reduce repeated boilerplate in tests below.
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.
-use super::super::tests::FileType::*;
+use FileType::*;
 
 #[test]
 fn gt_run_in_expression_position_follows_the_type_argument_lookahead() {

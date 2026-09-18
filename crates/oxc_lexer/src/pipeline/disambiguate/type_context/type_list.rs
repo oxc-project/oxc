@@ -16,13 +16,15 @@ use crate::{
     token::tk,
 };
 
-use super::super::super::{
+use crate::pipeline::{
     bitmap::{bm_get, bm_next1},
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
 };
 
-use super::super::common::{kind_at, lt_in_range, type_prefix_kind, word_is_any, word_len};
+use crate::pipeline::disambiguate::common::{
+    kind_at, lt_in_range, type_prefix_kind, word_is_any, word_len,
+};
 
 use super::bytes::skip_ws_fwd;
 

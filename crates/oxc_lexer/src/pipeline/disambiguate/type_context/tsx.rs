@@ -18,9 +18,9 @@ use crate::{
     token::tk,
 };
 
-use super::super::super::bitmap::bm_next1;
+use crate::pipeline::bitmap::bm_next1;
 
-use super::super::common::{
+use crate::pipeline::disambiguate::common::{
     AngleMatch, angle_match_back, annotation_colon_is_declaration, bm_prev_sig,
     brace_opens_object_literal, class_like_walk, conditional_type_question,
     extends_precedes_question, ident_is, kind_at, lt_in_range, match_delim_back, prop_name,

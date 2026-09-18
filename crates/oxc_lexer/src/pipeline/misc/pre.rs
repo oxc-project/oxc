@@ -1,6 +1,6 @@
 use crate::{error::diag_code, lanes::Lanes, tables::is_id_start, token::tk};
 
-use super::super::{
+use crate::pipeline::{
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
     find::unicode_ws_len,
     scan::scan_ident_esc,

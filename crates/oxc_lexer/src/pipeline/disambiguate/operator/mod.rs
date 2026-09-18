@@ -23,7 +23,7 @@ use crate::{
     token::tk,
 };
 
-use super::super::{
+use crate::pipeline::{
     bitmap::{bm_next0, bm_next1, bm_prev1},
     scan::scan_number,
 };

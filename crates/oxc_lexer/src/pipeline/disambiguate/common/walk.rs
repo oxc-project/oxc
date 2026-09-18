@@ -32,7 +32,7 @@ use crate::{
     token::{KW_KIND_BASE, KW_KIND_MAX, tk},
 };
 
-use super::super::super::bitmap::{bm_next1, bm_prev1};
+use crate::pipeline::bitmap::{bm_next1, bm_prev1};
 
 const ANGLE_MATCH_CAP: u32 = 4096;
 

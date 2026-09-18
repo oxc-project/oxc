@@ -18,12 +18,12 @@
 //! [`LT_OPERAND_WORDS`] also lives here. It lists the words after which a `<` starts an operand,
 //! for [`operator`] and [`type_context`].
 //!
-//! [`operator`]: super::super::operator
-//! [`type_context`]: super::super::type_context
+//! [`operator`]: crate::pipeline::disambiguate::operator
+//! [`type_context`]: crate::pipeline::disambiguate::type_context
 
 use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
 
-use super::super::super::bitmap::bm_next1;
+use crate::pipeline::bitmap::bm_next1;
 
 use super::{
     constructs::{

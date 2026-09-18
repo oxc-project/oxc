@@ -1,6 +1,6 @@
 use crate::{comment_meta, error::diag_code, lanes::Lanes, tables::Tables, token::tk};
 
-use super::super::{
+use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
     find::{find_line_terminator, find_opener, find_opener6},
 };

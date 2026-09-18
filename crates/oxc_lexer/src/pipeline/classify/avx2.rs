@@ -5,7 +5,7 @@ use crate::{
     token::tk,
 };
 
-use super::super::chunk::{load256, mm, veq};
+use crate::pipeline::chunk::{load256, mm, veq};
 
 pub(super) unsafe fn classify_impl(
     t: &Tables,

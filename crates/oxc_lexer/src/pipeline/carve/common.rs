@@ -6,7 +6,7 @@ use crate::{
     token::tk,
 };
 
-use super::super::{
+use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     disambiguate::not_operator_position,
     scan::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},

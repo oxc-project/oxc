@@ -5,7 +5,7 @@ use crate::{
     token::tk,
 };
 
-use super::super::{
+use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
     disambiguate::{bm_prev_sig, not_operator_position},
     find::{

@@ -4,7 +4,7 @@ use crate::{
     tables::{Tables, is_id_start, is_word, is_ws},
 };
 
-use super::super::super::{
+use crate::pipeline::{
     bitmap::bm_get,
     disambiguate::{jsx_site_is_expression, ts_type_region_open, type_parameter_list_head},
     find::{find_line_terminator, unicode_ws_len},

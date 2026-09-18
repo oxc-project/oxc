@@ -16,9 +16,9 @@
 
 use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
 
-use super::super::super::bitmap::bm_next1;
+use crate::pipeline::bitmap::bm_next1;
 
-use super::super::common::{
+use crate::pipeline::disambiguate::common::{
     AngleMatch, angle_match_back, as_gated_type_ref, as_type_operand, bm_prev_sig, class_like_walk,
     ident_is, kind_at, lt_in_range, prop_name, word_is_any,
 };

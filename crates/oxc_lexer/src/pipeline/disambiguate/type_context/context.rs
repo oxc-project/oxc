@@ -24,9 +24,9 @@ use crate::{
     token::tk,
 };
 
-use super::super::super::bitmap::{bm_get, bm_next1};
+use crate::pipeline::bitmap::{bm_get, bm_next1};
 
-use super::super::common::{
+use crate::pipeline::disambiguate::common::{
     AngleMatch, LT_OPERAND_WORDS, angle_match_back, annotation_colon_is_declaration,
     bang_is_postfix, bm_prev_sig, brace_opens_value, chain_head, class_like_walk,
     conditional_type_question, declarator_without_init, extends_precedes_question, ident_is,

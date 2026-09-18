@@ -1,10 +1,12 @@
 use crate::token::TokenKind;
 
-use super::super::tests::{diag_codes_of, division, kinds_of, regex, stream};
+use crate::pipeline::disambiguate::tests::{
+    FileType, diag_codes_of, division, kinds_of, regex, stream,
+};
 
 // Reduce repeated boilerplate in tests below.
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.
-use super::super::tests::FileType::*;
+use FileType::*;
 
 #[test]
 fn debugger_precedes_regex() {

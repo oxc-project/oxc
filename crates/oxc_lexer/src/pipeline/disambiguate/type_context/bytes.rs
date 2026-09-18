@@ -16,17 +16,17 @@
 //!
 //! Every scan has a length limit, so pathological input can't make it slow.
 //!
-//! [`match_delim_back`]: super::super::common::match_delim_back
-//! [`angle_match_back`]: super::super::common::angle_match_back
+//! [`match_delim_back`]: crate::pipeline::disambiguate::common::match_delim_back
+//! [`angle_match_back`]: crate::pipeline::disambiguate::common::angle_match_back
 
 use crate::{
     tables::{is_id_start, is_ws},
     token::tk,
 };
 
-use super::super::super::bitmap::bm_get;
+use crate::pipeline::bitmap::bm_get;
 
-use super::super::common::kind_at;
+use crate::pipeline::disambiguate::common::kind_at;
 
 pub(super) const ENCLOSING_SCAN_CAP: usize = 1 << 16;
 
