@@ -541,6 +541,15 @@ pub fn lower<'a>(
     // Note: `id` param may include inferred names (e.g., from `const Foo = () => {}`),
     // but the HIR function's `id` field should only include the function's own AST id
     // (FunctionDeclaration.id or FunctionExpression.id, NOT arrow functions).
+    // Outlined declarations are inserted as siblings of a declaration root,
+    // so references to bindings in the containing lexical scope remain valid.
+    // Arrow and function-expression roots are appended to the program body and
+    // must keep any such function inline.
+    env.allow_outer_lexical_outlining = match func {
+        FunctionNode::Function(f) => f.is_declaration(),
+        FunctionNode::Arrow(_) => false,
+    };
+
     let (params, body, generator, is_async, span, ast_id, ast_id_span) = match func {
         FunctionNode::Function(f) => {
             let body_ref = f.body.as_deref().expect("component function has a body");
@@ -812,6 +821,7 @@ fn lower_inner<'a>(
     );
 
     // Build the HIR
+    let has_outer_lexical_reference = builder.has_outer_lexical_reference();
     let (hir_body, instructions, used_names, child_bindings) = builder.build()?;
     let instructions = ArenaVec::from_iter_in(instructions, &env.allocator);
 
@@ -831,6 +841,7 @@ fn lower_inner<'a>(
             params: hir_params,
             returns,
             context,
+            has_outer_lexical_reference,
             body: hir_body,
             instructions,
             generator,
@@ -3175,6 +3186,9 @@ fn lower_function<'a>(
         ident_spans,
     )?;
 
+    if hir_func.has_outer_lexical_reference {
+        builder.note_outer_lexical_reference();
+    }
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -3237,6 +3251,9 @@ fn lower_function_declaration<'a>(
         ident_spans,
     )?;
 
+    if hir_func.has_outer_lexical_reference {
+        builder.note_outer_lexical_reference();
+    }
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -3406,6 +3423,9 @@ fn lower_function_for_object_method<'a>(
         ident_spans,
     )?;
 
+    if hir_func.has_outer_lexical_reference {
+        builder.note_outer_lexical_reference();
+    }
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 

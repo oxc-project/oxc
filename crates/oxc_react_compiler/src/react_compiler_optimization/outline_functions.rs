@@ -57,6 +57,8 @@ pub fn outline_functions<'a>(
                     // 2. Anonymous (no explicit id on the inner function)
                     // 3. Not an fbt operand
                     if inner_func.context.is_empty()
+                        && (!inner_func.has_outer_lexical_reference
+                            || env.allow_outer_lexical_outlining)
                         && inner_func.id.is_none()
                         && !fbt_operands.contains(&lvalue_id)
                     {
