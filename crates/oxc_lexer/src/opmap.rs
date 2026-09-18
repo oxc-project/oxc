@@ -238,11 +238,11 @@ pub static PUNCT1_TOK: [u8; PUNCT1_NKNOWN] = punct1_tok();
 pub struct OpMap {
     pub opmap_mul: u32,
     pub opmap_slot: [u8; 256],
-
     pub punct1_ord: [u8; 256],
 }
 
 pub const KW_MAX: usize = KW_COUNT_TS;
+
 /// Slot count of the keyword hash tables — must cover the smallest shift a
 /// set may search (JS shift 25 → 128 slots, TS shift 23 → 512).
 pub const KW_SLOTS: usize = 512;
