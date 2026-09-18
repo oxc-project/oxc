@@ -5,7 +5,7 @@
 
 use crate::{
     opmap::{
-        KEYWORDS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, KwSet, OPMAP_NOPS, OPMAP_OPS,
+        KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, KwSet, OPMAP_NOPS, OPMAP_OPS,
         OpMap, PUNCT1_LIST, PUNCT1_NKNOWN, PUNCT1_TOK, op_key,
     },
     token::{KW_KIND_BASE, tk},
@@ -113,9 +113,9 @@ pub struct Tables {
 impl Tables {
     pub fn new() -> Tables {
         let op = OpMap::new();
-        let kwjs = KwSet::build(&KEYWORDS, false, &[25, 24], KW_HASH_HINT_JS);
+        let kwjs = KwSet::build(&KEYWORDS_JS, false, &[25, 24], KW_HASH_HINT_JS);
         let kwts = KwSet::build(&KEYWORDS_TS, true, &[23], KW_HASH_HINT_TS);
-        kwjs.self_check(&KEYWORDS);
+        kwjs.self_check(&KEYWORDS_JS);
         kwts.self_check(&KEYWORDS_TS);
         let mut t = Tables {
             op,
@@ -172,13 +172,13 @@ impl Tables {
         let mut mask = 0u64;
         for r in RX.iter() {
             let mut found: i32 = -1;
-            for kw in KEYWORDS.iter() {
+            for kw in KEYWORDS_JS.iter() {
                 if kw.0 == *r {
                     found = (kw.1 as u8 - KW_KIND_BASE) as i32;
                     break;
                 }
             }
-            assert!(found >= 0 && found < 64, "tables.rs: regex-kw {r} missing from KEYWORDS");
+            assert!(found >= 0 && found < 64, "tables.rs: regex-kw {r} missing from KEYWORDS_JS");
             mask |= 1u64 << found;
         }
         self.regex_kw_mask = mask;
@@ -323,7 +323,7 @@ impl Tables {
             let js = unsafe { self.kwjs.lookup(buf.as_ptr(), bytes.len()) };
             let ts = unsafe { self.kwts.lookup(buf.as_ptr(), bytes.len()) };
             assert!(ts == *tok as u32, "tables.rs: kwts lookup({w}) wrong");
-            let in_js = KEYWORDS.iter().any(|k| k.0 == *w);
+            let in_js = KEYWORDS_JS.iter().any(|k| k.0 == *w);
             assert!(js == if in_js { *tok as u32 } else { 0 }, "tables.rs: kwjs lookup({w}) wrong");
         }
     }
@@ -331,7 +331,7 @@ impl Tables {
 
 fn kwinit_selfcheck() {
     let mut in_set = [false; 256];
-    for kw in KEYWORDS.iter() {
+    for kw in KEYWORDS_JS.iter() {
         in_set[kw.0.as_bytes()[0] as usize] = true;
     }
     for c in 0..256usize {

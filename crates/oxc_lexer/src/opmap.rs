@@ -15,7 +15,7 @@ pub const KW_COUNT_TS: usize = 81;
 /// Keyword spellings and the token kind each rewrites to (the JS set).
 /// `get`/`set` map to IDENT (contextual, never keywords at lex time) but
 /// stay in the table so the perfect hash keeps its shape.
-pub const KEYWORDS: [(&str, TokenKind); KW_COUNT_JS] = [
+pub const KEYWORDS_JS: [(&str, TokenKind); KW_COUNT_JS] = [
     ("await", TokenKind::KwAwait),
     ("break", TokenKind::KwBreak),
     ("case", TokenKind::KwCase),
@@ -104,9 +104,9 @@ const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
     ("using", TokenKind::KwUsing),
 ];
 
-/// The TS-mode keyword set: [`KEYWORDS`] followed by [`KEYWORDS_TS_EXTRA`].
+/// The TS-mode keyword set: [`KEYWORDS_JS`] followed by [`KEYWORDS_TS_EXTRA`].
 pub static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
-    *concat_slices!([(&str, TokenKind)]: &KEYWORDS, &KEYWORDS_TS_EXTRA);
+    *concat_slices!([(&str, TokenKind)]: &KEYWORDS_JS, &KEYWORDS_TS_EXTRA);
 
 /// First punctuator kind - the token-kind space reserves [32, 128) for them.
 pub const OP_KIND_BASE: u8 = tk!(LBrace);
