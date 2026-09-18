@@ -211,18 +211,18 @@ impl Drop for Arena {
     fn drop(&mut self) {
         // SAFETY: every pointer is null or a live `alloc_uninit` allocation with the recorded capacity, freed once.
         unsafe {
-            free_uninit::<Diagnostic>(self.diags, self.diags_capacity);
-            free_uninit::<LineEntry>(self.lines, self.lines_capacity);
-            free_uninit::<u8>(self.tok_kinds, self.tok_kinds_capacity);
-            free_uninit::<Span>(self.tok_spans, self.tok_spans_capacity);
-            free_uninit::<f64>(self.numbers, self.numbers_capacity);
-            free_uninit::<StringSpan>(self.atoms, self.atoms_capacity);
-            free_uninit::<StringSpan>(self.strings, self.strings_capacity);
-            free_uninit::<u8>(self.cooked_bytes, self.cooked_bytes_capacity);
-            free_uninit::<StringSpan>(self.templates, self.templates_capacity);
-            free_uninit::<RegExpFlags>(self.regex_flags, self.regex_flags_capacity);
-            free_uninit::<u8>(self.comment_meta, self.comment_meta_capacity);
-            free_uninit::<Comment>(self.comments, self.comments_capacity);
+            free_uninit(self.diags, self.diags_capacity);
+            free_uninit(self.lines, self.lines_capacity);
+            free_uninit(self.tok_kinds, self.tok_kinds_capacity);
+            free_uninit(self.tok_spans, self.tok_spans_capacity);
+            free_uninit(self.numbers, self.numbers_capacity);
+            free_uninit(self.atoms, self.atoms_capacity);
+            free_uninit(self.strings, self.strings_capacity);
+            free_uninit(self.cooked_bytes, self.cooked_bytes_capacity);
+            free_uninit(self.templates, self.templates_capacity);
+            free_uninit(self.regex_flags, self.regex_flags_capacity);
+            free_uninit(self.comment_meta, self.comment_meta_capacity);
+            free_uninit(self.comments, self.comments_capacity);
         }
         self.diags = ptr::null_mut();
         self.lines = ptr::null_mut();
