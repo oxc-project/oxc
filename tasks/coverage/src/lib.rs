@@ -290,6 +290,10 @@ pub fn snapshot_results(name: &str, test_root: &Path, results: &[CoverageResult]
         }
     }
 
+    // Use the upcoming TypeScript fixture layout in snapshots while still loading the old layout.
+    // Normalize the complete output so paths embedded in diagnostics are updated too.
+    let out = out.replace("typescript/tests/", "typescript/tsc/testdata/tests/");
+
     let path = snap_root().join(format!("{}.snap", name.to_lowercase()));
     snapshot.save(&path, &out);
 }
