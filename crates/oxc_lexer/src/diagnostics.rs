@@ -304,9 +304,13 @@ impl NumericWalk<'_> {
 
 /// Re-walk the numeric literal at `off` and reproduce oxc_parser's first
 /// diagnostic for it; `None` when the walk finds nothing wrong.
-#[expect(clippy::cast_possible_truncation, reason = "source offsets are bounded by MAX_SOURCE_LEN")]
 fn parser_numeric_first_error(source: &str, off: u32, sev: u16) -> Option<OxcDiagnostic> {
     let mut walk = NumericWalk { src: source, i: off as usize };
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "source offsets are bounded by MAX_SOURCE_LEN"
+    )]
     match walk.walk() {
         Ok(()) => None,
         Err(NumErr::Unexpected(at)) => {
@@ -326,10 +330,6 @@ fn parser_numeric_first_error(source: &str, off: u32, sev: u16) -> Option<OxcDia
 /// Convert one lexer [`Diagnostic`] into an [`OxcDiagnostic`] with
 /// oxc_parser's message and span for that error class. `source` is the
 /// original text, needed to recover offending characters.
-#[expect(
-    clippy::match_same_arms,
-    reason = "distinct codes deliberately collapse to the parser's message (see module docs)"
-)]
 pub fn to_oxc_diagnostic(d: &Diagnostic, source: &str) -> OxcDiagnostic {
     let span = span_of(d);
     let sev = d.severity;
@@ -346,6 +346,10 @@ pub fn to_oxc_diagnostic(d: &Diagnostic, source: &str) -> OxcDiagnostic {
         return exact;
     }
 
+    #[expect(
+        clippy::match_same_arms,
+        reason = "distinct codes deliberately collapse to the parser's message (see module docs)"
+    )]
     match d.code {
         // Exact 1:1 with oxc_parser/src/diagnostics.rs.
         Code::UNTERMINATED_STRING => diag(sev, "Unterminated string").with_label(span),

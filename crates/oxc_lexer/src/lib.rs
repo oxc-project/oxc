@@ -48,8 +48,8 @@ pub fn lex_utf8_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Are
 
 /// # Panics
 /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `len`.
-#[expect(clippy::cast_possible_truncation, reason = "PAD is a small constant")]
 pub fn lex_utf8(src: &[u8], len: u32, options: LexOptions) -> (LexResult, Arena) {
+    #[expect(clippy::cast_possible_truncation, reason = "PAD is a small constant")]
     let tok_cap = len + PAD as u32;
     let diag_cap =
         if options.max_diagnostic_count > 0 { options.max_diagnostic_count } else { 1024 };
@@ -59,7 +59,6 @@ pub fn lex_utf8(src: &[u8], len: u32, options: LexOptions) -> (LexResult, Arena)
     (r, arena)
 }
 
-#[expect(clippy::cast_possible_truncation, reason = "token counts are bounded by MAX_SOURCE_LEN")]
 fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) -> LexResult {
     arena.ensure_token_capacity();
     let n = len as usize;
@@ -129,13 +128,19 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
         let n_cr = copy_lane(&l.comments, arena.comments, arena.comments_capacity);
         let n_diag = copy_lane(&l.diags, arena.diags, arena.diags_capacity);
 
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "token counts are bounded by MAX_SOURCE_LEN"
+        )]
+        let token_count = k as u32;
+
         LexResult {
             diagnostics: arena.diags,
             diagnostic_count: n_diag,
             lines: arena.lines,
             line_count: 0,
             hit_resource_limit: false,
-            token_count: k as u32,
+            token_count,
             numbers_count: n_num,
             atoms_count: n_atm,
             strings_count: n_str,
@@ -148,7 +153,6 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
     })
 }
 
-#[expect(clippy::cast_possible_truncation, reason = "char lengths are 1..=4")]
 fn resolve_unicode_leads(
     lanes: &mut Lanes,
     src: &[u8],
@@ -184,9 +188,11 @@ fn resolve_unicode_leads(
         } else {
             error::diag_code::UNEXPECTED_CHARACTER
         };
+        #[expect(clippy::cast_possible_truncation, reason = "char lengths are 1..=4")]
+        let len = ch.len_utf8() as u32;
         lanes.diags.push(error::Diagnostic {
             off,
-            len: ch.len_utf8() as u32,
+            len,
             code,
             severity: error::diag_severity::ERROR,
         });
@@ -225,7 +231,6 @@ fn empty_result(arena: &Arena) -> LexResult {
 }
 
 #[inline]
-#[expect(clippy::cast_possible_truncation, reason = "lane lengths are bounded by u32 capacities")]
 fn copy_lane<T: Copy>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
     if dst.is_null() {
         return 0;
@@ -236,9 +241,16 @@ fn copy_lane<T: Copy>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
         "lexer: lane overflow ({} entries, capacity {cap}) — arena lane sizing out of date",
         srcv.len()
     );
+
     // SAFETY: `dst` is non-null with capacity >= srcv.len(), asserted above.
     unsafe {
         ptr::copy_nonoverlapping(srcv.as_ptr(), dst, srcv.len());
     }
-    srcv.len() as u32
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "lane lengths are bounded by u32 capacities"
+    )]
+    let len = srcv.len() as u32;
+    len
 }
