@@ -4,23 +4,30 @@ input_file: crates/oxc_react_compiler/fixtures/timers.js
 ---
 import { c as _c } from "react/compiler-runtime";
 function Component(props) {
-	const $ = _c(2);
-	const start = performance.now();
+	const $ = _c(3);
 	let t0;
 	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-		t0 = Date.now();
+		t0 = performance.now();
 		$[0] = t0;
 	} else {
 		t0 = $[0];
 	}
-	const now = t0;
-	const time = performance.now() - start;
+	const start = t0;
 	let t1;
 	if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-		t1 = <div>rendering took {time} at {now}</div>;
+		t1 = Date.now();
 		$[1] = t1;
 	} else {
 		t1 = $[1];
 	}
-	return t1;
+	const now = t1;
+	let t2;
+	if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+		const time = performance.now() - start;
+		t2 = <div>rendering took {time} at {now}</div>;
+		$[2] = t2;
+	} else {
+		t2 = $[2];
+	}
+	return t2;
 }
