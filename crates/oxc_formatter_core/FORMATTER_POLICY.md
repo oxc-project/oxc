@@ -63,8 +63,9 @@ Rules:
 - Every divergence has an entry in the owning layer's `DIVERGENCES.md` and a pin fixture
   - The owning layer decides the behavior: a language crate for single-language behavior, `apps/oxfmt` for embedding
   - The pin is a minimal fixture in the owner's `tests/fixtures/`, distilled from whatever exposed the divergence; a conformance file is never the pin, it stays a regression net
-  - The fixture carries a one-line marker: which lines deviate + `see DIVERGENCES.md#<slug>`; the why lives in the entry
-    - `DIVERGENCES.md#<slug>` is the one reference form everywhere (docs, source, fixtures); never a quoted or bare slug, never an upstream issue alone
+  - The fixture points back at its entry: it is named after the slug, or carries a one-line `DIVERGENCES.md#<slug>` marker
+    (a fixture pinning several entries, or a language where a comment is content); the why and the deviating lines live in the entry
+    - `DIVERGENCES.md#<slug>` is the one reference form everywhere (docs, source, fixture markers); never a quoted or bare slug, never an upstream issue alone
 - Entry format, with OUR behavior as the spec
   - H2 slug: the stable anchor
   - `Why:` required; the reason keyword, its parenthetical, then upstream issues as bare references: `uniform-rule (same construct, same output: X; prettier/prettier#NNNN)`

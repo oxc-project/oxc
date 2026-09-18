@@ -68,18 +68,9 @@ node -e 'const p=require("./apps/oxfmt/node_modules/prettier");p.__debug.printTo
 
 ### Prettier conformance
 
-At the current version (v3.9.6), these divergences have been confirmed and are intentional (see DIVERGENCES.md):
+Every failing file is accounted for by a DIVERGENCES.md entry's `Conformance:` line; there are no unclassified failures.
 
-Conformance failures classified as divergences (16, all of them):
-
-- `thematicBreak/simple.md` and `commonmark-test-suite/snippet: example-11.md`, `example-50.md` to `example-54.md` (`#leading-thematic-break`)
-- `commonmark-test-suite/snippet: example-2.md` (`#indented-code-tab`)
-- `link/encodedLink.md` (`#url-escaping`)
-- `gfm-test-suite/snippet: example-491.md` (`#single-tilde-strikethrough`)
-- `liquid/*.md` (`#liquid-flow-tags`)
-- `blockquote/notext-end.md` (`#line-shapes`)
-- `paragraph/cjk.md` (`#container-directive`)
-- `commonmark-test-suite/snippet: example-412.md` (`#stray-delimiters`)
+Pin fixtures are named after their entry's slug (a comment would be an HTML block and change the document).
 
 ### Fixture fingerprint
 

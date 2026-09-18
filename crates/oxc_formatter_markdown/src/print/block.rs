@@ -130,7 +130,7 @@ fn double_gap(
     let prev_is_ignore = ignore_kind(previous, f) == Some(IgnoreKind::Next);
     let html_after_html = matches!((previous, node), (Block::HtmlBlock(_), Block::HtmlBlock(_)));
     // A type 7 HTML block can only follow a paragraph without a blank line as a lazy line of a container
-    // (a micromark quirk, parser DIVERGENCES);
+    // (a micromark quirk, oxc-markdown-parser DIVERGENCES.md);
     // printed with the container's prefix it needs the blank line to stay a block.
     // Prettier prints it adjacent, where it becomes paragraph text.
     let html_after_paragraph =

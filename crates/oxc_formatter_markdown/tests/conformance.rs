@@ -42,7 +42,7 @@ const CONFIG: ConformanceConfig = ConformanceConfig {
         "markdown/commonmark-test-suite/snippet: example-98.md",
         // Fenced blocks whose only difference is Prettier formatting the embedded language (js / ts / css / json / html / markdown).
         "markdown/blockquote/code.md",
-        // Also the `always`-only trailing `>` line: DIVERGENCES.md `ignored-block-trailing-quote-line`.
+        // Also the `always`-only trailing `>` line: DIVERGENCES.md#ignored-block-trailing-quote-line.
         "markdown/blockquote/ignore-code.md",
         "markdown/list/codeblock.md",
         "markdown/list/parser-regression/issue-11202.md",

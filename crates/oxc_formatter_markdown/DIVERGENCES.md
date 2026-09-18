@@ -5,7 +5,8 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 ## leading-thematic-break
 
 - Why: semantics (prettier/prettier#19839)
-- Pin: `tests/fixtures/markdown/thematic-break-first.md`
+- Pin: `tests/fixtures/markdown/leading-thematic-break.md`
+- Conformance: `markdown/thematicBreak/simple.md`, `markdown/commonmark-test-suite/snippet: example-11.md`, `example-50.md` to `example-54.md`
 
 ```markdown
 <!-- input -->
@@ -37,7 +38,8 @@ Prettier `main` prints `***` since #19839; the pin (3.9.6) still prints `---`.
 ## url-escaping
 
 - Why: semantics (prettier/prettier#19482, prettier/prettier#19849, prettier/prettier#19891)
-- Pin: `tests/fixtures/markdown/link-url-special-chars.md`
+- Pin: `tests/fixtures/markdown/url-escaping.md`
+- Conformance: `markdown/link/encodedLink.md`
 
 ```markdown
 <!-- input -->
@@ -59,6 +61,7 @@ Titles get the same `\&` treatment.
 
 - Why: uniform-rule (same construct, same output: space-indented code block)
 - Pin: `tests/fixtures/markdown/indented-code-tab.md`
+- Conformance: `markdown/commonmark-test-suite/snippet: example-2.md`
 
 ````markdown
 <!-- input: two spaces, a tab -->
@@ -79,7 +82,7 @@ so an indent written as spaces plus a tab becomes a fenced block.
 
 ## ignored-block-trailing-quote-line
 
-- Why: uniform-rule (same construct, same output: the `proseWrap: preserve` layout)
+- Why: uniform-rule (same construct, same output: a blockquote's trailing blank `>` line under `proseWrap: preserve`)
 - Pin: `tests/fixtures/markdown/prose-wrap/ignored-block-trailing-quote-line.md`
 
 ```markdown
@@ -110,7 +113,7 @@ Prettier drops it under `preserve` and `never` but prints a bare `>` under `alwa
 ## list-indented-code-alignment
 
 - Why: semantics (prettier/prettier#19644, prettier/prettier#19647, prettier/prettier#19990)
-- Pin: `tests/fixtures/markdown/tab-width-4/list-indented-code.md`, `tests/fixtures/markdown/tab-width-4/indented-code-block.md`
+- Pin: `tests/fixtures/markdown/tab-width-4/list-indented-code-alignment.md`
 
 ```markdown
 <!-- input, tabWidth 4 -->
@@ -133,11 +136,12 @@ An indented code block inside a list item is printed at the item's content colum
 the code's content is exactly what follows that column, so any extra alignment becomes part of it on the next parse.
 The pin aligns it by the task checkbox (continuation lines drift by 4 per run, #19644);
 #19647 aligned it by the tab width instead, which shifted the content whenever `tabWidth` exceeded the marker width.
-Prettier `main` prints it as we do since #19990 (`indented-code-block.md` is its fixture); the pin (3.9.6) still differs.
+Prettier `main` prints it as we do since #19990 (the fixture's first four items are its fixture); the pin (3.9.6) still differs.
 
-The same rule keeps the marker of an ordered list unpadded when an item starts with indented code
-(the content column is the marker plus one space, so any padding lands inside the code).
-Prettier pads it when the code starts at a tab stop in the source, which `>2.     foo` does only because of the `>`:
+## ordered-marker-before-indented-code
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/tab-width-4/ordered-marker-before-indented-code.md`
 
 ```markdown
 <!-- input -->
@@ -150,8 +154,15 @@ Prettier pads it when the code starts at a tab stop in the source, which `>2.   
 > 2.      foo
 ```
 
-An HTML block after a task item's paragraph keeps the item's content column too
-(Prettier drops the alignment when the html starts at another column than the paragraph, which moves it out of the item):
+The marker of an ordered list stays unpadded when an item starts with indented code:
+the content column is the marker plus one space, so any padding lands inside the code
+(the rule of DIVERGENCES.md#list-indented-code-alignment, applied to the marker).
+Prettier pads it when the code starts at a tab stop in the source, which `>2.     foo` does only because of the `>`.
+
+## list-html-block-alignment
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/tab-width-4/list-html-block-alignment.md`
 
 ```markdown
 <!-- input -->
@@ -170,13 +181,39 @@ An HTML block after a task item's paragraph keeps the item's content column too
 <textarea>
 ```
 
-An HTML block closed by its container's end (`><script>a` then a list) carries that line ending as content;
-Prettier prints it, and inside a blockquote the block gains a `>` line on every pass. It is not printed.
+An HTML block after a task item's paragraph keeps the item's content column, as indented code does (DIVERGENCES.md#list-indented-code-alignment).
+Prettier drops the alignment when the html starts at another column than the paragraph (the checkbox counts for its printer, not for the parser), which moves the block out of the item.
+
+## html-block-trailing-newline
+
+- Why: invariant
+- Pin: `tests/fixtures/markdown/html-block-trailing-newline.md`
+
+```markdown
+<!-- input -->
+- > <script>
+  > a
+- b
+
+<!-- ours -->
+- > <script>
+  > a
+- b
+
+<!-- prettier (one more `> ` line per pass) -->
+- > <script>
+  > a
+  >
+- b
+```
+
+An HTML block closed by its container's end carries that line ending as content (micromark's `trailing_newline`); it is not printed.
+Prettier prints it as a blank line of the blockquote, and inside a list item that line is not a fixpoint: every pass adds another.
 
 ## list-marker-after-ignored-list
 
 - Why: semantics
-- Pin: `tests/fixtures/markdown/oxfmt-ignore.md`
+- Pin: `tests/fixtures/markdown/list-marker-after-ignored-list.md`
 
 ```markdown
 <!-- input -->
@@ -204,7 +241,8 @@ Prettier alternates from the marker it would have printed (`-`), prints `*` next
 ## single-tilde-strikethrough
 
 - Why: semantics (prettier/prettier#19739)
-- Pin: `tests/fixtures/markdown/single-tilde.md`
+- Pin: `tests/fixtures/markdown/single-tilde-strikethrough.md`
+- Conformance: `markdown/gfm-test-suite/snippet: example-491.md`
 
 ```markdown
 <!-- input -->
@@ -224,7 +262,8 @@ Prettier `main` preserves it since #19739.
 ## liquid-flow-tags
 
 - Why: semantics (prettier/prettier#19724, prettier/prettier#19838)
-- Pin: `tests/fixtures/markdown/prose-wrap/liquid-flow.md`
+- Pin: `tests/fixtures/markdown/prose-wrap/liquid-flow-tags.md`
+- Conformance: `markdown/liquid/character-after-closing-tokens.md`, `markdown/liquid/example-1.md`, `markdown/liquid/example-2.md`
 
 ```markdown
 <!-- input -->
@@ -260,6 +299,7 @@ Prettier `main` parses them as flow nodes since #19838.
 
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/container-directive.md`
+- Conformance: `markdown/paragraph/cjk.md`
 
 ```markdown
 <!-- input -->
@@ -287,6 +327,7 @@ Prettier has no directive construct (#19662 would add micromark's grammar only),
 
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/line-shapes.md`
+- Conformance: `markdown/blockquote/notext-end.md`
 
 ```markdown
 <!-- input -->
@@ -305,12 +346,11 @@ A paragraph line starting with `<<<` (VitePress snippet import), a component tag
 a stray `:::`, or `[!` as the first line of a blockquote (GitHub / Obsidian alert marker) keeps its line boundaries and is never re-wrapped (AGENTS.md "Dialects").
 Prettier joins and wraps them like any word: the alert above loses its marker line (GitHub needs `[!NOTE]` alone on it),
 a wrapped `<<<` line loses its `[title]`, and a component tag wrapped to column 0 opens an HTML block in MDX / VitePress.
-`blockquote/notext-end.md` is the conformance failure.
 
 ## wrapped-block-starts
 
 - Why: semantics (prettier/prettier#13634, prettier/prettier#19112, prettier/prettier#19847)
-- Pin: `tests/fixtures/markdown/prose-wrap/wrap-block-starts.md`
+- Pin: `tests/fixtures/markdown/prose-wrap/wrapped-block-starts.md`
 
 ```markdown
 <!-- input, proseWrap always -->
@@ -340,6 +380,7 @@ Prettier drops the break before `- item`, `# heading` and `> quote` itself.
 
 - Why: semantics (prettier/prettier#6035, prettier/prettier#17303, prettier/prettier#17353)
 - Pin: `tests/fixtures/markdown/prose-wrap/stray-delimiters.md`
+- Conformance: `markdown/commonmark-test-suite/snippet: example-412.md`
 
 ```markdown
 <!-- input -->
@@ -368,7 +409,7 @@ Found by `tests/invariants.rs`, the fuzzed `parse(format(x)) ≅ parse(x)` check
 ## verbatim-inline-continuation
 
 - Why: semantics (prettier/prettier#19116)
-- Pin: `tests/fixtures/markdown/list-multiline-inline.md`
+- Pin: `tests/fixtures/markdown/verbatim-inline-continuation.md`
 
 ```markdown
 <!-- input -->

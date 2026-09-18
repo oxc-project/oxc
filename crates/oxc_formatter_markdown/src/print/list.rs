@@ -88,10 +88,10 @@ pub fn write_list<'a>(
         write!(f, text(prefix));
 
         // A `[paragraph, html]` item whose html sits left of the content column is
-        // micromark's lazy type 7 quirk (parser DIVERGENCES): the html stays where it was, unaligned.
+        // micromark's lazy type 7 quirk (oxc-markdown-parser DIVERGENCES.md): the html stays where it was, unaligned.
         // (Prettier drops the alignment whenever the two columns differ,
         // which moves an html block indented past a task checkbox out of the item:
-        // DIVERGENCES `list-indented-code-alignment`)
+        // DIVERGENCES.md#list-html-block-alignment)
         let skip_align =
             item.children.len() == 2 && matches!(item.children[1], Block::HtmlBlock(_)) && {
                 let source = f.context().source_text().as_str();
@@ -137,7 +137,7 @@ fn write_list_item<'a>(
         let body = format_with(|f| block::write_block(child, &item.children, i, child_parent, f));
         // An indented code block's content is whatever follows the item's content column + 4:
         // any extra alignment lands inside the code on the next parse.
-        // See DIVERGENCES `list-indented-code-alignment`.
+        // See DIVERGENCES.md#list-indented-code-alignment and DIVERGENCES.md#list-html-block-alignment.
         // (Prettier's checkbox align before #19647, the same for prettier/prettier#19986)
         if is_indented_code(child) || matches!(child, Block::HtmlBlock(_)) {
             write!(f, body);
@@ -234,7 +234,7 @@ fn is_aligned(list: &List<'_>, next: Option<&Block<'_>>, f: &MarkdownFormatter<'
     // An item starting with indented code has its content column fixed at the marker plus one space:
     // padding the marker would land inside the code (`>2.     foo`,
     // where the code starts at a tab stop only because of the `>`).
-    // See DIVERGENCES `list-indented-code-alignment`.
+    // See DIVERGENCES.md#ordered-marker-before-indented-code.
     if list.children.iter().any(|item| item.children.first().is_some_and(is_indented_code)) {
         return false;
     }
