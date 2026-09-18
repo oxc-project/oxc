@@ -27,11 +27,15 @@ use crate::pipeline::disambiguate::common::{
 #[cfg(test)]
 mod tests;
 
-const POP_BRACE: u8 = 0;
-const POP_PAREN: u8 = 1;
-const POP_CONCISE: u8 = 2;
-
 const MAX_SCOPES: usize = 512;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+enum Pop {
+    Brace = 0,
+    Paren = 1,
+    Concise = 2,
+}
 
 #[derive(Clone, Copy)]
 struct Scope {
@@ -41,7 +45,7 @@ struct Scope {
     reserved: bool,
     is_class: bool,
     is_obj: bool,
-    pop: u8,
+    pop: Pop,
     par: i32,
     brk: i32,
     brc: i32,
@@ -51,7 +55,7 @@ struct Scope {
 
 impl Scope {
     fn child(&self) -> Scope {
-        Scope { is_class: false, is_obj: false, pop: POP_BRACE, qdebt: 0, ..*self }
+        Scope { is_class: false, is_obj: false, pop: Pop::Brace, qdebt: 0, ..*self }
     }
 }
 
@@ -73,7 +77,7 @@ pub(super) unsafe fn replay_is_keyword(
         reserved: false,
         is_class: false,
         is_obj: false,
-        pop: POP_BRACE,
+        pop: Pop::Brace,
         par: 0,
         brk: 0,
         brc: 0,
@@ -182,7 +186,7 @@ pub(super) unsafe fn replay_is_keyword(
             } else if k == tk!(TemplateMiddle) || k == tk!(TemplateTail) {
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
-                    if top.pop == POP_CONCISE && top.tdep == tdepth {
+                    if top.pop == Pop::Concise && top.tdep == tdepth {
                         scopes.pop();
                         continue;
                     }
@@ -206,7 +210,7 @@ pub(super) unsafe fn replay_is_keyword(
                     s.is_gen = g;
                     s.asyn = a;
                     s.reserved = false;
-                    s.pop = POP_PAREN;
+                    s.pop = Pop::Paren;
                     s.par = par;
                     s.brk = brk;
                     s.brc = brc;
@@ -217,8 +221,8 @@ pub(super) unsafe fn replay_is_keyword(
             b')' => {
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
-                    if (top.pop == POP_CONCISE && par - 1 < top.par)
-                        || (top.pop == POP_PAREN && top.par == par)
+                    if (top.pop == Pop::Concise && par - 1 < top.par)
+                        || (top.pop == Pop::Paren && top.par == par)
                     {
                         scopes.pop();
                         continue;
@@ -231,7 +235,7 @@ pub(super) unsafe fn replay_is_keyword(
             b']' => {
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
-                    if top.pop == POP_CONCISE && brk - 1 < top.brk {
+                    if top.pop == Pop::Concise && brk - 1 < top.brk {
                         scopes.pop();
                         continue;
                     }
@@ -324,7 +328,7 @@ pub(super) unsafe fn replay_is_keyword(
             b'}' => {
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
-                    if top.pop == POP_CONCISE && brc - 1 < top.brc {
+                    if top.pop == Pop::Concise && brc - 1 < top.brc {
                         scopes.pop();
                         continue;
                     }
@@ -361,7 +365,7 @@ pub(super) unsafe fn replay_is_keyword(
                     s.is_gen = false;
                     s.asyn = arrow_is_async(src, st, kind, n, pos);
                     s.reserved = false;
-                    s.pop = POP_CONCISE;
+                    s.pop = Pop::Concise;
                     s.par = par;
                     s.brk = brk;
                     s.brc = brc;
@@ -374,7 +378,7 @@ pub(super) unsafe fn replay_is_keyword(
                     && *src.add(pos + 1) != b'.'
                     && (pos == 0 || *src.add(pos - 1) != b'?')
                     && let Some(top) = scopes.last_mut()
-                    && top.pop == POP_CONCISE
+                    && top.pop == Pop::Concise
                     && top.par == par
                     && top.brk == brk
                     && top.brc == brc
@@ -387,7 +391,7 @@ pub(super) unsafe fn replay_is_keyword(
                 let is_colon = *src.add(pos) == b':';
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
-                    if top.pop == POP_CONCISE && top.par == par && top.brk == brk && top.brc == brc
+                    if top.pop == Pop::Concise && top.par == par && top.brk == brk && top.brc == brc
                     {
                         if is_colon && top.qdebt > 0 {
                             scopes.last_mut().unwrap().qdebt -= 1;
@@ -427,7 +431,7 @@ unsafe fn asi_pop_concise(
     tdepth: i32,
     ts: bool,
 ) {
-    if scopes.last().is_none_or(|s| s.pop != POP_CONCISE) {
+    if scopes.last().is_none_or(|s| s.pop != Pop::Concise) {
         return;
     }
     if !lt_in_range(src, prev_end, pos)
@@ -438,7 +442,7 @@ unsafe fn asi_pop_concise(
     }
     while scopes.len() > 1 {
         let top = *scopes.last().unwrap();
-        if top.pop == POP_CONCISE
+        if top.pop == Pop::Concise
             && top.par == par
             && top.brk == brk
             && top.brc == brc
