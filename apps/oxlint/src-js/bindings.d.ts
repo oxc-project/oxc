@@ -71,15 +71,13 @@ export type JsDestroyWorkspaceCb = ((arg: string) => void)
 export type JsLintFileCb = ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string, arg7: boolean, arg8?: string | undefined | null) => string | null)
 
 /** JS callback to lint a file which is parsed by a custom (JS) parser. */
-export type JsLintFileWithJsParserCb =
-  ((arg0: string, arg1: string, arg2: boolean, arg3: number, arg4: string | undefined | null, arg5: Array<number>, arg6: Array<number>, arg7: string, arg8: string, arg9?: string | undefined | null) => string)
+export type JsLintFileWithJsParserCb = ((arg0: string, arg1: string, arg2: boolean, arg3: number, arg4: string | undefined | null, arg5: Array<number>, arg6: Array<number>, arg7: string, arg8: string, arg9?: string | undefined | null) => string)
 
 /** JS callback to load JavaScript config files. */
 export type JsLoadJsConfigsCb = ((arg: Array<string>) => Promise<string>)
 
 /** JS callback to load a custom parser. */
-export type JsLoadParserCb =
-  ((arg: string) => Promise<string>)
+export type JsLoadParserCb = ((arg: string) => Promise<string>)
 
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb = ((arg0: string, arg1: string | undefined | null, arg2: boolean, arg3?: string | undefined | null) => Promise<string>)
