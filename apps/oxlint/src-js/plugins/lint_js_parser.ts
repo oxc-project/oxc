@@ -217,9 +217,11 @@ function lintFileWithJsParserImpl(
     // Leave `maskedRegions` as `null`
   }
 
-  // Get visitors for this file from all rules, collecting them for the string-keyed walk
+  // Get visitors for this file from all rules, collecting them for the string-keyed walk.
+  // Timings are not collected on this path: the string-keyed walk below has no timing
+  // instrumentation, so a per-rule accumulator would only ever record `create` calls.
   const visitors: Visitor[] = [];
-  buildRuleVisitors(ruleIds, optionsIds, (visitor) => visitors.push(visitor));
+  buildRuleVisitors(ruleIds, optionsIds, null, (visitor) => visitors.push(visitor));
 
   // Compile visitors into string-keyed dispatch, and walk the AST.
   // Skip the walk if no visitors visit any nodes.

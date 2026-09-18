@@ -81,7 +81,8 @@ pub use crate::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLintFileWithJsParserCb, ExternalLinterLoadParserCb,
         ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb, JsComment, JsFix,
-        JsMaskedRegion, JsParserLintFileResult, LintFileResult, LoadParserResult, LoadPluginResult,
+        JsMaskedRegion, JsParserLintFileResult, LintFileFailure, LintFileOutput, LintFileResult,
+        LintFileTiming, LintFileTimings, LoadParserResult, LoadPluginResult,
         convert_and_merge_js_fixes,
     },
     external_plugin_store::{
@@ -550,6 +551,7 @@ impl Linter {
                     &mut ctx_host,
                     allocator,
                     js_allocator_pool,
+                    rule_timing_store,
                 );
 
                 if !ctx_host.next_sub_host() {
@@ -1150,7 +1152,9 @@ impl Linter {
             allocator,
         );
         match result {
-            Ok(diagnostics) => {
+            Ok(LintFileOutput { diagnostics, timings }) => {
+                self.record_external_timings(rule_timing_store, external_rules, timings);
+
                 self.convert_external_diagnostics(
                     diagnostics,
                     external_rules,
@@ -1175,6 +1179,50 @@ impl Linter {
                 ));
             }
         }
+    }
+
+    fn record_external_timings(
+        &self,
+        rule_timing_store: Option<&RuleTimingStore>,
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        timings: Option<LintFileTimings>,
+    ) {
+        let Some(rule_timing_store) = rule_timing_store else { return };
+
+        let Some(timings) = timings else { return };
+
+        if let Some(duration) = Self::duration_from_millis(timings.runtime_ms) {
+            rule_timing_store.record_js_plugin_runtime(duration);
+        }
+        rule_timing_store.merge(
+            timings
+                .rules
+                .into_iter()
+                .filter_map(|timing| self.external_rule_timing_record(external_rules, timing)),
+        );
+    }
+
+    fn external_rule_timing_record(
+        &self,
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        timing: LintFileTiming,
+    ) -> Option<RuleTimingRecord> {
+        let (external_rule_id, _, _) =
+            external_rules.get(usize::try_from(timing.rule_index).ok()?)?;
+        let duration = Self::duration_from_millis(timing.duration_ms)?;
+        let (plugin_name, rule_name) = self.config.resolve_plugin_rule_names(*external_rule_id);
+
+        Some(RuleTimingRecord {
+            source: RuleTimingSource::JsPlugin,
+            plugin_name: plugin_name.to_string(),
+            rule_name: rule_name.to_string(),
+            duration,
+            calls: timing.calls,
+        })
+    }
+
+    fn duration_from_millis(duration_ms: f64) -> Option<Duration> {
+        Duration::try_from_secs_f64(duration_ms / 1000.0).ok()
     }
 
     /// Convert external (JS plugin) diagnostics into [`Message`]s and forward them to `push`.

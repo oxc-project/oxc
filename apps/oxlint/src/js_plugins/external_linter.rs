@@ -15,7 +15,7 @@ use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
     ExternalLinterLintFileCb, ExternalLinterLintFileWithJsParserCb, ExternalLinterLoadParserCb,
     ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb, JsParserLintFileResult,
-    LintFileResult, LoadParserResult, LoadPluginResult,
+    LintFileFailure, LintFileOutput, LoadParserResult, LoadPluginResult,
 };
 
 use crate::{

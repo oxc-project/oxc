@@ -25,6 +25,7 @@ import { walkProgram, ancestors } from "../generated/walk.js";
 
 import type { VisitFn, EnterExit } from "./visitor.ts";
 import type { AfterHook, BufferWithArrays, Visitor } from "./types.ts";
+import type { RuleTiming } from "./timing.ts";
 
 // Buffers cache.
 //
@@ -198,7 +199,7 @@ export function lintFileImpl(
   setGlobalsForFile(globalsJSON);
 
   // Get visitors for this file from all rules, compiling each into the visitor for the native walk
-  buildRuleVisitors(ruleIds, optionsIds, addVisitorToCompiled);
+  buildRuleVisitors(ruleIds, optionsIds, timings, addVisitorToCompiled);
 
   const visitorState = finalizeCompiledVisitor();
 
@@ -242,12 +243,15 @@ export function lintFileImpl(
  *
  * @param ruleIds - IDs of rules to run on this file
  * @param optionsIds - IDs of options for each rule, in same order as `ruleIds`
- * @param onVisitor - Called with each active rule's visitor, in run order
+ * @param timings - Timing accumulators to append to, or `null` if timings are not being collected
+ * @param onVisitor - Called with each active rule's visitor and its timing accumulator
+ *   (`undefined` when timings are not being collected), in run order
  */
 export function buildRuleVisitors(
   ruleIds: number[],
   optionsIds: number[],
-  onVisitor: (visitor: Visitor) => void,
+  timings: RuleTiming[] | null,
+  onVisitor: (visitor: Visitor, timing: RuleTiming | undefined) => void,
 ): void {
   debugAssertIsNonNull(allOptions, "`allOptions` should be initialized");
 
@@ -311,7 +315,7 @@ export function buildRuleVisitors(
       }
     }
 
-    onVisitor(visitor);
+    onVisitor(visitor, timing);
   }
 }
 
