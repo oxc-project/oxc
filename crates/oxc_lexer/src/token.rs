@@ -368,9 +368,11 @@ impl Display for TokenKind {
 /// # SAFETY
 ///
 /// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
-/// pipeline only ever writes kinds that came from [`crate::opmap`]'s tables or
+/// pipeline only ever writes kinds that came from [`opmap`]'s tables or
 /// from the named constants in `pipeline`, so this holds for any range the
 /// lexer has written; it does *not* hold for uninitialised arena memory.
+///
+/// [`opmap`]: crate::opmap
 #[inline]
 pub(crate) const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
     // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and
@@ -564,8 +566,10 @@ mod tests {
         assert!(!TokenKind::String.is_numeric());
     }
 
-    /// Backs the safety invariant of [`super::kinds_from_bytes`]: the lexer
-    /// never emits a byte outside the declared discriminants.
+    /// Backs the safety invariant of [`kinds_from_bytes`] -
+    /// the lexer never emits a byte outside the declared discriminants.
+    ///
+    /// [`kinds_from_bytes`]: super::kinds_from_bytes
     #[test]
     fn every_emitted_kind_is_declared() {
         const SOURCES: [&str; 6] = [

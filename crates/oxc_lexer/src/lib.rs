@@ -3,6 +3,10 @@
 
 use std::{cell::RefCell, mem, ptr, slice};
 
+use oxc_ast::ast::RegExpFlags;
+use oxc_span::Span;
+use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
+
 pub mod arena;
 mod comment_meta;
 #[cfg(feature = "oxc_diagnostics")]
@@ -33,7 +37,7 @@ thread_local! {
     static SCRATCH: RefCell<Lexer> = RefCell::new(Lexer::new());
 }
 
-const _: () = assert!(size_of::<oxc_ast::ast::RegExpFlags>() == 1);
+const _: () = assert!(size_of::<RegExpFlags>() == 1);
 
 /// # Panics
 /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `len`,
@@ -149,7 +153,7 @@ fn resolve_unicode_leads(
     lanes: &mut Lanes,
     src: &[u8],
     kinds_all: &[TokenKind],
-    spans_all: &[oxc_span::Span],
+    spans_all: &[Span],
 ) {
     let k = kinds_all.len();
     let mut leads = mem::take(&mut lanes.unicode_leads);
@@ -170,11 +174,7 @@ fn resolve_unicode_leads(
                 kinds_all[ti],
                 TokenKind::PrivateIdent | TokenKind::PrivateIdentEscaped
             ));
-        let ok = if off == name_start {
-            oxc_syntax::identifier::is_identifier_start(ch)
-        } else {
-            oxc_syntax::identifier::is_identifier_part(ch)
-        };
+        let ok = if off == name_start { is_identifier_start(ch) } else { is_identifier_part(ch) };
         if ok {
             continue;
         }

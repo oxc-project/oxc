@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use oxc_ast::ast::REGEXP_FLAGS_LIST;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
@@ -371,7 +372,7 @@ pub fn to_oxc_diagnostic(d: &Diagnostic, source: &str) -> OxcDiagnostic {
             format!("Unexpected flag {} in regular expression literal", offending_char(source, d)),
         )
         .with_label(span)
-        .with_help(format!("The allowed flags are `{}`", oxc_ast::ast::REGEXP_FLAGS_LIST)),
+        .with_help(format!("The allowed flags are `{REGEXP_FLAGS_LIST}`")),
         Code::DUPLICATE_REGEXP_FLAG => diag(
             sev,
             format!(

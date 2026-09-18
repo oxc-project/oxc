@@ -17,7 +17,7 @@ use crate::{
     lanes::Lanes,
     options::LexOptions,
     tables::Tables,
-    token::{SPAN_SENTINELS, TokenKind, tk},
+    token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes, tk},
 };
 
 mod bitmap;
@@ -96,10 +96,10 @@ impl Lexer {
     #[must_use]
     pub fn kinds(&self) -> &[TokenKind] {
         let bytes = &self.sig_kinds[..self.sig_len + SPAN_SENTINELS];
-        crate::token::debug_assert_kind_bytes(bytes);
+        debug_assert_kind_bytes(bytes);
         // SAFETY: `lex_raw` wrote `sig_len` kinds plus the sentinels, all of
         // them declared discriminants.
-        unsafe { crate::token::kinds_from_bytes(bytes) }
+        unsafe { kinds_from_bytes(bytes) }
     }
 
     fn ensure(&mut self, n: usize) {
@@ -200,11 +200,13 @@ impl Lexer {
 
     /// Lex `src[..n]` into the internal `spans`/`sig_kinds` buffers (mode from
     /// `options`), returning the significant token count. Test/bench entry;
-    /// the arena API is [`crate::lex_utf8`].
+    /// the arena API is [`lex_utf8`].
     ///
     /// # Panics
     ///
     /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `n`.
+    ///
+    /// [`lex_utf8`]: crate::lex_utf8
     pub fn lex(&mut self, src: &[u8], n: usize, options: LexOptions) -> usize {
         assert!(
             src.len() >= n + PAD,

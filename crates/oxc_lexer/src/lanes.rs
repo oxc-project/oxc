@@ -13,9 +13,11 @@ use std::{ptr, str};
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use std::arch::x86_64::*;
 
-use oxc_ast::ast::RegExpFlags;
+use oxc_ast::ast::{Comment, CommentKind, RegExpFlags};
+use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
+    comment_meta,
     error::{Diagnostic, diag_code, diag_severity},
     token::StringSpan,
 };
@@ -29,7 +31,7 @@ pub struct Lanes {
     pub regex_flags: Vec<u8>,
     pub cooked: Vec<u8>,
     pub comment_meta: Vec<u8>,
-    pub comments: Vec<oxc_ast::ast::Comment>,
+    pub comments: Vec<Comment>,
     /// Lexer diagnostics, pushed only on cold error paths; empty for valid input.
     pub diags: Vec<Diagnostic>,
     /// Byte ranges lexed content-blind (the `.tsx` type-argument skip): diagnostics landing in one are dropped at drain time.
@@ -75,9 +77,9 @@ impl Lanes {
             };
             // Unknown or repeated flag: diagnostic. At most 8 flag chars.
             if bit == 0 {
-                self.push_diag((fs + k) as u32, 1, crate::error::diag_code::INVALID_REGEXP_FLAG);
+                self.push_diag((fs + k) as u32, 1, diag_code::INVALID_REGEXP_FLAG);
             } else if f & bit != 0 {
-                self.push_diag((fs + k) as u32, 1, crate::error::diag_code::DUPLICATE_REGEXP_FLAG);
+                self.push_diag((fs + k) as u32, 1, diag_code::DUPLICATE_REGEXP_FLAG);
             }
             f |= bit;
         }
@@ -142,15 +144,11 @@ impl Lanes {
     #[inline(never)]
     pub fn push_num_end_diag_unicode(&mut self, src: &[u8], e2: usize) {
         let Some(ch) = decode_char_at(src, e2) else { return };
-        if !oxc_syntax::identifier::is_identifier_start(ch) {
+        if !is_identifier_start(ch) {
             return;
         }
         let end = ident_start_run_end(src, e2 + ch.len_utf8());
-        self.push_diag(
-            e2 as u32,
-            (end - e2) as u32,
-            crate::error::diag_code::INVALID_NUMERIC_LITERAL,
-        );
+        self.push_diag(e2 as u32, (end - e2) as u32, diag_code::INVALID_NUMERIC_LITERAL);
     }
 
     #[inline]
@@ -264,13 +262,9 @@ impl Lanes {
     #[inline(never)]
     fn check_escaped_ident_char(&mut self, value: u32, at_start: bool, end: usize) {
         let Some(ch) = char::from_u32(value) else { return }; // surrogates handled by caller
-        let ok = if at_start {
-            oxc_syntax::identifier::is_identifier_start(ch)
-        } else {
-            oxc_syntax::identifier::is_identifier_part(ch)
-        };
+        let ok = if at_start { is_identifier_start(ch) } else { is_identifier_part(ch) };
         if !ok {
-            self.push_diag(end as u32, 0, crate::error::diag_code::UNEXPECTED_CHARACTER);
+            self.push_diag(end as u32, 0, diag_code::UNEXPECTED_CHARACTER);
         }
     }
 
@@ -282,7 +276,8 @@ impl Lanes {
     #[cold]
     #[inline(never)]
     fn validate_ident_escapes(&mut self, src: &[u8], bs: usize, be: usize) {
-        use crate::error::diag_code as D;
+        use diag_code as D;
+
         fn hex4(src: &[u8], mut k: usize, be: usize) -> (Option<u32>, usize) {
             let mut v = 0u32;
             for _ in 0..4 {
@@ -414,7 +409,7 @@ impl Lanes {
         }
         // Only non-SWAR numbers (floats, radix-prefixed, bigint, separators, leading zeros, long) reach the validation walk.
         let code = validate_number(src, s, e);
-        if code != crate::error::diag_code::OK {
+        if code != diag_code::OK {
             self.push_diag(s as u32, (e - s) as u32, code);
         }
         self.numbers.push(parse_number(src, s, e));
@@ -430,16 +425,15 @@ impl Lanes {
         blk: bool,
         meta: u8,
     ) {
-        use oxc_ast::ast::{Comment, CommentKind};
         let kind = if !blk {
             CommentKind::Line
-        } else if meta & crate::comment_meta::META_MULTILINE != 0 {
+        } else if meta & comment_meta::META_MULTILINE != 0 {
             CommentKind::MultiLineBlock
         } else {
             CommentKind::SingleLineBlock
         };
         let mut c = Comment::new(start, end.min(sl as u32), kind);
-        c.content = crate::comment_meta::content_from_ordinal(meta);
+        c.content = comment_meta::content_from_ordinal(meta);
 
         let s_ = (start as usize).min(sl);
         let mut q = s_;
@@ -638,7 +632,7 @@ fn ident_start_run_end(s: &[u8], mut i: usize) -> usize {
             i += 1;
         } else {
             let Some(c) = decode_char_at(s, i) else { break };
-            if !oxc_syntax::identifier::is_identifier_start(c) {
+            if !is_identifier_start(c) {
                 break;
             }
             i += c.len_utf8();
@@ -741,7 +735,8 @@ fn radix_digit(c: u8) -> Option<u8> {
 /// here. Detection only; `parse_number` still produces a lenient value.
 #[inline(never)]
 fn validate_number(src: &[u8], s: usize, e: usize) -> u16 {
-    use crate::error::diag_code as D;
+    use diag_code as D;
+
     let bytes = &src[s..e];
     let Some((&last, head)) = bytes.split_last() else { return D::OK };
     let is_bigint = last == b'n';
