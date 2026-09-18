@@ -23,6 +23,16 @@ pub struct Oxfmtrc {
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub overrides: Option<Vec<OxfmtOverrideConfig>>,
+    /// Prettier plugins to load, as package names or paths.
+    /// Resolved from the directory containing this configuration file.
+    ///
+    /// A plugin's declared file extensions are formatted by delegating to Prettier.
+    /// Plugins declared in nested configurations or in `overrides` are not read:
+    /// the set of extensions to collect is settled before per-file resolution.
+    ///
+    /// - Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plugins: Option<Vec<String>>,
     /// Ignore files matching these glob patterns.
     /// Patterns use gitignore-style matching, rooted at the directory containing the configuration file.
     /// Files outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.

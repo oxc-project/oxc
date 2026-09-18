@@ -103,6 +103,14 @@
       },
       "markdownDescription": "File-specific overrides.\nWhen a file matches multiple overrides, the later override takes precedence (array order matters).\n\n- Default: `[]`"
     },
+    "plugins": {
+      "description": "Prettier plugins to load, as package names or paths.\nResolved from the directory containing this configuration file.\n\nA plugin's declared file extensions are formatted by delegating to Prettier.\nPlugins declared in nested configurations or in `overrides` are not read:\nthe set of extensions to collect is settled before per-file resolution.\n\n- Default: `[]`",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "Prettier plugins to load, as package names or paths.\nResolved from the directory containing this configuration file.\n\nA plugin's declared file extensions are formatted by delegating to Prettier.\nPlugins declared in nested configurations or in `overrides` are not read:\nthe set of extensions to collect is settled before per-file resolution.\n\n- Default: `[]`"
+    },
     "printWidth": {
       "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Languages: All\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
       "type": "integer",
