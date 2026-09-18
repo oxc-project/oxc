@@ -1,22 +1,23 @@
----
-source: apps/oxlint/src/tester.rs
----
-########## 
-arguments: -c fixtures/cli/print_config/ban_rules/eslintrc.json -A all -D eqeqeq --print-config
-working directory: 
-----------
+# Exit code
+0
+
+# stdout
+```
 {
   "plugins": [
     "unicorn",
     "typescript",
     "oxc"
   ],
+  "jsPlugins": [
+    {
+      "name": "custom",
+      "specifier": "./plugin.js"
+    }
+  ],
   "categories": {},
   "rules": {
-    "eqeqeq": [
-      "deny",
-      "always"
-    ]
+    "custom/rule": "deny"
   },
   "settings": {
     "jsx-a11y": {
@@ -56,6 +57,8 @@ working directory:
   "globals": {},
   "ignorePatterns": []
 }
-----------
-CLI result: PrintConfigResult
-----------
+```
+
+# stderr
+```
+```
