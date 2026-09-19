@@ -110,14 +110,14 @@ impl Tables {
             let dt = (t & 0x80) != 0;
             assert!(
                 kw == is_kw_init(cb) && opp == is_op_char(cb) && dt == (cb == b'.'),
-                "tables.rs: MRG_LO/HI wrong at byte {c:#04x}"
+                "MRG_LO/HI wrong at byte {c:#04x}"
             );
             let tt = if c < 0x80 { self.mrg_lo_ts[c & 15] & self.mrg_hi[c >> 4] } else { 0 };
             assert!(
                 ((tt & 0x03) != 0) == is_kw_init_ts(cb)
                     && ((tt & 0x3C) != 0) == opp
                     && ((tt & 0x80) != 0) == dt,
-                "tables.rs: MRG_LO_TS wrong at byte {c:#04x}"
+                "MRG_LO_TS wrong at byte {c:#04x}"
             );
             let tb = if c < 0x80 { self.wb_lo[c & 15] & self.wb_hi[c >> 4] } else { 0 };
             let wd = (c >= 0x80) || (tb & 0x3F) != 0;
@@ -125,7 +125,7 @@ impl Tables {
             let dg = (tb & 0x02) != 0;
             assert!(
                 wd == is_word(cb) && ws == is_ws(cb) && dg == is_digit(cb),
-                "tables.rs: WB_LO/HI wrong at byte {c:#04x}"
+                "WB_LO/HI wrong at byte {c:#04x}"
             );
         }
     }

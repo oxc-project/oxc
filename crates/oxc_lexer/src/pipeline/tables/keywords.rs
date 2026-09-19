@@ -164,9 +164,9 @@ impl Keywords {
             buf[..bytes.len()].copy_from_slice(bytes);
             let js = unsafe { self.kwjs.lookup(buf.as_ptr(), bytes.len()) };
             let ts = unsafe { self.kwts.lookup(buf.as_ptr(), bytes.len()) };
-            assert!(ts == *tok as u32, "tables.rs: kwts lookup({w}) wrong");
+            assert!(ts == *tok as u32, "kwts lookup({w}) wrong");
             let in_js = KEYWORDS_JS.iter().any(|k| k.0 == *w);
-            assert!(js == if in_js { *tok as u32 } else { 0 }, "tables.rs: kwjs lookup({w}) wrong");
+            assert!(js == if in_js { *tok as u32 } else { 0 }, "kwjs lookup({w}) wrong");
         }
     }
 }
@@ -207,7 +207,7 @@ fn build_regex_kw_mask() -> u64 {
                 break;
             }
         }
-        assert!(found >= 0 && found < 64, "tables.rs: regex-kw {r} missing from KEYWORDS_JS");
+        assert!(found >= 0 && found < 64, "regex-kw {r} missing from KEYWORDS_JS");
         mask |= 1u64 << found;
     }
     mask
@@ -263,7 +263,7 @@ impl KwSet {
         hint: (u32, u32),
     ) -> KwSet {
         let n = list.len();
-        assert!(n >= 2 && n <= KW_COUNT_TS && n < 0xFF, "opmap.rs: bad KwSet word count");
+        assert!(n >= 2 && n <= KW_COUNT_TS && n < 0xFF, "bad KwSet word count");
         let mut s = KwSet {
             ts_key,
             kw_len: [0; KW_COUNT_TS],
@@ -280,7 +280,7 @@ impl KwSet {
         for i in 0..n {
             let bytes = list[i].0.as_bytes();
             let len = bytes.len();
-            assert!(len >= 2 && len <= 10, "opmap.rs: keyword length out of range");
+            assert!(len >= 2 && len <= 10, "keyword length out of range");
             s.kw_len[i] = len as u8;
             s.kw_tok[i] = list[i].1 as u8;
             let mut w: u64 = 0;
@@ -338,7 +338,7 @@ impl KwSet {
                         m += 2;
                     }
                 }
-                panic!("opmap.rs: kw perfect-hash search FAILED");
+                panic!("kw perfect-hash search FAILED");
             }
         }
         for i in 0..n {
@@ -394,12 +394,12 @@ impl KwSet {
             unsafe {
                 assert!(
                     self.lookup(buf.as_ptr(), bytes.len()) == list[i].1 as u32,
-                    "opmap self-check: kw lookup({}) wrong",
+                    "self-check: kw lookup({}) wrong",
                     list[i].0
                 );
                 assert!(
                     self.lookup(buf.as_ptr(), bytes.len() + 1) == 0,
-                    "opmap self-check: kw lookup({}+1) matched",
+                    "self-check: kw lookup({}+1) matched",
                     list[i].0
                 );
             }
@@ -428,7 +428,7 @@ impl KwSet {
             unsafe {
                 assert!(
                     self.lookup(buf.as_ptr(), neg.len()) == 0,
-                    "opmap self-check: kw negative {neg} matched"
+                    "self-check: kw negative {neg} matched"
                 );
             }
         }
@@ -441,16 +441,13 @@ fn kwinit_selfcheck() {
         in_set[kw.0.as_bytes()[0] as usize] = true;
     }
     for c in 0..256usize {
-        assert!(is_kw_init(c as u8) == in_set[c], "tables.rs: KWINIT_LO/HI wrong at byte {c:#04x}");
+        assert!(is_kw_init(c as u8) == in_set[c], "KWINIT_LO/HI wrong at byte {c:#04x}");
     }
     let mut in_set_ts = [false; 256];
     for kw in KEYWORDS_TS.iter() {
         in_set_ts[kw.0.as_bytes()[0] as usize] = true;
     }
     for c in 0..256usize {
-        assert!(
-            is_kw_init_ts(c as u8) == in_set_ts[c],
-            "tables.rs: KWINIT_TS_LO wrong at byte {c:#04x}"
-        );
+        assert!(is_kw_init_ts(c as u8) == in_set_ts[c], "KWINIT_TS_LO wrong at byte {c:#04x}");
     }
 }

@@ -90,7 +90,7 @@ impl OpMap {
                 a.len as usize == a.txt.len()
                     && a.kind as u8 >= OP_KIND_BASE
                     && a.kind as u8 <= OP_KIND_MAX,
-                "opmap.rs: bad OpDef {i}"
+                "bad OpDef {i}"
             );
             for j in (i + 1)..OPMAP_OPS.len() {
                 let b = &OPMAP_OPS[j];
@@ -98,7 +98,7 @@ impl OpMap {
                 let b2 = if b.len >= 3 { b.txt[2] } else { 0 };
                 assert!(
                     !(a.len == b.len && a.txt[0] == b.txt[0] && a.txt[1] == b.txt[1] && a2 == b2),
-                    "opmap.rs: (c0,c1,c2,len) collision"
+                    "(c0,c1,c2,len) collision"
                 );
             }
         }
@@ -131,7 +131,7 @@ impl OpMap {
             }
             m += 2;
         }
-        panic!("opmap.rs: opmap perfect-hash search FAILED");
+        panic!("opmap perfect-hash search FAILED");
     }
 
     fn build_op_pack(&mut self) {
@@ -196,9 +196,9 @@ impl OpMap {
             b[..o.len as usize].copy_from_slice(&o.txt[..o.len as usize]);
             assert!(
                 self.opmap_lookup(b[0], b[1], b[2], b[3], o.len as u32) == o.kind as u32,
-                "opmap self-check: opmap_lookup wrong"
+                "self-check: opmap_lookup wrong"
             );
-            assert!(seen_kind[o.kind as usize] == 0, "opmap self-check: duplicate ordinal");
+            assert!(seen_kind[o.kind as usize] == 0, "self-check: duplicate ordinal");
             seen_kind[o.kind as usize] = 1;
         }
         assert!(
@@ -209,24 +209,21 @@ impl OpMap {
                 && self.opmap_lookup(b'>', b'>', b'=', 0, 3) == tk!(RShiftEq) as u32
                 && self.opmap_lookup(b'=', b'=', 0, 0, 2) == tk!(EqEq) as u32
                 && self.opmap_lookup(b'=', b'/', 0, 0, 2) == 0,
-            "opmap self-check: op spot-checks failed"
+            "self-check: op spot-checks failed"
         );
         let mut seen = [0u8; 256];
         for i in 0..PUNCT1.len() {
             let ord = self.punct1_ord[PUNCT1[i].byte as usize];
             assert!(
                 ord == PUNCT1[i].kind as u8 && seen[ord as usize] == 0,
-                "opmap self-check: PUNCT1 ordinal wrong/dup"
+                "self-check: PUNCT1 ordinal wrong/dup"
             );
             seen[ord as usize] = 1;
         }
         for b in 0..256usize {
             let ord = self.punct1_ord[b];
             let is_known = PUNCT1.iter().any(|p| p.byte == b as u8);
-            assert!(
-                is_known || ord == tk!(Invalid),
-                "opmap self-check: PUNCT1_ORD should be unknown"
-            );
+            assert!(is_known || ord == tk!(Invalid), "self-check: PUNCT1_ORD should be unknown");
         }
         assert!(
             self.punct1_ord[b'(' as usize] == tk!(LParen)
@@ -238,7 +235,7 @@ impl OpMap {
                 && self.punct1_ord[b'$' as usize] == tk!(Invalid)
                 && self.punct1_ord[b' ' as usize] == tk!(Invalid)
                 && self.punct1_ord[0] == tk!(Invalid),
-            "opmap self-check: PUNCT1 spot-checks failed"
+            "self-check: PUNCT1 spot-checks failed"
         );
     }
 }
@@ -255,6 +252,6 @@ pub(super) fn opch_selfcheck() {
         in_set[q as usize] = true;
     }
     for c in 0..256usize {
-        assert!(is_op_char(c as u8) == in_set[c], "tables.rs: OPCH_LO/HI wrong at byte {c:#04x}");
+        assert!(is_op_char(c as u8) == in_set[c], "OPCH_LO/HI wrong at byte {c:#04x}");
     }
 }

@@ -62,7 +62,7 @@ pub(super) fn punct1_hash_selfcheck() {
         if is_word(cb) || is_ws(cb) {
             continue;
         }
-        assert!(punct1_hash(cb) == punct1_ord[c], "tables.rs: PH_A/B/T wrong at byte {c:#04x}");
+        assert!(punct1_hash(cb) == punct1_ord[c], "PH_A/B/T wrong at byte {c:#04x}");
     }
 }
 
