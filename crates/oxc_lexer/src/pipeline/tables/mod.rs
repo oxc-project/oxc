@@ -3,13 +3,11 @@ use crate::token::{KW_KIND_BASE, tk};
 use crate::pipeline::bytes::{is_digit, is_word, is_ws};
 
 mod opmap;
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
-pub(super) use opmap::PUNCT1;
-pub(super) use opmap::{KwSet, PUNCT1_NKNOWN};
+pub(super) use opmap::{KwSet, PUNCT1, PUNCT1_NKNOWN};
 
 use opmap::{
     KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, OPMAP_NOPS, OPMAP_OPS, OpMap,
-    PUNCT1_LIST, PUNCT1_TOK, op_key,
+    op_key,
 };
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
@@ -329,7 +327,7 @@ fn opch_selfcheck() {
 fn punct1_hash_selfcheck() {
     let mut punct1_ord = [tk!(Invalid); 256];
     for i in 0..PUNCT1_NKNOWN {
-        punct1_ord[PUNCT1_LIST[i] as usize] = PUNCT1_TOK[i];
+        punct1_ord[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
     }
     for c in 0..256usize {
         let cb = c as u8;

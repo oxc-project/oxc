@@ -199,30 +199,6 @@ pub const PUNCT1: [Punct1; PUNCT1_NKNOWN] = [
     Punct1::new('#', TokenKind::Invalid),
 ];
 
-const fn punct1_list() -> [u8; PUNCT1_NKNOWN] {
-    let mut out = [0u8; PUNCT1_NKNOWN];
-    let mut i = 0;
-    while i < PUNCT1_NKNOWN {
-        out[i] = PUNCT1[i].byte;
-        i += 1;
-    }
-    out
-}
-
-const fn punct1_tok() -> [u8; PUNCT1_NKNOWN] {
-    let mut out = [0u8; PUNCT1_NKNOWN];
-    let mut i = 0;
-    while i < PUNCT1_NKNOWN {
-        out[i] = PUNCT1[i].kind as u8;
-        i += 1;
-    }
-    out
-}
-
-/// Column views of [`PUNCT1`].
-pub(super) static PUNCT1_LIST: [u8; PUNCT1_NKNOWN] = punct1_list();
-pub(super) static PUNCT1_TOK: [u8; PUNCT1_NKNOWN] = punct1_tok();
-
 pub struct OpMap {
     pub opmap_mul: u32,
     pub opmap_slot: [u8; 256],
@@ -522,7 +498,7 @@ impl OpMap {
     fn punct1_init(&mut self) {
         self.punct1_ord = [tk!(Invalid); 256];
         for i in 0..PUNCT1_NKNOWN {
-            self.punct1_ord[PUNCT1_LIST[i] as usize] = PUNCT1_TOK[i];
+            self.punct1_ord[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
         }
     }
 
@@ -575,16 +551,16 @@ impl OpMap {
         );
         let mut seen = [0u8; 256];
         for i in 0..PUNCT1_NKNOWN {
-            let ord = self.punct1_ord[PUNCT1_LIST[i] as usize];
+            let ord = self.punct1_ord[PUNCT1[i].byte as usize];
             assert!(
-                ord == PUNCT1_TOK[i] && seen[ord as usize] == 0,
+                ord == PUNCT1[i].kind as u8 && seen[ord as usize] == 0,
                 "opmap self-check: PUNCT1 ordinal wrong/dup"
             );
             seen[ord as usize] = 1;
         }
         for b in 0..256usize {
             let ord = self.punct1_ord[b];
-            let is_known = PUNCT1_LIST.contains(&(b as u8));
+            let is_known = PUNCT1.iter().any(|p| p.byte == b as u8);
             assert!(
                 is_known || ord == tk!(Invalid),
                 "opmap self-check: PUNCT1_ORD should be unknown"
