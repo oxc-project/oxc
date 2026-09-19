@@ -173,8 +173,19 @@ impl Config {
             .cloned()
             .collect::<FxHashMap<_, _>>();
 
-        // Build this only if an override adds a plugin whose category rules need applying.
-        let mut all_rules: Option<Vec<RuleEnum>> = None;
+        // Apply category defaults for newly enabled plugins before explicit override rules.
+        // Root plugins already have their categories applied in base_rules.
+        let new_plugins = plugins & !self.base.config.plugins;
+        if !new_plugins.is_empty() {
+            for rule in RULES.iter().filter(|rule| {
+                LintPlugins::try_from(rule.plugin_name())
+                    .is_ok_and(|plugin| !plugin.is_empty() && new_plugins.contains(plugin))
+            }) {
+                if let Some(severity) = self.categories.get(&rule.category()) {
+                    rules.entry(rule.clone()).or_insert(*severity);
+                }
+            }
+        }
 
         // Build a hashmap of existing external rules keyed by rule id with value (options_id, severity)
         let mut external_rules = self
@@ -184,49 +195,7 @@ impl Config {
             .map(|&(rule_id, options_id, severity)| (rule_id, (options_id, severity)))
             .collect::<FxHashMap<_, _>>();
 
-        // Track which plugins have already had their category rules applied.
-        // Start with the root plugins since they already have categories applied in base_rules.
-        let mut configured_plugins = self.base.config.plugins;
-
         for override_config in overrides_to_apply {
-            if let Some(override_plugins) = override_config.plugins
-                && override_plugins != plugins
-            {
-                // Only apply categories to plugins that:
-                // 1. Are in the current accumulated plugin set
-                // 2. Have NOT been configured yet (not in root or previous overrides)
-                let unconfigured_plugins = plugins & !configured_plugins;
-
-                if !unconfigured_plugins.is_empty() {
-                    let all_rules = all_rules.get_or_insert_with(|| {
-                        RULES
-                            .iter()
-                            .filter(|rule| {
-                                LintPlugins::try_from(rule.plugin_name())
-                                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
-                            })
-                            .cloned()
-                            .collect::<Vec<_>>()
-                    });
-                    for (rule, severity) in all_rules.iter().filter_map(|rule| {
-                        let rule_plugin = LintPlugins::try_from(rule.plugin_name())
-                            .unwrap_or(LintPlugins::empty());
-                        // Only apply categories to rules from unconfigured plugins
-                        if !rule_plugin.is_empty() && unconfigured_plugins.contains(rule_plugin) {
-                            self.categories
-                                .get(&rule.category())
-                                .map(|severity| (rule.clone(), severity))
-                        } else {
-                            None
-                        }
-                    }) {
-                        rules.entry(rule).or_insert(*severity);
-                    }
-                    // Mark these plugins as configured
-                    configured_plugins |= unconfigured_plugins;
-                }
-            }
-
             for (rule, severity) in &override_config.rules.builtin_rules {
                 if *severity == AllowWarnDeny::Allow {
                     rules.remove(rule);
@@ -1519,6 +1488,136 @@ mod test {
         .unwrap()
         .build(&mut external_plugin_store)
         .unwrap()
+    }
+
+    #[test]
+    fn test_override_plugin_categories_with_empty_root_plugins() {
+        // https://github.com/oxc-project/oxc/issues/19779
+        for (plugin, category, rule_name) in [
+            ("vitest", "style", "require-hook"),
+            ("react", "restriction", "only-export-components"),
+            ("jsdoc", "correctness", "check-tag-names"),
+        ] {
+            let config = config_from_str_with_defaults(
+                &serde_json::json!({
+                    "plugins": [],
+                    "categories": { category: "error" },
+                    "overrides": [{
+                        "files": ["*.test.tsx"],
+                        "excludeFiles": ["excluded.test.tsx"],
+                        "plugins": [plugin]
+                    }]
+                })
+                .to_string(),
+            );
+
+            let resolved = config.apply_overrides(Path::new("example.test.tsx"));
+            assert!(
+                resolved.rules.iter().any(|(rule, severity)| {
+                    rule.plugin_name() == plugin
+                        && rule.name() == rule_name
+                        && *severity == AllowWarnDeny::Deny
+                }),
+                "{plugin}/{rule_name} should inherit its category severity"
+            );
+
+            for path in ["example.tsx", "excluded.test.tsx"] {
+                let resolved = config.apply_overrides(Path::new(path));
+                assert!(resolved.rules.iter().all(|(rule, _)| rule.plugin_name() != plugin));
+            }
+        }
+    }
+
+    #[test]
+    fn test_override_plugin_categories_with_repeated_root_plugins() {
+        let config = config_from_str_with_defaults(
+            r#"{
+                "plugins": ["typescript"],
+                "categories": { "restriction": "warn" },
+                "rules": { "typescript/no-explicit-any": "off" },
+                "overrides": [{
+                    "files": ["*.tsx"],
+                    "plugins": ["typescript", "react"]
+                }]
+            }"#,
+        );
+
+        let resolved = config.apply_overrides(Path::new("example.tsx"));
+        assert!(resolved.rules.iter().any(|(rule, severity)| {
+            rule.plugin_name() == "react"
+                && rule.name() == "only-export-components"
+                && *severity == AllowWarnDeny::Warn
+        }));
+        assert!(resolved.rules.iter().all(|(rule, _)| rule.name() != "no-explicit-any"));
+    }
+
+    #[test]
+    fn test_override_plugin_categories_preserve_rule_configuration() {
+        let config = config_from_str_with_defaults(
+            r#"{
+                "plugins": [],
+                "categories": { "restriction": "error" },
+                "overrides": [
+                    {
+                        "files": ["*.tsx"],
+                        "plugins": ["react"],
+                        "rules": {
+                            "react/only-export-components": "off",
+                            "react/jsx-filename-extension": ["warn", { "extensions": [".tsx"] }]
+                        }
+                    },
+                    {
+                        "files": ["*.tsx"],
+                        "plugins": ["react", "typescript"]
+                    }
+                ]
+            }"#,
+        );
+
+        let resolved = config.apply_overrides(Path::new("example.tsx"));
+        assert!(resolved.rules.iter().all(|(rule, _)| rule.name() != "only-export-components"));
+        let (rule, severity) = resolved
+            .rules
+            .iter()
+            .find(|(rule, _)| rule.name() == "jsx-filename-extension")
+            .unwrap();
+        assert_eq!(*severity, AllowWarnDeny::Warn);
+        let expected = RuleEnum::ReactJsxFilenameExtension(
+            ReactJsxFilenameExtension::from_configuration(
+                serde_json::json!([{ "extensions": [".tsx"] }]),
+            )
+            .unwrap(),
+        );
+        assert_eq!(format!("{rule:?}"), format!("{expected:?}"));
+        assert!(resolved.rules.iter().any(|(rule, severity)| {
+            rule.plugin_name() == "typescript"
+                && rule.name() == "no-explicit-any"
+                && *severity == AllowWarnDeny::Deny
+        }));
+    }
+
+    #[test]
+    fn test_override_plugin_categories_use_default_correctness() {
+        for (categories, expected) in [
+            (serde_json::json!({}), Some(AllowWarnDeny::Warn)),
+            (serde_json::json!({ "correctness": "off" }), None),
+        ] {
+            let config = config_from_str_with_defaults(
+                &serde_json::json!({
+                    "plugins": [],
+                    "categories": categories,
+                    "overrides": [{ "files": ["*.js"], "plugins": ["jsdoc"] }]
+                })
+                .to_string(),
+            );
+            let resolved = config.apply_overrides(Path::new("example.js"));
+            let severity = resolved
+                .rules
+                .iter()
+                .find(|(rule, _)| rule.name() == "check-tag-names")
+                .map(|(_, severity)| *severity);
+            assert_eq!(severity, expected);
+        }
     }
 
     #[test]
