@@ -128,6 +128,18 @@ If set, it applies to every file and overrides the `typeAware` option of every c
 If unset, each file follows the `typeAware` option of the config which governs it.
 
 
+## typeCheck
+
+type: `boolean`
+
+
+Whether to report the TypeScript compiler diagnostics (experimental type checking).
+If set, it applies to every file linted with type-aware rules and overrides the
+`typeCheck` option of every config; it does not enable type-aware linting itself, so a
+file no config makes type-aware is never type-checked.
+If unset, each file follows the `typeCheck` option of the config which governs it.
+
+
 ## unusedDisableDirectives
 
 type: `"allow" | "warn" | "deny"`

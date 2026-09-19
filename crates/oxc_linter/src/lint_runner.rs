@@ -240,7 +240,7 @@ pub struct LintRunnerBuilder {
     regular_linter: Linter,
     type_aware_enabled: bool,
     type_aware_forced: bool,
-    type_check: bool,
+    type_check_override: Option<bool>,
     lint_service_options: LintServiceOptions,
     silent: bool,
     fix_kind: FixKind,
@@ -255,7 +255,7 @@ impl LintRunnerBuilder {
             regular_linter: linter,
             type_aware_enabled: false,
             type_aware_forced: false,
-            type_check: false,
+            type_check_override: None,
             lint_service_options,
             silent: false,
             fix_kind: FixKind::None,
@@ -280,9 +280,13 @@ impl LintRunnerBuilder {
         self
     }
 
+    /// Decide TypeScript compiler diagnostics explicitly for every file handed to `tsgolint`:
+    /// `Some(true)` from `--type-check` / `--type-check-only` / the editor's `typeCheck: true`,
+    /// `Some(false)` from the editor's `typeCheck: false`. `None` lets the config which governs
+    /// each file decide.
     #[must_use]
-    pub fn with_type_check(mut self, enabled: bool) -> Self {
-        self.type_check = enabled;
+    pub fn with_type_check_override(mut self, type_check: Option<bool>) -> Self {
+        self.type_check_override = type_check;
         self
     }
 
@@ -328,7 +332,7 @@ impl LintRunnerBuilder {
             Some(
                 state
                     .with_silent(self.silent)
-                    .with_type_check(self.type_check)
+                    .with_type_check_override(self.type_check_override)
                     .with_timings(self.timings)
                     .with_ignore_fixes(self.with_ignore_fixes)
                     .with_type_aware_forced(self.type_aware_forced),

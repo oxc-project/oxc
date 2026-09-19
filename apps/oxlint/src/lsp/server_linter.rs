@@ -33,8 +33,8 @@ use oxc_language_server::{ancestor_ignore_globs, is_ignored_by_globs};
 
 use crate::{
     config_loader::{
-        ConfigLoadError, ConfigLoader, build_nested_configs, config_file_names,
-        discover_configs_in_tree, materialize_default_plugins,
+        ConfigLoadError, ConfigLoadWarnings, ConfigLoader, RunOverrides, build_nested_configs,
+        config_file_names, discover_configs_in_tree, materialize_default_plugins,
     },
     lsp::{
         code_actions::{
@@ -178,18 +178,19 @@ impl ServerLinterBuilder {
 
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
+        let mut config_warnings = ConfigLoadWarnings::default();
         let nested_configs = if options.use_nested_configs() {
-            let (nested_configs, messages) = self.create_nested_configs(
+            let (nested_configs, messages, warnings) = self.create_nested_configs(
                 &root_path,
                 &oxlintrc.path,
                 &mut external_plugin_store,
                 &mut nested_ignore_patterns,
                 &mut extended_paths,
                 Some(root_uri.as_str()),
-                type_aware_forced,
                 excluded_roots,
             );
             client_messages.extend(messages);
+            config_warnings = warnings;
             nested_configs
         } else {
             FxHashMap::default()
@@ -228,6 +229,29 @@ impl ServerLinterBuilder {
             ConfigStoreBuilder::empty().build(&mut ExternalPluginStore::new(false)).unwrap()
         });
 
+        // The root config is built here rather than by the loader, so the load is only finished
+        // now. One pass over every config problem, root and nested alike.
+        let config_warnings = ConfigLoader::finish_load(
+            config_warnings,
+            &base_config,
+            &nested_configs,
+            &root_path,
+            type_aware_forced,
+        );
+        let warning_overrides = RunOverrides {
+            type_aware_forced,
+            // The editor switched type-aware linting off for every file, so nothing a config says
+            // about type-aware rules or type checking comes into play.
+            type_aware_disabled: options.type_aware == Some(false),
+            type_check_overridden: options.type_check.is_some(),
+            type_check_without_type_aware_is_fatal: false,
+        };
+        for warning in config_warnings.to_report(warning_overrides) {
+            warn!("{warning}");
+            client_messages
+                .push(ClientMessage { r#type: MessageType::WARNING, message: warning.to_string() });
+        }
+
         if external_plugin_store.is_empty() {
             external_linter = None;
         }
@@ -248,6 +272,8 @@ impl ServerLinterBuilder {
         };
 
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
+        client_messages
+            .extend(editor_type_check_without_type_aware(options.type_check, type_aware));
         let config_store_clone = config_store.clone();
 
         // Send JS plugins config to JS side
@@ -278,6 +304,9 @@ impl ServerLinterBuilder {
         let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
             .with_type_aware(type_aware)
             .with_type_aware_forced(type_aware_forced)
+            // `None` lets the config which governs each file decide; `Some(false)` is the
+            // editor's explicit off for a config which enables `options.typeCheck`.
+            .with_type_check_override(options.type_check)
             .with_fix_kind(fix_kind)
             .with_ignore_fixes(true)
             .build()
@@ -430,6 +459,24 @@ impl ToolBuilder for ServerLinterBuilder {
     }
 }
 
+/// The editor requested TypeScript diagnostics, but nothing is linted with type-aware rules.
+///
+/// `typeCheck` decides what the files handed to `tsgolint` report; it never hands it a file, so
+/// with type-aware linting off there is nothing for it to act on and the editor shows no
+/// TypeScript diagnostics at all. A warning is emitted rather than silently doing nothing.
+fn editor_type_check_without_type_aware(
+    type_check: Option<bool>,
+    type_aware: bool,
+) -> Option<ClientMessage> {
+    if type_check != Some(true) || type_aware {
+        return None;
+    }
+    Some(ClientMessage {
+        r#type: MessageType::WARNING,
+        message: "oxlint: the `typeCheck` setting has no effect without `typeAware`, so no TypeScript diagnostics are reported. Set `typeAware` to `true`, or enable `options.typeAware` in a configuration file.".to_string(),
+    })
+}
+
 impl ServerLinterBuilder {
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
@@ -441,9 +488,8 @@ impl ServerLinterBuilder {
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
         workspace_uri: Option<&str>,
-        type_aware_forced: bool,
         excluded_roots: &[PathBuf],
-    ) -> (FxHashMap<PathBuf, Config>, Vec<ClientMessage>) {
+    ) -> (FxHashMap<PathBuf, Config>, Vec<ClientMessage>, ConfigLoadWarnings) {
         let mut client_messages = Vec::new();
         let config_paths = discover_configs_in_tree(root_path, base_config_path, excluded_roots);
 
@@ -488,15 +534,12 @@ impl ServerLinterBuilder {
             }
         }
 
-        for warning in warnings.to_report(type_aware_forced) {
-            warn!("{warning}");
-            client_messages
-                .push(ClientMessage { r#type: MessageType::WARNING, message: warning.to_string() });
-        }
-
+        // The warnings are reported by the caller, once the root config has been built and can
+        // be taken into account too.
         (
             build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths)),
             client_messages,
+            warnings,
         )
     }
 
@@ -1045,6 +1088,7 @@ impl ServerLinter {
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
+            || old_options.type_check != new_options.type_check
     }
 
     /// Check if the linter is responsible for the given URI.
@@ -1072,8 +1116,43 @@ mod tests_builder {
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         },
         commands::FIX_ALL_COMMAND_ID,
-        server_linter::ServerLinterBuilder,
+        options::LintOptions as LSPLintOptions,
+        server_linter::{ServerLinter, ServerLinterBuilder, editor_type_check_without_type_aware},
     };
+    use tower_lsp_server::ls_types::MessageType;
+
+    /// `typeCheck` only decides what the type-aware files report, so setting it while nothing is
+    /// type-aware reports nothing at all. A warning is emitted instead of silently doing
+    /// nothing.
+    #[test]
+    fn test_editor_type_check_without_type_aware_warns() {
+        let message =
+            editor_type_check_without_type_aware(Some(true), false).expect("expected a warning");
+        assert_eq!(message.r#type, MessageType::WARNING);
+        assert!(message.message.contains("`typeCheck`"));
+        assert!(message.message.contains("`typeAware`"));
+
+        // No warning is emitted once some file is linted with type-aware rules.
+        assert!(editor_type_check_without_type_aware(Some(true), true).is_none());
+        // None either when the editor did not enable type checking.
+        assert!(editor_type_check_without_type_aware(Some(false), false).is_none());
+        assert!(editor_type_check_without_type_aware(None, false).is_none());
+    }
+
+    /// `typeCheck` is resolved into the `tsgolint` payload when the linter is created, so a
+    /// change to it has to rebuild the linter like `typeAware` does.
+    #[test]
+    fn test_type_check_option_needs_restart() {
+        let unset = LSPLintOptions::default();
+        let on = LSPLintOptions { type_check: Some(true), ..LSPLintOptions::default() };
+        let off = LSPLintOptions { type_check: Some(false), ..LSPLintOptions::default() };
+
+        assert!(!ServerLinter::needs_restart(&unset, &unset));
+        assert!(ServerLinter::needs_restart(&unset, &on));
+        assert!(ServerLinter::needs_restart(&on, &off));
+        // `Some(false)` is the editor's explicit off, not the same as "follow the config".
+        assert!(ServerLinter::needs_restart(&off, &unset));
+    }
 
     #[test]
     fn test_server_capabilities_default_providers() {
@@ -1323,7 +1402,6 @@ mod test {
                 &mut nested_ignore_patterns,
                 &mut extended_paths,
                 None,
-                false,
                 &[],
             )
             .0;
@@ -1683,6 +1761,28 @@ mod test {
         let tester =
             Tester::new("fixtures/lsp/tsgolint/type_aware_config", json!({ "typeAware": false }));
         tester.test_and_snapshot_single_file("test-with-lsp-config.ts");
+    }
+
+    /// The editor's `typeCheck: true` enables the TypeScript compiler diagnostics on every file
+    /// linted with type-aware rules, regardless of `options.typeCheck` in the config governing
+    /// it. The fixture's config enables `typeAware` and leaves `typeCheck` unset, so
+    /// without the setting nothing would be type-checked.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_lsp_type_check_reports_type_errors() {
+        let tester =
+            Tester::new("fixtures/lsp/tsgolint/type_check_config", json!({ "typeCheck": true }));
+        tester.test_and_snapshot_single_file("type-checked.ts");
+    }
+
+    /// `typeCheck: false` is the editor's explicit off: the file is still linted with type-aware
+    /// rules (`no-floating-promises` still fires), it just reports no TypeScript diagnostics.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_lsp_type_check_false_reports_no_type_errors() {
+        let tester =
+            Tester::new("fixtures/lsp/tsgolint/type_check_config", json!({ "typeCheck": false }));
+        tester.test_and_snapshot_single_file("not-type-checked.ts");
     }
 
     #[test]
