@@ -37,6 +37,7 @@ pub struct ConfigStoreBuilder {
     config: LintConfig,
     categories: OxlintCategories,
     overrides: OxlintOverrides,
+    filters: Vec<LintFilter>,
 
     // Collect all `extends` file paths for the language server.
     // The server will tell the clients to watch for the extends files.
@@ -62,7 +63,15 @@ impl ConfigStoreBuilder {
         let overrides = OxlintOverrides::default();
         let extended_paths = Vec::new();
 
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            filters: Vec::new(),
+            extended_paths,
+        }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -76,7 +85,15 @@ impl ConfigStoreBuilder {
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
         let external_rules = FxHashMap::default();
         let extended_paths = Vec::new();
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            filters: Vec::new(),
+            extended_paths,
+        }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -308,11 +325,12 @@ impl ConfigStoreBuilder {
             config,
             categories,
             overrides: oxlintrc.overrides,
+            filters: Vec::new(),
             extended_paths,
         };
 
         for filter in oxlintrc.categories.filters() {
-            builder = builder.with_filter(&filter);
+            builder = builder.apply_filter(&filter);
         }
 
         {
@@ -402,36 +420,37 @@ impl ConfigStoreBuilder {
     }
 
     pub fn with_filter(mut self, filter: &LintFilter) -> Self {
-        let (severity, filter) = filter.into();
+        self.filters.push(filter.clone());
+        self.apply_filter(filter)
+    }
 
-        match severity {
-            AllowWarnDeny::Deny | AllowWarnDeny::Warn => match filter {
-                LintFilterKind::Category(category) => {
-                    self.upsert_where(severity, |r| r.category() == *category);
-                }
-                LintFilterKind::Rule(plugin, rule) => {
-                    let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
-                    self.upsert_where(severity, |r| r.plugin_name() == plugin && r.name() == rule);
-                }
-                LintFilterKind::Generic(name) => self.upsert_where(severity, |r| r.name() == name),
-                LintFilterKind::All => {
-                    self.upsert_where(severity, |r| r.category() != RuleCategory::Nursery);
-                }
-            },
-            AllowWarnDeny::Allow => match filter {
-                LintFilterKind::Category(category) => {
-                    self.rules.retain(|rule, _| rule.category() != *category);
-                }
-                LintFilterKind::Rule(plugin, rule) => {
-                    let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
-                    self.rules.retain(|r, _| r.plugin_name() != plugin || r.name() != rule);
-                }
-                LintFilterKind::Generic(name) => self.rules.retain(|rule, _| rule.name() != name),
-                LintFilterKind::All => self.rules.clear(),
-            },
+    fn apply_filter(mut self, filter: &LintFilter) -> Self {
+        match filter.severity() {
+            AllowWarnDeny::Deny | AllowWarnDeny::Warn => {
+                self.upsert_where(filter.severity(), |rule| {
+                    Self::filter_matches_rule(filter, rule)
+                });
+            }
+            AllowWarnDeny::Allow => {
+                self.rules.retain(|rule, _| !Self::filter_matches_rule(filter, rule));
+            }
         }
 
         self
+    }
+
+    fn filter_matches_rule(filter: &LintFilter, rule: &RuleEnum) -> bool {
+        match filter.kind() {
+            LintFilterKind::Category(category) => rule.category() == *category,
+            LintFilterKind::Rule(plugin, name) => {
+                let (plugin, name) = super::rules::unalias_plugin_name(plugin, name);
+                rule.plugin_name() == plugin && rule.name() == name
+            }
+            LintFilterKind::Generic(name) => rule.name() == name,
+            LintFilterKind::All => {
+                filter.severity().is_allow() || rule.category() != RuleCategory::Nursery
+            }
+        }
     }
 
     /// Warn/Deny a let of rules based on some predicate. Rules already in `self.rules` get
@@ -518,7 +537,26 @@ impl ConfigStoreBuilder {
             .collect();
         external_rules.sort_unstable_by_key(|(r, _, _)| *r);
 
-        Ok(Config::new(rules, external_rules, self.categories, self.config, resolved_overrides))
+        // Resolve the last matching filter once, rather than matching filter names for every file.
+        // Include plugins enabled only by an override; apply_overrides checks the file's plugins.
+        let filter_rules = if self.filters.is_empty() || resolved_overrides.is_empty() {
+            Vec::new()
+        } else {
+            RULES
+                .iter()
+                .filter_map(|rule| {
+                    self.filters
+                        .iter()
+                        .rev()
+                        .find(|filter| Self::filter_matches_rule(filter, rule))
+                        .map(|filter| (rule.clone(), filter.severity()))
+                })
+                .collect()
+        };
+        let mut config =
+            Config::new(rules, external_rules, self.categories, self.config, resolved_overrides);
+        config.filter_rules = filter_rules;
+        Ok(config)
     }
 
     fn resolve_overrides(
@@ -975,6 +1013,115 @@ mod test {
                 "{plugin_name}/{name} is in the default rule set but its plugin is not enabled"
             );
         }
+    }
+
+    fn config_with_filters(source: &str, filters: &[LintFilter]) -> Config {
+        let mut external_plugin_store = ExternalPluginStore::default();
+        ConfigStoreBuilder::from_oxlintrc(
+            true,
+            serde_json::from_str(source).unwrap(),
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .with_filters(filters)
+        .build(&mut external_plugin_store)
+        .unwrap()
+    }
+
+    #[test]
+    fn test_filters_override_file_rules() {
+        let source = r#"{
+            "categories": { "correctness": "off" },
+            "overrides": [{ "files": ["**/*.js"], "rules": { "no-debugger": "error" } }]
+        }"#;
+        let config = config_with_filters(source, &[]);
+        assert_eq!(config.apply_overrides(Path::new("file.js")).rules.len(), 1);
+        assert!(config.apply_overrides(Path::new("file.ts")).rules.is_empty());
+        for name in ["no-debugger", "eslint/no-debugger", "correctness", "all"] {
+            let config = config_with_filters(
+                source,
+                &[LintFilter::new(AllowWarnDeny::Allow, name).unwrap()],
+            );
+            assert!(config.apply_overrides(Path::new("file.js")).rules.is_empty(), "{name}");
+            let store = crate::ConfigStore::new(
+                config,
+                FxHashMap::default(),
+                ExternalPluginStore::default(),
+            );
+            assert_eq!(store.number_of_rules(false), Some(0), "{name}");
+        }
+        for severity in [AllowWarnDeny::Warn, AllowWarnDeny::Deny] {
+            let config =
+                config_with_filters(source, &[LintFilter::new(severity, "no-debugger").unwrap()]);
+            for path in ["file.js", "file.ts"] {
+                let resolved = config.apply_overrides(Path::new(path));
+                assert_eq!(resolved.rules.len(), 1);
+                assert_eq!(resolved.rules[0].1, severity);
+            }
+        }
+    }
+
+    #[test]
+    fn test_filters_keep_override_options_and_order() {
+        let source = r#"{
+            "rules": { "no-console": ["error", { "allow": ["error"] }] },
+            "overrides": [
+                { "files": ["**/*.js"], "rules": { "no-console": ["off", { "allow": ["warn"] }] } }
+            ]
+        }"#;
+        let config = config_with_filters(
+            source,
+            &[
+                LintFilter::new(AllowWarnDeny::Allow, "all").unwrap(),
+                LintFilter::new(AllowWarnDeny::Warn, "no-console").unwrap(),
+            ],
+        );
+        let resolved = config.apply_overrides(Path::new("file.js"));
+        assert_eq!(resolved.rules.len(), 1);
+        let (rule, severity) = &resolved.rules[0];
+        assert_eq!(*severity, AllowWarnDeny::Warn);
+        let RuleEnum::EslintNoConsole(rule) = rule else { panic!("Expected no-console") };
+        assert_eq!(rule.allow.len(), 1);
+        assert_eq!(rule.allow[0], "warn");
+
+        let config = config_with_filters(
+            source,
+            &[
+                LintFilter::new(AllowWarnDeny::Warn, "no-console").unwrap(),
+                LintFilter::new(AllowWarnDeny::Allow, "all").unwrap(),
+            ],
+        );
+        assert!(config.apply_overrides(Path::new("file.js")).rules.is_empty());
+    }
+
+    #[test]
+    fn test_filters_apply_to_override_plugins() {
+        let source = r#"{
+            "plugins": [],
+            "categories": { "correctness": "error" },
+            "overrides": [{ "files": ["**/*.tsx"], "plugins": ["react"] }]
+        }"#;
+        let config =
+            config_with_filters(source, &[LintFilter::new(AllowWarnDeny::Allow, "all").unwrap()]);
+        assert!(config.apply_overrides(Path::new("file.tsx")).rules.is_empty());
+
+        let config = config_with_filters(
+            source,
+            &[
+                LintFilter::new(AllowWarnDeny::Allow, "all").unwrap(),
+                LintFilter::new(AllowWarnDeny::Warn, "react-hooks/rules-of-hooks").unwrap(),
+            ],
+        );
+        let resolved = config.apply_overrides(Path::new("file.tsx"));
+        assert_eq!(resolved.rules.len(), 1);
+        assert_eq!(resolved.rules[0].0.name(), "rules-of-hooks");
+        assert_eq!(resolved.rules[0].1, AllowWarnDeny::Warn);
+        assert!(config.apply_overrides(Path::new("file.js")).rules.is_empty());
+        let store =
+            crate::ConfigStore::new(config, FxHashMap::default(), ExternalPluginStore::default());
+        assert_eq!(store.number_of_rules(false), Some(1));
     }
 
     // change a rule already set to "warn" to "deny"

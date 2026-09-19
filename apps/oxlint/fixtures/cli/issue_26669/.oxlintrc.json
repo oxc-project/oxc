@@ -1,0 +1,6 @@
+{
+  "categories": { "correctness": "off" },
+  "overrides": [
+    { "files": ["**/*.js"], "rules": { "prefer-const": "error" } }
+  ]
+}
