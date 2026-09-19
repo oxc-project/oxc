@@ -154,44 +154,56 @@ pub(super) static OPMAP_OPS: [OpDef; OPMAP_NOPS] = [
     OpDef::new("/=", TokenKind::SlashEq),
 ];
 
+pub struct Punct1 {
+    pub byte: u8,
+    pub kind: TokenKind,
+}
+
+impl Punct1 {
+    const fn new(c: char, kind: TokenKind) -> Self {
+        assert!(c.is_ascii());
+        Self { byte: c as u8, kind }
+    }
+}
+
 pub const PUNCT1_NKNOWN: usize = 26;
 
 /// Single-char punctuators and their kinds. `#` maps to UNKNOWN: a bare `#`
 /// is invalid on its own (private names and hashbangs are resolved earlier).
-pub const PUNCT1: [(u8, TokenKind); PUNCT1_NKNOWN] = [
-    (b'(', TokenKind::LParen),
-    (b')', TokenKind::RParen),
-    (b'[', TokenKind::LBracket),
-    (b']', TokenKind::RBracket),
-    (b'{', TokenKind::LBrace),
-    (b'}', TokenKind::RBrace),
-    (b';', TokenKind::Semi),
-    (b',', TokenKind::Comma),
-    (b'.', TokenKind::Dot),
-    (b'<', TokenKind::Lt),
-    (b'>', TokenKind::Gt),
-    (b'+', TokenKind::Plus),
-    (b'-', TokenKind::Minus),
-    (b'*', TokenKind::Star),
-    (b'/', TokenKind::Slash),
-    (b'%', TokenKind::Percent),
-    (b'&', TokenKind::Amp),
-    (b'|', TokenKind::Pipe),
-    (b'^', TokenKind::Caret),
-    (b'!', TokenKind::Bang),
-    (b'~', TokenKind::Tilde),
-    (b'?', TokenKind::Question),
-    (b':', TokenKind::Colon),
-    (b'=', TokenKind::Eq),
-    (b'@', TokenKind::At),
-    (b'#', TokenKind::Invalid),
+pub const PUNCT1: [Punct1; PUNCT1_NKNOWN] = [
+    Punct1::new('(', TokenKind::LParen),
+    Punct1::new(')', TokenKind::RParen),
+    Punct1::new('[', TokenKind::LBracket),
+    Punct1::new(']', TokenKind::RBracket),
+    Punct1::new('{', TokenKind::LBrace),
+    Punct1::new('}', TokenKind::RBrace),
+    Punct1::new(';', TokenKind::Semi),
+    Punct1::new(',', TokenKind::Comma),
+    Punct1::new('.', TokenKind::Dot),
+    Punct1::new('<', TokenKind::Lt),
+    Punct1::new('>', TokenKind::Gt),
+    Punct1::new('+', TokenKind::Plus),
+    Punct1::new('-', TokenKind::Minus),
+    Punct1::new('*', TokenKind::Star),
+    Punct1::new('/', TokenKind::Slash),
+    Punct1::new('%', TokenKind::Percent),
+    Punct1::new('&', TokenKind::Amp),
+    Punct1::new('|', TokenKind::Pipe),
+    Punct1::new('^', TokenKind::Caret),
+    Punct1::new('!', TokenKind::Bang),
+    Punct1::new('~', TokenKind::Tilde),
+    Punct1::new('?', TokenKind::Question),
+    Punct1::new(':', TokenKind::Colon),
+    Punct1::new('=', TokenKind::Eq),
+    Punct1::new('@', TokenKind::At),
+    Punct1::new('#', TokenKind::Invalid),
 ];
 
 const fn punct1_list() -> [u8; PUNCT1_NKNOWN] {
     let mut out = [0u8; PUNCT1_NKNOWN];
     let mut i = 0;
     while i < PUNCT1_NKNOWN {
-        out[i] = PUNCT1[i].0;
+        out[i] = PUNCT1[i].byte;
         i += 1;
     }
     out
@@ -201,7 +213,7 @@ const fn punct1_tok() -> [u8; PUNCT1_NKNOWN] {
     let mut out = [0u8; PUNCT1_NKNOWN];
     let mut i = 0;
     while i < PUNCT1_NKNOWN {
-        out[i] = PUNCT1[i].1 as u8;
+        out[i] = PUNCT1[i].kind as u8;
         i += 1;
     }
     out
