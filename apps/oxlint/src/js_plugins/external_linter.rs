@@ -1,4 +1,5 @@
 use std::{
+    ptr::NonNull,
     sync::{Arc, atomic::Ordering, mpsc::channel},
     time::Duration,
 };
@@ -10,7 +11,7 @@ use napi::{
 };
 use serde::Deserialize;
 
-use oxc_allocator::{Allocator, free_fixed_size_allocator};
+use oxc_allocator::{Allocator, FixedSizeAllocatorMetadata, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
     ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
@@ -272,15 +273,8 @@ unsafe fn get_buffer(
 
     // Buffer has not already been sent to JS. Send it.
 
-    // Get pointer to start of allocator chunk.
-    // SAFETY: Fixed-size allocators have their chunk aligned on `BLOCK_ALIGN`, and size less than `BLOCK_ALIGN`.
-    // So we can get pointer to start of `Allocator` chunk by rounding down to next multiple of `BLOCK_ALIGN`.
-    // That can't go out of bounds of the backing allocation.
-    let chunk_ptr = unsafe {
-        let ptr = metadata_ptr.cast::<u8>();
-        let offset = ptr.addr().get() % BLOCK_ALIGN;
-        ptr.sub(offset)
-    };
+    // SAFETY: `metadata_ptr` points to the `FixedSizeAllocatorMetadata` of a fixed-size allocator
+    let chunk_ptr = unsafe { fixed_size_chunk_ptr(metadata_ptr) };
 
     // SAFETY:
     // Range of memory starting at `chunk_ptr` and encompassing `BUFFER_SIZE` is all within
@@ -306,6 +300,25 @@ unsafe fn get_buffer(
     };
 
     (buffer_id, Some(buffer))
+}
+
+/// Get pointer to start of the chunk of a fixed-size allocator, from a pointer to its `FixedSizeAllocatorMetadata`.
+///
+/// Fixed-size allocators have their chunk aligned on `BLOCK_ALIGN`, and size less than `BLOCK_ALIGN`.
+/// So the chunk start is `metadata_ptr` rounded down to the next multiple of `BLOCK_ALIGN`.
+/// That can't go out of bounds of the backing allocation.
+///
+/// # SAFETY
+/// `metadata_ptr` must point to the `FixedSizeAllocatorMetadata` of a fixed-size allocator
+/// (obtained via `Allocator::fixed_size_metadata_ptr`).
+pub(super) unsafe fn fixed_size_chunk_ptr(
+    metadata_ptr: NonNull<FixedSizeAllocatorMetadata>,
+) -> NonNull<u8> {
+    let ptr = metadata_ptr.cast::<u8>();
+    let offset = ptr.addr().get() % BLOCK_ALIGN;
+    // SAFETY: Caller guarantees `metadata_ptr` belongs to a fixed-size allocator, whose chunk starts
+    // at the `BLOCK_ALIGN` boundary at or below it
+    unsafe { ptr.sub(offset) }
 }
 
 /// Wrap `createWorkspace` JS callback as a normal Rust function.

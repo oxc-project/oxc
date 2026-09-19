@@ -54,12 +54,26 @@ export declare const enum Severity {
 export declare function applyFixes(sourceText: string, fixesJson: string): string | null
 
 /**
- * Get offset within a `Uint8Array` which is aligned on `BLOCK_ALIGN`.
+ * Get a `Uint8Array` view of this thread's raw transfer buffer.
  *
- * Does not check that the offset is within bounds of `buffer`.
- * To ensure it always is, provide a `Uint8Array` of at least `BLOCK_SIZE + BLOCK_ALIGN` bytes.
+ * The view covers the allocatable region plus `RawTransferMetadata`, the same region the linter
+ * shares with JS plugins. JS reads the AST from it; the only bytes JS writes are the per-comment
+ * and per-token "deserialized" flags, which Rust rewrites on every parse (the comment content byte
+ * explicitly, the token bytes because every token is written afresh).
+ *
+ * Rust keeps ownership of the memory, and the block is never unmapped (see `IDLE_POOLS`), so the
+ * view has no finalizer and the `is_double_owned` flag used by the linter's `get_buffer` is never
+ * set. A view always points at mapped memory; after the next parse on its thread it reads that
+ * parse's data, the same contract as the linter's shared buffers. JS may call this more than once:
+ * a test runner that resets its module registry obtains a fresh view of the same memory. Callers
+ * should keep one view per module instance.
+ *
+ * # Panics
+ *
+ * Panics on the thread's first call if the fixed-size allocation cannot be made
+ * (see `AllocatorPool::new_fixed_size`).
  */
-export declare function getBufferOffset(buffer: Uint8Array): number
+export declare function getRawTransferBuffer(): Uint8Array
 
 /** JS callback to create a workspace. */
 export type JsCreateWorkspaceCb = ((arg: string) => Promise<undefined>)
@@ -96,34 +110,22 @@ export type JsSetupRuleConfigsCb = ((arg: string) => string | null)
 export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb): Promise<boolean>
 
 /**
- * Parse AST into provided `Uint8Array` buffer, synchronously.
+ * Parse source text into this thread's raw transfer buffer, synchronously.
  *
- * Source text must be written into somewhere towards end of the buffer.
- * - `source_start` is position of first byte of source text in buffer
- * - `source_len` is length of source text (in UTF-8 bytes)
+ * The source text is copied into the buffer, and the AST is written after it.
+ * The offset of `Program` within the buffer is written into the buffer's `RawTransferMetadata` slot.
  *
- * This function will parse the source, and write the AST into the buffer, starting at the end (before the source text).
+ * Caller can deserialize data from the buffer on JS side, via the view from `getRawTransferBuffer`.
  *
- * It also writes to the very end of the buffer the offset of `Program` within the buffer.
+ * The buffer's contents remain valid until the next call to `parse_raw_sync` on the same thread.
  *
- * Caller can deserialize data from the buffer on JS side.
- *
- * # SAFETY
- *
- * Caller must ensure:
- * * Source text is written into the buffer.
- * * Start of source text is at `source_start` bytes from the start of the buffer.
- * * Source text's UTF-8 byte length is `source_len`.
- * * This section of bytes in the buffer comprises a valid UTF-8 string.
- *
- * If source text is originally a JS string on JS side, and converted to a buffer with
- * `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+ * Returns the ID of the buffer the AST was written into.
  *
  * # Panics
  *
- * Panics if source text is too long, or AST takes more memory than is available in the buffer.
+ * Panics if source text and AST take more memory than is available in the buffer.
  */
-export declare function parseRawSync(filename: string, buffer: Uint8Array, sourceStart: number, sourceLen: number, options?: ParserOptions | undefined | null): void
+export declare function parseRawSync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): number
 
 export interface ParserOptions {
   /** Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`. */
