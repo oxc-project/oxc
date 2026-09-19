@@ -24,8 +24,8 @@ use oxc_linter::{
 };
 
 use oxc_language_server::{
-    Capabilities, CodeActionParams, ConcurrentHashMap, DiagnosticMode, DiagnosticResult,
-    TextDocument, Tool, ToolBuilder, ToolRestartChanges,
+    BuildContext, Capabilities, CodeActionParams, ConcurrentHashMap, DiagnosticMode,
+    DiagnosticResult, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
     utils::normalize_user_config_path_to_watch_pattern,
 };
 
@@ -482,6 +482,7 @@ impl Tool for ServerLinter {
         &self,
         builder: &dyn ToolBuilder,
         root_uri: &Uri,
+        _context: BuildContext<'_>,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
@@ -575,6 +576,7 @@ impl Tool for ServerLinter {
         builder: &dyn ToolBuilder,
         _changed_uri: &Uri,
         root_uri: &Uri,
+        _context: BuildContext<'_>,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)

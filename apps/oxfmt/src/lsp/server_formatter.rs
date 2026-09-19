@@ -8,8 +8,9 @@ use tower_lsp_server::ls_types::{Pattern, Range, ServerCapabilities, TextEdit, U
 use tracing::{debug, error, warn};
 
 use oxc_language_server::{
-    Capabilities, ClientMessage, LanguageId, TextDocument, Tool, ToolBuildResult, ToolBuilder,
-    ToolRestartChanges, offset_to_position, utils::normalize_user_config_path_to_watch_pattern,
+    BuildContext, Capabilities, ClientMessage, LanguageId, TextDocument, Tool, ToolBuildResult,
+    ToolBuilder, ToolRestartChanges, offset_to_position,
+    utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::core::{
@@ -165,6 +166,7 @@ impl Tool for ServerFormatter {
         &self,
         builder: &dyn ToolBuilder,
         root_uri: &Uri,
+        _context: BuildContext<'_>,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
@@ -215,6 +217,7 @@ impl Tool for ServerFormatter {
         _builder: &dyn ToolBuilder,
         _changed_uri: &Uri,
         _root_uri: &Uri,
+        _context: BuildContext<'_>,
         _options: serde_json::Value,
     ) -> ToolRestartChanges {
         // Rebuild the snapshot wholesale.

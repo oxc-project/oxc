@@ -1,6 +1,6 @@
 use std::{fmt::Write, path::PathBuf};
 
-use oxc_language_server::{DiagnosticResult, TextDocument, Tool, ToolRestartChanges};
+use oxc_language_server::{BuildContext, DiagnosticResult, TextDocument, Tool, ToolRestartChanges};
 use tower_lsp_server::ls_types::{
     CodeAction, CodeActionContext, CodeActionKind, CodeActionOrCommand, CodeDescription,
     Diagnostic, NumberOrString, Position, Range, Uri,
@@ -282,6 +282,7 @@ impl Tester<'_> {
         self.create_linter().handle_configuration_change(
             &builder,
             &Self::get_root_uri(self.relative_root_dir),
+            BuildContext::default(),
             &self.options,
             new_options,
         )
