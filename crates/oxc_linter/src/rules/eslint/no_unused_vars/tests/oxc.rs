@@ -1981,3 +1981,20 @@ fn removing_an_import_preserves_comments_before_the_separator() {
         .expect_fix(fix)
         .test();
 }
+
+#[test]
+fn test_root_exports_do_not_export_namespace_bindings() {
+    let pass = vec![
+        "export const value = 1; export namespace NS { export const value = 2; }",
+        "const value = 1; export { value as renamed }; export namespace NS { export const value = 2; }",
+        "export const value = 1; export namespace NS { const value = 2; export const used = value; }",
+    ];
+    let fail = vec![
+        "export const value = 1; export namespace NS { const value = 2; }",
+        "const value = 1; export { value as renamed }; export namespace NS { const value = 2; }",
+        "export const value = 1; export namespace NS { export namespace Inner { const value = 2; } }",
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
