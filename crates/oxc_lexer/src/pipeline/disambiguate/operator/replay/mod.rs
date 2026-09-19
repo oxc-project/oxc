@@ -15,12 +15,9 @@
 //! This only runs when `yield` or `await` comes directly before a `/`, or before a `<` in a JSX file.
 //! That is rare, so replaying from the start of the file is affordable.
 
-use crate::token::tk;
+use crate::token::{OP_KIND_BASE, tk};
 
-use crate::pipeline::{
-    bitmap::bm_next1,
-    tables::{OP_KIND_BASE, Tables},
-};
+use crate::pipeline::{bitmap::bm_next1, tables::Tables};
 
 use crate::pipeline::disambiguate::common::{
     AngleMatch, angle_match_back, bm_prev_sig, ident_is, lt_in_range, match_delim_back,

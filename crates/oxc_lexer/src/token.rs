@@ -264,6 +264,10 @@ define_token_kind! {
     Invalid = 255 => "INVALID",
 }
 
+/// First punctuator kind - the token-kind space reserves [32, 128) for them.
+pub(crate) const OP_KIND_BASE: u8 = tk!(LBrace);
+pub(crate) const OP_KIND_MAX: u8 = tk!(At);
+
 /// First keyword kind: every kind `>= KW_KIND_BASE` other than [`TokenKind::Invalid`] is a keyword.
 pub const KW_KIND_BASE: u8 = tk!(KwBreak);
 pub(crate) const KW_KIND_MAX: u8 = tk!(KwUsing);

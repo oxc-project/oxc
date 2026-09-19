@@ -21,12 +21,9 @@
 //! [`operator`]: crate::pipeline::disambiguate::operator
 //! [`type_context`]: crate::pipeline::disambiguate::type_context
 
-use crate::token::tk;
+use crate::token::{OP_KIND_BASE, tk};
 
-use crate::pipeline::{
-    bitmap::bm_next1,
-    tables::{OP_KIND_BASE, Tables},
-};
+use crate::pipeline::{bitmap::bm_next1, tables::Tables};
 
 use super::{
     constructs::{

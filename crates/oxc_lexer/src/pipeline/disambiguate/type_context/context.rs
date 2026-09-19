@@ -18,12 +18,12 @@
 //!
 //! [`tsx`]: super::tsx
 
-use crate::token::tk;
+use crate::token::{OP_KIND_BASE, tk};
 
 use crate::pipeline::{
     bitmap::{bm_get, bm_next1},
     bytes::is_ws,
-    tables::{OP_KIND_BASE, Tables},
+    tables::Tables,
 };
 
 use crate::pipeline::disambiguate::common::{

@@ -17,13 +17,13 @@
 //!   [`replay`] works that out.
 //! - TypeScript adds more cases, e.g. a postfix `!`, or a `>` closing type arguments.
 
-use crate::token::tk;
+use crate::token::{OP_KIND_BASE, tk};
 
 use crate::pipeline::{
     bitmap::{bm_next0, bm_next1, bm_prev1},
     bytes::{is_digit, is_word, is_ws},
     scan::scan_number,
-    tables::{OP_KIND_BASE, Tables},
+    tables::Tables,
 };
 
 use super::common::{

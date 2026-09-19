@@ -2,7 +2,7 @@ use std::ptr;
 
 use constcat::concat_slices;
 
-use crate::token::{TokenKind, tk};
+use crate::token::{OP_KIND_BASE, OP_KIND_MAX, TokenKind, tk};
 
 const KW_COUNT_JS: usize = 46;
 const KW_COUNT_TS: usize = 81;
@@ -103,9 +103,6 @@ const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
 pub(super) static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
     *concat_slices!([(&str, TokenKind)]: &KEYWORDS_JS, &KEYWORDS_TS_EXTRA);
 
-/// First punctuator kind - the token-kind space reserves [32, 128) for them.
-pub const OP_KIND_BASE: u8 = tk!(LBrace);
-const OP_KIND_MAX: u8 = tk!(At);
 pub(super) const OPMAP_NOPS: usize = 33;
 
 pub(super) struct OpDef {

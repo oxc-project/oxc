@@ -5,7 +5,7 @@ use crate::pipeline::bytes::{is_digit, is_word, is_ws};
 mod opmap;
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 pub(super) use opmap::PUNCT1;
-pub(super) use opmap::{KwSet, OP_KIND_BASE, PUNCT1_NKNOWN};
+pub(super) use opmap::{KwSet, PUNCT1_NKNOWN};
 
 use opmap::{
     KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, OPMAP_NOPS, OPMAP_OPS, OpMap,

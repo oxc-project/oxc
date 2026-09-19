@@ -12,13 +12,9 @@
 //!   There TypeScript reads `<T>(x: T) => x` as a JSX element, which never closes.
 //!   So this decides whether that error is reported.
 
-use crate::token::tk;
+use crate::token::{OP_KIND_BASE, tk};
 
-use crate::pipeline::{
-    bitmap::bm_next1,
-    bytes::is_ws,
-    tables::{OP_KIND_BASE, Tables},
-};
+use crate::pipeline::{bitmap::bm_next1, bytes::is_ws, tables::Tables};
 
 use crate::pipeline::disambiguate::common::{
     AngleMatch, angle_match_back, annotation_colon_is_declaration, bm_prev_sig,
