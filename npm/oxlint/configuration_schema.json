@@ -1,3 +1,57 @@
+   Compiling futures-core v0.3.34
+   Compiling futures-sink v0.3.34
+   Compiling slab v0.4.12
+   Compiling futures-io v0.3.34
+   Compiling log v0.4.33
+   Compiling futures-task v0.3.34
+   Compiling tracing-core v0.1.36
+   Compiling tokio v1.53.1
+   Compiling ref-cast v1.0.25
+   Compiling borrow-or-share v0.2.4
+   Compiling napi v3.12.4
+   Compiling futures-channel v0.3.34
+   Compiling libloading v0.9.0
+   Compiling fluent-uri v0.4.1
+   Compiling tower-layer v0.3.3
+   Compiling tower-service v0.3.3
+   Compiling sync_wrapper v1.0.2
+   Compiling globset v0.4.18
+   Compiling httparse v1.10.1
+   Compiling nohash-hasher v0.2.0
+   Compiling napi-sys v3.3.1
+   Compiling lazy_static v1.5.0
+   Compiling futures-util v0.3.34
+   Compiling is_ci v1.2.0
+   Compiling tracing v0.1.44
+   Compiling supports-color v3.0.2
+   Compiling ignore v0.4.33
+   Compiling sharded-slab v0.1.7
+   Compiling tracing-log v0.2.0
+   Compiling oxc_resolver v11.24.3
+   Compiling ls-types v0.0.3
+   Compiling derive_builder v0.20.2
+   Compiling lazy-regex v3.6.1
+   Compiling owo-colors v4.3.0
+   Compiling oxlint v1.83.0 (/Users/aniketsaha/Open_Source/oxc/apps/oxlint)
+   Compiling thread_local v1.1.9
+   Compiling nu-ansi-term v0.50.3
+   Compiling handlebars v6.4.4
+   Compiling oxc_config v0.0.0 (/Users/aniketsaha/Open_Source/oxc/crates/oxc_config)
+   Compiling tracing-subscriber v0.3.23
+   Compiling oxc_linter v1.83.0 (/Users/aniketsaha/Open_Source/oxc/crates/oxc_linter)
+   Compiling bpaf v0.9.27
+   Compiling tokio-util v0.7.18
+   Compiling pico-args v0.5.0
+   Compiling website_common v0.0.0 (/Users/aniketsaha/Open_Source/oxc/tasks/website_common)
+   Compiling futures-executor v0.3.34
+   Compiling tower v0.5.3
+   Compiling futures v0.3.34
+   Compiling oxc_napi v0.150.0 (/Users/aniketsaha/Open_Source/oxc/crates/oxc_napi)
+   Compiling tower-lsp-server v0.23.0
+   Compiling oxc_language_server v1.41.0 (/Users/aniketsaha/Open_Source/oxc/crates/oxc_language_server)
+   Compiling website_linter v0.0.0 (/Users/aniketsaha/Open_Source/oxc/tasks/website_linter)
+    Finished `dev` profile [unoptimized] target(s) in 18.89s
+     Running `target/debug/website_linter schema-json`
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Oxlintrc",
@@ -9239,6 +9293,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-useless-collection-argument": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/no-useless-else": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-useless-error-capture-stack-trace": {
