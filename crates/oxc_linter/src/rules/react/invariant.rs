@@ -44,6 +44,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // A named function expression can capture its private name in a callback.
+        "export const ExportedName = function Node() { return <Tree renderItem={() => <Node />} />; };",
+        "export const ExportedName = function Node({ value }) { return <Tree renderItem={() => () => <Node value={value} />} />; };",
         // ---- PluginTest-test.ts ----
         // [Invariant] Defined after use
         // (OK because invariants are only meant for the compiler team's consumption)
