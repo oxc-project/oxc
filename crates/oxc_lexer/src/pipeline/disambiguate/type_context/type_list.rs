@@ -180,7 +180,7 @@ pub(super) unsafe fn type_list_legal(
         let was_this = this_head;
         this_head = false;
         if k == tk!(Ident) || k == tk!(IdentEscaped) {
-            let kk = t.kwts.lookup(src.add(w), word_len(src, w)) as u8;
+            let kk = t.keywords.kwts.lookup(src.add(w), word_len(src, w)) as u8;
             this_head = kk == tk!(KwThis);
             if !start && brc == 0 && !matches!(kk, tk!(KwExtends) | tk!(KwIs) | tk!(KwIn)) {
                 return false;

@@ -2,7 +2,7 @@ use std::ptr;
 
 use constcat::concat_slices;
 
-use crate::token::TokenKind;
+use crate::token::{KW_KIND_BASE, TokenKind};
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -27,7 +27,7 @@ const KW_COUNT_TS: usize = 81;
 /// Keyword spellings and the token kind each rewrites to (the JS set).
 /// `get`/`set` map to IDENT (contextual, never keywords at lex time) but
 /// stay in the table so the perfect hash keeps its shape.
-pub(super) const KEYWORDS_JS: [(&str, TokenKind); KW_COUNT_JS] = [
+const KEYWORDS_JS: [(&str, TokenKind); KW_COUNT_JS] = [
     ("await", TokenKind::KwAwait),
     ("break", TokenKind::KwBreak),
     ("case", TokenKind::KwCase),
@@ -117,8 +117,101 @@ const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
 ];
 
 /// The TS-mode keyword set: [`KEYWORDS_JS`] followed by [`KEYWORDS_TS_EXTRA`].
-pub(super) static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
+static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
     *concat_slices!([(&str, TokenKind)]: &KEYWORDS_JS, &KEYWORDS_TS_EXTRA);
+
+pub struct Keywords {
+    pub kwjs: KwSet,
+    pub kwts: KwSet,
+    pub regex_kw_mask: u64,
+}
+
+impl Keywords {
+    pub(super) fn new() -> Self {
+        let kwjs = KwSet::build(&KEYWORDS_JS, false, &[25, 24], KW_HASH_HINT_JS);
+        let kwts = KwSet::build(&KEYWORDS_TS, true, &[23], KW_HASH_HINT_TS);
+
+        let regex_kw_mask = build_regex_kw_mask();
+
+        Self { kwjs, kwts, regex_kw_mask }
+    }
+
+    /// Is the word at `p` one of the keywords a regex may directly follow?
+    /// Text-based and called only before any keyword-kind rewrite, so the JS
+    /// set answers for both modes (every RX word is in both sets, and no
+    /// other spelling has its mask bit).
+    #[inline(always)]
+    pub unsafe fn is_regex_keyword(&self, p: *const u8, len: usize) -> bool {
+        let k = self.kwjs.lookup(p, len);
+        k >= KW_KIND_BASE as u32 && ((self.regex_kw_mask >> (k - KW_KIND_BASE as u32)) & 1) != 0
+    }
+
+    pub(super) fn self_check(&self) {
+        self.kwjs.self_check(&KEYWORDS_JS);
+        self.kwts.self_check(&KEYWORDS_TS);
+
+        self.kwset_selfcheck();
+        kwinit_selfcheck();
+    }
+
+    /// Cross-set behavior the unit tests rely on: TS spellings resolve only
+    /// through the TS set, and JS words agree byte-for-byte across sets.
+    fn kwset_selfcheck(&self) {
+        let mut buf = [0u8; 16];
+        for (w, tok) in KEYWORDS_TS.iter() {
+            let bytes = w.as_bytes();
+            buf.fill(0);
+            buf[..bytes.len()].copy_from_slice(bytes);
+            let js = unsafe { self.kwjs.lookup(buf.as_ptr(), bytes.len()) };
+            let ts = unsafe { self.kwts.lookup(buf.as_ptr(), bytes.len()) };
+            assert!(ts == *tok as u32, "tables.rs: kwts lookup({w}) wrong");
+            let in_js = KEYWORDS_JS.iter().any(|k| k.0 == *w);
+            assert!(js == if in_js { *tok as u32 } else { 0 }, "tables.rs: kwjs lookup({w}) wrong");
+        }
+    }
+}
+
+fn build_regex_kw_mask() -> u64 {
+    // `of` is deliberately absent: it precedes a regex only in a for-of
+    // head (never written - a RegExp isn't iterable), while `instance/of/g`
+    // style division is real code. Matches es-module-lexer/SWC/RESS.
+    const RX: [&str; 18] = [
+        "in",
+        "do",
+        "new",
+        "case",
+        "void",
+        "else",
+        "yield",
+        "await",
+        "throw",
+        "break",
+        "return",
+        "typeof",
+        "delete",
+        "default",
+        "extends",
+        "continue",
+        "debugger",
+        "instanceof",
+    ];
+
+    // Indexed by kind offset from `KW_KIND_BASE`.
+    // Every `RX` word sits in the JS kind block (offsets < 64), so the mask is set-independent.
+    let mut mask = 0u64;
+    for r in RX.iter() {
+        let mut found: i32 = -1;
+        for kw in KEYWORDS_JS.iter() {
+            if kw.0 == *r {
+                found = (kw.1 as u8 - KW_KIND_BASE) as i32;
+                break;
+            }
+        }
+        assert!(found >= 0 && found < 64, "tables.rs: regex-kw {r} missing from KEYWORDS_JS");
+        mask |= 1u64 << found;
+    }
+    mask
+}
 
 /// Slot count of the keyword hash tables - must cover the smallest shift a
 /// set may search (JS shift 25 → 128 slots, TS shift 23 → 512).
@@ -127,11 +220,11 @@ const KW_SLOTS: usize = 512;
 /// Verified first-try hints for the deterministic perfect-hash searches
 /// below (checked for injectivity before use, so a word-list edit can never
 /// ship a stale constant - it just falls back to the search).
-pub(super) const KW_HASH_HINT_JS: (u32, u32) = (0x0058_DC65, 25);
-pub(super) const KW_HASH_HINT_TS: (u32, u32) = (0x000B_385B, 23);
+const KW_HASH_HINT_JS: (u32, u32) = (0x0058_DC65, 25);
+const KW_HASH_HINT_TS: (u32, u32) = (0x000B_385B, 23);
 
 /// One keyword-recognition table set: spellings, perfect hash, and the
-/// verify patterns `kw_verify_batch` compares against. `Tables` holds two -
+/// verify patterns `kw_verify_batch` compares against. `Keywords` holds two -
 /// the JS set and the TS set - and `lex_raw` selects by `LexOptions::ts`.
 ///
 /// The hash key differs per set. JS keys on `(c0, c1, len)`; the TS set
@@ -163,7 +256,7 @@ fn kw_key_ts(c0: u8, c1: u8, clast: u8, len: u32) -> u32 {
 }
 
 impl KwSet {
-    pub(super) fn build(
+    fn build(
         list: &[(&'static str, TokenKind)],
         ts_key: bool,
         shifts: &[u32],
@@ -293,7 +386,7 @@ impl KwSet {
         self.kw_tok[idx] as u32
     }
 
-    pub(super) fn self_check(&self, list: &[(&'static str, TokenKind)]) {
+    fn self_check(&self, list: &[(&'static str, TokenKind)]) {
         for i in 0..list.len() {
             let mut buf = [0u8; 16];
             let bytes = list[i].0.as_bytes();
@@ -342,7 +435,7 @@ impl KwSet {
     }
 }
 
-pub(super) fn kwinit_selfcheck() {
+fn kwinit_selfcheck() {
     let mut in_set = [false; 256];
     for kw in KEYWORDS_JS.iter() {
         in_set[kw.0.as_bytes()[0] as usize] = true;

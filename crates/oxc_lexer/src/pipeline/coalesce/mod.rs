@@ -32,7 +32,7 @@ pub unsafe fn coalesce(
     ts: bool,
     lanes: &mut Lanes,
 ) {
-    let kw = if ts { &t.kwts } else { &t.kwjs };
+    let kw = if ts { &t.keywords.kwts } else { &t.keywords.kwjs };
     let nw = (n + 63) >> 6;
     let mut opprev: u64 = 0;
     let mut dtprev: u64 = 0;

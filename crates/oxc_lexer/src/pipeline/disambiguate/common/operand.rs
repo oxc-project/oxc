@@ -494,7 +494,7 @@ unsafe fn ts_gt_brace(
             return body(class_walk_from(t, src, st, kind, n, tq, true, depth));
         }
         let e = bm_next1(st, tp + 1, n);
-        if t.is_regex_keyword(src.add(tp), e - tp) {
+        if t.keywords.is_regex_keyword(src.add(tp), e - tp) {
             return GtBrace::Value;
         }
         return GtBrace::No;
@@ -738,7 +738,7 @@ pub unsafe fn type_annotation_asi(
                 _ => return false,
             }
         } else if kk == tk!(Ident) || kk == tk!(IdentEscaped) {
-            let kw = t.kwts.lookup(src.add(w), word_len(src, w)) as u8;
+            let kw = t.keywords.kwts.lookup(src.add(w), word_len(src, w)) as u8;
             if matches!(kw, tk!(KwExtends) | tk!(KwIs) | tk!(KwIn) | tk!(KwAs)) {
                 ends = false;
                 starts = false;

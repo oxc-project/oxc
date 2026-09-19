@@ -1,5 +1,3 @@
-use crate::token::KW_KIND_BASE;
-
 use crate::pipeline::bytes::{is_digit, is_word, is_ws};
 
 mod keywords;
@@ -15,16 +13,14 @@ pub(super) use punct1::PUNCT1;
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 pub(super) use punct1::{PH_A, PH_B, PH_T0, PH_T1};
 
-use keywords::{KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, kwinit_selfcheck};
+use keywords::Keywords;
 use operators::{OpMap, opch_selfcheck};
 use pair_luts::PairLuts;
 use punct1::punct1_hash_selfcheck;
 
 pub(super) struct Tables {
     pub op: OpMap,
-    pub kwjs: KwSet,
-    pub kwts: KwSet,
-    pub regex_kw_mask: u64,
+    pub keywords: Keywords,
     pub mrg_lo: [u8; 16],
     pub mrg_hi: [u8; 16],
     pub mrg_lo_ts: [u8; 16],
@@ -36,15 +32,9 @@ pub(super) struct Tables {
 impl Tables {
     pub fn new() -> Tables {
         let op = OpMap::new();
-        let kwjs = KwSet::build(&KEYWORDS_JS, false, &[25, 24], KW_HASH_HINT_JS);
-        let kwts = KwSet::build(&KEYWORDS_TS, true, &[23], KW_HASH_HINT_TS);
-        kwjs.self_check(&KEYWORDS_JS);
-        kwts.self_check(&KEYWORDS_TS);
         let mut t = Tables {
             op,
-            kwjs,
-            kwts,
-            regex_kw_mask: 0,
+            keywords: Keywords::new(),
             mrg_lo: [0; 16],
             mrg_hi: [0; 16],
             mrg_lo_ts: [0; 16],
@@ -52,66 +42,13 @@ impl Tables {
             wb_hi: [0; 16],
             pair_luts: PairLuts::new(),
         };
-        t.build_regex_kw_mask();
         t.build_merged_luts();
         t.pair_luts.build();
-        kwinit_selfcheck();
         opch_selfcheck();
         t.merged_selfcheck();
         punct1_hash_selfcheck();
-        t.kwset_selfcheck();
+        t.keywords.self_check();
         t
-    }
-
-    fn build_regex_kw_mask(&mut self) {
-        // `of` is deliberately absent: it precedes a regex only in a for-of
-        // head (never written - a RegExp isn't iterable), while `instance/of/g`
-        // style division is real code. Matches es-module-lexer/SWC/RESS.
-        const RX: [&str; 18] = [
-            "in",
-            "do",
-            "new",
-            "case",
-            "void",
-            "else",
-            "yield",
-            "await",
-            "throw",
-            "break",
-            "return",
-            "typeof",
-            "delete",
-            "default",
-            "extends",
-            "continue",
-            "debugger",
-            "instanceof",
-        ];
-        // Indexed by kind offset from `KW_KIND_BASE`.
-        // Every `RX` word sits in the JS kind block (offsets < 64), so the mask is set-independent.
-        let mut mask = 0u64;
-        for r in RX.iter() {
-            let mut found: i32 = -1;
-            for kw in KEYWORDS_JS.iter() {
-                if kw.0 == *r {
-                    found = (kw.1 as u8 - KW_KIND_BASE) as i32;
-                    break;
-                }
-            }
-            assert!(found >= 0 && found < 64, "tables.rs: regex-kw {r} missing from KEYWORDS_JS");
-            mask |= 1u64 << found;
-        }
-        self.regex_kw_mask = mask;
-    }
-
-    /// Is the word at `p` one of the keywords a regex may directly follow?
-    /// Text-based and called only before any keyword-kind rewrite, so the JS
-    /// set answers for both modes (every RX word is in both sets, and no
-    /// other spelling has its mask bit).
-    #[inline(always)]
-    pub unsafe fn is_regex_keyword(&self, p: *const u8, len: usize) -> bool {
-        let k = self.kwjs.lookup(p, len);
-        k >= KW_KIND_BASE as u32 && ((self.regex_kw_mask >> (k - KW_KIND_BASE as u32)) & 1) != 0
     }
 
     fn build_merged_luts(&mut self) {
@@ -190,22 +127,6 @@ impl Tables {
                 wd == is_word(cb) && ws == is_ws(cb) && dg == is_digit(cb),
                 "tables.rs: WB_LO/HI wrong at byte {c:#04x}"
             );
-        }
-    }
-
-    /// Cross-set behavior the unit tests rely on: TS spellings resolve only
-    /// through the TS set, and JS words agree byte-for-byte across sets.
-    fn kwset_selfcheck(&self) {
-        let mut buf = [0u8; 16];
-        for (w, tok) in KEYWORDS_TS.iter() {
-            let bytes = w.as_bytes();
-            buf.fill(0);
-            buf[..bytes.len()].copy_from_slice(bytes);
-            let js = unsafe { self.kwjs.lookup(buf.as_ptr(), bytes.len()) };
-            let ts = unsafe { self.kwts.lookup(buf.as_ptr(), bytes.len()) };
-            assert!(ts == *tok as u32, "tables.rs: kwts lookup({w}) wrong");
-            let in_js = KEYWORDS_JS.iter().any(|k| k.0 == *w);
-            assert!(js == if in_js { *tok as u32 } else { 0 }, "tables.rs: kwjs lookup({w}) wrong");
         }
     }
 }

@@ -147,7 +147,7 @@ pub unsafe fn not_operator_position(
                     continue;
                 }
             };
-            if k == tk!(Ident) && t.is_regex_keyword(src.add(ws), we - ws) {
+            if k == tk!(Ident) && t.keywords.is_regex_keyword(src.add(ws), we - ws) {
                 if ts
                     && we - ws == 4
                     && ws == qi
@@ -384,7 +384,7 @@ unsafe fn prev_regex_sim(
             return false;
         }
         return match word_run_end(src, ls, le) {
-            RunEnd::Seg(ss, se, _) => t.is_regex_keyword(src.add(ss), se - ss),
+            RunEnd::Seg(ss, se, _) => t.keywords.is_regex_keyword(src.add(ss), se - ss),
             RunEnd::Blank(_) => !seed_tail,
         };
     }
@@ -399,7 +399,7 @@ unsafe fn prev_regex_sim(
                 RunEnd::Seg(ss, se, false) => {
                     prop_name(src, pls)
                         || prop_name(src, ss)
-                        || !t.is_regex_keyword(src.add(ss), se - ss)
+                        || !t.keywords.is_regex_keyword(src.add(ss), se - ss)
                 }
                 RunEnd::Seg(_, _, true) => false,
                 RunEnd::Blank(true) => false,
@@ -457,7 +457,7 @@ unsafe fn anchor_seed_tail(
                     if prop_name(src, sp) || prop_name(src, ss) {
                         return true;
                     }
-                    return !t.is_regex_keyword(src.add(ss), se - ss);
+                    return !t.keywords.is_regex_keyword(src.add(ss), se - ss);
                 }
                 RunEnd::Blank(true) => return false,
                 RunEnd::Blank(false) => {
