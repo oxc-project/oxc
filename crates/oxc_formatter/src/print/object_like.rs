@@ -67,6 +67,17 @@ impl<'a> ObjectLike<'a, '_> {
         }
     }
 
+    /// An object written on one line that is already wider than the line width can never print
+    /// flat. Expanding it up front keeps `objectWrap: "preserve"` idempotent: otherwise the first
+    /// pass breaks it, the second pass reads that break as an authored one, and an enclosing
+    /// `best_fitting!` (a member chain, hugged arguments) can choose a different layout.
+    fn members_cannot_fit(&self, f: &JsFormatter<'_, 'a>) -> bool {
+        let span = self.span();
+        let source = f.source_text().slice_range(span.start, span.end);
+        !source.contains('\n')
+            && source.chars().count() > usize::from(f.options().line_width.value())
+    }
+
     fn members_are_empty(&self) -> bool {
         match self {
             Self::ObjectExpression(o) => o.properties().is_empty(),
@@ -95,8 +106,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
             write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
         } else {
             let should_insert_space_around_brackets = f.options().bracket_spacing.value();
-            let should_expand =
-                f.options().expand == Expand::Auto && self.members_have_leading_newline(f);
+            let should_expand = f.options().expand == Expand::Auto
+                && (self.members_have_leading_newline(f) || self.members_cannot_fit(f));
 
             // If the object type is the type annotation of the only parameter in a function,
             // try to hug the parameter; we don't create a group and inline the contents here.

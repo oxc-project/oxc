@@ -661,3 +661,32 @@ var target = x ? y : /** @type {Document} */ ((root).head ?? fallback);
 A cast comment types the parenthesized expression directly after it.
 When the comment binds to an inner expression and the formatter adds parentheses around the whole (a `??` in a conditional branch, a sequence, a return argument), it prints inside the added pair so the cast keeps its target.
 Printed outside, the cast covers the whole expression and tsc types `root` as its uncast type again (`Property 'head' does not exist on type 'Node'`).
+
+## object-wrap-preserve-overflow-chain
+
+- Why: invariant
+- Pin: `tests/fixtures/ts/object-wrap-preserve/idempotent-member-chain.ts`
+- Conformance: `typescript/method-chain/object/issue-17239.ts`
+
+```ts
+// input
+model = types
+  .model({ something: mxSomething })
+  .volatile<[foo]>((self) => ({ loading: false, savingStatus: "idle", undoDisabled: false, aiFocused: false, online: true }));
+
+// ours
+model = types.model({ something: mxSomething }).volatile<[foo]>((self) => ({
+  loading: false,
+  ...
+}));
+
+// prettier
+model = types
+  .model({ something: mxSomething })
+  .volatile<[foo]>((self) => ({
+    loading: false,
+    ...
+  }));
+```
+
+Prettier's output is not a fixpoint: its second pass reads the newline it just wrote after `{` as an authored expansion (`objectWrap: "preserve"`) and prints our output. An object written on one line that is wider than the line width is expanded up front, so the first pass already prints what the second would.
