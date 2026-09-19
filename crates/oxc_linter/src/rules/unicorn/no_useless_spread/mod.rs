@@ -13,7 +13,9 @@ use oxc_span::{GetSpan, SPAN, Span};
 
 mod const_eval;
 
-use const_eval::{ConstEval, is_array_from, is_new_typed_array};
+use const_eval::{
+    ArrayKind, ConstEval, ValueHint, array_receiver_kind, is_array_from, is_new_typed_array,
+};
 
 use crate::{
     AstNode,
@@ -404,7 +406,25 @@ fn check_useless_clone<'a>(
         return;
     }
 
-    let hint = target.const_eval();
+    let hint = if is_array
+        && let Expression::CallExpression(call) = target
+        && is_method_call(call, None, Some(&["slice", "concat"]), None, None)
+    {
+        match array_receiver_kind(call, ctx) {
+            ArrayKind::NonArray => return,
+            ArrayKind::Unknown if is_method_call(call, None, Some(&["slice"]), None, None) => {
+                // String and typed-array slices need the spread to produce a plain array.
+                // Like upstream, report unknown receivers without offering an unsafe fix:
+                // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v74.0.0/rules/no-useless-spread.js#L534-L539
+                ctx.diagnostic(clone(span, true, diagnostic_name(ctx, target)));
+                return;
+            }
+            ArrayKind::Array => ValueHint::NewArray,
+            ArrayKind::Unknown => target.const_eval(),
+        }
+    } else {
+        target.const_eval()
+    };
     let hint_matches_expr = if is_array { hint.is_array() } else { hint.is_object() };
     if hint_matches_expr {
         let name = diagnostic_name(ctx, target);
@@ -587,6 +607,19 @@ fn test() {
         r"[...not.array]",
         r"[...not.array()]",
         r"[...array.unknown()]",
+        // Issue: <https://github.com/oxc-project/oxc/issues/26159>
+        r"const nif = '123456789'; export const a = [...nif.slice(0, 8)].reduce((acc, ch) => acc + Number(ch), 0)",
+        r"[...'abc'.slice(1)]",
+        r"[...`abc`.slice(1)]",
+        r"const text = 'abc'; const alias = text; [...alias.slice(1)]",
+        r"const text = 'abcd'; [...text.slice(1).slice(1)]",
+        r"[...new Foo().slice(1)]",
+        r"const text = 'x'; [...text.concat('y')].join('-')",
+        r"[...`x`.concat('y')]",
+        r"const text = 'abc'; [...text.slice(1).concat('d')]",
+        r"const text = 'abc'; [...text.concat('d').slice(1)]",
+        r"const text = flag ? 'abc' : 'def'; [...text.slice(1)]",
+        r"const text = (sideEffect(), 'abc'); [...text.slice(1)]",
         r"const arr = [1, 2, 3]; const unique = [...arr];", // valid method to shallow-clone an array
         r"[...Object.notReturningArray(foo)]",
         r"[...NotObject.keys(foo)]",
@@ -624,6 +657,7 @@ fn test() {
         "[...Uint8Array.from([1, 2, 3])]",
         "[...Uint8Array.from([1, 2, 3]).slice(0)]",
         // the typed-array hint survives a chain of clone methods
+        "[...new Uint8Array(buf).slice(0, 12).slice(0)]",
         "[...new Uint8Array(buf).slice(0, 12).map(f)]",
         // every typed array constructor
         "[...new Int8Array(buf).slice(0)]",
@@ -636,6 +670,10 @@ fn test() {
         "[...new Float64Array(buf).slice(0)]",
         "[...new BigInt64Array(buf).slice(0)]",
         "[...new BigUint64Array(buf).slice(0)]",
+        "const bytes = new Uint8Array(buf); [...bytes.slice(1)]",
+        "const bytes = Uint8Array.from(buf); const alias = bytes; [...alias.slice(1)]",
+        "const bytes = new Uint8Array(buf); [...bytes.map(f).slice(1)]",
+        "[...new Uint8Array().slice(1)]",
     ];
 
     #[expect(clippy::literal_string_with_formatting_args)]
@@ -719,7 +757,22 @@ fn test() {
         r"[...foo.flat()]",
         r"[...foo.flatMap(bar)]",
         r"[...foo.map(bar)]",
+        r"[...[1, 2, 3].slice(1)]",
+        r"[...[1, 2, 3].slice(1).slice(1)]",
         r"[...foo.slice(1)]",
+        r"[...foo.slice().slice().slice().slice().slice().slice().slice().slice()]",
+        r"const array = [1, 2, 3]; [...array.slice(1)]",
+        r"const array = [1, 2, 3]; const alias = array; [...alias.slice(1)]",
+        r"const array = [1, 2, 3]; [...array.slice(1).slice(1)]",
+        r"function fn(value) { return [...value.slice(1)]; }",
+        r"let value = 'abc'; [...value.slice(1)]",
+        r"let value = []; value = 'abc'; [...value.slice(1)]",
+        r"const {value} = object; [...value.slice(1)]",
+        r"const [value] = ['abc']; [...value.slice(1)]",
+        r"const value = []; function fn(value) { return [...value.slice(1)]; }",
+        r"const a = b; const b = a; [...a.slice(1)]",
+        r"const value = flag ? [] : 'abc'; [...value.slice(1)]",
+        r"const a = flag ? b : b; const b = a; [...a.slice(1)]",
         r"[...foo.splice(1)]",
         r"[...foo.toReversed()]",
         r"[...foo.toSorted()]",
@@ -783,6 +836,34 @@ fn test() {
         // (r"new Map(...[...iterable])", r"new Map(iterable)"),
         // useless clones - simple arrays
         ("[...foo.map(x => !!x)]", "foo.map(x => !!x)"),
+        ("[...[1, 2, 3].slice(1)]", "[1, 2, 3].slice(1)"),
+        ("[...[1, 2, 3].slice(1).slice(1)]", "[1, 2, 3].slice(1).slice(1)"),
+        ("const array = [1, 2, 3]; [...array.slice(1)]", "const array = [1, 2, 3]; array.slice(1)"),
+        (
+            "const array = [1, 2, 3]; const alias = array; [...alias.slice(1)]",
+            "const array = [1, 2, 3]; const alias = array; alias.slice(1)",
+        ),
+        (
+            "const array = [1, 2, 3]; [...array.slice(1).slice(1)]",
+            "const array = [1, 2, 3]; array.slice(1).slice(1)",
+        ),
+        // Unknown receivers still get a diagnostic, but may return strings or typed arrays.
+        ("[...foo.slice(1)]", "[...foo.slice(1)]"),
+        ("[...foo.slice(1).slice(1)]", "[...foo.slice(1).slice(1)]"),
+        ("let value = 'abc'; [...value.slice(1)]", "let value = 'abc'; [...value.slice(1)]"),
+        (
+            "let value = []; value = 'abc'; [...value.slice(1)]",
+            "let value = []; value = 'abc'; [...value.slice(1)]",
+        ),
+        (
+            "const [value] = ['abc']; [...value.slice(1)]",
+            "const [value] = ['abc']; [...value.slice(1)]",
+        ),
+        ("const a = b; const b = a; [...a.slice(1)]", "const a = b; const b = a; [...a.slice(1)]"),
+        (
+            "const value = flag ? [] : 'abc'; [...value.slice(1)]",
+            "const value = flag ? [] : 'abc'; [...value.slice(1)]",
+        ),
         ("[...new Array()]", "new Array()"),
         ("[...new Array(3)]", "new Array(3).fill()"),
         ("[...new Array(1, 2, 3)]", "new Array(1, 2, 3)"),
@@ -810,4 +891,33 @@ fn test() {
         .change_rule_path_extension("mjs")
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_typescript_receivers() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "const text = 'abc' as const; [...text.slice(1)]",
+        "[...('abc' satisfies string).concat('d')]",
+        "const bytes = new Uint8Array(3); [...bytes!.slice(1)]",
+    ];
+    let fail = vec![
+        "function fn(value: string | string[]) { return [...value.slice(1)]; }",
+        "const array = [1, 2, 3] as const; [...array.slice(1)]",
+    ];
+    let fix = vec![
+        (
+            "function fn(value: string | string[]) { return [...value.slice(1)]; }",
+            "function fn(value: string | string[]) { return [...value.slice(1)]; }",
+        ),
+        (
+            "const array = [1, 2, 3] as const; [...array.slice(1)]",
+            "const array = [1, 2, 3] as const; array.slice(1)",
+        ),
+    ];
+    Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
+        .expect_fix(fix)
+        .test();
 }
