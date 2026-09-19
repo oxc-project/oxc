@@ -1,8 +1,9 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
 use std::{
+    ffi::OsStr,
     fmt,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
 };
 
@@ -86,6 +87,15 @@ pub struct ModuleRecord {
     /// `export default name`
     ///         ^^^^^^^ span
     pub export_default: Option<Span>,
+
+    /// Whether `resolved_absolute_path` contains a `node_modules` segment.
+    /// Cached at construction because `import/no-cycle` tests this on every graph edge.
+    pub(crate) is_in_node_modules: bool,
+
+    /// Whether this module is in a cycle in the default `import/no-cycle` graph
+    /// (type-only edges skipped, `node_modules` skipped). Filled lazily by that
+    /// rule and reused by later files so each module is classified at most once.
+    pub(crate) import_cycle_member: OnceLock<bool>,
 }
 
 impl fmt::Debug for ModuleRecord {
@@ -112,6 +122,8 @@ impl fmt::Debug for ModuleRecord {
             .field("exported_bindings", &self.exported_bindings)
             .field("exported_bindings_from_star_export", &self.exported_bindings_from_star_export)
             .field("export_default", &self.export_default)
+            .field("is_in_node_modules", &self.is_in_node_modules)
+            .field("import_cycle_member", &self.import_cycle_member)
             .finish()
     }
 }
@@ -507,6 +519,9 @@ impl ModuleRecord {
                         .filter_map(|export_entry| export_entry.export_name.default_export_span()),
                 )
                 .next(),
+            is_in_node_modules: path
+                .components()
+                .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules"))),
             ..ModuleRecord::default()
         }
     }
