@@ -21,8 +21,9 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::{bm_next0, bm_next1, bm_prev1},
+    bytes::{is_digit, is_word, is_ws},
     scan::scan_number,
-    tables::{OP_KIND_BASE, Tables, is_digit, is_glue_join, is_word, is_ws},
+    tables::{OP_KIND_BASE, Tables},
 };
 
 use super::common::{
@@ -287,6 +288,11 @@ unsafe fn glue_anchor(src: *const u8, st: *const u64, qi: usize) -> usize {
         a = q as usize;
     }
     a
+}
+
+#[inline(always)]
+fn is_glue_join(c: u8) -> bool {
+    is_word(c) || c == b'.' || c == b'+' || c == b'-' || c == b'?'
 }
 
 unsafe fn prev_regex_sim(

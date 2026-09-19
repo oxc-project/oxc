@@ -1,8 +1,8 @@
 use std::slice;
 
 use crate::pipeline::{
+    bytes::{hex_val, is_digit, is_word},
     find::{find_regex, find_tmpl, find4},
-    tables::{hex_val, is_digit, is_word},
 };
 
 #[inline]

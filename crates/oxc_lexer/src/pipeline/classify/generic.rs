@@ -2,8 +2,9 @@ use std::ptr;
 
 use crate::token::tk;
 
-use crate::pipeline::tables::{
-    PUNCT1, PUNCT1_NKNOWN, Tables, is_digit, is_kw_init, is_kw_init_ts, is_op_char, is_word, is_ws,
+use crate::pipeline::{
+    bytes::{is_digit, is_word, is_ws},
+    tables::{PUNCT1, PUNCT1_NKNOWN, Tables, is_kw_init, is_kw_init_ts, is_op_char},
 };
 
 const FL_WORD: u32 = 0;

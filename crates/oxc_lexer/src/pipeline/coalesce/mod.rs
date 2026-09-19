@@ -4,9 +4,10 @@ use crate::{error::DiagCode, lanes::Lanes, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
+    bytes::{is_digit, is_word, is_ws},
     disambiguate::{gt_run_split, lt_run_split},
     scan::scan_number,
-    tables::{KwSet, Tables, is_digit, is_op_char, is_word, is_ws},
+    tables::{KwSet, Tables, is_op_char},
 };
 
 mod keywords;

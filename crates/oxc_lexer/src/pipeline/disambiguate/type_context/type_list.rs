@@ -14,9 +14,10 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::{bm_get, bm_next1},
+    bytes::{is_digit, is_id_start},
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
-    tables::{OP_KIND_BASE, Tables, is_digit, is_id_start},
+    tables::{OP_KIND_BASE, Tables},
 };
 
 use crate::pipeline::disambiguate::common::{

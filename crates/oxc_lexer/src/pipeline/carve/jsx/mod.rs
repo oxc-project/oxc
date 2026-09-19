@@ -2,13 +2,14 @@ use crate::{error::DiagCode, lanes::Lanes, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
+    bytes::{is_digit, is_id_start, is_word, is_ws},
     disambiguate::{bm_prev_sig, not_operator_position},
     find::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2,
     },
     scan::scan_block_comment,
-    tables::{Tables, is_digit, is_id_start, is_word, is_ws},
+    tables::Tables,
 };
 
 use super::common::{

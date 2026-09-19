@@ -15,6 +15,7 @@ use crate::{
 };
 
 mod bitmap;
+mod bytes;
 mod carve;
 mod chunk;
 mod classify;

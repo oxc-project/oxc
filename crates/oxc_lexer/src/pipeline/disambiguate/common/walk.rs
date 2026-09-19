@@ -30,7 +30,8 @@ use crate::token::{KW_KIND_BASE, KW_KIND_MAX, tk};
 
 use crate::pipeline::{
     bitmap::{bm_next1, bm_prev1},
-    tables::{OP_KIND_BASE, is_word},
+    bytes::is_word,
+    tables::OP_KIND_BASE,
 };
 
 const ANGLE_MATCH_CAP: u32 = 4096;

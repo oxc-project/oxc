@@ -22,7 +22,8 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::{bm_get, bm_next1},
-    tables::{OP_KIND_BASE, Tables, is_ws},
+    bytes::is_ws,
+    tables::{OP_KIND_BASE, Tables},
 };
 
 use crate::pipeline::disambiguate::common::{

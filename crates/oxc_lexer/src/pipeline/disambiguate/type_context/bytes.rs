@@ -23,7 +23,7 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::bm_get,
-    tables::{is_id_start, is_ws},
+    bytes::{is_id_start, is_ws},
 };
 
 use crate::pipeline::disambiguate::common::kind_at;
