@@ -147,8 +147,11 @@ pub struct TsGoLintState {
     fix: bool,
     /// If `true`, request that suggestions be returned from `tsgolint`.
     fix_suggestions: bool,
-    /// If `true`, include TypeScript compiler syntactic and semantic diagnostics.
-    type_check: bool,
+    /// When set, type-checking was decided explicitly (`--type-check`, `--type-check-only`, or
+    /// the editor's `typeCheck` setting) and applies to every file handed to `tsgolint`,
+    /// regardless of the `options.typeCheck` value of the config which governs it. `None` lets
+    /// each config decide for the files it governs.
+    type_check_override: Option<bool>,
     /// If `true`, skip type-aware lint rules while retaining TypeScript diagnostics.
     type_check_only: bool,
     /// If `true`, request that per-rule debug timings be returned from `tsgolint`.
@@ -185,7 +188,7 @@ impl TsGoLintState {
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
-            type_check: false,
+            type_check_override: None,
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
@@ -210,7 +213,7 @@ impl TsGoLintState {
             silent: false,
             fix: false,
             fix_suggestions: false,
-            type_check: false,
+            type_check_override: None,
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
@@ -228,12 +231,17 @@ impl TsGoLintState {
         self
     }
 
-    /// Set to `true` to include TypeScript compiler syntactic and semantic diagnostics.
+    /// Decide TypeScript compiler diagnostics explicitly, for every file handed to `tsgolint`:
+    /// `Some(true)` type-checks them all (`--type-check`, `--type-check-only`, the editor's
+    /// `typeCheck: true`), `Some(false)` type-checks none of them (the editor's
+    /// `typeCheck: false`). This never changes *which* files are handed to `tsgolint`; that is
+    /// decided by type-aware linting.
     ///
-    /// Default is `false`.
+    /// Default is `None`: each file follows the `options.typeCheck` of the config which governs
+    /// it.
     #[must_use]
-    pub fn with_type_check(mut self, yes: bool) -> Self {
-        self.type_check = yes;
+    pub fn with_type_check_override(mut self, type_check: Option<bool>) -> Self {
+        self.type_check_override = type_check;
         self
     }
 
@@ -1003,16 +1011,44 @@ impl TsGoLintState {
         diagnostics
     }
 
-    /// Create a JSON input for STDIN of tsgolint in this format:
+    /// Create a JSON input for STDIN of tsgolint.
+    ///
+    /// # Payload semantics
+    ///
+    /// The payload is a list of config groups, each listing the absolute paths of the files it
+    /// applies to, the rules to run on them, and an optional `type_check` flag. `tsgolint`
+    /// interprets them as follows, and `oxlint` is written against that contract:
+    ///
+    /// 1. A payload where `type_check` is absent from every group behaves exactly like it did
+    ///    before the field existed.
+    /// 2. The last group listing a file defines that file's whole config, its rules and its
+    ///    `type_check` together; there is no inheritance between groups. A `type_check` absent
+    ///    from that group means `true`. `oxlint` never lists a file in two groups, and always
+    ///    sends the field rather than relying on that default, so the payload says outright which
+    ///    files are type-checked.
+    /// 3. `type_check: false` excludes that group's files from every TypeScript diagnostic
+    ///    attached to them, syntactic and parse ones included. Type-aware *rules* still run on
+    ///    those files; only the compiler's own diagnostics are dropped.
+    /// 4. `report_syntactic` and `report_semantic` stay run-wide selectors for which *kinds* of
+    ///    diagnostic are reported, and `type_check` selects which *files* report them. So
+    ///    `type_check: true` is a no-op unless at least one of the two is set, which is why
+    ///    `oxlint` sets both as soon as a single emitted file is type-checked.
+    /// 5. A config group is identified by `(rules, type_check)`: files whose `type_check` differs
+    ///    must never share a group, even when their rules are identical, because a group carries
+    ///    exactly one value of the field.
     ///
     /// ```json
     /// {
-    ///   "files": [
+    ///   "version": 2,
+    ///   "configs": [
     ///     {
-    ///       "file_path": "/absolute/path/to/file.ts",
-    ///       "rules": ["rule-1", "another-rule"]
+    ///       "file_paths": ["/absolute/path/to/file.ts"],
+    ///       "rules": [{ "name": "no-floating-promises" }],
+    ///       "type_check": true
     ///     }
-    ///   ]
+    ///   ],
+    ///   "report_syntactic": true,
+    ///   "report_semantic": true
     /// }
     /// ```
     ///
@@ -1027,6 +1063,7 @@ impl TsGoLintState {
         resolved_configs: &FxHashMap<PathBuf, ResolvedLinterState>,
     ) -> Payload {
         if self.type_check_only {
+            // Type-check-only mode type-checks every file it is handed, whatever its config says.
             let file_paths: Vec<String> =
                 paths.iter().map(|path| path.to_string_lossy().into_owned()).collect();
             return Payload {
@@ -1034,21 +1071,28 @@ impl TsGoLintState {
                 configs: if file_paths.is_empty() {
                     vec![]
                 } else {
-                    vec![Config { file_paths, rules: vec![] }]
+                    vec![Config { file_paths, rules: vec![], type_check: true }]
                 },
                 source_overrides,
-                report_syntactic: self.type_check,
-                report_semantic: self.type_check,
+                report_syntactic: true,
+                report_semantic: true,
             };
         }
 
-        let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
+        // Keyed by `(rules, type_check)`: a group carries a single `type_check` value, so files
+        // which disagree about it stay in separate groups even with identical rules.
+        let mut config_groups: FxHashMap<(BTreeSet<Rule>, bool), Vec<String>> =
+            FxHashMap::default();
 
         for path in paths {
             let path_buf = PathBuf::from(path);
             let file_path = path.to_string_lossy().to_string();
 
             let resolved_config = self.resolved_config(resolved_configs, &path_buf);
+            // `typeCheck` comes from the same resolved config as the rules.
+            let type_check = self
+                .type_check_override
+                .unwrap_or_else(|| resolved_config.config.options.type_check.unwrap_or(false));
 
             let rules: BTreeSet<Rule> = resolved_config
                 .rules
@@ -1067,21 +1111,27 @@ impl TsGoLintState {
                 })
                 .collect();
 
-            config_groups.entry(rules).or_default().push(file_path);
+            config_groups.entry((rules, type_check)).or_default().push(file_path);
         }
+
+        // `type_check` only selects the files, never the kinds of diagnostic, so it is a no-op
+        // unless the run also enables a kind. Both are enabled as soon as one file is
+        // type-checked.
+        let any_type_check = config_groups.keys().any(|(_, type_check)| *type_check);
 
         Payload {
             version: 2,
             configs: config_groups
                 .into_iter()
-                .map(|(rules, file_paths)| Config {
+                .map(|((rules, type_check), file_paths)| Config {
                     file_paths,
                     rules: rules.into_iter().collect(),
+                    type_check,
                 })
                 .collect(),
             source_overrides,
-            report_syntactic: self.type_check,
-            report_semantic: self.type_check,
+            report_syntactic: any_type_check,
+            report_semantic: any_type_check,
         }
     }
 }
@@ -1097,11 +1147,14 @@ impl TsGoLintState {
 ///       "rules": [
 ///         { "name": "rule-1" },
 ///         { "name": "another-rule" },
-///       ]
+///       ],
+///       "type_check": true
 ///     }
 ///   ]
 /// }
 /// ```
+///
+/// See [`TsGoLintState::json_input`] for how `tsgolint` interprets the fields.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Payload {
     pub version: i32,
@@ -1118,6 +1171,17 @@ pub struct Config {
     /// List of rules to apply to this file
     /// Example: `["no-floating-promises"]`
     pub rules: Vec<Rule>,
+    /// Whether this group's files report TypeScript compiler diagnostics.
+    ///
+    /// Always serialized: `tsgolint` treats an absent `type_check` as `true`, so leaving it out
+    /// would type-check a group which set it to `false`. See [`TsGoLintState::json_input`].
+    #[serde(default = "type_check_default")]
+    pub type_check: bool,
+}
+
+/// `tsgolint` type-checks a config group whose `type_check` is absent.
+fn type_check_default() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
@@ -3623,5 +3687,206 @@ mod test {
             ),
             "the boundary itself should be accepted"
         );
+    }
+}
+
+/// Tests for the `tsgolint` payload built by [`TsGoLintState::json_input`].
+///
+/// The `type_check` field is per config group, so these assert on the payload itself: the
+/// released `tsgolint` binaries used by the CLI fixtures ignore the field, and would report the
+/// same diagnostics either way.
+#[cfg(test)]
+mod json_input_test {
+    use std::{ffi::OsStr, path::PathBuf, sync::Arc};
+
+    use rustc_hash::FxHashMap;
+    use serde_json::{Value, json};
+
+    use super::{Config, Payload, TsGoLintState};
+    use crate::{
+        ExternalPluginStore,
+        config::{ConfigStore, ConfigStoreBuilder, Oxlintrc},
+    };
+
+    const ROOT_FILE: &str = "/root/index.ts";
+    const NESTED_FILE: &str = "/root/packages/app/index.ts";
+
+    /// A config which runs a single type-aware rule, plus the given `options`.
+    fn type_aware_config(options: &Value) -> Value {
+        json!({
+            "categories": { "correctness": "off" },
+            "options": options,
+            "rules": { "typescript/no-floating-promises": "error" },
+        })
+    }
+
+    /// A store whose root config governs `/root` and whose nested config governs
+    /// `/root/packages/app`, both running the same type-aware rule.
+    fn store_with_nested_options(root_options: Value, nested_options: Value) -> ConfigStore {
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let mut build = |options: Value| {
+            let oxlintrc: Oxlintrc = serde_json::from_value(type_aware_config(&options)).unwrap();
+            ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                None,
+                &mut external_plugin_store,
+                None,
+            )
+            .unwrap()
+            .build(&mut external_plugin_store)
+            .unwrap()
+        };
+        let root = build(root_options);
+        let nested = build(nested_options);
+        let mut nested_configs = FxHashMap::default();
+        nested_configs.insert(PathBuf::from("/root/packages/app"), nested);
+        ConfigStore::new(root, nested_configs, external_plugin_store)
+    }
+
+    fn payload_for(config_store: ConfigStore, type_check_override: Option<bool>) -> Payload {
+        let state = TsGoLintState::for_test(&PathBuf::from("/root"), config_store, None)
+            .with_type_check_override(type_check_override);
+        let paths: Vec<Arc<OsStr>> =
+            vec![Arc::from(OsStr::new(ROOT_FILE)), Arc::from(OsStr::new(NESTED_FILE))];
+        // No config resolved by a plan, so `json_input` resolves each file's own.
+        state.json_input(&paths, None, &FxHashMap::default())
+    }
+
+    fn group_for<'p>(payload: &'p Payload, file_path: &str) -> &'p Config {
+        payload
+            .configs
+            .iter()
+            .find(|config| config.file_paths.iter().any(|path| path == file_path))
+            .unwrap_or_else(|| panic!("no config group lists {file_path}"))
+    }
+
+    #[test]
+    fn payload_splits_groups_with_different_type_check_even_with_identical_rules() {
+        // Both configs enable exactly the same rule, so the only thing separating the two files
+        // is `type_check`. A group carries a single value of the field, so they must not merge.
+        let payload = payload_for(
+            store_with_nested_options(json!({ "typeAware": true }), {
+                json!({ "typeAware": true, "typeCheck": true })
+            }),
+            None,
+        );
+
+        assert_eq!(payload.configs.len(), 2);
+        let root = group_for(&payload, ROOT_FILE);
+        let nested = group_for(&payload, NESTED_FILE);
+        assert_eq!(root.rules, nested.rules, "the two groups must differ only by `type_check`");
+        assert!(!root.type_check);
+        assert!(nested.type_check);
+    }
+
+    #[test]
+    fn payload_always_serializes_type_check() {
+        // `tsgolint` reads an absent `type_check` as `true`, so a `false` group which skipped the
+        // field would be type-checked after all. Assert on the JSON, not on the struct, because
+        // that default is what a `skip_serializing_if` would reintroduce.
+        let payload = payload_for(
+            store_with_nested_options(json!({ "typeAware": true }), {
+                json!({ "typeAware": true, "typeCheck": true })
+            }),
+            None,
+        );
+
+        let json = serde_json::to_value(&payload).unwrap();
+        let configs = json["configs"].as_array().expect("`configs` should be an array");
+        assert_eq!(configs.len(), 2);
+        let mut serialized: Vec<bool> = configs
+            .iter()
+            .map(|config| {
+                config
+                    .as_object()
+                    .expect("a config group should be an object")
+                    .get("type_check")
+                    .unwrap_or_else(|| panic!("`type_check` missing from {config}"))
+                    .as_bool()
+                    .expect("`type_check` should be a JSON boolean")
+            })
+            .collect();
+        // Both values are spelled out, rather than one of them being left to the default.
+        serialized.sort_unstable();
+        assert_eq!(serialized, vec![false, true]);
+    }
+
+    #[test]
+    fn payload_enables_report_flags_when_any_group_type_checks() {
+        // `report_syntactic` / `report_semantic` select the *kinds* of diagnostic for the whole
+        // run, so `type_check: true` on a single group is a no-op without them.
+        let payload = payload_for(
+            store_with_nested_options(json!({ "typeAware": true }), {
+                json!({ "typeAware": true, "typeCheck": true })
+            }),
+            None,
+        );
+        assert!(payload.report_syntactic);
+        assert!(payload.report_semantic);
+
+        // Neither kind is enabled when no file is type-checked.
+        let payload = payload_for(
+            store_with_nested_options(json!({ "typeAware": true }), json!({ "typeAware": true })),
+            None,
+        );
+        assert!(!payload.report_syntactic);
+        assert!(!payload.report_semantic);
+        assert!(payload.configs.iter().all(|config| !config.type_check));
+    }
+
+    #[test]
+    fn payload_type_check_is_not_inherited_by_a_nested_config() {
+        // Only the *root* config enables type checking here. `options` is never inherited, so
+        // the nested package takes the default and its files are sent with `type_check: false`.
+        // Sharing the option requires `extends`.
+        let payload = payload_for(
+            store_with_nested_options(
+                json!({ "typeAware": true, "typeCheck": true }),
+                json!({ "typeAware": true }),
+            ),
+            None,
+        );
+
+        assert!(group_for(&payload, ROOT_FILE).type_check);
+        assert!(!group_for(&payload, NESTED_FILE).type_check);
+    }
+
+    #[test]
+    fn cli_type_check_flag_forces_every_group() {
+        // `--type-check` / `--type-check-only` type-check every file, regardless of the config
+        // which governs it. The two files now agree, so they share a single group.
+        let payload = payload_for(
+            store_with_nested_options(json!({ "typeAware": true }), {
+                json!({ "typeAware": true, "typeCheck": false })
+            }),
+            Some(true),
+        );
+
+        assert_eq!(payload.configs.len(), 1);
+        assert!(payload.configs[0].type_check);
+        assert_eq!(payload.configs[0].file_paths.len(), 2);
+        assert!(payload.report_syntactic);
+        assert!(payload.report_semantic);
+    }
+
+    #[test]
+    fn editor_type_check_false_disables_every_group() {
+        // The editor's `typeCheck: false` overrides a config which turns it on. The files are
+        // still linted with type-aware rules, they just report no TypeScript diagnostics, so no
+        // diagnostic kind is enabled either.
+        let payload = payload_for(
+            store_with_nested_options(
+                json!({ "typeAware": true, "typeCheck": true }),
+                json!({ "typeAware": true, "typeCheck": true }),
+            ),
+            Some(false),
+        );
+
+        assert_eq!(payload.configs.len(), 1);
+        assert!(!payload.configs[0].type_check);
+        assert_eq!(payload.configs[0].file_paths.len(), 2);
+        assert!(!payload.report_syntactic);
+        assert!(!payload.report_semantic);
     }
 }

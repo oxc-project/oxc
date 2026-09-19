@@ -124,6 +124,20 @@ impl Config {
         self.base.config.options.type_aware
     }
 
+    /// `options.typeCheck` as declared by this config, after `extends` has been resolved.
+    pub fn type_check(&self) -> Option<bool> {
+        self.base.config.options.type_check
+    }
+
+    /// Absolute path of the configuration file this config was built from, if there was one.
+    ///
+    /// A config built from a default [`Oxlintrc`](crate::config::Oxlintrc) carries an empty
+    /// path, which is reported as `None` here just as `Oxlintrc::dir` reports no directory
+    /// for it.
+    pub fn path(&self) -> Option<&Path> {
+        self.base.config.path.as_deref().filter(|path| !path.as_os_str().is_empty())
+    }
+
     pub fn number_of_rules(&self) -> usize {
         self.base.rules.len()
     }
@@ -387,45 +401,6 @@ impl ConfigStore {
     /// was started from. Share the option through `extends`.
     pub(crate) fn type_aware_enabled_of(config: &LintConfig) -> bool {
         config.options.type_aware.unwrap_or(false)
-    }
-
-    /// Whether type-checking diagnostics are enabled by *any* config, root or nested.
-    ///
-    /// `tsgolint` reports type-checking diagnostics for a whole run, not per config group,
-    /// so enabling `typeCheck` in a nested config type-checks every file sent to `tsgolint`,
-    /// that is every file linted with type-aware rules.
-    /// So a root config with `typeAware: false` and `typeCheck: true` only type-checks the files
-    /// of the nested configs which enable `typeAware`.
-    /// A nested `typeCheck: true` also outweighs a root `typeCheck: false`.
-    pub fn type_check_enabled(&self) -> bool {
-        self.base.base.config.options.type_check.unwrap_or(false)
-            || self
-                .nested_configs
-                .values()
-                .any(|config| config.base.config.options.type_check == Some(true))
-    }
-
-    /// The configs which enable `typeCheck`, root first, then the nested ones in path order, by
-    /// file path. `None` for a config without a file.
-    pub fn type_check_config_paths(&self) -> Vec<Option<&Path>> {
-        fn enables_type_check(config: &Config) -> bool {
-            config.base.config.options.type_check == Some(true)
-        }
-        fn file_path(config: &Config) -> Option<&Path> {
-            config.base.config.path.as_deref()
-        }
-        let mut nested: Vec<_> = self
-            .nested_configs
-            .values()
-            .filter(|config| enables_type_check(config))
-            .map(file_path)
-            .collect();
-        nested.sort_unstable();
-        std::iter::once(&self.base)
-            .filter(|config| enables_type_check(config))
-            .map(file_path)
-            .chain(nested)
-            .collect()
     }
 
     /// Whether warnings should produce a non-zero exit code.
@@ -1453,70 +1428,6 @@ mod test {
     }
 
     #[test]
-    fn test_type_check_enabled_from_root_config() {
-        let base = Config::new(
-            vec![],
-            vec![],
-            OxlintCategories::default(),
-            LintConfig {
-                options: OxlintOptions { type_check: Some(true), ..OxlintOptions::default() },
-                ..LintConfig::default()
-            },
-            ResolvedOxlintOverrides::new(vec![]),
-        );
-        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
-        assert!(store.type_check_enabled());
-    }
-
-    /// The root config first, even without a file, then the nested ones in path order.
-    #[test]
-    fn test_type_check_config_paths() {
-        let make = |type_check: bool, path: Option<&str>| {
-            Config::new(
-                vec![],
-                vec![],
-                OxlintCategories::default(),
-                LintConfig {
-                    options: OxlintOptions {
-                        type_check: Some(type_check),
-                        ..OxlintOptions::default()
-                    },
-                    path: path.map(PathBuf::from),
-                    ..LintConfig::default()
-                },
-                ResolvedOxlintOverrides::new(vec![]),
-            )
-        };
-        let mut nested = FxHashMap::default();
-        nested.insert(PathBuf::from("/root/b"), make(true, Some("/root/b/.oxlintrc.json")));
-        nested.insert(PathBuf::from("/root/a"), make(true, Some("/root/a/.oxlintrc.json")));
-        nested.insert(PathBuf::from("/root/c"), make(false, Some("/root/c/.oxlintrc.json")));
-        let store = ConfigStore::new(make(true, None), nested, ExternalPluginStore::default());
-
-        assert_eq!(
-            store.type_check_config_paths(),
-            [
-                None,
-                Some(Path::new("/root/a/.oxlintrc.json")),
-                Some(Path::new("/root/b/.oxlintrc.json"))
-            ]
-        );
-    }
-
-    #[test]
-    fn test_type_check_disabled_by_default() {
-        let base = Config::new(
-            vec![],
-            vec![],
-            OxlintCategories::default(),
-            LintConfig::default(),
-            ResolvedOxlintOverrides::new(vec![]),
-        );
-        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
-        assert!(!store.type_check_enabled());
-    }
-
-    #[test]
     fn test_deny_warnings_enabled_from_root_config() {
         let base = Config::new(
             vec![],
@@ -1588,6 +1499,11 @@ mod test {
         ConfigStore::report_unused_disable_directives_of(
             &store.get_related_config(path).base.config,
         )
+    }
+
+    /// Whether `path` reports TypeScript diagnostics, through the config which governs it.
+    fn type_check_for(store: &ConfigStore, path: &Path) -> bool {
+        store.get_related_config(path).type_check().unwrap_or(false)
     }
 
     /// Whether type-aware linting applies to `path`, through the config which governs it.
@@ -1671,7 +1587,59 @@ mod test {
             OxlintOptions { type_check: Some(true), ..OxlintOptions::default() },
         );
 
-        assert!(store.type_check_enabled());
+        // Only the files the nested config governs report the diagnostics.
+        assert!(type_check_for(&store, Path::new("/root/packages/app/src/index.ts")));
+        assert!(!type_check_for(&store, Path::new("/root/packages/other/src/index.ts")));
+        assert!(!type_check_for(&store, Path::new("/root/index.ts")));
+    }
+
+    #[test]
+    fn test_type_check_not_inherited_from_root_config() {
+        let store = store_with_nested_options(
+            OxlintOptions { type_check: Some(true), ..OxlintOptions::default() },
+            OxlintOptions::default(),
+        );
+
+        // Like `typeAware`, the root value is *not* inherited: only the config which governs the
+        // file is consulted. Sharing the option is what `extends` is for.
+        assert!(!type_check_for(&store, Path::new("/root/packages/app/src/index.ts")));
+        assert!(type_check_for(&store, Path::new("/root/index.ts")));
+    }
+
+    #[test]
+    fn test_type_check_disabled_by_nested_config() {
+        let store = store_with_nested_options(
+            OxlintOptions { type_check: Some(true), ..OxlintOptions::default() },
+            OxlintOptions { type_check: Some(false), ..OxlintOptions::default() },
+        );
+
+        assert!(!type_check_for(&store, Path::new("/root/packages/app/src/index.ts")));
+        assert!(type_check_for(&store, Path::new("/root/index.ts")));
+    }
+
+    /// A config built from a default `Oxlintrc` has no file.
+    #[test]
+    fn test_path_is_none_for_a_config_without_a_file() {
+        let without_file = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        assert_eq!(without_file.path(), None);
+
+        let with_file = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig {
+                path: Some(PathBuf::from("/root/.oxlintrc.json")),
+                ..LintConfig::default()
+            },
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        assert_eq!(with_file.path(), Some(Path::new("/root/.oxlintrc.json")));
     }
 
     #[test]

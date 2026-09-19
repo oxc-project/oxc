@@ -1,0 +1,12 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "options": {
+    "typeAware": true,
+    "typeCheck": true
+  },
+  "rules": {
+    "typescript/no-floating-promises": "error"
+  }
+}

@@ -253,8 +253,7 @@ impl ConfigLoadDiagnostic {
     /// A warning, not reported when the run sets any of the `unless` overrides. Every warning is
     /// built here.
     fn warning_unless(diagnostic: OxcDiagnostic, unless: RunOverrides) -> Self {
-        debug_assert!(diagnostic.severity != Severity::Error, "a warning cannot be an error");
-        ConfigLoadWarning { diagnostic, unless }.into()
+        ConfigLoadWarning::new(diagnostic, unless).into()
     }
 
     /// Whether to report this, given what the run decided. Errors are always reported.
@@ -290,6 +289,13 @@ pub struct ConfigLoadWarning {
 }
 
 impl ConfigLoadWarning {
+    /// A warning, not reported when the run sets any of the `unless` overrides. Every warning is
+    /// built here.
+    fn new(diagnostic: OxcDiagnostic, unless: RunOverrides) -> Self {
+        debug_assert!(diagnostic.severity != Severity::Error, "a warning cannot be an error");
+        Self { diagnostic, unless }
+    }
+
     /// Whether to report this, given what the run decided.
     pub fn is_reported(&self, overrides: RunOverrides) -> bool {
         !overrides.intersects(self.unless)
@@ -301,22 +307,27 @@ bitflags! {
     /// the configs say. Built by [`RunOverrides::for_cli`] and
     /// [`RunOverrides::for_language_server`].
     ///
-    /// Also the mask of [`ConfigLoadWarning::unless`]. Which nested config warning is reported in
-    /// which run (the type-aware rules one is only for a config which leaves `typeAware` unset):
+    /// Also the mask of [`ConfigLoadWarning::unless`]. Which config warning is reported in which
+    /// run, where (a) is a nested `denyWarnings` / `maxWarnings`, (b) type-aware rules in a config
+    /// which leaves `typeAware` unset, (c) `typeCheck` without `typeAware`, and (d) a type-aware
+    /// config which does not inherit the `typeCheck` of the config above it. A run which stops on
+    /// a fatal error reports none of them.
     ///
-    /// | Run                     | deny/max warnings | `typeCheck` | type-aware rules |
-    /// | ----------------------- | ----------------- | ----------- | ---------------- |
-    /// | CLI                     | yes               | yes         | yes              |
-    /// | CLI `--type-aware`      | yes               | yes         | no               |
-    /// | CLI `--type-check`      | yes               | no          | yes              |
-    /// | CLI `--type-check-only` | yes               | no          | no               |
-    /// | LSP                     | no                | no          | yes              |
-    /// | LSP, `typeAware` set    | no                | no          | no               |
+    /// | Run                     | (a) | (b) | (c) | (d) |
+    /// | ----------------------- | --- | --- | --- | --- |
+    /// | CLI                     | yes | yes | yes | yes |
+    /// | CLI `--type-aware`      | yes | no  | no  | yes |
+    /// | CLI `--type-check`      | yes | yes | yes | no  |
+    /// | CLI `--type-check-only` | yes | no  | no  | no  |
+    /// | LSP                     | no  | yes | yes | yes |
+    /// | LSP `typeAware: true`   | no  | no  | no  | yes |
+    /// | LSP `typeAware: false`  | no  | no  | no  | no  |
+    /// | LSP `typeCheck` set     | no  | yes | yes | no  |
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
     pub struct RunOverrides: u8 {
         /// Whether files are type-checked does not depend on `options.typeCheck`: `--type-check`
-        /// and `--type-check-only` type-check every file given to `tsgolint`, and the language
-        /// server never type-checks.
+        /// and `--type-check-only` type-check every file given to `tsgolint`, and the editor's
+        /// `typeCheck` setting decides it either way.
         const TYPE_CHECK_OVERRIDDEN = 1 << 0;
         /// The exit code does not depend on `options.denyWarnings` and `options.maxWarnings`: the
         /// language server has none, and reads neither option.
@@ -339,11 +350,13 @@ impl RunOverrides {
         overrides
     }
 
-    /// What a language server run decided. `type_aware` is the editor's `typeAware` setting.
-    pub fn for_language_server(type_aware: Option<bool>) -> Self {
-        let mut overrides = Self::TYPE_CHECK_OVERRIDDEN | Self::EXIT_CODE_OVERRIDDEN;
+    /// What a language server run decided, from the editor's `typeAware` and `typeCheck`
+    /// settings.
+    pub fn for_language_server(type_aware: Option<bool>, type_check: Option<bool>) -> Self {
+        let mut overrides = Self::EXIT_CODE_OVERRIDDEN;
         overrides.set(Self::TYPE_AWARE_FORCED, type_aware == Some(true));
         overrides.set(Self::TYPE_AWARE_DISABLED, type_aware == Some(false));
+        overrides.set(Self::TYPE_CHECK_OVERRIDDEN, type_check.is_some());
         overrides
     }
 }
@@ -579,18 +592,6 @@ impl<'a> ConfigLoader<'a> {
                         RunOverrides::EXIT_CODE_OVERRIDDEN,
                     ));
                 }
-                // Unlike `typeAware`, `typeCheck` cannot be scoped to the files this config
-                // governs, because `tsgolint` reports type-checking diagnostics for a whole run.
-                // The option keeps working, and a warning points out that it belongs in the root
-                // config. Not reported when the run decides type checking regardless of the
-                // configs. A nested `typeCheck: false` gets no hint, although it does not stop the
-                // run-wide type check either.
-                if config.options.type_check == Some(true) {
-                    diagnostics.push(ConfigLoadDiagnostic::warning_unless(
-                        nested_type_check_is_run_wide(&display_path()),
-                        RunOverrides::TYPE_CHECK_OVERRIDDEN,
-                    ));
-                }
             }
 
             // Captured before the config is consumed, to warn below if these rules can never run.
@@ -642,6 +643,16 @@ impl<'a> ConfigLoader<'a> {
                             RunOverrides::TYPE_AWARE_FORCED | RunOverrides::TYPE_AWARE_DISABLED,
                         ));
                     }
+                    // `typeCheck` is scoped the same way, and `tsgolint` only ever sees the files
+                    // linted with type-aware rules. The root config is built by the caller, so
+                    // `finish_load` covers that one.
+                    if !is_root_config
+                        && let Some(warning) = type_check_without_type_aware(&config, false, || {
+                            config_display_path(&path, display_root)
+                        })
+                    {
+                        diagnostics.push(warning.into());
+                    }
                     built_configs.push(LoadedConfig {
                         dir,
                         config,
@@ -664,6 +675,41 @@ impl<'a> ConfigLoader<'a> {
         // A language server may serve several workspace folders, so their warnings name config
         // files by their absolute path.
         self.load_many(configs, Some(root_dir), None)
+    }
+
+    /// The warnings which need the root config, or the whole set of configs at once.
+    ///
+    /// The root config is the one config `ConfigLoader` does not build itself: the caller does,
+    /// after resolving `extends`. Both the CLI and the language server call this once they have
+    /// built it, and report these warnings along with the ones found while loading, so an editor
+    /// reports the same problems the CLI does, once each. Config paths are relative to
+    /// `display_root`, or absolute without one, like the warnings found while loading.
+    ///
+    /// `type_aware_forced` says whether `--type-aware`, `--type-check-only` or the editor's
+    /// `typeAware` setting makes *every* file type-aware, which decides how many configs the
+    /// `typeCheck` of a config above them was going to reach.
+    #[must_use]
+    pub fn finish_load(
+        root: &Config,
+        nested_configs: &FxHashMap<PathBuf, Config>,
+        display_root: Option<&Path>,
+        type_aware_forced: bool,
+    ) -> Vec<ConfigLoadWarning> {
+        let mut warnings = Vec::new();
+        if let Some(root_path) = root.path()
+            && let Some(warning) = type_check_without_type_aware(root, true, || {
+                config_display_path(root_path, display_root)
+            })
+        {
+            warnings.push(warning);
+        }
+        warnings.extend(configs_missing_type_check(
+            root,
+            nested_configs,
+            display_root,
+            type_aware_forced,
+        ));
+        warnings
     }
 
     /// Try to load config from a specific directory.
@@ -901,6 +947,107 @@ fn nested_deny_warnings_not_supported(path: &str) -> OxcDiagnostic {
     .with_help("Move `options.denyWarnings` to the root configuration file.")
 }
 
+/// Warn if `config` type-checks its files without linting them with type-aware rules.
+///
+/// `typeCheck` and `typeAware` are both resolved from the config which governs a file, and
+/// `tsgolint` is only handed the files linted with type-aware rules, so `typeCheck` alone reports
+/// nothing. Not reported when the run turns type-aware linting on or off for every file.
+fn type_check_without_type_aware(
+    config: &Config,
+    is_root_config: bool,
+    display_path: impl FnOnce() -> String,
+) -> Option<ConfigLoadWarning> {
+    if config.type_check() != Some(true) || config.type_aware() == Some(true) {
+        return None;
+    }
+    // Advising `extends` of a config which sets the option, or noting that it is not inherited
+    // from the root config, only makes sense when there is a config above this one.
+    let help = if is_root_config {
+        "Set `options.typeAware` to `true` in this config."
+    } else {
+        "Set `options.typeAware` to `true` in this config, or `extends` a config which does. It is not inherited from the root config."
+    };
+    let display_path = display_path();
+    Some(ConfigLoadWarning::new(
+        OxcDiagnostic::warn(format!(
+            "{display_path} sets `options.typeCheck`, but does not set `options.typeAware`, so no TypeScript diagnostics are reported for its files."
+        ))
+        .with_help(help),
+        RunOverrides::TYPE_AWARE_FORCED | RunOverrides::TYPE_AWARE_DISABLED,
+    ))
+}
+
+/// The nearest config above `dir` which sets `options.typeCheck`.
+///
+/// Configs which leave the option unset are skipped, because they are the ones this resolves
+/// the value for. The root config governs everything the nested configs do not, so it comes
+/// last.
+fn nearest_type_check_ancestor<'c>(
+    dir: &Path,
+    nested_configs: &'c FxHashMap<PathBuf, Config>,
+    root: &'c Config,
+) -> Option<&'c Config> {
+    for ancestor in dir.ancestors().skip(1) {
+        if let Some(config) = nested_configs.get(ancestor)
+            && config.type_check().is_some()
+        {
+            return Some(config);
+        }
+    }
+    root.type_check().is_some().then_some(root)
+}
+
+/// Warn about the type-aware configs which an ancestor's `options.typeCheck` does *not* reach.
+///
+/// `typeCheck` is resolved from the config which governs each file and is never inherited, so
+/// turning it on in a config leaves every type-aware package below it untouched. That is easy
+/// to miss when a config predates per-file type checking, so it is reported once per affected
+/// package. A package which sets the option itself, either way, is left alone. Not reported
+/// when the run decides type checking for every file, or turns type-aware linting off.
+fn configs_missing_type_check(
+    root: &Config,
+    nested_configs: &FxHashMap<PathBuf, Config>,
+    display_root: Option<&Path>,
+    type_aware_forced: bool,
+) -> Vec<ConfigLoadWarning> {
+    // Only the root config can lack a file.
+    let display = |config: &Config| {
+        config.path().map_or_else(
+            || "the root config".to_string(),
+            |path| config_display_path(path, display_root),
+        )
+    };
+    let mut missing: Vec<(String, String)> = nested_configs
+        .iter()
+        .filter(|(_, config)| {
+            // Forcing type-aware linting on hands `tsgolint` every file, so a config which never
+            // enabled it also becomes one of the configs an ancestor's `typeCheck` misses.
+            (type_aware_forced || config.type_aware() == Some(true))
+                && config.type_check().is_none()
+        })
+        .filter_map(|(dir, config)| {
+            let ancestor = nearest_type_check_ancestor(dir, nested_configs, root)?;
+            (ancestor.type_check() == Some(true)).then(|| (display(config), display(ancestor)))
+        })
+        .collect();
+    // `nested_configs` is a hash map, so sort to keep the warnings in a stable order.
+    missing.sort_unstable();
+    missing
+        .into_iter()
+        .map(|(display_path, ancestor_path)| {
+            ConfigLoadWarning::new(
+                OxcDiagnostic::warn(format!(
+                    "{display_path} does not set `options.typeCheck`, so its files are not type-checked although {ancestor_path} enables it."
+                ))
+                .with_help(
+                    "Set `options.typeCheck` to `true` in this config, or share it through `extends`. It is not inherited from the config above it.",
+                ),
+                RunOverrides::TYPE_CHECK_OVERRIDDEN | RunOverrides::TYPE_AWARE_DISABLED,
+            )
+        })
+        .collect()
+}
+
 fn nested_type_aware_rules_without_type_aware(path: &str, rules: &[String]) -> OxcDiagnostic {
     let (plural, subject) =
         if rules.len() == 1 { ("", "it never runs") } else { ("s", "they never run") };
@@ -910,15 +1057,6 @@ fn nested_type_aware_rules_without_type_aware(path: &str, rules: &[String]) -> O
     ))
     .with_help(
         "Set `options.typeAware` to `true` in this config, or `extends` a config which does. It is not inherited from the root config.",
-    )
-}
-
-fn nested_type_check_is_run_wide(path: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "The `options.typeCheck` option was found in {path}, but it applies to every file linted with type-aware rules, not only to that directory."
-    ))
-    .with_help(
-        "Move `options.typeCheck` to the root configuration file, or remove it if only this directory should be type-checked.",
     )
 }
 
@@ -933,9 +1071,12 @@ fn nested_max_warnings_not_supported(path: &str) -> OxcDiagnostic {
 mod test {
     use std::path::PathBuf;
 
-    use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
+    use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore, Oxlintrc};
+    use rustc_hash::FxHashMap;
 
-    use super::{ConfigLoadDiagnostic, ConfigLoadError, ConfigLoader, RunOverrides};
+    use super::{
+        ConfigLoadDiagnostic, ConfigLoadError, ConfigLoader, RunOverrides, build_nested_configs,
+    };
     #[cfg(feature = "napi")]
     use crate::js_config::{JsConfigLoaderCb, JsConfigResult};
     use oxc_config::DiscoveredConfigFile;
@@ -1168,15 +1309,274 @@ mod test {
         assert!(diagnostics.is_empty());
     }
 
+    /// Loads a tree of configs: `root`, if given, plus one config per `(directory, contents)`
+    /// pair, and finishes the load the way both front ends do. `type_aware_forced` stands in for
+    /// `--type-aware` and the editor's `typeAware: true`. Returns the number of nested configs and
+    /// every diagnostic, those found while loading followed by those of `finish_load`, with
+    /// config paths relative to the tree.
+    ///
+    /// A root config is handed to the discovery path as well as built separately, so the
+    /// `!is_root_config` guard in `load_many` is exercised and a root problem can only be
+    /// reported once. Without one, the root is built from `Oxlintrc::default()` rather than
+    /// searched for, so the test never walks out of its temporary directory and picks up a
+    /// config which happens to exist on the machine running it.
+    fn load_tree(
+        root: Option<&str>,
+        nested: &[(&str, &str)],
+        type_aware_forced: bool,
+    ) -> (usize, Vec<ConfigLoadDiagnostic>) {
+        let root_dir = tempfile::tempdir().unwrap();
+        let root_path = root_dir.path().join(".oxlintrc.json");
+        let mut discovered = Vec::new();
+        if let Some(root) = root {
+            std::fs::write(&root_path, root).unwrap();
+            discovered.push(DiscoveredConfigFile::Json(root_path.clone()));
+        }
+        for (dir, contents) in nested {
+            let nested_path = root_dir.path().join(dir).join(".oxlintrc.json");
+            std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+            std::fs::write(&nested_path, contents).unwrap();
+            discovered.push(DiscoveredConfigFile::Json(nested_path));
+        }
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let (configs, mut diagnostics) =
+            loader.load_many(discovered, Some(root_dir.path()), Some(root_dir.path()));
+
+        let mut nested_ignore_patterns = Vec::new();
+        // The root config is discovered too, but it is the caller which builds and passes it, so
+        // drop it from the nested map the way `load_root_and_nested` does.
+        let nested_configs: FxHashMap<_, _> =
+            build_nested_configs(configs, &mut nested_ignore_patterns, None)
+                .into_iter()
+                .filter(|(dir, _)| dir != root_dir.path())
+                .collect();
+
+        let root_oxlintrc = match root {
+            Some(_) => ConfigLoader::new(None, &mut external_plugin_store, &[], None)
+                .load_root_config(root_dir.path(), Some(&root_path))
+                .unwrap(),
+            // Not `load_root_config` with no path: that walks up out of the temporary directory.
+            None => Oxlintrc::default(),
+        };
+        let root_config = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            root_oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap();
+
+        diagnostics.extend(
+            ConfigLoader::finish_load(
+                &root_config,
+                &nested_configs,
+                Some(root_dir.path()),
+                type_aware_forced,
+            )
+            .into_iter()
+            .map(ConfigLoadDiagnostic::from),
+        );
+        (nested_configs.len(), diagnostics)
+    }
+
+    /// The help of the only warning in `diagnostics`.
+    fn only_warning_help(diagnostics: &[ConfigLoadDiagnostic]) -> String {
+        assert_eq!(diagnostics.len(), 1, "{diagnostics:?}");
+        let ConfigLoadDiagnostic::Warning(warning) = &diagnostics[0] else {
+            panic!("expected a warning: {diagnostics:?}");
+        };
+        warning.diagnostic.help.as_deref().unwrap().to_string()
+    }
+
+    /// A nested config may set `typeCheck`: it is resolved per file from the config which governs
+    /// it, like `typeAware`.
     #[test]
-    fn test_nested_json_config_warns_about_type_check() {
+    fn test_nested_json_config_allows_type_check() {
         let (configs, diagnostics) =
             load_nested_json(r#"{ "options": { "typeAware": true, "typeCheck": true } }"#);
-        // `typeCheck` still applies, but it cannot be scoped to this directory.
+        assert_eq!(configs, 1);
+        assert!(diagnostics.is_empty(), "{diagnostics:?}");
+    }
+
+    /// `typeCheck` without `typeAware` type-checks nothing, because `tsgolint` is only handed
+    /// the files linted with type-aware rules.
+    #[test]
+    fn test_nested_json_config_warns_about_type_check_without_type_aware() {
+        let (configs, diagnostics) = load_nested_json(r#"{ "options": { "typeCheck": true } }"#);
         assert_eq!(configs, 1);
         let messages = warning_messages(&diagnostics);
         assert_eq!(messages.len(), 1);
-        assert!(messages[0].contains("options.typeCheck"));
+        assert!(messages[0].contains("sets `options.typeCheck`"), "{}", messages[0]);
+        // A nested config can pick the option up from a shared one, which the root cannot.
+        assert!(only_warning_help(&diagnostics).contains("extends"));
+    }
+
+    /// `typeAware: false` leaves the config without type-aware rules, exactly as leaving the
+    /// option unset does.
+    #[test]
+    fn test_nested_json_config_warns_about_type_check_with_type_aware_false() {
+        let (configs, diagnostics) =
+            load_nested_json(r#"{ "options": { "typeAware": false, "typeCheck": true } }"#);
+        assert_eq!(configs, 1);
+        assert_eq!(warning_messages(&diagnostics).len(), 1);
+    }
+
+    /// The root config is built by the caller, so `load_many` must leave it to `finish_load`
+    /// rather than warning about it a second time. `load_tree` hands the root config to the
+    /// discovery path as well, which is what would double it up.
+    #[test]
+    fn test_root_type_check_without_type_aware_warns_once() {
+        let (_, diagnostics) = load_tree(
+            Some(r#"{ "options": { "typeCheck": true } }"#),
+            &[("packages/app", r#"{ "rules": { "no-debugger": "error" } }"#)],
+            false,
+        );
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1, "{messages:?}");
+        assert!(
+            messages[0].starts_with(".oxlintrc.json sets `options.typeCheck`"),
+            "{}",
+            messages[0]
+        );
+        // The root has no config above it, so `extends` is not the advice to give.
+        let help = only_warning_help(&diagnostics);
+        assert!(!help.contains("extends"), "root help should not mention `extends`: {help}");
+    }
+
+    /// `typeCheck` is not inherited, so turning it on in a config leaves every type-aware package
+    /// below it silently un-type-checked. Reported once per package, against the config which
+    /// enables it, so a deep tree says which one to look at.
+    #[test]
+    fn test_warns_about_type_aware_configs_without_type_check() {
+        let (nested, diagnostics) = load_tree(
+            Some(r#"{ "options": { "typeAware": true, "typeCheck": true } }"#),
+            &[
+                ("packages/app", r#"{ "options": { "typeAware": true } }"#),
+                ("packages/lib", r#"{ "options": { "typeAware": true } }"#),
+            ],
+            false,
+        );
+        assert_eq!(nested, 2);
+        assert_eq!(
+            warning_messages(&diagnostics),
+            [
+                "packages/app/.oxlintrc.json does not set `options.typeCheck`, so its files are not type-checked although .oxlintrc.json enables it.",
+                "packages/lib/.oxlintrc.json does not set `options.typeCheck`, so its files are not type-checked although .oxlintrc.json enables it.",
+            ]
+        );
+    }
+
+    /// `--type-aware` and the editor's `typeAware: true` hand `tsgolint` every file, so a package
+    /// which never enabled type-aware linting also becomes one an ancestor's `typeCheck` misses.
+    #[test]
+    fn test_warns_about_configs_made_type_aware_by_the_flag() {
+        let nested = &[("packages/app", r#"{ "rules": { "no-debugger": "error" } }"#)][..];
+        let root = Some(r#"{ "options": { "typeAware": true, "typeCheck": true } }"#);
+
+        // The package's own config sets neither option, so nothing is missing from it.
+        let (_, diagnostics) = load_tree(root, nested, false);
+        assert!(diagnostics.is_empty(), "{diagnostics:?}");
+
+        // The flag then makes its files type-aware.
+        let (_, diagnostics) = load_tree(root, nested, true);
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1);
+        assert!(messages[0].starts_with("packages/app/.oxlintrc.json does not set"));
+    }
+
+    /// The comparison is against the nearest config above which sets the option, not against the
+    /// root: a monorepo usually turns the option on in an intermediate package config.
+    #[test]
+    fn test_warns_against_the_nearest_ancestor_which_sets_type_check() {
+        let (_, diagnostics) = load_tree(
+            Some(r#"{ "options": { "typeAware": true } }"#),
+            &[
+                ("packages", r#"{ "options": { "typeAware": true, "typeCheck": true } }"#),
+                ("packages/app", r#"{ "options": { "typeAware": true } }"#),
+            ],
+            false,
+        );
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1);
+        assert!(messages[0].starts_with("packages/app/.oxlintrc.json does not set"));
+        assert!(messages[0].contains("although packages/.oxlintrc.json enables it"));
+    }
+
+    /// With no root config file, an intermediate config which enables the option is still the
+    /// one compared against.
+    #[test]
+    fn test_warns_without_a_root_config() {
+        let (_, diagnostics) = load_tree(
+            None,
+            &[
+                ("packages", r#"{ "options": { "typeAware": true, "typeCheck": true } }"#),
+                ("packages/app", r#"{ "options": { "typeAware": true } }"#),
+            ],
+            false,
+        );
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1);
+        assert!(messages[0].starts_with("packages/app/.oxlintrc.json does not set"));
+        assert!(messages[0].contains("although packages/.oxlintrc.json enables it"));
+    }
+
+    /// No ancestor config sets the option, so there is nothing to inherit.
+    #[test]
+    fn test_does_not_warn_when_no_ancestor_sets_type_check() {
+        let (_, diagnostics) = load_tree(
+            Some(r#"{ "options": { "typeAware": true } }"#),
+            &[("packages/app", r#"{ "options": { "typeAware": true } }"#)],
+            false,
+        );
+        assert!(diagnostics.is_empty(), "{diagnostics:?}");
+    }
+
+    /// The nearest ancestor which sets the option sets it to `false`, so the package loses
+    /// nothing.
+    #[test]
+    fn test_does_not_warn_when_the_nearest_ancestor_disables_type_check() {
+        let (_, diagnostics) = load_tree(
+            Some(r#"{ "options": { "typeAware": true, "typeCheck": true } }"#),
+            &[
+                ("packages", r#"{ "options": { "typeAware": true, "typeCheck": false } }"#),
+                ("packages/app", r#"{ "options": { "typeAware": true } }"#),
+            ],
+            false,
+        );
+        assert!(diagnostics.is_empty(), "{diagnostics:?}");
+    }
+
+    /// A package which sets the option itself, either way, is left alone.
+    #[test]
+    fn test_does_not_warn_when_the_config_sets_type_check_itself() {
+        for nested in [
+            r#"{ "options": { "typeAware": true, "typeCheck": true } }"#,
+            r#"{ "options": { "typeAware": true, "typeCheck": false } }"#,
+        ] {
+            let (_, diagnostics) = load_tree(
+                Some(r#"{ "options": { "typeAware": true, "typeCheck": true } }"#),
+                &[("packages/app", nested)],
+                false,
+            );
+            assert!(diagnostics.is_empty(), "unexpected warning for {nested}: {diagnostics:?}");
+        }
+    }
+
+    /// A package which is not type-aware is never handed to `tsgolint`, so `typeCheck` was never
+    /// going to reach it and there is nothing to migrate.
+    #[test]
+    fn test_does_not_warn_about_a_config_which_is_not_type_aware() {
+        let (_, diagnostics) = load_tree(
+            Some(r#"{ "options": { "typeAware": true, "typeCheck": true } }"#),
+            &[("packages/app", r#"{ "rules": { "no-debugger": "error" } }"#)],
+            false,
+        );
+        assert!(diagnostics.is_empty(), "{diagnostics:?}");
     }
 
     /// Which warning is reported in which kind of run, as documented on [`RunOverrides`]. A new
@@ -1188,34 +1588,55 @@ mod test {
             ("CLI --type-aware", RunOverrides::for_cli(true, false)),
             ("CLI --type-check", RunOverrides::for_cli(false, true)),
             ("CLI --type-check-only", RunOverrides::for_cli(true, true)),
-            ("language server", RunOverrides::for_language_server(None)),
-            ("language server, typeAware: true", RunOverrides::for_language_server(Some(true))),
-            ("language server, typeAware: false", RunOverrides::for_language_server(Some(false))),
+            ("language server", RunOverrides::for_language_server(None, None)),
+            (
+                "language server, typeAware: true",
+                RunOverrides::for_language_server(Some(true), None),
+            ),
+            (
+                "language server, typeAware: false",
+                RunOverrides::for_language_server(Some(false), None),
+            ),
+            (
+                "language server, typeCheck set",
+                RunOverrides::for_language_server(None, Some(false)),
+            ),
         ];
+        // (warning, root config, nested config, reported in each run)
         let warnings = [
             (
-                "denyWarnings",
+                "(a) denyWarnings",
+                None,
                 r#"{ "options": { "denyWarnings": true } }"#,
-                [true, true, true, true, false, false, false],
+                [true, true, true, true, false, false, false, false],
             ),
             (
-                "maxWarnings",
+                "(a) maxWarnings",
+                None,
                 r#"{ "options": { "maxWarnings": 1 } }"#,
-                [true, true, true, true, false, false, false],
+                [true, true, true, true, false, false, false, false],
             ),
             (
-                "typeCheck",
-                r#"{ "options": { "typeAware": true, "typeCheck": true } }"#,
-                [true, true, false, false, false, false, false],
-            ),
-            (
-                "type-aware rules, typeAware unset",
+                "(b) type-aware rules, typeAware unset",
+                None,
                 r#"{ "rules": { "typescript/no-floating-promises": "error" } }"#,
-                [true, false, true, false, true, false, false],
+                [true, false, true, false, true, false, false, true],
+            ),
+            (
+                "(c) typeCheck without typeAware",
+                None,
+                r#"{ "options": { "typeCheck": true } }"#,
+                [true, false, true, false, true, false, false, true],
+            ),
+            (
+                "(d) typeCheck not inherited",
+                Some(r#"{ "options": { "typeAware": true, "typeCheck": true } }"#),
+                r#"{ "options": { "typeAware": true } }"#,
+                [true, true, false, false, true, true, false, false],
             ),
         ];
-        for (warning, config, expected) in warnings {
-            let (_, diagnostics) = load_nested_json(config);
+        for (warning, root, nested, expected) in warnings {
+            let (_, diagnostics) = load_tree(root, &[("nested", nested)], false);
             assert_eq!(warning_messages(&diagnostics).len(), 1, "{warning}");
             for ((run, overrides), expected) in runs.iter().zip(expected) {
                 assert_eq!(diagnostics[0].is_reported(*overrides), expected, "{warning} in {run}");
@@ -1597,12 +2018,16 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (configs, errors) = loader.load_discovered_with_root_dir(
+        let (configs, diagnostics) = loader.load_discovered_with_root_dir(
             root_dir.path(),
             [DiscoveredConfigFile::Js(nested_path)],
         );
-        assert!(errors.is_empty());
         assert_eq!(configs.len(), 1);
+        // A value set through `extends` counts as the config's own, so it is warned about like
+        // one: the extended config does not set `typeAware` either.
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1);
+        assert!(messages[0].contains("sets `options.typeCheck`"), "{}", messages[0]);
     }
 
     #[cfg(feature = "napi")]

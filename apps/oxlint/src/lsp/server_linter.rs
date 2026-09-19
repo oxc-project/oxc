@@ -33,7 +33,7 @@ use crate::lsp::utils::{
 };
 use crate::{
     config_loader::{
-        ConfigLoader, RunOverrides, build_nested_configs, config_file_names,
+        ConfigLoadDiagnostic, ConfigLoader, RunOverrides, build_nested_configs, config_file_names,
         discover_configs_in_tree, materialize_default_plugins,
     },
     lsp::{
@@ -178,7 +178,7 @@ impl ServerLinterBuilder {
 
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
-        let (nested_configs, config_client_message) = if options.use_nested_configs() {
+        let (nested_configs, mut config_diagnostics) = if options.use_nested_configs() {
             self.create_nested_configs(
                 &root_path,
                 &oxlintrc.path,
@@ -186,14 +186,11 @@ impl ServerLinterBuilder {
                 &mut nested_ignore_patterns,
                 &mut extended_paths,
                 Some(root_uri.as_ref()),
-                options.type_aware,
                 excluded_roots,
             )
         } else {
             (FxHashMap::default(), Vec::new())
         };
-
-        client_messages.extend(config_client_message);
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
         // Without a config file there are no patterns and the root is never consulted,
@@ -234,6 +231,18 @@ impl ServerLinterBuilder {
             ConfigStoreBuilder::empty().build(&mut ExternalPluginStore::new(false)).unwrap()
         });
 
+        // The root config is built here rather than by the loader, so the load is only finished
+        // now, with every config at hand. Paths are shown absolute, like the loader's errors.
+        config_diagnostics.extend(
+            ConfigLoader::finish_load(&base_config, &nested_configs, None, type_aware_forced)
+                .into_iter()
+                .map(ConfigLoadDiagnostic::from),
+        );
+        client_messages.extend(config_client_messages(
+            config_diagnostics,
+            RunOverrides::for_language_server(options.type_aware, options.type_check),
+        ));
+
         if external_plugin_store.is_empty() {
             external_linter = None;
         }
@@ -254,6 +263,8 @@ impl ServerLinterBuilder {
         };
 
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
+        client_messages
+            .extend(editor_type_check_without_type_aware(options.type_check, type_aware));
         let config_store_clone = config_store.clone();
 
         // Send JS plugins config to JS side
@@ -287,6 +298,9 @@ impl ServerLinterBuilder {
         let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
             .with_type_aware(type_aware)
             .with_type_aware_forced(type_aware_forced)
+            // `None` lets the config which governs each file decide; `Some(false)` is the
+            // editor's explicit off for a config which enables `options.typeCheck`.
+            .with_type_check_override(options.type_check)
             .with_fix_kind(fix_kind)
             .with_ignore_fixes(true)
             .build()
@@ -457,6 +471,38 @@ impl ToolBuilder for ServerLinterBuilder {
     }
 }
 
+/// The config load diagnostics this language server reports to the client, which also logs them.
+fn config_client_messages(
+    diagnostics: Vec<ConfigLoadDiagnostic>,
+    overrides: RunOverrides,
+) -> impl Iterator<Item = ClientMessage> {
+    diagnostics
+        .into_iter()
+        .filter(move |diagnostic| diagnostic.is_reported(overrides))
+        .map(config_load_diagnostic_to_client_message)
+}
+
+/// The editor requested TypeScript diagnostics, but nothing is linted with type-aware rules.
+///
+/// `typeCheck` decides what the files handed to `tsgolint` report; it never hands it a file, so
+/// with type-aware linting off there is nothing for it to act on and the editor shows no
+/// TypeScript diagnostics at all. A warning is emitted rather than silently doing nothing.
+///
+/// This is about an editor setting, not a configuration file, so it is a client message of its
+/// own rather than a config load warning.
+fn editor_type_check_without_type_aware(
+    type_check: Option<bool>,
+    type_aware: bool,
+) -> Option<ClientMessage> {
+    if type_check != Some(true) || type_aware {
+        return None;
+    }
+    Some(ClientMessage {
+        r#type: MessageType::Warning,
+        message: "oxlint: the `typeCheck` setting has no effect without `typeAware`, so no TypeScript diagnostics are reported. Set `typeAware` to `true`, or enable `options.typeAware` in a configuration file.".to_string(),
+    })
+}
+
 impl ServerLinterBuilder {
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
@@ -468,9 +514,8 @@ impl ServerLinterBuilder {
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
         workspace_uri: Option<&str>,
-        type_aware: Option<bool>,
         excluded_roots: &[PathBuf],
-    ) -> (FxHashMap<PathBuf, Config>, Vec<ClientMessage>) {
+    ) -> (FxHashMap<PathBuf, Config>, Vec<ConfigLoadDiagnostic>) {
         let config_paths = discover_configs_in_tree(root_path, base_config_path, excluded_roots);
 
         #[cfg_attr(not(feature = "napi"), allow(unused_mut))]
@@ -488,18 +533,9 @@ impl ServerLinterBuilder {
 
         let (configs, diagnostics) = loader.load_discovered_with_root_dir(root_path, config_paths);
 
-        // show messages to the LSP client, which also logs them
-        let overrides = RunOverrides::for_language_server(type_aware);
-        let client_messages = diagnostics
-            .into_iter()
-            .filter(|diagnostic| diagnostic.is_reported(overrides))
-            .map(config_load_diagnostic_to_client_message)
-            .collect();
-
-        (
-            build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths)),
-            client_messages,
-        )
+        // The caller reports the diagnostics, once the root config has been built and the load
+        // can be finished with it.
+        (build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths)), diagnostics)
     }
 
     /// The `.gitignore` and `.eslintignore` files of the directories between `parent_root`
@@ -1045,6 +1081,7 @@ impl ServerLinter {
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
+            || old_options.type_check != new_options.type_check
     }
 
     /// Check if the linter is responsible for the given URI.
@@ -1073,8 +1110,43 @@ mod tests_builder {
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         },
         commands::FIX_ALL_COMMAND_ID,
-        server_linter::ServerLinterBuilder,
+        options::LintOptions as LSPLintOptions,
+        server_linter::{ServerLinter, ServerLinterBuilder, editor_type_check_without_type_aware},
     };
+    use tower_lsp_server::gen_lsp_types::MessageType;
+
+    /// `typeCheck` only decides what the type-aware files report, so setting it while nothing is
+    /// type-aware reports nothing at all. A warning is emitted instead of silently doing
+    /// nothing.
+    #[test]
+    fn test_editor_type_check_without_type_aware_warns() {
+        let message =
+            editor_type_check_without_type_aware(Some(true), false).expect("expected a warning");
+        assert_eq!(message.r#type, MessageType::Warning);
+        assert!(message.message.contains("`typeCheck`"));
+        assert!(message.message.contains("`typeAware`"));
+
+        // No warning is emitted once some file is linted with type-aware rules.
+        assert!(editor_type_check_without_type_aware(Some(true), true).is_none());
+        // None either when the editor did not enable type checking.
+        assert!(editor_type_check_without_type_aware(Some(false), false).is_none());
+        assert!(editor_type_check_without_type_aware(None, false).is_none());
+    }
+
+    /// `typeCheck` is resolved into the `tsgolint` payload when the linter is created, so a
+    /// change to it has to rebuild the linter like `typeAware` does.
+    #[test]
+    fn test_type_check_option_needs_restart() {
+        let unset = LSPLintOptions::default();
+        let on = LSPLintOptions { type_check: Some(true), ..LSPLintOptions::default() };
+        let off = LSPLintOptions { type_check: Some(false), ..LSPLintOptions::default() };
+
+        assert!(!ServerLinter::needs_restart(&unset, &unset));
+        assert!(ServerLinter::needs_restart(&unset, &on));
+        assert!(ServerLinter::needs_restart(&on, &off));
+        // `Some(false)` is the editor's explicit off, not the same as "follow the config".
+        assert!(ServerLinter::needs_restart(&off, &unset));
+    }
 
     #[test]
     fn test_server_capabilities_default_providers() {
@@ -1296,15 +1368,18 @@ mod test {
     use rustc_hash::FxHashSet;
     use serde_json::json;
     use tower_lsp_server::gen_lsp_types::{
-        CodeActionContext, CodeActionKind, CodeActionTriggerKind, Position, Range,
+        CodeActionContext, CodeActionKind, CodeActionTriggerKind, MessageType, Position, Range,
     };
 
-    use crate::lsp::{
-        code_actions::{
-            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+    use crate::{
+        config_loader::RunOverrides,
+        lsp::{
+            code_actions::{
+                CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+            },
+            server_linter::{ServerLinterBuilder, config_client_messages},
+            tester::{Tester, get_file_path},
         },
-        server_linter::ServerLinterBuilder,
-        tester::{Tester, get_file_path},
     };
 
     fn code_action_params(
@@ -1322,13 +1397,12 @@ mod test {
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut extended_paths = FxHashSet::default();
         let base_config_path = get_file_path("fixtures/lsp/init_nested_configs/.oxlintrc.json");
-        let (configs, client_message) = builder.create_nested_configs(
+        let (configs, diagnostics) = builder.create_nested_configs(
             &get_file_path("fixtures/lsp/init_nested_configs"),
             &base_config_path,
             &mut external_plugin_store,
             &mut nested_ignore_patterns,
             &mut extended_paths,
-            None,
             None,
             &[],
         );
@@ -1339,20 +1413,20 @@ mod test {
         assert_eq!(configs_dirs.len(), 2);
         assert!(configs_dirs[1].ends_with("deep2"));
         assert!(configs_dirs[0].ends_with("deep1"));
-        assert_eq!(client_message, []);
+        assert!(diagnostics.is_empty());
     }
 
-    /// The language server never type-checks and has no exit code, so a nested `typeCheck`,
-    /// `denyWarnings` or `maxWarnings` is not worth a warning there.
+    /// The language server has no exit code, so a nested `denyWarnings` or `maxWarnings` is not
+    /// worth a warning there.
     #[test]
-    fn test_create_nested_configs_does_not_warn_about_run_wide_options() {
+    fn test_create_nested_configs_does_not_warn_about_exit_code_options() {
         let root_dir = tempfile::tempdir().unwrap();
         std::fs::write(root_dir.path().join(".oxlintrc.json"), "{}").unwrap();
         let nested_dir = root_dir.path().join("nested");
         std::fs::create_dir_all(&nested_dir).unwrap();
         std::fs::write(
             nested_dir.join(".oxlintrc.json"),
-            r#"{ "options": { "typeCheck": true, "denyWarnings": true, "maxWarnings": 1 } }"#,
+            r#"{ "options": { "denyWarnings": true, "maxWarnings": 1 } }"#,
         )
         .unwrap();
 
@@ -1360,19 +1434,65 @@ mod test {
         let mut nested_ignore_patterns = Vec::new();
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut extended_paths = FxHashSet::default();
-        let (configs, client_messages) = builder.create_nested_configs(
+        let (configs, diagnostics) = builder.create_nested_configs(
             root_dir.path(),
             &root_dir.path().join(".oxlintrc.json"),
             &mut external_plugin_store,
             &mut nested_ignore_patterns,
             &mut extended_paths,
             None,
-            None,
             &[],
         );
 
         assert_eq!(configs.len(), 1);
+        let client_messages =
+            config_client_messages(diagnostics, RunOverrides::for_language_server(None, None))
+                .collect::<Vec<_>>();
         assert_eq!(client_messages, []);
+    }
+
+    /// A nested `typeCheck` without `typeAware` has no effect in the editor either, unless the
+    /// editor's `typeAware` setting decides for every file, either way.
+    #[test]
+    fn test_create_nested_configs_type_check_warning_follows_editor_setting() {
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.json"), "{}").unwrap();
+        let nested_dir = root_dir.path().join("nested");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(
+            nested_dir.join(".oxlintrc.json"),
+            r#"{ "options": { "typeCheck": true } }"#,
+        )
+        .unwrap();
+
+        let messages_for = |type_aware: Option<bool>| {
+            let builder = ServerLinterBuilder::default();
+            let mut nested_ignore_patterns = Vec::new();
+            let mut external_plugin_store = ExternalPluginStore::new(false);
+            let mut extended_paths = FxHashSet::default();
+            let (_, diagnostics) = builder.create_nested_configs(
+                root_dir.path(),
+                &root_dir.path().join(".oxlintrc.json"),
+                &mut external_plugin_store,
+                &mut nested_ignore_patterns,
+                &mut extended_paths,
+                None,
+                &[],
+            );
+            let overrides = RunOverrides::for_language_server(type_aware, None);
+            config_client_messages(diagnostics, overrides).collect::<Vec<_>>()
+        };
+
+        let messages = messages_for(None);
+        assert_eq!(messages.len(), 1, "{messages:?}");
+        assert_eq!(messages[0].r#type, MessageType::Warning);
+        assert!(
+            messages[0].message.contains("sets `options.typeCheck`"),
+            "{}",
+            messages[0].message
+        );
+        assert_eq!(messages_for(Some(true)), []);
+        assert_eq!(messages_for(Some(false)), []);
     }
 
     /// The editor's `typeAware` setting, either way, decides for every file, so a nested config
@@ -1394,18 +1514,17 @@ mod test {
             let mut nested_ignore_patterns = Vec::new();
             let mut external_plugin_store = ExternalPluginStore::new(false);
             let mut extended_paths = FxHashSet::default();
-            builder
-                .create_nested_configs(
-                    root_dir.path(),
-                    &root_dir.path().join(".oxlintrc.json"),
-                    &mut external_plugin_store,
-                    &mut nested_ignore_patterns,
-                    &mut extended_paths,
-                    None,
-                    type_aware,
-                    &[],
-                )
-                .1
+            let (_, diagnostics) = builder.create_nested_configs(
+                root_dir.path(),
+                &root_dir.path().join(".oxlintrc.json"),
+                &mut external_plugin_store,
+                &mut nested_ignore_patterns,
+                &mut extended_paths,
+                None,
+                &[],
+            );
+            let overrides = RunOverrides::for_language_server(type_aware, None);
+            config_client_messages(diagnostics, overrides).collect::<Vec<_>>()
         };
 
         let messages = messages_for(None);
@@ -1765,6 +1884,57 @@ mod test {
         let tester =
             Tester::new("fixtures/lsp/tsgolint/type_aware_config", json!({ "typeAware": false }));
         tester.test_and_snapshot_single_file("test-with-lsp-config.ts");
+    }
+
+    /// The editor's `typeCheck: true` enables the TypeScript compiler diagnostics on every file
+    /// linted with type-aware rules, regardless of `options.typeCheck` in the config governing
+    /// it. The fixture's config enables `typeAware` and leaves `typeCheck` unset, so
+    /// without the setting nothing would be type-checked.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_lsp_type_check_reports_type_errors() {
+        let tester =
+            Tester::new("fixtures/lsp/tsgolint/type_check_config", json!({ "typeCheck": true }));
+        tester.test_and_snapshot_single_file("type-checked.ts");
+    }
+
+    /// `typeCheck: false` is the editor's explicit off: the file is still linted with type-aware
+    /// rules (`no-floating-promises` still fires), it just reports no TypeScript diagnostics.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_lsp_type_check_false_reports_no_type_errors() {
+        let tester =
+            Tester::new("fixtures/lsp/tsgolint/type_check_config", json!({ "typeCheck": false }));
+        tester.test_and_snapshot_single_file("not-type-checked.ts");
+    }
+
+    /// The load is finished once the root config is built: a type-aware nested config which
+    /// does not inherit the root's `typeCheck` is reported, by its absolute path, unless the
+    /// editor's `typeCheck` decides for every file or its `typeAware: false` switches type-aware
+    /// linting off.
+    #[test]
+    fn test_lsp_warns_about_type_aware_configs_without_type_check() {
+        const FIXTURE: &str = "fixtures/cli/tsgolint_root_type_check";
+        let type_check_warnings = |options: serde_json::Value| {
+            let tester = Tester::new(FIXTURE, options);
+            let (_, messages) = tester.build_linter_for(&tester.get_file_uri("index.ts"));
+            messages
+                .into_iter()
+                .filter(|message| {
+                    message.r#type == MessageType::Warning && message.message.contains("typeCheck")
+                })
+                .collect::<Vec<_>>()
+        };
+
+        let warnings = type_check_warnings(json!({}));
+        assert_eq!(warnings.len(), 1, "{warnings:?}");
+        let nested_config = get_file_path(&format!("{FIXTURE}/packages/app/.oxlintrc.json"));
+        let nested_config = nested_config.to_string_lossy().cow_replace('\\', "/").into_owned();
+        assert!(warnings[0].message.contains(&nested_config), "{}", warnings[0].message);
+
+        assert_eq!(type_check_warnings(json!({ "typeCheck": true })), []);
+        assert_eq!(type_check_warnings(json!({ "typeCheck": false })), []);
+        assert_eq!(type_check_warnings(json!({ "typeAware": false })), []);
     }
 
     #[test]
