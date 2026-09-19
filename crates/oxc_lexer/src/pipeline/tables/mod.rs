@@ -1,14 +1,22 @@
-use crate::token::{KW_KIND_BASE, tk};
+use crate::token::KW_KIND_BASE;
 
 use crate::pipeline::bytes::{is_digit, is_word, is_ws};
 
 mod opmap;
-pub(super) use opmap::{KwSet, PUNCT1, PUNCT1_NKNOWN};
+mod punct1;
+
+pub(super) use opmap::KwSet;
+
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+pub(super) use punct1::{PH_A, PH_B, PH_T0, PH_T1};
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+pub(super) use punct1::{PUNCT1, PUNCT1_NKNOWN};
 
 use opmap::{
     KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, OPMAP_NOPS, OPMAP_OPS, OpMap,
     op_key,
 };
+use punct1::punct1_hash_selfcheck;
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -33,22 +41,6 @@ const OPCH_HI: [u8; 16] = [0, 0, 1, 2, 0, 4, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0];
 #[inline(always)]
 pub(super) const fn is_op_char(c: u8) -> bool {
     (OPCH_LO[(c & 15) as usize] & OPCH_HI[(c >> 4) as usize]) != 0
-}
-
-pub(super) const PH_A: [u8; 16] = [4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2];
-pub(super) const PH_B: [u8; 16] = [24, 26, 2, 16, 31, 25, 19, 30, 0, 0, 0, 0, 0, 0, 0, 0];
-pub(super) const PH_T0: [u8; 16] =
-    [68, 38, 58, 76, 255, 72, 42, 52, 34, 33, 255, 255, 70, 48, 37, 55];
-pub(super) const PH_T1: [u8; 16] =
-    [40, 255, 43, 50, 64, 61, 255, 255, 35, 36, 80, 89, 255, 82, 32, 41];
-
-#[inline(always)]
-fn punct1_hash(c: u8) -> u8 {
-    if c < 0x20 {
-        return tk!(Invalid);
-    }
-    let h = (PH_A[(c & 15) as usize] ^ PH_B[((c >> 4) & 15) as usize]) & 31;
-    if h < 16 { PH_T0[h as usize] } else { PH_T1[(h & 15) as usize] }
 }
 
 #[repr(C, align(64))]
@@ -321,19 +313,5 @@ fn opch_selfcheck() {
     }
     for c in 0..256usize {
         assert!(is_op_char(c as u8) == in_set[c], "tables.rs: OPCH_LO/HI wrong at byte {c:#04x}");
-    }
-}
-
-fn punct1_hash_selfcheck() {
-    let mut punct1_ord = [tk!(Invalid); 256];
-    for i in 0..PUNCT1_NKNOWN {
-        punct1_ord[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
-    }
-    for c in 0..256usize {
-        let cb = c as u8;
-        if is_word(cb) || is_ws(cb) {
-            continue;
-        }
-        assert!(punct1_hash(cb) == punct1_ord[c], "tables.rs: PH_A/B/T wrong at byte {c:#04x}");
     }
 }
