@@ -7,6 +7,7 @@ pub mod format_node_without_trailing_comments;
 pub mod jsx;
 pub mod member_chain;
 pub mod object;
+pub mod opaque;
 pub mod statement_body;
 pub mod string;
 pub mod suppressed;

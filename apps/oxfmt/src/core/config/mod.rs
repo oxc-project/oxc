@@ -123,7 +123,7 @@ pub enum ResolveOutcome {
     /// Ready to format with this strategy.
     Format(FormatStrategy),
     /// The file's parser requires a plugin that the resolved config did NOT enable.
-    /// The payload carries the missing config key (e.g. `"svelte"`)
+    /// The payload carries the missing config key (e.g. `"svelte"`, `"ember"`)
     /// so callers can construct a friendly error or log message.
     #[cfg_attr(not(feature = "napi"), expect(dead_code))]
     MissingPlugin(&'static str),

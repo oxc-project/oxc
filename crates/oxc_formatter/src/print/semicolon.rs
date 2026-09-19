@@ -313,7 +313,12 @@ pub fn suppressed_statement_content_end(
     f: &JsFormatter<'_, '_>,
 ) -> Option<u32> {
     let span = stmt.span();
+    // A statement opening with an opaque region takes no terminator, suppressed or not
+    // (see the `ExpressionStatement` and `ExportDefaultDeclaration` printers).
+    let opens_with_region =
+        |expression_start| f.context().opaque_region_at_start(expression_start).is_some();
     let content_end = match stmt {
+        Statement::ExpressionStatement(s) if opens_with_region(s.expression.span().start) => None,
         Statement::ExpressionStatement(s) => Some(s.expression.span().end),
         Statement::ReturnStatement(s) => Some(
             s.argument
@@ -349,6 +354,7 @@ pub fn suppressed_statement_content_end(
             }
             ExportDefaultDeclarationKind::ClassDeclaration(_)
             | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => None,
+            expression if opens_with_region(expression.span().start) => None,
             expression => Some(expression.span().end),
         },
         Statement::ExportDeclaration(s) => declaration_content_end(&s.declaration, f),
