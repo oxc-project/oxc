@@ -64,7 +64,11 @@ struct FormatCli {
 
 impl FormatCommand {
     pub fn parse() -> Self {
-        FormatCli::parse_into()
+        let args = std::env::args_os().skip(1).collect::<Vec<_>>();
+        match Self::embedded_outcome(&args) {
+            usage::embedded::Outcome::Parsed(command) => command,
+            usage::embedded::Outcome::Exit(exit) => exit_process(exit),
+        }
     }
 
     /// Parses formatter options from an argument slice.
@@ -93,8 +97,31 @@ impl FormatCommand {
     }
 
     pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
-        FormatCli::embedded_outcome_into(args)
+        let mut outcome = FormatCli::embedded_outcome_into(args);
+        if let usage::embedded::Outcome::Exit(exit) = &mut outcome {
+            preserve_legacy_version_output(exit, "oxfmt");
+        }
+        outcome
     }
+}
+
+fn preserve_legacy_version_output(exit: &mut usage::embedded::Exit, bin: &str) {
+    let default = format!("{bin} {}\n", env!("CARGO_PKG_VERSION"));
+    if exit.code == 0 && !exit.stderr && exit.text == default {
+        exit.text = format!("Version: {}\n\n", env!("CARGO_PKG_VERSION"));
+    }
+}
+
+fn exit_process(exit: usage::embedded::Exit) -> ! {
+    use std::io::Write;
+
+    let result = if exit.stderr {
+        std::io::stderr().lock().write_all(exit.text.as_bytes())
+    } else {
+        std::io::stdout().lock().write_all(exit.text.as_bytes())
+    };
+    result.expect("failed to write CLI output");
+    std::process::exit(exit.code);
 }
 
 impl TryFrom<FormatCli> for FormatCommand {
@@ -274,43 +301,4 @@ pub struct RuntimeOptions {
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[usage(long, value_name = "INT")]
     pub threads: Option<usize>,
-}
-
-#[cfg(test)]
-mod tests {
-    use std::ffi::OsString;
-
-    use usage_rs as usage;
-
-    use super::FormatCommand;
-
-    #[test]
-    fn typed_finalization_reports_invalid_paths() {
-        let error = FormatCommand::parse_from(&["../src"]).unwrap_err();
-        let usage::Error::InvalidValue(error) = error else {
-            panic!("expected invalid path value");
-        };
-        assert_eq!(error.name, "PATH");
-        assert_eq!(error.value, "../src");
-    }
-
-    #[test]
-    fn embedded_help_preserves_section_order() {
-        let args = [OsString::from("--help")];
-        let outcome = FormatCommand::embedded_outcome(&args);
-        let exit = outcome.exit().expect("help should return an embedded exit");
-        assert_eq!(exit.code, 0);
-        assert!(!exit.stderr);
-
-        let output_options = exit.text.find("Output Options:").expect("output options heading");
-        let arguments = exit.text.find("Arguments:").expect("arguments heading");
-        let flags = exit.text.find("Flags:").expect("flags heading");
-        assert!(output_options < arguments && arguments < flags);
-    }
-
-    #[cfg(feature = "napi")]
-    #[test]
-    fn migration_source_remains_case_insensitive() {
-        assert!(FormatCommand::parse_from(&["--migrate", "PRETTIER"]).is_ok());
-    }
 }

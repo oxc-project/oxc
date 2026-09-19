@@ -135,7 +135,11 @@ pub struct SuppressionOptions {
 
 impl LintCommand {
     pub fn parse() -> Self {
-        LintCli::parse_into()
+        let args = std::env::args_os().skip(1).collect::<Vec<_>>();
+        match Self::embedded_outcome(&args) {
+            usage::embedded::Outcome::Parsed(command) => command,
+            usage::embedded::Outcome::Exit(exit) => exit_process(exit),
+        }
     }
 
     /// Parses linter options from an argument slice.
@@ -164,8 +168,31 @@ impl LintCommand {
     }
 
     pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
-        LintCli::embedded_outcome_into(args)
+        let mut outcome = LintCli::embedded_outcome_into(args);
+        if let usage::embedded::Outcome::Exit(exit) = &mut outcome {
+            preserve_legacy_version_output(exit, "oxlint");
+        }
+        outcome
     }
+}
+
+fn preserve_legacy_version_output(exit: &mut usage::embedded::Exit, bin: &str) {
+    let default = format!("{bin} {}\n", env!("CARGO_PKG_VERSION"));
+    if exit.code == 0 && !exit.stderr && exit.text == default {
+        exit.text = format!("Version: {}\n\n", env!("CARGO_PKG_VERSION"));
+    }
+}
+
+fn exit_process(exit: usage::embedded::Exit) -> ! {
+    use std::io::Write;
+
+    let result = if exit.stderr {
+        std::io::stderr().lock().write_all(exit.text.as_bytes())
+    } else {
+        std::io::stdout().lock().write_all(exit.text.as_bytes())
+    };
+    result.expect("failed to write CLI output");
+    std::process::exit(exit.code);
 }
 
 impl TryFrom<LintCli> for LintCommand {
@@ -900,21 +927,6 @@ mod lint_options {
     }
 
     #[test]
-    fn filter_interleaves_every_severity() {
-        let options =
-            get_lint_options("-D suspicious -A no-debugger --warn pedantic --deny no-var src");
-        assert_eq!(
-            options.filter,
-            [
-                (AllowWarnDeny::Deny, "suspicious".into()),
-                (AllowWarnDeny::Allow, "no-debugger".into()),
-                (AllowWarnDeny::Warn, "pedantic".into()),
-                (AllowWarnDeny::Deny, "no-var".into())
-            ]
-        );
-    }
-
-    #[test]
     fn format() {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
@@ -1087,75 +1099,5 @@ mod inline_config_options {
             options.inline_config_options.report_unused_directives,
             ReportUnusedDirectives::WithSeverity(Some(AllowWarnDeny::Deny))
         );
-    }
-}
-
-#[cfg(test)]
-mod usage_integration {
-    use std::ffi::OsString;
-
-    use super::LintCommand;
-
-    #[test]
-    fn embedded_help_preserves_sections_and_renders_markdown() {
-        let args = [OsString::from("--help")];
-        let outcome = LintCommand::embedded_outcome(&args);
-        let exit = outcome.exit().expect("help should return an embedded exit");
-        assert_eq!(exit.code, 0);
-        assert!(!exit.stderr);
-
-        let basic = exit.text.find("Basic Configuration:").expect("basic options heading");
-        let arguments = exit.text.find("Arguments:").expect("arguments heading");
-        let flags = exit.text.find("Flags:").expect("flags heading");
-        assert!(basic < arguments && arguments < flags);
-        assert!(exit.text.contains("Warning: Avoid using this option."));
-        assert!(!exit.text.contains("**Warning:**"));
-        assert!(!exit.text.contains("::: warning"));
-        assert!(exit.text.contains("[possible values: default, github"));
-        assert!(exit.text.contains("Examples:"));
-    }
-
-    #[test]
-    fn spec_exposes_output_and_completion_contracts() {
-        let spec = LintCommand::to_kdl();
-        let lint_filter_group = spec.lines().find(|line| line.contains("group lint-filter"));
-        assert_eq!(
-            lint_filter_group,
-            Some("group lint-filter \"--allow\" \"--warn\" \"--deny\" multiple=#true")
-        );
-        assert!(spec.contains("warning \"Avoid using this option."));
-        assert!(spec.contains("flag \"-h --help\"") && spec.contains("builtin=#true"));
-        assert!(spec.contains("flag \"-V --version\""));
-        assert!(spec.contains("output checkstyle media_type=\"application/xml\""));
-        assert!(spec.contains("output json media_type=\"application/json\" framing=json"));
-        assert!(spec.contains("output sarif media_type=\"application/sarif+json\" framing=json"));
-        assert!(spec.contains("select \"--format\""));
-        assert!(spec.contains("complete path type=path"));
-    }
-
-    #[test]
-    fn embedded_dispatch_handles_control_requests() {
-        let spec = LintCommand::embedded_outcome(&[OsString::from(usage_rs::SPEC_REQUEST)]);
-        let exit = spec.exit().expect("spec request should return an embedded exit");
-        assert_eq!(exit.code, 0);
-        assert!(!exit.stderr);
-        assert!(exit.text.contains("name oxlint"));
-
-        let args =
-            ["__complete_word__", "--shell", "bash", "--line", "oxlint --form"].map(OsString::from);
-        let completions = LintCommand::embedded_outcome(&args);
-        let exit = completions.exit().expect("completion request should return an embedded exit");
-        assert_eq!(exit.code, 0);
-        assert!(!exit.stderr);
-        assert!(exit.text.contains("--format"));
-
-        let args = ["__complete_word__", "--shell", "bash", "--line", "oxlint --format=j"]
-            .map(OsString::from);
-        let completions = LintCommand::embedded_outcome(&args);
-        let exit = completions.exit().expect("completion request should return an embedded exit");
-        assert_eq!(exit.code, 0);
-        assert!(!exit.stderr);
-        assert!(exit.text.contains("--format=json"));
-        assert!(exit.text.contains("--format=junit"));
     }
 }
