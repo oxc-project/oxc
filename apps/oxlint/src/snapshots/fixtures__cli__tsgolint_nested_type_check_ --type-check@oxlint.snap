@@ -5,9 +5,6 @@ source: apps/oxlint/src/tester.rs
 arguments: 
 working directory: fixtures/cli/tsgolint_nested_type_check
 ----------
-
-  ! The `options.typeCheck` option was found in packages/app/.oxlintrc.json, but it applies to every file linted with type-aware rules, not only to that directory.
-  help: Move `options.typeCheck` to the root configuration file, or remove it if only this directory should be type-checked.
 Found 0 warnings and 0 errors.
 Finished in <variable>ms on 1 file using 1 threads.
 ----------
