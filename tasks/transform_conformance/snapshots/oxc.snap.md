@@ -1,6 +1,6 @@
 commit: 68b6a2ab
 
-Passed: 280/408
+Passed: 281/408
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -1196,7 +1196,7 @@ after transform: ["babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (25/40)
+# plugin-styled-components (26/40)
 * minify-comments/input.js
 Unresolved references mismatch:
 after transform: ["x", "y", "z"]
@@ -1209,9 +1209,6 @@ x Output mismatch
 x Output mismatch
 
 * styled-components/annotate-create-global-style-with-pure-comments/input.js
-x Output mismatch
-
-* styled-components/annotate-css-with-pure-comments/input.js
 x Output mismatch
 
 * styled-components/annotate-styled-calls-with-pure-comments/input.js

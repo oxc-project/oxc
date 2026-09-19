@@ -9,17 +9,17 @@ const GlobalStyle = styled.createGlobalStyle`
 `;
 const Test = styled.default.div.withConfig({
   displayName: "input__Test",
-  componentId: "test-namespace__sc-zljhv7-0"
+  componentId: "test-namespace__sc-1PWpDL-0"
 })`color:red;`;
 const before = styled.default.div.withConfig({
   displayName: "input__before",
-  componentId: "test-namespace__sc-zljhv7-1"
+  componentId: "test-namespace__sc-1PWpDL-1"
 })`color:blue;`;
 styled.default.div.withConfig({
   displayName: "input",
-  componentId: "test-namespace__sc-zljhv7-2"
+  componentId: "test-namespace__sc-1PWpDL-2"
 })``;
 export default styled.default.button.withConfig({
   displayName: "input",
-  componentId: "test-namespace__sc-zljhv7-3"
+  componentId: "test-namespace__sc-1PWpDL-3"
 })``;
