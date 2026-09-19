@@ -19,7 +19,8 @@ Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 Rule timings:
 Rule                 Time (ms)  Relative  Calls  Source
 ------------------  ----------  --------  -----  ------
-eslint/no-debugger       <variable>    <variable>%      1  native
+eslint/no-debugger       <variable>     <variable>%      1  native
+import/no-cycle          <variable>     <variable>%      1  native
 ----------
 CLI result: LintSucceeded
 ----------

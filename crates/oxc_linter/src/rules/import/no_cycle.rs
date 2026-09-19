@@ -9,15 +9,17 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use rustc_hash::FxHashSet;
+use rayon::prelude::*;
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    ModuleRecord,
-    context::LintContext,
+    AllowWarnDeny, ModuleRecord,
+    context::{ProjectLintContext, RuleLabel},
     module_graph_visitor::{ModuleGraphVisitorBuilder, ModuleGraphVisitorEvent, VisitFoldWhile},
-    rule::{DefaultRuleConfig, Rule},
+    rule::{DefaultRuleConfig, ProjectRule, Rule},
+    rules::RuleEnum,
 };
 
 fn no_cycle_diagnostic(span: Span, stack: &[(CompactStr, PathBuf)], cwd: &Path) -> OxcDiagnostic {
@@ -64,7 +66,7 @@ fn format_cycle(stack: &[(CompactStr, PathBuf)], cwd: &Path) -> String {
 }
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
-#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[derive(Debug, Clone, Copy, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCycle {
     /// Maximum dependency depth to traverse
@@ -143,17 +145,34 @@ impl Rule for NoCycle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
+}
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.module_record();
-
-        // Gated on unbounded `max_depth` (the default), where the walks below explore the whole
-        // reachable subgraph anyway so the prefilter replaces their work. Under a shallow depth cap
-        // they are cheap and an unbounded prefilter could cost more than it saves.
-        if self.max_depth == u32::MAX && !self.can_be_in_cycle(module_record) {
-            return;
+impl ProjectRule for NoCycle {
+    fn run_on_project(
+        &self,
+        ctx: &ProjectLintContext<'_>,
+    ) -> FxHashMap<PathBuf, Vec<OxcDiagnostic>> {
+        let target_paths = ctx.target_paths(|rule| match rule {
+            RuleEnum::ImportNoCycle(config) => Some(config),
+            _ => None,
+        });
+        if target_paths.is_empty() {
+            return FxHashMap::default();
         }
 
+        collect_cycle_diagnostics(ctx, &target_paths)
+    }
+}
+
+impl NoCycle {
+    /// builds diagnostics for `module_record`'s direct imports that are
+    /// `in_same_cycle`. cycles have already been detected here—this just builds
+    /// a nice error display via BFS
+    fn module_diagnostics(
+        self,
+        module_record: &ModuleRecord,
+        in_same_cycle: impl Fn(&Path) -> bool,
+    ) -> Vec<OxcDiagnostic> {
         let needle = &module_record.resolved_absolute_path;
         let mut direct_imports = module_record
             .loaded_modules()
@@ -162,8 +181,15 @@ impl Rule for NoCycle {
             .collect::<Vec<_>>();
         direct_imports.sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
+        let mut diagnostics = Vec::new();
+
         for (key, loaded_module_record) in direct_imports {
-            if !self.should_traverse_module(&key, &loaded_module_record, module_record) {
+            if !should_traverse_module(
+                self.ignore_types,
+                &key,
+                &loaded_module_record,
+                module_record,
+            ) {
                 continue;
             }
 
@@ -173,13 +199,20 @@ impl Rule for NoCycle {
                 vec![(key.clone(), loaded_module_record.resolved_absolute_path.clone())];
 
             if loaded_module_record.resolved_absolute_path == *needle {
-                ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
+                diagnostics
+                    .push(self_referencing_cycle_diagnostic(span, requested_module.is_import));
+                continue;
+            }
+
+            if !in_same_cycle(&loaded_module_record.resolved_absolute_path) {
                 continue;
             }
 
             let visitor_result = ModuleGraphVisitorBuilder::default()
                 .max_depth(self.max_depth.saturating_sub(1))
-                .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
+                .filter(|(key, val), parent| {
+                    should_traverse_module(self.ignore_types, key, val, parent)
+                })
                 .event(|event, (key, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
                         stack.push((key.clone(), val.resolved_absolute_path.clone()));
@@ -197,127 +230,193 @@ impl Rule for NoCycle {
                 });
 
             if visitor_result.result {
-                ctx.diagnostic(no_cycle_diagnostic(
+                diagnostics.push(no_cycle_diagnostic(
                     span,
                     &stack,
                     &std::env::current_dir().unwrap(),
                 ));
             }
         }
+
+        diagnostics
     }
 }
 
-impl NoCycle {
-    /// Is `root` in a cycle at all? True iff some module reachable from it imports it back — one
-    /// traversal answering for every direct import at once, instead of one walk per import.
-    ///
-    /// This only gates those walks, which still decide what is reported, so it must never miss a
-    /// cycle they would find: it follows the same edges under the same filter, and is unbounded
-    /// where they stop at `max_depth`.
-    fn can_be_in_cycle(&self, root: &ModuleRecord) -> bool {
-        // Pointer identity, to avoid cloning a `PathBuf` per node. `root` is never inserted: an
-        // edge back to it is the answer, not a node to expand.
-        let mut visited = FxHashSet::<usize>::default();
-        let mut stack = Vec::<Arc<ModuleRecord>>::new();
+fn should_traverse_module(
+    ignore_types: bool,
+    key: &CompactStr,
+    module: &Arc<ModuleRecord>,
+    parent: &ModuleRecord,
+) -> bool {
+    let path = &module.resolved_absolute_path;
 
-        if self.visit_dependencies(root, root, &mut visited, &mut stack) {
-            return true;
-        }
-        while let Some(module_record) = stack.pop() {
-            if self.visit_dependencies(&module_record, root, &mut visited, &mut stack) {
-                return true;
-            }
-        }
-        false
+    let is_node_module = path
+        .components()
+        .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
+
+    if is_node_module {
+        return false;
     }
 
-    /// Pushes `module_record`'s unvisited traversable dependencies onto `stack`; `true` if one of
-    /// them is `root`, closing a cycle.
-    fn visit_dependencies(
-        &self,
-        module_record: &ModuleRecord,
-        root: &ModuleRecord,
-        visited: &mut FxHashSet<usize>,
-        stack: &mut Vec<Arc<ModuleRecord>>,
-    ) -> bool {
-        for (specifier, weak_module_record) in module_record.loaded_modules().iter() {
-            let loaded_module_record = weak_module_record.upgrade().unwrap();
-            if !self.should_traverse_module(specifier, &loaded_module_record, module_record) {
-                continue;
-            }
-            // By path, not pointer: that is what the walks report on, and one file can have
-            // several records (one per section).
-            if loaded_module_record.resolved_absolute_path == root.resolved_absolute_path {
-                return true;
-            }
-            if visited.insert(Arc::as_ptr(&loaded_module_record) as usize) {
-                stack.push(loaded_module_record);
-            }
-        }
-        false
-    }
+    if ignore_types {
+        // Equivalent to collecting both entry lists and testing `!is_empty() && all(is_type)`,
+        // without materializing either `Vec`. This runs once per graph edge considered.
+        let mut types = parent
+            .import_entries
+            .iter()
+            .filter(|entry| entry.module_request.name() == key)
+            .map(|entry| entry.is_type)
+            .chain(
+                parent
+                    .indirect_export_entries
+                    .iter()
+                    .filter(|entry| {
+                        entry
+                            .module_request
+                            .as_ref()
+                            .is_some_and(|module_request| module_request.name() == key)
+                    })
+                    .map(|entry| entry.is_type),
+            )
+            .peekable();
 
-    fn should_traverse_module(
-        &self,
-        key: &CompactStr,
-        module: &Arc<ModuleRecord>,
-        parent: &ModuleRecord,
-    ) -> bool {
-        let path = &module.resolved_absolute_path;
-
-        let is_node_module = path
-            .components()
-            .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
-
-        if is_node_module {
+        if types.peek().is_some() && types.all(|is_type| is_type) {
             return false;
         }
+    }
 
-        if self.ignore_types {
-            // Equivalent to collecting both entry lists and testing `!is_empty() && all(is_type)`,
-            // without materializing either `Vec`. This runs once per graph edge considered.
-            let mut types = parent
-                .import_entries
-                .iter()
-                .filter(|entry| entry.module_request.name() == key)
-                .map(|entry| entry.is_type)
-                .chain(
-                    parent
-                        .indirect_export_entries
+    // Allow self referencing named export.
+    // In test.js:
+    // ```
+    // export function example1() { }
+    // export * as Example from './test.js';
+    // ```
+    if path == &parent.resolved_absolute_path
+        && let Some(e) = module
+            .indirect_export_entries
+            .iter()
+            .find(|e| e.module_request.as_ref().is_some_and(|r| r.name.as_str() == key))
+        && e.export_name.is_name()
+    {
+        return false;
+    }
+
+    true
+}
+
+mod graph_cycles {
+    use std::path::Path;
+
+    use petgraph::graphmap::DiGraphMap;
+    use rayon::prelude::*;
+    use rustc_hash::FxHashMap;
+
+    use crate::context::ProjectModules;
+
+    use super::should_traverse_module;
+
+    type ImportGraph<'a> = DiGraphMap<&'a Path, ()>;
+
+    /// Builds a directed graph in parallel so cycles can be detected
+    fn build_import_graph<'a>(ignore_types: bool, modules: &ProjectModules<'a>) -> ImportGraph<'a> {
+        let edges: Vec<(&'a Path, &'a Path)> = modules
+            .par_iter()
+            .flat_map_iter(|(&path, &records)| {
+                records.iter().flat_map(move |module_record| {
+                    let loaded_modules = module_record.loaded_modules();
+                    loaded_modules
                         .iter()
-                        .filter(|entry| {
-                            entry
-                                .module_request
-                                .as_ref()
-                                .is_some_and(|module_request| module_request.name() == key)
+                        .map(|(specifier, weak_module_record)| {
+                            (specifier, weak_module_record.upgrade().unwrap())
                         })
-                        .map(|entry| entry.is_type),
-                )
-                .peekable();
+                        .filter(|(specifier, imported)| {
+                            should_traverse_module(ignore_types, specifier, imported, module_record)
+                        })
+                        // grabs module path from modules since `Weak` upgrade
+                        // doesn't live long enough
+                        .filter_map(|(_, imported)| {
+                            modules.get_key_value(imported.resolved_absolute_path.as_path())
+                        })
+                        .map(move |(&to, _)| (path, to))
+                        .collect::<Vec<_>>()
+                })
+            })
+            .collect();
 
-            if types.peek().is_some() && types.all(|is_type| is_type) {
-                return false;
-            }
+        let mut graph = ImportGraph::new();
+        for &path in modules.keys() {
+            graph.add_node(path);
+        }
+        for (from, to) in edges {
+            graph.add_edge(from, to, ());
         }
 
-        // Allow self referencing named export.
-        // In test.js:
-        // ```
-        // export function example1() { }
-        // export * as Example from './test.js';
-        // ```
-        if path == &parent.resolved_absolute_path
-            && let Some(e) = module
-                .indirect_export_entries
-                .iter()
-                .find(|e| e.module_request.as_ref().is_some_and(|r| r.name.as_str() == key))
-            && e.export_name.is_name()
-        {
-            return false;
-        }
-
-        true
+        graph
     }
+
+    pub type CycleId = usize;
+
+    /// Turns a directed module graph into a map of `Path` to `CycleId`. This is done linearly via Tarjan's algorithm
+    fn cycles_by_path<'a>(graph: &ImportGraph<'a>) -> FxHashMap<&'a Path, CycleId> {
+        let is_cycle = |component: &[&Path]| -> bool {
+            component.len() > 1 || graph.contains_edge(component[0], component[0])
+        };
+        petgraph::algo::tarjan_scc(graph)
+            .into_iter()
+            .enumerate()
+            .filter(|(_, component)| is_cycle(component))
+            // strongly connected components are unique in a directed graph
+            .flat_map(|(id, component)| component.into_iter().map(move |module| (module, id)))
+            .collect()
+    }
+
+    /// Linearly detects cycles in the module graph. Returns which cycle a path
+    /// is in, if any
+    pub fn cycles_by_module<'a>(
+        ignore_types: bool,
+        modules: &ProjectModules<'a>,
+    ) -> FxHashMap<&'a Path, CycleId> {
+        cycles_by_path(&build_import_graph(ignore_types, modules))
+    }
+}
+
+/// Converts the cycles found in `cycles_by_module` into diagnostics.
+/// Abides by disable directives like other rules
+fn collect_cycle_diagnostics(
+    project: &ProjectLintContext<'_>,
+    target_paths: &FxHashMap<PathBuf, (AllowWarnDeny, NoCycle)>,
+) -> FxHashMap<PathBuf, Vec<OxcDiagnostic>> {
+    let modules = project.modules();
+    // types must be checked for the whole graph if any config enables them
+    let include_type_edges = target_paths.values().any(|(_, config)| !config.ignore_types);
+    let cycles = graph_cycles::cycles_by_module(!include_type_edges, modules);
+
+    let rule = RuleLabel::new(NoCycle::PLUGIN, NoCycle::NAME);
+
+    modules
+        .par_iter()
+        .filter_map(|(&path, records)| {
+            let cycle = cycles.get(path)?;
+            let (path, &(severity, config)) = target_paths.get_key_value(path)?;
+
+            let diagnostics: Vec<OxcDiagnostic> = records
+                .iter()
+                .flat_map(|module_record| {
+                    config
+                        .module_diagnostics(module_record, |imported: &Path| {
+                            cycles.get(imported) == Some(cycle)
+                        })
+                        .into_iter()
+                        .map(|diagnostic| (diagnostic, module_record.source_text_offset))
+                })
+                .filter_map(|(diagnostic, section_offset)| {
+                    project.finalize_diagnostic(path, diagnostic, rule, severity, section_offset)
+                })
+                .collect();
+
+            (!diagnostics.is_empty()).then(|| (path.clone(), diagnostics))
+        })
+        .collect()
 }
 
 #[test]
