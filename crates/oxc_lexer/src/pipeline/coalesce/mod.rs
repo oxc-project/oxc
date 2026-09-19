@@ -149,7 +149,7 @@ pub unsafe fn coalesce(
                 }
                 if run == 2 {
                     let key = (q & 0xFFFF) | (2u32 << 24);
-                    let pack = t.op2_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                    let pack = t.op.op2_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                     let want = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
                     let mut ok = ((pack ^ want) & 0x00FF_FFFF) == 0;
                     let kk = (pack >> 24) as u8;
@@ -167,17 +167,17 @@ pub unsafe fn coalesce(
                 }
                 let b2 = (q >> 16) as u8;
                 let key3 = (q & 0xFF_FFFF) | (3u32 << 24);
-                let p3 = t.op3_pack[(key3.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                let p3 = t.op.op3_pack[(key3.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let want3 = 3u64 | ((b0 as u64) << 8) | ((b1 as u64) << 16) | ((b2 as u64) << 24);
                 let ok3 = ((p3 ^ want3) & 0xFFFF_FFFF) == 0;
                 let key2a = (q & 0xFFFF) | (2u32 << 24);
-                let pa = t.op2_pack[(key2a.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                let pa = t.op.op2_pack[(key2a.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let wanta = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
                 let ka = (pa >> 24) as u8;
                 let mut ok2a = ((pa ^ wanta) & 0x00FF_FFFF) == 0;
                 ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
                 let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
-                let pb = t.op2_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                let pb = t.op.op2_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let wantb = 2u32 | ((b1 as u32) << 8) | ((b2 as u32) << 16);
                 let kb = (pb >> 24) as u8;
                 let mut ok2b = ((pb ^ wantb) & 0x00FF_FFFF) == 0;

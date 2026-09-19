@@ -2,7 +2,7 @@ use crate::token::{OP_KIND_BASE, OP_KIND_MAX, TokenKind, tk};
 
 use super::punct1::PUNCT1;
 
-pub(super) struct OpDef {
+struct OpDef {
     pub txt: &'static [u8],
     pub len: u8,
     pub kind: TokenKind,
@@ -15,7 +15,7 @@ impl OpDef {
     }
 }
 
-pub(super) static OPMAP_OPS: [OpDef; 33] = [
+static OPMAP_OPS: [OpDef; 33] = [
     OpDef::new("<=", TokenKind::Le),
     OpDef::new(">=", TokenKind::Ge),
     OpDef::new("==", TokenKind::EqEq),
@@ -62,14 +62,22 @@ pub const fn is_op_char(c: u8) -> bool {
 pub struct OpMap {
     pub opmap_mul: u32,
     pub opmap_slot: [u8; 256],
+    pub op2_pack: [u32; 256],
+    pub op3_pack: [u64; 256],
     pub punct1_ord: [u8; 256],
 }
 
 impl OpMap {
     pub(super) fn new() -> OpMap {
-        let mut m =
-            OpMap { opmap_mul: 0, opmap_slot: [0xFF; 256], punct1_ord: [tk!(Invalid); 256] };
+        let mut m = OpMap {
+            opmap_mul: 0,
+            opmap_slot: [0xFF; 256],
+            op2_pack: [0; 256],
+            op3_pack: [0; 256],
+            punct1_ord: [tk!(Invalid); 256],
+        };
         m.opmap_init();
+        m.build_op_pack();
         m.punct1_init();
         m.self_check();
         m
@@ -124,6 +132,29 @@ impl OpMap {
             m += 2;
         }
         panic!("opmap.rs: opmap perfect-hash search FAILED");
+    }
+
+    fn build_op_pack(&mut self) {
+        self.op2_pack = [0; 256];
+        self.op3_pack = [0; 256];
+        for i in 0..OPMAP_OPS.len() {
+            let o = &OPMAP_OPS[i];
+            let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
+            let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
+            let h = (key.wrapping_mul(self.opmap_mul) >> 24) as usize;
+            if o.len == 2 {
+                self.op2_pack[h] = 2u32
+                    | ((o.txt[0] as u32) << 8)
+                    | ((o.txt[1] as u32) << 16)
+                    | ((o.kind as u32) << 24);
+            } else if o.len == 3 {
+                self.op3_pack[h] = 3u64
+                    | ((o.txt[0] as u64) << 8)
+                    | ((o.txt[1] as u64) << 16)
+                    | ((o.txt[2] as u64) << 24)
+                    | ((o.kind as u64) << 32);
+            }
+        }
     }
 
     fn punct1_init(&mut self) {
@@ -213,7 +244,7 @@ impl OpMap {
 }
 
 #[inline(always)]
-pub(super) fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
+fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
     (c0 as u32) | ((c1 as u32) << 8) | ((c2 as u32) << 16) | (len << 24)
 }
 
