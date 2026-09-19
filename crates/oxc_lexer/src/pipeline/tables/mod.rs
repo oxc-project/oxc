@@ -9,13 +9,13 @@ mod punct1;
 pub(super) use keywords::{KwSet, is_kw_init, is_kw_init_ts};
 pub(super) use operators::is_op_char;
 
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+pub(super) use punct1::PUNCT1;
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 pub(super) use punct1::{PH_A, PH_B, PH_T0, PH_T1};
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
-pub(super) use punct1::{PUNCT1, PUNCT1_NKNOWN};
 
 use keywords::{KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, kwinit_selfcheck};
-use operators::{OPMAP_NOPS, OPMAP_OPS, OpMap, op_key, opch_selfcheck};
+use operators::{OPMAP_OPS, OpMap, op_key, opch_selfcheck};
 use punct1::punct1_hash_selfcheck;
 
 #[repr(C, align(64))]
@@ -128,7 +128,7 @@ impl Tables {
     fn build_op_pack(&mut self) {
         self.op2_pack = [0; 256];
         self.op3_pack = [0; 256];
-        for i in 0..OPMAP_NOPS {
+        for i in 0..OPMAP_OPS.len() {
             let o = &OPMAP_OPS[i];
             let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
             let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);

@@ -1,8 +1,6 @@
 use crate::token::{OP_KIND_BASE, OP_KIND_MAX, TokenKind, tk};
 
-use super::punct1::{PUNCT1, PUNCT1_NKNOWN};
-
-pub const OPMAP_NOPS: usize = 33;
+use super::punct1::PUNCT1;
 
 pub(super) struct OpDef {
     pub txt: &'static [u8],
@@ -17,7 +15,7 @@ impl OpDef {
     }
 }
 
-pub(super) static OPMAP_OPS: [OpDef; OPMAP_NOPS] = [
+pub(super) static OPMAP_OPS: [OpDef; 33] = [
     OpDef::new("<=", TokenKind::Le),
     OpDef::new(">=", TokenKind::Ge),
     OpDef::new("==", TokenKind::EqEq),
@@ -78,7 +76,7 @@ impl OpMap {
     }
 
     fn opmap_init(&mut self) {
-        for i in 0..OPMAP_NOPS {
+        for i in 0..OPMAP_OPS.len() {
             let a = &OPMAP_OPS[i];
             assert!(
                 a.len as usize == a.txt.len()
@@ -86,7 +84,7 @@ impl OpMap {
                     && a.kind as u8 <= OP_KIND_MAX,
                 "opmap.rs: bad OpDef {i}"
             );
-            for j in (i + 1)..OPMAP_NOPS {
+            for j in (i + 1)..OPMAP_OPS.len() {
                 let b = &OPMAP_OPS[j];
                 let a2 = if a.len >= 3 { a.txt[2] } else { 0 };
                 let b2 = if b.len >= 3 { b.txt[2] } else { 0 };
@@ -100,7 +98,7 @@ impl OpMap {
         while m < (1u64 << 28) {
             let mut used = [0u8; 256];
             let mut ok = true;
-            for i in 0..OPMAP_NOPS {
+            for i in 0..OPMAP_OPS.len() {
                 let o = &OPMAP_OPS[i];
                 let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
                 let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
@@ -114,7 +112,7 @@ impl OpMap {
             if ok {
                 self.opmap_mul = m as u32;
                 self.opmap_slot = [0xFF; 256];
-                for i in 0..OPMAP_NOPS {
+                for i in 0..OPMAP_OPS.len() {
                     let o = &OPMAP_OPS[i];
                     let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
                     let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
@@ -130,7 +128,7 @@ impl OpMap {
 
     fn punct1_init(&mut self) {
         self.punct1_ord = [tk!(Invalid); 256];
-        for i in 0..PUNCT1_NKNOWN {
+        for i in 0..PUNCT1.len() {
             self.punct1_ord[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
         }
     }
@@ -161,7 +159,7 @@ impl OpMap {
 
     fn self_check(&self) {
         let mut seen_kind = [0u8; 256];
-        for i in 0..OPMAP_NOPS {
+        for i in 0..OPMAP_OPS.len() {
             let o = &OPMAP_OPS[i];
             let mut b = [0u8; 4];
             b[..o.len as usize].copy_from_slice(&o.txt[..o.len as usize]);
@@ -183,7 +181,7 @@ impl OpMap {
             "opmap self-check: op spot-checks failed"
         );
         let mut seen = [0u8; 256];
-        for i in 0..PUNCT1_NKNOWN {
+        for i in 0..PUNCT1.len() {
             let ord = self.punct1_ord[PUNCT1[i].byte as usize];
             assert!(
                 ord == PUNCT1[i].kind as u8 && seen[ord as usize] == 0,

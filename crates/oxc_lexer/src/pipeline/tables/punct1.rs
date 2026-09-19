@@ -15,12 +15,10 @@ impl Punct1 {
     }
 }
 
-pub const PUNCT1_NKNOWN: usize = 26;
-
 /// Single-byte punctuators and their [`TokenKind`]s.
 /// `#` maps to `Invalid` - a bare `#` is invalid on its own
 /// (private names and hashbangs are resolved earlier).
-pub const PUNCT1: [Punct1; PUNCT1_NKNOWN] = [
+pub const PUNCT1: [Punct1; 26] = [
     Punct1::new('(', TokenKind::LParen),
     Punct1::new(')', TokenKind::RParen),
     Punct1::new('[', TokenKind::LBracket),
@@ -56,7 +54,7 @@ pub const PH_T1: [u8; 16] = [40, 255, 43, 50, 64, 61, 255, 255, 35, 36, 80, 89, 
 
 pub(super) fn punct1_hash_selfcheck() {
     let mut punct1_ord = [tk!(Invalid); 256];
-    for i in 0..PUNCT1_NKNOWN {
+    for i in 0..PUNCT1.len() {
         punct1_ord[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
     }
     for c in 0..256usize {

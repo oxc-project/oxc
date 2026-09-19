@@ -4,7 +4,7 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bytes::{is_digit, is_word, is_ws},
-    tables::{PUNCT1, PUNCT1_NKNOWN, Tables, is_kw_init, is_kw_init_ts, is_op_char},
+    tables::{PUNCT1, Tables, is_kw_init, is_kw_init_ts, is_op_char},
 };
 
 const FL_WORD: u32 = 0;
@@ -21,7 +21,7 @@ static CLS_TS: [u16; 256] = cls_table(true);
 const fn cls_table(ts: bool) -> [u16; 256] {
     let mut punct = [tk!(Invalid); 256];
     let mut i = 0;
-    while i < PUNCT1_NKNOWN {
+    while i < PUNCT1.len() {
         punct[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
         i += 1;
     }
