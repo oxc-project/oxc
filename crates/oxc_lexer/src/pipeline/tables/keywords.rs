@@ -4,6 +4,23 @@ use constcat::concat_slices;
 
 use crate::token::TokenKind;
 
+const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
+const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
+
+/// TS-mode variant: the JS set plus `k`/`m`/`p`/`u` (keyof, module, the
+/// p-words, unique/unknown/undefined/using). Same hi-nibble rows.
+const KWINIT_TS_LO: [u8; 16] = [2, 1, 3, 3, 3, 3, 3, 3, 0, 3, 0, 1, 1, 1, 1, 1];
+
+#[inline(always)]
+pub const fn is_kw_init(c: u8) -> bool {
+    (KWINIT_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
+}
+
+#[inline(always)]
+pub const fn is_kw_init_ts(c: u8) -> bool {
+    (KWINIT_TS_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
+}
+
 const KW_COUNT_JS: usize = 46;
 const KW_COUNT_TS: usize = 81;
 
@@ -324,5 +341,25 @@ impl KwSet {
                 );
             }
         }
+    }
+}
+
+pub(super) fn kwinit_selfcheck() {
+    let mut in_set = [false; 256];
+    for kw in KEYWORDS_JS.iter() {
+        in_set[kw.0.as_bytes()[0] as usize] = true;
+    }
+    for c in 0..256usize {
+        assert!(is_kw_init(c as u8) == in_set[c], "tables.rs: KWINIT_LO/HI wrong at byte {c:#04x}");
+    }
+    let mut in_set_ts = [false; 256];
+    for kw in KEYWORDS_TS.iter() {
+        in_set_ts[kw.0.as_bytes()[0] as usize] = true;
+    }
+    for c in 0..256usize {
+        assert!(
+            is_kw_init_ts(c as u8) == in_set_ts[c],
+            "tables.rs: KWINIT_TS_LO wrong at byte {c:#04x}"
+        );
     }
 }

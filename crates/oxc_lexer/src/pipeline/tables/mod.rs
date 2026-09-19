@@ -2,38 +2,21 @@ use crate::token::KW_KIND_BASE;
 
 use crate::pipeline::bytes::{is_digit, is_word, is_ws};
 
+mod keywords;
 mod operators;
-mod opmap;
 mod punct1;
 
+pub(super) use keywords::{KwSet, is_kw_init, is_kw_init_ts};
 pub(super) use operators::is_op_char;
-pub(super) use opmap::KwSet;
 
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 pub(super) use punct1::{PH_A, PH_B, PH_T0, PH_T1};
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 pub(super) use punct1::{PUNCT1, PUNCT1_NKNOWN};
 
+use keywords::{KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, kwinit_selfcheck};
 use operators::{OPMAP_NOPS, OPMAP_OPS, OpMap, op_key, opch_selfcheck};
-use opmap::{KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS};
 use punct1::punct1_hash_selfcheck;
-
-const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
-const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
-
-#[inline(always)]
-pub(super) const fn is_kw_init(c: u8) -> bool {
-    (KWINIT_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
-}
-
-/// TS-mode variant: the JS set plus `k`/`m`/`p`/`u` (keyof, module, the
-/// p-words, unique/unknown/undefined/using). Same hi-nibble rows.
-const KWINIT_TS_LO: [u8; 16] = [2, 1, 3, 3, 3, 3, 3, 3, 0, 3, 0, 1, 1, 1, 1, 1];
-
-#[inline(always)]
-pub(super) const fn is_kw_init_ts(c: u8) -> bool {
-    (KWINIT_TS_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
-}
 
 #[repr(C, align(64))]
 pub(super) struct PairLuts {
@@ -274,25 +257,5 @@ impl Tables {
             let in_js = KEYWORDS_JS.iter().any(|k| k.0 == *w);
             assert!(js == if in_js { *tok as u32 } else { 0 }, "tables.rs: kwjs lookup({w}) wrong");
         }
-    }
-}
-
-fn kwinit_selfcheck() {
-    let mut in_set = [false; 256];
-    for kw in KEYWORDS_JS.iter() {
-        in_set[kw.0.as_bytes()[0] as usize] = true;
-    }
-    for c in 0..256usize {
-        assert!(is_kw_init(c as u8) == in_set[c], "tables.rs: KWINIT_LO/HI wrong at byte {c:#04x}");
-    }
-    let mut in_set_ts = [false; 256];
-    for kw in KEYWORDS_TS.iter() {
-        in_set_ts[kw.0.as_bytes()[0] as usize] = true;
-    }
-    for c in 0..256usize {
-        assert!(
-            is_kw_init_ts(c as u8) == in_set_ts[c],
-            "tables.rs: KWINIT_TS_LO wrong at byte {c:#04x}"
-        );
     }
 }
