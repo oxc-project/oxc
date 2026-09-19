@@ -381,7 +381,8 @@ impl<'a> ContextHost<'a> {
     pub fn report_unused_directives(&self, rule_severity: Severity) {
         // report unused disable
         // relate to lint result, check after linter run finish
-        let unused_disable_comments = self.disable_directives().collect_unused_disable_comments();
+        let unused_disable_comments =
+            self.disable_directives().collect_unused_disable_comments(|_| true);
         let fix_message = "remove unused disable directive";
         let source_text = self.source_text();
 

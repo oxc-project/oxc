@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use ignore::gitignore::Gitignore;
 use oxc_language_server::{BuildContext, ClientMessage, ToolBuildResult};
@@ -61,6 +61,10 @@ pub struct ServerLinterBuilder {
     external_linter: Option<ExternalLinter>,
     #[cfg(feature = "napi")]
     js_config_loader: Option<crate::js_config::JsConfigLoaderCb>,
+    /// The roots already told that their workspace has no `tsgolint`. A worker is rebuilt on
+    /// every configuration change, and the message is reported once per root; a different root
+    /// is a different project and gets its own.
+    roots_informed: Mutex<FxHashSet<String>>,
 }
 
 impl ServerLinterBuilder {
@@ -72,7 +76,20 @@ impl ServerLinterBuilder {
             external_linter,
             #[cfg(feature = "napi")]
             js_config_loader,
+            roots_informed: Mutex::new(FxHashSet::default()),
         }
+    }
+
+    /// Whether `root_uri` still has to be told that its workspace has no `tsgolint`, marking
+    /// it as told.
+    ///
+    /// # Panics
+    /// Panics if the informed-roots mutex is poisoned.
+    fn first_report(&self, root_uri: &Uri) -> bool {
+        self.roots_informed
+            .lock()
+            .expect("informed roots mutex poisoned")
+            .insert(root_uri.as_str().to_string())
     }
 
     /// Creates a new `ServerLinter` instance based on the provided root URI and options.
@@ -265,11 +282,26 @@ impl ServerLinterBuilder {
             .with_ignore_fixes(true)
             .build()
         {
-            Ok(runner) => runner,
+            Ok(runner) => {
+                // Not finding one for the workspace root is no longer fatal: each file uses the
+                // `tsgolint` of the package it belongs to. The message is reported on the first
+                // build only, so the per-file warnings which follow are explained without being
+                // repeated on every configuration change.
+                if type_aware && runner.type_aware_has_no_fallback() && self.first_report(root_uri)
+                {
+                    client_messages.push(ClientMessage {
+                        r#type: MessageType::INFO,
+                        message:
+                            "oxlint: no `oxlint-tsgolint` found for the workspace root; each file will use the nearest package installation, and files without one get a warning."
+                                .to_string(),
+                    });
+                }
+                runner
+            }
             Err(e) => {
-                // Falling back silently leaves the user with no type-aware diagnostics and no
-                // explanation, which in a monorepo usually means `oxlint-tsgolint` is missing from
-                // the workspace root.
+                // This is now only reached for an `OXLINT_TSGOLINT_PATH` which cannot be
+                // honoured. Falling back silently would leave the user with no type-aware
+                // diagnostics and no explanation of why.
                 warn!("Failed to initialize type-aware linting: {e}");
                 client_messages.push(ClientMessage {
                     r#type: MessageType::ERROR,
@@ -965,25 +997,21 @@ impl ServerLinter {
         let mut fs = LspFileSystem::default();
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
-        let mut messages: Vec<DiagnosticReport> =
-            match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
-                Ok(results) => results
-                    .into_iter()
-                    .filter_map(|message| {
-                        message_to_lsp_diagnostic(
-                            message,
-                            uri,
-                            source_text,
-                            self.rules_customization.as_ref(),
-                        )
-                    })
-                    .collect(),
-                Err(e) => {
-                    // clear disable directives on error to prevent stale directives
-                    self.runner.directives_coordinator().remove(path);
-                    return Err(e);
-                }
-            };
+        // A `tsgolint` failure is reported as a warning on the file; the regular diagnostics
+        // are kept.
+        let mut messages: Vec<DiagnosticReport> = self
+            .runner
+            .run_source(&[Arc::from(path.as_os_str())], &fs)
+            .into_iter()
+            .filter_map(|message| {
+                message_to_lsp_diagnostic(
+                    message,
+                    uri,
+                    source_text,
+                    self.rules_customization.as_ref(),
+                )
+            })
+            .collect();
 
         messages.append(&mut generate_inverted_diagnostics(&messages, uri));
 
@@ -996,7 +1024,12 @@ impl ServerLinter {
             self.runner.report_unused_directive_for(path).filter(|s| s.is_warn_deny())
             && let Some(directives) = directives
         {
-            messages.extend(create_unused_directives_report(&directives, severity, source_text));
+            messages.extend(create_unused_directives_report(
+                &directives,
+                severity,
+                source_text,
+                self.runner.directives_coordinator().rules_not_run(path).as_ref(),
+            ));
         }
         Ok(messages)
     }

@@ -17,7 +17,7 @@ use oxc_diagnostics::{
 };
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
-    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunError, LintRunner,
     LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
@@ -525,7 +525,6 @@ impl CliRunner {
         let cwd = options.cwd().to_path_buf();
 
         // Create the LintRunner
-        // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(type_aware)
             .with_type_aware_forced(type_aware_forced)
@@ -557,19 +556,30 @@ impl CliRunner {
             lint_runner.lint_files::<false>(&files_to_lint, tx_error.clone(), &diff_manager, None)
         };
 
+        let (lint_runner, lint_result) = lint_result;
+
+        let mut type_aware_failed = false;
         match lint_result {
-            Ok(lint_runner) => {
-                lint_runner.report_unused_directives(&tx_error);
-            }
-            Err(err) => {
+            Ok(()) => lint_runner.report_unused_directives(&tx_error),
+            Err(LintRunError::Planning(err)) => {
+                // Nothing was linted, so there is nothing to render it alongside and no run to
+                // summarize. Printing an all-clear count here would be incorrect.
                 print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
+            }
+            Err(LintRunError::Running(_)) => {
+                // The regular pass ran, so its unused directives are still valid. The
+                // failure itself was already reported as a diagnostic on the file it
+                // concerns, by the code which knew which files those were.
+                lint_runner.report_unused_directives(&tx_error);
+                type_aware_failed = true;
             }
         }
 
         // A suppression file can contain regular lint rules that were not run in type-check-only
         // mode, so its runtime diff is incomplete and cannot be used to validate the baseline.
-        let result = if type_check_only {
+        // The same is true when type-aware linting failed part way through.
+        let result = if type_check_only || type_aware_failed {
             Ok(())
         } else {
             suppression_manager.finalize(diff_manager, &tx_error, &cwd)
@@ -605,6 +615,11 @@ impl CliRunner {
             }),
         }) {
             print_and_flush_stdout(stdout, &end);
+        }
+
+        // Every diagnostic has been emitted, including the failure itself.
+        if type_aware_failed {
+            return CliRunResult::TsGoLintError;
         }
 
         // When --suppress-all is used and the file was written successfully,
