@@ -6,7 +6,7 @@ use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
 
-use crate::{FixKind, fixer::Fix};
+use crate::{FixKind, config::plugins::canonical_plugin_name, fixer::Fix};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum DirectivePrefix {
@@ -302,8 +302,16 @@ impl DisableDirectives {
     fn mark_disable_directive_used(&self, disable_directive: DisabledRule) {
         self.used_disable_comments.borrow_mut().push(disable_directive);
     }
-
-    pub fn contains(&self, rule_name: &str, span: Span) -> bool {
+    fn rule_matches(disabled_rule: &str, plugin_name: &str, rule_name: &str) -> bool {
+        match disabled_rule.rsplit_once('/') {
+            Some((disabled_plugin, disabled_rule)) => {
+                canonical_plugin_name(disabled_plugin) == canonical_plugin_name(plugin_name)
+                    && disabled_rule == rule_name
+            }
+            None => disabled_rule == rule_name,
+        }
+    }
+    pub fn contains(&self, plugin_name: &str, rule_name: &str, span: Span) -> bool {
         // For `eslint-disable-next-line` and `eslint-disable-line` directives, we only check
         // if the diagnostic's starting position falls within the disabled interval.
         // This prevents suppressing diagnostics for larger constructs (like functions) that
@@ -318,23 +326,15 @@ impl DisableDirectives {
             // Check if this rule should be disabled
             let rule_matches = match &interval.val {
                 DisabledRule::All { .. } => true,
-                // `rule_name` does not contain the plugin prefix.
-                // - `vitest/foobar` will be just `foobar`.
-                // - `@typescript-eslint/no-var-requires` will be just `no-var-requires`
+                // Match a qualified directive (`plugin/rule`) against both the diagnostic's
+                // plugin and rule names. For an unqualified directive (`rule`), match only
+                // the rule name to preserve compatibility with ESLint-style directives.
                 //
-                // This enables matching rules across different plugins that share the same
-                // rule name, such as jest<->vitest rules and eslint<->typescript rules.
-                //
-                // We strip the plugin prefix from the directive name and compare equality
-                // rather than doing a substring match. Otherwise unrelated rules like
-                // `canonical/no-re-export` would accidentally match oxlint's `export`
-                // rule because `"no-re-export".contains("export")` is true.
+                // Qualified names must match exactly. Otherwise a directive such as
+                // `canonical/no-re-export` could accidentally suppress the `import/export`
+                // rule if matching used substring checks.
                 DisabledRule::Single { rule_name: name, .. } => {
-                    if rule_name.contains('/') {
-                        name == rule_name
-                    } else {
-                        name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule) == rule_name
-                    }
+                    Self::rule_matches(name, plugin_name, rule_name)
                 }
             };
 
@@ -1489,13 +1489,11 @@ mod tests {
 
         let debugger_span = Span::sized(source_text.rfind("debugger").unwrap() as u32, 8);
         for rule in expected_rules {
-            assert!(directives.contains(rule, debugger_span), "{directive} should disable {rule}");
-            if let Some((_, rule_without_plugin)) = rule.rsplit_once('/') {
-                assert!(
-                    directives.contains(rule_without_plugin, debugger_span),
-                    "{directive} should disable {rule_without_plugin}"
-                );
-            }
+            let (plugin_name, rule_name) = rule.rsplit_once('/').unwrap_or(("", rule));
+            assert!(
+                directives.contains(plugin_name, rule_name, debugger_span),
+                "{directive} should disable {rule}"
+            );
         }
     }
 
@@ -1609,8 +1607,8 @@ mod tests {
         let console_start = source_text.find("console.log").unwrap() as u32;
         let debugger_start = source_text.find("debugger;").unwrap() as u32;
 
-        assert!(!directives.contains("no-console", Span::sized(console_start, 11)));
-        assert!(directives.contains("no-debugger", Span::sized(debugger_start, 8)));
+        assert!(!directives.contains("eslint", "no-console", Span::sized(console_start, 11)));
+        assert!(directives.contains("oxlint", "no-debugger", Span::sized(debugger_start, 8)));
         assert!(directives.unused_enable_comments().is_empty());
     }
 
@@ -1818,7 +1816,7 @@ mod tests {
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
         let x_span = Span::sized(source_text.find("const x").unwrap() as u32, 5);
-        assert!(directives.contains("no-bitwise", x_span));
+        assert!(directives.contains("eslint", "no-bitwise", x_span));
 
         let unused = directives.collect_unused_disable_comments();
         assert_eq!(unused.len(), 1);
@@ -1954,7 +1952,7 @@ function test() {
         // The diagnostic for the entire function should NOT be suppressed
         // even though it contains a disable-next-line directive
         assert!(
-            !directives.contains("max-lines-per-function", function_span),
+            !directives.contains("eslint", "max-lines-per-function", function_span),
             "eslint-disable-next-line should not suppress diagnostics for the entire function"
         );
 
@@ -1963,7 +1961,7 @@ function test() {
         let first_console_log_span = Span::new(55, 66);
         assert_eq!(first_console_log_span.source_text(source_text), "console.log");
         assert!(
-            directives.contains("no-console", first_console_log_span),
+            directives.contains("eslint", "no-console", first_console_log_span),
             "eslint-disable-next-line should suppress diagnostics on the next line"
         );
 
@@ -1972,7 +1970,7 @@ function test() {
         let second_console_log_span = Span::new(97, 109);
         assert_eq!(second_console_log_span.source_text(source_text), "console.warn");
         assert!(
-            !directives.contains("no-console", second_console_log_span),
+            !directives.contains("eslint", "no-console", second_console_log_span),
             "eslint-disable-next-line should NOT suppress diagnostics on lines after the next line"
         );
     }
@@ -2103,7 +2101,7 @@ function test() {
         let export_start = source_text.find("export *").unwrap() as u32;
         let export_span = Span::sized(export_start, 21);
         assert!(
-            !directives.contains("export", export_span),
+            !directives.contains("import", "export", export_span),
             "`canonical/no-re-export` directive must not suppress the `export` rule"
         );
 
@@ -2120,7 +2118,7 @@ function test() {
         let export_start = source_text_exact.find("export *").unwrap() as u32;
         let export_span = Span::sized(export_start, 21);
         assert!(
-            directives.contains("export", export_span),
+            directives.contains("import", "export", export_span),
             "`import/export` directive must suppress the `export` rule"
         );
     }
