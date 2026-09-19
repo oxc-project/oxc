@@ -66,8 +66,8 @@ mod lint_runner;
 
 pub use crate::config::{normalize_rule_name, plugins::normalize_plugin_name};
 pub use crate::disable_directives::{
-    DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
-    create_unused_directives_diagnostics,
+    DirectivePrefix, DisableDirectives, DisableDirectivesBuilder, DisableRuleComment,
+    RuleCommentRule, RuleCommentType, create_unused_directives_diagnostics,
 };
 pub use crate::{
     config::{
@@ -84,7 +84,7 @@ pub use crate::{
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Fixer, Message, PossibleFixes, oxc_code_short_canonical_name},
     frameworks::FrameworkFlags,
-    lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
+    lint_runner::{DirectivesStore, LintRunError, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -93,7 +93,7 @@ pub use crate::{
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
-    tsgolint::TsGoLintState,
+    tsgolint::{TsGoLintState, type_aware_failure_message},
     utils::{read_to_arena_str, read_to_string},
 };
 use crate::{
