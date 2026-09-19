@@ -131,6 +131,19 @@ impl Config {
         self.base.config.options.type_aware
     }
 
+    /// `options.typeCheck` as declared by this config, after `extends` has been resolved.
+    pub fn type_check(&self) -> Option<bool> {
+        self.base.config.options.type_check
+    }
+
+    /// Absolute path of the configuration file this config was built from, if there was one.
+    ///
+    /// A config built from a default [`Oxlintrc`] carries an empty path, which is reported as
+    /// `None` here just as `Oxlintrc::dir` reports no directory for it.
+    pub fn path(&self) -> Option<&Path> {
+        self.base.config.path.as_deref().filter(|path| !path.as_os_str().is_empty())
+    }
+
     pub fn number_of_rules(&self) -> usize {
         self.base.rules.len()
     }
@@ -461,14 +474,10 @@ impl ConfigStore {
         })
     }
 
-    /// Whether type-checking diagnostics are enabled by *any* config, root or nested.
+    /// Whether any config, root or nested, enables `typeCheck`.
     ///
-    /// `tsgolint` reports type-checking diagnostics for a whole run, not per config group,
-    /// so enabling `typeCheck` in a nested config type-checks every file sent to `tsgolint`,
-    /// that is every file linted with type-aware rules.
-    /// So a root config with `typeAware: false` and `typeCheck: true` only type-checks the files
-    /// of the nested configs which enable `typeAware`.
-    /// A nested `typeCheck: true` also outweighs a root `typeCheck: false`.
+    /// `typeCheck` only applies to the files linted with type-aware rules, so a run where this
+    /// holds, but no config or flag enables type-aware linting, type-checks nothing.
     pub fn type_check_enabled(&self) -> bool {
         self.base.base.config.options.type_check.unwrap_or(false)
             || self
@@ -480,22 +489,16 @@ impl ConfigStore {
     /// The configs which enable `typeCheck`, root first, then the nested ones in path order, by
     /// file path. `None` for a config without a file.
     pub fn type_check_config_paths(&self) -> Vec<Option<&Path>> {
-        fn enables_type_check(config: &Config) -> bool {
-            config.base.config.options.type_check == Some(true)
-        }
-        fn file_path(config: &Config) -> Option<&Path> {
-            config.base.config.path.as_deref()
-        }
         let mut nested: Vec<_> = self
             .nested_configs
             .values()
-            .filter(|config| enables_type_check(config))
-            .map(file_path)
+            .filter(|config| config.type_check() == Some(true))
+            .map(Config::path)
             .collect();
         nested.sort_unstable();
         std::iter::once(&self.base)
-            .filter(|config| enables_type_check(config))
-            .map(file_path)
+            .filter(|config| config.type_check() == Some(true))
+            .map(Config::path)
             .chain(nested)
             .collect()
     }
@@ -1713,6 +1716,11 @@ mod test {
         store.get_related_config(path).base.config.options.report_unused_disable_directives
     }
 
+    /// Whether `path` reports TypeScript diagnostics, through the config which governs it.
+    fn type_check_for(store: &ConfigStore, path: &Path) -> bool {
+        store.get_related_config(path).type_check().unwrap_or(false)
+    }
+
     /// Whether type-aware linting applies to `path`, through the config which governs it.
     fn type_aware_for(store: &ConfigStore, path: &Path) -> bool {
         store.get_related_config(path).type_aware().unwrap_or(false)
@@ -1799,6 +1807,34 @@ mod test {
         );
 
         assert!(store.type_check_enabled());
+        // Only the files the nested config governs report the diagnostics.
+        assert!(type_check_for(&store, Path::new("/root/packages/app/src/index.ts")));
+        assert!(!type_check_for(&store, Path::new("/root/packages/other/src/index.ts")));
+        assert!(!type_check_for(&store, Path::new("/root/index.ts")));
+    }
+
+    #[test]
+    fn test_type_check_not_inherited_from_root_config() {
+        let store = store_with_nested_options(
+            OxlintOptions { type_check: Some(true), ..OxlintOptions::default() },
+            OxlintOptions::default(),
+        );
+
+        // Like `typeAware`, the root value is *not* inherited: only the config which governs the
+        // file is consulted. Sharing the option is what `extends` is for.
+        assert!(!type_check_for(&store, Path::new("/root/packages/app/src/index.ts")));
+        assert!(type_check_for(&store, Path::new("/root/index.ts")));
+    }
+
+    #[test]
+    fn test_type_check_disabled_by_nested_config() {
+        let store = store_with_nested_options(
+            OxlintOptions { type_check: Some(true), ..OxlintOptions::default() },
+            OxlintOptions { type_check: Some(false), ..OxlintOptions::default() },
+        );
+
+        assert!(!type_check_for(&store, Path::new("/root/packages/app/src/index.ts")));
+        assert!(type_check_for(&store, Path::new("/root/index.ts")));
     }
 
     #[test]

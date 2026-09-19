@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/nested_type_check_with_type_aware_root
+----------
+
+  ! packages/app/.oxlintrc.json sets `options.typeCheck`, but does not enable `options.typeAware`, so no TypeScript diagnostics are reported for its files.
+  help: Set `options.typeAware` to `true` in this config, or `extends` a config which does. It is not inherited from the root config.
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

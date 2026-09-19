@@ -96,6 +96,12 @@ pub struct LintOptions {
     /// If set, it applies to every file and overrides the `typeAware` option of every config.
     /// If unset, each file follows the `typeAware` option of the config which governs it.
     pub type_aware: Option<bool>,
+    /// Whether to report the TypeScript compiler diagnostics (experimental type checking).
+    /// If set, it applies to every file linted with type-aware rules and overrides the
+    /// `typeCheck` option of every config; it does not enable type-aware linting itself, so a
+    /// file no config makes type-aware is never type-checked.
+    /// If unset, each file follows the `typeCheck` option of the config which governs it.
+    pub type_check: Option<bool>,
     /// Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
     /// It gets automatically enabled when `configPath` is set.
     /// Nested config support is always disabled in Vite+ mode.
@@ -256,6 +262,7 @@ impl TryFrom<Value> for LintOptions {
                 .filter(|s| !s.is_empty())
                 .map(str::to_owned),
             type_aware: object.get("typeAware").and_then(Value::as_bool),
+            type_check: object.get("typeCheck").and_then(Value::as_bool),
             disable_nested_config: object
                 .get("disableNestedConfig")
                 .and_then(Value::as_bool)
@@ -294,6 +301,7 @@ mod test {
             "configPath": "./custom.json",
             "unusedDisableDirectives": "warn",
             "typeAware": true,
+            "typeCheck": true,
             "disableNestedConfig": true,
             "fixKind": "dangerous_fix",
             "rulesCustomization": {
@@ -312,6 +320,7 @@ mod test {
         assert_eq!(options.config_path, Some("./custom.json".into()));
         assert_eq!(options.unused_disable_directives, Some(UnusedDisableDirectives::Warn));
         assert_eq!(options.type_aware, Some(true));
+        assert_eq!(options.type_check, Some(true));
         assert!(options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
 
@@ -415,11 +424,13 @@ mod test {
             "configPath": null,
             "tsConfigPath": null,
             "typeAware": null,
+            "typeCheck": null,
             "unusedDisableDirectives": null
         });
 
         let options = LintOptions::try_from(json).unwrap();
         assert_eq!(options.type_aware, None); // null should be treated as None
+        assert_eq!(options.type_check, None);
     }
 
     #[test]
