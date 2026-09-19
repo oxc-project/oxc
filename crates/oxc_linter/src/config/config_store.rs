@@ -490,6 +490,34 @@ impl ConfigStore {
 }
 
 #[cfg(test)]
+impl ConfigStore {
+    /// A store whose root config is the `.oxlintrc.json` content `root`, with one nested config
+    /// per `(directory, .oxlintrc.json content)` of `nested`.
+    pub(crate) fn from_oxlintrc_json(
+        root: serde_json::Value,
+        nested: impl IntoIterator<Item = (PathBuf, serde_json::Value)>,
+    ) -> Self {
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let mut build = |json: serde_json::Value| {
+            let oxlintrc = serde_json::from_value(json).unwrap();
+            super::ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                None,
+                &mut external_plugin_store,
+                None,
+            )
+            .unwrap()
+            .build(&mut external_plugin_store)
+            .unwrap()
+        };
+        let root = build(root);
+        let nested = nested.into_iter().map(|(dir, json)| (dir, build(json))).collect();
+        Self::new(root, nested, external_plugin_store)
+    }
+}
+
+#[cfg(test)]
 mod test {
     use std::{
         path::{Path, PathBuf},

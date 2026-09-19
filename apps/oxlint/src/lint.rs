@@ -17,7 +17,7 @@ use oxc_diagnostics::{
 };
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
-    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunError, LintRunner,
     LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
@@ -536,7 +536,6 @@ impl CliRunner {
 
         let cwd = options.cwd().to_path_buf();
 
-        // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(type_aware)
             .with_type_aware_forced(type_aware_forced)
@@ -563,10 +562,12 @@ impl CliRunner {
         // of the run time, with all the lint threads idle.
         // The diagnostics are rendered into a buffer, and the buffer is written to `stdout` only
         // after linting finishes. So output that JS plugins or `tsgolint` print during linting
-        // does not appear between the diagnostics, and a `tsgolint` failure prints only its error.
+        // does not appear between the diagnostics, and a failure to plan type-aware linting
+        // prints only its error.
         let (lint_result, diagnostic_result, rendered) = std::thread::scope(|scope| {
             let lint_thread = scope.spawn(|| -> Result<_, String> {
-                let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
+                let (lint_runner, lint_result) = if let Some(rule_timing_store) = &rule_timing_store
+                {
                     lint_runner.lint_files::<true>(
                         &files_to_lint,
                         tx_error.clone(),
@@ -581,13 +582,29 @@ impl CliRunner {
                         None,
                     )
                 };
-                let lint_runner = lint_result?;
-                lint_runner.report_unused_directives(&tx_error);
+
+                let mut type_aware_failed = false;
+                match lint_result {
+                    Ok(()) => lint_runner.report_unused_directives(&tx_error),
+                    Err(LintRunError::Planning(err)) => {
+                        // Nothing was linted, so there is nothing to render it alongside and no
+                        // run to summarize. Printing an all-clear count here would be incorrect.
+                        return Err(err);
+                    }
+                    Err(LintRunError::Running(_)) => {
+                        // The regular pass ran, so its unused directives are still valid. The
+                        // failure itself was already reported as a diagnostic on the file it
+                        // concerns, by the code which knew which files those were.
+                        lint_runner.report_unused_directives(&tx_error);
+                        type_aware_failed = true;
+                    }
+                }
 
                 // A suppression file can contain regular lint rules that were not run in
                 // type-check-only mode, so its runtime diff is incomplete and cannot be used to
                 // validate the baseline.
-                let result = if type_check_only {
+                // The same is true when type-aware linting failed part way through.
+                let result = if type_check_only || type_aware_failed {
                     Ok(())
                 } else {
                     suppression_manager.finalize(diff_manager, &tx_error, &cwd)
@@ -595,7 +612,7 @@ impl CliRunner {
 
                 // Close the channel, so that `diagnostic_service.run` returns.
                 drop(tx_error);
-                Ok(result)
+                Ok((result, type_aware_failed))
             });
 
             let mut rendered = Vec::new();
@@ -605,8 +622,8 @@ impl CliRunner {
             (lint_result, diagnostic_result, rendered)
         });
 
-        let result = match lint_result {
-            Ok(result) => result,
+        let (result, type_aware_failed) = match lint_result {
+            Ok(outcome) => outcome,
             Err(err) => {
                 print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
@@ -641,6 +658,11 @@ impl CliRunner {
             }),
         }) {
             print_and_flush_stdout(stdout, &end);
+        }
+
+        // Every diagnostic has been emitted, including the failure itself.
+        if type_aware_failed {
+            return CliRunResult::TsGoLintError;
         }
 
         // When --suppress-all is used and the file was written successfully,
@@ -2454,7 +2476,8 @@ mod test {
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_failure() {
         // The fixture has a fake `tsgolint` that exits with an error.
-        // Only the error is printed; diagnostics from regular linting are not.
+        // The failure is reported on the file it concerns, next to the diagnostics from regular
+        // linting, and the run ends with `TsGoLintError`.
         let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_failure".into()).test_and_snapshot(args);
     }
