@@ -199,16 +199,12 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `() => { return foo })` -> `() => foo`
-    pub fn substitute_arrow_expression(
-        arrow_expr: &mut ArrowFunctionExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
+    pub fn substitute_arrow_expression(arrow_expr: &mut ArrowFunctionExpression<'a>) {
         if let Some(body) = arrow_expr.get_function_body_mut()
             && body.directives.is_empty()
             && body.statements.len() == 1
             && let Statement::ReturnStatement(return_statement) = &mut body.statements[0]
-            && let Some(expr) =
-                return_statement.argument.as_mut().map(|argument| argument.take_in(ctx))
+            && let Some(expr) = return_statement.argument.take()
         {
             arrow_expr.body = ArrowFunctionBody::from(expr);
         }
