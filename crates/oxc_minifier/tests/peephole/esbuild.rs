@@ -211,7 +211,7 @@ fn js_parser_test() {
     test("while (x) { debugger; if (1) { if (1) continue; z() } }", "for (; x; ) debugger;");
     // test("while (x()) continue", "for (; x(); ) ;");
     test("while (x) { y(); continue }", "for (; x; ) y();");
-    test("while (x) { if (y) { z(); continue } }", "for (; x; ) if (y) { z(); continue; }");
+    test("while (x) { if (y) { z(); continue } }", "for (; x;) y && z();");
     test(
         "label: while (x) while (y) { z(); continue label }",
         "label: for (; x; ) for (; y; ) { z(); continue label;}",
