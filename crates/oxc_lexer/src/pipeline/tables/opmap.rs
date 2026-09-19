@@ -2,9 +2,7 @@ use std::ptr;
 
 use constcat::concat_slices;
 
-use crate::token::{OP_KIND_BASE, OP_KIND_MAX, TokenKind, tk};
-
-use super::punct1::{PUNCT1, PUNCT1_NKNOWN};
+use crate::token::TokenKind;
 
 const KW_COUNT_JS: usize = 46;
 const KW_COUNT_TS: usize = 81;
@@ -105,63 +103,6 @@ const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
 pub(super) static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
     *concat_slices!([(&str, TokenKind)]: &KEYWORDS_JS, &KEYWORDS_TS_EXTRA);
 
-pub(super) const OPMAP_NOPS: usize = 33;
-
-pub(super) struct OpDef {
-    pub txt: &'static [u8],
-    pub len: u8,
-    pub kind: TokenKind,
-}
-
-impl OpDef {
-    const fn new(txt: &'static str, kind: TokenKind) -> Self {
-        assert!(txt.len() <= 255);
-        Self { txt: txt.as_bytes(), len: txt.len() as u8, kind }
-    }
-}
-
-pub(super) static OPMAP_OPS: [OpDef; OPMAP_NOPS] = [
-    OpDef::new("<=", TokenKind::Le),
-    OpDef::new(">=", TokenKind::Ge),
-    OpDef::new("==", TokenKind::EqEq),
-    OpDef::new("!=", TokenKind::BangEq),
-    OpDef::new("===", TokenKind::EqEqEq),
-    OpDef::new("!==", TokenKind::BangEqEq),
-    OpDef::new("**", TokenKind::StarStar),
-    OpDef::new("++", TokenKind::PlusPlus),
-    OpDef::new("--", TokenKind::MinusMinus),
-    OpDef::new("<<", TokenKind::LShift),
-    OpDef::new(">>", TokenKind::RShift),
-    OpDef::new(">>>", TokenKind::URShift),
-    OpDef::new("&&", TokenKind::AmpAmp),
-    OpDef::new("||", TokenKind::PipePipe),
-    OpDef::new("??", TokenKind::Nullish),
-    OpDef::new("?.", TokenKind::OptionalChain),
-    OpDef::new("=>", TokenKind::Arrow),
-    OpDef::new("+=", TokenKind::PlusEq),
-    OpDef::new("-=", TokenKind::MinusEq),
-    OpDef::new("*=", TokenKind::StarEq),
-    OpDef::new("%=", TokenKind::PercentEq),
-    OpDef::new("<<=", TokenKind::LShiftEq),
-    OpDef::new(">>=", TokenKind::RShiftEq),
-    OpDef::new(">>>=", TokenKind::URShiftEq),
-    OpDef::new("&=", TokenKind::AmpEq),
-    OpDef::new("|=", TokenKind::PipeEq),
-    OpDef::new("^=", TokenKind::CaretEq),
-    OpDef::new("&&=", TokenKind::AmpAmpEq),
-    OpDef::new("||=", TokenKind::PipePipeEq),
-    OpDef::new("??=", TokenKind::NullishEq),
-    OpDef::new("**=", TokenKind::StarStarEq),
-    OpDef::new("...", TokenKind::Ellipsis),
-    OpDef::new("/=", TokenKind::SlashEq),
-];
-
-pub struct OpMap {
-    pub opmap_mul: u32,
-    pub opmap_slot: [u8; 256],
-    pub punct1_ord: [u8; 256],
-}
-
 const KW_MAX: usize = KW_COUNT_TS;
 
 /// Slot count of the keyword hash tables - must cover the smallest shift a
@@ -204,11 +145,6 @@ fn kw_key(c0: u8, c1: u8, len: u32) -> u32 {
 #[inline(always)]
 fn kw_key_ts(c0: u8, c1: u8, clast: u8, len: u32) -> u32 {
     (c0 as u32) | ((c1 as u32) << 8) | ((clast as u32) << 16) | (len << 24)
-}
-
-#[inline(always)]
-pub(super) fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
-    (c0 as u32) | ((c1 as u32) << 8) | ((c2 as u32) << 16) | (len << 24)
 }
 
 impl KwSet {
@@ -388,152 +324,5 @@ impl KwSet {
                 );
             }
         }
-    }
-}
-
-impl OpMap {
-    pub(super) fn new() -> OpMap {
-        let mut m =
-            OpMap { opmap_mul: 0, opmap_slot: [0xFF; 256], punct1_ord: [tk!(Invalid); 256] };
-        m.opmap_init();
-        m.punct1_init();
-        m.self_check();
-        m
-    }
-
-    fn opmap_init(&mut self) {
-        for i in 0..OPMAP_NOPS {
-            let a = &OPMAP_OPS[i];
-            assert!(
-                a.len as usize == a.txt.len()
-                    && a.kind as u8 >= OP_KIND_BASE
-                    && a.kind as u8 <= OP_KIND_MAX,
-                "opmap.rs: bad OpDef {i}"
-            );
-            for j in (i + 1)..OPMAP_NOPS {
-                let b = &OPMAP_OPS[j];
-                let a2 = if a.len >= 3 { a.txt[2] } else { 0 };
-                let b2 = if b.len >= 3 { b.txt[2] } else { 0 };
-                assert!(
-                    !(a.len == b.len && a.txt[0] == b.txt[0] && a.txt[1] == b.txt[1] && a2 == b2),
-                    "opmap.rs: (c0,c1,c2,len) collision"
-                );
-            }
-        }
-        let mut m: u64 = (1u64 << 24) | 1;
-        while m < (1u64 << 28) {
-            let mut used = [0u8; 256];
-            let mut ok = true;
-            for i in 0..OPMAP_NOPS {
-                let o = &OPMAP_OPS[i];
-                let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
-                let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
-                let slot = (key.wrapping_mul(m as u32) >> 24) as usize;
-                if used[slot] != 0 {
-                    ok = false;
-                    break;
-                }
-                used[slot] = 1;
-            }
-            if ok {
-                self.opmap_mul = m as u32;
-                self.opmap_slot = [0xFF; 256];
-                for i in 0..OPMAP_NOPS {
-                    let o = &OPMAP_OPS[i];
-                    let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
-                    let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
-                    let slot = (key.wrapping_mul(self.opmap_mul) >> 24) as usize;
-                    self.opmap_slot[slot] = i as u8;
-                }
-                return;
-            }
-            m += 2;
-        }
-        panic!("opmap.rs: opmap perfect-hash search FAILED");
-    }
-
-    fn punct1_init(&mut self) {
-        self.punct1_ord = [tk!(Invalid); 256];
-        for i in 0..PUNCT1_NKNOWN {
-            self.punct1_ord[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
-        }
-    }
-
-    #[inline(always)]
-    pub fn opmap_lookup(&self, b0: u8, b1: u8, b2: u8, b3: u8, len: u32) -> u32 {
-        let c2 = if len >= 3 { b2 } else { 0 };
-        let key = op_key(b0, b1, c2, len);
-        let idx = self.opmap_slot[(key.wrapping_mul(self.opmap_mul) >> 24) as usize];
-        if idx == 0xFF {
-            return 0;
-        }
-        let o = &OPMAP_OPS[idx as usize];
-        if o.len as u32 != len {
-            return 0;
-        }
-        if o.txt[0] != b0 || o.txt[1] != b1 {
-            return 0;
-        }
-        if len >= 3 && o.txt[2] != b2 {
-            return 0;
-        }
-        if len >= 4 && o.txt[3] != b3 {
-            return 0;
-        }
-        o.kind as u32
-    }
-
-    fn self_check(&self) {
-        let mut seen_kind = [0u8; 256];
-        for i in 0..OPMAP_NOPS {
-            let o = &OPMAP_OPS[i];
-            let mut b = [0u8; 4];
-            b[..o.len as usize].copy_from_slice(&o.txt[..o.len as usize]);
-            assert!(
-                self.opmap_lookup(b[0], b[1], b[2], b[3], o.len as u32) == o.kind as u32,
-                "opmap self-check: opmap_lookup wrong"
-            );
-            assert!(seen_kind[o.kind as usize] == 0, "opmap self-check: duplicate ordinal");
-            seen_kind[o.kind as usize] = 1;
-        }
-        assert!(
-            self.opmap_lookup(b'.', b'.', 0, 0, 2) == 0
-                && self.opmap_lookup(b'<', b'<', 0, 0, 2) == tk!(LShift) as u32
-                && self.opmap_lookup(b'<', b'=', 0, 0, 2) == tk!(Le) as u32
-                && self.opmap_lookup(b'>', b'>', b'>', 0, 3) == tk!(URShift) as u32
-                && self.opmap_lookup(b'>', b'>', b'=', 0, 3) == tk!(RShiftEq) as u32
-                && self.opmap_lookup(b'=', b'=', 0, 0, 2) == tk!(EqEq) as u32
-                && self.opmap_lookup(b'=', b'/', 0, 0, 2) == 0,
-            "opmap self-check: op spot-checks failed"
-        );
-        let mut seen = [0u8; 256];
-        for i in 0..PUNCT1_NKNOWN {
-            let ord = self.punct1_ord[PUNCT1[i].byte as usize];
-            assert!(
-                ord == PUNCT1[i].kind as u8 && seen[ord as usize] == 0,
-                "opmap self-check: PUNCT1 ordinal wrong/dup"
-            );
-            seen[ord as usize] = 1;
-        }
-        for b in 0..256usize {
-            let ord = self.punct1_ord[b];
-            let is_known = PUNCT1.iter().any(|p| p.byte == b as u8);
-            assert!(
-                is_known || ord == tk!(Invalid),
-                "opmap self-check: PUNCT1_ORD should be unknown"
-            );
-        }
-        assert!(
-            self.punct1_ord[b'(' as usize] == tk!(LParen)
-                && self.punct1_ord[b'#' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'a' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'"' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'`' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'\\' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'$' as usize] == tk!(Invalid)
-                && self.punct1_ord[b' ' as usize] == tk!(Invalid)
-                && self.punct1_ord[0] == tk!(Invalid),
-            "opmap self-check: PUNCT1 spot-checks failed"
-        );
     }
 }
