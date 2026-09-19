@@ -2324,6 +2324,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
+ "tempfile",
  "unicode-segmentation",
  "url",
 ]
