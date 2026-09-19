@@ -4,6 +4,7 @@ use crate::pipeline::bytes::{is_digit, is_word, is_ws};
 
 mod keywords;
 mod operators;
+mod pair_luts;
 mod punct1;
 
 pub(super) use keywords::{KwSet, is_kw_init, is_kw_init_ts};
@@ -16,15 +17,8 @@ pub(super) use punct1::{PH_A, PH_B, PH_T0, PH_T1};
 
 use keywords::{KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, kwinit_selfcheck};
 use operators::{OPMAP_OPS, OpMap, op_key, opch_selfcheck};
+use pair_luts::PairLuts;
 use punct1::punct1_hash_selfcheck;
-
-#[repr(C, align(64))]
-pub(super) struct PairLuts {
-    pub lut0z: [[u8; 8]; 256],
-    pub lutpad: [[u8; 32]; 256],
-}
-
-const _: () = assert!(size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
 
 pub(super) struct Tables {
     pub op: OpMap,
@@ -60,12 +54,12 @@ impl Tables {
             wb_hi: [0; 16],
             op2_pack: [0; 256],
             op3_pack: [0; 256],
-            pair_luts: PairLuts { lut0z: [[0; 8]; 256], lutpad: [[0; 32]; 256] },
+            pair_luts: PairLuts::new(),
         };
         t.build_regex_kw_mask();
         t.build_op_pack();
         t.build_merged_luts();
-        t.build_pair_luts();
+        t.pair_luts.build();
         kwinit_selfcheck();
         opch_selfcheck();
         t.merged_selfcheck();
@@ -195,22 +189,6 @@ impl Tables {
                 }
             }
             self.wb_hi[hi as usize] |= 1u8 << bit;
-        }
-    }
-
-    fn build_pair_luts(&mut self) {
-        for m in 0..256usize {
-            let mut k = 0usize;
-            for bit in 0..8usize {
-                if (m >> bit) & 1 != 0 {
-                    self.pair_luts.lut0z[m][k] = bit as u8;
-                    self.pair_luts.lutpad[m][8 + k] = (bit + 8) as u8;
-                    k += 1;
-                }
-            }
-            for j in k..8 {
-                self.pair_luts.lutpad[m][8 + j] = 0x80;
-            }
         }
     }
 
