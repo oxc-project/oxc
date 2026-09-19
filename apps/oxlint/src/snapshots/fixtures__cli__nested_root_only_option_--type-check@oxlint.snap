@@ -1,0 +1,16 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-check
+working directory: fixtures/cli/nested_root_only_option
+----------
+
+  ! The `options.denyWarnings` option is only supported in the root config. It was found in nested/.oxlintrc.json and is ignored.
+  help: Move `options.denyWarnings` to the root configuration file.
+
+The `--type-check` option requires type-aware linting.
+Use `--type-aware --type-check` or enable `options.typeAware` in your config.
+----------
+CLI result: InvalidOptionTypeCheckWithoutTypeAware
+----------

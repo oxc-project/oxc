@@ -846,11 +846,18 @@ export interface OxlintOptions {
    *
    * Equivalent to passing `--type-check` on the CLI.
    *
-   * `tsgolint` reports these diagnostics for a whole run rather than per directory, so
-   * enabling this in a nested config enables it for the whole run, and oxlint warns about it.
-   * It belongs in the root configuration file.
+   * Resolved from the config which governs each file, so a nested config may type-check its
+   * own directory. It is *not* inherited from the root config: a nested config which does not
+   * set it does not pick up the root's value, so share it with `extends`, which a child config
+   * can still override. The `--type-check` CLI flag and the editor's `typeCheck` setting
+   * override it for every file that is handed to `tsgolint`, which is every file linted with
+   * type-aware rules.
    *
-   * Note that this requires the `oxlint-tsgolint` package to be installed.
+   * It has no effect without `typeAware`, which is what hands a file to `tsgolint` in the
+   * first place: neither this option nor `--type-check` enables type-aware linting.
+   *
+   * Note that this requires the `oxlint-tsgolint` package to be installed, in a release which
+   * honours per-file type checking; older releases type-check every file of the run.
    */
   typeCheck?: boolean;
 }
