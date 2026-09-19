@@ -68,6 +68,14 @@ function Component(props) {
   return <div>{props.text}</div>;
 }
 ",
+        // ALL-CAPS methods are constants, not components (`Date.UTC`).
+        "
+export function Sample() {
+  const now = new Date();
+  const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  return <div>{startDate.toString()}</div>;
+}
+",
     ];
 
     let fail = vec![
