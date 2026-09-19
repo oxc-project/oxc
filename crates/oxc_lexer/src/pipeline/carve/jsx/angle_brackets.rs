@@ -1,14 +1,11 @@
-use crate::{
-    error::DiagCode,
-    lanes::Lanes,
-    tables::{Tables, is_id_start, is_word, is_ws},
-};
+use crate::{error::DiagCode, lanes::Lanes};
 
 use crate::pipeline::{
     bitmap::bm_get,
     disambiguate::{jsx_site_is_expression, ts_type_region_open, type_parameter_list_head},
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
+    tables::{Tables, is_id_start, is_word, is_ws},
 };
 
 const FN_TYPE_SCAN_CAP: usize = 1 << 16;

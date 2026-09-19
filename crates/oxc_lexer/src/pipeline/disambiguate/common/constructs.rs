@@ -14,9 +14,12 @@
 //! [`walk`]: super::walk
 //! [`operand`]: super::operand
 
-use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
+use crate::token::tk;
 
-use crate::pipeline::bitmap::bm_next1;
+use crate::pipeline::{
+    bitmap::bm_next1,
+    tables::{OP_KIND_BASE, Tables},
+};
 
 use super::walk::{
     AngleMatch, angle_match_back, bm_prev_sig, chain_head, ident_is, kind_at, lt_in_range,

@@ -18,13 +18,12 @@
 //!
 //! [`tsx`]: super::tsx
 
-use crate::{
-    opmap::OP_KIND_BASE,
-    tables::{Tables, is_ws},
-    token::tk,
-};
+use crate::token::tk;
 
-use crate::pipeline::bitmap::{bm_get, bm_next1};
+use crate::pipeline::{
+    bitmap::{bm_get, bm_next1},
+    tables::{OP_KIND_BASE, Tables, is_ws},
+};
 
 use crate::pipeline::disambiguate::common::{
     AngleMatch, LT_OPERAND_WORDS, angle_match_back, annotation_colon_is_declaration,

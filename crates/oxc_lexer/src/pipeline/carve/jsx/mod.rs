@@ -1,9 +1,4 @@
-use crate::{
-    error::DiagCode,
-    lanes::Lanes,
-    tables::{Tables, is_digit, is_id_start, is_word, is_ws},
-    token::tk,
-};
+use crate::{error::DiagCode, lanes::Lanes, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
@@ -13,6 +8,7 @@ use crate::pipeline::{
         find_opener_jsx7, find_opener6, find1, find2,
     },
     scan::scan_block_comment,
+    tables::{Tables, is_digit, is_id_start, is_word, is_ws},
 };
 
 use super::common::{

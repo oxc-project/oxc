@@ -1,5 +1,5 @@
-// Kernel lint policy (this module tree, `lanes`, `opmap`, `tables`): the
-// `unsafe fn` boundary is the reviewed surface, and the pedantic/nursery
+// Kernel lint policy (this module tree and `lanes`):
+// the `unsafe fn` boundary is the reviewed surface, and the pedantic/nursery
 // style lints fight the SIMD idiom. API modules keep the full workspace bar.
 #![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::pedantic, clippy::nursery)]
@@ -11,7 +11,6 @@ use crate::{
     PAD,
     lanes::Lanes,
     options::LexOptions,
-    tables::Tables,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };
 
@@ -25,12 +24,14 @@ mod disambiguate;
 mod find;
 mod misc;
 mod scan;
+mod tables;
 
 use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, write_sentinels};
 use misc::{misc_post, misc_pre};
+use tables::Tables;
 
 pub struct Lexer {
     word: Vec<u64>,

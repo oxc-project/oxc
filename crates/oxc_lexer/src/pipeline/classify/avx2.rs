@@ -1,11 +1,11 @@
 use std::arch::x86_64::*;
 
-use crate::{
-    tables::{PH_A, PH_B, PH_T0, PH_T1, Tables},
-    token::tk,
-};
+use crate::token::tk;
 
-use crate::pipeline::chunk::{load256, mm, veq};
+use crate::pipeline::{
+    chunk::{load256, mm, veq},
+    tables::{PH_A, PH_B, PH_T0, PH_T1, Tables},
+};
 
 pub(super) unsafe fn classify_impl(
     t: &Tables,

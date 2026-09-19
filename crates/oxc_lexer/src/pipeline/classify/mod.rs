@@ -1,4 +1,4 @@
-use crate::tables::Tables;
+use crate::pipeline::tables::Tables;
 
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 mod avx2;

@@ -1,11 +1,10 @@
 use std::ptr;
 
-use crate::tables::{is_word, is_ws};
-
 use crate::pipeline::{
     bitmap::bm_next0,
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
+    tables::{is_word, is_ws},
 };
 
 #[inline]

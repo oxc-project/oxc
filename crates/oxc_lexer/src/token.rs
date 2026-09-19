@@ -368,11 +368,9 @@ impl Display for TokenKind {
 /// # SAFETY
 ///
 /// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
-/// pipeline only ever writes kinds that came from [`opmap`]'s tables or
+/// pipeline only ever writes kinds that came from `opmap`'s tables or
 /// from the named constants in `pipeline`, so this holds for any range the
 /// lexer has written; it does *not* hold for uninitialised arena memory.
-///
-/// [`opmap`]: crate::opmap
 #[inline]
 pub(crate) const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
     // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and

@@ -12,10 +12,8 @@ mod comment_meta;
 pub mod diagnostics;
 pub mod error;
 mod lanes;
-mod opmap;
 pub mod options;
 mod pipeline;
-mod tables;
 pub mod token;
 
 pub use arena::{Arena, LexResult, LineEntry};

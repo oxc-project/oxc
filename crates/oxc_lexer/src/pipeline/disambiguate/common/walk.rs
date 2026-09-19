@@ -26,13 +26,12 @@
 
 use std::cell::{Cell, RefCell};
 
-use crate::{
-    opmap::OP_KIND_BASE,
-    tables::is_word,
-    token::{KW_KIND_BASE, KW_KIND_MAX, tk},
-};
+use crate::token::{KW_KIND_BASE, KW_KIND_MAX, tk};
 
-use crate::pipeline::bitmap::{bm_next1, bm_prev1};
+use crate::pipeline::{
+    bitmap::{bm_next1, bm_prev1},
+    tables::{OP_KIND_BASE, is_word},
+};
 
 const ANGLE_MATCH_CAP: u32 = 4096;
 

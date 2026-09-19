@@ -19,12 +19,12 @@
 //! [`match_delim_back`]: crate::pipeline::disambiguate::common::match_delim_back
 //! [`angle_match_back`]: crate::pipeline::disambiguate::common::angle_match_back
 
-use crate::{
-    tables::{is_id_start, is_ws},
-    token::tk,
-};
+use crate::token::tk;
 
-use crate::pipeline::bitmap::bm_get;
+use crate::pipeline::{
+    bitmap::bm_get,
+    tables::{is_id_start, is_ws},
+};
 
 use crate::pipeline::disambiguate::common::kind_at;
 

@@ -1,9 +1,10 @@
-use crate::{error::DiagCode, lanes::Lanes, tables::is_id_start, token::tk};
+use crate::{error::DiagCode, lanes::Lanes, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
     find::unicode_ws_len,
     scan::scan_ident_esc,
+    tables::is_id_start,
 };
 
 #[inline]

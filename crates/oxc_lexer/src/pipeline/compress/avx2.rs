@@ -4,9 +4,10 @@ use oxc_span::Span;
 
 use crate::{
     lanes::Lanes,
-    tables::Tables,
     token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
 };
+
+use crate::pipeline::tables::Tables;
 
 use super::common::{emit_value, invalid_diags};
 

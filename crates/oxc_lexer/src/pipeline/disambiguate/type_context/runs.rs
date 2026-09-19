@@ -14,9 +14,12 @@
 //! [`type_list`]: super::type_list
 //! [`context`]: super::context
 
-use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
+use crate::token::tk;
 
-use crate::pipeline::bitmap::bm_next1;
+use crate::pipeline::{
+    bitmap::bm_next1,
+    tables::{OP_KIND_BASE, Tables},
+};
 
 use crate::pipeline::disambiguate::common::{
     AngleMatch, angle_match_back, as_gated_type_ref, as_type_operand, bm_prev_sig, class_like_walk,

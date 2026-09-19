@@ -10,16 +10,13 @@
 //!   A `(` can, as in `f<T>(x)`. An identifier can't, as in `a < b > c`.
 //!   When the token alone doesn't settle it, the answer is [`Follow::Ctx`], and the caller decides.
 
-use crate::{
-    opmap::OP_KIND_BASE,
-    tables::{Tables, is_digit, is_id_start},
-    token::tk,
-};
+use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::{bm_get, bm_next1},
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
+    tables::{OP_KIND_BASE, Tables, is_digit, is_id_start},
 };
 
 use crate::pipeline::disambiguate::common::{

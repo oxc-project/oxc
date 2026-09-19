@@ -1,38 +1,37 @@
-// Kernel lint policy - see the note in `pipeline/mod.rs`.
-#![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
-#![allow(clippy::pedantic, clippy::nursery)]
-#![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
+use crate::token::{KW_KIND_BASE, tk};
 
-use crate::{
-    opmap::{
-        KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, KwSet, OPMAP_NOPS, OPMAP_OPS,
-        OpMap, PUNCT1_LIST, PUNCT1_NKNOWN, PUNCT1_TOK, op_key,
-    },
-    token::{KW_KIND_BASE, tk},
+mod opmap;
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+pub(super) use opmap::PUNCT1;
+pub(super) use opmap::{KwSet, OP_KIND_BASE, PUNCT1_NKNOWN};
+
+use opmap::{
+    KEYWORDS_JS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, OPMAP_NOPS, OPMAP_OPS, OpMap,
+    PUNCT1_LIST, PUNCT1_TOK, op_key,
 };
 
 #[inline(always)]
-pub const fn is_ws(c: u8) -> bool {
+pub(super) const fn is_ws(c: u8) -> bool {
     c == b' ' || c == b'\t' || c == b'\n' || c == b'\r' || c == 0x0c || c == 0x0b
 }
 
 #[inline(always)]
-pub const fn is_digit(c: u8) -> bool {
+pub(super) const fn is_digit(c: u8) -> bool {
     c >= b'0' && c <= b'9'
 }
 
 #[inline(always)]
-pub const fn is_id_start(c: u8) -> bool {
+pub(super) const fn is_id_start(c: u8) -> bool {
     (c >= b'a' && c <= b'z') || (c >= b'A' && c <= b'Z') || c == b'_' || c == b'$' || c >= 0x80
 }
 
 #[inline(always)]
-pub const fn is_word(c: u8) -> bool {
+pub(super) const fn is_word(c: u8) -> bool {
     is_id_start(c) || is_digit(c)
 }
 
 #[inline(always)]
-pub fn hex_val(c: u8) -> u32 {
+pub(super) fn hex_val(c: u8) -> u32 {
     if c >= b'0' && c <= b'9' {
         return (c - b'0') as u32;
     }
@@ -44,42 +43,44 @@ pub fn hex_val(c: u8) -> u32 {
 }
 
 #[inline(always)]
-pub fn is_glue_join(c: u8) -> bool {
+pub(super) fn is_glue_join(c: u8) -> bool {
     is_word(c) || c == b'.' || c == b'+' || c == b'-' || c == b'?'
 }
 
-pub const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
-pub const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
+const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
+const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
 
 #[inline(always)]
-pub const fn is_kw_init(c: u8) -> bool {
+pub(super) const fn is_kw_init(c: u8) -> bool {
     (KWINIT_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
 
 /// TS-mode variant: the JS set plus `k`/`m`/`p`/`u` (keyof, module, the
 /// p-words, unique/unknown/undefined/using). Same hi-nibble rows.
-pub const KWINIT_TS_LO: [u8; 16] = [2, 1, 3, 3, 3, 3, 3, 3, 0, 3, 0, 1, 1, 1, 1, 1];
+const KWINIT_TS_LO: [u8; 16] = [2, 1, 3, 3, 3, 3, 3, 3, 0, 3, 0, 1, 1, 1, 1, 1];
 
 #[inline(always)]
-pub const fn is_kw_init_ts(c: u8) -> bool {
+pub(super) const fn is_kw_init_ts(c: u8) -> bool {
     (KWINIT_TS_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
 
-pub const OPCH_LO: [u8; 16] = [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 10, 3, 7, 2];
-pub const OPCH_HI: [u8; 16] = [0, 0, 1, 2, 0, 4, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0];
+const OPCH_LO: [u8; 16] = [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 10, 3, 7, 2];
+const OPCH_HI: [u8; 16] = [0, 0, 1, 2, 0, 4, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0];
 
 #[inline(always)]
-pub const fn is_op_char(c: u8) -> bool {
+pub(super) const fn is_op_char(c: u8) -> bool {
     (OPCH_LO[(c & 15) as usize] & OPCH_HI[(c >> 4) as usize]) != 0
 }
 
-pub const PH_A: [u8; 16] = [4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2];
-pub const PH_B: [u8; 16] = [24, 26, 2, 16, 31, 25, 19, 30, 0, 0, 0, 0, 0, 0, 0, 0];
-pub const PH_T0: [u8; 16] = [68, 38, 58, 76, 255, 72, 42, 52, 34, 33, 255, 255, 70, 48, 37, 55];
-pub const PH_T1: [u8; 16] = [40, 255, 43, 50, 64, 61, 255, 255, 35, 36, 80, 89, 255, 82, 32, 41];
+pub(super) const PH_A: [u8; 16] = [4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2];
+pub(super) const PH_B: [u8; 16] = [24, 26, 2, 16, 31, 25, 19, 30, 0, 0, 0, 0, 0, 0, 0, 0];
+pub(super) const PH_T0: [u8; 16] =
+    [68, 38, 58, 76, 255, 72, 42, 52, 34, 33, 255, 255, 70, 48, 37, 55];
+pub(super) const PH_T1: [u8; 16] =
+    [40, 255, 43, 50, 64, 61, 255, 255, 35, 36, 80, 89, 255, 82, 32, 41];
 
 #[inline(always)]
-pub fn punct1_hash(c: u8) -> u8 {
+fn punct1_hash(c: u8) -> u8 {
     if c < 0x20 {
         return tk!(Invalid);
     }
@@ -88,14 +89,14 @@ pub fn punct1_hash(c: u8) -> u8 {
 }
 
 #[repr(C, align(64))]
-pub struct PairLuts {
+pub(super) struct PairLuts {
     pub lut0z: [[u8; 8]; 256],
     pub lutpad: [[u8; 32]; 256],
 }
 
 const _: () = assert!(size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
 
-pub struct Tables {
+pub(super) struct Tables {
     pub op: OpMap,
     pub kwjs: KwSet,
     pub kwts: KwSet,

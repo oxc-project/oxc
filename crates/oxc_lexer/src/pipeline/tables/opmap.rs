@@ -1,21 +1,16 @@
-// Kernel lint policy - see the note in `pipeline/mod.rs`.
-#![allow(unsafe_op_in_unsafe_fn, clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
-#![allow(clippy::pedantic, clippy::nursery)]
-#![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
-
 use std::ptr;
 
 use constcat::concat_slices;
 
 use crate::token::{TokenKind, tk};
 
-pub const KW_COUNT_JS: usize = 46;
-pub const KW_COUNT_TS: usize = 81;
+const KW_COUNT_JS: usize = 46;
+const KW_COUNT_TS: usize = 81;
 
 /// Keyword spellings and the token kind each rewrites to (the JS set).
 /// `get`/`set` map to IDENT (contextual, never keywords at lex time) but
 /// stay in the table so the perfect hash keeps its shape.
-pub const KEYWORDS_JS: [(&str, TokenKind); KW_COUNT_JS] = [
+pub(super) const KEYWORDS_JS: [(&str, TokenKind); KW_COUNT_JS] = [
     ("await", TokenKind::KwAwait),
     ("break", TokenKind::KwBreak),
     ("case", TokenKind::KwCase),
@@ -105,15 +100,15 @@ const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
 ];
 
 /// The TS-mode keyword set: [`KEYWORDS_JS`] followed by [`KEYWORDS_TS_EXTRA`].
-pub static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
+pub(super) static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
     *concat_slices!([(&str, TokenKind)]: &KEYWORDS_JS, &KEYWORDS_TS_EXTRA);
 
 /// First punctuator kind - the token-kind space reserves [32, 128) for them.
 pub const OP_KIND_BASE: u8 = tk!(LBrace);
-pub const OP_KIND_MAX: u8 = tk!(At);
-pub const OPMAP_NOPS: usize = 33;
+const OP_KIND_MAX: u8 = tk!(At);
+pub(super) const OPMAP_NOPS: usize = 33;
 
-pub struct OpDef {
+pub(super) struct OpDef {
     pub txt: &'static [u8],
     pub len: u8,
     pub kind: TokenKind,
@@ -126,7 +121,7 @@ impl OpDef {
     }
 }
 
-pub static OPMAP_OPS: [OpDef; OPMAP_NOPS] = [
+pub(super) static OPMAP_OPS: [OpDef; OPMAP_NOPS] = [
     OpDef::new("<=", TokenKind::Le),
     OpDef::new(">=", TokenKind::Ge),
     OpDef::new("==", TokenKind::EqEq),
@@ -216,8 +211,8 @@ const fn punct1_tok() -> [u8; PUNCT1_NKNOWN] {
 }
 
 /// Column views of [`PUNCT1`].
-pub static PUNCT1_LIST: [u8; PUNCT1_NKNOWN] = punct1_list();
-pub static PUNCT1_TOK: [u8; PUNCT1_NKNOWN] = punct1_tok();
+pub(super) static PUNCT1_LIST: [u8; PUNCT1_NKNOWN] = punct1_list();
+pub(super) static PUNCT1_TOK: [u8; PUNCT1_NKNOWN] = punct1_tok();
 
 pub struct OpMap {
     pub opmap_mul: u32,
@@ -225,17 +220,17 @@ pub struct OpMap {
     pub punct1_ord: [u8; 256],
 }
 
-pub const KW_MAX: usize = KW_COUNT_TS;
+const KW_MAX: usize = KW_COUNT_TS;
 
 /// Slot count of the keyword hash tables - must cover the smallest shift a
 /// set may search (JS shift 25 → 128 slots, TS shift 23 → 512).
-pub const KW_SLOTS: usize = 512;
+const KW_SLOTS: usize = 512;
 
 /// Verified first-try hints for the deterministic perfect-hash searches
 /// below (checked for injectivity before use, so a word-list edit can never
 /// ship a stale constant - it just falls back to the search).
-pub const KW_HASH_HINT_JS: (u32, u32) = (0x0058_DC65, 25);
-pub const KW_HASH_HINT_TS: (u32, u32) = (0x000B_385B, 23);
+pub(super) const KW_HASH_HINT_JS: (u32, u32) = (0x0058_DC65, 25);
+pub(super) const KW_HASH_HINT_TS: (u32, u32) = (0x000B_385B, 23);
 
 /// One keyword-recognition table set: spellings, perfect hash, and the
 /// verify patterns `kw_verify_batch` compares against. `Tables` holds two -
@@ -260,22 +255,22 @@ pub struct KwSet {
 }
 
 #[inline(always)]
-pub fn kw_key(c0: u8, c1: u8, len: u32) -> u32 {
+fn kw_key(c0: u8, c1: u8, len: u32) -> u32 {
     (c0 as u32) | ((c1 as u32) << 8) | (len << 16)
 }
 
 #[inline(always)]
-pub fn kw_key_ts(c0: u8, c1: u8, clast: u8, len: u32) -> u32 {
+fn kw_key_ts(c0: u8, c1: u8, clast: u8, len: u32) -> u32 {
     (c0 as u32) | ((c1 as u32) << 8) | ((clast as u32) << 16) | (len << 24)
 }
 
 #[inline(always)]
-pub fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
+pub(super) fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
     (c0 as u32) | ((c1 as u32) << 8) | ((c2 as u32) << 16) | (len << 24)
 }
 
 impl KwSet {
-    pub fn build(
+    pub(super) fn build(
         list: &[(&'static str, TokenKind)],
         ts_key: bool,
         shifts: &[u32],
@@ -405,7 +400,7 @@ impl KwSet {
         self.kw_tok[idx] as u32
     }
 
-    pub fn self_check(&self, list: &[(&'static str, TokenKind)]) {
+    pub(super) fn self_check(&self, list: &[(&'static str, TokenKind)]) {
         for i in 0..list.len() {
             let mut buf = [0u8; 16];
             let bytes = list[i].0.as_bytes();
@@ -455,7 +450,7 @@ impl KwSet {
 }
 
 impl OpMap {
-    pub fn new() -> OpMap {
+    pub(super) fn new() -> OpMap {
         let mut m =
             OpMap { opmap_mul: 0, opmap_slot: [0xFF; 256], punct1_ord: [tk!(Invalid); 256] };
         m.opmap_init();

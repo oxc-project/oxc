@@ -1,9 +1,9 @@
 use std::ptr;
 
-use crate::{
-    opmap::{PUNCT1, PUNCT1_NKNOWN},
-    tables::{Tables, is_digit, is_kw_init, is_kw_init_ts, is_op_char, is_word, is_ws},
-    token::tk,
+use crate::token::tk;
+
+use crate::pipeline::tables::{
+    PUNCT1, PUNCT1_NKNOWN, Tables, is_digit, is_kw_init, is_kw_init_ts, is_op_char, is_word, is_ws,
 };
 
 const FL_WORD: u32 = 0;

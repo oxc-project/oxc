@@ -1,6 +1,8 @@
 use std::ptr;
 
-use crate::{opmap::KwSet, token::tk};
+use crate::token::tk;
+
+use crate::pipeline::tables::KwSet;
 
 pub const KWB: usize = 64;
 
