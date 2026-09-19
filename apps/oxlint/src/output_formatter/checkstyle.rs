@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::{
     Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info, batch_infos},
 };
 
 use crate::output_formatter::{InternalFormatter, xml_utils::xml_escape};
@@ -38,7 +38,9 @@ impl DiagnosticReporter for CheckstyleReporter {
 }
 
 fn format_checkstyle(diagnostics: &[Error]) -> String {
-    let infos = diagnostics.iter().map(Info::new).collect::<Vec<_>>();
+    // Resolve line/column for the whole batch at once, so diagnostics of the same file share
+    // one scan of its source instead of rescanning it per diagnostic.
+    let infos: Vec<Info> = batch_infos(diagnostics).map(|(_, info)| info).collect();
     let mut grouped: FxHashMap<String, Vec<Info>> = FxHashMap::default();
     for info in infos {
         grouped.entry(info.filename.clone()).or_default().push(info);
