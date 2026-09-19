@@ -1,5 +1,6 @@
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
+use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 
@@ -7,19 +8,19 @@ use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
+        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier, Statement,
         match_member_expression,
     },
 };
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_str::CompactStr;
 
-use crate::LintContext;
 pub use crate::utils::jest::parse_jest_fn::{
     ExpectError, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
+use crate::{LintContext, utils::is_vitest_import_source};
 pub use padding_around_block::report_missing_padding_before_jest_block;
 
 mod padding_around_block;
@@ -157,7 +158,8 @@ pub fn parse_expect_jest_fn_call<'a>(
 
 pub struct PossibleJestNode<'a, 'b> {
     pub node: &'b AstNode<'a>,
-    pub original: Option<&'a str>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
+    // Imported name, including Vitest tests derived with `.extend()`. None for globals.
+    pub original: Option<&'a str>,
 }
 
 /// Collect all possible Jest fn Call Expression,
@@ -201,9 +203,11 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
                     return Some(PossibleJestNode { node: parent, original });
                 } else if matches!(
                     parent_kind,
-                    AstKind::StaticMemberExpression(_)
-                        | AstKind::TaggedTemplateExpression(_)
-                        | AstKind::ComputedMemberExpression(_)
+                    AstKind::StaticMemberExpression(_) | AstKind::TaggedTemplateExpression(_)
+                ) || matches!(
+                    parent_kind,
+                    AstKind::ComputedMemberExpression(member)
+                        if member.object.address() == semantic.nodes().get_node(id).address()
                 ) {
                     id = parent.id();
                 } else {
@@ -217,13 +221,18 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
 fn collect_ids_referenced_to_import<'a, 'c>(
     semantic: &'c Semantic<'a>,
 ) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
+    let has_vitest_import = semantic.nodes().program().body.iter().any(|statement| {
+        matches!(statement, Statement::ImportDeclaration(import_decl)
+            if is_vitest_import_source(import_decl.source.value.as_str()))
+    });
+    let mut fixture_bindings = FxHashMap::default();
     semantic
         .scoping()
         .resolved_references()
         .enumerate()
-        .filter_map(|(symbol_id, reference_ids)| {
+        .filter_map(move |(symbol_id, reference_ids)| {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if semantic.scoping().symbol_flags(symbol_id).is_import() {
+            let original = if semantic.scoping().symbol_flags(symbol_id).is_import() {
                 let id = semantic.scoping().symbol_declaration(symbol_id);
                 let AstKind::ImportDeclaration(import_decl) = semantic.nodes().parent_kind(id)
                 else {
@@ -231,20 +240,91 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(
+                if !matches!(
                     import_decl.source.value.as_str(),
                     "@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest"
                 ) {
-                    let original = find_original_name(import_decl, name);
-                    return Some(
-                        reference_ids.iter().map(move |&reference_id| (reference_id, original)),
-                    );
+                    return None;
                 }
-            }
-
-            None
+                find_original_name(import_decl, name)
+            } else if has_vitest_import {
+                Some(find_vitest_fixture_name(symbol_id, semantic, &mut fixture_bindings)?)
+            } else {
+                return None;
+            };
+            Some(reference_ids.iter().map(move |&reference_id| (reference_id, original)))
         })
         .flatten()
+}
+
+#[derive(Clone, Copy)]
+struct VitestTestBinding<'a> {
+    name: &'a str,
+    is_extended: bool,
+}
+
+/// Follow stable aliases and `.extend()` calls back to a named Vitest test import.
+fn find_vitest_fixture_name<'a>(
+    mut symbol_id: SymbolId,
+    semantic: &Semantic<'a>,
+    bindings: &mut FxHashMap<SymbolId, Option<VitestTestBinding<'a>>>,
+) -> Option<&'a str> {
+    let scoping = semantic.scoping();
+    let mut pending = SmallVec::<[(SymbolId, bool); 4]>::new();
+
+    let mut binding = loop {
+        if let Some(binding) = bindings.get(&symbol_id) {
+            break *binding;
+        }
+        let flags = scoping.symbol_flags(symbol_id);
+        let declaration_id = scoping.symbol_declaration(symbol_id);
+        if flags.is_import() {
+            let AstKind::ImportDeclaration(import_decl) =
+                semantic.nodes().parent_kind(declaration_id)
+            else {
+                return None;
+            };
+            let original = find_original_name(import_decl, scoping.symbol_name(symbol_id))?;
+            break (is_vitest_import_source(import_decl.source.value.as_str())
+                && matches!(original, "test" | "it"))
+            .then_some(VitestTestBinding { name: original, is_extended: false });
+        }
+
+        if !flags.is_variable() || scoping.symbol_is_mutated(symbol_id) {
+            return None;
+        }
+
+        let AstKind::VariableDeclarator(declaration) = semantic.nodes().kind(declaration_id) else {
+            return None;
+        };
+        if !declaration.id.is_binding_identifier() {
+            return None;
+        }
+        let mut expression = declaration.init.as_ref()?.get_inner_expression();
+        let mut is_extended = false;
+        while let Expression::CallExpression(call) = expression {
+            let member = call.callee.get_inner_expression().as_member_expression()?;
+            if member.static_property_name() != Some("extend") {
+                return None;
+            }
+            is_extended = true;
+            expression = member.object().get_inner_expression();
+        }
+        let Expression::Identifier(ident) = expression else { return None };
+        // Mark in-progress bindings as unresolved to break cycles. Cache completed
+        // chains as well, so long chains of aliases are only traversed once.
+        bindings.insert(symbol_id, None);
+        pending.push((symbol_id, is_extended));
+        symbol_id = scoping.get_reference(ident.reference_id()).symbol_id()?;
+    };
+    bindings.insert(symbol_id, binding);
+    while let Some((symbol_id, is_extended)) = pending.pop() {
+        if let Some(binding) = &mut binding {
+            binding.is_extended |= is_extended;
+        }
+        bindings.insert(symbol_id, binding);
+    }
+    binding.filter(|binding| binding.is_extended).map(|binding| binding.name)
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.

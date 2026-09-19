@@ -1,0 +1,87 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:111]
+ 1 │ import { test as baseTest } from 'vitest'; const test = baseTest.extend<{ value: boolean }>({ value: true }); test.skip('example', async () => {});
+   ·                                                                                                               ─────────
+   ╰────
+  help: Remove the appending `.skip`
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:70]
+ 1 │ import { it as base } from 'vitest'; const custom = base.extend({}); custom.skip('example', () => {});
+   ·                                                                      ───────────
+   ╰────
+  help: Remove the appending `.skip`
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:72]
+ 1 │ import { test } from 'vite-plus/test'; const custom = test.extend({}); custom.skip('example', () => {});
+   ·                                                                        ───────────
+   ╰────
+  help: Remove the appending `.skip`
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:72]
+ 1 │ import { test } from '@effect/vitest'; const custom = test.extend({}); custom.skip('example', () => {});
+   ·                                                                        ───────────
+   ╰────
+  help: Remove the appending `.skip`
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:104]
+ 1 │ import { test as base } from 'vitest'; const first = base.extend({}); const second = first.extend({}); second.skip('example', () => {});
+   ·                                                                                                        ───────────
+   ╰────
+  help: Remove the appending `.skip`
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:83]
+ 1 │ import { test as base } from 'vitest'; const custom = base.extend({}).extend({}); custom.skip('example', () => {});
+   ·                                                                                   ───────────
+   ╰────
+  help: Remove the appending `.skip`
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:75]
+ 1 │ import { test as base } from 'vitest'; const custom = base['extend']({}); custom['skip']('example', () => {});
+   ·                                                                           ──────────────
+   ╰────
+  help: Remove the appending `.skip`
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:94]
+ 1 │ import { test as base } from 'vitest'; const custom = base.extend({}); const alias = custom; alias.skip('example', () => {});
+   ·                                                                                              ──────────
+   ╰────
+  help: Remove the appending `.skip`
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:93]
+ 1 │ import { test as base } from 'vitest'; const alias = base; const custom = alias.extend({}); custom.skip('example', () => {});
+   ·                                                                                             ───────────
+   ╰────
+  help: Remove the appending `.skip`
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:72]
+ 1 │ import { test as base } from 'vitest'; const custom = base.extend({}); custom.skip.each([1])('example', () => {});
+   ·                                                                        ─────────────────────
+   ╰────
+  help: Remove the appending `.skip`
+
+  ⚠ vitest(no-disabled-tests): Test is missing function argument
+   ╭─[no_disabled_tests.tsx:1:72]
+ 1 │ import { test as base } from 'vitest'; const custom = base.extend({}); custom('missing callback');
+   ·                                                                        ──────────────────────────
+   ╰────
+  help: Add function argument
+
+  ⚠ vitest(no-disabled-tests): Disabled test
+   ╭─[no_disabled_tests.tsx:1:70]
+ 1 │ import { test as base } from 'vitest'; let custom = base.extend({}); custom.skip('example', () => {});
+   ·                                                                      ───────────
+   ╰────
+  help: Remove the appending `.skip`

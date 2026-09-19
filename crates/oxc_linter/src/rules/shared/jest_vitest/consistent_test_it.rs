@@ -170,6 +170,7 @@ impl ConsistentTestItConfig {
                 call_expr.callee.get_inner_expression(),
                 &jest_fn_call.name,
                 fn_to_str,
+                ctx,
             ) {
                 ctx.diagnostic_with_fix(
                     consistent_method(fn_to_str, opposite_test_keyword, span),
@@ -186,6 +187,7 @@ impl ConsistentTestItConfig {
                 call_expr.callee.get_inner_expression(),
                 &jest_fn_call.name,
                 describe_to_str,
+                ctx,
             ) {
                 ctx.diagnostic_with_fix(
                     consistent_method_within_describe(describe_to_str, opposite_test_keyword, span),
@@ -203,9 +205,17 @@ impl ConsistentTestItConfig {
         expr: &Expression,
         test_name: &str,
         fix_jest_name: &'s str,
+        ctx: &LintContext,
     ) -> Option<(Span, Cow<'s, str>)> {
         match expr {
             Expression::Identifier(ident) => {
+                // Replacing a derived test function with `test` or `it` would discard its fixtures.
+                if let Some(symbol_id) =
+                    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                    && !ctx.scoping().symbol_flags(symbol_id).is_import()
+                {
+                    return None;
+                }
                 if ident.name.eq("fit") {
                     return Some((ident.span(), Cow::Borrowed("test.only")));
                 }
@@ -218,17 +228,19 @@ impl ConsistentTestItConfig {
                 Some((ident.span(), prefer_test_name))
             }
             Expression::StaticMemberExpression(expr) => {
-                Self::get_prefer_test_name_and_span(&expr.object, test_name, fix_jest_name)
+                Self::get_prefer_test_name_and_span(&expr.object, test_name, fix_jest_name, ctx)
             }
             Expression::CallExpression(call_expr) => Self::get_prefer_test_name_and_span(
                 call_expr.callee.get_inner_expression(),
                 test_name,
                 fix_jest_name,
+                ctx,
             ),
             Expression::TaggedTemplateExpression(expr) => Self::get_prefer_test_name_and_span(
                 expr.tag.get_inner_expression(),
                 test_name,
                 fix_jest_name,
+                ctx,
             ),
             _ => None,
         }
