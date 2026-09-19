@@ -120,8 +120,6 @@ const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
 pub(super) static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
     *concat_slices!([(&str, TokenKind)]: &KEYWORDS_JS, &KEYWORDS_TS_EXTRA);
 
-const KW_MAX: usize = KW_COUNT_TS;
-
 /// Slot count of the keyword hash tables - must cover the smallest shift a
 /// set may search (JS shift 25 → 128 slots, TS shift 23 → 512).
 const KW_SLOTS: usize = 512;
@@ -142,10 +140,10 @@ pub(super) const KW_HASH_HINT_TS: (u32, u32) = (0x000B_385B, 23);
 /// interface/intrinsic).
 pub struct KwSet {
     pub ts_key: bool,
-    pub kw_len: [u8; KW_MAX],
-    pub kw_first8: [u64; KW_MAX],
-    pub kw_ext: [u16; KW_MAX],
-    pub kw_tok: [u8; KW_MAX],
+    pub kw_len: [u8; KW_COUNT_TS],
+    pub kw_first8: [u64; KW_COUNT_TS],
+    pub kw_ext: [u16; KW_COUNT_TS],
+    pub kw_tok: [u8; KW_COUNT_TS],
     pub mask_tab: [u64; 9],
     pub kw_hash_mul: u32,
     pub kw_hash_shift: u32,
@@ -172,13 +170,13 @@ impl KwSet {
         hint: (u32, u32),
     ) -> KwSet {
         let n = list.len();
-        assert!(n >= 2 && n <= KW_MAX && n < 0xFF, "opmap.rs: bad KwSet word count");
+        assert!(n >= 2 && n <= KW_COUNT_TS && n < 0xFF, "opmap.rs: bad KwSet word count");
         let mut s = KwSet {
             ts_key,
-            kw_len: [0; KW_MAX],
-            kw_first8: [0; KW_MAX],
-            kw_ext: [0; KW_MAX],
-            kw_tok: [0; KW_MAX],
+            kw_len: [0; KW_COUNT_TS],
+            kw_first8: [0; KW_COUNT_TS],
+            kw_ext: [0; KW_COUNT_TS],
+            kw_tok: [0; KW_COUNT_TS],
             mask_tab: [0; 9],
             kw_hash_mul: 0,
             kw_hash_shift: 0,
