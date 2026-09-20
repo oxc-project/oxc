@@ -557,6 +557,7 @@ mod tests {
         fs.set(
             Uri::from_str("file:///root/diagnostics.config").unwrap(),
             "hello world".to_string(),
+            None,
         );
         let mut needs_diagnostic_refresh = false;
 
@@ -646,6 +647,7 @@ mod tests {
         fs.set(
             Uri::from_str("file:///root/diagnostics.config").unwrap(),
             "hello world".to_string(),
+            None,
         );
         let mut needs_diagnostic_refresh = false;
 
@@ -770,7 +772,7 @@ mod tests {
                 uri: Uri::from_str("file:///root/file.js").unwrap(),
                 range: Range::default(),
                 context: CodeActionContext::default(),
-                is_open_document: false,
+                document: None,
             })
             .await;
 
@@ -781,7 +783,7 @@ mod tests {
                 uri: Uri::from_str("file:///root/code_action.config").unwrap(),
                 range: Range::default(),
                 context: CodeActionContext::default(),
-                is_open_document: false,
+                document: None,
             })
             .await;
 
