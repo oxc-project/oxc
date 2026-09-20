@@ -1,0 +1,16 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "jsPlugins": [
+    {
+      "name": "dupe-alias",
+      "specifier": "./packages/a/node_modules/oxlint-plugin-dupe"
+    },
+    "./packages/b/node_modules/oxlint-plugin-dupe"
+  ],
+  "rules": {
+    "dupe/no-debugger": "error",
+    "dupe-alias/no-debugger": "error"
+  }
+}
