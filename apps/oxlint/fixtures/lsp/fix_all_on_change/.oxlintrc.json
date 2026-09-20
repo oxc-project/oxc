@@ -1,0 +1,5 @@
+{
+  "rules": {
+    "no-useless-rename": "error"
+  }
+}

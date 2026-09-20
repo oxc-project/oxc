@@ -21,7 +21,7 @@ use tower_lsp_server::{
 use tracing::{debug, error, info, warn};
 
 use crate::{
-    ClientMessage, ConcurrentHashMap, LanguageId,
+    ClientMessage, ConcurrentHashMap, LanguageId, OpenDocument,
     capabilities::{Capabilities, DiagnosticMode, server_capabilities},
     file_system::LSPFileSystem,
     options::WorkspaceOption,
@@ -594,7 +594,13 @@ impl LanguageServer for Backend {
         debug!("oxc server did save");
         let uri = params.text_document.uri;
         if let Some(content) = params.text {
-            self.file_system.set(uri.clone(), content);
+            // `textDocument/didSave` carries no version, so the stored one is kept.
+            self.file_system.set(uri.clone(), content, None);
+            // The saved text may differ from the content the cached code actions were computed
+            // from, and the kept version no longer tells them apart, so the cache is dropped.
+            if let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await {
+                worker.remove_uri_cache(&uri).await;
+            }
         }
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
@@ -628,7 +634,7 @@ impl LanguageServer for Backend {
             .next()
             .map(|c: TextDocumentContentChangeEvent| c.text)
         {
-            self.file_system.set(uri.clone(), content);
+            self.file_system.set(uri.clone(), content, Some(params.text_document.version));
         }
 
         let document = self.file_system.get_document(&uri);
@@ -636,11 +642,10 @@ impl LanguageServer for Backend {
         let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
             return;
         };
-        // Remove the internal cache for the document.
-        // When the editor requests `textDocument/codeAction`, it may use its diagnostic cache to generate actions.
-        // This could cause code actions to be generated with stale diagnostics if the cache is not cleared here.
-        // This should never happen, because this server expects `textDocument/diagnostic` is requested beforehand.
-        // Sadly, some editors/extensions have bugs, so we need to make sure the cache is cleared on change.
+        // The cached code actions were computed from the previous content, so they must not be
+        // served for the new one, even when the editor still holds diagnostics for the document.
+        // A `source.fixAll` code action request re-lints the document from its new content,
+        // every other code action request is answered once diagnostics ran for that content.
         worker.remove_uri_cache(&uri).await;
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
@@ -697,6 +702,7 @@ impl LanguageServer for Backend {
             uri.clone(),
             LanguageId::new(params.text_document.language_id),
             content,
+            params.text_document.version,
         );
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
@@ -786,14 +792,16 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let is_open_document = self.file_system.is_open(&uri);
-
-        let params = crate::CodeActionParams {
-            uri,
-            range: params.range,
-            context: params.context,
-            is_open_document,
+        // The in-memory content is the one the request refers to, the file on disk is stale
+        // as long as the client has unsaved changes.
+        let text_document = self.file_system.get_document(&uri);
+        let document = match (text_document.text, text_document.version) {
+            (Some(content), Some(version)) => Some(OpenDocument { content, version }),
+            _ => None,
         };
+
+        let params =
+            crate::CodeActionParams { uri, range: params.range, context: params.context, document };
 
         let code_actions = worker.get_code_actions_or_commands(params).await;
 

@@ -1847,6 +1847,58 @@ mod test_suite {
     }
 
     #[tokio::test]
+    async fn test_did_save_clears_uri_cache() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+        let cache_uris = Arc::new(Mutex::new(Vec::new()));
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::new(DiagnosticMode::Pull)
+                            .with_cache_tracking(Arc::clone(&cache_uris)),
+                    ),
+                )
+            },
+            initialize_request(init_options),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/file.txt");
+        server.send_request(did_open(&file, "some text")).await;
+
+        server.send_request(diagnostic(3, &file)).await;
+        let diagnostic_response = server.recv_response().await;
+        assert!(diagnostic_response.is_ok());
+        assert_eq!(diagnostic_response.id(), &Id::Number(3));
+
+        {
+            let removed_cache_uris = cache_uris.lock().unwrap();
+            assert_eq!(removed_cache_uris.len(), 1);
+            assert_eq!(removed_cache_uris[0], file.parse().unwrap());
+        }
+
+        // The saved text replaces the content without carrying a new version, so the cached
+        // actions of the previous content must not survive it.
+        server.send_request(did_save(&file, "saved text")).await;
+
+        // didSave is a notification; use a follow-up request to ensure it was processed.
+        server.send_request(test_configuration_request(4)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        assert_eq!(response.id(), &Id::Number(4));
+
+        {
+            let removed_cache_uris = cache_uris.lock().unwrap();
+            assert_eq!(removed_cache_uris.len(), 0);
+        }
+
+        server.shutdown(5).await;
+    }
+
+    #[tokio::test]
     async fn test_code_action_no_actions() {
         let mut server = TestServer::new_initialized(
             |client| Backend::new(client, server_info(), create_workspace_manager()),
