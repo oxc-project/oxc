@@ -62,8 +62,8 @@ impl<'a> PeepholeOptimizations {
             }
             // `true` => `false`
             // `false` => `true`
-            Expression::BooleanLiteral(boolean) => {
-                boolean.value = !boolean.value;
+            Expression::BooleanLiteral(bool_expr) => {
+                bool_expr.value = !bool_expr.value;
                 true
             }
             // `!(a == b || c == d)` => `a != b && c != d`
