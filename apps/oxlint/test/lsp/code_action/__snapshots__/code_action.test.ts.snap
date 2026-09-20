@@ -39,7 +39,7 @@ debugger;
 
 --- Code Actions ---------
 
-Title : Fix this Remove debugger statement problem
+Title : Fix fixes-plugin/fixes problem
 Preferred: Yes
 Resulting Content:
 const value = 1;
@@ -72,7 +72,7 @@ debugger;
 
 --- Code Actions ---------
 
-Title : Fix this Remove debugger statement problem
+Title : Fix fixes-plugin/fixes problem
 Preferred: Yes
 Resulting Content:
 

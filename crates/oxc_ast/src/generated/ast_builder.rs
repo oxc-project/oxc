@@ -21081,7 +21081,7 @@ impl<'a> TSTypeAnnotation<'a> {
     /// use [`TSTypeAnnotation::boxed`] instead.
     ///
     /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
+    /// * `span`: Starts at the `:` token and ends at the end of the type annotation.
     /// * `type_annotation`: The actual type in the annotation
     #[inline]
     pub fn new(span: Span, type_annotation: TSType<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
@@ -21095,7 +21095,7 @@ impl<'a> TSTypeAnnotation<'a> {
     /// If you want a stack-allocated node, use [`TSTypeAnnotation::new`] instead.
     ///
     /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
+    /// * `span`: Starts at the `:` token and ends at the end of the type annotation.
     /// * `type_annotation`: The actual type in the annotation
     #[inline]
     pub fn boxed(

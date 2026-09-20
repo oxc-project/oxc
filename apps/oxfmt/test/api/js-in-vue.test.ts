@@ -149,6 +149,40 @@ export default {
     expect(result.errors).toStrictEqual([]);
   });
 
+  it('should fill JSX text in <script lang="tsx"> blocks, not all-or-nothing', async () => {
+    const input = `
+<script setup lang="tsx">
+const short = (
+  <div>
+    <label for="d" class={[c]}>
+      Please enter the scheduled payment date below
+    </label>
+  </div>
+);
+const long = <div>Please enter the scheduled payment date below aaa bbb ccc ddd eee fff ggg hhh</div>;
+</script>
+`;
+    const result = await format("a.vue", input, { printWidth: 80 });
+
+    expect(result.code).toBe(`<script setup lang="tsx">
+const short = (
+  <div>
+    <label for="d" class={[c]}>
+      Please enter the scheduled payment date below
+    </label>
+  </div>
+);
+const long = (
+  <div>
+    Please enter the scheduled payment date below aaa bbb ccc ddd eee fff ggg
+    hhh
+  </div>
+);
+</script>
+`);
+    expect(result.errors).toStrictEqual([]);
+  });
+
   it('should format generic arrows in <script lang="ts"> blocks', async () => {
     const input = `
 <script lang="ts">

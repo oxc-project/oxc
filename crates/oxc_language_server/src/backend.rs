@@ -232,32 +232,27 @@ impl LanguageServer for Backend {
             // will only be filled when using push diagnostic model
             let mut new_diagnostics = Vec::new();
 
-            for (index, worker) in needed_configurations.values().copied().enumerate() {
+            for (index, worker) in needed_configurations.values().enumerate() {
                 // get the configuration from the response and start the worker
                 let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 debug!("starting worker in initialize with options: {configuration:?}");
                 client_messages.extend(worker.start_worker(configuration.clone()).await);
+            }
 
-                // run diagnostics for all known files in the workspace of the worker.
-                // This is necessary because the worker was not started before.
-                // On Pull diagnostic model, we will ask the client to refresh diagnostics instead of sending them all.
-                if capabilities.diagnostic_mode != DiagnosticMode::Push {
-                    continue;
-                }
-
+            // run diagnostics for all known files in the workspace of the worker.
+            // This is necessary because the worker was not started before.
+            // On Pull diagnostic model, we will ask the client to refresh diagnostics instead of sending them all.
+            if capabilities.diagnostic_mode == DiagnosticMode::Push {
                 for uri in &known_uris {
                     // Check if this worker is the most specific one for this URI
                     let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
                         continue;
                     };
                     let document = self.file_system.get_document(uri);
-                    let diagnostics = worker.run_diagnostic(&document).await;
+                    let diagnostics = worker.run_diagnostic(document).await;
                     match diagnostics {
                         Err(err) => {
-                            error!(
-                                "running diagnostics for {} failed: {err}",
-                                document.uri.as_str()
-                            );
+                            error!("running diagnostics for {} failed: {err}", uri.as_str());
                             client_messages
                                 .push(ClientMessage { r#type: MessageType::ERROR, message: err });
                         }
@@ -607,7 +602,7 @@ impl LanguageServer for Backend {
                 return;
             };
             let document = self.file_system.get_document(&uri);
-            match worker.run_diagnostic_on_save(&document).await {
+            match worker.run_diagnostic_on_save(document).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
                     self.client.show_message(MessageType::ERROR, err).await;
@@ -649,7 +644,7 @@ impl LanguageServer for Backend {
         worker.remove_uri_cache(&uri).await;
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
-            match worker.run_diagnostic_on_change(&document).await {
+            match worker.run_diagnostic_on_change(document).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
                     self.client.show_message(MessageType::ERROR, err).await;
@@ -711,7 +706,7 @@ impl LanguageServer for Backend {
 
             let document = self.file_system.get_document(&uri);
 
-            match worker.run_diagnostic(&document).await {
+            match worker.run_diagnostic(document).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
                     self.client.show_message(MessageType::ERROR, err).await;
@@ -800,7 +795,7 @@ impl LanguageServer for Backend {
             is_open_document,
         };
 
-        let code_actions = worker.get_code_actions_or_commands(&params).await;
+        let code_actions = worker.get_code_actions_or_commands(params).await;
 
         if code_actions.is_empty() {
             return Ok(None);
@@ -873,7 +868,7 @@ impl LanguageServer for Backend {
         };
 
         let document = self.file_system.get_document(uri);
-        let diagnostics = worker.run_diagnostic(&document).await;
+        let diagnostics = worker.run_diagnostic(document).await;
 
         let diagnostics = match diagnostics {
             Err(err) => {
@@ -936,7 +931,7 @@ impl LanguageServer for Backend {
         };
 
         let document = self.file_system.get_document(uri);
-        match worker.format_file(&document).await {
+        match worker.format_file(document).await {
             Ok(edits) => {
                 if edits.is_empty() {
                     return Ok(None);

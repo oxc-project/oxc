@@ -1,0 +1,53 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A declaration as a `for` BODY terminates itself even when the head has no
+// init: the head-vs-body test is by span, not by parent kind.
+
+for (;;) var noInit = 1
+
+for (init;;) var withInit = 2
+
+==================== Output ====================
+------------------------------
+{ printWidth: 80, semi: true }
+------------------------------
+// A declaration as a `for` BODY terminates itself even when the head has no
+// init: the head-vs-body test is by span, not by parent kind.
+
+for (;;) var noInit = 1;
+
+for (init; ;) var withInit = 2;
+
+-------------------------------
+{ printWidth: 100, semi: true }
+-------------------------------
+// A declaration as a `for` BODY terminates itself even when the head has no
+// init: the head-vs-body test is by span, not by parent kind.
+
+for (;;) var noInit = 1;
+
+for (init; ;) var withInit = 2;
+
+-------------------------------
+{ printWidth: 80, semi: false }
+-------------------------------
+// A declaration as a `for` BODY terminates itself even when the head has no
+// init: the head-vs-body test is by span, not by parent kind.
+
+for (;;) var noInit = 1
+
+for (init; ;) var withInit = 2
+
+--------------------------------
+{ printWidth: 100, semi: false }
+--------------------------------
+// A declaration as a `for` BODY terminates itself even when the head has no
+// init: the head-vs-body test is by span, not by parent kind.
+
+for (;;) var noInit = 1
+
+for (init; ;) var withInit = 2
+
+===================== End =====================

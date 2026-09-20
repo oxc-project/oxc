@@ -41,7 +41,8 @@ src/
 just test           # Unit tests
 just minsize        # Size benchmarks (PRIMARY METRIC)
 cargo coverage      # Conformance tests
-just e2e           # End-to-end tests
+pnpm --filter "./napi/minify" --filter "./napi/transform" run build-test
+pnpm --dir tasks/e2e test # End-to-end tests
 just ready         # Run before committing
 ```
 
@@ -116,7 +117,7 @@ fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'
 
 ```bash
 # Debug conformance failures
-cargo coverage -- --debug
+cargo coverage --debug
 
 # Test single file
 cargo run -p oxc_minifier --example minifier test.js

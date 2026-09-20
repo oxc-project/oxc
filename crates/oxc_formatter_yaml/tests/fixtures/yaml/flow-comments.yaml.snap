@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# DIVERGENCE: a flow collection either fits on one line or breaks normally;
+# DIVERGENCE (DIVERGENCES.md#flow-flat-with-newline, DIVERGENCES.md#flow-comment-position): a flow collection either fits on one line or breaks normally;
 # a comment inside one breaks it (never Prettier's flat-with-newline form),
 # and it stays at its syntactic position.
 {"key" # trailing the key
@@ -30,7 +30,7 @@ key: [ # kept inside the brackets
 ------------------
 { printWidth: 80 }
 ------------------
-# DIVERGENCE: a flow collection either fits on one line or breaks normally;
+# DIVERGENCE (DIVERGENCES.md#flow-flat-with-newline, DIVERGENCES.md#flow-comment-position): a flow collection either fits on one line or breaks normally;
 # a comment inside one breaks it (never Prettier's flat-with-newline form),
 # and it stays at its syntactic position.
 {
@@ -67,7 +67,7 @@ key: [
 -------------------
 { printWidth: 100 }
 -------------------
-# DIVERGENCE: a flow collection either fits on one line or breaks normally;
+# DIVERGENCE (DIVERGENCES.md#flow-flat-with-newline, DIVERGENCES.md#flow-comment-position): a flow collection either fits on one line or breaks normally;
 # a comment inside one breaks it (never Prettier's flat-with-newline form),
 # and it stays at its syntactic position.
 {

@@ -44,6 +44,10 @@ A-transformer:
             "napi/transform-relay/**",
           ]
 
+A-lexer:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_lexer/**"]
+
 A-linter:
   - changed-files:
       - any-glob-to-any-file:

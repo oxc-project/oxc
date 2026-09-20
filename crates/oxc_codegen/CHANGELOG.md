@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.150.0] - 2026-09-14
+
+### 🚀 Features
+
+- 9ef028c codegen: Add `ascii_only` option (#25994) (Samuel Attard)
+
+### 🐛 Bug Fixes
+
+- d7713ad parser: Classify Unicode line breaks in block comments (#26536) (camc314)
+- 32d00c5 codegen: Preserve instantiation expression precedence (#26424) (camc314)
+- ae6c386 codegen: Preserve in restriction through yield arguments (#26413) (camc314)
+- 42ac916 codegen: Preserve private-in right operand precedence (#26411) (camc314)
+
+### ⚡ Performance
+
+- d198982 codegen: Outline postfix source mapping work (#26450) (camc314)
+- 8bfb8c0 codegen: Avoid duplicate sourcemap name lookups (#26441) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- bfb4c57 parser: Distinguish unapplied no-side-effects comments (#26120) (碳苯 Carbon)
+
+### 🐛 Bug Fixes
+
+- b156333 codegen: Order accessibility before abstract on accessors (#26392) (camc314)
+- 2da73b7 codegen: Print matching quoted import names as identifiers (#26386) (camc314)
+- 0a81d29 codegen: Preserve private-in left operand precedence (#26383) (camc314)
+
 ## [0.147.0] - 2026-08-24
 
 ### 🐛 Bug Fixes

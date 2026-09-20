@@ -9,13 +9,11 @@ use oxc_formatter_core::{
 };
 use oxc_graphql_parser::ast::{ListValue, ObjectValue, Value};
 
-use crate::comments::{
-    flush_leading_comments, flush_trailing_comment_before_break, flush_trailing_inside_comments,
-};
+use crate::comments::{flush_leading_comments, flush_trailing_inside_comments};
 
 use super::{
     GraphqlFormatter, SeparatorKind, common, flush_trailing_before_literal, format_with,
-    span::{Spanned, close_delim_start, to_span},
+    span::{close_delim_start, to_span},
     string, write_sequence,
 };
 
@@ -45,7 +43,7 @@ fn write_list_value<'a>(list: &'a ListValue<'a>, f: &mut GraphqlFormatter<'_, 'a
         return;
     }
 
-    flush_trailing_comment_before_break(values[0].span().start, f);
+    // `[ # c`: the comment leads the first value on its own line, as after every opener.
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         // No blank-line preservation (Prettier uses a plain `path.map` for list values).
         let last_end = write_sequence(f, values, SeparatorKind::CommaSoftline, false, |i, f| {
@@ -68,7 +66,7 @@ fn write_object_value<'a>(object: &'a ObjectValue<'a>, f: &mut GraphqlFormatter<
         return;
     }
 
-    flush_trailing_comment_before_break(fields[0].span().start, f);
+    // `{ # c`: the comment leads the first field on its own line, as after every opener.
     let bracket_spacing = f.context().options().bracket_spacing.value();
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         let last_end = write_sequence(f, fields, SeparatorKind::CommaSoftline, false, |i, f| {

@@ -19,6 +19,16 @@ impl<'a> PeepholeOptimizations {
         alternate: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        // "(a, b) ? c : d" => "a, b ? c : d"
+        if let Expression::SequenceExpression(mut sequence_expr) = test {
+            if let Some(test) = sequence_expr.expressions.pop() {
+                sequence_expr
+                    .expressions
+                    .push(Self::minimize_conditional(span, test, consequent, alternate, ctx));
+            }
+            return Expression::SequenceExpression(sequence_expr);
+        }
+
         // Wrap the fresh conditional in an `Expression` slot so that, if the
         // fold returns a replacement, `ctx.replace_expression` can walk the
         // mutated transient conditional and mark its leaked refs dead. Without
@@ -689,12 +699,9 @@ impl<'a> PeepholeOptimizations {
             ctx,
         ) {
             if !matches!(expr, Expression::ChainExpression(_)) {
-                let new_expr = Expression::new_chain_expression(
-                    expr.span(),
-                    expr.take_in(ctx).into_chain_element().unwrap(),
-                    ctx,
-                );
-                ctx.replace_expression(expr, new_expr);
+                ctx.replace_expression_with(expr, |e, ctx| {
+                    Expression::new_chain_expression(e.span(), e.into_chain_element().unwrap(), ctx)
+                });
             }
             true
         } else {

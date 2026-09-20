@@ -9,9 +9,11 @@ use crate::{
     options::FormatTrailingCommas,
     print::function::FormatContentWithCacheMode,
     utils::{
-        assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
+        assignment_like::AssignmentLikeLayout,
+        expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        suppressed::FormatSuppressedNode, typecast::format_leading_comments_and_open_paren,
+        suppressed::write_suppressed_expression,
+        typecast::{format_leading_comments_and_open_paren, is_cast_target},
     },
     write,
 };
@@ -154,8 +156,8 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                 write!(f, formatted_signature);
 
-                let body_has_soft_line_break =
-                    arrow_expression.is_none_or(|expression| match expression {
+                let body_has_soft_line_break = arrow_expression.is_none_or(|expression| {
+                    let body_kind_hugs = match expression {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_) => {
@@ -166,7 +168,10 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                             is_multiline_template_starting_on_same_line(expression, f.source_text())
                                 || is_huggable_html_embed(expression, f)
                         }
-                    });
+                    };
+                    // A cast-wrapped body has no kind (see `is_cast_target`)
+                    body_kind_hugs && !is_cast_target(expression.span(), f)
+                });
 
                 if body_has_soft_line_break {
                     // A block body pushed down by its head-side comments is indented under the arrow:
@@ -325,7 +330,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         // This matches Prettier, which allows type annotations when
         // grouping arrow expressions, but disallows them when grouping
         // normal function expressions.
-        if !has_only_simple_parameters(parameters, true) {
+        if !has_only_simple_parameters(parameters, None, true) {
             return true;
         }
 
@@ -499,6 +504,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         // If the body is _not_ one of those kinds, then we'll want to insert a
         // soft line break before the body so that it prints on a separate line
         // in its entirety.
+        // A cast-wrapped body has no kind (see `is_cast_target`).
         let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
             matches!(
                 expression,
@@ -507,7 +513,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
                     | Expression::SequenceExpression(_)
                     | Expression::JSXElement(_)
                     | Expression::JSXFragment(_)
-            )
+            ) && !is_cast_target(expression.span(), f)
         });
 
         // An own-line comment before the tail body forces the body onto its own line even for the kinds above,
@@ -866,13 +872,15 @@ fn format_sequence_with_leading_comment<'a, 'b>(
     let is_suppressed = f.comments().is_suppressed(sequence_span.start);
 
     let format_sequence = format_with(move |f| {
-        format_leading_comments_and_open_paren(sequence_span, leading_comments_start, true, f);
         if is_suppressed {
-            write!(f, FormatSuppressedNode(sequence_span));
+            // The single owner keeps a cast target's source parens (`() => /** @type {A} */ (a, b)`),
+            // which double as the sequence-body parens this site otherwise forces.
+            write_suppressed_expression(sequence_span, leading_comments_start, true, f);
         } else {
+            format_leading_comments_and_open_paren(sequence_span, leading_comments_start, true, f);
             write!(f, format_body);
+            write!(f, [")"]);
         }
-        write!(f, [")"]);
     });
 
     Some(format_with(move |f| {

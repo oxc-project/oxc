@@ -65,7 +65,7 @@ export function printBinaryish(
       if (left.type === "BinaryExpression" && left.left.type === "PrivateIdentifier") {
         // Private-in expression as the left operand
         typeAssertIs<ESTree.PrivateInExpression>(left);
-        printPrivateInExpression(left, state, PREC_LOWEST);
+        printPrivateInExpression(left, state, v.leftPrecedence);
         binVisitRightAndFinish(v, state);
         break;
       }

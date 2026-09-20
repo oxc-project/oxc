@@ -132,8 +132,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
-        let has_no_side_effects_comment =
-            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
 
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
@@ -195,46 +195,56 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => self.parse_expression_or_labeled_statement(),
         };
 
-        if has_no_side_effects_comment {
-            Self::set_pure_on_function_stmt(&mut stmt);
+        if let Some(comments) = no_side_effects_comments
+            && Self::set_pure_on_function_stmt(&mut stmt)
+        {
+            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
         }
 
         stmt
     }
 
-    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) {
+    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
         match stmt {
             Statement::FunctionDeclaration(func) => {
                 func.pure = true;
+                true
             }
             Statement::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
                 ExportDefaultDeclarationKind::FunctionExpression(func)
                 | ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                     func.pure = true;
+                    true
                 }
                 ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
                     func.pure = true;
+                    true
                 }
-                _ => {}
+                _ => false,
             },
             Statement::ExportDeclaration(decl) => match &mut decl.declaration {
                 Declaration::FunctionDeclaration(func) => {
                     func.pure = true;
+                    true
                 }
                 Declaration::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                     if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init)
                     {
-                        Self::set_pure_on_function_expr(expr);
+                        Self::set_pure_on_function_expr(expr)
+                    } else {
+                        false
                     }
                 }
-                _ => {}
+                _ => false,
             },
             Statement::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                 if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init) {
-                    Self::set_pure_on_function_expr(expr);
+                    Self::set_pure_on_function_expr(expr)
+                } else {
+                    false
                 }
             }
-            _ => {}
+            _ => false,
         }
     }
 
@@ -393,7 +403,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     r#await,
                 );
             }
-            Kind::Let => {
+            Kind::Let if !self.cur_token().escaped() => {
                 // `for (let`
                 let decl_start = self.cur_start();
                 // disallow `for (let in ...`
@@ -412,17 +422,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => {}
         }
 
-        // [+Using, +Await] await [no LineTerminator here] using [no LineTerminator here]
-        if self.at(Kind::Await)
-            && self.lookahead(|p| {
-                p.bump_any();
-                if !p.at(Kind::Using) || p.cur_token().is_on_new_line() {
-                    return false;
-                }
-                p.bump_any();
-                !p.cur_token().is_on_new_line()
-            })
-        {
+        // [+Using, +Await] await [no LineTerminator here] using [no LineTerminator here] ForBinding[?Yield, ?Await, ~Pattern]
+        if self.at(Kind::Await) && self.is_using_statement() {
             return self.parse_using_declaration_for_statement(
                 for_start,
                 parenthesis_opening_span,
@@ -459,7 +460,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_for_loop(for_start, parenthesis_opening_span, None, r#await);
         }
 
-        let is_let = self.at(Kind::Let);
+        let is_let = self.at(Kind::Let) && !self.cur_token().escaped();
         // `async` is allowed as `for (async of ...)` if `async` is escaped
         let is_async = self.at(Kind::Async) && !self.cur_token().escaped();
         let expr_start = self.cur_start();
@@ -526,7 +527,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         parenthesis_opening_span: Span,
         r#await: bool,
     ) -> Statement<'a> {
-        let using_decl = self.parse_using_declaration(StatementContext::For);
+        let using_decl =
+            self.context_remove(Context::In, |p| p.parse_using_declaration(StatementContext::For));
 
         if matches!(self.cur_kind(), Kind::In) {
             if using_decl.kind.is_await() {

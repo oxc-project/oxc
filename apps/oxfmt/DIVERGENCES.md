@@ -4,62 +4,70 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 ## template-expression-indent
 
-- Why: prettier-bug (prettier/prettier#19725)
-- Pin: `conformance/fixtures/edge-cases/css-in-js/template-expression-indent.js` (also `gql-in-js` / `html-in-js` siblings)
-- Drop when: the pin catches up
+- Why: invariant (prettier/prettier#19725)
+- Pin: `conformance/fixtures/edge-cases/css-in-js/template-expression-indent.js`, `conformance/fixtures/edge-cases/gql-in-js/template-expression-indent.js`, `conformance/fixtures/edge-cases/html-in-js/template-expression-indent.js`
+- Conformance: `externals/webawesome/carousel/carousel.ts`, `externals/webawesome/color-picker/color-picker.ts`, `externals/webawesome/input/input.ts`
 
 ```js
 /* input */
-_ = gql`
-  ${
-                    a +
+_ = css`
+  a{
+    color:
+                  ${
+                    a
                     // comment
-                    b
-                  }
+                    + b}
+    ;
+  }
 `;
 
 /* ours */
-_ = gql`
-  ${
-    a +
-    // comment
-    b
+_ = css`
+  a {
+    color: ${
+      a +
+      // comment
+      b
+    };
   }
 `;
 
 /* prettier */
-_ = gql`
-  ${
+_ = css`
+  a {
+    color: ${
                     a +
                     // comment
                     b
-                  }
+                  };
+  }
 `;
 ```
 
 A broken `${expr}` inside an embedded template re-indents to the placeholder's position;
-Prettier 3.9.6 preserves the source indentation non-idempotently (fixed upstream by prettier#19725).
+Prettier 3.9.6 preserves the source indentation, not a fixpoint: its second pass yields ours.
 
 ## broken-template-comment-indent
 
-- Why: prettier-bug
-- Pin: `conformance/fixtures/edge-cases/xxx-in-js-comment/broken-template-comment-indent.js` (also tracked by conformance `externals/prettier/js/multiparser-comments/comment-inside.js`)
+- Why: invariant
+- Pin: `conformance/fixtures/edge-cases/xxx-in-js-comment/broken-template-comment-indent.js`
+- Conformance: `externals/prettier/js/multiparser-comments/comment-inside.js`
 
 ```js
 /* input */
 html`
-  ${
-  foo
+${
+      foo
   /* comment */
 }
 `;
 
 /* ours */
 html`
-  ${
-    foo
-    /* comment */
-  }
+${
+  foo
+  /* comment */
+}
 `;
 
 /* prettier */
@@ -71,14 +79,15 @@ html`
 `;
 ```
 
-A `${}` whose embed formatting bails (comments force the broken form) still indents its expression to the
-placeholder, same as `template-expression-indent`; Prettier prints it at ROOT indent, dropping the embed
-indent entirely (an artifact of its embed bail-out path).
+A `${}` whose embed formatting bails (comments force the broken form) still indents its expression to the placeholder, same as `template-expression-indent`;
+Prettier prints it at ROOT indent, dropping the embed indent entirely (an artifact of its embed bail-out path), not a fixpoint:
+its second pass indents the expression to the placeholder too (at the template body's indent, `  ${` / `    foo`).
 
 ## ts-in-vue-generic-trailing-comma
 
-- Why: uniform-rule
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/generic-trailing-comma.vue` (also tracked by conformance `externals/vue-vben-admin/.../api-component/api-component.vue`)
+- Why: uniform-rule (embedded script formats like its standalone file)
+- Pin: `conformance/fixtures/edge-cases/js-in-vue/generic-trailing-comma.vue`
+- Conformance: `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
 
 ```vue
 <!-- input -->
@@ -99,12 +108,13 @@ const getComponentRef = <T = any,>() => componentRef.value as T;
 
 A ts-in-vue script formats exactly like plain `.ts`: the disambiguating trailing comma in `<T,>` is only
 required where JSX is possible (`.tsx`, `.mts`/`.cts`). Prettier keeps it in ts-in-xxx embeds but removes it
-in ts-in-md and plain `.ts` — one rule over that internal inconsistency.
+in ts-in-md and plain `.ts` — one rule over that internal inconsistency, the same one css-in-js and gql-in-js follow.
 
 ## styled-extend-tag
 
 - Why: cost
-- Pin: `conformance/fixtures/edge-cases/css-in-js/styled-extend-tag.js` (also tracked by conformance `externals/prettier/js/multiparser-css/styled-components.js`)
+- Pin: `conformance/fixtures/edge-cases/css-in-js/styled-extend-tag.js`
+- Conformance: `externals/prettier/js/multiparser-css/styled-components.js`
 
 ```js
 /* input */

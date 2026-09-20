@@ -28,7 +28,7 @@ events:
 
 Oops! Something went wrong! :(
 
-ESLint: 10.8.1
+ESLint: 10.10.0
 
 Error: `onCodePathEnd` CFG event handler threw
 Occurred while linting <fixture>/files/1.js

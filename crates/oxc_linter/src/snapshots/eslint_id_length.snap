@@ -553,3 +553,27 @@ source: crates/oxc_linter/src/tester.rs
  1 │ ({ prop: obj.𐌘 } = {});
    ·              ─
    ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:17]
+ 1 │ interface Foo { a: string; }
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:17]
+ 1 │ interface Foo { a(): void; }
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ type Foo = { a: string };
+   ·              ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ type Foo = { a(): void };
+   ·              ─
+   ╰────

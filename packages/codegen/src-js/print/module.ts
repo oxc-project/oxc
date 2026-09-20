@@ -114,8 +114,13 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
 
         if (TS && specifier.importKind === "type") write(state, "type ", CAT_OTHER);
 
-        const importedName = moduleExportName(specifier.imported, state);
-        const { local } = specifier;
+        const { imported, local } = specifier;
+        if (imported.type === "Literal" && imported.value === local.name) {
+          printSpaceBeforeIdentifier(state);
+          writeWithMapNamed(state, local.name, local.start, local.end, local);
+          break;
+        }
+        const importedName = moduleExportName(imported, state);
         if (importedName !== local.name) {
           write(state, " as ", CAT_OTHER);
           writeWithMapNamed(state, local.name, local.start, local.end, local);

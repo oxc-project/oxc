@@ -77,7 +77,7 @@ pub trait Tool: Send + Sync {
     /// The tool should filter the code actions based on the requested range.
     /// The context can be used to further filter the code actions,
     /// for example by the `only` field which indicates that only code actions of certain kinds are requested.
-    fn get_code_actions_or_commands(&self, _params: &CodeActionParams) -> Vec<CodeActionOrCommand> {
+    fn get_code_actions_or_commands(&self, _params: CodeActionParams) -> Vec<CodeActionOrCommand> {
         Vec::new()
     }
 
@@ -91,7 +91,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs; ignoring formatting should return [`Ok`] with an empty vector.
-    fn run_format(&self, _document: &TextDocument) -> Result<Vec<TextEdit>, String> {
+    fn run_format(&self, _document: TextDocument) -> Result<Vec<TextEdit>, String> {
         Ok(Vec::new())
     }
 
@@ -103,7 +103,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs; ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic(&self, _document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic(&self, _document: TextDocument) -> DiagnosticResult {
         Ok(Vec::new())
     }
 
@@ -116,7 +116,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs; ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic_on_save(&self, _document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic_on_save(&self, _document: TextDocument) -> DiagnosticResult {
         Ok(Vec::new())
     }
 
@@ -129,7 +129,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs; ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic_on_change(&self, _document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic_on_change(&self, _document: TextDocument) -> DiagnosticResult {
         Ok(Vec::new())
     }
 

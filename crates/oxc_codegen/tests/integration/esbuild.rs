@@ -2,24 +2,23 @@
 //! * <https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer_test.go>
 //! * <https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_parser/js_parser_test.go>
 
-use crate::tester::{test, test_minify};
+use crate::tester::{test, test_ascii, test_minify, test_minify_ascii};
 
 // NOTE: These values are aligned with terser, not esbuild.
 #[test]
 fn test_number() {
     // Check "1eN"
-    // TODO FIXME
-    // test("x = 1e-100", "x = 1e-100;\n");
-    // test("x = 1e-4", "x = 1e-4;\n");
-    // test("x = 1e-3", "x = 1e-3;\n");
-    // test("x = 1e-2", "x = 1e-2;\n");
-    // test("x = 1e-1", "x = 1e-1;\n");
-    // test("x = 1e0", "x = 1e0;\n");
-    // test("x = 1e1", "x = 1e1;\n");
-    // test("x = 1e2", "x = 1e2;\n");
-    // test("x = 1e3", "x = 1e3;\n");
-    // test("x = 1e4", "x = 1e4;\n");
-    // test("x = 1e100", "x = 1e100;\n");
+    test("x = 1e-100", "x = 1e-100;\n");
+    test("x = 1e-4", "x = 1e-4;\n");
+    test("x = 1e-3", "x = .001;\n");
+    test("x = 1e-2", "x = .01;\n");
+    test("x = 1e-1", "x = .1;\n");
+    test("x = 1e0", "x = 1;\n");
+    test("x = 1e1", "x = 10;\n");
+    test("x = 1e2", "x = 100;\n");
+    test("x = 1e3", "x = 1e3;\n");
+    test("x = 1e4", "x = 1e4;\n");
+    test("x = 1e100", "x = 1e100;\n");
     test_minify("x = 1e-100", "x=1e-100;");
     test_minify("x = 1e-5", "x=1e-5;");
     test_minify("x = 1e-4", "x=1e-4;");
@@ -34,19 +33,18 @@ fn test_number() {
     test_minify("x = 1e100", "x=1e100;");
 
     // Check "12eN"
-    // TODO FIXME
-    // test("x = 12e-100", "x = 12e-100;\n");
-    // test("x = 12e-5", "x = 12e-5;\n");
-    // test("x = 12e-4", "x = 12e-4;\n");
-    // test("x = 12e-3", "x = 12e-3;\n");
-    // test("x = 12e-2", "x = 12e-2;\n");
-    // test("x = 12e-1", "x = 12e-1;\n");
-    // test("x = 12e0", "x = 12e0;\n");
-    // test("x = 12e1", "x = 12e1;\n");
-    // test("x = 12e2", "x = 12e2;\n");
-    // test("x = 12e3", "x = 12e3;\n");
-    // test("x = 12e4", "x = 12e4;\n");
-    // test("x = 12e100", "x = 12e100;\n");
+    test("x = 12e-100", "x = 1.2e-99;\n");
+    test("x = 12e-5", "x = 12e-5;\n");
+    test("x = 12e-4", "x = .0012;\n");
+    test("x = 12e-3", "x = .012;\n");
+    test("x = 12e-2", "x = .12;\n");
+    test("x = 12e-1", "x = 1.2;\n");
+    test("x = 12e0", "x = 12;\n");
+    test("x = 12e1", "x = 120;\n");
+    test("x = 12e2", "x = 1200;\n");
+    test("x = 12e3", "x = 12e3;\n");
+    test("x = 12e4", "x = 12e4;\n");
+    test("x = 12e100", "x = 12e100;\n");
     test_minify("x = 12e-100", "x=1.2e-99;");
     test_minify("x = 12e-6", "x=12e-6;");
     test_minify("x = 12e-5", "x=12e-5;");
@@ -62,20 +60,19 @@ fn test_number() {
     test_minify("x = 12e100", "x=12e100;");
 
     // Check cases for "A.BeX" => "ABeY" simplification
-    // TODO FIXME
-    // test("x = 123456789", "x = 123456789;\n");
-    // test("x = 1123456789", "x = 1123456789;\n");
-    // test("x = 10123456789", "x = 10123456789;\n");
-    // test("x = 100123456789", "x = 100123456789;\n");
-    // test("x = 1000123456789", "x = 1000123456789;\n");
-    // test("x = 10000123456789", "x = 10000123456789;\n");
-    // test("x = 100000123456789", "x = 100000123456789;\n");
-    // test("x = 1000000123456789", "x = 1000000123456789;\n");
-    // test("x = 10000000123456789", "x = 10000000123456789;\n");
-    // test("x = 100000000123456789", "x = 100000000123456789;\n");
-    // test("x = 1000000000123456789", "x = 1000000000123456789;\n");
-    // test("x = 10000000000123456789", "x = 10000000000123456789;\n");
-    // test("x = 100000000000123456789", "x = 100000000000123456789;\n");
+    test("x = 123456789", "x = 123456789;\n");
+    test("x = 1123456789", "x = 1123456789;\n");
+    test("x = 10123456789", "x = 10123456789;\n");
+    test("x = 100123456789", "x = 100123456789;\n");
+    test("x = 1000123456789", "x = 0xe8dc00dd15;\n");
+    test("x = 10000123456789", "x = 0x91855ce6d15;\n");
+    test("x = 100000123456789", "x = 0x5af317d60d15;\n");
+    test("x = 1000000123456789", "x = 0x38d7eac224d15;\n");
+    test("x = 10000000123456789", "x = 0x2386f2771ccd14;\n");
+    test("x = 100000000123456789", "x = 0x163457864e5cd10;\n");
+    test("x = 1000000000123456789", "x = 0xde0b6b3aebfcd00;\n");
+    test("x = 10000000000123456789", "x = 0x8ac723049143d000;\n");
+    test("x = 100000000000123456789", "x = 0x56bc75e2d6a6bc000;\n");
 
     // Check numbers around the ends of various integer ranges. These were
     // crashing in the WebAssembly build due to a bug in the Go runtime.
@@ -113,14 +110,13 @@ fn test_number() {
     test_minify("x = -0x1_0000_0000_0000_1000", "x=-0x10000000000001000;");
 
     // Check the hex vs. decimal decision boundary when minifying
-    // TODO FIXME
-    // test("x = 999999999999", "x = 999999999999;\n");
-    // test("x = 1000000000001", "x = 1000000000001;\n");
-    // test("x = 0x0FFF_FFFF_FFFF_FF80", "x = 0x0FFF_FFFF_FFFF_FF80;\n");
-    // test("x = 0x1000_0000_0000_0000", "x = 0x1000_0000_0000_0000;\n");
-    // test("x = 0xFFFF_FFFF_FFFF_F000", "x = 0xFFFF_FFFF_FFFF_F000;\n");
-    // test("x = 0xFFFF_FFFF_FFFF_F800", "x = 0xFFFF_FFFF_FFFF_F800;\n");
-    // test("x = 0xFFFF_FFFF_FFFF_FFFF", "x = 0xFFFF_FFFF_FFFF_FFFF;\n");
+    test("x = 999999999999", "x = 999999999999;\n");
+    test("x = 1000000000001", "x = 0xe8d4a51001;\n");
+    test("x = 0x0FFF_FFFF_FFFF_FF80", "x = 0xfffffffffffff80;\n");
+    test("x = 0x1000_0000_0000_0000", "x = 0x1000000000000000;\n");
+    test("x = 0xFFFF_FFFF_FFFF_F000", "x = 0xfffffffffffff000;\n");
+    test("x = 0xFFFF_FFFF_FFFF_F800", "x = 0xfffffffffffff800;\n");
+    test("x = 0xFFFF_FFFF_FFFF_FFFF", "x = 0x10000000000000000;\n");
     test_minify("x = 999999999999", "x=999999999999;");
     test_minify("x = 1000000000001", "x=0xe8d4a51001;");
     test_minify("x = 0x0FFF_FFFF_FFFF_FF80", "x=0xfffffffffffff80;");
@@ -883,49 +879,48 @@ fn test_ascii_only() {
     test("let π = 'π'", "let π = \"π\";\n");
     test("let π_ = 'π'", "let π_ = \"π\";\n");
     test("let _π = 'π'", "let _π = \"π\";\n");
-    // testASCII(t, "let π = 'π'", "let \\u03C0 = \"\\u03C0\";\n");
-    // testASCII(t, "let π_ = 'π'", "let \\u03C0_ = \"\\u03C0\";\n");
-    // testASCII(t, "let _π = 'π'", "let _\\u03C0 = \"\\u03C0\";\n");
+    test_ascii("let π = 'π'", "let \\u03C0 = \"\\u03C0\";\n");
+    test_ascii("let π_ = 'π'", "let \\u03C0_ = \"\\u03C0\";\n");
+    test_ascii("let _π = 'π'", "let _\\u03C0 = \"\\u03C0\";\n");
 
     test("let 貓 = '🐈'", "let 貓 = \"🐈\";\n");
     test("let 貓abc = '🐈'", "let 貓abc = \"🐈\";\n");
     test("let abc貓 = '🐈'", "let abc貓 = \"🐈\";\n");
-    // testASCII(t, "let 貓 = '🐈'", "let \\u8C93 = \"\\u{1F408}\";\n");
-    // testASCII(t, "let 貓abc = '🐈'", "let \\u8C93abc = \"\\u{1F408}\";\n");
-    // testASCII(t, "let abc貓 = '🐈'", "let abc\\u8C93 = \"\\u{1F408}\";\n");
+    test_ascii("let 貓 = '🐈'", "let \\u8C93 = \"\\u{1F408}\";\n");
+    test_ascii("let 貓abc = '🐈'", "let \\u8C93abc = \"\\u{1F408}\";\n");
+    test_ascii("let abc貓 = '🐈'", "let abc\\u8C93 = \"\\u{1F408}\";\n");
 
     // Test a character outside the BMP
     test("var 𐀀", "var 𐀀;\n");
     test("var \\u{10000}", "var 𐀀;\n");
-    // testASCII(t, "var 𐀀", "var \\u{10000};\n");
-    // testASCII(t, "var \\u{10000}", "var \\u{10000};\n");
-    // testTargetASCII(t, 2015, "'𐀀'", "\"\\u{10000}\";\n");
+    test_ascii("var 𐀀", "var \\u{10000};\n");
+    test_ascii("var \\u{10000}", "var \\u{10000};\n");
+    test_ascii("'𐀀'", "\"\\u{10000}\";\n");
     // testTargetASCII(t, 5, "'𐀀'", "\"\\uD800\\uDC00\";\n");
-    // testTargetASCII(t, 2015, "x.𐀀", "x[\"\\u{10000}\"];\n");
+    // esbuild rewrites an astral member name to a computed key for ES5; as ES2015+ it stays an identifier.
+    test_ascii("x.𐀀", "x.\\u{10000};\n");
     // testTargetASCII(t, 5, "x.𐀀", "x[\"\\uD800\\uDC00\"];\n");
 
     // Escapes should use consistent case
-    // testASCII(
-    // t,
-    // "var \\u{100a} = {\\u100A: '\\u100A'}",
-    // "var \\u100A = { \\u100A: \"\\u100A\" };\n",
-    // );
-    // testASCII(
-    // t,
-    // "var \\u{1000a} = {\\u{1000A}: '\\u{1000A}'}",
-    // "var \\u{1000A} = { \"\\u{1000A}\": \"\\u{1000A}\" };\n",
-    // );
+    test_ascii("var \\u{100a} = {\\u100A: '\\u100A'}", "var \\u100A = { \\u100A: \"\\u100A\" };\n");
+    // esbuild quotes an astral property key for its ES5 targets; as an ES2015+ identifier it can stay bare.
+    test_ascii(
+        "var \\u{1000a} = {\\u{1000A}: '\\u{1000A}'}",
+        "var \\u{1000A} = { \\u{1000A}: \"\\u{1000A}\" };\n",
+    );
 
-    // These characters should always be escaped
-    // test( "let x = '\u2028'", "let x = \"\\u2028\";\n");
-    // test( "let x = '\u2029'", "let x = \"\\u2029\";\n");
-    // test( "let x = '\uFEFF'", "let x = \"\\uFEFF\";\n");
+    // Line and paragraph separators are always escaped.
+    test("let x = '\u{2028}'", "let x = \"\\u2028\";\n");
+    test("let x = '\u{2029}'", "let x = \"\\u2029\";\n");
+    // The byte order mark is escaped only in ASCII-only mode.
+    test("let x = '\u{FEFF}'", "let x = \"\u{FEFF}\";\n");
+    test_ascii("let x = '\u{FEFF}'", "let x = \"\\uFEFF\";\n");
 
     // There should still be a space before "extends"
-    // testASCII(t, "class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0 {\n}\n");
-    // testASCII(t, "(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0 {\n});\n");
-    // test_minifyASCII(t, "class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0{}");
-    // test_minifyASCII(t, "(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0{});");
+    test_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0 {}\n");
+    test_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0 {});\n");
+    test_minify_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0{}");
+    test_minify_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0{});");
 }
 
 #[test]
@@ -977,13 +972,13 @@ fn test_jsx() {
     test("<a b={<>{c}</>}/>", "<a b={<>{c}</>} />;\n");
 
     // These can't be escaped because JSX lacks a syntax for escapes
-    // testJSXASCII(t, "<π/>", "<π />;\n");
-    // testJSXASCII(t, "<π.𐀀/>", "<π.𐀀 />;\n");
-    // testJSXASCII(t, "<𐀀.π/>", "<𐀀.π />;\n");
-    // testJSXASCII(t, "<π>x</π>", "<π>x</π>;\n");
-    // testJSXASCII(t, "<𐀀>x</𐀀>", "<𐀀>x</𐀀>;\n");
-    // testJSXASCII(t, "<a π/>", "<a π />;\n");
-    // testJSXASCII(t, "<a 𐀀/>", "<a 𐀀 />;\n");
+    test_ascii("<π/>", "<π />;\n");
+    test_ascii("<π.𐀀/>", "<π.𐀀 />;\n");
+    test_ascii("<𐀀.π/>", "<𐀀.π />;\n");
+    test_ascii("<π>x</π>", "<π>x</π>;\n");
+    test_ascii("<𐀀>x</𐀀>", "<𐀀>x</𐀀>;\n");
+    test_ascii("<a π/>", "<a π />;\n");
+    test_ascii("<a 𐀀/>", "<a 𐀀 />;\n");
 
     // JSX text is deliberately not printed as ASCII when JSX preservation is
     // enabled. This is because:
@@ -993,10 +988,10 @@ fn test_jsx() {
     // c) People do very weird/custom things with JSX that "preserve" shouldn't break
     //
     // See also: https://github.com/evanw/esbuild/issues/3605
-    // testJSXASCII(t, "<a b='π'/>", "<a b='π' />;\n");
-    // testJSXASCII(t, "<a b='𐀀'/>", "<a b='𐀀' />;\n");
-    // testJSXASCII(t, "<a>π</a>", "<a>π</a>;\n");
-    // testJSXASCII(t, "<a>𐀀</a>", "<a>𐀀</a>;\n");
+    test_ascii("<a b='π'/>", "<a b=\"π\" />;\n");
+    test_ascii("<a b='𐀀'/>", "<a b=\"𐀀\" />;\n");
+    test_ascii("<a>π</a>", "<a>π</a>;\n");
+    test_ascii("<a>𐀀</a>", "<a>𐀀</a>;\n");
 
     // testJSXMinify(t, "<a b c={x,y} d='true'/>", "<a b c={(x,y)}d='true'/>;");
     // testJSXMinify(t, "<a><b/><c/></a>", "<a><b/><c/></a>;");

@@ -70,7 +70,7 @@ impl ServerFormatterBuilder {
 
         // If `configPath` is explicitly set, load it eagerly as the single config for all files.
         let use_nested_config = options.use_nested_configs();
-        let explicit_config_path = options.explicit_config_path().map(PathBuf::from);
+        let explicit_config_path = options.config_path.as_ref().map(PathBuf::from);
 
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
@@ -193,7 +193,7 @@ impl Tool for ServerFormatter {
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
         let options = deserialize_lsp_options(options);
 
-        let mut patterns: Vec<Pattern> = if let Some(config_path) = options.explicit_config_path() {
+        let mut patterns: Vec<Pattern> = if let Some(config_path) = options.config_path.as_deref() {
             vec![normalize_user_config_path_to_watch_pattern(config_path)]
         } else {
             // Watch subdirectories too for nested config support;
@@ -234,7 +234,7 @@ impl Tool for ServerFormatter {
         ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() }
     }
 
-    fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
+    fn run_format(&self, document: TextDocument) -> Result<Vec<TextEdit>, String> {
         let file_content;
         let (result, source_text) = if document.uri.scheme().as_str() == "file" {
             let Some(path) = document.uri.to_file_path() else {

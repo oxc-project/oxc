@@ -7,8 +7,9 @@ use crate::{
     formatter::{
         JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{empty_line, format_once, hard_line_break, soft_line_indent_or_space, space},
-        trivia::{FormatLeadingComments, FormatTrailingComments},
+        trivia::{FormatCommentBeforeContent, FormatLeadingComments, FormatTrailingComments},
     },
+    print::semicolon::write_suppressed_statement,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
@@ -115,11 +116,7 @@ pub fn write_trailing_comments_before(
         } else {
             write!(f, hard_line_break());
         }
-        f.context_mut().comments_mut().increment_printed_count();
-        write!(f, comment);
-        if comment.is_line() {
-            write!(f, hard_line_break());
-        }
+        write!(f, FormatCommentBeforeContent::new(comment));
     }
     // The own-line loop's breaks have already flushed a pending same-line line comment
     own_line.is_empty() && same_line.last().is_some_and(|comment| comment.is_line())
@@ -211,7 +208,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
                         if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
                     );
                     if is_consequent_of_if_statement_parent {
-                        write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        // A suppressed consequent still hands its terminator to the formatter
+                        if !write_suppressed_statement(self.body, f) {
+                            write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        }
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);
                         FormatTrailingComments::Comments(comments).fmt(f);

@@ -1,3 +1,4 @@
+// oxlint-disable vitest/expect-expect -- Benchmarks measure performance instead of asserting behavior.
 // Benchmarks. Run with `pnpm run bench`.
 //
 // Each fixture is printed three ways:
@@ -26,7 +27,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join as pathJoin } from "node:path";
 import { parseSync } from "oxc-parser";
-import { bench, describe } from "vitest";
+import { describe, test } from "vitest";
 
 import { printSync as oxcPrintSync } from "./dist/index.js";
 
@@ -68,6 +69,10 @@ const PARSE_OPTIONS = {
 // V8 has to tier the printer up to optimized code before any of the timed iterations start,
 // or the first results measure the interpreter instead.
 const BENCH_OPTIONS = { time: 3000, warmupTime: 1000, iterations: 50, warmupIterations: 20 };
+
+// Vitest 5 runs benchmarks inside ordinary tests, so their timeout must also cover warmup and
+// minimum iterations on slower fixtures.
+const BENCH_TEST_OPTIONS = { timeout: 60_000 };
 
 /**
  * Load a fixture, downloading it and caching it on disk if it isn't there already.
@@ -139,31 +144,25 @@ for (const { filename, code } of fixtures) {
   // `code.charCodeAt(0)` triggers flattening `code`. Writing the result to `flattenSink` prevents V8
   // from optimizing out the `charCodeAt` call as dead code.
   describe(`${filename} (${code.length} bytes)`, () => {
-    bench(
-      "oxc-codegen",
-      () => {
+    test("oxc-codegen", BENCH_TEST_OPTIONS, async ({ bench }) => {
+      await bench("oxc-codegen", () => {
         const { code } = oxcPrintSync(program, options);
         flattenSink ^= code.charCodeAt(0);
-      },
-      BENCH_OPTIONS,
-    );
+      }).run(BENCH_OPTIONS);
+    });
 
-    bench(
-      "oxc-codegen sourcemaps",
-      () => {
+    test("oxc-codegen sourcemaps", BENCH_TEST_OPTIONS, async ({ bench }) => {
+      await bench("oxc-codegen sourcemaps", () => {
         const { code } = oxcPrintSync(program, mapOptions);
         flattenSink ^= code.charCodeAt(0);
-      },
-      BENCH_OPTIONS,
-    );
+      }).run(BENCH_OPTIONS);
+    });
 
-    bench(
-      "oxc-codegen sourcemaps no generation",
-      () => {
+    test("oxc-codegen sourcemaps no generation", BENCH_TEST_OPTIONS, async ({ bench }) => {
+      await bench("oxc-codegen sourcemaps no generation", () => {
         const { code } = oxcPrintSync(program, mapNoGenerationOptions);
         flattenSink ^= code.charCodeAt(0);
-      },
-      BENCH_OPTIONS,
-    );
+      }).run(BENCH_OPTIONS);
+    });
   });
 }

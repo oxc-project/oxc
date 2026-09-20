@@ -54,7 +54,7 @@ impl MayHaveSideEffectsContext<'_> for Ctx {
 fn test(source_text: &str, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let stmt = ret.program.body.first().unwrap();
@@ -65,7 +65,7 @@ fn test(source_text: &str, expected: bool) {
 fn test_in_function(source_text: &str, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::FunctionDeclaration(stmt)) = &ret.program.body.first() else {

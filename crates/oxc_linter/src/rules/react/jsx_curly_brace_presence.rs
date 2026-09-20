@@ -664,20 +664,24 @@ fn report_missing_curly_for_string_attribute_value(
 fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_value: &str) {
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_necessary_diagnostic(span), |fixer| {
         let fixer = fixer.for_multifix();
-        let line_matches = string_value.match_indices('\n').map(|(i, _)| i).collect::<Vec<_>>();
-        let fix_contexts = if line_matches.is_empty() {
+        let fix_contexts = if string_value.contains('\n') {
+            string_value
+                .split('\n')
+                .scan(0, |line_start, line| {
+                    let contexts = build_missing_curly_fix_context_for_line(
+                        span,
+                        line,
+                        u32::try_from(*line_start).unwrap(),
+                    );
+                    *line_start += line.len() + 1;
+                    Some(contexts)
+                })
+                .flatten()
+                .collect::<Vec<_>>()
+        } else {
             build_missing_curly_fix_context_for_part(span, string_value, 0)
                 .iter()
                 .copied()
-                .collect::<Vec<_>>()
-        } else {
-            string_value
-                .split('\n')
-                .enumerate()
-                .flat_map(|(index, line)| {
-                    let line_start = calculate_line_start(line_matches.as_slice(), index);
-                    build_missing_curly_fix_context_for_line(span, line, line_start)
-                })
                 .collect::<Vec<_>>()
         };
         if fix_contexts.is_empty() {
@@ -722,17 +726,6 @@ fn build_missing_curly_fix_context_for_part(
         let span_from_first_char = Span::sized(new_start, u32::try_from(text.len()).unwrap());
         (span_from_first_char, text)
     })
-}
-
-fn calculate_line_start(line_matches: &[usize], index: usize) -> u32 {
-    if index == 0 {
-        0u32
-    } else {
-        u32::try_from(
-            line_matches.get(index - 1).map_or(1usize, |new_line_index| *new_line_index + 1),
-        )
-        .unwrap()
-    }
 }
 
 fn calculate_part_start(line_matches: &[usize], index: usize) -> u32 {
@@ -1546,4 +1539,20 @@ fn test() {
     Tester::new(JsxCurlyBracePresence::NAME, JsxCurlyBracePresence::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_multiline_byte_offsets() {
+    use crate::tester::Tester;
+
+    let source = "<App>é\n\n界\n</App>";
+    let config = Some(serde_json::json!([{ "children": "always" }]));
+    Tester::new(
+        JsxCurlyBracePresence::NAME,
+        JsxCurlyBracePresence::PLUGIN,
+        Vec::<(&str, Option<serde_json::Value>)>::new(),
+        vec![(source, config.clone())],
+    )
+    .expect_fix(vec![(source, "<App>{\"é\"}\n\n{\"界\"}\n</App>", config)])
+    .test();
 }

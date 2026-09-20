@@ -111,13 +111,24 @@ use crate::{
 
 /// Maximum length of source which can be parsed (in bytes).
 /// ~4 GiB on 64-bit systems, ~2 GiB on 32-bit systems.
+//
 // Length is constrained by 2 factors:
 // 1. `Span`'s `start` and `end` are `u32`s, which limits length to `u32::MAX` bytes.
 // 2. Rust's allocator APIs limit allocations to `isize::MAX`.
-// https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
+//    https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
+//
+// On 64-bit systems, the limit is 256 bytes below `u32::MAX` rather than `u32::MAX` itself:
+//
+// 1. `oxc_lexer` will require source text to be followed by 64 bytes of padding.
+//    This means *padded* length can fit in a `u32`.
+//    256 instead of 64 to leave headroom, in case the padding requirement expands in future.
+// 2. Counts of tokens, comments and errors are all bounded by source length plus a small constant,
+//    so they can be stored as `u32`s without any possibility of overflow.
+// 3. No real `Span` can have `start` or `end` of `u32::MAX`, so such a `Span` can be used as a sentinel.
+//    `oxc_transformer`'s styled-components plugin relies on this.
 pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
     // 64-bit systems
-    u32::MAX as usize
+    u32::MAX as usize - 256
 } else {
     // 32-bit or 16-bit systems
     isize::MAX as usize
@@ -134,23 +145,25 @@ pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
 ///    enabled](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error)
 ///
 /// ## Errors
-/// Oxc's [`Parser`] is able to recover from some syntax errors and continue parsing. When this
-/// happens,
+///
+/// Oxc's [`Parser`] is able to recover from some syntax errors and continue parsing.
+/// When this happens:
+///
 /// 1. [`diagnostics`] will be non-empty
 /// 2. [`program`] will contain a full AST
-/// 3. [`panicked`] will be false
+/// 3. [`fatal_error`] will be false
 ///
-/// When the parser cannot recover, it will abort and terminate parsing early. [`program`] will
-/// be empty and [`panicked`] will be `true`.
+/// When the parser cannot recover, it will abort and terminate parsing early.
+/// [`program`] will be empty and [`fatal_error`] will be `true`.
 ///
 /// [`program`]: ParserReturn::program
 /// [`diagnostics`]: ParserReturn::diagnostics
-/// [`panicked`]: ParserReturn::panicked
+/// [`fatal_error`]: ParserReturn::fatal_error
 #[non_exhaustive]
 pub struct ParserReturn<'a> {
     /// The parsed AST.
     ///
-    /// Will be empty (e.g. no statements, directives, etc) if the parser panicked.
+    /// Will be empty (e.g. no statements, directives, etc) if the parser encountered a fatal error.
     ///
     /// ## Validity
     /// It is possible for the AST to be present and semantically invalid. This will happen if
@@ -179,15 +192,18 @@ pub struct ParserReturn<'a> {
     /// Tokens are only collected when tokens are enabled in [`ParserConfig`].
     pub tokens: ArenaVec<'a, Token>,
 
-    /// Whether the parser panicked and terminated early.
+    /// Whether the parser encountered a fatal error and terminated early.
     ///
-    /// This will be `false` if parsing was successful, or if parsing was able to recover from a
-    /// syntax error. When `true`, [`program`] will be empty and [`diagnostics`] will contain at least
-    /// one error.
+    /// If `false`, either parsing was successful, or parsing was able to recover from a syntax error.
+    /// [`diagnostics`] may still contain errors, indicating that the program is not syntactically valid,
+    /// but parser was able to recover enough to produce an AST.
+    ///
+    /// If `true`, parser was unable to parse the source.
+    /// [`program`] will be empty and [`diagnostics`] will contain at least one error.
     ///
     /// [`program`]: ParserReturn::program
     /// [`diagnostics`]: ParserReturn::diagnostics
-    pub panicked: bool,
+    pub fatal_error: bool,
 
     /// Whether the file is [flow](https://flow.org).
     pub is_flow_language: bool,
@@ -687,10 +703,10 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
         let mut program = self.parse_program();
-        let mut panicked = false;
+        let mut has_fatal_error = false;
 
         if let Some(fatal_error) = self.fatal_error.take() {
-            panicked = true;
+            has_fatal_error = true;
             self.errors.truncate(fatal_error.errors_len);
             if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
                 // Noop
@@ -706,7 +722,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         self.check_unfinished_errors();
 
         if let Some(overlong_error) = self.overlong_error() {
-            panicked = true;
+            has_fatal_error = true;
             self.lexer.errors.clear();
             self.errors.clear();
             self.error(overlong_error);
@@ -754,8 +770,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             }
         }
 
-        let tokens =
-            if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
+        let tokens = if has_fatal_error {
+            ArenaVec::new_in(&self.ast)
+        } else {
+            self.lexer.finalize_tokens()
+        };
 
         program.comments = self.lexer.trivia_builder.comments;
 
@@ -765,7 +784,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             diagnostics: errors,
             irregular_whitespaces,
             tokens,
-            panicked,
+            fatal_error: has_fatal_error,
             is_flow_language,
         }
     }
@@ -838,15 +857,32 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
     /// we need to reparse them with the await context enabled.
     fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
-        // Token stream is already complete from the first parse.
-        // Reparsing here is only to patch AST nodes, so keep the original token stream.
         let original_tokens =
             if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
+        let original = original_tokens.as_ref().map_or(&[][..], |tokens| tokens.as_slice());
+        let mut original_index = 0;
+        let mut replacements = ArenaVec::new_in(self);
 
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
+        // Ranges refer to the original tokens and to the flat replacement buffer
+        let mut edits = ArenaVec::with_capacity_in(
+            if self.lexer.config.tokens() { checkpoints.len() } else { 0 },
+            self,
+        );
         for (stmt_index, checkpoint) in checkpoints {
-            // Rewind to the checkpoint
             self.rewind(checkpoint);
+            let replacement_start = replacements.len();
+
+            if self.lexer.config.tokens() {
+                original_index += original[original_index..]
+                    .iter()
+                    .position(|token| token.start() >= self.token.start())
+                    .unwrap_or(original.len() - original_index);
+                // The checkpoint's current token has already been lexed
+                replacements.push(self.token);
+                self.lexer.set_tokens(std::mem::replace(&mut replacements, ArenaVec::new_in(self)));
+            }
+            let edit_start = original_index;
 
             // Parse the statement with await context enabled (TopLevel context is already set)
             let stmt = self.context_add(Context::Await, |p| {
@@ -857,10 +893,62 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             if stmt_index < statements.len() {
                 statements[stmt_index] = stmt;
             }
+
+            if self.lexer.config.tokens() {
+                replacements = self.lexer.take_tokens();
+                // Exclude the next statement's token (or EOF)
+                replacements.pop();
+                // An earlier reparse can consume a later candidate, as in `await\nawait /x/u`.
+                // Record overlapping source ranges only once.
+                let end = replacements[..replacement_start].last().map_or(0, Token::end);
+                let overlap_len =
+                    replacements[replacement_start..].partition_point(|token| token.start() < end);
+                if overlap_len != 0 {
+                    replacements.copy_within(replacement_start + overlap_len.., replacement_start);
+                    let len = replacements.len() - overlap_len;
+                    replacements.truncate(len);
+                }
+                original_index += original[original_index..]
+                    .iter()
+                    .position(|token| token.start() >= self.token.start())
+                    .unwrap_or(original.len() - original_index);
+                edits.push((edit_start..original_index, replacement_start..replacements.len()));
+            }
         }
 
-        if let Some(original_tokens) = original_tokens {
-            self.lexer.set_tokens(original_tokens);
+        if let Some(mut tokens) = original_tokens {
+            let mut read = 0;
+            if edits.iter().all(|(range, replacement)| replacement.len() <= range.len()) {
+                // Compact in place. Original indices remain valid because the write cursor
+                // never overtakes the read cursor.
+                let mut write = 0;
+                for (range, replacement) in edits {
+                    tokens.copy_within(read..range.start, write);
+                    write += range.start - read;
+                    let replacement = &replacements[replacement];
+                    tokens[write..write + replacement.len()].copy_from_slice(replacement);
+                    write += replacement.len();
+                    read = range.end;
+                }
+                let tail_len = tokens.len() - read;
+                tokens.copy_within(read.., write);
+                tokens.truncate(write + tail_len);
+                self.lexer.set_tokens(tokens);
+            } else {
+                // A growing replacement could overwrite unread tokens.
+                // Use a separate output buffer, still applying all edits in one forward pass.
+                let len = edits.iter().fold(tokens.len(), |len, (range, replacement)| {
+                    len - range.len() + replacement.len()
+                });
+                let mut output = ArenaVec::with_capacity_in(len, self);
+                for (range, replacement) in edits {
+                    output.extend_from_slice(&tokens[read..range.start]);
+                    output.extend_from_slice(&replacements[replacement]);
+                    read = range.end;
+                }
+                output.extend_from_slice(&tokens[read..]);
+                self.lexer.set_tokens(output);
+            }
         }
     }
 
@@ -1244,7 +1332,7 @@ mod test {
 
         // Parsing should fail
         assert!(ret.program.is_empty());
-        assert!(ret.panicked);
+        assert!(ret.fatal_error);
         assert_eq!(ret.diagnostics.len(), 1);
         assert_eq!(
             ret.diagnostics.first().unwrap().to_string(),
@@ -1270,8 +1358,82 @@ mod test {
 
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
-        assert!(!ret.panicked);
+        assert!(!ret.fatal_error);
         assert!(ret.diagnostics.is_empty());
         assert_eq!(ret.program.body.len(), 2);
+    }
+
+    // Where the lexer cannot lex any further it emits `Undetermined`, and no `Eof` follows.
+    // That final token ends the input just as `Eof` does, so it is discarded, and discarding it
+    // must not take the real token before it with it.
+    #[test]
+    fn tokens_when_lexing_ends_in_error() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, "foo();\n'unterminated", SourceType::default())
+            .with_config(config::TokensParserConfig)
+            .parse();
+
+        assert!(!ret.fatal_error);
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(ret.diagnostics.first().unwrap().to_string(), "Unterminated string");
+
+        let tokens = ret
+            .tokens
+            .iter()
+            .map(|token| (token.kind(), token.start(), token.end()))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            tokens,
+            [
+                (Kind::Ident, 0, 3),
+                (Kind::LParen, 3, 4),
+                (Kind::RParen, 4, 5),
+                (Kind::Semicolon, 5, 6),
+            ]
+        );
+    }
+
+    #[test]
+    fn tokens_after_unambiguous_await_reparse() {
+        for source in [
+            "await /x/u; export {};",
+            // Reparsing merges `/a/`, but splits `/b/g`, increasing the token count.
+            "await /a/ /b/g; export {};",
+            "before(); await /a/ /b/g; between(); await /x/u; export {}; tail();",
+            "before(); await /x/u; after(); export {}; tail();",
+            "before(); await /x/u; between(); await /y/g; export {}; tail();",
+            "await /x/u\nawait /y/g\nexport {};",
+            "await\nawait /x/u; export {};",
+            "before(); await\nawait /x/u; between(); await\nawait /y/g; export {}; tail();",
+            "const x = await /x/u; between(); const y = await /y/g; export {};",
+            "/before/.test(await /x/u); /after/.test('after'); export {};",
+            "await /x/u, import.meta;",
+            "#!/usr/bin/env node\n'use strict';\nawait /* regexp */ /x/u; export {};",
+            "export {}; await /x/u;",
+        ] {
+            let allocator = Allocator::default();
+            let parse = |source_type| {
+                Parser::new(&allocator, source, source_type)
+                    .with_config(config::TokensParserConfig)
+                    .parse()
+            };
+            let unambiguous = parse(SourceType::unambiguous());
+            let module = parse(SourceType::mjs());
+            assert_eq!(unambiguous.tokens.as_slice(), module.tokens.as_slice(), "{source}");
+        }
+    }
+
+    // A fatal error fast-forwards the lexer to end of file. Re-lexing the `}` of a template
+    // substitution after that would derive a token position from the moved cursor, and so
+    // overwrite an unrelated token in the collected stream.
+    #[test]
+    fn tokens_when_template_substitution_fails() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, "`${}`", SourceType::default())
+            .with_config(config::TokensParserConfig)
+            .parse();
+
+        assert!(ret.fatal_error);
+        assert!(ret.tokens.is_empty());
     }
 }

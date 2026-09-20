@@ -8,3 +8,6 @@
 @import url("./c.css") supports(font-format(woff2));
 @import "d.css" supports((display: grid) and (gap: 1rem));
 @import url("e.css") supports(display: flex) screen and (min-width: 400px);
+/* a wrap inside a comma group sits one indent deeper than a wrap between comma groups */
+@import "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa.css" some-modifier another-modifier yet-another-one, "bbbbbbbbbbbbbbbbbb.css" tail-word;
+@import url("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.css") tail-word, "b.css" x y;

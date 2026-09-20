@@ -64,9 +64,15 @@ TAGS_PEV_FORMATE_DESCRIPTION = "TAGS_PEV_FORMATE_DESCRIPTION"
 # oxc_lexer
 tpos = "tpos"
 vor = "vor"
-PUNCT1_NKNOWN = "PUNCT1_NKNOWN"
 # Vendored react_compiler local-variable abbreviations (PrivateName, Optional{Call,Member}Expression, plural of `from`)
 pn = "pn"
 oce = "oce"
 ome = "ome"
 froms = "froms"
+
+[type.ascii-only-tests]
+extend-glob = ["ascii_only.rs"]
+
+[type.ascii-only-tests.extend-words]
+# Prefix of café in escaped Unicode test fixtures.
+caf = "caf"

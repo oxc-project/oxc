@@ -71,6 +71,12 @@ const sources = [
     repo: "facebook/docusaurus/packages/docusaurus-theme-classic/src",
     version: "v3.9.2",
   },
+  // jsdoc
+  {
+    name: "svelte",
+    repo: "sveltejs/svelte/packages/svelte/src",
+    version: "svelte@5.57.0",
+  },
 ];
 
 // Group sources by repository and download each group sequentially.

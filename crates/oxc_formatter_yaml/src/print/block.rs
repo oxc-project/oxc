@@ -11,7 +11,7 @@ use oxc_formatter_core::{
 use oxc_yaml_parser::ast::{BlockScalar, Chomping, Content, MappingItem, Node, Root};
 
 use crate::{
-    comments::write_comment_line_suffix,
+    comments::FormatLineCommentSuffix,
     options::ProseWrap,
     print::{
         YamlFormatter, format_with,
@@ -91,7 +91,7 @@ pub fn write_block_scalar<'a>(
         && comment.own_line_column.is_none()
     {
         f.context().comments().take_before(comment.span.end);
-        write_comment_line_suffix(comment.span, f);
+        write!(f, FormatLineCommentSuffix::new(comment.span).with_leading_space());
     }
 
     let line_groups: Vec<Vec<&'a str>> =

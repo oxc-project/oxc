@@ -1,15 +1,15 @@
 //! Build-script helpers for formatter fixture tests.
 //!
 //! Walks a `tests/fixtures/` directory and emits `#[test]` functions into `$OUT_DIR/generated_tests.rs`
-//! that each call a per-crate `test_file(path)` helper. The generated file is meant to be
-//! consumed via `include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"))` from the
-//! integration-test target.
+//! that each call a per-crate `test_file(path)` helper.
+//! The generated file is meant to be consumed via `include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"))`
+//! from the integration-test target.
 //!
-//! Language is parameterized by [`GenerateConfig::extensions`] — only files whose extension is
-//! in that list are picked up as test inputs.
+//! Language is parameterized by [`GenerateConfig::extensions`];
+//! only files whose extension is in that list are picked up as test inputs.
 
-// This module is exclusively called from `build.rs` scripts, where `println!`
-// is the documented way to emit Cargo directives.
+// This module is exclusively called from `build.rs` scripts,
+// where `println!` is the documented way to emit Cargo directives.
 #![allow(clippy::print_stdout)]
 
 use std::{
@@ -28,8 +28,7 @@ pub struct GenerateConfig<'a> {
 
 /// Walks `fixtures_dir` and writes an auto-generated test module tree to `out_file`.
 ///
-/// Also emits `cargo:rerun-if-changed=<fixtures_dir>` so Cargo re-runs the build script when
-/// fixtures change.
+/// Also emits `cargo:rerun-if-changed=<fixtures_dir>` so Cargo re-runs the build script when fixtures change.
 ///
 /// # Errors
 /// Propagates filesystem errors from directory traversal or file write.
@@ -127,8 +126,7 @@ fn generate_modules(
 
 fn is_test_file(path: &Path, extensions: &[&str]) -> bool {
     // `options.json` is the harness's per-directory option overrides, not a test input.
-    // Without this skip the JSON formatter (whose extensions include `json`) would try
-    // to format the option file itself.
+    // Without this skip, the JSON formatter (`json`) would try to format the option file itself.
     if path.file_name().and_then(|n| n.to_str()) == Some("options.json") {
         return false;
     }
@@ -171,7 +169,7 @@ fn file_to_test_name(filename: &str, extensions: &[&str]) -> String {
         }
     }
 
-    // Strip the trailing `_<ext>` token if it matches one of the configured extensions.
+    // Strip the trailing `_<ext>` token if it matches one of the configured extensions
     if let Some(pos) = name.rfind('_') {
         let after = &name[pos + 1..];
         if extensions.iter().any(|e| e.eq_ignore_ascii_case(after)) {

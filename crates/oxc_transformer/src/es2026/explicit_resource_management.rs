@@ -80,25 +80,30 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         }
         let variable_decl_kind = decl.kind;
 
-        // `for (using x of y)` -> `for (const _x of y)`
-        decl.kind = VariableDeclarationKind::Const;
-
         let variable_declarator = decl.declarations.first_mut().unwrap();
 
-        let variable_declarator_binding_ident =
-            variable_declarator.id.get_binding_identifier().unwrap();
+        let Some(variable_declarator_binding_ident) =
+            variable_declarator.id.get_binding_identifier()
+        else {
+            // The parser already reported the invalid binding pattern.
+            return;
+        };
+
         let variable_declarator_binding_name = variable_declarator_binding_ident.name;
 
         let for_of_init_symbol_id = variable_declarator_binding_ident.symbol_id();
 
         let temp_id = ctx.generate_uid_based_on_node(
-            variable_declarator.id.get_binding_identifier().unwrap(),
+            variable_declarator_binding_ident,
             for_of_stmt_scope_id,
             SymbolFlags::ConstVariable | SymbolFlags::BlockScopedVariable,
         );
 
         let binding_pattern =
             mem::replace(&mut variable_declarator.id, temp_id.create_binding_pattern(ctx));
+
+        // `for (using x of y)` -> `for (const _x of y)`
+        decl.kind = VariableDeclarationKind::Const;
 
         // `using x = _x;`
         let using_stmt = Statement::new_variable_declaration(

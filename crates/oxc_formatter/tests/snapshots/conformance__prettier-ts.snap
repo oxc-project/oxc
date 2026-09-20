@@ -2,15 +2,17 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-ts compatibility: 624/659 (94.69%), 16 files skipped
+ts compatibility: 620/660 (93.94%), 16 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | typescript/as/as.ts | 💥 | 97.74% |
+| typescript/as/as-const/as-const.ts | 💥 | 66.67% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 93.33% |
 | typescript/as/comments/17407.ts | 💥 | 47.06% |
+| typescript/as/comments/18160.ts | 💥 | 54.21% |
 | typescript/call/callee-comments.ts | 💥 | 75.00% |
 | typescript/cast/18406.ts | 💥 | 84.21% |
 | typescript/class-comment/class-implements.ts | 💥 | 93.33% |
@@ -29,6 +31,7 @@ ts compatibility: 624/659 (94.69%), 16 files skipped
 | typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 88.24% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |
+| typescript/satisfies-operators/comments-unstable.ts | 💥💥 | 61.54% |
 | typescript/template-literals/member-expression.ts | 💥 | 65.12% |
 | typescript/type-parameters-arguments/18041.ts | 💥 | 91.43% |
 | typescript/type-parameters-arguments/18604.ts | 💥 | 60.00% |
@@ -38,10 +41,12 @@ ts compatibility: 624/659 (94.69%), 16 files skipped
 | typescript/union/5849.ts | 💥 | 95.38% |
 | typescript/union/union-parens.ts | 💥 | 97.67% |
 | typescript/union/comments/18106.ts | 💥 | 86.36% |
+| typescript/union/comments/18379.ts | 💥 | 92.31% |
 | typescript/union/consistent-with-flow/81-characters.ts | 💥 | 53.85% |
 | typescript/union/consistent-with-flow/comment.ts | 💥 | 87.50% |
 | typescript/union/consistent-with-flow/conditional.ts | 💥 | 54.55% |
 | typescript/union/consistent-with-flow/leading-comments.ts | 💥 | 90.14% |
+| typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 88.00% |
 | typescript/union/consistent-with-flow/single-type.ts | 💥 | 97.50% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
@@ -68,7 +73,5 @@ ts compatibility: 624/659 (94.69%), 16 files skipped
 - jsx/comments/in-attributes.js
 - jsx/spread/child.js
 - typescript/as/comments/17407.ts
-- typescript/as/comments/18160.ts
 - typescript/call/callee-comments.ts
 - typescript/method-chain/object/issue-17239.ts
-- typescript/satisfies-operators/comments-unstable.ts

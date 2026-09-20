@@ -13,7 +13,7 @@ use unicode_width::UnicodeWidthChar;
 
 use crate::{
     ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
-    InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextWidth,
+    IndentWidth, InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextWidth,
 };
 
 use self::call_stack::{
@@ -104,7 +104,8 @@ impl<'a> Printer<'a> {
     ) -> PrintResult<Printed> {
         let mut stack = PrintCallStack::new(PrintElementArgs::new());
         let mut queue: PrintQueue<'a> = PrintQueue::new(document);
-        let mut indent_stack = PrintIndentStack::new(Indention::Level(indent));
+        let mut indent_stack =
+            PrintIndentStack::new(Indention { level: indent, ..Indention::default() });
 
         while let Some(element) = queue.pop() {
             self.print_element(&mut stack, &mut indent_stack, &mut queue, element)?;
@@ -127,9 +128,10 @@ impl<'a> Printer<'a> {
     ) -> PrintResult<()> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, EndPrefix,
+            StartAlign, StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup,
+            StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            StartPrefix,
         };
 
         let args = stack.top();
@@ -176,12 +178,12 @@ impl<'a> Printer<'a> {
                     // A blank line is left behind from the start of a line always,
                     // mid-line only when a break remains after the line-ending one.
                     let leaves_blank = count > 1 || self.state.line_width == 0;
+                    let indention = indent_stack.indention();
                     for _ in 0..count {
-                        self.print_char('\n');
+                        self.print_line_break(indention);
                     }
                     self.state.has_empty_line = leaves_blank;
                     self.state.pending_space = false;
-                    self.state.pending_indent = indent_stack.indention();
                     return Ok(());
                 }
 
@@ -194,8 +196,7 @@ impl<'a> Printer<'a> {
                     // when a line break follows; this printer never trims, so it must not write indention that no content claims.
                     // See the [literal_line_break] divergence note)
                     self.flush_pending_indention_and_space();
-                    self.print_char('\n');
-                    self.state.pending_indent = indent_stack.root();
+                    self.print_line_break(indent_stack.root());
                     self.state.has_empty_line = false;
                     return Ok(());
                 }
@@ -205,19 +206,20 @@ impl<'a> Printer<'a> {
                 // NOTE: no end-of-line trimming happens here (unlike Prettier's `printDocToString`):
                 // the pending space/indent mechanisms never materialize at a line end,
                 // and Text/Token content is the emitter's responsibility to keep trimmed.
+                let indention = indent_stack.indention();
                 if self.state.line_width > 0 {
-                    self.print_char('\n');
+                    self.print_line_break(indention);
                     self.state.has_empty_line = false;
                 }
 
                 // Print a second line break if this is an empty line
                 if line_mode == &LineMode::Empty && !self.state.has_empty_line {
-                    self.print_char('\n');
+                    self.print_line_break(indention);
                     self.state.has_empty_line = true;
                 }
 
                 self.state.pending_space = false;
-                self.state.pending_indent = indent_stack.indention();
+                self.state.pending_indent = indention;
             }
 
             FormatElement::ExpandParent => {
@@ -296,6 +298,15 @@ impl<'a> Printer<'a> {
                 stack.push(TagKind::Align, args);
             }
 
+            FormatElement::Tag(StartPrefix(prefix)) => {
+                indent_stack.prefix(
+                    prefix.0,
+                    &mut self.state.prefix_nodes,
+                    self.options.indent_style(),
+                );
+                stack.push(TagKind::Prefix, args);
+            }
+
             FormatElement::Tag(StartMarkAsRoot) => {
                 indent_stack.mark_root();
                 stack.push(TagKind::MarkAsRoot, args);
@@ -349,7 +360,7 @@ impl<'a> Printer<'a> {
                 }
                 stack.pop(tag.kind())?;
             }
-            FormatElement::Tag(tag @ (EndIndent | EndAlign | EndLineSuffix)) => {
+            FormatElement::Tag(tag @ (EndIndent | EndAlign | EndPrefix | EndLineSuffix)) => {
                 stack.pop(tag.kind())?;
                 indent_stack.pop();
             }
@@ -736,25 +747,58 @@ impl<'a> Printer<'a> {
         invalid_end_tag(TagKind::Entry, stack.top_kind())
     }
 
-    /// Prints `indention` (indent levels + align spaces) and adds its width to the current line.
+    /// Prints `indention` (prefix chain, indent levels, align spaces) and adds its width to the current line.
     #[inline]
     fn print_indention(&mut self, indention: Indention) {
         if indention.is_empty() {
             return;
         }
+        self.state.line_width +=
+            indention.width(&self.state.prefix_nodes, self.options.indent_width());
+        if indention.prefix.is_some() {
+            self.emit_prefix_chain(indention, false);
+        }
+        self.emit_level_and_align(indention);
+    }
 
-        let level = indention.level() as usize;
-        self.state.buffer.print_indent(level);
-        self.state.line_width += level * self.options.indent_width().value() as usize;
+    /// Writes `indention`'s prefix chain up to and including its last prefix
+    /// (`trim_last`: that one without its trailing whitespace).
+    /// Width is the caller's business.
+    fn emit_prefix_chain(&mut self, indention: Indention, trim_last: bool) {
+        let node =
+            PrefixNode::get(&self.state.prefix_nodes, indention.prefix.expect("has a prefix"));
+        if node.before.prefix.is_some() {
+            self.emit_prefix_chain(node.before, false);
+        }
+        self.emit_level_and_align(node.before);
+        self.state.buffer.print_str(if trim_last { node.prefix.trim_end() } else { node.prefix });
+    }
 
-        let align_count = indention.align() as usize;
-        for _ in 0..align_count {
+    #[inline]
+    fn emit_level_and_align(&mut self, indention: Indention) {
+        self.state.buffer.print_indent(indention.level as usize);
+        for _ in 0..indention.align {
             // SAFETY: `' '` is an valid ASCII character
             unsafe {
                 self.state.buffer.print_byte_unchecked(b' ');
             }
         }
-        self.state.line_width += align_count;
+    }
+
+    /// Ends the current line; `next` becomes the pending indention of the new one.
+    ///
+    /// Ending an EMPTY line inside `prefix_align` still prints its prefixes, the last one trimmed:
+    /// Prettier writes the whole indention at every newline and trims trailing whitespace at the next,
+    /// so a blank line in a blockquote is `>`.
+    /// The levels / aligns after the last prefix are that whitespace.
+    /// (A literal line materializes the pending indention itself first, so nothing is left for this.)
+    #[inline]
+    fn print_line_break(&mut self, next: Indention) {
+        if self.state.line_width == 0 && self.state.pending_indent.prefix.is_some() {
+            self.emit_prefix_chain(self.state.pending_indent, true);
+        }
+        self.print_char('\n');
+        self.state.pending_indent = next;
     }
 
     /// Materializes the pending indention and pending space before printing visible content.
@@ -876,6 +920,8 @@ struct PrinterState<'a> {
     fits_stack_tem_indent: Vec<Indention>,
     fits_root_indent_stack: Vec<Indention>,
     fits_queue: Vec<&'a [FormatElement<'a>]>,
+    /// Every `prefix_align` entered so far (see [Indention]).
+    prefix_nodes: Vec<PrefixNode>,
     /// Sorted Tailwind CSS classes for lookup during printing
     sorted_tailwind_classes: &'a [String],
 }
@@ -919,81 +965,112 @@ impl GroupModes {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-enum Indention {
-    /// Indent the content by `count` levels by using the indention sequence specified by the printer options.
-    Level(u16),
+/// The indention of a line: `level` indent levels, `align` spaces,
+/// and before them (when `prefix` is set) the chain of `prefix_align` strings in effect,
+/// each preceded by the indention it was added to.
+///
+/// `Copy`, so the stacks and the pending indent copy it freely;
+/// a prefix chain is one index into [PrinterState::prefix_nodes], created by the `StartPrefix` tag only.
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Default)]
+struct Indention {
+    /// Indent levels after the last prefix (all of them when there is none).
+    level: u16,
+    /// Align spaces after the last prefix.
+    align: u8,
+    /// How many `align` tags contributed to `align`
+    /// (each becomes one tab in tab mode, see [Self::flush_align]).
+    align_count: u8,
+    /// The innermost `prefix_align` in effect.
+    prefix: Option<PrefixId>,
+}
 
-    /// Indent the content by n-`level`s using the indention sequence specified by the printer options and `align` spaces.
-    Align { level: u16, align: NonZeroU8, align_count: u16 },
+/// Index + 1 into [PrinterState::prefix_nodes].
+type PrefixId = std::num::NonZeroU32;
+
+/// One `prefix_align` in effect.
+#[derive(Copy, Clone, Debug)]
+struct PrefixNode {
+    /// What prints before the prefix: the indention the prefix was added to (its own chain included).
+    before: Indention,
+    prefix: &'static str,
+}
+
+impl PrefixNode {
+    #[inline]
+    fn get(nodes: &[PrefixNode], id: PrefixId) -> Self {
+        nodes[id.get() as usize - 1]
+    }
 }
 
 impl Indention {
+    #[inline]
     const fn is_empty(self) -> bool {
-        matches!(self, Indention::Level(0))
+        self.level == 0 && self.align == 0 && self.prefix.is_none()
     }
 
-    /// Creates a new indention level with a zero-indent.
-    const fn new() -> Self {
-        Indention::Level(0)
-    }
-
-    /// Returns the indention level
-    fn level(self) -> u16 {
-        match self {
-            Indention::Level(count) => count,
-            Indention::Align { level: indent, .. } => indent,
-        }
-    }
-
-    /// Returns the number of trailing align spaces or 0 if none
-    fn align(self) -> u8 {
-        match self {
-            Indention::Level(_) => 0,
-            Indention::Align { align, .. } => align.into(),
+    /// In tab mode every `align` tag so far becomes one indent level
+    /// (Prettier's `makeAlign`: aligns before an indent or a string align are flushed to tabs).
+    fn flush_align(self, indent_style: IndentStyle) -> Self {
+        if self.align > 0 && indent_style.is_tab() {
+            Self {
+                level: self.level + u16::from(self.align_count),
+                align: 0,
+                align_count: 0,
+                ..self
+            }
+        } else {
+            self
         }
     }
 
     /// Increments the level by one.
-    ///
-    /// The behaviour depends on the [`indent_style`][IndentStyle] if this is an [`Indention::Align`]:
-    /// * **Tabs**: `align` is converted into an indent. This results in `level` increasing by two: once for the align, once for the level increment
-    /// * **Spaces**: Increments the `level` by one and keeps the `align` unchanged.
     fn increment_level(self, indent_style: IndentStyle) -> Self {
-        match self {
-            Indention::Level(count) => Indention::Level(count + 1),
-            // Increase the indent AND convert the align to an indent
-            Indention::Align { level, align_count, .. } if indent_style.is_tab() => {
-                Indention::Level(level + align_count + 1)
-            }
-            Indention::Align { level: indent, align, align_count } => {
-                Indention::Align { level: indent + 1, align, align_count }
-            }
-        }
+        let flushed = self.flush_align(indent_style);
+        Self { level: flushed.level + 1, ..flushed }
     }
 
     /// Adds an `align` of `count` spaces to the current indention.
-    ///
-    /// It increments the `level` value if the current value is [`Indention::Align`].
     fn set_align(self, count: NonZeroU8) -> Self {
-        match self {
-            Indention::Level(indent_count) => {
-                Indention::Align { level: indent_count, align: count, align_count: 1 }
-            }
-
-            // Convert the existing align to an indent
-            Indention::Align { level: indent, align, align_count } => Indention::Align {
-                level: indent,
-                align: align.saturating_add(count.get()),
-                align_count: align_count + 1,
-            },
+        Self {
+            align: self.align.saturating_add(count.get()),
+            align_count: self.align_count.saturating_add(1),
+            ..self
         }
     }
-}
 
-impl Default for Indention {
-    fn default() -> Self {
-        Indention::new()
+    /// Appends `prefix`: the current indention becomes what prints before it (`nodes` records that),
+    /// and the new indention starts empty after it.
+    fn set_prefix(
+        self,
+        prefix: &'static str,
+        nodes: &mut Vec<PrefixNode>,
+        indent_style: IndentStyle,
+    ) -> Self {
+        nodes.push(PrefixNode { before: self.flush_align(indent_style), prefix });
+        let id = PrefixId::new(u32::try_from(nodes.len()).expect("prefix count fits u32"))
+            .expect("nodes.len() > 0 after push");
+        Self { prefix: Some(id), ..Self::default() }
+    }
+
+    /// Columns this indention occupies.
+    #[inline]
+    fn width(self, nodes: &[PrefixNode], indent_width: IndentWidth) -> usize {
+        let own = self.level as usize * indent_width.value() as usize + self.align as usize;
+        match self.prefix {
+            None => own,
+            Some(id) => own + Self::chain_width(nodes, id, indent_width),
+        }
+    }
+
+    // PERF: Out of line so that `width` -> `fits_text` (every measured token),
+    // stays small enough to be inlined into `fits`.
+    #[inline(never)]
+    fn chain_width(nodes: &[PrefixNode], id: PrefixId, indent_width: IndentWidth) -> usize {
+        let node = PrefixNode::get(nodes, id);
+        let own =
+            node.before.level as usize * indent_width.value() as usize + node.before.align as usize;
+        let before = node.before.prefix.map_or(0, |id| Self::chain_width(nodes, id, indent_width));
+        before + own + TextWidth::from_text(node.prefix, indent_width).value() as usize
     }
 }
 
@@ -1013,6 +1090,8 @@ struct FitsMeasurer<'a, 'print> {
     /// The separator mode above only applies to entries of the fill the printer is currently printing (depth 0),
     /// not to entries of nested fills the walk enters on its own.
     fill_depth: u32,
+    /// Prefix nodes the measurement creates are dropped again in [Self::finish] (nothing printed refers to them).
+    prefix_nodes_len: usize,
 }
 
 impl<'a, 'print> FitsMeasurer<'a, 'print> {
@@ -1066,6 +1145,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         };
 
         let fill_separator_mode = printer.state.fill_separator_mode;
+        let prefix_nodes_len = printer.state.prefix_nodes.len();
 
         Self {
             state: fits_state,
@@ -1075,6 +1155,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             must_be_flat: false,
             fill_separator_mode,
             fill_depth: 0,
+            prefix_nodes_len,
             printer,
         }
     }
@@ -1146,9 +1227,10 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     fn fits_element(&mut self, element: &'a FormatElement) -> PrintResult<Fits> {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, EndPrefix,
+            StartAlign, StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup,
+            StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            StartPrefix,
         };
 
         let args = self.stack.top();
@@ -1287,6 +1369,15 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 self.stack.push(TagKind::Align, args);
             }
 
+            FormatElement::Tag(StartPrefix(prefix)) => {
+                self.indent_stack.prefix(
+                    prefix.0,
+                    &mut self.printer.state.prefix_nodes,
+                    self.printer.options.indent_style(),
+                );
+                self.stack.push(TagKind::Prefix, args);
+            }
+
             FormatElement::Tag(StartGroup(group)) => {
                 if self.must_be_flat && !group.mode().is_flat() {
                     return Ok(Fits::No);
@@ -1388,7 +1479,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 }
                 self.stack.pop(tag.kind())?;
             }
-            FormatElement::Tag(tag @ (EndIndent | EndAlign)) => {
+            FormatElement::Tag(tag @ (EndIndent | EndAlign | EndPrefix)) => {
                 self.stack.pop(tag.kind())?;
                 self.indent_stack.pop();
             }
@@ -1421,9 +1512,8 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
 
     fn fits_text(&mut self, text: Text) -> Fits {
         let indent = std::mem::take(&mut self.state.pending_indent);
-        self.state.line_width += indent.level() as usize
-            * self.options().indent_width().value() as usize
-            + indent.align() as usize;
+        self.state.line_width +=
+            indent.width(&self.printer.state.prefix_nodes, self.options().indent_width());
 
         if self.state.pending_space {
             self.state.line_width += 1;
@@ -1459,6 +1549,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     }
 
     fn finish(self) {
+        self.printer.state.prefix_nodes.truncate(self.prefix_nodes_len);
         let mut queue = self.queue.finish();
         queue.clear();
         self.printer.state.fits_queue = queue;
@@ -1564,7 +1655,7 @@ mod tests {
         builders::{
             align, block_indent, dedent_to_root, empty_line, exact_line_breaks, group,
             hard_line_break, if_group_breaks, if_group_fits_on_line, indent, line_suffix,
-            literal_line_break, mark_as_root, soft_block_indent, soft_line_break,
+            literal_line_break, mark_as_root, prefix_align, soft_block_indent, soft_line_break,
             soft_line_break_or_space, space, text, token,
         },
         format_args,
@@ -1638,6 +1729,169 @@ mod tests {
         );
         // 2 breaks (line ending + 1 blank), then 2 more blanks.
         assert_eq!("a\n\n\n\nb", formatted.as_code());
+    }
+
+    #[test]
+    fn prefix_align_prints_the_prefix_on_every_new_line() {
+        let allocator = Allocator::default();
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(
+                token("> "),
+                prefix_align(&"> ", &format_args!(token("a"), hard_line_break(), token("b"))),
+                hard_line_break(),
+                token("c")
+            ),
+        );
+        // No prefix leaks onto the line after the tag
+        assert_eq!("> a\n> b\nc", formatted.as_code());
+
+        // A break ending the scope opens a prefixed line (a line's indention is its break's, see `indent`)
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(
+                token("> "),
+                prefix_align(&"> ", &format_args!(token("a"), hard_line_break())),
+                token("b")
+            ),
+        );
+        assert_eq!("> a\n> b", formatted.as_code());
+    }
+
+    #[test]
+    fn prefix_align_keeps_its_order_with_align_and_indent() {
+        let allocator = Allocator::default();
+        let inner = test_format_with(|f| write!(f, [token("a"), hard_line_break(), token("b")]));
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(
+                align(2, &prefix_align(&"> ", &inner)),
+                hard_line_break(),
+                prefix_align(&"> ", &align(2, &inner)),
+                hard_line_break(),
+                prefix_align(&"> ", &indent(&prefix_align(&"> ", &inner)))
+            ),
+        );
+        assert_eq!("a\n  > b\na\n>   b\na\n>   > b", formatted.as_code());
+    }
+
+    #[test]
+    fn prefix_align_nests_and_survives_root_and_suffix_mechanics() {
+        let allocator = Allocator::default();
+        let body = test_format_with(|f| {
+            write!(
+                f,
+                [
+                    token("a"),
+                    line_suffix(&token(" # c")),
+                    hard_line_break(),
+                    // The marked root keeps the prefixes: a literal line stays inside the quote
+                    mark_as_root(&format_args!(
+                        token("b"),
+                        literal_line_break(),
+                        dedent_to_root(&token("d")),
+                        hard_line_break(),
+                        token("e")
+                    ))
+                ]
+            );
+        });
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(
+                token("> > "),
+                prefix_align(&"> ", &prefix_align(&"> ", &body)),
+                hard_line_break(),
+                token("f")
+            ),
+        );
+        assert_eq!("> > a # c\n> > b\n> > d\n> > e\nf", formatted.as_code());
+    }
+
+    #[test]
+    fn prefix_align_blank_lines_keep_a_trimmed_prefix() {
+        let allocator = Allocator::default();
+        let formatted = format_simple(
+            &allocator,
+            &format_args!(
+                token("> "),
+                prefix_align(
+                    &"> ",
+                    &format_args!(
+                        token("a"),
+                        empty_line(),
+                        token("b"),
+                        exact_line_breaks(3),
+                        token("c"),
+                        hard_line_break(),
+                        mark_as_root(&literal_line_break()),
+                        token("d")
+                    )
+                ),
+                empty_line(),
+                token("e")
+            ),
+        );
+        // Levels / aligns after the last prefix are trailing whitespace, trimmed like Prettier does;
+        // a literal line materializes `> ` as is.
+        assert_eq!("> a\n>\n> b\n>\n>\n> c\n> \n> d\n\ne", formatted.as_code());
+    }
+
+    #[test]
+    fn prefix_align_narrows_the_line_for_groups() {
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            write!(
+                f,
+                [
+                    group(&format_args!(
+                        token("aaaa"),
+                        soft_line_break_or_space(),
+                        token("bbbb"),
+                        soft_line_break_or_space(),
+                        token("cccc")
+                    )),
+                    hard_line_break(),
+                    token("x")
+                ]
+            );
+        });
+        let options = PrinterOptions {
+            print_width: PrintWidth::new(16),
+            indent_style: IndentStyle::Space,
+            indent_width: 2.try_into().unwrap(),
+            line_ending: LineEnding::Lf,
+        };
+        // 14 columns fit alone, not behind a 4-column prefix
+        let plain = format_simple_with_options(&allocator, &content, options.clone());
+        assert_eq!("aaaa bbbb cccc\nx", plain.as_code());
+        let prefixed = format_simple_with_options(
+            &allocator,
+            &format_args!(token("> > "), prefix_align(&"> > ", &content)),
+            options,
+        );
+        assert_eq!("> > aaaa\n> > bbbb\n> > cccc\n> > x", prefixed.as_code());
+    }
+
+    #[test]
+    fn prefix_align_in_tab_mode_flushes_the_align_before_it_only() {
+        let allocator = Allocator::default();
+        let inner = test_format_with(|f| write!(f, [token("a"), hard_line_break(), token("b")]));
+        let formatted = format_simple_with_options(
+            &allocator,
+            &format_args!(
+                align(2, &prefix_align(&"> ", &align(2, &inner))),
+                hard_line_break(),
+                indent(&inner)
+            ),
+            PrinterOptions {
+                indent_style: IndentStyle::Tab,
+                line_ending: LineEnding::Lf,
+                ..PrinterOptions::default()
+            },
+        );
+        // Prettier's `makeAlign`: aligns before a string align become tabs, the trailing one stays spaces
+        assert_eq!("a\n\t>   b\na\n\tb", formatted.as_code());
     }
 
     #[test]
@@ -1926,6 +2180,37 @@ a",
         );
 
         assert_eq!("k: |+\n  hello world\n\n  next\n", result.as_code());
+    }
+
+    /// `align(0)` pushes no frame: the content prints at the current indention,
+    /// and in tab mode the next `indent` does not gain a tab for it.
+    #[test]
+    fn zero_width_align_is_identity() {
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            write!(
+                f,
+                [
+                    token("a"),
+                    align(
+                        0,
+                        &format_args!(
+                            hard_line_break(),
+                            token("b"),
+                            indent(&format_args!(hard_line_break(), token("c")))
+                        )
+                    )
+                ]
+            );
+        });
+
+        let result = format_simple(&allocator, &content);
+        assert_eq!("a\nb\n  c", result.as_code());
+
+        let options =
+            PrinterOptions { indent_style: IndentStyle::Tab, ..PrinterOptions::default() };
+        let result = format_simple_with_options(&allocator, &content, options);
+        assert_eq!("a\nb\n\tc", result.as_code());
     }
 
     /// Known divergence from Prettier: a hard line directly after a column-0 literal line

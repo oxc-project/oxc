@@ -154,7 +154,7 @@ fn run_with_iterations(
     let ret = Parser::new(&allocator, source_text, source_type)
         .with_options(ParseOptions { allow_return_outside_function: true, ..Default::default() })
         .parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
     let mut program = ret.program;
     let iterations = options.map_or(0, |options| {

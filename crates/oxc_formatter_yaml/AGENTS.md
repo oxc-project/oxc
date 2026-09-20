@@ -9,8 +9,9 @@ Prettier compatible YAML formatter (`oxfmt`'s Tier 1 backend), using the `oxc_fo
 
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
-- Two entry points (see their docs in `src/format.rs`):
+- Entry points (see their docs in `src/format.rs`):
   - `format()` for standalone files, `format_to_ir()` for embedded use via the dispatcher (e.g. CSS front matter, JSDoc fenced blocks)
+  - `parse_for_format()`: the parse `format()` runs, exposed for callers that inspect the AST (e.g. the fixture harness's fingerprint)
 
 ### Parser
 

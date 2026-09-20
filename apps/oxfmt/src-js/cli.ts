@@ -72,12 +72,14 @@ void (async () => {
   // https://nodejs.org/api/process.html#processexitcode
   process.exitCode = exitCode!;
 
-  // Node.js < 25.4.0 has a race condition with ThreadsafeFunction cleanup that causes
+  // Older Node.js versions have a race condition with ThreadsafeFunction cleanup that causes
   // crashes on large codebases. Add a small delay to allow pending NAPI operations
-  // to complete before exit. Fixed in Node.js 25.4.0+.
+  // to complete before exit. Fixed in Node.js 25.4.0+ and backported to 24.13.1.
   // See: https://github.com/nodejs/node/issues/55706
-  const [major, minor] = process.versions.node.split(".").map(Number);
-  if (major < 25 || (major === 25 && minor < 4)) {
+  // Backport: https://nodejs.org/en/blog/release/v24.13.1
+  const [major, minor, patch] = process.versions.node.split(".").map(Number);
+  const hasNode24Fix = major === 24 && (minor > 13 || (minor === 13 && patch >= 1));
+  if (!hasNode24Fix && (major < 25 || (major === 25 && minor < 4))) {
     setTimeout(() => process.exit(), 50);
   }
 })();

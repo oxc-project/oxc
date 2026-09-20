@@ -82,3 +82,19 @@ source: crates/oxc_linter/src/tester.rs
    ·       ╰── 'count' is declared here
    ╰────
   help: Did you mean to use this variable?
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function foo(a, ...[_ignored]) {} foo()
+   ·              ┬
+   ·              ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function foo(a, ...{b, ..._ignored}) {} foo()
+   ·              ┬
+   ·              ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.

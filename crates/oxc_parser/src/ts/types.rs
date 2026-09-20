@@ -53,7 +53,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
         let return_type = {
             let return_type_start = self.cur_start();
-            let return_type = self.parse_return_type();
+            let return_type = self.parse_return_type(Kind::Arrow);
             TSTypeAnnotation::boxed(self.end_span(return_type_start), return_type, self)
         };
 
@@ -128,7 +128,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_modifiers(false, false);
         }
         let kind = self.cur_kind();
-        if kind.is_identifier() || kind == Kind::This {
+        if kind.is_binding_identifier() || kind == Kind::This {
             self.bump_any();
             return true;
         }
@@ -979,7 +979,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // example of invalid code:
                 // type C<T extends unknown[]> = [...string[], ...T[]];
                 if let TSTupleElement::TSRestType(rest) = &tuple
-                    && match &rest.type_annotation {
+                    && let Some(rest_type) = (match &rest.type_annotation {
+                        TSType::TSNamedTupleMember(named) => named.element_type.as_ts_type(),
+                        ty => Some(ty),
+                    })
+                    && match rest_type {
                         TSType::TSArrayType(_) => true,
                         // Check for `Array<...>` type
                         TSType::TSTypeReference(ts_ref) => match &ts_ref.type_name {
@@ -1318,12 +1322,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
         let start = self.cur_start();
-        let return_type = self.parse_return_type();
+        let return_type = self.parse_return_type(Kind::Colon);
         Some(TSTypeAnnotation::boxed(self.end_span(start), return_type, self))
     }
 
-    fn parse_return_type(&mut self) -> TSType<'a> {
-        self.bump_any();
+    fn parse_return_type(&mut self, separator: Kind) -> TSType<'a> {
+        self.expect(separator);
         self.context_remove(Context::DisallowConditionalTypes, Self::parse_type_or_type_predicate)
     }
 
@@ -1423,7 +1427,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         match kind {
             TSMethodSignatureKind::Get => {
-                if !params.items.is_empty() {
+                if params.parameters_count() != 0 {
                     self.error(diagnostics::getter_parameters(params.span));
                 }
             }
@@ -1599,6 +1603,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_ts_index_signature_name(&mut self) -> TSIndexSignatureName<'a> {
         let start = self.cur_start();
+        self.check_identifier(self.cur_kind(), self.ctx);
         let name = self.parse_identifier_name().name;
         if self.at(Kind::Question) {
             self.error(diagnostics::index_signature_question_mark(self.cur_token().span()));

@@ -393,15 +393,15 @@ function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
 
-  if (TS && (node.type === "TSAbstractAccessorProperty" || node.abstract)) {
-    printSpaceBeforeIdentifier(state);
-    write(state, "abstract ", CAT_OTHER);
-  }
-
   if (TS && node.accessibility != null) {
     printSpaceBeforeIdentifier(state);
     writeNoLast(state, node.accessibility);
     write(state, " ", CAT_OTHER);
+  }
+
+  if (TS && (node.type === "TSAbstractAccessorProperty" || node.abstract)) {
+    printSpaceBeforeIdentifier(state);
+    write(state, "abstract ", CAT_OTHER);
   }
 
   if (node.static) {

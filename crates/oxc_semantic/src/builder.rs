@@ -740,44 +740,37 @@ impl<'a> SemanticBuilder<'a> {
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
     fn resolve_references_for_current_scope(&mut self, unresolved_start: usize) {
-        // Process in-place using a retain-style write-cursor — no temporary
-        // `Vec`. Reads each entry by value out of the flat list (all fields are
-        // `Copy`), so calling `try_resolve_reference` (which takes `&mut self`)
-        // doesn't conflict with the index read.
-        let end = self.unresolved_references.len();
-        if end <= unresolved_start {
+        if self.unresolved_references.len() == unresolved_start {
             return;
         }
-        let mut write_idx = unresolved_start;
-        for read_idx in unresolved_start..end {
-            let mut unresolved = self.unresolved_references.get(read_idx);
 
+        let current_scope_id = self.current_scope_id;
+        let parent_scope_id = self
+            .scoping
+            .scope_parent_id(current_scope_id)
+            .expect("function and catch parameter scopes always have a parent");
+
+        // Take the list out of `self` while resolving, so the closure can call `&mut self`
+        // methods. Resolution never pushes new unresolved references, so nothing is lost.
+        let mut unresolved_references = mem::take(&mut self.unresolved_references);
+        unresolved_references.retain_from(unresolved_start, |unresolved| {
             // Parameter decorators are visited in an outer class scope. Leave those references
             // for final resolution because the current function is not on their scope chain.
-            let is_in_current_scope = unresolved.lookup_scope_id == self.current_scope_id
-                || self
-                    .scoping
-                    .scope_is_descendant_of(unresolved.lookup_scope_id, self.current_scope_id);
-            if !is_in_current_scope {
-                self.unresolved_references.set(write_idx, unresolved);
-                write_idx += 1;
-                continue;
+            let lookup_scope_id = unresolved.lookup_scope_id;
+            if lookup_scope_id != current_scope_id
+                && !self.scoping.scope_is_descendant_of(lookup_scope_id, current_scope_id)
+            {
+                return true;
             }
-
-            if self.walk_up_resolve_reference(unresolved, self.current_scope_id) {
-                continue;
+            if self.walk_up_resolve_reference(*unresolved, current_scope_id) {
+                return false;
             }
-
             // Skip this function body during final resolution. An enclosing parameter resolution
             // may still resolve the reference before advancing the boundary again.
-            unresolved.lookup_scope_id = self
-                .scoping
-                .scope_parent_id(self.current_scope_id)
-                .expect("function and catch parameter scopes always have a parent");
-            self.unresolved_references.set(write_idx, unresolved);
-            write_idx += 1;
-        }
-        self.unresolved_references.truncate(write_idx);
+            unresolved.lookup_scope_id = parent_scope_id;
+            true
+        });
+        self.unresolved_references = unresolved_references;
     }
 
     pub(crate) fn add_redeclare_variable(
@@ -2103,16 +2096,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(return_type);
         }
 
-        if func.params.has_parameter() || func.return_type.is_some() {
-            // `function foo({bar: identifier_reference}) {}`
-            //                     ^^^^^^^^^^^^^^^^^^^^
-            // `function foo<SomeType>(v: SomeType): SomeType { return v; }`
-            //                            ^^^^^^^^   ^^^^^^^^
-            // Parameter initializers must be resolved after all parameters have been declared.
-            // Param types and return type must be resolved after type parameters have been declared.
-            // In both cases, need to avoid binding to variables/types declared inside the function body.
-            self.resolve_references_for_current_scope(unresolved_start);
-        }
+        // `function foo({bar: identifier_reference}) {}`
+        //                     ^^^^^^^^^^^^^^^^^^^^
+        // `function foo<SomeType>(v: SomeType): SomeType { return v; }`
+        //                            ^^^^^^^^   ^^^^^^^^
+        // `function foo<T extends SomeType>(this: SomeType) {}`
+        //                         ^^^^^^^^        ^^^^^^^^
+        // Parameter initializers must be resolved after all parameters have been declared.
+        // Param types, return type, type parameter constraints and the `this` type must be
+        // resolved after type parameters have been declared.
+        // In all cases, need to avoid binding to variables/types declared inside the function body.
+        self.resolve_references_for_current_scope(unresolved_start);
 
         if let Some(body) = &func.body {
             self.visit_function_body(body);
@@ -2191,16 +2185,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(return_type);
         }
 
-        if expr.params.has_parameter() || expr.return_type.is_some() {
-            // `let foo = ({bar: identifier_reference}) => {};`
-            //                   ^^^^^^^^^^^^^^^^^^^^
-            // `let foo = <SomeType>(v: SomeType): SomeType => v;`
-            //                          ^^^^^^^^   ^^^^^^^^
-            // Parameter initializers must be resolved after all parameters have been declared.
-            // Param types and return type must be resolved after type parameters have been declared.
-            // In both cases, need to avoid binding to variables/types declared inside the function body.
-            self.resolve_references_for_current_scope(unresolved_start);
-        }
+        // `let foo = ({bar: identifier_reference}) => {};`
+        //                   ^^^^^^^^^^^^^^^^^^^^
+        // `let foo = <SomeType>(v: SomeType): SomeType => v;`
+        //                          ^^^^^^^^   ^^^^^^^^
+        // `let foo = <T extends SomeType>() => {};`
+        //                       ^^^^^^^^
+        // Parameter initializers must be resolved after all parameters have been declared.
+        // Param types, return type and type parameter constraints must be resolved after
+        // type parameters have been declared.
+        // In all cases, need to avoid binding to variables/types declared inside the function body.
+        self.resolve_references_for_current_scope(unresolved_start);
 
         self.visit_arrow_function_body(&expr.body);
 

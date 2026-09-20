@@ -1,5 +1,7 @@
-commit: b465fdbf
+commit: c975de50
 
 estree_typescript_tokens Summary:
-AST Parsed     : 9723/9723 (100.00%)
-Positive Passed: 9723/9723 (100.00%)
+AST Parsed     : 9585/9586 (99.99%)
+Positive Passed: 9585/9586 (99.99%)
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocThisTagWithThisParameter.ts
+Identifier expected. 'this' is a reserved word that cannot be used here.
