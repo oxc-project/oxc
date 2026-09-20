@@ -178,13 +178,13 @@ test-lexer *args='':
 test-lexer-simd *args='':
   cargo test -p oxc_lexer {{_lexer-simd}} {{args}}
 
-# Run lexer conformance against the scalar fallback
+# Run lexer conformance against the scalar fallback (also part of `just coverage`)
 conformance-lexer *args='':
-  cargo run -p oxc_coverage --profile coverage --features lexer -- lexer {{args}}
+  cargo run -p oxc_coverage --profile coverage -- lexer {{args}}
 
 # Run lexer conformance against the SIMD core
 conformance-lexer-simd *args='':
-  cargo run -p oxc_coverage --profile coverage {{_lexer-simd}} --features lexer -- lexer {{args}}
+  cargo run -p oxc_coverage --profile coverage {{_lexer-simd}} -- lexer {{args}}
 
 # Lint `oxc_lexer` and the conformance harness against the scalar fallback
 [unix]
