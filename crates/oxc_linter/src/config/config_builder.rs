@@ -4,7 +4,7 @@ use std::{
 };
 
 use itertools::Itertools;
-use oxc_resolver::{ResolveOptions, Resolver};
+use oxc_resolver::{Resolution, ResolveOptions, Resolver};
 use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
@@ -20,7 +20,7 @@ use crate::{
         rules::OverrideRulesError,
     },
     external_linter::ExternalLinter,
-    external_plugin_store::{ExternalOptionsId, ExternalRuleId},
+    external_plugin_store::{ExternalOptionsId, ExternalPluginIdentity, ExternalRuleId},
     rules::RULES,
 };
 
@@ -264,10 +264,7 @@ impl ConfigStoreBuilder {
                 });
             };
 
-            let resolver = Resolver::new(ResolveOptions {
-                condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
-                ..Default::default()
-            });
+            let resolver = plugin_resolver();
 
             for entry in external_plugins {
                 Self::load_external_plugin(
@@ -675,6 +672,11 @@ impl ConfigStoreBuilder {
             });
         }
 
+        let identity = plugin_identity(&resolved, &plugin_path);
+        if external_plugin_store.try_reuse_plugin(&plugin_path, identity.as_ref(), alias) {
+            return Ok(());
+        }
+
         // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = String::from(Url::from_file_path(&plugin_path).unwrap());
@@ -695,6 +697,8 @@ impl ConfigStoreBuilder {
             external_plugin_store.register_plugin(
                 plugin_path,
                 plugin_name,
+                alias.is_some(),
+                identity,
                 result.offset,
                 result.rule_names,
             );
@@ -740,6 +744,32 @@ impl Debug for ConfigStoreBuilder {
             .field("config", &self.config)
             .finish_non_exhaustive()
     }
+}
+
+fn plugin_resolver() -> Resolver {
+    Resolver::new(ResolveOptions {
+        condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
+        ..Default::default()
+    })
+}
+
+/// Only a plugin installed under `node_modules` has an identity. For any other plugin the nearest
+/// `package.json` is that of the project, which says nothing about which plugin the file is.
+fn plugin_identity(resolved: &Resolution, plugin_path: &Path) -> Option<ExternalPluginIdentity> {
+    // `package_json` is the manifest of the package the resolved plugin file is part of,
+    // not the one of the config which asks for the plugin.
+    let package_json = resolved.package_json()?;
+    let package_dir = package_json.directory();
+    if !package_dir.components().any(|component| component.as_os_str() == "node_modules") {
+        return None;
+    }
+
+    let entry_path = plugin_path.strip_prefix(package_dir).ok()?;
+    Some(ExternalPluginIdentity {
+        package_name: package_json.name()?.to_string(),
+        version: package_json.version()?.to_string(),
+        entry_path: entry_path.to_path_buf(),
+    })
 }
 
 /// An error that can occur while building a [`Config`] from an [`Oxlintrc`].
@@ -1826,5 +1856,254 @@ mod test {
         .unwrap()
         .build(&mut external_plugin_store)
         .unwrap()
+    }
+
+    /// Deduplication of JS plugins which are installed separately in each package of a monorepo.
+    ///
+    /// The packages the identity is read from are in `fixtures/js_plugin_dedupe`.
+    mod external_plugin_dedupe {
+        use std::sync::{Arc, Mutex};
+
+        use crate::external_linter::LoadPluginResult;
+
+        use super::*;
+
+        /// Stand-in for the JS side.
+        ///
+        /// Records which plugin modules are imported, and rejects a plugin name which is already
+        /// registered, as `registerPlugin` does. Registrations are held per workspace, because the
+        /// JS side holds one plugin and rule registry per workspace.
+        #[derive(Default)]
+        struct JsSide {
+            loaded_urls: Vec<String>,
+            workspaces: FxHashMap<String, JsWorkspace>,
+        }
+
+        #[derive(Default)]
+        struct JsWorkspace {
+            plugin_names: Vec<String>,
+            rule_count: usize,
+        }
+
+        fn external_linter(js_side: &Arc<Mutex<JsSide>>) -> ExternalLinter {
+            let js_side = Arc::clone(js_side);
+            ExternalLinter::new(
+                Arc::new(Box::new(move |url: String, plugin_name, _is_alias, workspace_uri| {
+                    // On JS side `plugin.meta.name` takes priority over the name Rust provides,
+                    // and the package name is used when there is none. The fixture plugins
+                    // define no `meta.name`, and all have a package name. Names are normalized
+                    // as the JS side normalizes `meta.name`.
+                    let name = plugin_name.unwrap_or_else(|| {
+                        let plugin_file = Url::parse(&url).unwrap().to_file_path().unwrap();
+                        let package_json = std::fs::read_to_string(
+                            plugin_file.parent().unwrap().join("package.json"),
+                        )
+                        .unwrap();
+                        let package_json: serde_json::Value =
+                            serde_json::from_str(&package_json).unwrap();
+                        normalize_plugin_name(package_json["name"].as_str().unwrap()).into_owned()
+                    });
+
+                    let mut js_side = js_side.lock().unwrap();
+                    js_side.loaded_urls.push(url);
+
+                    let workspace =
+                        js_side.workspaces.entry(workspace_uri.unwrap_or_default()).or_default();
+                    if workspace.plugin_names.contains(&name) {
+                        return Err(format!("Error: Plugin name '{name}' is already registered."));
+                    }
+                    workspace.plugin_names.push(name.clone());
+
+                    let offset = workspace.rule_count;
+                    workspace.rule_count += 1;
+                    Ok(LoadPluginResult {
+                        name,
+                        offset,
+                        rule_names: vec!["no-debugger".to_string()],
+                    })
+                })),
+                Arc::new(Box::new(|_| Ok(()))),
+                Arc::new(Box::new(|_, _, _, _, _, _, _, _| unreachable!())),
+                Arc::new(Box::new(|_| Ok(()))),
+                Arc::new(Box::new(|_| Ok(()))),
+            )
+        }
+
+        /// The JS side, and the linter and plugin store of the Rust side.
+        struct Harness {
+            js_side: Arc<Mutex<JsSide>>,
+            linter: ExternalLinter,
+            resolver: Resolver,
+            store: ExternalPluginStore,
+        }
+
+        impl Harness {
+            fn new() -> Self {
+                let js_side = Arc::new(Mutex::new(JsSide::default()));
+                let linter = external_linter(&js_side);
+                Self {
+                    js_side,
+                    linter,
+                    resolver: plugin_resolver(),
+                    store: ExternalPluginStore::new(true),
+                }
+            }
+
+            /// Load a plugin as the config in `package_dir` of the fixture monorepo would.
+            fn load(
+                &mut self,
+                package_dir: &str,
+                specifier: &str,
+            ) -> Result<(), ConfigBuilderError> {
+                self.load_in(package_dir, specifier, None, None)
+            }
+
+            fn load_aliased(
+                &mut self,
+                package_dir: &str,
+                specifier: &str,
+                alias: &str,
+            ) -> Result<(), ConfigBuilderError> {
+                self.load_in(package_dir, specifier, Some(alias), None)
+            }
+
+            fn load_in(
+                &mut self,
+                package_dir: &str,
+                specifier: &str,
+                alias: Option<&str>,
+                workspace_uri: Option<&str>,
+            ) -> Result<(), ConfigBuilderError> {
+                let config_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("fixtures/js_plugin_dedupe/packages")
+                    .join(package_dir);
+                ConfigStoreBuilder::load_external_plugin(
+                    &config_dir,
+                    specifier,
+                    alias,
+                    &self.linter,
+                    &self.resolver,
+                    &mut self.store,
+                    workspace_uri,
+                )
+            }
+
+            /// Number of plugin modules imported on JS side.
+            fn loaded(&self) -> usize {
+                self.js_side.lock().unwrap().loaded_urls.len()
+            }
+
+            fn rule_id(&self, plugin_name: &str) -> ExternalRuleId {
+                self.store.lookup_rule_id(plugin_name, "no-debugger").unwrap()
+            }
+        }
+
+        #[test]
+        fn plugin_resolving_to_a_registered_path_is_reused() {
+            let mut harness = Harness::new();
+
+            for _ in 0..2 {
+                harness.load("a", "oxlint-plugin-dupe").unwrap();
+            }
+
+            assert_eq!(harness.loaded(), 1);
+        }
+
+        #[test]
+        fn plugin_installed_in_two_packages_at_same_version_is_loaded_once() {
+            let mut harness = Harness::new();
+
+            harness.load("a", "oxlint-plugin-dupe").unwrap();
+            harness.load("b", "oxlint-plugin-dupe").unwrap();
+
+            assert_eq!(harness.loaded(), 1);
+        }
+
+        #[test]
+        fn rules_of_a_reused_plugin_keep_their_ids() {
+            let mut harness = Harness::new();
+
+            harness.load("a", "oxlint-plugin-dupe").unwrap();
+            let first_rule_id = harness.rule_id("dupe");
+            harness.load("b", "oxlint-plugin-dupe").unwrap();
+
+            assert_eq!(harness.rule_id("dupe"), first_rule_id);
+        }
+
+        #[test]
+        fn plugin_requested_under_an_alias_is_loaded_separately() {
+            let mut harness = Harness::new();
+
+            harness.load_aliased("a", "oxlint-plugin-dupe", "dupe-alias").unwrap();
+            harness.load("b", "oxlint-plugin-dupe").unwrap();
+
+            assert_eq!(harness.loaded(), 2);
+            assert_ne!(harness.rule_id("dupe-alias"), harness.rule_id("dupe"));
+        }
+
+        #[test]
+        fn plugin_requested_under_its_registered_name_as_alias_is_reused() {
+            let mut harness = Harness::new();
+
+            harness.load("a", "oxlint-plugin-dupe").unwrap();
+            let first_rule_id = harness.rule_id("dupe");
+            harness.load_aliased("b", "oxlint-plugin-dupe", "dupe").unwrap();
+
+            assert_eq!(harness.loaded(), 1);
+            assert_eq!(harness.rule_id("dupe"), first_rule_id);
+        }
+
+        #[test]
+        fn two_versions_of_a_plugin_are_loaded_separately() {
+            let mut harness = Harness::new();
+
+            harness.load("a", "oxlint-plugin-dupe").unwrap();
+            let err = harness.load("c", "oxlint-plugin-dupe").unwrap_err();
+
+            assert_eq!(harness.loaded(), 2);
+            let message = err.to_string();
+            assert!(message.contains("Plugin name 'dupe' is already registered"), "{message}");
+        }
+
+        #[test]
+        fn plugins_outside_node_modules_get_no_identity() {
+            let mut harness = Harness::new();
+
+            harness.load("d", "./index.js").unwrap();
+            let err = harness.load("e", "./index.js").unwrap_err();
+
+            assert_eq!(harness.loaded(), 2);
+            let message = err.to_string();
+            assert!(message.contains("Plugin name 'local' is already registered"), "{message}");
+        }
+
+        #[test]
+        fn plugin_package_without_a_version_is_loaded_again() {
+            let mut harness = Harness::new();
+
+            harness.load("a", "oxlint-plugin-unversioned").unwrap();
+            let err = harness.load("b", "oxlint-plugin-unversioned").unwrap_err();
+
+            assert_eq!(harness.loaded(), 2);
+            let message = err.to_string();
+            assert!(
+                message.contains("Plugin name 'unversioned' is already registered"),
+                "{message}"
+            );
+        }
+
+        #[test]
+        fn plugin_is_not_reused_across_plugin_stores() {
+            let mut harness = Harness::new();
+
+            // The language server builds one `ExternalPluginStore` per workspace folder,
+            // and the JS side holds one plugin registry per workspace.
+            for workspace_uri in ["file:///workspace-a", "file:///workspace-b"] {
+                harness.store = ExternalPluginStore::new(true);
+                harness.load_in("a", "oxlint-plugin-dupe", None, Some(workspace_uri)).unwrap();
+            }
+
+            assert_eq!(harness.loaded(), 2);
+        }
     }
 }
