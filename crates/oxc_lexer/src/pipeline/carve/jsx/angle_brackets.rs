@@ -1,14 +1,12 @@
-use crate::{
-    error::diag_code,
-    lanes::Lanes,
-    tables::{Tables, is_id_start, is_word, is_ws},
-};
+use crate::{error::DiagCode, lanes::Lanes};
 
-use super::super::super::{
+use crate::pipeline::{
     bitmap::bm_get,
+    bytes::{is_id_start, is_word, is_ws},
     disambiguate::{jsx_site_is_expression, ts_type_region_open, type_parameter_list_head},
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
+    tables::Tables,
 };
 
 const FN_TYPE_SCAN_CAP: usize = 1 << 16;
@@ -124,8 +122,8 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
     AngleVerdict::Jsx
 }
 
-/// Byte length of the whitespace at `p` — ASCII, or the multi-byte
-/// ECMAScript whitespace `misc_pre` marked as a token boundary — else 0.
+/// Byte length of the whitespace at `p` - ASCII, or the multi-byte
+/// ECMAScript whitespace `misc_pre` marked as a token boundary - else 0.
 #[inline(always)]
 unsafe fn head_ws_len(src: &[u8], p: usize) -> usize {
     let c = src[p];
@@ -159,7 +157,7 @@ unsafe fn jsx_ambiguous_site(
     }
     if generic_fn_type_after(src, n, lp) {
         if jsx_site_is_expression(t, src, st, opch, kind, n, lt) {
-            lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, diag_code::UNTERMINATED_JSX_ELEMENT);
+            lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
         }
         return false;
     }

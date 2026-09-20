@@ -1,7 +1,5 @@
 # externals/webawesome/page/page.ts
 
-> union out of its `:`/`as` position expands to leading-`|` right away. See crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
-
 ## Option 2
 
 `````json

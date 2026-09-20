@@ -1,4 +1,4 @@
-use super::super::chunk::{eqm, load64};
+use crate::pipeline::chunk::{eqm, load64};
 
 #[inline]
 pub unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
@@ -83,7 +83,7 @@ macro_rules! define_find_function {
         $(#[$attr])*
         #[inline]
         pub unsafe fn $name(src: *const u8, n: usize, mut i: usize) -> usize {
-            use super::super::chunk::{load64, eqm};
+            use crate::pipeline::chunk::{load64, eqm};
 
             while i + 8 <= n {
                 let x = load64(src, i);

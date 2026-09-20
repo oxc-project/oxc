@@ -3,7 +3,7 @@ use oxc_ast::ast::{
     UnaryExpression,
 };
 use oxc_ecmascript::{ToInt32, ToUint32};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, Ident};
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::ToJsString,
@@ -165,7 +165,7 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
         Expression::StaticMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
-            find_in_enum_body_scopes(member_expr.property.name.as_str(), obj_symbol_id, ctx.scoping)
+            find_in_enum_body_scopes(member_expr.property.name, obj_symbol_id, ctx.scoping)
         }
         Expression::ComputedMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
@@ -173,7 +173,7 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
                 return None;
             };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
-            find_in_enum_body_scopes(prop_lit.value.as_str(), obj_symbol_id, ctx.scoping)
+            find_in_enum_body_scopes(prop_lit.value.into(), obj_symbol_id, ctx.scoping)
         }
         _ => None,
     }
@@ -289,13 +289,13 @@ fn eval_unary_expression(
 /// // The symbol `A` has two body scopes — this searches both.
 /// ```
 fn find_in_enum_body_scopes(
-    member_name: &str,
+    member_name: Ident<'_>,
     enum_symbol_id: SymbolId,
     scoping: &Scoping,
 ) -> Option<ConstantValue> {
     let body_scopes = scoping.get_enum_body_scopes(enum_symbol_id)?;
     for &body_scope in body_scopes {
-        if let Some(member_symbol_id) = scoping.get_binding(body_scope, member_name.into())
+        if let Some(member_symbol_id) = scoping.get_binding(body_scope, member_name)
             && let Some(value) = scoping.get_enum_member_value(member_symbol_id)
         {
             return Some(value.clone());

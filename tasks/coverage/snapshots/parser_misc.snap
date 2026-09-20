@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 110/110 (100.00%)
-Positive Passed: 110/110 (100.00%)
-Negative Passed: 227/227 (100.00%)
+AST Parsed     : 111/111 (100.00%)
+Positive Passed: 111/111 (100.00%)
+Negative Passed: 234/234 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -934,6 +934,62 @@ Negative Passed: 227/227 (100.00%)
  1 │ import defer 'module';
    ·              ────┬───
    ·                  ╰── `from` expected
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-abstract-type-require.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ abstract import type X = require("external");
+   · ────────
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-abstract.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ abstract import X = A.B;
+   · ────────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-declare-abstract.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ declare abstract import X = A.B;
+   · ───────
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-declare-abstract.ts:2:9]
+ 1 │ namespace A { export class B {} }
+ 2 │ declare abstract import X = A.B;
+   ·         ────────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-declare-require.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ declare import X = require("external");
+   · ───────
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-export-abstract.ts:2:8]
+ 1 │ namespace A { export class B {} }
+ 2 │ export abstract import X = A.B;
+   ·        ────────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-export-declare-type-require.ts:2:8]
+ 1 │ namespace A { export class B {} }
+ 2 │ export declare import type X = require("external");
+   ·        ───────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-export-declare.ts:2:8]
+ 1 │ namespace A { export class B {} }
+ 2 │ export declare import X = A.B;
+   ·        ───────
    ╰────
 
   × Identifier expected. 'this' is a reserved word that cannot be used here.

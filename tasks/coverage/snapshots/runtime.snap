@@ -1,8 +1,8 @@
-commit: be13516f
+commit: 35d56660
 
 runtime Summary:
-AST Parsed     : 18277/18277 (100.00%)
-Positive Passed: 17306/18277 (94.69%)
+AST Parsed     : 18280/18280 (100.00%)
+Positive Passed: 17307/18280 (94.68%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -1076,6 +1076,12 @@ Test262Error: The expression should evaluate to the result Expected SameValue(«
 
 minify Error: tasks/coverage/test262/test/language/expressions/does-not-equals/S11.9.2_A7.8.js
 Test262Error: #7: (1 != {valueOf: function() {throw "error"}, toString: function() {return 1}}) throw "error"
+
+minify Error: tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-number-extremes.js
+Test262Error: The result of (0xfffffffffffff800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n != Number.MAX_VALUE) is false Expected SameValue(«true», «false») to be true
+
+minify Error: tasks/coverage/test262/test/language/expressions/equals/bigint-and-number-extremes.js
+Test262Error: The result of (0xfffffffffffff800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n == Number.MAX_VALUE) is true Expected SameValue(«false», «true») to be true
 
 minify Error: tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-err.js
 Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all

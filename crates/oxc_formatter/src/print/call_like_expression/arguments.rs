@@ -570,32 +570,34 @@ fn can_group_arrow_function_expression_argument(
     is_arrow_recursion: bool,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    arrow_function.get_expression().is_none_or(|expr| match expr {
-        Expression::ObjectExpression(_)
-        | Expression::ArrayExpression(_)
-        | Expression::JSXElement(_)
-        | Expression::JSXFragment(_) => true,
-        Expression::ArrowFunctionExpression(inner_arrow_function) => {
-            can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
-        }
-        // A cast-wrapped body is not a call to `couldExpandArg` (see `is_cast_target`);
-        // a cast inside the body (`(cast).has(r)`) still leaves it a call.
-        // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/call-arguments.js#L232-L234
-        //
-        // A call wrapped in `ChainExpression` / `TSNonNullExpression`
-        // (e.g. `a?.b()`, `a.b()!`) counts as a call,
-        // like Prettier's `isCallExpression(stripChainElementWrappers(body))`.
-        //
-        // NOTE: The conditional check is deliberately asymmetric:
-        // Prettier matches a bare `ConditionalExpression` body only,
-        // so a wrapped one (`(a ? b : c)!`) does not count.
-        // Not derivable from a principle; follow Prettier if it changes.
-        expr if matches!(expr, Expression::ConditionalExpression(_))
-            || as_call_expression_without_chain_wrappers(expr).is_some() =>
-        {
-            !is_arrow_recursion && !is_cast_target(expr.span(), f)
-        }
-        _ => false,
+    arrow_function.get_expression().is_none_or(|expr| {
+        let shape_can_group = match expr {
+            Expression::ObjectExpression(_)
+            | Expression::ArrayExpression(_)
+            | Expression::JSXElement(_)
+            | Expression::JSXFragment(_) => true,
+            Expression::ArrowFunctionExpression(inner_arrow_function) => {
+                can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
+            }
+            // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/call-arguments.js#L232-L234
+            //
+            // A call wrapped in `ChainExpression` / `TSNonNullExpression`
+            // (e.g. `a?.b()`, `a.b()!`) counts as a call,
+            // like Prettier's `isCallExpression(stripChainElementWrappers(body))`.
+            //
+            // NOTE: The conditional check is deliberately asymmetric:
+            // Prettier matches a bare `ConditionalExpression` body only,
+            // so a wrapped one (`(a ? b : c)!`) does not count.
+            // Not derivable from a principle; follow Prettier if it changes.
+            expr if matches!(expr, Expression::ConditionalExpression(_))
+                || as_call_expression_without_chain_wrappers(expr).is_some() =>
+            {
+                !is_arrow_recursion
+            }
+            _ => false,
+        };
+        // A cast-wrapped body has no shape (see `is_cast_target`)
+        shape_can_group && !is_cast_target(expr.span(), f)
     })
 }
 

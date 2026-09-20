@@ -127,6 +127,61 @@ type WithComment = SerializedProps
 Prettier's output changes line (own-line to same-line, behind `& `) and is not a fixpoint (the second pass inlines the type with the comment behind `;`).
 Binary-like chains hoist the comment in both formatters; the own-line invariant over Prettier's internal inconsistency.
 
+## union-suppression-whole
+
+- Why: uniform-rule (same construct, same output: any other node after the same suppression comment, see #eol-suppression-after-assign-colon)
+- Pin: `tests/fixtures/ts/union/suppression.ts`
+- Conformance: `typescript/union/comments/18379.ts`, `typescript/union/consistent-with-flow/prettier-ignore.ts`
+
+A suppression comment before a union covers the whole union, wherever it sits: own-line, on the operator's line, or inline.
+One after a `|` covers that member (both formatters).
+
+```ts
+// input (= ours)
+type A =
+  // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+type B = // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+
+// prettier
+type A =
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X, Y>;
+type B =
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X, Y>;
+```
+
+Prettier's `handleUnionTypeComments` retargets an own-line comment to the first member (attachment time), a hand-aligned union loses its layout.
+After `type =` its printer own-lines an operator-line comment too, so the second pass retargets it (the first pass keeps the whole union);
+after `let :` the whole union stays, printed from column 0 (ours too);
+after `as` / `satisfies` the comment relocates behind the statement and the target is lost (#binary-cast-own-line-comment).
+
+The last member's trailing comment ends the union too, and the outermost node ending there claims it (the rule every node follows);
+Prettier gives it to the member and re-lays out the rest.
+
+```ts
+// input
+type T = (
+  | Aaaa<X,Y>
+  | Bbbb<X,Y> // prettier-ignore
+) & C;
+
+// ours (the verbatim range starts at the union's `|`)
+type T = (| Aaaa<X,Y>
+  | Bbbb<X,Y> // prettier-ignore
+) & C;
+
+// prettier
+type T = (
+  | Aaaa<X, Y>
+  | Bbbb<X,Y> // prettier-ignore
+) & C;
+```
+
 ## union-added-paren-comment-side
 
 - Why: uniform-rule (same construct, same output: array / indexed-access types)
@@ -153,22 +208,37 @@ Prettier moves the comment inside for `keyof`/type-operator operands while keepi
 
 Prettier's output crosses user content (the value the comment precedes, then the `;`) or changes line (own-lined in TS).
 An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break).
+Block comments glued after the operator before it stay there, in order;
+Prettier prints the line comment first and the block on the value's line, crossing the block.
+A line comment before the operator rides its `line_suffix` past the operator and gets the same break;
+Prettier flushes it past the value.
 
 ```ts
 // input
 const v1 = // c
   1;
+const v2 = /* c */ // d
+  1;
+const v3 // c
+  = 1;
 type Alias = // c
   "VALUE";
 
 // ours
 const v1 = // c
   1;
+const v2 = /* c */ // d
+  1;
+const v3 = // c
+  1;
 type Alias = // c
   "VALUE";
 
 // prettier
 const v1 = 1; // c
+const v2 = // d
+  /* c */ 1;
+const v3 = 1; // c
 type Alias =
   // c
   "VALUE";
@@ -181,6 +251,33 @@ Prettier treats the same shape three ways:
 - simple-typed property signatures get it flushed past the member and its `;` separator
 
 Not yet covered: default parameters, destructuring defaults, enum members (different formatting paths still flush, Prettier-compatible).
+
+## eol-suppression-after-assign-colon
+
+- Why: invariant
+- Pin: `tests/fixtures/ts/ignore/eol-after-operator.ts`
+
+Prettier's output loses the suppression's target: the right-hand side is reformatted.
+A suppression line comment ending the `=` / `:` line keeps its line (#eol-comment-after-assign-colon) and still suppresses the right-hand side.
+
+```ts
+// input
+const c = // prettier-ignore
+  foo( a,b );
+
+// ours
+const c = // prettier-ignore
+  foo( a,b );
+
+// prettier
+const c = // prettier-ignore
+  foo(a, b);
+```
+
+Prettier attaches the comment as the left side's trailing comment for variable declarators and class properties (the marker then targets the name),
+and as the value's leading comment for object properties and type aliases (own-lined there), so the same shape is suppressed at two of the four sites.
+A type annotation before the operator (`let d: Foo = // prettier-ignore`) is not the target either way;
+Prettier keeps it verbatim too (its trailing attachment), we format it.
 
 ## union-leading-pipe-comment-normalization
 
@@ -333,8 +430,7 @@ const eolBlock = {} /* c */ satisfies {};
 Prettier is converging on its own piecewise fixes (own-line comments in prettier/prettier#19939, endOfLine comments reattached in prettier/prettier#19958, both normalizing toward own-line); we preserve the written position instead, so the entry outlives them.
 
 `as const` follows the same policy (`const` is a type like any other; the pinned Prettier relocates its comments across `const` and the `;`).
-The one exclusion, pinned in the fixture: union types defer to the union printer's own comment claiming (a same-line line comment before a union still moves behind the statement, crossing the type — an invariant violation tolerated only here) — that claiming is its own subsystem, see #union-leading-pipe-comment-normalization and #union-added-paren-comment-side.
-Drop when: the union printer's claiming is bounded to its own gap; this exclusion then collapses into the general slot rule above (the `unionEol` pin flips).
+A union type claims the after-operator comments as its leading comments and places them itself (own-line and line comments lead the members, inline blocks go behind the `|`, see #union-leading-pipe-comment-normalization), the same placement as after a type alias's `=`; the glued line comment keeps the operator's line either way (`1 as // c` + break, where the pinned Prettier relocates it across the type and the `;`).
 
 ## head-body-comment-relocation
 
@@ -385,7 +481,10 @@ The shapes, each pinned by its fixture:
 ## union-annotation-flat-retry
 
 - Why: style-hold (oxc#25841)
-- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts` (also tracked by oxfmt's conformance suite, e.g. vue-vben-admin `api-component.vue`, webawesome `*.ts`)
+- Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`
+- Oxfmt: `externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue`, `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`,
+  `externals/webawesome/badge/badge.ts`, `externals/webawesome/button/button.ts`, `externals/webawesome/callout/callout.ts`, `externals/webawesome/checkbox/checkbox.ts`, `externals/webawesome/color-picker/color-picker.ts`, `externals/webawesome/copy-button/copy-button.ts`, `externals/webawesome/details/details.ts`, `externals/webawesome/dropdown/dropdown.ts`, `externals/webawesome/dropdown-item/dropdown-item.ts`, `externals/webawesome/format-number/format-number.ts`, `externals/webawesome/icon/icon.ts`, `externals/webawesome/input/input.ts`,
+  `externals/webawesome/number-input/number-input.ts`, `externals/webawesome/page/page.ts`, `externals/webawesome/popup/popup.ts`, `externals/webawesome/qr-code/qr-code.ts`, `externals/webawesome/radio/radio.ts`, `externals/webawesome/radio-group/radio-group.ts`, `externals/webawesome/rating/rating.ts`, `externals/webawesome/select/select.ts`, `externals/webawesome/slider/slider.ts`, `externals/webawesome/switch/switch.ts`, `externals/webawesome/tag/tag.ts`, `externals/webawesome/textarea/textarea.ts`
 - Drop when: the wait-and-see on Prettier 3.9's union style resolves (follow, or re-classify)
 
 ```ts
@@ -546,6 +645,7 @@ we reuse the reprint path's split (`write_leading_comments_with_asi_guard`, call
 
 - Why: semantics (Prettier's placement rebinds the cast to the added parens; verified with tsc; prettier/prettier#19645, fixed on main by prettier/prettier#19652)
 - Pin: `tests/fixtures/js/comments/type-cast-comment-inside-added-parens.js`
+- Oxfmt: `externals/svelte/internal/client/dom/css.js`
 
 ```js
 // input

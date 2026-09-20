@@ -436,11 +436,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::IfStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                     Self::try_fold_if(stmt, ctx);
-                    if let Statement::IfStatement(if_stmt) = stmt
-                        && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
-                    {
-                        ctx.replace_statement(stmt, folded_stmt);
-                    }
+                    Self::try_minimize_if(stmt, ctx);
                 }
                 Statement::WhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);

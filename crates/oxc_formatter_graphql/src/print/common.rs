@@ -170,7 +170,7 @@ pub(super) fn write_paren_list<'a, T, F>(
     flush_trailing_comment_before(to_span(list_span).start, f);
     write!(f, "(");
     // `( # c`: the comment leads the first item (own line), as after every opener
-    // (DIVERGENCES.md "argument-list-opener-comment": Prettier moves it past the `)`).
+    // (DIVERGENCES.md#argument-list-opener-comment: Prettier moves it past the `)`).
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         let last_end =
             write_sequence(f, items, SeparatorKind::CommaSoftline, preserve_blank, &write_item);

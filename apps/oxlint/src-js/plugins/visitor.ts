@@ -102,8 +102,10 @@ import {
   IDENTIFIER_COUNT_INCREMENT,
 } from "./selector.ts";
 import { debugAssert, debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
+import { wrapTimedFunction } from "./timing.ts";
 
 import type { Node } from "./types.ts";
+import type { RuleTiming } from "./timing.ts";
 import type { VisitorObject } from "../generated/visitor.d.ts";
 
 // Visit function for a specific AST node type.
@@ -261,8 +263,9 @@ let visitPropsCacheNextIndex = 0;
  * Add a visitor to compiled visitor.
  *
  * @param visitor - Visitor object
+ * @param timing - Timing accumulator for the rule which owns this visitor
  */
-export function addVisitorToCompiled(visitor: VisitorObject): void {
+export function addVisitorToCompiled(visitor: VisitorObject, timing?: RuleTiming): void {
   if (visitor === null || typeof visitor !== "object") {
     throw new TypeError("Visitor returned from `create` method must be an object");
   }
@@ -307,7 +310,7 @@ export function addVisitorToCompiled(visitor: VisitorObject): void {
     // Set up `VisitProp` object.
     // Reuse `VisitProp` object from cache. Loop above ensures cache is filled with enough objects.
     const visitProp = visitPropsCache[visitPropsCacheNextIndex++];
-    visitProp.fn = visitFn;
+    visitProp.fn = timing === undefined ? visitFn : wrapTimedFunction(visitFn, timing);
     visitProp.specificity = specificity;
     visitProp.selectorStr = name;
 
@@ -346,7 +349,10 @@ export function addVisitorToCompiled(visitor: VisitorObject): void {
       visitProp.specificity |= selector.specificity;
 
       if (selector.isComplex) {
-        visitProp.fn = wrapVisitFnWithSelectorMatch(visitFn, selector.esquerySelector);
+        const timedVisitFn = visitProp.fn;
+        debugAssertIsNonNull(timedVisitFn);
+        typeAssertIs<VisitFn>(timedVisitFn);
+        visitProp.fn = wrapVisitFnWithSelectorMatch(timedVisitFn, selector.esquerySelector);
       }
 
       const { typeIds } = selector;

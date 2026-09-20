@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use itertools::Either;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -31,15 +32,14 @@ fn no_map_spread_diagnostic(
     spread: &Spread<'_, '_>,
     returned_span: Option<Span>,
 ) -> OxcDiagnostic {
-    let spans = spread.spread_spans();
-    assert!(!spans.is_empty());
-    let mut spread_labels = spread.spread_spans().into_iter();
-    let first_message = if spans.len() == 1 {
+    let mut spread_labels = spread.spread_spans().peekable();
+    let first_span = spread_labels.next().expect("at least one spread");
+    let first_message = if spread_labels.peek().is_none() {
         "This spread allocates a new value on each iteration"
     } else {
         "These spreads allocate new values on each iteration"
     };
-    let first = spread_labels.next().unwrap().label(first_message);
+    let first = first_span.label(first_message);
     let others = spread_labels.map(LabeledSpan::from);
 
     let returned_label = returned_span
@@ -543,24 +543,20 @@ impl<'a, 'b> Spread<'a, 'b> {
         }
     }
 
-    fn spread_spans(&self) -> Vec<Span> {
+    fn spread_spans(&self) -> impl Iterator<Item = Span> + '_ {
         match self {
-            Spread::Object(obj) => obj
-                .properties
-                .iter()
-                .filter_map(|prop| match prop {
+            Spread::Object(obj) => {
+                Either::Left(obj.properties.iter().filter_map(|prop| match prop {
                     ObjectPropertyKind::SpreadProperty(spread) => Some(spread.span()),
                     ObjectPropertyKind::ObjectProperty(_) => None,
-                })
-                .collect(),
-            Spread::Array(arr) => arr
-                .elements
-                .iter()
-                .filter_map(|elem| match elem {
+                }))
+            }
+            Spread::Array(arr) => {
+                Either::Right(arr.elements.iter().filter_map(|elem| match elem {
                     ArrayExpressionElement::SpreadElement(spread) => Some(spread.span()),
                     _ => None,
-                })
-                .collect(),
+                }))
+            }
         }
     }
 }

@@ -5,7 +5,8 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 ## template-expression-indent
 
 - Why: invariant (prettier/prettier#19725)
-- Pin: `conformance/fixtures/edge-cases/css-in-js/template-expression-indent.js` (also `gql-in-js` / `html-in-js` siblings)
+- Pin: `conformance/fixtures/edge-cases/css-in-js/template-expression-indent.js`, `conformance/fixtures/edge-cases/gql-in-js/template-expression-indent.js`, `conformance/fixtures/edge-cases/html-in-js/template-expression-indent.js`
+- Conformance: `externals/webawesome/carousel/carousel.ts`, `externals/webawesome/color-picker/color-picker.ts`, `externals/webawesome/input/input.ts`
 
 ```js
 /* input */
@@ -49,7 +50,8 @@ Prettier 3.9.6 preserves the source indentation, not a fixpoint: its second pass
 ## broken-template-comment-indent
 
 - Why: invariant
-- Pin: `conformance/fixtures/edge-cases/xxx-in-js-comment/broken-template-comment-indent.js` (also tracked by conformance `externals/prettier/js/multiparser-comments/comment-inside.js`)
+- Pin: `conformance/fixtures/edge-cases/xxx-in-js-comment/broken-template-comment-indent.js`
+- Conformance: `externals/prettier/js/multiparser-comments/comment-inside.js`
 
 ```js
 /* input */
@@ -84,7 +86,8 @@ its second pass indents the expression to the placeholder too (at the template b
 ## ts-in-vue-generic-trailing-comma
 
 - Why: uniform-rule (embedded script formats like its standalone file)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/generic-trailing-comma.vue` (also tracked by conformance `externals/vue-vben-admin/.../api-component/api-component.vue`)
+- Pin: `conformance/fixtures/edge-cases/js-in-vue/generic-trailing-comma.vue`
+- Conformance: `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
 
 ```vue
 <!-- input -->
@@ -110,7 +113,8 @@ in ts-in-md and plain `.ts` — one rule over that internal inconsistency, the s
 ## styled-extend-tag
 
 - Why: cost
-- Pin: `conformance/fixtures/edge-cases/css-in-js/styled-extend-tag.js` (also tracked by conformance `externals/prettier/js/multiparser-css/styled-components.js`)
+- Pin: `conformance/fixtures/edge-cases/css-in-js/styled-extend-tag.js`
+- Conformance: `externals/prettier/js/multiparser-css/styled-components.js`
 
 ```js
 /* input */

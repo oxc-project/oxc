@@ -199,6 +199,22 @@ lint-lexer *args='':
 lint-lexer-simd *args='':
   just lint-lexer {{_lexer-simd}} {{args}}
 
+# `ready-lexer` fails if any step fails, or if conformance changes the lexer snapshots.
+# Only the lexer snapshots are checked for changes, so it can be run with other uncommitted changes.
+# Snapshots are checked after each conformance run, because the SIMD run overwrites the snapshots from the scalar run.
+_lexer-snapshots := "tasks/coverage/snapshots/lexer_*"
+
+# Lint, test, and run conformance for `oxc_lexer` against both implementations, and check snapshots are unchanged
+ready-lexer:
+  just lint-lexer
+  just lint-lexer-simd
+  just test-lexer
+  just test-lexer-simd
+  just conformance-lexer
+  git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
+  just conformance-lexer-simd
+  git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
+
 # ==================== LINTER ====================
 
 # oxlint release build

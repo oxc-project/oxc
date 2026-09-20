@@ -1,4 +1,6 @@
-use crate::{lanes::Lanes, tables::Tables};
+use crate::lanes::Lanes;
+
+use crate::pipeline::tables::Tables;
 
 mod common;
 mod js;

@@ -1,5 +1,5 @@
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
 /// Get bit `i`.
 ///

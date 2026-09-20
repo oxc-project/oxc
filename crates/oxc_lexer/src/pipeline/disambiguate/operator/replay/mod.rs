@@ -1,11 +1,25 @@
-use crate::{opmap::OP_KIND_BASE, tables::Tables};
+//! Is `yield` or `await` a keyword at this position?
+//!
+//! Outside modules, `yield` and `await` are keywords in some places, and ordinary identifiers elsewhere.
+//! That decides whether a `/` after one starts a regex (`yield /re/`) or is division (`yield / 2`).
+//!
+//! - `yield` is a keyword inside a generator, and in strict mode code.
+//! - `await` is a keyword inside an async function.
+//! - Both are reserved inside a class's `static` block.
+//!
+//! That depends on every enclosing function, which is hard to see by walking backwards.
+//! So [`replay_is_keyword`] replays the tokens forwards from the start of the file,
+//! keeping a stack of the functions, classes and object literals it's inside.
+//! A `"use strict"` directive or a class body makes the code inside strict.
+//!
+//! This only runs when `yield` or `await` comes directly before a `/`, or before a `<` in a JSX file.
+//! That is rare, so replaying from the start of the file is affordable.
 
-use super::super::super::{
-    BCOM, HASHBANG, IDENT, IDENT_ESC, LCOM, NUM, PRIV_IDENT, PRIV_IDENT_ESC, STR, TMPL_HEAD,
-    TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL, WS, bitmap::bm_next1,
-};
+use crate::token::{OP_KIND_BASE, tk};
 
-use super::super::{
+use crate::pipeline::{bitmap::bm_next1, tables::Tables};
+
+use crate::pipeline::disambiguate::common::{
     AngleMatch, angle_match_back, bm_prev_sig, ident_is, lt_in_range, match_delim_back,
     operand_position, prop_name, return_type_signature_paren, tail_before,
 };
@@ -13,11 +27,15 @@ use super::super::{
 #[cfg(test)]
 mod tests;
 
-const POP_BRACE: u8 = 0;
-const POP_PAREN: u8 = 1;
-const POP_CONCISE: u8 = 2;
-
 const MAX_SCOPES: usize = 512;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+enum Pop {
+    Brace = 0,
+    Paren = 1,
+    Concise = 2,
+}
 
 #[derive(Clone, Copy)]
 struct Scope {
@@ -27,7 +45,7 @@ struct Scope {
     reserved: bool,
     is_class: bool,
     is_obj: bool,
-    pop: u8,
+    pop: Pop,
     par: i32,
     brk: i32,
     brc: i32,
@@ -37,7 +55,7 @@ struct Scope {
 
 impl Scope {
     fn child(&self) -> Scope {
-        Scope { is_class: false, is_obj: false, pop: POP_BRACE, qdebt: 0, ..*self }
+        Scope { is_class: false, is_obj: false, pop: Pop::Brace, qdebt: 0, ..*self }
     }
 }
 
@@ -59,7 +77,7 @@ pub(super) unsafe fn replay_is_keyword(
         reserved: false,
         is_class: false,
         is_obj: false,
-        pop: POP_BRACE,
+        pop: Pop::Brace,
         par: 0,
         brk: 0,
         brc: 0,
@@ -102,7 +120,11 @@ pub(super) unsafe fn replay_is_keyword(
                 };
             }
             let k = *kind.add(i);
-            if k == WS || k == LCOM || k == BCOM || k == HASHBANG {
+            if k == tk!(Whitespace)
+                || k == tk!(LineComment)
+                || k == tk!(BlockComment)
+                || k == tk!(Hashbang)
+            {
                 i += 1;
                 continue;
             }
@@ -115,7 +137,7 @@ pub(super) unsafe fn replay_is_keyword(
         prev_end = bm_next1(st, pos + 1, n);
 
         if prologue != 0 {
-            if k == STR {
+            if k == tk!(String) {
                 let e = bm_next1(st, pos + 1, n).min(site);
                 let mut j = e;
                 let confirmed;
@@ -126,7 +148,7 @@ pub(super) unsafe fn replay_is_keyword(
                         break;
                     }
                     let jk = *kind.add(j);
-                    if jk == WS || jk == LCOM || jk == BCOM {
+                    if jk == tk!(Whitespace) || jk == tk!(LineComment) || jk == tk!(BlockComment) {
                         j += 1;
                         continue;
                     }
@@ -157,20 +179,20 @@ pub(super) unsafe fn replay_is_keyword(
         }
 
         if k < OP_KIND_BASE {
-            if k == IDENT && !prop_name(src, pos) && ident_is(src, pos, b"class") {
+            if k == tk!(Ident) && !prop_name(src, pos) && ident_is(src, pos, b"class") {
                 pending_class.push((par, brk, brc));
-            } else if k == TMPL_HEAD {
+            } else if k == tk!(TemplateHead) {
                 tdepth += 1;
-            } else if k == TMPL_MIDDLE || k == TMPL_TAIL {
+            } else if k == tk!(TemplateMiddle) || k == tk!(TemplateTail) {
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
-                    if top.pop == POP_CONCISE && top.tdep == tdepth {
+                    if top.pop == Pop::Concise && top.tdep == tdepth {
                         scopes.pop();
                         continue;
                     }
                     break;
                 }
-                if k == TMPL_TAIL {
+                if k == tk!(TemplateTail) {
                     tdepth -= 1;
                 }
             }
@@ -188,7 +210,7 @@ pub(super) unsafe fn replay_is_keyword(
                     s.is_gen = g;
                     s.asyn = a;
                     s.reserved = false;
-                    s.pop = POP_PAREN;
+                    s.pop = Pop::Paren;
                     s.par = par;
                     s.brk = brk;
                     s.brc = brc;
@@ -199,8 +221,8 @@ pub(super) unsafe fn replay_is_keyword(
             b')' => {
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
-                    if (top.pop == POP_CONCISE && par - 1 < top.par)
-                        || (top.pop == POP_PAREN && top.par == par)
+                    if (top.pop == Pop::Concise && par - 1 < top.par)
+                        || (top.pop == Pop::Paren && top.par == par)
                     {
                         scopes.pop();
                         continue;
@@ -213,7 +235,7 @@ pub(super) unsafe fn replay_is_keyword(
             b']' => {
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
-                    if top.pop == POP_CONCISE && brk - 1 < top.brk {
+                    if top.pop == Pop::Concise && brk - 1 < top.brk {
                         scopes.pop();
                         continue;
                     }
@@ -244,33 +266,30 @@ pub(super) unsafe fn replay_is_keyword(
                             s.asyn = arrow_is_async(src, st, kind, n, p);
                             s.reserved = false;
                             opened_body = true;
-                        } else if pb == b')' {
-                            if let Some(lp) = match_delim_back(src, st, kind, p, b'(', b')') {
-                                if let Some((g, a)) =
-                                    header_kind(src, st, kind, n, lp, enc.is_class, enc.is_obj)
-                                {
-                                    s.is_gen = g;
-                                    s.asyn = a;
-                                    s.reserved = false;
-                                    opened_body = true;
-                                }
-                            }
-                        }
-                    }
-                    if !opened_body && ts {
-                        if let Some(lp) = return_type_signature_paren(src, st, kind, pos) {
-                            if let Some((g, a)) =
+                        } else if pb == b')'
+                            && let Some(lp) = match_delim_back(src, st, kind, p, b'(', b')')
+                            && let Some((g, a)) =
                                 header_kind(src, st, kind, n, lp, enc.is_class, enc.is_obj)
-                            {
-                                s.is_gen = g;
-                                s.asyn = a;
-                                s.reserved = false;
-                                opened_body = true;
-                            }
+                        {
+                            s.is_gen = g;
+                            s.asyn = a;
+                            s.reserved = false;
+                            opened_body = true;
                         }
                     }
                     if !opened_body
-                        && pk == IDENT
+                        && ts
+                        && let Some(lp) = return_type_signature_paren(src, st, kind, pos)
+                        && let Some((g, a)) =
+                            header_kind(src, st, kind, n, lp, enc.is_class, enc.is_obj)
+                    {
+                        s.is_gen = g;
+                        s.asyn = a;
+                        s.reserved = false;
+                        opened_body = true;
+                    }
+                    if !opened_body
+                        && pk == tk!(Ident)
                         && enc.is_class
                         && !prop_name(src, p)
                         && ident_is(src, p, b"static")
@@ -281,7 +300,7 @@ pub(super) unsafe fn replay_is_keyword(
                     }
                     if !opened_body
                         && !pending_class.is_empty()
-                        && pk == IDENT
+                        && pk == tk!(Ident)
                         && !prop_name(src, p)
                         && ident_is(src, p, b"extends")
                     {
@@ -309,7 +328,7 @@ pub(super) unsafe fn replay_is_keyword(
             b'}' => {
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
-                    if top.pop == POP_CONCISE && brc - 1 < top.brc {
+                    if top.pop == Pop::Concise && brc - 1 < top.brc {
                         scopes.pop();
                         continue;
                     }
@@ -330,7 +349,7 @@ pub(super) unsafe fn replay_is_keyword(
                         break;
                     }
                     let jk = *kind.add(j);
-                    if jk == WS || jk == LCOM || jk == BCOM {
+                    if jk == tk!(Whitespace) || jk == tk!(LineComment) || jk == tk!(BlockComment) {
                         j += 1;
                         continue;
                     }
@@ -346,7 +365,7 @@ pub(super) unsafe fn replay_is_keyword(
                     s.is_gen = false;
                     s.asyn = arrow_is_async(src, st, kind, n, pos);
                     s.reserved = false;
-                    s.pop = POP_CONCISE;
+                    s.pop = Pop::Concise;
                     s.par = par;
                     s.brk = brk;
                     s.brc = brc;
@@ -358,24 +377,21 @@ pub(super) unsafe fn replay_is_keyword(
                 if *src.add(pos + 1) != b'?'
                     && *src.add(pos + 1) != b'.'
                     && (pos == 0 || *src.add(pos - 1) != b'?')
+                    && let Some(top) = scopes.last_mut()
+                    && top.pop == Pop::Concise
+                    && top.par == par
+                    && top.brk == brk
+                    && top.brc == brc
+                    && top.tdep == tdepth
                 {
-                    if let Some(top) = scopes.last_mut() {
-                        if top.pop == POP_CONCISE
-                            && top.par == par
-                            && top.brk == brk
-                            && top.brc == brc
-                            && top.tdep == tdepth
-                        {
-                            top.qdebt += 1;
-                        }
-                    }
+                    top.qdebt += 1;
                 }
             }
             b',' | b';' | b':' => {
                 let is_colon = *src.add(pos) == b':';
                 while scopes.len() > 1 {
                     let top = *scopes.last().unwrap();
-                    if top.pop == POP_CONCISE && top.par == par && top.brk == brk && top.brc == brc
+                    if top.pop == Pop::Concise && top.par == par && top.brk == brk && top.brc == brc
                     {
                         if is_colon && top.qdebt > 0 {
                             scopes.last_mut().unwrap().qdebt -= 1;
@@ -415,7 +431,7 @@ unsafe fn asi_pop_concise(
     tdepth: i32,
     ts: bool,
 ) {
-    if scopes.last().is_none_or(|s| s.pop != POP_CONCISE) {
+    if scopes.last().is_none_or(|s| s.pop != Pop::Concise) {
         return;
     }
     if !lt_in_range(src, prev_end, pos)
@@ -426,7 +442,7 @@ unsafe fn asi_pop_concise(
     }
     while scopes.len() > 1 {
         let top = *scopes.last().unwrap();
-        if top.pop == POP_CONCISE
+        if top.pop == Pop::Concise
             && top.par == par
             && top.brk == brk
             && top.brc == brc
@@ -469,12 +485,12 @@ unsafe fn continues_expression(src: *const u8, kind: *const u8, pos: usize, ts: 
                 | b'}'
         );
     }
-    if k == IDENT {
+    if k == tk!(Ident) {
         return ident_is(src, pos, b"in")
             || ident_is(src, pos, b"instanceof")
             || (ts && (ident_is(src, pos, b"as") || ident_is(src, pos, b"satisfies")));
     }
-    matches!(k, TMPL_HEAD | TMPL_NOSUB)
+    matches!(k, tk!(TemplateHead) | tk!(TemplateNoSub))
 }
 
 unsafe fn asi_tail_before(
@@ -538,7 +554,7 @@ unsafe fn header_kind(
     }
     if *kind.add(p) >= OP_KIND_BASE && *src.add(p) == b'*' {
         let f = bm_prev_sig(st, kind, p);
-        if f >= 0 && *kind.add(f as usize) == IDENT && ident_is(src, f as usize, b"function") {
+        if f >= 0 && *kind.add(f as usize) == tk!(Ident) && ident_is(src, f as usize, b"function") {
             let a = bm_prev_sig(st, kind, f as usize);
             let asyn = a >= 0 && async_modifier(src, st, kind, n, a as usize, f as usize);
             return Some((true, asyn));
@@ -555,7 +571,7 @@ unsafe fn header_kind(
         } else {
             return None;
         }
-    } else if *kind.add(p) == IDENT {
+    } else if *kind.add(p) == tk!(Ident) {
         if ident_is(src, p, b"function") && !prop_name(src, p) && !(in_class || in_obj) {
             let a = bm_prev_sig(st, kind, p);
             let asyn = a >= 0 && async_modifier(src, st, kind, n, a as usize, p);
@@ -564,7 +580,8 @@ unsafe fn header_kind(
         let f = bm_prev_sig(st, kind, p);
         if f >= 0 {
             let fp = f as usize;
-            if *kind.add(fp) == IDENT && !prop_name(src, fp) && ident_is(src, fp, b"function") {
+            if *kind.add(fp) == tk!(Ident) && !prop_name(src, fp) && ident_is(src, fp, b"function")
+            {
                 let a = bm_prev_sig(st, kind, fp);
                 let asyn = a >= 0 && async_modifier(src, st, kind, n, a as usize, fp);
                 return Some((false, asyn));
@@ -572,7 +589,7 @@ unsafe fn header_kind(
             if *kind.add(fp) >= OP_KIND_BASE && *src.add(fp) == b'*' {
                 let g = bm_prev_sig(st, kind, fp);
                 if g >= 0
-                    && *kind.add(g as usize) == IDENT
+                    && *kind.add(g as usize) == tk!(Ident)
                     && ident_is(src, g as usize, b"function")
                 {
                     let a = bm_prev_sig(st, kind, g as usize);
@@ -583,7 +600,14 @@ unsafe fn header_kind(
         }
         true
     } else {
-        matches!(*kind.add(p), STR | NUM | PRIV_IDENT | IDENT_ESC | PRIV_IDENT_ESC)
+        matches!(
+            *kind.add(p),
+            tk!(String)
+                | tk!(Number)
+                | tk!(PrivateIdent)
+                | tk!(IdentEscaped)
+                | tk!(PrivateIdentEscaped)
+        )
     };
     if !named || !(in_class || in_obj) {
         return None;
@@ -605,7 +629,7 @@ unsafe fn header_kind(
             }
             break;
         }
-        if *kind.add(mp) == IDENT && !prop_name(src, mp) {
+        if *kind.add(mp) == tk!(Ident) && !prop_name(src, mp) {
             if !asyn && async_modifier(src, st, kind, n, mp, cur) {
                 asyn = true;
                 cur = mp;
@@ -637,7 +661,7 @@ unsafe fn header_kind(
             }
         }
         if !method_pos {
-            if *kind.add(p) == IDENT && !prop_name(src, p) && ident_is(src, p, b"function") {
+            if *kind.add(p) == tk!(Ident) && !prop_name(src, p) && ident_is(src, p, b"function") {
                 let a = bm_prev_sig(st, kind, p);
                 let asy = a >= 0 && async_modifier(src, st, kind, n, a as usize, p);
                 return Some((false, asy));
@@ -660,17 +684,18 @@ unsafe fn arrow_is_async(
         return false;
     }
     let hp = h as usize;
-    if *kind.add(hp) == IDENT {
+    if *kind.add(hp) == tk!(Ident) {
         let a = bm_prev_sig(st, kind, hp);
         if a >= 0 && async_modifier(src, st, kind, n, a as usize, hp) {
             return true;
         }
-    } else if *kind.add(hp) >= OP_KIND_BASE && *src.add(hp) == b')' {
-        if let Some(lp) = match_delim_back(src, st, kind, hp, b'(', b')') {
-            let a = bm_prev_sig(st, kind, lp);
-            if a >= 0 && async_modifier(src, st, kind, n, a as usize, lp) {
-                return true;
-            }
+    } else if *kind.add(hp) >= OP_KIND_BASE
+        && *src.add(hp) == b')'
+        && let Some(lp) = match_delim_back(src, st, kind, hp, b'(', b')')
+    {
+        let a = bm_prev_sig(st, kind, lp);
+        if a >= 0 && async_modifier(src, st, kind, n, a as usize, lp) {
+            return true;
         }
     }
     if let Some(lp) = return_type_signature_paren(src, st, kind, gt.saturating_sub(1)) {
@@ -688,7 +713,7 @@ unsafe fn async_modifier(
     pos: usize,
     next: usize,
 ) -> bool {
-    if *kind.add(pos) != IDENT || prop_name(src, pos) || !ident_is(src, pos, b"async") {
+    if *kind.add(pos) != tk!(Ident) || prop_name(src, pos) || !ident_is(src, pos, b"async") {
         return false;
     }
     let e = bm_next1(st, pos + 1, n);

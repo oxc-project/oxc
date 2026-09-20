@@ -1,7 +1,5 @@
 # externals/webawesome/carousel/carousel.ts
 
-> embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent
-
 ## Option 1
 
 `````json

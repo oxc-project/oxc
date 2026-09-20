@@ -215,8 +215,8 @@ describeRangeParent.concurrent("range & parent TypeScript", () => {
 // These fixtures' ASTs match TS-ESLint, so only their token tests are skipped.
 // https://github.com/typescript-eslint/typescript-eslint/issues/12820
 const TS_TOKENS_SKIP_PATHS = new Set([
-  "tests/cases/compiler/importTypeWithUnparenthesizedGenericFunctionParsed.ts.md",
-  "tests/cases/compiler/parseGenericArrowRatherThanLeftShift.ts.md",
+  "tsc/testdata/tests/cases/compiler/importTypeWithUnparenthesizedGenericFunctionParsed.ts.md",
+  "tsc/testdata/tests/cases/compiler/parseGenericArrowRatherThanLeftShift.ts.md",
 ]);
 const tsTokensFixturePaths = tsFixturePaths.filter((path) => !TS_TOKENS_SKIP_PATHS.has(path));
 

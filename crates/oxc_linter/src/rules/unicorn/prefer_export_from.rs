@@ -1,5 +1,6 @@
 use cow_utils::CowUtils;
 use indexmap::IndexMap;
+use itertools::Itertools;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -166,7 +167,6 @@ impl PreferExportFrom {
                     let value = &attribute.value.raw.unwrap();
                     format!("{key}: {value}")
                 })
-                .collect::<Vec<_>>()
                 .join(", ");
 
             format!("{keyword} {{ {entries} }}")

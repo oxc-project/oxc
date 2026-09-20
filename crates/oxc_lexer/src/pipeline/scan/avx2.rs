@@ -1,6 +1,6 @@
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
-use super::super::chunk::{load256, mm, veq};
+use crate::pipeline::chunk::{load256, mm, veq};
 
 use super::common::lic_verify_at;
 

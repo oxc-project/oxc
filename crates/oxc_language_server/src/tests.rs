@@ -23,22 +23,37 @@ pub struct FakeToolBuilder {
     diagnostic_mode: DiagnosticMode,
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
     pub build_client_message: Vec<ClientMessage>,
+    delays: FakeToolDelays,
+}
+
+#[derive(Default, Clone, Copy)]
+pub struct FakeToolDelays {
+    run_diagnostic: u64,
 }
 
 impl FakeToolBuilder {
     pub fn new(diagnostic_mode: DiagnosticMode) -> Self {
-        Self { diagnostic_mode, cache_uris: None, build_client_message: Vec::new() }
+        Self {
+            diagnostic_mode,
+            cache_uris: None,
+            build_client_message: Vec::new(),
+            delays: FakeToolDelays::default(),
+        }
     }
 
     pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
         Self { cache_uris: Some(cache_uris), ..self }
+    }
+
+    pub fn with_delays(self, delays: FakeToolDelays) -> Self {
+        Self { delays, ..self }
     }
 }
 
 impl ToolBuilder for FakeToolBuilder {
     fn build(&self, _root_uri: &Uri, _options: serde_json::Value) -> ToolBuildResult {
         ToolBuildResult {
-            tool: Box::new(FakeTool { cache_uris: self.cache_uris.clone() }),
+            tool: Box::new(FakeTool { cache_uris: self.cache_uris.clone(), delays: self.delays }),
             client_messages: self.build_client_message.clone(),
         }
     }
@@ -62,11 +77,14 @@ impl ToolBuilder for FakeToolBuilder {
 
 pub struct FakeTool {
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+    delays: FakeToolDelays,
 }
 
 pub const FAKE_COMMAND: &str = "fake.command";
 
 const WORKSPACE: &str = "file:///path/to/workspace";
+
+const NESTED_WORKSPACE: &str = "file:///path/to/workspace/nested";
 
 const WORKSPACE_2: &str = "file:///path/to/another_workspace";
 
@@ -185,6 +203,9 @@ impl Tool for FakeTool {
     }
 
     fn run_diagnostic(&self, document: TextDocument) -> DiagnosticResult {
+        if self.delays.run_diagnostic > 0 {
+            std::thread::sleep(std::time::Duration::from_millis(self.delays.run_diagnostic));
+        }
         if let Some(cache_uris) = &self.cache_uris {
             cache_uris.lock().unwrap().push(document.uri.clone());
         }
@@ -655,8 +676,8 @@ mod test_suite {
         ClientMessage, DiagnosticMode,
         backend::Backend,
         tests::{
-            FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, TestServer, WORKSPACE,
-            WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
+            FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, NESTED_WORKSPACE, TestServer,
+            WORKSPACE, WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
             acknowledge_unregistrations, code_action, create_workspace_manager,
             create_workspace_manager_with_builder, diagnostic, diagnostic_with_previous_result_id,
             did_change, did_change_configuration, did_change_watched_files, did_close, did_open,
@@ -917,6 +938,54 @@ mod test_suite {
 
         assert!(shutdown_result.is_ok());
         assert_eq!(shutdown_result.id(), &Id::Number(2));
+    }
+
+    #[tokio::test]
+    async fn test_workspace_configuration_runs_push_diagnostics_for_open_files() {
+        let init_options = InitializeRequestOptions {
+            workspace_configuration: true,
+            workspace_folders: Some(vec![
+                WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() },
+                WorkspaceFolder {
+                    uri: NESTED_WORKSPACE.parse().unwrap(),
+                    name: "nested".to_string(),
+                },
+            ]),
+            ..Default::default()
+        };
+        let mut server = TestServer::new(|client| {
+            Backend::new(
+                client,
+                server_info(),
+                create_workspace_manager_with_builder(FakeToolBuilder::new(DiagnosticMode::Push)),
+            )
+        });
+
+        server.send_request(initialize_request_workspace_folders(init_options)).await;
+        assert!(server.recv_response().await.is_ok());
+
+        let uri = format!("{NESTED_WORKSPACE}/diagnostics.config");
+        let content = "initialized content";
+        server.send_request(did_open(&uri, content)).await;
+
+        // Send initialized notification
+        server.send_request(initialized_notification()).await;
+
+        // workspace configuration request expected
+        response_to_configuration(&mut server, vec![json!(null), json!(null)]).await;
+
+        let diagnostic_response = server.recv_notification().await;
+        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri, uri.parse().unwrap());
+        assert_eq!(params.diagnostics.len(), 1);
+        assert_eq!(
+            params.diagnostics[0].message,
+            format!("Fake diagnostic for content: {content}")
+        );
+
+        server.shutdown_with_diagnostic_clear(2, vec![uri.parse().unwrap()]).await;
     }
 
     #[tokio::test]
@@ -2691,6 +2760,71 @@ mod test_suite {
             server.send_ack(&Id::Number(0)).await;
 
             server.shutdown(2).await;
+        }
+    }
+
+    mod request_locks {
+        use std::time::Instant;
+
+        use crate::tests::{FakeToolDelays, create_dynamic_workspace_manager};
+
+        use super::*;
+        #[tokio::test]
+        #[ignore = "This needs to be fixed"]
+        async fn test_request_locks() {
+            let delay = 100;
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_dynamic_workspace_manager(
+                            FakeToolBuilder::new(DiagnosticMode::Pull)
+                                .with_delays(FakeToolDelays { run_diagnostic: delay }),
+                        ),
+                    )
+                },
+                initialize_request(InitializeRequestOptions::default()),
+            )
+            .await;
+
+            let file = format!("{WORKSPACE}/diagnostics.config");
+            server.send_request(did_open(&file, "content")).await;
+
+            let now = Instant::now();
+
+            // Send multiple diagnostic requests
+            for i in 0..5 {
+                server.send_request(diagnostic(1 + i, &file)).await;
+            }
+            server.send_request(code_action(6, &file)).await;
+
+            let mut diagnostic_responses = 0;
+            loop {
+                let response = server.recv_response().await;
+                if response.id() == &Id::Number(6) {
+                    break;
+                }
+                diagnostic_responses += 1;
+            }
+
+            let elapsed = now.elapsed().as_millis();
+
+            while diagnostic_responses < 5 {
+                let response = server.recv_response().await;
+                assert_ne!(response.id(), &Id::Number(6));
+                diagnostic_responses += 1;
+            }
+
+            server.shutdown(7).await;
+
+            // The diagnostic request should not block the code action request,
+            // so the total elapsed time should be less than delay * number of diagnostic requests.
+            assert!(
+                elapsed < u128::from(delay * 5),
+                "Diagnostic requests are blocking the code action request, elapsed time: {elapsed}ms, expected under {}ms",
+                delay * 5
+            );
         }
     }
 }

@@ -1,10 +1,10 @@
 use crate::token::TokenKind;
 
-use super::super::super::tests::{division, kinds_of, regex};
+use crate::pipeline::disambiguate::tests::{FileType, division, kinds_of, regex};
 
 // Reduce repeated boilerplate in tests below.
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.
-use super::super::super::tests::FileType::*;
+use FileType::*;
 
 #[test]
 fn yield_identifier_divides() {

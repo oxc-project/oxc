@@ -18,6 +18,7 @@ pub struct OxcOptions {
     pub codegen: Option<OxcCodegenOptions>,
     pub compress: Option<OxcCompressOptions>,
     pub mangle: Option<OxcMangleOptions>,
+    pub mangle_props: Option<OxcManglePropertiesOptions>,
     pub control_flow: Option<OxcControlFlowOptions>,
     pub inject: Option<OxcInjectOptions>,
     pub define: Option<OxcDefineOptions>,
@@ -33,6 +34,7 @@ pub struct OxcRunOptions {
     pub whitespace: bool,
     pub compress: bool,
     pub mangle: bool,
+    pub mangle_props: Option<bool>,
     pub scope: bool,
     pub symbol: bool,
     pub cfg: bool,
@@ -113,6 +115,44 @@ pub struct OxcControlFlowOptions {
 pub struct OxcMangleOptions {
     pub top_level: bool,
     pub keep_names: bool,
+}
+
+#[napi(object)]
+#[derive(Default, Clone)]
+pub struct OxcManglePropertiesOptions {
+    /// Property names to mangle, using Rust regex syntax (for example, "_$").
+    pub include: String,
+    /// Exclude matching property names, using Rust regex syntax.
+    pub exclude: Option<String>,
+    /// Exact property names to preserve.
+    pub reserved: Option<Vec<String>>,
+    /// Also mangle quoted property occurrences (default: false).
+    pub quoted: Option<bool>,
+    /// Generate readable property names (default: false).
+    pub debug: Option<bool>,
+}
+
+impl TryFrom<&OxcManglePropertiesOptions> for oxc::minifier::ManglePropertiesOptions {
+    type Error = String;
+
+    fn try_from(options: &OxcManglePropertiesOptions) -> Result<Self, Self::Error> {
+        let mut result = Self::from_pattern(&options.include)
+            .map_err(|error| format!("Invalid mangleProps.include regex: {error}"))?;
+        result.exclude = options
+            .exclude
+            .as_ref()
+            .map(|pattern| {
+                lazy_regex::Regex::new(pattern)
+                    .map_err(|error| format!("Invalid mangleProps.exclude regex: {error}"))
+            })
+            .transpose()?;
+        if let Some(reserved) = &options.reserved {
+            result.reserved = reserved.iter().map(|name| name.as_str().into()).collect();
+        }
+        result.mangle_quoted = options.quoted.unwrap_or_default();
+        result.debug = options.debug.unwrap_or_default();
+        Ok(result)
+    }
 }
 
 #[napi(object)]

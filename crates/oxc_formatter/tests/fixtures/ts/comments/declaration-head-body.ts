@@ -2,7 +2,8 @@
 // braces (head-body comment policy): a block comment inline, a line comment
 // keeping its position with the `{` forced onto the next line, an own-line
 // comment keeping its own line.
-// Known divergence (typescript/interface{,2}/comments*.ts): Prettier pulls
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation;
+// typescript/interface{,2}/comments*.ts): Prettier pulls
 // line and own-line comments inside the braces (`{\n  // c`), or past them
 // entirely for enum/namespace (`enum E {} // c`) -- attachment artifacts of
 // the kind prettier is currently fixing elsewhere (prettier#19894 family,

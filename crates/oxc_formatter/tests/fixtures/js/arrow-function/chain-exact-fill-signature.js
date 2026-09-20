@@ -1,6 +1,6 @@
 // An arrow chain with a parens-adding conditional body keeps a signature line
 // that exactly fills the print width, body indented on the next line.
-// DIVERGES from Prettier (DIVERGENCES.md "arrow-chain-exact-fill-signature"),
+// DIVERGES from Prettier (DIVERGENCES.md#arrow-chain-exact-fill-signature),
 // which counts the hug layout's literal trailing space when measuring the fit,
 // breaks the assignment, and retries the chain flat on the indented next line
 // (with parens); layout-only, triggers only on an exact width match.

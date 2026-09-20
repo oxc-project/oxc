@@ -783,8 +783,9 @@ impl NoUselessAssignment {
         scope_id_a: ScopeId,
         scope_id_b: ScopeId,
     ) -> bool {
-        Self::get_parent_variable_scope(ctx, scope_id_a)
-            == Self::get_parent_variable_scope(ctx, scope_id_b)
+        scope_id_a == scope_id_b
+            || Self::get_parent_variable_scope(ctx, scope_id_a)
+                == Self::get_parent_variable_scope(ctx, scope_id_b)
     }
 
     fn analyze_loop_recursive(

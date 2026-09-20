@@ -64,6 +64,10 @@ describe("LSP initialization", () => {
       ["**/.oxlintrc.json", "**/.oxlintrc.jsonc", "**/oxlint.config.ts", "**/oxlint.config.mts"],
     ],
     [{ configPath: "./custom-config.json" }, ["custom-config.json"]],
+    [
+      { disableNestedConfig: true },
+      [".oxlintrc.json", ".oxlintrc.jsonc", "oxlint.config.ts", "oxlint.config.mts"],
+    ],
   ])(
     "should send correct dynamic watch pattern registration for config: %s",
     async (lspConfig, expectedPatterns) => {

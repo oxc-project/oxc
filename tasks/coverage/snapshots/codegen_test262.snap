@@ -1,5 +1,5 @@
-commit: be13516f
+commit: 35d56660
 
 codegen_test262 Summary:
-AST Parsed     : 47435/47435 (100.00%)
-Positive Passed: 47435/47435 (100.00%)
+AST Parsed     : 47445/47445 (100.00%)
+Positive Passed: 47445/47445 (100.00%)
