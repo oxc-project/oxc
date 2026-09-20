@@ -250,18 +250,22 @@ impl Rule for CapitalizedComments {
             // - A letter is "uppercase" if it differs from its lowercase form
             // - A letter is "lowercase" if it differs from its uppercase form
             // - Letters with no case distinction (CJK, Hebrew, Arabic, etc.) are skipped
-            let lower = first_letter.to_lowercase().collect::<String>();
-            let upper = first_letter.to_uppercase().collect::<String>();
+            let lower = first_letter.to_lowercase();
+            let upper = first_letter.to_uppercase();
 
             // Skip letters with no case distinction (e.g., CJK characters)
-            if lower == upper {
+            if lower.clone().eq(upper.clone()) {
                 continue;
             }
 
             let is_uppercase = first_letter.is_uppercase();
             let (wrong_case, correct_case, fixed_letter) = match self.capitalize {
-                AlwaysNever::Always if !is_uppercase => ("lowercase", "uppercase", upper),
-                AlwaysNever::Never if is_uppercase => ("uppercase", "lowercase", lower),
+                AlwaysNever::Always if !is_uppercase => {
+                    ("lowercase", "uppercase", upper.collect::<String>())
+                }
+                AlwaysNever::Never if is_uppercase => {
+                    ("uppercase", "lowercase", lower.collect::<String>())
+                }
                 _ => continue,
             };
 
@@ -274,7 +278,7 @@ impl Rule for CapitalizedComments {
 
             ctx.diagnostic_with_fix(
                 capitalized_comments_diagnostic(comment.span, wrong_case, correct_case),
-                |fixer| fixer.replace(letter_span, fixed_letter.clone()),
+                |fixer| fixer.replace(letter_span, fixed_letter),
             );
         }
     }
@@ -1134,6 +1138,8 @@ fn test() {
             "// should fail. https://github.com",
             Some(serde_json::json!(["never"])),
         ),
+        ("// ßeta", "// SSeta", Some(serde_json::json!(["always"]))),
+        ("// İtem", "// i\u{307}tem", Some(serde_json::json!(["never"]))),
     ];
 
     Tester::new(CapitalizedComments::NAME, CapitalizedComments::PLUGIN, pass, fail)

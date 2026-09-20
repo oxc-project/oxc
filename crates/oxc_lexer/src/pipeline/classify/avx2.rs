@@ -1,16 +1,13 @@
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
-use crate::{
-    opmap::PUNCT1_KIND_UNKNOWN,
+use crate::token::tk;
+
+use crate::pipeline::{
+    chunk::{load256, mm, veq},
     tables::{PH_A, PH_B, PH_T0, PH_T1, Tables},
 };
 
-use super::super::{
-    IDENT, NUM, WS,
-    chunk::{load256, mm, veq},
-};
-
-pub unsafe fn classify(
+pub(super) unsafe fn classify_impl(
     t: &Tables,
     ts: bool,
     src: *const u8,
@@ -33,7 +30,7 @@ pub unsafe fn classify(
     let mut b = 0usize;
     // Process ceil(n/64) blocks. When n is not a multiple of 64 the final
     // block overreads up to 63 bytes into the caller-guaranteed zeroed PAD
-    // and is masked below — this replaces the byte-at-a-time scalar tail,
+    // and is masked below - this replaces the byte-at-a-time scalar tail,
     // which cost ~18 cyc per tail byte (up to ~1.1k cyc when n mod 64 is
     // near 63) and dominated small-file lexing.
     let nb_ceil = n.div_ceil(64);
@@ -41,10 +38,10 @@ pub unsafe fn classify(
     let v_phb = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_B.as_ptr() as *const __m128i));
     let v_pht0 = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_T0.as_ptr() as *const __m128i));
     let v_pht1 = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_T1.as_ptr() as *const __m128i));
-    let v_96 = _mm256_set1_epi8(PUNCT1_KIND_UNKNOWN as i8);
-    let v_ws = _mm256_set1_epi8(WS as i8);
-    let v_ident = _mm256_set1_epi8(IDENT as i8);
-    let v_num = _mm256_set1_epi8(NUM as i8);
+    let v_96 = _mm256_set1_epi8(tk!(Invalid) as i8);
+    let v_ws = _mm256_set1_epi8(tk!(Whitespace) as i8);
+    let v_ident = _mm256_set1_epi8(tk!(Ident) as i8);
+    let v_num = _mm256_set1_epi8(tk!(Number) as i8);
     let v_mlo = _mm256_broadcastsi128_si256(_mm_loadu_si128(mrg_lo.as_ptr() as *const __m128i));
     let v_mhi = _mm256_broadcastsi128_si256(_mm_loadu_si128(t.mrg_hi.as_ptr() as *const __m128i));
     let v_wblo = _mm256_broadcastsi128_si256(_mm_loadu_si128(t.wb_lo.as_ptr() as *const __m128i));
@@ -117,7 +114,7 @@ pub unsafe fn classify(
     // other six bitmaps are already 0 for a zero byte, but masking all seven
     // makes the last word bit-identical to the old scalar tail's output (real
     // bits [0, rem), zeros above) regardless of LUT contents. `kind` past `n`
-    // is never read — `compress` only visits masked `st` starts — so it needs
+    // is never read - `compress` only visits masked `st` starts - so it needs
     // no fixup.
     let rem = n & 63;
     if rem != 0 {

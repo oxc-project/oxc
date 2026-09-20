@@ -1,42 +1,48 @@
-pub mod diag_code {
-    pub const OK: u16 = 0;
-    pub const UNTERMINATED_STRING: u16 = 1;
-    pub const UNTERMINATED_TEMPLATE: u16 = 2;
-    pub const UNTERMINATED_BLOCK_COMMENT: u16 = 3;
-    pub const UNTERMINATED_REGEXP: u16 = 4;
-    pub const LINE_TERMINATOR_IN_REGEXP: u16 = 5;
-    pub const INVALID_UTF8: u16 = 6;
-    pub const INVALID_UNICODE_ESCAPE: u16 = 7;
-    pub const INVALID_IDENTIFIER_ESCAPE: u16 = 8;
-    pub const INVALID_NUMERIC_SEPARATOR: u16 = 9;
-    pub const INVALID_BIGINT: u16 = 10;
-    pub const INVALID_NUMERIC_LITERAL: u16 = 11;
-    pub const INVALID_HASHBANG_POSITION: u16 = 12;
-    pub const INVALID_REGEXP_FLAG: u16 = 13;
-    pub const DUPLICATE_REGEXP_FLAG: u16 = 14;
-    pub const INVALID_REGEXP_GRAMMAR: u16 = 15;
-    pub const ORACLE_DEPTH_EXCEEDED: u16 = 16;
-    pub const ALLOCATION_LIMIT_EXCEEDED: u16 = 17;
-    pub const UNEXPECTED_CHARACTER: u16 = 18;
-    pub const LINE_TERMINATOR_IN_STRING: u16 = 19;
-    pub const HTML_COMMENT_IN_MODULE: u16 = 20;
-    pub const UNTERMINATED_JSX_ELEMENT: u16 = 21;
-    pub const UNTERMINATED_JSX_TAG: u16 = 22;
-    pub const UNTERMINATED_JSX_CONTAINER: u16 = 23;
-    pub const JSX_CLOSING_TAG_MISMATCH: u16 = 24;
-    pub const JSX_TEXT_INVALID_CHARACTER: u16 = 25;
-}
-
-pub mod diag_severity {
-    pub const ERROR: u16 = 0;
-    pub const WARNING: u16 = 1;
-}
-
 #[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Diagnostic {
     pub off: u32,
     pub len: u32,
-    pub code: u16,
-    pub severity: u16,
+    pub code: DiagCode,
+    pub severity: DiagSeverity,
+}
+
+#[repr(u16)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Debug)]
+pub enum DiagCode {
+    #[default]
+    Ok = 0,
+    UnterminatedString = 1,
+    UnterminatedTemplate = 2,
+    UnterminatedBlockComment = 3,
+    UnterminatedRegexp = 4,
+    LineTerminatorInRegexp = 5,
+    InvalidUtf8 = 6,
+    InvalidUnicodeEscape = 7,
+    InvalidIdentifierEscape = 8,
+    InvalidNumericSeparator = 9,
+    InvalidBigint = 10,
+    InvalidNumericLiteral = 11,
+    InvalidHashbangPosition = 12,
+    InvalidRegexpFlag = 13,
+    DuplicateRegexpFlag = 14,
+    InvalidRegexpGrammar = 15,
+    OracleDepthExceeded = 16,
+    AllocationLimitExceeded = 17,
+    UnexpectedCharacter = 18,
+    LineTerminatorInString = 19,
+    HtmlCommentInModule = 20,
+    UnterminatedJsxElement = 21,
+    UnterminatedJsxTag = 22,
+    UnterminatedJsxContainer = 23,
+    JsxClosingTagMismatch = 24,
+    JsxTextInvalidCharacter = 25,
+}
+
+#[repr(u16)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Debug)]
+pub enum DiagSeverity {
+    #[default]
+    Error = 0,
+    Warning = 1,
 }

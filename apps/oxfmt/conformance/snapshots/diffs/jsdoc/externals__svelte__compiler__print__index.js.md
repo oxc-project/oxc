@@ -1,7 +1,5 @@
 # externals/svelte/compiler/print/index.js
 
-> TODO: `if (!(a && b))` hugs `!(` to the head paren since prettier/prettier#18401, not ported yet (conformance `js/if/condition-break/unary-expression.js`). Unrelated to JSDoc
-
 ## Option 1
 
 `````json

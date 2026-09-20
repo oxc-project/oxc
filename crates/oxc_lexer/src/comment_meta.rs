@@ -1,3 +1,5 @@
+use oxc_ast::ast::CommentContent;
+
 pub const CONTENT_NONE: u8 = 0;
 pub const CONTENT_LEGAL: u8 = 1;
 pub const CONTENT_JSDOC: u8 = 2;
@@ -12,8 +14,7 @@ pub const CONTENT_PROPERTY_KEY: u8 = 10;
 pub const META_MULTILINE: u8 = 0x10;
 
 #[inline]
-pub fn content_from_ordinal(o: u8) -> oxc_ast::ast::CommentContent {
-    use oxc_ast::ast::CommentContent;
+pub fn content_from_ordinal(o: u8) -> CommentContent {
     match o & 0x0F {
         CONTENT_LEGAL => CommentContent::Legal,
         CONTENT_JSDOC => CommentContent::Jsdoc,
@@ -189,11 +190,12 @@ pub fn meta_byte_exact(src: &[u8], start: u32, end: u32, is_block: bool) -> u8 {
 
 #[cfg(test)]
 mod tests {
+    use oxc_ast::ast::CommentContent;
+
     use super::{
         CONTENT_COVERAGE_IGNORE, CONTENT_COVERAGE_IGNORE_FILE, CONTENT_NONE, CONTENT_PROPERTY_KEY,
         classify, content_from_ordinal,
     };
-    use oxc_ast::ast::CommentContent;
 
     #[test]
     fn coverage_ignore_file() {

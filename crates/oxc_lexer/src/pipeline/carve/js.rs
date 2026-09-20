@@ -1,9 +1,9 @@
-use crate::{comment_meta, error::diag_code, lanes::Lanes, tables::Tables};
+use crate::{comment_meta, error::DiagCode, lanes::Lanes, token::tk};
 
-use super::super::{
-    HASHBANG, LCOM, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL,
+use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
     find::{find_line_terminator, find_opener, find_opener6},
+    tables::Tables,
 };
 
 use super::common::{lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape};
@@ -25,7 +25,7 @@ pub(super) unsafe fn carve_js(
     let mut i = 0usize;
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
         let end = find_line_terminator(src, n, 2);
-        *kind = HASHBANG;
+        *kind = tk!(Hashbang);
         bm_clear_range(st, 1, end - 1);
         if end < n {
             bm_set(st, end);
@@ -44,8 +44,17 @@ pub(super) unsafe fn carve_js(
                 i = lex_string(src, srcs, n, st, kind, s, c, lanes);
             }
             b'`' => {
-                let (end, opened_sub) =
-                    lex_template_segment(src, srcs, n, st, kind, s, TMPL_HEAD, TMPL_NOSUB, lanes);
+                let (end, opened_sub) = lex_template_segment(
+                    src,
+                    srcs,
+                    n,
+                    st,
+                    kind,
+                    s,
+                    tk!(TemplateHead),
+                    tk!(TemplateNoSub),
+                    lanes,
+                );
                 if opened_sub {
                     depth.push(0);
                 }
@@ -74,8 +83,8 @@ pub(super) unsafe fn carve_js(
                         st,
                         kind,
                         s,
-                        TMPL_MIDDLE,
-                        TMPL_TAIL,
+                        tk!(TemplateMiddle),
+                        tk!(TemplateTail),
                         lanes,
                     );
                     if opened_sub {
@@ -94,10 +103,10 @@ pub(super) unsafe fn carve_js(
                     && *src.add(s + 3) == b'-';
                 if html && (!lanes.module || html_close_at_line_start(srcs, s)) {
                     if lanes.module {
-                        lanes.push_diag(s as u32, 4, diag_code::HTML_COMMENT_IN_MODULE);
+                        lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
                     }
                     let end = find_line_terminator(src, n, s + 4);
-                    *kind.add(s) = LCOM;
+                    *kind.add(s) = tk!(LineComment);
                     if end > s + 1 {
                         bm_clear_range(st, s + 1, end - 1);
                     }
@@ -124,6 +133,7 @@ pub(super) unsafe fn carve_js(
             }
             b'>' => {
                 // Annex B B.1.3: `-->` begins a line comment, but only at
+                #[expect(clippy::collapsible_match)]
                 if s >= 2
                     && *src.add(s - 1) == b'-'
                     && *src.add(s - 2) == b'-'
@@ -132,7 +142,7 @@ pub(super) unsafe fn carve_js(
                 {
                     let start = s - 2;
                     let end = find_line_terminator(src, n, s + 1);
-                    *kind.add(start) = LCOM;
+                    *kind.add(start) = tk!(LineComment);
                     bm_set(st, start);
                     if end > start + 1 {
                         bm_clear_range(st, start + 1, end - 1);
@@ -164,7 +174,7 @@ pub(super) unsafe fn carve_js(
     }
 }
 
-/// Annex B B.1.3: a `-->` close-comment counts only at line start — scanning
+/// Annex B B.1.3: a `-->` close-comment counts only at line start - scanning
 /// back must reach a LineTerminator (or start of input) crossing nothing but
 /// whitespace and block comments; a newline inside a crossed block comment
 /// also qualifies. Cold: called only on a literal `-->`.

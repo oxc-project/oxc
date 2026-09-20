@@ -1,7 +1,5 @@
 # externals/aws-cloudformation-templates/RainModules/load-balancer.yml
 
-> over-indented comment after `key: value` never rewrites the pair. See crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented
-
 ## Option 1
 
 `````json

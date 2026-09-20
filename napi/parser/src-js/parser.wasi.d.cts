@@ -1,3 +1,7 @@
+
+/** The WASI flavor this loader instantiates. */
+export declare const __napiBindingTarget: 'wasm32-wasi'
+
 export interface Comment {
   type: 'Line' | 'Block'
   value: string

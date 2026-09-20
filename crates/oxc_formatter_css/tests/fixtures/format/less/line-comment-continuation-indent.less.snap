@@ -3,7 +3,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 // A continuation line inside a parenthesized operation sits one level under the operation,
-// whether the width or a `//` comment broke the line (see DIVERGENCES.md "line-comment-continuation-indent")
+// whether the width or a `//` comment broke the line (see DIVERGENCES.md#line-comment-continuation-indent)
 @a1: (@column-width * // c
   @columns) + 1;
 @a2: (@column-width * @a-very-long-variable-name-that-forces-the-line-to-wrap-somewhere-ok) + 1;
@@ -21,7 +21,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 { printWidth: 80 }
 ------------------
 // A continuation line inside a parenthesized operation sits one level under the operation,
-// whether the width or a `//` comment broke the line (see DIVERGENCES.md "line-comment-continuation-indent")
+// whether the width or a `//` comment broke the line (see DIVERGENCES.md#line-comment-continuation-indent)
 @a1: (
     @column-width * // c
       @columns
@@ -52,7 +52,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 { printWidth: 100 }
 -------------------
 // A continuation line inside a parenthesized operation sits one level under the operation,
-// whether the width or a `//` comment broke the line (see DIVERGENCES.md "line-comment-continuation-indent")
+// whether the width or a `//` comment broke the line (see DIVERGENCES.md#line-comment-continuation-indent)
 @a1: (
     @column-width * // c
       @columns

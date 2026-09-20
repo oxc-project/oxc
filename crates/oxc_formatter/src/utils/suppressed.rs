@@ -4,6 +4,7 @@ use oxc_span::Span;
 use crate::{
     Buffer, Format,
     formatter::{prelude::*, trivia::FormatTrailingComments},
+    print::write_comments_before_closing_paren,
     utils::typecast::{format_leading_comments_and_open_paren, write_suppressed_cast_target},
     write,
 };
@@ -32,6 +33,16 @@ pub fn write_suppressed_expression(
     format_leading_comments_and_open_paren(span, leading_comments_start, needs_parentheses, f);
     FormatSuppressedNode(span).fmt(f);
     if needs_parentheses {
+        // The trailing run before a surviving source `)` prints inside the pair (the verbatim node is one line, no group breaks for it);
+        // a line comment there forces the `)` onto the next line, as it forces a body's `{`.
+        // ```ts
+        // type T = (A | B // prettier-ignore
+        // ) & C;
+        // ```
+        let run = write_comments_before_closing_paren(f, span.end);
+        if run.and_then(<[_]>::last).is_some_and(|comment| comment.is_line()) {
+            write!(f, [hard_line_break()]);
+        }
         write!(f, ")");
     }
 }

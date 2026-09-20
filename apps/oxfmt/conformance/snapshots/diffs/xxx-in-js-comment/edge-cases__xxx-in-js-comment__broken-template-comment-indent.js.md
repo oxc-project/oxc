@@ -1,7 +1,5 @@
 # edge-cases/xxx-in-js-comment/broken-template-comment-indent.js
 
-> broken `${}` holding comments indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
-
 ## Option 1
 
 `````json
@@ -16,7 +14,7 @@
 +++ oxfmt
 @@ -1,8 +1,8 @@
  // DIVERGES: broken `${}` holding comments indents to the placeholder;
- // see apps/oxfmt/DIVERGENCES.md "broken-template-comment-indent"
+ // see apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
  html`
    ${
 -  foo
@@ -33,7 +31,7 @@
 
 `````js
 // DIVERGES: broken `${}` holding comments indents to the placeholder;
-// see apps/oxfmt/DIVERGENCES.md "broken-template-comment-indent"
+// see apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
 html`
   ${
     foo
@@ -47,7 +45,7 @@ html`
 
 `````js
 // DIVERGES: broken `${}` holding comments indents to the placeholder;
-// see apps/oxfmt/DIVERGENCES.md "broken-template-comment-indent"
+// see apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
 html`
   ${
   foo
@@ -71,7 +69,7 @@ html`
 +++ oxfmt
 @@ -1,8 +1,8 @@
  // DIVERGES: broken `${}` holding comments indents to the placeholder;
- // see apps/oxfmt/DIVERGENCES.md "broken-template-comment-indent"
+ // see apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
  html`
    ${
 -  foo
@@ -88,7 +86,7 @@ html`
 
 `````js
 // DIVERGES: broken `${}` holding comments indents to the placeholder;
-// see apps/oxfmt/DIVERGENCES.md "broken-template-comment-indent"
+// see apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
 html`
   ${
     foo
@@ -102,7 +100,7 @@ html`
 
 `````js
 // DIVERGES: broken `${}` holding comments indents to the placeholder;
-// see apps/oxfmt/DIVERGENCES.md "broken-template-comment-indent"
+// see apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
 html`
   ${
   foo

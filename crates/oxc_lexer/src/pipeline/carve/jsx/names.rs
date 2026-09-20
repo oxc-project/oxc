@@ -1,7 +1,8 @@
-use crate::tables::{is_word, is_ws};
+use std::ptr;
 
-use super::super::super::{
+use crate::pipeline::{
     bitmap::bm_next0,
+    bytes::{is_word, is_ws},
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
 };
@@ -22,8 +23,8 @@ pub(super) unsafe fn jsx_names_equal_fast(
         && !matches!(ce, b'.' | b':' | b'-')
         && !(is_ws(ce) && !is_word(*src.add(e + 1)) && jsx_name_continues_after(src, n, e))
     {
-        let x = core::ptr::read_unaligned(src.add(a) as *const u64);
-        let y = core::ptr::read_unaligned(src.add(b) as *const u64);
+        let x = ptr::read_unaligned(src.add(a) as *const u64);
+        let y = ptr::read_unaligned(src.add(b) as *const u64);
         let mask = if len == 8 { !0u64 } else { (1u64 << (len * 8)) - 1 };
         if (x ^ y) & mask != 0 {
             return false;

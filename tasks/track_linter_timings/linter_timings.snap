@@ -107,7 +107,6 @@ eslint/no-proto                                            |  95297
 eslint/no-prototype-builtins                               |  62606
 eslint/no-redeclare                                        |      7
 eslint/no-regex-spaces                                     |  64236
-eslint/no-restricted-exports                               |     70
 eslint/no-restricted-globals                               |      7
 eslint/no-return-assign                                    |  13005
 eslint/no-script-url                                       |  63073
@@ -549,7 +548,7 @@ unicorn/consistent-assert                                  |    103
 unicorn/consistent-date-clone                              |   1421
 unicorn/consistent-empty-array-spread                      |   4722
 unicorn/consistent-existence-index-check                   |  20604
-unicorn/consistent-function-scoping                        |  16812
+unicorn/consistent-function-scoping                        |      7
 unicorn/consistent-template-literal-escape                 |    613
 unicorn/custom-error-definition                            |    300
 unicorn/empty-brace-spaces                                 |  44575
