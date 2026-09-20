@@ -718,26 +718,26 @@ fn js_parser_test() {
         "x: while (x) y: while (y) { if (a) break x; if (b) break y; }",
         "x: for (; x; ) y: for (; y; ) { if (a) break x; if (b) break y;}",
     );
-    // test(
-    // "x: while (x) y: while (y) { if (a) continue x; if (b) continue y; }",
-    // "x: for (; x; ) y: for (; y; ) { if (a) continue x; if (b) continue y;}",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) break x; if (b) break x; }",
-    // "x: for (; x; ) for (; y; ) if (a || b) break x;",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) continue x; if (b) continue x; }",
-    // "x: for (; x; ) for (; y; ) if (a || b) continue x;",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) break y; if (b) break y; }",
-    // "for (; x; ) y: for (; y; ) if (a || b) break y;",
-    // );
-    // test(
-    // "x: while (x) y: while (y) { if (a) continue y; if (b) continue y; }",
-    // "for (; x; ) y: for (; y; ) if (a || b) continue y;",
-    // );
+    test(
+        "x: while (x) y: while (y) { if (a) continue x; if (b) continue y; }",
+        "x: for (; x; ) y: for (; y; ) { if (a) continue x; if (b) continue y;}",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) break x; if (b) break x; }",
+        "x: for (; x; ) for (; y; ) if (a || b) break x;",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) continue x; if (b) continue x; }",
+        "x: for (; x; ) for (; y; ) if (a || b) continue x;",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) break y; if (b) break y; }",
+        "for (; x; ) y: for (; y; ) if (a || b) break y;",
+    );
+    test(
+        "x: while (x) y: while (y) { if (a) continue y; if (b) continue y; }",
+        "for (; x; ) y: for (; y; ) if (a || b) continue y;",
+    );
     test("if (x ? y : 0) foo()", "x && y && foo();");
     test("if (x ? y : 1) foo()", "(!x || y) && foo();");
     test("if (x ? 0 : y) foo()", "!x && y && foo();");

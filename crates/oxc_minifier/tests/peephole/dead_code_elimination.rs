@@ -560,11 +560,7 @@ fn drop_multiple_labels() {
     drop_labels.insert("TEST".to_string());
     options.drop_labels = drop_labels;
 
-    test_with_options(
-        "PURE: { foo(); } TEST: { bar(); } OTHER: { baz(); }",
-        "OTHER: baz();",
-        options,
-    );
+    test_with_options("PURE: { foo(); } TEST: { bar(); } OTHER: { baz(); }", "baz();", options);
 }
 
 #[test]

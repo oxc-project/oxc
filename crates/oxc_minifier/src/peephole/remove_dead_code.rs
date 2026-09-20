@@ -265,6 +265,16 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
+        if ctx.state.labels.stack.last().is_some_and(|s| !s.used) {
+            ctx.replace_statement_with(stmt, |stmt, _ctx| {
+                let Statement::LabeledStatement(stmt) = stmt else {
+                    unreachable!();
+                };
+                stmt.unbox().body
+            });
+            return;
+        }
+
         // Check the first statement in the block, or just the `break [id] ` statement.
         // Check if we need to remove the whole block.
         match &mut s.body {
