@@ -16,6 +16,7 @@ mod minimize_if_statement;
 mod minimize_not_expression;
 mod minimize_statements;
 mod minimize_switch_statements;
+mod minimize_variable_declaration;
 mod normalize;
 mod obscure_edge_cases;
 mod oxc;
