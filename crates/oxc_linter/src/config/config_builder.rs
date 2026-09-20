@@ -4,7 +4,7 @@ use std::{
 };
 
 use itertools::Itertools;
-use oxc_resolver::{ResolveOptions, Resolver};
+use oxc_resolver::{Resolution, ResolveOptions, Resolver};
 use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
@@ -20,7 +20,7 @@ use crate::{
         rules::OverrideRulesError,
     },
     external_linter::ExternalLinter,
-    external_plugin_store::{ExternalOptionsId, ExternalRuleId},
+    external_plugin_store::{ExternalOptionsId, ExternalPluginIdentity, ExternalRuleId},
     rules::RULES,
 };
 
@@ -264,10 +264,7 @@ impl ConfigStoreBuilder {
                 });
             };
 
-            let resolver = Resolver::new(ResolveOptions {
-                condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
-                ..Default::default()
-            });
+            let resolver = plugin_resolver();
 
             for entry in external_plugins {
                 Self::load_external_plugin(
@@ -674,6 +671,11 @@ impl ConfigStoreBuilder {
             });
         }
 
+        let identity = plugin_identity(&resolved, &plugin_path);
+        if external_plugin_store.try_reuse_plugin(&plugin_path, identity.as_ref(), alias) {
+            return Ok(());
+        }
+
         // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = String::from(Url::from_file_path(&plugin_path).unwrap());
@@ -694,6 +696,8 @@ impl ConfigStoreBuilder {
             external_plugin_store.register_plugin(
                 plugin_path,
                 plugin_name,
+                alias.is_some(),
+                identity,
                 result.offset,
                 result.rule_names,
             );
@@ -739,6 +743,32 @@ impl Debug for ConfigStoreBuilder {
             .field("config", &self.config)
             .finish_non_exhaustive()
     }
+}
+
+fn plugin_resolver() -> Resolver {
+    Resolver::new(ResolveOptions {
+        condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
+        ..Default::default()
+    })
+}
+
+/// Only a plugin installed under `node_modules` has an identity. For any other plugin the nearest
+/// `package.json` is that of the project, which says nothing about which plugin the file is.
+fn plugin_identity(resolved: &Resolution, plugin_path: &Path) -> Option<ExternalPluginIdentity> {
+    // `package_json` is the manifest of the package the resolved plugin file is part of,
+    // not the one of the config which asks for the plugin.
+    let package_json = resolved.package_json()?;
+    let package_dir = package_json.directory();
+    if !package_dir.components().any(|component| component.as_os_str() == "node_modules") {
+        return None;
+    }
+
+    let entry_path = plugin_path.strip_prefix(package_dir).ok()?;
+    Some(ExternalPluginIdentity {
+        package_name: package_json.name()?.to_string(),
+        version: package_json.version()?.to_string(),
+        entry_path: entry_path.to_path_buf(),
+    })
 }
 
 /// An error that can occur while building a [`Config`] from an [`Oxlintrc`].
@@ -1825,5 +1855,152 @@ mod test {
         .unwrap()
         .build(&mut external_plugin_store)
         .unwrap()
+    }
+
+    /// Deduplication of JS plugins which are installed separately in each package of a monorepo.
+    ///
+    /// The packages are in `fixtures/js_plugin_dedupe`. The plugins are never imported, only their
+    /// `package.json` is read.
+    mod external_plugin_dedupe {
+        use std::sync::{Arc, Mutex};
+
+        use crate::external_linter::LoadPluginResult;
+
+        use super::*;
+
+        fn package_dir(package: &str) -> PathBuf {
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("fixtures/js_plugin_dedupe/packages")
+                .join(package)
+        }
+
+        /// The Rust side of the linter, and a stand-in for the JS side.
+        struct Harness {
+            /// Names of the plugins loaded on JS side.
+            loaded_plugins: Arc<Mutex<Vec<String>>>,
+            linter: ExternalLinter,
+            resolver: Resolver,
+            store: ExternalPluginStore,
+        }
+
+        impl Harness {
+            fn new() -> Self {
+                let loaded_plugins = Arc::new(Mutex::new(Vec::<String>::new()));
+                let loaded = Arc::clone(&loaded_plugins);
+                // As `registerPlugin` does, reject a plugin name which is already registered.
+                // The fixture plugins define no `meta.name`, so the name is the one given by Rust:
+                // the alias if there is one, else the package name.
+                let load_plugin = move |_url: String, plugin_name: Option<String>, _, _| {
+                    let name = plugin_name.expect("fixture plugins are loaded by package name");
+                    let mut loaded = loaded.lock().unwrap();
+                    if loaded.contains(&name) {
+                        return Err(format!("Plugin name '{name}' is already registered."));
+                    }
+                    // One rule per plugin.
+                    let offset = loaded.len();
+                    loaded.push(name.clone());
+                    Ok(LoadPluginResult {
+                        name,
+                        offset,
+                        rule_names: vec!["no-debugger".to_string()],
+                    })
+                };
+                let linter = ExternalLinter::new(
+                    Arc::new(Box::new(load_plugin)),
+                    Arc::new(Box::new(|_| Ok(()))),
+                    Arc::new(Box::new(|_, _, _, _, _, _, _, _| unreachable!())),
+                    Arc::new(Box::new(|_| Ok(()))),
+                    Arc::new(Box::new(|_| Ok(()))),
+                );
+                Self {
+                    loaded_plugins,
+                    linter,
+                    resolver: plugin_resolver(),
+                    store: ExternalPluginStore::new(true),
+                }
+            }
+
+            /// Load a plugin as the config in the fixture package `package` would.
+            fn load(
+                &mut self,
+                package: &str,
+                specifier: &str,
+                alias: Option<&str>,
+            ) -> Result<(), ConfigBuilderError> {
+                ConfigStoreBuilder::load_external_plugin(
+                    &package_dir(package),
+                    specifier,
+                    alias,
+                    &self.linter,
+                    &self.resolver,
+                    &mut self.store,
+                    None,
+                )
+            }
+
+            /// Number of plugins loaded on JS side.
+            fn loaded(&self) -> usize {
+                self.loaded_plugins.lock().unwrap().len()
+            }
+        }
+
+        #[test]
+        fn plugin_installed_in_two_packages_at_same_version_is_loaded_once() {
+            let mut harness = Harness::new();
+
+            harness.load("same-version-1", "oxlint-plugin-dupe", None).unwrap();
+            let rule_id = harness.store.lookup_rule_id("dupe", "no-debugger").unwrap();
+            harness.load("same-version-2", "oxlint-plugin-dupe", None).unwrap();
+
+            assert_eq!(harness.loaded(), 1);
+            assert_eq!(harness.store.lookup_rule_id("dupe", "no-debugger").unwrap(), rule_id);
+        }
+
+        #[test]
+        fn plugin_requested_under_its_registered_name_as_alias_is_reused() {
+            let mut harness = Harness::new();
+
+            harness.load("same-version-1", "oxlint-plugin-dupe", None).unwrap();
+            harness.load("same-version-2", "oxlint-plugin-dupe", Some("dupe")).unwrap();
+
+            assert_eq!(harness.loaded(), 1);
+        }
+
+        #[test]
+        fn plugin_identity_is_package_name_version_and_entry_for_packages_in_node_modules() {
+            let identity = |version: &str, entry_path: &str| {
+                Some(ExternalPluginIdentity {
+                    package_name: "oxlint-plugin-dupe".to_string(),
+                    version: version.to_string(),
+                    entry_path: PathBuf::from(entry_path),
+                })
+            };
+            let cases = [
+                ("same-version-1", "oxlint-plugin-dupe", identity("1.0.0", "index.js")),
+                // Another installation of the same package.
+                ("same-version-2", "oxlint-plugin-dupe", identity("1.0.0", "index.js")),
+                ("other-version", "oxlint-plugin-dupe", identity("2.0.0", "index.js")),
+                // Another plugin of the same package.
+                (
+                    "same-version-1",
+                    "oxlint-plugin-dupe/second-entry.js",
+                    identity("1.0.0", "second-entry.js"),
+                ),
+                // No identity: no `version` in the `package.json`.
+                ("unversioned", "oxlint-plugin-unversioned", None),
+                // No identity: not installed under `node_modules`.
+                ("local", "./index.js", None),
+            ];
+
+            let resolver = plugin_resolver();
+            for (package, specifier, expected) in cases {
+                let resolved = resolver.resolve(package_dir(package), specifier).unwrap();
+                assert_eq!(
+                    plugin_identity(&resolved, &resolved.full_path()),
+                    expected,
+                    "{package}: {specifier}"
+                );
+            }
+        }
     }
 }
