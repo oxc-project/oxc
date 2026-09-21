@@ -675,9 +675,9 @@ impl<'a> PeepholeOptimizations {
         }
 
         /// Verify whether `arg_expr` is `e > offset ? e - offset : 0` or `e`
-        fn verify_array_arg(
-            arg_expr: &Expression,
-            name_e: &str,
+        fn verify_array_arg<'a>(
+            arg_expr: &Expression<'a>,
+            name_e: Ident<'a>,
             offset: f64,
         ) -> VerifyArrayArgResult {
             match arg_expr {
@@ -696,7 +696,7 @@ impl<'a> PeepholeOptimizations {
                         return VerifyArrayArgResult::Invalid;
                     };
                     if test_expr.operator == BinaryOperator::GreaterThan
-                        && test_expr.left.is_specific_id(name_e)
+                        && test_expr.left.is_specific_id(&name_e)
                         && matches!(&test_expr.right, Expression::NumericLiteral(n) if n.value == offset)
                         && cons_expr.operator == BinaryOperator::Subtraction
                         && matches!(&cons_expr.left, Expression::Identifier(id) if id.name == name_e)
@@ -821,7 +821,7 @@ impl<'a> PeepholeOptimizations {
             }
             match &b.right {
                 Expression::Identifier(right) => Some((
-                    &right.name,
+                    right.name,
                     ctx.scoping().get_reference(right.reference_id()).symbol_id(),
                 )),
                 Expression::StaticMemberExpression(sm) => {
@@ -1766,7 +1766,7 @@ impl<'a> PeepholeOptimizations {
             // In `catch (e) { var e = x }`, `var e` hoists to function scope but the assignment
             // targets the catch parameter. Removing the catch param changes semantics.
             && ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
-            && !Self::catch_body_has_same_name_var(&catch.body, ident.name.as_str())
+            && !Self::catch_body_has_same_name_var(&catch.body, ident.name)
         {
             catch.param = None;
         }
@@ -1812,7 +1812,7 @@ impl<'a> PeepholeOptimizations {
         ctx.replace_expression(expr, new_value);
     }
 
-    fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: &str) -> bool {
+    fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: Ident<'a>) -> bool {
         body.body.iter().any(|stmt| {
             let Statement::VariableDeclaration(decl) = stmt else { return false };
             if !decl.kind.is_var() {
