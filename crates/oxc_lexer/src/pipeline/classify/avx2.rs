@@ -23,7 +23,7 @@ pub(super) unsafe fn classify_impl(
 ) {
     // The merged LUT variants differ only in the keyword-initial bits; the
     // selection happens once, outside the loop.
-    let mrg_lo = if ts { &t.mrg_lo_ts } else { &t.mrg_lo };
+    let mrg_lo = if ts { &t.merged_luts.lo_ts } else { &t.merged_luts.lo };
     let mut cw: u64 = 0;
     let mut cs: u64 = 0;
     let mut i = 0usize;
@@ -43,9 +43,12 @@ pub(super) unsafe fn classify_impl(
     let v_ident = _mm256_set1_epi8(tk!(Ident) as i8);
     let v_num = _mm256_set1_epi8(tk!(Number) as i8);
     let v_mlo = _mm256_broadcastsi128_si256(_mm_loadu_si128(mrg_lo.as_ptr() as *const __m128i));
-    let v_mhi = _mm256_broadcastsi128_si256(_mm_loadu_si128(t.mrg_hi.as_ptr() as *const __m128i));
-    let v_wblo = _mm256_broadcastsi128_si256(_mm_loadu_si128(t.wb_lo.as_ptr() as *const __m128i));
-    let v_wbhi = _mm256_broadcastsi128_si256(_mm_loadu_si128(t.wb_hi.as_ptr() as *const __m128i));
+    let v_mhi =
+        _mm256_broadcastsi128_si256(_mm_loadu_si128(t.merged_luts.hi.as_ptr() as *const __m128i));
+    let v_wblo =
+        _mm256_broadcastsi128_si256(_mm_loadu_si128(t.word_luts.lo.as_ptr() as *const __m128i));
+    let v_wbhi =
+        _mm256_broadcastsi128_si256(_mm_loadu_si128(t.word_luts.hi.as_ptr() as *const __m128i));
     let v_kwpl = _mm256_set1_epi8(0x03);
     let v_oppl = _mm256_set1_epi8(0x3c);
     let v_wdpl = _mm256_set1_epi8(0x3f);
