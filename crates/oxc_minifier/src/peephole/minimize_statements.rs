@@ -1921,6 +1921,21 @@ impl<'a> PeepholeOptimizations {
                 }
                 false
             }
+            Statement::BreakStatement(stmt) if stmt.label.is_some() => {
+                for (index, ancestor) in ctx.ancestors().enumerate() {
+                    match ancestor {
+                        Ancestor::BlockStatementBody(_) if index == 0 => {}
+                        Ancestor::LabeledStatementBody(label_stmt) => {
+                            if let Some(label) = &stmt.label {
+                                return label.name == label_stmt.label().name;
+                            }
+                        }
+                        Ancestor::IfStatementConsequent(_) | Ancestor::IfStatementAlternate(_) => {}
+                        _ => return false,
+                    }
+                }
+                false
+            }
             // bare `return;` in function-body scope.
             Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
                 ctx.parent().is_function_body()
