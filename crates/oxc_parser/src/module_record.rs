@@ -15,6 +15,13 @@ pub struct ModuleRecordBuilder<'a> {
     exported_bindings_duplicated: ArenaVec<'a, NameSpan<'a>>,
 }
 
+/// The parser reported the well-formedness syntax error for such a name.
+/// Omit its module-record entries rather than record the replacement
+/// character `ModuleExportName::name` returns for it.
+fn name_is_ill_formed(name: &ModuleExportName) -> bool {
+    matches!(name, ModuleExportName::StringLiteral(lit) if lit.value.has_lone_surrogate())
+}
+
 impl<'a> ModuleRecordBuilder<'a> {
     pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
         Self {
@@ -209,8 +216,10 @@ impl<'a> ModuleRecordBuilder<'a> {
             for specifier in specifiers {
                 let (import_name, local_name, is_type) = match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        // Invalid export names were diagnosed while parsing the specifier.
-                        let Some(name) = specifier.imported.name().as_str() else { continue };
+                        if name_is_ill_formed(&specifier.imported) {
+                            continue;
+                        }
+                        let name = specifier.imported.name().as_str();
                         (
                             ImportImportName::Name(NameSpan::new(
                                 name.into(),
@@ -256,10 +265,11 @@ impl<'a> ModuleRecordBuilder<'a> {
         // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
         let Some(source) = decl.source.value.as_str() else { return };
         let module_request = NameSpan::new(source.into(), decl.source.span);
-        let exported = decl.exported.as_ref().and_then(|name| {
-            name.name().as_str().map(|value| NameSpan::new(value.into(), name.span()))
-        });
-        // Keep invalid names in the recovered AST, but omit their module-record entries.
+        let exported = decl
+            .exported
+            .as_ref()
+            .filter(|name| !name_is_ill_formed(name))
+            .map(|name| NameSpan::new(name.name().as_str().into(), name.span()));
         if decl.exported.is_none() || exported.is_some() {
             if let Some(exported) = &exported {
                 self.add_export_binding(exported.name, exported.span);
@@ -349,9 +359,11 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
         for specifier in &decl.specifiers {
-            // These names must be well-formed Unicode; the parser reports invalid names.
-            let Some(exported) = specifier.exported.name().as_str() else { continue };
-            let Some(local) = specifier.local.name().as_str() else { continue };
+            if name_is_ill_formed(&specifier.exported) || name_is_ill_formed(&specifier.local) {
+                continue;
+            }
+            let exported = specifier.exported.name().as_str();
+            let local = specifier.local.name().as_str();
             let export_name =
                 ExportExportName::Name(NameSpan::new(exported.into(), specifier.exported.span()));
             let export_entry = ExportEntry {
@@ -388,9 +400,11 @@ impl<'a> ModuleRecordBuilder<'a> {
         );
 
         for specifier in &decl.specifiers {
-            // These names must be well-formed Unicode; the parser reports invalid names.
-            let Some(exported) = specifier.exported.name().as_str() else { continue };
-            let Some(local) = specifier.local.name().as_str() else { continue };
+            if name_is_ill_formed(&specifier.exported) || name_is_ill_formed(&specifier.local) {
+                continue;
+            }
+            let exported = specifier.exported.name().as_str();
+            let local = specifier.local.name().as_str();
             let export_name =
                 ExportExportName::Name(NameSpan::new(exported.into(), specifier.exported.span()));
             let import_name =

@@ -2116,10 +2116,9 @@ impl Display for ModuleExportName<'_> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.fmt(f),
             Self::IdentifierReference(identifier) => identifier.name.fmt(f),
-            Self::StringLiteral(literal) => match literal.value.as_str() {
-                Some(value) => write!(f, r#""{value}""#),
-                None => write!(f, "{:?}", literal.value),
-            },
+            Self::StringLiteral(literal) => {
+                write!(f, "\"{}\"", literal.value.as_str().unwrap_or("\u{FFFD}"))
+            }
         }
     }
 }
@@ -2127,16 +2126,21 @@ impl Display for ModuleExportName<'_> {
 impl<'a> ModuleExportName<'a> {
     /// Returns the exported name of this module export name.
     ///
+    /// The name is always UTF-8: the specification requires module export
+    /// names to be well-formed Unicode, and the parser reports the syntax
+    /// error for a string form containing a lone surrogate. In the recovered
+    /// AST of such a program the name is returned as U+FFFD.
+    ///
     /// ## Example
     ///
     /// - `export { foo }` => `"foo"`
     /// - `export { foo as bar }` => `"bar"`
     /// - `export { foo as "anything" }` => `"anything"`
-    pub fn name(&self) -> JSStr<'a> {
+    pub fn name(&self) -> Str<'a> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.into(),
             Self::IdentifierReference(identifier) => identifier.name.into(),
-            Self::StringLiteral(literal) => literal.value,
+            Self::StringLiteral(literal) => Str::from(literal.value.as_str().unwrap_or("\u{FFFD}")),
         }
     }
 

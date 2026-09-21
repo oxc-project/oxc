@@ -940,8 +940,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ));
                 }
 
-                // Recovery for an invalid local string name, already diagnosed above.
-                let local_name = name.name().as_str().unwrap_or_default();
+                // An invalid local string name was diagnosed above and reads
+                // back as the replacement character.
+                let local_name = name.name().as_str();
                 let local = BindingIdentifier::new(name.span(), self.ident(local_name), self);
                 let imported = property_name.unwrap_or(name);
                 ImportOrExportSpecifier::Import(ImportSpecifier::new(

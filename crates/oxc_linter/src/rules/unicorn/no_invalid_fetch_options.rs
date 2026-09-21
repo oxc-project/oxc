@@ -208,20 +208,13 @@ fn is_invalid_fetch_options<'a>(
                                         if let TSType::TSLiteralType(ty) = ty {
                                             let TSLiteralType { literal, .. } = &**ty;
                                             if let TSLiteral::StringLiteral(str_lit) = literal {
-                                                return str_lit
+                                                let method = str_lit
                                                     .value
                                                     .as_str()
                                                     .map_or(UNKNOWN_METHOD_NAME, |value| {
                                                         value.cow_to_ascii_uppercase()
-                                                    })
-                                                    == "GET"
-                                                    || str_lit
-                                                        .value
-                                                        .as_str()
-                                                        .map_or(UNKNOWN_METHOD_NAME, |value| {
-                                                            value.cow_to_ascii_uppercase()
-                                                        })
-                                                        == "HEAD";
+                                                    });
+                                                return method == "GET" || method == "HEAD";
                                             }
                                         }
                                         false
