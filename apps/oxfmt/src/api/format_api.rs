@@ -6,8 +6,7 @@ use oxc_napi::OxcError;
 
 use crate::core::{
     ExternalServices, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-    JsSortTailwindClassesCb, ResolveOutcome, SourceFormatter, classify_file_kind, resolve_for_api,
-    utils,
+    JsSortTailwindClassesCb, ResolveOutcome, SourceFormatter, resolve_for_api, utils,
 };
 
 pub struct ApiFormatResult {
@@ -45,16 +44,16 @@ pub fn run(
     );
 
     let filepath = utils::normalize_relative_path(&cwd, Path::new(filename));
-    let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
-        external_services.cleanup();
-        return ApiFormatResult {
-            code: source_text,
-            errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
-        };
-    };
-    let strategy = match resolve_for_api(options.unwrap_or_default(), kind, &cwd) {
-        Ok(ResolveOutcome::Format(strategy)) => strategy,
-        Ok(ResolveOutcome::MissingPlugin(plugin)) => {
+    let strategy = match resolve_for_api(options.unwrap_or_default(), Arc::from(filepath), &cwd) {
+        Ok(Some(ResolveOutcome::Format(strategy))) => strategy,
+        Ok(None) => {
+            external_services.cleanup();
+            return ApiFormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
+            };
+        }
+        Ok(Some(ResolveOutcome::MissingPlugin(plugin))) => {
             external_services.cleanup();
             return ApiFormatResult {
                 code: source_text,
