@@ -245,16 +245,6 @@ pub struct KwSet {
     pub kwh_kind: [u8; KW_SLOTS],
 }
 
-#[inline(always)]
-fn kw_key(c0: u8, c1: u8, len: u32) -> u32 {
-    (c0 as u32) | ((c1 as u32) << 8) | (len << 16)
-}
-
-#[inline(always)]
-fn kw_key_ts(c0: u8, c1: u8, clast: u8, len: u32) -> u32 {
-    (c0 as u32) | ((c1 as u32) << 8) | ((clast as u32) << 16) | (len << 24)
-}
-
 impl KwSet {
     fn build(
         list: &[(&'static str, TokenKind)],
@@ -433,6 +423,16 @@ impl KwSet {
             }
         }
     }
+}
+
+#[inline(always)]
+fn kw_key(c0: u8, c1: u8, len: u32) -> u32 {
+    (c0 as u32) | ((c1 as u32) << 8) | (len << 16)
+}
+
+#[inline(always)]
+fn kw_key_ts(c0: u8, c1: u8, clast: u8, len: u32) -> u32 {
+    (c0 as u32) | ((c1 as u32) << 8) | ((clast as u32) << 16) | (len << 24)
 }
 
 fn kwinit_selfcheck() {
