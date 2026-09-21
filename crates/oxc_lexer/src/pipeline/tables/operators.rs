@@ -1,6 +1,4 @@
-use crate::token::{OP_KIND_BASE, OP_KIND_MAX, TokenKind, tk};
-
-use super::punct1::PUNCT1;
+use crate::token::{OP_KIND_BASE, OP_KIND_MAX, TokenKind};
 
 struct OpDef {
     pub txt: &'static [u8],
@@ -64,21 +62,14 @@ pub struct OpMap {
     pub opmap_slot: [u8; 256],
     pub op2_pack: [u32; 256],
     pub op3_pack: [u64; 256],
-    pub punct1_ord: [u8; 256],
 }
 
 impl OpMap {
     pub(super) fn new() -> OpMap {
-        let mut m = OpMap {
-            opmap_mul: 0,
-            opmap_slot: [0xFF; 256],
-            op2_pack: [0; 256],
-            op3_pack: [0; 256],
-            punct1_ord: [tk!(Invalid); 256],
-        };
+        let mut m =
+            OpMap { opmap_mul: 0, opmap_slot: [0xFF; 256], op2_pack: [0; 256], op3_pack: [0; 256] };
         m.opmap_init();
         m.build_op_pack();
-        m.punct1_init();
         m
     }
 
@@ -156,13 +147,6 @@ impl OpMap {
         }
     }
 
-    fn punct1_init(&mut self) {
-        self.punct1_ord = [tk!(Invalid); 256];
-        for i in 0..PUNCT1.len() {
-            self.punct1_ord[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
-        }
-    }
-
     #[inline(always)]
     pub fn opmap_lookup(&self, b0: u8, b1: u8, b2: u8, b3: u8, len: u32) -> u32 {
         let c2 = if len >= 3 { b2 } else { 0 };
@@ -195,6 +179,8 @@ fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
+    use crate::token::tk;
+
     use super::*;
 
     #[test]
@@ -238,30 +224,5 @@ mod tests {
                 && opmap.opmap_lookup(b'=', b'/', 0, 0, 2) == 0,
             "op spot-checks failed"
         );
-    }
-
-    #[test]
-    fn test_punct1_ord() {
-        let punct1_ord = &OpMap::new().punct1_ord;
-
-        let mut seen = [0u8; 256];
-        for i in 0..PUNCT1.len() {
-            let ord = punct1_ord[PUNCT1[i].byte as usize];
-            assert!(
-                ord == PUNCT1[i].kind as u8 && seen[ord as usize] == 0,
-                "PUNCT1 ordinal wrong/dup"
-            );
-            seen[ord as usize] = 1;
-        }
-
-        for b in 0..256usize {
-            let ord = punct1_ord[b];
-            let is_known = PUNCT1.iter().any(|p| p.byte == b as u8);
-            assert!(is_known || ord == tk!(Invalid), "PUNCT1_ORD should be unknown");
-        }
-
-        for byte in [b'#', b'a', b'"', b'`', b'\\', b'$', b' ', 0] {
-            assert!(punct1_ord[byte as usize] == tk!(Invalid));
-        }
     }
 }

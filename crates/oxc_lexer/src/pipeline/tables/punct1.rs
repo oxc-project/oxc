@@ -1,4 +1,4 @@
-use crate::token::TokenKind;
+use crate::token::{TokenKind, tk};
 
 /// Single-byte punctuator and its [`TokenKind`].
 pub struct Punct1 {
@@ -60,6 +60,25 @@ pub mod punct1_luts {
         [40, 255, 43, 50, 64, 61, 255, 255, 35, 36, 80, 89, 255, 82, 32, 41];
 }
 
+// TODO: `Punct1Ord` is not used anywhere in pipeline.
+// Delete it unless we need it for some future purpose.
+#[cfg_attr(not(test), expect(dead_code))]
+pub struct Punct1Ord {
+    ord: [u8; 256],
+}
+
+impl Punct1Ord {
+    pub(super) fn new() -> Self {
+        let mut ord = [tk!(Invalid); 256];
+
+        for i in 0..PUNCT1.len() {
+            ord[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
+        }
+
+        Self { ord }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -93,5 +112,30 @@ mod tests {
         }
         let h = (PH_A[(c & 15) as usize] ^ PH_B[((c >> 4) & 15) as usize]) & 31;
         if h < 16 { PH_T0[h as usize] } else { PH_T1[(h & 15) as usize] }
+    }
+
+    #[test]
+    fn test_punct1_ord() {
+        let punct1_ord = Punct1Ord::new().ord;
+
+        let mut seen = [0u8; 256];
+        for i in 0..PUNCT1.len() {
+            let ord = punct1_ord[PUNCT1[i].byte as usize];
+            assert!(
+                ord == PUNCT1[i].kind as u8 && seen[ord as usize] == 0,
+                "PUNCT1 ordinal wrong/dup"
+            );
+            seen[ord as usize] = 1;
+        }
+
+        for b in 0..256usize {
+            let ord = punct1_ord[b];
+            let is_known = PUNCT1.iter().any(|p| p.byte == b as u8);
+            assert!(is_known || ord == tk!(Invalid), "PUNCT1_ORD should be unknown");
+        }
+
+        for byte in [b'#', b'a', b'"', b'`', b'\\', b'$', b' ', 0] {
+            assert!(punct1_ord[byte as usize] == tk!(Invalid));
+        }
     }
 }

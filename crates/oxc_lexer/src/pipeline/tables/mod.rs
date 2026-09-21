@@ -19,13 +19,15 @@ use classify_luts::{MergedLuts, WordLuts};
 use keywords::Keywords;
 use operators::OpMap;
 use pair_luts::PairLuts;
+use punct1::Punct1Ord;
 
-#[cfg_attr(
-    not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")),
-    expect(dead_code, reason = "`merged_luts` and `word_luts` only used in SIMD implementation")
+#[expect(
+    dead_code,
+    reason = "`punct1_ord` is unused. `merged_luts` and `word_luts` only used in SIMD implementation."
 )]
 pub(super) struct Tables {
     pub op: OpMap,
+    pub punct1_ord: Punct1Ord,
     pub keywords: Keywords,
     pub merged_luts: MergedLuts,
     pub word_luts: WordLuts,
@@ -36,6 +38,7 @@ impl Tables {
     pub fn new() -> Tables {
         Self {
             op: OpMap::new(),
+            punct1_ord: Punct1Ord::new(),
             keywords: Keywords::new(),
             merged_luts: MergedLuts::new(),
             word_luts: WordLuts::new(),
