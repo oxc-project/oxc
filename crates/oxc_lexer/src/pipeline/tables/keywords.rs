@@ -2,6 +2,8 @@ use std::ptr;
 
 use constcat::concat_slices;
 
+use oxc_data_structures::str::const_str_eq;
+
 use crate::token::{KW_KIND_BASE, TokenKind};
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
@@ -120,34 +122,7 @@ const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
 static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
     *concat_slices!([(&str, TokenKind)]: &KEYWORDS_JS, &KEYWORDS_TS_EXTRA);
 
-pub struct Keywords {
-    pub kwjs: KwSet,
-    pub kwts: KwSet,
-    pub regex_kw_mask: u64,
-}
-
-impl Keywords {
-    pub(super) fn new() -> Self {
-        let kwjs = KwSet::build(&KEYWORDS_JS, false, &[25, 24], KW_HASH_HINT_JS);
-        let kwts = KwSet::build(&KEYWORDS_TS, true, &[23], KW_HASH_HINT_TS);
-
-        let regex_kw_mask = build_regex_kw_mask();
-
-        Self { kwjs, kwts, regex_kw_mask }
-    }
-
-    /// Is the word at `p` one of the keywords a regex may directly follow?
-    /// Text-based and called only before any keyword-kind rewrite, so the JS
-    /// set answers for both modes (every RX word is in both sets, and no
-    /// other spelling has its mask bit).
-    #[inline(always)]
-    pub unsafe fn is_regex_keyword(&self, p: *const u8, len: usize) -> bool {
-        let k = self.kwjs.lookup(p, len);
-        k >= KW_KIND_BASE as u32 && ((self.regex_kw_mask >> (k - KW_KIND_BASE as u32)) & 1) != 0
-    }
-}
-
-fn build_regex_kw_mask() -> u64 {
+const REGEX_KW_MASK: u64 = {
     // `of` is deliberately absent: it precedes a regex only in a for-of
     // head (never written - a RegExp isn't iterable), while `instance/of/g`
     // style division is real code. Matches es-module-lexer/SWC/RESS.
@@ -175,18 +150,54 @@ fn build_regex_kw_mask() -> u64 {
     // Indexed by kind offset from `KW_KIND_BASE`.
     // Every `RX` word sits in the JS kind block (offsets < 64), so the mask is set-independent.
     let mut mask = 0u64;
-    for r in RX.iter() {
+
+    let mut rx_index = 0;
+    while rx_index < RX.len() {
+        let r = RX[rx_index];
+
         let mut found: i32 = -1;
-        for kw in KEYWORDS_JS.iter() {
-            if kw.0 == *r {
+        let mut kw_index = 0;
+        while kw_index < KEYWORDS_JS.len() {
+            let kw = KEYWORDS_JS[kw_index];
+            if const_str_eq(kw.0, r) {
                 found = (kw.1 as u8 - KW_KIND_BASE) as i32;
                 break;
             }
+            kw_index += 1;
         }
-        assert!(found >= 0 && found < 64, "regex-kw {r} missing from KEYWORDS_JS");
+
+        assert!(found >= 0 && found < 64, "regex keyword missing from KEYWORDS_JS");
         mask |= 1u64 << found;
+
+        rx_index += 1;
     }
+
     mask
+};
+
+pub struct Keywords {
+    pub kwjs: KwSet,
+    pub kwts: KwSet,
+    pub regex_kw_mask: u64,
+}
+
+impl Keywords {
+    pub(super) fn new() -> Self {
+        let kwjs = KwSet::build(&KEYWORDS_JS, false, &[25, 24], KW_HASH_HINT_JS);
+        let kwts = KwSet::build(&KEYWORDS_TS, true, &[23], KW_HASH_HINT_TS);
+
+        Self { kwjs, kwts, regex_kw_mask: REGEX_KW_MASK }
+    }
+
+    /// Is the word at `p` one of the keywords a regex may directly follow?
+    /// Text-based and called only before any keyword-kind rewrite, so the JS
+    /// set answers for both modes (every RX word is in both sets, and no
+    /// other spelling has its mask bit).
+    #[inline(always)]
+    pub unsafe fn is_regex_keyword(&self, p: *const u8, len: usize) -> bool {
+        let k = self.kwjs.lookup(p, len);
+        k >= KW_KIND_BASE as u32 && ((self.regex_kw_mask >> (k - KW_KIND_BASE as u32)) & 1) != 0
+    }
 }
 
 /// Slot count of the keyword hash tables - must cover the smallest shift a
