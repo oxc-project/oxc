@@ -58,7 +58,7 @@ oxc-toml = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
-tower-lsp-server = { workspace = true, features = ["proposed"] }
+tower-lsp-server = { workspace = true, features = ["url-fluent-uri"] }
 
 # NAPI dependencies (conditional on napi feature)
 napi = { workspace = true, features = ["async", "serde-json"], optional = true }
