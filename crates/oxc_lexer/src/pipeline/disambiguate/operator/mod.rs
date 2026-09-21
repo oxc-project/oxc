@@ -17,15 +17,13 @@
 //!   [`replay`] works that out.
 //! - TypeScript adds more cases, e.g. a postfix `!`, or a `>` closing type arguments.
 
-use crate::{
-    opmap::OP_KIND_BASE,
-    tables::{Tables, is_digit, is_glue_join, is_word, is_ws},
-    token::tk,
-};
+use crate::token::{OP_KIND_BASE, tk};
 
-use super::super::{
+use crate::pipeline::{
     bitmap::{bm_next0, bm_next1, bm_prev1},
+    bytes::{is_digit, is_word, is_ws},
     scan::scan_number,
+    tables::Tables,
 };
 
 use super::common::{
@@ -149,7 +147,7 @@ pub unsafe fn not_operator_position(
                     continue;
                 }
             };
-            if k == tk!(Ident) && t.is_regex_keyword(src.add(ws), we - ws) {
+            if k == tk!(Ident) && t.keywords.is_regex_keyword(src.add(ws), we - ws) {
                 if ts
                     && we - ws == 4
                     && ws == qi
@@ -186,7 +184,7 @@ pub unsafe fn not_operator_position(
         }
         if k >= OP_KIND_BASE {
             let ch = *src.add(qi);
-            // TS postfix non-null `!`: `x! / 2` is division, not a regex —
+            // TS postfix non-null `!`: `x! / 2` is division, not a regex -
             // look through the `!`, unless a newline sits before it (ASI
             // makes it a prefix `!/re/`).
             if ts && ch == b'!' {
@@ -292,6 +290,11 @@ unsafe fn glue_anchor(src: *const u8, st: *const u64, qi: usize) -> usize {
     a
 }
 
+#[inline(always)]
+fn is_glue_join(c: u8) -> bool {
+    is_word(c) || c == b'.' || c == b'+' || c == b'-' || c == b'?'
+}
+
 unsafe fn prev_regex_sim(
     t: &Tables,
     src: *const u8,
@@ -381,7 +384,7 @@ unsafe fn prev_regex_sim(
             return false;
         }
         return match word_run_end(src, ls, le) {
-            RunEnd::Seg(ss, se, _) => t.is_regex_keyword(src.add(ss), se - ss),
+            RunEnd::Seg(ss, se, _) => t.keywords.is_regex_keyword(src.add(ss), se - ss),
             RunEnd::Blank(_) => !seed_tail,
         };
     }
@@ -396,7 +399,7 @@ unsafe fn prev_regex_sim(
                 RunEnd::Seg(ss, se, false) => {
                     prop_name(src, pls)
                         || prop_name(src, ss)
-                        || !t.is_regex_keyword(src.add(ss), se - ss)
+                        || !t.keywords.is_regex_keyword(src.add(ss), se - ss)
                 }
                 RunEnd::Seg(_, _, true) => false,
                 RunEnd::Blank(true) => false,
@@ -454,7 +457,7 @@ unsafe fn anchor_seed_tail(
                     if prop_name(src, sp) || prop_name(src, ss) {
                         return true;
                     }
-                    return !t.is_regex_keyword(src.add(ss), se - ss);
+                    return !t.keywords.is_regex_keyword(src.add(ss), se - ss);
                 }
                 RunEnd::Blank(true) => return false,
                 RunEnd::Blank(false) => {

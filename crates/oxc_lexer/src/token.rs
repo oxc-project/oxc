@@ -1,10 +1,15 @@
+use std::{
+    fmt::{self, Display},
+    mem, slice,
+};
+
 macro_rules! define_token_kind {
     ($( $variant:ident = $value:literal => $name:literal ),+ $(,)?) => {
         /// A lexed token kind.
         ///
         /// The discriminants are load-bearing: `[32, 128)` is reserved for
         /// punctuators and `>= 128` for keywords, so the pipeline can classify
-        /// with range checks and SIMD compares. They are *not* dense â€” the
+        /// with range checks and SIMD compares. They are *not* dense - the
         /// pipeline computes kinds arithmetically and blends them in SIMD
         /// registers, so it works on the raw `u8` and only the crate boundary
         /// is typed.
@@ -259,6 +264,10 @@ define_token_kind! {
     Invalid = 255 => "INVALID",
 }
 
+/// First punctuator kind - the token-kind space reserves [32, 128) for them.
+pub(crate) const OP_KIND_BASE: u8 = tk!(LBrace);
+pub(crate) const OP_KIND_MAX: u8 = tk!(At);
+
 /// First keyword kind: every kind `>= KW_KIND_BASE` other than [`TokenKind::Invalid`] is a keyword.
 pub const KW_KIND_BASE: u8 = tk!(KwBreak);
 pub(crate) const KW_KIND_MAX: u8 = tk!(KwUsing);
@@ -270,7 +279,7 @@ impl TokenKind {
         self as u8
     }
 
-    /// # Safety
+    /// # SAFETY
     ///
     /// `byte` must be a declared discriminant, i.e. `TokenKind::from_u8(byte).is_some()`.
     #[inline]
@@ -279,7 +288,7 @@ impl TokenKind {
         debug_assert!(Self::from_u8(byte).is_some(), "not a declared TokenKind discriminant");
         // SAFETY: the caller guarantees `byte` is a declared discriminant, and
         // `TokenKind` is `#[repr(u8)]`, so it shares `u8`'s layout.
-        unsafe { core::mem::transmute::<u8, Self>(byte) }
+        unsafe { mem::transmute::<u8, Self>(byte) }
     }
 
     #[inline]
@@ -352,18 +361,18 @@ impl TokenKind {
     }
 }
 
-impl core::fmt::Display for TokenKind {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
     }
 }
 
 /// Reinterpret raw kind bytes written by the pipeline as [`TokenKind`]s.
 ///
-/// # Safety
+/// # SAFETY
 ///
 /// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
-/// pipeline only ever writes kinds that came from [`crate::opmap`]'s tables or
+/// pipeline only ever writes kinds that came from `opmap`'s tables or
 /// from the named constants in `pipeline`, so this holds for any range the
 /// lexer has written; it does *not* hold for uninitialised arena memory.
 #[inline]
@@ -371,7 +380,7 @@ pub(crate) const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
     // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and
     // alignment as `u8`, and the caller guarantees every byte is a declared
     // discriminant.
-    unsafe { core::slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
+    unsafe { slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
 }
 
 #[inline]
@@ -496,8 +505,9 @@ impl StringSpan {
 
 #[cfg(test)]
 mod tests {
-    use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
     use crate::{LexOptions, Lexer, PAD};
+
+    use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
 
     #[test]
     fn from_u8_round_trips_every_variant() {
@@ -558,8 +568,10 @@ mod tests {
         assert!(!TokenKind::String.is_numeric());
     }
 
-    /// Backs the safety invariant of [`super::kinds_from_bytes`]: the lexer
-    /// never emits a byte outside the declared discriminants.
+    /// Backs the safety invariant of [`kinds_from_bytes`] -
+    /// the lexer never emits a byte outside the declared discriminants.
+    ///
+    /// [`kinds_from_bytes`]: super::kinds_from_bytes
     #[test]
     fn every_emitted_kind_is_declared() {
         const SOURCES: [&str; 6] = [

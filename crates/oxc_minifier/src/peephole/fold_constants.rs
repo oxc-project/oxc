@@ -840,8 +840,7 @@ impl<'a> PeepholeOptimizations {
 
             let new_expr = Expression::new_boolean_literal(
                 e.span,
-                e.operator == BinaryOperator::Inequality
-                    || e.operator == BinaryOperator::StrictInequality,
+                matches!(e.operator, BinaryOperator::StrictInequality | BinaryOperator::Inequality),
                 ctx,
             );
             ctx.replace_expression(expr, new_expr);

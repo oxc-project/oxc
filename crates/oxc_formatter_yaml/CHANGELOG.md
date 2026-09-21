@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.69.0] - 2026-09-21
+
+### 📚 Documentation
+
+- 09ecfa7 formatter_yaml: Unify DIVERGENCES reference (#26746) (leaysgur)
+
 ## [0.68.0] - 2026-09-14
 
 ### 🚀 Features

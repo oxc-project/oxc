@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
-assertion_line: 43
 ---
 ==================== Input ====================
 // Trailing comments on class and interface members (the statement-level
@@ -8,7 +7,8 @@ assertion_line: 43
 // Class properties move the same-line comment behind the semicolon;
 // an own-line comment before the `;` defers to the next element's leading pass
 // (Prettier's first pass cancels the same-line move in that case
-// and needs a second pass to settle — we print that fixpoint directly)
+// and needs a second pass to settle; DIVERGES: we print that fixpoint directly,
+// see DIVERGENCES.md#paren-comment-fixpoint)
 class Cls {
   a = 1 /* r */;
   b = 2 // line r
@@ -85,7 +85,8 @@ class WithIndexSignature {
 // Class properties move the same-line comment behind the semicolon;
 // an own-line comment before the `;` defers to the next element's leading pass
 // (Prettier's first pass cancels the same-line move in that case
-// and needs a second pass to settle — we print that fixpoint directly)
+// and needs a second pass to settle; DIVERGES: we print that fixpoint directly,
+// see DIVERGENCES.md#paren-comment-fixpoint)
 class Cls {
   a = 1; /* r */
   b = 2; // line r
@@ -159,7 +160,8 @@ class WithIndexSignature {
 // Class properties move the same-line comment behind the semicolon;
 // an own-line comment before the `;` defers to the next element's leading pass
 // (Prettier's first pass cancels the same-line move in that case
-// and needs a second pass to settle — we print that fixpoint directly)
+// and needs a second pass to settle; DIVERGES: we print that fixpoint directly,
+// see DIVERGENCES.md#paren-comment-fixpoint)
 class Cls {
   a = 1; /* r */
   b = 2; // line r
@@ -233,7 +235,8 @@ class WithIndexSignature {
 // Class properties move the same-line comment behind the semicolon;
 // an own-line comment before the `;` defers to the next element's leading pass
 // (Prettier's first pass cancels the same-line move in that case
-// and needs a second pass to settle — we print that fixpoint directly)
+// and needs a second pass to settle; DIVERGES: we print that fixpoint directly,
+// see DIVERGENCES.md#paren-comment-fixpoint)
 class Cls {
   a = 1 /* r */
   b = 2 // line r
@@ -307,7 +310,8 @@ class WithIndexSignature {
 // Class properties move the same-line comment behind the semicolon;
 // an own-line comment before the `;` defers to the next element's leading pass
 // (Prettier's first pass cancels the same-line move in that case
-// and needs a second pass to settle — we print that fixpoint directly)
+// and needs a second pass to settle; DIVERGES: we print that fixpoint directly,
+// see DIVERGENCES.md#paren-comment-fixpoint)
 class Cls {
   a = 1 /* r */
   b = 2 // line r

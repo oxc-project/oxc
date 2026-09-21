@@ -2,9 +2,10 @@ use oxc_span::Span;
 
 use crate::{
     lanes::Lanes,
-    tables::Tables,
     token::{SPAN_SENTINELS, tk},
 };
+
+use crate::pipeline::tables::Tables;
 
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 mod avx2;

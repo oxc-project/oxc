@@ -4,7 +4,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ==================== Input ====================
 // SCSS arithmetic in a media prelude prints through the structured `SassExpr`
 // printer with spaced operators.
-// DIVERGES from Prettier (DIVERGENCES.md "media-query-operator-spacing"):
+// DIVERGES from Prettier (DIVERGENCES.md#media-query-operator-spacing):
 // its postcss-media-query-parser never value-parses the prelude, so the glued
 // `)-1` survives verbatim (prettier/prettier#1811).
 // The same glued `-` in a VALUE position is a different artifact:
@@ -33,7 +33,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 // SCSS arithmetic in a media prelude prints through the structured `SassExpr`
 // printer with spaced operators.
-// DIVERGES from Prettier (DIVERGENCES.md "media-query-operator-spacing"):
+// DIVERGES from Prettier (DIVERGENCES.md#media-query-operator-spacing):
 // its postcss-media-query-parser never value-parses the prelude, so the glued
 // `)-1` survives verbatim (prettier/prettier#1811).
 // The same glued `-` in a VALUE position is a different artifact:
@@ -61,7 +61,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 -------------------
 // SCSS arithmetic in a media prelude prints through the structured `SassExpr`
 // printer with spaced operators.
-// DIVERGES from Prettier (DIVERGENCES.md "media-query-operator-spacing"):
+// DIVERGES from Prettier (DIVERGENCES.md#media-query-operator-spacing):
 // its postcss-media-query-parser never value-parses the prelude, so the glued
 // `)-1` survives verbatim (prettier/prettier#1811).
 // The same glued `-` in a VALUE position is a different artifact:

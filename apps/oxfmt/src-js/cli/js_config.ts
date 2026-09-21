@@ -12,7 +12,7 @@ export function loadJsConfig(path: string): Promise<object> {
 }
 
 /**
- * Load a Vite+ config file (`vite.config.ts`) via `vite-plus`'s `resolveConfig` and extract the `.fmt` field.
+ * Load a Vite+ config file (`vite.config.*`) via `vite-plus`'s `resolveConfig` and extract the `.fmt` field.
  *
  * @param path - Absolute path to the Vite config file
  * @returns Config object from `.fmt` field, or `null` to signal "skip"

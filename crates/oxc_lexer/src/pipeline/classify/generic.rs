@@ -1,7 +1,10 @@
-use crate::{
-    opmap::{PUNCT1, PUNCT1_NKNOWN},
-    tables::{Tables, is_digit, is_kw_init, is_kw_init_ts, is_op_char, is_word, is_ws},
-    token::tk,
+use std::ptr;
+
+use crate::token::tk;
+
+use crate::pipeline::{
+    bytes::{is_digit, is_word, is_ws},
+    tables::{PUNCT1, Tables, is_kw_init, is_kw_init_ts, is_op_char},
 };
 
 const FL_WORD: u32 = 0;
@@ -18,8 +21,8 @@ static CLS_TS: [u16; 256] = cls_table(true);
 const fn cls_table(ts: bool) -> [u16; 256] {
     let mut punct = [tk!(Invalid); 256];
     let mut i = 0;
-    while i < PUNCT1_NKNOWN {
-        punct[PUNCT1[i].0 as usize] = PUNCT1[i].1 as u8;
+    while i < PUNCT1.len() {
+        punct[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
         i += 1;
     }
     let mut t = [0u16; 256];
@@ -61,7 +64,7 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     t
 }
 
-pub unsafe fn classify(
+pub(super) unsafe fn classify_impl(
     _t: &Tables,
     ts: bool,
     src: *const u8,
@@ -95,7 +98,7 @@ pub unsafe fn classify(
                 kw |= (v & 0xff) << (j * 8);
                 j += 1;
             }
-            core::ptr::write_unaligned(kind.add(p) as *mut u64, kw);
+            ptr::write_unaligned(kind.add(p) as *mut u64, kw);
             let sh = (g * 8) as u32;
             mw |= pk(fw, FL_WORD) << sh;
             ms |= pk(fw, FL_WS) << sh;

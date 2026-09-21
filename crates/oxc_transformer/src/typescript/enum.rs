@@ -390,7 +390,7 @@ impl<'a> TypeScriptEnum {
                 Self::get_number_literal_expression(0.0, ctx)
             };
 
-            let is_str = init.is_string_literal();
+            let is_str = Self::is_syntactically_string(&init);
 
             // Foo["x"] = init
             let member_expr = {
@@ -487,6 +487,32 @@ impl<'a> TypeScriptEnum {
                 .is_some(),
             TSEnumMemberName::ComputedTemplateString(_) => false,
         })
+    }
+
+    /// Whether an enum member initializer is a string by syntax alone.
+    ///
+    /// A string member gets no reverse mapping. tsc decides this without type
+    /// information: string literals, template literals, and `+` with a string on
+    /// either side are strings, looking through parentheses and type wrappers.
+    /// Anything else, including `typeof x`, keeps the reverse mapping.
+    ///
+    /// This also covers initializers the constant evaluator declined. Emitting a
+    /// reverse mapping for those wrote a bogus key that could overwrite another
+    /// member.
+    ///
+    /// See `isSyntacticallyString` in TypeScript's checker. TypeScript looks
+    /// through parentheses only, so an `as`, `satisfies`, non-null, or angle
+    /// bracket assertion around a string still gets a reverse mapping.
+    fn is_syntactically_string(expr: &Expression<'a>) -> bool {
+        match expr.without_parentheses() {
+            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
+            Expression::BinaryExpression(binary) => {
+                binary.operator == BinaryOperator::Addition
+                    && (Self::is_syntactically_string(&binary.left)
+                        || Self::is_syntactically_string(&binary.right))
+            }
+            _ => false,
+        }
     }
 
     fn get_number_literal_expression(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {

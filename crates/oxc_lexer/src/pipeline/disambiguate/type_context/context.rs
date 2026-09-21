@@ -18,15 +18,15 @@
 //!
 //! [`tsx`]: super::tsx
 
-use crate::{
-    opmap::OP_KIND_BASE,
-    tables::{Tables, is_ws},
-    token::tk,
+use crate::token::{OP_KIND_BASE, tk};
+
+use crate::pipeline::{
+    bitmap::{bm_get, bm_next1},
+    bytes::is_ws,
+    tables::Tables,
 };
 
-use super::super::super::bitmap::{bm_get, bm_next1};
-
-use super::super::common::{
+use crate::pipeline::disambiguate::common::{
     AngleMatch, LT_OPERAND_WORDS, angle_match_back, annotation_colon_is_declaration,
     bang_is_postfix, bm_prev_sig, brace_opens_value, chain_head, class_like_walk,
     conditional_type_question, declarator_without_init, extends_precedes_question, ident_is,
@@ -429,10 +429,10 @@ pub(super) unsafe fn lt_head_is_operand(
     if k >= OP_KIND_BASE {
         let c = *src.add(w);
         if c == b')' {
-            if let Some(lp) = match_delim_back(src, st, kind, w, b'(', b')') {
-                if paren_is_statement_head(src, st, kind, lp) {
-                    return true;
-                }
+            if let Some(lp) = match_delim_back(src, st, kind, w, b'(', b')')
+                && paren_is_statement_head(src, st, kind, lp)
+            {
+                return true;
             }
             return asi_head(t);
         }
@@ -849,10 +849,10 @@ unsafe fn colon_context(
         if c == b'?' && !matches!(*src.add(v + 1), b'?' | b'.') {
             return Ctx::Type;
         }
-        if c == b')' {
-            if let Some(ctx) = signature_colon(src, st, kind, v) {
-                return ctx;
-            }
+        if c == b')'
+            && let Some(ctx) = signature_colon(src, st, kind, v)
+        {
+            return ctx;
         }
         if c == b']' || c == b'}' {
             let open = if c == b']' { b'[' } else { b'{' };
@@ -934,6 +934,7 @@ pub(super) unsafe fn ternary_colon(
                 }
                 b':' => debt += 1,
                 b'?' => {
+                    #[expect(clippy::collapsible_match)]
                     if *src.add(w + 1) != b'?'
                         && *src.add(w + 1) != b'.'
                         && (w == 0 || *src.add(w - 1) != b'?')

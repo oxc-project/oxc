@@ -11,32 +11,40 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9860>
-    pub fn try_minimize_if(
-        if_stmt: &mut IfStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
+    pub fn try_minimize_if(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::IfStatement(if_stmt) = stmt else { return };
+
         // Flip empty consequent so the rest of the function can assume consequent is non-empty.
         if Self::is_statement_empty(&if_stmt.consequent) {
             if if_stmt.alternate.is_none() {
                 // `if (a) {}` => `a;`
-                let mut expr = if_stmt.test.take_in(ctx);
-                Self::remove_unused_expression(&mut expr, ctx);
-                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+                ctx.replace_statement_with(stmt, |stmt, ctx| {
+                    let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
+                    let IfStatement { mut test, span, .. } = if_stmt.unbox();
+                    Self::remove_unused_expression(&mut test, ctx);
+                    Statement::new_expression_statement(span, test, ctx)
+                });
+                return;
             }
-            let mut new_consequent = if_stmt.alternate.take().unwrap();
+            let new_consequent = if_stmt.alternate.take().unwrap();
 
-            if let Statement::ExpressionStatement(expr_stmt) = &mut new_consequent {
-                let (op, a) = match &mut if_stmt.test {
-                    // `if (!a); else b();` => `a && b();`
-                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                        (LogicalOperator::And, unary_expr.argument.take_in(ctx))
-                    }
-                    // `if (a); else b();` => `a || b();`
-                    e => (LogicalOperator::Or, e.take_in(ctx)),
-                };
-                let b = expr_stmt.expression.take_in(ctx);
-                let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
-                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+            if let Statement::ExpressionStatement(expr_stmt) = new_consequent {
+                ctx.replace_statement_with(stmt, |stmt, ctx| {
+                    let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
+                    let IfStatement { test, span, .. } = if_stmt.unbox();
+                    let (op, a) = match test {
+                        // `if (!a); else b();` => `a && b();`
+                        Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                            (LogicalOperator::And, unary_expr.unbox().argument)
+                        }
+                        // `if (a); else b();` => `a || b();`
+                        e => (LogicalOperator::Or, e),
+                    };
+                    let b = expr_stmt.unbox().expression;
+                    let expr = Self::join_with_left_associative_op(span, op, a, b, ctx);
+                    Statement::new_expression_statement(span, expr, ctx)
+                });
+                return;
             }
 
             // `if (!a) {} else x;` => `if (a) x;`
@@ -49,37 +57,50 @@ impl<'a> PeepholeOptimizations {
 
         // Consequent is non-empty from here on.
 
-        if let Some(alternate) = &mut if_stmt.alternate {
-            if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent
-                && let Statement::ExpressionStatement(alternate_expr_stmt) = alternate
-            {
+        if let Some(alternate) = &if_stmt.alternate {
+            if matches!(&if_stmt.consequent, Statement::ExpressionStatement(_)) && matches!(alternate, Statement::ExpressionStatement(_)) {
                 // `if (a) b(); else c();` => `a ? b() : c();`
-                let test = if_stmt.test.take_in(ctx);
-                let consequent = expr_stmt.expression.take_in(ctx);
-                let alternate = alternate_expr_stmt.expression.take_in(ctx);
-                let expr =
-                    Self::minimize_conditional(if_stmt.span, test, consequent, alternate, ctx);
-                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+                ctx.replace_statement_with(stmt, |stmt, ctx| {
+                    let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
+                    let IfStatement { test, consequent, alternate, span, .. } = if_stmt.unbox();
+                    let Statement::ExpressionStatement(a) = consequent else { unreachable!() };
+                    let Statement::ExpressionStatement(b) = alternate.unwrap() else {
+                        unreachable!()
+                    };
+                    let a = a.unbox().expression;
+                    let b = b.unbox().expression;
+                    let expr = Self::minimize_conditional(span, test, a, b, ctx);
+                    Statement::new_expression_statement(span, expr, ctx)
+                });
+                return;
             }
 
             if Self::should_invert_if(&if_stmt.consequent, alternate, &if_stmt.test, ctx) {
                 ctx.replace_expression_with(&mut if_stmt.test, |old, ctx| {
                     Self::minimize_not(old.span(), old, ctx, true)
                 });
-                std::mem::swap(&mut if_stmt.consequent, alternate);
+                let if_mut = if_stmt.as_mut();
+                let Some(alternate) = &mut if_mut.alternate else { unreachable!() };
+                std::mem::swap(&mut if_mut.consequent, alternate);
             }
-        } else if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
-            let (op, a) = match &mut if_stmt.test {
-                // `if (!a) b();` => `a || b();`
-                Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                    (LogicalOperator::Or, unary_expr.argument.take_in(ctx))
-                }
-                // `if (a)  b();` => `a && b();`
-                e => (LogicalOperator::And, e.take_in(ctx)),
-            };
-            let b = expr_stmt.expression.take_in(ctx);
-            let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
-            return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+        } else if matches!(&if_stmt.consequent, Statement::ExpressionStatement(_)) {
+            ctx.replace_statement_with(stmt, |stmt, ctx| {
+                let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
+                let IfStatement { test, consequent, span, .. } = if_stmt.unbox();
+                let Statement::ExpressionStatement(b) = consequent else { unreachable!() };
+                let (op, a) = match test {
+                    // `if (!a) b();` => `a || b();`
+                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                        (LogicalOperator::Or, unary_expr.unbox().argument)
+                    }
+                    // `if (a)  b();` => `a && b();`
+                    e => (LogicalOperator::And, e),
+                };
+                let b = b.unbox().expression;
+                let expr = Self::join_with_left_associative_op(span, op, a, b, ctx);
+                Statement::new_expression_statement(span, expr, ctx)
+            });
+            return;
         } else if let Statement::IfStatement(if2_stmt) = &mut if_stmt.consequent
             && if2_stmt.alternate.is_none()
         {
@@ -92,7 +113,6 @@ impl<'a> PeepholeOptimizations {
         }
 
         Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
-        None
     }
 
     /// Returns true when the current statement position accepts only a single

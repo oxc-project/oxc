@@ -1,7 +1,7 @@
 #![cfg(target_endian = "little")]
 #![expect(clippy::cast_possible_truncation, reason = "test helpers: lengths fit u32")]
 
-use oxc_lexer::{LexOptions, Lexer, PAD, TokenKind, diag_code, lex_utf8};
+use oxc_lexer::{DiagCode, LexOptions, Lexer, PAD, TokenKind, lex_utf8};
 
 fn kinds_of(code: &str, module: bool) -> Vec<TokenKind> {
     let mut buf = code.as_bytes().to_vec();
@@ -13,7 +13,7 @@ fn kinds_of(code: &str, module: bool) -> Vec<TokenKind> {
     lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
 
-fn diag_codes(code: &str, module: bool) -> Vec<u16> {
+fn diag_codes(code: &str, module: bool) -> Vec<DiagCode> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
@@ -46,9 +46,9 @@ fn module_html_open_comment_at_line_start_diagnosed() {
     let src = "<!-- c\nx;";
     let ks = kinds_of(src, true);
     assert!(!ks.contains(&TokenKind::Lt), "line-start form stays a comment: {ks:?}");
-    assert_eq!(diag_codes(src, true), vec![diag_code::HTML_COMMENT_IN_MODULE]);
+    assert_eq!(diag_codes(src, true), [DiagCode::HtmlCommentInModule]);
     let src = "x;\n<!-- c\ny;";
-    assert_eq!(diag_codes(src, true), vec![diag_code::HTML_COMMENT_IN_MODULE]);
+    assert_eq!(diag_codes(src, true), [DiagCode::HtmlCommentInModule]);
     assert!(diag_codes(src, false).is_empty(), "script form is silent");
 }
 

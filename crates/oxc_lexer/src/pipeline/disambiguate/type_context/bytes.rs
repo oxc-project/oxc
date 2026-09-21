@@ -16,17 +16,17 @@
 //!
 //! Every scan has a length limit, so pathological input can't make it slow.
 //!
-//! [`match_delim_back`]: super::super::common::match_delim_back
-//! [`angle_match_back`]: super::super::common::angle_match_back
+//! [`match_delim_back`]: crate::pipeline::disambiguate::common::match_delim_back
+//! [`angle_match_back`]: crate::pipeline::disambiguate::common::angle_match_back
 
-use crate::{
-    tables::{is_id_start, is_ws},
-    token::tk,
+use crate::token::tk;
+
+use crate::pipeline::{
+    bitmap::bm_get,
+    bytes::{is_id_start, is_ws},
 };
 
-use super::super::super::bitmap::bm_get;
-
-use super::super::common::kind_at;
+use crate::pipeline::disambiguate::common::kind_at;
 
 pub(super) const ENCLOSING_SCAN_CAP: usize = 1 << 16;
 
@@ -68,7 +68,7 @@ pub(super) enum Encl {
 ///
 /// The counters are what separate the two readings. A type-argument list is
 /// always delimiter-balanced, so an unmatched `(`/`[`/`{`, or a `;` outside
-/// any of them, proves the region is not one — that is what rejects
+/// any of them, proves the region is not one - that is what rejects
 /// `(a << 3) | (a >>> 29)`, `o[(y = e) >> 2]` and `x >>= 8`. A `<<` whose
 /// second byte is no longer a token start is a fused shift; one that
 /// `lt_run_split` already split counts as two openers.
@@ -139,7 +139,7 @@ pub(super) unsafe fn gt_run_closes_type_args(
             b'}' => {
                 // A substitution-closing `}` is the start of the next
                 // template segment, and its `${` was swallowed by the
-                // preceding one — counting it would leave every
+                // preceding one - counting it would leave every
                 // `Array<Map<A, `p${s}q`>>` looking brace-unbalanced.
                 let kk = kind_at(kind, i);
                 if kk == tk!(TemplateMiddle) || kk == tk!(TemplateTail) {
@@ -252,13 +252,13 @@ pub(super) unsafe fn enclosing_opener(
 ///
 /// Only one TypeScript production puts two `<` next to each other: a
 /// type-argument list whose first argument is a function type. The second
-/// `<` therefore has to open a type-parameter list belonging to one —
+/// `<` therefore has to open a type-parameter list belonging to one:
 ///
 /// ```text
 /// Name < < TypeParams > ( Params ) => Type >
 /// ```
 ///
-/// — so the whole shape is checked, not a prefix of it. That is what
+/// So the whole shape is checked, not a prefix of it. That is what
 /// separates `Array<<T>(x: T) => T>` from `a << b >> c` (no `(` after the
 /// first `>`) and from `a << b > (c)` (no `=>` after the parameters). Every
 /// reject path returns false, i.e. today's fused `<<`, so a wrong answer can
@@ -356,8 +356,8 @@ pub(super) unsafe fn skip_ws_fwd(src: *const u8, mut i: usize, lim: usize) -> us
 
 /// Forward angle match: from `i` at `depth`, the `>` that brings it to 0, or
 /// `None` on an unmatched closer, a `;` outside every bracket, or the cap.
-/// Same gating as [`gt_run_closes_type_args`] — `opch & st` for angles, `st`
-/// for the bracket counters — and the same balance requirement at the close.
+/// Same gating as [`gt_run_closes_type_args`] - `opch & st` for angles, `st`
+/// for the bracket counters - and the same balance requirement at the close.
 unsafe fn angle_close_fwd(
     src: *const u8,
     st: *const u64,

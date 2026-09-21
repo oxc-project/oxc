@@ -1,7 +1,5 @@
 # externals/gitlab/stylesheets/framework/variables_overrides.scss
 
-> no trailing comma into non-comma-list map-item parens. See crates/oxc_formatter_css/DIVERGENCES.md#map-item-break-comma-lists-only
-
 ## Option 1
 
 `````json

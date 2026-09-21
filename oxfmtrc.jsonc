@@ -12,6 +12,7 @@
     "apps/oxlint/test/fixtures/suggestions/files/**",
     "apps/oxlint/test/fixtures/sourceCode_token_methods/files/**",
     "apps/oxlint/test/fixtures/tokens/files/**",
+    "apps/oxlint/test/fixtures/tokens_unambiguous_await/files/**",
     "**/dist/**",
     "**/generated/**",
     "**/CHANGELOG.md",

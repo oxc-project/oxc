@@ -4,7 +4,8 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ==================== Input ====================
 // Comments between a do-body's `}` and the `while` keyword keep their
 // positions (head-body comment policy), like the `else`/`catch`/`finally` gaps.
-// Known divergence (js/comments/between-head-and-body/between-head-and-body.js):
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation;
+// js/comments/between-head-and-body/between-head-and-body.js):
 // Prettier flushes a line comment past the whole `while (x);` head and pulls an
 // own-line comment into the parens (`while (\n// a\nx)`) -- attachment
 // artifacts of the kind prettier is currently fixing elsewhere
@@ -26,7 +27,8 @@ do {} while (x); // real trailing
 ------------------
 // Comments between a do-body's `}` and the `while` keyword keep their
 // positions (head-body comment policy), like the `else`/`catch`/`finally` gaps.
-// Known divergence (js/comments/between-head-and-body/between-head-and-body.js):
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation;
+// js/comments/between-head-and-body/between-head-and-body.js):
 // Prettier flushes a line comment past the whole `while (x);` head and pulls an
 // own-line comment into the parens (`while (\n// a\nx)`) -- attachment
 // artifacts of the kind prettier is currently fixing elsewhere
@@ -47,7 +49,8 @@ do {} while (x); // real trailing
 -------------------
 // Comments between a do-body's `}` and the `while` keyword keep their
 // positions (head-body comment policy), like the `else`/`catch`/`finally` gaps.
-// Known divergence (js/comments/between-head-and-body/between-head-and-body.js):
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation;
+// js/comments/between-head-and-body/between-head-and-body.js):
 // Prettier flushes a line comment past the whole `while (x);` head and pulls an
 // own-line comment into the parens (`while (\n// a\nx)`) -- attachment
 // artifacts of the kind prettier is currently fixing elsewhere

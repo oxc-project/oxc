@@ -7,7 +7,7 @@ define_find_function!(
 );
 
 define_find_function!(
-    /// [`find_opener`] widened with `{` / `}` — used inside template
+    /// [`find_opener`] widened with `{` / `}` - used inside template
     /// substitutions, where braces drive the nesting depth.
     find_opener6: b'"', b'\'', b'`', b'/', b'{', b'}', b'<', b'>'
 );

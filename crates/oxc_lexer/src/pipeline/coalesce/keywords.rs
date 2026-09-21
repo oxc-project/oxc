@@ -1,4 +1,8 @@
-use crate::{opmap::KwSet, token::tk};
+use std::ptr;
+
+use crate::token::tk;
+
+use crate::pipeline::tables::KwSet;
 
 pub const KWB: usize = 64;
 
@@ -24,8 +28,8 @@ pub(super) unsafe fn kw_flush(
 /// Resolve a batch of keyword candidates (positions collected by
 /// `coalesce`): exact match against the perfect-hash tables, patching
 /// `kind` from IDENT to the keyword kind on hit. `TS_KEY` selects the
-/// active set's hash key — `(c0, c1, len)` for JS, `(c0, c1, last, len)`
-/// for TS — monomorphized so the JS copy carries none of the wider key.
+/// active set's hash key - `(c0, c1, len)` for JS, `(c0, c1, last, len)`
+/// for TS - monomorphized so the JS copy carries none of the wider key.
 /// Kept out of line: inlining would double both variants into each of
 /// coalesce's flush sites, and one call per KWB words is free.
 #[inline(never)]
@@ -40,7 +44,7 @@ unsafe fn kw_verify_batch<const TS_KEY: bool>(
     let wb = word as *const u8;
     for ix in 0..k {
         let p = *pos.add(ix) as usize;
-        let x = core::ptr::read_unaligned(wb.add(p >> 3) as *const u64) >> (p & 7);
+        let x = ptr::read_unaligned(wb.add(p >> 3) as *const u64) >> (p & 7);
         let len = (!x).trailing_zeros() as usize;
         if len > 8 {
             let kk = kw.lookup(src.add(p), len);
@@ -49,7 +53,7 @@ unsafe fn kw_verify_batch<const TS_KEY: bool>(
             }
             continue;
         }
-        let w8 = core::ptr::read_unaligned(src.add(p) as *const u64);
+        let w8 = ptr::read_unaligned(src.add(p) as *const u64);
         let z = bzhi(w8, (len << 3) as u32);
         let key = if TS_KEY {
             // Last char comes off the bzhi'd word: bits above len*8 are
@@ -71,7 +75,7 @@ unsafe fn kw_verify_batch<const TS_KEY: bool>(
 fn bzhi(x: u64, n: u32) -> u64 {
     #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
     unsafe {
-        core::arch::x86_64::_bzhi_u64(x, n)
+        std::arch::x86_64::_bzhi_u64(x, n)
     }
 
     #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]

@@ -14,9 +14,9 @@
 //! [`walk`]: super::walk
 //! [`operand`]: super::operand
 
-use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
+use crate::token::{OP_KIND_BASE, tk};
 
-use super::super::super::bitmap::bm_next1;
+use crate::pipeline::{bitmap::bm_next1, tables::Tables};
 
 use super::walk::{
     AngleMatch, angle_match_back, bm_prev_sig, chain_head, ident_is, kind_at, lt_in_range,
@@ -211,6 +211,7 @@ pub unsafe fn conditional_type_question(
                 }
                 b':' => debt += 1,
                 b'?' => {
+                    #[expect(clippy::collapsible_match)]
                     if *src.add(w + 1) != b'?'
                         && *src.add(w + 1) != b'.'
                         && (w == 0 || *src.add(w - 1) != b'?')
@@ -295,7 +296,7 @@ pub unsafe fn of_is_forof_keyword(
     let tk = *kind.add(tp);
     if tk == tk!(Ident) || tk == tk!(IdentEscaped) {
         let e = bm_next1(st, tp + 1, n);
-        if !prop_name(src, tp) && t.is_regex_keyword(src.add(tp), e - tp) {
+        if !prop_name(src, tp) && t.keywords.is_regex_keyword(src.add(tp), e - tp) {
             return false;
         }
     } else if tk >= OP_KIND_BASE {
@@ -363,7 +364,7 @@ pub unsafe fn of_is_forof_keyword(
                 let bk = *kind.add(bp);
                 let tail = if bk == tk!(Ident) || bk == tk!(IdentEscaped) {
                     let be = bm_next1(st, bp + 1, n);
-                    prop_name(src, bp) || !t.is_regex_keyword(src.add(bp), be - bp)
+                    prop_name(src, bp) || !t.keywords.is_regex_keyword(src.add(bp), be - bp)
                 } else {
                     bk >= OP_KIND_BASE && matches!(*src.add(bp), b']' | b'}' | b')')
                 };
@@ -746,7 +747,7 @@ pub unsafe fn tail_before(
     }
     if sk == tk!(Ident) {
         let e = bm_next1(st, sp + 1, n);
-        return prop_name(src, sp) || !t.is_regex_keyword(src.add(sp), e - sp);
+        return prop_name(src, sp) || !t.keywords.is_regex_keyword(src.add(sp), e - sp);
     }
     matches!(
         sk,

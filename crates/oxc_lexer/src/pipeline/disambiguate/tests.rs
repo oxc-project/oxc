@@ -1,4 +1,4 @@
-use crate::{LexOptions, Lexer, PAD, token::TokenKind};
+use crate::{LexOptions, Lexer, PAD, error::DiagCode, token::TokenKind};
 
 /// Minimal version of `SourceType` just for tests.
 ///
@@ -164,7 +164,7 @@ fn jsx_self_close_allows_whitespace() {
     assert!(!ks.contains(&TokenKind::JsxTagEnd), "lone slash: kinds {ks:?}");
 }
 
-pub(super) fn diag_codes_of(code: &str, file_type: FileType) -> Vec<u16> {
+pub(super) fn diag_codes_of(code: &str, file_type: FileType) -> Vec<DiagCode> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);

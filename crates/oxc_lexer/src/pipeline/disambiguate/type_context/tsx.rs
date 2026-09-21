@@ -12,15 +12,11 @@
 //!   There TypeScript reads `<T>(x: T) => x` as a JSX element, which never closes.
 //!   So this decides whether that error is reported.
 
-use crate::{
-    opmap::OP_KIND_BASE,
-    tables::{Tables, is_ws},
-    token::tk,
-};
+use crate::token::{OP_KIND_BASE, tk};
 
-use super::super::super::bitmap::bm_next1;
+use crate::pipeline::{bitmap::bm_next1, bytes::is_ws, tables::Tables};
 
-use super::super::common::{
+use crate::pipeline::disambiguate::common::{
     AngleMatch, angle_match_back, annotation_colon_is_declaration, bm_prev_sig,
     brace_opens_object_literal, class_like_walk, conditional_type_question,
     extends_precedes_question, ident_is, kind_at, lt_in_range, match_delim_back, prop_name,
@@ -161,12 +157,12 @@ unsafe fn member_or_param_colon_in_type(
                                 return true;
                             }
                         }
-                        if c == b'(' && pc == b']' {
-                            if let Some(lb) = match_delim_back(src, st, kind, pp, b'[', b']') {
-                                if member_start_before(src, st, kind, lb, true) {
-                                    return true;
-                                }
-                            }
+                        if c == b'('
+                            && pc == b']'
+                            && let Some(lb) = match_delim_back(src, st, kind, pp, b'[', b']')
+                            && member_start_before(src, st, kind, lb, true)
+                        {
+                            return true;
                         }
                     }
                     if type_head_keyword(src, st, kind, pp, c) {
@@ -190,6 +186,7 @@ unsafe fn member_or_param_colon_in_type(
                 }
                 b';' => return false,
                 b'?' => {
+                    #[expect(clippy::collapsible_match)]
                     if *src.add(w + 1) != b'?'
                         && *src.add(w + 1) != b'.'
                         && (w == 0 || *src.add(w - 1) != b'?')

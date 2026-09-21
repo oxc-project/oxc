@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.151.0] - 2026-09-21
+
+### 🐛 Bug Fixes
+
+- 7811f0a parser: Preserve reparsed `await` tokens (#26619) (camc314)
+- 3130405 parser: Recover await using object binding patterns (#26721) (camc314)
+- 827fdbd parser: Reject invalid modifiers on import aliases (#26622) (camc314)
+
 ## [0.150.0] - 2026-09-14
 
 ### 🐛 Bug Fixes
