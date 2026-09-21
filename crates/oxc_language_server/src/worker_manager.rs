@@ -1,20 +1,63 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, Ordering},
+use std::{
+    path::{Path, PathBuf},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 use serde_json::Value;
 use tokio::sync::{OnceCell, RwLock, RwLockReadGuard};
 use tower_lsp_server::{
     jsonrpc::{Error, Result},
-    ls_types::{Registration, Unregistration, Uri, WorkspaceFolder},
+    ls_types::{MessageType, Pattern, Registration, Unregistration, Uri, WorkspaceFolder},
 };
-use tracing::debug;
+use tracing::{debug, warn};
 
 use crate::{
-    ClientMessage, capabilities::DiagnosticMode, file_system::ResolvedPath, tool::ToolBuilder,
+    ClientMessage,
+    capabilities::DiagnosticMode,
+    file_system::ResolvedPath,
+    tool::ToolBuilder,
     worker::WorkspaceWorker,
+    working_directories::{
+        ResolvedWorkingDirectories, resolve_working_directories, sub_worker_options,
+        working_directories_need_walk,
+    },
 };
+
+/// The index of the root which contains `file_path` with the longest match.
+fn find_most_specific_root<'a>(
+    roots: impl Iterator<Item = (usize, &'a Path)>,
+    file_path: &Path,
+) -> Option<usize> {
+    roots
+        .filter(|(_, root_path)| file_path.starts_with(root_path))
+        .max_by_key(|(_, root_path)| root_path.as_os_str().len())
+        .map(|(index, _)| index)
+}
+
+/// The outcome of [`WorkerManager::sync_sub_workers`].
+#[derive(Default)]
+pub struct SubWorkerSync {
+    /// Sub workers which are not a working directory anymore, the caller has to shut them down.
+    pub removed: Vec<WorkspaceWorker>,
+    /// Roots of the sub workers which were created.
+    pub added_roots: Vec<Uri>,
+    /// Roots whose excluded set changed, so their tool has to be rebuilt. They are already rebuilt
+    /// when the caller set `rebuild_now`.
+    pub rebuild_roots: Vec<Uri>,
+    /// Watcher registrations of the created sub workers, and of the rebuilt workers whose
+    /// patterns changed.
+    pub registrations: Vec<Registration>,
+    /// Watcher unregistrations of the rebuilt workers whose patterns changed.
+    pub unregistrations: Vec<Unregistration>,
+    /// Messages to show to the client.
+    pub client_messages: Vec<ClientMessage>,
+    /// Whether the `auto` flag of the workspace folder worker flipped, which changes its watcher
+    /// patterns independently of what its tool decides.
+    pub auto_changed: bool,
+}
 
 enum WorkerGuardInner<'a> {
     Vec(RwLockReadGuard<'a, Vec<WorkspaceWorker>>),
@@ -206,6 +249,584 @@ impl WorkerManager {
         WorkspaceWorker::new(root_uri, Arc::clone(&self.tool_builder), diagnostic_mode)
     }
 
+    // ── `workingDirectories` ──────────────────────────────────────────────────
+
+    /// Resolve the `workingDirectories` option away from the runtime.
+    ///
+    /// A glob or the `auto` detection walks the workspace folder, which is blocking file system
+    /// work and must not run on an async worker thread.
+    /// # Errors
+    /// When the blocking task could not be joined. The caller must then keep the state it has:
+    /// resolving to an empty set would tear every sub worker down for a transient failure.
+    async fn resolve_working_directories(
+        &self,
+        root_uri: &Uri,
+        options: &serde_json::Value,
+        folder_roots: &[Uri],
+    ) -> std::result::Result<ResolvedWorkingDirectories, ClientMessage> {
+        // the workspace folders the client opened below this one belong to their own worker
+        let nested_roots = Self::nested_folder_roots(root_uri, folder_roots);
+
+        // A literal entry is a handful of `is_dir()` calls and an absent option is no work at all,
+        // both are resolved inline. Only a glob or the `auto` detection walks the workspace folder.
+        if !working_directories_need_walk(options) {
+            return Ok(resolve_working_directories(
+                root_uri,
+                options,
+                self.tool_builder.as_ref(),
+                &nested_roots,
+            ));
+        }
+
+        let tool_builder = Arc::clone(&self.tool_builder);
+        let task_root_uri = root_uri.clone();
+        let options = options.clone();
+
+        tokio::task::spawn_blocking(move || {
+            resolve_working_directories(
+                &task_root_uri,
+                &options,
+                tool_builder.as_ref(),
+                &nested_roots,
+            )
+        })
+        .await
+        .map_err(|err| {
+            warn!("resolving the working directories of {} failed: {err}", root_uri.as_str());
+            ClientMessage {
+                r#type: MessageType::WARNING,
+                message: format!(
+                    "`workingDirectories` could not be resolved for {}, the previous project roots are kept",
+                    root_uri.as_str()
+                ),
+            }
+        })
+    }
+
+    /// The roots of the workspace folders the client opened strictly below `root_uri`.
+    ///
+    /// The caller passes every workspace folder root it knows about, which is deliberately not
+    /// read from [`Self::workers`] here: the handlers which start a worker hold that lock, or
+    /// start folders which are not registered yet, and re-entering a write-fair [`RwLock`] from
+    /// inside a read guard deadlocks as soon as a writer is queued.
+    fn nested_folder_roots(root_uri: &Uri, folder_roots: &[Uri]) -> Vec<PathBuf> {
+        let Ok(resolved) = ResolvedPath::try_from(root_uri) else {
+            return vec![];
+        };
+        let root_path = resolved.as_path();
+
+        let mut nested = folder_roots
+            .iter()
+            .filter_map(|uri| ResolvedPath::try_from(uri).ok())
+            .map(|resolved| resolved.as_path().to_path_buf())
+            .filter(|path| path != root_path && path.starts_with(root_path))
+            .collect::<Vec<_>>();
+        nested.sort_unstable();
+        nested.dedup();
+
+        nested
+    }
+
+    /// The roots of every workspace folder worker, the sub workers excluded.
+    ///
+    /// The lock is taken and dropped here, so the result can be handed to a call which starts or
+    /// reconciles workers.
+    pub async fn folder_roots(&self) -> Vec<Uri> {
+        self.workers
+            .read()
+            .await
+            .iter()
+            .filter(|worker| !worker.is_sub_worker())
+            .map(|worker| worker.get_root_uri().clone())
+            .collect()
+    }
+
+    /// Resolve every root once, so the comparisons below do not canonicalize them again.
+    fn resolve_roots(roots: &[Uri]) -> Vec<(Uri, PathBuf)> {
+        roots
+            .iter()
+            .filter_map(|root| {
+                ResolvedPath::try_from(root)
+                    .ok()
+                    .map(|resolved| (root.clone(), resolved.as_path().to_path_buf()))
+            })
+            .collect()
+    }
+
+    /// Compute the excluded roots of `root_path`: the resolved roots strictly below it.
+    ///
+    /// A working directory can contain another working directory, in which case the outer one must
+    /// exclude the inner one just like the workspace folder excludes both.
+    fn excluded_roots_below(roots: &[(Uri, PathBuf)], root_path: &Path) -> Vec<Uri> {
+        roots
+            .iter()
+            .filter(|(_, other_path)| other_path != root_path && other_path.starts_with(root_path))
+            .map(|(uri, _)| uri.clone())
+            .collect()
+    }
+
+    /// Whether a change to this file can add or remove a working directory: a `package.json` for
+    /// the `auto` detection, or one of the configuration file names of the tool.
+    ///
+    /// This is deliberately not the watcher patterns of the tool: a setup with an explicit
+    /// `configPath` watches a single file but still gains a working directory when a config
+    /// appears somewhere else.
+    pub fn is_project_root_marker(&self, uri: &Uri) -> bool {
+        let Some(name) = uri.path().as_str().rsplit('/').next() else {
+            return false;
+        };
+
+        name == "package.json" || self.tool_builder.config_file_names().contains(&name)
+    }
+
+    /// Create and start one sub worker per resolved working directory.
+    ///
+    /// `claimed_roots` holds the roots which already have a worker: a client workspace folder is
+    /// never shadowed by a sub worker for the same directory.
+    async fn start_sub_workers(
+        &self,
+        parent_uri: &Uri,
+        roots: &[Uri],
+        options: &serde_json::Value,
+        diagnostic_mode: &DiagnosticMode,
+        claimed_roots: &[Uri],
+    ) -> (Vec<WorkspaceWorker>, Vec<ClientMessage>) {
+        let sub_options = sub_worker_options(options);
+        let mut client_messages = vec![];
+        let mut sub_workers = Vec::with_capacity(roots.len());
+
+        let resolved_roots = Self::resolve_roots(roots);
+        let claimed_paths = Self::resolve_roots(claimed_roots);
+
+        for (root_uri, root_path) in &resolved_roots {
+            if claimed_paths.iter().any(|(_, claimed)| claimed == root_path) {
+                debug!(
+                    "skipping working directory {}, it already has its own worker",
+                    root_uri.as_str()
+                );
+                continue;
+            }
+
+            debug!("starting working directory worker for {}", root_uri.as_str());
+            let sub_worker = WorkspaceWorker::new_sub_worker(
+                root_uri.clone(),
+                parent_uri.clone(),
+                Arc::clone(&self.tool_builder),
+                diagnostic_mode.clone(),
+            );
+            // a working directory nested inside another one is owned by its own worker
+            sub_worker
+                .set_working_directories(
+                    Self::excluded_roots_below(&resolved_roots, root_path),
+                    false,
+                )
+                .await;
+            client_messages.extend(sub_worker.start_worker(sub_options.clone()).await);
+            sub_workers.push(sub_worker);
+        }
+
+        (sub_workers, client_messages)
+    }
+
+    /// Resolve the `workingDirectories` option of a workspace folder, start its worker and start
+    /// one sub worker per resolved working directory.
+    ///
+    /// The working directories have to be known **before** the workspace folder worker is started,
+    /// so its tool can exclude them from its eager discovery (nested configs, ignore files, ...).
+    ///
+    /// `claimed_roots` holds the roots which already have a worker, so a directory which the client
+    /// opened as its own workspace folder does not get a second, shadowing worker, and
+    /// `folder_roots` every workspace folder root the caller knows about, registered or not.
+    ///
+    /// This method deliberately never touches `Self::workers`: `initialized` calls it while it
+    /// holds the read guard, and re-entering a write-fair [`RwLock`] from inside a read guard
+    /// deadlocks as soon as a writer is queued.
+    ///
+    /// The returned sub workers are already started, the caller has to insert them into the worker
+    /// list (directly, or through [`Self::add_workers`]).
+    pub async fn start_folder_worker(
+        &self,
+        folder_worker: &WorkspaceWorker,
+        options: serde_json::Value,
+        diagnostic_mode: &DiagnosticMode,
+        claimed_roots: &[Uri],
+        folder_roots: &[Uri],
+    ) -> (Vec<WorkspaceWorker>, Vec<ClientMessage>) {
+        let resolved = match self
+            .resolve_working_directories(folder_worker.get_root_uri(), &options, folder_roots)
+            .await
+        {
+            Ok(resolved) => resolved,
+            Err(message) => {
+                // the worker still starts, only without working directories
+                let mut client_messages = vec![message];
+                client_messages.extend(folder_worker.start_worker(options).await);
+                return (vec![], client_messages);
+            }
+        };
+        let mut client_messages = resolved.client_messages();
+
+        folder_worker.set_working_directories(resolved.roots.clone(), resolved.auto).await;
+        client_messages.extend(folder_worker.start_worker(options.clone()).await);
+
+        let (sub_workers, messages) = self
+            .start_sub_workers(
+                folder_worker.get_root_uri(),
+                &resolved.roots,
+                &options,
+                diagnostic_mode,
+                claimed_roots,
+            )
+            .await;
+        client_messages.extend(messages);
+
+        (sub_workers, client_messages)
+    }
+
+    /// Recompute the `workingDirectories` of the workspace folder worker with the root
+    /// `parent_uri` and reconcile its sub workers: sub workers which disappeared are removed and
+    /// returned for shutdown, new ones are created, started and inserted, surviving ones are left
+    /// untouched.
+    ///
+    /// `report_warnings` should only be `true` when the option value itself changed, so a watched
+    /// file event does not repeat the same validation warnings over and over.
+    pub async fn sync_sub_workers(
+        &self,
+        parent_uri: &Uri,
+        options: &serde_json::Value,
+        diagnostic_mode: &DiagnosticMode,
+        dynamic_watchers: bool,
+        report_warnings: bool,
+        rebuild_now: bool,
+    ) -> SubWorkerSync {
+        // the lock is not held here, so the folder roots are read before resolving
+        let folder_roots = self.folder_roots().await;
+        let resolved =
+            match self.resolve_working_directories(parent_uri, options, &folder_roots).await {
+                Ok(resolved) => resolved,
+                Err(message) => {
+                    // keep every worker as it is, the option could not be resolved this time
+                    return SubWorkerSync {
+                        client_messages: vec![message],
+                        ..SubWorkerSync::default()
+                    };
+                }
+            };
+        let mut sync = SubWorkerSync {
+            client_messages: if report_warnings { resolved.client_messages() } else { vec![] },
+            ..SubWorkerSync::default()
+        };
+
+        // The sub workers which have to exist are the resolved roots which the client did not
+        // open as a workspace folder itself. A client folder always wins, so there is exactly one
+        // worker, and one watcher registration, per root at any time.
+        //
+        // The comparison is made against the workers which are actually there, not only against
+        // the roots stored on the parent: adding or removing a workspace folder on one of those
+        // roots changes what has to exist without changing the option value.
+        let parent_path = ResolvedPath::try_from(parent_uri).ok();
+        let parent_path = parent_path.as_ref().map(ResolvedPath::as_path);
+
+        let (expected, parent_roots_changed) = {
+            let workers = self.workers.read().await;
+            let Some(parent) = workers
+                .iter()
+                .find(|worker| !worker.is_sub_worker() && worker.has_root_path(parent_path))
+            else {
+                return sync;
+            };
+
+            let stored_roots = parent.get_working_directories().await;
+            // always store them, the `auto` flag can change without changing the resolved roots
+            sync.auto_changed =
+                parent.set_working_directories(resolved.roots.clone(), resolved.auto).await;
+
+            let resolved_roots = Self::resolve_roots(&resolved.roots);
+            let expected = resolved_roots
+                .iter()
+                .filter(|(_, root_path)| {
+                    !workers.iter().any(|worker| {
+                        !worker.is_sub_worker() && worker.has_root_path(Some(root_path))
+                    })
+                })
+                .map(|(uri, _)| uri.clone())
+                .collect::<Vec<_>>();
+
+            let current = workers
+                .iter()
+                .filter(|worker| worker.has_parent_path(parent_path))
+                .filter_map(WorkspaceWorker::get_root_path)
+                .collect::<Vec<_>>();
+            let expected_paths = Self::resolve_roots(&expected);
+
+            let roots_changed = stored_roots != resolved.roots;
+            let unchanged = !roots_changed
+                && current.len() == expected.len()
+                && current
+                    .iter()
+                    .all(|root| expected_paths.iter().any(|(_, expected)| expected == root));
+
+            if unchanged {
+                return sync;
+            }
+
+            (expected, roots_changed)
+        };
+
+        // remove the sub workers which are not expected anymore, either because the option does
+        // not resolve to them or because the client opened a workspace folder on their root
+        {
+            let expected_paths = Self::resolve_roots(&expected);
+            let mut workers = self.workers.write().await;
+            let mut index = 0;
+            while index < workers.len() {
+                let worker = &workers[index];
+                if worker.has_parent_path(parent_path)
+                    && !expected_paths
+                        .iter()
+                        .any(|(_, expected)| worker.has_root_path(Some(expected)))
+                {
+                    sync.removed.push(workers.remove(index));
+                } else {
+                    index += 1;
+                }
+            }
+        }
+
+        // create the sub workers which are new
+        let claimed_roots = self
+            .workers
+            .read()
+            .await
+            .iter()
+            .map(|worker| worker.get_root_uri().clone())
+            .collect::<Vec<_>>();
+        let (added, messages) = self
+            .start_sub_workers(
+                parent_uri,
+                &resolved.roots,
+                options,
+                diagnostic_mode,
+                &claimed_roots,
+            )
+            .await;
+        sync.client_messages.extend(messages);
+
+        for sub_worker in &added {
+            sync.added_roots.push(sub_worker.get_root_uri().clone());
+            if dynamic_watchers {
+                sync.registrations.extend(sub_worker.init_watchers().await);
+            }
+        }
+        self.add_workers(added).await;
+
+        // The build context of the workspace folder worker changed, and so did the one of every
+        // surviving sub worker whose nested working directories changed. Their options did not
+        // change, so their tool would otherwise keep the configs and ignore files of a directory
+        // which is now owned by another worker.
+        sync.rebuild_roots = self.prepare_rebuilds(parent_uri, &sync, parent_roots_changed).await;
+
+        if rebuild_now {
+            let (client_messages, unregistrations, registrations) =
+                self.rebuild_workers(&sync.rebuild_roots).await;
+            sync.client_messages.extend(client_messages);
+            sync.unregistrations.extend(unregistrations);
+            sync.registrations.extend(registrations);
+        }
+
+        sync
+    }
+
+    /// Store the new exclusions on the workers whose [`BuildContext`](crate::BuildContext)
+    /// changed after a reconciliation, and return their roots.
+    ///
+    /// The workspace folder worker is first, so a caller which rebuilds them in order has an up to
+    /// date folder worker before it lints the documents a removed sub worker orphaned.
+    async fn prepare_rebuilds(
+        &self,
+        parent_uri: &Uri,
+        sync: &SubWorkerSync,
+        parent_roots_changed: bool,
+    ) -> Vec<Uri> {
+        let workers = self.workers.read().await;
+
+        let parent_path = ResolvedPath::try_from(parent_uri).ok();
+        let parent_path = parent_path.as_ref().map(ResolvedPath::as_path);
+
+        let Some(parent) = workers
+            .iter()
+            .find(|worker| !worker.is_sub_worker() && worker.has_root_path(parent_path))
+        else {
+            return vec![];
+        };
+
+        let mut roots = vec![];
+        // the folder worker only changed when its own set of excluded roots changed
+        if parent_roots_changed {
+            roots.push(parent.get_root_uri().clone());
+        }
+
+        // The full resolved set, including the roots which a client workspace folder claimed: a
+        // working directory has to exclude everything below it, regardless of which worker
+        // serves it.
+        let resolved_roots = Self::resolve_roots(&parent.get_working_directories().await);
+        let added_paths = Self::resolve_roots(&sync.added_roots);
+
+        for worker in workers.iter() {
+            if !worker.has_parent_path(parent_path) {
+                continue;
+            }
+            // a worker which was just created already has the right context
+            if added_paths.iter().any(|(_, added)| worker.has_root_path(Some(added))) {
+                continue;
+            }
+            let Some(worker_path) = worker.get_root_path() else {
+                continue;
+            };
+
+            let excluded_roots = Self::excluded_roots_below(&resolved_roots, worker_path);
+            if worker.get_working_directories().await == excluded_roots {
+                continue;
+            }
+
+            worker.set_working_directories(excluded_roots, false).await;
+            roots.push(worker.get_root_uri().clone());
+        }
+
+        roots
+    }
+
+    /// Rebuild the tools of the workers rooted at `roots`, in order.
+    ///
+    /// Returns the messages for the client and the watcher registrations of the workers whose
+    /// patterns changed with the rebuild.
+    pub async fn rebuild_workers(
+        &self,
+        roots: &[Uri],
+    ) -> (Vec<ClientMessage>, Vec<Unregistration>, Vec<Registration>) {
+        let mut client_messages = vec![];
+        let mut unregistrations = vec![];
+        let mut registrations = vec![];
+
+        let workers = self.workers.read().await;
+        for (root, root_path) in Self::resolve_roots(roots) {
+            let Some(worker) = workers.iter().find(|worker| worker.has_root_path(Some(&root_path)))
+            else {
+                continue;
+            };
+
+            debug!("rebuilding the worker {}", root.as_str());
+            let (messages, unregistered, registered) = worker.rebuild_tool().await;
+            client_messages.extend(messages);
+            unregistrations.extend(unregistered);
+            registrations.extend(registered);
+        }
+
+        (client_messages, unregistrations, registrations)
+    }
+
+    /// Re-register the file system watchers of the given roots, without rebuilding their tools.
+    ///
+    /// Needed for a worker whose tool restarted on its own: the tool reported no watcher change,
+    /// but its patterns can depend on the excluded roots it was rebuilt with.
+    pub async fn refresh_worker_watchers(
+        &self,
+        roots: &[(Uri, Vec<Pattern>)],
+    ) -> (Vec<Unregistration>, Vec<Registration>) {
+        let mut unregistrations = vec![];
+        let mut registrations = vec![];
+
+        let workers = self.workers.read().await;
+        for (root, patterns_before) in roots {
+            let Ok(root_path) = ResolvedPath::try_from(root) else {
+                continue;
+            };
+            let Some(worker) =
+                workers.iter().find(|worker| worker.has_root_path(Some(root_path.as_path())))
+            else {
+                continue;
+            };
+
+            let (unregistered, registered) =
+                worker.refresh_watchers_if_changed(patterns_before).await;
+            unregistrations.extend(unregistered);
+            registrations.extend(registered);
+        }
+
+        (unregistrations, registrations)
+    }
+
+    /// Route every URI to the worker responsible for it, in a single pass.
+    ///
+    /// The result is indexed like `uris` and holds the index of the worker, or `None` when no
+    /// worker covers the URI. Handlers which need the owned documents of several workers route
+    /// once and group by index with [`Self::owned_uris`].
+    pub fn route_uris(workers: &[WorkspaceWorker], uris: &[Uri]) -> Vec<Option<usize>> {
+        uris.iter().map(|uri| Self::find_worker_index_for_uri(workers, uri)).collect()
+    }
+
+    /// The URIs which [`Self::route_uris`] assigned to `index`.
+    pub fn owned_uris(routes: &[Option<usize>], uris: &[Uri], index: usize) -> Vec<Uri> {
+        uris.iter()
+            .zip(routes)
+            .filter(|(_, route)| **route == Some(index))
+            .map(|(uri, _)| uri.clone())
+            .collect()
+    }
+
+    /// Every workspace folder worker whose root contains `uri`, with its options.
+    ///
+    /// A file can sit in several nested workspace folders and each of them may declare its own
+    /// `workingDirectories`, so a marker file has to reconcile all of them, not only the nearest.
+    pub async fn folder_workers_containing(&self, uri: &Uri) -> Vec<(Uri, serde_json::Value)> {
+        let workers = self.workers.read().await;
+        let Ok(resolved_path) = ResolvedPath::try_from(uri) else {
+            return vec![];
+        };
+        let file_path = resolved_path.as_path();
+
+        let mut folders = vec![];
+        for worker in workers.iter().filter(|worker| !worker.is_sub_worker()) {
+            if !worker.get_root_path().is_some_and(|root| file_path.starts_with(root)) {
+                continue;
+            }
+            folders.push((worker.get_root_uri().clone(), worker.get_options().await));
+        }
+
+        folders
+    }
+
+    /// Whether the event only matches a watcher pattern a workspace folder worker registered for
+    /// itself, the `**/package.json` of the `auto` detection.
+    ///
+    /// Such an event is not a tool configuration change, so it must not reach the tool of that
+    /// folder nor the tool of any of its sub workers.
+    ///
+    /// Every workspace folder above the file is asked, not only the nearest one: a `package.json`
+    /// inside a nested client folder is still the detection marker of the `auto` folder above it,
+    /// and the nested folder, which declares nothing, must not turn it into a tool event.
+    pub async fn is_detection_only_event(&self, uri: &Uri) -> bool {
+        let workers = self.workers.read().await;
+        let Ok(resolved_path) = ResolvedPath::try_from(uri) else {
+            return false;
+        };
+        let file_path = resolved_path.as_path();
+
+        let mut is_detection = false;
+        for worker in workers.iter().filter(|worker| !worker.is_sub_worker()) {
+            if !worker.get_root_path().is_some_and(|root| file_path.starts_with(root)) {
+                continue;
+            }
+            // a tool which watches the file itself always wins, the event is a real config change
+            if worker.matches_tool_pattern(uri).await {
+                return false;
+            }
+            is_detection |= worker.matches_detection_pattern(uri).await;
+        }
+
+        is_detection
+    }
+
     // ── Lookup helpers (associated functions) ─────────────────────────────────
 
     /// Return the index of the most specific workspace worker for a given URI,
@@ -216,26 +837,19 @@ impl WorkerManager {
     /// typescript-language-server.
     fn find_worker_index_for_uri(workers: &[WorkspaceWorker], uri: &Uri) -> Option<usize> {
         if uri.scheme().as_str() != "file" {
-            return if workers.is_empty() { None } else { Some(0) };
+            // these are in-memory files that don't have a file path
+            return (!workers.is_empty()).then_some(0);
         }
 
         let resolved_path = ResolvedPath::try_from(uri).ok()?;
-        let file_path = resolved_path.as_path();
 
-        workers
-            .iter()
-            .enumerate()
-            .filter_map(|(i, worker)| {
-                let resolved_path = ResolvedPath::try_from(worker.get_root_uri()).ok()?;
-                let root_path = resolved_path.as_path();
-                if file_path.starts_with(root_path) {
-                    Some((i, root_path.as_os_str().len()))
-                } else {
-                    None
-                }
-            })
-            .max_by_key(|(_, len)| *len)
-            .map(|(i, _)| i)
+        // the roots are resolved once, when the worker is created
+        find_most_specific_root(
+            workers.iter().enumerate().filter_map(|(index, worker)| {
+                worker.get_root_path().map(|root_path| (index, root_path))
+            }),
+            resolved_path.as_path(),
+        )
     }
 
     // SAFETY: call this method only when you are sure, that we are not in `DynamicWithWorkspaces` mode,
@@ -335,8 +949,20 @@ impl WorkerManager {
         }
 
         for folder in removed {
-            if let Some(idx) = workers.iter().position(|w| w.get_root_uri() == &folder.uri) {
-                workers_to_shutdown.push(workers.swap_remove(idx));
+            let folder_path = ResolvedPath::try_from(&folder.uri).ok();
+            let folder_path = folder_path.as_ref().map(ResolvedPath::as_path);
+
+            // removing a workspace folder also removes its `workingDirectories` sub workers
+            let mut index = 0;
+            while index < workers.len() {
+                let worker = &workers[index];
+                if worker.has_parent_path(folder_path)
+                    || (!worker.is_sub_worker() && worker.has_root_path(folder_path))
+                {
+                    workers_to_shutdown.push(workers.remove(index));
+                } else {
+                    index += 1;
+                }
             }
         }
 
@@ -480,6 +1106,82 @@ mod tests {
     #[cfg(target_os = "windows")]
     fn path_from_fixture(fixture: &str) -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures").join(fixture)
+    }
+
+    /// `initialized` starts the workspace folder workers while it holds the read guard of the
+    /// worker list, and a notification from the client can queue a writer at any moment. Tokio's
+    /// `RwLock` is write fair, so a second `read()` taken from inside the guard would never be
+    /// granted: starting a worker must not touch the list at all.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_starting_a_worker_under_the_read_guard_does_not_deadlock() {
+        let root: Uri = "file:///path/to/workspace".parse().unwrap();
+        let manager = Arc::new(WorkerManager::new(create_builder()));
+        manager
+            .start_manager(
+                vec![WorkspaceWorker::new(root.clone(), create_builder(), DiagnosticMode::None)],
+                DiagnosticMode::None,
+            )
+            .await;
+
+        let guard = manager.read_workspace_workers().await;
+
+        // a `didChangeWorkspaceFolders` landing right now queues a writer
+        let writing = Arc::clone(&manager);
+        let writer = tokio::spawn(async move {
+            writing
+                .add_workers(vec![WorkspaceWorker::new(
+                    "file:///path/to/other".parse().unwrap(),
+                    create_builder(),
+                    DiagnosticMode::None,
+                )])
+                .await;
+        });
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+
+        let started = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            manager.start_folder_worker(
+                &guard[0],
+                serde_json::json!({ "workingDirectories": ["packages/a"] }),
+                &DiagnosticMode::None,
+                std::slice::from_ref(&root),
+                std::slice::from_ref(&root),
+            ),
+        )
+        .await;
+        assert!(started.is_ok(), "starting a worker under the read guard deadlocked");
+
+        drop(guard);
+        writer.await.unwrap();
+    }
+
+    /// Semantics rule 7: the `**/package.json` of the `auto` detection is not a tool event. The
+    /// nearest workspace folder of the marker can be a nested client folder which declares
+    /// nothing, so every folder above the file decides, not only that one.
+    #[tokio::test]
+    async fn test_a_marker_inside_a_nested_folder_stays_a_detection_event() {
+        let root: Uri = "file:///path/to/workspace".parse().unwrap();
+        let nested: Uri = "file:///path/to/workspace/packages/a".parse().unwrap();
+
+        let folder = WorkspaceWorker::new(root.clone(), create_builder(), DiagnosticMode::None);
+        folder
+            .start_worker(serde_json::json!({ "workingDirectories": [{ "mode": "auto" }] }))
+            .await;
+        folder.set_working_directories(vec![], true).await;
+
+        let inner = WorkspaceWorker::new(nested, create_builder(), DiagnosticMode::None);
+        inner.start_worker(serde_json::json!({})).await;
+
+        let manager = WorkerManager::new(create_builder());
+        manager.start_manager(vec![folder, inner], DiagnosticMode::None).await;
+
+        let marker: Uri = "file:///path/to/workspace/packages/a/package.json".parse().unwrap();
+        assert!(manager.is_detection_only_event(&marker).await);
+
+        // a file a tool watches is a real configuration change, regardless of which folder
+        // watches it
+        let config: Uri = "file:///path/to/workspace/packages/a/tool.config".parse().unwrap();
+        assert!(!manager.is_detection_only_event(&config).await);
     }
 
     #[tokio::test]

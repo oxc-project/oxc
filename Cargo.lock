@@ -2231,11 +2231,15 @@ name = "oxc_language_server"
 version = "1.41.0"
 dependencies = [
  "cow-utils",
+ "fast-glob",
  "futures",
+ "ignore",
+ "oxc-schemars",
  "papaya",
  "rustc-hash",
  "serde",
  "serde_json",
+ "tempfile",
  "tokio",
  "tower-lsp-server",
  "tracing",
@@ -2305,6 +2309,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
+ "tempfile",
  "unicode-segmentation",
  "url",
 ]

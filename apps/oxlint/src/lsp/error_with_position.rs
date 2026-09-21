@@ -1,3 +1,4 @@
+use rustc_hash::FxHashSet;
 use std::borrow::Cow;
 
 use oxc_span::Span;
@@ -255,11 +256,16 @@ pub fn generate_inverted_diagnostics(
     inverted_diagnostics
 }
 
-/// Generate diagnostics for unused disable directives, with fixes to remove them.
+/// Build the reports for the directives of a file which turned out to be unused.
+///
+/// `rules_not_run` holds the rules whose pass never ran for this file, in every spelling a
+/// directive may use for them. A directive naming one of them cannot be reported as unused, so
+/// it is neither reported nor offered a delete quick-fix.
 pub fn create_unused_directives_report(
     directives: &DisableDirectives,
     severity: AllowWarnDeny,
     source_text: &str,
+    rules_not_run: Option<&FxHashSet<String>>,
 ) -> Vec<DiagnosticReport> {
     let mut reports = Vec::new();
     let fix_message = "remove unused disable directive";
@@ -271,7 +277,11 @@ pub fn create_unused_directives_report(
     };
 
     // Report unused disable comments
-    let unused_disable = directives.collect_unused_disable_comments();
+    let unused_disable = directives.collect_unused_disable_comments(|rule| {
+        let Some(rules_not_run) = rules_not_run else { return true };
+        // A bare directive covers the rules which did not run too.
+        rule.is_some_and(|rule| !rules_not_run.contains(rule))
+    });
     for unused_comment in unused_disable {
         let span = unused_comment.span;
         let fix_span = unused_comment.fix_span;
@@ -352,5 +362,74 @@ fn build_unused_disable_diagnostic_report(
                 FixedContentKind::UnusedDirective,
             )],
         }),
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+    use oxc_linter::{AllowWarnDeny, DisableDirectivesBuilder};
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+    use rustc_hash::FxHashSet;
+
+    use super::create_unused_directives_report;
+
+    const SOURCE: &str = "// eslint-disable-next-line typescript/no-floating-promises\ndebugger;\n";
+
+    /// Every spelling a directive may use for the rule, as
+    /// `TsGoLintState::type_aware_directive_names` records them.
+    fn rules_not_run() -> FxHashSet<String> {
+        [
+            "no-floating-promises",
+            "typescript/no-floating-promises",
+            "typescript-eslint/no-floating-promises",
+            "@typescript-eslint/no-floating-promises",
+        ]
+        .into_iter()
+        .map(ToString::to_string)
+        .collect()
+    }
+
+    fn report(rules_not_run: Option<&FxHashSet<String>>) -> Vec<super::DiagnosticReport> {
+        let allocator = Allocator::default();
+        let parsed = Parser::new(&allocator, SOURCE, SourceType::ts()).parse();
+        let semantic =
+            SemanticBuilder::new_linter().build(allocator.alloc(parsed.program)).semantic;
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+
+        create_unused_directives_report(
+            &directives,
+            AllowWarnDeny::Warn,
+            semantic.source_text(),
+            rules_not_run,
+        )
+    }
+
+    /// `tsgolint` never ran for this file, so its directive cannot be reported as unused.
+    /// Reporting it would offer the editor a quick-fix deleting a directive which is still
+    /// needed.
+    #[test]
+    fn a_directive_of_a_rule_which_never_ran_is_neither_reported_nor_offered_for_deletion() {
+        let reports = report(Some(&rules_not_run()));
+
+        assert!(reports.is_empty(), "{reports:?}");
+    }
+
+    /// The same directive, when the rule did run, is reported as usual and carries its fix.
+    #[test]
+    fn a_directive_of_a_rule_which_ran_is_still_reported_with_its_fix() {
+        let reports = report(None);
+
+        // The comment names one rule, so the whole comment is what is unused.
+        assert_eq!(reports.len(), 1, "{reports:?}");
+        assert!(
+            reports[0].diagnostic.message.contains("Unused eslint-disable"),
+            "{:?}",
+            reports[0].diagnostic.message
+        );
+        assert!(reports[0].code_action.is_some(), "the delete quick-fix should be offered");
     }
 }

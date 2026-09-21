@@ -18,16 +18,27 @@ mod tool_params;
 pub mod utils;
 mod worker;
 mod worker_manager;
+mod working_directories;
 
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::language_id::LanguageId;
 pub use crate::position::offset_to_position;
 pub use crate::tool::{
-    ClientMessage, DiagnosticResult, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
+    BuildContext, ClientMessage, DiagnosticResult, Tool, ToolBuildResult, ToolBuilder,
+    ToolRestartChanges,
 };
 pub use crate::tool_params::CodeActionParams;
+pub use crate::utils::{
+    ancestor_directories, ancestor_ignore_globs, find_root_for_uri, find_root_for_uri_in,
+    is_ignored_by_globs, matches_watcher_patterns, roots_are_equal,
+};
 pub use crate::worker::WorkspaceWorker;
 pub use crate::worker_manager::WorkerManager;
+pub use crate::working_directories::{
+    ResolvedWorkingDirectories, WORKING_DIRECTORIES_OPTION, WorkingDirectory,
+    WorkingDirectoryEntry, WorkingDirectoryMode, is_below_ignored_directory,
+    resolve_working_directories, sub_worker_options,
+};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
