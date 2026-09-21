@@ -926,10 +926,10 @@ impl ServerLinter {
             .collect();
 
         if let Some(severity) = match self.suppressed_violation_severity {
-            SuppressedViolationSeverity::Hint => Some(DiagnosticSeverity::HINT),
-            SuppressedViolationSeverity::Info => Some(DiagnosticSeverity::INFORMATION),
-            SuppressedViolationSeverity::Warn => Some(DiagnosticSeverity::WARNING),
-            SuppressedViolationSeverity::Error => Some(DiagnosticSeverity::ERROR),
+            SuppressedViolationSeverity::Hint => Some(DiagnosticSeverity::Hint),
+            SuppressedViolationSeverity::Info => Some(DiagnosticSeverity::Information),
+            SuppressedViolationSeverity::Warn => Some(DiagnosticSeverity::Warning),
+            SuppressedViolationSeverity::Error => Some(DiagnosticSeverity::Error),
             SuppressedViolationSeverity::Off => None,
         } {
             for message in suppressed {
