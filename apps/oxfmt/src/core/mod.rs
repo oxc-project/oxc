@@ -3,6 +3,7 @@ pub mod embed;
 mod format;
 pub mod options;
 pub mod oxfmtrc;
+pub mod plugins;
 mod support;
 pub mod utils;
 

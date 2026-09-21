@@ -131,6 +131,21 @@ file://<fixture>/config-no-sort-package-json/package.json
 --------------------"
 `;
 
+exports[`LSP formatting > config options > should apply config from config-plugins/test.tiny 1`] = `
+"--- URI -----------
+file://<fixture>/config-plugins/test.tiny
+--- BEFORE ---------
+one   two
+     three
+
+--- AFTER ----------
+one
+two
+three
+
+--------------------"
+`;
+
 exports[`LSP formatting > config options > should apply config from config-semi/test.ts 1`] = `
 "--- URI -----------
 file://<fixture>/config-semi/test.ts
