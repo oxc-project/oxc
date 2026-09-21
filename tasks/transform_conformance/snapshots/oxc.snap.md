@@ -116,9 +116,10 @@ rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
 
 * enum-surrogate-string-value/input.ts
 Missing ReferenceId: "E"
+Missing ReferenceId: "E"
 Symbol reference IDs mismatch for "E":
-after transform: SymbolId(5): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
-rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
+after transform: SymbolId(10): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9)]
 
 * enum-template-literal/input.ts
 Symbol reference IDs mismatch for "Size":
