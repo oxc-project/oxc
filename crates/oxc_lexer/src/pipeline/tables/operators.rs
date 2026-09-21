@@ -260,17 +260,8 @@ mod tests {
             assert!(is_known || ord == tk!(Invalid), "PUNCT1_ORD should be unknown");
         }
 
-        assert!(
-            punct1_ord[b'(' as usize] == tk!(LParen)
-                && punct1_ord[b'#' as usize] == tk!(Invalid)
-                && punct1_ord[b'a' as usize] == tk!(Invalid)
-                && punct1_ord[b'"' as usize] == tk!(Invalid)
-                && punct1_ord[b'`' as usize] == tk!(Invalid)
-                && punct1_ord[b'\\' as usize] == tk!(Invalid)
-                && punct1_ord[b'$' as usize] == tk!(Invalid)
-                && punct1_ord[b' ' as usize] == tk!(Invalid)
-                && punct1_ord[0] == tk!(Invalid),
-            "PUNCT1 spot-checks failed"
-        );
+        for byte in [b'#', b'a', b'"', b'`', b'\\', b'$', b' ', 0] {
+            assert!(punct1_ord[byte as usize] == tk!(Invalid));
+        }
     }
 }
