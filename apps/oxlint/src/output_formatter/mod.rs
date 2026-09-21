@@ -28,7 +28,7 @@ use oxc_diagnostics::reporter::DiagnosticReporter;
 
 use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, usage_rs::ValueEnum)]
 pub enum OutputFormat {
     Default,
     /// GitHub Check Annotation
@@ -40,6 +40,7 @@ pub enum OutputFormat {
     Agent,
     Checkstyle,
     Stylish,
+    #[usage(name = "junit")]
     JUnit,
     Sarif,
 }
@@ -61,6 +62,23 @@ impl FromStr for OutputFormat {
             "sarif" => Ok(Self::Sarif),
             _ => Err(format!("'{s}' is not a known format")),
         }
+    }
+}
+
+impl std::fmt::Display for OutputFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Default => "default",
+            Self::Github => "github",
+            Self::Gitlab => "gitlab",
+            Self::Json => "json",
+            Self::Unix => "unix",
+            Self::Agent => "agent",
+            Self::Checkstyle => "checkstyle",
+            Self::Stylish => "stylish",
+            Self::JUnit => "junit",
+            Self::Sarif => "sarif",
+        })
     }
 }
 
