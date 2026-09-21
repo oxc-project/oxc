@@ -58,7 +58,9 @@ impl<'a> PeepholeOptimizations {
         // Consequent is non-empty from here on.
 
         if let Some(alternate) = &if_stmt.alternate {
-            if matches!(&if_stmt.consequent, Statement::ExpressionStatement(_)) && matches!(alternate, Statement::ExpressionStatement(_)) {
+            if matches!(&if_stmt.consequent, Statement::ExpressionStatement(_))
+                && matches!(alternate, Statement::ExpressionStatement(_))
+            {
                 // `if (a) b(); else c();` => `a ? b() : c();`
                 ctx.replace_statement_with(stmt, |stmt, ctx| {
                     let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
