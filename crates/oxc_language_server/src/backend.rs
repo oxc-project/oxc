@@ -1,7 +1,7 @@
 use std::{borrow::Cow, sync::Arc};
 
 use futures::future::join_all;
-use rustc_hash::FxBuildHasher;
+use rustc_hash::FxHashSet;
 use serde_json::Value;
 use tokio::sync::{OnceCell, SetError};
 use tower_lsp_server::{
@@ -13,9 +13,10 @@ use tower_lsp_server::{
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
         DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
         DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
-        ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
-        TextDocumentContentChangeEvent, TextEdit, Uri, WorkspaceEdit,
+        ExecuteCommandParams, FileChangeType, FullDocumentDiagnosticReport, InitializeParams,
+        InitializeResult, InitializedParams, MessageType, Pattern, Registration,
+        RelatedFullDocumentDiagnosticReport, ServerInfo, TextDocumentContentChangeEvent, TextEdit,
+        Unregistration, Uri, WorkspaceEdit,
     },
 };
 use tracing::{debug, error, info, warn};
@@ -24,10 +25,49 @@ use crate::{
     ClientMessage, ConcurrentHashMap, LanguageId,
     capabilities::{Capabilities, DiagnosticMode, server_capabilities},
     file_system::LSPFileSystem,
+    file_system::ResolvedPath,
     options::WorkspaceOption,
+    utils::{find_root_for_uri, roots_are_equal},
     worker::WorkspaceWorker,
     worker_manager::WorkerManager,
+    working_directories::{
+        WORKING_DIRECTORIES_OPTION, is_below_ignored_directory, sub_worker_options,
+    },
 };
+
+/// Everything a worker reconciliation produced and the caller has to forward to the client.
+#[derive(Default)]
+struct WorkerChanges {
+    diagnostics: Vec<(Uri, Vec<Diagnostic>)>,
+    cleared_diagnostics: Vec<Uri>,
+    registrations: Vec<Registration>,
+    unregistrations: Vec<Unregistration>,
+    client_messages: Vec<ClientMessage>,
+    /// Whether an open document is now handled by a different worker, so the client has to ask for
+    /// its diagnostics again in pull mode.
+    needs_diagnostics_refresh: bool,
+    /// Roots whose excluded set changed, so their tool has to be rebuilt. Already rebuilt when the
+    /// caller requested the reconciliation to do it.
+    rebuild_roots: Vec<Uri>,
+    /// Roots of the sub workers which the reconciliation created.
+    added_roots: Vec<Uri>,
+    /// Roots whose documents changed owner and still have to be revalidated.
+    changed_roots: Vec<Uri>,
+}
+
+impl WorkerChanges {
+    fn extend(&mut self, other: Self) {
+        self.diagnostics.extend(other.diagnostics);
+        self.cleared_diagnostics.extend(other.cleared_diagnostics);
+        self.registrations.extend(other.registrations);
+        self.unregistrations.extend(other.unregistrations);
+        self.client_messages.extend(other.client_messages);
+        self.needs_diagnostics_refresh |= other.needs_diagnostics_refresh;
+        self.rebuild_roots.extend(other.rebuild_roots);
+        self.added_roots.extend(other.added_roots);
+        self.changed_roots.extend(other.changed_roots);
+    }
+}
 
 /// The Backend implements the LanguageServer trait to handle LSP requests and notifications.
 ///
@@ -122,7 +162,7 @@ impl LanguageServer for Backend {
         debug!("diagnostic model: {:?}", capabilities.diagnostic_mode);
 
         // client sent workspace folders
-        let workers = if let Some(workspace_folders) = params.workspace_folders {
+        let mut workers = if let Some(workspace_folders) = params.workspace_folders {
             let uris: Vec<&Uri> = workspace_folders.iter().map(|folder| &folder.uri).collect();
             WorkerManager::assert_workspaces_are_valid_paths(uris)?;
 
@@ -153,6 +193,12 @@ impl LanguageServer for Backend {
         if !capabilities.workspace_configuration || options.is_some() {
             let options = options.unwrap_or_default();
 
+            // a directory the client opened as its own workspace folder never gets a second,
+            // shadowing sub worker
+            let folder_roots =
+                workers.iter().map(|worker| worker.get_root_uri().clone()).collect::<Vec<_>>();
+            let mut claimed_roots = folder_roots.clone();
+            let mut sub_workers = vec![];
             for worker in &workers {
                 let option = options
                     .iter()
@@ -164,8 +210,24 @@ impl LanguageServer for Backend {
 
                 debug!("starting worker in initialize with options: {option:?}");
 
-                client_messages.extend(worker.start_worker(option).await);
+                let (workers, messages) = self
+                    .worker_manager
+                    .start_folder_worker(
+                        worker,
+                        option,
+                        &capabilities.diagnostic_mode,
+                        &claimed_roots,
+                        &folder_roots,
+                    )
+                    .await;
+                claimed_roots.extend(workers.iter().map(|w| w.get_root_uri().clone()));
+                sub_workers.extend(workers);
+                client_messages.extend(messages);
             }
+
+            // A `workingDirectories` sub worker is an ordinary worker. Appending them is enough,
+            // because a file URI is routed to the worker with the longest matching root path.
+            workers.extend(sub_workers);
         }
 
         client_messages.extend(
@@ -209,35 +271,76 @@ impl LanguageServer for Backend {
             return;
         };
 
-        let workspace_workers = &*self.worker_manager.read_workspace_workers().await;
-        let needed_configurations =
-            ConcurrentHashMap::with_capacity_and_hasher(workspace_workers.len(), FxBuildHasher);
-        let needed_configurations = needed_configurations.pin_owned();
-        for worker in workspace_workers {
-            if worker.needs_init_options().await {
-                needed_configurations.insert(worker.get_root_uri().clone(), worker);
+        // Collect the workspace folder workers which have not been started in `initialize`.
+        // The read lock must not be held while starting them, because that inserts the
+        // `workingDirectories` sub workers, which needs the write lock.
+        let needed_configurations = {
+            let workspace_workers = self.worker_manager.read_workspace_workers().await;
+            let mut uris = Vec::with_capacity(workspace_workers.len());
+            for worker in workspace_workers.iter() {
+                if worker.needs_init_options().await {
+                    uris.push(worker.get_root_uri().clone());
+                }
             }
-        }
+            uris
+        };
 
         if !needed_configurations.is_empty() {
             let configurations = if capabilities.workspace_configuration {
-                self.request_workspace_configuration(needed_configurations.keys().collect()).await
+                self.request_workspace_configuration(needed_configurations.iter().collect()).await
             } else {
                 // every worker should be initialized already in `initialize` request
                 vec![serde_json::Value::Null; needed_configurations.len()]
             };
 
+            let mut sub_workers = vec![];
+            {
+                let workspace_workers = self.worker_manager.read_workspace_workers().await;
+                // a directory the client opened as its own workspace folder never gets a second,
+                // shadowing sub worker
+                let mut claimed_roots = workspace_workers
+                    .iter()
+                    .map(|worker| worker.get_root_uri().clone())
+                    .collect::<Vec<_>>();
+                // the folders are read from the guard which is already held: `start_folder_worker`
+                // must not take the lock a second time
+                let folder_roots = workspace_workers
+                    .iter()
+                    .filter(|worker| !worker.is_sub_worker())
+                    .map(|worker| worker.get_root_uri().clone())
+                    .collect::<Vec<_>>();
+                for (index, root_uri) in needed_configurations.iter().enumerate() {
+                    let Some(worker) = workspace_workers.iter().find(|worker| {
+                        !worker.is_sub_worker() && worker.get_root_uri() == root_uri
+                    }) else {
+                        continue;
+                    };
+                    // get the configuration from the response and start the worker
+                    let configuration =
+                        configurations.get(index).unwrap_or(&serde_json::Value::Null);
+                    debug!("starting worker in initialize with options: {configuration:?}");
+
+                    let (workers, messages) = self
+                        .worker_manager
+                        .start_folder_worker(
+                            worker,
+                            configuration.clone(),
+                            &capabilities.diagnostic_mode,
+                            &claimed_roots,
+                            &folder_roots,
+                        )
+                        .await;
+                    claimed_roots.extend(workers.iter().map(|w| w.get_root_uri().clone()));
+                    sub_workers.extend(workers);
+                    client_messages.extend(messages);
+                }
+            }
+            self.worker_manager.add_workers(sub_workers).await;
+
             // All open-file URIs
             let known_uris = self.file_system.keys();
             // will only be filled when using push diagnostic model
             let mut new_diagnostics = Vec::new();
-
-            for (index, worker) in needed_configurations.values().enumerate() {
-                // get the configuration from the response and start the worker
-                let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
-                debug!("starting worker in initialize with options: {configuration:?}");
-                client_messages.extend(worker.start_worker(configuration.clone()).await);
-            }
 
             // run diagnostics for all known files in the workspace of the worker.
             // This is necessary because the worker was not started before.
@@ -263,9 +366,7 @@ impl LanguageServer for Backend {
 
             if !new_diagnostics.is_empty() {
                 self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
-            } else if capabilities.diagnostic_mode == DiagnosticMode::Pull
-                && !needed_configurations.is_empty()
-            {
+            } else if capabilities.diagnostic_mode == DiagnosticMode::Pull {
                 debug_assert!(
                     capabilities.refresh_diagnostics,
                     "pull mode requires refresh diagnostics capability"
@@ -282,7 +383,7 @@ impl LanguageServer for Backend {
 
         // init all file watchers
         if capabilities.dynamic_watchers {
-            for worker in workspace_workers {
+            for worker in self.worker_manager.read_workspace_workers().await.iter() {
                 registrations.extend(worker.init_watchers().await);
             }
 
@@ -330,11 +431,19 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeConfiguration>
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        let workers = self.worker_manager.read_workspace_workers().await;
+        let mut changes = WorkerChanges::default();
         let mut new_diagnostics = Vec::new();
-        let mut removing_registrations = vec![];
-        let mut adding_registrations = vec![];
-        let mut client_messages = vec![];
+
+        // `workingDirectories` sub workers are invisible to the client, only the workspace folders
+        // are addressed by a configuration change.
+        let folder_uris = {
+            let workers = self.worker_manager.read_workspace_workers().await;
+            workers
+                .iter()
+                .filter(|worker| !worker.is_sub_worker())
+                .map(|worker| worker.get_root_uri().clone())
+                .collect::<Vec<_>>()
+        };
 
         // when null, request configuration from client; otherwise, parse as per-workspace options or use as global configuration
         let options = if params.settings == Value::Null {
@@ -344,10 +453,10 @@ impl LanguageServer for Backend {
                 || {
                     // fallback to old configuration
                     // for all workers (default only one)
-                    let options = workers
+                    let options = folder_uris
                         .iter()
-                        .map(|worker| WorkspaceOption {
-                            workspace_uri: worker.get_root_uri().clone(),
+                        .map(|workspace_uri| WorkspaceOption {
+                            workspace_uri: workspace_uri.clone(),
                             options: params.settings.clone(),
                         })
                         .collect();
@@ -366,18 +475,14 @@ impl LanguageServer for Backend {
             .get()
             .is_some_and(|capabilities| capabilities.workspace_configuration)
         {
-            let configs = self
-                .request_workspace_configuration(
-                    workers.iter().map(WorkspaceWorker::get_root_uri).collect(),
-                )
-                .await;
+            let configs = self.request_workspace_configuration(folder_uris.iter().collect()).await;
 
             // Only create WorkspaceOption when the config is Some
             configs
                 .into_iter()
                 .enumerate()
                 .map(|(index, options)| WorkspaceOption {
-                    workspace_uri: workers[index].get_root_uri().clone(),
+                    workspace_uri: folder_uris[index].clone(),
                     options,
                 })
                 .collect::<Vec<_>>()
@@ -397,28 +502,191 @@ impl LanguageServer for Backend {
             None
         };
 
-        for option in resolved_options {
-            let Some(worker) =
-                workers.iter().find(|worker| worker.get_root_uri() == &option.workspace_uri)
-            else {
-                continue;
+        // First reconcile the `workingDirectories` sub workers of every workspace folder. This has
+        // to happen before the folder worker handles the option change, so its tool is rebuilt with
+        // the new set of excluded roots.
+        let mut auto_changed_folders = vec![];
+        let mut restarted_roots: Vec<Uri> = vec![];
+        // roots whose tool restarted without requesting new watchers, with the patterns they had
+        // before: when their excluded roots also changed, the patterns of the rebuilt tool are
+        // diffed against these and re-registered when they differ
+        let mut restarted_keeping_watchers: Vec<(Uri, Vec<Pattern>)> = vec![];
+        // the documents a worker already re-linted in this notification, per worker root
+        let mut relinted: Vec<(Uri, Vec<Uri>)> = vec![];
+        for option in &resolved_options {
+            // Resolving the option walks the file system, so it only runs when its value actually
+            // changed: an unrelated configuration change resolves to the very same roots. This is
+            // also what decides whether the validation warnings are repeated.
+            let option_changed = {
+                let workers = self.worker_manager.read_workspace_workers().await;
+                let previous = match workers.iter().find(|worker| {
+                    !worker.is_sub_worker()
+                        && roots_are_equal(worker.get_root_uri(), &option.workspace_uri)
+                }) {
+                    Some(worker) => Some(worker.get_options().await),
+                    None => None,
+                };
+
+                previous.is_none_or(|previous| {
+                    previous.get(WORKING_DIRECTORIES_OPTION)
+                        != option.options.get(WORKING_DIRECTORIES_OPTION)
+                })
             };
-
-            let result = worker
-                .did_change_configuration(option.options, &mut needs_diagnostics_refresh, fs)
-                .await;
-
-            if let Some(diagnostics) = result.diagnostics {
-                new_diagnostics.extend(diagnostics);
+            if !option_changed {
+                continue;
             }
 
-            removing_registrations.extend(result.removed_watchers);
-            adding_registrations.extend(result.new_watchers);
-            client_messages.extend(result.client_messages);
+            // The tools are not rebuilt here: the workers are about to handle the option change
+            // themselves, and a tool which restarts for it does not have to be built twice.
+            let (reconciled, auto_changed) = self
+                .reconcile_sub_workers(
+                    &option.workspace_uri,
+                    &option.options,
+                    &diagnostic_mode,
+                    true,
+                    false,
+                )
+                .await;
+            changes.extend(reconciled);
+
+            if auto_changed {
+                auto_changed_folders.push(option.workspace_uri.clone());
+            }
         }
 
-        if diagnostic_mode == DiagnosticMode::Push && !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
+        // Then hand the new options to the workspace folder worker and to its surviving sub
+        // workers. A sub worker never sees the `workingDirectories` option itself, so it can not
+        // spawn further working directories.
+        {
+            let workers = self.worker_manager.read_workspace_workers().await;
+            let open_uris = self.file_system.keys();
+            // route every open document once, the workers below group it by their own index
+            let routes = WorkerManager::route_uris(&workers, &open_uris);
+
+            for option in &resolved_options {
+                let sub_options = sub_worker_options(&option.options);
+
+                for (index, worker) in workers.iter().enumerate() {
+                    let worker_options = if worker
+                        .get_parent_uri()
+                        .is_some_and(|parent| roots_are_equal(parent, &option.workspace_uri))
+                    {
+                        sub_options.clone()
+                    } else if !worker.is_sub_worker()
+                        && roots_are_equal(worker.get_root_uri(), &option.workspace_uri)
+                    {
+                        option.options.clone()
+                    } else {
+                        continue;
+                    };
+
+                    // only revalidate the documents this worker is responsible for
+                    let owned_uris = WorkerManager::owned_uris(&routes, &open_uris, index);
+                    let patterns_before = worker.watcher_patterns().await;
+                    let result = worker
+                        .did_change_configuration(
+                            worker_options,
+                            &mut needs_diagnostics_refresh,
+                            fs,
+                            &owned_uris,
+                        )
+                        .await;
+
+                    if let Some(diagnostics) = result.diagnostics {
+                        // only the documents the worker actually published for: one which came
+                        // back clean still needs the diagnostics of its previous owner cleared
+                        relinted.push((
+                            worker.get_root_uri().clone(),
+                            diagnostics.iter().map(|(uri, _)| uri.clone()).collect(),
+                        ));
+                        new_diagnostics.extend(diagnostics);
+                    }
+
+                    let tool_changed_watchers =
+                        !result.new_watchers.is_empty() || !result.removed_watchers.is_empty();
+
+                    if result.tool_restarted {
+                        // the tool was rebuilt with the new context already
+                        restarted_roots.push(worker.get_root_uri().clone());
+                        if !tool_changed_watchers {
+                            restarted_keeping_watchers
+                                .push((worker.get_root_uri().clone(), patterns_before));
+                        }
+                    }
+                    changes.unregistrations.extend(result.removed_watchers);
+                    changes.registrations.extend(result.new_watchers);
+                    changes.client_messages.extend(result.client_messages);
+
+                    // The `auto` flag of this worker flipped, which adds or removes the
+                    // `**/package.json` watcher. The tool knows nothing about it, so force the
+                    // re-registration when it did not already request one.
+                    if auto_changed_folders
+                        .iter()
+                        .any(|folder| roots_are_equal(folder, worker.get_root_uri()))
+                        && !tool_changed_watchers
+                    {
+                        let (unregistrations, registrations) = worker.refresh_watchers().await;
+                        changes.unregistrations.extend(unregistrations);
+                        changes.registrations.extend(registrations);
+                    }
+                }
+            }
+        }
+
+        // A worker whose excluded roots changed has to be rebuilt, unless its tool restarted for
+        // the option change anyway: that restart already used the new build context.
+        let rebuild_roots = changes
+            .rebuild_roots
+            .iter()
+            .filter(|root| {
+                !restarted_roots.iter().any(|restarted| roots_are_equal(restarted, root))
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+        if !rebuild_roots.is_empty() {
+            let (client_messages, unregistrations, registrations) =
+                self.worker_manager.rebuild_workers(&rebuild_roots).await;
+            changes.client_messages.extend(client_messages);
+            changes.unregistrations.extend(unregistrations);
+            changes.registrations.extend(registrations);
+        }
+
+        // A tool which restarted for the option change was rebuilt with the new excluded roots,
+        // but it reported no watcher change: its patterns are derived from those roots, so they
+        // are re-registered here. `rebuild_workers` does the same diff for the others.
+        let refresh_roots = restarted_keeping_watchers
+            .into_iter()
+            .filter(|(root, _)| {
+                changes.rebuild_roots.iter().any(|changed| roots_are_equal(changed, root))
+            })
+            .collect::<Vec<_>>();
+        if !refresh_roots.is_empty() {
+            let (unregistrations, registrations) =
+                self.worker_manager.refresh_worker_watchers(&refresh_roots).await;
+            changes.unregistrations.extend(unregistrations);
+            changes.registrations.extend(registrations);
+        }
+
+        // Only now, with every tool rebuilt, are the documents which changed owner revalidated.
+        // A document its new owner already re-linted above is skipped, unless that owner was
+        // rebuilt afterwards and its diagnostics are stale.
+        let already_linted = relinted
+            .into_iter()
+            .filter(|(root, _)| !rebuild_roots.iter().any(|rebuilt| roots_are_equal(rebuilt, root)))
+            .flat_map(|(_, uris)| uris)
+            .collect::<FxHashSet<_>>();
+        self.revalidate_changed_owners(&mut changes, &diagnostic_mode, &already_linted).await;
+
+        new_diagnostics.extend(std::mem::take(&mut changes.diagnostics));
+        needs_diagnostics_refresh |= changes.needs_diagnostics_refresh;
+
+        if diagnostic_mode == DiagnosticMode::Push {
+            if !changes.cleared_diagnostics.is_empty() {
+                self.clear_diagnostics(std::mem::take(&mut changes.cleared_diagnostics)).await;
+            }
+            if !new_diagnostics.is_empty() {
+                self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
+            }
         }
 
         if diagnostic_mode == DiagnosticMode::Pull && needs_diagnostics_refresh {
@@ -426,18 +694,22 @@ impl LanguageServer for Backend {
             self.spawn_diagnostic_refresh();
         }
 
-        if !removing_registrations.is_empty()
-            && let Err(err) = self.client.unregister_capability(removing_registrations).await
+        if !changes.unregistrations.is_empty()
+            && let Err(err) = self
+                .client
+                .unregister_capability(std::mem::take(&mut changes.unregistrations))
+                .await
         {
             warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
         }
-        if !adding_registrations.is_empty()
-            && let Err(err) = self.client.register_capability(adding_registrations).await
+        if !changes.registrations.is_empty()
+            && let Err(err) =
+                self.client.register_capability(std::mem::take(&mut changes.registrations)).await
         {
             warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
         }
 
-        self.send_client_messages(client_messages).await;
+        self.send_client_messages(changes.client_messages).await;
     }
 
     /// This notification is sent when a configuration file of a tool changes (example: `.oxlintrc.json`).
@@ -448,41 +720,195 @@ impl LanguageServer for Backend {
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
 
+        let mut changes = WorkerChanges::default();
         let mut new_diagnostics = Vec::new();
-        let mut removing_registrations = vec![];
-        let mut adding_registrations = vec![];
-        let mut client_messages = vec![];
 
         let mut needs_diagnostics_refresh = false;
         let diagnostic_mode =
             self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
+        let dynamic_watchers =
+            self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers);
         let fs = if diagnostic_mode == DiagnosticMode::Push {
             Some(self.file_system.as_ref())
         } else {
             None
         };
 
+        // Creating or deleting a watched file (a tool config file, or a `package.json` when
+        // `workingDirectories` is in `auto` mode) can add or remove a working directory. Collect
+        // the workspace folders to reconcile first, so a notification carrying several events for
+        // the same folder only reconciles it once.
+        let mut folders_to_reconcile: Vec<(Uri, serde_json::Value)> = vec![];
+        // the events which reconcile a workspace folder: only they are already accounted for by
+        // the rebuild, every other event of the same notification still reaches every worker
+        let mut reconciling_uris: Vec<Uri> = vec![];
         for file_event in &params.changes {
-            // We do not expect multiple changes from the same workspace folder.
-            // If we should consider it, we need to map the events to the workers first,
-            // to only restart the internal linter / diagnostics for once.
-            // A change can affect multiple workspaces if the file is in a shared location, for example a config file in the home directory.
-            for worker in self.worker_manager.read_workspace_workers().await.iter() {
-                let result = worker
-                    .did_change_watched_files(file_event, &mut needs_diagnostics_refresh, fs)
-                    .await;
+            // Only a created or deleted file can add or remove a working directory, and only a
+            // file the workspace folder actually watches (a `package.json` of the `auto` mode, or
+            // one of its configuration files) can be that file. Resolving the option walks the
+            // file system, so everything else must not reach it.
+            if !matches!(file_event.typ, FileChangeType::CREATED | FileChangeType::DELETED) {
+                continue;
+            }
+            // Only a `package.json` or a configuration file of the tool can change the result, and
+            // that is decided by the file *names*, not by the watcher patterns: a setup with an
+            // explicit `configPath` watches one file but still gains a working directory when a
+            // config appears somewhere else.
+            if !self.worker_manager.is_project_root_marker(&file_event.uri) {
+                continue;
+            }
+            let Ok(file_path) = ResolvedPath::try_from(&file_event.uri) else {
+                continue;
+            };
 
-                if let Some(diagnostics) = result.diagnostics {
-                    new_diagnostics.extend(diagnostics);
+            // A file can sit in several nested workspace folders, and each of them may declare its
+            // own `workingDirectories`: the marker reconciles every one of them, not only the
+            // nearest.
+            for (parent_uri, options) in
+                self.worker_manager.folder_workers_containing(&file_event.uri).await
+            {
+                if options.get(WORKING_DIRECTORIES_OPTION).is_none_or(serde_json::Value::is_null) {
+                    continue;
                 }
-                removing_registrations.extend(result.removed_watchers);
-                adding_registrations.extend(result.new_watchers);
-                client_messages.extend(result.client_messages);
+                if folders_to_reconcile.iter().any(|(uri, _)| roots_are_equal(uri, &parent_uri)) {
+                    if !reconciling_uris.contains(&file_event.uri) {
+                        reconciling_uris.push(file_event.uri.clone());
+                    }
+                    continue;
+                }
+                // `**/package.json` also matches inside `node_modules`, which the LSP glob syntax
+                // can not exclude, so those events are dropped here, relative to the folder.
+                let Ok(parent_path) = ResolvedPath::try_from(&parent_uri) else {
+                    continue;
+                };
+                if is_below_ignored_directory(parent_path.as_path(), file_path.as_path()) {
+                    continue;
+                }
+
+                if !reconciling_uris.contains(&file_event.uri) {
+                    reconciling_uris.push(file_event.uri.clone());
+                }
+                folders_to_reconcile.push((parent_uri, options));
             }
         }
 
-        if diagnostic_mode == DiagnosticMode::Push && !new_diagnostics.is_empty() {
-            self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
+        // This has to happen before the events are handed to the workers, so a workspace folder
+        // worker is rebuilt with the new set of excluded roots. The option value did not change,
+        // so its validation warnings are not repeated.
+        for (parent_uri, options) in folders_to_reconcile {
+            // the option value did not change here, so the `auto` flag can not flip and the
+            // watcher patterns of the worker stay the same
+            let (reconciled, _auto_changed) = self
+                .reconcile_sub_workers(&parent_uri, &options, &diagnostic_mode, false, true)
+                .await;
+            changes.extend(reconciled);
+        }
+
+        // A worker which the reconciliation just built or rebuilt already read the file which
+        // triggered it, it must not be built a second time for that event. The other events of
+        // the same notification are unrelated to the rebuild and still reach it.
+        let mut rebuilt_roots = std::mem::take(&mut changes.rebuild_roots);
+        rebuilt_roots.extend(std::mem::take(&mut changes.added_roots));
+
+        let open_uris = self.file_system.keys();
+        // the documents which were linted in this notification, so the revalidation of the
+        // rebuilt workers below does not lint them a second time
+        let mut already_linted = FxHashSet::default();
+
+        for file_event in &params.changes {
+            // A `package.json` is watched for the `auto` detection only. It is not a tool
+            // configuration file, so it must not reach the tool of the workspace folder, nor the
+            // tool of any of its sub workers.
+            if self.worker_manager.is_detection_only_event(&file_event.uri).await {
+                continue;
+            }
+
+            // We do not expect multiple changes from the same workspace folder.
+            // If we should consider it, we need to map the events to the workers first,
+            // to only restart the internal linter / diagnostics for once.
+            //
+            // Events below `node_modules` or `.git` are noise: `**/package.json` matches thousands
+            // of them. They only reach a worker whose tool explicitly watches that exact file, for
+            // example a config it extends from a dependency, and are never broadcast.
+            //
+            // Only the workers the change can affect see it: the ones whose root contains the
+            // file, the ones rooted below the directory holding it (a config there governs them,
+            // which is how a `workingDirectories` sub worker resolves its own config), and the
+            // ones which registered it as an absolute watcher pattern, which is how a tool
+            // watches a config file it extends from outside its root.
+            //
+            // A change which affects no worker at all can still be a config file shared by every
+            // workspace, for example one in the home directory, so it is handed to all of them.
+            let workers = self.worker_manager.read_workspace_workers().await;
+            let mut targets = vec![];
+            for (index, worker) in workers.iter().enumerate() {
+                if worker.watches_uri(&file_event.uri).await {
+                    targets.push(index);
+                }
+            }
+            if targets.is_empty() {
+                // Events below `node_modules` or `.git` are noise: `**/package.json` matches
+                // thousands of them. They only reach a worker whose tool explicitly watches that
+                // exact file, and are never broadcast.
+                if Self::is_ignored_below_any(&workers, &file_event.uri) {
+                    continue;
+                }
+                targets = (0..workers.len()).collect();
+            }
+
+            // A worker the reconciliation just (re)built read the new state already, but only
+            // for the event which triggered that reconciliation. This is applied after the
+            // fallback above, so skipping the only interested worker does not turn the event into
+            // a broadcast.
+            if reconciling_uris.contains(&file_event.uri) {
+                targets.retain(|index| {
+                    !rebuilt_roots
+                        .iter()
+                        .any(|root| roots_are_equal(root, workers[*index].get_root_uri()))
+                });
+            }
+
+            // route every open document once, the workers below group it by their own index
+            let routes = WorkerManager::route_uris(&workers, &open_uris);
+
+            for index in targets {
+                let worker = &workers[index];
+                // only revalidate the documents this worker is responsible for
+                let owned_uris = WorkerManager::owned_uris(&routes, &open_uris, index);
+                let result = worker
+                    .did_change_watched_files(
+                        file_event,
+                        &mut needs_diagnostics_refresh,
+                        fs,
+                        &owned_uris,
+                    )
+                    .await;
+
+                if let Some(diagnostics) = result.diagnostics {
+                    // only the documents the worker actually published for, see above
+                    already_linted.extend(diagnostics.iter().map(|(uri, _)| uri.clone()));
+                    new_diagnostics.extend(diagnostics);
+                }
+                changes.unregistrations.extend(result.removed_watchers);
+                changes.registrations.extend(result.new_watchers);
+                changes.client_messages.extend(result.client_messages);
+            }
+        }
+
+        // The documents of a worker the reconciliation rebuilt, and the ones which changed owner,
+        // are linted by their owner now, unless an event of this notification linted them already.
+        self.revalidate_changed_owners(&mut changes, &diagnostic_mode, &already_linted).await;
+
+        new_diagnostics.extend(std::mem::take(&mut changes.diagnostics));
+        needs_diagnostics_refresh |= changes.needs_diagnostics_refresh;
+
+        if diagnostic_mode == DiagnosticMode::Push {
+            if !changes.cleared_diagnostics.is_empty() {
+                self.clear_diagnostics(std::mem::take(&mut changes.cleared_diagnostics)).await;
+            }
+            if !new_diagnostics.is_empty() {
+                self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
+            }
         }
 
         if diagnostic_mode == DiagnosticMode::Pull && needs_diagnostics_refresh {
@@ -490,21 +916,27 @@ impl LanguageServer for Backend {
             self.spawn_diagnostic_refresh();
         }
 
-        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
-            if !removing_registrations.is_empty()
-                && let Err(err) = self.client.unregister_capability(removing_registrations).await
+        if dynamic_watchers {
+            if !changes.unregistrations.is_empty()
+                && let Err(err) = self
+                    .client
+                    .unregister_capability(std::mem::take(&mut changes.unregistrations))
+                    .await
             {
                 warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
             }
 
-            if !adding_registrations.is_empty()
-                && let Err(err) = self.client.register_capability(adding_registrations).await
+            if !changes.registrations.is_empty()
+                && let Err(err) = self
+                    .client
+                    .register_capability(std::mem::take(&mut changes.registrations))
+                    .await
             {
                 warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
             }
         }
 
-        self.send_client_messages(client_messages).await;
+        self.send_client_messages(changes.client_messages).await;
     }
 
     /// The server will start new [WorkspaceWorker]s for added workspace folders
@@ -520,6 +952,13 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeWorkspaceFolders>
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
         let capabilities = self.capabilities.get();
+        let changed_folder_paths = params
+            .event
+            .added
+            .iter()
+            .chain(params.event.removed.iter())
+            .map(|folder| folder.uri.clone())
+            .collect::<Vec<_>>();
         let diagnostic_mode = capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
 
         // === Phase 1: Update worker state (brief write lock, no async I/O) ===
@@ -530,7 +969,7 @@ impl LanguageServer for Backend {
             .await;
 
         // === Phase 2: Shut down removed workers (no lock held) ===
-        let mut cleared_diagnostics = vec![];
+        let mut cleared_diagnostics: Vec<Uri> = vec![];
         let mut removed_registrations = vec![];
         let mut client_messages = vec![];
         for worker in workers_to_shutdown {
@@ -551,38 +990,137 @@ impl LanguageServer for Backend {
 
         let mut new_workers = vec![];
         let mut added_registrations = vec![];
+        // a directory the client opened as its own workspace folder never gets a second,
+        // shadowing sub worker
+        let mut claimed_roots = self
+            .worker_manager
+            .read_workspace_workers()
+            .await
+            .iter()
+            .map(|worker| worker.get_root_uri().clone())
+            .collect::<Vec<_>>();
+        // every workspace folder root, the ones this notification adds included
+        let mut folder_roots = self.worker_manager.folder_roots().await;
+        folder_roots.extend(params.event.added.iter().map(|folder| folder.uri.clone()));
+        claimed_roots.extend(params.event.added.iter().map(|folder| folder.uri.clone()));
+
         for (index, folder) in params.event.added.into_iter().enumerate() {
             let worker = self.worker_manager.create_worker(folder.uri, diagnostic_mode.clone());
             let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
 
-            client_messages.extend(worker.start_worker(options.clone()).await);
+            // starting the worker also creates one sub worker per `workingDirectories` entry
+            let (sub_workers, messages) = self
+                .worker_manager
+                .start_folder_worker(
+                    &worker,
+                    options.clone(),
+                    &diagnostic_mode,
+                    &claimed_roots,
+                    &folder_roots,
+                )
+                .await;
+            claimed_roots.extend(sub_workers.iter().map(|w| w.get_root_uri().clone()));
+            client_messages.extend(messages);
+
             added_registrations.extend(worker.init_watchers().await);
             new_workers.push(worker);
+
+            for sub_worker in sub_workers {
+                added_registrations.extend(sub_worker.init_watchers().await);
+                new_workers.push(sub_worker);
+            }
         }
 
         // === Phase 4: Insert new workers (brief write lock, no async I/O) ===
         self.worker_manager.add_workers(new_workers).await;
 
-        // === Phase 5: Clear diagnostics and update client watchers (no lock held) ===
-        if diagnostic_mode == DiagnosticMode::Push && !cleared_diagnostics.is_empty() {
-            self.clear_diagnostics(cleared_diagnostics).await;
+        // === Phase 5: Reconcile the `workingDirectories` sub workers (no lock held) ===
+        // A workspace folder opened on a root which a sub worker served replaces it, and a folder
+        // which was removed hands its root back to a sub worker. The option value did not change,
+        // so its validation warnings are not repeated.
+        // Only a folder which contains, or sits inside, one of the folders which were added or
+        // removed can have gained or lost a working directory.
+        let changed_paths = changed_folder_paths
+            .iter()
+            .filter_map(|uri| ResolvedPath::try_from(uri).ok())
+            .collect::<Vec<_>>();
+
+        let mut new_diagnostics = vec![];
+        let mut needs_diagnostics_refresh = false;
+        let mut reconcile_changes = WorkerChanges::default();
+        for (parent_uri, options) in self.folders_with_working_directories().await {
+            let Ok(parent_path) = ResolvedPath::try_from(&parent_uri) else {
+                continue;
+            };
+            let related = changed_paths.iter().any(|changed| {
+                let (changed, parent) = (changed.as_path(), parent_path.as_path());
+                changed.starts_with(parent) || parent.starts_with(changed)
+            });
+            if !related {
+                continue;
+            }
+
+            let (reconciled, _auto_changed) = self
+                .reconcile_sub_workers(&parent_uri, &options, &diagnostic_mode, false, true)
+                .await;
+
+            reconcile_changes.extend(reconciled);
+        }
+
+        // The documents of the workers a removed workspace folder shut down are handed over with
+        // the ones of the reconciliation, so a document a new owner republishes for below is not
+        // cleared first: that would publish the same document twice and make the editor flicker.
+        reconcile_changes.cleared_diagnostics.extend(std::mem::take(&mut cleared_diagnostics));
+
+        // the documents which changed owner, and the ones of the rebuilt workers, are linted by
+        // their owner now that every tool is up to date
+        self.revalidate_changed_owners(
+            &mut reconcile_changes,
+            &diagnostic_mode,
+            &FxHashSet::default(),
+        )
+        .await;
+
+        new_diagnostics.extend(reconcile_changes.diagnostics);
+        cleared_diagnostics.extend(reconcile_changes.cleared_diagnostics);
+        added_registrations.extend(reconcile_changes.registrations);
+        removed_registrations.extend(reconcile_changes.unregistrations);
+        client_messages.extend(reconcile_changes.client_messages);
+        needs_diagnostics_refresh |= reconcile_changes.needs_diagnostics_refresh;
+
+        // === Phase 6: Clear diagnostics and update client watchers (no lock held) ===
+        if diagnostic_mode == DiagnosticMode::Push {
+            if !cleared_diagnostics.is_empty() {
+                self.clear_diagnostics(cleared_diagnostics).await;
+            }
+            if !new_diagnostics.is_empty() {
+                self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
+            }
+        }
+
+        if diagnostic_mode == DiagnosticMode::Pull && needs_diagnostics_refresh {
+            // In pull diagnostic model, we ask the client to refresh diagnostics
+            self.spawn_diagnostic_refresh();
         }
 
         if capabilities.is_some_and(|c| c.dynamic_watchers) {
-            if !added_registrations.is_empty()
-                && let Err(err) = self.client.register_capability(added_registrations).await
-            {
-                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
-            }
-
+            // Unregister first: a watcher id is derived from the root, and a root which changes
+            // owner (a sub worker replaced by a workspace folder worker, or the other way around)
+            // produces an unregistration and a registration for the very same id.
             if !removed_registrations.is_empty()
                 && let Err(err) = self.client.unregister_capability(removed_registrations).await
             {
                 warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
             }
+
+            if !added_registrations.is_empty()
+                && let Err(err) = self.client.register_capability(added_registrations).await
+            {
+                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+            }
         }
 
-        // === Phase 6: Show messages to the client ===
+        // === Phase 7: Show messages to the client ===
         self.send_client_messages(client_messages).await;
     }
 
@@ -1029,6 +1567,161 @@ impl Backend {
             self.client.publish_diagnostics(uri, diagnostics, version)
         }))
         .await;
+    }
+
+    /// Whether `uri` is below a `node_modules` or `.git` directory of one of the worker roots.
+    fn is_ignored_below_any(workers: &[WorkspaceWorker], uri: &Uri) -> bool {
+        let Ok(file) = ResolvedPath::try_from(uri) else {
+            return false;
+        };
+        let file_path = file.as_path();
+
+        workers.iter().any(|worker| {
+            worker
+                .get_root_path()
+                .is_some_and(|root_path| is_below_ignored_directory(root_path, file_path))
+        })
+    }
+
+    /// The workspace folder workers which declare `workingDirectories`, with their options.
+    async fn folders_with_working_directories(&self) -> Vec<(Uri, serde_json::Value)> {
+        let workers = self.worker_manager.read_workspace_workers().await;
+        let mut folders = vec![];
+
+        for worker in workers.iter().filter(|worker| !worker.is_sub_worker()) {
+            let options = worker.get_options().await;
+            if options.get(WORKING_DIRECTORIES_OPTION).is_none_or(serde_json::Value::is_null) {
+                continue;
+            }
+            folders.push((worker.get_root_uri().clone(), options));
+        }
+
+        folders
+    }
+
+    /// Recompute the `workingDirectories` of the workspace folder worker `parent_uri` and
+    /// reconcile its sub workers.
+    ///
+    /// Shuts down the sub workers which disappeared. The tools whose build context changed were
+    /// already rebuilt by the manager, so the open documents whose responsible worker changed can
+    /// be revalidated right away: the ones a new sub worker took over, and the ones orphaned by a
+    /// removed sub worker.
+    ///
+    /// Returns everything the caller has to forward to the client, and whether the `auto` flag of
+    /// the workspace folder worker flipped.
+    async fn reconcile_sub_workers(
+        &self,
+        parent_uri: &Uri,
+        options: &serde_json::Value,
+        diagnostic_mode: &DiagnosticMode,
+        report_warnings: bool,
+        rebuild_now: bool,
+    ) -> (WorkerChanges, bool) {
+        let dynamic_watchers =
+            self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers);
+        let sync = self
+            .worker_manager
+            .sync_sub_workers(
+                parent_uri,
+                options,
+                diagnostic_mode,
+                dynamic_watchers,
+                report_warnings,
+                rebuild_now,
+            )
+            .await;
+
+        let mut changes = WorkerChanges {
+            registrations: sync.registrations,
+            unregistrations: sync.unregistrations,
+            client_messages: sync.client_messages,
+            rebuild_roots: sync.rebuild_roots,
+            added_roots: sync.added_roots.clone(),
+            ..WorkerChanges::default()
+        };
+
+        let mut changed_roots = sync.added_roots;
+        for worker in sync.removed {
+            changed_roots.push(worker.get_root_uri().clone());
+            let (uris, unregistrations) = worker.shutdown().await;
+            changes.cleared_diagnostics.extend(uris);
+            changes.unregistrations.extend(unregistrations);
+        }
+
+        // A worker the reconciliation rebuilt reads other configuration files now, so its open
+        // documents have to be linted again exactly like the ones which changed owner. The caller
+        // revalidates, once, when it knows which documents it linted itself: a rebuild and an
+        // event of the same notification must not lint the same document twice.
+        changed_roots.extend(changes.rebuild_roots.iter().cloned());
+
+        changes.changed_roots = changed_roots;
+
+        (changes, sync.auto_changed)
+    }
+
+    /// Revalidate the open documents whose responsible worker changed.
+    ///
+    /// Without this a document keeps the diagnostics of its previous owner. The new owner
+    /// publishes for it, so its previous diagnostics are not cleared first: that would publish the
+    /// same document twice and make the editor flicker.
+    ///
+    /// `already_linted` holds the documents their new owner linted earlier in the same
+    /// notification with an up to date tool: linting them again would only publish the very same
+    /// diagnostics twice.
+    async fn revalidate_changed_owners(
+        &self,
+        changes: &mut WorkerChanges,
+        diagnostic_mode: &DiagnosticMode,
+        already_linted: &FxHashSet<Uri>,
+    ) {
+        let changed_roots = std::mem::take(&mut changes.changed_roots);
+        if changed_roots.is_empty() {
+            return;
+        }
+
+        let affected = self
+            .file_system
+            .keys()
+            .into_iter()
+            .filter(|uri| {
+                uri.scheme().as_str() == "file" && find_root_for_uri(&changed_roots, uri).is_some()
+            })
+            .collect::<Vec<_>>();
+
+        // in pull mode the client has to ask for their diagnostics again
+        changes.needs_diagnostics_refresh |= !affected.is_empty();
+
+        if *diagnostic_mode != DiagnosticMode::Push {
+            return;
+        }
+
+        let mut revalidated = FxHashSet::default();
+        for uri in affected {
+            if already_linted.contains(&uri) {
+                // its new owner published for it already
+                revalidated.insert(uri);
+                continue;
+            }
+            let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
+                continue;
+            };
+            match worker.run_diagnostic(self.file_system.get_document(&uri)).await {
+                Err(err) => {
+                    error!("running diagnostics for {} failed: {err}", uri.as_str());
+                    changes
+                        .client_messages
+                        .push(ClientMessage { r#type: MessageType::ERROR, message: err });
+                }
+                Ok(diagnostics) => {
+                    for (uri, _) in &diagnostics {
+                        revalidated.insert(uri.clone());
+                    }
+                    changes.diagnostics.extend(diagnostics);
+                }
+            }
+        }
+
+        changes.cleared_diagnostics.retain(|uri| !revalidated.contains(uri));
     }
 
     /// Send multiple messages to the client, if any.

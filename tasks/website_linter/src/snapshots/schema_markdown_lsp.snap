@@ -124,7 +124,8 @@ type: `boolean`
 
 
 Whether to enable/disable type-aware linting.
-It will override the root config's `typeAware` option if set.
+If set, it applies to every file and overrides the `typeAware` option of every config.
+If unset, each file follows the `typeAware` option of the config which governs it.
 
 
 ## unusedDisableDirectives
@@ -133,3 +134,60 @@ type: `"allow" | "warn" | "deny"`
 
 
 How to handle unused disable directives. By default, they are allowed and ignored.
+If unset, the `reportUnusedDisableDirectives` option of the config which governs each file
+is used.
+
+
+## workingDirectories
+
+type: `array`
+
+
+Additional project roots below the workspace folder, each linted as if it were its own
+workspace folder (like `eslint.workingDirectories`). Strings are paths or globs relative to
+the workspace folder; `[{ "mode": "auto" }]` detects directories containing both a
+`package.json` and an oxlint config file. Handled by the language server, not by the tool.
+
+A directory listed explicitly is a working directory even when it is gitignored; the
+`auto` detection follows the `.gitignore` of the workspace folder instead.
+
+A working directory does not inherit the configuration of its workspace folder. Its config
+file becomes the root config instead of a nested config, and a working directory without a
+config file resolves one the same way opening that directory as a workspace folder would.
+
+
+### workingDirectories[n]
+
+type: `object | string`
+
+
+A single `workingDirectories` entry.
+
+
+#### workingDirectories[n].!cwd
+
+type: `boolean`
+
+
+ESLint's `!cwd`, which asks the client not to change the working directory of the linter
+process. The server gives every working directory its own worker instead, so there is no
+process working directory to keep, and the flag is ignored.
+
+
+#### workingDirectories[n].directory
+
+type: `string`
+
+
+A path or a glob, relative to the workspace folder.
+
+`pattern` is accepted as an alias, because that is the name some clients use for the same
+thing in their own settings.
+
+
+#### workingDirectories[n].mode
+
+type: `"auto"`
+
+
+When set to `auto`, the working directories are detected instead of being listed.

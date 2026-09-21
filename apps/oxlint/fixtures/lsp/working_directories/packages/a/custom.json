@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "no-empty": "error",
+    "no-debugger": "off"
+  }
+}

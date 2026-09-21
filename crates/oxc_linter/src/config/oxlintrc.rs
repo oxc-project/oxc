@@ -30,6 +30,11 @@ pub struct OxlintOptions {
     ///
     /// Equivalent to passing `--type-aware` on the CLI.
     ///
+    /// Resolved from the config which governs each file, so a nested config may enable
+    /// type-aware linting for its own directory. It is *not* inherited from the root config:
+    /// share it with `extends`, which a child config can still override. The `--type-aware` CLI
+    /// flag and the editor setting apply to every file.
+    ///
     /// Note that this requires the `oxlint-tsgolint` package to be installed.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_aware: Option<bool>,
@@ -37,31 +42,41 @@ pub struct OxlintOptions {
     ///
     /// Equivalent to passing `--type-check` on the CLI.
     ///
+    /// `tsgolint` reports these diagnostics for a whole run rather than per directory, so
+    /// enabling this in a nested config enables it for the whole run, and oxlint warns about it.
+    /// It belongs in the root configuration file.
+    ///
     /// Note that this requires the `oxlint-tsgolint` package to be installed.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_check: Option<bool>,
     /// Ensure warnings produce a non-zero exit code.
     ///
     /// Equivalent to passing `--deny-warnings` on the CLI.
+    /// Only supported in the root configuration file: it decides the exit code of the whole run.
+    /// Setting it in a nested config warns and ignores it.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deny_warnings: Option<bool>,
     /// Specify a warning threshold. Exits with an error status if warnings exceed this value.
     ///
     /// Equivalent to passing `--max-warnings` on the CLI.
+    /// Only supported in the root configuration file: it decides the exit code of the whole run.
+    /// Setting it in a nested config warns and ignores it.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_warnings: Option<usize>,
     /// Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
     ///
     /// Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
     /// CLI flags take precedence over this value when both are set.
-    /// Only supported in the root configuration file.
+    /// Resolved from the config which governs each file, and not inherited from the root config:
+    /// share it with `extends`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub report_unused_disable_directives: Option<AllowWarnDeny>,
     /// Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
     /// directives in addition to its native `oxlint-*` directives.
     ///
     /// Defaults to `true`.
-    /// Only supported in the root configuration file.
+    /// Resolved from the config which governs each file, and not inherited from the root config:
+    /// share it with `extends`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub respect_eslint_disable_directives: Option<bool>,
 }

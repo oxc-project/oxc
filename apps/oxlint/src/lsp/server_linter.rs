@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 
 use ignore::gitignore::Gitignore;
-use oxc_language_server::{ClientMessage, ToolBuildResult};
+use oxc_language_server::{BuildContext, ClientMessage, ToolBuildResult};
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{
     CodeActionTriggerKind, DiagnosticOptions, DiagnosticServerCapabilities,
@@ -11,7 +11,7 @@ use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
         CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionProviderCapability,
-        Diagnostic, ExecuteCommandOptions, Pattern, ServerCapabilities, Uri,
+        Diagnostic, ExecuteCommandOptions, MessageType, Pattern, ServerCapabilities, Uri,
         WorkDoneProgressOptions, WorkspaceEdit,
     },
 };
@@ -29,10 +29,12 @@ use oxc_language_server::{
     utils::normalize_user_config_path_to_watch_pattern,
 };
 
+use oxc_language_server::{ancestor_ignore_globs, is_ignored_by_globs};
+
 use crate::{
     config_loader::{
-        ConfigLoader, build_nested_configs, config_file_names, discover_configs_in_tree,
-        materialize_default_plugins,
+        ConfigLoadError, ConfigLoader, build_nested_configs, config_file_names,
+        discover_configs_in_tree, materialize_default_plugins,
     },
     lsp::{
         code_actions::{
@@ -84,6 +86,29 @@ impl ServerLinterBuilder {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> (ServerLinter, Vec<ClientMessage>) {
+        self.build_excluding(root_uri, options, &[], None)
+    }
+
+    /// Same as [`Self::build`], skipping everything below `excluded_roots` and honouring the
+    /// ignore files between `parent_root` and the root.
+    ///
+    /// `excluded_roots` holds the `workingDirectories` of this root. They are linted by their own
+    /// worker with their own config, so this linter must not pick up their nested configs or their
+    /// ignore files.
+    ///
+    /// `parent_root` is the workspace folder of a `workingDirectories` sub worker. The sub worker
+    /// still honours the `.gitignore` / `.eslintignore` files between that folder and its own
+    /// root, like the `ignore` crate does when `oxlint` runs from inside the package.
+    ///
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
+    pub fn build_excluding(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        excluded_roots: &[PathBuf],
+        parent_root: Option<&Path>,
+    ) -> (ServerLinter, Vec<ClientMessage>) {
         let options = match serde_json::from_value::<LSPLintOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -106,6 +131,9 @@ impl ServerLinterBuilder {
             }
         }
 
+        // The editor setting applies type-aware linting to every file; `options.typeAware` in a
+        // config only applies to the files that config governs.
+        let type_aware_forced = options.type_aware == Some(true);
         let config_path = options.config_path.as_ref().map(PathBuf::from);
         let loader = ConfigLoader::new(
             external_linter,
@@ -116,10 +144,16 @@ impl ServerLinterBuilder {
         #[cfg(feature = "napi")]
         let loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
 
+        let mut client_messages: Vec<ClientMessage> = Vec::new();
+
         let mut oxlintrc = match loader.load_root_config(&root_path, config_path.as_ref()) {
             Ok(config) => config,
             Err(e) => {
                 warn!("Failed to load config: {e}");
+                client_messages.push(ClientMessage {
+                    r#type: MessageType::ERROR,
+                    message: format!("oxlint: failed to load the root configuration: {e}"),
+                });
                 Oxlintrc::default()
             }
         };
@@ -128,14 +162,18 @@ impl ServerLinterBuilder {
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
         let nested_configs = if options.use_nested_configs() {
-            self.create_nested_configs(
+            let (nested_configs, messages) = self.create_nested_configs(
                 &root_path,
                 &oxlintrc.path,
                 &mut external_plugin_store,
                 &mut nested_ignore_patterns,
                 &mut extended_paths,
                 Some(root_uri.as_str()),
-            )
+                type_aware_forced,
+                excluded_roots,
+            );
+            client_messages.extend(messages);
+            nested_configs
         } else {
             FxHashMap::default()
         };
@@ -180,14 +218,13 @@ impl ServerLinterBuilder {
 
         let lint_options = LintOptions {
             fix: fix_kind,
+            // The editor setting overrides the config. `Some(AllowWarnDeny::Allow)` means
+            // "explicitly off"; `None` lets the config which governs each file decide.
             report_unused_directive: match options.unused_disable_directives {
-                Some(UnusedDisableDirectives::Allow) => None,
+                Some(UnusedDisableDirectives::Allow) => Some(AllowWarnDeny::Allow),
                 Some(UnusedDisableDirectives::Warn) => Some(AllowWarnDeny::Warn),
                 Some(UnusedDisableDirectives::Deny) => Some(AllowWarnDeny::Deny),
-                None => match config_store.report_unused_disable_directives() {
-                    Some(severity) if severity.is_warn_deny() => Some(severity),
-                    _ => None,
-                },
+                None => None,
             },
             with_ignore_fixes: true,
             ..Default::default()
@@ -223,13 +260,23 @@ impl ServerLinterBuilder {
 
         let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
             .with_type_aware(type_aware)
+            .with_type_aware_forced(type_aware_forced)
             .with_fix_kind(fix_kind)
             .with_ignore_fixes(true)
             .build()
         {
             Ok(runner) => runner,
             Err(e) => {
+                // Falling back silently leaves the user with no type-aware diagnostics and no
+                // explanation, which in a monorepo usually means `oxlint-tsgolint` is missing from
+                // the workspace root.
                 warn!("Failed to initialize type-aware linting: {e}");
+                client_messages.push(ClientMessage {
+                    r#type: MessageType::ERROR,
+                    message: format!(
+                        "oxlint: type-aware linting is enabled but could not be started, continuing without it. {e}"
+                    ),
+                });
                 let linter =
                     Linter::new(lint_options, config_store_clone, external_linter.cloned())
                         .with_workspace_uri(Some(root_uri.as_str()));
@@ -247,14 +294,13 @@ impl ServerLinterBuilder {
                 options.run,
                 root_path.to_path_buf(),
                 LintIgnoreMatcher::new(&base_patterns, &base_ignore_root, nested_ignore_patterns),
-                Self::create_ignore_glob(&root_path),
+                Self::create_ignore_glob(&root_path, excluded_roots, parent_root),
                 extended_paths,
                 runner,
                 fix_kind,
-                lint_options.report_unused_directive,
                 options.rules_customization,
             ),
-            Vec::new(),
+            client_messages,
         )
     }
 }
@@ -305,6 +351,36 @@ impl ToolBuilder for ServerLinterBuilder {
         ToolBuildResult { tool: Box::new(tool), client_messages }
     }
 
+    fn build_with_context(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        context: BuildContext<'_>,
+    ) -> ToolBuildResult {
+        let excluded_roots = context
+            .excluded_roots
+            .iter()
+            .filter_map(|uri| uri.to_file_path().map(std::borrow::Cow::into_owned))
+            .collect::<Vec<_>>();
+        let parent_root = context
+            .parent_root
+            .and_then(|uri| uri.to_file_path().map(std::borrow::Cow::into_owned));
+        let (tool, client_messages) =
+            self.build_excluding(root_uri, options, &excluded_roots, parent_root.as_deref());
+        ToolBuildResult { tool: Box::new(tool), client_messages }
+    }
+
+    fn config_file_names(&self) -> Vec<&'static str> {
+        crate::config_loader::config_file_names()
+    }
+
+    /// A directory is an oxlint project root when it holds both a `package.json` and one of the
+    /// oxlint config files. Used by `"workingDirectories": [{ "mode": "auto" }]`.
+    fn is_project_root(&self, dir: &Path) -> bool {
+        dir.join("package.json").is_file()
+            && self.config_file_names().iter().any(|name| dir.join(name).is_file())
+    }
+
     #[expect(unused)]
     fn shutdown(&self, root_uri: &Uri) {
         // We don't currently destroy workspaces.
@@ -333,8 +409,11 @@ impl ServerLinterBuilder {
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
         workspace_uri: Option<&str>,
-    ) -> FxHashMap<PathBuf, Config> {
-        let config_paths = discover_configs_in_tree(root_path, base_config_path);
+        type_aware_forced: bool,
+        excluded_roots: &[PathBuf],
+    ) -> (FxHashMap<PathBuf, Config>, Vec<ClientMessage>) {
+        let mut client_messages = Vec::new();
+        let config_paths = discover_configs_in_tree(root_path, base_config_path, excluded_roots);
 
         #[cfg_attr(not(feature = "napi"), allow(unused_mut))]
         let mut loader = ConfigLoader::new(
@@ -349,33 +428,73 @@ impl ServerLinterBuilder {
             loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
         }
 
-        let (configs, errors) = loader.load_discovered_with_root_dir(root_path, config_paths);
+        let (configs, errors, warnings) =
+            loader.load_discovered_with_root_dir(root_path, config_paths);
 
+        // A config which cannot be loaded is skipped, which silently removes every diagnostic for
+        // the directory it governs. Tell the client instead of only logging it.
         for error in errors {
             if let Some(path) = error.path() {
                 warn!("Skipping config file {}: {:?}", path.display(), error);
+                client_messages.push(ClientMessage {
+                    r#type: MessageType::ERROR,
+                    message: format!(
+                        "oxlint: skipping the configuration file {}, files in that directory are not linted with it. {}",
+                        path.display(),
+                        error_message(&error)
+                    ),
+                });
             } else {
                 warn!("Skipping config file: {:?}", error);
+                client_messages.push(ClientMessage {
+                    r#type: MessageType::ERROR,
+                    message: format!(
+                        "oxlint: skipping a configuration file. {}",
+                        error_message(&error)
+                    ),
+                });
             }
         }
 
-        build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths))
+        for warning in warnings.to_report(type_aware_forced) {
+            warn!("{warning}");
+            client_messages
+                .push(ClientMessage { r#type: MessageType::WARNING, message: warning.to_string() });
+        }
+
+        (
+            build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths)),
+            client_messages,
+        )
     }
 
     #[expect(clippy::filetype_is_file)]
-    fn create_ignore_glob(root_path: &Path) -> Vec<Gitignore> {
+    fn create_ignore_glob(
+        root_path: &Path,
+        excluded_roots: &[PathBuf],
+        parent_root: Option<&Path>,
+    ) -> Vec<Gitignore> {
+        // ignore files above the root still apply to a `workingDirectories` sub worker
+        let mut gitignore_globs = parent_root.map_or_else(Vec::new, |parent_root| {
+            ancestor_ignore_globs(parent_root, root_path, &[".gitignore", ".eslintignore"])
+        });
+        let excluded_roots = excluded_roots.to_vec();
         let walk = ignore::WalkBuilder::new(root_path)
             .ignore(true)
             .hidden(false)
             .git_global(false)
-            .filter_entry(|entry| {
-                !(entry.file_name() == ".git"
-                    && entry.file_type().is_some_and(|file_type| file_type.is_dir()))
+            .filter_entry(move |entry| {
+                if entry.file_name() == ".git"
+                    && entry.file_type().is_some_and(|file_type| file_type.is_dir())
+                {
+                    return false;
+                }
+                // ignore files inside a `workingDirectories` root belong to that root's own linter
+                !excluded_roots.iter().any(|dir| dir == entry.path())
             })
             .build()
             .flatten();
 
-        let mut gitignore_globs = vec![];
         for entry in walk {
             if !entry.file_type().is_some_and(|v| v.is_file()) {
                 continue;
@@ -397,7 +516,25 @@ impl ServerLinterBuilder {
             }
         }
 
+        // A deeper ignore file wins over the ones above it and can re-include a path with a `!`
+        // pattern, so they are evaluated from the deepest to the outermost one.
         gitignore_globs
+            .sort_by_key(|gitignore| std::cmp::Reverse(gitignore.path().as_os_str().len()));
+
+        gitignore_globs
+    }
+}
+
+/// A human readable reason why a config file could not be loaded.
+fn error_message(error: &ConfigLoadError) -> String {
+    match error {
+        ConfigLoadError::Parse { error, .. } | ConfigLoadError::Diagnostic(error) => {
+            error.to_string()
+        }
+        ConfigLoadError::Build { error, .. } => error.clone(),
+        ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
+            "JavaScript/TypeScript config files require running oxlint through Node.js.".to_string()
+        }
     }
 }
 
@@ -410,7 +547,6 @@ pub struct ServerLinter {
     code_actions: Arc<ConcurrentHashMap<Uri, Vec<LinterCodeAction>>>,
     runner: LintRunner,
     fix_kind: FixKind,
-    unused_directives_severity: Option<AllowWarnDeny>,
     rules_customization: Option<RulesCustomization>,
 }
 
@@ -421,6 +557,7 @@ impl Tool for ServerLinter {
         &self,
         builder: &dyn ToolBuilder,
         root_uri: &Uri,
+        context: BuildContext<'_>,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
@@ -455,7 +592,7 @@ impl Tool for ServerLinter {
         // get the cached files before refreshing the linter, and revalidate them after
         builder.shutdown(root_uri);
         let ToolBuildResult { tool, client_messages } =
-            builder.build(root_uri, new_options_json.clone());
+            builder.build_with_context(root_uri, new_options_json.clone(), context);
 
         let patterns = {
             if old_option.config_path == new_options.config_path
@@ -514,11 +651,13 @@ impl Tool for ServerLinter {
         builder: &dyn ToolBuilder,
         _changed_uri: &Uri,
         root_uri: &Uri,
+        context: BuildContext<'_>,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
         builder.shutdown(root_uri);
-        let ToolBuildResult { tool, client_messages } = builder.build(root_uri, options);
+        let ToolBuildResult { tool, client_messages } =
+            builder.build_with_context(root_uri, options, context);
 
         ToolRestartChanges {
             tool: Some(tool),
@@ -712,7 +851,6 @@ impl ServerLinter {
         extended_paths: FxHashSet<PathBuf>,
         runner: LintRunner,
         fix_kind: FixKind,
-        unused_directives_severity: Option<AllowWarnDeny>,
         rules_customization: Option<RulesCustomization>,
     ) -> Self {
         Self {
@@ -724,7 +862,6 @@ impl ServerLinter {
             code_actions: Arc::new(ConcurrentHashMap::default()),
             runner,
             fix_kind,
-            unused_directives_severity,
             rules_customization,
         }
     }
@@ -772,15 +909,12 @@ impl ServerLinter {
             return true;
         }
 
-        for gitignore in &self.gitignore_glob {
-            if !uri_path.starts_with(gitignore.path()) {
-                continue;
-            }
-            if gitignore.matched_path_or_any_parents(uri_path, uri_path.is_dir()).is_ignore() {
-                debug!("ignored: {uri_path:?}");
-                return true;
-            }
+        // the globs are ordered from the deepest ignore file to the outermost one
+        if is_ignored_by_globs(&self.gitignore_glob, uri_path) {
+            debug!("ignored: {uri_path:?}");
+            return true;
         }
+
         false
     }
 
@@ -856,8 +990,10 @@ impl ServerLinter {
         // Take directives once to avoid separate get/remove lock acquisitions.
         let directives = self.runner.directives_coordinator().take(path);
 
-        // Add unused directives if configured
-        if let Some(severity) = self.unused_directives_severity
+        // Add unused directives if configured. The severity can differ per package, because a
+        // nested config may set `reportUnusedDisableDirectives` itself.
+        if let Some(severity) =
+            self.runner.report_unused_directive_for(path).filter(|s| s.is_warn_deny())
             && let Some(directives) = directives
         {
             messages.extend(create_unused_directives_report(&directives, severity, source_text));
@@ -866,6 +1002,9 @@ impl ServerLinter {
     }
 
     fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
+        // `workingDirectories` is deliberately not compared: the language server owns it and
+        // rebuilds this linter itself when the option *resolves* to a different set of roots. A
+        // change which only rewrites the entries resolves to the same roots and must not restart.
         old_options.config_path != new_options.config_path
             || old_options.ts_config_path != new_options.ts_config_path
             || old_options.use_nested_configs() != new_options.use_nested_configs()
@@ -1143,14 +1282,18 @@ mod test {
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut extended_paths = FxHashSet::default();
         let base_config_path = get_file_path("fixtures/lsp/init_nested_configs/.oxlintrc.json");
-        let configs = builder.create_nested_configs(
-            &get_file_path("fixtures/lsp/init_nested_configs"),
-            &base_config_path,
-            &mut external_plugin_store,
-            &mut nested_ignore_patterns,
-            &mut extended_paths,
-            None,
-        );
+        let configs = builder
+            .create_nested_configs(
+                &get_file_path("fixtures/lsp/init_nested_configs"),
+                &base_config_path,
+                &mut external_plugin_store,
+                &mut nested_ignore_patterns,
+                &mut extended_paths,
+                None,
+                false,
+                &[],
+            )
+            .0;
         let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
         // sorting the key because for consistent tests results
         configs_dirs.sort();
@@ -1171,7 +1314,7 @@ mod test {
         fs::create_dir_all(&git_dir).unwrap();
         fs::write(git_dir.join(".gitignore"), "refs/\n").unwrap();
 
-        let ignore_globs = ServerLinterBuilder::create_ignore_glob(root_dir.path());
+        let ignore_globs = ServerLinterBuilder::create_ignore_glob(root_dir.path(), &[], None);
 
         assert_eq!(ignore_globs.len(), 1);
         assert!(ignore_globs[0].path().starts_with(&app_dir));
@@ -1511,7 +1654,9 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
-    fn test_nested_config_file_type_aware_is_rejected() {
+    /// `options.typeAware` in a nested config enables type-aware linting for the files that
+    /// config governs, and only for those. See <https://github.com/oxc-project/oxc/issues/19937>.
+    fn test_nested_config_file_type_aware_is_applied() {
         let tester = Tester::new("fixtures/lsp/tsgolint/nested_type_aware", json!({}));
         tester.test_and_snapshot_multiple_file(&["test-root.ts", "nested/test.ts"]);
     }
@@ -1604,5 +1749,193 @@ mod test {
     fn test_issue_22758() {
         let tester = Tester::new("fixtures/lsp/issue_22758/apps/api", json!({}));
         tester.test_and_snapshot_single_file("app/auth/guard/firebase.ts");
+    }
+
+    /// `workingDirectories` turns a directory below the workspace folder into its own project
+    /// root, exactly like opening that directory as a workspace folder.
+    mod working_directories {
+        use oxc_language_server::{LanguageId, TextDocument, Tool, ToolRestartChanges};
+        use serde_json::json;
+
+        use crate::lsp::tester::Tester;
+
+        const FIXTURE: &str = "fixtures/lsp/working_directories";
+
+        /// Semantics rule 1: a working directory is served by an ordinary worker and a file is
+        /// routed to it by the longest matching root.
+        #[test]
+        fn test_glob() {
+            // `packages/a` is its own project root, so `packages/a/.oxlintrc.json` is used as its
+            // *root* config instead of as a nested config of the workspace folder: `no-debugger`
+            // is off and `no-console` is on.
+            //
+            // `packages/b` has no config of its own. A working directory is deliberately not
+            // merged with its workspace folder, it resolves a root config on its own by searching
+            // upwards, which is what happens when the user opens `packages/b` as a workspace
+            // folder. The nearest config above it is the fixture root one, so it reports
+            // `no-debugger` and `no-console`.
+            //
+            // The file at the workspace folder root keeps reporting the root config.
+            Tester::new(FIXTURE, json!({ "workingDirectories": ["packages/*"] }))
+                .with_snapshot_name("working_directories_glob")
+                .test_and_snapshot_multiple_file(&[
+                    "packages/a/src/index.ts",
+                    "packages/b/src/index.ts",
+                    "index.ts",
+                ]);
+        }
+
+        #[test]
+        fn test_config_path_is_relative_to_the_working_directory() {
+            // `configPath` is resolved by the worker of `packages/a`, so `custom.json` is looked up
+            // in `packages/a`, not in the workspace folder. Only `no-empty` is reported.
+            Tester::new(
+                FIXTURE,
+                json!({ "configPath": "custom.json", "workingDirectories": ["packages/a"] }),
+            )
+            .with_snapshot_name("working_directories_config_path")
+            .test_and_snapshot_single_file("packages/a/src/index.ts");
+        }
+
+        #[test]
+        fn test_config_path_without_working_directories() {
+            // Contrast to the test above: without `workingDirectories` the only worker is the
+            // workspace folder one, so `custom.json` is looked up at the workspace folder root,
+            // where it does not exist, and the linter falls back to the defaults.
+            Tester::new(FIXTURE, json!({ "configPath": "custom.json" }))
+                .with_snapshot_name("working_directories_config_path_at_root")
+                .test_and_snapshot_single_file("packages/a/src/index.ts");
+        }
+
+        #[test]
+        fn test_auto_mode() {
+            // `packages/a` has a `package.json` and a config, so it is detected as a project root.
+            // `packages/b` only has a `package.json`, so it stays with the workspace folder worker
+            // and is linted as a nested config directory of the workspace folder.
+            Tester::new(FIXTURE, json!({ "workingDirectories": [{ "mode": "auto" }] }))
+                .with_snapshot_name("working_directories_auto")
+                .test_and_snapshot_multiple_file(&[
+                    "packages/a/src/index.ts",
+                    "packages/b/src/index.ts",
+                ]);
+        }
+
+        /// A working directory still honours the ignore files of the workspace folder above it,
+        /// like the `ignore` crate does when `oxlint` runs from inside the package.
+        #[test]
+        fn test_sub_worker_honours_the_ignore_files_of_its_workspace_folder() {
+            let tester = Tester::new(FIXTURE, json!({ "workingDirectories": ["packages/a"] }));
+            let uri = tester.get_file_uri("packages/a/generated/index.ts");
+
+            // the workspace folder `.gitignore` ignores `generated/`
+            let diagnostics = tester
+                .create_linter_for(&uri)
+                .run_diagnostic(TextDocument::new(&uri, LanguageId::default(), None))
+                .unwrap();
+            assert!(
+                diagnostics.iter().all(|(_, diagnostics)| diagnostics.is_empty()),
+                "{diagnostics:?}"
+            );
+
+            // the very same `debugger` statement is reported when it is not ignored
+            let not_ignored = tester.get_file_uri("packages/b/src/index.ts");
+            let diagnostics = tester
+                .create_linter_for(&not_ignored)
+                .run_diagnostic(TextDocument::new(&not_ignored, LanguageId::default(), None))
+                .unwrap();
+            assert!(diagnostics.iter().any(|(_, diagnostics)| !diagnostics.is_empty()));
+        }
+
+        /// Semantics rule 3: the ignore files above a working directory are honoured, the deepest
+        /// one wins and can re-include a path an outer one excluded, like `git` does.
+        /// `test_sub_worker_honours_the_ignore_files_of_its_workspace_folder` covers the plain
+        /// inheritance of an ancestor ignore file.
+        #[test]
+        fn test_a_nested_ignore_file_can_re_include_a_path() {
+            let tester = Tester::new(FIXTURE, json!({ "workingDirectories": ["packages/a"] }));
+
+            // the workspace folder `.gitignore` ignores `dist/`, `packages/a/.gitignore` puts it
+            // back with `!dist/`
+            let uri = tester.get_file_uri("packages/a/dist/index.ts");
+            let diagnostics = tester
+                .create_linter_for(&uri)
+                .run_diagnostic(TextDocument::new(&uri, LanguageId::default(), None))
+                .unwrap();
+            assert!(diagnostics.iter().any(|(_, diagnostics)| !diagnostics.is_empty()));
+
+            // a `!pattern` on the file can not re-include it below an excluded directory: the
+            // workspace folder excludes `build/` and `packages/a` only whitelists `index.ts`
+            let ignored = tester.get_file_uri("packages/a/build/index.ts");
+            let diagnostics = tester
+                .create_linter_for(&ignored)
+                .run_diagnostic(TextDocument::new(&ignored, LanguageId::default(), None))
+                .unwrap();
+            assert!(
+                diagnostics.iter().all(|(_, diagnostics)| diagnostics.is_empty()),
+                "{diagnostics:?}"
+            );
+
+            // `generated/` is not re-included anywhere
+            let ignored = tester.get_file_uri("packages/a/generated/index.ts");
+            let diagnostics = tester
+                .create_linter_for(&ignored)
+                .run_diagnostic(TextDocument::new(&ignored, LanguageId::default(), None))
+                .unwrap();
+            assert!(
+                diagnostics.iter().all(|(_, diagnostics)| diagnostics.is_empty()),
+                "{diagnostics:?}"
+            );
+        }
+
+        /// The language server owns the option and rebuilds the linter itself when it resolves to
+        /// a different set of roots, so rewriting the entries must not restart anything.
+        #[test]
+        fn test_rewriting_the_entries_does_not_restart_the_linter() {
+            let ToolRestartChanges { tool, watch_patterns, .. } =
+                Tester::new(FIXTURE, json!({ "workingDirectories": ["packages/*"] }))
+                    .handle_configuration_change(
+                        json!({ "workingDirectories": ["packages/a", "packages/b"] }),
+                    );
+
+            assert!(tool.is_none());
+            assert!(watch_patterns.is_none());
+        }
+
+        #[test]
+        fn test_invalid_entries_are_ignored() {
+            let tester = Tester::new(
+                FIXTURE,
+                json!({ "workingDirectories": ["../outside", "/absolute", "packages/a"] }),
+            );
+
+            // only the valid entry creates a worker, next to the workspace folder worker
+            let roots = tester.worker_roots();
+            assert_eq!(roots.len(), 2);
+            assert!(roots[1].as_str().ends_with("/packages/a"));
+        }
+
+        /// Semantics rule 2: the root config of a working directory is found by walking up from
+        /// it, so linting one of its files gives the same result as opening that directory as a
+        /// workspace folder.
+        #[test]
+        fn test_matches_opening_the_directory_as_workspace_folder() {
+            let with_option = Tester::new(FIXTURE, json!({ "workingDirectories": ["packages/a"] }));
+            let uri = with_option.get_file_uri("packages/a/src/index.ts");
+            let from_working_directory = with_option
+                .create_linter_for(&uri)
+                .run_diagnostic(TextDocument::new(&uri, LanguageId::default(), None));
+
+            let as_workspace_folder =
+                Tester::new("fixtures/lsp/working_directories/packages/a", json!({}));
+            let standalone_uri = as_workspace_folder.get_file_uri("src/index.ts");
+            let from_workspace_folder = as_workspace_folder
+                .create_linter_for(&standalone_uri)
+                .run_diagnostic(TextDocument::new(&standalone_uri, LanguageId::default(), None));
+
+            assert_eq!(uri, standalone_uri);
+            assert_eq!(format!("{from_working_directory:?}"), format!("{from_workspace_folder:?}"));
+            // the fixture does report something, otherwise the assertion above is meaningless
+            assert!(!from_working_directory.unwrap().is_empty());
+        }
     }
 }

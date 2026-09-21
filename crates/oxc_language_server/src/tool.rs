@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
@@ -20,6 +22,39 @@ pub trait ToolBuilder: Send + Sync {
     /// Build a boxed instance of the tool for the given root URI and options.
     fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult;
 
+    /// Build a boxed instance of the tool with the extra [`BuildContext`] of its worker.
+    ///
+    /// The default implementation ignores the context, which is correct for tools which only
+    /// resolve their configuration upwards from their root and never walk it eagerly.
+    fn build_with_context(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        _context: BuildContext<'_>,
+    ) -> ToolBuildResult {
+        self.build(root_uri, options)
+    }
+
+    /// The configuration file names which make a directory a project root for this tool.
+    ///
+    /// The language server uses them, next to `package.json`, to decide whether a watched file
+    /// change can add or remove a `workingDirectories` entry. They are the names
+    /// [`Self::is_project_root`] looks for, not the watcher patterns: a setup with an explicit
+    /// `configPath` watches one file but still gains a working directory when a config appears
+    /// somewhere else.
+    fn config_file_names(&self) -> Vec<&'static str> {
+        Vec::new()
+    }
+
+    /// Whether `dir` is a project root for this tool, used by
+    /// `"workingDirectories": [{ "mode": "auto" }]`.
+    ///
+    /// Implementors should return `true` when the directory contains both a `package.json` and one
+    /// of the tool configuration files.
+    fn is_project_root(&self, _dir: &Path) -> bool {
+        false
+    }
+
     /// Shutdown hook for the tool. Implementors may perform any necessary cleanup here.
     fn shutdown(&self, _root_uri: &Uri) {
         // Default implementation does nothing.
@@ -31,10 +66,14 @@ pub type DiagnosticResult = Result<Vec<(Uri, Vec<Diagnostic>)>, String>;
 pub trait Tool: Send + Sync {
     /// The Server has new configuration changes.
     /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
+    ///
+    /// `context` is the [`BuildContext`] of the worker: an implementor which rebuilds itself has
+    /// to hand it back to [`ToolBuilder::build_with_context`], or it loses the roots it must skip.
     fn handle_configuration_change(
         &self,
         builder: &dyn ToolBuilder,
         root_uri: &Uri,
+        context: BuildContext<'_>,
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges;
@@ -49,11 +88,15 @@ pub trait Tool: Send + Sync {
     ///
     /// The given URI may not match the watch patterns or may be irrelevant for the workspace.
     /// A file change can affect multiple workspaces, so the Tool should check if it is relevant.
+    ///
+    /// `context` is the [`BuildContext`] of the worker: an implementor which rebuilds itself has
+    /// to hand it back to [`ToolBuilder::build_with_context`], or it loses the roots it must skip.
     fn handle_watched_file_change(
         &self,
         builder: &dyn ToolBuilder,
         changed_uri: &Uri,
         root_uri: &Uri,
+        context: BuildContext<'_>,
         options: serde_json::Value,
     ) -> ToolRestartChanges;
 
@@ -137,6 +180,23 @@ pub trait Tool: Send + Sync {
     fn remove_uri_cache(&self, _uri: &Uri) {
         // Default implementation does nothing.
     }
+}
+
+/// Extra context a worker passes to [`ToolBuilder::build_with_context`].
+#[derive(Debug, Default, Clone, Copy)]
+pub struct BuildContext<'a> {
+    /// Roots below the worker root which are owned by another worker, i.e. the resolved
+    /// `workingDirectories` of this worker.
+    ///
+    /// A tool which eagerly walks its root directory (config discovery, ignore file collection,
+    /// ...) must skip those directories, otherwise the same file would be handled twice, with two
+    /// different configurations.
+    pub excluded_roots: &'a [Uri],
+    /// The workspace folder this worker belongs to, when it is a `workingDirectories` sub worker.
+    ///
+    /// A sub worker still has to honour the ignore files between that folder and its own root,
+    /// the same way the CLI does when it is run from inside the directory.
+    pub parent_root: Option<&'a Uri>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
