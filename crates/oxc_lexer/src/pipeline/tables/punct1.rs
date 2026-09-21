@@ -47,10 +47,13 @@ pub const PUNCT1: [Punct1; 26] = [
     Punct1::new('#', TokenKind::Invalid),
 ];
 
-pub const PH_A: [u8; 16] = [4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2];
-pub const PH_B: [u8; 16] = [24, 26, 2, 16, 31, 25, 19, 30, 0, 0, 0, 0, 0, 0, 0, 0];
-pub const PH_T0: [u8; 16] = [68, 38, 58, 76, 255, 72, 42, 52, 34, 33, 255, 255, 70, 48, 37, 55];
-pub const PH_T1: [u8; 16] = [40, 255, 43, 50, 64, 61, 255, 255, 35, 36, 80, 89, 255, 82, 32, 41];
+pub mod punct1_luts {
+    pub const PH_A: [u8; 16] = [4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2];
+    pub const PH_B: [u8; 16] = [24, 26, 2, 16, 31, 25, 19, 30, 0, 0, 0, 0, 0, 0, 0, 0];
+    pub const PH_T0: [u8; 16] = [68, 38, 58, 76, 255, 72, 42, 52, 34, 33, 255, 255, 70, 48, 37, 55];
+    pub const PH_T1: [u8; 16] =
+        [40, 255, 43, 50, 64, 61, 255, 255, 35, 36, 80, 89, 255, 82, 32, 41];
+}
 
 pub(super) fn punct1_hash_selfcheck() {
     let mut punct1_ord = [tk!(Invalid); 256];
@@ -68,6 +71,8 @@ pub(super) fn punct1_hash_selfcheck() {
 
 #[inline(always)]
 fn punct1_hash(c: u8) -> u8 {
+    use punct1_luts::{PH_A, PH_B, PH_T0, PH_T1};
+
     if c < 0x20 {
         return tk!(Invalid);
     }

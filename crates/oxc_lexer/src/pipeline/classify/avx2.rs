@@ -4,7 +4,10 @@ use crate::token::tk;
 
 use crate::pipeline::{
     chunk::{load256, mm, veq},
-    tables::{PH_A, PH_B, PH_T0, PH_T1, Tables},
+    tables::{
+        Tables,
+        punct1_luts::{PH_A, PH_B, PH_T0, PH_T1},
+    },
 };
 
 pub(super) unsafe fn classify_impl(

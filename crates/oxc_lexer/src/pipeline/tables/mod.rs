@@ -13,7 +13,7 @@ pub(super) use operators::is_op_char;
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 pub(super) use punct1::PUNCT1;
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
-pub(super) use punct1::{PH_A, PH_B, PH_T0, PH_T1};
+pub(super) use punct1::punct1_luts;
 
 use classify_luts::{MergedLuts, WordLuts};
 use keywords::Keywords;
