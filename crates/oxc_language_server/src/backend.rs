@@ -1,6 +1,6 @@
 use std::{borrow::Cow, sync::Arc};
 
-use futures::future::join_all;
+use futures_util::future::join_all;
 use rustc_hash::FxBuildHasher;
 use serde_json::Value;
 use tokio::sync::{OnceCell, SetError};

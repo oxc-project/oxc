@@ -1,6 +1,6 @@
 use std::{num::NonZero, sync::Arc};
 
-use futures::future::BoxFuture;
+use futures_util::future::BoxFuture;
 use rustc_hash::FxBuildHasher;
 use tower_lsp_server::{
     Client, LanguageServer, LspService, LspServiceBuilder, Server,
