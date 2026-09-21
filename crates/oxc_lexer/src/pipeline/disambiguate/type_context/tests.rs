@@ -943,3 +943,150 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
         diagnosed(code);
     }
 }
+
+#[test]
+fn keyword_types_take_no_type_arguments() {
+    // `any<z>` is `any` then a comparison: keyword types never take arguments.
+    for kw in [
+        "any",
+        "unknown",
+        "string",
+        "number",
+        "boolean",
+        "symbol",
+        "object",
+        "never",
+        "undefined",
+        "null",
+        "void",
+        "bigint",
+        "this",
+        "true",
+        "false",
+    ] {
+        gt_run_fused(&format!("x = y as {kw}<z>>w;"));
+        gt_run_fused(&format!("x = y satisfies {kw} < z >> w;"));
+    }
+    gt_run_fused("let x: any = y as string < z >> w;");
+    gt_run_split("x = y as A<z>>w;");
+}
+
+#[test]
+fn function_head_name_after_a_line_break_keeps_its_return_type_list() {
+    for code in [
+        "function\nf<T>(): U<O<T>, C<T>> {}",
+        "function //c\nf<T>(): U<O<T>> {}",
+        "function /*\n*/ f<T>(): U<O<T>> {}",
+        "export function\nf<T>(): U<O<T>> {}",
+        "async function\nf(): Promise<Array<T>> {}",
+        "class\nC<T> extends B<C<T>> {}",
+    ] {
+        gt_run_split(code);
+    }
+}
+
+#[test]
+fn nested_type_reference_after_a_line_break_takes_no_arguments() {
+    // A type reference takes no arguments across a line break, so the speculative list fails.
+    for code in [
+        "x = f<A\n<B>>(c);",
+        "x = f<A\u{2028}<B>>(c);",
+        "x = f<A /*\n*/ <B>>(c);",
+        "x = f<A //c\n<B>>(c);",
+        "x = f<A, B\n<C>>(d);",
+        "x = new F<A\n<B>>(c);",
+        "x = f<A.B\n<C>>(d);",
+        "x = f<typeof a\n<C>>(d);",
+    ] {
+        gt_run_fused(code);
+    }
+    for code in [
+        "x = f<A<\nB>>(c);",
+        "x = f<\nA<B>>(c);",
+        "x = f<A<B\n>>(c);",
+        "x = f<A, /* c */ B<C>>(d);",
+    ] {
+        gt_run_split(code);
+    }
+}
+
+#[test]
+fn tsx_type_parameter_list_signals_cross_trivia() {
+    // A comment between the parameter name and its `,` / `=` / `extends` still marks a list;
+    // an `extends` attribute followed by a comment still marks a tag.
+    let tsx = |code: &str| kinds_of(code, ScriptTSX);
+    for (code, plain) in [
+        ("x = <T //c\nextends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
+        ("x = <T /*c*/ extends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
+        ("x = <T /*\n*/ extends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
+        ("x = <T //c\n,>(a: T) => a;", "x = <T,>(a: T) => a;"),
+        ("x = <T /*c*/,>(a: T) => a;", "x = <T,>(a: T) => a;"),
+        ("x = <T //c\n= U,>(a: T) => a;", "x = <T = U,>(a: T) => a;"),
+        ("x = <const /*c*/ T extends U>(a: T) => a;", "x = <const T extends U>(a: T) => a;"),
+        ("x = <T extends /*c*/ />;", "x = <T extends />;"),
+        ("x = <T extends //c\n />;", "x = <T extends />;"),
+    ] {
+        assert_eq!(tsx(code), tsx(plain), "{code:?}");
+        assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+    }
+}
+
+#[test]
+fn keyword_type_followed_by_a_dot_is_a_member_access() {
+    // `this`, `null`, `true`, `false` and `void` are whole types: `this.x` is not a type, so the
+    // speculative list fails and the run is a shift. `any.x` and `string.x` are qualified names.
+    for kw in ["this", "null", "true", "false", "void"] {
+        gt_run_fused(&format!("x = a<b<{kw}.y>>(1);"));
+    }
+    for kw in ["any", "string", "undefined"] {
+        gt_run_split(&format!("x = a<b<{kw}.y>>(1);"));
+    }
+    gt_run_split("x = a<b<this>>(1);");
+    gt_run_split("x = a<b<this[1]>>(1);");
+    gt_run_split("x = a<b<typeof this.y>>(1);");
+}
+
+#[test]
+fn super_is_a_type_only_in_a_type_query() {
+    gt_run_split("x = a<b<typeof super.y>>(1);");
+    gt_run_split("x = a<b<typeof super>>(1);");
+    gt_run_fused("x = a<b<super.y>>(1);");
+    // A type query names a value, which takes type arguments even when it spells a keyword type.
+    gt_run_split("x = c<Map<typeof this<A, 1>>>(1);");
+    gt_run_fused("x = c<Map<this<A, 1>>>(1);");
+}
+
+#[test]
+fn keywords_as_names_inside_a_type_list() {
+    // `let` is an identifier in a type; a reserved word is refused only where a list element
+    // starts (tsc's `isStartOfType`), and read as a name elsewhere: a property, a reference
+    // after `=>`.
+    gt_run_split("x = f<A<(let: T) => U>>(1);");
+    gt_run_split("x = f<A<let>>(1);");
+    gt_run_split("x = f<A<{ return: T; class?: U }>>(1);");
+    gt_run_split("x = f<A<(x: T) => return>>(1);");
+    gt_run_fused("x = f<A<return>>(1);");
+    gt_run_fused("x = f<A<B, return>>(1);");
+}
+
+#[test]
+fn escaped_identifier_follower_starts_an_expression() {
+    // An identifier written with a Unicode escape follows a `>` run like any other name.
+    gt_run_fused(r"x = f<T<U>>\u0061;");
+    gt_run_fused(r"x = f<T<U>> \u{61};");
+    gt_run_split("x = f<T<U>>\n\\u0061;");
+}
+
+#[test]
+fn line_break_before_extends_inside_a_type_parameter_list() {
+    // Inside a `<...>` list a line break is trivia, so no statement ends there. The template
+    // literal type keeps the run from being settled without a walk.
+    for code in [
+        "f = <T\nextends Replace<A, `{${string}}`, B>>(x: T) => 1;",
+        "f = <T\nextends Replace<A, B>>(x: T) => 1;",
+        "f = <T\nextends A<B>>(x: T) => 1;",
+        "f = <T /*\n*/ extends Replace<A, `{${string}}`, B>>(x: T) => 1;",
+    ] {
+        gt_run_split(code);
+    }
+}

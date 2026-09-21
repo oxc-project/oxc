@@ -1,273 +1,177 @@
 //! Moving backwards through the token stream.
 //!
-//! These are the primitives which the backward walks in `disambiguate` are built from.
+//! These are the primitives which the scans in `disambiguate` are built from.
 //! They move around the token stream without deciding what any construct means.
-//! Such decisions are left to [`constructs`] and [`operand`].
 //!
 //! Stepping and inspecting:
-//! - [`bm_prev_sig`] steps to the previous token, skipping whitespace and comments.
+//! - [`prev_sig`] steps to the previous token, skipping whitespace and comments.
 //! - [`kind_at`] reads a token's kind, treating keywords as plain identifiers,
 //!   and escaped identifiers as unescaped ones.
 //! - [`ident_is`] and [`word_is_any`] check whether an identifier is a particular word,
 //!   like `let`, or any word in a list.
-//! - [`prop_name`] checks whether an identifier directly follows a `.`, as in `x.return`,
-//!   which makes it a property name rather than a keyword.
 //! - [`lt_in_range`] asks whether a line break separates two positions, which ASI depends on.
 //!
 //! Jumping over bracketed groups:
-//! - [`match_delim_back`] goes from a `)`, `]` or `}` back to its opener.
-//!   Past [`BRACE_MATCH_CAP`] steps it switches to a table of bracket pairs, built once per lex,
-//!   so the answer stays exact.
-//! - [`angle_match_back`] goes from a `>` back to a `<` which could open type arguments.
-//! - [`chain_head`] goes from the last name in `a.b.c` back to `a`.
-//!
-//! [`constructs`]: super::constructs
-//! [`operand`]: super::operand
+//! - [`match_delim_back`] goes from a `)`, `]` or `}` back to its opener over a bitmap of bracket
+//!   tokens ([`Brackets`]), built per lex a word at a time as the matches reach it. Past
+//!   [`BRACE_MATCH_CAP`] bracket steps it switches to a table of bracket pairs, so the answer
+//!   stays exact.
 
 use std::cell::{Cell, RefCell};
 
-use crate::token::{KW_KIND_BASE, KW_KIND_MAX, OP_KIND_BASE, tk};
-
-use crate::pipeline::{
-    bitmap::{bm_next1, bm_prev1},
-    bytes::is_word,
+use super::{Tokens, bits, text};
+use crate::{
+    pipeline::{bytes::is_word, find::bracket_bits},
+    token::{KW_KIND_BASE, KW_KIND_MAX, OP_KIND_BASE, tk},
 };
 
-const ANGLE_MATCH_CAP: u32 = 4096;
-
-/// Distance cap (in token starts) for the backward delimiter matches below;
-/// past it we fall back to the safe legacy "`}` means regex" answer. Only
-/// pathological input gets near it.
+/// Bracket steps a backward match takes before the per-file closer-to-opener table answers, so a
+/// group matched again and again (queries after a huge wrapper function) costs a lookup, not a
+/// pass over its brackets each time.
 const BRACE_MATCH_CAP: u32 = 1024;
 
-pub enum AngleMatch {
-    Found(usize),
-    NotType,
-    Unknown,
+/// Bracket tokens (`(){}[]` at token starts) as a bitmap, built per lex a 64-byte word at a time
+/// as the matches reach it: crossing a group costs a step per bracket, not per token, and a file
+/// whose queries stay local never has the whole bitmap built. Owned by the lexer and shared with
+/// every [`Tokens`] view of the lex, so the words are cells.
+#[derive(Default)]
+pub(crate) struct Brackets {
+    bits: Vec<Cell<u64>>,
+    /// One bit per word of `bits`: built this lex.
+    built: Vec<Cell<u64>>,
+    /// The closer-to-opener table a match past the cap falls back on.
+    pairs: RefCell<Pairs>,
 }
 
-struct DelimMemo {
-    generation: u64,
-    upto: usize,
+/// Bracket pairs of the source up to `built_to`, built once, closers in source order.
+#[derive(Default)]
+struct Pairs {
+    built_to: usize,
     pairs: Vec<(u32, u32)>,
     open: [Vec<u32>; 3],
 }
 
-thread_local! {
-    static MEMO_GEN: Cell<u64> = const { Cell::new(0) };
-    static DELIM_MEMO: RefCell<DelimMemo> = const {
-        RefCell::new(DelimMemo {
-            generation: 0,
-            upto: 0,
-            pairs: Vec::new(),
-            open: [Vec::new(), Vec::new(), Vec::new()],
-        })
-    };
+impl Brackets {
+    /// A new lex over `n` bytes: size the buffers and forget every word of the previous one.
+    pub(crate) fn begin(&mut self, n: usize) {
+        let nwords = n.div_ceil(64) + 1;
+        self.bits.resize(nwords, Cell::new(0));
+        self.built.clear();
+        self.built.resize(nwords.div_ceil(64), Cell::new(0));
+        let pairs = self.pairs.get_mut();
+        pairs.built_to = 0;
+        pairs.pairs.clear();
+        for stack in &mut pairs.open {
+            stack.clear();
+        }
+    }
+
+    /// The bracket bits of word `w`, built on first use.
+    #[inline]
+    fn word(&self, src: &[u8], st: &[u64], n: usize, w: usize) -> u64 {
+        let (i, b) = (w >> 6, 1u64 << (w & 63));
+        let built = &self.built[i];
+        if built.get() & b == 0 {
+            self.bits[w].set(bracket_word(src, w << 6, n) & st[w]);
+            built.set(built.get() | b);
+        }
+        self.bits[w].get()
+    }
 }
 
-pub fn memo_new_lex() {
-    MEMO_GEN.with(|g| g.set(g.get().wrapping_add(1)));
+/// Bits of the 64 bytes at `base` that are brackets (bytes at or past `n` are clear). The source
+/// carries `PAD` bytes past `n`, so a whole word is readable whenever `base < n`.
+fn bracket_word(src: &[u8], base: usize, n: usize) -> u64 {
+    if base >= n {
+        return 0;
+    }
+    let mut out = bracket_bits(src, base);
+    if base + 64 > n {
+        out &= (1u64 << (n - base)) - 1;
+    }
+    out
 }
 
-pub unsafe fn angle_match_back(
-    src: *const u8,
-    st: *const u64,
-    kind: *const u8,
-    gt: usize,
-) -> AngleMatch {
+/// Match the close punctuator at `from` back to its opener over the bracket bitmap, counting
+/// only punctuator delimiters - template-closing `}`s and cleared literal interiors are
+/// invisible. Past [`BRACE_MATCH_CAP`] bracket steps the answer comes from a per-file
+/// closer-to-opener table built once, so it stays exact; None if unbalanced.
+#[inline]
+pub fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8) -> Option<usize> {
+    let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
     let mut depth: i32 = 1;
-    let mut tmpl: i32 = 0;
     let mut steps: u32 = 0;
-    let mut q = bm_prev_sig(st, kind, gt);
-    while q >= 0 {
-        steps += 1;
-        if steps > ANGLE_MATCH_CAP {
-            return AngleMatch::Unknown;
-        }
-        let w = q as usize;
-        let kk = kind_at(kind, w);
-        if tmpl > 0 {
-            if kk == tk!(TemplateTail) {
-                tmpl += 1;
-            } else if kk == tk!(TemplateHead) {
-                tmpl -= 1;
-            }
-            q = bm_prev_sig(st, kind, w);
-            continue;
-        }
-        if kk == tk!(TemplateTail) {
-            tmpl = 1;
-            q = bm_prev_sig(st, kind, w);
-            continue;
-        }
-        if kk >= OP_KIND_BASE {
-            let c = *src.add(w);
-            match c {
-                b'>' => {
-                    if !(w > 0 && *src.add(w - 1) == b'=') {
-                        depth += 1;
-                    }
-                }
-                b'<' => {
-                    if *src.add(w + 1) == b'=' {
-                        return AngleMatch::NotType;
-                    }
+    let mut w = from >> 6;
+    let mut bits = b.word(src, st, n, w) & ((1u64 << (from & 63)) - 1);
+    loop {
+        while bits != 0 {
+            let i = 63 - bits.leading_zeros() as usize;
+            bits &= !(1u64 << i);
+            let pos = (w << 6) | i;
+            if kind[pos] >= OP_KIND_BASE {
+                let c = src[pos];
+                if c == close {
+                    depth += 1;
+                } else if c == open {
                     depth -= 1;
                     if depth == 0 {
-                        return AngleMatch::Found(w);
+                        return Some(pos);
                     }
                 }
-                b')' | b']' | b'}' => {
-                    let open = match c {
-                        b')' => b'(',
-                        b']' => b'[',
-                        _ => b'{',
-                    };
-                    match match_delim_back(src, st, kind, w, open, c) {
-                        Some(op) => {
-                            q = bm_prev_sig(st, kind, op);
-                            continue;
-                        }
-                        None => return AngleMatch::Unknown,
-                    }
-                }
-                b'(' | b'[' | b'{' | b';' => return AngleMatch::NotType,
-                b'.' | b',' | b'|' | b'&' | b'?' | b':' | b'=' | b'+' | b'-' => {}
-                _ => return AngleMatch::NotType,
             }
-        } else if !matches!(
-            kk,
-            tk!(Ident)
-                | tk!(IdentEscaped)
-                | tk!(Number)
-                | tk!(BigInt)
-                | tk!(String)
-                | tk!(TemplateNoSub)
-        ) {
-            if kk == tk!(TemplateHead) || kk == tk!(TemplateMiddle) {
-                return AngleMatch::Unknown;
+            steps += 1;
+            if steps > BRACE_MATCH_CAP {
+                return delim_memo_opener(tokens, from);
             }
-            return AngleMatch::NotType;
         }
-        q = bm_prev_sig(st, kind, w);
-    }
-    AngleMatch::NotType
-}
-
-pub unsafe fn chain_head(
-    src: *const u8,
-    st: *const u64,
-    kind: *const u8,
-    from: usize,
-) -> Option<usize> {
-    let mut head = from;
-    while prop_name(src, head) {
-        let d = bm_prev_sig(st, kind, head);
-        if d < 0 {
+        if w == 0 {
             return None;
         }
-        let o = bm_prev_sig(st, kind, d as usize);
-        if o < 0 {
-            return None;
-        }
-        let op = o as usize;
-        if kind_at(kind, op) == tk!(Ident) {
-            head = op;
-            continue;
-        }
-        if kind_at(kind, op) >= OP_KIND_BASE && *src.add(op) == b')' {
-            let lp = match_delim_back(src, st, kind, op, b'(', b')')?;
-            let im = bm_prev_sig(st, kind, lp);
-            if im >= 0
-                && kind_at(kind, im as usize) == tk!(Ident)
-                && ident_is(src, im as usize, b"import")
-            {
-                return Some(im as usize);
-            }
-        }
-        return None;
+        w -= 1;
+        bits = b.word(src, st, n, w);
     }
-    Some(head)
-}
-
-/// Match the close punctuator at `from` back to its opener, counting only
-/// punctuator delimiters - template-closing `}`s and cleared literal
-/// interiors are invisible. Past the cap the answer comes from a per-file
-/// closer-to-opener table built once, so it is exact; None if unbalanced.
-#[inline]
-pub unsafe fn match_delim_back(
-    src: *const u8,
-    st: *const u64,
-    kind: *const u8,
-    from: usize,
-    open: u8,
-    close: u8,
-) -> Option<usize> {
-    let mut depth: i32 = 1;
-    let mut steps: u32 = 0;
-    let mut q = bm_prev1(st, from);
-    while q >= 0 {
-        steps += 1;
-        if steps > BRACE_MATCH_CAP {
-            return delim_memo_opener(src, st, kind, from);
-        }
-        let pos = q as usize;
-        if *kind.add(pos) >= OP_KIND_BASE {
-            let c = *src.add(pos);
-            if c == close {
-                depth += 1;
-            } else if c == open {
-                depth -= 1;
-                if depth == 0 {
-                    return Some(pos);
-                }
-            }
-        }
-        q = bm_prev1(st, pos);
-    }
-    None
 }
 
 #[inline(never)]
-unsafe fn delim_memo_opener(
-    src: *const u8,
-    st: *const u64,
-    kind: *const u8,
-    from: usize,
-) -> Option<usize> {
-    let generation = MEMO_GEN.with(Cell::get);
-    DELIM_MEMO.with(|cell| {
-        let mut m = cell.borrow_mut();
-        if m.generation != generation {
-            m.generation = generation;
-            m.upto = 0;
-            m.pairs.clear();
-            for stack in &mut m.open {
-                stack.clear();
+fn delim_memo_opener(tokens: &Tokens, from: usize) -> Option<usize> {
+    let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
+    let mut m = b.pairs.borrow_mut();
+    if from >= m.built_to {
+        let first = m.built_to >> 6;
+        let last = from >> 6;
+        let mut w = first;
+        while w <= last {
+            let mut bits = b.word(src, st, n, w);
+            if w == first {
+                bits &= !((1u64 << (m.built_to & 63)) - 1);
             }
-        }
-        let mut w = bm_next1(st, m.upto, from + 1);
-        while w <= from {
-            if *kind.add(w) >= OP_KIND_BASE {
-                let c = *src.add(w);
-                match c {
-                    b'(' | b'[' | b'{' => m.open[delim_slot(c)].push(w as u32),
-                    b')' | b']' | b'}' => {
-                        if let Some(o) = m.open[delim_slot(c)].pop() {
-                            m.pairs.push((w as u32, o));
+            if w == last {
+                bits &= u64::MAX >> (63 - (from & 63));
+            }
+            while bits != 0 {
+                let p = (w << 6) | bits.trailing_zeros() as usize;
+                bits &= bits - 1;
+                if kind[p] >= OP_KIND_BASE {
+                    let c = src[p];
+                    match c {
+                        b'(' | b'[' | b'{' => m.open[delim_slot(c)].push(p as u32),
+                        b')' | b']' | b'}' => {
+                            if let Some(o) = m.open[delim_slot(c)].pop() {
+                                m.pairs.push((p as u32, o));
+                            }
                         }
+                        _ => {}
                     }
-                    _ => {}
                 }
             }
-            w = bm_next1(st, w + 1, from + 1);
+            w += 1;
         }
-        m.upto = from + 1;
-        match m.pairs.binary_search_by_key(&(from as u32), |pr| pr.0) {
-            Ok(i) => Some(m.pairs[i].1 as usize),
-            Err(_) => None,
-        }
-    })
+        m.built_to = from + 1;
+    }
+    match m.pairs.binary_search_by_key(&(from as u32), |pr| pr.0) {
+        Ok(i) => Some(m.pairs[i].1 as usize),
+        Err(_) => None,
+    }
 }
 
 fn delim_slot(c: u8) -> usize {
@@ -278,24 +182,16 @@ fn delim_slot(c: u8) -> usize {
     }
 }
 
-pub unsafe fn word_is_any(src: *const u8, w: usize, words: &[&[u8]]) -> bool {
+pub fn word_is_any(src: &[u8], w: usize, words: &[&[u8]]) -> bool {
     let len = word_len(src, w);
-    let first = *src.add(w);
-    let mut i = 0;
-    while i < words.len() {
-        let kw = words[i];
-        if kw.len() == len && kw[0] == first && ident_is(src, w, kw) {
-            return true;
-        }
-        i += 1;
-    }
-    false
+    let first = src[w];
+    words.iter().any(|kw| kw.len() == len && kw[0] == first && ident_is(src, w, kw))
 }
 
 #[inline(always)]
-pub unsafe fn word_len(src: *const u8, w: usize) -> usize {
+pub fn word_len(src: &[u8], w: usize) -> usize {
     let mut e = w + 1;
-    while is_word(*src.add(e)) {
+    while is_word(src[e]) {
         e += 1;
     }
     e - w
@@ -304,51 +200,25 @@ pub unsafe fn word_len(src: *const u8, w: usize) -> usize {
 /// Does the identifier at `pos` equal exactly `kw`? The following-byte check
 /// rejects longer identifiers (the source pad makes it safe at EOF).
 #[inline]
-pub unsafe fn ident_is(src: *const u8, pos: usize, kw: &[u8]) -> bool {
-    let mut i = 0;
-    while i < kw.len() {
-        if *src.add(pos + i) != kw[i] {
-            return false;
-        }
-        i += 1;
-    }
-    let after = pos + kw.len();
-    !is_word(*src.add(after)) || trivia_at(src, after).is_some()
-}
-
-#[inline]
-pub unsafe fn trivia_at(src: *const u8, i: usize) -> Option<(bool, usize)> {
-    let b = *src.add(i);
-    if b < 0x80 {
-        return None;
-    }
-    let b1 = *src.add(i + 1);
-    let b2 = *src.add(i + 2);
-    match b {
-        0xc2 if b1 == 0xa0 || b1 == 0x85 => Some((false, 2)),
-        0xe1 if b1 == 0x9a && b2 == 0x80 => Some((false, 3)),
-        0xe2 if b1 == 0x80 && ((0x80..=0x8b).contains(&b2) || b2 == 0xaf) => Some((false, 3)),
-        0xe2 if b1 == 0x80 && (b2 == 0xa8 || b2 == 0xa9) => Some((true, 3)),
-        0xe2 if b1 == 0x81 && b2 == 0x9f => Some((false, 3)),
-        0xe3 if b1 == 0x80 && b2 == 0x80 => Some((false, 3)),
-        0xef if b1 == 0xbb && b2 == 0xbf => Some((false, 3)),
-        _ => None,
+pub fn ident_is(src: &[u8], pos: usize, kw: &[u8]) -> bool {
+    src[pos..].starts_with(kw) && {
+        let after = pos + kw.len();
+        !is_word(src[after]) || text::unicode_ws_len(src, after) != 0
     }
 }
 
-/// Previous significant token start before `pos` (skipping trivia), or -1 at
-/// start of input.
+/// Previous significant token start before `pos` (skipping trivia), or `None` at start of input.
 #[inline]
-pub unsafe fn bm_prev_sig(st: *const u64, kind: *const u8, pos: usize) -> i64 {
-    let mut q = bm_prev1(st, pos);
-    while q >= 0 {
-        let k = *kind.add(q as usize);
+pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize) -> Option<usize> {
+    let mut q = bits::prev1(st, pos);
+    while let Some(p) = q {
+        let k = kind[p];
         if k == tk!(Whitespace)
             || k == tk!(LineComment)
             || k == tk!(BlockComment)
             || k == tk!(Hashbang)
         {
-            q = bm_prev1(st, q as usize);
+            q = bits::prev1(st, p);
             continue;
         }
         break;
@@ -357,8 +227,8 @@ pub unsafe fn bm_prev_sig(st: *const u64, kind: *const u8, pos: usize) -> i64 {
 }
 
 #[inline(always)]
-pub unsafe fn kind_at(kind: *const u8, w: usize) -> u8 {
-    let k = *kind.add(w);
+pub fn kind_at(kind: &[u8], w: usize) -> u8 {
+    let k = kind[w];
     if k >= KW_KIND_BASE && k <= KW_KIND_MAX {
         return tk!(Ident);
     }
@@ -368,22 +238,14 @@ pub unsafe fn kind_at(kind: *const u8, w: usize) -> u8 {
     k
 }
 
-#[inline]
-pub unsafe fn prop_name(src: *const u8, pos: usize) -> bool {
-    pos > 0 && *src.add(pos - 1) == b'.' && (pos < 2 || *src.add(pos - 2) != b'.')
-}
-
-pub unsafe fn lt_in_range(src: *const u8, a: usize, b: usize) -> bool {
+pub fn lt_in_range(src: &[u8], a: usize, b: usize) -> bool {
     let mut i = a;
     while i < b {
-        let c = *src.add(i);
+        let c = src[i];
         if c == b'\n' || c == b'\r' {
             return true;
         }
-        if c == 0xe2
-            && *src.add(i + 1) == 0x80
-            && (*src.add(i + 2) == 0xa8 || *src.add(i + 2) == 0xa9)
-        {
+        if c == 0xe2 && src[i + 1] == 0x80 && (src[i + 2] == 0xa8 || src[i + 2] == 0xa9) {
             return true;
         }
         i += 1;

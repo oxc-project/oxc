@@ -3,11 +3,16 @@ use crate::{error::DiagCode, lanes::Lanes};
 use crate::pipeline::{
     bitmap::bm_get,
     bytes::{is_id_start, is_word, is_ws},
-    disambiguate::{jsx_site_is_expression, ts_type_region_open, type_parameter_list_head},
+    disambiguate::{
+        Tokens, Walks, jsx_site_is_expression, ts_type_region_open, type_parameter_list_head,
+    },
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
     tables::Tables,
+    token_view,
 };
+
+use super::names::jsx_skip_trivia_fast;
 
 const FN_TYPE_SCAN_CAP: usize = 1 << 16;
 const FN_TYPE_TMPL_DEPTH: u32 = 8;
@@ -41,7 +46,25 @@ pub(super) unsafe fn jsx_over_type_params(
         AngleVerdict::TypeParams => false,
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {
-            jsx_ambiguous_site(t, src, st, opch, kind, n, lt, gt, lp, lanes)
+            let tokens = token_view(
+                t,
+                src,
+                st,
+                opch,
+                word,
+                kind,
+                n,
+                ts,
+                0,
+                lanes.module,
+                &lanes.disambiguate.brackets,
+            );
+            let (jsx, unterminated) =
+                jsx_ambiguous_site(&tokens, &mut lanes.disambiguate.walks, src, n, lt, lp);
+            if unterminated {
+                lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
+            }
+            jsx
         }
     }
 }
@@ -61,26 +84,19 @@ pub(super) unsafe fn jsx_over_type_params(
 #[inline]
 unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> AngleVerdict {
     let mut p = t;
-    // optional `const` type-parameter modifier: `<const T,>`
+    // optional `const` type-parameter modifier: `<const T,>`. Like any modifier it must stay
+    // on the line of its parameter; a comment between them is fine.
     if n - p >= 6 && &src[p..p + 5] == b"const" && !is_word(src[p + 5]) {
-        let mut qq = p + 5;
-        while qq < n && is_ws(src[qq]) {
-            qq += 1;
-        }
-        if qq < n && is_id_start(src[qq]) {
+        let qq = jsx_skip_trivia_fast(src.as_ptr(), n, p + 5);
+        if qq < n && is_id_start(src[qq]) && !line_break_in(src, p + 5, qq) {
             p = qq; // `const` was a modifier; advance to the real param
         }
     }
     while p < n && bm_get(word, p) {
         p += 1; // first type-parameter identifier
     }
-    while p < n {
-        let w = head_ws_len(src, p);
-        if w == 0 {
-            break;
-        }
-        p += w;
-    }
+    // The signal may sit behind whitespace (Unicode too) or a comment: `<T /*c*/ extends U>`.
+    p = jsx_skip_trivia_fast(src.as_ptr(), n, p);
     if p >= n {
         return AngleVerdict::Jsx;
     }
@@ -108,10 +124,7 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
     // `extends` is also a legal JSX attribute name; it signals a generic only
     // as a full word not followed by `=` (attr value) or `>` (boolean attr).
     if n - p >= 7 && &src[p..p + 7] == b"extends" && !bm_get(word, p + 7) {
-        let mut qq = p + 7;
-        while qq < n && is_ws(src[qq]) {
-            qq += 1;
-        }
+        let qq = jsx_skip_trivia_fast(src.as_ptr(), n, p + 7);
         let d = if qq < n { src[qq] } else { 0 };
         if d == b'/' && !matches!(if qq + 1 < n { src[qq + 1] } else { 0 }, b'*' | b'/') {
             return AngleVerdict::Jsx;
@@ -122,46 +135,39 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
     AngleVerdict::Jsx
 }
 
-/// Byte length of the whitespace at `p` - ASCII, or the multi-byte
-/// ECMAScript whitespace `misc_pre` marked as a token boundary - else 0.
-#[inline(always)]
-unsafe fn head_ws_len(src: &[u8], p: usize) -> usize {
-    let c = src[p];
-    if is_ws(c) {
-        return 1;
+/// Does `src[a..b]` hold a LineTerminator (LF, CR, or the 3-byte LS/PS)?
+#[inline]
+fn line_break_in(src: &[u8], a: usize, b: usize) -> bool {
+    let mut i = a;
+    while i < b {
+        match src[i] {
+            b'\n' | b'\r' => return true,
+            0xE2 if src[i + 1] == 0x80 && matches!(src[i + 2], 0xA8 | 0xA9) => return true,
+            _ => i += 1,
+        }
     }
-    if c >= 0x80 {
-        return unicode_ws_len(src.as_ptr(), p);
-    }
-    0
+    false
 }
 
+/// Is the ambiguous `<T>(` at `lt` JSX (true) or a type-parameter list (false)? The second
+/// answer says whether it is an unterminated JSX element to report: a generic arrow shape at a
+/// site where an operand may start.
 #[inline(never)]
 unsafe fn jsx_ambiguous_site(
-    t: &Tables,
+    tokens: &Tokens,
+    walks: &mut Walks,
     src: *const u8,
-    st: *const u64,
-    opch: *const u64,
-    kind: *const u8,
     n: usize,
     lt: usize,
-    gt: usize,
     lp: usize,
-    lanes: &mut Lanes,
-) -> bool {
-    if ts_type_region_open(t, src, st, opch, kind, n, lt) {
-        return false;
-    }
-    if type_parameter_list_head(t, src, st, opch, kind, n, lt) {
-        return false;
+) -> (bool, bool) {
+    if ts_type_region_open(tokens, walks, lt) || type_parameter_list_head(tokens, walks, lt) {
+        return (false, false);
     }
     if generic_fn_type_after(src, n, lp) {
-        if jsx_site_is_expression(t, src, st, opch, kind, n, lt) {
-            lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
-        }
-        return false;
+        return (false, jsx_site_is_expression(tokens, walks, lt));
     }
-    true
+    (true, false)
 }
 
 unsafe fn generic_fn_type_after(src: *const u8, n: usize, lp: usize) -> bool {

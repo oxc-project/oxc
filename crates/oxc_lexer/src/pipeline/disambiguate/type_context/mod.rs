@@ -8,22 +8,26 @@
 //! - `carve`, for a `<` in a `.tsx` file ([`tsx`]).
 //!   `<T>` can open either a JSX element or a type parameter list, as in `let f: <T>(x: T) => T`.
 //!
-//! There are 5 files, each depending only on the ones listed before it:
+//! There are 4 files:
 //!
 //! - [`bytes`]: Bracket matching by scanning raw source bytes.
 //! - [`type_list`]: TypeScript's checks for accepting `<...>` as type arguments in an expression.
-//! - [`context`]: Whether a `<` is in a type or an expression. This is the recursive core.
 //! - [`runs`]: Entry points for `coalesce`.
 //! - [`tsx`]: Entry points for `carve`.
+//!
+//! What the bytes around a site cannot settle, the forward context walk answers ([`context`]).
+//!
+//! [`context`]: super::context
 
 mod bytes;
-mod context;
 mod runs;
 mod tsx;
 mod type_list;
 
+pub(super) use bytes::lt_run_opens_type_args;
 pub use runs::{gt_run_split, lt_run_split};
 pub use tsx::{jsx_site_is_expression, ts_type_region_open, type_parameter_list_head};
+pub(super) use type_list::type_args_at;
 
 #[cfg(test)]
 mod tests;

@@ -61,20 +61,6 @@ fn await_keyword_stays_regex() {
 }
 
 #[test]
-fn jsx_replay_oracle() {
-    let jsx = |code: &str| kinds_of(code, ScriptJSX);
-    let ks = jsx("function* items(d) { for (const x of d) yield <li id={x}/>; }");
-    assert!(ks.contains(&TokenKind::JsxLt), "yielded JSX element must frame: {ks:?}");
-    let ks = jsx("var await = 1, max = 10;\nif (await < max) done();");
-    assert!(!ks.contains(&TokenKind::JsxLt), "await < max is a comparison: {ks:?}");
-    assert!(ks.contains(&TokenKind::Lt), "expected a plain `<`: {ks:?}");
-    let ks = jsx("async function f() { return await <Spinner/>; }");
-    assert!(ks.contains(&TokenKind::JsxLt), "awaited JSX element must frame: {ks:?}");
-    let ks = jsx("var await = 1, g = 2;\nvar el = <a b={async () => await 1} c={await /2/g}/>;");
-    assert!(!ks.contains(&TokenKind::RegExp), "container leak, expected division: {ks:?}");
-}
-
-#[test]
 fn concise_bodies_pop() {
     division("var await = 1; const g = [async () => await 1, await /2/g];", ScriptJS);
     division("var await = 1; const h = (async () => await 1, await /2/g);", ScriptJS);
@@ -88,7 +74,7 @@ fn params_take_their_functions_kind() {
 }
 
 #[test]
-fn module_gate_skips_replay() {
+fn module_goal_keeps_yield_and_await_reserved() {
     let ks = kinds_of("var r = await /re/.test(x);", ModuleJS);
     assert!(ks.contains(&TokenKind::RegExp), "module keeps await reserved: {ks:?}");
     let ks = kinds_of("var r = yield /re/;", ModuleJS);
@@ -252,7 +238,21 @@ fn bigint_and_escaped_method_names() {
 }
 
 #[test]
-fn replay_hops_return_types_and_type_parameters() {
+fn jsx_after_yield_and_await() {
+    let jsx = |code: &str| kinds_of(code, ScriptJSX);
+    let ks = jsx("function* items(d) { for (const x of d) yield <li id={x}/>; }");
+    assert!(ks.contains(&TokenKind::JsxLt), "yielded JSX element must frame: {ks:?}");
+    let ks = jsx("var await = 1, max = 10;\nif (await < max) done();");
+    assert!(!ks.contains(&TokenKind::JsxLt), "await < max is a comparison: {ks:?}");
+    assert!(ks.contains(&TokenKind::Lt), "expected a plain `<`: {ks:?}");
+    let ks = jsx("async function f() { return await <Spinner/>; }");
+    assert!(ks.contains(&TokenKind::JsxLt), "awaited JSX element must frame: {ks:?}");
+    let ks = jsx("var await = 1, g = 2;\nvar el = <a b={async () => await 1} c={await /2/g}/>;");
+    assert!(!ks.contains(&TokenKind::RegExp), "container leak, expected division: {ks:?}");
+}
+
+#[test]
+fn walk_crosses_return_types_and_type_parameters() {
     regex("x = async (): T => { await /re/; };", ScriptTS);
     regex("x = async (): typeof cb => { await /re/; };", ScriptTS);
     regex("var $: <baz>() => 1n | T = async (): typeof cb => { await /<div>/ };", ScriptTS);

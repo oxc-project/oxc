@@ -2,18 +2,19 @@ use crate::{error::DiagCode, lanes::Lanes, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
-    bytes::{is_digit, is_id_start, is_word, is_ws},
-    disambiguate::{bm_prev_sig, not_operator_position},
+    bytes::{is_digit, is_id_start, is_word},
+    disambiguate::{not_operator_position, prev_sig},
     find::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2,
     },
-    scan::scan_block_comment,
     tables::Tables,
+    token_view,
 };
 
 use super::common::{
-    lex_block_comment, lex_line_comment, lex_slash, lex_string, lex_template_segment,
+    html_close_comment_at, html_open_comment_at, lex_block_comment, lex_html_close_comment,
+    lex_html_open_comment, lex_line_comment, lex_slash, lex_string, lex_template_segment,
     skip_unicode_brace_escape,
 };
 
@@ -22,7 +23,7 @@ mod hyphens;
 mod names;
 use angle_brackets::jsx_over_type_params;
 use hyphens::jsx_glue_hyphens;
-use names::{jsx_name_end, jsx_names_equal_fast, jsx_skip_trivia};
+use names::{jsx_name_end, jsx_names_equal_fast, jsx_skip_trivia, jsx_skip_trivia_fast};
 
 /// Template substitutions that can nest inside a type-argument list on a JSX
 /// element name before the run stops being carved. Overflow falls back to the
@@ -82,6 +83,11 @@ pub(super) unsafe fn carve_jsx(
     lanes: &mut Lanes,
 ) {
     let src = srcs.as_ptr();
+    // Annex B B.1.3 (`-->` at line start) needs JS mode to stop at `>`, which JSX is full of.
+    // The finders that do so are switched on only after a `<!--` has been lexed (the pair the
+    // legacy comments come in, and `<!--` is caught free on the `<` path), so a module or a
+    // JSX script without HTML comments never pays; a `-->` before any `<!--` stays operators.
+    let mut html_close = false;
     let mut stack: Vec<JFrame> = Vec::with_capacity(64);
     let mut mode = JMode::Js;
     let mut text_start = 0usize;
@@ -101,10 +107,13 @@ pub(super) unsafe fn carve_jsx(
                 let in_brace = stack.last().is_some_and(|f| {
                     matches!(f.kind, JFrameKind::TemplateSub | JFrameKind::JsxCont)
                 });
-                let s = if in_brace {
-                    find_opener_jsx7(src, n, i)
-                } else {
-                    find_opener_jsx5(src, n, i)
+                // The finders that also stop at `>` are only switched on by a `<!--` in a
+                // script (see `html_close`).
+                let s = match (in_brace, html_close) {
+                    (true, false) => find_opener_jsx7(src, n, i),
+                    (true, true) => find_opener6(src, n, i),
+                    (false, false) => find_opener_jsx5(src, n, i),
+                    (false, true) => find_opener(src, n, i),
                 };
                 if s >= n {
                     break;
@@ -191,10 +200,16 @@ pub(super) unsafe fn carve_jsx(
                         }
                     }
                     b'/' => {
-                        i = lex_slash(t, src, srcs, n, st, kind, opch, word, digit, ts, s, lanes);
+                        i = lex_slash(t, src, srcs, n, st, kind, opch, word, ts, s, lanes);
                     }
                     b'<' => {
                         let c1 = if s + 1 < n { *src.add(s + 1) } else { 0 };
+                        if c1 == b'!' && html_open_comment_at(srcs, n, s, lanes.module) {
+                            // Annex B B.1.1: the goal, not the JSX setting, decides.
+                            i = lex_html_open_comment(src, srcs, n, st, kind, opch, s, lanes);
+                            html_close = !lanes.module;
+                            continue;
+                        }
                         if c1 == b'<' {
                             // `<<` shift: skip both, or the second `<` would
                             // read the first as an operand preceder.
@@ -203,38 +218,25 @@ pub(super) unsafe fn carve_jsx(
                             // `<=` / `a<5`: leave for coalesce.
                             i = s + 1;
                         } else if not_operator_position(
-                            t,
-                            src,
-                            st,
-                            kind,
-                            word,
-                            digit,
-                            n,
+                            &token_view(
+                                t,
+                                src,
+                                st,
+                                opch,
+                                word,
+                                kind,
+                                n,
+                                ts,
+                                0,
+                                lanes.module,
+                                &lanes.disambiguate.brackets,
+                            ),
+                            &mut lanes.disambiguate.walks,
                             s,
-                            ts,
-                            lanes.module,
                         ) {
-                            // Operand position: candidate JSX.
-                            let mut tpos = s + 1;
-                            loop {
-                                while tpos < n && is_ws(*src.add(tpos)) {
-                                    tpos += 1;
-                                }
-                                if tpos + 1 >= n || *src.add(tpos) != b'/' {
-                                    break;
-                                }
-                                match *src.add(tpos + 1) {
-                                    b'*' => {
-                                        let e = scan_block_comment(src, n, tpos + 2).0;
-                                        if e >= n {
-                                            break;
-                                        }
-                                        tpos = e + 1;
-                                    }
-                                    b'/' => tpos = find_line_terminator(src, n, tpos + 2),
-                                    _ => break,
-                                }
-                            }
+                            // Operand position: candidate JSX. Whitespace (Unicode too) and
+                            // comments may separate `<` from the name.
+                            let tpos = jsx_skip_trivia_fast(src, n, s + 1);
                             let tc = if tpos < n { *src.add(tpos) } else { 0 };
                             if tc == b'>' {
                                 // fragment `<>`
@@ -270,6 +272,14 @@ pub(super) unsafe fn carve_jsx(
                             i = s + 1;
                         }
                     }
+                    b'>' => {
+                        // Only a script's finder stops here: Annex B B.1.3 `-->` at line start.
+                        i = if html_close_comment_at(srcs, s, lanes.module) {
+                            lex_html_close_comment(src, srcs, n, st, kind, opch, s, lanes)
+                        } else {
+                            s + 1
+                        };
+                    }
                     _ => {
                         i = s + 1;
                     }
@@ -288,8 +298,20 @@ pub(super) unsafe fn carve_jsx(
                 }
                 let c = *src.add(s);
                 if c == b'<' {
-                    let q = bm_prev_sig(st, kind, s);
-                    if q >= 0 && *src.add(q as usize) == b'=' {
+                    let tokens = token_view(
+                        t,
+                        src,
+                        st,
+                        opch,
+                        word,
+                        kind,
+                        n,
+                        ts,
+                        0,
+                        lanes.module,
+                        &lanes.disambiguate.brackets,
+                    );
+                    if prev_sig(tokens.st, tokens.kind, s).is_some_and(|q| *src.add(q) == b'=') {
                         let tpos = jsx_skip_trivia(src, n, s + 1);
                         jsx_punct(kind, opch, s, tk!(JsxLt));
                         stack.push(JFrame {
@@ -466,18 +488,29 @@ pub(super) unsafe fn carve_jsx(
                         } else if d == b'/' {
                             i = lex_line_comment(src, srcs, n, st, kind, s, lanes);
                         } else {
+                            // `/>` closes the tag, with any trivia (comments, Unicode
+                            // whitespace) between the two.
                             let gp = if d == b'>' {
                                 Some(s + 1)
-                            } else if is_ws(d) {
-                                let mut w = s + 2;
-                                while w < n && is_ws(*src.add(w)) {
-                                    w += 1;
-                                }
-                                (w < n && *src.add(w) == b'>').then_some(w)
                             } else {
-                                None
+                                let w = jsx_skip_trivia(src, n, s + 1);
+                                (w < n && *src.add(w) == b'>').then_some(w)
                             };
                             if let Some(gp) = gp {
+                                // Carve any comment between `/` and `>`: the tag resumes past
+                                // the `>`.
+                                let mut q = s + 1;
+                                while q < gp {
+                                    q = match (*src.add(q), *src.add(q + 1)) {
+                                        (b'/', b'*') => {
+                                            lex_block_comment(src, srcs, n, st, kind, q, lanes)
+                                        }
+                                        (b'/', b'/') => {
+                                            lex_line_comment(src, srcs, n, st, kind, q, lanes)
+                                        }
+                                        _ => q + 1,
+                                    };
+                                }
                                 jsx_punct(kind, opch, gp, tk!(JsxTagEnd));
                                 let parent = stack.last().map_or(JMode::Js, |f| f.parent);
                                 stack.pop();
@@ -546,16 +579,27 @@ pub(super) unsafe fn carve_jsx(
                     text_start = s + 1;
                     i = s + 1;
                 } else {
-                    // c == '<'
+                    // c == '<'. Trivia may follow it: a comment (`</*c*//a>` closes `a`) or
+                    // Unicode whitespace, whose lead byte would pass for a name start.
                     let c1 = if s + 1 < n { *src.add(s + 1) } else { 0 };
-                    let tpos = if c1 == b'/' || c1 == b'>' || is_id_start(c1) {
-                        s + 1
-                    } else {
-                        jsx_skip_trivia(src, n, s + 1)
-                    };
+                    let c2 = if s + 2 < n { *src.add(s + 2) } else { 0 };
+                    let direct = c1 == b'>'
+                        || (c1 == b'/' && c2 != b'*' && c2 != b'/')
+                        || (c1 < 0x80 && is_id_start(c1));
+                    let tpos = if direct { s + 1 } else { jsx_skip_trivia(src, n, s + 1) };
                     let tc = if tpos < n { *src.add(tpos) } else { 0 };
                     if tc == b'/' {
                         // closing tag `</name>` or `</>`; the name stays IDENT
+                        // A comment between `<` and `/` is trivia to carve: the branch resumes
+                        // past the `>` and would otherwise leave its bytes as operators.
+                        let mut q = s + 1;
+                        while q < tpos {
+                            q = match (*src.add(q), *src.add(q + 1)) {
+                                (b'/', b'*') => lex_block_comment(src, srcs, n, st, kind, q, lanes),
+                                (b'/', b'/') => lex_line_comment(src, srcs, n, st, kind, q, lanes),
+                                _ => q + 1,
+                            };
+                        }
                         let mut gp = tpos + 1;
                         loop {
                             gp = find2(src, n, gp, b'>', b'/');
@@ -584,7 +628,7 @@ pub(super) unsafe fn carve_jsx(
                             lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedJsxTag);
                         } else if let Some(f) = stack.last() {
                             let c2 = *src.add(tpos + 1);
-                            let cs = if is_word(c2) || c2 == b'>' {
+                            let cs = if (c2 < 0x80 && is_word(c2)) || c2 == b'>' {
                                 tpos + 1
                             } else {
                                 jsx_skip_trivia(src, gp, tpos + 1)

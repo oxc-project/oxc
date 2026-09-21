@@ -1,40 +1,31 @@
 //! Bracket matching by scanning raw source bytes.
 //!
-//! `common` matches brackets by walking back token by token ([`match_delim_back`], [`angle_match_back`]).
-//! Over long distances that is slow, so the scans here read source bytes instead.
+//! `common` matches brackets backwards over a bitmap of bracket tokens ([`match_delim_back`]).
+//! The scans here go forwards, reading raw source bytes.
 //! The token-start bitmap hides bytes inside literals and comments,
 //! and the operator bitmap hides the angle brackets of JSX tags.
 //!
-//! Backward:
-//! - [`gt_run_closes_type_args`] goes from a run of `>`s back to the `<` which the run would close.
-//! - [`enclosing_opener`] goes back to the nearest unclosed `(`, `[`, `{` or `<`.
-//!
 //! Forward:
 //! - [`angle_close_fwd`] and [`paren_close_fwd`] go from an opener to its closer.
-//! - [`lt_run_opens_type_args`] and [`arrow_after_paren_group`] check for the shape of an arrow function
-//!   after a `<<` or a `(`, as in `Array<<T>(x: T) => T>` or `(x): T => x`.
+//! - [`lt_run_opens_type_args`] checks for the shape of an arrow function after a `<<`,
+//!   as in `Array<<T>(x: T) => T>`.
 //!
 //! Every scan has a length limit, so pathological input can't make it slow.
 //!
-//! [`match_delim_back`]: crate::pipeline::disambiguate::common::match_delim_back
-//! [`angle_match_back`]: crate::pipeline::disambiguate::common::angle_match_back
+//! [`match_delim_back`]: crate::pipeline::disambiguate::common::Tokens::match_delim_back
 
-use crate::token::tk;
-
-use crate::pipeline::{
-    bitmap::bm_get,
-    bytes::{is_id_start, is_ws},
+use crate::{
+    pipeline::bytes::{is_id_start, is_ws},
+    token::{OP_KIND_BASE, tk},
 };
 
-use crate::pipeline::disambiguate::common::kind_at;
+use crate::pipeline::disambiguate::common::{bits, kind_at, text};
 
-pub(super) const ENCLOSING_SCAN_CAP: usize = 1 << 16;
-
-/// Cap for scanning `>` runs: matching `<` is within 100 bytes
-/// Hitting the cap returns `None` (fuse), so it can only widen the residual, never split a shift.
+/// Byte cap on the forward scans. Hitting it answers `None` (fuse), so it can only widen a fused
+/// run, never split a shift.
 pub(super) const GT_SCAN_CAP: usize = 1 << 16;
 
-/// Bytes `gt_run_closes_type_args` reacts to. Everything else is skipped without touching a bitmap.
+/// Bytes the forward angle match reacts to. Everything else is skipped without touching a bitmap.
 static GT_SCAN_DELIM: [bool; 256] = {
     let mut t = [false; 256];
     t[b'<' as usize] = true;
@@ -49,225 +40,27 @@ static GT_SCAN_DELIM: [bool; 256] = {
     t
 };
 
-pub(super) enum Encl {
-    Open(usize, u8),
-    Top,
-    Capped,
-}
-
-/// The `<` opening the outermost of the `run` nested type-argument lists that
-/// the run of `>` bytes at `gt` would close, or `None` when the region is not
-/// delimiter-balanced.
-///
-/// Reads source bytes backward rather than walking tokens: the matching `<`
-/// is a hundred bytes away, but the token walk that finds it has to cross
-/// every `(`/`[`/`{` in between and match each one back to its opener, which
-/// measured ~5,000 cycles a site on `ts_zod.ts` (+1.08 cyc/B). Angles are
-/// gated on `opch & st` so literal interiors and JSX tag punctuation are
-/// invisible; the bracket counters are gated on `st` alone.
-///
-/// The counters are what separate the two readings. A type-argument list is
-/// always delimiter-balanced, so an unmatched `(`/`[`/`{`, or a `;` outside
-/// any of them, proves the region is not one - that is what rejects
-/// `(a << 3) | (a >>> 29)`, `o[(y = e) >> 2]` and `x >>= 8`. A `<<` whose
-/// second byte is no longer a token start is a fused shift; one that
-/// `lt_run_split` already split counts as two openers.
-pub(super) unsafe fn gt_run_closes_type_args(
-    src: *const u8,
-    st: *const u64,
-    opch: *const u64,
-    kind: *const u8,
-    gt: usize,
-    run: usize,
-) -> Option<usize> {
-    let mut depth = run as i32;
-    let mut par: i32 = 0;
-    let mut brk: i32 = 0;
-    let mut brc: i32 = 0;
-    let lo = gt.saturating_sub(GT_SCAN_CAP);
-    let mut i = gt;
-    while i > lo {
-        i -= 1;
-        let c = *src.add(i);
-        if !GT_SCAN_DELIM[c as usize] {
-            continue;
-        }
-        if !bm_get(st, i) {
-            continue;
-        }
-        match c {
-            b'>' => {
-                if !bm_get(opch, i) {
-                    continue;
-                }
-                if i > 0 && *src.add(i - 1) == b'=' {
-                    continue;
-                }
-                let nx = *src.add(i + 1);
-                if (nx == b'>' || nx == b'=') && !bm_get(st, i + 1) {
-                    return None;
-                }
-                depth += 1;
-            }
-            b'<' => {
-                if !bm_get(opch, i) {
-                    continue;
-                }
-                let nx = *src.add(i + 1);
-                if nx == b'=' || (nx == b'<' && !bm_get(st, i + 1)) {
-                    return None;
-                }
-                depth -= 1;
-                if depth == 0 {
-                    return (par == 0 && brk == 0 && brc == 0).then_some(i);
-                }
-            }
-            b')' => par += 1,
-            b'(' => {
-                par -= 1;
-                if par < 0 {
-                    return None;
-                }
-            }
-            b']' => brk += 1,
-            b'[' => {
-                brk -= 1;
-                if brk < 0 {
-                    return None;
-                }
-            }
-            b'}' => {
-                // A substitution-closing `}` is the start of the next
-                // template segment, and its `${` was swallowed by the
-                // preceding one - counting it would leave every
-                // `Array<Map<A, `p${s}q`>>` looking brace-unbalanced.
-                let kk = kind_at(kind, i);
-                if kk == tk!(TemplateMiddle) || kk == tk!(TemplateTail) {
-                    continue;
-                }
-                brc += 1;
-            }
-            b'{' => {
-                brc -= 1;
-                if brc < 0 {
-                    return None;
-                }
-            }
-            _ => {
-                if par == 0 && brk == 0 && brc == 0 {
-                    return None;
-                }
-            }
-        }
-    }
-    None
-}
-
-pub(super) unsafe fn enclosing_opener(
-    src: *const u8,
-    st: *const u64,
-    opch: *const u64,
-    kind: *const u8,
-    n: usize,
-    from: usize,
-    stop_semi: bool,
-    cap: usize,
-) -> Encl {
-    let lo = from.saturating_sub(cap);
-    let mut par: i32 = 0;
-    let mut brk: i32 = 0;
-    let mut brc: i32 = 0;
-    let mut ang: i32 = 0;
-    let mut i = from + 1;
-    while i > lo {
-        i -= 1;
-        let c = *src.add(i);
-        if !GT_SCAN_DELIM[c as usize] || !bm_get(st, i) {
-            continue;
-        }
-        match c {
-            b'>' => {
-                if bm_get(opch, i) && !(i > 0 && *src.add(i - 1) == b'=') {
-                    ang += 1;
-                }
-            }
-            b'<' => {
-                if !bm_get(opch, i) {
-                    continue;
-                }
-                let nx = *src.add(i + 1);
-                if nx == b'=' || (nx == b'<' && !bm_get(st, i + 1)) {
-                    continue;
-                }
-                if nx == b'<' || (i > 0 && *src.add(i - 1) == b'<' && bm_get(st, i - 1)) {
-                    let first = if nx == b'<' { i } else { i - 1 };
-                    if !lt_run_opens_type_args(src, st, opch, kind, n, first) {
-                        continue;
-                    }
-                }
-                if ang == 0 {
-                    return Encl::Open(i, b'<');
-                }
-                ang -= 1;
-            }
-            b')' => par += 1,
-            b'(' => {
-                if par == 0 {
-                    return Encl::Open(i, b'(');
-                }
-                par -= 1;
-            }
-            b']' => brk += 1,
-            b'[' => {
-                if brk == 0 {
-                    return Encl::Open(i, b'[');
-                }
-                brk -= 1;
-            }
-            b'}' => {
-                let kk = kind_at(kind, i);
-                if kk == tk!(TemplateMiddle) || kk == tk!(TemplateTail) {
-                    continue;
-                }
-                brc += 1;
-            }
-            b'{' => {
-                if brc == 0 {
-                    return Encl::Open(i, b'{');
-                }
-                brc -= 1;
-            }
-            _ => {
-                if stop_semi && par == 0 && brk == 0 && brc == 0 && ang == 0 {
-                    return Encl::Top;
-                }
-            }
-        }
-    }
-    if lo == 0 { Encl::Top } else { Encl::Capped }
-}
-
 /// True when the `<<` at `lt` is two type-argument/type-parameter openers
 /// rather than shift-left.
 ///
 /// Only one TypeScript production puts two `<` next to each other: a
 /// type-argument list whose first argument is a function type. The second
-/// `<` therefore has to open a type-parameter list belonging to one:
+/// `<` therefore has to open a type-parameter list belonging to one —
 ///
 /// ```text
 /// Name < < TypeParams > ( Params ) => Type >
 /// ```
 ///
-/// So the whole shape is checked, not a prefix of it. That is what
+/// — so the whole shape is checked, not a prefix of it. That is what
 /// separates `Array<<T>(x: T) => T>` from `a << b >> c` (no `(` after the
 /// first `>`) and from `a << b > (c)` (no `=>` after the parameters). Every
 /// reject path returns false, i.e. today's fused `<<`, so a wrong answer can
 /// never split a real shift.
-pub(super) unsafe fn lt_run_opens_type_args(
-    src: *const u8,
-    st: *const u64,
-    opch: *const u64,
-    kind: *const u8,
+pub(in crate::pipeline::disambiguate) fn lt_run_opens_type_args(
+    src: &[u8],
+    st: &[u64],
+    opch: &[u64],
+    kind: &[u8],
     n: usize,
     lt: usize,
 ) -> bool {
@@ -278,22 +71,22 @@ pub(super) unsafe fn lt_run_opens_type_args(
     if head >= lim {
         return false;
     }
-    let hc = *src.add(head);
-    if !(is_id_start(hc) || (hc == b'\\' && *src.add(head + 1) == b'u')) {
+    let hc = src[head];
+    if !(is_id_start(hc) || (hc == b'\\' && src[head + 1] == b'u')) {
         return false;
     }
     let Some(gt) = angle_close_fwd(src, st, opch, kind, lt + 2, lim, 1) else {
         return false;
     };
     let lp = skip_ws_fwd(src, gt + 1, lim);
-    if lp >= lim || *src.add(lp) != b'(' {
+    if lp >= lim || src[lp] != b'(' {
         return false;
     }
     let Some(rp) = paren_close_fwd(src, st, lp, lim) else {
         return false;
     };
     let ar = skip_ws_fwd(src, rp + 1, lim);
-    if ar + 1 >= lim || *src.add(ar) != b'=' || *src.add(ar + 1) != b'>' {
+    if ar + 1 >= lim || src[ar] != b'=' || src[ar + 1] != b'>' {
         return false;
     }
     // The outer list must close too, or this was a comparison against a
@@ -301,54 +94,9 @@ pub(super) unsafe fn lt_run_opens_type_args(
     angle_close_fwd(src, st, opch, kind, ar + 2, lim, 1).is_some()
 }
 
-pub(super) unsafe fn arrow_after_paren_group(
-    src: *const u8,
-    st: *const u64,
-    lp: usize,
-    n: usize,
-) -> bool {
-    let lim = (lp + GT_SCAN_CAP).min(n);
-    let Some(rp) = paren_close_fwd(src, st, lp, lim) else {
-        return false;
-    };
-    let mut i = skip_ws_fwd(src, rp + 1, lim);
-    if i + 1 < lim && *src.add(i) == b'=' && *src.add(i + 1) == b'>' {
-        return true;
-    }
-    if i >= lim || *src.add(i) != b':' {
-        return false;
-    }
-    let mut depth: i32 = 0;
-    i += 1;
-    while i < lim {
-        if bm_get(st, i) {
-            match *src.add(i) {
-                b'(' | b'[' | b'{' | b'<' => depth += 1,
-                b')' | b']' | b'}' | b'>' => {
-                    if *src.add(i) == b'>' && i > 0 && *src.add(i - 1) == b'=' {
-                        if depth == 0 {
-                            return true;
-                        }
-                    } else {
-                        depth -= 1;
-                        if depth < 0 {
-                            return false;
-                        }
-                    }
-                }
-                b';' => return false,
-                b',' if depth == 0 => return false,
-                _ => {}
-            }
-        }
-        i += 1;
-    }
-    false
-}
-
 #[inline]
-pub(super) unsafe fn skip_ws_fwd(src: *const u8, mut i: usize, lim: usize) -> usize {
-    while i < lim && is_ws(*src.add(i)) {
+pub(super) fn skip_ws_fwd(src: &[u8], mut i: usize, lim: usize) -> usize {
+    while i < lim && is_ws(src[i]) {
         i += 1;
     }
     i
@@ -356,13 +104,13 @@ pub(super) unsafe fn skip_ws_fwd(src: *const u8, mut i: usize, lim: usize) -> us
 
 /// Forward angle match: from `i` at `depth`, the `>` that brings it to 0, or
 /// `None` on an unmatched closer, a `;` outside every bracket, or the cap.
-/// Same gating as [`gt_run_closes_type_args`] - `opch & st` for angles, `st`
-/// for the bracket counters - and the same balance requirement at the close.
-unsafe fn angle_close_fwd(
-    src: *const u8,
-    st: *const u64,
-    opch: *const u64,
-    kind: *const u8,
+/// Angles count only where `opch & st` is set, the bracket counters where `st` is, and the close
+/// must leave every bracket balanced.
+fn angle_close_fwd(
+    src: &[u8],
+    st: &[u64],
+    opch: &[u64],
+    kind: &[u8],
     i: usize,
     lim: usize,
     depth: i32,
@@ -370,62 +118,84 @@ unsafe fn angle_close_fwd(
     angle_close_fwd_capped(src, st, opch, kind, i, lim, depth).0
 }
 
-pub(super) unsafe fn angle_close_fwd_capped(
-    src: *const u8,
-    st: *const u64,
-    opch: *const u64,
-    kind: *const u8,
+pub(in crate::pipeline::disambiguate) fn angle_close_fwd_capped(
+    src: &[u8],
+    st: &[u64],
+    opch: &[u64],
+    kind: &[u8],
     mut i: usize,
     lim: usize,
     mut depth: i32,
 ) -> (Option<usize>, bool) {
-    let mut par: i32 = 0;
-    let mut brk: i32 = 0;
-    let mut brc: i32 = 0;
+    let mut parens: i32 = 0;
+    let mut brackets: i32 = 0;
+    let mut braces: i32 = 0;
     while i < lim {
-        let c = *src.add(i);
-        if GT_SCAN_DELIM[c as usize] && bm_get(st, i) {
-            let op = bm_get(opch, i);
+        if bits::get(st, i) {
+            let j = skip_raw_literal(src, kind, lim, i);
+            if j != i {
+                i = j;
+                continue;
+            }
+            // Asked from the JSX carve, a template head may be carved while its tail is still
+            // raw text (its substitution `}` a punctuator): cross the literal whole.
+            if kind_at(kind, i) == tk!(TemplateHead) {
+                let (close, end) = raw_template_end(src, lim, i);
+                if close < lim && kind_at(kind, close) >= OP_KIND_BASE {
+                    if end > lim {
+                        return (None, true);
+                    }
+                    i = end;
+                    continue;
+                }
+            }
+        }
+        let c = src[i];
+        if GT_SCAN_DELIM[c as usize] && bits::get(st, i) {
+            let op = bits::get(opch, i);
             match c {
                 b'<' => {
-                    if op && *src.add(i + 1) != b'=' {
+                    if op && src[i + 1] != b'=' {
                         depth += 1;
                     }
                 }
                 b'>' => {
-                    if op && !(i > 0 && *src.add(i - 1) == b'=') {
+                    if op && !(i > 0 && src[i - 1] == b'=') {
                         depth -= 1;
                         if depth == 0 {
-                            return ((par == 0 && brk == 0 && brc == 0).then_some(i), false);
+                            return (
+                                (parens == 0 && brackets == 0 && braces == 0).then_some(i),
+                                false,
+                            );
                         }
                     }
                 }
-                b'(' => par += 1,
+                b'(' => parens += 1,
                 b')' => {
-                    par -= 1;
-                    if par < 0 {
+                    parens -= 1;
+                    if parens < 0 {
                         return (None, false);
                     }
                 }
-                b'[' => brk += 1,
+                b'[' => brackets += 1,
                 b']' => {
-                    brk -= 1;
-                    if brk < 0 {
+                    brackets -= 1;
+                    if brackets < 0 {
                         return (None, false);
                     }
                 }
-                b'{' => brc += 1,
+                b'{' => braces += 1,
                 b'}' => {
                     let kk = kind_at(kind, i);
                     if kk != tk!(TemplateMiddle) && kk != tk!(TemplateTail) {
-                        brc -= 1;
-                        if brc < 0 {
+                        braces -= 1;
+                        if braces < 0 {
                             return (None, false);
                         }
                     }
                 }
                 _ => {
-                    if par == 0 && brk == 0 && brc == 0 {
+                    if parens == 0 && brackets == 0 && braces == 0 {
                         return (None, false); // `;`
                     }
                 }
@@ -436,17 +206,168 @@ pub(super) unsafe fn angle_close_fwd_capped(
     (None, true)
 }
 
+/// If a comment, string or template carve has not reached yet starts at the token start `i`, the
+/// position just past it; else `i`. Forward scans from before the carve cursor cross raw text;
+/// carved literals have cleared interiors and are never re-entered.
+#[inline]
+pub(super) fn skip_raw_literal(src: &[u8], kind: &[u8], n: usize, i: usize) -> usize {
+    if kind[i] < OP_KIND_BASE {
+        return i;
+    }
+    let c = src[i];
+    match c {
+        b'/' => match src[i + 1] {
+            b'/' => text::line_terminator_after(src, n, i + 2),
+            b'*' => {
+                let e = text::block_comment_end(src, n, i + 2);
+                if e < n { e + 1 } else { n }
+            }
+            _ => i,
+        },
+        b'"' | b'\'' => {
+            let mut j = i + 1;
+            while j < n {
+                let d = src[j];
+                if d == b'\\' {
+                    j += 2;
+                    continue;
+                }
+                if d == c || d == b'\n' || d == b'\r' {
+                    return j + 1;
+                }
+                j += 1;
+            }
+            n
+        }
+        b'`' => {
+            let mut j = i + 1;
+            while j < n {
+                let d = src[j];
+                if d == b'\\' {
+                    j += 2;
+                    continue;
+                }
+                if d == b'`' {
+                    return j + 1;
+                }
+                j += 1;
+            }
+            n
+        }
+        _ => i,
+    }
+}
+
+/// For a template head whose backtick is at `i`: the `}` closing its first substitution and the
+/// end (exclusive) of the whole literal, over raw bytes. `lim` when the `}` is not found before
+/// `lim`, `lim + 1` when the literal does not end before it. Cold: a template inside a
+/// speculated type-argument list.
+pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize) -> (usize, usize) {
+    let mut j = i + 1;
+    loop {
+        if j >= lim {
+            return (lim, lim + 1);
+        }
+        match src[j] {
+            b'\\' => j += 2,
+            b'`' => return (lim, j + 1),
+            b'$' if src[j + 1] == b'{' => {
+                j += 2;
+                break;
+            }
+            _ => j += 1,
+        }
+    }
+    let close = raw_substitution_close(src, lim, j, 0);
+    if close >= lim {
+        return (lim, lim + 1);
+    }
+    (close, raw_template_rest(src, lim, close + 1, 0))
+}
+
+/// From just after `${`: the index of the matching `}`, or `lim`.
+fn raw_substitution_close(src: &[u8], lim: usize, mut j: usize, depth: u32) -> usize {
+    let mut braces = 0u32;
+    while j < lim {
+        let c = src[j];
+        match c {
+            b'{' => braces += 1,
+            b'}' => {
+                if braces == 0 {
+                    return j;
+                }
+                braces -= 1;
+            }
+            b'`' => {
+                if depth > 8 {
+                    return lim;
+                }
+                j = raw_template_rest(src, lim, j + 1, depth + 1);
+                continue;
+            }
+            b'"' | b'\'' => {
+                j += 1;
+                while j < lim {
+                    let d = src[j];
+                    if d == b'\\' {
+                        j += 2;
+                        continue;
+                    }
+                    j += 1;
+                    if d == c || d == b'\n' || d == b'\r' {
+                        break;
+                    }
+                }
+                continue;
+            }
+            b'/' => match src[j + 1] {
+                b'/' => {
+                    j = text::line_terminator_after(src, lim, j + 2);
+                    continue;
+                }
+                b'*' => {
+                    let e = text::block_comment_end(src, lim, j + 2);
+                    if e >= lim {
+                        return lim;
+                    }
+                    j = e + 1;
+                    continue;
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        j += 1;
+    }
+    lim
+}
+
+/// Template text from `j` (after a substitution's `}` or the opening backtick): the index after
+/// the closing backtick, or `lim + 1`.
+fn raw_template_rest(src: &[u8], lim: usize, mut j: usize, depth: u32) -> usize {
+    while j < lim {
+        match src[j] {
+            b'\\' => j += 2,
+            b'`' => return j + 1,
+            b'$' if src[j + 1] == b'{' => {
+                let close = raw_substitution_close(src, lim, j + 2, depth);
+                if close >= lim {
+                    return lim + 1;
+                }
+                j = close + 1;
+            }
+            _ => j += 1,
+        }
+    }
+    lim + 1
+}
+
 /// The `)` matching the `(` at `i`, or `None` past `lim`.
-unsafe fn paren_close_fwd(
-    src: *const u8,
-    st: *const u64,
-    mut i: usize,
-    lim: usize,
-) -> Option<usize> {
+fn paren_close_fwd(src: &[u8], st: &[u64], mut i: usize, lim: usize) -> Option<usize> {
     let mut d: i32 = 0;
     while i < lim {
-        if bm_get(st, i) {
-            match *src.add(i) {
+        if bits::get(st, i) {
+            match src[i] {
                 b'(' => d += 1,
                 b')' => {
                     d -= 1;
