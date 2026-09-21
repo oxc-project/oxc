@@ -590,11 +590,7 @@ impl PreferExportFrom {
                     if let ModuleExportName::StringLiteral(literal) = &export_specifier.exported {
                         literal.raw.as_ref().unwrap().as_str()
                     } else {
-                        export_specifier
-                            .exported
-                            .name()
-                            .as_str()
-                            .expect("identifier export names are UTF-8")
+                        export_specifier.exported.name().as_str()
                     };
 
                 if imported_name == "default" {

@@ -483,9 +483,7 @@ impl<'a> StyledComponents<'a> {
                 match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                         let symbol_id = specifier.local.symbol_id();
-                        let Some(imported_name) = specifier.imported.name().as_str() else {
-                            continue;
-                        };
+                        let imported_name = specifier.imported.name().as_str();
                         match imported_name {
                             // Handle `import { default as styled }` and `import { styled }`
                             "default" | "styled" => {
