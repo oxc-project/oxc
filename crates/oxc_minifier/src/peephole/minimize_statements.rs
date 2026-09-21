@@ -50,7 +50,8 @@ impl<'a> PeepholeOptimizations {
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let mut old_stmts = stmts.take_in(ctx).into_iter();
+        let dummy = ArenaVec::with_capacity_in(stmts.len(), ctx);
+        let mut old_stmts = std::mem::replace(stmts, dummy).into_iter();
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
         let mut identity_drops = 0u32;
