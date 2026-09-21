@@ -675,9 +675,9 @@ impl<'a> PeepholeOptimizations {
         }
 
         /// Verify whether `arg_expr` is `e > offset ? e - offset : 0` or `e`
-        fn verify_array_arg(
-            arg_expr: &Expression,
-            name_e: &Ident,
+        fn verify_array_arg<'a>(
+            arg_expr: &Expression<'a>,
+            name_e: Ident<'a>,
             offset: f64,
         ) -> VerifyArrayArgResult {
             match arg_expr {
@@ -696,7 +696,7 @@ impl<'a> PeepholeOptimizations {
                         return VerifyArrayArgResult::Invalid;
                     };
                     if test_expr.operator == BinaryOperator::GreaterThan
-                        && test_expr.left.is_specific_id(name_e)
+                        && test_expr.left.is_specific_id(&name_e)
                         && matches!(&test_expr.right, Expression::NumericLiteral(n) if n.value == offset)
                         && cons_expr.operator == BinaryOperator::Subtraction
                         && matches!(&cons_expr.left, Expression::Identifier(id) if id.name == name_e)
@@ -821,7 +821,7 @@ impl<'a> PeepholeOptimizations {
             }
             match &b.right {
                 Expression::Identifier(right) => Some((
-                    &right.name,
+                    right.name,
                     ctx.scoping().get_reference(right.reference_id()).symbol_id(),
                 )),
                 Expression::StaticMemberExpression(sm) => {
