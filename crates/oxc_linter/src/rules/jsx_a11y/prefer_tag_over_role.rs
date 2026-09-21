@@ -54,6 +54,8 @@ impl PreferTagOverRole {
         if let JSXAttributeItem::Attribute(attr) = role_prop
             && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
         {
+            // A plain JSX attribute value is raw source text, so it never contains
+            // a lone surrogate; only expression containers can.
             let roles = role_values.value.as_str().into_iter().flat_map(str::split_whitespace);
             for role in roles {
                 Self::check_role(role, jsx_name, attr.span, ctx);

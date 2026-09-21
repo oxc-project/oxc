@@ -93,6 +93,8 @@ impl Rule for NoPageCustomFont {
         let is_custom_font = element.attributes.iter().any(|attr| {
             matches!(&attr,
               JSXAttributeItem::Attribute(attr) if attr.is_identifier("href") && attr.value.as_ref().is_some_and(|value|
+              // A plain JSX attribute value is raw source text, so it never contains
+              // a lone surrogate; only expression containers can.
               matches!(value, JSXAttributeValue::StringLiteral(literal) if literal.value.as_str().is_some_and(|value| value.starts_with("https://fonts.googleapis.com/css")))
             ))
         });

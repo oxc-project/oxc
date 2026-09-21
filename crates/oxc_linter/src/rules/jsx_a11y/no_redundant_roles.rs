@@ -111,6 +111,8 @@ impl Rule for NoRedundantRoles {
         if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(jsx_el, "role")
             && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
         {
+            // A plain JSX attribute value is raw source text, so it never contains
+            // a lone surrogate; only expression containers can.
             for role in role_values.value.as_str().into_iter().flat_map(str::split_whitespace) {
                 if let Some(implicit_role) = get_redundant_implicit_role(&component, jsx_el, role)
                     && !self.is_allowed_redundant_role(&component, implicit_role)
