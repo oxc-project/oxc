@@ -58,7 +58,11 @@ pub fn build_string_embedder(
             Route::Prettier(prettier_language) => prettier_language.parser(),
             // NOTE: Do not return `Ok(original)` here.
             // We need to keep unsupported content as-is.
-            Route::Unsupported => return Err(format!("Unsupported language: {language}")),
+            // `ember-template-tag` names a `<template>` island inside a `.gjs`/`.gts` host,
+            // not a fence language; a `gjs`/`gts` fence would need the whole hosted pipeline.
+            Route::EmberTemplateTag | Route::Unsupported => {
+                return Err(format!("Unsupported language: {language}"));
+            }
         };
         debug_span!("oxfmt::external::format_embedded", parser = parser_name).in_scope(|| {
             // `clone()` is unavoidable here,
