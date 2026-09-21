@@ -30,7 +30,6 @@ oxc_str = { workspace = true }
 oxc_syntax = { workspace = true, features = ["serialize"], optional = true }
 
 bitflags = { workspace = true }
-bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
 indexmap = { workspace = true }
@@ -49,6 +48,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 syn = { workspace = true, features = ["extra-traits", "full", "parsing", "printing"] }
 toml = { workspace = true }
+usage-rs = { workspace = true, features = ["completions"] }
 
 [features]
 default = ["generate-js"]
