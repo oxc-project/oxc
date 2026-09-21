@@ -2,8 +2,12 @@ use std::{num::NonZero, sync::Arc};
 
 use futures::future::BoxFuture;
 use rustc_hash::FxBuildHasher;
-use tower_lsp_server::gen_lsp_types::Uri;
-use tower_lsp_server::{LspService, Server, gen_lsp_types::ServerInfo};
+use tower_lsp_server::{
+    Client, LanguageServer, LspService, LspServiceBuilder, Server,
+    gen_lsp_types::{ServerInfo, Uri},
+};
+
+use crate::backend::Backend;
 
 mod backend;
 mod capabilities;
@@ -45,6 +49,24 @@ impl<'a> TextDocument<'a> {
     }
 }
 
+fn build_lsp_service<F>(init: F) -> LspServiceBuilder<Backend>
+where
+    F: FnOnce(Client) -> Backend,
+{
+    LspService::build_with_lifecycle_methods(init)
+        .custom_method("workspace/didChangeConfiguration", Backend::did_change_configuration)
+        .custom_method("workspace/didChangeWatchedFiles", Backend::did_change_watched_files)
+        .custom_method("workspace/didChangeWorkspaceFolders", Backend::did_change_workspace_folders)
+        .custom_method("textDocument/didSave", Backend::did_save)
+        .custom_method("textDocument/didChange", Backend::did_change)
+        .custom_method("textDocument/didOpen", Backend::did_open)
+        .custom_method("textDocument/didClose", Backend::did_close)
+        .custom_method("textDocument/codeAction", Backend::code_action)
+        .custom_method("workspace/executeCommand", Backend::execute_command)
+        .custom_method("textDocument/diagnostic", Backend::diagnostic)
+        .custom_method("textDocument/formatting", Backend::formatting)
+}
+
 /// Run the language server.
 ///
 /// The future is type-erased to reduce binary size by preventing CLI and NAPI execution paths from
@@ -65,8 +87,8 @@ async fn run_server_impl(
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
-    let (service, socket) = LspService::build(|client| {
-        crate::backend::Backend::new(
+    let (service, socket) = build_lsp_service(|client| {
+        Backend::new(
             client,
             ServerInfo { name: server_name, version: Some(server_version) },
             worker_manager,
