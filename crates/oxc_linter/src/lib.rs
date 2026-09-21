@@ -66,8 +66,8 @@ mod lint_runner;
 
 pub use crate::config::{normalize_rule_name, plugins::normalize_plugin_name};
 pub use crate::disable_directives::{
-    DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
-    create_unused_directives_diagnostics,
+    DirectivePrefix, DisableDirectives, DisableDirectivesBuilder, DisableRuleComment,
+    RuleCommentRule, RuleCommentType, create_unused_directives_diagnostics,
 };
 pub use crate::{
     config::{
@@ -84,7 +84,7 @@ pub use crate::{
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Fixer, Message, PossibleFixes, oxc_code_short_canonical_name},
     frameworks::FrameworkFlags,
-    lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
+    lint_runner::{DirectivesStore, LintRunError, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -93,7 +93,7 @@ pub use crate::{
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
-    tsgolint::TsGoLintState,
+    tsgolint::{TsGoLintState, type_aware_failure_message},
     utils::{read_to_arena_str, read_to_string},
 };
 use crate::{
@@ -318,8 +318,19 @@ impl Linter {
         &self.options
     }
 
-    pub(crate) fn respect_eslint_disable_directives(&self) -> bool {
-        self.config.respect_eslint_disable_directives()
+    pub(crate) fn respect_eslint_disable_directives_for(&self, path: &Path) -> bool {
+        self.config.respect_eslint_disable_directives_for(path)
+    }
+
+    /// The severity to use when reporting unused disable directives in `path`.
+    ///
+    /// An explicit CLI flag or editor setting takes precedence over the config file value.
+    /// `Some(AllowWarnDeny::Allow)` means "explicitly turned off" and does not fall back to
+    /// the config.
+    pub fn report_unused_directive_for(&self, path: &Path) -> Option<AllowWarnDeny> {
+        self.options
+            .report_unused_directive
+            .or_else(|| self.config.report_unused_disable_directives_for(path))
     }
 
     /// Returns the number of rules that will are being used, unless there
@@ -505,7 +516,7 @@ impl Linter {
         // Pass 3: Report unused enable/disable directives for every sub host.
         // Reporting unused directives is handled differently with type-aware linting,
         // so this only applies to partial loader files (Vue/Astro/Svelte).
-        if let Some(severity) = self.options.report_unused_directive
+        if let Some(severity) = self.report_unused_directive_for(path)
             && severity.is_warn_deny()
             && is_partial_loader_file
         {

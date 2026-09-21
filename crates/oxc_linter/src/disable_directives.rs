@@ -372,7 +372,16 @@ impl DisableDirectives {
         &self.unused_enable_comments
     }
 
-    pub fn collect_unused_disable_comments(&self) -> Vec<DisableRuleComment> {
+    /// Collect the directives which turned out to be unused.
+    ///
+    /// `ran` tells whether the pass which could have used a directive actually ran, given the
+    /// rule it names, or `None` for a bare directive which covers every rule. A directive whose
+    /// pass never ran cannot be reported as unused, and reporting it would prompt the user to
+    /// delete a directive which is still needed.
+    pub fn collect_unused_disable_comments(
+        &self,
+        ran: impl Fn(Option<&str>) -> bool,
+    ) -> Vec<DisableRuleComment> {
         let used = self.used_disable_comments.borrow();
 
         self.intervals
@@ -393,7 +402,20 @@ impl DisableDirectives {
                 // All intervals in the group share the same comment, so they have the same fix_span.
                 let fix_span = *group_vec[0].val.fix_span();
 
-                let rules: Vec<RuleCommentRule> = group_vec
+                // Only rules whose pass ran for this file can be judged unused; skip the others.
+                let considered: Vec<_> = group_vec
+                    .iter()
+                    .filter(|interval| match &interval.val {
+                        DisabledRule::Single { rule_name, .. } => ran(Some(rule_name)),
+                        DisabledRule::All { .. } => ran(None),
+                    })
+                    .collect();
+
+                if considered.is_empty() {
+                    return None;
+                }
+
+                let rules: Vec<RuleCommentRule> = considered
                     .iter()
                     .filter_map(|interval| {
                         if used.contains(&interval.val) {
@@ -420,6 +442,9 @@ impl DisableDirectives {
                     return None;
                 }
 
+                // Compared against the whole comment, not against what survived the filter: a
+                // comment which still names a rule whose pass never ran cannot be deleted
+                // wholesale, so it stays in its per-rule form.
                 if rules.len() == group_vec.len() {
                     return Some(DisableRuleComment {
                         directive_prefix: group_vec[0].val.directive_prefix(),
@@ -437,6 +462,12 @@ impl DisableDirectives {
                 })
             })
             .collect()
+    }
+}
+
+impl Default for DisableDirectivesBuilder {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -1347,15 +1378,20 @@ semi*/
 /// - Unused disable directives (no problems were reported)
 /// - Unused enable directives (no matching disable directives)
 ///
+/// `ran` is passed on to [`DisableDirectives::collect_unused_disable_comments`], which uses it
+/// to skip the directives whose pass did not run for this file.
+///
 /// # Arguments
 /// * `directives` - The disable directives to check for unused comments
 /// * `severity` - The severity level (Warn or Deny) for the diagnostics
+/// * `ran` - Whether the pass which could have used a directive ran, given the rule it names
 ///
 /// # Returns
 /// A vector of diagnostics for all unused directives
 pub fn create_unused_directives_diagnostics(
     directives: &DisableDirectives,
     severity: crate::AllowWarnDeny,
+    ran: impl Fn(Option<&str>) -> bool,
 ) -> Vec<oxc_diagnostics::OxcDiagnostic> {
     use oxc_diagnostics::OxcDiagnostic;
 
@@ -1368,7 +1404,7 @@ pub fn create_unused_directives_diagnostics(
     };
 
     // Report unused disable comments
-    let unused_disable = directives.collect_unused_disable_comments();
+    let unused_disable = directives.collect_unused_disable_comments(ran);
     for unused_comment in unused_disable {
         let span = unused_comment.span;
         match unused_comment.r#type {
@@ -1626,7 +1662,7 @@ mod tests {
                 )
             },
             |source_text, comments, directives| {
-                let unused = directives.collect_unused_disable_comments();
+                let unused = directives.collect_unused_disable_comments(|_| true);
 
                 assert_eq!(unused.len(), 1);
 
@@ -1668,7 +1704,7 @@ mod tests {
                 )
             },
             |source_text, comments, directives| {
-                let unused = directives.collect_unused_disable_comments();
+                let unused = directives.collect_unused_disable_comments(|_| true);
 
                 assert_eq!(unused.len(), 1);
 
@@ -1734,7 +1770,7 @@ mod tests {
                     is_next_line: false,
                 });
 
-                assert!(directives.collect_unused_disable_comments().is_empty());
+                assert!(directives.collect_unused_disable_comments(|_| true).is_empty());
             },
         );
     }
@@ -1820,7 +1856,7 @@ mod tests {
         let x_span = Span::sized(source_text.find("const x").unwrap() as u32, 5);
         assert!(directives.contains("no-bitwise", x_span));
 
-        let unused = directives.collect_unused_disable_comments();
+        let unused = directives.collect_unused_disable_comments(|_| true);
         assert_eq!(unused.len(), 1);
 
         let RuleCommentType::Single(rules) = &unused[0].r#type else {
@@ -1995,7 +2031,7 @@ function test() {
         let directives =
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
-        let unused = directives.collect_unused_disable_comments();
+        let unused = directives.collect_unused_disable_comments(|_| true);
         assert_eq!(unused.len(), 1);
 
         // span must be the outer comment span only (no line extension).
@@ -2021,7 +2057,7 @@ function test() {
         let directives =
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
-        let unused = directives.collect_unused_disable_comments();
+        let unused = directives.collect_unused_disable_comments(|_| true);
         assert_eq!(unused.len(), 1);
 
         // span must be the outer comment span only.
@@ -2047,7 +2083,7 @@ function test() {
         let directives =
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
-        let unused = directives.collect_unused_disable_comments();
+        let unused = directives.collect_unused_disable_comments(|_| true);
         assert_eq!(unused.len(), 1);
 
         // fix_span deletes only the comment; code on the same line is preserved.
@@ -2070,7 +2106,7 @@ function test() {
         let directives =
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
-        let unused = directives.collect_unused_disable_comments();
+        let unused = directives.collect_unused_disable_comments(|_| true);
         assert_eq!(unused.len(), 1);
 
         // span must be the outer comment span (starts at `//`, not at the indentation).

@@ -3,6 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
 
+use oxc_language_server::WorkingDirectory;
 use oxc_linter::{FixKind, normalize_rule_name};
 use tracing::error;
 
@@ -87,10 +88,19 @@ pub struct LintOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ts_config_path: Option<String>,
     /// How to handle unused disable directives. By default, they are allowed and ignored.
+    /// If unset, the `reportUnusedDisableDirectives` option of the config which governs each file
+    /// is used.
     pub unused_disable_directives: Option<UnusedDisableDirectives>,
     /// Whether to enable/disable type-aware linting.
-    /// It will override the root config's `typeAware` option if set.
+    /// If set, it applies to every file and overrides the `typeAware` option of every config.
+    /// If unset, each file follows the `typeAware` option of the config which governs it.
     pub type_aware: Option<bool>,
+    /// Whether to report the TypeScript compiler diagnostics (experimental type checking).
+    /// If set, it applies to every file linted with type-aware rules and overrides the
+    /// `typeCheck` option of every config; it does not enable type-aware linting itself, so a
+    /// file no config makes type-aware is never type-checked.
+    /// If unset, each file follows the `typeCheck` option of the config which governs it.
+    pub type_check: Option<bool>,
     /// Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
     /// It gets automatically enabled when `configPath` is set.
     #[schemars(with = "Option<bool>")]
@@ -98,6 +108,19 @@ pub struct LintOptions {
     /// What kind of fixes to generate for code actions.
     #[schemars(with = "Option<LintFixKindFlag>")]
     pub fix_kind: LintFixKindFlag,
+    /// Additional project roots below the workspace folder, each linted as if it were its own
+    /// workspace folder (like `eslint.workingDirectories`). Strings are paths or globs relative to
+    /// the workspace folder; `[{ "mode": "auto" }]` detects directories containing both a
+    /// `package.json` and an oxlint config file. Handled by the language server, not by the tool.
+    ///
+    /// A directory listed explicitly is a working directory even when it is gitignored; the
+    /// `auto` detection follows the `.gitignore` of the workspace folder instead.
+    ///
+    /// A working directory does not inherit the configuration of its workspace folder. Its config
+    /// file becomes the root config instead of a nested config, and a working directory without a
+    /// config file resolves one the same way opening that directory as a workspace folder would.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub working_directories: Vec<WorkingDirectory>,
     /// Customization for individual rules, allows to override the linter's diagnostics and autofix.
     /// Example of lowering the severity of "no-unused-vars" rule to "hint" and disabling autofix for it:
     /// ```json
@@ -248,6 +271,11 @@ impl TryFrom<Value> for LintOptions {
                 .filter(|s| !s.is_empty())
                 .map(str::to_owned),
             type_aware: object.get("typeAware").and_then(Value::as_bool),
+            type_check: object.get("typeCheck").and_then(Value::as_bool),
+            working_directories: object
+                .get("workingDirectories")
+                .and_then(|value| Vec::<WorkingDirectory>::deserialize(value).ok())
+                .unwrap_or_default(),
             disable_nested_config: object
                 .get("disableNestedConfig")
                 .and_then(Value::as_bool)
@@ -286,6 +314,7 @@ mod test {
             "configPath": "./custom.json",
             "unusedDisableDirectives": "warn",
             "typeAware": true,
+            "typeCheck": true,
             "disableNestedConfig": true,
             "fixKind": "dangerous_fix",
             "rulesCustomization": {
@@ -304,6 +333,7 @@ mod test {
         assert_eq!(options.config_path, Some("./custom.json".into()));
         assert_eq!(options.unused_disable_directives, Some(UnusedDisableDirectives::Warn));
         assert_eq!(options.type_aware, Some(true));
+        assert_eq!(options.type_check, Some(true));
         assert!(options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
 
@@ -407,11 +437,24 @@ mod test {
             "configPath": null,
             "tsConfigPath": null,
             "typeAware": null,
+            "typeCheck": null,
             "unusedDisableDirectives": null
         });
 
         let options = LintOptions::try_from(json).unwrap();
         assert_eq!(options.type_aware, None); // null should be treated as None
+        assert_eq!(options.type_check, None);
+    }
+
+    /// `typeCheck: false` overrides a config which enables `options.typeCheck`, and has to stay
+    /// distinguishable from "unset", which follows the config.
+    #[test]
+    fn test_type_check_false_is_not_unset() {
+        let options = LintOptions::try_from(json!({ "typeCheck": false })).unwrap();
+        assert_eq!(options.type_check, Some(false));
+
+        let options = LintOptions::try_from(json!({})).unwrap();
+        assert_eq!(options.type_check, None);
     }
 
     #[test]
