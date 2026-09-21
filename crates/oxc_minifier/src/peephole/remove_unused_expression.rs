@@ -178,7 +178,7 @@ impl<'a> PeepholeOptimizations {
                         };
                         if let Some((name, id)) = name_and_id
                             && Self::inject_optional_chaining_if_matched(
-                                name,
+                                &name,
                                 id,
                                 logical_right,
                                 ctx,

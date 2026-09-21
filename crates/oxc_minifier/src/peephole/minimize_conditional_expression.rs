@@ -385,7 +385,7 @@ impl<'a> PeepholeOptimizations {
                         let expr_to_inject_optional_chaining =
                             if is_negate { &mut expr.consequent } else { &mut expr.alternate };
                         if Self::inject_optional_chaining_if_matched(
-                            target_id_name,
+                            &target_id_name,
                             value_expr,
                             expr_to_inject_optional_chaining,
                             ctx,
@@ -687,7 +687,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// For `target_expr` = `a`, `expr` = `a.b`, this function changes `expr` to `a?.b` and returns true.
     pub fn inject_optional_chaining_if_matched(
-        target_id_name: Ident<'a>,
+        target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -711,14 +711,14 @@ impl<'a> PeepholeOptimizations {
 
     /// See [`Self::inject_optional_chaining_if_matched`]
     fn inject_optional_chaining_if_matched_inner(
-        target_id_name: Ident<'a>,
+        target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         match expr {
             Expression::StaticMemberExpression(e) => {
-                if e.object.is_specific_id(&target_id_name) {
+                if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
                     let new_object = expr_to_inject.take_in(ctx);
                     ctx.replace_expression(&mut e.object, new_object);
@@ -734,7 +734,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::ComputedMemberExpression(e) => {
-                if e.object.is_specific_id(&target_id_name) {
+                if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
                     let new_object = expr_to_inject.take_in(ctx);
                     ctx.replace_expression(&mut e.object, new_object);
@@ -750,7 +750,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::CallExpression(e) => {
-                if e.callee.is_specific_id(&target_id_name) {
+                if e.callee.is_specific_id(target_id_name) {
                     e.optional = true;
                     let new_callee = expr_to_inject.take_in(ctx);
                     ctx.replace_expression(&mut e.callee, new_callee);
@@ -767,7 +767,7 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::ChainExpression(e) => match &mut e.expression {
                 ChainElement::StaticMemberExpression(e) => {
-                    if e.object.is_specific_id(&target_id_name) {
+                    if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
                         let new_object = expr_to_inject.take_in(ctx);
                         ctx.replace_expression(&mut e.object, new_object);
@@ -783,7 +783,7 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
                 ChainElement::ComputedMemberExpression(e) => {
-                    if e.object.is_specific_id(&target_id_name) {
+                    if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
                         let new_object = expr_to_inject.take_in(ctx);
                         ctx.replace_expression(&mut e.object, new_object);
@@ -799,7 +799,7 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
                 ChainElement::CallExpression(e) => {
-                    if e.callee.is_specific_id(&target_id_name) {
+                    if e.callee.is_specific_id(target_id_name) {
                         e.optional = true;
                         let new_callee = expr_to_inject.take_in(ctx);
                         ctx.replace_expression(&mut e.callee, new_callee);
