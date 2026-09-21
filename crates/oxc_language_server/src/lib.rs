@@ -7,6 +7,7 @@ use tower_lsp_server::{LspService, Server, ls_types::ServerInfo};
 
 mod backend;
 mod capabilities;
+mod diagnostic_state;
 mod file_system;
 mod language_id;
 mod options;
@@ -30,6 +31,8 @@ pub use crate::worker::WorkspaceWorker;
 pub use crate::worker_manager::WorkerManager;
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
+
+pub type ConcurrentHashSet<T> = papaya::HashSet<T, FxBuildHasher>;
 
 #[derive(Debug)]
 pub struct TextDocument<'a> {

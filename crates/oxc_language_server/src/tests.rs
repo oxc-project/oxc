@@ -626,10 +626,20 @@ fn test_configuration_request(id: i64) -> Request {
 }
 
 fn diagnostic(id: i64, uri: &str) -> Request {
+    diagnostic_with_previous_result_id(id, uri, None)
+}
+
+/// A `textDocument/diagnostic` request, optionally carrying the `resultId` the client got from an
+/// earlier report.
+fn diagnostic_with_previous_result_id(
+    id: i64,
+    uri: &str,
+    previous_result_id: Option<&str>,
+) -> Request {
     let params = DocumentDiagnosticParams {
         text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
         identifier: None,
-        previous_result_id: None,
+        previous_result_id: previous_result_id.map(ToString::to_string),
         work_done_progress_params: WorkDoneProgressParams::default(),
         partial_result_params: PartialResultParams::default(),
     };
@@ -669,11 +679,12 @@ mod test_suite {
             FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, NESTED_WORKSPACE, TestServer,
             WORKSPACE, WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
             acknowledge_unregistrations, code_action, create_workspace_manager,
-            create_workspace_manager_with_builder, diagnostic, did_change,
-            did_change_configuration, did_change_watched_files, did_close, did_open, did_save,
-            execute_command_request, initialize_request, initialize_request_workspace_folders,
-            initialized_notification, response_to_configuration, shutdown_request,
-            test_configuration_request, workspace_folders_changed,
+            create_workspace_manager_with_builder, diagnostic, diagnostic_with_previous_result_id,
+            did_change, did_change_configuration, did_change_watched_files, did_close, did_open,
+            did_save, execute_command_request, initialize_request,
+            initialize_request_workspace_folders, initialized_notification,
+            response_to_configuration, shutdown_request, test_configuration_request,
+            workspace_folders_changed,
         },
     };
 
@@ -2098,6 +2109,221 @@ mod test_suite {
         );
 
         server.shutdown(4).await;
+    }
+
+    /// A full pull report carries a `resultId`, a client that sends it back for unchanged content
+    /// gets `unchanged` instead of another lint, and anything that can change the diagnostics —
+    /// an edit here — invalidates that id again.
+    #[tokio::test]
+    async fn test_diagnostics_pull_mode_result_id_and_unchanged() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
+                )
+            },
+            initialize_request(init_options),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/diagnostics.config");
+        let content = "pull mode text";
+        server.send_request(did_open(&file, content)).await;
+
+        // A client that has no previous result gets a full report carrying a result id.
+        server.send_request(diagnostic(3, &file)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        let report: serde_json::Value =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        assert_eq!(report["kind"], "full");
+        let result_id = report["resultId"].as_str().expect("full report must carry a resultId");
+
+        // Pulling again with that id, for unchanged content, is answered with `unchanged`.
+        server.send_request(diagnostic_with_previous_result_id(4, &file, Some(result_id))).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        let report: serde_json::Value =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        assert_eq!(report["kind"], "unchanged");
+        assert_eq!(report["resultId"].as_str(), Some(result_id));
+
+        // An edit changes the text, so the id no longer matches and the next pull lints again.
+        server.send_request(did_change(&file, "changed text")).await;
+        server.send_request(diagnostic_with_previous_result_id(5, &file, Some(result_id))).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        let report: serde_json::Value =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        assert_eq!(report["kind"], "full");
+        assert_ne!(report["resultId"].as_str(), Some(result_id));
+        assert_eq!(report["items"][0]["message"], "Fake diagnostic for content: changed text");
+        let result_id_after_edit = report["resultId"].as_str().unwrap().to_string();
+
+        // A watched file change can change the diagnostics of a document whose text did not change
+        // (a config or a tsconfig), so the id handed out for it must not be reused.
+        server
+            .send_request(did_change_watched_files(format!("{WORKSPACE}/tool.config").as_str()))
+            .await;
+        acknowledge_diagnostic_refresh(&mut server).await;
+        server
+            .send_request(diagnostic_with_previous_result_id(7, &file, Some(&result_id_after_edit)))
+            .await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        let report: serde_json::Value =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        assert_eq!(report["kind"], "full");
+        assert_ne!(report["resultId"].as_str(), Some(result_id_after_edit.as_str()));
+
+        server.shutdown(8).await;
+    }
+
+    /// The kind and the result id of the report in a `textDocument/diagnostic` response.
+    fn report_kind_and_result_id(response: &Response) -> (String, Option<String>) {
+        let report: serde_json::Value =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        (
+            report["kind"].as_str().unwrap().to_string(),
+            report["resultId"].as_str().map(ToString::to_string),
+        )
+    }
+
+    /// Only a rebuilt linter invalidates the result ids: a configuration change that leaves the
+    /// linter as it is must not make the client re-lint documents whose diagnostics cannot change.
+    #[tokio::test]
+    async fn test_diagnostics_pull_mode_configuration_change_without_restart_keeps_result_id() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
+                )
+            },
+            initialize_request(init_options),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/diagnostics.config");
+        server.send_request(did_open(&file, "pull mode text")).await;
+
+        server.send_request(diagnostic(3, &file)).await;
+        let response = server.recv_response().await;
+        let (kind, result_id) = report_kind_and_result_id(&response);
+        assert_eq!(kind, "full");
+        let result_id = result_id.expect("full report must carry a resultId");
+
+        // `FakeTool` rebuilds only for the options `1` and `3`, which stands for a configuration
+        // change that does not restart the linter (the client re-sent its settings, or a value that
+        // resolves to the current one).
+        server.send_request(did_change_configuration(Some(json!(0)))).await;
+        server.send_request(diagnostic_with_previous_result_id(4, &file, Some(&result_id))).await;
+        let response = server.recv_response().await;
+        let (kind, id_after_noop_change) = report_kind_and_result_id(&response);
+        assert_eq!(kind, "unchanged", "a configuration change without a restart must not relint");
+        assert_eq!(id_after_noop_change.as_deref(), Some(result_id.as_str()));
+
+        // A configuration change that does rebuild the linter can change the diagnostics of
+        // documents whose text did not change, so the id is invalidated.
+        server.send_request(did_change_configuration(Some(json!(1)))).await;
+        acknowledge_diagnostic_refresh(&mut server).await;
+        server.send_request(diagnostic_with_previous_result_id(5, &file, Some(&result_id))).await;
+        let response = server.recv_response().await;
+        let (kind, id_after_restart) = report_kind_and_result_id(&response);
+        assert_eq!(kind, "full");
+        assert_ne!(id_after_restart.as_deref(), Some(result_id.as_str()));
+
+        server.shutdown(6).await;
+    }
+
+    /// A refresh makes the client re-pull every open document. Documents of a workspace whose
+    /// linter was rebuilt have to be linted again, but the ones of the other workspaces keep their
+    /// result ids and are answered with `unchanged` without linting.
+    #[tokio::test]
+    async fn test_diagnostics_pull_mode_restart_only_invalidates_its_own_workspace() {
+        let init_options = InitializeRequestOptions {
+            pull_mode: true,
+            workspace_folders: Some(vec![
+                WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() },
+                WorkspaceFolder {
+                    uri: WORKSPACE_2.parse().unwrap(),
+                    name: "workspace_2".to_string(),
+                },
+            ]),
+            ..Default::default()
+        };
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
+                )
+            },
+            initialize_request_workspace_folders(init_options),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/diagnostics.config");
+        let other_file = format!("{WORKSPACE_2}/diagnostics.config");
+        server.send_request(did_open(&file, "pull mode text")).await;
+        server.send_request(did_open(&other_file, "pull mode text")).await;
+
+        server.send_request(diagnostic(3, &file)).await;
+        let response = server.recv_response().await;
+        let (kind, result_id) = report_kind_and_result_id(&response);
+        assert_eq!(kind, "full");
+        let result_id = result_id.unwrap();
+
+        server.send_request(diagnostic(4, &other_file)).await;
+        let response = server.recv_response().await;
+        let (kind, other_result_id) = report_kind_and_result_id(&response);
+        assert_eq!(kind, "full");
+        let other_result_id = other_result_id.unwrap();
+        assert_ne!(result_id, other_result_id, "the workspace root is part of the result id");
+
+        // Only the linter of `WORKSPACE` is rebuilt.
+        server
+            .send_request(did_change_configuration(Some(json!([
+                { "workspaceUri": WORKSPACE, "options": 1 },
+                { "workspaceUri": WORKSPACE_2, "options": 0 },
+            ]))))
+            .await;
+        acknowledge_diagnostic_refresh(&mut server).await;
+
+        server.send_request(diagnostic_with_previous_result_id(5, &file, Some(&result_id))).await;
+        let response = server.recv_response().await;
+        let (kind, id_after_restart) = report_kind_and_result_id(&response);
+        assert_eq!(kind, "full", "the rebuilt workspace has to be linted again");
+        assert_ne!(id_after_restart.as_deref(), Some(result_id.as_str()));
+
+        server
+            .send_request(diagnostic_with_previous_result_id(
+                6,
+                &other_file,
+                Some(&other_result_id),
+            ))
+            .await;
+        let response = server.recv_response().await;
+        let (kind, id_of_other_workspace) = report_kind_and_result_id(&response);
+        assert_eq!(kind, "unchanged", "an untouched workspace must not be linted again");
+        assert_eq!(id_of_other_workspace.as_deref(), Some(other_result_id.as_str()));
+
+        server.shutdown(7).await;
     }
 
     // ── Single-file mode (no workspace folders / root URI on initialize) ──────
