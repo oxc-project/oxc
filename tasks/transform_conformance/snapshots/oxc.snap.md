@@ -1,6 +1,6 @@
 commit: 68b6a2ab
 
-Passed: 280/408
+Passed: 280/409
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (43/62)
+# babel-plugin-transform-typescript (43/63)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -113,6 +113,12 @@ rebuilt        : SymbolId(9): [ReferenceId(25), ReferenceId(26), ReferenceId(28)
 Symbol reference IDs mismatch for "Color":
 after transform: SymbolId(4): [ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(12)]
 rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
+
+* enum-surrogate-string-value/input.ts
+Missing ReferenceId: "E"
+Symbol reference IDs mismatch for "E":
+after transform: SymbolId(5): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
+rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
 
 * enum-template-literal/input.ts
 Symbol reference IDs mismatch for "Size":

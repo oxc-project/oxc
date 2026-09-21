@@ -192,6 +192,8 @@ impl Rule for JsxNoScriptUrl {
                         };
                         if prop_value.as_string_literal().is_some_and(|val| {
                             link_props.contains(&attr.name.get_identifier().name.to_string())
+                                // A plain JSX attribute value is raw source
+                                // text, so it never contains a lone surrogate.
                                 && val
                                     .value
                                     .as_str()

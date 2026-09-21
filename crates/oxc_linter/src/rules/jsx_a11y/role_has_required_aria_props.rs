@@ -74,6 +74,8 @@ impl Rule for RoleHasRequiredAriaProps {
             let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value else {
                 return;
             };
+            // A plain JSX attribute value is raw source text, so it never contains
+            // a lone surrogate; only expression containers can.
             let roles = role_values.value.as_str().into_iter().flat_map(str::split_whitespace);
             for role in roles {
                 if let Some((_, props)) = ROLE_TO_REQUIRED_ARIA_PROPS.iter().find(|r| r.0 == role) {
