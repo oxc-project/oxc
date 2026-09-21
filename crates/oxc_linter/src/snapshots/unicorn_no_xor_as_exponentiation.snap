@@ -94,6 +94,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `^` with `**`.
 
   ⚠ unicorn(no-xor-as-exponentiation): Unexpected bitwise XOR operator `^`. Did you mean the exponentiation operator `**`?
+   ╭─[no_xor_as_exponentiation.tsx:2:2]
+ 1 │ 1 // ^
+ 2 │  ^ 2
+   ·  ─
+   ╰────
+  help: Replace `^` with `**`.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Unexpected bitwise XOR operator `^`. Did you mean the exponentiation operator `**`?
    ╭─[no_xor_as_exponentiation.tsx:1:4]
  1 │ 08 ^ 09
    ·    ─

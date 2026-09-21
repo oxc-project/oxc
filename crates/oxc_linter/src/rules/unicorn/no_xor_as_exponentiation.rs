@@ -129,6 +129,8 @@ fn test() {
         "flags ^ MASK",
         "2.5 ^ 3",
         "2 ^ 3.5",
+        "2.0 ^ 3",
+        "2 ^ 3.",
         "2e3 ^ 2",
         "2 ^ 3e2",
         "2n ^ 32n",
@@ -155,6 +157,7 @@ fn test() {
         "2 /* comment */ ^ 8",
         "(1) ^ (((2)))",
         "1 /* ^ */ ^ /* ^ */ 2",
+        "1 // ^\n ^ 2",
         "08 ^ 09",
         "018 ^ 019",
     ];
@@ -162,6 +165,12 @@ fn test() {
     let fix = vec![
         ("1 ^ 2", "1 ** 2", None, FixKind::Suggestion),
         ("1 /*a*/ ^ /*b*/ 2", "1 /*a*/ ** /*b*/ 2", None, FixKind::Suggestion),
+        ("1 /* ^ */ ^ /* ^ */ 2", "1 /* ^ */ ** /* ^ */ 2", None, FixKind::Suggestion),
+        ("1 // ^\n ^ 2", "1 // ^\n ** 2", None, FixKind::Suggestion),
+        ("(1) ^ (((2)))", "(1) ** (((2)))", None, FixKind::Suggestion),
+        ("2 ^ 8 ^ 2", "2 ** 8 ^ 2", None, FixKind::Suggestion),
+        ("10 ^ 1_000", "10 ** 1_000", None, FixKind::Suggestion),
+        ("018 ^ 019", "018 ** 019", None, FixKind::Suggestion),
     ];
 
     Tester::new(NoXorAsExponentiation::NAME, NoXorAsExponentiation::PLUGIN, pass, fail)
