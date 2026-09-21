@@ -83,6 +83,7 @@ class RuleTesterShim extends RuleTester {
   // Apply filter to test cases and add `before` hook to store test case in `currentTest`
   run(ruleName: string, rule: Rule, tests: TestCases): void {
     tests = {
+      ...tests,
       valid: tests.valid
         .map((test) => {
           if (typeof test === "string") test = { code: test };
