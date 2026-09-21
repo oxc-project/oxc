@@ -3,10 +3,13 @@ use crate::{error::DiagCode, lanes::Lanes};
 use crate::pipeline::{
     bitmap::bm_get,
     bytes::{is_id_start, is_word, is_ws},
-    disambiguate::{jsx_site_is_expression, ts_type_region_open, type_parameter_list_head},
+    disambiguate::{
+        Tokens, Walks, jsx_site_is_expression, ts_type_region_open, type_parameter_list_head,
+    },
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
     tables::Tables,
+    token_view,
 };
 
 use super::names::jsx_skip_trivia_fast;
@@ -43,7 +46,25 @@ pub(super) unsafe fn jsx_over_type_params(
         AngleVerdict::TypeParams => false,
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {
-            jsx_ambiguous_site(t, src, st, opch, kind, n, lt, gt, lp, lanes)
+            let tokens = token_view(
+                t,
+                src,
+                st,
+                opch,
+                word,
+                kind,
+                n,
+                ts,
+                0,
+                lanes.module,
+                &lanes.disambiguate.brackets,
+            );
+            let (jsx, unterminated) =
+                jsx_ambiguous_site(&tokens, &mut lanes.disambiguate.walks, src, n, lt, lp);
+            if unterminated {
+                lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
+            }
+            jsx
         }
     }
 }
@@ -120,32 +141,25 @@ fn line_break_in(src: &[u8], a: usize, b: usize) -> bool {
     false
 }
 
+/// Is the ambiguous `<T>(` at `lt` JSX (true) or a type-parameter list (false)? The second
+/// answer says whether it is an unterminated JSX element to report: a generic arrow shape at a
+/// site where an operand may start.
 #[inline(never)]
 unsafe fn jsx_ambiguous_site(
-    t: &Tables,
+    tokens: &Tokens,
+    walks: &mut Walks,
     src: *const u8,
-    st: *const u64,
-    opch: *const u64,
-    kind: *const u8,
     n: usize,
     lt: usize,
-    gt: usize,
     lp: usize,
-    lanes: &mut Lanes,
-) -> bool {
-    if ts_type_region_open(t, src, st, opch, kind, n, lt) {
-        return false;
-    }
-    if type_parameter_list_head(t, src, st, opch, kind, n, lt) {
-        return false;
+) -> (bool, bool) {
+    if ts_type_region_open(tokens, walks, lt) || type_parameter_list_head(tokens, walks, lt) {
+        return (false, false);
     }
     if generic_fn_type_after(src, n, lp) {
-        if jsx_site_is_expression(t, src, st, opch, kind, n, lt) {
-            lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
-        }
-        return false;
+        return (false, jsx_site_is_expression(tokens, walks, lt));
     }
-    true
+    (true, false)
 }
 
 unsafe fn generic_fn_type_after(src: *const u8, n: usize, lp: usize) -> bool {

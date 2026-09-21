@@ -3,12 +3,13 @@ use crate::{error::DiagCode, lanes::Lanes, token::tk};
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
     bytes::{is_digit, is_id_start, is_word},
-    disambiguate::{bm_prev_sig, not_operator_position},
+    disambiguate::{not_operator_position, prev_sig},
     find::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2,
     },
     tables::Tables,
+    token_view,
 };
 
 use super::common::{
@@ -199,7 +200,7 @@ pub(super) unsafe fn carve_jsx(
                         }
                     }
                     b'/' => {
-                        i = lex_slash(t, src, srcs, n, st, kind, opch, word, digit, ts, s, lanes);
+                        i = lex_slash(t, src, srcs, n, st, kind, opch, word, ts, s, lanes);
                     }
                     b'<' => {
                         let c1 = if s + 1 < n { *src.add(s + 1) } else { 0 };
@@ -217,16 +218,21 @@ pub(super) unsafe fn carve_jsx(
                             // `<=` / `a<5`: leave for coalesce.
                             i = s + 1;
                         } else if not_operator_position(
-                            t,
-                            src,
-                            st,
-                            kind,
-                            word,
-                            digit,
-                            n,
+                            &token_view(
+                                t,
+                                src,
+                                st,
+                                opch,
+                                word,
+                                kind,
+                                n,
+                                ts,
+                                0,
+                                lanes.module,
+                                &lanes.disambiguate.brackets,
+                            ),
+                            &mut lanes.disambiguate.walks,
                             s,
-                            ts,
-                            lanes.module,
                         ) {
                             // Operand position: candidate JSX. Whitespace (Unicode too) and
                             // comments may separate `<` from the name.
@@ -292,8 +298,20 @@ pub(super) unsafe fn carve_jsx(
                 }
                 let c = *src.add(s);
                 if c == b'<' {
-                    let q = bm_prev_sig(st, kind, s);
-                    if q >= 0 && *src.add(q as usize) == b'=' {
+                    let tokens = token_view(
+                        t,
+                        src,
+                        st,
+                        opch,
+                        word,
+                        kind,
+                        n,
+                        ts,
+                        0,
+                        lanes.module,
+                        &lanes.disambiguate.brackets,
+                    );
+                    if prev_sig(tokens.st, tokens.kind, s).is_some_and(|q| *src.add(q) == b'=') {
                         let tpos = jsx_skip_trivia(src, n, s + 1);
                         jsx_punct(kind, opch, s, tk!(JsxLt));
                         stack.push(JFrame {

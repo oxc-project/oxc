@@ -44,36 +44,6 @@ pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize) -> usize {
     if r < n { r } else { n }
 }
 
-/// Get index of the first set bit at or after `i`.
-///
-/// If every bit in `i..n` is clear, returns `n`.
-///
-/// # SAFETY
-///
-/// - `i` must be `<= n`.
-/// - `bm` must be aligned for `u64`.
-/// - `bm` must be valid for reads of `n.div_ceil(64) + 1` words.
-///   The last word is read only when `i` is `n` and `n` is a multiple of 64.
-#[inline(always)]
-pub(super) unsafe fn bm_next1(bm: *const u64, i: usize, n: usize) -> usize {
-    let mut w = i >> 6;
-    let x = *bm.add(w) & !((1u64 << (i & 63)).wrapping_sub(1));
-    if x != 0 {
-        let r = (w << 6) + x.trailing_zeros() as usize;
-        return if r < n { r } else { n };
-    }
-    w += 1;
-    while (w << 6) < n {
-        let x = *bm.add(w);
-        if x != 0 {
-            let r = (w << 6) + x.trailing_zeros() as usize;
-            return if r < n { r } else { n };
-        }
-        w += 1;
-    }
-    n
-}
-
 /// Get index of the last set bit before `p`.
 ///
 /// If bits `0..p` are all clear, returns `-1`.

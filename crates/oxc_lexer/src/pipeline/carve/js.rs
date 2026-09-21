@@ -19,7 +19,6 @@ pub(super) unsafe fn carve_js(
     kind: *mut u8,
     opch: *mut u64,
     word: *const u64,
-    digit: *const u64,
     ts: bool,
     lanes: &mut Lanes,
 ) {
@@ -97,7 +96,7 @@ pub(super) unsafe fn carve_js(
                 }
             }
             b'/' => {
-                i = lex_slash(t, src, srcs, n, st, kind, opch, word, digit, ts, s, lanes);
+                i = lex_slash(t, src, srcs, n, st, kind, opch, word, ts, s, lanes);
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.

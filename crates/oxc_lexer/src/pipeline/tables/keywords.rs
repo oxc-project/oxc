@@ -189,13 +189,13 @@ impl Keywords {
         Self { kwjs, kwts, regex_kw_mask: REGEX_KW_MASK }
     }
 
-    /// Is the word at `p` one of the keywords a regex may directly follow?
+    /// Is the word at `pos` of `len` bytes one of the keywords a regex may directly follow?
     /// Text-based and called only before any keyword-kind rewrite, so the JS
     /// set answers for both modes (every RX word is in both sets, and no
-    /// other spelling has its mask bit).
+    /// other spelling has its mask bit). Reads through a slice, see [`KwSet::lookup_at`].
     #[inline(always)]
-    pub unsafe fn is_regex_keyword(&self, p: *const u8, len: usize) -> bool {
-        let k = self.kwjs.lookup(p, len);
+    pub fn is_regex_keyword_at(&self, src: &[u8], pos: usize, len: usize) -> bool {
+        let k = self.kwjs.lookup_at(src, pos, len);
         k >= KW_KIND_BASE as u32 && ((self.regex_kw_mask >> (k - KW_KIND_BASE as u32)) & 1) != 0
     }
 }
@@ -327,6 +327,18 @@ impl KwSet {
             }
         }
         s
+    }
+
+    /// [`lookup`](Self::lookup) of the word at `pos` of `len` bytes, read through a slice.
+    ///
+    /// `lookup` reads at most ten bytes from the word's start, so the slice must extend ten bytes
+    /// past `pos`; the source pad guarantees that for any word in the source.
+    #[inline(always)]
+    pub fn lookup_at(&self, src: &[u8], pos: usize, len: usize) -> u32 {
+        let word = &src[pos..pos + 10];
+        // SAFETY: `lookup` reads bytes 0..len-1 (len <= 10), 0..8 and, for len > 8, 8..10 of the
+        // word, all inside the ten-byte slice.
+        unsafe { self.lookup(word.as_ptr(), len) }
     }
 
     /// Exact keyword match of the `len` bytes at `p`: the token kind on a
