@@ -7,16 +7,26 @@ mod env;
 mod external_plugins;
 mod globals;
 mod ignore_matcher;
+mod language_options;
 mod overrides;
 mod oxlintrc;
 pub mod plugins;
 mod rules;
 mod settings;
 pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
-pub use config_store::{Config, ConfigStore, ResolvedLinterState};
+pub use config_store::{Config, ConfigStore, ResolvedExternalParser, ResolvedLinterState};
+// Building a `Config` by hand (rather than through `ConfigStoreBuilder`, which needs a real
+// `ExternalLinter` to resolve `languageOptions.parser`) requires these outside of `config`.
+#[cfg(test)]
+pub use categories::OxlintCategories;
+#[cfg(test)]
+pub use config_store::{
+    ResolvedOxlintOverride, ResolvedOxlintOverrideRules, ResolvedOxlintOverrides,
+};
 pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
 pub use ignore_matcher::LintIgnoreMatcher;
+pub use language_options::{ExternalParserEntry, OxlintLanguageOptions};
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;

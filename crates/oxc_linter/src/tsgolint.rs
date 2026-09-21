@@ -43,6 +43,13 @@ pub struct TsGoLintState {
     type_check: bool,
     /// If `true`, request that per-rule debug timings be returned from `tsgolint`.
     timings: bool,
+    /// If `true`, let `tsgolint` execute project code for TypeScript `contentMappers`.
+    ///
+    /// Comes from the command line only. TypeScript declares the underlying option
+    /// `IsCommandLineOnly` so that a checked-in tsconfig cannot grant itself code
+    /// execution; sourcing this from `.oxlintrc.json`, or inferring it from a
+    /// `languageOptions.parser` override, would hand that capability straight back.
+    run_external_code: bool,
     /// If `true`, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
 }
@@ -61,6 +68,7 @@ impl TsGoLintState {
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
             timings: false,
+            run_external_code: false,
             with_ignore_fixes: false,
         }
     }
@@ -85,8 +93,19 @@ impl TsGoLintState {
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
             timings: false,
+            run_external_code: false,
             with_ignore_fixes: false,
         })
+    }
+
+    /// Returns `true` if `path` should be handed to `tsgolint`.
+    ///
+    /// Files whose extension maps to a [`SourceType`] always are. So are files matched by a
+    /// config override with `languageOptions.parser`: their extension is unknown to us, but
+    /// `typescript-go` can still resolve them through the tsconfig's `contentMappers`, which
+    /// is why the original path is what gets sent rather than some rewritten one.
+    fn is_type_aware_lintable(&self, path: &Path) -> bool {
+        SourceType::from_path(path).is_ok() || self.config_store.has_external_parser(path)
     }
 
     /// Set to `true` to skip file system reads.
@@ -105,6 +124,15 @@ impl TsGoLintState {
     #[must_use]
     pub fn with_type_check(mut self, yes: bool) -> Self {
         self.type_check = yes;
+        self
+    }
+
+    /// Set to `true` to let `tsgolint` execute project code for `contentMappers`.
+    ///
+    /// Default is `false`. Must come from the invocation, never from config.
+    #[must_use]
+    pub fn with_run_external_code(mut self, yes: bool) -> Self {
+        self.run_external_code = yes;
         self
     }
 
@@ -153,9 +181,8 @@ impl TsGoLintState {
         let all_paths = {
             let mut paths_buff = vec![];
             for path in paths {
-                if SourceType::from_path(Path::new(path)).is_ok() {
-                    let path_buf = PathBuf::from(path);
-                    paths_buff.push(path_buf.clone());
+                if self.is_type_aware_lintable(Path::new(path)) {
+                    paths_buff.push(PathBuf::from(path));
                 }
             }
             paths_buff
@@ -288,6 +315,14 @@ impl TsGoLintState {
                 }
 
                 for (path, source_text, messages) in messages_requiring_fixes {
+                    // `None` for a file routed to an external parser, which is load-bearing:
+                    // it skips `Fixer`'s debug-assertion re-parse, and oxc's parser cannot
+                    // read e.g. a `.gts`'s `<template>`. Fixing a file with an unknown
+                    // extension is safe only while tsgolint also holds up its half --
+                    // it emits a fix only where the content mapper's span mapping is
+                    // verbatim, so fixes land on the original bytes and never come back
+                    // from inside a mapped region. Break either half and `.gts` fixes
+                    // break: silent corruption there, a debug panic here.
                     let source_type = SourceType::from_path(&path)
                         .ok()
                         .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st });
@@ -563,7 +598,7 @@ impl TsGoLintState {
         let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
 
         for path in paths {
-            if SourceType::from_path(Path::new(path)).is_ok() {
+            if self.is_type_aware_lintable(Path::new(path)) {
                 let path_buf = PathBuf::from(path);
                 let file_path = path.to_string_lossy().to_string();
 
@@ -604,6 +639,7 @@ impl TsGoLintState {
             source_overrides,
             report_syntactic: self.type_check,
             report_semantic: self.type_check,
+            run_external_code: self.run_external_code,
         }
     }
 }
@@ -631,6 +667,7 @@ pub struct Payload {
     pub source_overrides: Option<FxHashMap<String, String>>,
     pub report_syntactic: bool,
     pub report_semantic: bool,
+    pub run_external_code: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1778,5 +1815,184 @@ mod test {
 
         // Identical rules should be deduplicated
         assert_eq!(rules.len(), 1, "BTreeSet should deduplicate identical rules");
+    }
+
+    /// Files matched by a config override with `languageOptions.parser` reach `tsgolint`
+    /// even though their extension is unknown to `SourceType::from_path`, and they reach it
+    /// under their original path so `typescript-go` can map them via `contentMappers`.
+    #[test]
+    fn test_json_input_includes_external_parser_files() {
+        use std::{ffi::OsStr, path::PathBuf, sync::Arc};
+
+        use rustc_hash::FxHashMap;
+
+        use crate::{
+            AllowWarnDeny, ExternalPluginStore, RuleEnum,
+            config::{
+                Config, ConfigStore, GlobSet, LintConfig, OxlintCategories, ResolvedExternalParser,
+                ResolvedOxlintOverride, ResolvedOxlintOverrideRules, ResolvedOxlintOverrides,
+            },
+            external_plugin_store::ExternalParserId,
+            rules::TypescriptNoFloatingPromises,
+            tsgolint::TsGoLintState,
+        };
+
+        let base_rules = vec![(
+            RuleEnum::TypescriptNoFloatingPromises(TypescriptNoFloatingPromises::default()),
+            AllowWarnDeny::Deny,
+        )];
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["**/*.{gjs,gts}"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            globals: None,
+            plugins: None,
+            external_parser: Some(ResolvedExternalParser {
+                parser_id: ExternalParserId::from_usize(0),
+                parser_options_json: None,
+            }),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+        let config_store = ConfigStore::new(
+            Config::new(
+                base_rules,
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                overrides,
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        let state = TsGoLintState::new(&PathBuf::from("/project"), config_store, FixKind::empty());
+
+        let paths: Vec<Arc<OsStr>> =
+            ["/project/app/component.gts", "/project/app/index.ts", "/project/README.md"]
+                .iter()
+                .map(|p| Arc::from(OsStr::new(*p)))
+                .collect();
+
+        let mut resolved_configs = FxHashMap::default();
+        let payload = state.json_input(&paths, None, &mut resolved_configs);
+
+        let mut sent: Vec<&str> = payload
+            .configs
+            .iter()
+            .flat_map(|config| config.file_paths.iter().map(String::as_str))
+            .collect();
+        sent.sort_unstable();
+
+        // The `.gts` is sent under its original path; the `.md` is still excluded.
+        assert_eq!(sent, vec!["/project/app/component.gts", "/project/app/index.ts"]);
+    }
+
+    /// A `languageOptions.parser` override makes a file *eligible* for tsgolint; it must
+    /// never also grant permission to execute project code. TypeScript keeps
+    /// `runExternalCode` command-line-only precisely so a checked-in config cannot
+    /// confer it, and `.oxlintrc.json` is checked in just the same.
+    #[test]
+    fn test_external_parser_override_does_not_grant_run_external_code() {
+        use std::{ffi::OsStr, path::PathBuf, sync::Arc};
+
+        use rustc_hash::FxHashMap;
+
+        use crate::{
+            ExternalPluginStore,
+            config::{
+                Config, ConfigStore, GlobSet, LintConfig, OxlintCategories, ResolvedExternalParser,
+                ResolvedOxlintOverride, ResolvedOxlintOverrideRules, ResolvedOxlintOverrides,
+            },
+            external_plugin_store::ExternalParserId,
+            tsgolint::TsGoLintState,
+        };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["**/*.{gjs,gts}"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            globals: None,
+            plugins: None,
+            external_parser: Some(ResolvedExternalParser {
+                parser_id: ExternalParserId::from_usize(0),
+                parser_options_json: None,
+            }),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+        let config_store = ConfigStore::new(
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                overrides,
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        let state = TsGoLintState::new(&PathBuf::from("/project"), config_store, FixKind::empty());
+        let paths: Vec<Arc<OsStr>> = vec![Arc::from(OsStr::new("/project/app/component.gts"))];
+        let mut resolved_configs = FxHashMap::default();
+
+        let payload = state.json_input(&paths, None, &mut resolved_configs);
+        assert!(
+            !payload.run_external_code,
+            "a parser override must not enable `run_external_code`"
+        );
+
+        // Only the invocation can turn it on.
+        let state = state.with_run_external_code(true);
+        let mut resolved_configs = FxHashMap::default();
+        assert!(state.json_input(&paths, None, &mut resolved_configs).run_external_code);
+    }
+
+    /// Without a `languageOptions.parser` override, unknown extensions stay excluded.
+    #[test]
+    fn test_json_input_excludes_unknown_extensions_without_parser() {
+        use std::{ffi::OsStr, path::PathBuf, sync::Arc};
+
+        use rustc_hash::FxHashMap;
+
+        use crate::{
+            AllowWarnDeny, ExternalPluginStore, RuleEnum,
+            config::{Config, ConfigStore, LintConfig, OxlintCategories, ResolvedOxlintOverrides},
+            rules::TypescriptNoFloatingPromises,
+            tsgolint::TsGoLintState,
+        };
+
+        let base_rules = vec![(
+            RuleEnum::TypescriptNoFloatingPromises(TypescriptNoFloatingPromises::default()),
+            AllowWarnDeny::Deny,
+        )];
+        let config_store = ConfigStore::new(
+            Config::new(
+                base_rules,
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                ResolvedOxlintOverrides::default(),
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        let state = TsGoLintState::new(&PathBuf::from("/project"), config_store, FixKind::empty());
+
+        let paths: Vec<Arc<OsStr>> = ["/project/app/component.gts", "/project/app/index.ts"]
+            .iter()
+            .map(|p| Arc::from(OsStr::new(*p)))
+            .collect();
+
+        let mut resolved_configs = FxHashMap::default();
+        let payload = state.json_input(&paths, None, &mut resolved_configs);
+
+        let sent: Vec<&str> = payload
+            .configs
+            .iter()
+            .flat_map(|config| config.file_paths.iter().map(String::as_str))
+            .collect();
+
+        assert_eq!(sent, vec!["/project/app/index.ts"]);
     }
 }

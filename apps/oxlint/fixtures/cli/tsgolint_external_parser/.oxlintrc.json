@@ -1,0 +1,22 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "typescript/no-unnecessary-condition": "error",
+    "typescript/no-unnecessary-type-assertion": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.{gjs,gts}"
+      ],
+      "languageOptions": {
+        "parser": "ember-eslint-parser"
+      }
+    }
+  ]
+}

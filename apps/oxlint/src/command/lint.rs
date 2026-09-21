@@ -58,6 +58,12 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_check: bool,
 
+    /// Allow type-aware linting to execute code from the project, for TypeScript
+    /// `contentMappers`. Deliberately CLI-only: a checked-in config must not be able to
+    /// grant a repository the right to run its own code.
+    #[bpaf(switch, hide_usage)]
+    pub run_external_code: bool,
+
     /// Run only TypeScript type checking diagnostics without regular lint diagnostics
     #[bpaf(long("type-check-only"), switch, hide)]
     pub type_check_only: bool,
