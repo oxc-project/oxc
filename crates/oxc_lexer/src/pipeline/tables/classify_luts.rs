@@ -1,10 +1,17 @@
-use crate::pipeline::bytes::{is_digit, is_word, is_ws};
+use crate::pipeline::bytes::{is_digit, is_ws};
 
 use super::{
     keywords::{is_kw_init, is_kw_init_ts},
     operators::is_op_char,
 };
 
+#[cfg_attr(
+    all(
+        not(test),
+        not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))
+    ),
+    expect(dead_code, reason = "only used in SIMD implementation and tests")
+)]
 pub struct MergedLuts {
     pub lo: [u8; 16],
     pub hi: [u8; 16],
@@ -40,33 +47,17 @@ impl MergedLuts {
             mrg_hi[hi as usize] |= 1u8 << bit;
         }
 
-        let merged_luts = Self { lo: mrg_lo, hi: mrg_hi, lo_ts: mrg_lo_ts };
-        merged_luts.self_check();
-        merged_luts
-    }
-
-    fn self_check(&self) {
-        for c in 0..256usize {
-            let cb = c as u8;
-            let t = if c < 0x80 { self.lo[c & 15] & self.hi[c >> 4] } else { 0 };
-            let kw = (t & 0x03) != 0;
-            let opp = (t & 0x3C) != 0;
-            let dt = (t & 0x80) != 0;
-            assert!(
-                kw == is_kw_init(cb) && opp == is_op_char(cb) && dt == (cb == b'.'),
-                "MRG_LO/HI wrong at byte {c:#04x}"
-            );
-            let tt = if c < 0x80 { self.lo_ts[c & 15] & self.hi[c >> 4] } else { 0 };
-            assert!(
-                ((tt & 0x03) != 0) == is_kw_init_ts(cb)
-                    && ((tt & 0x3C) != 0) == opp
-                    && ((tt & 0x80) != 0) == dt,
-                "MRG_LO_TS wrong at byte {c:#04x}"
-            );
-        }
+        Self { lo: mrg_lo, hi: mrg_hi, lo_ts: mrg_lo_ts }
     }
 }
 
+#[cfg_attr(
+    all(
+        not(test),
+        not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))
+    ),
+    expect(dead_code, reason = "only used in SIMD implementation and tests")
+)]
 pub struct WordLuts {
     pub lo: [u8; 16],
     pub hi: [u8; 16],
@@ -100,15 +91,52 @@ impl WordLuts {
             wb_hi[hi as usize] |= 1u8 << bit;
         }
 
-        let word_luts = Self { lo: wb_lo, hi: wb_hi };
-        word_luts.self_check();
-        word_luts
+        Self { lo: wb_lo, hi: wb_hi }
     }
+}
 
-    fn self_check(&self) {
+#[cfg(test)]
+mod tests {
+    use crate::pipeline::bytes::is_word;
+
+    use super::*;
+
+    #[test]
+    fn test_merged_luts() {
+        let merged_luts = MergedLuts::new();
+
         for c in 0..256usize {
             let cb = c as u8;
-            let tb = if c < 0x80 { self.lo[c & 15] & self.hi[c >> 4] } else { 0 };
+
+            let t = if c < 0x80 { merged_luts.lo[c & 15] & merged_luts.hi[c >> 4] } else { 0 };
+            let kw = (t & 0x03) != 0;
+            let opp = (t & 0x3C) != 0;
+            let dt = (t & 0x80) != 0;
+            assert!(
+                kw == is_kw_init(cb) && opp == is_op_char(cb) && dt == (cb == b'.'),
+                "MRG_LO/HI wrong at byte {c:#04x}"
+            );
+
+            let ts_t =
+                if c < 0x80 { merged_luts.lo_ts[c & 15] & merged_luts.hi[c >> 4] } else { 0 };
+            let ts_kw = (ts_t & 0x03) != 0;
+            let ts_opp = (ts_t & 0x3C) != 0;
+            let ts_dt = (ts_t & 0x80) != 0;
+            assert!(
+                ts_kw == is_kw_init_ts(cb) && ts_opp == opp && ts_dt == dt,
+                "MRG_LO_TS wrong at byte {c:#04x}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_word_luts() {
+        let word_luts = WordLuts::new();
+
+        for c in 0..256usize {
+            let cb = c as u8;
+
+            let tb = if c < 0x80 { word_luts.lo[c & 15] & word_luts.hi[c >> 4] } else { 0 };
             let wd = (c >= 0x80) || (tb & 0x3F) != 0;
             let ws = (tb & 0xC0) != 0;
             let dg = (tb & 0x02) != 0;

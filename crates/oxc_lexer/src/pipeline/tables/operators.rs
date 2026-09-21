@@ -79,7 +79,6 @@ impl OpMap {
         m.opmap_init();
         m.build_op_pack();
         m.punct1_init();
-        m.self_check();
         m
     }
 
@@ -187,57 +186,6 @@ impl OpMap {
         }
         o.kind as u32
     }
-
-    fn self_check(&self) {
-        let mut seen_kind = [0u8; 256];
-        for i in 0..OPMAP_OPS.len() {
-            let o = &OPMAP_OPS[i];
-            let mut b = [0u8; 4];
-            b[..o.len as usize].copy_from_slice(&o.txt[..o.len as usize]);
-            assert!(
-                self.opmap_lookup(b[0], b[1], b[2], b[3], o.len as u32) == o.kind as u32,
-                "self-check: opmap_lookup wrong"
-            );
-            assert!(seen_kind[o.kind as usize] == 0, "self-check: duplicate ordinal");
-            seen_kind[o.kind as usize] = 1;
-        }
-        assert!(
-            self.opmap_lookup(b'.', b'.', 0, 0, 2) == 0
-                && self.opmap_lookup(b'<', b'<', 0, 0, 2) == tk!(LShift) as u32
-                && self.opmap_lookup(b'<', b'=', 0, 0, 2) == tk!(Le) as u32
-                && self.opmap_lookup(b'>', b'>', b'>', 0, 3) == tk!(URShift) as u32
-                && self.opmap_lookup(b'>', b'>', b'=', 0, 3) == tk!(RShiftEq) as u32
-                && self.opmap_lookup(b'=', b'=', 0, 0, 2) == tk!(EqEq) as u32
-                && self.opmap_lookup(b'=', b'/', 0, 0, 2) == 0,
-            "self-check: op spot-checks failed"
-        );
-        let mut seen = [0u8; 256];
-        for i in 0..PUNCT1.len() {
-            let ord = self.punct1_ord[PUNCT1[i].byte as usize];
-            assert!(
-                ord == PUNCT1[i].kind as u8 && seen[ord as usize] == 0,
-                "self-check: PUNCT1 ordinal wrong/dup"
-            );
-            seen[ord as usize] = 1;
-        }
-        for b in 0..256usize {
-            let ord = self.punct1_ord[b];
-            let is_known = PUNCT1.iter().any(|p| p.byte == b as u8);
-            assert!(is_known || ord == tk!(Invalid), "self-check: PUNCT1_ORD should be unknown");
-        }
-        assert!(
-            self.punct1_ord[b'(' as usize] == tk!(LParen)
-                && self.punct1_ord[b'#' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'a' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'"' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'`' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'\\' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'$' as usize] == tk!(Invalid)
-                && self.punct1_ord[b' ' as usize] == tk!(Invalid)
-                && self.punct1_ord[0] == tk!(Invalid),
-            "self-check: PUNCT1 spot-checks failed"
-        );
-    }
 }
 
 #[inline(always)]
@@ -245,13 +193,84 @@ fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
     (c0 as u32) | ((c1 as u32) << 8) | ((c2 as u32) << 16) | (len << 24)
 }
 
-pub(super) fn opch_selfcheck() {
-    const OPCHARS: &[u8] = b"=!<>+-*&|^%?.";
-    let mut in_set = [false; 256];
-    for &q in OPCHARS {
-        in_set[q as usize] = true;
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_op_char() {
+        const OPCHARS: &[u8] = b"=!<>+-*&|^%?.";
+
+        let mut in_set = [false; 256];
+        for &q in OPCHARS {
+            in_set[q as usize] = true;
+        }
+
+        for c in 0..256usize {
+            assert!(is_op_char(c as u8) == in_set[c], "OPCH_LO/HI wrong at byte {c:#04x}");
+        }
     }
-    for c in 0..256usize {
-        assert!(is_op_char(c as u8) == in_set[c], "OPCH_LO/HI wrong at byte {c:#04x}");
+
+    #[test]
+    fn test_opmap() {
+        let opmap = OpMap::new();
+
+        let mut seen_kind = [0u8; 256];
+        for i in 0..OPMAP_OPS.len() {
+            let o = &OPMAP_OPS[i];
+            let mut b = [0u8; 4];
+            b[..o.len as usize].copy_from_slice(&o.txt[..o.len as usize]);
+            assert!(
+                opmap.opmap_lookup(b[0], b[1], b[2], b[3], o.len as u32) == o.kind as u32,
+                "opmap_lookup wrong"
+            );
+            assert!(seen_kind[o.kind as usize] == 0, "duplicate ordinal");
+            seen_kind[o.kind as usize] = 1;
+        }
+
+        assert!(
+            opmap.opmap_lookup(b'.', b'.', 0, 0, 2) == 0
+                && opmap.opmap_lookup(b'<', b'<', 0, 0, 2) == tk!(LShift) as u32
+                && opmap.opmap_lookup(b'<', b'=', 0, 0, 2) == tk!(Le) as u32
+                && opmap.opmap_lookup(b'>', b'>', b'>', 0, 3) == tk!(URShift) as u32
+                && opmap.opmap_lookup(b'>', b'>', b'=', 0, 3) == tk!(RShiftEq) as u32
+                && opmap.opmap_lookup(b'=', b'=', 0, 0, 2) == tk!(EqEq) as u32
+                && opmap.opmap_lookup(b'=', b'/', 0, 0, 2) == 0,
+            "op spot-checks failed"
+        );
+    }
+
+    #[test]
+    fn test_punct1_ord() {
+        let punct1_ord = &OpMap::new().punct1_ord;
+
+        let mut seen = [0u8; 256];
+        for i in 0..PUNCT1.len() {
+            let ord = punct1_ord[PUNCT1[i].byte as usize];
+            assert!(
+                ord == PUNCT1[i].kind as u8 && seen[ord as usize] == 0,
+                "PUNCT1 ordinal wrong/dup"
+            );
+            seen[ord as usize] = 1;
+        }
+
+        for b in 0..256usize {
+            let ord = punct1_ord[b];
+            let is_known = PUNCT1.iter().any(|p| p.byte == b as u8);
+            assert!(is_known || ord == tk!(Invalid), "PUNCT1_ORD should be unknown");
+        }
+
+        assert!(
+            punct1_ord[b'(' as usize] == tk!(LParen)
+                && punct1_ord[b'#' as usize] == tk!(Invalid)
+                && punct1_ord[b'a' as usize] == tk!(Invalid)
+                && punct1_ord[b'"' as usize] == tk!(Invalid)
+                && punct1_ord[b'`' as usize] == tk!(Invalid)
+                && punct1_ord[b'\\' as usize] == tk!(Invalid)
+                && punct1_ord[b'$' as usize] == tk!(Invalid)
+                && punct1_ord[b' ' as usize] == tk!(Invalid)
+                && punct1_ord[0] == tk!(Invalid),
+            "PUNCT1 spot-checks failed"
+        );
     }
 }

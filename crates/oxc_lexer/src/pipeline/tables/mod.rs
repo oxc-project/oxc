@@ -17,9 +17,8 @@ pub(super) use punct1::punct1_luts;
 
 use classify_luts::{MergedLuts, WordLuts};
 use keywords::Keywords;
-use operators::{OpMap, opch_selfcheck};
+use operators::OpMap;
 use pair_luts::PairLuts;
-use punct1::punct1_hash_selfcheck;
 
 #[cfg_attr(
     not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")),
@@ -44,9 +43,6 @@ impl Tables {
         };
 
         t.pair_luts.build();
-        opch_selfcheck();
-        punct1_hash_selfcheck();
-        t.keywords.self_check();
 
         t
     }

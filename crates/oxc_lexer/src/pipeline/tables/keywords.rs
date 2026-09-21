@@ -145,30 +145,6 @@ impl Keywords {
         let k = self.kwjs.lookup(p, len);
         k >= KW_KIND_BASE as u32 && ((self.regex_kw_mask >> (k - KW_KIND_BASE as u32)) & 1) != 0
     }
-
-    pub(super) fn self_check(&self) {
-        self.kwjs.self_check(&KEYWORDS_JS);
-        self.kwts.self_check(&KEYWORDS_TS);
-
-        self.kwset_selfcheck();
-        kwinit_selfcheck();
-    }
-
-    /// Cross-set behavior the unit tests rely on: TS spellings resolve only
-    /// through the TS set, and JS words agree byte-for-byte across sets.
-    fn kwset_selfcheck(&self) {
-        let mut buf = [0u8; 16];
-        for (w, tok) in KEYWORDS_TS.iter() {
-            let bytes = w.as_bytes();
-            buf.fill(0);
-            buf[..bytes.len()].copy_from_slice(bytes);
-            let js = unsafe { self.kwjs.lookup(buf.as_ptr(), bytes.len()) };
-            let ts = unsafe { self.kwts.lookup(buf.as_ptr(), bytes.len()) };
-            assert!(ts == *tok as u32, "kwts lookup({w}) wrong");
-            let in_js = KEYWORDS_JS.iter().any(|k| k.0 == *w);
-            assert!(js == if in_js { *tok as u32 } else { 0 }, "kwjs lookup({w}) wrong");
-        }
-    }
 }
 
 fn build_regex_kw_mask() -> u64 {
@@ -375,25 +351,75 @@ impl KwSet {
         }
         self.kw_tok[idx] as u32
     }
+}
 
-    fn self_check(&self, list: &[(&'static str, TokenKind)]) {
+#[inline(always)]
+fn kw_key(c0: u8, c1: u8, len: u32) -> u32 {
+    (c0 as u32) | ((c1 as u32) << 8) | (len << 16)
+}
+
+#[inline(always)]
+fn kw_key_ts(c0: u8, c1: u8, clast: u8, len: u32) -> u32 {
+    (c0 as u32) | ((c1 as u32) << 8) | ((clast as u32) << 16) | (len << 24)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_kw_init() {
+        let mut in_set = [false; 256];
+        for kw in KEYWORDS_JS.iter() {
+            in_set[kw.0.as_bytes()[0] as usize] = true;
+        }
+        for c in 0..256usize {
+            assert!(is_kw_init(c as u8) == in_set[c], "KWINIT_LO/HI wrong at byte {c:#04x}");
+        }
+    }
+
+    #[test]
+    fn test_is_kw_init_ts() {
+        let mut in_set_ts = [false; 256];
+        for kw in KEYWORDS_TS.iter() {
+            in_set_ts[kw.0.as_bytes()[0] as usize] = true;
+        }
+        for c in 0..256usize {
+            assert!(is_kw_init_ts(c as u8) == in_set_ts[c], "KWINIT_TS_LO wrong at byte {c:#04x}");
+        }
+    }
+
+    #[test]
+    fn test_kw_set_js() {
+        let keywords = Keywords::new();
+        check_kwset(&keywords.kwjs, &KEYWORDS_JS);
+    }
+
+    #[test]
+    fn test_kw_set_ts() {
+        let keywords = Keywords::new();
+        check_kwset(&keywords.kwts, &KEYWORDS_TS);
+    }
+
+    fn check_kwset(kwset: &KwSet, list: &[(&'static str, TokenKind)]) {
         for i in 0..list.len() {
             let mut buf = [0u8; 16];
             let bytes = list[i].0.as_bytes();
             buf[..bytes.len()].copy_from_slice(bytes);
             unsafe {
                 assert!(
-                    self.lookup(buf.as_ptr(), bytes.len()) == list[i].1 as u32,
-                    "self-check: kw lookup({}) wrong",
+                    kwset.lookup(buf.as_ptr(), bytes.len()) == list[i].1 as u32,
+                    "kw lookup({}) wrong",
                     list[i].0
                 );
                 assert!(
-                    self.lookup(buf.as_ptr(), bytes.len() + 1) == 0,
-                    "self-check: kw lookup({}+1) matched",
+                    kwset.lookup(buf.as_ptr(), bytes.len() + 1) == 0,
+                    "kw lookup({}+1) matched",
                     list[i].0
                 );
             }
         }
+
         for neg in [
             // spellchecker:off
             "lets",
@@ -416,38 +442,29 @@ impl KwSet {
             let mut buf = [0u8; 16];
             buf[..neg.len()].copy_from_slice(neg.as_bytes());
             unsafe {
-                assert!(
-                    self.lookup(buf.as_ptr(), neg.len()) == 0,
-                    "self-check: kw negative {neg} matched"
-                );
+                assert!(kwset.lookup(buf.as_ptr(), neg.len()) == 0, "kw negative {neg} matched");
             }
         }
     }
-}
 
-#[inline(always)]
-fn kw_key(c0: u8, c1: u8, len: u32) -> u32 {
-    (c0 as u32) | ((c1 as u32) << 8) | (len << 16)
-}
+    /// The 2 sets agree on the keywords they share.
+    /// TS set matches TS-only keywords, and JS set doesn't.
+    #[test]
+    fn test_kw_sets_cross_check() {
+        let keywords = Keywords::new();
 
-#[inline(always)]
-fn kw_key_ts(c0: u8, c1: u8, clast: u8, len: u32) -> u32 {
-    (c0 as u32) | ((c1 as u32) << 8) | ((clast as u32) << 16) | (len << 24)
-}
+        let mut buf = [0u8; 16];
+        for (w, tok) in KEYWORDS_TS {
+            let bytes = w.as_bytes();
+            buf.fill(0);
+            buf[..bytes.len()].copy_from_slice(bytes);
 
-fn kwinit_selfcheck() {
-    let mut in_set = [false; 256];
-    for kw in KEYWORDS_JS.iter() {
-        in_set[kw.0.as_bytes()[0] as usize] = true;
-    }
-    for c in 0..256usize {
-        assert!(is_kw_init(c as u8) == in_set[c], "KWINIT_LO/HI wrong at byte {c:#04x}");
-    }
-    let mut in_set_ts = [false; 256];
-    for kw in KEYWORDS_TS.iter() {
-        in_set_ts[kw.0.as_bytes()[0] as usize] = true;
-    }
-    for c in 0..256usize {
-        assert!(is_kw_init_ts(c as u8) == in_set_ts[c], "KWINIT_TS_LO wrong at byte {c:#04x}");
+            let ts = unsafe { keywords.kwts.lookup(buf.as_ptr(), bytes.len()) };
+            assert!(ts == tok as u32, "kwts lookup({w}) wrong");
+
+            let js = unsafe { keywords.kwjs.lookup(buf.as_ptr(), bytes.len()) };
+            let in_js = KEYWORDS_JS.iter().any(|k| k.0 == w);
+            assert!(js == if in_js { tok as u32 } else { 0 }, "kwjs lookup({w}) wrong");
+        }
     }
 }
