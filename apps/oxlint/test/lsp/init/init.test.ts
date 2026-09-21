@@ -96,6 +96,7 @@ describe("LSP initialization", () => {
         "vite.config.cjs",
         "vite.config.mts",
         "vite.config.cts",
+        "oxlint-suppressions.json",
       ],
       { VP_VERSION: "1" },
     ],
