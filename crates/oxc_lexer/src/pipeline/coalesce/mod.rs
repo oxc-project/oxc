@@ -1,22 +1,21 @@
 use std::{ptr, slice};
 
-use crate::{
-    error::diag_code,
-    lanes::Lanes,
-    opmap::KwSet,
-    tables::{Tables, is_digit, is_op_char, is_word, is_ws},
-    token::tk,
-};
+use crate::{error::DiagCode, lanes::Lanes, token::tk};
 
-use super::{
+use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
+    bytes::{is_digit, is_word, is_ws},
     disambiguate::{gt_run_split, lt_run_split},
     scan::scan_number,
+    tables::{KwSet, Tables, is_op_char},
 };
 
 mod keywords;
 pub use keywords::KWB;
 use keywords::kw_flush;
+
+/// [`glue_number`] computes the kind as `NUM + is_bigint` - keep them adjacent.
+const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
 
 pub unsafe fn coalesce(
     t: &Tables,
@@ -33,7 +32,7 @@ pub unsafe fn coalesce(
     ts: bool,
     lanes: &mut Lanes,
 ) {
-    let kw = if ts { &t.kwts } else { &t.kwjs };
+    let kw = if ts { &t.keywords.kwts } else { &t.keywords.kwjs };
     let nw = (n + 63) >> 6;
     let mut opprev: u64 = 0;
     let mut dtprev: u64 = 0;
@@ -143,15 +142,14 @@ pub unsafe fn coalesce(
                     }
                 }
                 // Mirror case: `Array<<T>(x: T) => T>` opens two lists, not `<<` shift-left.
-                if b0 == b'<' && b1 == b'<' && kw.ts_key {
-                    if lt_run_split(src, st, opch, kind, n, p) {
-                        cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
-                        continue;
-                    }
+                if b0 == b'<' && b1 == b'<' && kw.ts_key && lt_run_split(src, st, opch, kind, n, p)
+                {
+                    cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
+                    continue;
                 }
                 if run == 2 {
                     let key = (q & 0xFFFF) | (2u32 << 24);
-                    let pack = t.op2_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                    let pack = t.op.op2_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                     let want = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
                     let mut ok = ((pack ^ want) & 0x00FF_FFFF) == 0;
                     let kk = (pack >> 24) as u8;
@@ -169,17 +167,17 @@ pub unsafe fn coalesce(
                 }
                 let b2 = (q >> 16) as u8;
                 let key3 = (q & 0xFF_FFFF) | (3u32 << 24);
-                let p3 = t.op3_pack[(key3.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                let p3 = t.op.op3_pack[(key3.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let want3 = 3u64 | ((b0 as u64) << 8) | ((b1 as u64) << 16) | ((b2 as u64) << 24);
                 let ok3 = ((p3 ^ want3) & 0xFFFF_FFFF) == 0;
                 let key2a = (q & 0xFFFF) | (2u32 << 24);
-                let pa = t.op2_pack[(key2a.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                let pa = t.op.op2_pack[(key2a.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let wanta = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
                 let ka = (pa >> 24) as u8;
                 let mut ok2a = ((pa ^ wanta) & 0x00FF_FFFF) == 0;
                 ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
                 let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
-                let pb = t.op2_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                let pb = t.op.op2_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let wantb = 2u32 | ((b1 as u32) << 8) | ((b2 as u32) << 16);
                 let kb = (pb >> 24) as u8;
                 let mut ok2b = ((pb ^ wantb) & 0x00FF_FFFF) == 0;
@@ -243,9 +241,9 @@ unsafe fn glue_number(
                 // A surviving `n` is a misplaced bigint suffix; scan_number
                 // consumes legal ones. Token spans are unchanged either way.
                 let code = if c == b'n' {
-                    diag_code::INVALID_BIGINT
+                    DiagCode::InvalidBigint
                 } else {
-                    diag_code::INVALID_NUMERIC_LITERAL
+                    DiagCode::InvalidNumericLiteral
                 };
                 lanes.push_num_end_diag(srcs, e2, code);
                 if is_digit(c) {

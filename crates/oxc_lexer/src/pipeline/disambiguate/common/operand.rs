@@ -18,12 +18,12 @@
 //! [`LT_OPERAND_WORDS`] also lives here. It lists the words after which a `<` starts an operand,
 //! for [`operator`] and [`type_context`].
 //!
-//! [`operator`]: super::super::operator
-//! [`type_context`]: super::super::type_context
+//! [`operator`]: crate::pipeline::disambiguate::operator
+//! [`type_context`]: crate::pipeline::disambiguate::type_context
 
-use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
+use crate::token::{OP_KIND_BASE, tk};
 
-use super::super::super::bitmap::bm_next1;
+use crate::pipeline::{bitmap::bm_next1, tables::Tables};
 
 use super::{
     constructs::{
@@ -109,22 +109,19 @@ pub unsafe fn brace_opens_value(
         {
             return true;
         }
-        if ch == b')' {
-            if let Some(lp) = match_delim_back(src, st, kind, p, b'(', b')') {
-                if let Some(fk) = function_keyword_before_params(src, st, kind, lp) {
-                    if operand_position(t, src, st, kind, n, fk, ts, depth) {
-                        return true;
-                    }
-                }
-            }
+        if ch == b')'
+            && let Some(lp) = match_delim_back(src, st, kind, p, b'(', b')')
+            && let Some(fk) = function_keyword_before_params(src, st, kind, lp)
+            && operand_position(t, src, st, kind, n, fk, ts, depth)
+        {
+            return true;
         }
     }
-    if ts {
-        if let Some(lp) = return_type_signature_paren(src, st, kind, brace) {
-            if let Some(fk) = function_keyword_before_params(src, st, kind, lp) {
-                return operand_position(t, src, st, kind, n, fk, ts, depth);
-            }
-        }
+    if ts
+        && let Some(lp) = return_type_signature_paren(src, st, kind, brace)
+        && let Some(fk) = function_keyword_before_params(src, st, kind, lp)
+    {
+        return operand_position(t, src, st, kind, n, fk, ts, depth);
     }
     class_brace_is_value(t, src, st, kind, n, brace, ts, depth)
 }
@@ -262,10 +259,10 @@ unsafe fn operand_position_at(
     if ch == b':' {
         return colon_marks_value(t, src, st, kind, n, p, ts, depth);
     }
-    if ch == b')' {
-        if let Some(at) = decorator_start(src, st, kind, p) {
-            return operand_position_at(t, src, st, kind, n, at, ts, depth, hops + 1);
-        }
+    if ch == b')'
+        && let Some(at) = decorator_start(src, st, kind, p)
+    {
+        return operand_position_at(t, src, st, kind, n, at, ts, depth, hops + 1);
     }
     false
 }
@@ -394,6 +391,7 @@ unsafe fn colon_marks_value(
                 b'(' | b'[' | b';' => return false,
                 b':' => debt += 1,
                 b'?' => {
+                    #[expect(clippy::collapsible_match)]
                     if *src.add(w + 1) != b'?'
                         && *src.add(w + 1) != b'.'
                         && (w == 0 || *src.add(w - 1) != b'?')
@@ -496,7 +494,7 @@ unsafe fn ts_gt_brace(
             return body(class_walk_from(t, src, st, kind, n, tq, true, depth));
         }
         let e = bm_next1(st, tp + 1, n);
-        if t.is_regex_keyword(src.add(tp), e - tp) {
+        if t.keywords.is_regex_keyword(src.add(tp), e - tp) {
             return GtBrace::Value;
         }
         return GtBrace::No;
@@ -740,7 +738,7 @@ pub unsafe fn type_annotation_asi(
                 _ => return false,
             }
         } else if kk == tk!(Ident) || kk == tk!(IdentEscaped) {
-            let kw = t.kwts.lookup(src.add(w), word_len(src, w)) as u8;
+            let kw = t.keywords.kwts.lookup(src.add(w), word_len(src, w)) as u8;
             if matches!(kw, tk!(KwExtends) | tk!(KwIs) | tk!(KwIn) | tk!(KwAs)) {
                 ends = false;
                 starts = false;

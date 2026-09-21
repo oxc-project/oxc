@@ -24,7 +24,7 @@ pub async fn run_lsp(
 ) {
     let version = {
         let mut version = env!("CARGO_PKG_VERSION").to_string();
-        if let Some(vp_version) = crate::vp_version() {
+        if let Some(vp_version) = oxc_config::vp_version() {
             let _ = write!(version, " (VP: {})", vp_version.to_string_lossy());
         }
         version

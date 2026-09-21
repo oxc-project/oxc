@@ -1,8 +1,9 @@
-use crate::{comment_meta, error::diag_code, lanes::Lanes, tables::Tables, token::tk};
+use crate::{comment_meta, error::DiagCode, lanes::Lanes, token::tk};
 
-use super::super::{
+use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
     find::{find_line_terminator, find_opener, find_opener6},
+    tables::Tables,
 };
 
 use super::common::{lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape};
@@ -102,7 +103,7 @@ pub(super) unsafe fn carve_js(
                     && *src.add(s + 3) == b'-';
                 if html && (!lanes.module || html_close_at_line_start(srcs, s)) {
                     if lanes.module {
-                        lanes.push_diag(s as u32, 4, diag_code::HTML_COMMENT_IN_MODULE);
+                        lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
                     }
                     let end = find_line_terminator(src, n, s + 4);
                     *kind.add(s) = tk!(LineComment);
@@ -132,6 +133,7 @@ pub(super) unsafe fn carve_js(
             }
             b'>' => {
                 // Annex B B.1.3: `-->` begins a line comment, but only at
+                #[expect(clippy::collapsible_match)]
                 if s >= 2
                     && *src.add(s - 1) == b'-'
                     && *src.add(s - 2) == b'-'
@@ -172,7 +174,7 @@ pub(super) unsafe fn carve_js(
     }
 }
 
-/// Annex B B.1.3: a `-->` close-comment counts only at line start — scanning
+/// Annex B B.1.3: a `-->` close-comment counts only at line start - scanning
 /// back must reach a LineTerminator (or start of input) crossing nothing but
 /// whitespace and block comments; a newline inside a crossed block comment
 /// also qualifies. Cold: called only on a literal `-->`.

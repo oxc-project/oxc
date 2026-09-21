@@ -1,7 +1,8 @@
-use crate::{error::diag_code, lanes::Lanes, tables::is_id_start, token::tk};
+use crate::{error::DiagCode, lanes::Lanes, token::tk};
 
-use super::super::{
+use crate::pipeline::{
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
+    bytes::is_id_start,
     find::unicode_ws_len,
     scan::scan_ident_esc,
 };
@@ -67,7 +68,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                     if ok {
                         // Consume the verified continuation bits so they are
                         // not re-visited; a continuation still visible to the
-                        // walk had no valid lead — that is the stray-
+                        // walk had no valid lead - that is the stray-
                         // continuation check.
                         let cm: u128 = (((1u128 << cont) - 1) << 1) << (p & 63);
                         m &= !(cm as u64);
@@ -76,7 +77,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                         utf8_bad = true;
                         // Span = the maximal invalid subpart; one diag per
                         // file, context-free (fires inside strings too).
-                        lanes.push_diag(p as u32, (1 + cont) as u32, diag_code::INVALID_UTF8);
+                        lanes.push_diag(p as u32, (1 + cont) as u32, DiagCode::InvalidUtf8);
                         continue;
                     } else {
                         continue;

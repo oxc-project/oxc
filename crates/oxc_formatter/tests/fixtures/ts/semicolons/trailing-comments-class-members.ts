@@ -3,7 +3,8 @@
 // Class properties move the same-line comment behind the semicolon;
 // an own-line comment before the `;` defers to the next element's leading pass
 // (Prettier's first pass cancels the same-line move in that case
-// and needs a second pass to settle — we print that fixpoint directly)
+// and needs a second pass to settle; DIVERGES: we print that fixpoint directly,
+// see DIVERGENCES.md#paren-comment-fixpoint)
 class Cls {
   a = 1 /* r */;
   b = 2 // line r

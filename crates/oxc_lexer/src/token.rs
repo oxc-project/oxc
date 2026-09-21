@@ -9,7 +9,7 @@ macro_rules! define_token_kind {
         ///
         /// The discriminants are load-bearing: `[32, 128)` is reserved for
         /// punctuators and `>= 128` for keywords, so the pipeline can classify
-        /// with range checks and SIMD compares. They are *not* dense â€” the
+        /// with range checks and SIMD compares. They are *not* dense - the
         /// pipeline computes kinds arithmetically and blends them in SIMD
         /// registers, so it works on the raw `u8` and only the crate boundary
         /// is typed.
@@ -264,6 +264,10 @@ define_token_kind! {
     Invalid = 255 => "INVALID",
 }
 
+/// First punctuator kind - the token-kind space reserves [32, 128) for them.
+pub(crate) const OP_KIND_BASE: u8 = tk!(LBrace);
+pub(crate) const OP_KIND_MAX: u8 = tk!(At);
+
 /// First keyword kind: every kind `>= KW_KIND_BASE` other than [`TokenKind::Invalid`] is a keyword.
 pub const KW_KIND_BASE: u8 = tk!(KwBreak);
 pub(crate) const KW_KIND_MAX: u8 = tk!(KwUsing);
@@ -368,7 +372,7 @@ impl Display for TokenKind {
 /// # SAFETY
 ///
 /// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
-/// pipeline only ever writes kinds that came from [`crate::opmap`]'s tables or
+/// pipeline only ever writes kinds that came from `opmap`'s tables or
 /// from the named constants in `pipeline`, so this holds for any range the
 /// lexer has written; it does *not* hold for uninitialised arena memory.
 #[inline]
@@ -501,8 +505,9 @@ impl StringSpan {
 
 #[cfg(test)]
 mod tests {
-    use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
     use crate::{LexOptions, Lexer, PAD};
+
+    use super::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
 
     #[test]
     fn from_u8_round_trips_every_variant() {
@@ -563,8 +568,10 @@ mod tests {
         assert!(!TokenKind::String.is_numeric());
     }
 
-    /// Backs the safety invariant of [`super::kinds_from_bytes`]: the lexer
-    /// never emits a byte outside the declared discriminants.
+    /// Backs the safety invariant of [`kinds_from_bytes`] -
+    /// the lexer never emits a byte outside the declared discriminants.
+    ///
+    /// [`kinds_from_bytes`]: super::kinds_from_bytes
     #[test]
     fn every_emitted_kind_is_declared() {
         const SOURCES: [&str; 6] = [

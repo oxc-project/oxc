@@ -5,7 +5,8 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 // Block and own-line comments in a classic for-head keep their slot, never
 // crossing the head's `;`s or its `)`, with or without a node in the slot
 // (a same-line line comment moves just behind its `;` instead: `a; // c`).
-// Known divergence (js/explicit-resource-management/valid-await-using-comments.js):
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation;
+// js/explicit-resource-management/valid-await-using-comments.js):
 // Prettier moves empty-slot comments backward across the `;`s onto the init
 // (`for (a /*8*/ /*9*/;;)`), or forward out of the parens entirely when every
 // slot is empty (`for (;;) /*s0*/ ;`) -- attachment artifacts of the kind
@@ -36,7 +37,8 @@ b; c) {}
 // Block and own-line comments in a classic for-head keep their slot, never
 // crossing the head's `;`s or its `)`, with or without a node in the slot
 // (a same-line line comment moves just behind its `;` instead: `a; // c`).
-// Known divergence (js/explicit-resource-management/valid-await-using-comments.js):
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation;
+// js/explicit-resource-management/valid-await-using-comments.js):
 // Prettier moves empty-slot comments backward across the `;`s onto the init
 // (`for (a /*8*/ /*9*/;;)`), or forward out of the parens entirely when every
 // slot is empty (`for (;;) /*s0*/ ;`) -- attachment artifacts of the kind
@@ -72,7 +74,8 @@ for (
 // Block and own-line comments in a classic for-head keep their slot, never
 // crossing the head's `;`s or its `)`, with or without a node in the slot
 // (a same-line line comment moves just behind its `;` instead: `a; // c`).
-// Known divergence (js/explicit-resource-management/valid-await-using-comments.js):
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation;
+// js/explicit-resource-management/valid-await-using-comments.js):
 // Prettier moves empty-slot comments backward across the `;`s onto the init
 // (`for (a /*8*/ /*9*/;;)`), or forward out of the parens entirely when every
 // slot is empty (`for (;;) /*s0*/ ;`) -- attachment artifacts of the kind

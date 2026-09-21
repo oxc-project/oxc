@@ -1,15 +1,11 @@
-use crate::{
-    comment_meta,
-    error::diag_code,
-    lanes::Lanes,
-    tables::{Tables, hex_val},
-    token::tk,
-};
+use crate::{comment_meta, error::DiagCode, lanes::Lanes, token::tk};
 
-use super::super::{
+use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
+    bytes::hex_val,
     disambiguate::not_operator_position,
     scan::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
+    tables::Tables,
 };
 
 /// Lex the string literal opening at `s`. Returns the resume index. Shared
@@ -32,7 +28,7 @@ pub(super) unsafe fn lex_string(
         // The terminator wins over unterminated-at-EOF, same as oxc_parser.
         lanes.push_line_terminator_in_string(srcs, s, end);
     } else if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, diag_code::UNTERMINATED_STRING);
+        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedString);
     }
     *kind.add(s) = tk!(String);
     if end > s + 1 {
@@ -68,7 +64,7 @@ pub(super) unsafe fn lex_template_segment(
     let mut term = 0i32;
     let end = scan_tmpl_text(src, n, s + 1, &mut term);
     if term == 0 {
-        lanes.push_diag(s as u32, (end - s) as u32, diag_code::UNTERMINATED_TEMPLATE);
+        lanes.push_diag(s as u32, (end - s) as u32, DiagCode::UnterminatedTemplate);
     }
     *kind.add(s) = if term == 2 { head_kind } else { flat_kind };
     if end > s + 1 {
@@ -159,7 +155,7 @@ pub(super) unsafe fn lex_block_comment(
     let (e, saw_nl, lic_q) = scan_block_comment(src, n, s + 2);
     let end = if e < n { e + 1 } else { n };
     if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, diag_code::UNTERMINATED_BLOCK_COMMENT);
+        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedBlockComment);
     }
     *kind.add(s) = tk!(BlockComment);
     if end > s + 1 {
@@ -201,9 +197,9 @@ unsafe fn lex_regex(
         // oxc_parser reports a line terminator in the body as "unterminated"
         // with a span ending just past the first one, even when a later `/`
         // closes our token.
-        lanes.push_diag(s as u32, (nl_at + 1 - s) as u32, diag_code::LINE_TERMINATOR_IN_REGEXP);
+        lanes.push_diag(s as u32, (nl_at + 1 - s) as u32, DiagCode::LineTerminatorInRegexp);
     } else if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, diag_code::UNTERMINATED_REGEXP);
+        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedRegexp);
     }
     let mut end = fs;
     if end < n && bm_get(word, end) {

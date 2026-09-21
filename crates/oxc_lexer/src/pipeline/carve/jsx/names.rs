@@ -1,9 +1,8 @@
 use std::ptr;
 
-use crate::tables::{is_word, is_ws};
-
-use super::super::super::{
+use crate::pipeline::{
     bitmap::bm_next0,
+    bytes::{is_word, is_ws},
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
 };

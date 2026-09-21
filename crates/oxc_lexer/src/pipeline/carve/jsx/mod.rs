@@ -1,18 +1,15 @@
-use crate::{
-    error::diag_code,
-    lanes::Lanes,
-    tables::{Tables, is_digit, is_id_start, is_word, is_ws},
-    token::tk,
-};
+use crate::{error::DiagCode, lanes::Lanes, token::tk};
 
-use super::super::{
+use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
+    bytes::{is_digit, is_id_start, is_word, is_ws},
     disambiguate::{bm_prev_sig, not_operator_position},
     find::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2,
     },
     scan::scan_block_comment,
+    tables::Tables,
 };
 
 use super::common::{
@@ -255,7 +252,7 @@ pub(super) unsafe fn carve_jsx(
                                     t, src, srcs, st, opch, kind, word, n, s, tpos, ts, lanes,
                                 )
                             {
-                                // Element — unless `.tsx` says this is a
+                                // Element - unless `.tsx` says this is a
                                 // type-parameter list, which stays a less-than.
                                 jsx_punct(kind, opch, s, tk!(JsxLt));
                                 stack.push(JFrame {
@@ -319,7 +316,7 @@ pub(super) unsafe fn carve_jsx(
                     let mut p = s + 1;
                     jsx_punct(kind, opch, s, tk!(Lt));
                     // Open template substitutions, each counting its own
-                    // nested braces — the same shape `carve` keeps in its
+                    // nested braces - the same shape `carve` keeps in its
                     // `depth` vector, sized so this path allocates nothing.
                     let mut sub = [0u32; TYPE_ARG_TMPL_CAP];
                     let mut nsub = 0usize;
@@ -375,7 +372,7 @@ pub(super) unsafe fn carve_jsx(
                             }
                             // Braces only reach here through `find_opener6`,
                             // which is only selected while a substitution is
-                            // open — the guards say so rather than leaving it
+                            // open - the guards say so rather than leaving it
                             // to the finder choice.
                             b'{' if nsub != 0 => {
                                 sub[nsub - 1] += 1;
@@ -433,11 +430,7 @@ pub(super) unsafe fn carve_jsx(
                         // JSX attribute string: no escapes, ends at next quote.
                         let e = find1(src, n, s + 1, c);
                         if e >= n {
-                            lanes.push_diag(
-                                s as u32,
-                                (n - s) as u32,
-                                diag_code::UNTERMINATED_STRING,
-                            );
+                            lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedString);
                         }
                         let end = if e < n { e + 1 } else { n };
                         *kind.add(s) = tk!(String);
@@ -494,7 +487,7 @@ pub(super) unsafe fn carve_jsx(
                                 }
                                 i = gp + 1;
                             } else {
-                                // lone `/` (malformed) — stays a slash.
+                                // lone `/` (malformed) - stays a slash.
                                 i = s + 1;
                             }
                         }
@@ -549,7 +542,7 @@ pub(super) unsafe fn carve_jsx(
                     // A stray `>`/`}` ends the run; clear its opch so
                     // coalesce can't fuse adjacent strays into `>>`.
                     bm_clear(opch, s);
-                    lanes.push_diag(s as u32, 1, diag_code::JSX_TEXT_INVALID_CHARACTER);
+                    lanes.push_diag(s as u32, 1, DiagCode::JsxTextInvalidCharacter);
                     text_start = s + 1;
                     i = s + 1;
                 } else {
@@ -588,11 +581,7 @@ pub(super) unsafe fn carve_jsx(
                         }
                         let after = if gp < n { gp + 1 } else { n };
                         if gp >= n {
-                            lanes.push_diag(
-                                s as u32,
-                                (n - s) as u32,
-                                diag_code::UNTERMINATED_JSX_TAG,
-                            );
+                            lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedJsxTag);
                         } else if let Some(f) = stack.last() {
                             let c2 = *src.add(tpos + 1);
                             let cs = if is_word(c2) || c2 == b'>' {
@@ -604,7 +593,7 @@ pub(super) unsafe fn carve_jsx(
                                 lanes.push_diag(
                                     s as u32,
                                     (after - s) as u32,
-                                    diag_code::JSX_CLOSING_TAG_MISMATCH,
+                                    DiagCode::JsxClosingTagMismatch,
                                 );
                             }
                         }
@@ -628,7 +617,7 @@ pub(super) unsafe fn carve_jsx(
                         mode = JMode::Tag;
                         i = s + 1;
                     } else {
-                        // malformed lone `<` in text — clear opch, no `<<` fusion
+                        // malformed lone `<` in text - clear opch, no `<<` fusion
                         bm_clear(opch, s);
                         text_start = s + 1;
                         i = s + 1;
@@ -640,14 +629,14 @@ pub(super) unsafe fn carve_jsx(
     if let Some(f) = stack.last() {
         match f.kind {
             JFrameKind::JsxTag => {
-                lanes.push_diag(f.start, n as u32 - f.start, diag_code::UNTERMINATED_JSX_TAG);
+                lanes.push_diag(f.start, n as u32 - f.start, DiagCode::UnterminatedJsxTag);
             }
             JFrameKind::JsxElem => {
                 let ne = jsx_name_end(src, n, f.name_s as usize) as u32;
-                lanes.push_diag(f.start, ne - f.start, diag_code::UNTERMINATED_JSX_ELEMENT);
+                lanes.push_diag(f.start, ne - f.start, DiagCode::UnterminatedJsxElement);
             }
             JFrameKind::JsxCont => {
-                lanes.push_diag(f.start, n as u32 - f.start, diag_code::UNTERMINATED_JSX_CONTAINER);
+                lanes.push_diag(f.start, n as u32 - f.start, DiagCode::UnterminatedJsxContainer);
             }
             JFrameKind::TemplateSub => {}
         }

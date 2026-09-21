@@ -10,19 +10,19 @@
 //!   A `(` can, as in `f<T>(x)`. An identifier can't, as in `a < b > c`.
 //!   When the token alone doesn't settle it, the answer is [`Follow::Ctx`], and the caller decides.
 
-use crate::{
-    opmap::OP_KIND_BASE,
-    tables::{Tables, is_digit, is_id_start},
-    token::tk,
-};
+use crate::token::{OP_KIND_BASE, tk};
 
-use super::super::super::{
+use crate::pipeline::{
     bitmap::{bm_get, bm_next1},
+    bytes::{is_digit, is_id_start},
     find::{find_line_terminator, unicode_ws_len},
     scan::scan_block_comment,
+    tables::Tables,
 };
 
-use super::super::common::{kind_at, lt_in_range, type_prefix_kind, word_is_any, word_len};
+use crate::pipeline::disambiguate::common::{
+    kind_at, lt_in_range, type_prefix_kind, word_is_any, word_len,
+};
 
 use super::bytes::skip_ws_fwd;
 
@@ -180,7 +180,7 @@ pub(super) unsafe fn type_list_legal(
         let was_this = this_head;
         this_head = false;
         if k == tk!(Ident) || k == tk!(IdentEscaped) {
-            let kk = t.kwts.lookup(src.add(w), word_len(src, w)) as u8;
+            let kk = t.keywords.kwts.lookup(src.add(w), word_len(src, w)) as u8;
             this_head = kk == tk!(KwThis);
             if !start && brc == 0 && !matches!(kk, tk!(KwExtends) | tk!(KwIs) | tk!(KwIn)) {
                 return false;

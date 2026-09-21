@@ -4,7 +4,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ==================== Input ====================
 // A `//` on a comma's line stays on that line (`a, // c`), the line-boundary invariant;
 // Prettier's CSS moves it below as the next element's leading comment
-// (DIVERGENCES.md "line-comment-after-comma"). Every comma site:
+// (DIVERGENCES.md#line-comment-after-comma). Every comma site:
 $map: (
   "foo": 1, // Comment
   "bar": 2, // Comment
@@ -60,7 +60,7 @@ a {
 ------------------
 // A `//` on a comma's line stays on that line (`a, // c`), the line-boundary invariant;
 // Prettier's CSS moves it below as the next element's leading comment
-// (DIVERGENCES.md "line-comment-after-comma"). Every comma site:
+// (DIVERGENCES.md#line-comment-after-comma). Every comma site:
 $map: (
   "foo": 1, // Comment
   "bar": 2, // Comment
@@ -129,7 +129,7 @@ a {
 -------------------
 // A `//` on a comma's line stays on that line (`a, // c`), the line-boundary invariant;
 // Prettier's CSS moves it below as the next element's leading comment
-// (DIVERGENCES.md "line-comment-after-comma"). Every comma site:
+// (DIVERGENCES.md#line-comment-after-comma). Every comma site:
 $map: (
   "foo": 1, // Comment
   "bar": 2, // Comment

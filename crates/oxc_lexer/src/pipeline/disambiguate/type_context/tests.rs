@@ -1,12 +1,12 @@
-use crate::{error::diag_code, token::TokenKind};
+use crate::{error::DiagCode, token::TokenKind};
 
-use super::super::tests::{
-    diag_codes_of, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, stream,
+use crate::pipeline::disambiguate::tests::{
+    FileType, diag_codes_of, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, stream,
 };
 
 // Reduce repeated boilerplate in tests below.
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.
-use super::super::tests::FileType::*;
+use FileType::*;
 
 #[test]
 fn gt_run_in_expression_position_follows_the_type_argument_lookahead() {
@@ -609,7 +609,7 @@ fn tsx_generic_arrow_in_expression_position_is_diagnosed() {
     let diagnosed = |code: &str| {
         let codes = diag_codes_of(code, ScriptTSX);
         assert!(
-            codes.contains(&diag_code::UNTERMINATED_JSX_ELEMENT),
+            codes.contains(&DiagCode::UnterminatedJsxElement),
             "{code:?} must be diagnosed: {codes:?}"
         );
         let ks = kinds_of(code, ScriptTSX);
@@ -617,10 +617,7 @@ fn tsx_generic_arrow_in_expression_position_is_diagnosed() {
     };
     let silent = |code: &str| {
         let codes = diag_codes_of(code, ScriptTSX);
-        assert!(
-            !codes.contains(&diag_code::UNTERMINATED_JSX_ELEMENT),
-            "{code:?} is valid: {codes:?}"
-        );
+        assert!(!codes.contains(&DiagCode::UnterminatedJsxElement), "{code:?} is valid: {codes:?}");
     };
     for code in [
         "var a = <T>(x: T) => x;",
@@ -823,7 +820,7 @@ fn optional_markers_are_not_ternaries_for_the_jsx_diagnostic() {
     let diagnosed = |code: &str| {
         let codes = diag_codes_of(code, ScriptTSX);
         assert!(
-            codes.contains(&diag_code::UNTERMINATED_JSX_ELEMENT),
+            codes.contains(&DiagCode::UnterminatedJsxElement),
             "{code:?} must be diagnosed: {codes:?}"
         );
     };
@@ -868,7 +865,7 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
     let diagnosed = |code: &str| {
         let codes = diag_codes_of(code, ScriptTSX);
         assert!(
-            codes.contains(&diag_code::UNTERMINATED_JSX_ELEMENT),
+            codes.contains(&DiagCode::UnterminatedJsxElement),
             "{code:?} must be diagnosed: {codes:?}"
         );
     };

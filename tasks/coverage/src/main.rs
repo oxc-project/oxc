@@ -23,7 +23,7 @@ fn main() {
         std::thread::available_parallelism().map_or(1, NonZeroUsize::get)
     };
     // Match Linux's default main-thread stack (8 MB) so deeply-nested expressions
-    // (e.g. typescript/tests/cases/compiler/binderBinaryExpressionStressJs.ts)
+    // (e.g. typescript/tsc/testdata/tests/cases/compiler/binderBinaryExpressionStressJs.ts)
     // don't overflow macOS's 2 MB worker default.
     ThreadPoolBuilder::new()
         .num_threads(thread_count)

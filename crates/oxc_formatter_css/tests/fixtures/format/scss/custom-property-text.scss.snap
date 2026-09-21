@@ -39,7 +39,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 
 // The decoded static prefix owns the custom-property classification even when
 // its two hyphens are escaped. Raw fallback values must remain verbatim.
-// DIVERGES from Prettier (DIVERGENCES.md "custom-property-raw-verbatim").
+// DIVERGES from Prettier (DIVERGENCES.md#custom-property-raw-verbatim).
 .escaped-interpolated-name {
   \-\-#{$name}: */;
   \-\-theme-#{$name}: 1px   !foo;
@@ -101,7 +101,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 
 // The decoded static prefix owns the custom-property classification even when
 // its two hyphens are escaped. Raw fallback values must remain verbatim.
-// DIVERGES from Prettier (DIVERGENCES.md "custom-property-raw-verbatim").
+// DIVERGES from Prettier (DIVERGENCES.md#custom-property-raw-verbatim).
 .escaped-interpolated-name {
   \-\-#{$name}: */;
   \-\-theme-#{$name}: 1px   !foo;
@@ -162,7 +162,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 
 // The decoded static prefix owns the custom-property classification even when
 // its two hyphens are escaped. Raw fallback values must remain verbatim.
-// DIVERGES from Prettier (DIVERGENCES.md "custom-property-raw-verbatim").
+// DIVERGES from Prettier (DIVERGENCES.md#custom-property-raw-verbatim).
 .escaped-interpolated-name {
   \-\-#{$name}: */;
   \-\-theme-#{$name}: 1px   !foo;

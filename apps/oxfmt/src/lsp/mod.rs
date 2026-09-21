@@ -7,7 +7,7 @@ use std::{
 use oxc_language_server::{LanguageId, run_server};
 use tower_lsp_server::ls_types::Uri;
 
-use crate::core::{ExternalServices, JsConfigLoaderCb, utils};
+use crate::core::{ExternalServices, JsConfigLoaderCb};
 
 mod options;
 mod server_formatter;
@@ -63,7 +63,7 @@ pub fn create_fake_file_path_from_language_id(
 pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_services: ExternalServices) {
     let version = {
         let mut version = env!("CARGO_PKG_VERSION").to_string();
-        if let Some(vp_version) = utils::vp_version() {
+        if let Some(vp_version) = oxc_config::vp_version() {
             let _ = write!(version, " (VP: {})", vp_version.to_string_lossy());
         }
         version

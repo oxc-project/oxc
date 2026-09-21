@@ -78,10 +78,12 @@ pub struct LintOptions {
     pub run: Run,
     /// Path to the config file. Similar to `--config` CLI option.
     /// If set, it disables searching for config files.
+    /// An empty string is treated as unset.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config_path: Option<String>,
     /// Path to the tsconfig file. Similar to `--tsconfig` CLI option.
     /// If set, it disables auto discovery for tsconfig files.
+    /// An empty string is treated as unset.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ts_config_path: Option<String>,
     /// How to handle unused disable directives. By default, they are allowed and ignored.
@@ -188,6 +190,7 @@ impl From<LintFixKindFlag> for FixKind {
 }
 
 impl LintOptions {
+    /// Off with an explicit `configPath` or `disableNestedConfig`.
     pub fn use_nested_configs(&self) -> bool {
         !self.disable_nested_config && self.config_path.is_none()
     }
@@ -234,8 +237,16 @@ impl TryFrom<Value> for LintOptions {
             unused_disable_directives: object
                 .get("unusedDisableDirectives")
                 .and_then(|key| UnusedDisableDirectives::deserialize(key).ok()),
-            config_path: object.get("configPath").and_then(Value::as_str).map(str::to_owned),
-            ts_config_path: object.get("tsConfigPath").and_then(Value::as_str).map(str::to_owned),
+            config_path: object
+                .get("configPath")
+                .and_then(Value::as_str)
+                .filter(|s| !s.is_empty())
+                .map(str::to_owned),
+            ts_config_path: object
+                .get("tsConfigPath")
+                .and_then(Value::as_str)
+                .filter(|s| !s.is_empty())
+                .map(str::to_owned),
             type_aware: object.get("typeAware").and_then(Value::as_bool),
             disable_nested_config: object
                 .get("disableNestedConfig")
@@ -320,6 +331,18 @@ mod test {
 
         let rules_customization = options.rules_customization.unwrap();
         assert!(rules_customization.rules.contains_key("no-unused-vars"));
+    }
+
+    #[test]
+    fn test_empty_path_options_json() {
+        let json = json!({
+            "configPath": "",
+            "tsConfigPath": "",
+        });
+
+        let options = LintOptions::try_from(json).unwrap();
+        assert_eq!(options.config_path, None);
+        assert_eq!(options.ts_config_path, None);
     }
 
     #[test]

@@ -14,7 +14,7 @@ use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
     ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-    LintFileResult, LoadPluginResult,
+    LintFileFailure, LintFileOutput, LoadPluginResult,
 };
 
 use crate::{
@@ -141,8 +141,8 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
 /// Result returned by `lintFile` JS callback.
 #[derive(Clone, Debug, Deserialize)]
 pub enum LintFileReturnValue {
-    Success(Vec<LintFileResult>),
-    Failure(String),
+    Success(LintFileOutput),
+    Failure(LintFileFailure),
 }
 
 /// Wrap `lintFile` JS callback as a normal Rust function.
@@ -161,6 +161,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
               options_ids: Vec<u32>,
               settings_json: String,
               globals_json: String,
+              collect_timings: bool,
               workspace_uri: Option<String>,
               allocator: &Allocator| {
             let (tx, rx) = channel();
@@ -183,6 +184,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                     options_ids,
                     settings_json,
                     globals_json,
+                    collect_timings,
                     workspace_uri,
                 )),
                 ThreadsafeFunctionCallMode::NonBlocking,
@@ -199,30 +201,31 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             if status == Status::Ok {
                 match rx.recv() {
                     // `lintFile` returns `null` if no diagnostics reported, and no error occurred
-                    Ok(Ok(None)) => Ok(Vec::new()),
+                    Ok(Ok(None)) => Ok(LintFileOutput::default()),
                     // `lintFile` returns JSON string if diagnostics reported, or an error occurred
                     Ok(Ok(Some(json))) => {
                         match serde_json::from_str(&json) {
-                            // Diagnostics reported
-                            Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
+                            // Linting succeeded
+                            Ok(LintFileReturnValue::Success(output)) => Ok(output),
                             // Error occurred on JS side
-                            Ok(LintFileReturnValue::Failure(err)) => Err(err),
+                            Ok(LintFileReturnValue::Failure(failure)) => Err(failure),
                             // JSON deserialization failure.
                             // Possible if rule produces fixes/suggestions with out of range offsets.
                             Err(err) => Err(format!(
                                 "Failed to deserialize JSON returned by `lintFile`: {err}"
-                            )),
+                            )
+                            .into()),
                         }
                     }
                     // `lintFile` threw an error - should be impossible because `lintFile` is wrapped in try-catch
-                    Ok(Err(err)) => Err(format!("`lintFile` threw an error: {err}")),
+                    Ok(Err(err)) => Err(format!("`lintFile` threw an error: {err}").into()),
                     // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
                     // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
                     // `tx.send()` always happens before `tx` is dropped.
-                    Err(err) => Err(format!("`lintFile` did not respond: {err}")),
+                    Err(err) => Err(format!("`lintFile` did not respond: {err}").into()),
                 }
             } else {
-                Err(format!("Failed to schedule `lintFile` callback: {status:?}"))
+                Err(format!("Failed to schedule `lintFile` callback: {status:?}").into())
             }
         },
     ))

@@ -14,11 +14,11 @@
 //! [`type_list`]: super::type_list
 //! [`context`]: super::context
 
-use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
+use crate::token::{OP_KIND_BASE, tk};
 
-use super::super::super::bitmap::bm_next1;
+use crate::pipeline::{bitmap::bm_next1, tables::Tables};
 
-use super::super::common::{
+use crate::pipeline::disambiguate::common::{
     AngleMatch, angle_match_back, as_gated_type_ref, as_type_operand, bm_prev_sig, class_like_walk,
     ident_is, kind_at, lt_in_range, prop_name, word_is_any,
 };
@@ -31,7 +31,7 @@ use super::{
 
 /// `coalesce` entry for a `>`-run (`>>`, `>>>`, and a `>` glued to `=`): the
 /// number of leading `>` bytes to leave unfused, or 0 to fuse as today. Cold
-/// by construction — `>>` occurs once per ~110 KB of production TypeScript.
+/// by construction - `>>` occurs once per ~110 KB of production TypeScript.
 ///
 /// A balanced region is necessary but not sufficient: TypeScript's
 /// speculative type-argument parse in expression position also needs the
@@ -123,10 +123,12 @@ unsafe fn type_list_head_is_relational(
         }
         return ctx_after_token(t, src, st, opch, kind, n, p, After::Head, 0) == Ctx::Type;
     }
-    if hk >= OP_KIND_BASE && *src.add(hw) == b'>' && !(hw > 0 && *src.add(hw - 1) == b'=') {
-        if let AngleMatch::Found(lt2) = angle_match_back(src, st, kind, hw) {
-            return as_gated_type_ref(t, src, st, kind, n, lt2);
-        }
+    if hk >= OP_KIND_BASE
+        && *src.add(hw) == b'>'
+        && !(hw > 0 && *src.add(hw - 1) == b'=')
+        && let AngleMatch::Found(lt2) = angle_match_back(src, st, kind, hw)
+    {
+        return as_gated_type_ref(t, src, st, kind, n, lt2);
     }
     hk == tk!(Ident)
         && !prop_name(src, hw)
@@ -135,7 +137,7 @@ unsafe fn type_list_head_is_relational(
 }
 
 /// `coalesce` entry for a `<<` run: true when the two `<` must stay separate
-/// tokens. Cold — `<<` is shift-left everywhere except this one shape.
+/// tokens. Cold - `<<` is shift-left everywhere except this one shape.
 #[inline(never)]
 pub unsafe fn lt_run_split(
     src: *const u8,
