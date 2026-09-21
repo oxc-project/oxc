@@ -1,0 +1,178 @@
+name oxlint
+bin oxlint
+version "1.85.0"
+usage "oxlint [-c=./.oxlintrc.json] [PATH]..."
+help_template #"""
+{{usage}}
+
+{{commands}}
+
+{{grouped_flags}}
+
+{{ungrouped_args}}
+
+{{ungrouped_flags}}
+
+{{after_help}}
+"""#
+unknown_flags error
+args_override_self #false
+flagset suppression-options {
+    flag --suppress-all help="Generate suppressions for all current violations" hide=#true
+    flag --prune-suppressions help="Remove entries for violations that no longer exist" hide=#true
+}
+flag "-c --config" help=#"""
+Oxlint configuration file
+ * `.json` and `.jsonc` config files are supported in all runtimes
+ * JavaScript/TypeScript config files are experimental and require running via Node.js
+ * you can use comments in configuration files.
+ * tries to be compatible with ESLint v8's format
+"""# help_heading="Basic Configuration" {
+    long_help #"""
+Oxlint configuration file
+ * `.json` and `.jsonc` config files are supported in all runtimes
+ * JavaScript/TypeScript config files are experimental and require running via Node.js
+ * you can use comments in configuration files.
+ * tries to be compatible with ESLint v8's format
+
+If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, `oxlint.config.ts`, or `oxlint.config.mts` file in the current working directory.
+"""#
+    arg "<./.oxlintrc.json>"
+}
+flag --tsconfig help="Override the TypeScript config used for import resolution. Oxlint automatically discovers the relevant `tsconfig.json` for each file. Use this only when your project uses a non-standard tsconfig name or location." help_heading="Basic Configuration" {
+    warning "Avoid using this option. It can cause differences between import resolution and type-aware linting. Type-aware linting does not respect this option and will always discover the appropriate tsconfig.json for each file automatically."
+    arg "<./tsconfig.json>"
+}
+flag --init help="Initialize oxlint configuration with default values" help_heading="Basic Configuration"
+flag "-A --allow" help="Allow the rule or category (suppress the lint)" var=#true help_heading="Allowing / Denying Multiple Lints" {
+    arg <NAME>
+}
+flag "-W --warn" help="Warn on the rule or category (emit a warning)" var=#true help_heading="Allowing / Denying Multiple Lints" {
+    arg <NAME>
+}
+flag "-D --deny" help="Deny the rule or category (emit an error)" var=#true help_heading="Allowing / Denying Multiple Lints" {
+    arg <NAME>
+}
+flag --disable-unicorn-plugin help="Disable unicorn plugin, which is turned on by default" help_heading="Enable/Disable Plugins"
+flag --disable-oxc-plugin help="Disable oxc unique rules, which is turned on by default" help_heading="Enable/Disable Plugins"
+flag --disable-typescript-plugin help="Disable TypeScript plugin, which is turned on by default" help_heading="Enable/Disable Plugins"
+flag --import-plugin help="Enable import plugin and detect ESM problems." help_heading="Enable/Disable Plugins"
+flag --react-plugin help="Enable react plugin, which is turned off by default" help_heading="Enable/Disable Plugins"
+flag --jsdoc-plugin help="Enable jsdoc plugin and detect JSDoc problems" help_heading="Enable/Disable Plugins"
+flag --jest-plugin help="Enable the Jest plugin and detect test problems" help_heading="Enable/Disable Plugins"
+flag --vitest-plugin help="Enable the Vitest plugin and detect test problems" help_heading="Enable/Disable Plugins"
+flag --jsx-a11y-plugin help="Enable the JSX-a11y plugin and detect accessibility problems" help_heading="Enable/Disable Plugins"
+flag --nextjs-plugin help="Enable the Next.js plugin and detect Next.js problems" help_heading="Enable/Disable Plugins"
+flag --react-perf-plugin help="Enable the React performance plugin and detect rendering performance problems" help_heading="Enable/Disable Plugins"
+flag --promise-plugin help="Enable the promise plugin and detect promise usage problems" help_heading="Enable/Disable Plugins"
+flag --node-plugin help="Enable the node plugin and detect node usage problems" help_heading="Enable/Disable Plugins"
+flag --vue-plugin help="Enable the vue plugin and detect vue usage problems" help_heading="Enable/Disable Plugins"
+flag --fix help="Fix as many issues as possible. Only unfixed issues are reported in the output." help_heading="Fix Problems"
+flag --fix-suggestions help="Apply auto-fixable suggestions. May change program behavior." help_heading="Fix Problems"
+flag --fix-dangerously help="Apply dangerous fixes and suggestions" help_heading="Fix Problems"
+flag --ignore-path help="Specify the file to use as your `.eslintignore`" hide_default_value=#true help_heading="Ignore Files" default=.eslintignore {
+    arg <PATH>
+}
+flag --ignore-pattern help="Specify patterns of files to ignore (in addition to those in `.eslintignore`)" var=#true help_heading="Ignore Files" {
+    long_help #"""
+Specify patterns of files to ignore (in addition to those in `.eslintignore`)
+
+The supported syntax is the same as for `.eslintignore` and `.gitignore` files. You should quote your patterns in order to avoid shell interpretation of glob patterns.
+"""#
+    arg <PAT>
+}
+flag --no-ignore help="Disable excluding files from `.eslintignore` files, `--ignore-path` flags and `--ignore-pattern` flags" help_heading="Ignore Files"
+flag --quiet help="Disable reporting on warnings, only errors are reported" help_heading="Handle Warnings"
+flag --deny-warnings help="Ensure warnings produce a non-zero exit code" help_heading="Handle Warnings"
+flag --max-warnings help="Specify a warning threshold, which can be used to force exit with an error status if there are too many warning-level rule violations in your project" help_heading="Handle Warnings" {
+    arg <INT>
+}
+flag "-f --format" help="Use a specific output format. (default: auto-detected from the runtime environment)" help_heading=Output {
+    arg <FORMAT> {
+        choices {
+            choice default
+            choice github help="GitHub Check Annotation <https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-a-notice-message>"
+            choice gitlab
+            choice json
+            choice unix
+            choice agent
+            choice checkstyle
+            choice stylish
+            choice junit
+            choice sarif
+        }
+    }
+}
+flag --debug help="Enable debug output options. Options are comma-separated." help_heading=Output {
+    long_help #"""
+Enable debug output options. Options are comma-separated.
+
+ * `files` - Print the list of files that will be linted, then exit.
+ * `timings` - Enable per-rule timing information.
+"""#
+    arg <OPTIONS> {
+        choices strict=#false files timings
+    }
+}
+flag --rules help="List all the rules that are currently registered"
+flag --lsp help="Start the language server"
+flag --silent help="Do not display any diagnostics" help_heading=Miscellaneous
+flag --no-error-on-unmatched-pattern help="Do not exit with an error when no files are selected for linting (for example, after applying ignore patterns)" help_heading=Miscellaneous
+flag --threads help="Number of threads to use. Set to 1 for using only 1 CPU core." help_heading=Miscellaneous {
+    arg <INT>
+}
+flag --print-config help="This option outputs the configuration to be used. When present, no linting is performed and only config-related options are valid." help_heading=Miscellaneous
+flag --disable-nested-config help="Disable the automatic loading of nested configuration files"
+flag --type-aware help="Enable rules that require type information"
+flag --type-check help="Enable experimental type checking (includes TypeScript compiler diagnostics)"
+flag --type-check-only help="Run only TypeScript type checking diagnostics without regular lint diagnostics" hide=#true
+flag --report-unused-disable-directives help="Report directive comments like `// oxlint-disable-line`, when no errors would have been reported on that line anyway" help_heading="Inline Configuration Comments"
+flag --report-unused-disable-directives-severity help="Same as `--report-unused-disable-directives`, but allows you to specify the severity level of the reported errors. Only one of these two options can be used at a time." help_heading="Inline Configuration Comments" {
+    arg <SEVERITY> {
+        choices {
+            choice allow
+            choice off
+            choice deny
+            choice error
+            choice warn
+        }
+    }
+}
+use suppression-options
+flag "-h --help" help="Print help" action=help builtin=#true
+flag "-V --version" help="Print version" action=version builtin=#true
+arg "[PATH]..." help="Single file, single path or list of paths"
+complete path type=path
+complete "./.oxlintrc.json" type=path
+complete "./tsconfig.json" type=path
+group lint-filter "--allow" "--warn" "--deny" multiple=#true
+group unused-directives "--report-unused-disable-directives" "--report-unused-disable-directives-severity"
+example "oxlint -D correctness src" header="Deny a category"
+example "oxlint --format github ." header="GitHub Actions"
+heading "Allowing / Denying Multiple Lints" help=#"""
+Lint filters accumulate from left to right on the command line.
+For example: `-D correctness -A no-debugger` or `-A all -D no-debugger`.
+Categories:
+
+* `correctness` - Code that is outright wrong or useless (default)
+* `suspicious` - Code that is most likely wrong or useless
+* `pedantic` - Lints which are rather strict or have occasional false positives
+* `perf` - Code that could be written in a more performant way
+* `style` - Code that should be written in a more idiomatic way
+* `restriction` - Lints which prevent the use of language and library features
+* `nursery` - New lints that are still under development
+* `all` - All categories listed above except `nursery`. Does not enable plugins automatically.
+"""#
+output default help="Human-readable diagnostics" default=#true
+output agent help="Diagnostics optimized for coding agents"
+output checkstyle media_type="application/xml" help="Checkstyle XML diagnostics"
+output github help="GitHub workflow annotations"
+output gitlab media_type="application/json" framing=json help="GitLab Code Quality diagnostics"
+output json media_type="application/json" framing=json help="JSON diagnostics"
+output junit media_type="application/xml" help="JUnit XML diagnostics"
+output sarif media_type="application/sarif+json" framing=json help="SARIF diagnostics"
+output stylish help="Stylish text diagnostics"
+output unix help="Unix-style text diagnostics"
+select "--format"
+exit_code 0 "lint completed without errors"
+exit_code 1 "lint errors or invalid options were found"

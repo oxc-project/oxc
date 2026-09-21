@@ -31,6 +31,11 @@ pub struct FormatCommand {
 }
 
 #[derive(Debug, Clone, Cli)]
+// Answer `__usage_spec__` from the checked-in spec instead of the runtime KDL writer, which
+// keeps the writer out of the shipped binary. Regenerate with `just usage-spec` after changing
+// CLI metadata or the crate version. Only for the shipped `napi` build: without that feature
+// the CLI has fewer flags, so one checked-in spec cannot describe both binaries.
+#[cfg_attr(feature = "napi", usage(spec_endpoint_file = "cli.usage.kdl"))]
 #[usage(
     bin = "oxfmt",
     version,
@@ -292,6 +297,27 @@ mod tests {
     use usage_rs as usage;
 
     use super::FormatCommand;
+
+    /// `cli.usage.kdl` is the answer `oxfmt __usage_spec__` gives, embedded at compile time so
+    /// the shipped binary does not carry the KDL writer. Regenerate it with `just usage-spec`
+    /// whenever CLI metadata or the crate version changes.
+    #[cfg(feature = "napi")]
+    #[test]
+    fn embedded_spec_file_matches_the_live_serializer() {
+        let live = FormatCommand::to_kdl();
+        if std::env::var_os("UPDATE_USAGE_SPEC").is_some() {
+            let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("cli.usage.kdl");
+            std::fs::write(&path, &live).expect("write cli.usage.kdl");
+            return;
+        }
+
+        let outcome = FormatCommand::embedded_outcome(&[OsString::from(usage_rs::SPEC_REQUEST)]);
+        let exit = outcome.exit().expect("spec request should return an embedded exit");
+        assert_eq!(
+            exit.text, live,
+            "apps/oxfmt/cli.usage.kdl is out of date; regenerate it with `just usage-spec`"
+        );
+    }
 
     #[test]
     fn typed_finalization_reports_invalid_paths() {

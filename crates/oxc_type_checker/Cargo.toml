@@ -52,4 +52,4 @@ indexmap = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 self_cell = { workspace = true }
-usage-rs = { workspace = true, features = ["completions"] }
+usage-rs = { workspace = true, features = ["help", "diagnostics", "completions"] }
