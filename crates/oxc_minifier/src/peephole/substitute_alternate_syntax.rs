@@ -677,7 +677,7 @@ impl<'a> PeepholeOptimizations {
         /// Verify whether `arg_expr` is `e > offset ? e - offset : 0` or `e`
         fn verify_array_arg(
             arg_expr: &Expression,
-            name_e: &str,
+            name_e: &Ident,
             offset: f64,
         ) -> VerifyArrayArgResult {
             match arg_expr {
@@ -1766,7 +1766,7 @@ impl<'a> PeepholeOptimizations {
             // In `catch (e) { var e = x }`, `var e` hoists to function scope but the assignment
             // targets the catch parameter. Removing the catch param changes semantics.
             && ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
-            && !Self::catch_body_has_same_name_var(&catch.body, ident.name.as_str())
+            && !Self::catch_body_has_same_name_var(&catch.body, ident.name)
         {
             catch.param = None;
         }
@@ -1812,7 +1812,7 @@ impl<'a> PeepholeOptimizations {
         ctx.replace_expression(expr, new_value);
     }
 
-    fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: &str) -> bool {
+    fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: Ident<'a>) -> bool {
         body.body.iter().any(|stmt| {
             let Statement::VariableDeclaration(decl) = stmt else { return false };
             if !decl.kind.is_var() {
