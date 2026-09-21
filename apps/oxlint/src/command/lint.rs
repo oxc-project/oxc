@@ -59,6 +59,10 @@ pub struct LintCommand {
     bin = "oxlint",
     version,
     completion,
+    // Answer `__usage_spec__` from the checked-in spec instead of the runtime KDL
+    // writer, which keeps the writer out of the shipped binary. Regenerate with
+    // `just usage-spec` after changing CLI metadata or the crate version.
+    spec_endpoint_file = "cli.usage.kdl",
     unknown_flags = "error",
     args_override_self = false,
     heading("Allowing / Denying Multiple Lints", help = LINT_FILTERS_HELP),
@@ -1131,6 +1135,26 @@ mod usage_integration {
         assert!(spec.contains("output sarif media_type=\"application/sarif+json\" framing=json"));
         assert!(spec.contains("select \"--format\""));
         assert!(spec.contains("complete path type=path"));
+    }
+
+    /// `cli.usage.kdl` is the answer `oxlint __usage_spec__` gives, embedded at compile time so
+    /// the shipped binary does not carry the KDL writer. Regenerate it with `just usage-spec`
+    /// whenever CLI metadata or the crate version changes.
+    #[test]
+    fn embedded_spec_file_matches_the_live_serializer() {
+        let live = LintCommand::to_kdl();
+        if std::env::var_os("UPDATE_USAGE_SPEC").is_some() {
+            let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("cli.usage.kdl");
+            std::fs::write(&path, &live).expect("write cli.usage.kdl");
+            return;
+        }
+
+        let outcome = LintCommand::embedded_outcome(&[OsString::from(usage_rs::SPEC_REQUEST)]);
+        let exit = outcome.exit().expect("spec request should return an embedded exit");
+        assert_eq!(
+            exit.text, live,
+            "apps/oxlint/cli.usage.kdl is out of date; regenerate it with `just usage-spec`"
+        );
     }
 
     #[test]
