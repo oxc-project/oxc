@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 809090c oxlint,oxfmt: Find all `vite.config.*` variants (#26755) (leaysgur)
+
+### 📚 Documentation
+
+- 8fa3617 oxfmt: Unify DIVERGENCES reference and drop notes (#26750) (leaysgur)
+
 ## [0.68.0] - 2026-09-14
 
 ### 🚀 Features
