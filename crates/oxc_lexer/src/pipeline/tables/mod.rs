@@ -34,16 +34,12 @@ pub(super) struct Tables {
 
 impl Tables {
     pub fn new() -> Tables {
-        let mut t = Tables {
+        Self {
             op: OpMap::new(),
             keywords: Keywords::new(),
             merged_luts: MergedLuts::new(),
             word_luts: WordLuts::new(),
             pair_luts: PairLuts::new(),
-        };
-
-        t.pair_luts.build();
-
-        t
+        }
     }
 }
