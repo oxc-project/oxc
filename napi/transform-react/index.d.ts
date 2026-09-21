@@ -314,6 +314,12 @@ export interface TransformOptions {
    */
   jsx?: 'preserve' | JsxOptions
   /**
+   * Configure how Typescript is transformed.
+   *
+   * @see <https://oxc.rs/docs/guide/usage/transformer/typescript>
+   */
+  typescript?: TypeScriptOptions
+  /**
    * Configure React Compiler, or disable it with `false`.
    *
    * @default true
@@ -345,3 +351,26 @@ export interface TransformResult {
  * removed and configured JSX transforms run afterwards.
  */
 export declare function transformSync(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
+
+/**
+ * Configure how Typescript is transformed.
+ *
+ * @see <https://oxc.rs/docs/guide/usage/transformer/typescript>
+ */
+export interface TypeScriptOptions {
+  /**
+   * Inlines const enum values and removes the declaration.
+   *
+   * @default false
+   */
+  optimizeConstEnums?: boolean
+  /**
+   * Inlines regular (non-const) enum member accesses when all members
+   * satisfy const enum constraints (i.e., their values are statically evaluable).
+   * Non-exported enum declarations are also removed when all members are
+   * evaluable and no references to the enum as a runtime value exist.
+   *
+   * @default false
+   */
+  optimizeEnums?: boolean
+}
