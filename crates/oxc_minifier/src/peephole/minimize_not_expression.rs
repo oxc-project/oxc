@@ -60,6 +60,12 @@ impl<'a> PeepholeOptimizations {
                 num.value = if num.value.is_nan() || num.value == 0.0 { 1.0 } else { 0.0 };
                 true
             }
+            // `true` => `false`
+            // `false` => `true`
+            Expression::BooleanLiteral(bool_expr) => {
+                bool_expr.value = !bool_expr.value;
+                true
+            }
             // `!(a == b || c == d)` => `a != b && c != d`
             // `!(a == b && c == d)` => `a != b || c != d`
             // De Morgan's law, only when every comparison in the `&&`/`||` chain
