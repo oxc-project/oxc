@@ -1,0 +1,34 @@
+function Component(props, selected) {
+  try {
+    let value = props.zero;
+    if (selected === 1) {
+      value = props.one;
+    } else if (selected === 2) {
+      value = props.two;
+    } else if (selected === 3) {
+      value = props.three;
+    } else if (selected === 4) {
+      value = props.four;
+    } else if (selected === 5) {
+      value = props.five;
+    }
+    return value;
+  } catch (error) {
+    return error;
+  }
+}
+
+export const FIXTURE_ENTRYPOINT = {
+  fn: Component,
+  params: [
+    {
+      zero: 0,
+      one: 1,
+      two: 2,
+      three: 3,
+      four: 4,
+      five: 5,
+    },
+    5,
+  ],
+};
