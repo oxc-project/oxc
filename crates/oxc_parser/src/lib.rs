@@ -1037,6 +1037,75 @@ mod test {
     use super::*;
 
     #[test]
+    fn pife() {
+        use oxc_ast::ast::{ArrowFunctionExpression, Function};
+        use oxc_ast_visit::{Visit, walk};
+        use oxc_syntax::scope::ScopeFlags;
+
+        #[derive(Default)]
+        struct Pifes(Vec<bool>);
+
+        impl<'a> Visit<'a> for Pifes {
+            fn visit_function(&mut self, function: &Function<'a>, flags: ScopeFlags) {
+                self.0.push(function.pife);
+                walk::walk_function(self, function, flags);
+            }
+
+            fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
+                self.0.push(arrow.pife);
+                walk::walk_arrow_function_expression(self, arrow);
+            }
+        }
+
+        // PIFE is not serialized to ESTree, so source coverage fixtures cannot check it.
+        for (source, expected) in [
+            ("(function () {}());", vec![true]),
+            ("(function () {})();", vec![true]),
+            ("(function () {});", vec![true]),
+            ("(async function () {}());", vec![true]),
+            ("(function* () {}());", vec![true]),
+            ("(async function* () {}());", vec![true]),
+            ("((function () {}()));", vec![true]),
+            ("( /* comment */ async /* comment */ function () {}());", vec![true]),
+            ("(function () {}.call(null));", vec![true]),
+            ("(function () {}?.());", vec![true]),
+            ("(function () {} + 1);", vec![true]),
+            ("(function () {}, function () {});", vec![true, false]),
+            ("(function () {}(function () {}));", vec![true, false]),
+            (
+                "(function (x = function () {}) { return function () {}; }());",
+                vec![true, false, false],
+            ),
+            ("(function () { return (function () {}()); }());", vec![true, true]),
+            ("(function () {}()); const f = function () {};", vec![true, false]),
+            ("const f = function () {};", vec![false]),
+            ("foo(function () {});", vec![false]),
+            ("foo(async function () {});", vec![false]),
+            ("(async\n(function () {}));", vec![false]),
+            ("(0, function () {}());", vec![false]),
+            ("(foo(function () {}));", vec![false]),
+            ("(true ? function () {} : function () {});", vec![false, false]),
+            ("(() => 0)();", vec![true]),
+            ("(async () => 0)();", vec![true]),
+            ("foo(() => 0);", vec![false]),
+            ("(() => function () {});", vec![true, false]),
+            ("(x = function () {}) => x;", vec![false, false]),
+            ("(x = (function () {}())) => x;", vec![false, true]),
+        ] {
+            for preserve_parens in [false, true] {
+                let allocator = Allocator::default();
+                let ret = Parser::new(&allocator, source, SourceType::mjs())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse();
+                assert!(ret.diagnostics.is_empty(), "{source}: {:?}", ret.diagnostics);
+                let mut pifes = Pifes::default();
+                pifes.visit_program(&ret.program);
+                assert_eq!(pifes.0, expected, "{source}, preserve_parens={preserve_parens}");
+            }
+        }
+    }
+
+    #[test]
     fn parse_program_smoke_test() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
