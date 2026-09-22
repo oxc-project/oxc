@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
 use itertools::Itertools;
-use lazy_regex::{Regex, regex};
+use lazy_regex::regex;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{
@@ -15,8 +15,8 @@ use oxc_str::{CompactStr, JSStr};
 use crate::{
     context::LintContext,
     utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, is_string_raw_member_expression,
-        parse_general_jest_fn_call, regex_match_text,
+        ConfigRegex, JestFnKind, JestGeneralFnKind, PossibleJestNode,
+        is_string_raw_member_expression, parse_general_jest_fn_call,
     },
 };
 
@@ -122,7 +122,7 @@ pub struct ValidTitleConfig {
     allow_arguments: bool,
     /// Matcher for disallowed words, which will not be allowed in titles.
     /// `None` when no disallowed words are configured.
-    disallowed_words_reg: Option<Regex>,
+    disallowed_words_reg: Option<ConfigRegex>,
     /// Whether to ignore leading and trailing spaces in titles.
     ignore_spaces: bool,
     /// Patterns for titles that must not match.
@@ -156,7 +156,7 @@ impl ValidTitleConfig {
         let disallowed_words_reg = (!disallowed_words.is_empty()).then(|| {
             let disallowed_words_pattern =
                 disallowed_words.iter().map(|word| regex::escape(word)).join("|");
-            Regex::new(&format!(r"(?iu)\b(?:{disallowed_words_pattern})\b"))
+            ConfigRegex::new(&format!(r"(?iu)\b(?:{disallowed_words_pattern})\b"))
                 .expect("escaped disallowed words should form a valid regex")
         });
         let must_not_match_patterns = config
@@ -276,7 +276,7 @@ impl ValidTitleConfig {
     }
 }
 
-type CompiledMatcherAndMessage = (Regex, Option<CompactStr>);
+type CompiledMatcherAndMessage = (ConfigRegex, Option<CompactStr>);
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 enum MatchKind {
@@ -361,13 +361,13 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
             {
                 let (pat, _flags) = stripped.split_at(end);
                 // For now, ignore flags and just use the pattern
-                let regex = Regex::new(pat).ok()?;
+                let regex = ConfigRegex::new(pat).ok()?;
                 return Some((regex, None));
             }
 
             // Fallback: treat as a normal Rust regex with Unicode support
             let reg_str = format!("(?u){pattern_str}");
-            let reg = Regex::new(&reg_str).ok()?;
+            let reg = ConfigRegex::new(&reg_str).ok()?;
             Some((reg, None))
         }
         MatcherPattern::Vec(pattern) => {
@@ -378,10 +378,10 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
                 && let Some(end) = stripped.rfind('/')
             {
                 let (pat, _flags) = stripped.split_at(end);
-                Regex::new(pat).ok()?
+                ConfigRegex::new(pat).ok()?
             } else {
                 let reg_str = format!("(?u){pattern_str}");
-                Regex::new(&reg_str).ok()?
+                ConfigRegex::new(&reg_str).ok()?
             };
 
             let message = pattern.get(1).and_then(serde_json::Value::as_str).map(CompactStr::from);
@@ -403,10 +403,8 @@ fn validate_title(
     }
 
     if let Some(disallowed_words_reg) = &config.disallowed_words_reg {
-        // Configured patterns match against the lossy text, like the allow
-        // patterns in the import rules.
-        if let Some(matched) = disallowed_words_reg.find(&regex_match_text(title)) {
-            ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
+        if let Some(matched) = disallowed_words_reg.find(title) {
+            ctx.diagnostic(disallowed_word_diagnostic(matched, span));
         }
         return;
     }
@@ -443,11 +441,6 @@ fn validate_title(
     let Some(jest_fn_name) = MatchKind::from(un_prefixed_name) else {
         return;
     };
-
-    // Configured patterns match against the lossy text, like the allow
-    // patterns in the import rules.
-    let title = regex_match_text(title);
-    let title = title.as_ref();
 
     if let Some((regex, message)) = config.must_match_patterns.get(&jest_fn_name)
         && !regex.is_match(title)

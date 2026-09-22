@@ -65,6 +65,8 @@ nodejs-built-in-modules = { workspace = true }
 papaya = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
+regex-automata = { workspace = true }
+regex-syntax = { workspace = true }
 rust-lapper = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true, features = ["indexmap2", "regex"] }
@@ -81,4 +83,3 @@ url = { workspace = true }
 [dev-dependencies]
 insta = { workspace = true }
 markdown = { workspace = true }
-

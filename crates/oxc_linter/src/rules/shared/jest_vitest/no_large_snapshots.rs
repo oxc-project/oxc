@@ -1,11 +1,10 @@
-use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{Expression, ExpressionStatement, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -14,7 +13,7 @@ use crate::{
     context::LintContext,
     rule::DefaultRuleConfig,
     utils::{
-        PossibleJestNode, iter_possible_jest_call_node, parse_expect_jest_fn_call, regex_match_text,
+        ConfigRegex, PossibleJestNode, iter_possible_jest_call_node, parse_expect_jest_fn_call,
     },
 };
 
@@ -118,19 +117,19 @@ line 4
 
 #[derive(Debug, Clone)]
 enum AllowedSnapshotMatcher {
-    Pattern(Regex),
+    Pattern(ConfigRegex),
     Exact(CompactStr),
 }
 
 impl AllowedSnapshotMatcher {
     fn new(pattern: CompactStr) -> Self {
-        Regex::new(&pattern).map_or(Self::Exact(pattern), Self::Pattern)
+        ConfigRegex::new(&pattern).map_or(Self::Exact(pattern), Self::Pattern)
     }
 
-    fn is_match(&self, snapshot_name: &str) -> bool {
+    fn is_match(&self, snapshot_name: JSStr<'_>) -> bool {
         match self {
             Self::Pattern(pattern) => pattern.is_match(snapshot_name),
-            Self::Exact(name) => name == snapshot_name,
+            Self::Exact(name) => snapshot_name == name.as_str(),
         }
     }
 }
@@ -295,8 +294,7 @@ impl NoLargeSnapshotsConfig {
             return false;
         };
 
-        let snapshot_name = regex_match_text(snapshot_name);
-        allowed_snapshots_in_file.iter().any(|matcher| matcher.is_match(&snapshot_name))
+        allowed_snapshots_in_file.iter().any(|matcher| matcher.is_match(snapshot_name))
     }
 
     #[expect(clippy::cast_possible_truncation)] // the line count can't be over u32::MAX, because the source code is already limited by u32::MAX.
@@ -309,7 +307,7 @@ impl NoLargeSnapshotsConfig {
 
 #[cfg(test)]
 mod test {
-    use super::NoLargeSnapshotsConfig;
+    use super::{AllowedSnapshotMatcher, NoLargeSnapshotsConfig};
 
     #[test]
     fn allowed_snapshot_matchers() {
@@ -321,18 +319,16 @@ mod test {
         .unwrap();
         let matchers = &config.allowed_snapshots["/test.snap"];
 
-        assert!(matchers[0].is_match("snapshot 42"));
-        assert!(!matchers[0].is_match("other snapshot 42"));
-        assert!(matchers[1].is_match("snapshot [literal"));
-        assert!(!matchers[1].is_match("snapshot literal"));
+        assert!(matchers[0].is_match("snapshot 42".into()));
+        assert!(!matchers[0].is_match("other snapshot 42".into()));
+        assert!(matchers[1].is_match("snapshot [literal".into()));
+        assert!(!matchers[1].is_match("snapshot literal".into()));
     }
 
     #[test]
     fn allowed_snapshot_matchers_with_lone_surrogate_name() {
         use oxc_allocator::Allocator;
         use oxc_str::JSStrBuilder;
-
-        use crate::utils::regex_match_text;
 
         let config = NoLargeSnapshotsConfig::from_configuration(serde_json::json!([{
             "allowedSnapshots": {
@@ -342,18 +338,33 @@ mod test {
         .unwrap();
         let matchers = &config.allowed_snapshots["/test.snap"];
 
-        // A snapshot name containing a lone surrogate is matched through its
-        // lossy conversion, so the parts around the surrogate still match.
+        // Search the original value without replacing the surrogate or hiding surrounding text.
         let allocator = Allocator::default();
         let mut builder = JSStrBuilder::new_in(&allocator);
         builder.push_str("a");
         builder.push_code_unit(0xD800);
         builder.push_str(" large snapshot 42");
-        let name = regex_match_text(builder.into_js_str());
+        let name = builder.into_js_str();
 
-        assert_eq!(name.as_ref(), "a\u{FFFD} large snapshot 42");
-        assert!(matchers[0].is_match(&name));
-        assert!(!matchers[0].is_match("a\u{FFFD} large snapshot"));
+        assert!(matchers[0].is_match(name));
+        assert!(!matchers[0].is_match("a\u{FFFD} large snapshot".into()));
+    }
+
+    #[test]
+    fn allowed_snapshot_matchers_distinguish_replacement_character() {
+        use oxc_allocator::Allocator;
+        use oxc_str::JSStrBuilder;
+
+        let allocator = Allocator::default();
+        for surrogate in [0xD800, 0xDC00] {
+            let mut builder = JSStrBuilder::new_in(&allocator);
+            builder.push_code_unit(surrogate);
+            let value = builder.into_js_str();
+            assert!(!AllowedSnapshotMatcher::new("^�$".into()).is_match(value));
+            assert!(!AllowedSnapshotMatcher::Exact("�".into()).is_match(value));
+        }
+        assert!(AllowedSnapshotMatcher::new("^�$".into()).is_match("�".into()));
+        assert!(AllowedSnapshotMatcher::Exact("�".into()).is_match("�".into()));
     }
 
     #[test]

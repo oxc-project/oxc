@@ -8,14 +8,13 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::regex_match_text,
 };
 
 fn no_unassigned_import_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
@@ -98,9 +97,7 @@ impl Rule for NoUnassignedImport {
                 if import_decl.specifiers.is_some() {
                     return;
                 }
-                // Allow globs match against the lossy text, like the regex
-                // allow patterns in the other import rules.
-                if !self.is_match_allow_globs(&regex_match_text(import_decl.source.value)) {
+                if !self.is_match_allow_globs(import_decl.source.value) {
                     ctx.diagnostic(no_unassigned_import_diagnostic(
                         import_decl.span,
                         "Imported module should be assigned",
@@ -118,7 +115,7 @@ impl Rule for NoUnassignedImport {
                 let Argument::StringLiteral(source_str) = first_arg else {
                     return;
                 };
-                if !self.is_match_allow_globs(&regex_match_text(source_str.value)) {
+                if !self.is_match_allow_globs(source_str.value) {
                     ctx.diagnostic(no_unassigned_import_diagnostic(
                         call_expr.span,
                         "A `require()` style import is forbidden.",
@@ -131,8 +128,8 @@ impl Rule for NoUnassignedImport {
 }
 
 impl NoUnassignedImportConfig {
-    fn is_match_allow_globs(&self, source: &str) -> bool {
-        self.globs.iter().any(|glob| fast_glob::glob_match(glob.as_str(), source))
+    fn is_match_allow_globs(&self, source: JSStr<'_>) -> bool {
+        self.globs.iter().any(|glob| fast_glob::glob_match(glob.as_str(), source.as_bytes()))
     }
 }
 
@@ -142,8 +139,7 @@ fn test() {
     use serde_json::json;
 
     let pass = vec![
-        // The allow glob matches through the lossy text beside the lone
-        // surrogate.
+        // A wildcard can match a lone surrogate without changing its value.
         (r"import './\uD800.css'", Some(json!([{ "allow": ["**"]}]))),
         ("import _ from 'foo'", None),
         ("import foo from 'foo'", None),
@@ -182,4 +178,22 @@ fn test() {
         .change_rule_path("no-unassigned-import.js")
         .with_import_plugin(true)
         .test_and_snapshot();
+}
+
+#[test]
+fn configured_globs_preserve_lone_surrogates() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    let pass = vec![
+        (r#"import "\uFFFD";"#, Some(json!([{ "allow": ["�"] }]))),
+        (r#"import "\uD800/file.css";"#, Some(json!([{ "allow": ["**/*.css"] }]))),
+        (r#"require("\uDC00");"#, Some(json!([{ "allow": ["*"] }]))),
+    ];
+    let fail = vec![
+        (r#"import "\uD800";"#, Some(json!([{ "allow": ["�"] }]))),
+        (r#"import "\uDC00";"#, Some(json!([{ "allow": ["�"] }]))),
+        (r#"require("\uD800");"#, Some(json!([{ "allow": ["�"] }]))),
+    ];
+    Tester::new(NoUnassignedImport::NAME, NoUnassignedImport::PLUGIN, pass, fail).test();
 }

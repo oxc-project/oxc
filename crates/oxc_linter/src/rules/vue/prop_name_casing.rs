@@ -20,9 +20,8 @@ use crate::{
     frameworks::FrameworkOptions,
     rule::{Rule, TupleRuleConfig},
     utils::{
-        deserialize_regex_vec, diagnostic_text, find_property,
-        for_each_define_props_type_signature, is_vue_component_options_object_excluding_instance,
-        regex_match_text, vue_casing,
+        ConfigRegex, diagnostic_text, find_property, for_each_define_props_type_signature,
+        is_vue_component_options_object_excluding_instance, vue_casing,
     },
 };
 
@@ -55,8 +54,9 @@ pub struct PropNameCasing(Box<Config>);
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct Options {
     /// Prop names to ignore, as regular expression patterns.
-    #[serde(default, deserialize_with = "deserialize_regex_vec")]
-    ignore_props: Vec<Regex>,
+    #[serde(default)]
+    #[schemars(with = "Vec<Regex>")]
+    ignore_props: Vec<ConfigRegex>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
@@ -193,9 +193,7 @@ impl PropNameCasing {
 
     fn report_if_invalid(&self, name: JSStr<'_>, span: Span, ctx: &LintContext<'_>) {
         let Config(case_type, options) = &*self.0;
-        // `ignoreProps` patterns match against the lossy text, like the allow
-        // patterns in the import rules.
-        if is_ignored(&regex_match_text(name), &options.ignore_props) {
+        if is_ignored(name, &options.ignore_props) {
             return;
         }
         if check_case(name, *case_type) {
@@ -243,7 +241,7 @@ fn check_case(s: JSStr<'_>, case_type: CaseType) -> bool {
     }
 }
 
-fn is_ignored(name: &str, ignore_props: &[Regex]) -> bool {
+fn is_ignored(name: JSStr<'_>, ignore_props: &[ConfigRegex]) -> bool {
     ignore_props.iter().any(|regex| regex.is_match(name))
 }
 
@@ -254,8 +252,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // The ignoreProps pattern matches through the lossy text beside the
-        // lone surrogate.
+        // The ignoreProps pattern still matches text beside a lone surrogate.
         (
             r#"
                   <script>
@@ -1066,4 +1063,41 @@ fn test() {
     ];
 
     Tester::new(PropNameCasing::NAME, PropNameCasing::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn configured_patterns_preserve_lone_surrogates() {
+    use std::path::PathBuf;
+
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    let pass = vec![
+        (
+            r#"<script>export default {props: ["bad-name\uFFFD"]};</script>"#,
+            Some(json!(["camelCase", { "ignoreProps": ["^bad-name�$"] }])),
+        ),
+        (
+            r#"<script>export default {props: ["bad-name\uD800"]};</script>"#,
+            Some(json!(["camelCase", { "ignoreProps": ["^bad-name"] }])),
+        ),
+    ];
+    let fail = vec![
+        (
+            r#"<script>export default {props: ["bad-name\uD800"]};</script>"#,
+            Some(json!(["camelCase", { "ignoreProps": ["^bad-name�$"] }])),
+        ),
+        (
+            r#"<script>export default {props: ["bad-name\uDC00"]};</script>"#,
+            Some(json!(["camelCase", { "ignoreProps": [r"^bad-name[\uE000-\uFFFF]$"] }])),
+        ),
+    ];
+    let vue_cases = |cases: Vec<(&'static str, Option<serde_json::Value>)>| {
+        cases
+            .into_iter()
+            .map(|(source, config)| (source, config, None, Some(PathBuf::from("test.vue"))))
+            .collect::<Vec<_>>()
+    };
+    Tester::new(PropNameCasing::NAME, PropNameCasing::PLUGIN, vue_cases(pass), vue_cases(fail))
+        .test();
 }

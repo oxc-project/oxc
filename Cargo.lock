@@ -2301,6 +2301,8 @@ dependencies = [
  "papaya",
  "phf",
  "rayon",
+ "regex-automata",
+ "regex-syntax",
  "rust-lapper",
  "rustc-hash",
  "self_cell",

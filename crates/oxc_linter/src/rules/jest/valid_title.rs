@@ -740,3 +740,31 @@ fn test() {
         .expect_fix(fix)
         .test_and_snapshot();
 }
+
+#[test]
+fn configured_patterns_preserve_lone_surrogates() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    let pass = vec![
+        (r#"test("\uFFFD", () => {});"#, Some(json!([{ "mustMatch": {"test": "^�$"} }]))),
+        (r#"test("\uD800", () => {});"#, Some(json!([{ "mustNotMatch": {"test": "^�$"} }]))),
+        (
+            r#"test("\uD800 suffix", () => {});"#,
+            Some(json!([{ "mustMatch": {"test": "suffix$"} }])),
+        ),
+        (r#"test("a\uD800b", () => {});"#, Some(json!([{ "disallowedWords": ["�"] }]))),
+    ];
+    let fail = vec![
+        (r#"test("\uD800", () => {});"#, Some(json!([{ "mustMatch": {"test": "^�$"} }]))),
+        (
+            r#"test("\uDC00", () => {});"#,
+            Some(json!([{ "mustMatch": {"test": r"^[\uE000-\uFFFF]$"} }])),
+        ),
+        (r#"test("\uFFFD", () => {});"#, Some(json!([{ "mustNotMatch": {"test": "^�$"} }]))),
+        (r#"test("a\uFFFDb", () => {});"#, Some(json!([{ "disallowedWords": ["�"] }]))),
+    ];
+    Tester::new(ValidTitle::NAME, ValidTitle::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}

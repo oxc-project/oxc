@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
+use memchr::memmem;
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
@@ -191,12 +192,13 @@ impl Rule for ImgRedundantAlt {
 }
 
 impl ImgRedundantAlt {
-    /// [`Self::is_redundant_alt_text`] for a JavaScript string. The words come
-    /// from configuration and cannot contain a lone surrogate, so the lossy
-    /// text matches like the UTF-16 value: the replacement character is a word
-    /// boundary exactly as the surrogate is.
     fn is_redundant_alt_value(&self, alt_text: JSStr<'_>) -> bool {
-        self.is_redundant_alt_text(&alt_text.to_str_lossy())
+        if let Some(text) = alt_text.as_str() {
+            self.is_redundant_alt_text(text)
+        } else {
+            // ASCII case folding preserves WTF-8 and cannot turn a surrogate into a configured word.
+            self.is_redundant_alt_bytes(&alt_text.as_bytes().to_ascii_lowercase())
+        }
     }
 
     #[inline]
@@ -209,12 +211,19 @@ impl ImgRedundantAlt {
     #[inline]
     fn is_redundant_alt_text(&self, alt_text: &str) -> bool {
         let alt_text = alt_text.cow_to_ascii_lowercase();
-        let alt_text_bytes = alt_text.as_bytes();
+        self.is_redundant_alt_bytes(alt_text.as_bytes())
+    }
 
+    fn is_redundant_alt_bytes(&self, text: &[u8]) -> bool {
         for word in &self.words {
-            for (index, _) in alt_text.match_indices(word.as_ref()) {
+            for index in memmem::find_iter(text, word.as_bytes()) {
+                // For an empty configured word, match only at character boundaries, just as
+                // `str::match_indices` does. A non-empty UTF-8 word already has this property.
+                if word.is_empty() && index < text.len() && text[index] & 0xC0 == 0x80 {
+                    continue;
+                }
                 let end = index + word.len();
-                if Self::is_word_boundary(alt_text_bytes, index, end) {
+                if Self::is_word_boundary(text, index, end) {
                     return true;
                 }
             }
@@ -337,4 +346,27 @@ fn test() {
     ];
 
     Tester::new(ImgRedundantAlt::NAME, ImgRedundantAlt::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn configured_words_preserve_lone_surrogates() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    let pass = vec![
+        (r#"<img alt={"\uD800"} />;"#, Some(json!([{ "words": ["�"] }]))),
+        (r#"<img alt={"\uDC00"} />;"#, Some(json!([{ "words": ["�"] }]))),
+        (r#"<img alt={"a\uD800b"} />;"#, Some(json!([{ "words": [""] }]))),
+        (r#"<img alt="a中b" />;"#, Some(json!([{ "words": [""] }]))),
+        (r#"<img alt={"\uD83D\uDE00"} />;"#, Some(json!([{ "words": ["�"] }]))),
+    ];
+    let fail = vec![
+        (r#"<img alt={"\uFFFD"} />;"#, Some(json!([{ "words": ["�"] }]))),
+        (r#"<img alt={"\uD800 � \uDC00"} />;"#, Some(json!([{ "words": ["�"] }]))),
+        (r#"<img alt={"\uD800 PHOTO"} />;"#, None),
+        (r#"<img alt={"xword\uD800 WORD"} />;"#, Some(json!([{ "words": ["word"] }]))),
+        (r#"<img alt={"\uD800 中"} />;"#, Some(json!([{ "words": ["中"] }]))),
+        (r#"<img alt={"\uD800"} />;"#, Some(json!([{ "words": [""] }]))),
+    ];
+    Tester::new(ImgRedundantAlt::NAME, ImgRedundantAlt::PLUGIN, pass, fail).test();
 }

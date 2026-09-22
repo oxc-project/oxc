@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
-use oxc_str::static_ident;
+use oxc_str::{JSStr, static_ident};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -16,7 +16,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{deserialize_regex_vec, regex_match_text},
+    utils::ConfigRegex,
 };
 
 fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
@@ -42,8 +42,9 @@ pub struct NoRequireImportsConfig {
     /// ```ts
     /// console.log(require('../package.json').version);
     /// ```
-    #[serde(default, deserialize_with = "deserialize_regex_vec")]
-    allow: Vec<Regex>,
+    #[serde(default)]
+    #[schemars(with = "Vec<Regex>")]
+    allow: Vec<ConfigRegex>,
     /// When set to `true`, `import ... = require(...)` declarations won't be reported.
     /// This is useful if you use certain module options that require strict CommonJS interop semantics.
     ///
@@ -121,7 +122,7 @@ declare_oxc_lint!(
     short_description = "Forbids the use of CommonJS `require` calls.",
 );
 
-fn match_argument_value_with_regex(allow: &[Regex], argument_value: &str) -> bool {
+fn match_argument_value_with_regex(allow: &[ConfigRegex], argument_value: JSStr<'_>) -> bool {
     allow.iter().any(|regex| regex.is_match(argument_value))
 }
 
@@ -152,14 +153,15 @@ impl Rule for NoRequireImports {
                             let Some(quasi) = template_literal.quasis.first() else {
                                 return;
                             };
-                            if match_argument_value_with_regex(&self.allow, &quasi.value.raw) {
+                            if match_argument_value_with_regex(&self.allow, quasi.value.raw.into())
+                            {
                                 return;
                             }
                         }
                         Argument::StringLiteral(string_literal)
                             if match_argument_value_with_regex(
                                 &self.allow,
-                                &regex_match_text(string_literal.value),
+                                string_literal.value,
                             ) =>
                         {
                             return;
@@ -177,10 +179,7 @@ impl Rule for NoRequireImports {
                     }
 
                     if !self.allow.is_empty()
-                        && match_argument_value_with_regex(
-                            &self.allow,
-                            &regex_match_text(mod_ref.expression.value),
-                        )
+                        && match_argument_value_with_regex(&self.allow, mod_ref.expression.value)
                     {
                         return;
                     }
@@ -430,4 +429,23 @@ fn test() {
     Tester::new(NoRequireImports::NAME, NoRequireImports::PLUGIN, pass, fail)
         .change_rule_path_extension("ts")
         .test_and_snapshot();
+}
+
+#[test]
+fn configured_patterns_preserve_lone_surrogates() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    let pass = vec![
+        (r#"require("\uFFFD");"#, Some(json!([{ "allow": ["^�$"] }]))),
+        (r#"require("\uD800/package.json");"#, Some(json!([{ "allow": [r"/package\.json$"] }]))),
+        (r#"require("\uD83D\uDE00");"#, Some(json!([{ "allow": ["^.$"] }]))),
+    ];
+    let fail = vec![
+        (r#"require("\uD800");"#, Some(json!([{ "allow": ["^�$"] }]))),
+        (r#"require("\uDC00");"#, Some(json!([{ "allow": [r"^[\uE000-\uFFFF]$"] }]))),
+        (r#"import x = require("\uD800");"#, Some(json!([{ "allow": ["^�$"] }]))),
+        (r#"require("\uD800");"#, Some(json!([{ "allow": ["^.$"] }]))),
+    ];
+    Tester::new(NoRequireImports::NAME, NoRequireImports::PLUGIN, pass, fail).test();
 }

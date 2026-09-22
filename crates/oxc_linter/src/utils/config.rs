@@ -83,17 +83,6 @@ where
         .map_err(D::Error::custom)
 }
 
-/// Produce the text to match rule-configuration patterns against.
-///
-/// Regex patterns from rule configuration are always valid UTF-8 because serde_json rejects
-/// lone-surrogate escapes. Matching against a copy of the value in which each lone surrogate
-/// half is the replacement character U+FFFD therefore agrees with ESLint's UTF-16 matching
-/// for every expressible pattern, except a pattern that literally matches the replacement
-/// character.
-pub fn regex_match_text(value: JSStr<'_>) -> Cow<'_, str> {
-    value.to_str_lossy()
-}
-
 /// Produce the text to show a value in a diagnostic.
 ///
 /// A value without lone surrogates is borrowed as is. Otherwise the value is shown in its
