@@ -13,7 +13,8 @@ use crate::pipeline::{
 };
 
 use super::common::{
-    lex_block_comment, lex_line_comment, lex_slash, lex_string, lex_template_segment,
+    html_close_comment_at, html_open_comment_at, lex_block_comment, lex_html_close_comment,
+    lex_html_open_comment, lex_line_comment, lex_slash, lex_string, lex_template_segment,
     skip_unicode_brace_escape,
 };
 
@@ -82,6 +83,11 @@ pub(super) unsafe fn carve_jsx(
     lanes: &mut Lanes,
 ) {
     let src = srcs.as_ptr();
+    // Annex B B.1.3 (`-->` at line start) needs JS mode to stop at `>`, which JSX is full of.
+    // The finders that do so are switched on only after a `<!--` has been lexed (the pair the
+    // legacy comments come in, and `<!--` is caught free on the `<` path), so a module or a
+    // JSX script without HTML comments never pays; a `-->` before any `<!--` stays operators.
+    let mut html_close = false;
     let mut stack: Vec<JFrame> = Vec::with_capacity(64);
     let mut mode = JMode::Js;
     let mut text_start = 0usize;
@@ -101,10 +107,13 @@ pub(super) unsafe fn carve_jsx(
                 let in_brace = stack.last().is_some_and(|f| {
                     matches!(f.kind, JFrameKind::TemplateSub | JFrameKind::JsxCont)
                 });
-                let s = if in_brace {
-                    find_opener_jsx7(src, n, i)
-                } else {
-                    find_opener_jsx5(src, n, i)
+                // The finders that also stop at `>` are only switched on by a `<!--` in a
+                // script (see `html_close`).
+                let s = match (in_brace, html_close) {
+                    (true, false) => find_opener_jsx7(src, n, i),
+                    (true, true) => find_opener6(src, n, i),
+                    (false, false) => find_opener_jsx5(src, n, i),
+                    (false, true) => find_opener(src, n, i),
                 };
                 if s >= n {
                     break;
@@ -195,6 +204,12 @@ pub(super) unsafe fn carve_jsx(
                     }
                     b'<' => {
                         let c1 = if s + 1 < n { *src.add(s + 1) } else { 0 };
+                        if c1 == b'!' && html_open_comment_at(srcs, n, s, lanes.module) {
+                            // Annex B B.1.1: the goal, not the JSX setting, decides.
+                            i = lex_html_open_comment(src, srcs, n, st, kind, opch, s, lanes);
+                            html_close = !lanes.module;
+                            continue;
+                        }
                         if c1 == b'<' {
                             // `<<` shift: skip both, or the second `<` would
                             // read the first as an operand preceder.
@@ -269,6 +284,14 @@ pub(super) unsafe fn carve_jsx(
                             // Operator position: less-than.
                             i = s + 1;
                         }
+                    }
+                    b'>' => {
+                        // Only a script's finder stops here: Annex B B.1.3 `-->` at line start.
+                        i = if html_close_comment_at(srcs, s, lanes.module) {
+                            lex_html_close_comment(src, srcs, n, st, kind, opch, s, lanes)
+                        } else {
+                            s + 1
+                        };
                     }
                     _ => {
                         i = s + 1;

@@ -71,3 +71,35 @@ fn mid_line_close_comment_unchanged() {
         assert!(ks.contains(&TokenKind::Gt), "module={module}: {ks:?}");
     }
 }
+
+fn kinds_of_jsx(code: &str, module: bool) -> Vec<TokenKind> {
+    let mut buf = code.as_bytes().to_vec();
+    let n = buf.len();
+    buf.resize(n + PAD, 0);
+    let opts = LexOptions { source_type_module: module, jsx: true, ..Default::default() };
+    let mut lx = Lexer::new();
+    let count = lx.lex(&buf, n, opts);
+    lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
+}
+
+#[test]
+fn jsx_script_html_comments() {
+    // Annex B applies to a script whatever its JSX setting.
+    for src in ["x <!-- y\nz;", "<!-- c\nx;", "x = <a>{y}</a> <!-- c\nz;"] {
+        let ks = kinds_of_jsx(src, false);
+        assert!(!ks.contains(&TokenKind::Lt) && !ks.contains(&TokenKind::Bang), "{src:?}: {ks:?}");
+    }
+    // `-->` closes a comment a `<!--` opened: in a JSX script it is recognised after one.
+    for src in ["<!--\na;\n--> b;", "<!--\nx = 1;\n  --> c\ny;", "<!--\nx = 1;\n/* */ --> c\ny;"] {
+        let ks = kinds_of_jsx(src, false);
+        assert!(!ks.contains(&TokenKind::MinusMinus), "{src:?}: {ks:?}");
+        let ks = kinds_of_jsx(src, true);
+        assert!(ks.contains(&TokenKind::MinusMinus), "{src:?}: {ks:?}");
+    }
+    // Without a `<!--` before it, a JSX script keeps `-->` as operators: the finder that would
+    // stop at every `>` is only switched on by the opener.
+    let ks = kinds_of_jsx("a;\n--> b;", false);
+    assert!(ks.contains(&TokenKind::MinusMinus), "{ks:?}");
+    let ks = kinds_of_jsx("x <!-- y;", true);
+    assert!(ks.contains(&TokenKind::Lt) && ks.contains(&TokenKind::Bang), "{ks:?}");
+}
