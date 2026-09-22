@@ -11,6 +11,18 @@ impl OpDef {
         assert!(txt.len() <= 255);
         Self { txt: txt.as_bytes(), len: txt.len() as u8, kind }
     }
+
+    #[inline(always)]
+    fn key(&self) -> u32 {
+        let txt = self.txt;
+        let c2 = if self.len >= 3 { txt[2] } else { 0 };
+        op_key(txt[0], txt[1], c2, self.len as u32)
+    }
+
+    #[inline(always)]
+    fn slot(&self, mul: u32) -> usize {
+        op_slot(self.key(), mul)
+    }
 }
 
 static OPMAP_OPS: [OpDef; 33] = [
@@ -98,9 +110,7 @@ impl OpMap {
             let mut ok = true;
             for i in 0..OPMAP_OPS.len() {
                 let o = &OPMAP_OPS[i];
-                let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
-                let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
-                let slot = (key.wrapping_mul(m as u32) >> 24) as usize;
+                let slot = o.slot(m as u32);
                 if used[slot] != 0 {
                     ok = false;
                     break;
@@ -112,9 +122,7 @@ impl OpMap {
                 self.opmap_slot = [0xFF; 256];
                 for i in 0..OPMAP_OPS.len() {
                     let o = &OPMAP_OPS[i];
-                    let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
-                    let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
-                    let slot = (key.wrapping_mul(self.opmap_mul) >> 24) as usize;
+                    let slot = o.slot(self.opmap_mul);
                     self.opmap_slot[slot] = i as u8;
                 }
                 return;
@@ -129,9 +137,7 @@ impl OpMap {
         self.op3_pack = [0; 256];
         for i in 0..OPMAP_OPS.len() {
             let o = &OPMAP_OPS[i];
-            let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
-            let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
-            let h = (key.wrapping_mul(self.opmap_mul) >> 24) as usize;
+            let h = o.slot(self.opmap_mul);
             if o.len == 2 {
                 self.op2_pack[h] = 2u32
                     | ((o.txt[0] as u32) << 8)
@@ -151,7 +157,8 @@ impl OpMap {
     pub fn opmap_lookup(&self, b0: u8, b1: u8, b2: u8, b3: u8, len: u32) -> u32 {
         let c2 = if len >= 3 { b2 } else { 0 };
         let key = op_key(b0, b1, c2, len);
-        let idx = self.opmap_slot[(key.wrapping_mul(self.opmap_mul) >> 24) as usize];
+        let slot = op_slot(key, self.opmap_mul);
+        let idx = self.opmap_slot[slot];
         if idx == 0xFF {
             return 0;
         }
@@ -175,6 +182,11 @@ impl OpMap {
 #[inline(always)]
 fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
     (c0 as u32) | ((c1 as u32) << 8) | ((c2 as u32) << 16) | (len << 24)
+}
+
+#[inline(always)]
+fn op_slot(key: u32, mul: u32) -> usize {
+    (key.wrapping_mul(mul) >> 24) as usize
 }
 
 #[cfg(test)]
