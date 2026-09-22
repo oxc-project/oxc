@@ -255,15 +255,6 @@ impl NoUnusedVars {
         ctx: &LintContext<'a>,
         exported_names: &rustc_hash::FxHashSet<&str>,
     ) {
-        if self.args.is_none()
-            && matches!(
-                symbol.declaration().kind(),
-                AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_)
-            )
-        {
-            return;
-        }
-
         let is_ignored = self.is_ignored(symbol);
 
         if is_ignored.is_some() && !self.report_used_ignore_pattern {

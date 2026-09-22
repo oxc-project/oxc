@@ -2098,6 +2098,20 @@ fn disabled_arguments_do_not_report_used_ignore_patterns() {
     ];
     let fail = vec![
         (
+            "function f([_a]) { return _a; } f();",
+            Some(json!([{
+                "args": "none", "destructuredArrayIgnorePattern": "^_",
+                "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "function f(...[_a]) { return _a; } f();",
+            Some(json!([{
+                "args": "none", "argsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
             "function f(_a) { return _a; } f();",
             Some(json!([{
                 "args": "all", "argsIgnorePattern": "^_", "reportUsedIgnorePattern": true

@@ -423,7 +423,8 @@ impl NoUnusedVars {
     #[inline]
     pub(super) fn is_ignored_arg(&self, name: &str) -> Ignored {
         Ignored::new(
-            !(name == "_" && self.args_ignore_pattern.is_default())
+            !self.args.is_none()
+                && !(name == "_" && self.args_ignore_pattern.is_default())
                 && Self::is_none_or_match(self.args_ignore_pattern.as_ref(), name),
             IgnoreReason::NamePattern,
         )
