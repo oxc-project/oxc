@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
+    ast_util::outermost_paren_parent,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
@@ -546,6 +547,44 @@ impl PreferConst {
             return false;
         }
 
+        // A separate assignment can become a declaration only when it is a standalone
+        // statement. Assignments used as arguments, initializers, etc. must remain `let`.
+        // Only traverse nodes that can form a binding pattern. In particular, TS
+        // assertions and non-null expressions cannot be used in a const binding.
+        let Some(assignment) = ctx.nodes().ancestors(write_node_id).find(|node| {
+            !matches!(
+                node.kind(),
+                AstKind::ParenthesizedExpression(_)
+                    | AstKind::ArrayAssignmentTarget(_)
+                    | AstKind::ObjectAssignmentTarget(_)
+                    | AstKind::AssignmentTargetRest(_)
+                    | AstKind::AssignmentTargetWithDefault(_)
+                    | AstKind::AssignmentTargetPropertyIdentifier(_)
+                    | AstKind::AssignmentTargetPropertyProperty(_)
+            )
+        }) else {
+            return false;
+        };
+        if !matches!(assignment.kind(), AstKind::AssignmentExpression(_)) {
+            return false;
+        }
+        let Some(statement) = outermost_paren_parent(assignment, ctx.semantic()) else {
+            return false;
+        };
+        if !matches!(statement.kind(), AstKind::ExpressionStatement(_))
+            || !matches!(
+                ctx.nodes().parent_kind(statement.id()),
+                AstKind::Program(_)
+                    | AstKind::BlockStatement(_)
+                    | AstKind::FunctionBody(_)
+                    | AstKind::StaticBlock(_)
+                    | AstKind::SwitchCase(_)
+                    | AstKind::TSModuleBlock(_)
+            )
+        {
+            return false;
+        }
+
         // Check if the write is inside any control flow, loops, or certain destructuring assignments
         // If a destructuring assignment:
         // 1. Is inside a block (not at function/program level), OR
@@ -883,6 +922,26 @@ fn test() {
             "class C { static { () => a; let a = 1; } };",
             Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
         ), // { "ecmaVersion": 2022 }
+        (
+            "let titleWrapper: HTMLElement;
+             let descriptionWrapper: HTMLElement;
+             const item = _.div({ className: [this.attr.classFamily] },
+                 titleWrapper = _.div({ className: [this.attr.classFamily] },
+                     _.div({ className: [this.attr.classFamily] })),
+                 descriptionWrapper = _.div({ className: [this.attr.classFamily] },
+                     _.div({ className: [this.attr.classFamily] }))
+             );",
+            None,
+        ),
+        ("let a; foo(a = 1);", None),
+        ("let a; const b = (a = 1);", None),
+        ("let a; const b = { value: a = 1 };", None),
+        ("function f() { let a; return a = 1; }", None),
+        ("let a; obj.b = a = 1;", None),
+        ("let a; foo(({ a } = obj));", None),
+        ("for (const item of items) { let a; foo(a = item); }", None),
+        ("namespace N { let value; use(value = 1); }", None),
+        ("module N { let value; use(value = 1); }", None),
     ];
 
     let fail = vec![
@@ -1177,6 +1236,25 @@ fn test() {
 }
 
 #[test]
+fn test_typescript_assignment_targets() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "let a: any; (a as number) = 1; use(a);",
+        "let a: any; a! = 1; use(a);",
+        "let a: any; (<number>a) = 1; use(a);",
+        "let a: any; (a satisfies number) = 1; use(a);",
+        "let a: any; [(a as number)] = values; use(a);",
+        "let a: any; ({ value: a! } = obj); use(a);",
+    ];
+
+    Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, vec![])
+        .change_rule_path("test.ts")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
 fn test_svelte() {
     use crate::tester::Tester;
 
@@ -1445,6 +1523,9 @@ fn test_oxc() {
             }",
             Some(serde_json::json!([{ "ignoreReadBeforeAssign": false }])),
         ),
+        // Unlike ESLint, preserve diagnostics for standalone assignments in TS module blocks.
+        ("namespace N { let value; value = 1; use(value); }", None),
+        ("module N { let value; (value = 1); use(value); }", None),
     ];
 
     let fix = vec![
