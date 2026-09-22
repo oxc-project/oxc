@@ -15,13 +15,6 @@ pub struct ModuleRecordBuilder<'a> {
     exported_bindings_duplicated: ArenaVec<'a, NameSpan<'a>>,
 }
 
-/// The parser reported the well-formedness syntax error for such a name.
-/// Omit its module-record entries rather than record the replacement
-/// character `ModuleExportName::name` returns for it.
-fn name_is_ill_formed(name: &ModuleExportName) -> bool {
-    matches!(name, ModuleExportName::StringLiteral(lit) if lit.value.has_lone_surrogate())
-}
-
 impl<'a> ModuleRecordBuilder<'a> {
     pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
         Self {
@@ -216,10 +209,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             for specifier in specifiers {
                 let (import_name, local_name, is_type) = match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        if name_is_ill_formed(&specifier.imported) {
-                            continue;
-                        }
-                        let name = specifier.imported.name().as_str();
+                        let Some(name) = specifier.imported.name().as_str() else { continue };
                         (
                             ImportImportName::Name(NameSpan::new(
                                 name.into(),
@@ -262,11 +252,9 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     pub fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
         self.module_record.has_module_syntax = true;
-        let exported = decl
-            .exported
-            .as_ref()
-            .filter(|name| !name_is_ill_formed(name))
-            .map(|name| NameSpan::new(name.name(), name.span()));
+        let exported = decl.exported.as_ref().and_then(|name| {
+            name.name().as_str().map(|text| NameSpan::new(text.into(), name.span()))
+        });
         // The duplicate-export check does not depend on the module request, so
         // the exported name is registered before the request is examined.
         if let Some(exported) = &exported {
@@ -361,11 +349,9 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
         for specifier in &decl.specifiers {
-            if name_is_ill_formed(&specifier.exported) || name_is_ill_formed(&specifier.local) {
-                continue;
-            }
-            let exported = specifier.exported.name().as_str();
-            let local = specifier.local.name().as_str();
+            // Ill-formed export names are diagnosed by the parser and retained only in the AST.
+            let Some(exported) = specifier.exported.name().as_str() else { continue };
+            let Some(local) = specifier.local.name().as_str() else { continue };
             let export_name =
                 ExportExportName::Name(NameSpan::new(exported.into(), specifier.exported.span()));
             let export_entry = ExportEntry {
@@ -391,8 +377,8 @@ impl<'a> ModuleRecordBuilder<'a> {
         // The duplicate-export check does not depend on the module request, so
         // exported names are registered before the request is examined.
         for specifier in &decl.specifiers {
-            if !name_is_ill_formed(&specifier.exported) {
-                self.add_export_binding(specifier.exported.name(), specifier.exported.span());
+            if let Some(name) = specifier.exported.name().as_str() {
+                self.add_export_binding(name.into(), specifier.exported.span());
             }
         }
         // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
@@ -409,11 +395,9 @@ impl<'a> ModuleRecordBuilder<'a> {
         );
 
         for specifier in &decl.specifiers {
-            if name_is_ill_formed(&specifier.exported) || name_is_ill_formed(&specifier.local) {
-                continue;
-            }
-            let exported = specifier.exported.name().as_str();
-            let local = specifier.local.name().as_str();
+            // Ill-formed export names are diagnosed by the parser and retained only in the AST.
+            let Some(exported) = specifier.exported.name().as_str() else { continue };
+            let Some(local) = specifier.local.name().as_str() else { continue };
             let export_name =
                 ExportExportName::Name(NameSpan::new(exported.into(), specifier.exported.span()));
             let import_name =
@@ -450,6 +434,7 @@ where
 #[cfg(test)]
 mod module_record_tests {
     use oxc_allocator::Allocator;
+    use oxc_ast::ast::{ImportDeclarationSpecifier, Statement};
     use oxc_span::{SourceType, Span};
     use oxc_syntax::module_record::*;
 
@@ -460,6 +445,80 @@ mod module_record_tests {
         let ret = Parser::new(allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
         ret.module_record
+    }
+
+    #[test]
+    fn module_names_preserve_recovered_values() {
+        for (escape, units, well_formed) in [
+            (r"\uD800", vec![0xD800], false),
+            (r"\uDC00", vec![0xDC00], false),
+            (r"\uFFFD", vec![0xFFFD], true),
+            (r"\uD83D\uDE00", vec![0xD83D, 0xDE00], true),
+        ] {
+            let allocator = Allocator::default();
+            let source = format!(
+                r#"import {{ "pre{escape}post" as imported }} from "m";
+                export {{ local as "pre{escape}post" }};
+                export {{ "pre{escape}post" as forwarded }} from "m";
+                export * as "other{escape}post" from "m";
+                const local = 0;"#
+            );
+            let parsed = Parser::new(&allocator, &source, SourceType::mjs()).parse();
+            assert_eq!(parsed.diagnostics.is_empty(), well_formed);
+            let Statement::ImportDeclaration(import) = &parsed.program.body[0] else { panic!() };
+            let ImportDeclarationSpecifier::ImportSpecifier(import) =
+                &import.specifiers.as_ref().unwrap()[0]
+            else {
+                panic!()
+            };
+            let Statement::ExportNamedDeclaration(named) = &parsed.program.body[1] else {
+                panic!()
+            };
+            let Statement::ExportFromDeclaration(from) = &parsed.program.body[2] else { panic!() };
+            let Statement::ExportAllDeclaration(all) = &parsed.program.body[3] else { panic!() };
+            for (name, prefix) in [
+                (&import.imported, "pre"),
+                (&named.specifiers[0].exported, "pre"),
+                (&from.specifiers[0].local, "pre"),
+                (all.exported.as_ref().unwrap(), "other"),
+            ] {
+                let expected: Vec<_> = prefix
+                    .encode_utf16()
+                    .chain(units.iter().copied())
+                    .chain("post".encode_utf16())
+                    .collect();
+                assert_eq!(name.name().encode_utf16().collect::<Vec<_>>(), expected);
+                assert_eq!(name.name().as_str().is_some(), well_formed);
+                if !well_formed {
+                    assert_eq!(name.to_string(), format!("\"{prefix}\\u{:04x}post\"", units[0]));
+                }
+            }
+            // Invalid names stay in the recovered AST without being registered as U+FFFD.
+            assert_eq!(parsed.module_record.import_entries.len(), usize::from(well_formed));
+            assert_eq!(parsed.module_record.local_export_entries.len(), usize::from(well_formed));
+            assert_eq!(
+                parsed.module_record.indirect_export_entries.len(),
+                2 * usize::from(well_formed)
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_local_import_name_preserves_source_spelling() {
+        let allocator = Allocator::default();
+        let parsed =
+            Parser::new(&allocator, r#"import { "pre\uD800post" } from "m";"#, SourceType::mjs())
+                .parse();
+        assert!(!parsed.diagnostics.is_empty());
+        let Statement::ImportDeclaration(import) = &parsed.program.body[0] else { panic!() };
+        let ImportDeclarationSpecifier::ImportSpecifier(import) =
+            &import.specifiers.as_ref().unwrap()[0]
+        else {
+            panic!()
+        };
+        assert_eq!(import.local.name.as_str(), r#""pre\uD800post""#);
+        assert!(import.imported.name().has_lone_surrogate());
+        assert!(parsed.module_record.import_entries.is_empty());
     }
 
     // Table 55 gives examples of ImportEntry records fields used to represent the syntactic import forms:

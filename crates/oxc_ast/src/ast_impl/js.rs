@@ -2113,7 +2113,21 @@ impl Display for ModuleExportName<'_> {
             Self::IdentifierName(identifier) => identifier.name.fmt(f),
             Self::IdentifierReference(identifier) => identifier.name.fmt(f),
             Self::StringLiteral(literal) => {
-                write!(f, "\"{}\"", literal.value.as_str().unwrap_or("\u{FFFD}"))
+                // This output is also used as source by lint fixes. Rust's Debug escaping can
+                // turn NUL followed by a digit into an invalid JavaScript octal escape.
+                f.write_str("\"")?;
+                for c in literal.value.chars() {
+                    match c.to_u32() {
+                        0x22 => f.write_str("\\\"")?,
+                        0x5C => f.write_str("\\\\")?,
+                        0..=0x1F | 0x2028 | 0x2029 | 0xD800..=0xDFFF => {
+                            write!(f, "\\u{:04x}", c.to_u32())?;
+                        }
+                        // Lone surrogates were handled above; the remaining values are chars.
+                        _ => write!(f, "{}", c.to_char().unwrap())?,
+                    }
+                }
+                f.write_str("\"")
             }
         }
     }
@@ -2122,21 +2136,20 @@ impl Display for ModuleExportName<'_> {
 impl<'a> ModuleExportName<'a> {
     /// Returns the exported name of this module export name.
     ///
-    /// The name is always UTF-8: the specification requires module export
-    /// names to be well-formed Unicode, and the parser reports the syntax
-    /// error for a string form containing a lone surrogate. In the recovered
-    /// AST of such a program the name is returned as U+FFFD.
+    /// Preserves the literal value, including lone surrogates in a recovered
+    /// AST. Such names are syntax errors, reported by the parser; callers
+    /// requiring UTF-8 must explicitly handle those invalid names.
     ///
     /// ## Example
     ///
     /// - `export { foo }` => `"foo"`
     /// - `export { foo as bar }` => `"bar"`
     /// - `export { foo as "anything" }` => `"anything"`
-    pub fn name(&self) -> Str<'a> {
+    pub fn name(&self) -> JSStr<'a> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.into(),
             Self::IdentifierReference(identifier) => identifier.name.into(),
-            Self::StringLiteral(literal) => Str::from(literal.value.as_str().unwrap_or("\u{FFFD}")),
+            Self::StringLiteral(literal) => literal.value,
         }
     }
 
@@ -2163,6 +2176,41 @@ impl<'a> ModuleExportName<'a> {
     /// - `export { "foo" }` => `false`
     pub fn is_identifier(&self) -> bool {
         matches!(self, Self::IdentifierName(_) | Self::IdentifierReference(_))
+    }
+}
+
+#[test]
+fn module_export_name_display_escapes_javascript_strings() {
+    use oxc_allocator::Allocator;
+    use oxc_span::SPAN;
+    use oxc_str::JSStrBuilder;
+
+    let allocator = Allocator::default();
+    let display = |value| {
+        ModuleExportName::StringLiteral(StringLiteral {
+            node_id: oxc_syntax::node::NodeId::DUMMY.into(),
+            span: SPAN,
+            value,
+            raw: None,
+        })
+        .to_string()
+    };
+    for (value, expected) in [
+        ("\u{0}1", r#""\u00001""#),
+        ("\u{0}8", r#""\u00008""#),
+        ("\0x", r#""\u0000x""#),
+        ("\"\\'", r#""\"\\'""#),
+        ("\n\r\t\u{1f}", r#""\u000a\u000d\u0009\u001f""#),
+        ("\u{2028}\u{2029}", r#""\u2028\u2029""#),
+        ("é日😀�", "\"é日😀�\""),
+    ] {
+        assert_eq!(display(value.into()), expected);
+    }
+    for surrogate in [0xD800, 0xDC00] {
+        let mut builder = JSStrBuilder::new_in(&allocator);
+        builder.push_code_unit(surrogate);
+        builder.push_str("1");
+        assert_eq!(display(builder.into_js_str()), format!("\"\\u{surrogate:04x}1\""));
     }
 }
 

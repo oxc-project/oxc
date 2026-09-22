@@ -496,10 +496,10 @@ impl<'a> ModuleRunnerTransform<'a> {
                 let property = local.name();
                 // TODO(improvement): It looks like here could always return a computed member expression,
                 //                    so that we don't need to check if it's an identifier name.
-                if is_identifier_name(property.as_str()) {
-                    create_property_access(SPAN, object, property.as_str(), ctx)
+                if let Some(name) = property.as_str().filter(|name| is_identifier_name(name)) {
+                    create_property_access(SPAN, object, name, ctx)
                 } else {
-                    create_compute_property_access(SPAN, object, property.into(), ctx)
+                    create_compute_property_access(SPAN, object, property, ctx)
                 }
             } else {
                 let ModuleExportName::IdentifierReference(ident) = local else { unreachable!() };
@@ -657,7 +657,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             specifiers.into_iter().map(|specifier| match specifier {
                 ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                     let ImportSpecifier { span, local, imported, .. } = specifier.unbox();
-                    self.insert_import_binding(span, binding, local, imported.name().into(), ctx)
+                    self.insert_import_binding(span, binding, local, imported.name(), ctx)
                 }
                 ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
                     let ImportDefaultSpecifier { span, local, .. } = specifier.unbox();

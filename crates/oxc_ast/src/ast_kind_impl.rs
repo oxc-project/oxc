@@ -525,7 +525,7 @@ impl AstKind<'_> {
 
             Self::ImportDeclaration(_) => "ImportDeclaration".into(),
             Self::ImportSpecifier(i) => format!("ImportSpecifier({})", i.local.name).into(),
-            Self::ExportSpecifier(e) => format!("ExportSpecifier({})", e.local.name()).into(),
+            Self::ExportSpecifier(e) => format!("ExportSpecifier({})", e.local).into(),
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
             Self::ImportAttribute(_) => "ImportAttribute".into(),

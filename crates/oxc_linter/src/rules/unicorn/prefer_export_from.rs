@@ -590,7 +590,7 @@ impl PreferExportFrom {
                     if let ModuleExportName::StringLiteral(literal) = &export_specifier.exported {
                         literal.raw.as_ref().unwrap().as_str()
                     } else {
-                        export_specifier.exported.name().as_str()
+                        export_specifier.exported.identifier_name().unwrap().as_str()
                     };
 
                 if imported_name == "default" {
@@ -2104,4 +2104,24 @@ fn check_used_variables_option() {
         .expect_fix(fix)
         .with_snapshot_suffix("check_used_variables")
         .test_and_snapshot();
+}
+
+#[test]
+fn export_names_with_nul_before_digits() {
+    use crate::tester::Tester;
+
+    let mut fixes = Vec::new();
+    for digit in '0'..='9' {
+        fixes.push((
+            format!(r#"import foo from 'mod'; export {{ foo as "\u0000{digit}" }};"#),
+            format!("export {{ default as \"\\u0000{digit}\" }} from 'mod';\n"),
+        ));
+        fixes.push((
+            format!(r#"import * as foo from 'mod'; export {{ foo as "\u0000{digit}" }};"#),
+            format!("export * as \"\\u0000{digit}\" from 'mod';\n"),
+        ));
+    }
+    Tester::new::<&str>(PreferExportFrom::NAME, PreferExportFrom::PLUGIN, vec![], vec![])
+        .expect_fix(fixes)
+        .test();
 }
