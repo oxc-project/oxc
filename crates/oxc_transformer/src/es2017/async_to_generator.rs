@@ -727,10 +727,11 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         bound_ident: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let arguments = static_ident!("arguments");
-        let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), arguments);
-        let arguments_ident =
-            Argument::from(ctx.create_ident_expr(SPAN, arguments, symbol_id, ReferenceFlags::Read));
+        let arguments_ident = Argument::from(ctx.create_unbound_ident_expr(
+            SPAN,
+            static_ident!("arguments"),
+            ReferenceFlags::Read,
+        ));
 
         // (this, arguments)
         let this = Argument::new_this_expression(SPAN, ctx);
