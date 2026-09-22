@@ -1,9 +1,11 @@
 use oxc_ast::{AstKind, MemberExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::{NodeId, Reference};
 use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn bad_array_method_on_arguments_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad array method on `arguments`.")
@@ -63,32 +65,75 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadArrayMethodOnArguments {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let member_expr = match node.kind() {
-            AstKind::ComputedMemberExpression(member_expr) => {
-                MemberExpressionKind::Computed(member_expr)
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        let scoping = ctx.scoping();
+        if let Some(references) = scoping.root_unresolved_references().get("arguments") {
+            for &reference_id in references {
+                check_reference(scoping.get_reference(reference_id), ctx);
             }
-            AstKind::StaticMemberExpression(member_expr) => {
-                MemberExpressionKind::Static(member_expr)
-            }
-            _ => return,
-        };
-        if !member_expr.object().is_specific_id("arguments") {
-            return;
         }
 
-        let AstKind::CallExpression(_) = ctx.nodes().parent_kind(node.id()) else {
-            return;
-        };
-        let Some(name) = member_expr.static_property_name() else {
-            return;
-        };
-        if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
-            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                name.as_str(),
-                member_expr.span(),
-            ));
+        for scope_id in scoping.scope_descendants_from_root() {
+            let flags = scoping.scope_flags(scope_id);
+            if !flags.is_function() || flags.is_arrow() {
+                continue;
+            }
+            let Some(symbol_id) = scoping.get_binding(scope_id, static_ident!("arguments")) else {
+                continue;
+            };
+            // Bare `var arguments` declarations retain the function's implicit arguments object.
+            if !scoping.symbol_declarations(symbol_id).all(|id| is_bare_var_declaration(id, ctx)) {
+                continue;
+            }
+            for reference in scoping.get_resolved_references(symbol_id) {
+                check_reference(reference, ctx);
+            }
         }
+    }
+}
+
+fn is_bare_var_declaration(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
+    let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id) else {
+        return false;
+    };
+    if declarator.init.is_some() || !declarator.id.is_binding_identifier() {
+        return false;
+    }
+    let declaration_node = ctx.nodes().parent_node(node_id);
+    let AstKind::VariableDeclaration(declaration) = declaration_node.kind() else {
+        return false;
+    };
+    declaration.kind.is_var()
+        && !matches!(
+            ctx.nodes().parent_kind(declaration_node.id()),
+            AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
+        )
+}
+
+fn check_reference(reference: &Reference, ctx: &LintContext<'_>) {
+    if !reference.is_value() {
+        return;
+    }
+    let node = ctx.nodes().parent_node(reference.node_id());
+    let member_expr = match node.kind() {
+        AstKind::ComputedMemberExpression(member_expr) => {
+            MemberExpressionKind::Computed(member_expr)
+        }
+        AstKind::StaticMemberExpression(member_expr) => MemberExpressionKind::Static(member_expr),
+        _ => return,
+    };
+    if !member_expr.object().is_specific_id("arguments") {
+        return;
+    }
+
+    let AstKind::CallExpression(_) = ctx.nodes().parent_kind(node.id()) else {
+        return;
+    };
+    let Some(name) = member_expr.static_property_name() else {
+        return;
+    };
+    if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
+        ctx.diagnostic(bad_array_method_on_arguments_diagnostic(name.as_str(), member_expr.span()));
     }
 }
 
@@ -136,6 +181,19 @@ fn test() {
         "function fn() {arguments.toLocaleString(() => {})}",
         "function fn() {arguments.toString(() => {})}",
         "function fn() { Array.prototype.slice.call(arguments) }",
+        "const arguments = []; arguments.map(() => {})",
+        "function fn(arguments) { arguments.map(() => {}) }",
+        "function fn() { const arguments = []; arguments.map(() => {}) }",
+        "const arguments = []; const fn = () => arguments.map(() => {})",
+        "function fn() { object[arguments]() }",
+        "function fn() { var arguments = []; arguments.map(() => {}) }",
+        "function fn(arguments) { var arguments; arguments.map(() => {}) }",
+        "function fn() { var arguments; var arguments = []; arguments.map(() => {}) }",
+        "function fn() { var arguments = []; var arguments; arguments.map(() => {}) }",
+        "const fn = () => { var arguments; arguments.map(() => {}) }",
+        "var arguments; arguments.map(() => {})",
+        "function fn() { for (var arguments of [[]]) arguments.map(() => {}) }",
+        "function fn() { for (var arguments in {}) arguments.map(() => {}) }",
     ];
 
     let fail = vec![
@@ -181,6 +239,16 @@ fn test() {
         "const arr = [1, 2, 3, 4, 5];
          function fn() { arguments.with(2, 6) }
          fn(arr)",
+        "const arguments = []; function fn() { arguments.map(() => {}) }",
+        "const arguments = []; function fn(value = arguments.map(() => {})) {}",
+        "const arguments = []; function fn() { return () => arguments.map(() => {}) }",
+        "function fn() { arguments.map(() => {}); arguments.filter(() => {}) }",
+        "function fn() { var arguments; arguments.map(() => {}) }",
+        "function fn() { var arguments; arguments['map'](() => {}) }",
+        "function fn() { var arguments; return () => arguments.map(() => {}) }",
+        "function fn() { { var arguments; } arguments.map(() => {}) }",
+        "function fn() { var arguments; var arguments; arguments.map(() => {}) }",
+        "function fn() { var arguments; arguments.map(() => {}); arguments = []; }",
     ];
 
     Tester::new(BadArrayMethodOnArguments::NAME, BadArrayMethodOnArguments::PLUGIN, pass, fail)

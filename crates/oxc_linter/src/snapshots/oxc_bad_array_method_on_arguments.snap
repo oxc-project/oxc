@@ -283,3 +283,80 @@ source: crates/oxc_linter/src/tester.rs
  3 │          fn(arr)
    ╰────
   help: The `arguments` object does not have a `with()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:39]
+ 1 │ const arguments = []; function fn() { arguments.map(() => {}) }
+   ·                                       ─────────────
+   ╰────
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:43]
+ 1 │ const arguments = []; function fn(value = arguments.map(() => {})) {}
+   ·                                           ─────────────
+   ╰────
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:52]
+ 1 │ const arguments = []; function fn() { return () => arguments.map(() => {}) }
+   ·                                                    ─────────────
+   ╰────
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:17]
+ 1 │ function fn() { arguments.map(() => {}); arguments.filter(() => {}) }
+   ·                 ─────────────
+   ╰────
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:42]
+ 1 │ function fn() { arguments.map(() => {}); arguments.filter(() => {}) }
+   ·                                          ────────────────
+   ╰────
+  help: The `arguments` object does not have a `filter()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:32]
+ 1 │ function fn() { var arguments; arguments.map(() => {}) }
+   ·                                ─────────────
+   ╰────
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:32]
+ 1 │ function fn() { var arguments; arguments['map'](() => {}) }
+   ·                                ────────────────
+   ╰────
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:45]
+ 1 │ function fn() { var arguments; return () => arguments.map(() => {}) }
+   ·                                             ─────────────
+   ╰────
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:36]
+ 1 │ function fn() { { var arguments; } arguments.map(() => {}) }
+   ·                                    ─────────────
+   ╰────
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:47]
+ 1 │ function fn() { var arguments; var arguments; arguments.map(() => {}) }
+   ·                                               ─────────────
+   ╰────
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
+
+  ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
+   ╭─[bad_array_method_on_arguments.tsx:1:32]
+ 1 │ function fn() { var arguments; arguments.map(() => {}); arguments = []; }
+   ·                                ─────────────
+   ╰────
+  help: The `arguments` object does not have a `map()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
