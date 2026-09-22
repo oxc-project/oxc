@@ -176,7 +176,7 @@ impl WalkRunner {
             root_config_resolver,
             &resolved_ignore_paths,
             ignore_options.with_node_modules,
-            config_options.config.is_none() && !config_options.disable_nested_config,
+            config_options.use_nested_configs(),
             editorconfig_path.as_deref(),
             #[cfg(feature = "napi")]
             self.js_config_loader.as_ref(),

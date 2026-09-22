@@ -21,6 +21,7 @@ doctest = false
 
 [dependencies]
 oxc_ast = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["str"] }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 constcat = { workspace = true }
