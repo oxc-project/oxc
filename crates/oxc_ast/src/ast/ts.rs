@@ -1800,9 +1800,14 @@ pub struct TSExportAssignment<'a> {
     pub expression: Expression<'a>,
 }
 
-/// Namespace Export Declaration in declaration files
+/// Namespace export declaration in declaration files (.d.ts).
 ///
-/// `export as namespace foo`
+/// ## Example
+///
+/// ```ts
+/// export as namespace foo;
+/// //                  ^^^ id
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
@@ -1810,6 +1815,7 @@ pub struct TSExportAssignment<'a> {
 pub struct TSNamespaceExportDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// Name of the exported namespace.
     pub id: IdentifierName<'a>,
 }
 

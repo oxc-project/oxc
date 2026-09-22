@@ -9193,7 +9193,7 @@ impl<'a> Statement<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`
+    /// * `id`: Name of the exported namespace.
     #[inline]
     pub fn new_ts_namespace_export_declaration(
         span: Span,
@@ -15805,7 +15805,7 @@ impl<'a> ModuleDeclaration<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`
+    /// * `id`: Name of the exported namespace.
     #[inline]
     pub fn new_ts_namespace_export_declaration(
         span: Span,
@@ -27125,7 +27125,7 @@ impl<'a> TSNamespaceExportDeclaration<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`
+    /// * `id`: Name of the exported namespace.
     #[inline]
     pub fn new(span: Span, id: IdentifierName<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
@@ -27139,7 +27139,7 @@ impl<'a> TSNamespaceExportDeclaration<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`
+    /// * `id`: Name of the exported namespace.
     #[inline]
     pub fn boxed(
         span: Span,
