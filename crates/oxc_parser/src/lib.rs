@@ -1088,6 +1088,28 @@ mod test {
     }
 
     #[test]
+    fn preserve_parens_arrow_parameters() {
+        for preserve_parens in [false, true] {
+            for (source, valid) in [
+                ("a => a", true),
+                ("(a) => a", true),
+                ("((a)) => 0", false),
+                ("var foo = ((foo)) => {};", false),
+            ] {
+                let allocator = Allocator::default();
+                let ret = Parser::new(&allocator, source, SourceType::default())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse();
+                assert_eq!(
+                    ret.diagnostics.is_empty(),
+                    valid,
+                    "{source}, preserve_parens={preserve_parens}"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn ts_module_declaration() {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();

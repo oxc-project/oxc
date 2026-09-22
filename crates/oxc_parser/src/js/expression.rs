@@ -1525,6 +1525,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // `x => {}`
         if kind == Kind::Arrow
+            && !lhs_parenthesized
             && let Expression::Identifier(ident) = &lhs
         {
             let mut arrow_expr = self.parse_simple_arrow_function_expression(
