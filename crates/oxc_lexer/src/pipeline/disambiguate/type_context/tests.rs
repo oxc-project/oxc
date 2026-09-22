@@ -943,3 +943,36 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
         diagnosed(code);
     }
 }
+
+#[test]
+fn tsx_type_parameter_list_signals_cross_trivia() {
+    // A comment between the parameter name and its `,` / `=` / `extends` still marks a list;
+    // an `extends` attribute followed by a comment still marks a tag.
+    let tsx = |code: &str| kinds_of(code, ScriptTSX);
+    for (code, plain) in [
+        ("x = <T //c\nextends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
+        ("x = <T /*c*/ extends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
+        ("x = <T /*\n*/ extends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
+        ("x = <T //c\n,>(a: T) => a;", "x = <T,>(a: T) => a;"),
+        ("x = <T /*c*/,>(a: T) => a;", "x = <T,>(a: T) => a;"),
+        ("x = <T //c\n= U,>(a: T) => a;", "x = <T = U,>(a: T) => a;"),
+        ("x = <const /*c*/ T extends U>(a: T) => a;", "x = <const T extends U>(a: T) => a;"),
+        ("x = <T extends /*c*/ />;", "x = <T extends />;"),
+        ("x = <T extends //c\n />;", "x = <T extends />;"),
+    ] {
+        assert_eq!(tsx(code), tsx(plain), "{code:?}");
+        assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+    }
+}
+
+#[test]
+fn tsx_function_type_with_trivia_before_its_parameters() {
+    let plain = kinds_of("let f: <T> (x: T) => T;", ScriptTSX);
+    for code in [
+        "let f: <T> /*c*/ (x: T) => T;",
+        "let f: <T> // c\n(x: T) => T;",
+        "let f: <T>\u{a0}(x: T) => T;",
+    ] {
+        assert_eq!(kinds_of(code, ScriptTSX), plain, "{code:?}");
+    }
+}

@@ -477,3 +477,46 @@ fn relational_heads_before_a_balanced_run() {
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::Gt).count(), 3, "{ks:?}");
     assert!(ks.contains(&TokenKind::RShift), "{ks:?}");
 }
+
+#[test]
+fn jsx_child_tag_after_comment_or_unicode_space() {
+    // Trivia between `<` and `/`, or around a closing name, leaves the same tag.
+    for (code, plain) in [
+        ("x = <a>x</*c*//a>;", "x = <a>x</a>;"),
+        ("x = <a>x<//c\n/a>;", "x = <a>x</a>;"),
+        ("x = <a></*c*/b/></a>;", "x = <a><b/></a>;"),
+        ("x = <a><//c\nb/></a>;", "x = <a><b/></a>;"),
+        ("x = <a>x<\u{a0}/a>;", "x = <a>x</a>;"),
+        ("x = <a>x<\u{2028}/a>;", "x = <a>x</a>;"),
+        ("x = <a>x</\u{a0}a>;", "x = <a>x</a>;"),
+        ("x = <a>x</a\u{a0}>;", "x = <a>x</a>;"),
+        ("x = <a/\u{a0}>;", "x = <a/>;"),
+        ("x = <a/\u{3000}>;", "x = <a/>;"),
+        ("x = <a b=\"1\"/\u{feff}>;", "x = <a b=\"1\"/>;"),
+        ("x = <a / /*c*/ >;", "x = <a/>;"),
+        ("x = <>x<\u{a0}/>;", "x = <>x</>;"),
+        ("x = <>x</\u{a0}>;", "x = <>x</>;"),
+    ] {
+        assert_eq!(kinds_of(code, ScriptJSX), kinds_of(plain, ScriptJSX), "{code:?}");
+        assert!(diag_codes_of(code, ScriptJSX).is_empty(), "{code:?}");
+    }
+}
+
+#[test]
+fn jsx_member_tag_name_matches_across_trivia() {
+    // A comment or Unicode whitespace before the `.` of a member name (`<A/*c*/.B>`) hides no
+    // mismatch: the closing tag names the same element.
+    for code in [
+        "x = <A/*c*/.B>x</A.B>;",
+        "x = <A\u{a0}.B>x</A.B>;",
+        "x = <A\u{2029}.B>x</A.B>;",
+        "x = <A /*c*/ .B>x</A.B>;",
+        "x = <a/*c*/:b>x</a:b>;",
+        "x = <A.B>x</A/*c*/.B>;",
+    ] {
+        assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+    }
+    for code in ["x = <A/*c*/.B>x</A.C>;", "x = <A\u{a0}.B>x</A>;"] {
+        assert!(!diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+    }
+}

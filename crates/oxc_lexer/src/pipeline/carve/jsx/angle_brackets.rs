@@ -9,6 +9,8 @@ use crate::pipeline::{
     tables::Tables,
 };
 
+use super::names::jsx_skip_trivia_fast;
+
 const FN_TYPE_SCAN_CAP: usize = 1 << 16;
 const FN_TYPE_TMPL_DEPTH: u32 = 8;
 
@@ -61,26 +63,19 @@ pub(super) unsafe fn jsx_over_type_params(
 #[inline]
 unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> AngleVerdict {
     let mut p = t;
-    // optional `const` type-parameter modifier: `<const T,>`
+    // optional `const` type-parameter modifier: `<const T,>`. Like any modifier it must stay
+    // on the line of its parameter; a comment between them is fine.
     if n - p >= 6 && &src[p..p + 5] == b"const" && !is_word(src[p + 5]) {
-        let mut qq = p + 5;
-        while qq < n && is_ws(src[qq]) {
-            qq += 1;
-        }
-        if qq < n && is_id_start(src[qq]) {
+        let qq = jsx_skip_trivia_fast(src.as_ptr(), n, p + 5);
+        if qq < n && is_id_start(src[qq]) && !line_break_in(src, p + 5, qq) {
             p = qq; // `const` was a modifier; advance to the real param
         }
     }
     while p < n && bm_get(word, p) {
         p += 1; // first type-parameter identifier
     }
-    while p < n {
-        let w = head_ws_len(src, p);
-        if w == 0 {
-            break;
-        }
-        p += w;
-    }
+    // The signal may sit behind whitespace (Unicode too) or a comment: `<T /*c*/ extends U>`.
+    p = jsx_skip_trivia_fast(src.as_ptr(), n, p);
     if p >= n {
         return AngleVerdict::Jsx;
     }
@@ -89,15 +84,7 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
         return AngleVerdict::TypeParams; // `<T,>`  `<T,U>`  `<T = D>`
     }
     if c == b'>' {
-        // `<T>(` and `<T> (` are the same type-parameter list, so the `(`
-        // has to be found across trivia. Bounded: a JSX element open walks
-        // its own indent run and stops at the first non-space, and running
-        // out of budget yields `Jsx`, which is what this arm answered
-        // before, so the bound can only leave a rare shape unresolved.
-        let mut q = p + 1;
-        while q < n && is_ws(src[q]) {
-            q += 1;
-        }
+        let q = jsx_skip_trivia_fast(src.as_ptr(), n, p + 1);
         let v = if q < n && src[q] == b'(' {
             AngleVerdict::Ambiguous { gt: p, lp: q }
         } else {
@@ -108,10 +95,7 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
     // `extends` is also a legal JSX attribute name; it signals a generic only
     // as a full word not followed by `=` (attr value) or `>` (boolean attr).
     if n - p >= 7 && &src[p..p + 7] == b"extends" && !bm_get(word, p + 7) {
-        let mut qq = p + 7;
-        while qq < n && is_ws(src[qq]) {
-            qq += 1;
-        }
+        let qq = jsx_skip_trivia_fast(src.as_ptr(), n, p + 7);
         let d = if qq < n { src[qq] } else { 0 };
         if d == b'/' && !matches!(if qq + 1 < n { src[qq + 1] } else { 0 }, b'*' | b'/') {
             return AngleVerdict::Jsx;
@@ -122,18 +106,18 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
     AngleVerdict::Jsx
 }
 
-/// Byte length of the whitespace at `p` - ASCII, or the multi-byte
-/// ECMAScript whitespace `misc_pre` marked as a token boundary - else 0.
-#[inline(always)]
-unsafe fn head_ws_len(src: &[u8], p: usize) -> usize {
-    let c = src[p];
-    if is_ws(c) {
-        return 1;
+/// Does `src[a..b]` hold a LineTerminator (LF, CR, or the 3-byte LS/PS)?
+#[inline]
+fn line_break_in(src: &[u8], a: usize, b: usize) -> bool {
+    let mut i = a;
+    while i < b {
+        match src[i] {
+            b'\n' | b'\r' => return true,
+            0xE2 if src[i + 1] == 0x80 && matches!(src[i + 2], 0xA8 | 0xA9) => return true,
+            _ => i += 1,
+        }
     }
-    if c >= 0x80 {
-        return unicode_ws_len(src.as_ptr(), p);
-    }
-    0
+    false
 }
 
 #[inline(never)]
