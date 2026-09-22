@@ -346,13 +346,23 @@ unsafe fn munch_walk(
 
 #[inline(always)]
 fn prefetch(p: *const u8) {
-    #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+    #[cfg(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ))]
     unsafe {
         use std::arch::x86_64;
         x86_64::_mm_prefetch(p as *const i8, x86_64::_MM_HINT_T0)
     }
 
-    #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    )))]
     {
         // No-op
         let _ = p;
