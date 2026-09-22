@@ -14,7 +14,7 @@
 //! [`type_list`]: super::type_list
 //! [`context`]: crate::pipeline::disambiguate::context
 
-use crate::token::{OP_KIND_BASE, tk};
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use super::{bytes::lt_run_opens_type_args, type_list::type_args_at};
 use crate::pipeline::disambiguate::{
@@ -96,15 +96,9 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize) -> Option<usize> {
                 }
                 _ => {}
             }
-        } else if !matches!(
+        } else if !matches_tk!(
             k,
-            tk!(Ident)
-                | tk!(String)
-                | tk!(Number)
-                | tk!(BigInt)
-                | tk!(PrivateIdent)
-                | tk!(RegExp)
-                | tk!(TemplateNoSub)
+            Ident | String | Number | BigInt | PrivateIdent | RegExp | TemplateNoSub
         ) {
             return None;
         }
@@ -141,7 +135,7 @@ fn list_in_any_context(tokens: &Tokens, lt: usize) -> bool {
         }
     }
     match tokens.prev_token(lt) {
-        Prev::Word(k, tk!(KwFunction) | tk!(KwClass)) => !tokens.property_name(k),
+        Prev::Word(k, tk!(KwFunction | KwClass)) => !tokens.property_name(k),
         Prev::Word(head, 0) => {
             type_args_at(tokens, lt)
                 || (!tokens.line_break_between(tokens.next_start(head + 1), lt)
@@ -169,16 +163,10 @@ fn type_reference_head(tokens: &Tokens, head: usize) -> bool {
     match prev {
         // `class`, `extends` and `function` are reserved words, so a name on the next line is
         // still theirs; the others can be identifiers that a line break ends (`x = as\nA<B>>c`).
-        Prev::Word(k, tk!(KwExtends) | tk!(KwClass) | tk!(KwFunction)) => !tokens.property_name(k),
-        Prev::Word(
-            k,
-            tk!(KwImplements)
-            | tk!(KwAs)
-            | tk!(KwSatisfies)
-            | tk!(KwKeyof)
-            | tk!(KwInterface)
-            | tk!(KwType),
-        ) => !tokens.property_name(k) && !tokens.line_break_between(tokens.next_start(k + 1), h),
+        Prev::Word(k, tk!(KwExtends | KwClass | KwFunction)) => !tokens.property_name(k),
+        Prev::Word(k, tk!(KwImplements | KwAs | KwSatisfies | KwKeyof | KwInterface | KwType)) => {
+            !tokens.property_name(k) && !tokens.line_break_between(tokens.next_start(k + 1), h)
+        }
         Prev::Op(c, b':') => return_type_colon(tokens, c),
         _ => false,
     }
@@ -187,6 +175,7 @@ fn type_reference_head(tokens: &Tokens, head: usize) -> bool {
 /// Is the `:` at `c` the start of a return type: `function (...): ` or `name(...): ` where the
 /// token before `name` leaves no room for a call? `case (x): ` is the one keyword before `(` an
 /// expression follows.
+#[rustfmt::skip::macros(tk)]
 fn return_type_colon(tokens: &Tokens, c: usize) -> bool {
     let Prev::Op(rp, b')') = tokens.prev_token(c) else {
         return false;
@@ -203,16 +192,10 @@ fn return_type_colon(tokens: &Tokens, c: usize) -> bool {
                 | Prev::Op(_, b'{' | b'}' | b';')
                 | Prev::Word(
                     _,
-                    tk!(KwFunction)
-                        | tk!(KwStatic)
-                        | tk!(KwAsync)
-                        | tk!(KwPublic)
-                        | tk!(KwPrivate)
-                        | tk!(KwProtected)
-                        | tk!(KwReadonly)
-                        | tk!(KwAbstract)
-                        | tk!(KwOverride)
-                        | tk!(KwDeclare)
+                    tk!(
+                        KwFunction | KwStatic | KwAsync | KwPublic | KwPrivate | KwProtected
+                        | KwReadonly | KwAbstract | KwOverride | KwDeclare
+                    )
                 )
         ),
         _ => false,

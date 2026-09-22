@@ -22,7 +22,7 @@ use std::cell::{Cell, RefCell};
 use super::{Tokens, bits, text};
 use crate::{
     pipeline::{bytes::is_word, disambiguate::BRACKET_STEP_CAP, find::bracket_bits},
-    token::{KW_KIND_BASE, KW_KIND_MAX, OP_KIND_BASE, tk},
+    token::{KW_KIND_BASE, KW_KIND_MAX, OP_KIND_BASE, matches_tk, tk},
 };
 
 /// The source's bracket bytes (`(){}[]`) as a bitmap, built per lex a 64-byte word at a time
@@ -210,11 +210,7 @@ pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize) -> Option<usize> {
     let mut q = bits::prev1(st, pos);
     while let Some(p) = q {
         let k = kind[p];
-        if k == tk!(Whitespace)
-            || k == tk!(LineComment)
-            || k == tk!(BlockComment)
-            || k == tk!(Hashbang)
-        {
+        if matches_tk!(k, Whitespace | LineComment | BlockComment | Hashbang) {
             q = bits::prev1(st, p);
             continue;
         }
@@ -229,7 +225,7 @@ pub fn kind_at(kind: &[u8], w: usize) -> u8 {
     if k >= KW_KIND_BASE && k <= KW_KIND_MAX {
         return tk!(Ident);
     }
-    if k == tk!(IdentEscaped) || k == tk!(PrivateIdentEscaped) {
+    if matches_tk!(k, IdentEscaped | PrivateIdentEscaped) {
         return k & !(tk!(IdentEscaped) ^ tk!(Ident));
     }
     k

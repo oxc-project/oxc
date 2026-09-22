@@ -15,7 +15,7 @@ use crate::{
         bytes::{is_digit, is_id_start},
         tables::Tables,
     },
-    token::{OP_KIND_BASE, tk},
+    token::{OP_KIND_BASE, matches_tk, tk},
 };
 
 use crate::pipeline::disambiguate::common::{
@@ -154,6 +154,7 @@ pub(super) fn gt_follower(src: &[u8], n: usize, mut i: usize) -> Follow {
     }
 }
 
+#[rustfmt::skip::macros(matches_tk)]
 pub(super) fn type_list_legal(
     t: &Tables,
     src: &[u8],
@@ -184,7 +185,7 @@ pub(super) fn type_list_legal(
     let mut w = bits::next1(st, lo, hi);
     while w < hi {
         let mut k = kind_at(kind, w);
-        if w == skip || k == tk!(Whitespace) || k == tk!(LineComment) || k == tk!(BlockComment) {
+        if w == skip || matches_tk!(k, Whitespace | LineComment | BlockComment) {
             w = bits::next1(st, w + 1, hi);
             continue;
         }
@@ -219,29 +220,17 @@ pub(super) fn type_list_legal(
         prev_kw = 0;
         let was_elem_start = elem_start;
         elem_start = false;
-        if k == tk!(Ident) || k == tk!(IdentEscaped) {
+        if matches_tk!(k, Ident | IdentEscaped) {
             let kk = t.keywords.kwts.lookup_at(src, w, word_len(src, w)) as u8;
             // A keyword type (`this`, `any`, `null`, ...) takes no type arguments; in a type
             // query it names a value, which may (`typeof this<A>`).
-            this_head = matches!(
-                kk,
-                tk!(KwThis)
-                    | tk!(KwAny)
-                    | tk!(KwUnknown)
-                    | tk!(KwString)
-                    | tk!(KwNumber)
-                    | tk!(KwBoolean)
-                    | tk!(KwSymbol)
-                    | tk!(KwObject)
-                    | tk!(KwNever)
-                    | tk!(KwUndefined)
-                    | tk!(KwNull)
-                    | tk!(KwVoid)
-                    | tk!(KwTrue)
-                    | tk!(KwFalse)
-                    | tk!(KwBigInt)
-            ) && last_kw != tk!(KwTypeof);
-            if !start && braces == 0 && !matches!(kk, tk!(KwExtends) | tk!(KwIs) | tk!(KwIn)) {
+            this_head = matches_tk!(kk,
+                            KwThis | KwAny | KwUnknown | KwString | KwNumber | KwBoolean | KwSymbol
+                            | KwObject | KwNever | KwUndefined | KwNull | KwVoid | KwTrue | KwFalse
+                            | KwBigInt
+                        )
+                && last_kw != tk!(KwTypeof);
+            if !start && braces == 0 && !matches_tk!(kk, KwExtends | KwIs | KwIn) {
                 return false;
             }
             // tsc checks `isStartOfType` only where a list element starts (after `<` or a
@@ -260,23 +249,15 @@ pub(super) fn type_list_legal(
             // `this`, `null`, `true`, `false` and `void` are whole types: a `.` after one is
             // a member access, not a qualified name (`any.x` and `string.x` are references).
             no_dot = last_kw != tk!(KwTypeof)
-                && matches!(
-                    kk,
-                    tk!(KwThis) | tk!(KwNull) | tk!(KwTrue) | tk!(KwFalse) | tk!(KwVoid)
-                );
+                && matches_tk!(kk, KwThis | KwNull | KwTrue | KwFalse | KwVoid);
             prev_kw = kk;
             start = type_prefix_kind(kk);
-        } else if k == tk!(Number)
-            || k == tk!(BigInt)
-            || k == tk!(String)
-            || k == tk!(TemplateNoSub)
-            || k == tk!(TemplateTail)
-        {
+        } else if matches_tk!(k, Number | BigInt | String | TemplateNoSub | TemplateTail) {
             if !start && braces == 0 && k != tk!(TemplateTail) {
                 return false;
             }
             start = false;
-        } else if k == tk!(TemplateHead) || k == tk!(TemplateMiddle) {
+        } else if matches_tk!(k, TemplateHead | TemplateMiddle) {
             if k == tk!(TemplateHead) && !start && braces == 0 {
                 return false;
             }
@@ -432,37 +413,14 @@ pub(super) fn type_list_legal(
 }
 
 #[inline(always)]
+#[rustfmt::skip::macros(matches_tk)]
 fn type_illegal_kind(k: u8) -> bool {
-    matches!(
+    matches_tk!(
         k,
-        tk!(KwAwait)
-            | tk!(KwYield)
-            | tk!(KwDelete)
-            | tk!(KwFunction)
-            | tk!(KwClass)
-            | tk!(KwInstanceof)
-            | tk!(KwSuper)
-            | tk!(KwSwitch)
-            | tk!(KwCase)
-            | tk!(KwReturn)
-            | tk!(KwThrow)
-            | tk!(KwVar)
-            | tk!(KwConst)
-            | tk!(KwIf)
-            | tk!(KwElse)
-            | tk!(KwFor)
-            | tk!(KwWhile)
-            | tk!(KwDo)
-            | tk!(KwBreak)
-            | tk!(KwContinue)
-            | tk!(KwWith)
-            | tk!(KwTry)
-            | tk!(KwCatch)
-            | tk!(KwFinally)
-            | tk!(KwDebugger)
-            | tk!(KwDefault)
-            | tk!(KwExport)
-            | tk!(KwEnum)
+        KwAwait | KwYield | KwDelete | KwFunction | KwClass | KwInstanceof | KwSuper | KwSwitch
+        | KwCase | KwReturn | KwThrow | KwVar | KwConst | KwIf | KwElse | KwFor | KwWhile | KwDo
+        | KwBreak | KwContinue | KwWith | KwTry | KwCatch | KwFinally | KwDebugger | KwDefault
+        | KwExport | KwEnum
     )
 }
 
@@ -500,21 +458,11 @@ fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize) -> bool {
 }
 
 #[inline(always)]
+#[rustfmt::skip::macros(matches_tk)]
 fn type_prefix_kind(k: u8) -> bool {
-    matches!(
+    matches_tk!(
         k,
-        tk!(KwKeyof)
-            | tk!(KwTypeof)
-            | tk!(KwReadonly)
-            | tk!(KwUnique)
-            | tk!(KwInfer)
-            | tk!(KwAbstract)
-            | tk!(KwNew)
-            | tk!(KwAsserts)
-            | tk!(KwImport)
-            | tk!(KwExtends)
-            | tk!(KwIs)
-            | tk!(KwIn)
-            | tk!(KwAs)
+        KwKeyof | KwTypeof | KwReadonly | KwUnique | KwInfer | KwAbstract | KwNew | KwAsserts
+        | KwImport | KwExtends | KwIs | KwIn | KwAs
     )
 }

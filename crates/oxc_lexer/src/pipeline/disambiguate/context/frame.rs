@@ -1,64 +1,16 @@
 //! What the walk remembers per frame: the kind of every open bracket or virtual frame,
 //! its per-kind state, and the keyword codes the walk reads off the source.
 
-use crate::token::TokenKind;
-
-/// Keyword codes: the token kinds `coalesce` writes, used here on the spellings `classify` left as
-/// identifiers.
-macro_rules! kw_codes {
-    ($($name:ident = $kind:ident),* $(,)?) => {
-        $(pub(super) const $name: u8 = TokenKind::$kind as u8;)*
-    };
-}
-
-kw_codes! {
-    K_BREAK = KwBreak, K_CASE = KwCase, K_CATCH = KwCatch,
-    K_CLASS = KwClass, K_CONST = KwConst, K_CONTINUE = KwContinue,
-    K_DEBUGGER = KwDebugger, K_DEFAULT = KwDefault, K_DELETE = KwDelete,
-    K_DO = KwDo, K_ELSE = KwElse, K_ENUM = KwEnum, K_EXPORT = KwExport,
-    K_EXTENDS = KwExtends, K_FALSE = KwFalse, K_FINALLY = KwFinally,
-    K_FOR = KwFor, K_FUNCTION = KwFunction, K_IF = KwIf,
-    K_IMPORT = KwImport, K_IN = KwIn, K_INSTANCEOF = KwInstanceof,
-    K_NEW = KwNew, K_NULL = KwNull, K_RETURN = KwReturn, K_SUPER = KwSuper,
-    K_SWITCH = KwSwitch, K_THIS = KwThis, K_THROW = KwThrow,
-    K_TRUE = KwTrue, K_TRY = KwTry, K_TYPEOF = KwTypeof, K_VAR = KwVar,
-    K_VOID = KwVoid, K_WHILE = KwWhile, K_WITH = KwWith, K_YIELD = KwYield,
-    K_LET = KwLet, K_STATIC = KwStatic, K_ASYNC = KwAsync,
-    K_AWAIT = KwAwait, K_OF = KwOf, K_FROM = KwFrom, K_AS = KwAs,
-    K_ABSTRACT = KwAbstract, K_ACCESSOR = KwAccessor,
-    K_ASSERTS = KwAsserts, K_DECLARE = KwDeclare, K_GLOBAL = KwGlobal,
-    K_IMPLEMENTS = KwImplements, K_INFER = KwInfer,
-    K_INTERFACE = KwInterface, K_IS = KwIs, K_KEYOF = KwKeyof,
-    K_MODULE = KwModule, K_NAMESPACE = KwNamespace,
-    K_OVERRIDE = KwOverride, K_PRIVATE = KwPrivate,
-    K_PROTECTED = KwProtected, K_PUBLIC = KwPublic,
-    K_READONLY = KwReadonly, K_SATISFIES = KwSatisfies, K_TYPE = KwType,
-    K_UNIQUE = KwUnique, K_USING = KwUsing,
-    K_ANY = KwAny, K_BIGINT = KwBigInt, K_BOOLEAN = KwBoolean, K_NEVER = KwNever,
-    K_NUMBER = KwNumber, K_OBJECT = KwObject, K_STRING = KwString, K_SYMBOL = KwSymbol,
-    K_UNDEFINED = KwUndefined, K_UNKNOWN = KwUnknown,
-}
+use crate::token::matches_tk;
 
 /// A keyword that is a whole type by itself (`any`, `null`, `this`, ...): it takes no type
 /// arguments, so a `<` after it is a comparison.
+#[rustfmt::skip::macros(matches_tk)]
 pub(super) fn keyword_type(kw: u8) -> bool {
-    matches!(
+    matches_tk!(
         kw,
-        K_ANY
-            | K_BIGINT
-            | K_BOOLEAN
-            | K_NEVER
-            | K_NUMBER
-            | K_OBJECT
-            | K_STRING
-            | K_SYMBOL
-            | K_UNDEFINED
-            | K_UNKNOWN
-            | K_VOID
-            | K_NULL
-            | K_THIS
-            | K_TRUE
-            | K_FALSE
+        KwAny | KwBigInt | KwBoolean | KwNever | KwNumber | KwObject | KwString | KwSymbol
+        | KwUndefined | KwUnknown | KwVoid | KwNull | KwThis | KwTrue | KwFalse
     )
 }
 

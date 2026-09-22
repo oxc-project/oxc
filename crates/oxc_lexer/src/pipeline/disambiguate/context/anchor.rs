@@ -3,7 +3,7 @@
 //! `function` or `class` whose token before says declaration or expression; the `(` whose group
 //! holds the query when the token before makes it an expression's.
 
-use crate::token::{OP_KIND_BASE, tk};
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use super::*;
 use crate::pipeline::disambiguate::{RULE_SCAN_CAP, common::Prev};
@@ -53,10 +53,7 @@ pub(super) fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
                 }
                 _ => return false,
             }
-        } else if !matches!(
-            k,
-            tk!(Ident) | tk!(String) | tk!(Number) | tk!(BigInt) | tk!(TemplateNoSub)
-        ) {
+        } else if !matches_tk!(k, Ident | String | Number | BigInt | TemplateNoSub) {
             return false;
         }
         q = tokens.prev_sig(w);
@@ -65,22 +62,15 @@ pub(super) fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
 }
 
 /// Can the token at `f` follow a statement keyword but not a property, member or attribute name?
+#[rustfmt::skip::macros(matches_tk)]
 pub(super) fn keyword_follower(tokens: &Tokens, f: usize) -> bool {
     let k = tokens.base_kind(f);
     if k >= OP_KIND_BASE {
         return matches!(tokens.src[f], b'{' | b'-' | b'+' | b'~' | b'*' | b'@');
     }
-    matches!(
-        k,
-        tk!(Ident)
-            | tk!(String)
-            | tk!(Number)
-            | tk!(BigInt)
-            | tk!(TemplateNoSub)
-            | tk!(TemplateHead)
-            | tk!(RegExp)
-            | tk!(PrivateIdent)
-            | tk!(JsxLt)
+    matches_tk!(k,
+        Ident | String | Number | BigInt | TemplateNoSub | TemplateHead | RegExp
+        | PrivateIdent | JsxLt
     )
 }
 
@@ -91,7 +81,7 @@ pub(super) fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
         Prev::None => true,
         Prev::Op(_, b';' | b'{' | b')' | b':') => true,
         Prev::Op(_, b'}') => !in_jsx_tag(tokens, p),
-        Prev::Word(_, K_ELSE | K_DO | K_EXPORT | K_DEFAULT | K_DECLARE | K_ABSTRACT) => true,
+        Prev::Word(_, tk!(KwElse | KwDo | KwExport | KwDefault | KwDeclare | KwAbstract)) => true,
         Prev::Op(q, _) | Prev::Word(q, _) | Prev::Other(q) => {
             let e = tokens.next_start(q + 1);
             tokens.line_break_between(e, p) && !in_jsx_tag(tokens, p)
@@ -162,22 +152,22 @@ pub(super) fn fn_class_anchor(
             }
             _ => expr,
         },
-        Prev::Word(_, K_ELSE | K_DO | K_EXPORT | K_DEFAULT | K_DECLARE | K_ABSTRACT) => stmt,
+        Prev::Word(_, tk!(KwElse | KwDo | KwExport | KwDefault | KwDeclare | KwAbstract)) => stmt,
         // Restricted productions: a line break ends the statement.
-        Prev::Word(q, K_RETURN | K_YIELD) => {
+        Prev::Word(q, tk!(KwReturn | KwYield)) => {
             if named && broken(q) {
                 stmt
             } else {
                 expr
             }
         }
+        #[rustfmt::skip]
         Prev::Word(
             _,
-            K_TYPEOF | K_THROW | K_AWAIT | K_VOID | K_DELETE | K_NEW | K_IN | K_OF | K_INSTANCEOF
-            | K_CASE,
+            tk!(KwTypeof | KwThrow | KwAwait | KwVoid | KwDelete | KwNew | KwIn | KwOf | KwInstanceof | KwCase)
         ) => expr,
         // A heritage expression: what follows it is the enclosing class's body.
-        Prev::Word(_, K_EXTENDS) => None,
+        Prev::Word(_, tk!(KwExtends)) => None,
         Prev::Word(q, _) | Prev::Other(q) => {
             if named && broken(q) {
                 stmt
@@ -221,6 +211,7 @@ pub(super) fn anchor_at(tokens: &Tokens, p: usize) -> (u8, Option<Anchor>) {
     (kw, anchor)
 }
 
+#[rustfmt::skip::macros(tk)]
 pub(super) fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
     if kw == 0 {
         return None;
@@ -241,8 +232,8 @@ pub(super) fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<A
     let f_kw = if fk == tk!(Ident) { tokens.ident_kw(f) } else { 0 };
     let same_line = !tokens.line_break_between(e, f);
     match kw {
-        K_FUNCTION => function_anchor(tokens, p, prev, f),
-        K_CLASS => {
+        tk!(KwFunction) => function_anchor(tokens, p, prev, f),
+        tk!(KwClass) => {
             if fk == tk!(Ident) {
                 fn_class_anchor(tokens, p, prev, true, true)
             } else if fk >= OP_KIND_BASE && matches!(fc, b'{' | b'<') {
@@ -251,66 +242,57 @@ pub(super) fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<A
                 None
             }
         }
-        K_ASYNC => {
-            if f_kw == K_FUNCTION && same_line {
+        tk!(KwAsync) => {
+            if f_kw == tk!(KwFunction) && same_line {
                 let e2 = tokens.next_start(f + 1);
                 function_anchor(tokens, p, prev, tokens.next_sig(e2))
             } else {
                 None
             }
         }
-        K_VAR | K_CONST | K_RETURN | K_THROW | K_CASE | K_EXPORT | K_IMPORT | K_ENUM | K_ELSE
-        | K_DO | K_TRY | K_FINALLY | K_BREAK | K_CONTINUE | K_DEBUGGER | K_IF | K_FOR | K_WHILE
-        | K_SWITCH | K_WITH | K_CATCH => {
+        tk!(
+            KwVar | KwConst | KwReturn | KwThrow | KwCase | KwExport | KwImport | KwEnum | KwElse
+            | KwDo | KwTry | KwFinally | KwBreak | KwContinue | KwDebugger | KwIf | KwFor | KwWhile
+            | KwSwitch | KwWith | KwCatch
+        ) => {
             if keyword_follower(tokens, f) && stmt_boundary(tokens, p, prev) {
                 Some(Anchor::Stmt(p))
             } else {
                 None
             }
         }
-        K_LET | K_TYPE | K_INTERFACE | K_NAMESPACE | K_MODULE | K_DECLARE | K_ABSTRACT => {
+        tk!(KwLet | KwType | KwInterface | KwNamespace | KwModule | KwDeclare | KwAbstract) => {
             if !same_line {
                 return None;
             }
             let ok = match kw {
-                K_LET => {
+                tk!(KwLet) => {
                     fk == tk!(Ident)
                         && f_kw == 0
                         && second_follower(tokens, f, &[b'=', b';', b':', b','])
                 }
-                K_TYPE => {
+                tk!(KwType) => {
                     fk == tk!(Ident) && f_kw == 0 && second_follower(tokens, f, &[b'=', b'<'])
                 }
-                K_INTERFACE => {
+                tk!(KwInterface) => {
                     fk == tk!(Ident)
                         && f_kw == 0
                         && (second_follower(tokens, f, &[b'{', b'<'])
-                            || second_word(tokens, f) == K_EXTENDS)
+                            || second_word(tokens, f) == tk!(KwExtends))
                 }
-                K_NAMESPACE => {
+                tk!(KwNamespace) => {
                     fk == tk!(Ident) && f_kw == 0 && second_follower(tokens, f, &[b'{', b'.'])
                 }
-                K_MODULE => {
+                tk!(KwModule) => {
                     ((fk == tk!(Ident) && f_kw == 0) || fk == tk!(String))
                         && second_follower(tokens, f, &[b'{'])
                 }
-                K_DECLARE => matches!(
+                tk!(KwDeclare) => matches_tk!(
                     f_kw,
-                    K_CONST
-                        | K_LET
-                        | K_VAR
-                        | K_FUNCTION
-                        | K_CLASS
-                        | K_MODULE
-                        | K_NAMESPACE
-                        | K_GLOBAL
-                        | K_ENUM
-                        | K_INTERFACE
-                        | K_TYPE
-                        | K_ABSTRACT
-                        | K_ASYNC
+                    KwConst | KwLet | KwVar | KwFunction | KwClass | KwModule | KwNamespace
+                    | KwGlobal | KwEnum | KwInterface | KwType | KwAbstract | KwAsync
                 ),
-                _ => f_kw == K_CLASS,
+                _ => f_kw == tk!(KwClass),
             };
             if !ok {
                 return None;
@@ -318,9 +300,9 @@ pub(super) fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<A
             let boundary = match prev {
                 Prev::None => true,
                 Prev::Op(_, b';') => true,
-                Prev::Op(_, b'{') => kw == K_LET,
+                Prev::Op(_, b'{') => kw == tk!(KwLet),
                 Prev::Op(_, b'}') => !in_jsx_tag(tokens, p),
-                Prev::Word(_, K_EXPORT | K_DECLARE) => true,
+                Prev::Word(_, tk!(KwExport | KwDeclare)) => true,
                 _ => false,
             };
             if boundary { Some(Anchor::Stmt(p)) } else { None }
@@ -353,11 +335,11 @@ pub(super) fn brace_boundary(tokens: &Tokens, c: usize) -> Option<usize> {
     }
     let k = tokens.base_kind(f);
     let ok = match k {
-        tk!(Ident) => !matches!(
+        tk!(Ident) => !matches_tk!(
             tokens.ident_kw(f),
-            K_AS | K_SATISFIES | K_IN | K_INSTANCEOF | K_OF | K_IMPLEMENTS | K_EXTENDS | K_FROM
+            KwAs | KwSatisfies | KwIn | KwInstanceof | KwOf | KwImplements | KwExtends | KwFrom
         ),
-        tk!(PrivateIdent) | tk!(String) | tk!(Number) | tk!(BigInt) => true,
+        tk!(PrivateIdent | String | Number | BigInt) => true,
         _ => k >= OP_KIND_BASE && tokens.src[f] == b'@',
     };
     if ok { Some(f) } else { None }
@@ -366,23 +348,25 @@ pub(super) fn brace_boundary(tokens: &Tokens, c: usize) -> Option<usize> {
 /// The `(` at `p` holds the query: where the walk starts when the token before makes the paren an
 /// expression's (a call, a grouping, a statement head). None when it may be a type's, such as after
 /// `:`, `=`, `,`, `<` or `=>`: the walk then reaches it from an anchor further back.
+#[rustfmt::skip::macros(tk)]
 pub(super) fn paren_anchor(tokens: &Tokens, p: usize) -> Option<Anchor> {
     match tokens.prev_token(p) {
         Prev::None => Some(Anchor::Expr(p)),
-        Prev::Word(kp, K_IF | K_WHILE | K_FOR | K_WITH | K_SWITCH | K_CATCH)
+        Prev::Word(kp, tk!(KwIf | KwWhile | KwFor | KwWith | KwSwitch | KwCatch))
             if !tokens.property_name(kp) =>
         {
             Some(Anchor::Stmt(kp))
         }
-        Prev::Word(kp, K_AWAIT) => match tokens.prev_token(kp) {
-            Prev::Word(fp, K_FOR) if !tokens.property_name(fp) => Some(Anchor::Stmt(fp)),
+        Prev::Word(kp, tk!(KwAwait)) => match tokens.prev_token(kp) {
+            Prev::Word(fp, tk!(KwFor)) if !tokens.property_name(fp) => Some(Anchor::Stmt(fp)),
             _ => Some(Anchor::Expr(p)),
         },
         Prev::Word(
             _,
-            0 | K_THIS | K_SUPER | K_RETURN | K_THROW | K_TYPEOF | K_YIELD | K_VOID | K_DELETE
-            | K_IN | K_OF | K_INSTANCEOF | K_CASE | K_ELSE | K_DO | K_ASYNC | K_NULL | K_TRUE
-            | K_FALSE,
+            0 | tk!(
+                KwThis | KwSuper | KwReturn | KwThrow | KwTypeof | KwYield | KwVoid | KwDelete | KwIn
+                | KwOf | KwInstanceof | KwCase | KwElse | KwDo | KwAsync | KwNull | KwTrue | KwFalse
+            )
         ) => Some(Anchor::Expr(p)),
         Prev::Word(..) => None,
         Prev::Op(q, c) => match c {
@@ -393,13 +377,9 @@ pub(super) fn paren_anchor(tokens: &Tokens, p: usize) -> Option<Anchor> {
             _ => None,
         },
         Prev::Other(q) => match tokens.base_kind(q) {
-            tk!(String)
-            | tk!(Number)
-            | tk!(BigInt)
-            | tk!(TemplateNoSub)
-            | tk!(TemplateTail)
-            | tk!(RegExp)
-            | tk!(PrivateIdent) => Some(Anchor::Expr(p)),
+            tk!(
+                String | Number | BigInt | TemplateNoSub | TemplateTail | RegExp | PrivateIdent
+            ) => Some(Anchor::Expr(p)),
             _ => None,
         },
     }

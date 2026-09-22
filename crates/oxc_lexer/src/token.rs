@@ -272,14 +272,12 @@ pub(crate) use tk;
 /// ```
 ///
 /// Equivalent to `matches!(kind, tk!(Ident | PrivateIdent))`.
-#[allow(unused, clippy::allow_attributes)]
 macro_rules! matches_tk {
     ($value:expr, $($kind:ident)|+) => {
         matches!($value, $( $crate::token::__kind_u8::$kind )|+)
     };
 }
 
-#[allow(unused, clippy::allow_attributes)]
 pub(crate) use matches_tk;
 
 /// First punctuator kind - the token-kind space reserves [32, 128) for them.

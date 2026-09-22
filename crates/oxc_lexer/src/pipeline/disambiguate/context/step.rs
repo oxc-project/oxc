@@ -1,7 +1,7 @@
 //! Stepping one token: the line-break rules (ASI, restricted productions, the end of a
 //! type), literals, and the dispatch to words, punctuation, types and JSX.
 
-use crate::token::{OP_KIND_BASE, tk};
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use super::*;
 
@@ -41,11 +41,10 @@ pub(super) fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
     if k == tk!(Ident) {
         let e = tokens.next_start(pos + 1);
         let kw = tokens.word_kw(pos, e - pos);
-        return kw == K_IN
-            || kw == K_INSTANCEOF
-            || (tokens.ts && (kw == K_AS || kw == K_SATISFIES));
+        return matches_tk!(kw, KwIn | KwInstanceof)
+            || (tokens.ts && matches_tk!(kw, KwAs | KwSatisfies));
     }
-    matches!(k, tk!(TemplateHead) | tk!(TemplateNoSub))
+    matches_tk!(k, TemplateHead | TemplateNoSub)
 }
 
 /// Can `pos` continue a type after a completed type atom on the previous line? `.`, `|`, `&` may
@@ -74,11 +73,7 @@ impl Walk {
     pub(super) fn step(&mut self, tokens: &Tokens, pos: usize) -> usize {
         self.last_start = pos;
         let k = tokens.base_kind(pos);
-        if k == tk!(Whitespace)
-            || k == tk!(LineComment)
-            || k == tk!(BlockComment)
-            || k == tk!(Hashbang)
-        {
+        if matches_tk!(k, Whitespace | LineComment | BlockComment | Hashbang) {
             return pos + 1;
         }
         let newline = tokens.line_break_between(self.prev_end, pos);
@@ -127,9 +122,9 @@ impl Walk {
         // Restricted productions: `return` / `throw` / `yield` / `break` / `continue` followed by a
         // line break end their statement.
         if newline
-            && matches!(
+            && matches_tk!(
                 self.prev_kw,
-                K_RETURN | K_THROW | K_BREAK | K_CONTINUE | K_DEBUGGER | K_YIELD
+                KwReturn | KwThrow | KwBreak | KwContinue | KwDebugger | KwYield
             )
             && self.top_kind() != FrameKind::TypeRegion
         {
@@ -145,12 +140,7 @@ impl Walk {
 
         let end = match k {
             tk!(Ident) => self.step_word(tokens, pos, newline),
-            tk!(Number)
-            | tk!(BigInt)
-            | tk!(String)
-            | tk!(RegExp)
-            | tk!(TemplateNoSub)
-            | tk!(PrivateIdent) => {
+            tk!(Number | BigInt | String | RegExp | TemplateNoSub | PrivateIdent) => {
                 let e = tokens.next_start(pos + 1);
                 self.literal(tokens, pos, k, e);
                 e
@@ -199,7 +189,7 @@ impl Walk {
                 }
                 pos + 1
             }
-            tk!(JsxTagEnd) | tk!(JsxText) => pos + 1,
+            tk!(JsxTagEnd | JsxText) => pos + 1,
             _ => self.step_op(tokens, pos, newline),
         };
         self.prev_end = end;
@@ -227,13 +217,13 @@ impl Walk {
             }
             // Right after `function` / `class`, the name (or a generator's `*`) may follow a
             // line break: nothing has been declared yet, so there is no signature to end.
-            let unnamed = matches!(self.prev_kw, K_FUNCTION | K_CLASS);
+            let unnamed = matches_tk!(self.prev_kw, KwFunction | KwClass);
             if unnamed && (k == tk!(Ident) || (k >= OP_KIND_BASE && c == b'*')) {
                 return;
             }
             if k == tk!(Ident) {
                 let e = tokens.next_start(pos + 1);
-                if matches!(tokens.word_kw(pos, e - pos), K_EXTENDS | K_IMPLEMENTS) {
+                if matches_tk!(tokens.word_kw(pos, e - pos), KwExtends | KwImplements) {
                     return;
                 }
             }
@@ -328,8 +318,8 @@ impl Walk {
             // Module specifier: `import "x"`, `... from "x"`.
             let reg = self.stmt_reg();
             if (matches!(reg, S_IMPORT | S_IMPORT_NAME)
-                && matches!(self.prev_kw, K_IMPORT | K_FROM))
-                || (reg == S_EXPORT && self.prev_kw == K_FROM)
+                && matches_tk!(self.prev_kw, KwImport | KwFrom))
+                || (reg == S_EXPORT && self.prev_kw == tk!(KwFrom))
             {
                 self.value_done();
                 let nx = tokens.next_sig(end);
@@ -365,6 +355,6 @@ impl Walk {
             _ => {}
         }
         self.value_done();
-        self.prev_num = k == tk!(Number) || k == tk!(BigInt);
+        self.prev_num = matches_tk!(k, Number | BigInt);
     }
 }

@@ -19,7 +19,7 @@
 
 use crate::{
     pipeline::bytes::{is_id_start, is_ws},
-    token::{OP_KIND_BASE, tk},
+    token::{OP_KIND_BASE, matches_tk, tk},
 };
 
 use crate::pipeline::disambiguate::{
@@ -252,7 +252,7 @@ fn angle_close_fwd_capped(
                     // preceding one - counting it would leave every
                     // `Array<Map<A, `p${s}q`>>` looking brace-unbalanced.
                     let kk = kind_at(kind, i);
-                    if kk != tk!(TemplateMiddle) && kk != tk!(TemplateTail) {
+                    if !matches_tk!(kk, TemplateMiddle | TemplateTail) {
                         braces -= 1;
                         if braces < 0 {
                             return (None, false);
@@ -378,7 +378,7 @@ fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
                 b'{' => braces += 1,
                 b'}' => {
                     let kk = kind_at(kind, i);
-                    if kk != tk!(TemplateMiddle) && kk != tk!(TemplateTail) {
+                    if !matches_tk!(kk, TemplateMiddle | TemplateTail) {
                         braces -= 1;
                         kill(&mut stack, closers, |e| e.braces > braces);
                     }

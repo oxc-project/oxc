@@ -1,6 +1,8 @@
 //! Punctuation inside a type: type regions and how each kind of region ends, angle lists,
 //! and the `<` that may open one.
 
+use crate::token::tk;
+
 use super::*;
 
 impl Walk {
@@ -305,8 +307,8 @@ impl Walk {
                 self.set_value();
                 self.clear_prev();
                 match self.top_kind() {
-                    FrameKind::FnHead => self.prev_kw = K_FUNCTION,
-                    FrameKind::ClassHead => self.prev_kw = K_CLASS,
+                    FrameKind::FnHead => self.prev_kw = tk!(KwFunction),
+                    FrameKind::ClassHead => self.prev_kw = tk!(KwClass),
                     _ => {}
                 }
             }

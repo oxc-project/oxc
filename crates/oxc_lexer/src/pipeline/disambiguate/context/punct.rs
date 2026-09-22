@@ -1,7 +1,10 @@
 //! Punctuation in expression context: operators, arrows, separators, and the brackets that
 //! open and close frames.
 
-use crate::{pipeline::tables::is_op_char, token::OP_KIND_BASE};
+use crate::{
+    pipeline::tables::is_op_char,
+    token::{OP_KIND_BASE, matches_tk, tk},
+};
 
 use super::*;
 
@@ -149,7 +152,7 @@ impl Walk {
                         self.top_mut().is_generator = true;
                         self.set_value();
                         self.clear_prev();
-                        self.prev_kw = K_FUNCTION;
+                        self.prev_kw = tk!(KwFunction);
                         return pos + 1;
                     }
                     if matches!(self.top_kind(), FrameKind::Object | FrameKind::ClassBody)
@@ -159,7 +162,7 @@ impl Walk {
                         self.operand_done();
                         return pos + 1;
                     }
-                    if self.prev_kw == K_YIELD {
+                    if self.prev_kw == tk!(KwYield) {
                         // `yield*`
                         self.set_operand();
                         return pos + 1;
@@ -200,7 +203,7 @@ impl Walk {
                     // `export @dec class` and `export default @dec class` decorate declarations.
                     let decl = self.at_stmt_start()
                         || !self.operand_allowed()
-                        || self.prev_kw == K_EXPORT
+                        || self.prev_kw == tk!(KwExport)
                         || self.export_default;
                     self.decorator = if decl { 1 } else { 2 };
                 }
@@ -452,7 +455,7 @@ impl Walk {
                 self.decorator = 0;
                 return;
             }
-            if self.top().state == C_EXTENDS && self.prev_kw == K_EXTENDS {
+            if self.top().state == C_EXTENDS && self.prev_kw == tk!(KwExtends) {
                 // Object literal as heritage.
                 kind = FrameKind::Object;
                 value = true;
@@ -490,7 +493,8 @@ impl Walk {
                 kind = FrameKind::ModuleSpec;
             } else if reg == S_ENUM {
                 kind = FrameKind::EnumBody;
-            } else if reg == S_NAMESPACE || reg == S_DECLARE_MODULE || self.prev_kw == K_GLOBAL {
+            } else if reg == S_NAMESPACE || reg == S_DECLARE_MODULE || self.prev_kw == tk!(KwGlobal)
+            {
                 kind = FrameKind::Block;
             } else if matches!(top, FrameKind::Object) && self.top().state != M_VALUE {
                 // `{` at key position of an object literal: malformed; treat as a nested object.
@@ -660,12 +664,12 @@ impl Walk {
             generator = m & MOD_GEN != 0;
             is_async = m & MOD_ASYNC != 0;
         } else if head != 0
-            && matches!(self.prev_kw, K_IF | K_WHILE | K_FOR | K_WITH | K_SWITCH | K_CATCH)
+            && matches_tk!(self.prev_kw, KwIf | KwWhile | KwFor | KwWith | KwSwitch | KwCatch)
         {
             kind = FrameKind::Head;
             head_kind = head;
             self.frames[si].head = 0;
-        } else if self.operand_allowed() || self.prev_kw == K_NEW {
+        } else if self.operand_allowed() || self.prev_kw == tk!(KwNew) {
             kind = FrameKind::Group;
             is_async = self.prev_async;
         } else {

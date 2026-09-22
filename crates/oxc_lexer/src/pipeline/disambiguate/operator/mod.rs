@@ -23,7 +23,7 @@
 
 use crate::{
     pipeline::bytes::is_digit,
-    token::{OP_KIND_BASE, tk},
+    token::{OP_KIND_BASE, matches_tk, tk},
 };
 
 use super::{
@@ -60,11 +60,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
     let mut q = bits::prev1(tokens.st, p);
     while let Some(qi) = q {
         let k = tokens.kind[qi];
-        if k == tk!(Whitespace)
-            || k == tk!(LineComment)
-            || k == tk!(BlockComment)
-            || k == tk!(Hashbang)
-        {
+        if matches_tk!(k, Whitespace | LineComment | BlockComment | Hashbang) {
             q = bits::prev1(tokens.st, qi);
             continue;
         }
@@ -76,22 +72,17 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
             return module_specifier_asi(tokens, qi)
                 || (ts && context::after(tokens, walks, qi) == After::EndsDecl);
         }
-        if k == tk!(TemplateNoSub) || k == tk!(TemplateTail) {
+        if matches_tk!(k, TemplateNoSub | TemplateTail) {
             if !(ts && tokens.line_break_between(tokens.next_start(qi + 1), p)) {
                 return false;
             }
             let from = if k == tk!(TemplateTail) { template_head(tokens, qi) } else { qi };
             return context::after_from(tokens, walks, qi, from) == After::EndsDecl;
         }
-        if k == tk!(RegExp)
-            || k == tk!(PrivateIdent)
-            || k == tk!(PrivateIdentEscaped)
-            || k == tk!(JsxTagEnd)
-            || k == tk!(JsxLt)
-        {
+        if matches_tk!(k, RegExp | PrivateIdent | PrivateIdentEscaped | JsxTagEnd | JsxLt) {
             return false;
         }
-        if k == tk!(TemplateHead) || k == tk!(TemplateMiddle) {
+        if matches_tk!(k, TemplateHead | TemplateMiddle) {
             return true;
         }
         if k == tk!(Number) {
@@ -102,7 +93,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
                 && tokens.line_break_between(we, p)
                 && context::after(tokens, walks, qi) == After::EndsDecl;
         }
-        if k == tk!(Ident) || k == tk!(IdentEscaped) {
+        if matches_tk!(k, Ident | IdentEscaped) {
             let e = tokens.next_start(qi + 1);
             let newline = tokens.line_break_between(e, p);
             if prop_name(tokens, qi) {
@@ -274,16 +265,7 @@ fn tail_before(tokens: &Tokens, pos: usize) -> bool {
         return prop_name(tokens, sp)
             || !tokens.tables.keywords.is_regex_keyword_at(src, sp, e - sp);
     }
-    matches!(
-        sk,
-        tk!(Number)
-            | tk!(BigInt)
-            | tk!(String)
-            | tk!(TemplateNoSub)
-            | tk!(TemplateTail)
-            | tk!(RegExp)
-            | tk!(PrivateIdent)
-    )
+    matches_tk!(sk, Number | BigInt | String | TemplateNoSub | TemplateTail | RegExp | PrivateIdent)
 }
 
 fn paren_close_is_regex(tokens: &Tokens, qi: usize) -> bool {

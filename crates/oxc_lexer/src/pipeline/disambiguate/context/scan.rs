@@ -10,7 +10,7 @@
 //!
 //! [`anchor`]: super::anchor
 
-use crate::token::{OP_KIND_BASE, tk};
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use super::anchor::{Anchor, anchor_at, brace_boundary, paren_anchor};
 use super::*;
@@ -193,11 +193,11 @@ pub(super) fn scan(
             }
             // A `,` after a class or interface keyword may sit in its heritage list, which belongs
             // to the head, not to the frame around it.
-            if matches!(kw, K_CLASS | K_INTERFACE) && !tokens.property_name(p) {
+            if matches_tk!(kw, KwClass | KwInterface) && !tokens.property_name(p) {
                 lv.comma = None;
                 lv.brace = None;
             }
-        } else if k == tk!(TemplateTail) || k == tk!(TemplateMiddle) {
+        } else if matches_tk!(k, TemplateTail | TemplateMiddle) {
             // A template: skip back to its head. A middle also opens the substitution the query is
             // in, so the level changes there.
             let mut depth = 1i32;

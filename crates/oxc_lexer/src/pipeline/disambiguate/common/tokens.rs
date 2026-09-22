@@ -2,7 +2,7 @@
 
 use crate::{
     pipeline::{bytes::is_digit, tables::Tables},
-    token::{KW_KIND_BASE, OP_KIND_BASE, tk},
+    token::{KW_KIND_BASE, OP_KIND_BASE, matches_tk, tk},
 };
 
 use super::{Brackets, Closers, bits, walk};
@@ -104,11 +104,7 @@ impl Tokens<'_> {
                 return self.n;
             }
             let k = self.kind[i];
-            if k == tk!(Whitespace)
-                || k == tk!(LineComment)
-                || k == tk!(BlockComment)
-                || k == tk!(Hashbang)
-            {
+            if matches_tk!(k, Whitespace | LineComment | BlockComment | Hashbang) {
                 i += 1;
                 continue;
             }
