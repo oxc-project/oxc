@@ -1,0 +1,25 @@
+apps/oxlint/test/fixtures/eslintCompat_error_in_after/eslint.snap.md
+  s_07a60270fe8a9c::t_f5cc363ad0377f 32
+apps/oxlint/test/fixtures/eslintCompat_error_in_before/eslint.snap.md
+  s_07a60270fe8a9c::t_c455b5bbe0378b 20
+apps/oxlint/test/fixtures/eslintCompat_error_in_onCodePathEnd/eslint.snap.md
+  s_07a60270fe8a9c::t_9638aa82a7b913 31
+apps/oxlint/test/fixtures/eslintCompat_error_in_visit/eslint.snap.md
+  s_07a60270fe8a9c::t_2c7290c05e9dcc 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "73cdc02be0f46c27de502883e761428372709a47",
+  "prompts": {},
+  "sessions": {
+    "s_07a60270fe8a9c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0c6e4-9b43-7590-aa13-b7c9aaaebc68",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
