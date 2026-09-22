@@ -2064,3 +2064,23 @@ fn consumed_update_values_are_usages() {
         .intentionally_allow_no_fix_tests()
         .test();
 }
+
+#[test]
+fn ignore_patterns_in_array_rest() {
+    let array_options = Some(json!([{ "destructuredArrayIgnorePattern": "^_" }]));
+    let object_options = Some(json!([{ "ignoreRestSiblings": true }]));
+    let pass = vec![
+        ("const [...[_rest]] = items;", array_options.clone()),
+        ("function f([...[_rest]]) {} f();", array_options.clone()),
+        ("const [...{length, ...rest}] = items; use(rest);", object_options.clone()),
+    ];
+    let fail = vec![
+        // A rest identifier itself is not an array element covered by this option.
+        ("const [..._rest] = items;", array_options.clone()),
+        ("const [...[rest]] = items;", array_options),
+        ("const [...{length}] = items;", object_options),
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
