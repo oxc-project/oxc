@@ -81,7 +81,8 @@ pub(super) unsafe fn jsx_over_type_params(
 #[inline]
 unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> AngleVerdict {
     let mut p = t;
-    // optional `const` type-parameter modifier: `<const T,>`
+    // optional `const` type-parameter modifier: `<const T,>`. Like any modifier it must stay
+    // on the line of its parameter; a comment between them is fine.
     if n - p >= 6 && &src[p..p + 5] == b"const" && !is_word(src[p + 5]) {
         let qq = jsx_skip_trivia_fast(src.as_ptr(), n, p + 5);
         // A modifier must be on the same line as its parameter, so `const` followed by a line break
@@ -96,7 +97,7 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
     while p < n && bm_get(word, p) {
         p += 1; // first type-parameter identifier
     }
-    // The signal may sit behind whitespace (Unicode too) or a comment: <T /*c*/ extends U>.
+    // The signal may sit behind whitespace (Unicode too) or a comment: `<T /*c*/ extends U>`.
     p = jsx_skip_trivia_fast(src.as_ptr(), n, p);
     if p >= n {
         return AngleVerdict::Jsx;
@@ -128,6 +129,7 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
     AngleVerdict::Jsx
 }
 
+/// Does `src[a..b]` hold a LineTerminator (LF, CR, or the 3-byte LS/PS)?
 #[inline]
 fn line_break_in(src: &[u8], a: usize, b: usize) -> bool {
     let mut i = a;
@@ -141,7 +143,9 @@ fn line_break_in(src: &[u8], a: usize, b: usize) -> bool {
     false
 }
 
-/// Returns (is JSX, report an unterminated element).
+/// Is the ambiguous `<T>(` at `lt` JSX (true) or a type-parameter list (false)? The second
+/// answer says whether it is an unterminated JSX element to report: a generic arrow shape at a
+/// site where an operand may start.
 #[inline(never)]
 fn jsx_ambiguous_site(tokens: &Tokens, walks: &mut Walks, lt: usize, lp: usize) -> (bool, bool) {
     if ts_type_region_open(tokens, walks, lt) || type_parameter_list_head(tokens, walks, lt) {

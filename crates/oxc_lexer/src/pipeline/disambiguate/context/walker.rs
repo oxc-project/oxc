@@ -1,33 +1,45 @@
+//! The walk: its frame stack and flags, the operations the token steps use on them, the
+//! jump plan a bounded walk follows, and what a query reads off the state.
+
 use super::*;
 
+/// A jump a bounded walk takes after stepping the token at `at`.
 #[derive(Clone, Copy)]
 pub(super) enum Jump {
-    /// at opens a balanced group whose closer is at to: the walk resumes at the closer.
+    /// `at` opens a balanced group whose closer is at `to`: the walk resumes at the closer.
     Skip { at: u32, to: u32 },
-    /// The walk resumes at to only if it read the < at at as a list opener.
+    /// `at` is a `<` balanced by the `>` at `to`: the walk resumes there if it read the `<` as a
+    /// list opener (a comparison walks on).
     Angle { at: u32, to: u32 },
-    /// The last ;, , and } boundary (0: none) before the query in the frame at opens.
+    /// `at` opens a frame (or is an anchor inside one) holding the last `;` and `,` at `semi` /
+    /// `comma` and the last `}` boundary at `brace` (0: none) before the query: the walk resumes
+    /// at the nearest one its frame kind allows. A brace boundary is the token after a `}` that
+    /// must start a statement or member, so the frame is reset as a `;` would.
     Sep { at: u32, semi: u32, comma: u32, brace: u32 },
-    /// A continued walk's resume points, usable once its virtual frames are dropped.
+    /// First entry of a continued walk: the last `;` / brace boundary of the frame the walk is in,
+    /// where it may resume once its virtual frames are dropped (a `;` drops them too).
     Resume { semi: u32, brace: u32 },
 }
 
+/// What may come next at the walk's position.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(super) enum Expect {
     /// A statement may start here, so an operand may too.
     Statement,
-    /// An operand may start here, a statement may not: after an operator, (, =, return.
+    /// An operand may start here, a statement may not: after an operator, `(`, `=`, `return`.
     Operand,
     /// A value just ended: an operator may follow, an operand may not.
     Operator,
 }
 
 impl Walk {
+    /// May an operand start here?
     #[inline]
     pub(super) fn operand_allowed(&self) -> bool {
         self.expect != Expect::Operator
     }
 
+    /// May a statement start here?
     #[inline]
     pub(super) fn at_stmt_start(&self) -> bool {
         self.expect == Expect::Statement
@@ -35,45 +47,56 @@ impl Walk {
 }
 
 pub(super) struct Walk {
-    /// Frame count at the anchor (0: the full walk); valid while that frame is on the stack.
+    /// Frame count right after a bounded walk started at its anchor (0: the full walk); the walk
+    /// stays valid while that frame is on the stack.
     pub(super) seed_depth: usize,
-    /// The anchor frame was popped or a closer was unbalanced: the state is a guess from here.
+    /// A bounded walk popped its anchor frame (or met an unbalanced closer): its state is a guess
+    /// from here on.
     pub(super) seed_lost: bool,
+    /// Jumps of the current bounded walk, in source order, and the next one to consider.
     pub(super) jumps: Vec<Jump>,
     pub(super) next_jump: usize,
     pub(super) frames: Vec<Frame>,
     /// Next unprocessed byte position: every token start below it has been walked.
     pub(super) walked_to: usize,
+    /// What may come next.
     pub(super) expect: Expect,
     pub(super) prev_end: usize,
-    /// A numeric literal ended exactly at prev_end, so a . there continues it.
+    /// The previous significant token was a numeric literal ending exactly at `prev_end` (so a `.`
+    /// there continues the number).
     pub(super) prev_num: bool,
-    /// Previous token was . / ?.: the next word is a property name.
+    /// Previous token was `.` / `?.`: the next word is a property name.
     pub(super) after_dot: bool,
     /// Keyword code of the previous significant token, 0 if none.
     pub(super) prev_kw: u8,
-    /// Previous token was =>, with the async-ness of the arrow.
+    /// Previous token was `=>`, with the async-ness of the arrow.
     pub(super) prev_arrow: bool,
     pub(super) arrow_async: bool,
-    /// Previous token closed a Group ()), and whether async preceded it.
+    /// Previous token closed a Group (`)`), and whether `async` preceded it.
     pub(super) closed_group: bool,
     pub(super) closed_group_async: bool,
+    /// Previous token closed a Params frame.
     pub(super) closed_params: bool,
-    /// The previous significant token was async (same line as this one).
+    /// The previous significant token was `async` (same line as this one).
     pub(super) prev_async: bool,
+    /// `export default` was just seen.
     pub(super) export_default: bool,
     /// Decorator at statement level / operand level (0 none).
     pub(super) decorator: u8,
+    /// `await` immediately after `for`.
     pub(super) for_await: bool,
     /// A closing JSX tag is being skipped until its tk!(JsxTagEnd).
     pub(super) jsx_closing: bool,
-    /// The last token completed a statement nothing can continue (break label, import "x").
+    /// Set by the last processed token when the statement it completed cannot be continued by
+    /// anything (`break label`, module specifier).
     pub(super) stmt_done: bool,
-    /// Last after_token query, so a site asking twice gets one answer.
+    /// Last `after_token` query, so a site asking twice gets one answer.
     pub(super) last_query: (usize, After),
-    /// Start of the last token; a query inside it (the last > of >>>) sees the state after it.
+    /// Start of the last processed token (a query inside it, e.g. at the last `>` of a fused `>>>`,
+    /// reports the state after it).
     pub(super) last_start: usize,
-    /// After x as T or a type-argument list TypeScript never tries type arguments: < compares.
+    /// The previous token ended an `as` type or closed a type-argument list; TypeScript never tries
+    /// type arguments after those, so a `<` here compares.
     pub(super) no_type_args: bool,
 }
 
@@ -192,6 +215,7 @@ impl Walk {
         }
     }
 
+    /// Index of the innermost frame that owns statements / declarations.
     pub(super) fn stmt_frame(&self) -> usize {
         let mut i = self.frames.len() - 1;
         loop {
@@ -210,11 +234,14 @@ impl Walk {
         }
     }
 
+    /// The frame whose declarator state (`let x`, `for (let x`) governs the next token, if the
+    /// innermost real frame can hold one.
     pub(super) fn decl_frame(&self) -> Option<usize> {
         let i = self.stmt_frame();
         if is_stmt_holder(self.frames[i].kind) { Some(i) } else { None }
     }
 
+    /// Statement register of the innermost statement holder (S_NONE inside expression frames).
     pub(super) fn stmt_reg(&self) -> u8 {
         let i = self.stmt_frame();
         if is_stmt_holder(self.frames[i].kind) { self.frames[i].reg } else { S_NONE }
@@ -227,7 +254,7 @@ impl Walk {
         }
     }
 
-    /// Innermost function-like scope: where yield / await look up their keyword-ness.
+    /// Innermost function-like scope: where `yield` / `await` look up their keyword-ness.
     pub(super) fn scope(&self) -> &Frame {
         let mut i = self.frames.len() - 1;
         loop {
@@ -248,6 +275,7 @@ impl Walk {
         }
     }
 
+    /// Is the top of the stack (ignoring nothing) a type context?
     pub(super) fn in_type(&self) -> bool {
         matches!(
             self.top_kind(),
@@ -259,6 +287,7 @@ impl Walk {
         ) || (self.top_kind() == FrameKind::Sub && self.top().decl)
     }
 
+    /// The nearest TypeRegion above the nearest bracket frame, if any.
     pub(super) fn region_index(&self) -> Option<usize> {
         let mut i = self.frames.len() - 1;
         loop {
@@ -277,12 +306,14 @@ impl Walk {
         }
     }
 
+    /// Pop concise arrow bodies sitting on top of the stack.
     pub(super) fn pop_concise(&mut self) {
         while self.top_kind() == FrameKind::Concise {
             self.pop();
         }
     }
 
+    /// End every virtual frame above the nearest bracket frame (used by closers and separators).
     pub(super) fn pop_virtual(&mut self) {
         while matches!(
             self.top_kind(),
@@ -296,7 +327,8 @@ impl Walk {
         }
     }
 
-    /// Pops through the nearest bracket frame if its kind is in kinds; any other is a barrier.
+    /// Pop through the nearest bracket frame if its kind is in `kinds`; virtual frames are crossed,
+    /// any other bracket frame is a barrier and nothing is popped.
     pub(super) fn pop_to(&mut self, kinds: &[FrameKind]) -> Option<Frame> {
         let mut i = self.frames.len();
         while i > 1 {
@@ -336,6 +368,7 @@ impl Walk {
         self.decorator = 0;
     }
 
+    /// Statement boundary reached (`;`, ASI, block end).
     pub(super) fn end_statement(&mut self) {
         // Bodiless signatures and open type regions end with the statement.
         self.pop_virtual();
@@ -350,11 +383,13 @@ impl Walk {
         self.expect = Expect::Operand;
     }
 
+    /// An operator or keyword after which an operand may start.
     pub(super) fn operand_done(&mut self) {
         self.set_operand();
         self.clear_prev();
     }
 
+    /// A keyword that expects an operand, remembered for the next token.
     pub(super) fn keyword(&mut self, kw: u8) {
         self.operand_done();
         self.prev_kw = kw;
@@ -373,6 +408,9 @@ impl Walk {
         self.walked_to = pos.max(self.walked_to);
     }
 
+    /// After stepping the token at `pos` (ending at `end`): the next position to walk, following a
+    /// planned jump when the token opens a group or a frame that allows one. A jump lands on a
+    /// closer or separator, so no line break is reported before it.
     pub(super) fn jump(&mut self, pos: usize, end: usize, limit: usize) -> usize {
         while self.next_jump < self.jumps.len() {
             let j = self.jumps[self.next_jump];
@@ -423,6 +461,8 @@ impl Walk {
         end
     }
 
+    /// A continued walk: jump to the nearest of the `;` at `semi` and the brace boundary at
+    /// `brace` (0: none) before `limit` that its innermost bracket frame allows.
     pub(super) fn resume(&mut self, semi: usize, brace: usize, limit: usize) {
         let mut i = self.frames.len() - 1;
         while matches!(
@@ -463,6 +503,8 @@ impl Walk {
         }
     }
 
+    /// The state at a member or statement start after a `}` in the innermost frame: what its `;`
+    /// would leave.
     pub(super) fn resume_member(&mut self) {
         if self.top_kind() == FrameKind::ClassBody {
             let f = self.top_mut();
@@ -475,7 +517,9 @@ impl Walk {
         }
     }
 
-    /// Only where the separator resets the frame: ; for statements, , for members and elements.
+    /// Can the walk resume at a `;` / `,` of the innermost frame, or after a `}` boundary in it?
+    /// Only where the separator resets the frame: statements after `;`, members and elements after
+    /// `,`, statements and members after a body or a nested literal.
     pub(super) fn sep_allowed(&self, sep: u8) -> bool {
         Self::sep_allowed_in(self.top_kind(), sep)
     }
@@ -527,6 +571,8 @@ impl Walk {
         }
     }
 
+    /// Process the single token at `pos` (which must be the next unprocessed token) and report what
+    /// it leaves behind.
     pub(super) fn after_token(&mut self, tokens: &Tokens, pos: usize) -> After {
         debug_assert!(pos >= self.walked_to);
         let end = self.step(tokens, pos);
@@ -534,6 +580,7 @@ impl Walk {
         self.classify_after()
     }
 
+    /// The state left behind by the last processed token.
     pub(super) fn classify_after(&self) -> After {
         if self.stmt_done {
             return After::EndsDecl;
@@ -542,7 +589,8 @@ impl Walk {
         if let Some(i) = self.region_index() {
             let r = &self.frames[i];
             if r.decl && r.atom && matches!(r.state, R_INLINE | R_STMT | R_INTERFACE) {
-                // Parameter annotations never precede a regex; only statement regions matter.
+                // Parameter annotations (`(a: T` then `/`) are never followed by a regex; only
+                // statement-level regions matter.
                 let below = if i > 0 { self.frames[i - 1].kind } else { FrameKind::Root };
                 if !matches!(
                     below,
@@ -556,11 +604,11 @@ impl Walk {
                 }
             }
         }
-        // A bodiless function signature: function f(a) then a line break.
+        // A bodiless function signature: `function f(a)` then a line break.
         if self.top_kind() == FrameKind::FnHead && self.closed_params {
             return After::EndsDecl;
         }
-        // let x with nothing after the binding.
+        // `let x` with nothing after the binding.
         if let Some(si) = self.decl_frame() {
             let sf = &self.frames[si];
             if sf.state == D_BOUND && si == self.frames.len() - 1 && sf.kind != FrameKind::Head {
@@ -570,6 +618,7 @@ impl Walk {
         if self.operand_allowed() { After::Operand } else { After::Value }
     }
 
+    /// Is the identifier `yield` at the (unprocessed) token `pos` a keyword?
     pub(super) fn yield_is_keyword(&self) -> bool {
         let s = self.scope();
         !s.field_init() && (s.is_generator || s.strict || s.reserved)
@@ -590,6 +639,7 @@ impl Walk {
         }
     }
 
+    /// Would a `<` at the next token open a type-parameter list of a declaration head or member?
     pub(super) fn type_params_expected(&self) -> bool {
         match self.top_kind() {
             FrameKind::FnHead | FrameKind::ClassHead => true,
@@ -598,6 +648,7 @@ impl Walk {
         }
     }
 
+    /// Consecutive open `<` lists at the top of the stack.
     pub(super) fn open_angles(&self) -> usize {
         let mut i = self.frames.len();
         let mut k = 0;
@@ -615,7 +666,7 @@ impl Walk {
     pub(super) fn value_done(&mut self) {
         self.set_value();
         self.clear_prev();
-        // The first value in a for ( head is its binding.
+        // The first value in a `for (` head is its binding.
         if self.top_kind() == FrameKind::Head && self.top().state == F_START {
             self.top_mut().state = F_BOUND;
         }
@@ -652,6 +703,8 @@ impl Walk {
         self.operand_done();
     }
 
+    /// After a method / accessor body or nested object closed inside a member container, the next
+    /// member key may follow.
     pub(super) fn member_done(&mut self) {
         if matches!(self.top_kind(), FrameKind::ClassBody | FrameKind::Object) {
             let f = self.top_mut();

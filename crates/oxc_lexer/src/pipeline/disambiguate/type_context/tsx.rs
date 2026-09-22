@@ -1,27 +1,28 @@
-//! Is a `<` in a `.tsx` file TypeScript syntax, rather than the start of a JSX element?
+//! Entry points for `carve`: a `<` in a `.tsx` file.
 //!
-//! In `.tsx` files `<T>` can open either a JSX element or a type parameter list,
-//! as in `let f: <T>(x: T) => T` or `function <T>(x: T) {}`.
-//! `carve` settles most cases by looking ahead.
-//! When that isn't enough, it asks these questions, which look back at what comes before the `<`:
+//! `<T>` at operand position may open a JSX element, or the type parameters of a generic arrow
+//! function (`<T,>(x: T) => x`). Elsewhere it may sit in a type (`let f: <T>(x: T) => T`) or open
+//! the type parameters of a declaration or member. Which one is a question about the parser's
+//! state at the `<`, so all three answers read the forward context walk ([`context`]).
 //!
-//! - [`ts_type_region_open`]: Does a type start here, as in after the `:` in `let f: <T>(x: T) => T`?
-//! - [`type_parameter_list_head`]: Does this `<` open a type parameter list,
-//!   as in `function <T>` or a method `m<T>()`?
-//! - [`jsx_site_is_expression`]: Is this `<` in expression position?
-//!   There TypeScript reads `<T>(x: T) => x` as a JSX element, which never closes.
-//!   So this decides whether that error is reported.
+//! [`context`]: crate::pipeline::disambiguate::context
 
 use crate::pipeline::disambiguate::{Tokens, Walks, context};
 
+/// Is the `<` at `lt` inside a type: an annotation, an alias, a type literal or a type argument
+/// list? A `<` there opens a list, never a JSX element.
 pub fn ts_type_region_open(tokens: &Tokens, walks: &mut Walks, lt: usize) -> bool {
     context::before(tokens, walks, lt).in_type
 }
 
+/// Does the `<` at `lt` open the type parameters of a declaration head or member
+/// (`function f<`, `class C<`, `m<T>() {}`)?
 pub fn type_parameter_list_head(tokens: &Tokens, walks: &mut Walks, lt: usize) -> bool {
     context::before(tokens, walks, lt).type_params
 }
 
+/// Can an operand start at `lt`? A generic arrow there is an expression, so a `<T>(...)` that
+/// turns out not to be one is an unterminated JSX element.
 pub fn jsx_site_is_expression(tokens: &Tokens, walks: &mut Walks, lt: usize) -> bool {
     context::before(tokens, walks, lt).operand
 }

@@ -99,7 +99,7 @@ pub(super) unsafe fn carve_js(
                 i = lex_slash(t, src, srcs, n, st, kind, opch, word, ts, s, lanes);
             }
             b'<' => {
-                // Annex B B.1.1: <!-- begins a line comment.
+                // Annex B B.1.1: `<!--` begins a line comment.
                 i = if html_open_comment_at(srcs, n, s, lanes.module) {
                     lex_html_open_comment(src, srcs, n, st, kind, opch, s, lanes)
                 } else {
@@ -107,7 +107,7 @@ pub(super) unsafe fn carve_js(
                 };
             }
             b'>' => {
-                // Annex B B.1.3: --> begins a line comment, but only at line start.
+                // Annex B B.1.3: `-->` begins a line comment, but only at line start.
                 i = if html_close_comment_at(srcs, s, lanes.module) {
                     lex_html_close_comment(src, srcs, n, st, kind, opch, s, lanes)
                 } else {

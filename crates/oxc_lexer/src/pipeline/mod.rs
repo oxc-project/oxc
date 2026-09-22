@@ -226,6 +226,16 @@ impl Default for Lexer {
     }
 }
 
+/// The lex in progress as `disambiguate` reads it, over the buffers [`Lexer::ensure`] sized.
+///
+/// # SAFETY
+///
+/// - `src` must be valid for `n + PAD` bytes, `st`, `opch` and `word` for `n / 64 + 1` words and
+///   `kind` for `(n / 64 + 1) * 64` bytes.
+/// - Nothing may write to them while the view is alive: a question reads, answers and returns
+///   before the stage writes again.
+///
+/// `brackets` is the lex's bracket cache, `lanes.disambiguate.brackets`.
 unsafe fn token_view<'a>(
     t: &'a Tables,
     src: *const u8,

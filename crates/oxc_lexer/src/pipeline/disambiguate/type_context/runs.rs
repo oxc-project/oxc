@@ -4,6 +4,15 @@
 //! That is wrong when the `>`s close type argument lists, as in `Foo<Bar<T>>`.
 //! [`gt_run_split`] decides how many of the `>`s must stay separate tokens.
 //! [`lt_run_split`] does the same for a `<<` which opens two lists, as in `Array<<T>(x: T) => T>`.
+//!
+//! A `>` run is settled by the tokens around it ([`run_shortcut`]) when the run closes no `<` on
+//! its level, or when the list it closes opens in every context ([`list_in_any_context`]): after a
+//! plain name TypeScript's speculative parse accepts ([`type_list`]), after a keyword only a type
+//! follows, at a return type, or at `<T extends`. Otherwise the forward context walk counts the
+//! lists open at the run ([`context`]).
+//!
+//! [`type_list`]: super::type_list
+//! [`context`]: crate::pipeline::disambiguate::context
 
 use crate::token::{OP_KIND_BASE, tk};
 
@@ -14,17 +23,8 @@ use crate::pipeline::disambiguate::{
     context::{self, Walks},
 };
 
-/// `coalesce` entry for a `>`-run (`>>`, `>>>`, and a `>` glued to `=`): the
-/// number of leading `>` bytes to leave unfused, or 0 to fuse as today. Cold
-/// by construction - `>>` occurs once per ~110 KB of production TypeScript.
-///
-/// A balanced region is necessary but not sufficient: TypeScript's
-/// speculative type-argument parse in expression position also needs the
-/// region to scan as types (`foo(a<b + 1, c<d >> (e))` is a shift) and the
-/// token after the list to be one that may follow type arguments
-/// (`foo(a<b, c<d >> e)` is a shift). A glued `=` makes the rescan yield a
-/// compound operator, so `a<b>=c` fuses, while type context never rescans
-/// and `var v: Foo<T>= 1` splits.
+/// `coalesce` entry for a `>` run (`>>`, `>>>`, and a `>` glued to `=`): how many leading `>` bytes
+/// to leave unfused (each closes an open `<` list), or 0 to fuse.
 #[inline(never)]
 pub fn gt_run_split(tokens: &Tokens, walks: &mut Walks, p: usize, run: usize) -> usize {
     let mut g = 0usize;
@@ -34,12 +34,16 @@ pub fn gt_run_split(tokens: &Tokens, walks: &mut Walks, p: usize, run: usize) ->
     run_shortcut(tokens, p, g).unwrap_or_else(|| context::angles_before(tokens, walks, p)).min(g)
 }
 
+/// `coalesce` entry for a `<<` run: true when the two `<` must stay separate
+/// tokens. Cold - `<<` is shift-left everywhere except this one shape.
 #[inline(never)]
 pub fn lt_run_split(tokens: &Tokens, p: usize) -> bool {
     lt_run_opens_type_args(tokens, p)
 }
 
-/// The lists the run closes when its context cannot matter; None when the walk must decide.
+/// The lists a `>` run of `run` bytes at `pos` closes, when its context cannot matter: the run
+/// closes no list on its level, or the list that would take the whole run opens in every context
+/// ([`list_in_any_context`]). None when the context matters (the walk decides).
 fn run_shortcut(tokens: &Tokens, pos: usize, run: usize) -> Option<usize> {
     let mut pending = 0i32;
     let mut found = 0usize;
@@ -112,7 +116,16 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize) -> Option<usize> {
     if list_in_any_context(tokens, lt) { Some(found) } else { None }
 }
 
-/// No expression reading: <T extends, a speculated list after a name, a type reference head.
+/// Does the `<` at `lt` open a list whatever the context? Three shapes leave no expression
+/// reading:
+///
+/// - `<T extends X`: nothing continues `T extends` in an expression (in JSX, `<T extends>`,
+///   `<T extends=` and `<T extends/>` are tags).
+/// - A list after a plain name that TypeScript's expression speculation accepts: in a type, a `<`
+///   after a name always opens a list.
+/// - A list after a name that must be a type reference ([`type_reference_head`]) on the same
+///   line (a type reference takes no arguments across a line break), or after `function` or
+///   `class`.
 fn list_in_any_context(tokens: &Tokens, lt: usize) -> bool {
     let t = tokens.next_sig(lt + 1);
     if t < tokens.n && tokens.base_kind(t) == tk!(Ident) {
@@ -138,6 +151,8 @@ fn list_in_any_context(tokens: &Tokens, lt: usize) -> bool {
     }
 }
 
+/// Is the name at `head` (the last part of a dotted name) a type reference by the tokens before
+/// it: a keyword only a type follows on the same line, or the `:` of a return type?
 fn type_reference_head(tokens: &Tokens, head: usize) -> bool {
     let mut h = head;
     let mut prev = tokens.prev_token(h);
@@ -152,7 +167,8 @@ fn type_reference_head(tokens: &Tokens, head: usize) -> bool {
         prev = tokens.prev_token(h);
     }
     match prev {
-        // class, extends, function are reserved, so a name on the next line is still theirs.
+        // `class`, `extends` and `function` are reserved words, so a name on the next line is
+        // still theirs; the others can be identifiers that a line break ends (`x = as\nA<B>>c`).
         Prev::Word(k, tk!(KwExtends) | tk!(KwClass) | tk!(KwFunction)) => !tokens.property_name(k),
         Prev::Word(
             k,
@@ -168,7 +184,9 @@ fn type_reference_head(tokens: &Tokens, head: usize) -> bool {
     }
 }
 
-/// Is the : at c a return type's: function (...):  or name(...):  with no room for a call?
+/// Is the `:` at `c` the start of a return type: `function (...): ` or `name(...): ` where the
+/// token before `name` leaves no room for a call? `case (x): ` is the one keyword before `(` an
+/// expression follows.
 fn return_type_colon(tokens: &Tokens, c: usize) -> bool {
     let Prev::Op(rp, b')') = tokens.prev_token(c) else {
         return false;

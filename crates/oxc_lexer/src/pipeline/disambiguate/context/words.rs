@@ -1,8 +1,12 @@
+//! Words: which spellings are keywords here (contextual keywords), the statement keywords,
+//! plain names, and member keys with their modifiers.
+
 use crate::token::{OP_KIND_BASE, tk};
 
 use super::*;
 
-/// Reserved statement keywords always start a statement; contextual ones only after a line break.
+/// Does the word start a statement no expression can continue? Reserved statement keywords always
+/// do, contextual ones only after a line break.
 pub(super) fn is_stmt_keyword(kw: u8, newline: bool, ts: bool) -> bool {
     match kw {
         K_IF | K_FOR | K_WHILE | K_RETURN | K_VAR | K_CONST | K_SWITCH | K_TRY | K_THROW | K_DO
@@ -15,6 +19,7 @@ pub(super) fn is_stmt_keyword(kw: u8, newline: bool, ts: bool) -> bool {
 }
 
 impl Walk {
+    /// Step the word at `pos`; returns its end.
     pub(super) fn step_word(&mut self, tokens: &Tokens, pos: usize, newline: bool) -> usize {
         let end = tokens.next_start(pos + 1);
         let kw = if self.after_dot { 0 } else { tokens.word_kw(pos, end - pos) };
@@ -23,7 +28,7 @@ impl Walk {
             self.type_word(kw);
             return end;
         }
-        // for await (: the await belongs to the head.
+        // `for await (`: the `await` belongs to the head.
         if kw == K_AWAIT && self.prev_kw == K_FOR {
             self.for_await = true;
             return end;
@@ -44,6 +49,7 @@ impl Walk {
         end
     }
 
+    /// A word inside a type: a prefix or infix type keyword, else a type atom.
     fn type_word(&mut self, kw: u8) {
         match kw {
             K_KEYOF | K_TYPEOF | K_READONLY | K_UNIQUE | K_INFER | K_ABSTRACT | K_NEW
@@ -51,14 +57,16 @@ impl Walk {
                 self.type_operator();
                 self.prev_kw = kw;
                 if kw == K_EXTENDS {
-                    // A conditional type: its ? and : belong to the type.
+                    // A conditional type: the `?` and `:` to come belong to the type, not to an
+                    // enclosing expression.
                     if let Some(i) = self.region_index() {
                         self.frames[i].open_questions += 1;
                     }
                 }
             }
             _ => {
-                // A statement keyword right after a completed type is an error; read it as an atom.
+                // A statement keyword right after a completed type is an error on the same line
+                // and was handled by the break rule on a new one; read it as an atom.
                 self.type_atom();
                 if keyword_type(kw) {
                     self.prev_kw = kw;
@@ -67,7 +75,10 @@ impl Walk {
         }
     }
 
-    /// A contextual keyword is a plain name (0) unless its position and next token say otherwise.
+    /// Is the spelling with keyword code `kw` a keyword here? A contextual keyword (`yield`,
+    /// `await`, `of`, `let`, `using`, `async`, the TypeScript declaration words, `as`,
+    /// `satisfies`, `static`, `implements`, `from`) is a plain name (0) unless its position and
+    /// the token after it say otherwise; every other code stands.
     fn resolve_keyword(&self, tokens: &Tokens, end: usize, kw: u8) -> u8 {
         match kw {
             K_YIELD => {
@@ -113,7 +124,8 @@ impl Walk {
                 }
             }
             K_ASYNC => {
-                // async is a modifier only when a function / arrow head follows on the same line.
+                // `async` is a modifier only when the next token is on the same line and continues
+                // a function / arrow head.
                 let nx = tokens.next_sig(end);
                 let same_line = nx < tokens.n && !tokens.line_break_between(end, nx);
                 let nk = if nx < tokens.n { tokens.base_kind(nx) } else { 0 };
@@ -146,7 +158,8 @@ impl Walk {
                 }
             }
             K_AS | K_SATISFIES => {
-                // Only after a value in TS; export as opens export as namespace X.
+                // Only after a value in an expression, in TS; `export as` opens `export as
+                // namespace X`.
                 let export_as =
                     kw == K_AS && self.stmt_reg() == S_EXPORT && self.prev_kw == K_EXPORT;
                 let in_module_clause = self.top_kind() == FrameKind::ModuleSpec
@@ -173,6 +186,8 @@ impl Walk {
         kw
     }
 
+    /// A statement keyword that cannot continue an expression starts a new statement even
+    /// without a separator.
     fn statement_keyword_break(&mut self, kw: u8, newline: bool, ts: bool) {
         let import_attrs =
             kw == K_WITH && matches!(self.stmt_reg(), S_IMPORT | S_IMPORT_NAME | S_EXPORT);
@@ -195,11 +210,12 @@ impl Walk {
         }
     }
 
-    /// A register that takes this word as a declared name (type X, enum E, import x...).
+    /// A statement register that takes this word as a declared name (`break label`, `type X`,
+    /// `namespace N`, `enum E`, `import x`, `export as namespace N`). True when it did.
     fn declared_name(&mut self, tokens: &Tokens, end: usize, kw: u8) -> bool {
         match self.stmt_reg() {
             S_BREAK => {
-                // break label: the statement is complete.
+                // `break label`: the statement is complete.
                 self.set_stmt_reg(S_NONE);
                 self.value_done();
                 self.stmt_done = true;
@@ -214,7 +230,7 @@ impl Walk {
                 self.value_done();
             }
             S_IMPORT if kw == 0 || kw == K_TYPE => {
-                // import x / import type x / import x = ...
+                // `import x` / `import type x` / `import x = ...`
                 if kw == K_TYPE && self.prev_kw == K_IMPORT {
                     let nx = tokens.next_sig(end);
                     let nk = if nx < tokens.n { tokens.base_kind(nx) } else { 0 };
@@ -245,6 +261,7 @@ impl Walk {
         true
     }
 
+    /// The transition of the keyword `kw` (0: a plain name) in expression or statement position.
     fn keyword_word(&mut self, tokens: &Tokens, end: usize, kw: u8) {
         let stmt_reg = self.stmt_reg();
         let at_start = self.at_stmt_start();
@@ -299,13 +316,13 @@ impl Walk {
                 self.keyword(K_IMPLEMENTS);
             }
             K_WITH if matches!(stmt_reg, S_IMPORT | S_IMPORT_NAME | S_EXPORT) => {
-                // Import attributes: from "x" with { type: "json" }.
+                // Import attributes: `from "x" with { type: "json" }`.
                 self.keyword(K_WITH);
             }
             K_IF | K_WHILE | K_FOR | K_WITH | K_SWITCH | K_CATCH => {
                 self.operand_done();
                 if kw == K_CATCH {
-                    // catch { without a binding.
+                    // `catch {` without a binding.
                     self.expect = Expect::Statement;
                 }
                 self.prev_kw = kw;
@@ -354,7 +371,7 @@ impl Walk {
             }
             K_VAR | K_CONST | K_LET | K_USING => {
                 if kw == K_CONST {
-                    // const enum
+                    // `const enum`
                     let nx = tokens.next_sig(end);
                     if nx < tokens.n
                         && tokens.base_kind(nx) == tk!(Ident)
@@ -376,7 +393,7 @@ impl Walk {
                     && tokens.base_kind(nx) >= OP_KIND_BASE
                     && (nc == b'(' || nc == b'.')
                 {
-                    // import(...) / import.meta: an expression.
+                    // `import(...)` / `import.meta`: an expression.
                     self.set_value();
                     self.clear_prev();
                     self.prev_kw = K_IMPORT;
@@ -403,7 +420,8 @@ impl Walk {
                 self.prev_kw = K_SATISFIES;
             }
             K_ASYNC => {
-                // A modifier is transparent: the function or arrow it modifies decides.
+                // A modifier: the function or arrow it modifies decides expression-ness, so it is
+                // transparent.
                 self.clear_prev();
                 self.prev_async = true;
                 self.prev_kw = K_ASYNC;
@@ -413,7 +431,8 @@ impl Walk {
                 self.keyword(K_TYPE);
             }
             K_INTERFACE => {
-                // Same head frame as a class: extends, < and the body may come on later lines.
+                // Same head frame as a class: `extends`, `<` and the body may follow on later
+                // lines.
                 let f = self.push(FrameKind::ClassHead);
                 f.is_value = false;
                 f.reg = C_INTERFACE;
@@ -430,7 +449,7 @@ impl Walk {
                 let declare = self.prev_kw == K_DECLARE;
                 self.keyword(kw);
                 if declare && kw == K_MODULE {
-                    // declare module "x" may have no body.
+                    // `declare module "x"` may have no body.
                     self.set_stmt_reg(S_DECLARE_MODULE);
                 }
             }
@@ -454,6 +473,7 @@ impl Walk {
         }
     }
 
+    /// A plain identifier (or keyword used as a name) in expression / statement position.
     pub(super) fn plain_word(&mut self, tokens: &Tokens, end: usize, at_start: bool) {
         // Declarator binding.
         if let Some(si) = self.decl_frame()
@@ -478,12 +498,13 @@ impl Walk {
                 self.set_stmt_reg(S_LABEL);
             }
         }
-        // async x => ...: remember the modifier for the arrow.
+        // `async x => ...`: remember the modifier for the arrow.
         let is_async = self.prev_async;
         self.value_done();
         self.arrow_async = is_async;
     }
 
+    /// A word at member-key position of an object literal or class body.
     pub(super) fn member_word(&mut self, tokens: &Tokens, pos: usize, end: usize, kw: u8) -> usize {
         let is_class = self.top_kind() == FrameKind::ClassBody;
         // Modifiers apply when a key can follow on the same line.

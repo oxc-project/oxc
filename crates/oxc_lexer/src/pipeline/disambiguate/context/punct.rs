@@ -1,3 +1,6 @@
+//! Punctuation in expression context: operators, arrows, separators, and the brackets that
+//! open and close frames.
+
 use crate::{pipeline::tables::is_op_char, token::OP_KIND_BASE};
 
 use super::*;
@@ -8,7 +11,8 @@ impl Walk {
         let (mut len, _) = if is_op_char(c) || c == b'/' { tokens.munch(pos) } else { (1, 0) };
         let c1 = tokens.src[pos + 1];
 
-        // An operator in a for ( head makes the binding an expression, so a later of is a name.
+        // In a `for (` head an operator other than member access makes the binding an expression
+        // (`for (x = of / 2;;)`), so a later `of` is a plain identifier.
         if self.top_kind() == FrameKind::Head
             && self.top().state == F_BOUND
             && !matches!(c, b'.' | b'[' | b'(' | b')' | b']' | b'}' | b'{' | b',' | b';')
@@ -17,8 +21,9 @@ impl Walk {
             self.top_mut().state = F_EXPR;
         }
 
+        // Type context: brackets and separators belong to the type.
         if self.in_type() {
-            // > closes one Angle per byte; << opens two.
+            // `>` closes one Angle per byte; `<<` opens two.
             if c == b'>' && !(c1 == b'=' && self.top_kind() != FrameKind::Angle) {
                 len = 1;
             }
@@ -70,6 +75,7 @@ impl Walk {
             }
             b'?' => {
                 if len >= 2 {
+                    // `?.` / `??` / `??=`
                     if c1 == b'.' {
                         self.operand_done();
                         self.after_dot = true;
@@ -91,7 +97,7 @@ impl Walk {
                     return pos + 3;
                 }
                 if self.prev_num && self.prev_end == pos {
-                    // 1. continues the numeric literal.
+                    // `1.` continues the numeric literal.
                     self.set_value();
                     self.prev_num = false;
                     return pos + 1;
@@ -109,6 +115,7 @@ impl Walk {
                     self.assign();
                     return pos + 1;
                 }
+                // `==` / `===`
                 self.operand_done();
                 pos + len
             }
@@ -124,7 +131,7 @@ impl Walk {
             }
             b'+' | b'-' => {
                 if len == 2 && c1 == c {
-                    // ++ / --: postfix keeps the value.
+                    // `++` / `--`: postfix keeps the value.
                     if !self.operand_allowed() && !newline {
                         self.set_value();
                         self.clear_prev();
@@ -153,7 +160,7 @@ impl Walk {
                         return pos + 1;
                     }
                     if self.prev_kw == K_YIELD {
-                        // yield*
+                        // `yield*`
                         self.set_operand();
                         return pos + 1;
                     }
@@ -190,7 +197,7 @@ impl Walk {
             }
             b'@' => {
                 if self.decorator == 0 {
-                    // export @dec class and export default @dec class decorate declarations.
+                    // `export @dec class` and `export default @dec class` decorate declarations.
                     let decl = self.at_stmt_start()
                         || !self.operand_allowed()
                         || self.prev_kw == K_EXPORT
@@ -201,11 +208,12 @@ impl Walk {
                 pos + 1
             }
             b'#' => {
-                // Stray # (private names are tk!(PrivateIdent) tokens).
+                // Stray `#` (private names are tk!(PrivateIdent) tokens).
                 self.operand_done();
                 pos + 1
             }
             _ => {
+                // Every other operator expects an operand.
                 self.operand_done();
                 if self.top_kind() == FrameKind::Head && self.top().state != F_ITER {
                     self.top_mut().state = F_EXPR;
@@ -218,6 +226,7 @@ impl Walk {
     pub(super) fn arrow(&mut self, tokens: &Tokens, pos: usize) {
         let is_async = if self.closed_group { self.closed_group_async } else { self.arrow_async };
         self.prev_arrow = true;
+        // Concise body unless `{` follows.
         let nx = tokens.next_sig(pos + 2);
         let block = nx < tokens.n && tokens.base_kind(nx) >= OP_KIND_BASE && tokens.src[nx] == b'{';
         if !block {
@@ -235,13 +244,13 @@ impl Walk {
         let si = self.stmt_frame();
         let reg = self.stmt_reg();
         if reg == S_TYPE_NAME && si == self.frames.len() - 1 {
-            // type X =: the alias type.
+            // `type X =`: the alias type.
             self.set_stmt_reg(S_NONE);
             self.open_region(R_STMT, true);
             return;
         }
         if reg == S_IMPORT_NAME && si == self.frames.len() - 1 {
-            // import X = ...: a module reference.
+            // `import X = ...`: a module reference.
             self.set_stmt_reg(S_NONE);
             self.open_region(R_STMT, true);
             return;
@@ -259,7 +268,7 @@ impl Walk {
     }
 
     pub(super) fn question(&mut self, tokens: &Tokens, pos: usize) {
-        // Optional marker (a?: T, a?,, a?)) vs conditional.
+        // Optional marker (`a?: T`, `a?,`, `a?)`) vs conditional.
         let nx = tokens.next_sig(pos + 1);
         let nc = if nx < tokens.n { tokens.src[nx] } else { 0 };
         let member = self.top_kind() == FrameKind::ClassBody;
@@ -277,12 +286,13 @@ impl Walk {
     }
 
     pub(super) fn colon(&mut self, tokens: &Tokens) {
-        // A concise body with no pending ? of its own ends at :.
+        // A concise arrow body without a pending `?` of its own ends at a `:` (the `?` belongs to
+        // the frame below).
         while self.top_kind() == FrameKind::Concise && self.top().open_questions == 0 {
             self.pop();
         }
         let top = self.top_kind();
-        // Ternary with a pending ? on this frame.
+        // Ternary with a pending `?` on this frame.
         if self.top().open_questions > 0 {
             self.top_mut().open_questions -= 1;
             self.operand_done();
@@ -325,7 +335,7 @@ impl Walk {
                 return;
             }
             FrameKind::ComputedKey => {
-                // Index signature [k: string].
+                // Index signature `[k: string]`.
                 if tokens.ts {
                     self.open_region(R_INLINE, true);
                 } else {
@@ -354,7 +364,7 @@ impl Walk {
             return;
         }
         if tokens.ts && self.closed_group && top != FrameKind::Head {
-            // (a): T => arrow return type; remember the group's async.
+            // `(a): T =>` arrow return type; remember the group's `async`.
             let is_async = self.closed_group_async;
             self.open_region(R_ARROW_RET, true);
             self.top_mut().is_async = is_async;
@@ -483,7 +493,7 @@ impl Walk {
             } else if reg == S_NAMESPACE || reg == S_DECLARE_MODULE || self.prev_kw == K_GLOBAL {
                 kind = FrameKind::Block;
             } else if matches!(top, FrameKind::Object) && self.top().state != M_VALUE {
-                // { at key position of an object literal: malformed; treat as a nested object.
+                // `{` at key position of an object literal: malformed; treat as a nested object.
                 kind = FrameKind::Object;
                 value = true;
             } else if self.at_stmt_start() {
@@ -598,6 +608,8 @@ impl Walk {
             | FrameKind::StaticBlock
             | FrameKind::Block
             | FrameKind::EnumBody => {
+                // A statement-level body: a new statement may start; inside a class body a new
+                // member may start.
                 if matches!(self.top_kind(), FrameKind::ClassBody | FrameKind::Object) {
                     self.member_done();
                     self.operand_done();
@@ -692,7 +704,7 @@ impl Walk {
         };
         match f.kind {
             FrameKind::Head => {
-                // A statement (or {) follows.
+                // A statement (or `{`) follows.
                 self.expect = Expect::Statement;
                 self.clear_prev();
                 let si = self.stmt_frame();

@@ -1,10 +1,21 @@
 //! Bracket matching by scanning raw source bytes.
 //!
-//! Over long distances that is slow, so the scans here read source bytes instead.
+//! `common` matches brackets backwards over a bitmap of the source's bracket bytes ([`match_delim_back`]).
+//! The scans here go forwards, reading raw source bytes.
 //! The token-start bitmap hides bytes inside literals and comments,
 //! and the operator bitmap hides the angle brackets of JSX tags.
 //!
 //! Forward:
+//! - [`list_closer`] and [`group_closer`] go from an opener to its closer.
+//! - [`lt_run_opens_type_args`] checks for the shape of an arrow function after a `<<`,
+//!   as in `Array<<T>(x: T) => T>`.
+//!
+//! A scan reads at most [`FORWARD_SCAN_CAP`] bytes. Past that the answer is still exact: one pass
+//! from the opener ([`resolve_lists`], [`resolve_groups`]) resolves it and records the closer of
+//! every opener of the same kind it crosses in [`Closers`], so the openers inside it, and the
+//! `<`s of a file whose lists never close, cost a lookup each.
+//!
+//! [`match_delim_back`]: crate::pipeline::disambiguate::common::Tokens::match_delim_back
 
 use crate::{
     pipeline::bytes::{is_id_start, is_ws},
@@ -160,7 +171,8 @@ fn past_raw(src: &[u8], kind: &[u8], lim: usize, i: usize) -> Option<usize> {
     if j != i {
         return (j < lim).then_some(j);
     }
-    // From the JSX carve a carved template head can have a raw tail: cross the literal whole.
+    // Asked from the JSX carve, a template head may be carved while its tail is still
+    // raw text (its substitution `}` a punctuator): cross the literal whole.
     if kind_at(kind, i) == tk!(TemplateHead) {
         let (close, end) = raw_template_end(src, lim, i);
         if close < lim && kind_at(kind, close) >= OP_KIND_BASE {
@@ -172,6 +184,10 @@ fn past_raw(src: &[u8], kind: &[u8], lim: usize, i: usize) -> Option<usize> {
 
 /// Forward angle match: from `i` at `depth`, the `>` that brings it to 0, or
 /// `None` on an unmatched closer, a `;` outside every bracket, or the cap.
+/// The flag says the scan ran out at `lim` with the match still open, so the caller falls back to
+/// [`resolve_lists`]; on the other `None`s the region cannot be a list at all.
+/// Angles count only where `opch & st` is set, the bracket counters where `st` is, and the close
+/// must leave every bracket balanced.
 fn angle_close_fwd_capped(
     src: &[u8],
     st: &[u64],
@@ -231,6 +247,10 @@ fn angle_close_fwd_capped(
                 }
                 b'{' => braces += 1,
                 b'}' => {
+                    // A substitution-closing `}` is the start of the next
+                    // template segment, and its `${` was swallowed by the
+                    // preceding one - counting it would leave every
+                    // `Array<Map<A, `p${s}q`>>` looking brace-unbalanced.
                     let kk = kind_at(kind, i);
                     if kk != tk!(TemplateMiddle) && kk != tk!(TemplateTail) {
                         braces -= 1;
@@ -251,6 +271,8 @@ fn angle_close_fwd_capped(
     (None, true)
 }
 
+/// The `)` matching the `(` at `i`, or `None`. The flag says the scan ran out at `lim` with the
+/// match still open, so the caller falls back to [`resolve_groups`].
 fn paren_close_fwd_capped(
     src: &[u8],
     st: &[u64],
@@ -294,7 +316,7 @@ struct Open {
     dead: u32,
 }
 
-/// The rules of [angle_close_fwd_capped], run from every < at once and memoized.
+/// The rules of [`angle_close_fwd_capped`], run from every `<` at once and memoized.
 #[inline(never)]
 fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
     let Tokens { src, st, opch, kind, n, closers, .. } = *tokens;
@@ -436,7 +458,9 @@ fn resolve_groups(tokens: &Tokens, start: usize) -> Option<usize> {
     None
 }
 
-/// Past the uncarved comment, string or template starting at i, else i.
+/// If a comment, string or template carve has not reached yet starts at the token start `i`, the
+/// position just past it; else `i`. Forward scans from before the carve cursor cross raw text;
+/// carved literals have cleared interiors and are never re-entered.
 #[inline]
 pub(super) fn skip_raw_literal(src: &[u8], kind: &[u8], n: usize, i: usize) -> usize {
     if kind[i] < OP_KIND_BASE {
@@ -474,7 +498,10 @@ fn past_raw_string(src: &[u8], lim: usize, i: usize, quote: u8) -> usize {
     lim
 }
 
-/// (the } closing the first substitution, or lim; the end of the literal, or lim + 1)
+/// For a template head whose backtick is at `i`: the `}` closing its first substitution and the
+/// end (exclusive) of the whole literal, over raw bytes. `lim` when the `}` is not found before
+/// `lim`, `lim + 1` when the literal does not end before it. Cold: a template inside a
+/// speculated type-argument list.
 pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize) -> (usize, usize) {
     let mut first_close = lim;
     let mut subs: Vec<u32> = Vec::new();

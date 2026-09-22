@@ -937,7 +937,7 @@ fn adjacent_type_atoms_end_an_annotation() {
 
 #[test]
 fn decorated_export_class_declaration() {
-    // A decorator between export (or export default) and class decorates a declaration.
+    // A decorator between `export` (or `export default`) and `class` decorates a declaration.
     regex("export @dec class C {} /re/.test(x);", ModuleJS);
     regex("export @dec() class C {} /re/.test(x);", ModuleJS);
     regex("export @a @b class C {} /re/.test(x);", ModuleJS);
@@ -949,7 +949,7 @@ fn decorated_export_class_declaration() {
 
 #[test]
 fn ts_satisfies_after_a_type_operator() {
-    // satisfies ends the type of a preceding as / satisfies and opens its own.
+    // `satisfies` ends the type of a preceding `as` / `satisfies` and opens its own.
     division("let v = x as T satisfies {} / y;", ScriptTS);
     division("let v = x as {} satisfies {} / y;", ScriptTS);
     division("let v = x satisfies {} satisfies {} / y;", ScriptTS);
@@ -960,7 +960,7 @@ fn ts_satisfies_after_a_type_operator() {
 
 #[test]
 fn function_name_after_a_line_break() {
-    // Nothing restricts a line break between function and its name: the head goes on.
+    // Nothing restricts a line break between `function` and its name: the head goes on.
     division("x = function\nf() {} / 2;", ScriptJS);
     regex("function\nf(): T {} /re/.test(x);", ScriptTS);
     regex("function /* c */\nf() {} /re/.test(x);", ScriptJS);
@@ -970,7 +970,8 @@ fn function_name_after_a_line_break() {
 
 #[test]
 fn class_field_initializer_is_outside_yield_and_await_contexts() {
-    // A field initializer is outside the enclosing yield / await context, as in tsc.
+    // A field initializer is parsed outside the enclosing function's `yield` / `await` context,
+    // so both are identifiers in it; computed keys and static blocks still see the function.
     division("async function f() { class A { x = await / 2 / 1 } }", ScriptJS);
     division("async function f() { class A { static x = await / 2 / 1 } }", ScriptJS);
     division("async function f() { class A { x = (a = await / 2 / 1) => a } }", ScriptJS);

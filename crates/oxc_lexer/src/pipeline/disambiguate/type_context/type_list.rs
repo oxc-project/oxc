@@ -128,7 +128,8 @@ pub(super) fn gt_follower(src: &[u8], n: usize, mut i: usize) -> Follow {
                 }
             }
             b'~' | b'@' | b'#' | b'"' | b'\'' => Follow::Fuse,
-            // A name written with a Unicode escape starts an expression like any other.
+            // An identifier written with a leading Unicode escape starts an expression like any
+            // other name.
             b'\\' => {
                 if nx == b'u' {
                     Follow::Fuse
@@ -170,12 +171,15 @@ pub(super) fn type_list_legal(
     let mut cond_ok = false;
     let mut parens: i32 = 0;
     let mut this_head = false;
+    // Keyword kind of the previous token (0 when it was not a keyword) and whether that keyword
+    // is a whole type that no `.` may follow.
     let mut prev_kw: u8 = 0;
     let mut no_dot = false;
-    // A list element starts here: after the < or a , of a type-argument list.
+    // A list element starts here: after the `<` or a `,` of a type-argument list.
     let mut elem_start = true;
     let mut skip = usize::MAX;
-    // A type reference takes no arguments across a line break.
+    // Start of the previous significant token: a type reference takes no arguments across a
+    // line break, so a `<` after one is checked against it.
     let mut prev = usize::MAX;
     let mut w = bits::next1(st, lo, hi);
     while w < hi {
@@ -184,7 +188,8 @@ pub(super) fn type_list_legal(
             w = bits::next1(st, w + 1, hi);
             continue;
         }
-        // Uncarved text: a raw comment is trivia, a raw string or template a literal type.
+        // Text carve has not reached yet: a raw comment is trivia, a raw string or template is a
+        // literal type.
         let j = skip_raw_literal(src, kind, hi, w);
         if j != w {
             let c0 = src[w];
@@ -216,7 +221,8 @@ pub(super) fn type_list_legal(
         elem_start = false;
         if k == tk!(Ident) || k == tk!(IdentEscaped) {
             let kk = t.keywords.kwts.lookup_at(src, w, word_len(src, w)) as u8;
-            // A keyword type takes no type arguments, except as a value in a type query.
+            // A keyword type (`this`, `any`, `null`, ...) takes no type arguments; in a type
+            // query it names a value, which may (`typeof this<A>`).
             this_head = matches!(
                 kk,
                 tk!(KwThis)
@@ -238,7 +244,10 @@ pub(super) fn type_list_legal(
             if !start && braces == 0 && !matches!(kk, tk!(KwExtends) | tk!(KwIs) | tk!(KwIn)) {
                 return false;
             }
-            // tsc refuses a reserved word only where a list element starts (isStartOfType).
+            // tsc checks `isStartOfType` only where a list element starts (after `<` or a
+            // `,` of the list): a reserved word there is no type. Elsewhere a keyword is read
+            // as a name: a property (`{ return: T }`), a reference after `=>`, `:`, `|`. `super`
+            // names a value only in a type query (`typeof super.x`).
             if was_elem_start
                 && type_illegal_kind(kk)
                 && !(kk == tk!(KwSuper) && last_kw == tk!(KwTypeof))
@@ -248,7 +257,8 @@ pub(super) fn type_list_legal(
             if kk == tk!(KwExtends) {
                 cond_ok = true;
             }
-            // this, null, true, false, void are whole types: a . after one is a member.
+            // `this`, `null`, `true`, `false` and `void` are whole types: a `.` after one is
+            // a member access, not a qualified name (`any.x` and `string.x` are references).
             no_dot = last_kw != tk!(KwTypeof)
                 && matches!(
                     kk,
@@ -270,7 +280,9 @@ pub(super) fn type_list_legal(
             if k == tk!(TemplateHead) && !start && braces == 0 {
                 return false;
             }
-            // From the JSX carve the template tail is raw: read the literal whole.
+            // Asked from the JSX carve, the head is carved but the rest of the template is raw
+            // text; its substitution `}` is still a punctuator. Read the literal as a whole then
+            // (a template type), instead of its tail as tokens.
             if k == tk!(TemplateHead) {
                 let (close, end) = raw_template_end(src, hi, w);
                 if close < hi && kind_at(kind, close) >= OP_KIND_BASE {
@@ -343,7 +355,8 @@ pub(super) fn type_list_legal(
                     start = false;
                 }
                 b'=' => {
-                    // => of a function type, or a type-parameter default.
+                    // `=>` of a function type, or a type-parameter default (the walk also reads
+                    // member type-parameter lists here).
                     if src[w + 1] == b'>' && bits::get(st, w + 1) {
                         skip = w + 1;
                     }
@@ -453,6 +466,10 @@ fn type_illegal_kind(k: u8) -> bool {
     )
 }
 
+/// TypeScript's speculative parse of a type-argument list at the `<` at `lt` in expression
+/// position: a balanced list whose contents are types and whose closer is followed by a token that
+/// cannot start an expression. In a type, every `<` after a name opens a list, so a `<` this
+/// accepts opens one in any context.
 pub(in crate::pipeline::disambiguate) fn type_args_at(tokens: &Tokens, lt: usize) -> bool {
     let closers = tokens.closers;
     if let Some(r) = closers.get(lt) {

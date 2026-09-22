@@ -948,7 +948,7 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
 
 #[test]
 fn keyword_types_take_no_type_arguments() {
-    // any<z> is any then a comparison: keyword types never take arguments.
+    // `any<z>` is `any` then a comparison: keyword types never take arguments.
     for kw in [
         "any",
         "unknown",
@@ -1014,7 +1014,8 @@ fn nested_type_reference_after_a_line_break_takes_no_arguments() {
 
 #[test]
 fn tsx_type_parameter_list_signals_cross_trivia() {
-    // A comment before , / = / extends still marks a list; after an extends attr, a tag.
+    // A comment between the parameter name and its `,` / `=` / `extends` still marks a list;
+    // an `extends` attribute followed by a comment still marks a tag.
     let tsx = |code: &str| kinds_of(code, ScriptTSX);
     for (code, plain) in [
         ("x = <T //c\nextends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
@@ -1047,7 +1048,8 @@ fn tsx_const_followed_by_a_line_break_is_a_jsx_tag_name() {
 
 #[test]
 fn keyword_type_followed_by_a_dot_is_a_member_access() {
-    // this.x is not a type, so the list fails; any.x and string.x are qualified names.
+    // `this`, `null`, `true`, `false` and `void` are whole types: `this.x` is not a type, so the
+    // speculative list fails and the run is a shift. `any.x` and `string.x` are qualified names.
     for kw in ["this", "null", "true", "false", "void"] {
         gt_run_fused(&format!("x = a<b<{kw}.y>>(1);"));
     }
@@ -1071,7 +1073,9 @@ fn super_is_a_type_only_in_a_type_query() {
 
 #[test]
 fn keywords_as_names_inside_a_type_list() {
-    // A reserved word is refused only where a list element starts (tsc's isStartOfType).
+    // `let` is an identifier in a type; a reserved word is refused only where a list element
+    // starts (tsc's `isStartOfType`), and read as a name elsewhere: a property, a reference
+    // after `=>`.
     gt_run_split("x = f<A<(let: T) => U>>(1);");
     gt_run_split("x = f<A<let>>(1);");
     gt_run_split("x = f<A<{ return: T; class?: U }>>(1);");
@@ -1082,7 +1086,7 @@ fn keywords_as_names_inside_a_type_list() {
 
 #[test]
 fn escaped_identifier_follower_starts_an_expression() {
-    // An identifier written with a Unicode escape follows a > run like any other name.
+    // An identifier written with a Unicode escape follows a `>` run like any other name.
     gt_run_fused(r"x = f<T<U>>\u0061;");
     gt_run_fused(r"x = f<T<U>> \u{61};");
     gt_run_split("x = f<T<U>>\n\\u0061;");
@@ -1090,7 +1094,8 @@ fn escaped_identifier_follower_starts_an_expression() {
 
 #[test]
 fn line_break_before_extends_inside_a_type_parameter_list() {
-    // Inside a <...> list a line break is trivia.
+    // Inside a `<...>` list a line break is trivia, so no statement ends there. The template
+    // literal type keeps the run from being settled without a walk.
     for code in [
         "f = <T\nextends Replace<A, `{${string}}`, B>>(x: T) => 1;",
         "f = <T\nextends Replace<A, B>>(x: T) => 1;",

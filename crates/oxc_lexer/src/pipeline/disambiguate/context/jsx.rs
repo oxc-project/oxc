@@ -1,9 +1,14 @@
+//! Inside a JSX tag or element only the structure matters: nested tags, containers and the
+//! end of the element.
+
 use crate::token::{OP_KIND_BASE, tk};
 
 use super::*;
 
 impl Walk {
     pub(super) fn jsx_element_done(&mut self) {
+        // Back in whatever expression held the element (or in a parent's children, where it does
+        // not matter).
         if !matches!(self.top_kind(), FrameKind::JsxTag | FrameKind::JsxElem) {
             self.value_done();
         }

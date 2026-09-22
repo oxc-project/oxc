@@ -1,3 +1,26 @@
+//! Is a position directly after a complete value?
+//!
+//! [`not_operator_position`] answers this for `carve`, to tell a regex from division,
+//! and a JSX element from less-than. Its doc comment explains the question in detail.
+//!
+//! The token before the position settles nearly every case. Reading it takes most of this file,
+//! because the token stream `carve` has built so far is not final:
+//!
+//! - Operators and numbers such as `x++`, `a?.b` and `1.5e+3` aren't formed into their final
+//!   tokens until `coalesce`, which runs later, so the bytes around a punctuator are read
+//!   directly ([`incdec_is_postfix`], [`prop_name`]).
+//! - After `)`, what the parens closed decides it: `if (c) /re/` has a regex, but `f(c) / 2` has
+//!   a division ([`paren_close_is_regex`]).
+//!
+//! The cases left over are questions about the parser's state, which [`context`] answers by
+//! walking forward to the position:
+//!
+//! - After `}`, whether the braces closed a block or a value.
+//! - Outside modules, whether `yield` and `await` are keywords, which depends on the enclosing
+//!   functions, and whether `of` is the keyword of a `for ... of` head.
+//! - In TypeScript, a `>` which may close type arguments, a `void` which is a type rather than
+//!   the operator, and the line breaks after which a declaration ends without a semicolon.
+
 use crate::{
     pipeline::bytes::is_digit,
     token::{OP_KIND_BASE, tk},
@@ -27,6 +50,9 @@ mod tests;
 /// - `/` starts a regex if `true`, or is a division operator (`/` or `/=`) if `false`.
 /// - `<` may start a JSX element if `true`, or is a less-than operator if `false`.
 ///   In TS, a `<` in operator position can also open type arguments e.g. `f<T>()`.
+///
+/// The previous significant token decides most cases; `}`, `yield` / `await`, `of`, a TS `>` and
+/// the TS line-break cases depend on unbounded left context and ask [`context`].
 pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize) -> bool {
     let ts = tokens.ts;
     let module = tokens.module;
@@ -69,7 +95,8 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
             return true;
         }
         if k == tk!(Number) {
-            // A word run starting with a digit is a number: division, unless TS ASI applies.
+            // A word run that starts with a digit is a numeric literal, and a numeric literal ends
+            // a value: division, unless TS ASI applies.
             let we = bits::next0(tokens.word, qi, tokens.n);
             return ts
                 && tokens.line_break_between(we, p)
@@ -83,7 +110,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
             }
             if k == tk!(Ident) && tokens.tables.keywords.is_regex_keyword_at(src, qi, e - qi) {
                 if ts && e - qi == 4 && tokens.ident_is(qi, b"void") {
-                    // x as void / 2 is division; void /re/ is not.
+                    // `x as void / 2` is division; `void /re/` is not.
                     return context::after(tokens, walks, qi) != After::Value;
                 }
                 if !module
@@ -104,9 +131,8 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
         }
         if k >= OP_KIND_BASE {
             let ch = src[qi];
-            // TS postfix non-null `!`: `x! / 2` is division, not a regex -
-            // look through the `!`, unless a newline sits before it (ASI
-            // makes it a prefix `!/re/`).
+            // TS postfix non-null `!`: `x! / 2` is division, so look through the `!` unless a line
+            // terminator precedes it (ASI makes it a prefix `!/re/`).
             if ts && ch == b'!' {
                 let Some(q2) = tokens.prev_sig(qi) else {
                     return true;
@@ -118,18 +144,21 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
                 continue;
             }
             if ch == b'.' {
-                // Only a trailing-dot number (1./2) makes . end a value.
+                // Only a trailing-dot numeric literal (`1./2`) makes `.` end a value; member
+                // access, `...` and `?.` all precede an operand.
                 return !bits::prev1(tokens.st, qi).is_some_and(|q2| {
                     tokens.kind[q2] == tk!(Number) && tokens.next_start(q2 + 1) == qi
                 });
             }
             if ch == b'+' || ch == b'-' {
-                // Tail of ++ / --: postfix ends a value, prefix does not.
+                // Tail of `++`/`--`: postfix ends a value, prefix does not; a run of three or more
+                // always ends in a prefix pair or a lone sign.
                 if qi > 0 && src[qi - 1] == ch {
                     return !incdec_is_postfix(tokens, qi - 1);
                 }
                 return true;
             }
+            // `}` closed either a block (regex follows) or a value (division).
             if ch == b'}' {
                 let from = tokens.match_delim_back(qi, b'{', b'}').unwrap_or(qi);
                 return context::after_from(tokens, walks, qi, from) != After::Value;
@@ -161,7 +190,8 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
     true
 }
 
-/// Does a lone . (member access or ?., not ...) precede the word, trivia aside?
+/// Is the word at `pos` a property name: does a lone `.` (member access or `?.`, not the last dot
+/// of `...`) precede it as a token? Trivia in between does not matter: `x. return / 2` divides.
 #[inline]
 fn prop_name(tokens: &Tokens, pos: usize) -> bool {
     let Some(w) = tokens.prev_sig(pos) else {
@@ -173,15 +203,18 @@ fn prop_name(tokens: &Tokens, pos: usize) -> bool {
     let src = tokens.src;
     let c = src[w];
     if c == b'?' {
-        // A ?. that coalesce has already fused starts at the ?.
+        // A `?.` that `coalesce` has already fused starts at the `?`.
         return src[w + 1] == b'.' && !is_digit(src[w + 2]);
     }
-    // A lone .: not part of a ..., fused or not.
+    // A lone `.`: not a `...`, whether the run is still three token starts (the previous token is
+    // then its last dot) or already fused (its first).
     c == b'.'
         && !(src[w + 1] == b'.' && src[w + 2] == b'.')
         && !(w >= 2 && src[w - 1] == b'.' && src[w - 2] == b'.')
 }
 
+/// The TemplateHead that opened the template whose TemplateTail is at `tail` (nested templates are
+/// crossed); `tail` itself if unbalanced.
 fn template_head(tokens: &Tokens, tail: usize) -> usize {
     let mut depth = 0u32;
     let mut q = tokens.prev_sig(tail);
@@ -211,6 +244,8 @@ fn module_specifier_asi(tokens: &Tokens, spec: usize) -> bool {
         && (tokens.ident_is(w, b"from") || tokens.ident_is(w, b"import"))
 }
 
+/// Is the `++`/`--` whose first byte is at `first` postfix? It is when a value ends right before it
+/// on the same line; `tail_before` is the shared definition of "ends a value".
 fn incdec_is_postfix(tokens: &Tokens, first: usize) -> bool {
     tokens.prev_sig(first).is_some_and(|q| {
         tail_before(tokens, first) && !tokens.line_break_between(tokens.next_start(q + 1), first)
