@@ -121,3 +121,18 @@ macro_rules! vor {
     };
 }
 pub(super) use vor;
+
+#[inline]
+pub fn bracket_bits(src: &[u8], base: usize) -> u64 {
+    let block = &src[base..base + 64];
+    let mut out = 0u64;
+    for half in 0..2 {
+        // SAFETY: a 64-byte block, loads at 0 and 32; avx2 is required by this module's cfg.
+        let v = unsafe { load256(block.as_ptr(), half * 32) };
+        let m = unsafe {
+            vor!(veq(v, b'('), veq(v, b')'), veq(v, b'['), veq(v, b']'), veq(v, b'{'), veq(v, b'}'))
+        };
+        out |= u64::from(mm(m)) << (half * 32);
+    }
+    out
+}

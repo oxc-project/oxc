@@ -43,6 +43,7 @@ pub struct Lanes {
     /// pure-ASCII input.
     pub unicode_leads: Vec<u32>,
     pub module: bool,
+    pub(crate) disambiguate: crate::pipeline::DisambiguateState,
 }
 
 impl Lanes {

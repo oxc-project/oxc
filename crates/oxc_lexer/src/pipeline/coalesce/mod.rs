@@ -8,6 +8,7 @@ use crate::pipeline::{
     disambiguate::{gt_run_split, lt_run_split},
     scan::scan_number,
     tables::{KwSet, Tables, is_op_char},
+    token_view,
 };
 
 mod keywords;
@@ -33,6 +34,7 @@ pub unsafe fn coalesce(
     lanes: &mut Lanes,
 ) {
     let kw = if ts { &t.keywords.kwts } else { &t.keywords.kwjs };
+    lanes.disambiguate.restart(lanes.module);
     let nw = (n + 63) >> 6;
     let mut opprev: u64 = 0;
     let mut dtprev: u64 = 0;
@@ -134,7 +136,22 @@ pub unsafe fn coalesce(
                     && kw.ts_key
                     && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1))))
                 {
-                    let g = gt_run_split(t, src, st, opch, kind, n, p, run);
+                    let kw_final = (w & !(KWB - 1)) << 6;
+                    let tokens = token_view(
+                        t,
+                        src,
+                        st,
+                        opch,
+                        word,
+                        kind,
+                        n,
+                        ts,
+                        kw_final,
+                        lanes.module,
+                        &lanes.disambiguate.brackets,
+                        &lanes.disambiguate.closers,
+                    );
+                    let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run);
                     if g != 0 {
                         // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
                         cursor = munch_walk(t, src, n, st, opch, kind, p + g);
@@ -142,10 +159,25 @@ pub unsafe fn coalesce(
                     }
                 }
                 // Mirror case: `Array<<T>(x: T) => T>` opens two lists, not `<<` shift-left.
-                if b0 == b'<' && b1 == b'<' && kw.ts_key && lt_run_split(src, st, opch, kind, n, p)
-                {
-                    cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
-                    continue;
+                if b0 == b'<' && b1 == b'<' && kw.ts_key {
+                    let tokens = token_view(
+                        t,
+                        src,
+                        st,
+                        opch,
+                        word,
+                        kind,
+                        n,
+                        ts,
+                        0,
+                        lanes.module,
+                        &lanes.disambiguate.brackets,
+                        &lanes.disambiguate.closers,
+                    );
+                    if lt_run_split(&tokens, p) {
+                        cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
+                        continue;
+                    }
                 }
                 if run == 2 {
                     let key = (q & 0xFFFF) | (2u32 << 24);
@@ -276,7 +308,23 @@ unsafe fn glue_number(
             // reaches the `>` run before `coalesce` ever raises it as an event.
             if c == b'>' && kw.ts_key && matches!(*src.add(e2 + 1), b'>' | b'=') {
                 let end = bm_next0(opch, e2, n);
-                let g = gt_run_split(t, src, st, opch, kind, n, e2, end - e2);
+                // Keyword kinds are final only below this window's batch.
+                let kw_final = ((e2 >> 6) & !(KWB - 1)) << 6;
+                let tokens = token_view(
+                    t,
+                    src,
+                    st,
+                    opch,
+                    word,
+                    kind,
+                    n,
+                    kw.ts_key,
+                    kw_final,
+                    lanes.module,
+                    &lanes.disambiguate.brackets,
+                    &lanes.disambiguate.closers,
+                );
+                let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, e2, end - e2);
                 if g != 0 {
                     // The split `>`s stay single tokens, but whatever borders on them is still an operator run and has to be
                     // munched, or a following `&&` / `??` / `**` is emitted a byte at a time.

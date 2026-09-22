@@ -19,7 +19,6 @@ pub(super) unsafe fn carve_js(
     kind: *mut u8,
     opch: *mut u64,
     word: *const u64,
-    digit: *const u64,
     ts: bool,
     lanes: &mut Lanes,
 ) {
@@ -97,10 +96,10 @@ pub(super) unsafe fn carve_js(
                 }
             }
             b'/' => {
-                i = lex_slash(t, src, srcs, n, st, kind, opch, word, digit, ts, s, lanes);
+                i = lex_slash(t, src, srcs, n, st, kind, opch, word, ts, s, lanes);
             }
             b'<' => {
-                // Annex B B.1.1: `<!--` begins a line comment.
+                // Annex B B.1.1: <!-- begins a line comment.
                 i = if html_open_comment_at(srcs, n, s, lanes.module) {
                     lex_html_open_comment(src, srcs, n, st, kind, opch, s, lanes)
                 } else {
@@ -108,7 +107,7 @@ pub(super) unsafe fn carve_js(
                 };
             }
             b'>' => {
-                // Annex B B.1.3: `-->` begins a line comment, but only at line start.
+                // Annex B B.1.3: --> begins a line comment, but only at line start.
                 i = if html_close_comment_at(srcs, s, lanes.module) {
                     lex_html_close_comment(src, srcs, n, st, kind, opch, s, lanes)
                 } else {

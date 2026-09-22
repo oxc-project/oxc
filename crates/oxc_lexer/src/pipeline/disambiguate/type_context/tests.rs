@@ -1,8 +1,10 @@
 use crate::{error::DiagCode, token::TokenKind};
 
 use crate::pipeline::disambiguate::tests::{
-    FileType, diag_codes_of, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, stream,
+    FileType, diag_codes_of, division, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, stream,
 };
+
+use crate::pipeline::disambiguate::FORWARD_SCAN_CAP;
 
 // Reduce repeated boilerplate in tests below.
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.
@@ -945,9 +947,74 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
 }
 
 #[test]
+fn keyword_types_take_no_type_arguments() {
+    // any<z> is any then a comparison: keyword types never take arguments.
+    for kw in [
+        "any",
+        "unknown",
+        "string",
+        "number",
+        "boolean",
+        "symbol",
+        "object",
+        "never",
+        "undefined",
+        "null",
+        "void",
+        "bigint",
+        "this",
+        "true",
+        "false",
+    ] {
+        gt_run_fused(&format!("x = y as {kw}<z>>w;"));
+        gt_run_fused(&format!("x = y satisfies {kw} < z >> w;"));
+    }
+    gt_run_fused("let x: any = y as string < z >> w;");
+    gt_run_split("x = y as A<z>>w;");
+}
+
+#[test]
+fn function_head_name_after_a_line_break_keeps_its_return_type_list() {
+    for code in [
+        "function\nf<T>(): U<O<T>, C<T>> {}",
+        "function //c\nf<T>(): U<O<T>> {}",
+        "function /*\n*/ f<T>(): U<O<T>> {}",
+        "export function\nf<T>(): U<O<T>> {}",
+        "async function\nf(): Promise<Array<T>> {}",
+        "class\nC<T> extends B<C<T>> {}",
+    ] {
+        gt_run_split(code);
+    }
+}
+
+#[test]
+fn nested_type_reference_after_a_line_break_takes_no_arguments() {
+    // A type reference takes no arguments across a line break, so the speculative list fails.
+    for code in [
+        "x = f<A\n<B>>(c);",
+        "x = f<A\u{2028}<B>>(c);",
+        "x = f<A /*\n*/ <B>>(c);",
+        "x = f<A //c\n<B>>(c);",
+        "x = f<A, B\n<C>>(d);",
+        "x = new F<A\n<B>>(c);",
+        "x = f<A.B\n<C>>(d);",
+        "x = f<typeof a\n<C>>(d);",
+    ] {
+        gt_run_fused(code);
+    }
+    for code in [
+        "x = f<A<\nB>>(c);",
+        "x = f<\nA<B>>(c);",
+        "x = f<A<B\n>>(c);",
+        "x = f<A, /* c */ B<C>>(d);",
+    ] {
+        gt_run_split(code);
+    }
+}
+
+#[test]
 fn tsx_type_parameter_list_signals_cross_trivia() {
-    // A comment between the parameter name and its `,` / `=` / `extends` still marks a list;
-    // an `extends` attribute followed by a comment still marks a tag.
+    // A comment before , / = / extends still marks a list; after an extends attr, a tag.
     let tsx = |code: &str| kinds_of(code, ScriptTSX);
     for (code, plain) in [
         ("x = <T //c\nextends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
@@ -966,6 +1033,99 @@ fn tsx_type_parameter_list_signals_cross_trivia() {
 }
 
 #[test]
+fn keyword_type_followed_by_a_dot_is_a_member_access() {
+    // this.x is not a type, so the list fails; any.x and string.x are qualified names.
+    for kw in ["this", "null", "true", "false", "void"] {
+        gt_run_fused(&format!("x = a<b<{kw}.y>>(1);"));
+    }
+    for kw in ["any", "string", "undefined"] {
+        gt_run_split(&format!("x = a<b<{kw}.y>>(1);"));
+    }
+    gt_run_split("x = a<b<this>>(1);");
+    gt_run_split("x = a<b<this[1]>>(1);");
+    gt_run_split("x = a<b<typeof this.y>>(1);");
+}
+
+#[test]
+fn super_is_a_type_only_in_a_type_query() {
+    gt_run_split("x = a<b<typeof super.y>>(1);");
+    gt_run_split("x = a<b<typeof super>>(1);");
+    gt_run_fused("x = a<b<super.y>>(1);");
+    // A type query names a value, which takes type arguments even when it spells a keyword type.
+    gt_run_split("x = c<Map<typeof this<A, 1>>>(1);");
+    gt_run_fused("x = c<Map<this<A, 1>>>(1);");
+}
+
+#[test]
+fn keywords_as_names_inside_a_type_list() {
+    // A reserved word is refused only where a list element starts (tsc's isStartOfType).
+    gt_run_split("x = f<A<(let: T) => U>>(1);");
+    gt_run_split("x = f<A<let>>(1);");
+    gt_run_split("x = f<A<{ return: T; class?: U }>>(1);");
+    gt_run_split("x = f<A<(x: T) => return>>(1);");
+    gt_run_fused("x = f<A<return>>(1);");
+    gt_run_fused("x = f<A<B, return>>(1);");
+}
+
+#[test]
+fn escaped_identifier_follower_starts_an_expression() {
+    // An identifier written with a Unicode escape follows a > run like any other name.
+    gt_run_fused(r"x = f<T<U>>\u0061;");
+    gt_run_fused(r"x = f<T<U>> \u{61};");
+    gt_run_split("x = f<T<U>>\n\\u0061;");
+}
+
+#[test]
+fn line_break_before_extends_inside_a_type_parameter_list() {
+    // Inside a <...> list a line break is trivia.
+    for code in [
+        "f = <T\nextends Replace<A, `{${string}}`, B>>(x: T) => 1;",
+        "f = <T\nextends Replace<A, B>>(x: T) => 1;",
+        "f = <T\nextends A<B>>(x: T) => 1;",
+        "f = <T /*\n*/ extends Replace<A, `{${string}}`, B>>(x: T) => 1;",
+    ] {
+        gt_run_split(code);
+    }
+}
+
+#[test]
+fn type_argument_lists_longer_than_the_bounded_scan() {
+    // Past FORWARD_SCAN_CAP the closer comes from the memoized pass.
+    let members: String = (0..400).map(|i| format!("a{i}: string; ")).collect();
+    let big = format!("{{ {members}}}");
+    assert!(big.len() > FORWARD_SCAN_CAP);
+    gt_run_split(&format!("f<A<{big}>>(x);"));
+    gt_run_split(&format!("new F<A<{big}>>();"));
+    gt_run_split(&format!("a?.f<A<{big}>>();"));
+    gt_run_split(&format!("f<A<{big}>>`t`;"));
+    gt_run_split(&format!("x = f<A<{big}>>;"));
+    division(&format!("x = f<{big}> / 2 / 1;"), ScriptTS);
+    let values: String = (0..400).map(|i| format!("a{i}: 1 + 1, ")).collect();
+    gt_run_fused(&format!("x = a < b < {{ {values}}} >> c;"));
+}
+
+#[test]
+fn lt_lt_openers_around_lists_longer_than_the_bounded_scan() {
+    let members: String = (0..6000).map(|i| format!("a{i}: string; ")).collect();
+    let big = format!("{{ {members}}}");
+    for code in [
+        format!("let x: Array<<T>(x: T) => {big}> = y;"),
+        format!("let x: Array<<T extends {big}>(x: T) => T> = y;"),
+    ] {
+        let ks = kinds_of(&code, ScriptTS);
+        assert!(!ks.contains(&TokenKind::LShift), "{} tokens", ks.len());
+    }
+}
+
+#[test]
+fn lt_lt_openers_around_a_parameter_list_longer_than_the_bounded_scan() {
+    let members: String = (0..6000).map(|i| format!("a{i}: string; ")).collect();
+    let code = format!("let x: Array<<T>(a: {{ {members}}}) => T> = y;");
+    let ks = kinds_of(&code, ScriptTS);
+    assert!(!ks.contains(&TokenKind::LShift), "{} tokens", ks.len());
+}
+
+#[test]
 fn tsx_function_type_with_trivia_before_its_parameters() {
     let plain = kinds_of("let f: <T> (x: T) => T;", ScriptTSX);
     for code in [
@@ -975,4 +1135,21 @@ fn tsx_function_type_with_trivia_before_its_parameters() {
     ] {
         assert_eq!(kinds_of(code, ScriptTSX), plain, "{code:?}");
     }
+}
+
+#[test]
+fn jsx_element_type_arguments_with_deeply_nested_template_types() {
+    let deep = format!("{}T{}", "`${".repeat(33), "}`".repeat(33));
+    let code = format!("x = <Foo<{deep}> />;");
+    assert!(diag_codes_of(&code, ScriptTSX).is_empty(), "{code}");
+    let ks = kinds_of(&code, ScriptTSX);
+    assert_eq!(ks.iter().filter(|k| **k == TokenKind::JsxLt).count(), 1, "{ks:?}");
+    assert!(ks.contains(&TokenKind::JsxTagEnd), "{ks:?}");
+}
+
+#[test]
+fn tsx_template_type_with_deeply_nested_substitutions_in_expression_type_arguments() {
+    let deep = format!("{}U{}", "`${".repeat(10), "}`".repeat(10));
+    let code = format!("x = f<`${{<T>(x: T) => {deep}}}`>(1);");
+    assert!(diag_codes_of(&code, ScriptTSX).is_empty(), "{code}");
 }

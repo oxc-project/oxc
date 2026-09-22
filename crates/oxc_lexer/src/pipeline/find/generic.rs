@@ -105,3 +105,14 @@ macro_rules! define_find_function {
     };
 }
 pub(super) use define_find_function;
+
+#[inline]
+pub fn bracket_bits(src: &[u8], base: usize) -> u64 {
+    let mut out = 0u64;
+    for (i, &c) in src[base..base + 64].iter().enumerate() {
+        if matches!(c, b'(' | b')' | b'[' | b']' | b'{' | b'}') {
+            out |= 1u64 << i;
+        }
+    }
+    out
+}

@@ -22,6 +22,7 @@ mod classify;
 mod coalesce;
 mod compress;
 mod disambiguate;
+pub(crate) use disambiguate::State as DisambiguateState;
 mod find;
 mod misc;
 mod scan;
@@ -139,7 +140,7 @@ impl Lexer {
         self.ensure(n);
         self.lanes.clear();
         self.lanes.module = module;
-        disambiguate::memo_new_lex();
+        self.lanes.disambiguate.begin(n, module);
         if n == 0 {
             write_sentinels(0, out_spans, out_kinds);
             self.sig_len = 0;
@@ -222,5 +223,36 @@ impl Lexer {
 impl Default for Lexer {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+unsafe fn token_view<'a>(
+    t: &'a Tables,
+    src: *const u8,
+    st: *const u64,
+    opch: *const u64,
+    word: *const u64,
+    kind: *const u8,
+    n: usize,
+    ts: bool,
+    kw_final: usize,
+    module: bool,
+    brackets: &'a disambiguate::Brackets,
+    closers: &'a disambiguate::Closers,
+) -> disambiguate::Tokens<'a> {
+    let nb = n.div_ceil(64) + 1;
+    disambiguate::Tokens {
+        tables: t,
+        src: std::slice::from_raw_parts(src, n + PAD),
+        st: std::slice::from_raw_parts(st, nb),
+        opch: std::slice::from_raw_parts(opch, nb),
+        word: std::slice::from_raw_parts(word, nb),
+        kind: std::slice::from_raw_parts(kind, nb * 64),
+        n,
+        ts,
+        module,
+        kw_final,
+        brackets,
+        closers,
     }
 }

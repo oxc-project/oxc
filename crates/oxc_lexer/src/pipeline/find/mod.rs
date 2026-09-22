@@ -18,7 +18,7 @@ use avx2::define_find_function;
     target_feature = "bmi2",
     target_feature = "popcnt"
 ))]
-pub(super) use avx2::{find1, find2, find3, find4};
+pub(super) use avx2::{bracket_bits, find1, find2, find3, find4};
 
 #[cfg(not(all(
     target_arch = "x86_64",
@@ -40,7 +40,7 @@ use generic::define_find_function;
     target_feature = "bmi2",
     target_feature = "popcnt"
 )))]
-pub(super) use generic::{find1, find2, find3, find4};
+pub(super) use generic::{bracket_bits, find1, find2, find3, find4};
 
 mod common;
 pub(super) use common::{
