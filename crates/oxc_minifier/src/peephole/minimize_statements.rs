@@ -610,11 +610,8 @@ impl<'a> PeepholeOptimizations {
                     };
 
                     Self::minimize_statements(&mut body, ctx);
-                    let span = if body.is_empty() {
-                        if_stmt.consequent.span()
-                    } else {
-                        body[0].span()
-                    };
+                    let span =
+                        if body.is_empty() { if_stmt.consequent.span() } else { body[0].span() };
                     ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
                         Self::minimize_not(test.span(), test, ctx, true)
                     });
