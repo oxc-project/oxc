@@ -1,16 +1,8 @@
-//! Bit scans over the token bitmaps: one bit per source byte, 64 to a word.
-//!
-//! Safe counterparts of the `bitmap` primitives the pipeline stages run on raw pointers. Positions
-//! run to `n`, the source length: a forward scan that finds nothing before `n` answers `n`, and a
-//! backward one that reaches the start answers `None`.
-
-/// Is bit `i` set?
 #[inline(always)]
 pub fn get(bits: &[u64], i: usize) -> bool {
     (bits[i >> 6] >> (i & 63)) & 1 != 0
 }
 
-/// The first set bit at or after `i`, or `n`.
 #[inline(always)]
 pub fn next1(bits: &[u64], i: usize, n: usize) -> usize {
     let mut w = i >> 6;
@@ -29,7 +21,6 @@ pub fn next1(bits: &[u64], i: usize, n: usize) -> usize {
     n
 }
 
-/// The first clear bit at or after `i`, or `n`.
 #[inline(always)]
 pub fn next0(bits: &[u64], i: usize, n: usize) -> usize {
     let mut w = i >> 6;
@@ -44,7 +35,6 @@ pub fn next0(bits: &[u64], i: usize, n: usize) -> usize {
     ((w << 6) + inv.trailing_zeros() as usize).min(n)
 }
 
-/// The last set bit before `p`, or `None`.
 #[inline(always)]
 pub fn prev1(bits: &[u64], p: usize) -> Option<usize> {
     if p == 0 {

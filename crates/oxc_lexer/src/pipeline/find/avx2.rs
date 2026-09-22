@@ -122,15 +122,12 @@ macro_rules! vor {
 }
 pub(super) use vor;
 
-/// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
 #[inline]
 pub fn bracket_bits(src: &[u8], base: usize) -> u64 {
     let block = &src[base..base + 64];
     let mut out = 0u64;
     for half in 0..2 {
-        // SAFETY: `block` holds 64 bytes, so a 32-byte load at offset 0 or 32 stays inside it;
-        // the OR-fold touches no memory and needs only `avx2`, which this module's `#[cfg]`
-        // guarantees.
+        // SAFETY: a 64-byte block, loads at 0 and 32; avx2 is required by this module's cfg.
         let v = unsafe { load256(block.as_ptr(), half * 32) };
         let m = unsafe {
             vor!(veq(v, b'('), veq(v, b')'), veq(v, b'['), veq(v, b']'), veq(v, b'{'), veq(v, b'}'))

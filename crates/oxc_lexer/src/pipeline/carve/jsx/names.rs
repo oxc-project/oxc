@@ -19,9 +19,7 @@ pub(super) unsafe fn jsx_names_equal_fast(
     let e = bm_next0(word, a, n);
     let len = e - a;
     let ce = *src.add(e);
-    // The fast path compares one plain word; a comment or Unicode whitespace after it
-    // (`<A/*c*/.B>`, `<A\u{a0}.B>`) may hide a member name, so those take the trivia-aware
-    // path (a non-ASCII byte here is whitespace: `misc_pre` cleared it from `word`).
+    // A comment or Unicode whitespace after the word may hide a member name: slow path.
     if len <= 8
         && !matches!(ce, b'.' | b':' | b'-' | b'/')
         && ce < 0x80
@@ -38,8 +36,7 @@ pub(super) unsafe fn jsx_names_equal_fast(
     jsx_names_equal(src, n, a, b, lim_b)
 }
 
-/// Is the byte at `i` part of a JSX name? A non-ASCII lead byte is, unless it starts Unicode
-/// whitespace (`</a\u{a0}>` closes `a`).
+/// A non-ASCII lead byte is a name byte unless it starts Unicode whitespace.
 #[inline]
 unsafe fn is_jsx_name_byte_at(src: *const u8, i: usize) -> bool {
     let c = *src.add(i);
@@ -51,9 +48,6 @@ unsafe fn jsx_name_continues_after(src: *const u8, lim: usize, i: usize) -> bool
     t < lim && matches!(*src.add(t), b'.' | b':')
 }
 
-/// [`jsx_skip_trivia`] with the hot shapes inline: nothing to skip (`<div`), or plain spaces
-/// before a name byte (`<T extends`). Anything else (a comment, other whitespace, a
-/// non-ASCII lead) takes the full skip. Kept inline: this runs once per JSX element.
 #[inline(always)]
 pub(super) unsafe fn jsx_skip_trivia_fast(src: *const u8, n: usize, mut i: usize) -> usize {
     while i < n && *src.add(i) == b' ' {

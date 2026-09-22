@@ -43,8 +43,6 @@ pub struct Lanes {
     /// pure-ASCII input.
     pub unicode_leads: Vec<u32>,
     pub module: bool,
-    /// What the disambiguation questions keep across the lex: the context walks and the bracket
-    /// bitmap.
     pub(crate) disambiguate: crate::pipeline::DisambiguateState,
 }
 

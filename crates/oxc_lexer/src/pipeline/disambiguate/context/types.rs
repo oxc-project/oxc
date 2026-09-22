@@ -1,6 +1,3 @@
-//! Punctuation inside a type: type regions and how each kind of region ends, angle lists,
-//! and the `<` that may open one.
-
 use super::*;
 
 impl Walk {
@@ -13,8 +10,6 @@ impl Walk {
         self.operand_done();
     }
 
-    /// End the type region on top because `pos` is an expression token. Returns true if a region
-    /// was ended.
     pub(super) fn end_region_for(&mut self) -> bool {
         if self.top_kind() != FrameKind::TypeRegion {
             return false;
@@ -32,7 +27,7 @@ impl Walk {
         match c {
             b'(' => {
                 if top == FrameKind::TypeRegion && self.top().atom && self.top().state == R_EXPR {
-                    // `x as T (` cannot continue the type.
+                    // x as T ( cannot continue the type.
                     self.end_region_for();
                     self.open_paren();
                     return pos + 1;
@@ -92,10 +87,10 @@ impl Walk {
             }
             b'{' => {
                 if top == FrameKind::TypeRegion && self.top().atom {
-                    // A body follows a completed type (`): T {`).
+                    // A body follows a completed type (): T {).
                     let r = self.pop();
                     if r.state == R_INTERFACE {
-                        // `interface X extends Y {`: the body.
+                        // interface X extends Y {: the body.
                         let f = self.push(FrameKind::TypeLit);
                         f.decl = true;
                         f.is_value = false;
@@ -140,8 +135,7 @@ impl Walk {
             }
             b'<' => {
                 if keyword_type(self.prev_kw) {
-                    // `this` / `any` / `null`... take no type arguments: the type is over and
-                    // this `<` is a comparison.
+                    // this / any / null... take no type arguments: this < compares.
                     self.end_region_for();
                     self.operand_done();
                     return pos + 1;
@@ -158,7 +152,7 @@ impl Walk {
                     self.close_angle();
                     return pos + 1;
                 }
-                // Relational `>` after `x as T`: the type is over.
+                // Relational > after x as T: the type is over.
                 self.end_region_for();
                 self.operand_done();
                 pos + len
@@ -190,7 +184,7 @@ impl Walk {
             }
             b'=' => {
                 if len == 2 {
-                    // `=>` continues a function type only right after its parameter list.
+                    // => continues a function type only right after its parameter list.
                     if top == FrameKind::TypeRegion && self.top().inner {
                         self.type_operator();
                         return pos + 2;
@@ -233,7 +227,7 @@ impl Walk {
             }
             b'?' | b':' | b'|' | b'&' | b'.' | b'-' | b'+' | b'*' => {
                 if len >= 2 && matches!(c, b'|' | b'&' | b'?') && tokens.src[pos + 1] == c {
-                    // `||` / `&&` / `??`: expression operators.
+                    // || / && / ??: expression operators.
                     self.end_region_for();
                     self.operand_done();
                     return pos + len;
@@ -254,28 +248,27 @@ impl Walk {
                     && self.top().state == R_EXPR
                     && self.top().open_questions == 0
                 {
-                    // `x as T ? a : b`: a conditional expression.
+                    // x as T ? a : b: a conditional expression.
                     self.end_region_for();
                     self.question(tokens, pos);
                     return pos + 1;
                 }
                 if c == b':' && top == FrameKind::TypeRegion && self.top().open_questions > 0 {
-                    // The `:` of a conditional type pays its `?`.
+                    // The : of a conditional type pays its ?.
                     self.top_mut().open_questions -= 1;
                 }
                 self.type_operator();
                 pos + len
             }
             b'!' => {
-                // `x as T!`: not a type token.
+                // x as T!: not a type token.
                 self.end_region_for();
                 self.set_value();
                 self.clear_prev();
                 pos + 1
             }
             _ => {
-                // Any other operator ends an expression-embedded type; in a declaration type it is
-                // an error and we treat it the same.
+                // Any other operator ends the type.
                 self.end_region_for();
                 self.operand_done();
                 pos + len
@@ -287,15 +280,14 @@ impl Walk {
         let a = self.pop();
         match a.state {
             A_ASSERT => {
-                // Type assertion `<T>`: an operand follows.
+                // Type assertion <T>: an operand follows.
                 if self.top_kind() == FrameKind::TypeRegion && self.top().state == R_ASSERT {
                     self.pop();
                 }
                 self.operand_done();
             }
             A_EXPR_ARGS => {
-                // Type arguments on an expression: the instantiation is a value, and no second list
-                // may follow.
+                // An instantiation is a value, and no second list may follow.
                 self.set_value();
                 self.clear_prev();
                 self.no_type_args = true;
@@ -337,7 +329,7 @@ impl Walk {
             return;
         }
         if tokens.ts && self.operand_allowed() {
-            // `<T>x` assertion / `<T,>() =>` generic arrow: a type list.
+            // <T>x assertion / <T,>() => generic arrow: a type list.
             self.open_region(R_ASSERT, false);
             let f = self.push(FrameKind::Angle);
             f.decl = false;
@@ -346,7 +338,7 @@ impl Walk {
             return;
         }
         if tokens.ts && !self.operand_allowed() && !self.no_type_args {
-            // After a value: type arguments (`f<T>(x)`) or less-than.
+            // After a value: type arguments (f<T>(x)) or less-than.
             if self.expr_type_args(tokens, pos) {
                 let f = self.push(FrameKind::Angle);
                 f.decl = false;
@@ -361,8 +353,6 @@ impl Walk {
         }
     }
 
-    /// TypeScript's speculative parse of a type-argument list in expression position, on the
-    /// forward scans `coalesce` already uses.
     pub(super) fn expr_type_args(&mut self, tokens: &Tokens, lt: usize) -> bool {
         type_args_at(tokens, lt)
     }

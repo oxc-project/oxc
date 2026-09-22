@@ -1,8 +1,10 @@
 use crate::{error::DiagCode, token::TokenKind};
 
 use crate::pipeline::disambiguate::tests::{
-    FileType, diag_codes_of, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, stream,
+    FileType, diag_codes_of, division, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, stream,
 };
+
+use crate::pipeline::disambiguate::FORWARD_SCAN_CAP;
 
 // Reduce repeated boilerplate in tests below.
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.
@@ -946,7 +948,7 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
 
 #[test]
 fn keyword_types_take_no_type_arguments() {
-    // `any<z>` is `any` then a comparison: keyword types never take arguments.
+    // any<z> is any then a comparison: keyword types never take arguments.
     for kw in [
         "any",
         "unknown",
@@ -1012,8 +1014,7 @@ fn nested_type_reference_after_a_line_break_takes_no_arguments() {
 
 #[test]
 fn tsx_type_parameter_list_signals_cross_trivia() {
-    // A comment between the parameter name and its `,` / `=` / `extends` still marks a list;
-    // an `extends` attribute followed by a comment still marks a tag.
+    // A comment before , / = / extends still marks a list; after an extends attr, a tag.
     let tsx = |code: &str| kinds_of(code, ScriptTSX);
     for (code, plain) in [
         ("x = <T //c\nextends U>(a: T) => a;", "x = <T extends U>(a: T) => a;"),
@@ -1033,8 +1034,7 @@ fn tsx_type_parameter_list_signals_cross_trivia() {
 
 #[test]
 fn keyword_type_followed_by_a_dot_is_a_member_access() {
-    // `this`, `null`, `true`, `false` and `void` are whole types: `this.x` is not a type, so the
-    // speculative list fails and the run is a shift. `any.x` and `string.x` are qualified names.
+    // this.x is not a type, so the list fails; any.x and string.x are qualified names.
     for kw in ["this", "null", "true", "false", "void"] {
         gt_run_fused(&format!("x = a<b<{kw}.y>>(1);"));
     }
@@ -1058,9 +1058,7 @@ fn super_is_a_type_only_in_a_type_query() {
 
 #[test]
 fn keywords_as_names_inside_a_type_list() {
-    // `let` is an identifier in a type; a reserved word is refused only where a list element
-    // starts (tsc's `isStartOfType`), and read as a name elsewhere: a property, a reference
-    // after `=>`.
+    // A reserved word is refused only where a list element starts (tsc's isStartOfType).
     gt_run_split("x = f<A<(let: T) => U>>(1);");
     gt_run_split("x = f<A<let>>(1);");
     gt_run_split("x = f<A<{ return: T; class?: U }>>(1);");
@@ -1071,7 +1069,7 @@ fn keywords_as_names_inside_a_type_list() {
 
 #[test]
 fn escaped_identifier_follower_starts_an_expression() {
-    // An identifier written with a Unicode escape follows a `>` run like any other name.
+    // An identifier written with a Unicode escape follows a > run like any other name.
     gt_run_fused(r"x = f<T<U>>\u0061;");
     gt_run_fused(r"x = f<T<U>> \u{61};");
     gt_run_split("x = f<T<U>>\n\\u0061;");
@@ -1079,8 +1077,7 @@ fn escaped_identifier_follower_starts_an_expression() {
 
 #[test]
 fn line_break_before_extends_inside_a_type_parameter_list() {
-    // Inside a `<...>` list a line break is trivia, so no statement ends there. The template
-    // literal type keeps the run from being settled without a walk.
+    // Inside a <...> list a line break is trivia.
     for code in [
         "f = <T\nextends Replace<A, `{${string}}`, B>>(x: T) => 1;",
         "f = <T\nextends Replace<A, B>>(x: T) => 1;",
@@ -1089,4 +1086,70 @@ fn line_break_before_extends_inside_a_type_parameter_list() {
     ] {
         gt_run_split(code);
     }
+}
+
+#[test]
+fn type_argument_lists_longer_than_the_bounded_scan() {
+    // Past FORWARD_SCAN_CAP the closer comes from the memoized pass.
+    let members: String = (0..400).map(|i| format!("a{i}: string; ")).collect();
+    let big = format!("{{ {members}}}");
+    assert!(big.len() > FORWARD_SCAN_CAP);
+    gt_run_split(&format!("f<A<{big}>>(x);"));
+    gt_run_split(&format!("new F<A<{big}>>();"));
+    gt_run_split(&format!("a?.f<A<{big}>>();"));
+    gt_run_split(&format!("f<A<{big}>>`t`;"));
+    gt_run_split(&format!("x = f<A<{big}>>;"));
+    division(&format!("x = f<{big}> / 2 / 1;"), ScriptTS);
+    let values: String = (0..400).map(|i| format!("a{i}: 1 + 1, ")).collect();
+    gt_run_fused(&format!("x = a < b < {{ {values}}} >> c;"));
+}
+
+#[test]
+fn lt_lt_openers_around_lists_longer_than_the_bounded_scan() {
+    let members: String = (0..6000).map(|i| format!("a{i}: string; ")).collect();
+    let big = format!("{{ {members}}}");
+    for code in [
+        format!("let x: Array<<T>(x: T) => {big}> = y;"),
+        format!("let x: Array<<T extends {big}>(x: T) => T> = y;"),
+    ] {
+        let ks = kinds_of(&code, ScriptTS);
+        assert!(!ks.contains(&TokenKind::LShift), "{} tokens", ks.len());
+    }
+}
+
+#[test]
+fn lt_lt_openers_around_a_parameter_list_longer_than_the_bounded_scan() {
+    let members: String = (0..6000).map(|i| format!("a{i}: string; ")).collect();
+    let code = format!("let x: Array<<T>(a: {{ {members}}}) => T> = y;");
+    let ks = kinds_of(&code, ScriptTS);
+    assert!(!ks.contains(&TokenKind::LShift), "{} tokens", ks.len());
+}
+
+#[test]
+fn tsx_function_type_with_trivia_before_its_parameters() {
+    let plain = kinds_of("let f: <T> (x: T) => T;", ScriptTSX);
+    for code in [
+        "let f: <T> /*c*/ (x: T) => T;",
+        "let f: <T> // c\n(x: T) => T;",
+        "let f: <T>\u{a0}(x: T) => T;",
+    ] {
+        assert_eq!(kinds_of(code, ScriptTSX), plain, "{code:?}");
+    }
+}
+
+#[test]
+fn jsx_element_type_arguments_with_deeply_nested_template_types() {
+    let deep = format!("{}T{}", "`${".repeat(33), "}`".repeat(33));
+    let code = format!("x = <Foo<{deep}> />;");
+    assert!(diag_codes_of(&code, ScriptTSX).is_empty(), "{code}");
+    let ks = kinds_of(&code, ScriptTSX);
+    assert_eq!(ks.iter().filter(|k| **k == TokenKind::JsxLt).count(), 1, "{ks:?}");
+    assert!(ks.contains(&TokenKind::JsxTagEnd), "{ks:?}");
+}
+
+#[test]
+fn tsx_template_type_with_deeply_nested_substitutions_in_expression_type_arguments() {
+    let deep = format!("{}U{}", "`${".repeat(10), "}`".repeat(10));
+    let code = format!("x = f<`${{<T>(x: T) => {deep}}}`>(1);");
+    assert!(diag_codes_of(&code, ScriptTSX).is_empty(), "{code}");
 }

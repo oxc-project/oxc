@@ -1,37 +1,23 @@
-//! Anchors: tokens whose context is certain from their neighbours alone, where a bounded walk
-//! may start. Statement keywords that are not property names, members or JSX attributes; a
-//! `function` or `class` whose token before says declaration or expression; the `(` whose group
-//! holds the query when the token before makes it an expression's.
-
 use crate::token::{OP_KIND_BASE, tk};
 
 use super::*;
-use crate::pipeline::disambiguate::common::Prev;
+use crate::pipeline::disambiguate::{RULE_SCAN_CAP, common::Prev};
 
-/// Token cap for locating the JSX tag around a keyword.
-pub(super) const TAG_SCAN_CAP: u32 = 256;
-
-/// Where a bounded walk starts.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(super) enum Anchor {
-    /// A statement starts at the token here.
     Stmt(usize),
-    /// An operand starts at the token here: an expression-position `function` / `class`, or the
-    /// `(` whose group holds the query.
     Expr(usize),
-    /// The bounded walk already covers this point and continues from where it stopped.
     Continue,
 }
 
-/// Is the word at `p` an attribute inside a JSX opening tag? Scans back over attribute names,
-/// values and `=` to the tag's `<`.
 pub(super) fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
     let mut q = tokens.prev_sig(p);
     let mut steps = 0u32;
     while let Some(w) = q {
         steps += 1;
-        if steps > TAG_SCAN_CAP {
-            return false;
+        if steps > RULE_SCAN_CAP {
+            // Out of budget: assume a tag, which only costs an anchor.
+            return true;
         }
         let k = tokens.base_kind(w);
         if k == tk!(JsxLt) {
@@ -66,7 +52,6 @@ pub(super) fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
     false
 }
 
-/// Can the token at `f` follow a statement keyword but not a property, member or attribute name?
 pub(super) fn keyword_follower(tokens: &Tokens, f: usize) -> bool {
     let k = tokens.base_kind(f);
     if k >= OP_KIND_BASE {
@@ -86,8 +71,6 @@ pub(super) fn keyword_follower(tokens: &Tokens, f: usize) -> bool {
     )
 }
 
-/// Does a statement start at `p` as far as the token before it can tell? `}` needs the JSX check
-/// (an attribute after a `{...}` value); a line break allows a statement after anything else.
 pub(super) fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
     match prev {
         Prev::None => true,
@@ -101,9 +84,6 @@ pub(super) fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
     }
 }
 
-/// `function` / `class` at `at` (`async` for `async function`): a declaration or an expression,
-/// read off the token before. `named` says a name follows (a label's `:` then precedes a
-/// declaration, a property's an expression; only a name allows ASI to start a declaration).
 pub(super) fn fn_class_anchor(
     tokens: &Tokens,
     at: usize,
@@ -128,7 +108,7 @@ pub(super) fn fn_class_anchor(
                     stmt
                 }
             }
-            // `if (x) function f() {}`; a decorator's `)` before a class expression.
+            // if (x) function f() {}; a decorator's ) before a class expression.
             b')' => {
                 if !class || (named && broken(q)) {
                     stmt
@@ -190,9 +170,6 @@ pub(super) fn fn_class_anchor(
     }
 }
 
-/// `function` at `at` (or the `async` before it), with the token after `function` at `f`: a named
-/// function is a declaration or an expression by its context; an anonymous one is an expression,
-/// or a method named `function`, which is no anchor.
 pub(super) fn function_anchor(tokens: &Tokens, at: usize, prev: Prev, f: usize) -> Option<Anchor> {
     if f >= tokens.n {
         return None;
@@ -211,7 +188,6 @@ pub(super) fn function_anchor(tokens: &Tokens, at: usize, prev: Prev, f: usize) 
     }
 }
 
-/// Is the word at `p` an anchor? Also its keyword code (0: a plain name).
 pub(super) fn anchor_at(tokens: &Tokens, p: usize) -> (u8, Option<Anchor>) {
     let e = tokens.next_start(p + 1);
     // Keywords are lowercase words of up to ten letters: skip the hash for the rest.
@@ -331,23 +307,19 @@ pub(super) fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<A
     }
 }
 
-/// Is the significant token after the word at `f` one of `ops`?
 pub(super) fn second_follower(tokens: &Tokens, f: usize, ops: &[u8]) -> bool {
     let e = tokens.next_start(f + 1);
     let s = tokens.next_sig(e);
     s < tokens.n && tokens.base_kind(s) >= OP_KIND_BASE && ops.contains(&tokens.src[s])
 }
 
-/// Keyword code of the significant word after the word at `f` (0 if none).
 pub(super) fn second_word(tokens: &Tokens, f: usize) -> u8 {
     let e = tokens.next_start(f + 1);
     let s = tokens.next_sig(e);
     if s < tokens.n && tokens.base_kind(s) == tk!(Ident) { tokens.ident_kw(s) } else { 0 }
 }
 
-/// After the `}` at `c`: the position of a token that must start a statement or member there
-/// (a name, string, number, private name or decorator; not `as` / `satisfies` / `in` /
-/// `instanceof`, which continue a value), or None.
+/// The token after the } at c if it must start a statement or member, else None.
 pub(super) fn brace_boundary(tokens: &Tokens, c: usize) -> Option<usize> {
     let f = tokens.next_sig(c + 1);
     if f >= tokens.n {
@@ -365,9 +337,7 @@ pub(super) fn brace_boundary(tokens: &Tokens, c: usize) -> Option<usize> {
     if ok { Some(f) } else { None }
 }
 
-/// The `(` at `p` holds the query: where the walk starts when the token before makes the paren an
-/// expression's (a call, a grouping, a statement head). None when it may be a type's, such as after
-/// `:`, `=`, `,`, `<` or `=>`: the walk then reaches it from an anchor further back.
+/// Where the walk starts when the ( at p is an expression's; None when it may be a type's.
 pub(super) fn paren_anchor(tokens: &Tokens, p: usize) -> Option<Anchor> {
     match tokens.prev_token(p) {
         Prev::None => Some(Anchor::Expr(p)),

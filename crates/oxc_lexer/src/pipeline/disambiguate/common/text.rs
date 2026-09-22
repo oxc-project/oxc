@@ -1,12 +1,3 @@
-//! Raw source text on the forward scans: line terminators, block comments and Unicode whitespace,
-//! read a byte at a time.
-//!
-//! The pipeline's finders do the same work with SIMD over raw pointers. These run on the cold
-//! paths of the type-list speculation (a comment inside a `<...>` list), where a scalar loop costs
-//! nothing measurable. Every read is through a slice: the source carries a zeroed pad, so looking
-//! one or two bytes past a position below `n` stays in bounds.
-
-/// The first line terminator at or after `i` (LF, CR, LS or PS), or `n`.
 pub fn line_terminator_after(src: &[u8], n: usize, mut i: usize) -> usize {
     while i < n {
         match src[i] {
@@ -18,7 +9,6 @@ pub fn line_terminator_after(src: &[u8], n: usize, mut i: usize) -> usize {
     n
 }
 
-/// The `/` of the first `*/` at or after `i`, or `n` when the comment is unterminated.
 pub fn block_comment_end(src: &[u8], n: usize, mut i: usize) -> usize {
     while i + 1 < n {
         if src[i] == b'*' && src[i + 1] == b'/' {
@@ -29,9 +19,7 @@ pub fn block_comment_end(src: &[u8], n: usize, mut i: usize) -> usize {
     n
 }
 
-/// Byte length (2 or 3) of the multi-byte ECMAScript WhiteSpace or LineTerminator at `p`, or 0.
-/// The non-ASCII set: U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F,
-/// U+3000, U+FEFF.
+/// 2 or 3 for a non-ASCII WhiteSpace or LineTerminator at p, else 0.
 #[inline]
 pub fn unicode_ws_len(src: &[u8], p: usize) -> usize {
     let c1 = src[p + 1];

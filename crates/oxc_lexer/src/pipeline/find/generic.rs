@@ -106,7 +106,6 @@ macro_rules! define_find_function {
 }
 pub(super) use define_find_function;
 
-/// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
 #[inline]
 pub fn bracket_bits(src: &[u8], base: usize) -> u64 {
     let mut out = 0u64;
