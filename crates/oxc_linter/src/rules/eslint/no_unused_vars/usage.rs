@@ -477,6 +477,19 @@ impl<'a> Symbol<'_, 'a> {
                 {
                     return false;
                 }
+                AstKind::NewExpression(new_expr)
+                    if new_expr.callee.span().contains_inclusive(ref_span)
+                        || new_expr
+                            .arguments_span()
+                            .is_some_and(|span| span.contains_inclusive(ref_span)) =>
+                {
+                    return false;
+                }
+                AstKind::ComputedMemberExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_) => {
+                    is_used_by_others = true;
+                }
                 // When symbol is being assigned a new value, we flag the reference
                 // as only affecting itself until proven otherwise.
                 AstKind::UpdateExpression(UpdateExpression { argument, .. })
@@ -560,6 +573,30 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::WhileStatement(WhileStatement { test, .. })
                 | AstKind::DoWhileStatement(DoWhileStatement { test, .. })
                     if test.span().contains_inclusive(ref_span) =>
+                {
+                    return false;
+                }
+                AstKind::ConditionalExpression(expr)
+                    if expr.test.span().contains_inclusive(ref_span) =>
+                {
+                    is_used_by_others = true;
+                }
+                AstKind::LogicalExpression(expr)
+                    if expr.left.span().contains_inclusive(ref_span) =>
+                {
+                    is_used_by_others = true;
+                }
+                AstKind::SwitchStatement(stmt)
+                    if stmt.discriminant.span().contains_inclusive(ref_span) =>
+                {
+                    return false;
+                }
+
+                AstKind::SwitchCase(case)
+                    if case
+                        .test
+                        .as_ref()
+                        .is_some_and(|test| test.span().contains_inclusive(ref_span)) =>
                 {
                     return false;
                 }
@@ -753,13 +790,21 @@ impl<'a> Symbol<'_, 'a> {
                 {
                     return false;
                 }
-                // x && (a = x)
+                // The left operand controls whether the right operand is evaluated,
+                // even if the logical expression's result is discarded.
                 (AstKind::LogicalExpression(expr), _)
-                    if expr.left.span().contains_inclusive(ref_span())
-                        && expr.right.get_inner_expression().is_assignment() =>
+                    if expr.left.span().contains_inclusive(ref_span()) =>
                 {
                     return false;
                 }
+                // Reading a property consumes its object and key, even if the
+                // member expression's result is discarded.
+                (
+                    AstKind::ComputedMemberExpression(_)
+                    | AstKind::StaticMemberExpression(_)
+                    | AstKind::PrivateFieldExpression(_),
+                    _,
+                ) => return false,
                 // x instanceof Foo && (a = x)
                 (AstKind::BinaryExpression(expr), _)
                     if expr.operator.is_relational()
