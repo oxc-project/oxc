@@ -1813,6 +1813,15 @@ pub struct TSNamespaceExportDeclaration<'a> {
     pub id: IdentifierName<'a>,
 }
 
+/// An expression with instantiated type arguments.
+///
+/// ## Example
+///
+/// ```ts
+/// (foo<Bar>)()
+///     ^^^^^ type arguments
+///  ^^^^^^^^ expression
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
@@ -1820,7 +1829,13 @@ pub struct TSNamespaceExportDeclaration<'a> {
 pub struct TSInstantiationExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// The expression being instantiated with type arguments.
+    ///
+    /// Example: `foo` in `(foo<Bar>)()`
     pub expression: Expression<'a>,
+    /// The type arguments used to instantiate the expression.
+    ///
+    /// Example: `X` and `Y` in `(foo<X, Y>)()`
     pub type_arguments: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 

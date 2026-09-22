@@ -1189,8 +1189,8 @@ impl<'a> Expression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_arguments`
+    /// * `expression`: The expression being instantiated with type arguments.
+    /// * `type_arguments`: The type arguments used to instantiate the expression.
     #[inline]
     pub fn new_ts_instantiation_expression(
         span: Span,
@@ -2717,8 +2717,8 @@ impl<'a> ArrayExpressionElement<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_arguments`
+    /// * `expression`: The expression being instantiated with type arguments.
+    /// * `type_arguments`: The type arguments used to instantiate the expression.
     #[inline]
     pub fn new_ts_instantiation_expression(
         span: Span,
@@ -4152,8 +4152,8 @@ impl<'a> PropertyKey<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_arguments`
+    /// * `expression`: The expression being instantiated with type arguments.
+    /// * `type_arguments`: The type arguments used to instantiate the expression.
     #[inline]
     pub fn new_ts_instantiation_expression(
         span: Span,
@@ -6094,8 +6094,8 @@ impl<'a> Argument<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_arguments`
+    /// * `expression`: The expression being instantiated with type arguments.
+    /// * `type_arguments`: The type arguments used to instantiate the expression.
     #[inline]
     pub fn new_ts_instantiation_expression(
         span: Span,
@@ -11430,8 +11430,8 @@ impl<'a> ForStatementInit<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_arguments`
+    /// * `expression`: The expression being instantiated with type arguments.
+    /// * `type_arguments`: The type arguments used to instantiate the expression.
     #[inline]
     pub fn new_ts_instantiation_expression(
         span: Span,
@@ -14492,8 +14492,8 @@ impl<'a> ArrowFunctionBody<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_arguments`
+    /// * `expression`: The expression being instantiated with type arguments.
+    /// * `type_arguments`: The type arguments used to instantiate the expression.
     #[inline]
     pub fn new_ts_instantiation_expression(
         span: Span,
@@ -17961,8 +17961,8 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_arguments`
+    /// * `expression`: The expression being instantiated with type arguments.
+    /// * `type_arguments`: The type arguments used to instantiate the expression.
     #[inline]
     pub fn new_ts_instantiation_expression(
         span: Span,
@@ -20152,8 +20152,8 @@ impl<'a> JSXExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_arguments`
+    /// * `expression`: The expression being instantiated with type arguments.
+    /// * `type_arguments`: The type arguments used to instantiate the expression.
     #[inline]
     pub fn new_ts_instantiation_expression(
         span: Span,
@@ -27159,8 +27159,8 @@ impl<'a> TSInstantiationExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_arguments`
+    /// * `expression`: The expression being instantiated with type arguments.
+    /// * `type_arguments`: The type arguments used to instantiate the expression.
     #[inline]
     pub fn new(
         span: Span,
@@ -27184,8 +27184,8 @@ impl<'a> TSInstantiationExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_arguments`
+    /// * `expression`: The expression being instantiated with type arguments.
+    /// * `type_arguments`: The type arguments used to instantiate the expression.
     #[inline]
     pub fn boxed(
         span: Span,
