@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.151.0] - 2026-09-21
+
+### 🐛 Bug Fixes
+
+- cd7228f minifier: Add missing negation for boolean literal (#26847) (Armano)
+
+### ⚡ Performance
+
+- 3f1e3aa minifier: Preallocate stmts vec size to avoid excesive reallocs (#26856) (Armano)
+- 5f72954 minifier: Reduce allocations when processing if statements (#26666) (Armano)
+
 ## [0.150.0] - 2026-09-14
 
 ### 🚀 Features

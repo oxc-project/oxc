@@ -21,7 +21,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use tracing::instrument;
 
-use oxc_config::{ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path};
+use oxc_config::{ConfigDiscovery, DiscoveredConfigFile, is_js_config_path, vp_version};
 #[cfg(feature = "napi")]
 use oxc_formatter::JsFormatOptions;
 #[cfg(feature = "napi")]
@@ -43,24 +43,18 @@ use super::{
     utils,
 };
 
-const OXFMT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
-    json: ".oxfmtrc.json",
-    jsonc: ".oxfmtrc.jsonc",
-    js: &["oxfmt.config.ts", "oxfmt.config.mts"],
-    vite: "vite.config.ts",
-};
-
 pub fn config_discovery() -> ConfigDiscovery {
-    ConfigDiscovery::new(
-        OXFMT_CONFIG_FILE_NAMES,
-        cfg!(feature = "napi") && utils::vp_version().is_some(),
-    )
+    if cfg!(feature = "napi") && vp_version().is_some() {
+        ConfigDiscovery::vite_plus()
+    } else {
+        ConfigDiscovery::oxfmt()
+    }
 }
 
 /// Build a `ConfigResolver` from a single discovered config file (no ancestor walk,
 /// no `build_and_validate`).
 ///
-/// NOTE: Returns `Ok(None)` when the discovered file is a `vite.config.ts` whose
+/// NOTE: Returns `Ok(None)` when the discovered file is a `vite.config.*` whose
 /// default export lacks a `.fmt` field.
 /// Callers decide how to handle it:
 /// - [`ConfigResolver::from_config`] (explicit `--config`): treat as an error

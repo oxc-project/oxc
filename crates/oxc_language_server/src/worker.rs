@@ -4,12 +4,12 @@ use rustc_hash::FxHashSet;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
-    jsonrpc::ErrorCode,
-    ls_types::{
-        CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions, FileEvent,
-        FileSystemWatcher, GlobPattern, OneOf, Registration, RelativePattern, TextEdit,
+    gen_lsp_types::{
+        BaseUri, CodeActionResponse, Diagnostic, DidChangeWatchedFilesRegistrationOptions,
+        FileEvent, FileSystemWatcher, GlobPattern, Registration, RelativePattern, TextEdit,
         Unregistration, Uri, WatchKind, WorkspaceEdit,
     },
+    jsonrpc::ErrorCode,
 };
 use tracing::debug;
 
@@ -231,7 +231,7 @@ impl WorkspaceWorker {
     pub async fn get_code_actions_or_commands(
         &self,
         params: CodeActionParams,
-    ) -> Vec<CodeActionOrCommand> {
+    ) -> Vec<CodeActionResponse> {
         let mut actions = Vec::new();
         if let Some(tool) = self.tool.read().await.as_ref() {
             actions.extend(tool.get_code_actions_or_commands(params));
@@ -393,7 +393,7 @@ impl WorkspaceWorker {
 /// Create an unregistration for a file system watcher
 fn unregistration_watcher_id(root_uri: &Uri) -> Unregistration {
     Unregistration {
-        id: format!("watcher-{}", root_uri.as_str()),
+        id: format!("watcher-{root_uri}"),
         method: "workspace/didChangeWatchedFiles".to_string(),
     }
 }
@@ -401,23 +401,23 @@ fn unregistration_watcher_id(root_uri: &Uri) -> Unregistration {
 /// Create a registration for a file system watcher for the given patterns
 fn registration_watcher_id(root_uri: &Uri, patterns: Vec<String>) -> Registration {
     Registration {
-        id: format!("watcher-{}", root_uri.as_str()),
+        id: format!("watcher-{root_uri}"),
         method: "workspace/didChangeWatchedFiles".to_string(),
         register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
             watchers: patterns
                 .into_iter()
                 .map(|pattern| {
                     let glob_pattern = if Path::new(&pattern).is_absolute() {
-                        GlobPattern::String(pattern)
+                        GlobPattern::Pattern(pattern)
                     } else {
-                        GlobPattern::Relative(RelativePattern {
-                            base_uri: OneOf::Right(root_uri.clone()),
+                        GlobPattern::RelativePattern(RelativePattern {
+                            base_uri: BaseUri::Uri(root_uri.clone()),
                             pattern,
                         })
                     };
                     FileSystemWatcher {
                         glob_pattern,
-                        kind: Some(WatchKind::all()), // created, deleted, changed
+                        kind: Some(WatchKind::Custom(7)), // created, deleted, changed
                     }
                 })
                 .collect::<Vec<_>>(),
@@ -427,19 +427,17 @@ fn registration_watcher_id(root_uri: &Uri, patterns: Vec<String>) -> Registratio
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
-    use std::sync::Arc;
+    use std::{str::FromStr, sync::Arc};
     use tower_lsp_server::{
-        jsonrpc::ErrorCode,
-        ls_types::{
-            CodeActionContext, CodeActionOrCommand, FileChangeType, FileEvent, MessageType, Range,
-            Uri,
+        gen_lsp_types::{
+            CodeActionContext, CodeActionResponse, FileChangeType, FileEvent, Message, MessageType,
+            Range, Uri,
         },
+        jsonrpc::ErrorCode,
     };
 
     #[cfg(unix)]
-    use tower_lsp_server::ls_types::{DidChangeWatchedFilesRegistrationOptions, GlobPattern};
+    use tower_lsp_server::gen_lsp_types::{DidChangeWatchedFilesRegistrationOptions, GlobPattern};
 
     use crate::{
         ClientMessage, CodeActionParams, LanguageId, TextDocument, ToolBuilder,
@@ -514,9 +512,9 @@ mod tests {
 
         assert_eq!(options.watchers.len(), 1);
         match &options.watchers[0].glob_pattern {
-            GlobPattern::String(pattern) => assert_eq!(pattern, "/etc/**/*.json"),
-            GlobPattern::Relative(_) => {
-                panic!("Expected absolute glob to be encoded as GlobPattern::String")
+            GlobPattern::Pattern(pattern) => assert_eq!(pattern, "/etc/**/*.json"),
+            GlobPattern::RelativePattern(_) => {
+                panic!("Expected absolute glob to be encoded as GlobPattern::Pattern")
             }
         }
     }
@@ -566,7 +564,7 @@ mod tests {
             .did_change_watched_files(
                 &FileEvent {
                     uri: Uri::from_str("file:///root/unknown.file").unwrap(),
-                    typ: FileChangeType::CHANGED,
+                    kind: FileChangeType::Changed,
                 },
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
@@ -583,7 +581,7 @@ mod tests {
             .did_change_watched_files(
                 &FileEvent {
                     uri: Uri::from_str("file:///root/watcher.config").unwrap(),
-                    typ: FileChangeType::CHANGED,
+                    kind: FileChangeType::Changed,
                 },
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
@@ -602,7 +600,7 @@ mod tests {
             .did_change_watched_files(
                 &FileEvent {
                     uri: Uri::from_str("file:///root/tool.config").unwrap(),
-                    typ: FileChangeType::CHANGED,
+                    kind: FileChangeType::Changed,
                 },
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
@@ -621,7 +619,7 @@ mod tests {
             .did_change_watched_files(
                 &FileEvent {
                     uri: Uri::from_str("file:///root/tool.config").unwrap(),
-                    typ: FileChangeType::CHANGED,
+                    kind: FileChangeType::Changed,
                 },
                 &mut needs_diagnostic_refresh,
                 None,
@@ -719,7 +717,7 @@ mod tests {
             result.client_messages,
             vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
-                r#type: MessageType::WARNING,
+                r#type: MessageType::Warning,
             }]
         );
     }
@@ -738,7 +736,7 @@ mod tests {
             .did_change_watched_files(
                 &FileEvent {
                     uri: Uri::from_str("file:///root/misconfiguration.config").unwrap(),
-                    typ: FileChangeType::CHANGED,
+                    kind: FileChangeType::Changed,
                 },
                 &mut needs_diagnostic_refresh,
                 None,
@@ -753,7 +751,7 @@ mod tests {
             result.client_messages,
             vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
-                r#type: MessageType::WARNING,
+                r#type: MessageType::Warning,
             }]
         );
     }
@@ -788,7 +786,7 @@ mod tests {
             .await;
 
         assert_eq!(actions.len(), 1);
-        if let CodeActionOrCommand::CodeAction(action) = &actions[0] {
+        if let CodeActionResponse::CodeAction(action) = &actions[0] {
             assert_eq!(action.title, "Code Action title");
         } else {
             panic!("Expected CodeAction");
@@ -816,7 +814,7 @@ mod tests {
         assert_eq!(diagnostics_no_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_no_content[0].1[0].message,
-            "Fake diagnostic for content: <no content>"
+            Message::String("Fake diagnostic for content: <no content>".to_string())
         );
 
         let diagnostics_with_content = worker
@@ -833,7 +831,7 @@ mod tests {
         assert_eq!(diagnostics_with_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_with_content[0].1[0].message,
-            "Fake diagnostic for content: helloworld"
+            Message::String("Fake diagnostic for content: helloworld".to_string())
         );
 
         let no_diagnostics = worker
@@ -880,7 +878,7 @@ mod tests {
         assert_eq!(diagnostics_no_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_no_content[0].1[0].message,
-            "Fake diagnostic for content: <no content>"
+            Message::String("Fake diagnostic for content: <no content>".to_string())
         );
 
         let diagnostics_with_content = worker
@@ -897,7 +895,7 @@ mod tests {
         assert_eq!(diagnostics_with_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_with_content[0].1[0].message,
-            "Fake diagnostic for content: helloworld"
+            Message::String("Fake diagnostic for content: helloworld".to_string())
         );
 
         let no_diagnostics = worker
@@ -943,7 +941,7 @@ mod tests {
         assert_eq!(diagnostics_no_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_no_content[0].1[0].message,
-            "Fake diagnostic for content: <no content>"
+            Message::String("Fake diagnostic for content: <no content>".to_string())
         );
 
         let diagnostics_with_content = worker
@@ -960,7 +958,7 @@ mod tests {
         assert_eq!(diagnostics_with_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_with_content[0].1[0].message,
-            "Fake diagnostic for content: helloworld"
+            Message::String("Fake diagnostic for content: helloworld".to_string())
         );
 
         let no_diagnostics = worker

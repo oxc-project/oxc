@@ -1,6 +1,6 @@
 {
   "name": "oxfmt",
-  "version": "0.68.0",
+  "version": "0.70.0",
   "description": "Formatter for the JavaScript Oxidation Compiler",
   "keywords": [
     "formatter",
@@ -42,7 +42,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "tinypool": "2.1.2"
+    "tinypool": "2.2.0"
   },
   "peerDependencies": {
     "svelte": "^5.0.0",
