@@ -303,7 +303,9 @@ impl NoUnusedVars {
                     }
                 }
 
-                FoundStatus::NotFound
+                arr.rest.as_ref().map_or(FoundStatus::NotFound, |rest| {
+                    self.search_binding_pattern(target, &rest.argument)
+                })
             }
         }
     }

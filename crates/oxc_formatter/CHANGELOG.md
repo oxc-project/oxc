@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 6c8a862 formatter: Glue `fbt` component and text (#26616) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 68ce610 formatter: Keep after-operator comments in place (#26725) (leaysgur)
+- f91ad92 formatter: Let union place leading comments at `as|satisfies` (#26674) (leaysgur)
+- ea164c0 formatter: Fix block comment with RHS assignment and typecast-ed arrow body (#26672) (leaysgur)
+- 406ff1f formatter: Preserve redundant parens for `TSTypeAliasDeclaration` with suppress comment (#26671) (leaysgur)
+
+### 📚 Documentation
+
+- 095a97c formatter: Unify DIVERGENCES reference (#26748) (leaysgur)
+
 ## [0.68.0] - 2026-09-14
 
 ### 🐛 Bug Fixes

@@ -264,6 +264,18 @@ if (true) {
 --------------------"
 `;
 
+exports[`LSP formatting > config options > should ignore nested vite config in Vite+ mode 1`] = `
+"--- URI -----------
+file://<fixture>/config-vite-nested-ignored/child/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1
+
+--------------------"
+`;
+
 exports[`LSP formatting > config options in nested workspace folders > should respect nested oxfmt config with nested workspace folders nested-workspaces/test.ts 1`] = `
 "--- URI -----------
 file://<fixture>/nested-workspaces/test.ts
