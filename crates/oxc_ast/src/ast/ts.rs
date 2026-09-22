@@ -1743,6 +1743,20 @@ pub struct TSExternalModuleReference<'a> {
     pub expression: StringLiteral<'a>,
 }
 
+/// TypeScript non-null expression (`!`)
+///
+/// This expression assumes that the type of the inner expression is not null
+/// and changes it from `T | null` to just `T`.
+///
+/// ## Example
+///
+/// ```ts
+/// x!
+/// ^ expression
+///
+/// a.b.c!
+/// ^^^^^ expression
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
@@ -1750,6 +1764,7 @@ pub struct TSExternalModuleReference<'a> {
 pub struct TSNonNullExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// The expression to assume as not null, e.g., `x` in `x!`.
     pub expression: Expression<'a>,
 }
 
