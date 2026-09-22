@@ -1013,9 +1013,7 @@ impl ServerLinter {
 mod tests_builder {
     use std::fs;
 
-    use tower_lsp_server::gen_lsp_types::{
-        CodeActionKind, CodeActionProvider, ServerCapabilities,
-    };
+    use tower_lsp_server::gen_lsp_types::{CodeActionKind, CodeActionProvider, ServerCapabilities};
 
     use oxc_language_server::{Capabilities, DiagnosticMode, ToolBuilder};
 
