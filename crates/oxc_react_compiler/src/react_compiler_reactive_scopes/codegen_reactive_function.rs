@@ -2115,14 +2115,16 @@ fn ox_codegen_base_instruction_value<'a>(
             let expr = ox_codegen_place_to_expression(cx, value)?;
             Ok(OxValue::Expression(expr))
         }
-        InstructionValue::PostfixUpdate { operation, lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { operation, lvalue, .. }
+        | InstructionValue::PostfixUpdateContext { operation, lvalue, .. } => {
             let arg = ox_codegen_place_to_expression(cx, lvalue)?;
             let target = ox_expression_to_simple_assignment_target(cx, arg)?;
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_update_expression(
                 span, *operation, false, target, &cx.ast,
             )))
         }
-        InstructionValue::PrefixUpdate { operation, lvalue, .. } => {
+        InstructionValue::PrefixUpdateLocal { operation, lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { operation, lvalue, .. } => {
             let arg = ox_codegen_place_to_expression(cx, lvalue)?;
             let target = ox_expression_to_simple_assignment_target(cx, arg)?;
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_update_expression(

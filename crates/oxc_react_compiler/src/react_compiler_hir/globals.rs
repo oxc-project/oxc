@@ -319,6 +319,40 @@ const FREEZE_ARGS_FN: MethodDef = MethodDef {
     ..MethodDef::DEFAULT
 };
 
+/// Array mapping methods capture their callback's return value into the result.
+const ARRAY_MAP_ALIASING: AliasingSignatureConfig = AliasingSignatureConfig {
+    receiver: "@receiver",
+    params: &["@callback"],
+    rest: None,
+    returns: "@returns",
+    temporaries: &["@item", "@callbackReturn", "@thisArg"],
+    effects: &[
+        AliasingEffectConfig::Create {
+            into: "@returns",
+            value: ValueKind::Mutable,
+            reason: ValueReason::KnownReturnSignature,
+        },
+        AliasingEffectConfig::CreateFrom { from: "@receiver", into: "@item" },
+        AliasingEffectConfig::Create {
+            into: "@thisArg",
+            value: ValueKind::Primitive,
+            reason: ValueReason::KnownReturnSignature,
+        },
+        AliasingEffectConfig::Apply {
+            receiver: "@thisArg",
+            function: "@callback",
+            mutates_function: false,
+            args: &[
+                ApplyArgConfig::Place("@item"),
+                ApplyArgConfig::Hole,
+                ApplyArgConfig::Place("@receiver"),
+            ],
+            into: "@callbackReturn",
+        },
+        AliasingEffectConfig::Capture { from: "@callbackReturn", into: "@returns" },
+    ],
+};
+
 /// One property of an object shape: a method with a function signature, or a
 /// plain property like `length: Primitive`.
 enum PropDef {
@@ -493,46 +527,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
                     return_value_kind: ValueKind::Mutable,
                     no_alias: true,
                     mutable_only_if_operands_are_mutable: true,
-                    aliasing: Some(&AliasingSignatureConfig {
-                        receiver: "@receiver",
-                        params: &["@callback"],
-                        rest: None,
-                        returns: "@returns",
-                        temporaries: &["@item", "@callbackReturn", "@thisArg"],
-                        effects: &[
-                            // Map creates a new mutable array
-                            AliasingEffectConfig::Create {
-                                into: "@returns",
-                                value: ValueKind::Mutable,
-                                reason: ValueReason::KnownReturnSignature,
-                            },
-                            // The first arg to the callback is an item extracted from the receiver array
-                            AliasingEffectConfig::CreateFrom { from: "@receiver", into: "@item" },
-                            // The undefined this for the callback
-                            AliasingEffectConfig::Create {
-                                into: "@thisArg",
-                                value: ValueKind::Primitive,
-                                reason: ValueReason::KnownReturnSignature,
-                            },
-                            // Calls the callback, returning the result into a temporary
-                            AliasingEffectConfig::Apply {
-                                receiver: "@thisArg",
-                                function: "@callback",
-                                mutates_function: false,
-                                args: &[
-                                    ApplyArgConfig::Place("@item"),
-                                    ApplyArgConfig::Hole,
-                                    ApplyArgConfig::Place("@receiver"),
-                                ],
-                                into: "@callbackReturn",
-                            },
-                            // Captures the result of the callback into the return array
-                            AliasingEffectConfig::Capture {
-                                from: "@callbackReturn",
-                                into: "@returns",
-                            },
-                        ],
-                    }),
+                    aliasing: Some(&ARRAY_MAP_ALIASING),
                     ..MethodDef::DEFAULT
                 },
             ),
@@ -545,6 +540,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
                     return_value_kind: ValueKind::Mutable,
                     no_alias: true,
                     mutable_only_if_operands_are_mutable: true,
+                    aliasing: Some(&ARRAY_MAP_ALIASING),
                     ..MethodDef::DEFAULT
                 },
             ),
@@ -961,6 +957,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
                     callee_effect: Effect::ConditionallyMutate,
                     return_value_kind: ValueKind::Mutable,
                     no_alias: true,
+                    aliasing: Some(&ARRAY_MAP_ALIASING),
                     ..MethodDef::DEFAULT
                 },
             ),
@@ -972,6 +969,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
                     callee_effect: Effect::ConditionallyMutate,
                     return_value_kind: ValueKind::Mutable,
                     no_alias: true,
+                    aliasing: Some(&ARRAY_MAP_ALIASING),
                     ..MethodDef::DEFAULT
                 },
             ),

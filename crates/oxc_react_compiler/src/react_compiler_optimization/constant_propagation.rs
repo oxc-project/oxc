@@ -380,7 +380,8 @@ fn evaluate_instruction<'a>(
             }
             None
         }
-        InstructionValue::PostfixUpdate { lvalue, operation, value, span } => {
+        InstructionValue::PostfixUpdateLocal { lvalue, operation, value, span }
+        | InstructionValue::PostfixUpdateContext { lvalue, operation, value, span } => {
             let previous = read(constants, value);
             if let Some(Constant::Primitive { value: PrimitiveValue::Number(n), span: prev_span }) =
                 previous
@@ -407,7 +408,8 @@ fn evaluate_instruction<'a>(
             }
             None
         }
-        InstructionValue::PrefixUpdate { lvalue, operation, value, span } => {
+        InstructionValue::PrefixUpdateLocal { lvalue, operation, value, span }
+        | InstructionValue::PrefixUpdateContext { lvalue, operation, value, span } => {
             let previous = read(constants, value);
             if let Some(Constant::Primitive { value: PrimitiveValue::Number(n), .. }) = previous {
                 let prev_val = n.value();
