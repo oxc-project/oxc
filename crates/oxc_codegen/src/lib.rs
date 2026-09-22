@@ -247,7 +247,7 @@ impl<'a> Codegen<'a> {
 
     /// Set the symbol table used for identifier renaming.
     ///
-    /// Can be used for easy renaming of variables (based on semantic analysis).
+    /// Includes binding names and label output names assigned by the mangler.
     #[must_use]
     pub fn with_scoping(mut self, scoping: Option<Scoping>) -> Self {
         self.scoping = scoping;

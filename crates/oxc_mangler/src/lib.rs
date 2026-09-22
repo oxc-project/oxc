@@ -20,6 +20,7 @@ use oxc_str::{ArenaIdentHashSet, CompactStr, Ident};
 
 pub(crate) mod base54;
 mod keep_names;
+mod labels;
 
 pub use keep_names::MangleOptionsKeepNames;
 
@@ -315,8 +316,9 @@ impl<'t> Mangler<'t> {
         self
     }
 
-    /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
-    /// Pass the symbol table to oxc_codegen to generate the mangled code.
+    /// Mangles bindings and labels without modifying their names in `program`.
+    /// Pass the returned scoping to oxc_codegen to print the mangled names.
+    /// Label output names are keyed by the node IDs assigned during this build.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
         let mut builder = SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
@@ -328,6 +330,10 @@ impl<'t> Mangler<'t> {
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }
 
+    /// Mangle bindings and labels using an existing semantic build.
+    /// Node storage must be enabled with [`SemanticBuilder::with_build_nodes`].
+    /// Label output names are stored in the semantic scoping; private names are returned.
+    ///
     /// # Panics
     ///
     /// Panics if the child_ids does not exist in scope_tree.
@@ -336,6 +342,7 @@ impl<'t> Mangler<'t> {
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
+        labels::mangle_labels(semantic, self.options.debug);
         let class_private_mappings = Self::collect_private_members_from_semantic(semantic);
         if self.options.debug {
             self.build_with_semantic_impl(semantic, program, debug_name);

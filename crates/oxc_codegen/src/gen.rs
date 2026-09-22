@@ -617,7 +617,16 @@ impl Gen for LabeledStatement<'_> {
             p.print_indent();
         }
         p.print_space_before_identifier();
-        p.add_source_mapping(self.span);
+        // A preceding unnamed mapping would suppress the mangled label's name mapping.
+        #[cfg(feature = "sourcemap")]
+        if p.sourcemap_builder.is_some()
+            && p.scoping
+                .as_ref()
+                .and_then(|scoping| scoping.mangled_label_name(self.label.node_id.get()))
+                .is_none()
+        {
+            p.add_source_mapping(self.span);
+        }
         self.label.print(p, ctx);
         p.print_colon();
         p.print_body(&self.body, ctx);
@@ -1418,9 +1427,16 @@ impl Gen for BindingIdentifier<'_> {
 
 impl Gen for LabelIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        // Copy the short inline name so printing can mutably borrow the code generator.
+        let mangled = p
+            .scoping
+            .as_ref()
+            .and_then(|scoping| scoping.mangled_label_name(self.node_id.get()))
+            .cloned();
+        let name = mangled.as_deref().unwrap_or(self.name.as_str());
         p.print_space_before_identifier();
-        p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_name(self.name.as_str());
+        p.add_source_mapping_for_name(self.span, name);
+        p.print_name(name);
     }
 }
 

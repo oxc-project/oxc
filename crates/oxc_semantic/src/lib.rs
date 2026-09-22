@@ -97,6 +97,7 @@ pub struct Semantic<'a> {
     jsdoc: JSDocFinder<'a>,
 
     unused_labels: Vec<NodeId>,
+    label_identifiers: Vec<NodeId>,
 
     /// Control flow graph. Only present if [`Semantic`] is built with cfg
     /// creation enabled using [`SemanticBuilder::with_cfg`].
@@ -206,6 +207,13 @@ impl<'a> Semantic<'a> {
     #[cfg(feature = "jsdoc")]
     pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         &self.jsdoc
+    }
+
+    /// Label declarations and references in traversal order.
+    ///
+    /// Collected only when node storage is enabled. Inspect these IDs through [`Self::nodes`].
+    pub fn label_identifiers(&self) -> &[NodeId] {
+        &self.label_identifiers
     }
 
     /// Labels that were declared but never used.

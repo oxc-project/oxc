@@ -6,7 +6,7 @@ use self_cell::self_cell;
 use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn, CloneInSemanticIds};
 use oxc_index::IndexVec;
 use oxc_span::Span;
-use oxc_str::{ArenaIdentHashMap, Ident};
+use oxc_str::{ArenaIdentHashMap, CompactStr, Ident};
 use oxc_syntax::constant_value::ConstantValue;
 use oxc_syntax::{
     node::NodeId,
@@ -98,6 +98,9 @@ pub struct Scoping {
 
     pub(crate) references: IndexVec<ReferenceId, Reference>,
 
+    /// Output names for label declarations and references, keyed by their AST node IDs.
+    mangled_label_names: FxHashMap<NodeId, CompactStr>,
+
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
 
@@ -121,6 +124,7 @@ impl Default for Scoping {
         Self {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
+            mangled_label_names: FxHashMap::default(),
             no_side_effects: FxHashSet::default(),
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
@@ -300,6 +304,17 @@ pub struct ScopingInner<'cell> {
 
 // Symbol Table Methods
 impl Scoping {
+    /// Set label output names for this semantic build. Rebuilding semantic node IDs
+    /// invalidates this mapping, just as rebuilding symbol IDs invalidates binding names.
+    pub fn set_mangled_label_names(&mut self, names: FxHashMap<NodeId, CompactStr>) {
+        self.mangled_label_names = names;
+    }
+
+    /// Mangled output name of a label declaration or reference, if mangling ran.
+    pub fn mangled_label_name(&self, node_id: NodeId) -> Option<&CompactStr> {
+        self.mangled_label_names.get(&node_id)
+    }
+
     /// Returns the number of symbols in this table.
     #[inline]
     pub fn symbols_len(&self) -> usize {
@@ -1118,6 +1133,7 @@ impl Scoping {
         Self {
             symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
+            mangled_label_names: self.mangled_label_names.clone(),
             no_side_effects: self.no_side_effects.clone(),
             enum_data: self.enum_data.clone(),
             scope_table: self.scope_table.clone(),

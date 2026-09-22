@@ -99,6 +99,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) unresolved_references: UnresolvedReferences<'a>,
 
     unused_labels: UnusedLabels<'a>,
+    label_identifiers: Vec<NodeId>,
     #[cfg(feature = "jsdoc")]
     jsdoc: JSDocBuilder<'a>,
     stats: Option<Stats>,
@@ -157,6 +158,7 @@ impl<'a> SemanticBuilder<'a> {
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
+            label_identifiers: Vec::new(),
             #[cfg(feature = "jsdoc")]
             jsdoc: JSDocBuilder::default(),
             stats: None,
@@ -384,6 +386,7 @@ impl<'a> SemanticBuilder<'a> {
             #[cfg(feature = "jsdoc")]
             jsdoc,
             unused_labels: self.unused_labels.labels,
+            label_identifiers: self.label_identifiers,
             #[cfg(feature = "cfg")]
             cfg: self.cfg.map(ControlFlowGraphBuilder::build),
             #[cfg(not(feature = "cfg"))]
@@ -1614,6 +1617,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
+        self.leave_node(kind);
+    }
+
+    fn visit_label_identifier(&mut self, label: &LabelIdentifier<'a>) {
+        let kind = AstKind::LabelIdentifier(self.alloc(label));
+        self.enter_node(kind);
+        if matches!(self.node_store.kind, AstNodeStoreKind::Full(_)) {
+            self.label_identifiers.push(self.node_store.current_node_id);
+        }
         self.leave_node(kind);
     }
 
