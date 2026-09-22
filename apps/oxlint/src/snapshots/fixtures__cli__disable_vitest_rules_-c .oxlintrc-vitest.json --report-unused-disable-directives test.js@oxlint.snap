@@ -14,11 +14,11 @@ working directory: fixtures/cli/disable_vitest_rules
  8 | })
    `----
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[test.js:19:3]
+  ! Unused oxlint-disable directive (no problems were reported from vitest/no-restricted-vi-methods).
+    ,-[test.js:19:31]
  18 |   // This one should trigger a warning about an unnecessary disable:
  19 |   // oxlint-disable-next-line vitest/no-restricted-vi-methods
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  20 |   video.play();
     `----
 
