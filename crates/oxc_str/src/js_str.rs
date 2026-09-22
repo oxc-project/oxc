@@ -72,8 +72,6 @@ use crate::{JSChar, JSStrBuilder, Str};
 /// println!("{value:?}");
 /// ```
 #[derive(Clone, Copy)]
-// The C layout gives the pointer, length, and flag fixed offsets, which the
-// generated raw transfer deserializers read directly.
 #[repr(C)]
 pub struct JSStr<'a> {
     ptr: NonNull<u8>,
