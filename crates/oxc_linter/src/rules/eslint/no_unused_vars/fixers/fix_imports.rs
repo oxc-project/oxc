@@ -103,7 +103,14 @@ impl NoUnusedVars {
             .take(1)
             .map(|c| c.len_utf8() as u32)
             .sum();
-        span.end += trailing_newlines;
+        // Do not eat the terminator when the next statement is also an import.
+        // Adjacent import deletions would share a boundary and the fixer would
+        // drop every other edit (https://github.com/oxc-project/oxc/issues/26943).
+        let rest = &after_import[trailing_newlines as usize..];
+        let next_is_import = rest.trim_start_matches([' ', '\t']).starts_with("import");
+        if trailing_newlines > 0 && !next_is_import {
+            span.end += trailing_newlines;
+        }
 
         fixer.delete_range(span)
     }
