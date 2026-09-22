@@ -73,7 +73,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
                                     | Argument::TaggedTemplateExpression(_)
                             )
                         ))
-                        && is_test_call_expression(call))
+                        && is_test_call_expression(call)
+                        && !has_argument_comments(call, f.comments()))
             })
             || is_multiline_template_only_args(self, f.source_text())
             || is_graphql_call_with_single_template_arg(self, call_expression)
@@ -163,6 +164,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
             }
         }
     }
+}
+
+fn has_argument_comments(call: &CallExpression<'_>, comments: &Comments<'_>) -> bool {
+    let mut previous_end = call.callee.span().end;
+    for argument in &call.arguments {
+        let span = argument.span();
+        if comments.has_any_comment_in_range(previous_end, span.start) {
+            return true;
+        }
+        previous_end = span.end;
+    }
+    comments.has_any_comment_in_range(previous_end, call.span.end)
 }
 
 /// Tests if a call has multiple anonymous function like (arrow or function expression) arguments.

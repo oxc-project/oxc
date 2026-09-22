@@ -2,6 +2,37 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
+## test-call-comment-order
+
+- Why: invariant
+- Pin: `tests/fixtures/js/calls/test-call-comment-order.js`
+
+Test calls with comments around their arguments use the regular argument layout to preserve comment order, line boundaries, and idempotency. Comments inside a callback keep the compact test layout.
+
+Input:
+
+```js
+it("callback", // first
+// second
+function (done) {
+  done();
+});
+```
+
+Oxfmt:
+
+```js
+it(
+  "callback", // first
+  // second
+  function (done) {
+    done();
+  },
+);
+```
+
+Prettier 3.9.6 combines and reverses the two comments into `// second // first`. It also moves own-line comments onto preceding lines and trailing argument comments past the closing parenthesis. The regular-layout fallback is also the approach taken in prettier/prettier#20043.
+
 ## array-hole-trailing-comment
 
 - Why: invariant

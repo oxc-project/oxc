@@ -1,0 +1,125 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+test("timeout", () => {
+  run();
+},
+// first
+// second
+// third
+15000);
+
+it("callback", // first
+// second
+function (done) {
+  done();
+});
+
+describe.only(
+// description
+"suite", () => {
+  run();
+});
+
+test("trailing", () => {
+  run();
+}, 15000 // first
+// second
+);
+
+test("inside callback", () => {
+  // body
+  run();
+});
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+test(
+  "timeout",
+  () => {
+    run();
+  },
+  // first
+  // second
+  // third
+  15000,
+);
+
+it(
+  "callback", // first
+  // second
+  function (done) {
+    done();
+  },
+);
+
+describe.only(
+  // description
+  "suite",
+  () => {
+    run();
+  },
+);
+
+test(
+  "trailing",
+  () => {
+    run();
+  },
+  15000, // first
+  // second
+);
+
+test("inside callback", () => {
+  // body
+  run();
+});
+
+-------------------
+{ printWidth: 100 }
+-------------------
+test(
+  "timeout",
+  () => {
+    run();
+  },
+  // first
+  // second
+  // third
+  15000,
+);
+
+it(
+  "callback", // first
+  // second
+  function (done) {
+    done();
+  },
+);
+
+describe.only(
+  // description
+  "suite",
+  () => {
+    run();
+  },
+);
+
+test(
+  "trailing",
+  () => {
+    run();
+  },
+  15000, // first
+  // second
+);
+
+test("inside callback", () => {
+  // body
+  run();
+});
+
+===================== End =====================
