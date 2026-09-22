@@ -713,6 +713,21 @@ fn pife_roundtrip() {
     }
 }
 
+#[test]
+fn pife_grouping_idempotency() {
+    for source in [
+        "new (function () { return C; }())();",
+        "new ((function () { return C; })())();",
+        "(/* @__PURE__ */ (function () { return C; })()).constructor;",
+        "(/* @__PURE__ */ function () { return C; }()).constructor;",
+        "const x = (function () {} + 1) * 2;",
+        "foo((function () {}));",
+    ] {
+        crate::test_idempotency(source);
+        crate::test_idempotency_options(source, &CodegenOptions::minify());
+    }
+}
+
 // followup from https://github.com/oxc-project/oxc/pull/6422
 #[test]
 fn in_expr_in_sequence_in_for_loop_init() {
