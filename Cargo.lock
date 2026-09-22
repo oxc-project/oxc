@@ -2863,29 +2863,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_type_checker"
-version = "0.138.0"
-dependencies = [
- "anyhow",
- "bpaf",
- "indexmap",
- "oxc_allocator",
- "oxc_ast",
- "oxc_ast_visit",
- "oxc_diagnostics",
- "oxc_index",
- "oxc_parser",
- "oxc_resolver",
- "oxc_semantic",
- "oxc_span",
- "oxc_str",
- "oxc_syntax",
- "rayon",
- "rustc-hash",
- "self_cell",
-]
-
-[[package]]
 name = "oxfmt"
 version = "0.70.0"
 dependencies = [
