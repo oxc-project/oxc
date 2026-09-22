@@ -12,15 +12,13 @@
 //!
 //! # Consuming `JSStr`
 //!
-//! A consumer that needs `str` decides what a lone surrogate means for its
-//! check, and three policies cover the cases in practice. Checks over names,
-//! paths, and specifiers decline when [`JSStr::as_str`] returns `None`: a
-//! fixed name set or a well-known path never contains a lone surrogate, so
-//! declining changes nothing. Comparisons with fixed names use `JSStr`'s
-//! `PartialEq<&str>` directly and need no conversion. Only a value matched
-//! against user-configured patterns or shown to a person goes lossy:
-//! [`JSStr::to_str_lossy`] for matching, and the `Debug` form for
-//! diagnostics, which escapes the surrogate instead of replacing it.
+//! Comparisons with fixed UTF-8 names use `JSStr`'s `PartialEq<&str>` directly.
+//! A consumer that needs `str` must explicitly handle [`JSStr::as_str`] returning
+//! `None`. Matching arbitrary values must preserve their contents, using the
+//! original bytes or JavaScript code points as appropriate for the operation.
+//! [`JSStr::to_str_lossy`] replaces lone surrogates with U+FFFD and must not be
+//! used for identity or pattern matching. For diagnostics, the `Debug` form
+//! escapes lone surrogates and preserves the distinction from U+FFFD.
 //!
 //! Declining is only safe where skipping the work is conservative, as for an
 //! optional optimization or a lookup that cannot match. Code that decides

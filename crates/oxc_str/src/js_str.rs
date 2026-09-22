@@ -173,9 +173,9 @@ impl<'a> JSStr<'a> {
     /// Convert to UTF-8, replacing each lone surrogate with U+FFFD.
     ///
     /// A value without lone surrogates borrows in O(1). Use this where a
-    /// caller needs `str` and accepts the replacement, such as matching
-    /// user-configured patterns; diagnostics that should show the surrogate
-    /// use the Debug form instead, which escapes it.
+    /// caller explicitly accepts losing the distinction between lone surrogates
+    /// and U+FFFD. Do not use this for identity or pattern matching. Diagnostics
+    /// that should show the surrogate use the Debug form instead, which escapes it.
     pub fn to_str_lossy(self) -> Cow<'a, str> {
         match self.as_str() {
             Some(value) => Cow::Borrowed(value),
