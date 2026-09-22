@@ -149,6 +149,7 @@ pub unsafe fn coalesce(
                         kw_final,
                         lanes.module,
                         &lanes.disambiguate.brackets,
+                        &lanes.disambiguate.closers,
                     );
                     let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run);
                     if g != 0 {
@@ -171,6 +172,7 @@ pub unsafe fn coalesce(
                         0,
                         lanes.module,
                         &lanes.disambiguate.brackets,
+                        &lanes.disambiguate.closers,
                     );
                     if lt_run_split(&tokens, p) {
                         cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
@@ -320,6 +322,7 @@ unsafe fn glue_number(
                     kw_final,
                     lanes.module,
                     &lanes.disambiguate.brackets,
+                    &lanes.disambiguate.closers,
                 );
                 let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, e2, end - e2);
                 if g != 0 {

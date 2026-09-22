@@ -473,8 +473,7 @@ fn relational_heads_before_a_balanced_run() {
     division("x = this<A<B>> / 2;", ScriptTS);
     regex("x ? a : [b][c]()\n{}\n/y/.exec(s);", ScriptJS);
     regex("f(class { accessor x = y })\n{ }\n/</.test(s);", ScriptJS);
-    // `b<c<d>>` is not a type-argument list: its closing `>` is glued to another `>` and rescans as
-    // `>>` (tsc's `reScanGreaterToken`), so every `<` compares and the run is `>>>` + `>`.
+    // c<d>> rescans as >> (tsc's reScanGreaterToken), so every < compares.
     let ks = kinds_of("x = a > b<c<d>>>>(e);", ScriptTS);
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::Gt).count(), 2, "{ks:?}");
     assert!(ks.contains(&TokenKind::URShift), "{ks:?}");
@@ -482,9 +481,7 @@ fn relational_heads_before_a_balanced_run() {
 
 #[test]
 fn gt_runs_in_members_separated_only_by_line_breaks() {
-    // Without a `;` or `,` between members, the line break after the run ends the member: the
-    // name on the next line is another member, not the operand of a comparison, and a `<` there
-    // opens a signature's type parameters.
+    // Without a separator the line break ends the member; the next name is a new member.
     for code in [
         "declare class C {\n  a: A\n  b: B<C<void>>\n  constructor(r: R)\n}",
         "type T = {\n  a: A<'x', B<T, 'x'>>\n  b: A<'x', B<T, 'x'>>\n}",
@@ -500,9 +497,7 @@ fn gt_runs_in_members_separated_only_by_line_breaks() {
 
 #[test]
 fn gt_runs_after_arrows_mapped_types_and_import_types_inside_lists() {
-    // An arrow in a conditional type's branch, a mapped type with an `as` clause, or an
-    // `import("m")` chain inside a type-argument list does not end the list: the run after it
-    // still closes it.
+    // An arrow, a mapped type or an import("m") inside the list does not end it.
     for code in [
         "type P<T> = T extends U ? (a: A) => B<T> : (a: A) => B<C<T>>;",
         "type P<T> = R<T> extends Q<\n  infer U\n>\n  ? (...a: A<T>) => B<U>\n  : (...a: A<T>) => B<C<T>>;",
@@ -516,9 +511,7 @@ fn gt_runs_after_arrows_mapped_types_and_import_types_inside_lists() {
 
 #[test]
 fn gt_runs_closing_lists_that_open_in_any_context() {
-    // The token after the run fails TypeScript's expression speculation (`{`, a name), but the
-    // list can only be a list: a type parameter list `<T extends`, a name after a keyword only a
-    // type follows, a return type, a dotted name in a heritage clause.
+    // The follower fails the speculation, but the list can only be a list.
     for code in [
         "const f = <T extends A<B>>(x: T) => x;",
         "class C {\n  f = <T extends A<B>>(x: T) => x;\n}",
@@ -538,7 +531,7 @@ fn gt_runs_closing_lists_that_open_in_any_context() {
 
 #[test]
 fn relational_heads_that_look_like_type_references() {
-    // The same tokens read as an expression: a `case` label, a property named `function`.
+    // The same tokens read as an expression: a case label, a property named function.
     for code in
         ["switch (v) {\n  case (x): a < b < c >> d;\n}", "c ? o.function(x) : a < b < c >> d;"]
     {
@@ -548,8 +541,7 @@ fn relational_heads_that_look_like_type_references() {
 
 #[test]
 fn gt_runs_after_parameter_lists_inside_types() {
-    // A run after a parameter list inside a type: rest and optional parameters, object types as
-    // parameter types, and multi-line type parameter lists.
+    // A run after a parameter list inside a type.
     for code in [
         "type F<T extends (...a: any) => any> = (...a: P<T>) => Q<R<T>>;",
         "declare class C {\n  m<T, V>(d: D, v?: X<V>): P<Q<T>>\n}",
@@ -564,7 +556,7 @@ fn gt_runs_after_parameter_lists_inside_types() {
 
 #[test]
 fn jsx_child_tag_after_comment_or_unicode_space() {
-    // Trivia between `<` and `/`, or around a closing name, leaves the same tag.
+    // Trivia between < and /, or around a closing name, leaves the same tag.
     for (code, plain) in [
         ("x = <a>x</*c*//a>;", "x = <a>x</a>;"),
         ("x = <a>x<//c\n/a>;", "x = <a>x</a>;"),
@@ -588,8 +580,7 @@ fn jsx_child_tag_after_comment_or_unicode_space() {
 
 #[test]
 fn jsx_member_tag_name_matches_across_trivia() {
-    // A comment or Unicode whitespace before the `.` of a member name (`<A/*c*/.B>`) hides no
-    // mismatch: the closing tag names the same element.
+    // Trivia before the . of a member name hides no mismatch.
     for code in [
         "x = <A/*c*/.B>x</A.B>;",
         "x = <A\u{a0}.B>x</A.B>;",
@@ -607,9 +598,7 @@ fn jsx_member_tag_name_matches_across_trivia() {
 
 #[test]
 fn tsx_template_type_in_expression_type_arguments_is_not_jsx() {
-    // Asked from the JSX carve, the list `f<`${<T>(x: T) => T}`>` still has a raw template
-    // tail; the speculation must read the literal whole, so the `<T>` inside is a function
-    // type, not an unterminated element.
+    // The raw template tail must be read whole, so the <T> inside is a function type.
     for code in [
         "x = f<`${<T>(x: T) => T}`>(1);",
         "x = f<`a${<T>(x: T) => T}b`>(1);",
@@ -621,4 +610,11 @@ fn tsx_template_type_in_expression_type_arguments_is_not_jsx() {
         assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
     }
     gt_run_split("x = f<A<`${<T>(x: T) => T}`>>(1);");
+}
+
+#[test]
+fn bracket_bitmap_follows_the_token_starts() {
+    // The bracket word is built while the string in it is still raw text.
+    regex("if (a) /x/; if (s = \"(\") /re/.test(x);", ScriptJS);
+    gt_run_split("x = (a) / 2; y = f<B<(a: \"((\") => void>>(1);");
 }

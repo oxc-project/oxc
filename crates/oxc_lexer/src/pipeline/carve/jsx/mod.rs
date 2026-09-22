@@ -28,7 +28,6 @@ use names::{jsx_name_end, jsx_names_equal_fast, jsx_skip_trivia, jsx_skip_trivia
 /// Template substitutions that can nest inside a type-argument list on a JSX
 /// element name before the run stops being carved. Overflow falls back to the
 /// uncarved skip, so the budget can only leave an exotic shape as it was.
-const TYPE_ARG_TMPL_CAP: usize = 32;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum JMode {
@@ -83,10 +82,7 @@ pub(super) unsafe fn carve_jsx(
     lanes: &mut Lanes,
 ) {
     let src = srcs.as_ptr();
-    // Annex B B.1.3 (`-->` at line start) needs JS mode to stop at `>`, which JSX is full of.
-    // The finders that do so are switched on only after a `<!--` has been lexed (the pair the
-    // legacy comments come in, and `<!--` is caught free on the `<` path), so a module or a
-    // JSX script without HTML comments never pays; a `-->` before any `<!--` stays operators.
+    // --> needs finders that stop at >; they are switched on only once a <!-- was lexed.
     let mut html_close = false;
     let mut stack: Vec<JFrame> = Vec::with_capacity(64);
     let mut mode = JMode::Js;
@@ -107,8 +103,6 @@ pub(super) unsafe fn carve_jsx(
                 let in_brace = stack.last().is_some_and(|f| {
                     matches!(f.kind, JFrameKind::TemplateSub | JFrameKind::JsxCont)
                 });
-                // The finders that also stop at `>` are only switched on by a `<!--` in a
-                // script (see `html_close`).
                 let s = match (in_brace, html_close) {
                     (true, false) => find_opener_jsx7(src, n, i),
                     (true, true) => find_opener6(src, n, i),
@@ -230,12 +224,12 @@ pub(super) unsafe fn carve_jsx(
                                 0,
                                 lanes.module,
                                 &lanes.disambiguate.brackets,
+                                &lanes.disambiguate.closers,
                             ),
                             &mut lanes.disambiguate.walks,
                             s,
                         ) {
-                            // Operand position: candidate JSX. Whitespace (Unicode too) and
-                            // comments may separate `<` from the name.
+                            // Operand position: candidate JSX.
                             let tpos = jsx_skip_trivia_fast(src, n, s + 1);
                             let tc = if tpos < n { *src.add(tpos) } else { 0 };
                             if tc == b'>' {
@@ -273,7 +267,7 @@ pub(super) unsafe fn carve_jsx(
                         }
                     }
                     b'>' => {
-                        // Only a script's finder stops here: Annex B B.1.3 `-->` at line start.
+                        // Only a script's finder stops here: Annex B B.1.3 --> at line start.
                         i = if html_close_comment_at(srcs, s, lanes.module) {
                             lex_html_close_comment(src, srcs, n, st, kind, opch, s, lanes)
                         } else {
@@ -310,6 +304,7 @@ pub(super) unsafe fn carve_jsx(
                         0,
                         lanes.module,
                         &lanes.disambiguate.brackets,
+                        &lanes.disambiguate.closers,
                     );
                     if prev_sig(tokens.st, tokens.kind, s).is_some_and(|q| *src.add(q) == b'=') {
                         let tpos = jsx_skip_trivia(src, n, s + 1);
@@ -339,11 +334,10 @@ pub(super) unsafe fn carve_jsx(
                     jsx_punct(kind, opch, s, tk!(Lt));
                     // Open template substitutions, each counting its own
                     // nested braces - the same shape `carve` keeps in its
-                    // `depth` vector, sized so this path allocates nothing.
-                    let mut sub = [0u32; TYPE_ARG_TMPL_CAP];
-                    let mut nsub = 0usize;
+                    // depth vector.
+                    let mut sub: Vec<u32> = Vec::new();
                     while p < n && depth != 0 {
-                        let q = if nsub != 0 {
+                        let q = if !sub.is_empty() {
                             find_opener6(src, n, p)
                         } else {
                             find_opener(src, n, p)
@@ -382,31 +376,28 @@ pub(super) unsafe fn carve_jsx(
                                 );
                                 p = end;
                                 if opened {
-                                    // Past the nesting budget the rest of the
-                                    // run stays uncarved, which is what this
-                                    // whole arm used to do.
-                                    if nsub == TYPE_ARG_TMPL_CAP {
-                                        break;
-                                    }
-                                    sub[nsub] = 0;
-                                    nsub += 1;
+                                    sub.push(0);
                                 }
                             }
                             // Braces only reach here through `find_opener6`,
                             // which is only selected while a substitution is
                             // open - the guards say so rather than leaving it
                             // to the finder choice.
-                            b'{' if nsub != 0 => {
-                                sub[nsub - 1] += 1;
+                            b'{' if !sub.is_empty() => {
+                                if let Some(top) = sub.last_mut() {
+                                    *top += 1;
+                                }
                                 p = q + 1;
                             }
-                            b'}' if nsub != 0 => {
-                                if sub[nsub - 1] != 0 {
-                                    sub[nsub - 1] -= 1;
+                            b'}' if !sub.is_empty() => {
+                                if let Some(top) = sub.last_mut()
+                                    && *top != 0
+                                {
+                                    *top -= 1;
                                     p = q + 1;
                                     continue;
                                 }
-                                nsub -= 1;
+                                sub.pop();
                                 let (end, opened) = lex_template_segment(
                                     src,
                                     srcs,
@@ -420,11 +411,7 @@ pub(super) unsafe fn carve_jsx(
                                 );
                                 p = end;
                                 if opened {
-                                    if nsub == TYPE_ARG_TMPL_CAP {
-                                        break;
-                                    }
-                                    sub[nsub] = 0;
-                                    nsub += 1;
+                                    sub.push(0);
                                 }
                             }
                             // A comment inside a type-argument list is
@@ -488,8 +475,6 @@ pub(super) unsafe fn carve_jsx(
                         } else if d == b'/' {
                             i = lex_line_comment(src, srcs, n, st, kind, s, lanes);
                         } else {
-                            // `/>` closes the tag, with any trivia (comments, Unicode
-                            // whitespace) between the two.
                             let gp = if d == b'>' {
                                 Some(s + 1)
                             } else {
@@ -497,8 +482,6 @@ pub(super) unsafe fn carve_jsx(
                                 (w < n && *src.add(w) == b'>').then_some(w)
                             };
                             if let Some(gp) = gp {
-                                // Carve any comment between `/` and `>`: the tag resumes past
-                                // the `>`.
                                 let mut q = s + 1;
                                 while q < gp {
                                     q = match (*src.add(q), *src.add(q + 1)) {
@@ -579,8 +562,7 @@ pub(super) unsafe fn carve_jsx(
                     text_start = s + 1;
                     i = s + 1;
                 } else {
-                    // c == '<'. Trivia may follow it: a comment (`</*c*//a>` closes `a`) or
-                    // Unicode whitespace, whose lead byte would pass for a name start.
+                    // c == '<'
                     let c1 = if s + 1 < n { *src.add(s + 1) } else { 0 };
                     let c2 = if s + 2 < n { *src.add(s + 2) } else { 0 };
                     let direct = c1 == b'>'
@@ -590,8 +572,7 @@ pub(super) unsafe fn carve_jsx(
                     let tc = if tpos < n { *src.add(tpos) } else { 0 };
                     if tc == b'/' {
                         // closing tag `</name>` or `</>`; the name stays IDENT
-                        // A comment between `<` and `/` is trivia to carve: the branch resumes
-                        // past the `>` and would otherwise leave its bytes as operators.
+                        // Carve a comment between < and /, or its bytes end up as operators.
                         let mut q = s + 1;
                         while q < tpos {
                             q = match (*src.add(q), *src.add(q + 1)) {

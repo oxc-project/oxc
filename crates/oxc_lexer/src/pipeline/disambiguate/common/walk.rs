@@ -1,10 +1,9 @@
 //! Moving backwards through the token stream.
 //!
-//! These are the primitives which the scans in `disambiguate` are built from.
+//! These are the primitives which the backward walks in `disambiguate` are built from.
 //! They move around the token stream without deciding what any construct means.
 //!
 //! Stepping and inspecting:
-//! - [`prev_sig`] steps to the previous token, skipping whitespace and comments.
 //! - [`kind_at`] reads a token's kind, treating keywords as plain identifiers,
 //!   and escaped identifiers as unescaped ones.
 //! - [`ident_is`] and [`word_is_any`] check whether an identifier is a particular word,
@@ -12,38 +11,25 @@
 //! - [`lt_in_range`] asks whether a line break separates two positions, which ASI depends on.
 //!
 //! Jumping over bracketed groups:
-//! - [`match_delim_back`] goes from a `)`, `]` or `}` back to its opener over a bitmap of bracket
-//!   tokens ([`Brackets`]), built per lex a word at a time as the matches reach it. Past
-//!   [`BRACE_MATCH_CAP`] bracket steps it switches to a table of bracket pairs, so the answer
-//!   stays exact.
+//! - [`match_delim_back`] goes from a `)`, `]` or `}` back to its opener.
+//!   so the answer stays exact.
 
 use std::cell::{Cell, RefCell};
 
 use super::{Tokens, bits, text};
 use crate::{
-    pipeline::{bytes::is_word, find::bracket_bits},
+    pipeline::{bytes::is_word, disambiguate::BRACKET_STEP_CAP, find::bracket_bits},
     token::{KW_KIND_BASE, KW_KIND_MAX, OP_KIND_BASE, tk},
 };
 
-/// Bracket steps a backward match takes before the per-file closer-to-opener table answers, so a
-/// group matched again and again (queries after a huge wrapper function) costs a lookup, not a
-/// pass over its brackets each time.
-const BRACE_MATCH_CAP: u32 = 1024;
-
-/// Bracket tokens (`(){}[]` at token starts) as a bitmap, built per lex a 64-byte word at a time
-/// as the matches reach it: crossing a group costs a step per bracket, not per token, and a file
-/// whose queries stay local never has the whole bitmap built. Owned by the lexer and shared with
-/// every [`Tokens`] view of the lex, so the words are cells.
 #[derive(Default)]
 pub(crate) struct Brackets {
+    // st is applied when a word is read, not stored: carve is still clearing literal interiors.
     bits: Vec<Cell<u64>>,
-    /// One bit per word of `bits`: built this lex.
     built: Vec<Cell<u64>>,
-    /// The closer-to-opener table a match past the cap falls back on.
     pairs: RefCell<Pairs>,
 }
 
-/// Bracket pairs of the source up to `built_to`, built once, closers in source order.
 #[derive(Default)]
 struct Pairs {
     built_to: usize,
@@ -52,7 +38,6 @@ struct Pairs {
 }
 
 impl Brackets {
-    /// A new lex over `n` bytes: size the buffers and forget every word of the previous one.
     pub(crate) fn begin(&mut self, n: usize) {
         let nwords = n.div_ceil(64) + 1;
         self.bits.resize(nwords, Cell::new(0));
@@ -66,21 +51,18 @@ impl Brackets {
         }
     }
 
-    /// The bracket bits of word `w`, built on first use.
     #[inline]
-    fn word(&self, src: &[u8], st: &[u64], n: usize, w: usize) -> u64 {
+    fn word(&self, src: &[u8], n: usize, w: usize) -> u64 {
         let (i, b) = (w >> 6, 1u64 << (w & 63));
         let built = &self.built[i];
         if built.get() & b == 0 {
-            self.bits[w].set(bracket_word(src, w << 6, n) & st[w]);
+            self.bits[w].set(bracket_word(src, w << 6, n));
             built.set(built.get() | b);
         }
         self.bits[w].get()
     }
 }
 
-/// Bits of the 64 bytes at `base` that are brackets (bytes at or past `n` are clear). The source
-/// carries `PAD` bytes past `n`, so a whole word is readable whenever `base < n`.
 fn bracket_word(src: &[u8], base: usize, n: usize) -> u64 {
     if base >= n {
         return 0;
@@ -92,17 +74,17 @@ fn bracket_word(src: &[u8], base: usize, n: usize) -> u64 {
     out
 }
 
-/// Match the close punctuator at `from` back to its opener over the bracket bitmap, counting
-/// only punctuator delimiters - template-closing `}`s and cleared literal interiors are
-/// invisible. Past [`BRACE_MATCH_CAP`] bracket steps the answer comes from a per-file
-/// closer-to-opener table built once, so it stays exact; None if unbalanced.
+/// Match the close punctuator at `from` back to its opener, counting only
+/// punctuator delimiters - template-closing `}`s and cleared literal
+/// interiors are invisible. Past the cap the answer comes from a per-file
+/// closer-to-opener table built once, so it is exact; None if unbalanced.
 #[inline]
 pub fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8) -> Option<usize> {
     let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
     let mut depth: i32 = 1;
     let mut steps: u32 = 0;
     let mut w = from >> 6;
-    let mut bits = b.word(src, st, n, w) & ((1u64 << (from & 63)) - 1);
+    let mut bits = b.word(src, n, w) & st[w] & ((1u64 << (from & 63)) - 1);
     loop {
         while bits != 0 {
             let i = 63 - bits.leading_zeros() as usize;
@@ -120,7 +102,7 @@ pub fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8) -> Op
                 }
             }
             steps += 1;
-            if steps > BRACE_MATCH_CAP {
+            if steps > BRACKET_STEP_CAP {
                 return delim_memo_opener(tokens, from);
             }
         }
@@ -128,7 +110,7 @@ pub fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8) -> Op
             return None;
         }
         w -= 1;
-        bits = b.word(src, st, n, w);
+        bits = b.word(src, n, w) & st[w];
     }
 }
 
@@ -141,7 +123,7 @@ fn delim_memo_opener(tokens: &Tokens, from: usize) -> Option<usize> {
         let last = from >> 6;
         let mut w = first;
         while w <= last {
-            let mut bits = b.word(src, st, n, w);
+            let mut bits = b.word(src, n, w) & st[w];
             if w == first {
                 bits &= !((1u64 << (m.built_to & 63)) - 1);
             }
@@ -207,7 +189,7 @@ pub fn ident_is(src: &[u8], pos: usize, kw: &[u8]) -> bool {
     }
 }
 
-/// Previous significant token start before `pos` (skipping trivia), or `None` at start of input.
+/// Previous significant token start before pos (skipping trivia), or None at start of input.
 #[inline]
 pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize) -> Option<usize> {
     let mut q = bits::prev1(st, pos);

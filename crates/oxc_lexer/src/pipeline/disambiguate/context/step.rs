@@ -1,12 +1,7 @@
-//! Stepping one token: the line-break rules (ASI, restricted productions, the end of a
-//! type), literals, and the dispatch to words, punctuation, types and JSX.
-
 use crate::token::{OP_KIND_BASE, tk};
 
 use super::*;
 
-/// Can `tok` (the token starting at `pos`) continue an expression that a value token ended on the
-/// previous line? Used for ASI.
 pub(super) fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
     let k = tokens.base_kind(pos);
     if k >= OP_KIND_BASE {
@@ -48,8 +43,7 @@ pub(super) fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
     matches!(k, tk!(TemplateHead) | tk!(TemplateNoSub))
 }
 
-/// Can `pos` continue a type after a completed type atom on the previous line? `.`, `|`, `&` may
-/// follow a line break; `[`, `<`, `extends` may not.
+/// ., |, & may follow a line break inside a type; [, <, extends may not.
 pub(super) fn continues_type_after_break(tokens: &Tokens, pos: usize) -> bool {
     let k = tokens.base_kind(pos);
     if k >= OP_KIND_BASE {
@@ -84,7 +78,6 @@ impl Walk {
         let newline = tokens.line_break_between(self.prev_end, pos);
         self.stmt_done = false;
 
-        // Skipping the inside of a closing JSX tag.
         if self.jsx_closing {
             if k == tk!(JsxTagEnd) {
                 self.jsx_closing = false;
@@ -92,7 +85,6 @@ impl Walk {
             }
             return pos + 1;
         }
-        // Inside an opening tag / children: only structure matters.
         if matches!(self.top_kind(), FrameKind::JsxTag | FrameKind::JsxElem) {
             return self.step_jsx(tokens, pos, k);
         }
@@ -101,8 +93,7 @@ impl Walk {
         if newline && !self.operand_allowed() && !continues_expression(tokens, pos) {
             self.asi(tokens, pos);
         }
-        // `let x` then a line break: only `=`, `,`, `;`, `:` and `!` can continue the declarator,
-        // anything else starts a new statement.
+        // let x then a line break: only =, ,, ;, :, ! continue the declarator.
         if newline
             && !self.operand_allowed()
             && let Some(di) = self.decl_frame()
@@ -115,8 +106,7 @@ impl Walk {
                 self.end_statement();
             }
         }
-        // A type ended on the previous line and this token cannot continue it: the annotation, and
-        // any statement it belongs to, is over.
+        // A type ended on the previous line and this token cannot continue it.
         if newline
             && self.top_kind() == FrameKind::TypeRegion
             && self.top().atom
@@ -124,8 +114,7 @@ impl Walk {
         {
             self.end_region_by_break(tokens, pos);
         }
-        // Restricted productions: `return` / `throw` / `yield` / `break` / `continue` followed by a
-        // line break end their statement.
+        // Restricted productions: a line break ends the statement.
         if newline
             && matches!(
                 self.prev_kw,
@@ -217,16 +206,14 @@ impl Walk {
             // A declaration type: handled by the caller's type check.
             return;
         }
-        // A head continues onto the next line when its body (or more head) follows; otherwise the
-        // break ends a bodiless signature.
+        // More head or the body continues the head; otherwise the break ends a bodiless signature.
         if matches!(self.top_kind(), FrameKind::FnHead | FrameKind::ClassHead) {
             let c = tokens.src[pos];
             let k = tokens.base_kind(pos);
             if k >= OP_KIND_BASE && (c == b'{' || c == b'<' || c == b'(') {
                 return;
             }
-            // Right after `function` / `class`, the name (or a generator's `*`) may follow a
-            // line break: nothing has been declared yet, so there is no signature to end.
+            // Right after function / class the name may still follow a line break.
             let unnamed = matches!(self.prev_kw, K_FUNCTION | K_CLASS);
             if unnamed && (k == tk!(Ident) || (k >= OP_KIND_BASE && c == b'*')) {
                 return;
@@ -261,7 +248,7 @@ impl Walk {
                 // No statements here; nothing to end.
             }
             FrameKind::Angle => {
-                // Inside a `<...>` list a line break is trivia: `<T\nextends U>` is one list.
+                // Inside a <...> list a line break is trivia: <T\nextends U> is one list.
             }
             _ => self.end_statement(),
         }
@@ -289,7 +276,7 @@ impl Walk {
                 }
             }
             R_EXPR => {
-                // `x as T` then a new line: the value is complete.
+                // x as T then a new line: the value is complete.
                 self.set_value();
                 self.no_type_args = true;
                 if !continues_expression(tokens, pos) {
@@ -325,7 +312,7 @@ impl Walk {
                     self.frames[si].prologue = 0;
                 }
             }
-            // Module specifier: `import "x"`, `... from "x"`.
+            // Module specifier: import "x", ... from "x".
             let reg = self.stmt_reg();
             if (matches!(reg, S_IMPORT | S_IMPORT_NAME)
                 && matches!(self.prev_kw, K_IMPORT | K_FROM))
@@ -346,7 +333,7 @@ impl Walk {
                 return;
             }
             if reg == S_DECLARE_MODULE {
-                // `declare module "x"`: bodiless unless `{` follows.
+                // declare module "x": bodiless unless { follows.
                 self.value_done();
                 self.stmt_done = true;
                 return;

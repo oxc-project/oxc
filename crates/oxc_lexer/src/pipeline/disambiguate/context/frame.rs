@@ -1,10 +1,5 @@
-//! What the walk remembers per frame: the kind of every open bracket or virtual frame,
-//! its per-kind state, and the keyword codes the walk reads off the source.
-
 use crate::token::TokenKind;
 
-/// Keyword codes: the token kinds `coalesce` writes, used here on the spellings `classify` left as
-/// identifiers.
 macro_rules! kw_codes {
     ($($name:ident = $kind:ident),* $(,)?) => {
         $(pub(super) const $name: u8 = TokenKind::$kind as u8;)*
@@ -39,8 +34,7 @@ kw_codes! {
     K_UNDEFINED = KwUndefined, K_UNKNOWN = KwUnknown,
 }
 
-/// A keyword that is a whole type by itself (`any`, `null`, `this`, ...): it takes no type
-/// arguments, so a `<` after it is a comparison.
+/// any, null, this...: whole types that take no type arguments.
 pub(super) fn keyword_type(kw: u8) -> bool {
     matches!(
         kw,
@@ -77,8 +71,7 @@ pub(super) enum FrameKind {
     EnumBody,
     ModuleSpec,
     Container,
-    // A template substitution (`${` .. `}`), opened by a TemplateHead or TemplateMiddle and closed
-    // by the next Middle/Tail.
+    // A template substitution, from a TemplateHead or Middle to the next Middle or Tail.
     Sub,
     // Parens.
     Head,
@@ -116,7 +109,7 @@ pub(super) const H_SWITCH: u8 = 5;
 
 pub(super) const H_CATCH: u8 = 6;
 
-// Declarator state on statement frames and for-heads (`state`).
+// Declarator state on statement frames and for-heads (state).
 pub(super) const D_NONE: u8 = 0;
 
 pub(super) const D_BINDING: u8 = 1;
@@ -125,7 +118,7 @@ pub(super) const D_BOUND: u8 = 2;
 
 pub(super) const D_INIT: u8 = 3;
 
-// Statement register on statement frames (`reg`).
+// Statement register on statement frames (reg).
 pub(super) const S_NONE: u8 = 0;
 
 pub(super) const S_CASE: u8 = 1;
@@ -154,7 +147,7 @@ pub(super) const S_IMPORT_NAME: u8 = 13;
 
 pub(super) const S_DECLARE_MODULE: u8 = 14;
 
-// For-head state (`state`).
+// For-head state (state).
 pub(super) const F_START: u8 = 0;
 
 pub(super) const F_BOUND: u8 = 1;
@@ -163,21 +156,21 @@ pub(super) const F_EXPR: u8 = 2;
 
 pub(super) const F_ITER: u8 = 3;
 
-// Member state on Object / ClassBody / TypeLit (`state`).
+// Member state on Object / ClassBody / TypeLit (state).
 pub(super) const M_KEY_POS: u8 = 0;
 
 pub(super) const M_KEY_SEEN: u8 = 1;
 
 pub(super) const M_VALUE: u8 = 2;
 
-// Member modifier bits (`mods`) on Object / ClassBody.
+// Member modifier bits (mods) on Object / ClassBody.
 pub(super) const MOD_ASYNC: u8 = 1;
 
 pub(super) const MOD_GEN: u8 = 2;
 
 pub(super) const MOD_STATIC: u8 = 4;
 
-// TypeRegion end rule (`state`).
+// TypeRegion end rule (state).
 pub(super) const R_ASSERT: u8 = 1; // `<T>x`: ends at its closing `>`
 pub(super) const R_ARROW_RET: u8 = 2; // `(a): T =>`: ends at `=>`
 pub(super) const R_INLINE: u8 = 3; // declarator/param/member annotation: ends at `=`/`,`/closer/`{`
@@ -185,18 +178,18 @@ pub(super) const R_STMT: u8 = 4; // alias / import-equals / bodiless module: end
 pub(super) const R_EXPR: u8 = 5; // `as T` / `satisfies T`: ends at any expression token
 pub(super) const R_INTERFACE: u8 = 6; // `interface X ... { }`: ends after its body
 
-// What an Angle list is (`state`).
+// What an Angle list is (state).
 pub(super) const A_DECL_PARAMS: u8 = 1; // type parameters of a declaration head or member
 pub(super) const A_EXPR_ARGS: u8 = 2; // type arguments on an expression: `f<T>(x)`
 pub(super) const A_IN_TYPE: u8 = 3; // a list inside a type
 pub(super) const A_ASSERT: u8 = 4; // `<T>x` assertion or `<T,>() =>` generic arrow
 
-// ClassHead heritage state (`state`), and its interface marker (`reg`).
+// ClassHead heritage state (state), and its interface marker (reg).
 pub(super) const C_EXTENDS: u8 = 1;
 pub(super) const C_IMPLEMENTS: u8 = 2;
 pub(super) const C_INTERFACE: u8 = 1;
 
-// TypeLit (`state`): the body of an interface, which ends the statement when closed.
+// TypeLit (state): the body of an interface, which ends the statement when closed.
 pub(super) const L_INTERFACE_BODY: u8 = 1;
 
 #[derive(Clone, Copy)]
@@ -212,13 +205,13 @@ pub(super) struct Frame {
     pub(super) decl: bool,
     /// TypeRegion: the last token completed a type.
     pub(super) atom: bool,
-    /// TypeRegion: the last token closed a `(` opened inside the region.
+    /// TypeRegion: the last token closed a ( opened inside the region.
     pub(super) inner: bool,
     pub(super) state: u8,
     pub(super) reg: u8,
     /// Member modifier bits (Object / ClassBody).
     pub(super) mods: u8,
-    /// For-head: the binding came from a declaration (`for (let x of`).
+    /// For-head: the binding came from a declaration (for (let x of).
     pub(super) decl_binding: bool,
     pub(super) head: u8,
     pub(super) open_questions: u16,
@@ -226,9 +219,7 @@ pub(super) struct Frame {
 }
 
 impl Frame {
-    /// A class field initializer (`x = ...` in a class body): parsed outside the `yield` and
-    /// `await` contexts of whatever encloses the class, as tsc does, so both are identifiers in
-    /// it. Computed keys still see the enclosing function.
+    /// Field initializers sit outside the enclosing yield / await context, as in tsc.
     pub(super) fn field_init(&self) -> bool {
         self.kind == FrameKind::ClassBody && self.state == M_VALUE
     }
@@ -256,7 +247,6 @@ impl Frame {
     }
 }
 
-/// Frames that hold statements (and so declarator state and statement registers).
 pub(super) fn is_stmt_holder(k: FrameKind) -> bool {
     matches!(
         k,
