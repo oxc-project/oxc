@@ -84,7 +84,12 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
     // optional `const` type-parameter modifier: `<const T,>`
     if n - p >= 6 && &src[p..p + 5] == b"const" && !is_word(src[p + 5]) {
         let qq = jsx_skip_trivia_fast(src.as_ptr(), n, p + 5);
-        if qq < n && is_id_start(src[qq]) && !line_break_in(src, p + 5, qq) {
+        // A modifier must be on the same line as its parameter, so `const` followed by a line break
+        // can only be a JSX tag name, e.g. `<const\nextends U>` is JSX.
+        if line_break_in(src, p + 5, qq) {
+            return AngleVerdict::Jsx;
+        }
+        if qq < n && is_id_start(src[qq]) {
             p = qq; // `const` was a modifier; advance to the real param
         }
     }

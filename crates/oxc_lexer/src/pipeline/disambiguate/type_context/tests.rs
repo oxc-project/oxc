@@ -1033,6 +1033,19 @@ fn tsx_type_parameter_list_signals_cross_trivia() {
 }
 
 #[test]
+fn tsx_const_followed_by_a_line_break_is_a_jsx_tag_name() {
+    // `const` is only a modifier on the same line as its parameter.
+    for code in [
+        "x = <const\nextends U>hi</const>;",
+        "x = <const\nT extends U>hi</const>;",
+        "x = <const /*\n*/ extends U>hi</const>;",
+    ] {
+        assert!(kinds_of(code, ScriptTSX).contains(&TokenKind::JsxLt), "{code:?}");
+        assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+    }
+}
+
+#[test]
 fn keyword_type_followed_by_a_dot_is_a_member_access() {
     // this.x is not a type, so the list fails; any.x and string.x are qualified names.
     for kw in ["this", "null", "true", "false", "void"] {
