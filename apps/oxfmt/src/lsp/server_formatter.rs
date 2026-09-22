@@ -4,12 +4,15 @@ use std::{
 };
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use tower_lsp_server::ls_types::{Pattern, Range, ServerCapabilities, TextEdit, Uri};
+use tower_lsp_server::gen_lsp_types::{
+    DocumentFormattingProvider, Pattern, Range, ServerCapabilities, TextEdit, Uri,
+};
 use tracing::{debug, error, warn};
 
 use oxc_language_server::{
     Capabilities, ClientMessage, LanguageId, TextDocument, Tool, ToolBuildResult, ToolBuilder,
-    ToolRestartChanges, offset_to_position, utils::normalize_user_config_path_to_watch_pattern,
+    ToolRestartChanges, offset_to_position, uri_utils::uri_to_file_path,
+    utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::core::{
@@ -54,7 +57,7 @@ impl ServerFormatterBuilder {
     ) -> (ServerFormatter, Vec<ClientMessage>) {
         let options = deserialize_lsp_options(options);
 
-        let root_path = root_uri.to_file_path().unwrap();
+        let root_path = uri_to_file_path(root_uri).unwrap();
         debug!("root_path = {:?}", root_path.display());
 
         // Resolve workspace-level concerns only here.
@@ -70,7 +73,7 @@ impl ServerFormatterBuilder {
 
         // If `configPath` is explicitly set, load it eagerly as the single config for all files.
         let use_nested_config = options.use_nested_configs();
-        let explicit_config_path = options.explicit_config_path().map(PathBuf::from);
+        let explicit_config_path = options.config_path.as_ref().map(PathBuf::from);
 
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
@@ -102,8 +105,7 @@ impl ToolBuilder for ServerFormatterBuilder {
         capabilities: &mut ServerCapabilities,
         _backend_capabilities: &mut Capabilities,
     ) {
-        capabilities.document_formatting_provider =
-            Some(tower_lsp_server::ls_types::OneOf::Left(true));
+        capabilities.document_formatting_provider = Some(DocumentFormattingProvider::Bool(true));
     }
 
     fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
@@ -193,7 +195,7 @@ impl Tool for ServerFormatter {
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
         let options = deserialize_lsp_options(options);
 
-        let mut patterns: Vec<Pattern> = if let Some(config_path) = options.explicit_config_path() {
+        let mut patterns: Vec<Pattern> = if let Some(config_path) = options.config_path.as_deref() {
             vec![normalize_user_config_path_to_watch_pattern(config_path)]
         } else {
             // Watch subdirectories too for nested config support;
@@ -237,7 +239,7 @@ impl Tool for ServerFormatter {
     fn run_format(&self, document: TextDocument) -> Result<Vec<TextEdit>, String> {
         let file_content;
         let (result, source_text) = if document.uri.scheme().as_str() == "file" {
-            let Some(path) = document.uri.to_file_path() else {
+            let Some(path) = uri_to_file_path(document.uri) else {
                 return Err("Invalid file URI".to_string());
             };
 
@@ -540,17 +542,21 @@ fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
 mod tests_builder {
     use crate::lsp::server_formatter::ServerFormatterBuilder;
     use oxc_language_server::{Capabilities, ToolBuilder};
+    use tower_lsp_server::gen_lsp_types::DocumentFormattingProvider;
 
     #[test]
     fn test_server_capabilities() {
-        use tower_lsp_server::ls_types::{OneOf, ServerCapabilities};
+        use tower_lsp_server::gen_lsp_types::ServerCapabilities;
 
         let builder = ServerFormatterBuilder::dummy();
         let mut capabilities = ServerCapabilities::default();
 
         builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
-        assert_eq!(capabilities.document_formatting_provider, Some(OneOf::Left(true)));
+        assert_eq!(
+            capabilities.document_formatting_provider,
+            Some(DocumentFormattingProvider::Bool(true))
+        );
     }
 }
 

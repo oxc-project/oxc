@@ -1743,6 +1743,20 @@ pub struct TSExternalModuleReference<'a> {
     pub expression: StringLiteral<'a>,
 }
 
+/// TypeScript non-null expression (`!`)
+///
+/// This expression assumes that the type of the inner expression is not null
+/// and changes it from `T | null` to just `T`.
+///
+/// ## Example
+///
+/// ```ts
+/// x!
+/// ^ expression
+///
+/// a.b.c!
+/// ^^^^^ expression
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
@@ -1750,6 +1764,7 @@ pub struct TSExternalModuleReference<'a> {
 pub struct TSNonNullExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// The expression to assume as not null, e.g., `x` in `x!`.
     pub expression: Expression<'a>,
 }
 
@@ -1800,9 +1815,14 @@ pub struct TSExportAssignment<'a> {
     pub expression: Expression<'a>,
 }
 
-/// Namespace Export Declaration in declaration files
+/// Namespace export declaration in declaration files (.d.ts).
 ///
-/// `export as namespace foo`
+/// ## Example
+///
+/// ```ts
+/// export as namespace foo;
+/// //                  ^^^ id
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
@@ -1810,9 +1830,19 @@ pub struct TSExportAssignment<'a> {
 pub struct TSNamespaceExportDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// Name of the exported namespace.
     pub id: IdentifierName<'a>,
 }
 
+/// An expression with instantiated type arguments.
+///
+/// ## Example
+///
+/// ```ts
+/// (foo<Bar>)()
+///     ^^^^^ type arguments
+///  ^^^^^^^^ expression
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
@@ -1820,7 +1850,13 @@ pub struct TSNamespaceExportDeclaration<'a> {
 pub struct TSInstantiationExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// The expression being instantiated with type arguments.
+    ///
+    /// Example: `foo` in `(foo<Bar>)()`
     pub expression: Expression<'a>,
+    /// The type arguments used to instantiate the expression.
+    ///
+    /// Example: `X` and `Y` in `(foo<X, Y>)()`
     pub type_arguments: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 

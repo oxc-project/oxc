@@ -1,9 +1,9 @@
-commit: 1eac4481
+commit: fd665901
 
 parser_babel Summary:
-AST Parsed     : 2234/2234 (100.00%)
-Positive Passed: 2218/2234 (99.28%)
-Negative Passed: 1728/1742 (99.20%)
+AST Parsed     : 2239/2239 (100.00%)
+Positive Passed: 2223/2239 (99.29%)
+Negative Passed: 1732/1746 (99.20%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -3885,12 +3885,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·    ─
    ╰────
 
-  × Invalid Character `9`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/208/input.js:1:3]
- 1 │ 0b9
-   ·   ▲
-   ╰────
-
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/209/input.js:1:4]
  1 │ 0b18
@@ -4388,10 +4382,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Invalid Character `𫠞`
+  × Invalid Character `𯿾`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/327/input.js:1:5]
- 1 │ var 𫠞_ = 12;
-   ·     ──
+ 1 │ var 𯿾_ = 12;
+   ·     ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4712,6 +4706,30 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ import default from "foo"
    ·        ───┬───
    ·           ╰── `from` expected
+   ╰────
+
+  × Invalid Character `9`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-binary-radix-leading/input.js:1:3]
+ 1 │ 0b9
+   ·   ▲
+   ╰────
+
+  × Invalid Character `9`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-binary-radix-leading-errorRecovery-false/input.js:1:3]
+ 1 │ 0b9
+   ·   ▲
+   ╰────
+
+  × Invalid characters after number
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-binary-radix-trailing/input.js:1:4]
+ 1 │ 0b19
+   ·    ─
+   ╰────
+
+  × Invalid characters after number
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-binary-radix-trailing-errorRecovery-false/input.js:1:4]
+ 1 │ 0b19
+   ·    ─
    ╰────
 
   × Cannot use `yield` as an identifier in a generator context
@@ -5970,6 +5988,60 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:1:5]
  1 │ new import("foo");
    ·     ─────────────
+ 2 │ 
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:3:5]
+ 2 │ 
+ 3 │ new import("foo").bar;
+   ·     ─────────────────
+ 4 │ new import("foo")[bar];
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:4:5]
+ 3 │ new import("foo").bar;
+ 4 │ new import("foo")[bar];
+   ·     ──────────────────
+ 5 │ new import("foo")`bar`;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:5:5]
+ 4 │ new import("foo")[bar];
+ 5 │ new import("foo")`bar`;
+   ·     ──────────────────
+ 6 │ new import("foo").bar(qux);
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:6:5]
+ 5 │ new import("foo")`bar`;
+ 6 │ new import("foo").bar(qux);
+   ·     ──────────────────────
+ 7 │ new import("foo")[bar](qux);
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:7:5]
+ 6 │ new import("foo").bar(qux);
+ 7 │ new import("foo")[bar](qux);
+   ·     ───────────────────────
+ 8 │ new import("foo")`bar`(qux);
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:8:5]
+ 7 │ new import("foo")[bar](qux);
+ 8 │ new import("foo")`bar`(qux);
+   ·     ───────────────────────
    ╰────
   help: Wrap this with parenthesis
 
@@ -9136,14 +9208,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-object-pattern/input.js:2:14]
+  × Using declarations may not have binding patterns.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-object-pattern/input.js:2:15]
  1 │ async function f() {
  2 │   await using { foo } = f();
-   ·              ▲
+   ·               ───────
  3 │ }
    ╰────
-  help: Try inserting a semicolon here
 
   × Using declarations may not have binding patterns.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/disallow-destructuring/input.js:1:17]
@@ -12361,6 +12432,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ──
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/bigInt/invalid-float/input.js:1:4]
+ 1 │ 0e0n;
+   ·    ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts:2:12]
@@ -15732,11 +15810,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-await-using/input.ts:2:14]
+  × Missing initializer in destructuring declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-await-using/input.ts:2:15]
  1 │ {
  2 │   await using {}! = {};
-   ·              ▲
+   ·               ──
+ 3 │ }
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations may not have binding patterns.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-await-using/input.ts:2:15]
+ 1 │ {
+ 2 │   await using {}! = {};
+   ·               ──
+ 3 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-await-using/input.ts:2:17]
+ 1 │ {
+ 2 │   await using {}! = {};
+   ·                 ▲
  3 │ }
    ╰────
   help: Try inserting a semicolon here

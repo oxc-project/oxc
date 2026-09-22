@@ -1133,3 +1133,47 @@ fn html_comments() {
         "const x = 1;\n--> comment\nconst y = 2;\n",
     );
 }
+
+#[test]
+fn template_literal_dollar_escapes() {
+    for (source, expected) in [
+        (r"`\$`;", r"`$`;"),
+        (r"`^${pattern}\$`;", r"`^${pattern}$`;"),
+        (r"`\$a\$${value}\$`;", r"`$a$${value}$`;"),
+        (r"`\${value}`;", r"`\${value}`;"),
+        (r"`\$\{value}`;", r"`$\{value}`;"),
+        (r"`\$\u007bvalue}`;", r"`$\u007bvalue}`;"),
+        (r"`\\$`;", r"`\\$`;"),
+        (r"`\\\$`;", r"`\\$`;"),
+        (r"`\\\\$`;", r"`\\\\$`;"),
+        (r"`\\\\\$`;", r"`\\\\$`;"),
+        (r"`\\\${value}`;", r"`\\\${value}`;"),
+        (r"`\\${value}\$`;", r"`\\${value}$`;"),
+        (r"`\$${{value}}\$`;", r"`$${{value}}$`;"),
+        (r"tag`\$${value}\$`;", r"tag`\$${value}\$`;"),
+        (r"String.raw`\$${value}\$`;", r"String.raw`\$${value}\$`;"),
+        (r"tag`\$${`\$`}\$`;", r"tag`\$${`$`}\$`;"),
+    ] {
+        test_minify(source, expected);
+        test_minify_same(expected);
+    }
+    test_same("`^${pattern}\\$`;\n");
+    test_same("tag`\\$`;\n");
+
+    for ascii_only in [false, true] {
+        test_options(
+            r"`é\$</script>${value}\$é`;",
+            if ascii_only {
+                r"`\u00E9$<\/script>${value}$\u00E9`;"
+            } else {
+                r"`é$<\/script>${value}$é`;"
+            },
+            CodegenOptions { minify: true, ascii_only, ..CodegenOptions::default() },
+        );
+        test_options(
+            r"String.raw`é\$`;",
+            r"String.raw`é\$`;",
+            CodegenOptions { minify: true, ascii_only, ..CodegenOptions::default() },
+        );
+    }
+}

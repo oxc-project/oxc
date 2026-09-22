@@ -1,7 +1,5 @@
 # externals/gitlab/stylesheets/pages/profile.scss
 
-> trailing `//` comment never counts toward print width. See crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
-
 ## Option 1
 
 `````json

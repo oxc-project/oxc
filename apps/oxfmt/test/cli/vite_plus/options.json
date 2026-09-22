@@ -38,5 +38,10 @@
     "cwd": "priority",
     "args": ["--check", "test.ts"],
     "env": { "VP_VERSION": "1", "NO_COLOR": "1" }
+  },
+  {
+    "cwd": "nested_ignored",
+    "args": ["--check", "child/test.ts"],
+    "env": { "VP_VERSION": "1", "NO_COLOR": "1" }
   }
 ]

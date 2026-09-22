@@ -1,4 +1,4 @@
-use super::super::chunk::{eqm, load64};
+use crate::pipeline::chunk::{eqm, load64};
 
 use super::common::lic_verify_at;
 

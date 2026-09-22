@@ -2,7 +2,7 @@
    trailing `//` before a block, interpolated names
    (the `UnknownSassAtRule` statement path).
    `@error`/`@warn` re-quote strings to the preferred quote
-   (intentional divergence from Prettier — see `at_rule.rs`). */
+   (DIVERGES, see DIVERGENCES.md#warn-error-requote). */
 @a:b;
 @foo (x);
 @foo /* gap */ bar;

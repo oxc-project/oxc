@@ -1,14 +1,13 @@
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
 use oxc_span::Span;
 
 use crate::{
     lanes::Lanes,
-    tables::Tables,
-    token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte},
+    token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
 };
 
-use super::super::{BIGINT, HASHBANG, IDENT_ESC, NUM, PRIV_IDENT_ESC};
+use crate::pipeline::tables::Tables;
 
 use super::common::{emit_value, invalid_diags};
 
@@ -120,7 +119,7 @@ pub(super) unsafe fn build_spans(
     // AVX2-specific code
     let v_min = _mm_set1_epi8(TRIVIA_MIN as i8);
     let v_span = _mm_set1_epi8((TRIVIA_MAX - TRIVIA_MIN) as i8);
-    let v_hb = _mm_set1_epi8(HASHBANG as i8);
+    let v_hb = _mm_set1_epi8(tk!(Hashbang) as i8);
     let zero = _mm_setzero_si128();
     while j + 8 <= m {
         let k8 = _mm_loadl_epi64(stage_kind.add(j) as *const __m128i);
@@ -162,7 +161,7 @@ pub(super) unsafe fn build_spans(
         let k = *stage_kind.add(j);
         *sp.add(w) = stage_pos.add(j).cast::<u64>().read_unaligned();
         *sig_kinds.add(w) = k;
-        w += usize::from(!is_trivia_byte(k) || k == HASHBANG);
+        w += usize::from(!is_trivia_byte(k) || k == tk!(Hashbang));
         j += 1;
     }
 
@@ -177,10 +176,10 @@ pub(super) unsafe fn lanes_post(
     nn: u32,
     lanes: &mut Lanes,
 ) {
-    let v_num = _mm256_set1_epi8(NUM as i8);
-    let v_big = _mm256_set1_epi8(BIGINT as i8);
-    let v_esc = _mm256_set1_epi8(IDENT_ESC as i8);
-    let v_pesc = _mm256_set1_epi8(PRIV_IDENT_ESC as i8);
+    let v_num = _mm256_set1_epi8(tk!(Number) as i8);
+    let v_big = _mm256_set1_epi8(tk!(BigInt) as i8);
+    let v_esc = _mm256_set1_epi8(tk!(IdentEscaped) as i8);
+    let v_pesc = _mm256_set1_epi8(tk!(PrivateIdentEscaped) as i8);
     macro_rules! hits {
         ($v:expr) => {{
             let v = $v;
@@ -190,10 +189,10 @@ pub(super) unsafe fn lanes_post(
             )
         }};
     }
-    // 255 (INVALID) is the byte-class default for stray/control bytes and
+    // `tk!(Invalid)` is the byte-class default for stray/control bytes and
     // reaches the output as a 1-byte token. Track "any seen" alongside the
     // value sweep; localize cold.
-    let v_inv = _mm256_set1_epi8(-1i8); // 0xFF == token_kind::INVALID
+    let v_inv = _mm256_set1_epi8(tk!(Invalid) as i8);
     let mut inv = _mm256_setzero_si256();
     let mut i = 0usize;
     while i + 64 <= m {

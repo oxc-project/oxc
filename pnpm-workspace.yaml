@@ -14,19 +14,19 @@ catalog:
   "@emnapi/runtime": 2.0.0-alpha.3
   emnapi: 2.0.0-alpha.3
   "@arethetypeswrong/core": 0.18.5
-  "@napi-rs/cli": 3.9.1
+  "@napi-rs/cli": 3.10.4
   "@napi-rs/wasm-runtime": 1.2.4
   "@types/node": 24.1.0
   cross-env: ^10.1.0
   degit: 3.10.0
-  eslint: 10.10.0
+  eslint: 10.11.0
   json-schema-to-typescript: ^16.0.0
   publint: 0.3.24
-  rolldown: 1.2.8
+  rolldown: 1.2.9
   tsdown: 0.23.0
   vite: 8.3.0
-  vite-plus: 0.3.1
-  vitest: 5.0.0
+  vite-plus: 0.3.3
+  vitest: 5.0.1
 
 overrides:
   rolldown: "catalog:"

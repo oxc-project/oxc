@@ -3,7 +3,7 @@
 //! must separate the pairs the JS key cannot.
 #![cfg(target_endian = "little")]
 
-use oxc_lexer::{Lexer, PAD, TokenKind, default_options};
+use oxc_lexer::{LexOptions, Lexer, PAD, TokenKind};
 
 /// All 35 TS-mode additions, mirroring `KEYWORDS_TS_EXTRA` (kept literal so
 /// a table typo cannot hide behind shared constants).
@@ -50,9 +50,7 @@ fn kinds(code: &str, ts: bool, jsx: bool) -> Vec<TokenKind> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
-    let mut opts = default_options();
-    opts.ts = ts;
-    opts.jsx = jsx;
+    let opts = LexOptions { jsx, ts, ..Default::default() };
     let mut lx = Lexer::new();
     let count = lx.lex(&buf, n, opts);
     lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
@@ -94,7 +92,7 @@ fn js_keywords_identical_in_both_modes() {
 
 #[test]
 fn ts_key_separates_narrow_key_collisions() {
-    // These pairs share (c0, c1, len) — the JS key cannot tell them apart,
+    // These pairs share (c0, c1, len) - the JS key cannot tell them apart,
     // the TS (c0, c1, last, len) key must.
     assert_eq!(first_kind("static", true), TokenKind::KwStatic);
     assert_eq!(first_kind("string", true), TokenKind::KwString);
@@ -139,17 +137,14 @@ fn near_misses_stay_ident() {
 #[test]
 fn member_access_words_stay_ident() {
     // The candidate filter drops words right after a member dot.
-    assert_eq!(
-        kinds("a.type", true, false),
-        vec![TokenKind::Ident, TokenKind::Dot, TokenKind::Ident]
-    );
+    assert_eq!(kinds("a.type", true, false), [TokenKind::Ident, TokenKind::Dot, TokenKind::Ident]);
     assert_eq!(
         kinds("a?.string", true, false),
-        vec![TokenKind::Ident, TokenKind::OptionalChain, TokenKind::Ident]
+        [TokenKind::Ident, TokenKind::OptionalChain, TokenKind::Ident]
     );
     assert_eq!(
         kinds("module.exports", true, false),
-        vec![TokenKind::KwModule, TokenKind::Dot, TokenKind::Ident]
+        [TokenKind::KwModule, TokenKind::Dot, TokenKind::Ident]
     );
 }
 
@@ -157,17 +152,11 @@ fn member_access_words_stay_ident() {
 fn ts_statement_shapes() {
     assert_eq!(
         kinds("type X = string;", true, false),
-        vec![
-            TokenKind::KwType,
-            TokenKind::Ident,
-            TokenKind::Eq,
-            TokenKind::KwString,
-            TokenKind::Semi
-        ]
+        [TokenKind::KwType, TokenKind::Ident, TokenKind::Eq, TokenKind::KwString, TokenKind::Semi]
     );
     assert_eq!(
         kinds("interface I { readonly x: number }", true, false),
-        vec![
+        [
             TokenKind::KwInterface,
             TokenKind::Ident,
             TokenKind::LBrace,
@@ -180,12 +169,12 @@ fn ts_statement_shapes() {
     );
     assert_eq!(
         kinds("declare module 'x';", true, false),
-        vec![TokenKind::KwDeclare, TokenKind::KwModule, TokenKind::String, TokenKind::Semi]
+        [TokenKind::KwDeclare, TokenKind::KwModule, TokenKind::String, TokenKind::Semi]
     );
     // Same input in JS mode: every TS spelling is a plain identifier.
     assert_eq!(
         kinds("type X = string;", false, false),
-        vec![TokenKind::Ident, TokenKind::Ident, TokenKind::Eq, TokenKind::Ident, TokenKind::Semi]
+        [TokenKind::Ident, TokenKind::Ident, TokenKind::Eq, TokenKind::Ident, TokenKind::Semi]
     );
 }
 
@@ -193,7 +182,7 @@ fn ts_statement_shapes() {
 fn tsx_mode_uses_ts_set() {
     assert_eq!(
         kinds("type P = { x: number };", true, true),
-        vec![
+        [
             TokenKind::KwType,
             TokenKind::Ident,
             TokenKind::Eq,
