@@ -2,7 +2,7 @@
 //! [`Symbol`] are considered a usage.
 
 use itertools::Itertools;
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::{AstKind, AstType, ast::*};
 use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
 
@@ -707,6 +707,10 @@ impl<'a> Symbol<'_, 'a> {
     /// foo.bar;
     /// ```
     fn is_discarded_read(&self, reference: &Reference) -> bool {
+        if !self.nodes().contains(AstType::SequenceExpression) {
+            return false;
+        }
+
         for (parent, grandparent) in
             self.iter_relevant_parent_and_grandparent_kinds(reference.node_id())
         {
