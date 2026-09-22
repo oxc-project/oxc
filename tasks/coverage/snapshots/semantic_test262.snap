@@ -2,7 +2,7 @@ commit: 0a888ef3
 
 semantic_test262 Summary:
 AST Parsed     : 47452/47452 (100.00%)
-Positive Passed: 47334/47452 (99.75%)
+Positive Passed: 47332/47452 (99.75%)
 semantic Error: tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-computed-property-name-from-arrow-function-expression.js
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
@@ -659,6 +659,20 @@ Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | DirectEval)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode)
 
+semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-init-simple-no-strict.js
+Symbol reference IDs mismatch for "arguments":
+after transform: SymbolId(1): [ReferenceId(28), ReferenceId(32)]
+rebuilt        : SymbolId(3): []
+Reference symbol mismatch for "arguments":
+after transform: SymbolId(1) "arguments"
+rebuilt        : <None>
+Reference symbol mismatch for "arguments":
+after transform: SymbolId(1) "arguments"
+rebuilt        : <None>
+Unresolved reference IDs mismatch for "arguments":
+after transform: [ReferenceId(1), ReferenceId(5)]
+rebuilt        : [ReferenceId(3), ReferenceId(12), ReferenceId(17), ReferenceId(28)]
+
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-getter.js
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
@@ -678,6 +692,20 @@ semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/asy
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
+
+semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-id-init-simple-no-strict.js
+Symbol reference IDs mismatch for "arguments":
+after transform: SymbolId(1): [ReferenceId(30), ReferenceId(34)]
+rebuilt        : SymbolId(4): []
+Reference symbol mismatch for "arguments":
+after transform: SymbolId(1) "arguments"
+rebuilt        : <None>
+Reference symbol mismatch for "arguments":
+after transform: SymbolId(1) "arguments"
+rebuilt        : <None>
+Unresolved reference IDs mismatch for "arguments":
+after transform: [ReferenceId(1), ReferenceId(5)]
+rebuilt        : [ReferenceId(4), ReferenceId(14), ReferenceId(19), ReferenceId(31)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-getter.js
 Scope parent mismatch:
