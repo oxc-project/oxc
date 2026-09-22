@@ -588,10 +588,10 @@ jobs:
 
   lexer:
     # `oxc_lexer` compiles to one of two implementations, chosen at build time:
-    # 1. SIMD core on x86_64 with `avx2` + `bmi2`.
+    # 1. SIMD core on x86_64 with `avx2` + `bmi2` + `popcnt`.
     # 2. Scalar fallback everywhere else.
     #
-    # Neither feature is in the x86_64 baseline on any platform, so the SIMD core is never built
+    # None of these features is in the x86_64 baseline on any platform, so the SIMD core is never built
     # unless asked for explicitly - which means no other job here lints, tests or runs it.
     #
     # Both legs regenerate the committed conformance snapshots and fail on any diff,

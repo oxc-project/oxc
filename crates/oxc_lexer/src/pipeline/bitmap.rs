@@ -1,4 +1,9 @@
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 use std::arch::x86_64::*;
 
 /// Get bit `i`.
@@ -168,7 +173,12 @@ pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `nw` words.
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 #[inline]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
     let mut w = 0usize;
@@ -198,7 +208,12 @@ pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `nw` words.
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 #[inline]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
     let mut w = 0usize;

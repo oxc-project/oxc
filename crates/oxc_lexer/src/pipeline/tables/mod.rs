@@ -5,14 +5,29 @@ mod pair_luts;
 mod punct1;
 
 pub(super) use keywords::KwSet;
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 pub(super) use keywords::{is_kw_init, is_kw_init_ts};
 
 pub(super) use operators::is_op_char;
 
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 pub(super) use punct1::PUNCT1;
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 pub(super) use punct1::punct1_luts;
 
 use classify_luts::{MergedLuts, WordLuts};
@@ -21,7 +36,12 @@ use operators::OpMap;
 use pair_luts::PairLuts;
 
 #[cfg_attr(
-    not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")),
+    not(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    )),
     expect(dead_code, reason = "`merged_luts` and `word_luts` only used in SIMD implementation")
 )]
 pub(super) struct Tables {

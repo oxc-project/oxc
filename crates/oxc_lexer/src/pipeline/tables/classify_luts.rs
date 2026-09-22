@@ -8,7 +8,12 @@ use super::{
 #[cfg_attr(
     all(
         not(test),
-        not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))
+        not(all(
+            target_arch = "x86_64",
+            target_feature = "avx2",
+            target_feature = "bmi2",
+            target_feature = "popcnt"
+        ))
     ),
     expect(dead_code, reason = "only used in SIMD implementation and tests")
 )]
@@ -54,7 +59,12 @@ impl MergedLuts {
 #[cfg_attr(
     all(
         not(test),
-        not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))
+        not(all(
+            target_arch = "x86_64",
+            target_feature = "avx2",
+            target_feature = "bmi2",
+            target_feature = "popcnt"
+        ))
     ),
     expect(dead_code, reason = "only used in SIMD implementation and tests")
 )]
