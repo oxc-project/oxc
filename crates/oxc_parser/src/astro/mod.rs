@@ -2058,6 +2058,45 @@ h1 { color: red; }
     }
 
     #[test]
+    fn parse_astro_script_trailing_whitespace_before_parent_closing_tag() {
+        let allocator = Allocator::default();
+        let source = "<sl-sidebar-state-persist><script is:inline>code</script>\n</sl-sidebar-state-persist>";
+        let ret = Parser::new(&allocator, source, SourceType::astro()).parse_astro();
+
+        assert!(!ret.panicked, "parser panicked: {:?}", ret.errors);
+        assert!(ret.errors.is_empty(), "errors: {:?}", ret.errors);
+        let JSXChild::Element(parent) = &ret.root.body[0] else {
+            panic!("Expected parent element");
+        };
+        assert_eq!(parent.children.len(), 2);
+        assert!(matches!(parent.children[0], JSXChild::Element(_)));
+        let JSXChild::Text(text) = &parent.children[1] else {
+            panic!("Expected trailing whitespace text child");
+        };
+        assert_eq!(text.value.as_str(), "\n");
+    }
+
+    #[test]
+    fn parse_astro_script_whitespace_before_following_sibling() {
+        let allocator = Allocator::default();
+        let source = "<div><script is:inline>code</script>\n<span /></div>";
+        let ret = Parser::new(&allocator, source, SourceType::astro()).parse_astro();
+
+        assert!(!ret.panicked, "parser panicked: {:?}", ret.errors);
+        assert!(ret.errors.is_empty(), "errors: {:?}", ret.errors);
+        let JSXChild::Element(parent) = &ret.root.body[0] else {
+            panic!("Expected parent element");
+        };
+        assert_eq!(parent.children.len(), 3);
+        assert!(matches!(parent.children[0], JSXChild::Element(_)));
+        let JSXChild::Text(text) = &parent.children[1] else {
+            panic!("Expected inter-element whitespace text child");
+        };
+        assert_eq!(text.value.as_str(), "\n");
+        assert!(matches!(parent.children[2], JSXChild::Element(_)));
+    }
+
+    #[test]
     fn parse_astro_script_defer_is_parsed() {
         let allocator = Allocator::default();
         let source_type = SourceType::astro();

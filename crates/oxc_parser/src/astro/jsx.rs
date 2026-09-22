@@ -50,7 +50,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             // In Astro, check for <script> which needs special handling
             if self.cur_src() == "script" {
                 // parse_astro_script_in_jsx returns JSXChild, convert to Expression
-                return match self.parse_astro_script_in_jsx(span) {
+                return match self.parse_astro_script_in_jsx(span, false) {
                     JSXChild::Element(el) => Expression::JSXElement(el),
                     JSXChild::AstroScript(script) => {
                         // Wrap AstroScript in a synthetic JSX element for expression context
@@ -287,7 +287,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                     if kind == Kind::Ident || kind.is_any_keyword() {
                         // Check for <script> which needs special handling
                         if self.cur_src() == "script" {
-                            children.push(self.parse_astro_script_in_jsx(span));
+                            children.push(self.parse_astro_script_in_jsx(span, true));
                             continue;
                         }
                         children.push(JSXChild::Element(self.parse_astro_jsx_element(span, true)));
@@ -535,7 +535,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 // JSX-children site; otherwise its body parses as JSX and a close
                 // tag in a template literal (`` `</article>` ``) becomes a stray error.
                 if self.cur_src() == "script" {
-                    children.push(self.parse_astro_script_in_jsx(child_span));
+                    children.push(self.parse_astro_script_in_jsx(child_span, false));
                 } else {
                     let element = self.parse_astro_jsx_element(child_span, false);
                     children.push(JSXChild::Element(element));
@@ -915,7 +915,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// See [`Self::is_raw_text_script`] for the rules on when the content is
     /// parsed vs. treated as raw text.
     #[expect(clippy::cast_possible_truncation)]
-    pub(crate) fn parse_astro_script_in_jsx(&mut self, span: u32) -> JSXChild<'a> {
+    pub(crate) fn parse_astro_script_in_jsx(
+        &mut self,
+        span: u32,
+        in_jsx_child: bool,
+    ) -> JSXChild<'a> {
         self.bump_any(); // skip `script`
 
         let attributes = self.parse_astro_jsx_attributes();
@@ -1005,6 +1009,13 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             } else {
                 self.cur_token().span().end
             };
+
+            // The closing tag was consumed with the regular lexer, which skips
+            // trivia. Re-enter JSX-child mode so whitespace after the raw-text
+            // element is preserved as a JSXText child of its parent.
+            self.lexer.set_position_for_astro(end);
+            self.token =
+                if in_jsx_child { self.lexer.next_jsx_child() } else { self.lexer.next_token() };
 
             let full_span = oxc_span::Span::new(span, end);
 
@@ -1214,7 +1225,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                         }
                     } else if kind == Kind::Ident || kind.is_any_keyword() {
                         if self.cur_src() == "script" {
-                            children.push(self.parse_astro_script_in_jsx(child_span));
+                            children.push(self.parse_astro_script_in_jsx(child_span, true));
                         } else {
                             let element = self.parse_astro_jsx_element(child_span, true);
                             children.push(JSXChild::Element(element));
