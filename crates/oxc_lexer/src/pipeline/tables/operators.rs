@@ -1,4 +1,4 @@
-use crate::token::{OP_KIND_BASE, OP_KIND_MAX, TokenKind};
+use crate::token::TokenKind;
 
 struct OpDef {
     pub txt: &'static [u8],
@@ -86,24 +86,6 @@ impl OpMap {
     }
 
     fn opmap_init(&mut self) {
-        for i in 0..OPMAP_OPS.len() {
-            let a = &OPMAP_OPS[i];
-            assert!(
-                a.len as usize == a.txt.len()
-                    && a.kind as u8 >= OP_KIND_BASE
-                    && a.kind as u8 <= OP_KIND_MAX,
-                "bad OpDef {i}"
-            );
-            for j in (i + 1)..OPMAP_OPS.len() {
-                let b = &OPMAP_OPS[j];
-                let a2 = if a.len >= 3 { a.txt[2] } else { 0 };
-                let b2 = if b.len >= 3 { b.txt[2] } else { 0 };
-                assert!(
-                    !(a.len == b.len && a.txt[0] == b.txt[0] && a.txt[1] == b.txt[1] && a2 == b2),
-                    "(c0,c1,c2,len) collision"
-                );
-            }
-        }
         let mut m: u64 = (1u64 << 24) | 1;
         while m < (1u64 << 28) {
             let mut used = [0u8; 256];
@@ -191,7 +173,7 @@ fn op_slot(key: u32, mul: u32) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::token::tk;
+    use crate::token::{OP_KIND_BASE, OP_KIND_MAX, tk};
 
     use super::*;
 
@@ -236,5 +218,29 @@ mod tests {
                 && opmap.opmap_lookup(b'=', b'/', 0, 0, 2) == 0,
             "op spot-checks failed"
         );
+    }
+
+    #[test]
+    fn test_op_defs() {
+        for i in 0..OPMAP_OPS.len() {
+            let a = &OPMAP_OPS[i];
+
+            assert!(
+                a.len as usize == a.txt.len()
+                    && a.kind as u8 >= OP_KIND_BASE
+                    && a.kind as u8 <= OP_KIND_MAX,
+                "bad OpDef {i}"
+            );
+
+            for j in (i + 1)..OPMAP_OPS.len() {
+                let b = &OPMAP_OPS[j];
+                let a2 = if a.len >= 3 { a.txt[2] } else { 0 };
+                let b2 = if b.len >= 3 { b.txt[2] } else { 0 };
+                assert!(
+                    !(a.len == b.len && a.txt[0] == b.txt[0] && a.txt[1] == b.txt[1] && a2 == b2),
+                    "(c0,c1,c2,len) collision"
+                );
+            }
+        }
     }
 }
