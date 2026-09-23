@@ -6,7 +6,7 @@ mod ignore_patterns;
 mod walk;
 
 pub use discovery::{
-    ConfigConflict, ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
+    ConfigConflict, ConfigDiscovery, DiscoveredConfigFile, is_js_config_path, vp_version,
 };
 pub use glob_set::{GlobSet, validate_glob_pattern};
 pub use ignore_patterns::validate_ignore_pattern;

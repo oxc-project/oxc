@@ -899,12 +899,13 @@ fn run_estree_acorn_jsx_impl(
 // Skip paths for TypeScript ESTree tests
 static TS_SKIP_PATHS: &[&str] = &[
     // Skip cases which are failing in parser conformance tests
-    "typescript/tests/cases/compiler/arrayFromAsync.ts",
-    "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
-    "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
-    "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
+    "typescript/tsc/testdata/tests/cases/compiler/arrayFromAsync.ts",
+    "typescript/tsc/testdata/tests/cases/compiler/regexInvalidUtf8WithUnicodeFlag.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/es2019/importMeta/importMeta.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
     // Skip tests where TS-ESLint is incorrect
-    "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
 ];
 
 // Additional skip paths for the TypeScript ESTree *token* tests.
@@ -913,8 +914,8 @@ static TS_TOKENS_SKIP_PATHS: &[&str] = &[
     // TS-ESLint drops the first `<` of a `<<` which opens a type argument list,
     // e.g. `ReturnType<<T>(x: T) => number>`. Oxc correctly emits both `<` tokens.
     // <https://github.com/typescript-eslint/typescript-eslint/issues/12820>
-    "typescript/tests/cases/compiler/importTypeWithUnparenthesizedGenericFunctionParsed.ts",
-    "typescript/tests/cases/compiler/parseGenericArrowRatherThanLeftShift.ts",
+    "typescript/tsc/testdata/tests/cases/compiler/importTypeWithUnparenthesizedGenericFunctionParsed.ts",
+    "typescript/tsc/testdata/tests/cases/compiler/parseGenericArrowRatherThanLeftShift.ts",
 ];
 
 pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {

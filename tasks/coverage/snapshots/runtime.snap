@@ -1,8 +1,8 @@
-commit: be13516f
+commit: 0a888ef3
 
 runtime Summary:
-AST Parsed     : 18277/18277 (100.00%)
-Positive Passed: 17306/18277 (94.69%)
+AST Parsed     : 18281/18281 (100.00%)
+Positive Passed: 17306/18281 (94.67%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -1035,6 +1035,9 @@ Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be t
 transform Error: tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
+minify Error: tasks/coverage/test262/test/language/expressions/class/ident-name-method-def-protected-escaped.js
+timeout: global
+
 minify Error: tasks/coverage/test262/test/language/expressions/class/name.js
 Test262Error: name descriptor value should be cls; name value should be cls
 
@@ -1074,8 +1077,17 @@ Test262Error: The expression should evaluate to the result Expected SameValue(«
 transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-sub.js
 Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «1») to be true
 
+codegen Error: tasks/coverage/test262/test/language/expressions/delete/super-property-uninitialized-this.js
+Test262Error: Expected a ReferenceError but got a Test262Error
+
 minify Error: tasks/coverage/test262/test/language/expressions/does-not-equals/S11.9.2_A7.8.js
 Test262Error: #7: (1 != {valueOf: function() {throw "error"}, toString: function() {return 1}}) throw "error"
+
+minify Error: tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-number-extremes.js
+Test262Error: The result of (0xfffffffffffff800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n != Number.MAX_VALUE) is false Expected SameValue(«true», «false») to be true
+
+minify Error: tasks/coverage/test262/test/language/expressions/equals/bigint-and-number-extremes.js
+Test262Error: The result of (0xfffffffffffff800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n == Number.MAX_VALUE) is true Expected SameValue(«false», «true») to be true
 
 minify Error: tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-err.js
 Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all

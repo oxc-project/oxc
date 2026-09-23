@@ -151,11 +151,11 @@ ast:
 
 # `oxc_lexer` compiles to one of two implementations, chosen at build time:
 #
-# * SIMD core, on x86_64 with `avx2` + `bmi2` enabled
+# * SIMD core, on x86_64 with `avx2` + `bmi2` + `popcnt` enabled
 # * Scalar fallback, everywhere else
 #
-# Both need testing, and they should produce identical results. Neither `avx2` nor `bmi2` is in the x86_64 baseline
-# on any platform, so reaching the SIMD core always means asking for them explicitly - even on an x86_64 host.
+# Both need testing, and they should produce identical results. None of `avx2`, `bmi2` and `popcnt` is in the x86_64
+# baseline on any platform, so reaching the SIMD core always means asking for them explicitly - even on an x86_64 host.
 # The flags live in `.cargo/lexer-simd.toml`, passed with `cargo --config`, which avoids shell quoting entirely
 # (this justfile runs PowerShell on Windows).
 #
@@ -198,6 +198,22 @@ lint-lexer *args='':
 # Lint `oxc_lexer` and the conformance harness against the SIMD core
 lint-lexer-simd *args='':
   just lint-lexer {{_lexer-simd}} {{args}}
+
+# `ready-lexer` fails if any step fails, or if conformance changes the lexer snapshots.
+# Only the lexer snapshots are checked for changes, so it can be run with other uncommitted changes.
+# Snapshots are checked after each conformance run, because the SIMD run overwrites the snapshots from the scalar run.
+_lexer-snapshots := "tasks/coverage/snapshots/lexer_*"
+
+# Lint, test, and run conformance for `oxc_lexer` against both implementations, and check snapshots are unchanged
+ready-lexer:
+  just lint-lexer
+  just lint-lexer-simd
+  just test-lexer
+  just test-lexer-simd
+  just conformance-lexer
+  git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
+  just conformance-lexer-simd
+  git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
 
 # ==================== LINTER ====================
 

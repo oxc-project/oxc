@@ -982,8 +982,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let literal = self.parse_literal_string();
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
+                // The error is fatal so that no AST ever carries an ill-formed export name.
                 if !literal.is_string_well_formed_unicode() {
-                    self.error(diagnostics::export_lone_surrogate(literal.span));
+                    let error = diagnostics::export_lone_surrogate(literal.span);
+                    return self.fatal_error(error);
                 }
                 ModuleExportName::StringLiteral(literal)
             }

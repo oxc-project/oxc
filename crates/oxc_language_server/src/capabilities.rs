@@ -1,7 +1,7 @@
-use tower_lsp_server::ls_types::{
-    ClientCapabilities, OneOf, SaveOptions, ServerCapabilities, TextDocumentSyncCapability,
-    TextDocumentSyncKind, TextDocumentSyncOptions, TextDocumentSyncSaveOptions,
-    WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+use tower_lsp_server::gen_lsp_types::{
+    ChangeNotifications, ClientCapabilities, Save, SaveOptions, ServerCapabilities,
+    TextDocumentSync, TextDocumentSyncKind, TextDocumentSyncOptions,
+    WorkspaceFoldersServerCapabilities, WorkspaceOptions,
 };
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
@@ -65,20 +65,18 @@ impl From<ClientCapabilities> for Capabilities {
 
 pub fn server_capabilities() -> ServerCapabilities {
     ServerCapabilities {
-        text_document_sync: Some(TextDocumentSyncCapability::Options(TextDocumentSyncOptions {
-            change: Some(TextDocumentSyncKind::FULL),
+        text_document_sync: Some(TextDocumentSync::Options(TextDocumentSyncOptions {
+            change: Some(TextDocumentSyncKind::Full),
             open_close: Some(true),
-            save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
-                include_text: Some(false),
-            })),
+            save: Some(Save::SaveOptions(SaveOptions { include_text: Some(false) })),
             ..Default::default()
         })),
-        workspace: Some(WorkspaceServerCapabilities {
+        workspace: Some(WorkspaceOptions {
             workspace_folders: Some(WorkspaceFoldersServerCapabilities {
                 supported: Some(true),
-                change_notifications: Some(OneOf::Left(true)),
+                change_notifications: Some(ChangeNotifications::Bool(true)),
             }),
-            file_operations: None,
+            ..Default::default()
         }),
         ..ServerCapabilities::default()
     }
@@ -86,7 +84,7 @@ pub fn server_capabilities() -> ServerCapabilities {
 
 #[cfg(test)]
 mod test {
-    use tower_lsp_server::ls_types::{
+    use tower_lsp_server::gen_lsp_types::{
         ClientCapabilities, DidChangeWatchedFilesClientCapabilities, WorkspaceClientCapabilities,
     };
 

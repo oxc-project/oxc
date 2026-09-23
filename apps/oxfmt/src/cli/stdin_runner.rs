@@ -94,13 +94,12 @@ impl StdinRunner {
         let filepath = utils::normalize_relative_path(&cwd, &filepath);
 
         // Follow the same logic as `walk_runner` to resolve `config_resolver`.
-        let nested_ctx = (config_options.config.is_none() && !config_options.disable_nested_config)
-            .then(|| {
-                NestedConfigCtx::new(
-                    editorconfig_path.as_deref().map(Arc::from),
-                    Some(Arc::clone(&self.js_config_loader)),
-                )
-            });
+        let nested_ctx = config_options.use_nested_configs().then(|| {
+            NestedConfigCtx::new(
+                editorconfig_path.as_deref().map(Arc::from),
+                Some(Arc::clone(&self.js_config_loader)),
+            )
+        });
         let config_resolver = match resolve_file_scope_config(
             &filepath,
             &Arc::new(config_resolver),
