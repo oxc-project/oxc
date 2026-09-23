@@ -20,8 +20,9 @@ use crate::react_compiler_hir::visitors::{
     PlaceList, each_instruction_lvalue_ids, each_instruction_value_operand, each_terminal_operand,
 };
 use crate::react_compiler_hir::{
-    BlockId, Effect, FunctionId, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionKind, InstructionValue, ParamPattern, Place, PlaceOrSpread, Terminal,
+    ArrayElement, BlockId, Effect, FunctionId, HirFunction, Identifier, IdentifierId,
+    IdentifierName, InstructionKind, InstructionValue, ObjectPropertyKey, ObjectPropertyOrSpread,
+    ParamPattern, Place, PlaceOrSpread, PrimitiveValue, Terminal,
 };
 
 type ContextValues = FxHashMap<IdentifierId, FxHashSet<IdentifierId>>;
@@ -508,19 +509,161 @@ fn propagate_reassignments(
     reassignments
 }
 
-fn propagate_identifier_set(
-    identifiers: &mut FxHashSet<IdentifierId>,
-    propagation_edges: &FxHashMap<IdentifierId, Vec<IdentifierId>>,
-) {
-    let mut pending: VecDeque<_> = identifiers.iter().copied().collect();
-    while let Some(identifier) = pending.pop_front() {
-        let Some(targets) = propagation_edges.get(&identifier) else { continue };
-        for &target in targets {
-            if identifiers.insert(target) {
-                pending.push_back(target);
+/// Track callable identity through aliases and selected properties. Generic taint
+/// edges also represent containment, so an async object member must not make the
+/// object itself (or another member) an async function.
+fn infer_async_callable_contexts(
+    func: &HirFunction,
+    alias_edges: &FxHashMap<IdentifierId, Vec<IdentifierId>>,
+    async_functions: &FxHashSet<IdentifierId>,
+    captured_contexts: &CapturedContexts,
+) -> CapturedContexts {
+    if async_functions.is_empty() {
+        return CapturedContexts::default();
+    }
+    type Property = (Option<String>, IdentifierId);
+    let mut sources = CapturedContexts::default();
+    let mut properties: FxHashMap<IdentifierId, Vec<Property>> = FxHashMap::default();
+    let mut constants = FxHashMap::default();
+    for instruction in &func.instructions {
+        if let InstructionValue::Primitive { value, .. } = &instruction.value {
+            let key = match value {
+                PrimitiveValue::String(value) => Some(value.to_string()),
+                PrimitiveValue::Number(value) => Some(value.to_string()),
+                _ => None,
+            };
+            if let Some(key) = key {
+                constants.insert(instruction.lvalue.identifier, key);
             }
         }
     }
+    let mut loads = Vec::new();
+    let mut stores = Vec::new();
+    let mut spreads = Vec::new();
+    for instruction in &func.instructions {
+        let id = instruction.lvalue.identifier;
+        if async_functions.contains(&id) {
+            sources.entry(id).or_default().insert(id);
+        }
+        match &instruction.value {
+            InstructionValue::ObjectExpression { properties: entries, .. } => {
+                sources.entry(id).or_default().insert(id);
+                for entry in entries {
+                    match entry {
+                        ObjectPropertyOrSpread::Property(property) => {
+                            let key = match &property.key {
+                                ObjectPropertyKey::Identifier { name, .. }
+                                | ObjectPropertyKey::String { name, .. } => Some(name.to_string()),
+                                ObjectPropertyKey::Computed { name, .. } => {
+                                    constants.get(&name.identifier).cloned()
+                                }
+                            };
+                            properties
+                                .entry(id)
+                                .or_default()
+                                .push((key, property.place.identifier));
+                        }
+                        ObjectPropertyOrSpread::Spread(spread) => {
+                            spreads.push((spread.place.identifier, id, false))
+                        }
+                    }
+                }
+            }
+            InstructionValue::ArrayExpression { elements, .. } => {
+                sources.entry(id).or_default().insert(id);
+                let mut fixed_index = true;
+                for (index, element) in elements.iter().enumerate() {
+                    match element {
+                        ArrayElement::Place(place) => properties
+                            .entry(id)
+                            .or_default()
+                            .push((fixed_index.then(|| index.to_string()), place.identifier)),
+                        ArrayElement::Spread(spread) => {
+                            spreads.push((spread.place.identifier, id, true));
+                            fixed_index = false;
+                        }
+                        ArrayElement::Hole => {}
+                    }
+                }
+            }
+            InstructionValue::PropertyLoad { object, property, .. } => {
+                loads.push((object.identifier, Some(property.to_string()), id))
+            }
+            InstructionValue::ComputedLoad { object, property, .. } => {
+                loads.push((object.identifier, constants.get(&property.identifier).cloned(), id))
+            }
+            InstructionValue::PropertyStore { object, property, value, .. } => {
+                stores.push((object.identifier, Some(property.to_string()), value.identifier))
+            }
+            InstructionValue::ComputedStore { object, property, value, .. } => stores.push((
+                object.identifier,
+                constants.get(&property.identifier).cloned(),
+                value.identifier,
+            )),
+            _ => {}
+        }
+    }
+    loop {
+        let previous_count: usize = sources.values().map(FxHashSet::len).sum::<usize>()
+            + properties.values().map(Vec::len).sum::<usize>();
+        propagate_captured_contexts(&mut sources, alias_edges);
+        for (object, key, value) in &stores {
+            if let Some(objects) = sources.get(object) {
+                for &object in objects {
+                    let entries = properties.entry(object).or_default();
+                    let entry = (key.clone(), *value);
+                    if !entries.contains(&entry) {
+                        entries.push(entry);
+                    }
+                }
+            }
+        }
+        for &(from, into, array) in &spreads {
+            let entries: Vec<_> = sources
+                .get(&from)
+                .into_iter()
+                .flatten()
+                .filter_map(|source| properties.get(source))
+                .flatten()
+                .map(|(key, value)| (if array { None } else { key.clone() }, *value))
+                .collect();
+            let into = properties.entry(into).or_default();
+            for entry in entries {
+                if !into.contains(&entry) {
+                    into.push(entry);
+                }
+            }
+        }
+        for (object, key, into) in &loads {
+            let values: Vec<_> = sources
+                .get(object)
+                .into_iter()
+                .flatten()
+                .filter_map(|source| properties.get(source))
+                .flatten()
+                .filter(|(property, _)| key.is_none() || property.is_none() || key == property)
+                .flat_map(|(_, value)| sources.get(value).into_iter().flatten().copied())
+                .collect();
+            sources.entry(*into).or_default().extend(values);
+        }
+        let count: usize = sources.values().map(FxHashSet::len).sum::<usize>()
+            + properties.values().map(Vec::len).sum::<usize>();
+        if count == previous_count {
+            break;
+        }
+    }
+    let mut result = CapturedContexts::default();
+    for (identifier, values) in sources {
+        for value in values {
+            if async_functions.contains(&value) {
+                result
+                    .entry(identifier)
+                    .or_default()
+                    .extend(captured_contexts.get(&value).into_iter().flatten().copied());
+            }
+        }
+    }
+    result
 }
 
 fn context_values_at_block_entry(
@@ -781,6 +924,7 @@ fn get_context_reassignment(
     // phis. Build the complete graph before validating uses so loop backedges
     // and other cycles reach a fixpoint independent of block order.
     let mut propagation_edges: FxHashMap<IdentifierId, Vec<IdentifierId>> = FxHashMap::default();
+    let mut callable_edges: FxHashMap<IdentifierId, Vec<IdentifierId>> = FxHashMap::default();
     let mut correlated_values = CorrelatedValues::default();
     let mut seeds: Vec<(IdentifierId, Place)> = Vec::new();
     let mut returning_seeds: Vec<(IdentifierId, Place)> = Vec::new();
@@ -832,6 +976,7 @@ fn get_context_reassignment(
             );
             for operand in phi.operands.values() {
                 propagation_edges.entry(operand.identifier).or_default().push(phi.place.identifier);
+                callable_edges.entry(operand.identifier).or_default().push(phi.place.identifier);
             }
         }
 
@@ -895,6 +1040,10 @@ fn get_context_reassignment(
                 }
 
                 InstructionValue::StoreLocal { lvalue, value, .. } => {
+                    callable_edges
+                        .entry(value.identifier)
+                        .or_default()
+                        .extend([lvalue.place.identifier, instr.lvalue.identifier]);
                     propagation_edges
                         .entry(value.identifier)
                         .or_default()
@@ -905,6 +1054,10 @@ fn get_context_reassignment(
                 | InstructionValue::PrefixUpdateLocal { .. } => {}
 
                 InstructionValue::LoadLocal { place, .. } => {
+                    callable_edges
+                        .entry(place.identifier)
+                        .or_default()
+                        .push(instr.lvalue.identifier);
                     propagation_edges
                         .entry(place.identifier)
                         .or_default()
@@ -924,6 +1077,12 @@ fn get_context_reassignment(
                         place.identifier,
                         instr.lvalue.identifier,
                         &mut propagation_edges,
+                    );
+                    connect_context_value(
+                        &context_values,
+                        place.identifier,
+                        instr.lvalue.identifier,
+                        &mut callable_edges,
                     );
                 }
 
@@ -948,6 +1107,10 @@ fn get_context_reassignment(
                 }
 
                 InstructionValue::StoreContext { lvalue, value, .. } => {
+                    callable_edges
+                        .entry(value.identifier)
+                        .or_default()
+                        .push(instr.lvalue.identifier);
                     if !is_function_expression {
                         context_variables.insert(lvalue.place.identifier);
                     }
@@ -1006,6 +1169,13 @@ fn get_context_reassignment(
         }
     }
 
+    let async_captured_contexts = infer_async_callable_contexts(
+        func,
+        &callable_edges,
+        &async_function_values,
+        &captured_contexts,
+    );
+    async_function_values = async_captured_contexts.keys().copied().collect();
     propagate_captured_contexts(&mut captured_contexts, &propagation_edges);
     propagate_captured_contexts(&mut returned_captured_contexts, &propagation_edges);
     propagate_captured_contexts(&mut returned_loaded_contexts, &propagation_edges);
@@ -1039,13 +1209,12 @@ fn get_context_reassignment(
     }
     propagate_captured_contexts(&mut captured_contexts, &propagation_edges);
     propagate_correlated_values(&mut correlated_values, &propagation_edges);
-    propagate_identifier_set(&mut async_function_values, &propagation_edges);
 
     let active_async_contexts_by_block = infer_active_async_contexts_by_block(
         func,
         env,
         &async_function_values,
-        &captured_contexts,
+        &async_captured_contexts,
         &initial_context_values,
         &context_values_by_block,
         &hoisted_function_values,
@@ -1205,19 +1374,21 @@ fn get_context_reassignment(
             }
 
             for operand in each_invoked_async_operand(&instr.value, env) {
-                if !async_function_values.contains(&operand.identifier) {
+                let Some(contexts) = async_captured_contexts.get(&operand.identifier) else {
                     continue;
-                }
-                if let Some(reassignment_place) = find_reassignment_for_operand(
-                    operand.identifier,
-                    &context_values,
-                    &context_values_by_block,
-                    &reassigning_functions,
-                    &captured_contexts,
-                    &correlated_values,
-                ) {
-                    record_async_reassignment(reassignment_place, identifiers, diagnostics);
-                    return ReassignmentResult::default();
+                };
+                for &context in contexts {
+                    if let Some(reassignment_place) = find_reassignment_for_operand(
+                        context,
+                        &context_values,
+                        &context_values_by_block,
+                        &reassigning_functions,
+                        &captured_contexts,
+                        &correlated_values,
+                    ) {
+                        record_async_reassignment(reassignment_place, identifiers, diagnostics);
+                        return ReassignmentResult::default();
+                    }
                 }
             }
 
@@ -1225,7 +1396,7 @@ fn get_context_reassignment(
                 &instr.value,
                 env,
                 &async_function_values,
-                &captured_contexts,
+                &async_captured_contexts,
                 &context_values,
                 &mut active_async_contexts,
             );
