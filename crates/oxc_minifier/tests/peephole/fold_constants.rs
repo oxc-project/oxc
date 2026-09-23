@@ -1515,6 +1515,29 @@ fn string_method_folds_use_utf16_positions() {
 }
 
 #[test]
+fn string_method_folds_handle_lone_surrogates() {
+    // A lone surrogate in the receiver is one UTF-16 code unit; the numeric
+    // folds count it like any other unit.
+    fold(r#"x = "a\uD800b".indexOf("b")"#, "x = 2");
+    fold(r#"x = "a\uD800b".indexOf("b", 2)"#, "x = 2");
+    fold(r#"x = "a\uD800b".indexOf("b", 3)"#, "x = -1");
+    fold(r#"x = "a\uD800b".indexOf("c")"#, "x = -1");
+    // Separated lone halves never match a formed surrogate pair.
+    fold(r#"x = "x\uD83Dy\uDE00z".indexOf("\u{1F600}")"#, "x = -1");
+    fold(r#"x = "a\u{1F600}\uD800b".indexOf("\u{1F600}")"#, "x = 1");
+    fold(r#"x = "a\uD800b\uD800b".lastIndexOf("b")"#, "x = 4");
+    fold(r#"x = "a\uD800b\uD800b".lastIndexOf("b", 3)"#, "x = 2");
+    fold(r#"x = "a\uD800b".lastIndexOf("")"#, "x = 3");
+    fold(r#"x = "a\uD800b".charCodeAt(1)"#, "x = 55296");
+    fold(r#"x = "a\uD800b".charCodeAt(2)"#, "x = 98");
+    fold(r#"x = "a\uD800b".charCodeAt(3)"#, "x = NaN");
+    // A search value with a lone surrogate is not a constant string and
+    // stays unfolded.
+    fold_same(r#"x = "a\uD800b".indexOf("\uD800")"#);
+    fold_same(r#"x = "a\uD800b".lastIndexOf("\uD800")"#);
+}
+
+#[test]
 fn template_concatenation_preserves_surrogates() {
     fold(r"`${a}\uD800` + `\uDC00${b}`", r"`${a}\uD800\uDC00${b}`");
     fold(r"`${a}\uD800` + 'x'", r"`${a}\uD800x`");
