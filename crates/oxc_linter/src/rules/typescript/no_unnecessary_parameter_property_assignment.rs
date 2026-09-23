@@ -211,15 +211,18 @@ impl<'a> AssignmentVisitor<'a, '_> {
                 continue; // there already was an assignment outside the constructor
             }
 
-            self.ctx.diagnostic_with_suggestion(
-                no_unnecessary_parameter_property_assignment_diagnostic(assignment_expr.span),
-                |fixer| {
-                    fixer.delete_range(Span::new(
-                        assignment_expr.span.start,
-                        assignment_expr.span.end + 1,
-                    ))
-                },
-            );
+            let diagnostic =
+                no_unnecessary_parameter_property_assignment_diagnostic(assignment_expr.span);
+            if let AstKind::ExpressionStatement(statement) =
+                self.ctx.nodes().parent_kind(assignment_expr.node_id())
+            {
+                self.ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    fixer.delete_range(statement.span)
+                });
+            } else {
+                // Nested assignments may supply a value to their surrounding expression.
+                self.ctx.diagnostic(diagnostic);
+            }
         }
     }
 }
@@ -780,6 +783,8 @@ fn test() {
         "class User { constructor(public name: string) { { let name = ''; name = 'other'; } this.name = name; } }",
         "class User { constructor(public name: string) { function f() { name = 'other'; } this.name = name; } }",
         "class User { constructor(public name: string) { const f = () => { name = 'other'; }; this.name = name; } }",
+        "class User { constructor(public name: string) { let local; local = (this.name = name); } }",
+        "class User { constructor(public name: string) { let local; local = this.name = name; } }",
     ];
 
     let fix = vec![
@@ -1198,6 +1203,18 @@ fn test() {
         (
             "class User { constructor(public name: string) { let local = name; local = local.trim(); this.name = name; } }",
             "class User { constructor(public name: string) { let local = name; local = local.trim();  } }",
+        ),
+        (
+            "class User { constructor(public name: string) { let local; local = (this.name = name); } }",
+            "class User { constructor(public name: string) { let local; local = (this.name = name); } }",
+        ),
+        (
+            "class User { constructor(public name: string) { let local; local = this.name = name; } }",
+            "class User { constructor(public name: string) { let local; local = this.name = name; } }",
+        ),
+        (
+            "class User { constructor(public name: string) { this.name = name} }",
+            "class User { constructor(public name: string) { } }",
         ),
     ];
 

@@ -274,3 +274,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                                      ────────────────
    ╰────
   help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:69]
+ 1 │ class User { constructor(public name: string) { let local; local = (this.name = name); } }
+   ·                                                                     ────────────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:68]
+ 1 │ class User { constructor(public name: string) { let local; local = this.name = name; } }
+   ·                                                                    ────────────────
+   ╰────
+  help: Remove the unnecessary assignment
