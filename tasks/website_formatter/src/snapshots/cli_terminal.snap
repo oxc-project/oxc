@@ -54,5 +54,6 @@ Flags:
 Examples:
   Check formatting:
     $ oxfmt --check .
+
   Format files:
     $ oxfmt --write src
