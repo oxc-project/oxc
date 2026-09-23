@@ -1745,8 +1745,8 @@ pub struct TSExternalModuleReference<'a> {
 
 /// TypeScript non-null expression (`!`)
 ///
-/// This expression assumes that the type of the inner expression is not null
-/// and changes it from `T | null` to just `T`.
+/// This expression asserts that the inner expression is neither `null` nor `undefined`,
+/// removing both from its type (for example, `T | null | undefined` becomes `T`).
 ///
 /// ## Example
 ///
@@ -1764,7 +1764,7 @@ pub struct TSExternalModuleReference<'a> {
 pub struct TSNonNullExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    /// The expression to assume as not null, e.g., `x` in `x!`.
+    /// The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     pub expression: Expression<'a>,
 }
 
