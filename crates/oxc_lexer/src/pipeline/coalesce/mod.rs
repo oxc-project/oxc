@@ -8,6 +8,7 @@ use crate::pipeline::{
     disambiguate::{gt_run_split, lt_run_split},
     scan::scan_number,
     tables::{KwSet, Tables, is_op_char},
+    token_view,
 };
 
 mod keywords;
@@ -33,6 +34,7 @@ pub unsafe fn coalesce(
     lanes: &mut Lanes,
 ) {
     let kw = if ts { &t.keywords.kwts } else { &t.keywords.kwjs };
+    lanes.disambiguate.restart(lanes.module);
     let nw = (n + 63) >> 6;
     let mut opprev: u64 = 0;
     let mut dtprev: u64 = 0;
@@ -134,7 +136,22 @@ pub unsafe fn coalesce(
                     && kw.ts_key
                     && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1))))
                 {
-                    let g = gt_run_split(t, src, st, opch, kind, n, p, run);
+                    let kw_final = (w & !(KWB - 1)) << 6;
+                    let tokens = token_view(
+                        t,
+                        src,
+                        st,
+                        opch,
+                        word,
+                        kind,
+                        n,
+                        ts,
+                        kw_final,
+                        lanes.module,
+                        &lanes.disambiguate.brackets,
+                        &lanes.disambiguate.closers,
+                    );
+                    let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run);
                     if g != 0 {
                         // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
                         cursor = munch_walk(t, src, n, st, opch, kind, p + g);
@@ -142,16 +159,30 @@ pub unsafe fn coalesce(
                     }
                 }
                 // Mirror case: `Array<<T>(x: T) => T>` opens two lists, not `<<` shift-left.
-                if b0 == b'<' && b1 == b'<' && kw.ts_key && lt_run_split(src, st, opch, kind, n, p)
-                {
-                    cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
-                    continue;
+                if b0 == b'<' && b1 == b'<' && kw.ts_key {
+                    let tokens = token_view(
+                        t,
+                        src,
+                        st,
+                        opch,
+                        word,
+                        kind,
+                        n,
+                        ts,
+                        0,
+                        lanes.module,
+                        &lanes.disambiguate.brackets,
+                        &lanes.disambiguate.closers,
+                    );
+                    if lt_run_split(&tokens, p) {
+                        cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
+                        continue;
+                    }
                 }
                 if run == 2 {
                     let key = (q & 0xFFFF) | (2u32 << 24);
-                    let pack = t.op.op2_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                    let want = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
-                    let mut ok = ((pack ^ want) & 0x00FF_FFFF) == 0;
+                    let pack = t.op.op_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                    let mut ok = ((pack ^ key) & 0xFF_FFFF) == 0;
                     let kk = (pack >> 24) as u8;
                     ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8));
                     let hm: u8 = 0u8.wrapping_sub(ok as u8);
@@ -167,26 +198,23 @@ pub unsafe fn coalesce(
                 }
                 let b2 = (q >> 16) as u8;
                 let key3 = (q & 0xFF_FFFF) | (3u32 << 24);
-                let p3 = t.op.op3_pack[(key3.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                let want3 = 3u64 | ((b0 as u64) << 8) | ((b1 as u64) << 16) | ((b2 as u64) << 24);
-                let ok3 = ((p3 ^ want3) & 0xFFFF_FFFF) == 0;
+                let p3 = t.op.op_pack[(key3.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
                 let key2a = (q & 0xFFFF) | (2u32 << 24);
-                let pa = t.op.op2_pack[(key2a.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                let wanta = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
+                let pa = t.op.op_pack[(key2a.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let ka = (pa >> 24) as u8;
-                let mut ok2a = ((pa ^ wanta) & 0x00FF_FFFF) == 0;
+                let mut ok2a = ((pa ^ key2a) & 0xFF_FFFF) == 0;
                 ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
                 let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
-                let pb = t.op.op2_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                let wantb = 2u32 | ((b1 as u32) << 8) | ((b2 as u32) << 16);
+                let pb = t.op.op_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let kb = (pb >> 24) as u8;
-                let mut ok2b = ((pb ^ wantb) & 0x00FF_FFFF) == 0;
+                let mut ok2b = ((pb ^ key2b) & 0xFF_FFFF) == 0;
                 ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8));
                 let sel3 = ok3;
                 let sel2a = !ok3 && ok2a;
                 let sel2b = !ok3 && !ok2a && ok2b;
                 let m0: u8 = 0u8.wrapping_sub((sel3 || sel2a) as u8);
-                let k0v: u8 = if sel3 { (p3 >> 32) as u8 } else { ka };
+                let k0v: u8 = if sel3 { (p3 >> 24) as u8 } else { ka };
                 *kind.add(p) = (*kind.add(p) & !m0) | (k0v & m0);
                 let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
                 *kind.add(p + 1) = (*kind.add(p + 1) & !m1) | (kb & m1);
@@ -276,7 +304,23 @@ unsafe fn glue_number(
             // reaches the `>` run before `coalesce` ever raises it as an event.
             if c == b'>' && kw.ts_key && matches!(*src.add(e2 + 1), b'>' | b'=') {
                 let end = bm_next0(opch, e2, n);
-                let g = gt_run_split(t, src, st, opch, kind, n, e2, end - e2);
+                // Keyword kinds are final only below this window's batch.
+                let kw_final = ((e2 >> 6) & !(KWB - 1)) << 6;
+                let tokens = token_view(
+                    t,
+                    src,
+                    st,
+                    opch,
+                    word,
+                    kind,
+                    n,
+                    kw.ts_key,
+                    kw_final,
+                    lanes.module,
+                    &lanes.disambiguate.brackets,
+                    &lanes.disambiguate.closers,
+                );
+                let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, e2, end - e2);
                 if g != 0 {
                     // The split `>`s stay single tokens, but whatever borders on them is still an operator run and has to be
                     // munched, or a following `&&` / `??` / `**` is emitted a byte at a time.
@@ -346,13 +390,23 @@ unsafe fn munch_walk(
 
 #[inline(always)]
 fn prefetch(p: *const u8) {
-    #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+    #[cfg(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ))]
     unsafe {
         use std::arch::x86_64;
         x86_64::_mm_prefetch(p as *const i8, x86_64::_MM_HINT_T0)
     }
 
-    #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    )))]
     {
         // No-op
         let _ = p;

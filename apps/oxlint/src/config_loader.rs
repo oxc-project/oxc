@@ -31,7 +31,7 @@ pub struct JsConfigResult {
     pub config: Option<Oxlintrc>,
 }
 
-fn config_discovery() -> ConfigDiscovery {
+pub fn config_discovery() -> ConfigDiscovery {
     if cfg!(feature = "napi") && vp_version().is_some() {
         ConfigDiscovery::vite_plus()
     } else {
@@ -102,7 +102,6 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
 
 /// Discover config files by walking DOWN from a root directory.
 /// Will skip the base config file (e.g., root oxlintrc) to avoid duplicate loading.
-/// In Vite+ mode, only `vite.config.*` is discovered.
 ///
 /// Used by LSP where we have a workspace root and need to discover all configs
 /// upfront for file watching and diagnostics.

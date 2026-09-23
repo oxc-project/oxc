@@ -272,11 +272,13 @@ pub enum JSXMemberExpressionObject<'a> {
 /// ## Example
 ///
 /// ```tsx
-/// // boolean-like and string-like expressions are not wrapped in containers.
-/// // Here, only `container` is a JSXExpressionContainer.
-/// <Foo bar baz="bang" container={4}/>
-///   {4}  // <- wrapped in container
-/// </Foo>
+/// // `bar` has no value; `baz` has a StringLiteral value.
+/// // Both `{4}` parts are JSXExpressionContainer nodes.
+/// const element = (
+///   <Foo bar baz="bang" container={4}>
+///     {4}
+///   </Foo>
+/// );
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -371,9 +373,8 @@ pub struct JSXAttribute<'a> {
     pub span: Span,
     /// The name of the attribute. This is a prop in React-like applications.
     pub name: JSXAttributeName<'a>,
-    /// The value of the attribute. This can be a string literal, an expression,
-    /// or an element. Will be [`None`] for boolean-like attributes (e.g.
-    /// `<button disabled />`).
+    /// The value of the attribute.
+    /// [`None`] for boolean-like attributes (e.g. `<button disabled />`).
     pub value: Option<JSXAttributeValue<'a>>,
 }
 
@@ -520,8 +521,12 @@ pub struct JSXSpreadChild<'a> {
 /// ## Example
 ///
 /// ```tsx
-/// <Foo>Some text</Foo>     // `Some Text` is a JSXText,
-/// <Foo>"Some string"</Foo> // but `"Some string"` is a StringLiteral.
+/// // Both children are JSXText, including the quotation marks:
+/// const plain = <Foo>Some text</Foo>;
+/// const quoted = <Foo>"Some string"</Foo>;
+///
+/// // The expression container contains a StringLiteral:
+/// const expression = <Foo>{"Some string"}</Foo>;
 /// ```
 #[ast(visit)]
 #[derive(Debug)]

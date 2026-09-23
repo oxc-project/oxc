@@ -76,25 +76,33 @@ pub struct ConfigDiscovery {
     /// When several entries exist in one directory,
     /// pick the first one in `entries` order instead of reporting a [`ConfigConflict`].
     first_wins: bool,
+    /// Whether configs in subdirectories of the root are discovered.
+    nested_configs: bool,
 }
 
 impl ConfigDiscovery {
     /// Config discovery for oxlint: `.oxlintrc.json(c)` and `oxlint.config.(m)ts`.
     pub fn oxlint() -> Self {
-        Self { entries: OXLINT_CONFIG_FILE_NAMES, first_wins: false }
+        Self { entries: OXLINT_CONFIG_FILE_NAMES, first_wins: false, nested_configs: true }
     }
 
     /// Config discovery for oxfmt: `.oxfmtrc.json(c)` and `oxfmt.config.(m)ts`.
     pub fn oxfmt() -> Self {
-        Self { entries: OXFMT_CONFIG_FILE_NAMES, first_wins: false }
+        Self { entries: OXFMT_CONFIG_FILE_NAMES, first_wins: false, nested_configs: true }
     }
 
     /// Config discovery for Vite+ mode, which only looks for `vite.config.*`.
     ///
     /// Vite+ reads `lint` / `fmt` from whichever of these it finds first,
     /// so multiple files are resolved the same way instead of being a conflict.
+    /// Vite+ also uses a single config per project, so nested configs are not discovered.
     pub fn vite_plus() -> Self {
-        Self { entries: VITE_PLUS_CONFIG_FILE_NAMES, first_wins: true }
+        Self { entries: VITE_PLUS_CONFIG_FILE_NAMES, first_wins: true, nested_configs: false }
+    }
+
+    /// Callers combine this with their own `--disable-nested-config` style options.
+    pub fn nested_configs(&self) -> bool {
+        self.nested_configs
     }
 
     /// Return supported config file names in discovery order.

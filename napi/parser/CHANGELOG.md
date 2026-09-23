@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.151.0] - 2026-09-21
+
+### 🚀 Features
+
+- 1fac655 coverage: Support new TypeScript fixture layout (#26226) (camc314)
+
 ## [0.149.0] - 2026-09-07
 
 ### 🐛 Bug Fixes

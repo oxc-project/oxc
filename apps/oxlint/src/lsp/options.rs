@@ -6,6 +6,8 @@ use serde_json::Value;
 use oxc_linter::{FixKind, normalize_rule_name};
 use tracing::error;
 
+use crate::config_loader::config_discovery;
+
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum UnusedDisableDirectives {
@@ -93,6 +95,7 @@ pub struct LintOptions {
     pub type_aware: Option<bool>,
     /// Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
     /// It gets automatically enabled when `configPath` is set.
+    /// Nested config support is always disabled in Vite+ mode.
     #[schemars(with = "Option<bool>")]
     pub disable_nested_config: bool,
     /// What kind of fixes to generate for code actions.
@@ -190,9 +193,11 @@ impl From<LintFixKindFlag> for FixKind {
 }
 
 impl LintOptions {
-    /// Off with an explicit `configPath` or `disableNestedConfig`.
+    /// Nested config search: off with `disableNestedConfig`, an explicit `configPath`, or in Vite+ mode.
     pub fn use_nested_configs(&self) -> bool {
-        !self.disable_nested_config && self.config_path.is_none()
+        !self.disable_nested_config
+            && self.config_path.is_none()
+            && config_discovery().nested_configs()
     }
 }
 

@@ -1,6 +1,4 @@
-use crate::token::{OP_KIND_BASE, OP_KIND_MAX, TokenKind, tk};
-
-use super::punct1::PUNCT1;
+use crate::token::TokenKind;
 
 struct OpDef {
     pub txt: &'static [u8],
@@ -10,8 +8,17 @@ struct OpDef {
 
 impl OpDef {
     const fn new(txt: &'static str, kind: TokenKind) -> Self {
-        assert!(txt.len() <= 255);
         Self { txt: txt.as_bytes(), len: txt.len() as u8, kind }
+    }
+
+    const fn key(&self) -> u32 {
+        let txt = self.txt;
+        let c2 = if self.len >= 3 { txt[2] } else { 0 };
+        op_key(txt[0], txt[1], c2, self.len as u32)
+    }
+
+    const fn slot(&self, mul: u32) -> usize {
+        op_slot(self.key(), mul)
     }
 }
 
@@ -59,116 +66,64 @@ pub const fn is_op_char(c: u8) -> bool {
     (OPCH_LO[(c & 15) as usize] & OPCH_HI[(c >> 4) as usize]) != 0
 }
 
+/// Multiplier for the operator perfect hash.
+const OPMAP_MUL: u32 = 0x0101_0749;
+
+static OPMAP_SLOT: [u8; 256] = {
+    let mut slots = [0xFF; 256];
+
+    let mut i = 0_usize;
+    while i < OPMAP_OPS.len() {
+        let op_def = &OPMAP_OPS[i];
+        let slot = op_def.slot(OPMAP_MUL);
+        slots[slot] = i as u8;
+        i += 1;
+    }
+
+    slots
+};
+
+static OP_PACK: [u32; 256] = {
+    let mut op_pack = [0; 256];
+
+    let mut i = 0_usize;
+    while i < OPMAP_OPS.len() {
+        let op_def = &OPMAP_OPS[i];
+        if op_def.len != 4 {
+            let slot = op_def.slot(OPMAP_MUL);
+
+            let txt = op_def.txt;
+            let bytes = if op_def.len == 2 {
+                (txt[0] as u32) | ((txt[1] as u32) << 8)
+            } else {
+                (txt[0] as u32) | ((txt[1] as u32) << 8) | ((txt[2] as u32) << 16)
+            };
+            op_pack[slot] = bytes | ((op_def.kind as u32) << 24);
+        }
+        i += 1;
+    }
+
+    op_pack
+};
+
 pub struct OpMap {
     pub opmap_mul: u32,
     pub opmap_slot: [u8; 256],
-    pub op2_pack: [u32; 256],
-    pub op3_pack: [u64; 256],
-    pub punct1_ord: [u8; 256],
+    pub op_pack: [u32; 256],
 }
 
 impl OpMap {
+    /// Create an [`OpMap`].
     pub(super) fn new() -> OpMap {
-        let mut m = OpMap {
-            opmap_mul: 0,
-            opmap_slot: [0xFF; 256],
-            op2_pack: [0; 256],
-            op3_pack: [0; 256],
-            punct1_ord: [tk!(Invalid); 256],
-        };
-        m.opmap_init();
-        m.build_op_pack();
-        m.punct1_init();
-        m.self_check();
-        m
-    }
-
-    fn opmap_init(&mut self) {
-        for i in 0..OPMAP_OPS.len() {
-            let a = &OPMAP_OPS[i];
-            assert!(
-                a.len as usize == a.txt.len()
-                    && a.kind as u8 >= OP_KIND_BASE
-                    && a.kind as u8 <= OP_KIND_MAX,
-                "bad OpDef {i}"
-            );
-            for j in (i + 1)..OPMAP_OPS.len() {
-                let b = &OPMAP_OPS[j];
-                let a2 = if a.len >= 3 { a.txt[2] } else { 0 };
-                let b2 = if b.len >= 3 { b.txt[2] } else { 0 };
-                assert!(
-                    !(a.len == b.len && a.txt[0] == b.txt[0] && a.txt[1] == b.txt[1] && a2 == b2),
-                    "(c0,c1,c2,len) collision"
-                );
-            }
-        }
-        let mut m: u64 = (1u64 << 24) | 1;
-        while m < (1u64 << 28) {
-            let mut used = [0u8; 256];
-            let mut ok = true;
-            for i in 0..OPMAP_OPS.len() {
-                let o = &OPMAP_OPS[i];
-                let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
-                let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
-                let slot = (key.wrapping_mul(m as u32) >> 24) as usize;
-                if used[slot] != 0 {
-                    ok = false;
-                    break;
-                }
-                used[slot] = 1;
-            }
-            if ok {
-                self.opmap_mul = m as u32;
-                self.opmap_slot = [0xFF; 256];
-                for i in 0..OPMAP_OPS.len() {
-                    let o = &OPMAP_OPS[i];
-                    let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
-                    let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
-                    let slot = (key.wrapping_mul(self.opmap_mul) >> 24) as usize;
-                    self.opmap_slot[slot] = i as u8;
-                }
-                return;
-            }
-            m += 2;
-        }
-        panic!("opmap perfect-hash search FAILED");
-    }
-
-    fn build_op_pack(&mut self) {
-        self.op2_pack = [0; 256];
-        self.op3_pack = [0; 256];
-        for i in 0..OPMAP_OPS.len() {
-            let o = &OPMAP_OPS[i];
-            let c2 = if o.len >= 3 { o.txt[2] } else { 0 };
-            let key = op_key(o.txt[0], o.txt[1], c2, o.len as u32);
-            let h = (key.wrapping_mul(self.opmap_mul) >> 24) as usize;
-            if o.len == 2 {
-                self.op2_pack[h] = 2u32
-                    | ((o.txt[0] as u32) << 8)
-                    | ((o.txt[1] as u32) << 16)
-                    | ((o.kind as u32) << 24);
-            } else if o.len == 3 {
-                self.op3_pack[h] = 3u64
-                    | ((o.txt[0] as u64) << 8)
-                    | ((o.txt[1] as u64) << 16)
-                    | ((o.txt[2] as u64) << 24)
-                    | ((o.kind as u64) << 32);
-            }
-        }
-    }
-
-    fn punct1_init(&mut self) {
-        self.punct1_ord = [tk!(Invalid); 256];
-        for i in 0..PUNCT1.len() {
-            self.punct1_ord[PUNCT1[i].byte as usize] = PUNCT1[i].kind as u8;
-        }
+        Self { opmap_mul: OPMAP_MUL, opmap_slot: OPMAP_SLOT, op_pack: OP_PACK }
     }
 
     #[inline(always)]
     pub fn opmap_lookup(&self, b0: u8, b1: u8, b2: u8, b3: u8, len: u32) -> u32 {
         let c2 = if len >= 3 { b2 } else { 0 };
         let key = op_key(b0, b1, c2, len);
-        let idx = self.opmap_slot[(key.wrapping_mul(self.opmap_mul) >> 24) as usize];
+        let slot = op_slot(key, self.opmap_mul);
+        let idx = self.opmap_slot[slot];
         if idx == 0xFF {
             return 0;
         }
@@ -187,71 +142,141 @@ impl OpMap {
         }
         o.kind as u32
     }
-
-    fn self_check(&self) {
-        let mut seen_kind = [0u8; 256];
-        for i in 0..OPMAP_OPS.len() {
-            let o = &OPMAP_OPS[i];
-            let mut b = [0u8; 4];
-            b[..o.len as usize].copy_from_slice(&o.txt[..o.len as usize]);
-            assert!(
-                self.opmap_lookup(b[0], b[1], b[2], b[3], o.len as u32) == o.kind as u32,
-                "self-check: opmap_lookup wrong"
-            );
-            assert!(seen_kind[o.kind as usize] == 0, "self-check: duplicate ordinal");
-            seen_kind[o.kind as usize] = 1;
-        }
-        assert!(
-            self.opmap_lookup(b'.', b'.', 0, 0, 2) == 0
-                && self.opmap_lookup(b'<', b'<', 0, 0, 2) == tk!(LShift) as u32
-                && self.opmap_lookup(b'<', b'=', 0, 0, 2) == tk!(Le) as u32
-                && self.opmap_lookup(b'>', b'>', b'>', 0, 3) == tk!(URShift) as u32
-                && self.opmap_lookup(b'>', b'>', b'=', 0, 3) == tk!(RShiftEq) as u32
-                && self.opmap_lookup(b'=', b'=', 0, 0, 2) == tk!(EqEq) as u32
-                && self.opmap_lookup(b'=', b'/', 0, 0, 2) == 0,
-            "self-check: op spot-checks failed"
-        );
-        let mut seen = [0u8; 256];
-        for i in 0..PUNCT1.len() {
-            let ord = self.punct1_ord[PUNCT1[i].byte as usize];
-            assert!(
-                ord == PUNCT1[i].kind as u8 && seen[ord as usize] == 0,
-                "self-check: PUNCT1 ordinal wrong/dup"
-            );
-            seen[ord as usize] = 1;
-        }
-        for b in 0..256usize {
-            let ord = self.punct1_ord[b];
-            let is_known = PUNCT1.iter().any(|p| p.byte == b as u8);
-            assert!(is_known || ord == tk!(Invalid), "self-check: PUNCT1_ORD should be unknown");
-        }
-        assert!(
-            self.punct1_ord[b'(' as usize] == tk!(LParen)
-                && self.punct1_ord[b'#' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'a' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'"' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'`' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'\\' as usize] == tk!(Invalid)
-                && self.punct1_ord[b'$' as usize] == tk!(Invalid)
-                && self.punct1_ord[b' ' as usize] == tk!(Invalid)
-                && self.punct1_ord[0] == tk!(Invalid),
-            "self-check: PUNCT1 spot-checks failed"
-        );
-    }
 }
 
 #[inline(always)]
-fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
+const fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
     (c0 as u32) | ((c1 as u32) << 8) | ((c2 as u32) << 16) | (len << 24)
 }
 
-pub(super) fn opch_selfcheck() {
-    const OPCHARS: &[u8] = b"=!<>+-*&|^%?.";
-    let mut in_set = [false; 256];
-    for &q in OPCHARS {
-        in_set[q as usize] = true;
+#[inline(always)]
+const fn op_slot(key: u32, mul: u32) -> usize {
+    (key.wrapping_mul(mul) >> 24) as usize
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::token::{OP_KIND_BASE, OP_KIND_MAX};
+
+    use super::*;
+
+    #[test]
+    fn test_is_op_char() {
+        const OPCHARS: &[u8] = b"=!<>+-*&|^%?.";
+
+        let mut in_set = [false; 256];
+        for &q in OPCHARS {
+            in_set[q as usize] = true;
+        }
+
+        for c in 0..256usize {
+            assert!(is_op_char(c as u8) == in_set[c], "OPCH_LO/HI wrong at byte {c:#04x}");
+        }
     }
-    for c in 0..256usize {
-        assert!(is_op_char(c as u8) == in_set[c], "OPCH_LO/HI wrong at byte {c:#04x}");
+
+    #[test]
+    fn test_op_defs_length() {
+        for (i, op_def) in OPMAP_OPS.iter().enumerate() {
+            let len = op_def.txt.len();
+            assert!(len >= 2 && len <= 4, "OpDef {i}: length out of range");
+            assert!(op_def.len as usize == len, "OpDef {i}: `len` and `txt.len()` do not match");
+        }
+    }
+
+    #[test]
+    fn test_op_defs_token_kind_range() {
+        for (i, op_def) in OPMAP_OPS.iter().enumerate() {
+            let kind = op_def.kind as u8;
+            assert!(kind >= OP_KIND_BASE && kind <= OP_KIND_MAX, "OpDef {i}: `kind` out of range");
+        }
+    }
+
+    #[test]
+    fn test_op_defs_unique_token_kinds() {
+        let mut seen = [false; 256];
+        for op_def in &OPMAP_OPS {
+            let kind = op_def.kind;
+            assert!(!seen[kind as usize], "duplicate `TokenKind`: {kind}");
+            seen[kind as usize] = true;
+        }
+    }
+
+    #[test]
+    fn test_op_defs_no_key_collisions() {
+        for (index1, op_def1) in OPMAP_OPS.iter().enumerate() {
+            for (index2, op_def2) in OPMAP_OPS.iter().enumerate().skip(index1 + 1) {
+                assert!(op_def1.key() != op_def2.key(), "OpDef {index1}, {index2}: key collision");
+            }
+        }
+    }
+
+    #[test]
+    fn test_opmap_lookup_correct_kinds() {
+        let opmap = OpMap::new();
+
+        for (i, op_def) in OPMAP_OPS.iter().enumerate() {
+            let txt = op_def.txt;
+            let lookup_kind = opmap.opmap_lookup(
+                txt[0],
+                txt[1],
+                *txt.get(2).unwrap_or(&0),
+                *txt.get(3).unwrap_or(&0),
+                op_def.len as u32,
+            );
+            assert!(lookup_kind == op_def.kind as u32, "OpDef {i}: `opmap_lookup` wrong kind");
+        }
+    }
+
+    #[test]
+    fn test_opmap_lookup_returns_zero_on_no_match() {
+        let opmap = OpMap::new();
+
+        let cases = ["..", "=/"];
+        for txt in cases {
+            let bytes = txt.as_bytes();
+            let kind = opmap.opmap_lookup(
+                bytes[0],
+                bytes[1],
+                *bytes.get(2).unwrap_or(&0),
+                *bytes.get(3).unwrap_or(&0),
+                bytes.len() as u32,
+            );
+            assert!(kind == 0, "`opmap_lookup` should return 0 for {txt:?}");
+        }
+    }
+
+    #[test]
+    fn test_perfect_hash() {
+        // If `OPMAP_MUL` produces no collisions, all good
+        if is_collision_free(OPMAP_MUL) {
+            return;
+        }
+
+        // There was a collision - find a new value for `OPMAP_MUL` which has no collisions
+        let mut mul = (1u32 << 24) | 1;
+        while mul < (1u32 << 28) {
+            if is_collision_free(mul) {
+                panic!(
+                    "Current value for `OPMAP_MUL` produces collisions. Set it to 0x{:04X}_{:04X}.",
+                    mul >> 16,
+                    mul & 0xFFFF
+                );
+            }
+            mul += 2;
+        }
+
+        panic!("Current value for `OPMAP_MUL` produces collisions. Could not find another value.");
+    }
+
+    fn is_collision_free(mul: u32) -> bool {
+        let mut used = [false; 256];
+        for op_def in &OPMAP_OPS {
+            let slot = op_def.slot(mul);
+            if used[slot] {
+                return false;
+            }
+            used[slot] = true;
+        }
+        true
     }
 }

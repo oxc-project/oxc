@@ -5,9 +5,9 @@ checker.ts:
   sys deallocs: 122
   sys alloc bytes: 14996287 # 15.00 MB
   sys peak growth: 10169560 # 10.17 MB
-  arena allocs: 56251
+  arena allocs: 56205
   arena reallocs: 5084
-  arena size: 16317648 # 16.32 MB
+  arena size: 16316976 # 16.32 MB
 
 App.tsx:
   file size: 415342 # 415.34 kB
@@ -16,9 +16,9 @@ App.tsx:
   sys deallocs: 61
   sys alloc bytes: 2128539 # 2.13 MB
   sys peak growth: 1612427 # 1.61 MB
-  arena allocs: 7513
+  arena allocs: 7476
   arena reallocs: 920
-  arena size: 2684416 # 2.68 MB
+  arena size: 2683840 # 2.68 MB
 
 RadixUIAdoptionSection.jsx:
   file size: 2520 # 2.52 kB
@@ -27,9 +27,9 @@ RadixUIAdoptionSection.jsx:
   sys deallocs: 21
   sys alloc bytes: 17400 # 17.40 kB
   sys peak growth: 11628 # 11.63 kB
-  arena allocs: 16
+  arena allocs: 15
   arena reallocs: 0
-  arena size: 35120 # 35.12 kB
+  arena size: 35104 # 35.10 kB
 
 pdf.mjs:
   file size: 567296 # 567.30 kB
@@ -38,9 +38,9 @@ pdf.mjs:
   sys deallocs: 2427
   sys alloc bytes: 5313795 # 5.31 MB
   sys peak growth: 3693355 # 3.69 MB
-  arena allocs: 19621
+  arena allocs: 19592
   arena reallocs: 2574
-  arena size: 5711520 # 5.71 MB
+  arena size: 5711008 # 5.71 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
@@ -49,9 +49,9 @@ antd.js:
   sys deallocs: 860
   sys alloc bytes: 29973448 # 29.97 MB
   sys peak growth: 19934725 # 19.93 MB
-  arena allocs: 181796
+  arena allocs: 181576
   arena reallocs: 34406
-  arena size: 43045192 # 43.05 MB
+  arena size: 43041368 # 43.04 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB
@@ -60,9 +60,9 @@ binder.ts:
   sys deallocs: 33
   sys alloc bytes: 963008 # 963.01 kB
   sys peak growth: 657404 # 657.40 kB
-  arena allocs: 2926
+  arena allocs: 2922
   arena reallocs: 244
-  arena size: 1074976 # 1.07 MB
+  arena size: 1074912 # 1.07 MB
 
 kitchen-sink.tsx:
   file size: 732898 # 732.90 kB
@@ -71,6 +71,6 @@ kitchen-sink.tsx:
   sys deallocs: 1854
   sys alloc bytes: 5304252 # 5.30 MB
   sys peak growth: 3707425 # 3.71 MB
-  arena allocs: 31089
+  arena allocs: 31037
   arena reallocs: 3012
-  arena size: 8440712 # 8.44 MB
+  arena size: 8439864 # 8.44 MB
