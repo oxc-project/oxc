@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
@@ -567,7 +569,7 @@ impl<'a> PeepholeOptimizations {
                     .span()
                     .merge_within(e.right.span(), e.span)
                     .unwrap_or(SPAN);
-                let value = Str::from_strs_array_in([&left_str, &right_str], ctx);
+                let value = JSStr::from_js_strs_array_in([left_str, right_str], ctx);
                 let right = Expression::new_string_literal(span, value, None, ctx);
                 let left = left_binary_expr.left.take_in(ctx);
                 return Some(Expression::new_binary_expression(
@@ -632,13 +634,14 @@ impl<'a> PeepholeOptimizations {
                 last_quasi.value.raw = Str::from_strs_array_in(
                     [
                         last_quasi.value.raw.as_str(),
-                        Self::escape_string_for_template_literal(&right_str).as_ref(),
+                        Self::escape_string_for_template_literal(right_str).as_ref(),
                     ],
                     ctx,
                 );
-                let new_cooked = last_quasi.value.cooked.map(|cooked| {
-                    JSStr::from_js_strs_array_in([cooked, JSStr::from(right_str.as_ref())], ctx)
-                });
+                let new_cooked = last_quasi
+                    .value
+                    .cooked
+                    .map(|cooked| JSStr::from_js_strs_array_in([cooked, right_str], ctx));
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx));
             }
@@ -652,14 +655,15 @@ impl<'a> PeepholeOptimizations {
                     .expect("template literal must have at least one quasi");
                 first_quasi.value.raw = Str::from_strs_array_in(
                     [
-                        Self::escape_string_for_template_literal(&left_str).as_ref(),
+                        Self::escape_string_for_template_literal(left_str).as_ref(),
                         first_quasi.value.raw.as_str(),
                     ],
                     ctx,
                 );
-                let new_cooked = first_quasi.value.cooked.map(|cooked| {
-                    JSStr::from_js_strs_array_in([JSStr::from(left_str.as_ref()), cooked], ctx)
-                });
+                let new_cooked = first_quasi
+                    .value
+                    .cooked
+                    .map(|cooked| JSStr::from_js_strs_array_in([left_str, cooked], ctx));
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx));
             }
@@ -968,11 +972,20 @@ impl<'a> PeepholeOptimizations {
         // `t.expressions` untouched (no drain, no allocation — `inline_exprs` only allocates on push).
         let mut inline_exprs = Vec::new();
         for (idx, expr) in t.expressions.iter().enumerate() {
-            if !expr.may_have_side_effects(ctx)
-                && let Some(str) = expr.to_js_string(ctx)
-            {
-                inline_exprs.push((idx, str));
+            if expr.may_have_side_effects(ctx) {
+                continue;
             }
+            let value = match expr.to_js_string(ctx) {
+                Some(Cow::Borrowed(value)) => JSStr::from(value),
+                Some(Cow::Owned(value)) => JSStr::from_str_in(&value, ctx),
+                // `to_js_string` produces UTF-8, so a string literal with a lone
+                // surrogate is read from the AST instead.
+                None => match expr {
+                    Expression::StringLiteral(lit) => lit.value,
+                    _ => continue,
+                },
+            };
+            inline_exprs.push((idx, value));
         }
         if inline_exprs.is_empty() {
             return;
@@ -994,11 +1007,11 @@ impl<'a> PeepholeOptimizations {
 
         // inline the extracted inline-able expressions into quasis
         // "current_quasis + extracted_value + next_quasis"
-        for (i, (idx, str)) in inline_exprs.into_iter().enumerate() {
+        for (i, (idx, value)) in inline_exprs.into_iter().enumerate() {
             let idx = idx - i;
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];
-            let escaped = Self::escape_string_for_template_literal(&str);
+            let escaped = Self::escape_string_for_template_literal(value);
             let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
             let raw = quasi.value.raw.as_str();
             let starts_with_digit = escaped
@@ -1024,7 +1037,7 @@ impl<'a> PeepholeOptimizations {
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
                 Some(JSStr::from_js_strs_array_in(
-                    [cooked1, JSStr::from(str.as_ref()), cooked2.unwrap_or(JSStr::empty())],
+                    [cooked1, value, cooked2.unwrap_or(JSStr::empty())],
                     ctx,
                 ))
             } else {
