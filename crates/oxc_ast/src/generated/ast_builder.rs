@@ -808,7 +808,7 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -834,8 +834,8 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -2336,7 +2336,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -2362,8 +2362,8 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -3771,7 +3771,7 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -3797,8 +3797,8 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -4793,7 +4793,7 @@ impl<'a> NewExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new(
         span: Span,
@@ -4822,7 +4822,7 @@ impl<'a> NewExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn boxed(
         span: Span,
@@ -4847,8 +4847,8 @@ impl<'a> NewExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_with_pure(
         span: Span,
@@ -4878,8 +4878,8 @@ impl<'a> NewExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn boxed_with_pure(
         span: Span,
@@ -5713,7 +5713,7 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -5739,8 +5739,8 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -11049,7 +11049,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -11075,8 +11075,8 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -14111,7 +14111,7 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -14137,8 +14137,8 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -17580,7 +17580,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -17606,8 +17606,8 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -19771,7 +19771,7 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -19797,8 +19797,8 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
