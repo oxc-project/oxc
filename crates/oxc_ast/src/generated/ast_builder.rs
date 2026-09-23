@@ -20307,7 +20307,7 @@ impl<'a> JSXAttributeItem<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `name`: The name of the attribute. This is a prop in React-like applications.
-    /// * `value`: The value of the attribute. This can be a string literal, an expression,
+    /// * `value`: The value of the attribute.
     #[inline]
     pub fn new_attribute(
         span: Span,
@@ -20344,7 +20344,7 @@ impl<'a> JSXAttribute<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `name`: The name of the attribute. This is a prop in React-like applications.
-    /// * `value`: The value of the attribute. This can be a string literal, an expression,
+    /// * `value`: The value of the attribute.
     #[inline]
     pub fn new(
         span: Span,
@@ -20364,7 +20364,7 @@ impl<'a> JSXAttribute<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code.
     /// * `name`: The name of the attribute. This is a prop in React-like applications.
-    /// * `value`: The value of the attribute. This can be a string literal, an expression,
+    /// * `value`: The value of the attribute.
     #[inline]
     pub fn boxed(
         span: Span,

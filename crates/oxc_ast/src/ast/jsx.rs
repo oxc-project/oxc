@@ -371,9 +371,8 @@ pub struct JSXAttribute<'a> {
     pub span: Span,
     /// The name of the attribute. This is a prop in React-like applications.
     pub name: JSXAttributeName<'a>,
-    /// The value of the attribute. This can be a string literal, an expression,
-    /// or an element. Will be [`None`] for boolean-like attributes (e.g.
-    /// `<button disabled />`).
+    /// The value of the attribute.
+    /// [`None`] for boolean-like attributes (e.g. `<button disabled />`).
     pub value: Option<JSXAttributeValue<'a>>,
 }
 
