@@ -2119,8 +2119,8 @@ pub struct Class<'a> {
     ///
     /// ## Example
     /// ```ts
-    /// class Foo {}          // true
-    /// abstract class Bar {} // false
+    /// class Foo {}          // false
+    /// abstract class Bar {} // true
     /// ```
     #[ts]
     pub r#abstract: bool,
