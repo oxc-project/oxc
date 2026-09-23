@@ -619,7 +619,7 @@ pub struct TSBooleanKeyword {
 ///
 /// ## Example
 /// ```ts
-/// type Foo = boolean;
+/// type Foo = number;
 /// ```
 ///
 /// ## Reference
