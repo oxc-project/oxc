@@ -852,8 +852,10 @@ pub struct TSTypeParameterInstantiation<'a> {
 /// type Box<T extends string = 'foo'> = { value: T };
 /// // name  ^                  ^^^^^ default
 ///
-/// function add<in T>(a: T, b: T): T { return a + b; }
-/// //           ^^ in: true
+/// interface Consumer<in T> {
+/// //                 ^^ in: true
+///   consume(value: T): void;
+/// }
 /// ```
 ///
 /// ## References
