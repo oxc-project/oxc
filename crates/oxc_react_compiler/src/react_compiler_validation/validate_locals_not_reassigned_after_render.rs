@@ -41,6 +41,7 @@ struct ReassignmentResult {
     reassignment: Option<Place>,
     returned: Option<Place>,
     returned_contexts: FxHashSet<IdentifierId>,
+    returned_context_loads: FxHashSet<IdentifierId>,
 }
 
 /// Validates that local variables cannot be reassigned after render.
@@ -306,13 +307,20 @@ fn add_invoked_async_contexts(
     env: &Environment<'_>,
     async_function_values: &FxHashSet<IdentifierId>,
     captured_contexts: &CapturedContexts,
-    active_contexts: &mut FxHashSet<IdentifierId>,
+    context_values: &ContextValues,
+    active_contexts: &mut ContextValues,
 ) {
     for operand in each_invoked_async_operand(value, env) {
         if async_function_values.contains(&operand.identifier)
             && let Some(contexts) = captured_contexts.get(&operand.identifier)
         {
-            active_contexts.extend(contexts.iter().copied());
+            for &context in contexts {
+                if let Some(values) = context_values.get(&context) {
+                    active_contexts.entry(context).or_default().extend(values);
+                } else {
+                    insert_context_value(active_contexts, context, context);
+                }
+            }
         }
     }
 }
@@ -566,41 +574,86 @@ fn correlated_context_values_at_block_entry(
     sources
 }
 
-fn active_async_contexts_at_block_entry(
-    func: &HirFunction,
-    block_id: BlockId,
-    contexts_by_block: &FxHashMap<BlockId, FxHashSet<IdentifierId>>,
-) -> FxHashSet<IdentifierId> {
-    let mut contexts = FxHashSet::default();
-    for predecessor in &func.body.blocks[&block_id].preds {
-        if let Some(predecessor_contexts) = contexts_by_block.get(predecessor) {
-            contexts.extend(predecessor_contexts.iter().copied());
-        }
-    }
-    contexts
+fn is_hoisted_function_store(
+    value: &InstructionValue<'_>,
+    hoisted_function_values: &HoistedFunctionValues,
+) -> bool {
+    matches!(value, InstructionValue::StoreContext { lvalue, .. }
+        if lvalue.kind == InstructionKind::Function
+            && hoisted_function_values.contains_key(&lvalue.place.identifier))
 }
 
-/// Compute captures whose async invocation can still observe later stores at every block exit.
+fn update_context_values(
+    value: &InstructionValue<'_>,
+    values: &mut ContextValues,
+    hoisted_function_values: &HoistedFunctionValues,
+    only_tracked: bool,
+) {
+    if is_hoisted_function_store(value, hoisted_function_values) {
+        return;
+    }
+    let (identifier, replacement) = match value {
+        InstructionValue::DeclareContext { lvalue, .. } => {
+            let replacement = if lvalue.kind == InstructionKind::HoistedFunction {
+                hoisted_function_values
+                    .get(&lvalue.place.identifier)
+                    .copied()
+                    .unwrap_or(lvalue.place.identifier)
+            } else {
+                lvalue.place.identifier
+            };
+            (lvalue.place.identifier, Some(replacement))
+        }
+        InstructionValue::StoreContext { lvalue, value, .. } => {
+            (lvalue.place.identifier, Some(value.identifier))
+        }
+        InstructionValue::PostfixUpdateContext { lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { lvalue, .. } => (lvalue.identifier, None),
+        _ => return,
+    };
+    if only_tracked && !values.contains_key(&identifier) {
+        return;
+    }
+    if let Some(replacement) = replacement {
+        replace_context_value(values, identifier, replacement);
+    } else {
+        clear_context_value(values, identifier);
+    }
+}
+
+/// Keep reaching values only on paths where an async invocation is pending.
+/// Merging an invocation from one branch with a store from another would invent
+/// a continuation that cannot occur at runtime.
 fn infer_active_async_contexts_by_block(
     func: &HirFunction,
     env: &Environment<'_>,
     async_function_values: &FxHashSet<IdentifierId>,
     captured_contexts: &CapturedContexts,
-) -> FxHashMap<BlockId, FxHashSet<IdentifierId>> {
+    initial: &ContextValues,
+    values_by_block: &FxHashMap<BlockId, ContextValues>,
+    hoisted_function_values: &HoistedFunctionValues,
+) -> FxHashMap<BlockId, ContextValues> {
     let mut contexts_by_block = FxHashMap::default();
+    let empty = ContextValues::default();
     loop {
         let mut changed = false;
         for (&block_id, block) in &func.body.blocks {
             let mut contexts =
-                active_async_contexts_at_block_entry(func, block_id, &contexts_by_block);
+                context_values_at_block_entry(func, block_id, &empty, &contexts_by_block);
+            let mut values =
+                context_values_at_block_entry(func, block_id, initial, values_by_block);
             for &instruction_id in &block.instructions {
+                let value = &func.instructions[instruction_id.index()].value;
                 add_invoked_async_contexts(
-                    &func.instructions[instruction_id.index()].value,
+                    value,
                     env,
                     async_function_values,
                     captured_contexts,
+                    &values,
                     &mut contexts,
                 );
+                update_context_values(value, &mut values, hoisted_function_values, false);
+                update_context_values(value, &mut contexts, hoisted_function_values, true);
             }
             if contexts_by_block.get(&block_id) != Some(&contexts) {
                 contexts_by_block.insert(block_id, contexts);
@@ -694,31 +747,7 @@ fn infer_context_values_by_block(
                 context_values_at_block_entry(func, block_id, &initial, &values_by_block);
             for &instruction_id in &block.instructions {
                 let instr = &func.instructions[instruction_id.index()];
-                match &instr.value {
-                    InstructionValue::DeclareContext { lvalue, .. } => {
-                        let value = if lvalue.kind == InstructionKind::HoistedFunction {
-                            hoisted_function_values
-                                .get(&lvalue.place.identifier)
-                                .copied()
-                                .unwrap_or(lvalue.place.identifier)
-                        } else {
-                            lvalue.place.identifier
-                        };
-                        replace_context_value(&mut values, lvalue.place.identifier, value);
-                    }
-                    InstructionValue::StoreContext { lvalue, value, .. } => {
-                        replace_context_value(
-                            &mut values,
-                            lvalue.place.identifier,
-                            value.identifier,
-                        );
-                    }
-                    InstructionValue::PostfixUpdateContext { lvalue, .. }
-                    | InstructionValue::PrefixUpdateContext { lvalue, .. } => {
-                        clear_context_value(&mut values, lvalue.identifier);
-                    }
-                    _ => {}
-                }
+                update_context_values(&instr.value, &mut values, &hoisted_function_values, false);
             }
             if values_by_block.get(&block_id) != Some(&values) {
                 values_by_block.insert(block_id, values);
@@ -765,6 +794,7 @@ fn get_context_reassignment(
     // bindings at each escape point so a definite overwrite can kill stale taint.
     let mut captured_contexts = CapturedContexts::default();
     let mut returned_captured_contexts = CapturedContexts::default();
+    let mut returned_loaded_contexts = CapturedContexts::default();
     let (initial_context_values, context_values_by_block, hoisted_function_values) =
         infer_context_values_by_block(func, functions);
     // Bindings owned by this function are ordinary locals while it executes,
@@ -807,6 +837,9 @@ fn get_context_reassignment(
 
         for &instruction_id in &block.instructions {
             let instr = &func.instructions[instruction_id.index()];
+            if is_hoisted_function_store(&instr.value, &hoisted_function_values) {
+                continue;
+            }
 
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
@@ -842,6 +875,12 @@ fn get_context_reassignment(
                         returned_captured_contexts.insert(
                             instr.lvalue.identifier,
                             reassignment.returned_contexts.clone(),
+                        );
+                    }
+                    if !inner_is_async && !reassignment.returned_context_loads.is_empty() {
+                        returned_loaded_contexts.insert(
+                            instr.lvalue.identifier,
+                            reassignment.returned_context_loads.clone(),
                         );
                     }
                     // Captures are live bindings even for async functions. Keep
@@ -969,9 +1008,24 @@ fn get_context_reassignment(
 
     propagate_captured_contexts(&mut captured_contexts, &propagation_edges);
     propagate_captured_contexts(&mut returned_captured_contexts, &propagation_edges);
-    for (callback_identifiers, result_identifiers, _) in &no_alias_calls {
+    propagate_captured_contexts(&mut returned_loaded_contexts, &propagation_edges);
+    for (callback_identifiers, result_identifiers, call_context_values) in &no_alias_calls {
         let mut contexts = FxHashSet::default();
         for callback_identifier in callback_identifiers {
+            // A direct return of a context load snapshots its current value.
+            // Only a returned closure keeps observing later binding stores.
+            if let Some(loaded_contexts) = returned_loaded_contexts.get(callback_identifier) {
+                for &context in loaded_contexts {
+                    for &result in result_identifiers {
+                        connect_context_value(
+                            call_context_values,
+                            context,
+                            result,
+                            &mut propagation_edges,
+                        );
+                    }
+                }
+            }
             if let Some(callback_contexts) = returned_captured_contexts.get(callback_identifier) {
                 contexts.extend(callback_contexts.iter().copied());
             }
@@ -987,8 +1041,15 @@ fn get_context_reassignment(
     propagate_correlated_values(&mut correlated_values, &propagation_edges);
     propagate_identifier_set(&mut async_function_values, &propagation_edges);
 
-    let active_async_contexts_by_block =
-        infer_active_async_contexts_by_block(func, env, &async_function_values, &captured_contexts);
+    let active_async_contexts_by_block = infer_active_async_contexts_by_block(
+        func,
+        env,
+        &async_function_values,
+        &captured_contexts,
+        &initial_context_values,
+        &context_values_by_block,
+        &hoisted_function_values,
+    );
 
     let returning_functions = propagate_reassignments(&returning_seeds, &propagation_edges);
     let mut reassigning_functions = propagate_reassignments(&seeds, &propagation_edges);
@@ -1026,14 +1087,14 @@ fn get_context_reassignment(
         reassigning_functions = propagate_reassignments(&seeds, &propagation_edges);
     }
 
-    let mut returned_value_contexts = captured_contexts.clone();
+    let mut returned_value_loads = CapturedContexts::default();
     for context_place in &func.context {
-        returned_value_contexts
+        returned_value_loads
             .entry(context_place.identifier)
             .or_default()
             .insert(context_place.identifier);
     }
-    propagate_captured_contexts(&mut returned_value_contexts, &propagation_edges);
+    propagate_captured_contexts(&mut returned_value_loads, &propagation_edges);
 
     // With the complete fixed-point map, validate uses in source CFG order so
     // diagnostics retain their existing ordering.
@@ -1045,10 +1106,17 @@ fn get_context_reassignment(
             &initial_context_values,
             &context_values_by_block,
         );
-        let mut active_async_contexts =
-            active_async_contexts_at_block_entry(func, block_id, &active_async_contexts_by_block);
+        let mut active_async_contexts = context_values_at_block_entry(
+            func,
+            block_id,
+            &ContextValues::default(),
+            &active_async_contexts_by_block,
+        );
         for &instruction_id in &block.instructions {
             let instr = &func.instructions[instruction_id.index()];
+            if is_hoisted_function_store(&instr.value, &hoisted_function_values) {
+                continue;
+            }
 
             match &instr.value {
                 InstructionValue::FunctionExpression { .. }
@@ -1121,10 +1189,10 @@ fn get_context_reassignment(
             // An async continuation observes the live binding when execution
             // yields, not every intermediate store in the current synchronous job.
             if matches!(instr.value, InstructionValue::Await { .. }) {
-                for &context in &active_async_contexts {
+                for &context in active_async_contexts.keys() {
                     if let Some(reassignment_place) = find_reassignment_for_operand(
                         context,
-                        &context_values,
+                        &active_async_contexts,
                         &context_values_by_block,
                         &reassigning_functions,
                         &captured_contexts,
@@ -1151,44 +1219,36 @@ fn get_context_reassignment(
                     record_async_reassignment(reassignment_place, identifiers, diagnostics);
                     return ReassignmentResult::default();
                 }
-                if let Some(contexts) = captured_contexts.get(&operand.identifier) {
-                    active_async_contexts.extend(contexts.iter().copied());
-                }
             }
 
-            match &instr.value {
-                InstructionValue::DeclareContext { lvalue, .. } => {
-                    let value = if lvalue.kind == InstructionKind::HoistedFunction {
-                        hoisted_function_values
-                            .get(&lvalue.place.identifier)
-                            .copied()
-                            .unwrap_or(lvalue.place.identifier)
-                    } else {
-                        lvalue.place.identifier
-                    };
-                    replace_context_value(&mut context_values, lvalue.place.identifier, value);
-                }
-                InstructionValue::StoreContext { lvalue, value, .. } => {
-                    replace_context_value(
-                        &mut context_values,
-                        lvalue.place.identifier,
-                        value.identifier,
-                    );
-                }
-                InstructionValue::PostfixUpdateContext { lvalue, .. }
-                | InstructionValue::PrefixUpdateContext { lvalue, .. } => {
-                    clear_context_value(&mut context_values, lvalue.identifier);
-                }
-                _ => {}
-            }
+            add_invoked_async_contexts(
+                &instr.value,
+                env,
+                &async_function_values,
+                &captured_contexts,
+                &context_values,
+                &mut active_async_contexts,
+            );
+            update_context_values(
+                &instr.value,
+                &mut context_values,
+                &hoisted_function_values,
+                false,
+            );
+            update_context_values(
+                &instr.value,
+                &mut active_async_contexts,
+                &hoisted_function_values,
+                true,
+            );
         }
 
         // Leaving the function also allows pending async continuations to resume.
         if matches!(block.terminal, Terminal::Return { .. } | Terminal::Throw { .. }) {
-            for &context in &active_async_contexts {
+            for &context in active_async_contexts.keys() {
                 if let Some(reassignment_place) = find_reassignment_for_operand(
                     context,
-                    &context_values,
+                    &active_async_contexts,
                     &context_values_by_block,
                     &reassigning_functions,
                     &captured_contexts,
@@ -1203,8 +1263,11 @@ fn get_context_reassignment(
         // Check terminal operands for reassigning functions.
         let is_return = matches!(block.terminal, Terminal::Return { .. });
         for operand in each_terminal_operand(&block.terminal) {
-            if is_return && let Some(contexts) = returned_value_contexts.get(&operand.identifier) {
+            if is_return && let Some(contexts) = captured_contexts.get(&operand.identifier) {
                 result.returned_contexts.extend(contexts.iter().copied());
+            }
+            if is_return && let Some(contexts) = returned_value_loads.get(&operand.identifier) {
+                result.returned_context_loads.extend(contexts.iter().copied());
             }
             if let Some(reassignment_place) = find_reassignment_for_operand(
                 operand.identifier,
