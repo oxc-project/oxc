@@ -922,13 +922,51 @@ impl RestrictedPattern {
         };
 
         let case_insensitive = !self.case_sensitive.unwrap_or(false);
+        let name =
+            if case_insensitive { name.cow_to_ascii_lowercase() } else { Cow::Borrowed(name) };
 
+        // Like gitignore, a pattern that matches a parent directory also matches everything
+        // inside it, and a negated pattern cannot re-include a path whose parent is excluded.
+        // So `foo` restricts `foo/bar`, and `["foo", "!foo/bar"]` still restricts `foo/bar`.
+        for (end, _) in name.match_indices('/') {
+            if end > 0
+                && matches!(
+                    Self::match_group(groups, &name[..end], true, case_insensitive),
+                    GlobResult::Found
+                )
+            {
+                return GlobResult::Found;
+            }
+        }
+
+        Self::match_group(groups, &name, false, case_insensitive)
+    }
+
+    /// Matches `name` against the patterns of a group. The last matching pattern wins.
+    /// `is_dir` is true when `name` is a parent directory of the import path.
+    fn match_group(
+        groups: &[CompactStr],
+        name: &str,
+        is_dir: bool,
+        case_insensitive: bool,
+    ) -> GlobResult {
         let mut decision = GlobResult::None;
 
         for raw_pat in groups {
             let (negated, pat) = match raw_pat.strip_prefix('!') {
                 Some(rest) => (true, rest),
                 None => (false, raw_pat.as_str()),
+            };
+
+            // A trailing slash means the pattern only matches directories.
+            let pat = match pat.strip_suffix('/') {
+                Some(dir_pat) if !dir_pat.is_empty() => {
+                    if !is_dir {
+                        continue;
+                    }
+                    dir_pat
+                }
+                _ => pat,
             };
 
             // roughly based on https://github.com/BurntSushi/ripgrep/blob/6dfaec03/crates/ignore/src/gitignore.rs#L436-L516
@@ -938,13 +976,9 @@ impl RestrictedPattern {
                 Cow::Owned(format!("**/{pat}"))
             };
 
-            let (pat, name) = if case_insensitive {
-                (pat.cow_to_ascii_lowercase(), name.cow_to_ascii_lowercase())
-            } else {
-                (pat, name.into())
-            };
+            let pat = if case_insensitive { pat.cow_to_ascii_lowercase() } else { pat };
 
-            if fast_glob::glob_match(pat.as_ref(), name.as_ref()) {
+            if fast_glob::glob_match(pat.as_ref(), name) {
                 decision = if negated { GlobResult::Whitelist } else { GlobResult::Found };
             }
         }
@@ -2051,6 +2085,32 @@ fn test() {
                 "patterns": [{ "group": ["foo/*"], "allowImportNames": ["bar"] }]
             }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/25954
+        (
+            r#"import withPatterns from "foobar/baz";"#,
+            Some(serde_json::json!([{ "patterns": ["foo"] }])),
+        ),
+        (r#"import withPatterns from "foo";"#, Some(serde_json::json!([{ "patterns": ["foo/"] }]))),
+        (
+            r#"import withGitignores from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": [{ "group": ["foo", "!foo"] }] }])),
+        ),
+        (
+            r#"import withGitignores from "foo/bar/baz";"#,
+            Some(serde_json::json!([{ "patterns": [{ "group": ["foo/*", "!foo/bar"] }] }])),
+        ),
+        (
+            r#"import withPatterns from "FOO/bar";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "caseSensitive": true }] }]),
+            ),
+        ),
+        (
+            r#"import { allowed } from "foo/bar";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "allowImportNames": ["allowed"] }] }]),
+            ),
+        ),
     ];
 
     let pass_typescript = vec![
@@ -2362,10 +2422,10 @@ fn test() {
             r#"import withPaths from "foo/bar";"#,
             Some(serde_json::json!([{ "paths": ["foo/bar"] }])),
         ),
-        // (
-        //     r#"import withPatterns from "foo/bar";"#,
-        //     Some(serde_json::json!([{ "patterns": ["foo"] }])),
-        // ),
+        (
+            r#"import withPatterns from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": ["foo"] }])),
+        ),
         (
             r#"import withPatterns from "foo/bar";"#,
             Some(serde_json::json!([{ "patterns": ["bar"] }])),
@@ -2875,10 +2935,10 @@ fn test() {
             "import absoluteWithPatterns from '/foo';",
             Some(serde_json::json!([{ "patterns": ["foo"] }])),
         ),
-        // (
-        //     "import absoluteWithPatterns from '#foo/bar';",
-        //     Some(serde_json::json!([{ "patterns": ["\\#foo"] }])),
-        // ),
+        (
+            "import absoluteWithPatterns from '#foo/bar';",
+            Some(serde_json::json!([{ "patterns": ["\\#foo"] }])),
+        ),
         (
             "import { Foo } from '../../my/relative-module';",
             Some(serde_json::json!([{
@@ -3301,6 +3361,35 @@ fn test() {
             r"import 'foo'; import {a} from 'b'",
             Some(
                 serde_json::json!([{ "paths": [{ "name": "foo", "message": "foo is forbidden, use bar instead" }] }]),
+            ),
+        ),
+        // https://github.com/oxc-project/oxc/issues/25954
+        (
+            "import { foo1 } from 'foo';\nimport { foo2 } from 'foo/bar';",
+            Some(serde_json::json!([{ "patterns": ["foo"] }])),
+        ),
+        (r#"import "foo/bar";"#, Some(serde_json::json!([{ "patterns": ["foo"] }]))),
+        (r#"export * from "foo/bar";"#, Some(serde_json::json!([{ "patterns": ["foo"] }]))),
+        (
+            r#"import withPatterns from "foo/bar/baz";"#,
+            Some(serde_json::json!([{ "patterns": ["foo/bar"] }])),
+        ),
+        (
+            r#"import withPatterns from "@scope/pkg/sub";"#,
+            Some(serde_json::json!([{ "patterns": [{ "group": ["@scope/pkg"] }] }])),
+        ),
+        (
+            r#"import withPatterns from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": ["foo/"] }])),
+        ),
+        (
+            r#"import withGitignores from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": [{ "group": ["foo", "!foo/bar"] }] }])),
+        ),
+        (
+            r#"import { restricted } from "foo/bar";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "importNames": ["restricted"] }] }]),
             ),
         ),
         // https://github.com/oxc-project/oxc/issues/10984
