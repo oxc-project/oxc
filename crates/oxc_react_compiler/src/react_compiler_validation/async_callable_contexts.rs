@@ -1,18 +1,67 @@
+use std::rc::Rc;
+
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use super::validate_locals_not_reassigned_after_render::each_invoked_async_operand;
+use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     ArrayElement, ArrayPatternElement, BlockId, HirFunction, IdentifierId, Instruction,
-    InstructionKind, InstructionValue, ObjectPropertyKey, ObjectPropertyOrSpread, Pattern,
-    PrimitiveValue,
+    InstructionId, InstructionKind, InstructionValue, ObjectPropertyKey, ObjectPropertyOrSpread,
+    Pattern, PrimitiveValue,
 };
 
-type Values = FxHashSet<IdentifierId>;
+type Captures = FxHashMap<IdentifierId, FxHashSet<IdentifierId>>;
 type Properties = FxHashMap<Option<String>, Values>;
-type Captures = FxHashMap<IdentifierId, Values>;
+
+pub(super) struct AsyncInvocation {
+    pub captures: FxHashSet<IdentifierId>,
+    pub context_values: Rc<Captures>,
+}
+
+pub(super) struct AsyncCallables {
+    pub identifiers: FxHashSet<IdentifierId>,
+    pub invocations: FxHashMap<InstructionId, Vec<AsyncInvocation>>,
+}
+
+/// Pair each possible async function with the live bindings on the paths where
+/// that function is selected. Merging another callable must not mix its bindings
+/// into this function's captures.
+#[derive(Clone, Default, PartialEq, Eq)]
+struct Values {
+    identities: FxHashSet<IdentifierId>,
+    contexts: FxHashMap<IdentifierId, Rc<Captures>>,
+}
+
+impl Values {
+    fn single(identifier: IdentifierId) -> Self {
+        Self { identities: FxHashSet::from_iter([identifier]), contexts: FxHashMap::default() }
+    }
+
+    fn extend(&mut self, other: &Self) {
+        self.identities.extend(&other.identities);
+        for (&function, contexts) in &other.contexts {
+            let into = self.contexts.entry(function).or_default();
+            if Rc::ptr_eq(into, contexts) {
+                continue;
+            }
+            let into = Rc::make_mut(into);
+            for (&binding, values) in contexts.iter() {
+                into.entry(binding).or_default().extend(values);
+            }
+        }
+    }
+
+    fn update_context(&mut self, binding: IdentifierId, values: &FxHashSet<IdentifierId>) {
+        for contexts in self.contexts.values_mut() {
+            Rc::make_mut(contexts).insert(binding, values.clone());
+        }
+    }
+}
 
 #[derive(Clone, Default, PartialEq, Eq)]
 struct CallableState {
-    values: Captures,
+    values: FxHashMap<IdentifierId, Values>,
+    context_values: Captures,
     properties: FxHashMap<IdentifierId, Properties>,
     keys: FxHashMap<IdentifierId, String>,
 }
@@ -32,10 +81,26 @@ impl CallableState {
     }
 
     fn allocate(&mut self, identifier: IdentifierId) {
-        self.values.insert(identifier, FxHashSet::from_iter([identifier]));
+        self.values.insert(identifier, Values::single(identifier));
+    }
+
+    fn update_context(&mut self, binding: IdentifierId) {
+        let values = self.values(binding).identities;
+        self.context_values.insert(binding, values.clone());
+        for value in self.values.values_mut() {
+            value.update_context(binding, &values);
+        }
+        for properties in self.properties.values_mut() {
+            for value in properties.values_mut() {
+                value.update_context(binding, &values);
+            }
+        }
     }
 
     fn merge(&mut self, other: &Self) {
+        for (&binding, values) in &other.context_values {
+            self.context_values.entry(binding).or_default().extend(values);
+        }
         for (&id, values) in &other.values {
             self.values.entry(id).or_default().extend(values);
         }
@@ -59,7 +124,8 @@ impl CallableState {
 
     fn properties(&self, identifier: IdentifierId) -> Properties {
         let mut result = Properties::default();
-        for object in self.values.get(&identifier).into_iter().flatten() {
+        for object in self.values.get(&identifier).into_iter().flat_map(|values| &values.identities)
+        {
             if let Some(properties) = self.properties.get(object) {
                 for (key, values) in properties {
                     result.entry(key.clone()).or_default().extend(values);
@@ -74,16 +140,18 @@ impl CallableState {
             .properties(object)
             .into_iter()
             .filter(|(property, _)| key.is_none() || property.is_none() || key == *property)
-            .flat_map(|(_, values)| values)
-            .collect();
+            .fold(Values::default(), |mut result, (_, values)| {
+                result.extend(&values);
+                result
+            });
         self.values.insert(into, values);
         self.keys.remove(&into);
     }
 
     fn store(&mut self, object: IdentifierId, key: Option<String>, values: Values) {
         let objects = self.values(object);
-        let definite = objects.len() == 1 && key.is_some();
-        for object in objects {
+        let definite = objects.identities.len() == 1 && key.is_some();
+        for object in objects.identities {
             let properties = self.properties.entry(object).or_default();
             if definite {
                 properties.insert(key.clone(), values.clone());
@@ -154,11 +222,20 @@ impl CallableState {
         &mut self,
         instruction: &Instruction<'_>,
         hoisted: &FxHashMap<IdentifierId, IdentifierId>,
+        async_functions: &FxHashSet<IdentifierId>,
+        captured_contexts: &Captures,
     ) {
         let id = instruction.lvalue.identifier;
         match &instruction.value {
             InstructionValue::FunctionExpression { .. } | InstructionValue::ObjectMethod { .. } => {
-                self.allocate(id)
+                self.allocate(id);
+                if async_functions.contains(&id) {
+                    let mut contexts = self.context_values.clone();
+                    for &capture in captured_contexts.get(&id).into_iter().flatten() {
+                        contexts.entry(capture).or_insert_with(|| FxHashSet::from_iter([capture]));
+                    }
+                    self.values.get_mut(&id).unwrap().contexts.insert(id, Rc::new(contexts));
+                }
             }
             InstructionValue::Primitive { value, .. } => {
                 let key = match value {
@@ -184,16 +261,24 @@ impl CallableState {
                 }
                 self.copy(value.identifier, lvalue.place.identifier);
                 self.copy(value.identifier, id);
+                if matches!(instruction.value, InstructionValue::StoreContext { .. }) {
+                    self.update_context(lvalue.place.identifier);
+                }
             }
             InstructionValue::DeclareContext { lvalue, .. } => {
                 if lvalue.kind == InstructionKind::HoistedFunction
                     && let Some(value) = hoisted.get(&lvalue.place.identifier)
                 {
-                    self.values.insert(lvalue.place.identifier, FxHashSet::from_iter([*value]));
+                    let mut values = Values::single(*value);
+                    if async_functions.contains(value) {
+                        values.contexts.insert(*value, Rc::new(self.context_values.clone()));
+                    }
+                    self.values.insert(lvalue.place.identifier, values);
                 } else {
                     self.values.insert(lvalue.place.identifier, Values::default());
                 }
                 self.keys.remove(&lvalue.place.identifier);
+                self.update_context(lvalue.place.identifier);
             }
             InstructionValue::ObjectExpression { properties, .. } => {
                 self.allocate(id);
@@ -231,8 +316,10 @@ impl CallableState {
                             let values = self
                                 .properties(spread.place.identifier)
                                 .into_values()
-                                .flatten()
-                                .collect();
+                                .fold(Values::default(), |mut result, values| {
+                                    result.extend(&values);
+                                    result
+                                });
                             self.store(id, None, values);
                             index = None;
                             continue;
@@ -274,6 +361,7 @@ impl CallableState {
             | InstructionValue::PostfixUpdateContext { lvalue, .. } => {
                 self.values.insert(lvalue.identifier, Values::default());
                 self.keys.remove(&lvalue.identifier);
+                self.update_context(lvalue.identifier);
             }
             _ => {}
         }
@@ -289,9 +377,12 @@ pub(super) fn infer_async_callable_contexts(
     async_functions: &FxHashSet<IdentifierId>,
     captured_contexts: &Captures,
     hoisted: &FxHashMap<IdentifierId, IdentifierId>,
-) -> Captures {
+    env: &Environment<'_>,
+) -> AsyncCallables {
+    let mut result =
+        AsyncCallables { identifiers: FxHashSet::default(), invocations: FxHashMap::default() };
     if async_functions.is_empty() {
-        return Captures::default();
+        return result;
     }
     let mut states: FxHashMap<BlockId, CallableState> = FxHashMap::default();
     loop {
@@ -308,7 +399,7 @@ pub(super) fn infer_async_callable_contexts(
                 let mut keys = Vec::new();
                 for (predecessor, operand) in &phi.operands {
                     if let Some(predecessor) = states.get(predecessor) {
-                        values.extend(predecessor.values(operand.identifier));
+                        values.extend(&predecessor.values(operand.identifier));
                         keys.push(predecessor.keys.get(&operand.identifier));
                     }
                 }
@@ -321,8 +412,19 @@ pub(super) fn infer_async_callable_contexts(
                     state.keys.remove(&phi.place.identifier);
                 }
             }
-            for instruction in &block.instructions {
-                state.apply(&func.instructions[instruction.index()], hoisted);
+            for &instruction_id in &block.instructions {
+                let instruction = &func.instructions[instruction_id.index()];
+                let mut invocations = Vec::new();
+                for operand in each_invoked_async_operand(&instruction.value, env) {
+                    for (function, context_values) in state.values(operand.identifier).contexts {
+                        invocations.push(AsyncInvocation {
+                            captures: captured_contexts.get(&function).cloned().unwrap_or_default(),
+                            context_values,
+                        });
+                    }
+                }
+                result.invocations.insert(instruction_id, invocations);
+                state.apply(instruction, hoisted, async_functions, captured_contexts);
             }
             if states.get(&block_id) != Some(&state) {
                 states.insert(block_id, state);
@@ -333,16 +435,10 @@ pub(super) fn infer_async_callable_contexts(
             break;
         }
     }
-    let mut result = Captures::default();
     for state in states.values() {
         for (&identifier, values) in &state.values {
-            for value in values {
-                if async_functions.contains(value) {
-                    result
-                        .entry(identifier)
-                        .or_default()
-                        .extend(captured_contexts.get(value).into_iter().flatten().copied());
-                }
+            if !values.contexts.is_empty() {
+                result.identifiers.insert(identifier);
             }
         }
     }

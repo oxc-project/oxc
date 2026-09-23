@@ -13,7 +13,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
 use smallvec::smallvec;
 
-use super::async_callable_contexts::infer_async_callable_contexts;
+use super::async_callable_contexts::{AsyncInvocation, infer_async_callable_contexts};
 use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::type_config::AliasingEffectConfig;
@@ -22,7 +22,7 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     BlockId, Effect, FunctionId, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionKind, InstructionValue, ParamPattern, Place, PlaceOrSpread, Terminal,
+    InstructionId, InstructionKind, InstructionValue, ParamPattern, Place, PlaceOrSpread, Terminal,
 };
 
 type ContextValues = FxHashMap<IdentifierId, FxHashSet<IdentifierId>>;
@@ -295,7 +295,10 @@ fn invoked_function_operand(value: &InstructionValue<'_>) -> Option<Place> {
     }
 }
 
-fn each_invoked_async_operand(value: &InstructionValue<'_>, env: &Environment<'_>) -> PlaceList {
+pub(super) fn each_invoked_async_operand(
+    value: &InstructionValue<'_>,
+    env: &Environment<'_>,
+) -> PlaceList {
     let mut operands = each_no_alias_callback_operand(value, env, false);
     if let Some(function) = invoked_function_operand(value) {
         operands.push(function);
@@ -304,23 +307,15 @@ fn each_invoked_async_operand(value: &InstructionValue<'_>, env: &Environment<'_
 }
 
 fn add_invoked_async_contexts(
-    value: &InstructionValue<'_>,
-    env: &Environment<'_>,
-    async_function_values: &FxHashSet<IdentifierId>,
-    captured_contexts: &CapturedContexts,
-    context_values: &ContextValues,
+    invocations: &[AsyncInvocation],
     active_contexts: &mut ContextValues,
 ) {
-    for operand in each_invoked_async_operand(value, env) {
-        if async_function_values.contains(&operand.identifier)
-            && let Some(contexts) = captured_contexts.get(&operand.identifier)
-        {
-            for &context in contexts {
-                if let Some(values) = context_values.get(&context) {
-                    active_contexts.entry(context).or_default().extend(values);
-                } else {
-                    insert_context_value(active_contexts, context, context);
-                }
+    for invocation in invocations {
+        for &context in &invocation.captures {
+            if let Some(values) = invocation.context_values.get(&context) {
+                active_contexts.entry(context).or_default().extend(values);
+            } else {
+                insert_context_value(active_contexts, context, context);
             }
         }
     }
@@ -612,11 +607,7 @@ fn update_context_values(
 /// a continuation that cannot occur at runtime.
 fn infer_active_async_contexts_by_block(
     func: &HirFunction,
-    env: &Environment<'_>,
-    async_function_values: &FxHashSet<IdentifierId>,
-    captured_contexts: &CapturedContexts,
-    initial: &ContextValues,
-    values_by_block: &FxHashMap<BlockId, ContextValues>,
+    invocations: &FxHashMap<InstructionId, Vec<AsyncInvocation>>,
     hoisted_function_values: &HoistedFunctionValues,
 ) -> FxHashMap<BlockId, ContextValues> {
     let mut contexts_by_block = FxHashMap::default();
@@ -626,19 +617,11 @@ fn infer_active_async_contexts_by_block(
         for (&block_id, block) in &func.body.blocks {
             let mut contexts =
                 context_values_at_block_entry(func, block_id, &empty, &contexts_by_block);
-            let mut values =
-                context_values_at_block_entry(func, block_id, initial, values_by_block);
             for &instruction_id in &block.instructions {
+                if let Some(invocations) = invocations.get(&instruction_id) {
+                    add_invoked_async_contexts(invocations, &mut contexts);
+                }
                 let value = &func.instructions[instruction_id.index()].value;
-                add_invoked_async_contexts(
-                    value,
-                    env,
-                    async_function_values,
-                    captured_contexts,
-                    &values,
-                    &mut contexts,
-                );
-                update_context_values(value, &mut values, hoisted_function_values, false);
                 update_context_values(value, &mut contexts, hoisted_function_values, true);
             }
             if contexts_by_block.get(&block_id) != Some(&contexts) {
@@ -992,13 +975,15 @@ fn get_context_reassignment(
         }
     }
 
-    let async_captured_contexts = infer_async_callable_contexts(
+    let async_callables = infer_async_callable_contexts(
         func,
         &async_function_values,
         &captured_contexts,
         &hoisted_function_values,
+        env,
     );
-    async_function_values = async_captured_contexts.keys().copied().collect();
+    async_function_values = async_callables.identifiers;
+    let async_invocations = async_callables.invocations;
     propagate_captured_contexts(&mut captured_contexts, &propagation_edges);
     propagate_captured_contexts(&mut returned_captured_contexts, &propagation_edges);
     propagate_captured_contexts(&mut returned_loaded_contexts, &propagation_edges);
@@ -1033,15 +1018,8 @@ fn get_context_reassignment(
     propagate_captured_contexts(&mut captured_contexts, &propagation_edges);
     propagate_correlated_values(&mut correlated_values, &propagation_edges);
 
-    let active_async_contexts_by_block = infer_active_async_contexts_by_block(
-        func,
-        env,
-        &async_function_values,
-        &async_captured_contexts,
-        &initial_context_values,
-        &context_values_by_block,
-        &hoisted_function_values,
-    );
+    let active_async_contexts_by_block =
+        infer_active_async_contexts_by_block(func, &async_invocations, &hoisted_function_values);
 
     let returning_functions = propagate_reassignments(&returning_seeds, &propagation_edges);
     let mut reassigning_functions = propagate_reassignments(&seeds, &propagation_edges);
@@ -1196,33 +1174,24 @@ fn get_context_reassignment(
                 }
             }
 
-            for operand in each_invoked_async_operand(&instr.value, env) {
-                let Some(contexts) = async_captured_contexts.get(&operand.identifier) else {
-                    continue;
-                };
-                for &context in contexts {
-                    if let Some(reassignment_place) = find_reassignment_for_operand(
-                        context,
-                        &context_values,
-                        &context_values_by_block,
-                        &reassigning_functions,
-                        &captured_contexts,
-                        &correlated_values,
-                    ) {
-                        record_async_reassignment(reassignment_place, identifiers, diagnostics);
-                        return ReassignmentResult::default();
+            if let Some(invocations) = async_invocations.get(&instruction_id) {
+                for invocation in invocations {
+                    for &context in &invocation.captures {
+                        if let Some(reassignment_place) = find_reassignment_for_operand(
+                            context,
+                            &invocation.context_values,
+                            &context_values_by_block,
+                            &reassigning_functions,
+                            &captured_contexts,
+                            &correlated_values,
+                        ) {
+                            record_async_reassignment(reassignment_place, identifiers, diagnostics);
+                            return ReassignmentResult::default();
+                        }
                     }
                 }
+                add_invoked_async_contexts(invocations, &mut active_async_contexts);
             }
-
-            add_invoked_async_contexts(
-                &instr.value,
-                env,
-                &async_function_values,
-                &async_captured_contexts,
-                &context_values,
-                &mut active_async_contexts,
-            );
             update_context_values(
                 &instr.value,
                 &mut context_values,
