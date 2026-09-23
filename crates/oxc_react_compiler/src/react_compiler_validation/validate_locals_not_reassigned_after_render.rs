@@ -187,7 +187,31 @@ fn each_no_alias_callback_operand(
     if !signature.no_alias {
         return PlaceList::new();
     }
-    let Some(aliasing) = signature.aliasing else { return PlaceList::new() };
+    let Some(aliasing) = signature.aliasing else {
+        if require_result_flow {
+            return PlaceList::new();
+        }
+        // Legacy no-alias signatures can invoke callbacks without retaining
+        // their results. Read-only arguments cannot invoke a mutable callback.
+        return args
+            .iter()
+            .enumerate()
+            .filter_map(|(index, argument)| {
+                let effect =
+                    signature.positional_params.get(index).copied().or(signature.rest_param);
+                if !matches!(
+                    effect,
+                    Some(Effect::ConditionallyMutate | Effect::Capture | Effect::Store)
+                ) {
+                    return None;
+                }
+                Some(match argument {
+                    PlaceOrSpread::Place(place) => *place,
+                    PlaceOrSpread::Spread(spread) => spread.place,
+                })
+            })
+            .collect();
+    };
 
     let mut operands = PlaceList::new();
     for effect in aliasing.effects {
