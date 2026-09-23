@@ -1745,8 +1745,8 @@ pub struct TSExternalModuleReference<'a> {
 
 /// TypeScript non-null expression (`!`)
 ///
-/// This expression assumes that the type of the inner expression is not null
-/// and changes it from `T | null` to just `T`.
+/// This expression assumes that the type of the inner expression is not nullish,
+/// and changes it from `T | undefined | null` to just `T`.
 ///
 /// ## Example
 ///
