@@ -998,8 +998,8 @@ pub struct TSInterfaceBody<'a> {
 
 /// TypeScript Property Signature
 ///
-/// Used in [classes](Class), [interfaces](TSInterfaceDeclaration), [mapped types](TSMappedType),
-/// etc. Part of a [`TSSignature`].
+/// A property member of an [interface](TSInterfaceDeclaration) or
+/// [type literal](TSTypeLiteral), represented as a [`TSSignature`] variant.
 ///
 /// ## Example
 /// ```ts
