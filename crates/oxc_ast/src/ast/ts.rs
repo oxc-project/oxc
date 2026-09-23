@@ -466,7 +466,7 @@ pub struct TSIndexedAccessType<'a> {
 /// ## Example
 ///
 /// ```ts
-/// type `StringNumberPair` = [string, number];
+/// type StringNumberPair = [string, number];
 /// ```
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types>
