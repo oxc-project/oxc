@@ -89,7 +89,7 @@ pub struct OpMap {
     pub opmap_mul: u32,
     pub opmap_slot: [u8; 256],
     pub op2_pack: [u32; 256],
-    pub op3_pack: [u64; 256],
+    pub op3_pack: [u32; 256],
 }
 
 impl OpMap {
@@ -99,18 +99,20 @@ impl OpMap {
         let mut op3_pack = [0; 256];
 
         for op_def in &OPMAP_OPS {
+            if op_def.len == 4 {
+                continue;
+            }
+
             let slot = op_def.slot(OPMAP_MUL);
             if op_def.len == 2 {
-                op2_pack[slot] = 2u32
-                    | ((op_def.txt[0] as u32) << 8)
-                    | ((op_def.txt[1] as u32) << 16)
+                op2_pack[slot] = (op_def.txt[0] as u32)
+                    | ((op_def.txt[1] as u32) << 8)
                     | ((op_def.kind as u32) << 24);
-            } else if op_def.len == 3 {
-                op3_pack[slot] = 3u64
-                    | ((op_def.txt[0] as u64) << 8)
-                    | ((op_def.txt[1] as u64) << 16)
-                    | ((op_def.txt[2] as u64) << 24)
-                    | ((op_def.kind as u64) << 32);
+            } else {
+                op3_pack[slot] = (op_def.txt[0] as u32)
+                    | ((op_def.txt[1] as u32) << 8)
+                    | ((op_def.txt[2] as u32) << 16)
+                    | ((op_def.kind as u32) << 24);
             }
         }
 
