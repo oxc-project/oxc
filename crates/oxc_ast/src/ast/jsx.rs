@@ -272,11 +272,13 @@ pub enum JSXMemberExpressionObject<'a> {
 /// ## Example
 ///
 /// ```tsx
-/// // boolean-like and string-like expressions are not wrapped in containers.
-/// // Here, only `container` is a JSXExpressionContainer.
-/// <Foo bar baz="bang" container={4}/>
-///   {4}  // <- wrapped in container
-/// </Foo>
+/// // `bar` has no value; `baz` has a StringLiteral value.
+/// // Both `{4}` parts are JSXExpressionContainer nodes.
+/// const element = (
+///   <Foo bar baz="bang" container={4}>
+///     {4}
+///   </Foo>
+/// );
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
