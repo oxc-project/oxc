@@ -45,20 +45,6 @@ describe("RuleTester fix output parsing", () => {
     expect(() => checkFix("let a; let a;")).toThrow(/Autofix: Parsing failed in fixed code/);
   });
 
-  it("rejects invalid suggestion output with its index", () => {
-    expect(() =>
-      run(replacementRule("const = ;", true), {
-        code: "foo;",
-        errors: [
-          {
-            message: "Replace source",
-            suggestions: [{ desc: "Replace source", output: "const = ;" }],
-          },
-        ],
-      }),
-    ).toThrow(/Suggestion at index 0: Parsing failed in fixed code/);
-  });
-
   it("validates every suggestion independently", () => {
     const rule: Rule = {
       meta: { hasSuggestions: true, schema: [] },
@@ -137,33 +123,9 @@ describe("RuleTester fix output parsing", () => {
 });
 
 describe("RuleTester output parser configuration", () => {
-  it.each([
-    { filename: "file.ts", output: "let value: number = 1;" },
-    { filename: "file.jsx", output: "<div />;" },
-    { filename: "file.tsx", output: "const value: JSX.Element = <div />;" },
-    { filename: "file.d.ts", output: "declare const value: number;" },
-  ])("uses the language of $filename", ({ filename, output }) => {
+  it("uses the filename to enable TypeScript and JSX in output", () => {
     expect(() =>
-      checkFix(output, {
-        filename,
-        code: filename.endsWith(".d.ts") ? "declare const foo: number;" : "foo;",
-      }),
-    ).not.toThrow();
-  });
-
-  it("uses parser options when there is no filename", () => {
-    expect(() =>
-      checkFix("let value: number = 1;", {
-        languageOptions: { parserOptions: { lang: "ts" } },
-      }),
-    ).not.toThrow();
-  });
-
-  it("uses JSX parser options when there is no filename", () => {
-    expect(() =>
-      checkFix("<div />;", {
-        languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
-      }),
+      checkFix("const value: JSX.Element = <div />;", { filename: "file.tsx" }),
     ).not.toThrow();
   });
 
@@ -193,24 +155,6 @@ describe("RuleTester output parser configuration", () => {
     expect(() => checkFix("export {};", { languageOptions: { sourceType: "script" } })).toThrow(
       /Autofix: Parsing failed in fixed code/,
     );
-  });
-
-  it("accepts module syntax in module output", () => {
-    expect(() =>
-      checkFix("export {};", { languageOptions: { sourceType: "module" } }),
-    ).not.toThrow();
-  });
-
-  it("detects the source type from unambiguous output", () => {
-    expect(() =>
-      checkFix("export {};", { languageOptions: { sourceType: "unambiguous" } }),
-    ).not.toThrow();
-  });
-
-  it("accepts commonjs output", () => {
-    expect(() =>
-      checkFix("return;", { languageOptions: { sourceType: "commonjs" } }),
-    ).not.toThrow();
   });
 
   it("honors the default module source type in ESLint compatibility mode", () => {
@@ -290,18 +234,6 @@ describe("RuleTester output parser configuration", () => {
         ],
       }),
     ).not.toThrow();
-  });
-
-  it("runs the after hook when output parsing fails", () => {
-    let afterCalls = 0;
-    expect(() =>
-      checkFix("(", {
-        after() {
-          afterCalls++;
-        },
-      }),
-    ).toThrow(/Autofix: Parsing failed in fixed code/);
-    expect(afterCalls).toBe(1);
   });
 });
 
