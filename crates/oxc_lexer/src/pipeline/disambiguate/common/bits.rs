@@ -6,13 +6,13 @@
 
 /// Is bit `i` set?
 #[inline(always)]
-pub fn get(bits: &[u64], i: usize) -> bool {
+pub(crate) fn get(bits: &[u64], i: usize) -> bool {
     (bits[i >> 6] >> (i & 63)) & 1 != 0
 }
 
 /// The first set bit at or after `i`, or `n`.
 #[inline(always)]
-pub fn next1(bits: &[u64], i: usize, n: usize) -> usize {
+pub(crate) fn next1(bits: &[u64], i: usize, n: usize) -> usize {
     let mut w = i >> 6;
     let x = bits[w] & !((1u64 << (i & 63)).wrapping_sub(1));
     if x != 0 {
@@ -31,7 +31,7 @@ pub fn next1(bits: &[u64], i: usize, n: usize) -> usize {
 
 /// The first clear bit at or after `i`, or `n`.
 #[inline(always)]
-pub fn next0(bits: &[u64], i: usize, n: usize) -> usize {
+pub(crate) fn next0(bits: &[u64], i: usize, n: usize) -> usize {
     let mut w = i >> 6;
     let mut inv = !bits[w] & !((1u64 << (i & 63)).wrapping_sub(1));
     while inv == 0 {
@@ -46,7 +46,7 @@ pub fn next0(bits: &[u64], i: usize, n: usize) -> usize {
 
 /// The last set bit before `p`, or `None`.
 #[inline(always)]
-pub fn prev1(bits: &[u64], p: usize) -> Option<usize> {
+pub(crate) fn prev1(bits: &[u64], p: usize) -> Option<usize> {
     if p == 0 {
         return None;
     }

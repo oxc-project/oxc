@@ -6,7 +6,7 @@ use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::{is_digit, is_word, is_ws},
     disambiguate::{gt_run_split, lt_run_split},
-    operators::{is_op_char, opmap_lookup, opmap_pack},
+    operators::{is_op_char, opmap_longest, opmap_pack},
     scan::scan_number,
     tables::{KwSet, Tables},
     token_view,
@@ -353,20 +353,7 @@ unsafe fn munch_walk(
         let rem = end - pos;
         let lmax: u32 = if rem < 4 { rem as u32 } else { 4 };
         let bytes = *src.add(pos).cast::<[u8; 4]>();
-        let mut opk: u32 = 0;
-        let mut opl: u32 = 0;
-        let mut l = lmax;
-        while l >= 2 {
-            let k = opmap_lookup(bytes, l);
-            if k != 0
-                && !(k == tk!(OptionalChain) as u32 && pos + 2 < n && is_digit(*src.add(pos + 2)))
-            {
-                opk = k;
-                opl = l;
-                break;
-            }
-            l -= 1;
-        }
+        let (opk, opl) = opmap_longest(bytes, lmax);
         if opk != 0 {
             *kind.add(pos) = opk as u8;
             let mut j = 1usize;

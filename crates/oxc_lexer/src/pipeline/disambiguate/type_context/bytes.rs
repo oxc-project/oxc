@@ -7,7 +7,7 @@
 //!
 //! Forward:
 //! - [`list_closer`] and [`group_closer`] go from an opener to its closer.
-//! - [`lt_run_opens_type_args`] checks for the shape of an arrow function after a `<<`,
+//! - [`lt_run_split`] checks for the shape of an arrow function after a `<<`,
 //!   as in `Array<<T>(x: T) => T>`.
 //!
 //! A scan reads at most [`FORWARD_SCAN_CAP`] bytes. Past that the answer is still exact: one pass
@@ -18,13 +18,15 @@
 //! [`match_delim_back`]: crate::pipeline::disambiguate::common::Tokens::match_delim_back
 
 use crate::{
-    pipeline::bytes::{is_id_start, is_ws},
+    pipeline::bytes::{
+        block_comment_end, is_id_start, is_ws, line_terminator_after, unicode_ws_len_at,
+    },
     token::{OP_KIND_BASE, matches_tk, tk},
 };
 
 use crate::pipeline::disambiguate::{
     FORWARD_SCAN_CAP,
-    common::{Closers, Tokens, bits, kind_at, text},
+    common::{Closers, Tokens, bits, kind_at},
 };
 
 /// Bytes the forward angle match reacts to. Everything else is skipped without touching a bitmap.
@@ -58,10 +60,8 @@ static GT_SCAN_DELIM: [bool; 256] = {
 /// first `>`) and from `a << b > (c)` (no `=>` after the parameters). Every
 /// reject path returns false, i.e. today's fused `<<`, so a wrong answer can
 /// never split a real shift.
-pub(in crate::pipeline::disambiguate) fn lt_run_opens_type_args(
-    tokens: &Tokens,
-    lt: usize,
-) -> bool {
+#[inline(never)]
+pub(crate) fn lt_run_split(tokens: &Tokens, lt: usize) -> bool {
     let Tokens { src, st, n, .. } = *tokens;
     // A TypeParameter starts with an identifier (or the `const` modifier),
     // which is what makes `<<=` cost two bytes to reject.
@@ -96,7 +96,7 @@ pub(in crate::pipeline::disambiguate) fn lt_run_opens_type_args(
     list_closer(tokens, lt).is_some()
 }
 
-pub fn arrow_after_params(tokens: &Tokens, lp: usize) -> bool {
+pub(crate) fn arrow_after_params(tokens: &Tokens, lp: usize) -> bool {
     let Tokens { src, n, .. } = *tokens;
     let Some(rp) = group_closer(tokens, lp) else {
         return false;
@@ -119,15 +119,15 @@ fn skip_trivia_fwd(src: &[u8], n: usize, mut i: usize) -> usize {
         if is_ws(c) {
             i += 1;
         } else if c == b'/' && src[i + 1] == b'/' {
-            i = text::line_terminator_after(src, n, i + 2);
+            i = line_terminator_after(src, n, i + 2);
         } else if c == b'/' && src[i + 1] == b'*' {
-            let e = text::block_comment_end(src, n, i + 2);
+            let e = block_comment_end(src, n, i + 2);
             if e >= n {
                 return n;
             }
             i = e + 1;
-        } else if c >= 0x80 && text::unicode_ws_len(src, i) != 0 {
-            i += text::unicode_ws_len(src, i);
+        } else if c >= 0x80 && unicode_ws_len_at(src, i) != 0 {
+            i += unicode_ws_len_at(src, i);
         } else {
             break;
         }
@@ -135,7 +135,7 @@ fn skip_trivia_fwd(src: &[u8], n: usize, mut i: usize) -> usize {
     i
 }
 
-pub(super) fn list_closer(tokens: &Tokens, lt: usize) -> Option<usize> {
+fn list_closer(tokens: &Tokens, lt: usize) -> Option<usize> {
     match tokens.closers.get(lt) {
         Some(r) => r.closer(),
         None => scan_list_closer(tokens, lt),
@@ -143,11 +143,10 @@ pub(super) fn list_closer(tokens: &Tokens, lt: usize) -> Option<usize> {
 }
 
 pub(super) fn scan_list_closer(tokens: &Tokens, lt: usize) -> Option<usize> {
-    let Tokens { src, st, opch, kind, n, .. } = *tokens;
-    let lim = (lt + FORWARD_SCAN_CAP).min(n);
-    match angle_close_fwd_capped(src, st, opch, kind, lt + 1, lim, 1) {
+    let lim = (lt + FORWARD_SCAN_CAP).min(tokens.n);
+    match angle_close_fwd_capped(tokens, lt + 1, lim, 1) {
         (Some(gt), _) => Some(gt),
-        (None, true) if lim < n => resolve_lists(tokens, lt),
+        (None, true) if lim < tokens.n => resolve_lists(tokens, lt),
         (None, _) => None,
     }
 }
@@ -156,11 +155,10 @@ fn group_closer(tokens: &Tokens, lp: usize) -> Option<usize> {
     if let Some(r) = tokens.closers.get(lp) {
         return r.closer();
     }
-    let Tokens { src, st, kind, n, .. } = *tokens;
-    let lim = (lp + FORWARD_SCAN_CAP).min(n);
-    match paren_close_fwd_capped(src, st, kind, lp + 1, lim) {
+    let lim = (lp + FORWARD_SCAN_CAP).min(tokens.n);
+    match paren_close_fwd_capped(tokens, lp + 1, lim) {
         (Some(rp), _) => Some(rp),
-        (None, true) if lim < n => resolve_groups(tokens, lp),
+        (None, true) if lim < tokens.n => resolve_groups(tokens, lp),
         (None, _) => None,
     }
 }
@@ -189,14 +187,12 @@ fn past_raw(src: &[u8], kind: &[u8], lim: usize, i: usize) -> Option<usize> {
 /// Angles count only where `opch & st` is set, the bracket counters where `st` is, and the close
 /// must leave every bracket balanced.
 fn angle_close_fwd_capped(
-    src: &[u8],
-    st: &[u64],
-    opch: &[u64],
-    kind: &[u8],
+    tokens: &Tokens,
     mut i: usize,
     lim: usize,
     mut depth: i32,
 ) -> (Option<usize>, bool) {
+    let Tokens { src, st, opch, kind, .. } = *tokens;
     let mut parens: i32 = 0;
     let mut brackets: i32 = 0;
     let mut braces: i32 = 0;
@@ -273,13 +269,8 @@ fn angle_close_fwd_capped(
 
 /// The `)` matching the `(` at `i`, or `None`. The flag says the scan ran out at `lim` with the
 /// match still open, so the caller falls back to [`resolve_groups`].
-fn paren_close_fwd_capped(
-    src: &[u8],
-    st: &[u64],
-    kind: &[u8],
-    mut i: usize,
-    lim: usize,
-) -> (Option<usize>, bool) {
+fn paren_close_fwd_capped(tokens: &Tokens, mut i: usize, lim: usize) -> (Option<usize>, bool) {
+    let Tokens { src, st, kind, .. } = *tokens;
     let mut depth: i32 = 1;
     while i < lim {
         if bits::get(st, i) {
@@ -469,9 +460,9 @@ pub(super) fn skip_raw_literal(src: &[u8], kind: &[u8], n: usize, i: usize) -> u
     let c = src[i];
     match c {
         b'/' => match src[i + 1] {
-            b'/' => text::line_terminator_after(src, n, i + 2),
+            b'/' => line_terminator_after(src, n, i + 2),
             b'*' => {
-                let e = text::block_comment_end(src, n, i + 2);
+                let e = block_comment_end(src, n, i + 2);
                 if e < n { e + 1 } else { n }
             }
             _ => i,
@@ -553,9 +544,9 @@ pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize) -> (usize, usiz
                 }
                 b'"' | b'\'' => j = past_raw_string(src, lim, j, c),
                 b'/' => match src[j + 1] {
-                    b'/' => j = text::line_terminator_after(src, lim, j + 2),
+                    b'/' => j = line_terminator_after(src, lim, j + 2),
                     b'*' => {
-                        let e = text::block_comment_end(src, lim, j + 2);
+                        let e = block_comment_end(src, lim, j + 2);
                         if e >= lim {
                             return (lim, lim + 1);
                         }

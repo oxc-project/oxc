@@ -30,7 +30,9 @@
 //! [`OPMAP_MUL`] is hard-coded. `test_perfect_hash` test checks that it produces no collisions.
 //! If a change to the operator list breaks that, the test's failure message gives a replacement.
 
-use crate::token::TokenKind;
+use crate::token::{TokenKind, tk};
+
+use crate::pipeline::bytes::is_digit;
 
 /// Number of bits in operator perfect hash.
 const HASH_BITS: usize = 6;
@@ -192,6 +194,32 @@ pub(super) fn opmap_pack(key: u32) -> u32 {
     OP_PACK[slot]
 }
 
+/// Check if up to 4 bytes of source contains a 2-byte, 3-byte, or 4-byte operator.
+///
+/// Searches for longest operator first, starting at `max_len` length.
+///
+/// `max_len` must be 2, 3, or 4.
+///
+/// If an operator is found, returns a tuple `(kind, len)` where:
+/// - `kind` is the [`TokenKind`] of the operator as a `u32`
+/// - `len` is the length of the found operator in bytes
+///
+/// If no operator is found, returns 0 as `kind`, and 1 as `len`.
+///
+/// `?.` followed by a digit is rejected as a match.
+#[inline(always)]
+pub(super) fn opmap_longest(bytes: [u8; 4], max_len: u32) -> (/* kind*/ u32, /* len */ u32) {
+    let mut len = max_len;
+    while len >= 2 {
+        let kind = opmap_lookup(bytes, len);
+        if kind != 0 && !(kind == tk!(OptionalChain) as u32 && is_digit(bytes[2])) {
+            return (kind, len);
+        }
+        len -= 1;
+    }
+    (0, 1)
+}
+
 /// Check if 4 bytes of source contain a multi-byte operator in their first `len` bytes.
 ///
 /// * If an operator is found, returns the [`TokenKind`] of the operator as a `u32`.
@@ -199,7 +227,7 @@ pub(super) fn opmap_pack(key: u32) -> u32 {
 ///
 /// `len` must be between 2 and 4 (inclusive).
 #[inline(always)]
-pub(super) fn opmap_lookup(bytes: [u8; 4], len: u32) -> u32 {
+fn opmap_lookup(bytes: [u8; 4], len: u32) -> u32 {
     let key = op_key(bytes, len);
     let slot = op_slot(key, OPMAP_MUL);
 

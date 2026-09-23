@@ -1,8 +1,8 @@
 //! The token stream as the disambiguation questions read it.
 
-use crate::token::{KW_KIND_BASE, OP_KIND_BASE, matches_tk, tk};
+use crate::token::{KW_KIND_BASE, OP_KIND_BASE, is_trivia_byte, tk};
 
-use crate::pipeline::{bytes::is_digit, operators::opmap_lookup, tables::Tables};
+use crate::pipeline::{bytes::line_break_in, operators::opmap_longest, tables::Tables};
 
 use super::{Brackets, Closers, bits, walk};
 
@@ -49,6 +49,19 @@ pub(crate) enum Prev {
     Other(usize),
 }
 
+#[derive(Clone, Copy)]
+pub(crate) struct Peek {
+    pub(crate) pos: usize,
+    pub(crate) kind: u8,
+    pub(crate) byte: u8,
+}
+
+impl Prev {
+    pub(crate) fn is_member_dot(self, src: &[u8]) -> bool {
+        matches!(self, Prev::Op(q, c) if c == b'.' || (c == b'?' && src[q + 1] == b'.'))
+    }
+}
+
 impl Tokens<'_> {
     /// Base kind: keywords back to `tk!(Ident)`, escaped names to their plain kind.
     #[inline]
@@ -74,6 +87,10 @@ impl Tokens<'_> {
             return raw;
         }
         if raw != tk!(Ident) || pos < self.kw_final {
+            return 0;
+        }
+        // Keywords are lowercase words of up to ten letters: skip the hash for the rest.
+        if !self.src[pos].is_ascii_lowercase() {
             return 0;
         }
         let set = if self.ts { &self.tables.keywords.kwts } else { &self.tables.keywords.kwjs };
@@ -102,8 +119,7 @@ impl Tokens<'_> {
             if i >= self.n {
                 return self.n;
             }
-            let k = self.kind[i];
-            if matches_tk!(k, Whitespace | LineComment | BlockComment | Hashbang) {
+            if is_trivia_byte(self.kind[i]) {
                 i += 1;
                 continue;
             }
@@ -112,6 +128,13 @@ impl Tokens<'_> {
     }
 
     /// The significant token start before `pos` (skipping trivia), or `None` at the start.
+    #[inline]
+    pub(crate) fn peek(&self, i: usize) -> Peek {
+        let pos = self.next_sig(i);
+        let kind = if pos < self.n { self.base_kind(pos) } else { tk!(Eof) };
+        Peek { pos, kind, byte: self.src[pos] }
+    }
+
     #[inline]
     pub(crate) fn prev_sig(&self, pos: usize) -> Option<usize> {
         walk::prev_sig(self.st, self.kind, pos)
@@ -134,7 +157,7 @@ impl Tokens<'_> {
 
     /// Is the word at `w` a property name (`x.if`, `x?.if`)?
     pub(crate) fn property_name(&self, w: usize) -> bool {
-        matches!(self.prev_token(w), Prev::Op(q, c) if c == b'.' || (c == b'?' && self.src[q + 1] == b'.'))
+        self.prev_token(w).is_member_dot(self.src)
     }
 
     /// Number of `c` bytes the token at `p` starts with (a fused `>>>` counts three, a lone `>`
@@ -151,25 +174,40 @@ impl Tokens<'_> {
     /// Fused operator at `pos`: `(len, kind)`; `kind` is the punct kind for a single byte (0 for
     /// unknown).
     #[inline]
-    pub(crate) fn munch(&self, pos: usize) -> (usize, u32) {
+    pub(crate) fn op_len(&self, pos: usize) -> usize {
+        let lmax = (self.n - pos).min(4) as u32;
         let bytes = <[u8; 4]>::try_from(&self.src[pos..pos + 4]).unwrap();
-        let mut l = 4u32;
-        while l >= 2 {
-            if pos + l as usize <= self.n {
-                let k = opmap_lookup(bytes, l);
-                if k != 0 && !(k == tk!(OptionalChain) as u32 && is_digit(bytes[2])) {
-                    return (l as usize, k);
-                }
+        opmap_longest(bytes, lmax).1 as usize
+    }
+
+    /// The TemplateHead of the template whose tail or middle is at tail; None past cap steps.
+    pub(crate) fn template_head(&self, tail: usize, steps: &mut u32, cap: u32) -> Option<usize> {
+        let mut depth = 1i32;
+        let mut t = self.prev_sig(tail);
+        while let Some(tp) = t {
+            *steps += 1;
+            if *steps > cap {
+                return None;
             }
-            l -= 1;
+            match self.base_kind(tp) {
+                tk!(TemplateTail) => depth += 1,
+                tk!(TemplateHead) => {
+                    depth -= 1;
+                    if depth == 0 {
+                        return Some(tp);
+                    }
+                }
+                _ => {}
+            }
+            t = self.prev_sig(tp);
         }
-        (1, 0)
+        None
     }
 
     /// Does a line terminator lie in `a..b`?
     #[inline]
     pub(crate) fn line_break_between(&self, a: usize, b: usize) -> bool {
-        walk::lt_in_range(self.src, a, b)
+        line_break_in(self.src, a, b)
     }
 
     /// Does the identifier at `pos` equal exactly `kw`?

@@ -25,7 +25,7 @@
 //! - [`scan`]: the scan back to an anchor, and the entry points every question goes through.
 
 use super::common::Tokens;
-use super::type_context::{lt_run_opens_type_args, type_args_at};
+use super::type_context::{lt_run_split, type_args_at};
 
 mod anchor;
 mod frame;
@@ -94,8 +94,10 @@ impl Walks {
 /// enclosing functions (`yield` / `await`).
 pub(super) fn after_scoped(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
     let w = &mut walks.full;
-    if w.last_query.0 == pos {
-        return w.last_query.1;
+    if let Some((p, a)) = w.last_query
+        && p == pos
+    {
+        return a;
     }
     let inside_last = pos < w.walked_to && pos >= w.last_start;
     if w.walked_to > pos && !inside_last {
@@ -105,6 +107,6 @@ pub(super) fn after_scoped(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Af
     // A query inside the token just processed (the tail of a fused operator run such as `>>>`)
     // is answered by the state after it.
     let a = if w.walked_to > pos { w.classify_after() } else { w.after_token(tokens, pos) };
-    w.last_query = (pos, a);
+    w.last_query = Some((pos, a));
     a
 }

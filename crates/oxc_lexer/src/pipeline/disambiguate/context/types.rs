@@ -17,7 +17,7 @@ impl Walk {
 
     /// End the type region on top because `pos` is an expression token. Returns true if a region
     /// was ended.
-    pub(super) fn end_region_for(&mut self) -> bool {
+    fn end_region_for(&mut self) -> bool {
         if self.top_kind() != FrameKind::TypeRegion {
             return false;
         }
@@ -47,13 +47,7 @@ impl Walk {
             b')' => {
                 if top == FrameKind::TypeParen {
                     self.pop();
-                    if let Some(i) = self.region_index() {
-                        let r = &mut self.frames[i];
-                        r.atom = true;
-                        r.inner = true;
-                    }
-                    self.set_value();
-                    self.clear_prev();
+                    self.type_atom(true);
                     return pos + 1;
                 }
                 // Closes something outside the type.
@@ -79,13 +73,7 @@ impl Walk {
             b']' => {
                 if top == FrameKind::TypeBracket {
                     self.pop();
-                    if let Some(i) = self.region_index() {
-                        let r = &mut self.frames[i];
-                        r.atom = true;
-                        r.inner = false;
-                    }
-                    self.set_value();
-                    self.clear_prev();
+                    self.type_atom(false);
                     return pos + 1;
                 }
                 self.pop_virtual();
@@ -127,13 +115,7 @@ impl Walk {
                         self.end_statement();
                         return pos + 1;
                     }
-                    if let Some(i) = self.region_index() {
-                        let r = &mut self.frames[i];
-                        r.atom = true;
-                        r.inner = false;
-                    }
-                    self.set_value();
-                    self.clear_prev();
+                    self.type_atom(false);
                     return pos + 1;
                 }
                 self.pop_virtual();
@@ -166,18 +148,12 @@ impl Walk {
                 pos + len
             }
             b',' => {
-                match top {
-                    FrameKind::Angle
-                    | FrameKind::TypeParen
-                    | FrameKind::TypeBracket
-                    | FrameKind::TypeLit => {
-                        self.type_operator();
-                    }
-                    _ => {
-                        // Ends the region: next declarator / parameter / argument.
-                        self.pop();
-                        self.comma();
-                    }
+                if top.is_type_group() {
+                    self.type_operator();
+                } else {
+                    // Ends the region: next declarator / parameter / argument.
+                    self.pop();
+                    self.comma();
                 }
                 pos + 1
             }
@@ -204,13 +180,7 @@ impl Walk {
                         self.arrow(tokens, pos);
                         return pos + 2;
                     }
-                    if matches!(
-                        top,
-                        FrameKind::Angle
-                            | FrameKind::TypeParen
-                            | FrameKind::TypeBracket
-                            | FrameKind::TypeLit
-                    ) {
+                    if top.is_type_group() {
                         self.type_operator();
                         return pos + 2;
                     }
@@ -218,13 +188,7 @@ impl Walk {
                     self.arrow(tokens, pos);
                     return pos + 2;
                 }
-                if top == FrameKind::Angle {
-                    // Type-parameter default.
-                    self.type_operator();
-                    return pos + 1;
-                }
-                if matches!(top, FrameKind::TypeLit | FrameKind::TypeParen | FrameKind::TypeBracket)
-                {
+                if top.is_type_group() {
                     self.type_operator();
                     return pos + 1;
                 }
@@ -312,26 +276,13 @@ impl Walk {
                     _ => {}
                 }
             }
-            _ => {
-                if let Some(i) = self.region_index() {
-                    let r = &mut self.frames[i];
-                    r.atom = true;
-                    r.inner = false;
-                }
-                self.set_value();
-                self.clear_prev();
-            }
+            _ => self.type_atom(false),
         }
     }
 
     pub(super) fn less_than(&mut self, tokens: &Tokens, pos: usize) {
         // Type parameters of a declaration head or member.
-        let head = match self.top_kind() {
-            FrameKind::FnHead | FrameKind::ClassHead => true,
-            FrameKind::Object | FrameKind::ClassBody => self.top().state == M_KEY_SEEN,
-            _ => self.stmt_reg() == S_TYPE_NAME,
-        };
-        if tokens.ts && head {
+        if tokens.ts && self.type_params_expected() {
             let f = self.push(FrameKind::Angle);
             f.decl = true;
             f.state = A_DECL_PARAMS;
@@ -349,7 +300,7 @@ impl Walk {
         }
         if tokens.ts && !self.operand_allowed() && !self.no_type_args {
             // After a value: type arguments (`f<T>(x)`) or less-than.
-            if self.expr_type_args(tokens, pos) {
+            if type_args_at(tokens, pos) {
                 let f = self.push(FrameKind::Angle);
                 f.decl = false;
                 f.state = A_EXPR_ARGS;
@@ -361,11 +312,5 @@ impl Walk {
         if self.top_kind() == FrameKind::Head && self.top().state != F_ITER {
             self.top_mut().state = F_EXPR;
         }
-    }
-
-    /// TypeScript's speculative parse of a type-argument list in expression position, on the
-    /// forward scans `coalesce` already uses.
-    pub(super) fn expr_type_args(&mut self, tokens: &Tokens, lt: usize) -> bool {
-        type_args_at(tokens, lt)
     }
 }
