@@ -298,8 +298,9 @@ impl<'a> PeepholeOptimizations {
                     prev_var_decl.declarations.push(decl);
                     continue;
                 }
-                let new_decl = VariableDeclaration::boxed(span, kind, [decl], declare, ctx);
-                result.push(Statement::VariableDeclaration(new_decl));
+                let new_decl =
+                    Statement::new_variable_declaration(span, kind, [decl], declare, ctx);
+                result.push(new_decl);
             }
         }
     }
