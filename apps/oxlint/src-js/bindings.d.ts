@@ -37,7 +37,7 @@ export declare const enum Severity {
 }
 
 /**
- * Apply fixes to source text and return the fixed code.
+ * Apply fixes to source text and validate the fixed code with the original parsing options.
  *
  * - `source_text` is the original source code.
  * - `fixes_json` is a JSON string containing `Vec<Vec<JsFix>>` — an array of fix groups,
@@ -50,8 +50,13 @@ export declare const enum Severity {
  * Each group's fixes are merged, then all merged fixes are applied to `source_text`.
  *
  * Fix ranges are converted from UTF-16 code units to UTF-8 bytes.
+ * `filename` and `options` must match those used to parse the original source.
+ *
+ * # Errors
+ *
+ * Returns an error if the fixed code cannot be parsed.
  */
-export declare function applyFixes(sourceText: string, fixesJson: string): string | null
+export declare function applyFixes(sourceText: string, fixesJson: string, filename: string, options?: ParserOptions | undefined | null): string | null
 
 /**
  * Get offset within a `Uint8Array` which is aligned on `BLOCK_ALIGN`.
