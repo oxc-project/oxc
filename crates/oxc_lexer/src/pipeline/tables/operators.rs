@@ -69,20 +69,6 @@ pub const fn is_op_char(c: u8) -> bool {
 /// Multiplier for the operator perfect hash.
 const OPMAP_MUL: u32 = 0x0101_0749;
 
-static OPMAP_SLOT: [u8; 256] = {
-    let mut slots = [0xFF; 256];
-
-    let mut i = 0_usize;
-    while i < OPMAP_OPS.len() {
-        let op_def = &OPMAP_OPS[i];
-        let slot = op_def.slot(OPMAP_MUL);
-        slots[slot] = i as u8;
-        i += 1;
-    }
-
-    slots
-};
-
 static OP_PACK: [u32; 256] = {
     let mut op_pack = [0; 256];
 
@@ -106,41 +92,87 @@ static OP_PACK: [u32; 256] = {
     op_pack
 };
 
+/// Details of the single 4-byte operator (`>>>=`).
+const FOUR_BYTE_OP: ([u8; 4], TokenKind) = {
+    let mut op = None;
+    let mut i = 0_usize;
+    while i < OPMAP_OPS.len() {
+        let op_def = &OPMAP_OPS[i];
+        if op_def.len == 4 {
+            assert!(op.is_none(), "more than one 4-byte operator");
+            let txt = op_def.txt;
+            op = Some(([txt[0], txt[1], txt[2], txt[3]], op_def.kind));
+        }
+        i += 1;
+    }
+    op.expect("no 4-byte operator found")
+};
+const FOUR_BYTE_OP_BYTES: [u8; 4] = FOUR_BYTE_OP.0;
+const FOUR_BYTE_OP_KIND: TokenKind = FOUR_BYTE_OP.1;
+
 pub struct OpMap {
     pub opmap_mul: u32,
-    pub opmap_slot: [u8; 256],
     pub op_pack: [u32; 256],
 }
 
 impl OpMap {
     /// Create an [`OpMap`].
     pub(super) fn new() -> OpMap {
-        Self { opmap_mul: OPMAP_MUL, opmap_slot: OPMAP_SLOT, op_pack: OP_PACK }
+        Self { opmap_mul: OPMAP_MUL, op_pack: OP_PACK }
     }
 
+    /// Check if 4 bytes of source contain a multi-byte operator in their first `len` bytes.
+    ///
+    /// * If an operator is found, returns the [`TokenKind`] of the operator as a `u32`.
+    /// * Otherwise, returns 0.
+    ///
+    /// `len` must be between 2 and 4 (inclusive).
     #[inline(always)]
     pub fn opmap_lookup(&self, b0: u8, b1: u8, b2: u8, b3: u8, len: u32) -> u32 {
-        let c2 = if len >= 3 { b2 } else { 0 };
+        // There is only one 4-byte operator.
+        // Handle it here, so rest of code below only needs to handle 2-byte and 3-byte operators.
+        if len == 4 {
+            return if [b0, b1, b2, b3] == FOUR_BYTE_OP_BYTES {
+                FOUR_BYTE_OP_KIND as u32
+            } else {
+                0
+            };
+        }
+
+        let c2 = if len == 3 { b2 } else { 0 };
         let key = op_key(b0, b1, c2, len);
         let slot = op_slot(key, self.opmap_mul);
-        let idx = self.opmap_slot[slot];
-        if idx == 0xFF {
+
+        // Compare the candidate's and operator's first 3 bytes.
+        //
+        // - `key` has candidate's first 3 bytes in bottom 3 bytes.
+        //   When `len == 2`, the 3rd byte of `key` is 0.
+        // - `pack` has operator's first 3 bytes in bottom 3 bytes.
+        //   For 2-byte operators, the 3rd byte of `pack` is 0.
+        //
+        // So when bottom 3 bytes of `key` and `pack` are the same, it's a match.
+        //
+        // If `b0`, `b1`, and `c2` are all 0, then it's possible that `key` hashes to an empty slot,
+        // so `pack == 0`. In that case `((pack ^ key) & 0xFF_FFFF) == 0` and the branch returning 0
+        // is not taken. But in that case, `pack >> 24` is also 0, so 0 is returned either way.
+        //
+        // Lengths need no comparison, due to the construction of the hash table:
+        //
+        // - Every operator has a different `slot`.
+        // - A 3-byte candidate with 3rd byte == 0 has `key` with 3rd byte == 0.
+        //   Bottom 3 bytes of `key` could be same as bottom 3 bytes of `op_pack` entry
+        //   for the 2-byte operator with same first 2 bytes
+        //   e.g. `==\0` candidate vs `==` operator.
+        //   Hash table ensures these produce different `slot` values, so the check below fails.
+        //
+        // See `is_collision_free` in tests below.
+        let pack = self.op_pack[slot];
+        if ((pack ^ key) & 0xFF_FFFF) != 0 {
             return 0;
         }
-        let o = &OPMAP_OPS[idx as usize];
-        if o.len as u32 != len {
-            return 0;
-        }
-        if o.txt[0] != b0 || o.txt[1] != b1 {
-            return 0;
-        }
-        if len >= 3 && o.txt[2] != b2 {
-            return 0;
-        }
-        if len >= 4 && o.txt[3] != b3 {
-            return 0;
-        }
-        o.kind as u32
+
+        // Return `TokenKind` as `u32`
+        pack >> 24
     }
 }
 
@@ -231,7 +263,18 @@ mod tests {
     fn test_opmap_lookup_returns_zero_on_no_match() {
         let opmap = OpMap::new();
 
-        let cases = ["..", "=/"];
+        let cases = [
+            // Not operators
+            "..", "=/", "<<<", "&&&", "?..", ">>>>", "<<<=", "++++",
+            // 3-byte candidate whose 1st 2 bytes are a 2-byte operator, and 3rd byte is `\0`.
+            // Bottom 3 bytes of `key` are the same as bottom 3 bytes of that operator's entry
+            // in `op_pack`, so only hashing to a different slot prevents a false match.
+            "==\0", "<<\0", "||\0",
+            // All bytes 0, so bottom 3 bytes of `key` are 0, same as an empty slot.
+            // The check against `pack` passes if `key` hashes to an empty slot,
+            // and 0 is returned by `pack >> 24` instead.
+            "\0\0", "\0\0\0",
+        ];
         for txt in cases {
             let bytes = txt.as_bytes();
             let kind = opmap.opmap_lookup(
@@ -271,11 +314,21 @@ mod tests {
     fn is_collision_free(mul: u32) -> bool {
         let mut used = [false; 256];
         for op_def in &OPMAP_OPS {
+            // Ensure all operators hash to different slots
             let slot = op_def.slot(mul);
             if used[slot] {
                 return false;
             }
             used[slot] = true;
+
+            // `opmap_lookup` does not compare lengths, so a 3-byte candidate whose 3rd byte is 0,
+            // and has the same key bytes as this 2-byte operator, must not land on this operator's slot
+            if op_def.len == 2 {
+                let txt = op_def.txt;
+                if op_slot(op_key(txt[0], txt[1], 0, 3), mul) == slot {
+                    return false;
+                }
+            }
         }
         true
     }
