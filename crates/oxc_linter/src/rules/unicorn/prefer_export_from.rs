@@ -1588,6 +1588,17 @@ fn test() {
             export {namespace as renamed};",
             "export * as renamed from 'foo';\n",
         ),
+        // string export names keep their source spelling, so escapes stay escapes
+        (
+            "import * as namespace from 'foo';
+            export {namespace as \"a\\nb\"};",
+            "export * as \"a\\nb\" from 'foo';\n",
+        ),
+        (
+            "import defaultExport from 'foo';
+            export {defaultExport as 'say \\'hi\\''};",
+            "export { default as 'say \\'hi\\'' } from 'foo';\n",
+        ),
         (
             "import * as foo from 'foo';
             export {foo};
