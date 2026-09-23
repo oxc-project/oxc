@@ -655,8 +655,11 @@ pub struct TSNeverKeyword {
 /// TypeScript `intrinsic` Keyword
 ///
 /// Intrinsic types are built into TypeScript and are not user-defined.
+///
 /// ## Example
-/// `type Uppercase<T extends character> = intrinsic;`
+/// ```ts
+/// type Uppercase<S extends string> = intrinsic;
+/// ```
 ///
 /// ### References
 /// * [TypeScript Handbook - Intrinsic String Manipulation
