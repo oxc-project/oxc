@@ -246,6 +246,7 @@ impl<'a> JSStr<'a> {
 
     #[cfg(feature = "serialize")]
     #[cold]
+    #[inline(never)]
     fn serialize_lone_surrogates<S: ESTreeSerializer>(&self, mut serializer: S) {
         const HEX: &[u8; 16] = b"0123456789abcdef";
 

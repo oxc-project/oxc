@@ -123,6 +123,7 @@ impl Codegen<'_> {
 impl Codegen<'_> {
     /// Print values containing lone surrogates without exposing WTF-8 bytes as UTF-8.
     #[cold]
+    #[inline(never)]
     fn print_wtf8_string_body(
         &mut self,
         value: JSStr<'_>,
