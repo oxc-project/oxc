@@ -1024,24 +1024,11 @@ fn get_context_reassignment(
                     }
                 }
 
-                InstructionValue::StoreContext { lvalue, value, .. } => {
+                InstructionValue::StoreContext { lvalue, .. } => {
                     if is_function_expression
                         && context_variables.contains(&lvalue.place.identifier)
                     {
                         result.reassignment.get_or_insert(lvalue.place);
-                    }
-                    if active_async_contexts.contains(&lvalue.place.identifier)
-                        && let Some(reassignment_place) = find_reassignment_for_operand(
-                            value.identifier,
-                            &context_values,
-                            &context_values_by_block,
-                            &reassigning_functions,
-                            &captured_contexts,
-                            &correlated_values,
-                        )
-                    {
-                        record_async_reassignment(reassignment_place, identifiers, diagnostics);
-                        return ReassignmentResult::default();
                     }
                 }
 
@@ -1090,6 +1077,24 @@ fn get_context_reassignment(
                 }
             }
 
+            // An async continuation observes the live binding when execution
+            // yields, not every intermediate store in the current synchronous job.
+            if matches!(instr.value, InstructionValue::Await { .. }) {
+                for &context in &active_async_contexts {
+                    if let Some(reassignment_place) = find_reassignment_for_operand(
+                        context,
+                        &context_values,
+                        &context_values_by_block,
+                        &reassigning_functions,
+                        &captured_contexts,
+                        &correlated_values,
+                    ) {
+                        record_async_reassignment(reassignment_place, identifiers, diagnostics);
+                        return ReassignmentResult::default();
+                    }
+                }
+            }
+
             for operand in each_invoked_async_operand(&instr.value, env) {
                 if !async_function_values.contains(&operand.identifier) {
                     continue;
@@ -1134,6 +1139,23 @@ fn get_context_reassignment(
                     clear_context_value(&mut context_values, lvalue.identifier);
                 }
                 _ => {}
+            }
+        }
+
+        // Leaving the function also allows pending async continuations to resume.
+        if matches!(block.terminal, Terminal::Return { .. } | Terminal::Throw { .. }) {
+            for &context in &active_async_contexts {
+                if let Some(reassignment_place) = find_reassignment_for_operand(
+                    context,
+                    &context_values,
+                    &context_values_by_block,
+                    &reassigning_functions,
+                    &captured_contexts,
+                    &correlated_values,
+                ) {
+                    record_async_reassignment(reassignment_place, identifiers, diagnostics);
+                    return ReassignmentResult::default();
+                }
             }
         }
 
