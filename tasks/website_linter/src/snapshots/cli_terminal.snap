@@ -168,5 +168,6 @@ Flags:
 Examples:
   Deny a category:
     $ oxlint -D correctness src
+
   GitHub Actions:
     $ oxlint --format github .

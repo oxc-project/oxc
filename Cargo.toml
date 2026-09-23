@@ -273,8 +273,8 @@ tower-lsp-server = "0.24.0-rc.1" # LSP server framework
 tracing = "0.1.44" # Tracing framework
 tracing-subscriber = "0.3.23" # Tracing implementation
 unicode-width = "0.2" # Unicode display width
-usage-rs = { version = "6.10.0", default-features = false } # CLI parser
-usage-parser = { package = "usage-lib", version = "6.10.0" } # Usage spec parser and renderer
+usage-rs = { version = "6.11.1", default-features = false } # CLI parser
+usage-parser = { package = "usage-lib", version = "6.11.1" } # Usage spec parser and renderer
 ureq = { version = "3.3.0", default-features = false } # HTTP client
 url = { version = "2.5.8" } # URL parsing
 walkdir = "2.5.0" # Directory traversal
