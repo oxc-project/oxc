@@ -1,25 +1,43 @@
+use oxc_allocator::Allocator;
 use oxc_ast::ast::{BinaryOperator, Expression};
+use oxc_str::{JSStr, JSStrBuilder};
 
 /// Resolve a side-effect-free string expression made from string literals, template literals,
 /// and `+` concatenation. Returns `None` when any part cannot be determined statically.
-pub fn static_string_value(expression: &Expression<'_>) -> Option<String> {
+///
+/// A plain string literal is borrowed; a concatenation is built in `allocator`. Lone
+/// surrogates are preserved, and a pair split across parts is joined.
+pub fn static_string_value<'a>(
+    expression: &Expression<'a>,
+    allocator: &'a Allocator,
+) -> Option<JSStr<'a>> {
+    if let Expression::StringLiteral(literal) = expression.get_inner_expression() {
+        return Some(literal.value);
+    }
+    let mut builder = JSStrBuilder::new_in(allocator);
+    push_static_string_value(expression, &mut builder)?;
+    Some(builder.into_js_str())
+}
+
+fn push_static_string_value(
+    expression: &Expression<'_>,
+    builder: &mut JSStrBuilder<'_>,
+) -> Option<()> {
     match expression.get_inner_expression() {
-        Expression::StringLiteral(literal) => literal.value.as_str().map(str::to_owned),
+        Expression::StringLiteral(literal) => builder.push_js_str(literal.value),
         Expression::TemplateLiteral(template) => {
-            let mut value = String::new();
             for (index, quasi) in template.quasis.iter().enumerate() {
-                value.push_str(quasi.value.cooked?.as_str()?);
+                builder.push_js_str(quasi.value.cooked?);
                 if let Some(expr) = template.expressions.get(index) {
-                    value.push_str(&static_string_value(expr)?);
+                    push_static_string_value(expr, builder)?;
                 }
             }
-            Some(value)
         }
         Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
-            let mut value = static_string_value(&binary.left)?;
-            value.push_str(&static_string_value(&binary.right)?);
-            Some(value)
+            push_static_string_value(&binary.left, builder)?;
+            push_static_string_value(&binary.right, builder)?;
         }
-        _ => None,
+        _ => return None,
     }
+    Some(())
 }

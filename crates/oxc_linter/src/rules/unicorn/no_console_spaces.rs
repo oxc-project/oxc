@@ -73,13 +73,11 @@ impl Rule for NoConsoleSpaces {
 
         for (i, arg) in call_expr.arguments.iter().enumerate() {
             if let Some(expression_arg) = arg.as_expression() {
-                let (literal_raw, is_template_lit) = match expression_arg {
+                let (has_leading_space, has_trailing_space, is_template_lit) = match expression_arg
+                {
                     Expression::StringLiteral(string_lit) => {
-                        let Some(literal_raw) = string_lit.value.as_str() else {
-                            continue;
-                        };
-
-                        (literal_raw, false)
+                        let value = string_lit.value;
+                        (value.starts_with(' '), value.ends_with(' '), false)
                     }
                     Expression::TemplateLiteral(string_lit) => {
                         let literal_raw = string_lit
@@ -88,13 +86,13 @@ impl Rule for NoConsoleSpaces {
                             .trim_start_matches('`')
                             .trim_end_matches('`');
 
-                        (literal_raw, true)
+                        (literal_raw.starts_with(' '), literal_raw.ends_with(' '), true)
                     }
 
                     _ => continue,
                 };
 
-                if check_literal_leading(i, literal_raw) {
+                if i != 0 && has_leading_space {
                     report_diagnostic(
                         "leading",
                         // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.
@@ -105,7 +103,7 @@ impl Rule for NoConsoleSpaces {
                     );
                 }
 
-                if check_literal_trailing(i, literal_raw, call_expr_arg_len) {
+                if i != call_expr_arg_len - 1 && has_trailing_space {
                     report_diagnostic(
                         "trailing",
                         // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.
@@ -120,12 +118,6 @@ impl Rule for NoConsoleSpaces {
     }
 }
 
-fn check_literal_leading(i: usize, literal: &str) -> bool {
-    i != 0 && literal.starts_with(' ')
-}
-fn check_literal_trailing(i: usize, literal: &str, call_expr_arg_len: usize) -> bool {
-    i != call_expr_arg_len - 1 && literal.ends_with(' ')
-}
 fn report_diagnostic<'a>(
     direction: &'static str,
     ident: &'a str,
@@ -194,6 +186,9 @@ fn test() {
         "lib.console.info(\" a \", \" b \");",
         "lib.console.warn(\" a \", \" b \");",
         "lib.console.error(\" a \", \" b \");",
+        // A lone surrogate is not a space.
+        r#"console.log("\uD800", "\uDC00");"#,
+        r#"console.log("\uD800 x", "y \uDC00");"#,
     ];
 
     let fail = vec![
@@ -231,9 +226,15 @@ fn test() {
         "console[\"info\"](\" a \", \" b \");",
         "console[\"warn\"](\" a \", \" b \");",
         "console[\"error\"](\" a \", \" b \");",
+        // Lone surrogates elsewhere in the value do not hide the spaces.
+        r#"console.log("\uD800 ", "def");"#,
+        r#"console.log("abc", " \uDC00");"#,
+        r#"console.log("_", " \uD83D\uDE00 ", "_");"#,
     ];
 
     let fix = vec![
+        (r#"console.log("\uD800 ", bar)"#, r#"console.log("\uD800", bar)"#),
+        (r#"console.log(foo, " \uDC00")"#, r#"console.log(foo, "\uDC00")"#),
         ("console.log(\"foo \", bar)", "console.log(\"foo\", bar)"),
         ("console.debug(\"foo \", bar)", "console.debug(\"foo\", bar)"),
         ("console.info(\"foo \", bar)", "console.info(\"foo\", bar)"),
