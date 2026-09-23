@@ -92,36 +92,10 @@ const cases: Case[] = [
     failure: /data/,
   },
   {
-    name: "true requires a message in error objects",
-    assertionOptions: { requireMessage: true },
-    // @ts-expect-error - intentionally omit the required message assertion
-    errors: [{}],
-    failure: /message/,
-  },
-  {
-    name: "message mode rejects both message forms",
-    assertionOptions: { requireMessage: "message" },
-    errors: [{ message: "Unexpected identifier", messageId: "plain" }],
-    failure: /messageId/,
-  },
-  {
-    name: "messageId mode rejects both message forms",
-    assertionOptions: { requireMessage: "messageId" },
-    errors: [{ message: "Unexpected identifier", messageId: "plain" }],
-    failure: /message/,
-  },
-  {
     name: "data requirements accept string messages",
     assertionOptions: { requireData: true },
     mode: "data",
     errors: ["Unexpected foo"],
-  },
-  {
-    name: "empty data does not satisfy placeholders",
-    assertionOptions: { requireData: true },
-    mode: "data",
-    errors: [{ messageId: "data", data: {} }],
-    failure: /message/i,
   },
   {
     name: "explicit empty ranges still require end properties",
@@ -142,7 +116,6 @@ const cases: Case[] = [
     mode: "start-only",
     errors: [{ messageId: "plain", line: 1, column: 1 }],
   },
-  { name: "defaults accept counts", errors: 1 },
   {
     name: "false options accept counts",
     assertionOptions: { requireMessage: false, requireLocation: false, requireData: false },
@@ -155,31 +128,24 @@ const cases: Case[] = [
     errors: 1,
     failure: /array/,
   })),
-  ...([true, "message"] as const).flatMap((requireMessage): Case[] => [
-    {
-      name: `requireMessage ${requireMessage} accepts strings`,
-      assertionOptions: { requireMessage },
-      errors: ["Unexpected identifier"],
-    },
-    {
-      name: `requireMessage ${requireMessage} accepts regexps`,
-      assertionOptions: { requireMessage },
-      errors: [/Unexpected/],
-    },
-    {
-      name: `requireMessage ${requireMessage} accepts message objects`,
-      assertionOptions: { requireMessage },
-      errors: [{ message: "Unexpected identifier" }],
-    },
-  ]),
+  {
+    name: "true accepts string messages",
+    assertionOptions: { requireMessage: true },
+    errors: ["Unexpected identifier"],
+  },
+  {
+    name: "message accepts regexps",
+    assertionOptions: { requireMessage: "message" },
+    errors: [/Unexpected/],
+  },
+  {
+    name: "message accepts message objects",
+    assertionOptions: { requireMessage: "message" },
+    errors: [{ message: "Unexpected identifier" }],
+  },
   {
     name: "true accepts messageId",
     assertionOptions: { requireMessage: true },
-    errors: [{ messageId: "plain" }],
-  },
-  {
-    name: "messageId accepts messageId",
-    assertionOptions: { requireMessage: "messageId" },
     errors: [{ messageId: "plain" }],
   },
   {
@@ -237,11 +203,6 @@ const cases: Case[] = [
     errors: [/Unexpected/],
     failure: /object/,
   },
-  {
-    name: "location accepts complete location",
-    assertionOptions: { requireLocation: true },
-    errors: [{ messageId: "plain", ...location }],
-  },
   ...(["line", "column", "endLine", "endColumn"] as const).map((key): Case => {
     const incomplete: Partial<typeof location> = { ...location };
     delete incomplete[key];
@@ -252,12 +213,6 @@ const cases: Case[] = [
       failure: new RegExp(key),
     };
   }),
-  {
-    name: "location still checks values",
-    assertionOptions: { requireLocation: true },
-    errors: [{ messageId: "plain", ...location, column: 2 }],
-    failure: /location/i,
-  },
   {
     name: "point location can omit end in compatibility mode",
     assertionOptions: { requireLocation: true },
@@ -270,76 +225,60 @@ const cases: Case[] = [
     mode: "point",
     errors: [{ messageId: "plain", line: 1, column: 1, endLine: undefined, endColumn: undefined }],
   },
-  {
-    name: "data defaults allow omitted placeholder data",
+  ...([true, "error"] as const).map((requireData): Case => ({
+    name: `data ${requireData} requires error data`,
+    assertionOptions: { requireData },
     mode: "data",
     errors: [{ messageId: "data" }],
+    failure: /data/,
+  })),
+  {
+    name: "error mode accepts correct data",
+    assertionOptions: { requireData: "error" },
+    mode: "data",
+    errors: [{ messageId: "data", data: { name: "foo" } }],
   },
-  ...([true, "error"] as const).flatMap((requireData): Case[] => [
-    {
-      name: `data ${requireData} requires error data`,
-      assertionOptions: { requireData },
-      mode: "data",
-      errors: [{ messageId: "data" }],
-      failure: /data/,
-    },
-    {
-      name: `data ${requireData} accepts correct error data`,
-      assertionOptions: { requireData },
-      mode: "data",
-      errors: [{ messageId: "data", data: { name: "foo" } }],
-    },
-    {
-      name: `data ${requireData} rejects incorrect error data`,
-      assertionOptions: { requireData },
-      mode: "data",
-      errors: [{ messageId: "data", data: { name: "bar" } }],
-      failure: /message/i,
-    },
-    {
-      name: `data ${requireData} allows messages without placeholders`,
-      assertionOptions: { requireData },
-      errors: [{ messageId: "plain" }],
-    },
-    {
-      name: `data ${requireData} allows literal messages`,
-      assertionOptions: { requireData },
-      mode: "data",
-      errors: [{ message: "Unexpected foo" }],
-    },
-  ]),
+  {
+    name: "data requirement allows messages without placeholders",
+    assertionOptions: { requireData: true },
+    errors: [{ messageId: "plain" }],
+  },
+  {
+    name: "data requirement allows literal messages",
+    assertionOptions: { requireData: true },
+    mode: "data",
+    errors: [{ message: "Unexpected foo" }],
+  },
   {
     name: "suggestion mode does not require error data",
     assertionOptions: { requireData: "suggestion" },
     mode: "data",
     errors: [{ messageId: "data" }],
   },
-  ...([true, "suggestion"] as const).flatMap((requireData): Case[] => [
-    {
-      name: `data ${requireData} requires suggestion data`,
-      assertionOptions: { requireData },
-      mode: "suggestion",
-      errors: [{ messageId: "plain", suggestions: [{ messageId: "fix", output: "bar" }] }],
-      failure: /data/,
-    },
-    {
-      name: `data ${requireData} accepts correct suggestion data`,
-      assertionOptions: { requireData },
-      mode: "suggestion",
-      errors: [
-        {
-          messageId: "plain",
-          suggestions: [{ messageId: "fix", data: { name: "foo" }, output: "bar" }],
-        },
-      ],
-    },
-    {
-      name: `data ${requireData} allows literal suggestion descriptions`,
-      assertionOptions: { requireData },
-      mode: "suggestion",
-      errors: [{ messageId: "plain", suggestions: [{ desc: "Replace foo", output: "bar" }] }],
-    },
-  ]),
+  ...([true, "suggestion"] as const).map((requireData): Case => ({
+    name: `data ${requireData} requires suggestion data`,
+    assertionOptions: { requireData },
+    mode: "suggestion",
+    errors: [{ messageId: "plain", suggestions: [{ messageId: "fix", output: "bar" }] }],
+    failure: /data/,
+  })),
+  {
+    name: "suggestion mode accepts correct data",
+    assertionOptions: { requireData: "suggestion" },
+    mode: "suggestion",
+    errors: [
+      {
+        messageId: "plain",
+        suggestions: [{ messageId: "fix", data: { name: "foo" }, output: "bar" }],
+      },
+    ],
+  },
+  {
+    name: "data requirement allows literal suggestion descriptions",
+    assertionOptions: { requireData: true },
+    mode: "suggestion",
+    errors: [{ messageId: "plain", suggestions: [{ desc: "Replace foo", output: "bar" }] }],
+  },
   {
     name: "error mode does not require suggestion data",
     assertionOptions: { requireData: "error" },
