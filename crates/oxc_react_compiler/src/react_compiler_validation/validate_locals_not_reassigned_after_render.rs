@@ -193,10 +193,27 @@ fn each_no_alias_callback_operand(
         }
         // Legacy no-alias signatures can invoke callbacks without retaining
         // their results. Read-only arguments cannot invoke a mutable callback.
+        let only_first_callback = matches!(
+            signature.canonical_name.as_deref(),
+            Some(
+                "Array.filter"
+                    | "Array.every"
+                    | "Array.some"
+                    | "Array.find"
+                    | "Array.findIndex"
+                    | "Set.forEach"
+                    | "Map.forEach"
+            )
+        );
         return args
             .iter()
             .enumerate()
             .filter_map(|(index, argument)| {
+                // These built-ins invoke only the first argument; thisArg can
+                // itself be a function without ever being called.
+                if only_first_callback && index != 0 {
+                    return None;
+                }
                 let effect =
                     signature.positional_params.get(index).copied().or(signature.rest_param);
                 if !matches!(

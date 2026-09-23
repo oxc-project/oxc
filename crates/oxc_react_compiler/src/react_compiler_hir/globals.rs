@@ -547,6 +547,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "filter",
                 MethodDef {
+                    canonical_name: Some("Array.filter"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
@@ -559,6 +560,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "every",
                 MethodDef {
+                    canonical_name: Some("Array.every"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Primitive,
@@ -571,6 +573,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "some",
                 MethodDef {
+                    canonical_name: Some("Array.some"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Primitive,
@@ -583,6 +586,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "find",
                 MethodDef {
+                    canonical_name: Some("Array.find"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Poly,
@@ -595,6 +599,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "findIndex",
                 MethodDef {
+                    canonical_name: Some("Array.findIndex"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Primitive,
@@ -719,6 +724,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "forEach",
                 MethodDef {
+                    canonical_name: Some("Set.forEach"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Primitive,
@@ -813,6 +819,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "forEach",
                 MethodDef {
+                    canonical_name: Some("Map.forEach"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Primitive,
@@ -976,6 +983,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "filter",
                 MethodDef {
+                    canonical_name: Some("Array.filter"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
                     callee_effect: Effect::ConditionallyMutate,
@@ -1007,6 +1015,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "every",
                 MethodDef {
+                    canonical_name: Some("Array.every"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Primitive,
                     callee_effect: Effect::ConditionallyMutate,
@@ -1019,6 +1028,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "some",
                 MethodDef {
+                    canonical_name: Some("Array.some"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Primitive,
                     callee_effect: Effect::ConditionallyMutate,
@@ -1031,6 +1041,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "find",
                 MethodDef {
+                    canonical_name: Some("Array.find"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Object(BUILT_IN_MIXED_READONLY_ID),
                     callee_effect: Effect::ConditionallyMutate,
@@ -1043,6 +1054,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "findIndex",
                 MethodDef {
+                    canonical_name: Some("Array.findIndex"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Primitive,
                     callee_effect: Effect::ConditionallyMutate,
