@@ -633,10 +633,21 @@ fn add_configuration_patterns_from_object(
         return;
     };
 
+    // Like ESLint, all string patterns form a single group, so a negated pattern
+    // such as `!foo/bar` applies to the other string patterns.
+    let mut string_group_index: Option<usize> = None;
+
     for path_value in paths_array {
         match path_value {
             Value::String(module_name) => {
-                add_configuration_patterns_from_string(patterns, module_name);
+                if let Some(index) = string_group_index
+                    && let Some(group) = &mut patterns[index].group
+                {
+                    group.push(CompactStr::new(module_name));
+                } else {
+                    string_group_index = Some(patterns.len());
+                    add_configuration_patterns_from_string(patterns, module_name);
+                }
             }
             Value::Object(_) => {
                 if let Ok(pattern) = serde_json::from_value::<RestrictedPattern>(path_value.clone())
@@ -2111,6 +2122,21 @@ fn test() {
                 serde_json::json!([{ "patterns": [{ "group": ["foo"], "allowImportNames": ["allowed"] }] }]),
             ),
         ),
+        // String patterns form a single group, so negations apply to deeper paths.
+        (
+            r#"import a from "lodash/fp/get";"#,
+            Some(serde_json::json!([{ "patterns": ["lodash/*", "!lodash/fp"] }])),
+        ),
+        (
+            r#"import a from "foo/bar/baz";"#,
+            Some(serde_json::json!([{ "patterns": ["foo/*", "!foo/bar"] }])),
+        ),
+        (
+            r#"import a from "import2/good/x";"#,
+            Some(
+                serde_json::json!([{ "patterns": ["import1/private/*", "import2/*", "!import2/good"] }]),
+            ),
+        ),
     ];
 
     let pass_typescript = vec![
@@ -3391,6 +3417,29 @@ fn test() {
             Some(
                 serde_json::json!([{ "patterns": [{ "group": ["foo"], "importNames": ["restricted"] }] }]),
             ),
+        ),
+        (
+            r#"import a from "lodash/map";"#,
+            Some(serde_json::json!([{ "patterns": ["lodash/*", "!lodash/fp"] }])),
+        ),
+        (
+            r#"import a from "import2/bad/x";"#,
+            Some(
+                serde_json::json!([{ "patterns": ["import1/private/*", "import2/*", "!import2/good"] }]),
+            ),
+        ),
+        (
+            r#"import a from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": ["foo", "!foo/bar"] }])),
+        ),
+        (
+            r#"import a from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": ["!foo/bar", "foo/*"] }])),
+        ),
+        // reported once, not once per matching string pattern
+        (
+            r#"import a from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": ["foo", "foo/*"] }])),
         ),
         // https://github.com/oxc-project/oxc/issues/10984
         (

@@ -884,6 +884,36 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────
    ╰────
 
+  ⚠ eslint(no-restricted-imports): 'lodash/map' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import a from "lodash/map";
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'import2/bad/x' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import a from "import2/bad/x";
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import a from "foo/bar";
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import a from "foo/bar";
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import a from "foo/bar";
+   · ────────────────────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import 'foo'
