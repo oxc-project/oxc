@@ -88,15 +88,13 @@ static OPMAP_SLOT: [u8; 256] = {
 pub struct OpMap {
     pub opmap_mul: u32,
     pub opmap_slot: [u8; 256],
-    pub op2_pack: [u32; 256],
-    pub op3_pack: [u32; 256],
+    pub op_pack: [u32; 256],
 }
 
 impl OpMap {
     /// Create an [`OpMap`].
     pub(super) fn new() -> OpMap {
-        let mut op2_pack = [0; 256];
-        let mut op3_pack = [0; 256];
+        let mut op_pack = [0; 256];
 
         for op_def in &OPMAP_OPS {
             if op_def.len == 4 {
@@ -104,19 +102,17 @@ impl OpMap {
             }
 
             let slot = op_def.slot(OPMAP_MUL);
-            if op_def.len == 2 {
-                op2_pack[slot] = (op_def.txt[0] as u32)
-                    | ((op_def.txt[1] as u32) << 8)
-                    | ((op_def.kind as u32) << 24);
+
+            let txt = op_def.txt;
+            let bytes = if op_def.len == 2 {
+                (txt[0] as u32) | ((txt[1] as u32) << 8)
             } else {
-                op3_pack[slot] = (op_def.txt[0] as u32)
-                    | ((op_def.txt[1] as u32) << 8)
-                    | ((op_def.txt[2] as u32) << 16)
-                    | ((op_def.kind as u32) << 24);
-            }
+                (txt[0] as u32) | ((txt[1] as u32) << 8) | ((txt[2] as u32) << 16)
+            };
+            op_pack[slot] = bytes | ((op_def.kind as u32) << 24);
         }
 
-        Self { opmap_mul: OPMAP_MUL, opmap_slot: OPMAP_SLOT, op2_pack, op3_pack }
+        Self { opmap_mul: OPMAP_MUL, opmap_slot: OPMAP_SLOT, op_pack }
     }
 
     #[inline(always)]

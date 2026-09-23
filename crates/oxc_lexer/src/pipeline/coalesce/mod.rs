@@ -181,8 +181,8 @@ pub unsafe fn coalesce(
                 }
                 if run == 2 {
                     let key = (q & 0xFFFF) | (2u32 << 24);
-                    let pack = t.op.op2_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                    let mut ok = ((pack ^ q) & 0xFFFF) == 0;
+                    let pack = t.op.op_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                    let mut ok = ((pack ^ key) & 0xFF_FFFF) == 0;
                     let kk = (pack >> 24) as u8;
                     ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8));
                     let hm: u8 = 0u8.wrapping_sub(ok as u8);
@@ -198,17 +198,17 @@ pub unsafe fn coalesce(
                 }
                 let b2 = (q >> 16) as u8;
                 let key3 = (q & 0xFF_FFFF) | (3u32 << 24);
-                let p3 = t.op.op3_pack[(key3.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                let p3 = t.op.op_pack[(key3.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
                 let key2a = (q & 0xFFFF) | (2u32 << 24);
-                let pa = t.op.op2_pack[(key2a.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                let pa = t.op.op_pack[(key2a.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let ka = (pa >> 24) as u8;
-                let mut ok2a = ((pa ^ q) & 0xFFFF) == 0;
+                let mut ok2a = ((pa ^ key2a) & 0xFF_FFFF) == 0;
                 ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
                 let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
-                let pb = t.op.op2_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
+                let pb = t.op.op_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
                 let kb = (pb >> 24) as u8;
-                let mut ok2b = ((pb ^ key2b) & 0xFFFF) == 0;
+                let mut ok2b = ((pb ^ key2b) & 0xFF_FFFF) == 0;
                 ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8));
                 let sel3 = ok3;
                 let sel2a = !ok3 && ok2a;
