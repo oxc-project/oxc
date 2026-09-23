@@ -8,8 +8,10 @@ use std::{
 };
 
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, GetAllocator};
+#[cfg(feature = "serialize")]
+use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 
-use crate::{JSChar, JSStrBuilder, Str};
+use crate::{Ident, JSChar, JSStrBuilder, Str};
 
 /// An immutable JavaScript string borrowed from source text or arena memory.
 ///
@@ -79,6 +81,22 @@ pub struct JSStr<'a> {
     has_lone_surrogate: bool,
     _marker: PhantomData<&'a [u8]>,
 }
+
+// Raw AST transfer relies on these field offsets and reads the bool niche for
+// `Option<JSStr>::None`. Verify both so a layout change cannot silently corrupt
+// string values. Reading an uninitialized byte here fails const evaluation.
+const _: () = {
+    assert!(std::mem::offset_of!(JSStr<'_>, ptr) == 0);
+    assert!(std::mem::offset_of!(JSStr<'_>, len) == size_of::<NonNull<u8>>());
+    assert!(size_of::<Option<JSStr<'_>>>() == size_of::<JSStr<'_>>());
+    let none: Option<JSStr<'_>> = None;
+    let offset = std::mem::offset_of!(JSStr<'_>, has_lone_surrogate);
+    assert!(offset == size_of::<NonNull<u8>>() + size_of::<u32>());
+    // SAFETY: The offset is within `none`, which has the same size as `JSStr`.
+    // Const evaluation also checks that the niche byte is initialized.
+    let niche = unsafe { (&raw const none).cast::<u8>().add(offset).read() };
+    assert!(niche == 2);
+};
 
 impl JSStr<'static> {
     /// Return the empty string without allocating.
@@ -225,6 +243,40 @@ impl<'a> JSStr<'a> {
             _marker: PhantomData,
         }
     }
+
+    #[cfg(feature = "serialize")]
+    #[cold]
+    #[inline(never)]
+    fn serialize_lone_surrogates<S: ESTreeSerializer>(&self, mut serializer: S) {
+        const HEX: &[u8; 16] = b"0123456789abcdef";
+
+        let buffer = serializer.buffer_mut();
+        buffer.print_ascii_byte(b'"');
+        for ch in self.chars() {
+            match ch.to_u32() {
+                0x08 => buffer.print_str("\\b"),
+                0x09 => buffer.print_str("\\t"),
+                0x0A => buffer.print_str("\\n"),
+                0x0C => buffer.print_str("\\f"),
+                0x0D => buffer.print_str("\\r"),
+                0x22 => buffer.print_str("\\\""),
+                0x5C => buffer.print_str("\\\\"),
+                value @ (0..=0x1F | 0xD800..=0xDFFF) => {
+                    buffer.print_ascii_bytes([
+                        b'\\',
+                        b'u',
+                        HEX[((value >> 12) & 15) as usize],
+                        HEX[((value >> 8) & 15) as usize],
+                        HEX[((value >> 4) & 15) as usize],
+                        HEX[(value & 15) as usize],
+                    ]);
+                }
+                // Surrogates were handled above; every remaining code point is a scalar.
+                _ => buffer.print_char(ch.to_char().unwrap()),
+            }
+        }
+        buffer.print_ascii_byte(b'"');
+    }
 }
 
 // SAFETY: The only referenced storage is an immutable byte slice valid for
@@ -244,6 +296,13 @@ impl<'a> From<&'a str> for JSStr<'a> {
 impl<'a> From<Str<'a>> for JSStr<'a> {
     #[inline]
     fn from(value: Str<'a>) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl<'a> From<Ident<'a>> for JSStr<'a> {
+    #[inline]
+    fn from(value: Ident<'a>) -> Self {
         Self::from(value.as_str())
     }
 }
@@ -304,6 +363,18 @@ impl fmt::Debug for JSStr<'_> {
             }
         }
         f.write_char('"')
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl ESTree for JSStr<'_> {
+    #[inline]
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        if let Some(value) = self.as_str() {
+            value.serialize(serializer);
+        } else {
+            self.serialize_lone_surrogates(serializer);
+        }
     }
 }
 

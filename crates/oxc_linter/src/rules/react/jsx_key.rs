@@ -399,13 +399,13 @@ fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
             if let Some(value) = &attr.value {
                 match value {
                     JSXAttributeValue::StringLiteral(lit) => {
-                        return Some((lit.value.to_string(), attr.span));
+                        return Some((lit.value.as_str()?.to_owned(), attr.span));
                     }
                     JSXAttributeValue::ExpressionContainer(container) => {
                         // JSXExpression inherits from Expression, so we match the Expression variants directly
                         match &container.expression {
                             JSXExpression::StringLiteral(lit) => {
-                                return Some((lit.value.to_string(), attr.span));
+                                return Some((lit.value.as_str()?.to_owned(), attr.span));
                             }
                             JSXExpression::NumericLiteral(lit) => {
                                 return Some((lit.value.to_string(), attr.span));
