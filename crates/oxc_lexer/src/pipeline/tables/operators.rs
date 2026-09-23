@@ -12,14 +12,14 @@ impl OpDef {
     }
 
     #[inline(always)]
-    fn key(&self) -> u32 {
+    const fn key(&self) -> u32 {
         let txt = self.txt;
         let c2 = if self.len >= 3 { txt[2] } else { 0 };
         op_key(txt[0], txt[1], c2, self.len as u32)
     }
 
     #[inline(always)]
-    fn slot(&self, mul: u32) -> usize {
+    const fn slot(&self, mul: u32) -> usize {
         op_slot(self.key(), mul)
     }
 }
@@ -68,6 +68,23 @@ pub const fn is_op_char(c: u8) -> bool {
     (OPCH_LO[(c & 15) as usize] & OPCH_HI[(c >> 4) as usize]) != 0
 }
 
+/// Multiplier for the operator perfect hash.
+const OPMAP_MUL: u32 = 0x0101_0749;
+
+static OPMAP_SLOT: [u8; 256] = {
+    let mut slots = [0xFF; 256];
+
+    let mut i = 0_usize;
+    while i < OPMAP_OPS.len() {
+        let op_def = &OPMAP_OPS[i];
+        let slot = op_def.slot(OPMAP_MUL);
+        slots[slot] = i as u8;
+        i += 1;
+    }
+
+    slots
+};
+
 pub struct OpMap {
     pub opmap_mul: u32,
     pub opmap_slot: [u8; 256],
@@ -77,40 +94,14 @@ pub struct OpMap {
 
 impl OpMap {
     pub(super) fn new() -> OpMap {
-        let mut m =
-            OpMap { opmap_mul: 0, opmap_slot: [0xFF; 256], op2_pack: [0; 256], op3_pack: [0; 256] };
-        m.opmap_init();
+        let mut m = OpMap {
+            opmap_mul: OPMAP_MUL,
+            opmap_slot: OPMAP_SLOT,
+            op2_pack: [0; 256],
+            op3_pack: [0; 256],
+        };
         m.build_op_pack();
         m
-    }
-
-    fn opmap_init(&mut self) {
-        let mut m: u64 = (1u64 << 24) | 1;
-        while m < (1u64 << 28) {
-            let mut used = [0u8; 256];
-            let mut ok = true;
-            for i in 0..OPMAP_OPS.len() {
-                let o = &OPMAP_OPS[i];
-                let slot = o.slot(m as u32);
-                if used[slot] != 0 {
-                    ok = false;
-                    break;
-                }
-                used[slot] = 1;
-            }
-            if ok {
-                self.opmap_mul = m as u32;
-                self.opmap_slot = [0xFF; 256];
-                for i in 0..OPMAP_OPS.len() {
-                    let o = &OPMAP_OPS[i];
-                    let slot = o.slot(self.opmap_mul);
-                    self.opmap_slot[slot] = i as u8;
-                }
-                return;
-            }
-            m += 2;
-        }
-        panic!("opmap perfect-hash search FAILED");
     }
 
     fn build_op_pack(&mut self) {
@@ -161,12 +152,12 @@ impl OpMap {
 }
 
 #[inline(always)]
-fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
+const fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
     (c0 as u32) | ((c1 as u32) << 8) | ((c2 as u32) << 16) | (len << 24)
 }
 
 #[inline(always)]
-fn op_slot(key: u32, mul: u32) -> usize {
+const fn op_slot(key: u32, mul: u32) -> usize {
     (key.wrapping_mul(mul) >> 24) as usize
 }
 
@@ -259,5 +250,40 @@ mod tests {
             );
             assert!(kind == 0, "`opmap_lookup` should return 0 for {txt:?}");
         }
+    }
+
+    #[test]
+    fn test_perfect_hash() {
+        // If `OPMAP_MUL` produces no collisions, all good
+        if is_collision_free(OPMAP_MUL) {
+            return;
+        }
+
+        // There was a collision - find a new value for `OPMAP_MUL` which has no collisions
+        let mut mul = (1u32 << 24) | 1;
+        while mul < (1u32 << 28) {
+            if is_collision_free(mul) {
+                panic!(
+                    "Current value for `OPMAP_MUL` produces collisions. Set it to 0x{:04X}_{:04X}.",
+                    mul >> 16,
+                    mul & 0xFFFF
+                );
+            }
+            mul += 2;
+        }
+
+        panic!("Current value for `OPMAP_MUL` produces collisions. Could not find another value.");
+    }
+
+    fn is_collision_free(mul: u32) -> bool {
+        let mut used = [false; 256];
+        for op_def in &OPMAP_OPS {
+            let slot = op_def.slot(mul);
+            if used[slot] {
+                return false;
+            }
+            used[slot] = true;
+        }
+        true
     }
 }
