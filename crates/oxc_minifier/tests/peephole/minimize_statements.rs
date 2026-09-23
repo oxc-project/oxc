@@ -200,6 +200,29 @@ fn test_merge_adjacent_ifs_with_shorthand_object_property() {
     );
 }
 
+#[test]
+fn test_merge_adjacent_ifs_with_same_content() {
+    test("if (a) { b; return d } if (c) { b; return d }", "if (a || c) return b, d;");
+    test(
+        "if (a) if (x) return b; else throw c; if (d) if (x) return b; else throw c;",
+        "if (a || d) { if (x) return b; throw c; }",
+    );
+    test(
+        "if (a) { if (x) return b; else return c; } if (d) { if (x) return b; else return c; }",
+        "if (a || d) return x ? b : c;",
+    );
+    test(
+        "if (a) { return c; var z; } if (d) { return c; var z; }",
+        "if (a || d) { return c; var z; }",
+    );
+    test("if (a) { f; return b } if (c) { f; b }", "if (a) return f, b; c && (f, b);");
+    test_same("if (a) { for(;;)f; return b } if (c) { for(;;)f; throw b }");
+    test(
+        "if (a) { b; return d } if (c) { b; return d } if (e) { b; return d }",
+        "if (a || c || e) return b, d;",
+    );
+}
+
 // `{ __proto__: __proto__ }` sets `[[Prototype]]` via the Annex B.3.1 proto
 // setter, while `{ __proto__ }` is a plain shorthand that creates a regular
 // own data property. Normalising the former into the latter would change
