@@ -23,7 +23,7 @@ use napi_derive::napi;
 use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions},
-    diagnostics::{Diagnostics, Severity},
+    diagnostics::Diagnostics,
     parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     transformer::Transformer,
@@ -50,7 +50,7 @@ pub struct TransformResult {
     /// Source map, populated when `sourcemap` is `true`.
     pub map: Option<SourceMap>,
 
-    /// Parse, semantic, React Compiler, and downstream transform diagnostics.
+    /// Parse, semantic, downstream transform, and fatal React Compiler diagnostics.
     pub errors: Vec<OxcError>,
 }
 
@@ -98,24 +98,17 @@ fn transform_impl(
         return error_result(filename, source_text, diagnostics);
     }
 
-    let (react_output, mut react_diagnostics, react_fatal) = match react_compiler_options {
-        None => (None, Diagnostics::new(), false),
+    let react_output = match react_compiler_options {
+        None => None,
         Some(options) => match react_compiler_compile(&program, &semantic, &allocator, options) {
-            CompileResult::Success { output, diagnostics } => (output, diagnostics, false),
-            CompileResult::Fatal { diagnostics } => (None, diagnostics, true),
+            // Match Babel's default `logger: null` by omitting recoverable diagnostics.
+            CompileResult::Success { output, .. } => output,
+            CompileResult::Fatal { diagnostics: react_diagnostics } => {
+                diagnostics.extend(react_diagnostics);
+                return error_result(filename, source_text, diagnostics);
+            }
         },
     };
-    if !react_fatal {
-        for diagnostic in react_diagnostics.iter_mut() {
-            if diagnostic.severity == Severity::Error {
-                diagnostic.severity = Severity::Warning;
-            }
-        }
-    }
-    diagnostics.extend(react_diagnostics);
-    if react_fatal {
-        return error_result(filename, source_text, diagnostics);
-    }
 
     let mut scoping = semantic.into_scoping();
     if let Some(output) = react_output {

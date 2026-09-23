@@ -32,7 +32,7 @@ jobs:
           cache-key: warm
           tools: cargo-release-oxc
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       - name: Generate version and changelog
         id: run
@@ -100,7 +100,7 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: oxc-project
           repositories: website
-      - uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
+      - uses: benc-uk/workflow-dispatch@d004979be141727c7a17c28f603e2facc40d0855 # v1.3.3
         with:
           repo: oxc-project/website
           workflow: release.yml

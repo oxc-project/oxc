@@ -1,4 +1,4 @@
-use std::{borrow::Cow, path::Path};
+use std::{borrow::Cow, collections::hash_map::Entry, path::Path};
 
 use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_span::Span;
@@ -152,13 +152,16 @@ impl<'a> SourcemapBuilder<'a> {
     }
 
     fn add_name(&mut self, name: &'a str) -> u32 {
-        if let Some(&id) = self.names_map.get(name) {
-            return id;
+        match self.names_map.entry(name) {
+            Entry::Occupied(entry) => *entry.get(),
+            Entry::Vacant(entry) => {
+                let id = u32::try_from(self.names.len())
+                    .expect("sourcemap names length should fit in u32");
+                entry.insert(id);
+                self.names.push(name);
+                id
+            }
         }
-        let id = u32::try_from(self.names.len()).expect("sourcemap names length should fit in u32");
-        self.names_map.insert(name, id);
-        self.names.push(name);
-        id
     }
 
     #[expect(clippy::cast_possible_truncation)]

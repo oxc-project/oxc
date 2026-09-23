@@ -1,17 +1,23 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::LineEnding;
 use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
-use oxc_formatter_yaml::{YamlFormatOptions, format};
+use oxc_formatter_yaml::{YamlFormatOptions, format, parse_for_format};
 
 mod options;
 use options::apply_yaml_options;
 
 struct YamlHarness;
 
+/// What formatting must leave unchanged, see `FixtureFormatter::Fingerprint`.
+#[derive(Debug, PartialEq)]
+struct Fingerprint {
+    comments: usize,
+}
+
 impl FixtureFormatter for YamlHarness {
     type Options = YamlFormatOptions;
+    type Fingerprint = Fingerprint;
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = YamlFormatOptions::default();
@@ -26,6 +32,12 @@ impl FixtureFormatter for YamlHarness {
             .print()
             .expect("print should succeed")
             .into_code()
+    }
+
+    fn fingerprint(source: &str, _path: &Path, _options: &Self::Options) -> Fingerprint {
+        let allocator = Allocator::default();
+        let parsed = parse_for_format(&allocator, source).expect("source should parse");
+        Fingerprint { comments: parsed.comments.len() }
     }
 }
 
@@ -59,23 +71,6 @@ fn parse_error_is_err() {
             "{source:?} should fail to format"
         );
     }
-}
-
-/// The configured `end_of_line` is applied to EVERY output line break,
-/// including the blank-line runs emitted as raw `"\n"` text (block scalars,
-/// flow scalars) — the snapshot harness cannot pin this (insta normalizes
-/// line endings), so assert it directly.
-#[test]
-fn line_ending_is_applied() {
-    let allocator = Allocator::default();
-    let options =
-        YamlFormatOptions { line_ending: LineEnding::Crlf, ..YamlFormatOptions::default() };
-    let formatted = format(&allocator, "a: 1\nblock: |\n  x\n\n  y\nb: 2\n", options)
-        .expect("input should parse")
-        .print()
-        .expect("print should succeed")
-        .into_code();
-    assert_eq!(formatted, "a: 1\r\nblock: |\r\n  x\r\n\r\n  y\r\nb: 2\r\n");
 }
 
 /// A leading BOM is preserved (Prettier does the same).

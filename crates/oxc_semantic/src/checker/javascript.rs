@@ -7,7 +7,7 @@ use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span, best_match};
 use oxc_str::Ident;
 use oxc_syntax::{
-    class::ClassId,
+    class::{ClassId, ElementKind},
     number::NumberBase,
     operator::UnaryOperator,
     scope::{ScopeFlags, ScopeId},
@@ -88,7 +88,20 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
         let mut defined_elements =
             FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher);
         for (element_id, element) in elements.iter_enumerated() {
-            if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
+            // Public and private names belong to separate namespaces.
+            let previous =
+                defined_elements.entry((&element.name, element.is_private)).or_insert([None; 2]);
+            let prev_element_id = if element.is_private {
+                // Keep setters separate so a valid getter/setter pair cannot hide a
+                // repeated accessor.
+                let index = usize::from(element.kind.contains(ElementKind::Setter));
+                let prev_element_id = previous[index].or(previous[1 - index]);
+                previous[index] = Some(element_id);
+                prev_element_id
+            } else {
+                previous[0].replace(element_id)
+            };
+            if let Some(prev_element_id) = prev_element_id {
                 let prev_element = &elements[prev_element_id];
 
                 let mut is_duplicate = element.is_private == prev_element.is_private
@@ -797,7 +810,9 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                     },
                 );
             }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
@@ -840,7 +855,9 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                     },
                 );
             }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
@@ -848,15 +865,11 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
             }
             AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
                 Some(label) if label.name == labeled_statement.label.name => {
-                    if matches!(
-                        labeled_statement.body,
-                        Statement::LabeledStatement(_)
-                            | Statement::DoWhileStatement(_)
-                            | Statement::WhileStatement(_)
-                            | Statement::ForStatement(_)
-                            | Statement::ForInStatement(_)
-                            | Statement::ForOfStatement(_)
-                    ) {
+                    let mut target = &labeled_statement.body;
+                    while let Statement::LabeledStatement(nested) = target {
+                        target = &nested.body;
+                    }
+                    if target.is_iteration_statement() {
                         break;
                     }
                     return ctx.error(diagnostics::invalid_label_non_iteration(
@@ -1296,9 +1309,16 @@ pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilde
 }
 
 fn is_in_formal_parameters(ctx: &SemanticBuilder<'_>) -> bool {
-    for node_kind in ctx.ancestry().ancestor_kinds() {
+    let mut ancestors = ctx.ancestry().ancestor_kinds().peekable();
+    while let Some(node_kind) = ancestors.next() {
         match node_kind {
             AstKind::FormalParameter(_) => return true,
+            // Only the rest binding belongs to the parameter; decorators use the surrounding context.
+            AstKind::BindingRestElement(_)
+                if matches!(ancestors.peek(), Some(AstKind::FormalParameterRest(_))) =>
+            {
+                return true;
+            }
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 break;
             }

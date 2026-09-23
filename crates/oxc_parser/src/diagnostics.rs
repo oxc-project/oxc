@@ -889,8 +889,19 @@ parser_diagnostics! {
         OxcDiagnostic::error("import() requires a specifier.").with_label(span)
     };
 
+    declare_modifier_on_import(span: Span) => {
+        ts_error("1079", "A 'declare' modifier cannot be used with an import declaration.")
+            .with_label(span)
+    };
+
     modifier_cannot_be_used_here(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
+            .with_label(modifier.span())
+            .with_allowed_modifier_help(allowed)
+    };
+
+    accessor_only_on_property_declaration(modifier: Modifier, allowed: Option<ModifierKinds>) => {
+        ts_error("1275", "'accessor' modifier can only appear on a property declaration.")
             .with_label(modifier.span())
             .with_allowed_modifier_help(allowed)
     };

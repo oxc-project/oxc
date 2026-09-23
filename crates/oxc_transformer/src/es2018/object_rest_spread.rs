@@ -820,7 +820,7 @@ impl<'a> ObjectRestSpread<'a> {
                 new_decls.push((i, decls));
             }
         }
-        for (i, decls) in new_decls {
+        for (i, decls) in new_decls.into_iter().rev() {
             decl.declarations.splice(i..=i, decls);
         }
     }

@@ -1,7 +1,5 @@
 # externals/ng-zorro-antd/components/table/style/rtl.less
 
-> Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md
-
 ## Option 1
 
 `````json

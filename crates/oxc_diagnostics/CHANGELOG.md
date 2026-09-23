@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.148.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- e412cf2 linter: Clamp invalid JS plugin locations (#26144) (camc314)
+
+### ⚡ Performance
+
+- ac4785a diagnostics: Use fixed ANSI styles (#26130) (Boshen)
+
 ## [0.145.0] - 2026-08-18
 
 ### ⚡ Performance

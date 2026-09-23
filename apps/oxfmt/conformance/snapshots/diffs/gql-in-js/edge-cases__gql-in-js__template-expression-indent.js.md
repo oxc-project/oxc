@@ -1,7 +1,5 @@
 # edge-cases/gql-in-js/template-expression-indent.js
 
-> We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently
-
 ## Option 1
 
 `````json
@@ -14,8 +12,9 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -1,8 +1,8 @@
- // prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+@@ -1,9 +1,9 @@
+ // DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+ // see apps/oxfmt/DIVERGENCES.md#template-expression-indent
  _ = gql`
    ${
 -                    a +
@@ -33,7 +32,8 @@
 ### Actual (oxfmt)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = gql`
   ${
     a +
@@ -47,7 +47,8 @@ _ = gql`
 ### Expected (prettier)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = gql`
   ${
                     a +
@@ -70,8 +71,9 @@ _ = gql`
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -1,8 +1,8 @@
- // prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+@@ -1,9 +1,9 @@
+ // DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+ // see apps/oxfmt/DIVERGENCES.md#template-expression-indent
  _ = gql`
    ${
 -                    a +
@@ -89,7 +91,8 @@ _ = gql`
 ### Actual (oxfmt)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = gql`
   ${
     a +
@@ -103,7 +106,8 @@ _ = gql`
 ### Expected (prettier)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = gql`
   ${
                     a +

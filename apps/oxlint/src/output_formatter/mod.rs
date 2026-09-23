@@ -79,7 +79,12 @@ pub struct LintCommandInfo {
     /// At least in default mode we want to notify if oxlint-suppressions.json was created or updated.
     pub oxlint_suppression_file_action: OxlintSuppressionFileAction,
     /// Optional per-rule timing records for debug timing output.
-    pub rule_timings: Option<Vec<RuleTimingRecord>>,
+    pub rule_timings: Option<RuleTimings>,
+}
+
+pub struct RuleTimings {
+    pub records: Vec<RuleTimingRecord>,
+    pub js_plugin_runtime: Duration,
 }
 
 impl LintCommandInfo {
@@ -130,7 +135,7 @@ impl LintCommandInfo {
 /// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {
     /// Print all available rules by oxlint
-    fn all_rules(&self, _enabled_rules: FxHashSet<&str>) -> Option<String> {
+    fn all_rules(&self, _enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
         None
     }
 
@@ -170,7 +175,7 @@ impl OutputFormatter {
 
     /// Print all available rules by oxlint
     /// See [`InternalFormatter::all_rules`] for more details.
-    pub fn all_rules(&self, enabled_rules: FxHashSet<&str>) -> Option<String> {
+    pub fn all_rules(&self, enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
         self.internal.all_rules(enabled_rules)
     }
 

@@ -87,8 +87,10 @@ impl<'a> PeepholeOptimizations {
                 if has_optional {
                     ctx.notice_change();
                 } else {
-                    let new_expr = Expression::from(e.expression.take_in(ctx));
-                    ctx.replace_expression(expr, new_expr);
+                    ctx.replace_expression_with(expr, |e, _ctx| {
+                        let Expression::ChainExpression(e) = e else { unreachable!() };
+                        Expression::from(e.unbox().expression)
+                    });
                 }
             }
             ChainFold::Collapse { base, base_has_side_effects } => {
@@ -141,22 +143,11 @@ impl<'a> PeepholeOptimizations {
                 }
                 return Some(logical_expr.left.take_in(ctx));
             } else if !left.may_have_side_effects(ctx) {
-                let should_keep_indirect_access =
-                    Self::should_keep_indirect_access(&logical_expr.right, ctx);
-                // (true && o.f) => (0, o.f)
-                if should_keep_indirect_access {
-                    return Some(Expression::new_sequence_expression(
-                        logical_expr.span,
-                        [
-                            Expression::new_numeric_literal(
-                                logical_expr.left.span(),
-                                0.0,
-                                None,
-                                NumberBase::Decimal,
-                                ctx,
-                            ),
-                            logical_expr.right.take_in(ctx),
-                        ],
+                // `(true && o.f)` => `(0, o.f)`
+                if Self::should_keep_indirect_access(&logical_expr.right, ctx) {
+                    return Some(Self::preserve_indirect_access(
+                        logical_expr.left.span(),
+                        logical_expr.right.take_in(ctx),
                         ctx,
                     ));
                 }
@@ -212,27 +203,16 @@ impl<'a> PeepholeOptimizations {
         match left_val {
             ValueType::Null | ValueType::Undefined => {
                 Some(if left.may_have_side_effects(ctx) {
-                    // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
+                    // `(a(), null) ?? 1` => `(a(), null, 1)`
                     let expressions =
                         [logical_expr.left.take_in(ctx), logical_expr.right.take_in(ctx)];
                     Expression::new_sequence_expression(logical_expr.span, expressions, ctx)
                 } else {
-                    let should_keep_indirect_access =
-                        Self::should_keep_indirect_access(&logical_expr.right, ctx);
-                    // (null ?? o.f) => (0, o.f)
-                    if should_keep_indirect_access {
-                        return Some(Expression::new_sequence_expression(
-                            logical_expr.span,
-                            [
-                                Expression::new_numeric_literal(
-                                    logical_expr.left.span(),
-                                    0.0,
-                                    None,
-                                    NumberBase::Decimal,
-                                    ctx,
-                                ),
-                                logical_expr.right.take_in(ctx),
-                            ],
+                    // `(null ?? o.f)` => `(0, o.f)`
+                    if Self::should_keep_indirect_access(&logical_expr.right, ctx) {
+                        return Some(Self::preserve_indirect_access(
+                            logical_expr.left.span(),
+                            logical_expr.right.take_in(ctx),
                             ctx,
                         ));
                     }
@@ -245,22 +225,11 @@ impl<'a> PeepholeOptimizations {
             | ValueType::String
             | ValueType::Boolean
             | ValueType::Object => {
-                let should_keep_indirect_access =
-                    Self::should_keep_indirect_access(&logical_expr.left, ctx);
-                // (o.f ?? something) => (0, o.f)
-                if should_keep_indirect_access {
-                    return Some(Expression::new_sequence_expression(
-                        logical_expr.span,
-                        [
-                            Expression::new_numeric_literal(
-                                logical_expr.right.span(),
-                                0.0,
-                                None,
-                                NumberBase::Decimal,
-                                ctx,
-                            ),
-                            logical_expr.left.take_in(ctx),
-                        ],
+                // `(o.f ?? something)` => `(0, o.f)`
+                if Self::should_keep_indirect_access(&logical_expr.left, ctx) {
+                    return Some(Self::preserve_indirect_access(
+                        logical_expr.right.span(),
+                        logical_expr.left.take_in(ctx),
                         ctx,
                     ));
                 }
@@ -871,8 +840,7 @@ impl<'a> PeepholeOptimizations {
 
             let new_expr = Expression::new_boolean_literal(
                 e.span,
-                e.operator == BinaryOperator::Inequality
-                    || e.operator == BinaryOperator::StrictInequality,
+                matches!(e.operator, BinaryOperator::StrictInequality | BinaryOperator::Inequality),
                 ctx,
             );
             ctx.replace_expression(expr, new_expr);

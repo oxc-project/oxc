@@ -92,7 +92,7 @@ jobs:
           rm target/codspeed/analysis/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@4296e51e7041e24dadb86d1d6e8b9320d223dbe8 # v5.0.3
+        uses: CodSpeedHQ/action@373d6868929f444bc08d901fd0eb0ad52a8875ea # v5.2.1
         timeout-minutes: 30
         with:
           mode: ${{ matrix.mode }}

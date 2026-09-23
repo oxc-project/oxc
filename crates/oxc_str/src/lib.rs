@@ -8,7 +8,7 @@ mod ident_hasher;
 mod str;
 
 pub use compact_str::{CompactStr, MAX_INLINE_LEN};
-pub use ident::{ArenaIdentHashMap, Ident, IdentHashMap, IdentHashSet};
+pub use ident::{ArenaIdentHashMap, ArenaIdentHashSet, Ident, IdentHashMap, IdentHashSet};
 pub use ident_hasher::{IdentBuildHasher, IdentHasher};
 pub use str::{Str, Str as ArenaStr};
 

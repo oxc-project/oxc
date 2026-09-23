@@ -3,6 +3,10 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 {
+  "compilerOptions": {
+    "lib": ["ES2020", "ESNext.Disposable"], // ES2020 is very conservative target choice
+    "target": "ES2020"
+  },
   "workspaces": {
     "packages/test-dev-server/tests/fixtures/*": {
       "entry": ["dev.config.mjs", "src/*.js"] // no @rolldown/test-dev-server plugin
@@ -15,6 +19,10 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 { printWidth: 80 }
 ------------------
 {
+  "compilerOptions": {
+    "lib": ["ES2020", "ESNext.Disposable"], // ES2020 is very conservative target choice
+    "target": "ES2020"
+  },
   "workspaces": {
     "packages/test-dev-server/tests/fixtures/*": {
       "entry": ["dev.config.mjs", "src/*.js"] // no @rolldown/test-dev-server plugin
@@ -26,6 +34,10 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 { printWidth: 100 }
 -------------------
 {
+  "compilerOptions": {
+    "lib": ["ES2020", "ESNext.Disposable"], // ES2020 is very conservative target choice
+    "target": "ES2020"
+  },
   "workspaces": {
     "packages/test-dev-server/tests/fixtures/*": {
       "entry": ["dev.config.mjs", "src/*.js"] // no @rolldown/test-dev-server plugin

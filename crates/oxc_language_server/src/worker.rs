@@ -1,15 +1,15 @@
 use std::{path::Path, sync::Arc};
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
-    jsonrpc::ErrorCode,
-    ls_types::{
-        CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions, FileEvent,
-        FileSystemWatcher, GlobPattern, OneOf, Registration, RelativePattern, TextEdit,
+    gen_lsp_types::{
+        BaseUri, CodeActionResponse, Diagnostic, DidChangeWatchedFilesRegistrationOptions,
+        FileEvent, FileSystemWatcher, GlobPattern, Registration, RelativePattern, TextEdit,
         Unregistration, Uri, WatchKind, WorkspaceEdit,
     },
+    jsonrpc::ErrorCode,
 };
 use tracing::debug;
 
@@ -117,14 +117,12 @@ impl WorkspaceWorker {
     /// Common aggregator for tool-provided diagnostics.
     async fn collect_diagnostics_with<F>(
         &self,
-        document: &TextDocument<'_>,
+        document: TextDocument<'_>,
         run: F,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String>
     where
-        F: Fn(&Box<dyn Tool>, &TextDocument) -> DiagnosticResult,
+        F: Fn(&Box<dyn Tool>, TextDocument) -> DiagnosticResult,
     {
-        let mut aggregated: FxHashMap<Uri, Vec<Diagnostic>> = FxHashMap::default();
-
         let tool_diagnostics = {
             let tool_guard = self.tool.read().await;
             let Some(tool) = tool_guard.as_ref() else {
@@ -134,28 +132,22 @@ impl WorkspaceWorker {
             run(tool, document)
         };
 
-        match tool_diagnostics {
-            Ok(diags) => {
-                for (entry_uri, mut diags) in diags {
-                    aggregated.entry(entry_uri).or_default().append(&mut diags);
-                }
-            }
+        let diagnostics = match tool_diagnostics {
+            Ok(diags) => diags,
             Err(err) => {
                 return Err(err);
             }
-        }
+        };
 
         // In push mode, keep track of published diagnostics to clear them on shutdown
         if self.diagnostic_mode == DiagnosticMode::Push {
-            let new_published_uris: FxHashSet<Uri> = aggregated.keys().cloned().collect();
-            self.published_diagnostics.lock().await.extend(new_published_uris);
+            self.published_diagnostics
+                .lock()
+                .await
+                .extend(diagnostics.iter().map(|(uri, _)| uri.clone()));
         }
 
-        let mut result = Vec::with_capacity(aggregated.len());
-        for (uri, diags) in aggregated {
-            result.push((uri, diags));
-        }
-        Ok(result)
+        Ok(diagnostics)
     }
 
     /// Run different tools to collect diagnostics.
@@ -164,7 +156,7 @@ impl WorkspaceWorker {
     /// When calling `Tool::run_diagnostic` results into an error.
     pub async fn run_diagnostic(
         &self,
-        document: &TextDocument<'_>,
+        document: TextDocument<'_>,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| tool.run_diagnostic(document))
             .await
@@ -176,7 +168,7 @@ impl WorkspaceWorker {
     /// When calling `Tool::run_diagnostic_on_change` results into an error.
     pub async fn run_diagnostic_on_change(
         &self,
-        document: &TextDocument<'_>,
+        document: TextDocument<'_>,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| {
             tool.run_diagnostic_on_change(document)
@@ -190,7 +182,7 @@ impl WorkspaceWorker {
     /// When calling `Tool::run_diagnostic_on_save` results into an error.
     pub async fn run_diagnostic_on_save(
         &self,
-        document: &TextDocument<'_>,
+        document: TextDocument<'_>,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| {
             tool.run_diagnostic_on_save(document)
@@ -205,7 +197,7 @@ impl WorkspaceWorker {
     ///
     /// # Errors
     /// When calling `Tool::run_format` results into an error.
-    pub async fn format_file(&self, document: &TextDocument<'_>) -> Result<Vec<TextEdit>, String> {
+    pub async fn format_file(&self, document: TextDocument<'_>) -> Result<Vec<TextEdit>, String> {
         let tool_guard = self.tool.read().await;
         let Some(tool) = tool_guard.as_ref() else {
             return Ok(Vec::new());
@@ -238,8 +230,8 @@ impl WorkspaceWorker {
     /// It calls all tools and collects their code actions or commands.
     pub async fn get_code_actions_or_commands(
         &self,
-        params: &CodeActionParams,
-    ) -> Vec<CodeActionOrCommand> {
+        params: CodeActionParams,
+    ) -> Vec<CodeActionResponse> {
         let mut actions = Vec::new();
         if let Some(tool) = self.tool.read().await.as_ref() {
             actions.extend(tool.get_code_actions_or_commands(params));
@@ -358,7 +350,7 @@ impl WorkspaceWorker {
 
             for uri in file_system.keys() {
                 let document = file_system.get_document(&uri);
-                let Ok(mut reports) = tool.run_diagnostic(&document) else {
+                let Ok(mut reports) = tool.run_diagnostic(document) else {
                     // If diagnostics could not be run, skip this URI, but continue with others
                     // TODO: Should we aggregate errors instead? One by one, or all together?
                     continue;
@@ -401,7 +393,7 @@ impl WorkspaceWorker {
 /// Create an unregistration for a file system watcher
 fn unregistration_watcher_id(root_uri: &Uri) -> Unregistration {
     Unregistration {
-        id: format!("watcher-{}", root_uri.as_str()),
+        id: format!("watcher-{root_uri}"),
         method: "workspace/didChangeWatchedFiles".to_string(),
     }
 }
@@ -409,23 +401,23 @@ fn unregistration_watcher_id(root_uri: &Uri) -> Unregistration {
 /// Create a registration for a file system watcher for the given patterns
 fn registration_watcher_id(root_uri: &Uri, patterns: Vec<String>) -> Registration {
     Registration {
-        id: format!("watcher-{}", root_uri.as_str()),
+        id: format!("watcher-{root_uri}"),
         method: "workspace/didChangeWatchedFiles".to_string(),
         register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
             watchers: patterns
                 .into_iter()
                 .map(|pattern| {
                     let glob_pattern = if Path::new(&pattern).is_absolute() {
-                        GlobPattern::String(pattern)
+                        GlobPattern::Pattern(pattern)
                     } else {
-                        GlobPattern::Relative(RelativePattern {
-                            base_uri: OneOf::Right(root_uri.clone()),
+                        GlobPattern::RelativePattern(RelativePattern {
+                            base_uri: BaseUri::Uri(root_uri.clone()),
                             pattern,
                         })
                     };
                     FileSystemWatcher {
                         glob_pattern,
-                        kind: Some(WatchKind::all()), // created, deleted, changed
+                        kind: Some(WatchKind::Custom(7)), // created, deleted, changed
                     }
                 })
                 .collect::<Vec<_>>(),
@@ -435,19 +427,17 @@ fn registration_watcher_id(root_uri: &Uri, patterns: Vec<String>) -> Registratio
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
-    use std::sync::Arc;
+    use std::{str::FromStr, sync::Arc};
     use tower_lsp_server::{
-        jsonrpc::ErrorCode,
-        ls_types::{
-            CodeActionContext, CodeActionOrCommand, FileChangeType, FileEvent, MessageType, Range,
-            Uri,
+        gen_lsp_types::{
+            CodeActionContext, CodeActionResponse, FileChangeType, FileEvent, Message, MessageType,
+            Range, Uri,
         },
+        jsonrpc::ErrorCode,
     };
 
     #[cfg(unix)]
-    use tower_lsp_server::ls_types::{DidChangeWatchedFilesRegistrationOptions, GlobPattern};
+    use tower_lsp_server::gen_lsp_types::{DidChangeWatchedFilesRegistrationOptions, GlobPattern};
 
     use crate::{
         ClientMessage, CodeActionParams, LanguageId, TextDocument, ToolBuilder,
@@ -522,9 +512,9 @@ mod tests {
 
         assert_eq!(options.watchers.len(), 1);
         match &options.watchers[0].glob_pattern {
-            GlobPattern::String(pattern) => assert_eq!(pattern, "/etc/**/*.json"),
-            GlobPattern::Relative(_) => {
-                panic!("Expected absolute glob to be encoded as GlobPattern::String")
+            GlobPattern::Pattern(pattern) => assert_eq!(pattern, "/etc/**/*.json"),
+            GlobPattern::RelativePattern(_) => {
+                panic!("Expected absolute glob to be encoded as GlobPattern::Pattern")
             }
         }
     }
@@ -574,7 +564,7 @@ mod tests {
             .did_change_watched_files(
                 &FileEvent {
                     uri: Uri::from_str("file:///root/unknown.file").unwrap(),
-                    typ: FileChangeType::CHANGED,
+                    kind: FileChangeType::Changed,
                 },
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
@@ -591,7 +581,7 @@ mod tests {
             .did_change_watched_files(
                 &FileEvent {
                     uri: Uri::from_str("file:///root/watcher.config").unwrap(),
-                    typ: FileChangeType::CHANGED,
+                    kind: FileChangeType::Changed,
                 },
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
@@ -610,7 +600,7 @@ mod tests {
             .did_change_watched_files(
                 &FileEvent {
                     uri: Uri::from_str("file:///root/tool.config").unwrap(),
-                    typ: FileChangeType::CHANGED,
+                    kind: FileChangeType::Changed,
                 },
                 &mut needs_diagnostic_refresh,
                 Some(&fs),
@@ -629,7 +619,7 @@ mod tests {
             .did_change_watched_files(
                 &FileEvent {
                     uri: Uri::from_str("file:///root/tool.config").unwrap(),
-                    typ: FileChangeType::CHANGED,
+                    kind: FileChangeType::Changed,
                 },
                 &mut needs_diagnostic_refresh,
                 None,
@@ -727,7 +717,7 @@ mod tests {
             result.client_messages,
             vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
-                r#type: MessageType::WARNING,
+                r#type: MessageType::Warning,
             }]
         );
     }
@@ -746,7 +736,7 @@ mod tests {
             .did_change_watched_files(
                 &FileEvent {
                     uri: Uri::from_str("file:///root/misconfiguration.config").unwrap(),
-                    typ: FileChangeType::CHANGED,
+                    kind: FileChangeType::Changed,
                 },
                 &mut needs_diagnostic_refresh,
                 None,
@@ -761,7 +751,7 @@ mod tests {
             result.client_messages,
             vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
-                r#type: MessageType::WARNING,
+                r#type: MessageType::Warning,
             }]
         );
     }
@@ -776,7 +766,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let actions = worker
-            .get_code_actions_or_commands(&CodeActionParams {
+            .get_code_actions_or_commands(CodeActionParams {
                 uri: Uri::from_str("file:///root/file.js").unwrap(),
                 range: Range::default(),
                 context: CodeActionContext::default(),
@@ -787,7 +777,7 @@ mod tests {
         assert_eq!(actions.len(), 0);
 
         let actions = worker
-            .get_code_actions_or_commands(&CodeActionParams {
+            .get_code_actions_or_commands(CodeActionParams {
                 uri: Uri::from_str("file:///root/code_action.config").unwrap(),
                 range: Range::default(),
                 context: CodeActionContext::default(),
@@ -796,7 +786,7 @@ mod tests {
             .await;
 
         assert_eq!(actions.len(), 1);
-        if let CodeActionOrCommand::CodeAction(action) = &actions[0] {
+        if let CodeActionResponse::CodeAction(action) = &actions[0] {
             assert_eq!(action.title, "Code Action title");
         } else {
             panic!("Expected CodeAction");
@@ -815,7 +805,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic(&TextDocument::new(&uri, LanguageId::default(), None))
+            .run_diagnostic(TextDocument::new(&uri, LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -824,11 +814,11 @@ mod tests {
         assert_eq!(diagnostics_no_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_no_content[0].1[0].message,
-            "Fake diagnostic for content: <no content>"
+            Message::String("Fake diagnostic for content: <no content>".to_string())
         );
 
         let diagnostics_with_content = worker
-            .run_diagnostic(&TextDocument::new(
+            .run_diagnostic(TextDocument::new(
                 &uri,
                 LanguageId::default(),
                 Some(Arc::from("helloworld")),
@@ -841,11 +831,11 @@ mod tests {
         assert_eq!(diagnostics_with_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_with_content[0].1[0].message,
-            "Fake diagnostic for content: helloworld"
+            Message::String("Fake diagnostic for content: helloworld".to_string())
         );
 
         let no_diagnostics = worker
-            .run_diagnostic(&TextDocument::new(
+            .run_diagnostic(TextDocument::new(
                 &Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
@@ -856,7 +846,7 @@ mod tests {
         assert!(no_diagnostics.is_empty());
 
         let error = worker
-            .run_diagnostic(&TextDocument::new(
+            .run_diagnostic(TextDocument::new(
                 &Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,
@@ -879,7 +869,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic_on_change(&TextDocument::new(&uri, LanguageId::default(), None))
+            .run_diagnostic_on_change(TextDocument::new(&uri, LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -888,11 +878,11 @@ mod tests {
         assert_eq!(diagnostics_no_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_no_content[0].1[0].message,
-            "Fake diagnostic for content: <no content>"
+            Message::String("Fake diagnostic for content: <no content>".to_string())
         );
 
         let diagnostics_with_content = worker
-            .run_diagnostic_on_change(&TextDocument::new(
+            .run_diagnostic_on_change(TextDocument::new(
                 &uri,
                 LanguageId::default(),
                 Some(Arc::from("helloworld")),
@@ -905,11 +895,11 @@ mod tests {
         assert_eq!(diagnostics_with_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_with_content[0].1[0].message,
-            "Fake diagnostic for content: helloworld"
+            Message::String("Fake diagnostic for content: helloworld".to_string())
         );
 
         let no_diagnostics = worker
-            .run_diagnostic_on_change(&TextDocument::new(
+            .run_diagnostic_on_change(TextDocument::new(
                 &Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
@@ -920,7 +910,7 @@ mod tests {
         assert!(no_diagnostics.is_empty());
 
         let error = worker
-            .run_diagnostic_on_change(&TextDocument::new(
+            .run_diagnostic_on_change(TextDocument::new(
                 &Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,
@@ -942,7 +932,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic_on_save(&TextDocument::new(&uri, LanguageId::default(), None))
+            .run_diagnostic_on_save(TextDocument::new(&uri, LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -951,11 +941,11 @@ mod tests {
         assert_eq!(diagnostics_no_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_no_content[0].1[0].message,
-            "Fake diagnostic for content: <no content>"
+            Message::String("Fake diagnostic for content: <no content>".to_string())
         );
 
         let diagnostics_with_content = worker
-            .run_diagnostic_on_save(&TextDocument::new(
+            .run_diagnostic_on_save(TextDocument::new(
                 &uri,
                 LanguageId::default(),
                 Some(Arc::from("helloworld")),
@@ -968,11 +958,11 @@ mod tests {
         assert_eq!(diagnostics_with_content[0].1.len(), 1);
         assert_eq!(
             diagnostics_with_content[0].1[0].message,
-            "Fake diagnostic for content: helloworld"
+            Message::String("Fake diagnostic for content: helloworld".to_string())
         );
 
         let no_diagnostics = worker
-            .run_diagnostic_on_save(&TextDocument::new(
+            .run_diagnostic_on_save(TextDocument::new(
                 &Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
@@ -983,7 +973,7 @@ mod tests {
         assert!(no_diagnostics.is_empty());
 
         let error = worker
-            .run_diagnostic_on_save(&TextDocument::new(
+            .run_diagnostic_on_save(TextDocument::new(
                 &Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,

@@ -1,9 +1,7 @@
 use std::{
-    env,
+    env, fmt,
     io::{self, IsTerminal},
 };
-
-use owo_colors::Style;
 
 /// Theme used by [`GraphicalReportHandler`](crate::GraphicalReportHandler).
 ///
@@ -66,12 +64,81 @@ impl GraphicalTheme {
         Self { characters: ThemeCharacters::ascii(), styles: ThemeStyles::none() }
     }
 
-    /// Style used for warning text.
-    #[must_use]
-    pub const fn warning_style(&self) -> Style {
-        self.styles.warning
+    /// Write text using the theme's warning style.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when writing the text fails.
+    pub fn write_warning(&self, f: &mut impl fmt::Write, value: impl fmt::Display) -> fmt::Result {
+        self.styles.warning.write(f, value)
     }
 }
+
+const ANSI_RESET: &str = "\x1b[0m";
+const ANSI_PREFIXES: [&str; 9] = [
+    "",
+    "\x1b[38;2;225;80;80;1m",
+    "\x1b[38;2;244;191;117;1m",
+    "\x1b[38;2;106;159;181m",
+    "\x1b[38;2;92;157;255;1m",
+    "\x1b[2m",
+    "\x1b[38;2;246;87;248m",
+    "\x1b[38;2;30;201;212m",
+    "\x1b[38;2;145;246;111m",
+];
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[repr(u8)]
+pub(super) enum Style {
+    Plain,
+    Error,
+    Warning,
+    Info,
+    Link,
+    LineNumber,
+    Highlight1,
+    Highlight2,
+    Highlight3,
+}
+
+impl Style {
+    const fn prefix(self) -> &'static str {
+        ANSI_PREFIXES[self as usize]
+    }
+
+    pub(super) const fn is_plain(self) -> bool {
+        matches!(self, Self::Plain)
+    }
+
+    fn write(self, f: &mut impl fmt::Write, value: impl fmt::Display) -> fmt::Result {
+        let prefix = self.prefix();
+        f.write_str(prefix)?;
+        write!(f, "{value}")?;
+        if self.is_plain() { Ok(()) } else { f.write_str(ANSI_RESET) }
+    }
+}
+
+pub(super) struct Styled<T> {
+    target: T,
+    style: Style,
+}
+
+impl<T: fmt::Display> fmt::Display for Styled<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let prefix = self.style.prefix();
+        f.write_str(prefix)?;
+        self.target.fmt(f)?;
+        if self.style.is_plain() { Ok(()) } else { f.write_str(ANSI_RESET) }
+    }
+}
+
+pub(super) trait DiagnosticColorize: Sized {
+    fn style(self, style: Style) -> Styled<Self> {
+        Styled { target: self, style }
+    }
+}
+
+impl<T> DiagnosticColorize for T {}
 
 #[derive(Debug, Clone)]
 pub(super) struct ThemeStyles {
@@ -85,38 +152,30 @@ pub(super) struct ThemeStyles {
     pub(super) highlights: [Style; 3],
 }
 
-fn style() -> Style {
-    Style::new()
-}
-
 impl ThemeStyles {
     fn rgb() -> Self {
         Self {
-            error: style().fg_rgb::<225, 80, 80>().bold(),
-            warning: style().fg_rgb::<244, 191, 117>().bold(),
-            advice: style().fg_rgb::<106, 159, 181>(),
-            help: style().fg_rgb::<106, 159, 181>(),
-            note: style().fg_rgb::<106, 159, 181>(),
-            link: style().fg_rgb::<92, 157, 255>().bold(),
-            linum: style().dimmed(),
-            highlights: [
-                style().fg_rgb::<246, 87, 248>(),
-                style().fg_rgb::<30, 201, 212>(),
-                style().fg_rgb::<145, 246, 111>(),
-            ],
+            error: Style::Error,
+            warning: Style::Warning,
+            advice: Style::Info,
+            help: Style::Info,
+            note: Style::Info,
+            link: Style::Link,
+            linum: Style::LineNumber,
+            highlights: [Style::Highlight1, Style::Highlight2, Style::Highlight3],
         }
     }
 
     fn none() -> Self {
         Self {
-            error: style(),
-            warning: style(),
-            advice: style(),
-            help: style(),
-            note: style(),
-            link: style(),
-            linum: style(),
-            highlights: [style(); 3],
+            error: Style::Plain,
+            warning: Style::Plain,
+            advice: Style::Plain,
+            help: Style::Plain,
+            note: Style::Plain,
+            link: Style::Plain,
+            linum: Style::Plain,
+            highlights: [Style::Plain; 3],
         }
     }
 }

@@ -8,7 +8,8 @@ function foo() {
   );
 }
 
-// Known divergence: a trailing comment before the closing paren does not break
+// DIVERGES (see DIVERGENCES.md#paren-trailing-comment-operand-chain): a trailing
+// comment before the closing paren does not break
 // the operand chain, so pre-broken operands collapse (`a && b // B`) — the same
 // behavior both formatters have for return/throw arguments, call arguments,
 // assignments, and arrow bodies. Only here Prettier preserves the source break
@@ -33,5 +34,4 @@ function foo() {
 );
 
 !(/* L */ a && b);
-
 !(a && b /* B */);

@@ -332,6 +332,8 @@ impl IdLength {
                 }
             }
             AstKind::ObjectProperty(_)
+            | AstKind::TSPropertySignature(_)
+            | AstKind::TSMethodSignature(_)
                 if self.properties == AlwaysNever::Never => {
                     return;
                 }
@@ -598,19 +600,23 @@ fn test() {
             "export { default } from 'foo.json' with { type: 'json' }",
             Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
         ), // { "ecmaVersion": 2025 },
-                                                                                      // TODO:
-                                                                                      // (
-                                                                                      //     "import('foo.json', { with: { type: 'json' } })",
-                                                                                      //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-                                                                                      // ), // { "ecmaVersion": 2025 },
-                                                                                      // (
-                                                                                      //     "import('foo.json', { 'with': { type: 'json' } })",
-                                                                                      //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-                                                                                      // ), // { "ecmaVersion": 2025 },
-                                                                                      // (
-                                                                                      //     "import('foo.json', { with: { type } })",
-                                                                                      //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
-                                                                                      // ), // { "ecmaVersion": 2025 }
+        ("interface Foo { a: string; }", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("interface Foo { a(): void; }", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("type Foo = { a: string };", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("type Foo = { a(): void };", Some(serde_json::json!([{ "properties": "never" }]))),
+        // TODO:
+        // (
+        //     "import('foo.json', { with: { type: 'json' } })",
+        //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
+        // ), // { "ecmaVersion": 2025 },
+        // (
+        //     "import('foo.json', { 'with': { type: 'json' } })",
+        //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
+        // ), // { "ecmaVersion": 2025 },
+        // (
+        //     "import('foo.json', { with: { type } })",
+        //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
+        // ), // { "ecmaVersion": 2025 }
     ];
 
     let fail = vec![
@@ -712,6 +718,10 @@ fn test() {
         ("var { 𐌘 } = {};", None),         // { "ecmaVersion": 6, },
         ("var { prop: 𐌘} = {};", None),    // { "ecmaVersion": 6, },
         ("({ prop: obj.𐌘 } = {});", None), // { "ecmaVersion": 6, }
+        ("interface Foo { a: string; }", None),
+        ("interface Foo { a(): void; }", None),
+        ("type Foo = { a: string };", None),
+        ("type Foo = { a(): void };", None),
     ];
 
     Tester::new(IdLength::NAME, IdLength::PLUGIN, pass, fail).test_and_snapshot();

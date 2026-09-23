@@ -1,6 +1,6 @@
-commit: 1eac4481
+commit: fd665901
 
-Passed: 732/1162
+Passed: 731/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -924,7 +924,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (29/39)
+# babel-plugin-transform-object-rest-spread (28/39)
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -945,6 +945,47 @@ x Output mismatch
 
 * object-rest/object-ref-computed/input.js
 x Output mismatch
+
+* object-rest/parameters-object-rest-used-in-default/input.js
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(3): []
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(2): [ReferenceId(1)]
+rebuilt        : SymbolId(6): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(6): [ReferenceId(2)]
+rebuilt        : SymbolId(10): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(7): [ReferenceId(3)]
+rebuilt        : SymbolId(16): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(13): [ReferenceId(6)]
+rebuilt        : SymbolId(20): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(15): [ReferenceId(7)]
+rebuilt        : SymbolId(23): []
+Reference symbol mismatch for "R":
+after transform: SymbolId(0) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "Y":
+after transform: SymbolId(2) "Y"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(6) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(7) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(13) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(15) "R"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["b", "babelHelpers", "f", "q"]
+rebuilt        : ["R", "Y", "b", "babelHelpers", "f", "q"]
 
 * object-rest/symbol/input.js
 x Output mismatch
@@ -1114,7 +1155,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (110/155)
+# babel-plugin-transform-typescript (110/158)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1197,6 +1238,20 @@ rebuilt        : ScopeId(0): []
 Bindings mismatch:
 after transform: ScopeId(0): ["P"]
 rebuilt        : ScopeId(0): []
+
+* enum/enum-after-const-fail/input.ts
+
+  x Identifier `N` has already been declared
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/enum-after-const-fail/input.ts:1:7]
+ 1 | const N = 1;
+   :       |
+   :       `-- `N` has already been declared here
+ 2 | enum N {
+   :      |
+   :      `-- It can not be redeclared here
+ 3 |   A = 2,
+   `----
+
 
 * enum/enum-merging-inner-references/input.ts
 Symbol redeclarations mismatch for "Animals":
@@ -1343,6 +1398,11 @@ Bindings mismatch:
 after transform: ScopeId(12): ["D", "_d"]
 rebuilt        : ScopeId(4): ["_d"]
 
+* namespace/enum-after-namespace/input.ts
+Symbol redeclarations mismatch for "N":
+after transform: SymbolId(0): [Span { start: 17, end: 18 }, Span { start: 57, end: 58 }]
+rebuilt        : SymbolId(0): []
+
 * namespace/export-type-only/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["Platform"]
@@ -1371,6 +1431,11 @@ rebuilt        : ScopeId(0): []
    : ^^^^^^^^^^^^^^
    `----
 
+
+* namespace/nested-enum-after-namespace/input.ts
+Symbol redeclarations mismatch for "N":
+after transform: SymbolId(1): [Span { start: 37, end: 38 }, Span { start: 83, end: 84 }]
+rebuilt        : SymbolId(2): []
 
 * namespace/nested-namespace/input.ts
 Bindings mismatch:

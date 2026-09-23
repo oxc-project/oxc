@@ -1,7 +1,5 @@
 # edge-cases/html-in-js/template-expression-indent.js
 
-> We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently
-
 ## Option 1
 
 `````json
@@ -14,8 +12,8 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -1,11 +1,11 @@
- // prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+@@ -2,11 +2,11 @@
+ // see apps/oxfmt/DIVERGENCES.md#template-expression-indent
  _ = html`
    <div>
      ${
@@ -29,7 +27,7 @@
  `;
  
  // prettier/prettier#19518: nested embeds were not idempotent
-@@ -18,10 +18,10 @@
+@@ -19,10 +19,10 @@
              entry.children
                ? html`
                    <ol>
@@ -42,7 +40,7 @@
                  `
                : entry.title
            }
-@@ -35,16 +35,16 @@
+@@ -36,16 +36,16 @@
    return html`
      <div>
        <pre>
@@ -70,7 +68,8 @@
 ### Actual (oxfmt)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = html`
   <div>
     ${
@@ -126,7 +125,8 @@ const a = html`
 ### Expected (prettier)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = html`
   <div>
     ${
@@ -191,8 +191,8 @@ const a = html`
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -1,11 +1,11 @@
- // prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+@@ -2,11 +2,11 @@
+ // see apps/oxfmt/DIVERGENCES.md#template-expression-indent
  _ = html`
    <div>
      ${
@@ -206,7 +206,7 @@ const a = html`
  `;
  
  // prettier/prettier#19518: nested embeds were not idempotent
-@@ -18,12 +18,12 @@
+@@ -19,12 +19,12 @@
              entry.children
                ? html`
                    <ol>
@@ -223,7 +223,7 @@ const a = html`
                  `
                : entry.title
            }
-@@ -37,16 +37,16 @@
+@@ -38,16 +38,16 @@
    return html`
      <div>
        <pre>
@@ -251,7 +251,8 @@ const a = html`
 ### Actual (oxfmt)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = html`
   <div>
     ${
@@ -309,7 +310,8 @@ const a = html`
 ### Expected (prettier)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = html`
   <div>
     ${

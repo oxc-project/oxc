@@ -1,7 +1,5 @@
 # externals/gitlab/stylesheets/highlight/conflict_colors.scss
 
-> Allowed: Prettier drops blank lines in SCSS maps with paren values; ours preserves (prettier/prettier#16824)
-
 ## Option 1
 
 `````json

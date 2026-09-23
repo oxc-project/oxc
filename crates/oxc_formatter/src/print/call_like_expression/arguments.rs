@@ -28,7 +28,7 @@ use crate::{
     utils::{
         call_expression::is_test_call_expression,
         expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
-        member_chain::simple_argument::SimpleArgument,
+        member_chain::simple_argument::SimpleArgument, typecast::is_cast_target,
     },
     write,
 };
@@ -570,37 +570,34 @@ fn can_group_arrow_function_expression_argument(
     is_arrow_recursion: bool,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    arrow_function.get_expression().is_none_or(|expr| match expr {
-        Expression::ObjectExpression(_)
-        | Expression::ArrayExpression(_)
-        | Expression::JSXElement(_)
-        | Expression::JSXFragment(_) => true,
-        Expression::ArrowFunctionExpression(inner_arrow_function) => {
-            can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
-        }
-        // In Prettier's Babel AST, a JSDoc type cast like `/** @type {X} */ (expr)` preserves
-        // the `ParenthesizedExpression` wrapper, so `arg.body` is not a CallExpression and
-        // `couldExpandArg` naturally returns false. In oxc's AST the parens are stripped, so we
-        // must explicitly check for type cast comments to prevent incorrect grouping.
-        // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/call-arguments.js#L232-L234
-        //
-        // A call wrapped in `ChainExpression` / `TSNonNullExpression`
-        // (e.g. `a?.b()`, `a.b()!`) counts as a call,
-        // like Prettier's `isCallExpression(stripChainElementWrappers(body))`.
-        //
-        // NOTE: The conditional check is deliberately asymmetric:
-        // Prettier matches a bare `ConditionalExpression` body only,
-        // so a wrapped one (`(a ? b : c)!`) does not count.
-        // Not derivable from a principle; follow Prettier if it changes.
-        expr if matches!(expr, Expression::ConditionalExpression(_))
-            || as_call_expression_without_chain_wrappers(expr).is_some() =>
-        {
-            !is_arrow_recursion
-                && !f
-                    .comments()
-                    .has_type_cast_comment_in_range(arrow_function.span.start, expr.span().start)
-        }
-        _ => false,
+    arrow_function.get_expression().is_none_or(|expr| {
+        let shape_can_group = match expr {
+            Expression::ObjectExpression(_)
+            | Expression::ArrayExpression(_)
+            | Expression::JSXElement(_)
+            | Expression::JSXFragment(_) => true,
+            Expression::ArrowFunctionExpression(inner_arrow_function) => {
+                can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
+            }
+            // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/call-arguments.js#L232-L234
+            //
+            // A call wrapped in `ChainExpression` / `TSNonNullExpression`
+            // (e.g. `a?.b()`, `a.b()!`) counts as a call,
+            // like Prettier's `isCallExpression(stripChainElementWrappers(body))`.
+            //
+            // NOTE: The conditional check is deliberately asymmetric:
+            // Prettier matches a bare `ConditionalExpression` body only,
+            // so a wrapped one (`(a ? b : c)!`) does not count.
+            // Not derivable from a principle; follow Prettier if it changes.
+            expr if matches!(expr, Expression::ConditionalExpression(_))
+                || as_call_expression_without_chain_wrappers(expr).is_some() =>
+            {
+                !is_arrow_recursion
+            }
+            _ => false,
+        };
+        // A cast-wrapped body has no shape (see `is_cast_target`)
+        shape_can_group && !is_cast_target(expr.span(), f)
     })
 }
 
@@ -635,7 +632,7 @@ fn write_grouped_arguments<'a>(
                         AstNodes::Function(function)
                             if !group_layout.is_grouped_first()
                                 && (!only_one_argument
-                                    || function_has_only_simple_parameters(&function.params)) =>
+                                    || function_has_only_simple_parameters(function)) =>
                         {
                             has_cached = true;
                             return write!(f, [FormatFunction::new_cached(function), comma]);
@@ -879,7 +876,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedLastArgument<'a, '_> {
         // to remove any soft line breaks.
         match self.argument.as_ast_nodes() {
             AstNodes::Function(function)
-                if !self.is_only || function_has_only_simple_parameters(&function.params) =>
+                if !self.is_only || function_has_only_simple_parameters(function) =>
             {
                 FormatFunction::new_cached(function).fmt(f);
             }
@@ -899,8 +896,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedLastArgument<'a, '_> {
     }
 }
 
-fn function_has_only_simple_parameters(params: &FormalParameters<'_>) -> bool {
-    has_only_simple_parameters(params, false)
+fn function_has_only_simple_parameters(function: &Function<'_>) -> bool {
+    has_only_simple_parameters(&function.params, function.this_param.as_deref(), false)
 }
 
 /// Tests if this a simple module import like `import("module-name")` or `require("module-name")`.

@@ -48,6 +48,22 @@ describe("LSP formatting", () => {
         await formatFixture(FIXTURES_DIR, fixturePath, "typescript", client),
       ).toMatchSnapshot();
     });
+
+    it("should ignore nested vite config in Vite+ mode", async () => {
+      await using client = createLspConnection({ VP_VERSION: "1" });
+      const rootUri = pathToFileURL(join(FIXTURES_DIR, "config-vite-nested-ignored")).href;
+      await client.initialize([{ uri: rootUri, name: "test" }], {}, [
+        { workspaceUri: rootUri, options: null },
+      ]);
+      expect(
+        await formatFixture(
+          FIXTURES_DIR,
+          "config-vite-nested-ignored/child/test.ts",
+          "typescript",
+          client,
+        ),
+      ).toMatchSnapshot();
+    });
   });
 
   describe("config options in nested workspace folders", () => {

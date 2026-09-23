@@ -13,21 +13,22 @@ use oxc::{
 use rayon::prelude::*;
 use walkdir::WalkDir;
 
-use super::meta::{Baseline, BaselineFile, TestCaseContent};
+use super::{
+    BASELINES_PATH, CASES_PATH,
+    meta::{Baseline, BaselineFile, TestCaseContent},
+};
 use crate::{CoverageResult, TestResult, print_coverage, snapshot_results, workspace_root};
-
-const TESTS_ROOT: &str = "typescript/tests";
 
 pub fn run(filter: Option<&str>, detail: bool) {
     let results = run_transpile(filter);
     print_coverage("transpile", &results, detail);
     if filter.is_none() {
-        snapshot_results("transpile", Path::new("typescript/tests/cases/transpile"), &results);
+        snapshot_results("transpile", &Path::new(CASES_PATH).join("transpile"), &results);
     }
 }
 
 fn run_transpile(filter: Option<&str>) -> Vec<CoverageResult> {
-    let test_root = workspace_root().join(TESTS_ROOT).join("cases").join("transpile");
+    let test_root = workspace_root().join(CASES_PATH).join("transpile");
 
     let paths: Vec<_> = WalkDir::new(&test_root)
         .into_iter()
@@ -60,12 +61,10 @@ fn run_transpile(filter: Option<&str>) -> Vec<CoverageResult> {
 
 fn compare_baseline(path: &Path, content: &TestCaseContent) -> TestResult {
     // Get expected baseline
-    let rel_path = path
-        .strip_prefix(workspace_root().join(TESTS_ROOT).join("cases/transpile"))
-        .unwrap_or(path);
+    let rel_path =
+        path.strip_prefix(workspace_root().join(CASES_PATH).join("transpile")).unwrap_or(path);
     let filename = change_extension(rel_path.to_str().unwrap_or_default());
-    let baseline_path =
-        workspace_root().join(TESTS_ROOT).join("baselines/reference/transpile").join(&filename);
+    let baseline_path = workspace_root().join(BASELINES_PATH).join("transpile").join(&filename);
 
     let expected = BaselineFile::parse(&baseline_path);
     let actual = run_isolated_declarations(path, content);

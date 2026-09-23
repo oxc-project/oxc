@@ -1,15 +1,8 @@
 // Binding patterns.
 
 import { typeAssertIs } from "../asserts.ts";
-import {
-  CAT_CLOSE_BRACKET,
-  CAT_OTHER,
-  CAT_QUESTION,
-  write,
-  writeWithMap,
-  writeWithMapNamed,
-  writeWithMapNamedPrivate,
-} from "./write.ts";
+import { CAT_CLOSE_BRACKET, CAT_OTHER, CAT_QUESTION } from "./categories.ts";
+import { write, writeWithMap, writeWithMapNamed, writeWithMapNamedPrivate } from "./write.ts";
 import { printExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
 import { printLiteral } from "./literal.ts";

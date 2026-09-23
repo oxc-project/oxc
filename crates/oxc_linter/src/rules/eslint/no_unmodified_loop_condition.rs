@@ -1,5 +1,8 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
@@ -11,14 +14,23 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_unmodified_loop_condition_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is not modified in this loop.")).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoUnmodifiedLoopCondition;
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct NoUnmodifiedLoopCondition {
+    /// Whether references in each branch of a conditional expression should be checked
+    /// independently instead of checking the result of the entire expression.
+    check_conditional_expressions: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -50,22 +62,27 @@ declare_oxc_lint!(
     NoUnmodifiedLoopCondition,
     eslint,
     suspicious,
+    config = NoUnmodifiedLoopCondition,
     version = "1.48.0",
     short_description = "Disallow references in loop conditions that are never modified within the loop.",
 );
 
 impl Rule for NoUnmodifiedLoopCondition {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::WhileStatement(statement) => {
                 let loop_info =
                     LoopInfo { span: statement.span, node_id: node.id(), kind: LoopKind::While };
-                Self::check_loop_condition(&statement.test, &loop_info, ctx);
+                self.check_loop_condition(&statement.test, &loop_info, ctx);
             }
             AstKind::DoWhileStatement(statement) => {
                 let loop_info =
                     LoopInfo { span: statement.span, node_id: node.id(), kind: LoopKind::DoWhile };
-                Self::check_loop_condition(&statement.test, &loop_info, ctx);
+                self.check_loop_condition(&statement.test, &loop_info, ctx);
             }
             AstKind::ForStatement(statement) => {
                 let Some(test) = &statement.test else {
@@ -76,7 +93,7 @@ impl Rule for NoUnmodifiedLoopCondition {
                     node_id: node.id(),
                     kind: LoopKind::For { init_span: statement.init.as_ref().map(GetSpan::span) },
                 };
-                Self::check_loop_condition(test, &loop_info, ctx);
+                self.check_loop_condition(test, &loop_info, ctx);
             }
             _ => {}
         }
@@ -130,16 +147,18 @@ impl LoopInfo {
 
 impl NoUnmodifiedLoopCondition {
     fn check_loop_condition<'a>(
+        &self,
         condition: &Expression<'a>,
         loop_info: &LoopInfo,
         ctx: &LintContext<'a>,
     ) {
-        let mut collector = ConditionSymbolsCollector::new(ctx);
+        let mut collector = ConditionSymbolsCollector::new(ctx, self.check_conditional_expressions);
         collector.visit_expression(condition);
 
-        let mut standalone_symbols: Vec<(SymbolId, NodeId)> = vec![];
+        let mut standalone_symbols: Vec<(SymbolId, NodeId, bool)> = vec![];
         let mut standalone_seen: FxHashSet<SymbolId> = FxHashSet::default();
-        let mut grouped_symbols: FxHashMap<Span, Vec<(SymbolId, NodeId)>> = FxHashMap::default();
+        let mut grouped_symbols: FxHashMap<Span, Vec<(SymbolId, NodeId, bool)>> =
+            FxHashMap::default();
         let mut grouped_seen: FxHashMap<Span, FxHashSet<SymbolId>> = FxHashMap::default();
         let mut group_order: Vec<Span> = vec![];
         for symbol in collector.symbols {
@@ -151,14 +170,19 @@ impl NoUnmodifiedLoopCondition {
                     group_order.push(group_span);
                 }
                 let seen = grouped_seen.entry(group_span).or_default();
-                if seen.insert(symbol.symbol_id) {
-                    grouped_symbols
-                        .entry(group_span)
-                        .or_default()
-                        .push((symbol.symbol_id, symbol.reference_node_id));
+                if symbol.report_independently || seen.insert(symbol.symbol_id) {
+                    grouped_symbols.entry(group_span).or_default().push((
+                        symbol.symbol_id,
+                        symbol.reference_node_id,
+                        symbol.report_independently,
+                    ));
                 }
-            } else if standalone_seen.insert(symbol.symbol_id) {
-                standalone_symbols.push((symbol.symbol_id, symbol.reference_node_id));
+            } else if symbol.report_independently || standalone_seen.insert(symbol.symbol_id) {
+                standalone_symbols.push((
+                    symbol.symbol_id,
+                    symbol.reference_node_id,
+                    symbol.report_independently,
+                ));
             }
         }
 
@@ -166,11 +190,11 @@ impl NoUnmodifiedLoopCondition {
         let mut diagnostics: Vec<NodeId> = vec![];
         let mut reported_symbols: FxHashSet<SymbolId> = FxHashSet::default();
 
-        for (symbol_id, reference_node_id) in standalone_symbols {
+        for (symbol_id, reference_node_id, report_independently) in standalone_symbols {
             if Self::is_symbol_modified_cached(symbol_id, &mut modified_cache, loop_info, ctx) {
                 continue;
             }
-            if reported_symbols.insert(symbol_id) {
+            if report_independently || reported_symbols.insert(symbol_id) {
                 diagnostics.push(reference_node_id);
             }
         }
@@ -182,14 +206,14 @@ impl NoUnmodifiedLoopCondition {
             let Some(symbols) = grouped_symbols.get(&group_span) else {
                 continue;
             };
-            let has_modified_symbol = symbols.iter().any(|(symbol_id, _)| {
+            let has_modified_symbol = symbols.iter().any(|(symbol_id, _, _)| {
                 Self::is_symbol_modified_cached(*symbol_id, &mut modified_cache, loop_info, ctx)
             });
             if has_modified_symbol {
                 continue;
             }
-            for (symbol_id, reference_node_id) in symbols {
-                if reported_symbols.insert(*symbol_id) {
+            for (symbol_id, reference_node_id, report_independently) in symbols {
+                if *report_independently || reported_symbols.insert(*symbol_id) {
                     diagnostics.push(*reference_node_id);
                 }
             }
@@ -304,25 +328,38 @@ impl NoUnmodifiedLoopCondition {
 
 struct ConditionSymbolsCollector<'a, 'ctx> {
     ctx: &'ctx LintContext<'a>,
+    check_conditional_expressions: bool,
+    conditional_expression_depth: u32,
     symbols: Vec<ConditionSymbolInfo>,
     group_stack: Vec<Span>,
     dynamic_groups: FxHashSet<Span>,
 }
 
 impl<'a, 'ctx> ConditionSymbolsCollector<'a, 'ctx> {
-    fn new(ctx: &'ctx LintContext<'a>) -> Self {
-        Self { ctx, symbols: vec![], group_stack: vec![], dynamic_groups: FxHashSet::default() }
+    fn new(ctx: &'ctx LintContext<'a>, check_conditional_expressions: bool) -> Self {
+        Self {
+            ctx,
+            check_conditional_expressions,
+            conditional_expression_depth: 0,
+            symbols: vec![],
+            group_stack: vec![],
+            dynamic_groups: FxHashSet::default(),
+        }
     }
 }
 
 impl<'a> VisitJs<'a> for ConditionSymbolsCollector<'a, '_> {
     fn visit_expression(&mut self, expression: &Expression<'a>) {
-        let is_group_expression = matches!(
-            expression,
-            Expression::BinaryExpression(_) | Expression::ConditionalExpression(_)
-        );
+        let is_checked_conditional_expression = self.check_conditional_expressions
+            && matches!(expression, Expression::ConditionalExpression(_));
+        let is_group_expression = matches!(expression, Expression::BinaryExpression(_))
+            || (matches!(expression, Expression::ConditionalExpression(_))
+                && !is_checked_conditional_expression);
         if is_group_expression {
             self.group_stack.push(expression.span());
+        }
+        if is_checked_conditional_expression {
+            self.conditional_expression_depth += 1;
         }
 
         if matches!(
@@ -357,6 +394,9 @@ impl<'a> VisitJs<'a> for ConditionSymbolsCollector<'a, '_> {
         }
 
         walk_js::walk_expression(self, expression);
+        if is_checked_conditional_expression {
+            self.conditional_expression_depth -= 1;
+        }
         if is_group_expression {
             self.group_stack.pop();
         }
@@ -372,6 +412,7 @@ impl<'a> VisitJs<'a> for ConditionSymbolsCollector<'a, '_> {
             symbol_id,
             reference_node_id: reference.node_id(),
             group_span: self.group_stack.first().copied(),
+            report_independently: self.conditional_expression_depth > 0,
         });
     }
 }
@@ -380,6 +421,7 @@ struct ConditionSymbolInfo {
     symbol_id: SymbolId,
     reference_node_id: NodeId,
     group_span: Option<Span>,
+    report_independently: bool,
 }
 
 #[test]
@@ -435,5 +477,36 @@ fn test() {
     ];
 
     Tester::new(NoUnmodifiedLoopCondition::NAME, NoUnmodifiedLoopCondition::PLUGIN, pass, fail)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_check_conditional_expressions() {
+    use crate::tester::Tester;
+
+    let config = Some(serde_json::json!([{ "checkConditionalExpressions": true }]));
+    let pass = vec![(
+        "let foo = 0, bar = 1, baz = 2; while (foo ? bar : baz) { foo += 1; bar += 1; baz += 1; }",
+        config.clone(),
+    )];
+    let fail = vec![
+        ("let foo = 0, bar = 1, baz = 2; while (foo ? bar : baz) { foo += 1; }", config.clone()),
+        ("let foo = 0, bar = 1; while (foo ? foo : bar) { bar++; }", config.clone()),
+        (
+            "let flag = true, foo = 0; while (flag ? foo < foo : false) { flag = false; }",
+            config.clone(),
+        ),
+        (
+            "let flag = true, foo = 0; while (flag ? foo < 1 : foo < 2) { flag = false; }",
+            config.clone(),
+        ),
+        (
+            "let chunk = true, done = false; while (chunk ? !done : false) { chunk = nextOrNull(); }",
+            config,
+        ),
+    ];
+
+    Tester::new(NoUnmodifiedLoopCondition::NAME, NoUnmodifiedLoopCondition::PLUGIN, pass, fail)
+        .with_snapshot_suffix("check_conditional_expressions")
         .test_and_snapshot();
 }

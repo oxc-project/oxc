@@ -1,7 +1,5 @@
 # edge-cases/css-in-js/template-expression-indent.js
 
-> We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently
-
 ## Option 1
 
 `````json
@@ -14,8 +12,8 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -1,10 +1,10 @@
- // prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+@@ -2,10 +2,10 @@
+ // see apps/oxfmt/DIVERGENCES.md#template-expression-indent
  _ = css`
    a {
      color: ${
@@ -35,7 +33,8 @@
 ### Actual (oxfmt)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = css`
   a {
     color: ${
@@ -51,7 +50,8 @@ _ = css`
 ### Expected (prettier)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = css`
   a {
     color: ${
@@ -76,8 +76,8 @@ _ = css`
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -1,10 +1,10 @@
- // prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+@@ -2,10 +2,10 @@
+ // see apps/oxfmt/DIVERGENCES.md#template-expression-indent
  _ = css`
    a {
      color: ${
@@ -97,7 +97,8 @@ _ = css`
 ### Actual (oxfmt)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = css`
   a {
     color: ${
@@ -113,7 +114,8 @@ _ = css`
 ### Expected (prettier)
 
 `````js
-// prettier/prettier#19725: embedded `${expr}` no longer preserves source indentation
+// DIVERGES: embedded `${expr}` re-indents to the placeholder (Prettier preserves the source indentation);
+// see apps/oxfmt/DIVERGENCES.md#template-expression-indent
 _ = css`
   a {
     color: ${

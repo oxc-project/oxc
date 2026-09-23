@@ -134,10 +134,8 @@ impl Rule for BranchesSharingCode {
             if start == 1
                 && let Some(indent) = get_preceding_indent_str(ctx.source_text(), if_stmt.span)
             {
-                let delete_spans = bodies
-                    .iter()
-                    .map(|body| get_duplicated_delete_span(start, body, false))
-                    .collect::<Vec<_>>();
+                let delete_spans =
+                    bodies.iter().map(|body| get_duplicated_delete_span(start, body, false));
                 let moved_code = ctx.source_range(spans[0]);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
@@ -163,10 +161,8 @@ impl Rule for BranchesSharingCode {
                 && let Some(indent) = get_preceding_indent_str(ctx.source_text(), if_stmt.span)
                 && !duplicated_end_references_branch_locals(end, &bodies, ctx)
             {
-                let delete_spans = bodies
-                    .iter()
-                    .map(|body| get_duplicated_delete_span(end, body, true))
-                    .collect::<Vec<_>>();
+                let delete_spans =
+                    bodies.iter().map(|body| get_duplicated_delete_span(end, body, true));
                 let moved_code = ctx.source_range(spans[0]);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();

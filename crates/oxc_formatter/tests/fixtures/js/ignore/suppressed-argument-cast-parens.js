@@ -1,0 +1,50 @@
+// A suppressed expression's verbatim range is its span, which excludes the
+// node's own wrapping source parens (`preserve_parens: false`). A cast target
+// must keep them, or `/** @type {A} */ x` silently stops being a cast for tsc.
+
+foo(
+  // prettier-ignore
+  /** @type {A} */ (x),
+  /** @type {B} */ (y),
+);
+
+// Nested parens are kept as written.
+foo(
+  // prettier-ignore
+  /** @type {A} */ ((x)),
+);
+
+// In-paren comments stay in place via the verbatim text (no duplication).
+foo(
+  // prettier-ignore
+  /** @type {B} */ (/* in */ z),
+  // prettier-ignore
+  /** @type {C} */ (v /* :) */),
+);
+
+// A cast-shaped comment not immediately followed by `(` is not a cast:
+// the parens drop, like Prettier.
+foo(
+  // prettier-ignore
+  /** @type {D} */ /* mid */ (u),
+);
+
+// Bare parens (no cast comment) also drop, like Prettier.
+foo(
+  // prettier-ignore
+  (x + 1),
+);
+
+// Trailing comment after the closing paren stays trailing.
+foo(
+  // prettier-ignore
+  /** @type {C} */ (z) /* t */,
+  w,
+);
+
+// An arrow's sequence body routes through the same owner:
+// the source cast parens double as the body parens it forces (no `((...))`),
+// and the in-paren comment survives in place.
+const g = () =>
+  // prettier-ignore
+  /** @type {A} */ (/* c */ a, b);

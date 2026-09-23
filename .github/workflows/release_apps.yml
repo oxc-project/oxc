@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       - uses: ./.github/actions/check-version
         id: oxfmt
@@ -150,7 +150,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@a2a5f6e99e1a31540baa0468acfa302cff0f359f # v2.86.4
+        uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -159,7 +159,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -221,43 +221,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - name: Build
-        id: build
-        uses: cross-platform-actions/action@24ef01df165c76df1ed2b9f9e9212e78dc2fc963 # v1.4.0
-        env:
-          DEBUG: napi:*
-          RUSTUP_IO_THREADS: 1
+
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+
+      - run: rustup target add x86_64-unknown-freebsd
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          operating_system: freebsd
-          version: "14.2"
-          memory: 8G
-          cpu_count: 3
-          environment_variables: "DEBUG RUSTUP_IO_THREADS"
-          shell: bash
-          run: |
-            sudo pkg install -y -f curl libnghttp2 node22 npm cmake ca_root_nss
-            curl https://sh.rustup.rs -sSf --output rustup.sh
-            sh rustup.sh -y --profile minimal --default-toolchain stable
-            source "$HOME/.cargo/env"
-            echo "~~~~ rustc --version ~~~~"
-            rustc --version
-            echo "~~~~ node -v ~~~~"
-            node -v
-            pwd
-            ls -lah
-            whoami
-            env
-            export COREPACK_INTEGRITY_KEYS=0
-            sudo corepack enable
-            pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
-            cd apps/oxlint
-            pnpm run build-napi-release --target x86_64-unknown-freebsd
-            cd ../..
-            cargo build --release -p oxlint --features allocator --target=x86_64-unknown-freebsd
-            rm -rf node_modules
-            rm -rf target/x86_64-unknown-freebsd/release/build
-            rm -rf target/x86_64-unknown-freebsd/release/deps
-            rm -rf target/x86_64-unknown-freebsd/release/incremental
+          version: "0.15.2"
+
+      - name: Install cargo-zigbuild
+        uses: jaxxstorm/action-install-gh-release@25e24d2d23ae098373794ef1d6faecb48ee52da8 # v3.0.0
+        with:
+          repo: rust-cross/cargo-zigbuild
+
+      - name: Build oxlint for node.js
+        working-directory: apps/oxlint
+        run: pnpm run build-napi-release --target x86_64-unknown-freebsd -x
+
+      - name: Build Rust binary
+        run: cargo zigbuild --release -p oxlint --features allocator --target=x86_64-unknown-freebsd
 
       - name: Upload NAPI artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -314,7 +298,7 @@ jobs:
           path: artifacts
           pattern: oxlint-bindings-*
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       - name: Generate oxlint JS build
         working-directory: apps/oxlint
@@ -456,7 +440,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@a2a5f6e99e1a31540baa0468acfa302cff0f359f # v2.86.4
+        uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -465,7 +449,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -527,43 +511,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - name: Build
-        id: build
-        uses: cross-platform-actions/action@24ef01df165c76df1ed2b9f9e9212e78dc2fc963 # v1.4.0
-        env:
-          DEBUG: napi:*
-          RUSTUP_IO_THREADS: 1
+
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+
+      - run: rustup target add x86_64-unknown-freebsd
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          operating_system: freebsd
-          version: "14.2"
-          memory: 8G
-          cpu_count: 3
-          environment_variables: "DEBUG RUSTUP_IO_THREADS"
-          shell: bash
-          run: |
-            sudo pkg install -y -f curl libnghttp2 node22 npm cmake ca_root_nss
-            curl https://sh.rustup.rs -sSf --output rustup.sh
-            sh rustup.sh -y --profile minimal --default-toolchain stable
-            source "$HOME/.cargo/env"
-            echo "~~~~ rustc --version ~~~~"
-            rustc --version
-            echo "~~~~ node -v ~~~~"
-            node -v
-            pwd
-            ls -lah
-            whoami
-            env
-            export COREPACK_INTEGRITY_KEYS=0
-            sudo corepack enable
-            pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
-            cd apps/oxfmt
-            pnpm run build-napi-release --target x86_64-unknown-freebsd
-            cd ../..
-            cargo build --release -p oxfmt --no-default-features --features allocator --target=x86_64-unknown-freebsd
-            rm -rf node_modules
-            rm -rf target/x86_64-unknown-freebsd/release/build
-            rm -rf target/x86_64-unknown-freebsd/release/deps
-            rm -rf target/x86_64-unknown-freebsd/release/incremental
+          version: "0.15.2"
+
+      - name: Install cargo-zigbuild
+        uses: jaxxstorm/action-install-gh-release@25e24d2d23ae098373794ef1d6faecb48ee52da8 # v3.0.0
+        with:
+          repo: rust-cross/cargo-zigbuild
+
+      - name: Build oxfmt for node.js
+        working-directory: apps/oxfmt
+        run: pnpm run build-napi-release --target x86_64-unknown-freebsd -x
+
+      - name: Build Rust binary
+        run: cargo zigbuild --release -p oxfmt --no-default-features --features allocator --target=x86_64-unknown-freebsd
 
       - name: Upload NAPI artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -607,7 +575,7 @@ jobs:
           path: artifacts
           pattern: oxfmt-bindings-*
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       - name: Generate oxfmt JS build
         working-directory: apps/oxfmt
@@ -633,7 +601,7 @@ jobs:
           bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
 
   github-release:
-    name: GitHub Release
+    name: GitHub Releases
     needs:
       [
         check,
@@ -667,28 +635,11 @@ jobs:
           tools: cargo-release-oxc
 
       - name: Generate changelog
-        id: run
         run: |
           mkdir -p target
           cargo release-oxc changelog --release oxfmt --release oxlint
-          {
-            echo "## Table of Contents"
-            echo ""
-            echo "- [Oxlint v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION}](#oxlint-v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION})"
-            echo "- [Oxfmt v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}](#oxfmt-v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION})"
-            echo ""
-            echo "## Oxlint v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION}"
-            cat ./target/OXLINT_CHANGELOG
-            echo ""
-            echo ""
-            echo "## Oxfmt v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}"
-            cat ./target/OXFMT_CHANGELOG
-          } > ./target/RELEASE_BODY.md
-        env:
-          NEEDS_CHECK_OUTPUTS_OXLINT_VERSION: ${{ needs.check.outputs.oxlint_version }}
-          NEEDS_CHECK_OUTPUTS_OXFMT_VERSION: ${{ needs.check.outputs.oxfmt_version }}
 
-      - name: tag oxlint and oxfmt
+      - name: Tag Oxlint and Oxfmt
         env:
           NEEDS_CHECK_OUTPUTS_OXFMT_VERSION: ${{ needs.check.outputs.oxfmt_version }}
           NEEDS_CHECK_OUTPUTS_OXLINT_VERSION: ${{ needs.check.outputs.oxlint_version }}
@@ -711,14 +662,19 @@ jobs:
           done
           ls
 
-      - name: Create GitHub Release
-        id: release
+      - name: Create Oxfmt GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          GIT_TAG: apps_v${{ needs.check.outputs.oxlint_version }}
-          GIT_TARGET: ${{ github.sha }}
-          TITLE: "oxlint v${{ needs.check.outputs.oxlint_version }} & oxfmt v${{ needs.check.outputs.oxfmt_version }}"
-        run: gh release create ${GIT_TAG} ./release-artifacts/* --title "${TITLE}" --notes-file ./target/RELEASE_BODY.md --target ${GIT_TARGET}
+          GIT_TAG: oxfmt_v${{ needs.check.outputs.oxfmt_version }}
+          TITLE: oxfmt v${{ needs.check.outputs.oxfmt_version }}
+        run: gh release create "${GIT_TAG}" ./release-artifacts/oxfmt-* --title "${TITLE}" --notes-file ./target/OXFMT_CHANGELOG --verify-tag --latest=false
+
+      - name: Create Oxlint GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_TAG: oxlint_v${{ needs.check.outputs.oxlint_version }}
+          TITLE: oxlint v${{ needs.check.outputs.oxlint_version }}
+        run: gh release create "${GIT_TAG}" ./release-artifacts/oxlint-* --title "${TITLE}" --notes-file ./target/OXLINT_CHANGELOG --verify-tag --latest
 
       - name: wait 3 minutes for smoke test
         run: sleep 180s
@@ -739,8 +695,8 @@ jobs:
     container: ${{ matrix.container }}
     env:
       RELEASE_EMBED_TITLE: oxlint v${{ needs.check.outputs.oxlint_version }} & oxfmt v${{ needs.check.outputs.oxfmt_version }}
-      RELEASE_EMBED_DESCRIPTION: A new release is available! Check the changelog for details.
-      RELEASE_EMBED_URL: https://github.com/${{ github.repository }}/releases/tag/apps_v${{ needs.check.outputs.oxlint_version }}
+      RELEASE_EMBED_DESCRIPTION: New releases are available! Check the changelogs for details.
+      RELEASE_EMBED_URL: https://github.com/${{ github.repository }}/releases
     steps:
       - name: Test
         # These commands should be run on these defaults:
@@ -790,7 +746,7 @@ jobs:
             mirrors-oxfmt
 
       - name: Bump oxc-project/eslint-plugin-oxlint
-        uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
+        uses: benc-uk/workflow-dispatch@d004979be141727c7a17c28f603e2facc40d0855 # v1.3.3
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml
@@ -799,7 +755,7 @@ jobs:
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
       - name: Bump oxc-project/oxlint-migrate
-        uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
+        uses: benc-uk/workflow-dispatch@d004979be141727c7a17c28f603e2facc40d0855 # v1.3.3
         with:
           repo: oxc-project/oxlint-migrate
           workflow: bump_oxlint.yml
@@ -808,7 +764,7 @@ jobs:
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
       - name: Bump oxc-project/mirrors-oxlint
-        uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
+        uses: benc-uk/workflow-dispatch@d004979be141727c7a17c28f603e2facc40d0855 # v1.3.3
         with:
           repo: oxc-project/mirrors-oxlint
           workflow: main.yml
@@ -816,7 +772,7 @@ jobs:
           ref: main
 
       - name: Bump oxc-project/mirrors-oxfmt
-        uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
+        uses: benc-uk/workflow-dispatch@d004979be141727c7a17c28f603e2facc40d0855 # v1.3.3
         with:
           repo: oxc-project/mirrors-oxfmt
           workflow: main.yml

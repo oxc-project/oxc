@@ -1,6 +1,7 @@
 // String literal printing (port of `str.rs`, pretty mode: fixed quote).
 
-import { CAT_OTHER, write, writeNoLast, writeWithMapNoLast } from "./write.ts";
+import { CAT_OTHER } from "./categories.ts";
+import { write, writeNoLast, writeWithMapNoLast } from "./write.ts";
 import { debugAssert } from "../asserts.ts";
 
 import type { State } from "../state.ts";

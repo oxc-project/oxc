@@ -9,7 +9,6 @@
 
 use std::{cmp::max, fmt};
 
-use owo_colors::{OwoColorize, Style};
 use smallvec::SmallVec;
 
 use super::{
@@ -17,7 +16,7 @@ use super::{
     line::Line,
     span::{FancySpan, LabelRenderMode},
 };
-use crate::handlers::theme::ThemeCharacters;
+use crate::handlers::theme::{DiagnosticColorize, Style, ThemeCharacters};
 
 struct Underline {
     padding: usize,
@@ -351,7 +350,7 @@ mod tests {
             let label = LabelText {
                 chars: &theme.characters,
                 label: "plain label",
-                style: Style::new(),
+                style: Style::Plain,
                 render_mode,
             };
             output.clear();

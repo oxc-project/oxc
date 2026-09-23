@@ -620,3 +620,51 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ╰── It is first imported here
    ╰────
   help: Merge these imports into a single import statement
+
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json' };
+   ·                 ───┬───                                        ───────
+   ·                    ╰── It is first imported here
+   ╰────
+  help: Merge these imports into a single import statement
+
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo' with { type: 'json', mode: 'one' }; import {y} from './foo' with { 'mode': 'one', 'type': 'json' };
+   ·                 ───┬───                                                     ───────
+   ·                    ╰── It is first imported here
+   ╰────
+  help: Merge these imports into a single import statement
+
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo' with {}; import {y} from './foo';
+   ·                 ───┬───                          ───────
+   ·                    ╰── It is first imported here
+   ╰────
+  help: Merge these imports into a single import statement
+
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' }; import {z} from './foo' with { type: 'json' };
+   ·                 ───┬───                                                                                      ───────
+   ·                    ╰── It is first imported here
+   ╰────
+  help: Merge these imports into a single import statement
+
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
+   ╭─[index.ts:1:8]
+ 1 │ import './foo' with { mode: 'one' }; import './foo' with { mode: 'one' };
+   ·        ───┬───                              ───────
+   ·           ╰── It is first imported here
+   ╰────
+  help: Merge these imports into a single import statement
+
+  ⚠ import(no-duplicates): Module './foo' is imported more than once in this file
+   ╭─[index.ts:1:20]
+ 1 │ import * as x from './foo' with { mode: 'one' }; import * as y from './foo' with { mode: 'one' };
+   ·                    ───┬───                                          ───────
+   ·                       ╰── It is first imported here
+   ╰────
+  help: Merge these imports into a single import statement

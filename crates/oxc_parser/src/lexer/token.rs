@@ -52,7 +52,7 @@ const _: () = {
     assert!(is_valid_shift::<bool>(HAS_SEPARATOR_SHIFT));
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct Token(u128);
 

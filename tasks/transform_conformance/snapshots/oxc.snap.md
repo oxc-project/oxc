@@ -1,6 +1,6 @@
-commit: 1eac4481
+commit: fd665901
 
-Passed: 270/398
+Passed: 280/408
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -34,7 +34,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (29/33)
+# babel-plugin-transform-class-properties (31/35)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (41/60)
+# babel-plugin-transform-typescript (43/62)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -488,7 +488,7 @@ Bindings mismatch:
 after transform: ScopeId(3): ["Cls2"]
 rebuilt        : ScopeId(4): []
 Symbol reference IDs mismatch for "dec":
-after transform: SymbolId(0): [ReferenceId(4), ReferenceId(0), ReferenceId(1), ReferenceId(3)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
 Symbol scope ID mismatch for "Cls":
 after transform: SymbolId(4): ScopeId(1)

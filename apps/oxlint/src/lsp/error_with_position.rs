@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
 use oxc_span::Span;
-use tower_lsp_server::ls_types::{
-    self, CodeDescription, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
-    NumberOrString, Position, Range, Uri,
+use tower_lsp_server::gen_lsp_types::{
+    Code, CodeDescription, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, Location,
+    Message as LspMessage, Range, Uri,
 };
 
 use oxc_diagnostics::{OxcCode, Severity};
@@ -31,8 +31,8 @@ pub struct LinterCodeAction {
 
 #[derive(Debug, Clone)]
 pub struct FixedContent {
-    pub message: String,
-    pub code: String,
+    pub message: Cow<'static, str>,
+    pub code: Cow<'static, str>,
     pub range: Range,
     pub kind: FixKind,
     pub lsp_kind: FixedContentKind,
@@ -54,12 +54,12 @@ impl RulesCustomization {
 impl TryFrom<RuleCustomizationSeverity> for DiagnosticSeverity {
     type Error = &'static str;
 
-    fn try_from(value: RuleCustomizationSeverity) -> Result<Self, Self::Error> {
+    fn try_from(value: RuleCustomizationSeverity) -> Result<Self, &'static str> {
         match value {
-            RuleCustomizationSeverity::Error => Ok(DiagnosticSeverity::ERROR),
-            RuleCustomizationSeverity::Warn => Ok(DiagnosticSeverity::WARNING),
-            RuleCustomizationSeverity::Hint => Ok(DiagnosticSeverity::HINT),
-            RuleCustomizationSeverity::Info => Ok(DiagnosticSeverity::INFORMATION),
+            RuleCustomizationSeverity::Error => Ok(DiagnosticSeverity::Error),
+            RuleCustomizationSeverity::Warn => Ok(DiagnosticSeverity::Warning),
+            RuleCustomizationSeverity::Hint => Ok(DiagnosticSeverity::Hint),
+            RuleCustomizationSeverity::Info => Ok(DiagnosticSeverity::Information),
             RuleCustomizationSeverity::Off => Err(
                 "Off severity should not be converted to DiagnosticSeverity as it means the rule is disabled and should not produce diagnostics.",
             ),
@@ -69,9 +69,9 @@ impl TryFrom<RuleCustomizationSeverity> for DiagnosticSeverity {
 
 fn severity_to_lsp_severity(value: Severity) -> DiagnosticSeverity {
     match value {
-        Severity::Error => DiagnosticSeverity::ERROR,
-        Severity::Warning => DiagnosticSeverity::WARNING,
-        Severity::Advice => DiagnosticSeverity::HINT,
+        Severity::Error => DiagnosticSeverity::Error,
+        Severity::Warning => DiagnosticSeverity::Warning,
+        Severity::Advice => DiagnosticSeverity::Hint,
     }
 }
 pub fn message_to_lsp_diagnostic(
@@ -101,13 +101,13 @@ pub fn message_to_lsp_diagnostic(
                 .iter()
                 .map(|span| {
                     let offset = span.offset();
-                    let start_position = offset_to_position(offset, source_text);
-                    let end_position = offset_to_position(offset + span.len(), source_text);
+                    let start_position = lsp_offset_to_position(source_text, offset);
+                    let end_position = lsp_offset_to_position(source_text, offset + span.len());
 
-                    ls_types::DiagnosticRelatedInformation {
-                        location: ls_types::Location {
+                    DiagnosticRelatedInformation {
+                        location: Location {
                             uri: uri.clone(),
-                            range: ls_types::Range::new(start_position, end_position),
+                            range: Range::new(start_position, end_position),
                         },
                         message: span
                             .label()
@@ -118,8 +118,8 @@ pub fn message_to_lsp_diagnostic(
         )
     };
 
-    let start_position = offset_to_position(message.span.start, source_text);
-    let end_position = offset_to_position(message.span.end, source_text);
+    let start_position = lsp_offset_to_position(source_text, message.span.start);
+    let end_position = lsp_offset_to_position(source_text, message.span.end);
     let range = Range::new(start_position, end_position);
 
     let code = message.error.code.to_string();
@@ -147,21 +147,11 @@ pub fn message_to_lsp_diagnostic(
         diagnostic_message.push_str(note);
     }
 
-    // 1) Use `fixed_content.message` if it exists
-    // 2) Try to parse the report diagnostic message
-    // 3) Fallback to "Fix this problem"
-    let alternative_fix_title: Cow<'static, str> =
-        if let Some(code) = message.error.message.split(':').next() {
-            format!("Fix this {code} problem").into()
-        } else {
-            std::borrow::Cow::Borrowed("Fix this problem")
-        };
-
     let diagnostic = Diagnostic {
         range,
         severity: Some(severity),
-        code: Some(NumberOrString::String(code)),
-        message: diagnostic_message,
+        code: Some(Code::String(code)),
+        message: LspMessage::String(diagnostic_message),
         source: Some("oxc".into()),
         code_description,
         related_information,
@@ -171,26 +161,20 @@ pub fn message_to_lsp_diagnostic(
 
     let mut fixed_content = Vec::with_capacity(message.fixes.len());
 
-    // Convert PossibleFixes directly to PossibleFixContent
+    // Convert PossibleFixes directly to FixedContent
     match message.fixes {
         PossibleFixes::None => {}
-        PossibleFixes::Single(mut fix) => {
-            if fix.message.is_none() {
-                fix.message = Some(alternative_fix_title);
-            }
+        PossibleFixes::Single(fix) => {
             fixed_content.push(fix_to_fixed_content(
-                &fix,
+                fix,
                 source_text,
                 FixedContentKind::LintRule(message.error.code.clone()),
             ));
         }
         PossibleFixes::Multiple(fixes) => {
-            fixed_content.extend(fixes.into_iter().map(|mut fix| {
-                if fix.message.is_none() {
-                    fix.message = Some(alternative_fix_title.clone());
-                }
+            fixed_content.extend(fixes.into_iter().map(|fix| {
                 fix_to_fixed_content(
-                    &fix,
+                    fix,
                     source_text,
                     FixedContentKind::LintRule(message.error.code.clone()),
                 )
@@ -207,18 +191,23 @@ pub fn message_to_lsp_diagnostic(
     Some(DiagnosticReport { diagnostic, code_action })
 }
 
-fn fix_to_fixed_content(fix: &Fix, source_text: &str, fix_kind: FixedContentKind) -> FixedContent {
-    let start_position = offset_to_position(fix.span.start, source_text);
-    let end_position = offset_to_position(fix.span.end, source_text);
+fn fix_to_fixed_content(fix: Fix, source_text: &str, fix_kind: FixedContentKind) -> FixedContent {
+    let start_position = lsp_offset_to_position(source_text, fix.span.start);
+    let end_position = lsp_offset_to_position(source_text, fix.span.end);
 
-    debug_assert!(
-        fix.message.is_some(),
-        "Fix message should be present. `message_to_lsp_diagnostic` should modify fixes to include messages."
-    );
+    let message = fix.message.unwrap_or_else(|| {
+        let rule_name = match &fix_kind {
+            FixedContentKind::LintRule(code) => {
+                get_full_rule_name(code).unwrap_or(Cow::Borrowed("this"))
+            }
+            FixedContentKind::UnusedDirective => Cow::Borrowed("this"),
+        };
+        Cow::Owned(format!("Fix {rule_name} problem"))
+    });
 
     FixedContent {
-        message: fix.message.as_ref().map(std::string::ToString::to_string).unwrap_or_default(),
-        code: fix.content.to_string(),
+        message,
+        code: fix.content,
         range: Range::new(start_position, end_position),
         kind: fix.kind,
         lsp_kind: fix_kind,
@@ -235,7 +224,7 @@ pub fn generate_inverted_diagnostics(
             continue;
         };
         let related_information = Some(vec![DiagnosticRelatedInformation {
-            location: ls_types::Location { uri: uri.clone(), range: d.diagnostic.range },
+            location: Location { uri: uri.clone(), range: d.diagnostic.range },
             message: "original diagnostic".to_string(),
         }]);
         for r in related_info {
@@ -250,9 +239,9 @@ pub fn generate_inverted_diagnostics(
             inverted_diagnostics.push(DiagnosticReport {
                 diagnostic: Diagnostic {
                     range: r.location.range,
-                    severity: Some(DiagnosticSeverity::HINT),
+                    severity: Some(DiagnosticSeverity::Hint),
                     code: None,
-                    message: r.message.clone(),
+                    message: LspMessage::String(r.message.clone()),
                     source: d.diagnostic.source.clone(),
                     code_description: None,
                     related_information: related_information.clone(),
@@ -276,9 +265,9 @@ pub fn create_unused_directives_report(
     let fix_message = "remove unused disable directive";
 
     let severity = if severity == AllowWarnDeny::Deny {
-        DiagnosticSeverity::ERROR
+        DiagnosticSeverity::Error
     } else {
-        DiagnosticSeverity::WARNING
+        DiagnosticSeverity::Warning
     };
 
     // Report unused disable comments
@@ -293,7 +282,7 @@ pub fn create_unused_directives_report(
                     span,
                     severity,
                     source_text,
-                    Some(&Fix::delete(fix_span).with_message(fix_message)),
+                    Some(Fix::delete(fix_span).with_message(fix_message)),
                 ));
             }
             RuleCommentType::Single(rules) => {
@@ -303,7 +292,7 @@ pub fn create_unused_directives_report(
                         rule.name_span,
                         severity,
                         source_text,
-                        Some(&rule.create_fix(source_text, span).with_message(fix_message)),
+                        Some(rule.create_fix(source_text, span).with_message(fix_message)),
                     ));
                 }
             }
@@ -337,10 +326,10 @@ fn build_unused_disable_diagnostic_report(
     span: Span,
     severity: DiagnosticSeverity,
     source_text: &str,
-    fix: Option<&Fix>,
+    fix: Option<Fix>,
 ) -> DiagnosticReport {
-    let start_position = offset_to_position(span.start, source_text);
-    let end_position = offset_to_position(span.end, source_text);
+    let start_position = lsp_offset_to_position(source_text, span.start);
+    let end_position = lsp_offset_to_position(source_text, span.end);
     let range = Range::new(start_position, end_position);
 
     DiagnosticReport {
@@ -348,7 +337,7 @@ fn build_unused_disable_diagnostic_report(
             range,
             severity: Some(severity),
             code: Some("".into()),
-            message,
+            message: LspMessage::String(message),
             source: Some("oxc".into()),
             code_description: None,
             related_information: None,
@@ -363,64 +352,5 @@ fn build_unused_disable_diagnostic_report(
                 FixedContentKind::UnusedDirective,
             )],
         }),
-    }
-}
-
-pub fn offset_to_position(offset: u32, source_text: &str) -> Position {
-    lsp_offset_to_position(source_text, offset)
-}
-
-#[cfg(test)]
-#[expect(clippy::cast_possible_truncation)]
-mod test {
-    use super::offset_to_position;
-
-    #[test]
-    fn single_line() {
-        let source = "foo.bar!;";
-        assert_position(source, 0, (0, 0));
-        assert_position(source, 4, (0, 4));
-        assert_position(source, 9, (0, 9));
-    }
-
-    #[test]
-    fn multi_line() {
-        let source = "console.log(\n  foo.bar!\n);";
-        assert_position(source, 0, (0, 0));
-        assert_position(source, 12, (0, 12));
-        assert_position(source, 13, (1, 0));
-        assert_position(source, 23, (1, 10));
-        assert_position(source, 24, (2, 0));
-        assert_position(source, 26, (2, 2));
-    }
-
-    #[test]
-    fn multi_byte() {
-        let source = "let foo = \n  '👍';";
-        assert_position(source, 10, (0, 10));
-        assert_position(source, 11, (1, 0));
-        assert_position(source, 14, (1, 3));
-        assert_position(source, 18, (1, 5));
-        assert_position(source, 19, (1, 6));
-    }
-
-    #[test]
-    fn unicode_line_and_paragraph_separators_are_not_lsp_line_breaks() {
-        let source = "a\u{2028}b\nc\u{2029}d";
-        assert_position(source, source.find('b').unwrap() as u32, (0, 2));
-        assert_position(source, source.find('c').unwrap() as u32, (1, 0));
-        assert_position(source, source.find('d').unwrap() as u32, (1, 2));
-    }
-
-    #[test]
-    #[should_panic(expected = "out of bounds")]
-    fn out_of_bounds() {
-        offset_to_position(100, "foo");
-    }
-
-    fn assert_position(source: &str, offset: u32, expected: (u32, u32)) {
-        let position = offset_to_position(offset, source);
-        assert_eq!(position.line, expected.0);
-        assert_eq!(position.character, expected.1);
     }
 }

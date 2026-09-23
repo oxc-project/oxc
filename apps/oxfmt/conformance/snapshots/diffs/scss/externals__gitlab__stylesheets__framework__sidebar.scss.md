@@ -1,7 +1,5 @@
 # externals/gitlab/stylesheets/framework/sidebar.scss
 
-> long-expr line-break position
-
 ## Option 2
 
 `````json

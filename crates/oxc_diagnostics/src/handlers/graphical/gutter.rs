@@ -8,14 +8,13 @@
 
 use std::fmt::{self, Write};
 
-use owo_colors::OwoColorize;
-
 use super::{
     handler::GraphicalReportHandler,
     label::write_repeated_char,
     line::Line,
     span::{FancySpan, LabelRenderMode},
 };
+use crate::handlers::theme::DiagnosticColorize;
 
 impl GraphicalReportHandler {
     pub(super) fn write_linum(

@@ -602,17 +602,11 @@ fn is_redundant_property(property: &ObjectProperty) -> bool {
 }
 
 fn can_property_have_shorthand(property: &ObjectProperty) -> bool {
-    // Ignore getters and setters
-    if property.kind != PropertyKind::Init {
-        return false;
-    }
-
-    // Ignore computed properties, unless they are functions
-    if property.computed && !is_property_value_function(property) {
-        return false;
-    }
-
-    true
+    property.kind == PropertyKind::Init
+        && (property.computed
+            || (!property.key.is_specific_id("__proto__")
+                && !property.key.is_specific_string_literal("__proto__")))
+        && (!property.computed || is_property_value_function(property))
 }
 
 #[test]
@@ -975,6 +969,20 @@ fn test() {
                * @param {string} name
                */ (val) })",
             None,
+        ),
+        ("({ __proto__: function() {} })", None),
+        ("({ '__proto__': function() {} })", None),
+        ("({ __proto__: __proto__ })", Some(serde_json::json!(["properties"]))),
+        ("({ '__proto__': __proto__ })", Some(serde_json::json!(["properties"]))),
+        ("({ __proto__() {} })", Some(serde_json::json!(["never"]))),
+        ("({ __proto__ })", Some(serde_json::json!(["never"]))),
+        ("({ '__proto__'() {} })", Some(serde_json::json!(["always", { "avoidQuotes": true }]))),
+        (
+            "({ __proto__: () => {} })",
+            Some(serde_json::json!([
+                "always",
+                { "avoidExplicitReturnArrows": true }
+            ])),
         ),
     ];
 
@@ -2016,6 +2024,12 @@ fn test() {
                             }
                         ",
             Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        ("({ ['__proto__']: function() {} })", "({ ['__proto__']() {} })", None),
+        (
+            "({ ['__proto__']() {} })",
+            "({ ['__proto__']: function() {} })",
+            Some(serde_json::json!(["never"])),
         ),
     ];
 

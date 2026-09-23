@@ -24,8 +24,8 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         with:
           path: |
             /home/runner/.rustup
@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
           save-cache: ${{ github.ref_name == 'main' }}
@@ -58,14 +58,14 @@ jobs:
     runs-on: namespace-profile-mac-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
       # `cache: pnpm` is intentionally omitted. On Mac OS, `cache: pnpm` replaces the pnpm store directory
       # (`~/setup-pnpm/node_modules/.bin/store/v11`) with a symlink into the Namespace cache volume.
       # But `oxc-project/setup-node` also caches that same path via `actions/cache`, and at job end
       # `tar` archives the symlink record itself rather than the store contents - producing a faulty cache.
       # `actions/cache` already handles pnpm correctly here, only `rust` needs the NS volume.
       # Note: On Linux this action uses bind-mounts, which don't have this problem - it's a Mac OS problem only.
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         with:
           cache: rust
       - run: cargo ck
@@ -82,7 +82,6 @@ jobs:
       # Unsung heroes of the internet, who led me here to speed up Windows' slowness:
       # https://github.com/actions/cache/issues/752#issuecomment-1847036770
       # https://github.com/astral-sh/uv/blob/502e04200d52de30d3159894833b3db4f0d6644d/.github/workflows/ci.yml#L158
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
       - uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
         with:
           workspace-copy: true
@@ -91,6 +90,11 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+      - name: Install dependencies on Dev Drive
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Install Rust
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -125,11 +129,11 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@a2a5f6e99e1a31540baa0468acfa302cff0f359f # v2.86.4
+      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -143,11 +147,11 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@a2a5f6e99e1a31540baa0468acfa302cff0f359f # v2.86.4
+      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -167,9 +171,9 @@ jobs:
           paths: napi/,npm/,apps/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -179,8 +183,10 @@ jobs:
       - name: Build
         if: steps.filter.outputs.changed == 'true'
         run: |
+          rustup target add wasm32-wasip1
           rustup target add wasm32-wasip1-threads
           pnpm run build-wasm-dev
+          pnpm run build-wasip1-dev
           git diff --exit-code # Must commit everything
       - name: Test wasi in browser
         if: steps.filter.outputs.changed == 'true'
@@ -190,6 +196,7 @@ jobs:
           pnpm exec playwright install chromium
           pnpm run build-wasi
           pnpm run build-wasm-dev
+          pnpm run build-wasip1-dev
           pnpm run build-npm-dir
           pnpm run test-browser
           pnpm build-browser-bundle --npmDir npm-dir
@@ -206,9 +213,9 @@ jobs:
           paths: napi/parser/,napi/minify/,napi/transform/,napi/transform-react/,napi/transform-relay/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -247,9 +254,9 @@ jobs:
           paths: apps/shared/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -270,9 +277,9 @@ jobs:
           paths: apps/oxlint/,apps/shared/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -296,18 +303,18 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_config/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: ./.github/actions/check-changes
         id: filter-conformance
         with:
-          paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -320,7 +327,7 @@ jobs:
           pnpm --filter "./apps/oxfmt" build-test
           pnpm --filter "./apps/oxfmt" test
       # Conformance ---
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter-conformance.outputs.changed == 'true'
         with:
           # Warm fixtures skip download entirely (`.version` stamps in download-fixtures.js)
@@ -350,8 +357,6 @@ jobs:
           paths: napi/parser/,napi/minify/,napi/transform/,napi/transform-react/,napi/transform-relay/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
-        if: steps.filter.outputs.changed == 'true'
       - uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -361,6 +366,13 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
+      - name: Install dependencies on Dev Drive
+        if: steps.filter.outputs.changed == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -403,8 +415,6 @@ jobs:
           paths: apps/oxlint/,apps/shared/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
-        if: steps.filter.outputs.changed == 'true'
       - uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -414,6 +424,13 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
+      - name: Install dependencies on Dev Drive
+        if: steps.filter.outputs.changed == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -440,11 +457,9 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_config/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
-        if: steps.filter.outputs.changed == 'true'
       - uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -454,6 +469,13 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
+      - name: Install dependencies on Dev Drive
+        if: steps.filter.outputs.changed == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -475,7 +497,7 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: crate-ci/typos@8a48f81b6c64dcfea44b3633223084c4be58ac5f # v1.49.0
+      - uses: crate-ci/typos@512fc24f32f44ab01972217aaaf3dc86ec234d53 # v1.50.2
         with:
           files: .
 
@@ -486,8 +508,8 @@ jobs:
       CARGO_BUILD_WARNINGS: deny
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         with:
           path: /home/runner/.rustup
           cache: |
@@ -516,7 +538,7 @@ jobs:
       TOOLCHAIN: nightly-2026-04-01
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         with:
           path: /home/runner/.rustup
           cache: rust
@@ -544,10 +566,10 @@ jobs:
         with:
           node-compat-table: false
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
 
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -555,7 +577,7 @@ jobs:
             rust
             pnpm
 
-      - uses: taiki-e/install-action@a2a5f6e99e1a31540baa0468acfa302cff0f359f # v2.86.4
+      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just
@@ -565,6 +587,84 @@ jobs:
         run: |
           just update-transformer-fixtures
           just coverage
+          git diff --exit-code
+
+  lexer:
+    # `oxc_lexer` compiles to one of two implementations, chosen at build time:
+    # 1. SIMD core on x86_64 with `avx2` + `bmi2` + `popcnt`.
+    # 2. Scalar fallback everywhere else.
+    #
+    # None of these features is in the x86_64 baseline on any platform, so the SIMD core is never built
+    # unless asked for explicitly - which means no other job here lints, tests or runs it.
+    #
+    # Both legs regenerate the committed conformance snapshots and fail on any diff,
+    # which ensures the 2 implementations behave identically to each other.
+    #
+    # See the LEXER section of `justfile` for the flags.
+    name: Lexer (${{ matrix.variant }})
+    runs-on: namespace-profile-linux-x64-default
+    env:
+      CARGO_BUILD_WARNINGS: deny
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: scalar
+            suffix: ""
+          - variant: SIMD
+            suffix: "-simd"
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+
+      - name: Check if lexer checks should run
+        id: filter
+        uses: ./.github/actions/check-changes
+        with:
+          packages: oxc_lexer,oxc_coverage
+          paths: crates/oxc_lexer/,tasks/coverage/,.cargo/lexer-simd.toml,justfile,.github/workflows/ci.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          node-compat-table: false
+
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          path: /home/runner/.rustup
+          cache: rust
+
+      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          tool: just
+
+      - run: rustup component add clippy
+        # No need to run on scalar fallback - linting already covered by "Lint" job
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
+
+      - name: Lint
+        # No need to run on scalar fallback - already covered by "Lint" job
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
+        run: just lint-lexer-simd
+
+      - name: Test
+        # No need to run on scalar fallback - already covered by "Test Linux" job
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
+        run: just test-lexer-simd
+
+      - name: Conformance
+        # Run on both SIMD and scalar fallback - neither is run anywhere else.
+        # The harness prints which implementation it was built with (`oxc_lexer::IS_SIMD`).
+        # Checking it here is what guarantees this leg exercised the build it asked for.
+        if: steps.filter.outputs.changed == 'true'
+        run: |
+          set -o pipefail
+          just conformance-lexer${{ matrix.suffix }} | tee "$RUNNER_TEMP/lexer.log"
+          grep -qxF "Lexer implementation: ${{ matrix.variant }}" "$RUNNER_TEMP/lexer.log" ||
+            { echo "::error::Expected ${{ matrix.variant }}, but the harness reported otherwise"; exit 1; }
           git diff --exit-code
 
   test-codegen:
@@ -587,10 +687,10 @@ jobs:
         with:
           node-compat-table: false
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
 
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
@@ -618,7 +718,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
           cache: rust
@@ -673,7 +774,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
           cache: rust
@@ -696,10 +798,10 @@ jobs:
         with:
           filters: ".github/generated/ast_changes_watch_list.yml"
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.src == 'true'
 
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.src == 'true'
         with:
           path: /home/runner/.rustup
@@ -730,10 +832,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
 
-      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup

@@ -7,8 +7,8 @@ use oxc_yaml_parser::ast::{Content, Node, Props};
 
 use crate::{
     comments::{
-        flush_leading_comments, is_suppressed_last_before, suppression_flush_bound,
-        write_single_comment, write_suppressed_node,
+        FormatCommentBeforeContent, flush_leading_comments, is_suppressed_last_before,
+        suppression_flush_bound, write_suppressed_node,
     },
     context::YamlFormatContext,
 };
@@ -117,20 +117,29 @@ pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {
     write_props(&node.props, is_block_collection && !has_middle_comments, f);
 
     // Prettier: `[middles.len() == 1 ? "" : hardline, join(hardline, middles), hardline]`.
+    //
+    // NOTE: The single-middle case is a known FORMATTER_POLICY violation
+    // ("own-line comments stay own-line"): an own-line `# c` inlines after the props
+    // ```yaml
+    // key: &a
+    //   # c
+    //   a: 1
+    //
+    // # ->
+    //
+    // key: &a # c
+    //   a: 1
+    // ```
+    // Kept for now: Prettier byte-compat outweighs the invariant.
     // A block collection's trailing suppression marker is NOT a middle comment:
     // it stays pending so the first item's check can claim it.
     let middles_bound = suppression_flush_bound(is_block_collection, content_start, f);
     let middles = f.context().comments().take_before(middles_bound);
-    // `i > 0` is subsumed: any later iteration implies more than one middle.
-    let multiple_middles = middles.len() > 1;
-    for comment in middles {
-        if multiple_middles {
-            write!(f, hard_line_break());
-        }
-        write_single_comment(comment.span, f);
-    }
-    if !middles.is_empty() {
+    if middles.len() > 1 {
         write!(f, hard_line_break());
+    }
+    for comment in middles {
+        write!(f, FormatCommentBeforeContent::new(comment.span));
     }
 
     match content {

@@ -8,16 +8,13 @@ b {
   opacity: .10;
   margin: .50em .25em;
 }
-/* glued number chains and postcss-simple-vars values stay words too */
+/* glued number chains stay words too */
 c {
   width: theme(spacing.2.5);
 }
-$brand: sandstone.10;
-/* glued number-ish runs are one word too: no space injection */
+/* glued number-ish runs are one word too: no space injection (`is_word_glued_number`) */
 d {
   padding: 1+1+1+1;
   margin: 1px+1px+1px+1px;
   width: calc(100%+2px);
 }
-/* multi-value lists in $var declarations break one per line */
-$fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;

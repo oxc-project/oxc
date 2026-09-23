@@ -536,6 +536,7 @@ impl TsGoLintState {
 
         // Kill the child process if it's still running to avoid zombie processes
         let _ = child.kill();
+        let _ = child.wait();
 
         diagnostics
     }

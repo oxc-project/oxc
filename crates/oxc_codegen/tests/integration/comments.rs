@@ -1011,3 +1011,20 @@ fn test_comment_on_paren_protected_prologue_boundary() {
     test_same("// leading comment\n(\"use strict\");\nfoo();\n");
     test_same("\"use asm\";\n// leading comment\n(\"use strict\");\nfoo();\n");
 }
+
+#[test]
+fn test_block_comment_line_terminators() {
+    for separator in ["\u{2028}", "\u{2029}", "\n", "\r", "\r\n"] {
+        let source = format!("function f(){{return (/* first{separator}second */ {{}});}}");
+        test(&source, "function f() {\n\treturn (/* first\n\tsecond */ {});\n}\n");
+        test_idempotency(&source);
+    }
+    for separator in ["", "\u{2027}", "\u{202a}", "\u{00a0}"] {
+        let source = format!("function f(){{return (/* first{separator}second */ {{}});}}");
+        test(
+            &source,
+            &format!("function f() {{\n\treturn (/* first{separator}second */ {{}});\n}}\n"),
+        );
+        test_idempotency(&source);
+    }
+}

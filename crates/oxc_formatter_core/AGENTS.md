@@ -16,12 +16,12 @@ Formatting is two stages:
 
 Key IR pieces are all exported from the crate root.
 
+Every scope `Tag` acts on the line breaks inside it, never on the content (the `indent` rustdoc has the examples and the rationale).
+
 The semantics of each building block live in the `write/builders.rs` rustdocs.
 e.g. the mechanisms for verbatim multi-line content (`exact_line_breaks()` for blank runs exempt from newline collapsing, `literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `dedent_to_root`), with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
 
-Prettier doc primitives are ported on demand; still missing: the `trim`.
-
-Composite primitives translate rather than port 1:1:
+Every Prettier doc primitive its own language printers emit has a counterpart here; composite ones translate rather than port 1:1:
 
 - `hardlineWithoutBreakParent` is `hard_line_break().without_expand_parent()`
 - `conditionalGroup` is `best_fitting!`: same expansion boundary, same flat-first variant trial.
@@ -29,6 +29,7 @@ Composite primitives translate rather than port 1:1:
   that manual wiring is `ifBreak({groupId})` there and `if_group_breaks(..).with_group_id(..)` here
   See `oxc_formatter_yaml`'s `mapping_item.rs` for the full pattern.
   Oxfmt's Doc→IR mechanical conversion maps `expandedStates` to the same `BestFitting` primitive.
+- `align` is `prefix_align()`
 
 ### The printer never trims
 

@@ -6,6 +6,12 @@ type LiteralString = InlineString<31, u8>;
 // Adapted from Terser's `get_minified_number`:
 // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
 pub fn with_number_literal<R>(value: f64, f: impl FnOnce(&str) -> R) -> R {
+    if value < 1000.0 && value.fract() == 0.0 {
+        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let integer = value as u16;
+        let mut buffer = itoa::Buffer::new();
+        return f(buffer.format(integer));
+    }
     let literal = number_literal(value);
     f(literal.as_str())
 }
@@ -13,10 +19,6 @@ pub fn with_number_literal<R>(value: f64, f: impl FnOnce(&str) -> R) -> R {
 #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
 fn number_literal(value: f64) -> LiteralString {
     let mut buffer = dragonbox_ecma::Buffer::new();
-    if value < 1000.0 && value.fract() == 0.0 {
-        return LiteralString::from_str(buffer.format(value));
-    }
-
     let formatted = buffer.format(value);
     let mut best_candidate = LiteralString::new();
     for (index, byte) in formatted.bytes().enumerate() {
@@ -128,6 +130,38 @@ fn push_hex(mut value: u128, output: &mut LiteralString) {
 #[cfg(test)]
 mod tests {
     use super::with_number_literal;
+
+    #[test]
+    fn small_integer_literals() {
+        for integer in 0_u16..1000 {
+            let expected = integer.to_string();
+            with_number_literal(f64::from(integer), |literal| assert_eq!(literal, expected));
+        }
+    }
+
+    #[test]
+    fn small_integer_literal_boundaries() {
+        for (value, expected) in [
+            (-0.0, "0"),
+            (0.0_f64.next_up(), "5e-324"),
+            (0.5, ".5"),
+            (1.0_f64.next_down(), ".9999999999999999"),
+            (1.0_f64.next_up(), "1.0000000000000002"),
+            (10.0_f64.next_down(), "9.999999999999998"),
+            (10.0_f64.next_up(), "10.000000000000002"),
+            (100.0_f64.next_down(), "99.99999999999999"),
+            (100.0_f64.next_up(), "100.00000000000001"),
+            (999.0_f64.next_down(), "998.9999999999999"),
+            (999.0_f64.next_up(), "999.0000000000001"),
+            (999.5, "999.5"),
+            (1000.0_f64.next_down(), "999.9999999999999"),
+            (1000.0, "1e3"),
+            (1000.0_f64.next_up(), "1000.0000000000001"),
+            (1001.0, "1001"),
+        ] {
+            with_number_literal(value, |literal| assert_eq!(literal, expected, "value: {value:?}"));
+        }
+    }
 
     #[test]
     fn shortest_number_literal() {

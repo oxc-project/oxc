@@ -118,6 +118,21 @@ pub fn is_whitespace_jsx_expression<'a>(
     }
 }
 
+/// Whether the children of this element are read as raw `JSXText`
+/// by a compile-time DSL instead of going through the JSX whitespace rules.
+///
+/// JSX (compiler) drops whitespace containing a newline between text and an element,
+/// so the formatter can normally add or remove line breaks there freely.
+/// A DSL that reads the raw text sees that as a change to the string:
+/// `fbt` collapses any whitespace to a single space, so `</b>\n.` becomes `" ."`.
+/// For these elements, the presence or absence of a newline between text and a non-text child
+/// must be kept as written.
+///
+/// Also matches Prettier: only `<fbt>` is recognized, and only its direct children are affected.
+pub fn is_whitespace_sensitive_element(name: &JSXElementName<'_>) -> bool {
+    name.get_identifier_name().is_some_and(|name| name == "fbt")
+}
+
 #[derive(Debug, Clone)]
 pub enum JsxChild<'a, 'b> {
     /// A Single word in a JSX text. For example, the words for `a b\nc` are `[a, b, c]`

@@ -10,7 +10,6 @@
 
 use std::{borrow::Cow, cmp::max, fmt};
 
-use owo_colors::OwoColorize;
 use smallvec::SmallVec;
 
 use super::{
@@ -20,6 +19,7 @@ use super::{
 };
 use crate::{
     Diagnostic, LabeledSpan,
+    handlers::theme::DiagnosticColorize,
     source_impls::{SpanContents, SpanScanner},
 };
 

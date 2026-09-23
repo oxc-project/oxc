@@ -54,8 +54,13 @@ pub fn format_source_with_clause_and_semicolon<'a>(
             write!(f, [with_clause]);
         }
     });
-    let content_end = with_clause.map_or(source.span.end, |with| with.span.end);
+    let content_end = module_source_end(source, with_clause.map(AsRef::as_ref));
     write!(f, FormatContentWithSemicolon::new(&content, content_end, span_end));
+}
+
+/// Where an import/export's content ends: its with-clause, else its source.
+pub fn module_source_end(source: &StringLiteral, with_clause: Option<&WithClause>) -> u32 {
+    with_clause.map_or(source.span.end, |with| with.span.end)
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {

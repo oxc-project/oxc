@@ -145,6 +145,8 @@ struct SuperMethodInfo<'a> {
 
 pub struct ArrowFunctionConverter<'a> {
     mode: ArrowFunctionConverterMode,
+    async_to_generator_enabled: bool,
+    async_generator_functions_enabled: bool,
     this_var_stack: SparseStack<BoundIdentifier<'a>>,
     arguments_var_stack: SparseStack<BoundIdentifier<'a>>,
     constructor_super_stack: NonEmptyStack<bool>,
@@ -158,9 +160,11 @@ pub struct ArrowFunctionConverter<'a> {
 
 impl ArrowFunctionConverter<'_> {
     pub fn new(env: &EnvOptions) -> Self {
+        let async_to_generator_enabled = env.es2017.async_to_generator;
+        let async_generator_functions_enabled = env.es2018.async_generator_functions;
         let mode = if env.es2015.arrow_function.is_some() {
             ArrowFunctionConverterMode::Enabled
-        } else if env.es2017.async_to_generator || env.es2018.async_generator_functions {
+        } else if async_to_generator_enabled || async_generator_functions_enabled {
             ArrowFunctionConverterMode::AsyncOnly
         } else {
             ArrowFunctionConverterMode::Disabled
@@ -168,6 +172,8 @@ impl ArrowFunctionConverter<'_> {
         // `SparseStack`s are created with 1 empty entry, for `Program`
         Self {
             mode,
+            async_to_generator_enabled,
+            async_generator_functions_enabled,
             this_var_stack: SparseStack::new(),
             arguments_var_stack: SparseStack::new(),
             constructor_super_stack: NonEmptyStack::new(false),
@@ -227,7 +233,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
 
         if Self::is_class_method_like_ancestor(ctx.parent()) {
             self.super_methods_stack.push(FxIndexMap::default());
-            self.super_needs_transform_stack.push(func.r#async);
+            self.super_needs_transform_stack
+                .push(self.will_transform_async_function(func.r#async, func.generator));
         }
     }
 
@@ -276,14 +283,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
     ) {
         if self.is_async_only() {
             let previous = *self.arguments_needs_transform_stack.last();
-            self.arguments_needs_transform_stack.push(previous || arrow.r#async);
+            self.arguments_needs_transform_stack
+                .push(previous || self.will_transform_async_function(arrow.r#async, false));
 
             if Self::in_class_property_definition_value(ctx) {
                 self.this_var_stack.push(None);
                 self.super_methods_stack.push(FxIndexMap::default());
             }
-            self.super_needs_transform_stack
-                .push(arrow.r#async || *self.super_needs_transform_stack.last());
+            self.super_needs_transform_stack.push(
+                self.will_transform_async_function(arrow.r#async, false)
+                    || *self.super_needs_transform_stack.last(),
+            );
         }
     }
 
@@ -316,8 +326,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         if self.is_async_only() {
             // Ignore arrow functions
             if let Ancestor::FunctionBody(func) = ctx.parent() {
-                let is_async_method =
-                    *func.r#async() && Self::is_class_method_like_ancestor(ctx.ancestor(1));
+                let is_async_method = self
+                    .will_transform_async_function(*func.r#async(), *func.generator())
+                    && Self::is_class_method_like_ancestor(ctx.ancestor(1));
                 self.arguments_needs_transform_stack.push(is_async_method);
             }
         }
@@ -421,7 +432,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             Expression::ArrowFunctionExpression(arrow)
                 // TODO: If the async arrow function without `this` or `super` usage, we can skip this step.
                 if self.is_async_only()
-                    && arrow.r#async
+                    && self.will_transform_async_function(arrow.r#async, false)
                     && Self::in_class_property_definition_value(ctx)
                 => {
                     // Inside class property definition value, since async arrow function will be
@@ -521,6 +532,16 @@ impl<'a> ArrowFunctionConverter<'a> {
         self.mode == ArrowFunctionConverterMode::AsyncOnly
     }
 
+    #[inline]
+    fn will_transform_async_function(&self, r#async: bool, generator: bool) -> bool {
+        r#async
+            && if generator {
+                self.async_generator_functions_enabled
+            } else {
+                self.async_to_generator_enabled
+            }
+    }
+
     fn get_this_identifier(
         &mut self,
         span: Span,
@@ -613,7 +634,9 @@ impl<'a> ArrowFunctionConverter<'a> {
                 | Ancestor::StaticBlockBody(_) => return None,
                 // Arrow function
                 Ancestor::ArrowFunctionExpressionParams(func) => {
-                    return if self.is_async_only() && !*func.r#async() {
+                    return if self.is_async_only()
+                        && !self.will_transform_async_function(*func.r#async(), false)
+                    {
                         // Continue checking the parent to see if it's inside an async function.
                         continue;
                     } else {
@@ -621,7 +644,9 @@ impl<'a> ArrowFunctionConverter<'a> {
                     };
                 }
                 Ancestor::ArrowFunctionExpressionBody(func) => {
-                    return if self.is_async_only() && !*func.r#async() {
+                    return if self.is_async_only()
+                        && !self.will_transform_async_function(*func.r#async(), false)
+                    {
                         // Continue checking the parent to see if it's inside an async function.
                         continue;
                     } else {
@@ -630,17 +655,15 @@ impl<'a> ArrowFunctionConverter<'a> {
                 }
                 // Function body (includes class method or object method)
                 Ancestor::FunctionBody(func) => {
-                    // If we're inside a class async method or an object async method, and `is_async_only` is true,
-                    // the `AsyncToGenerator` or `AsyncGeneratorFunctions` plugin will move the body
-                    // of the method into a new generator function. This transformation can cause `this`
-                    // to point to the wrong context.
+                    // If we're inside a class async method or an object async method, and an
+                    // async transform will move the method body into a new generator function,
+                    // `this` will point to the wrong context.
                     // To prevent this issue, we replace `this` with `_this`, treating it similarly
                     // to how we handle arrow functions. Therefore, we return the `ScopeId` of the function.
-                    return if self.is_async_only()
-                    && *func.r#async()
-                    && Self::is_class_method_like_ancestor(
-                        ancestors.next().unwrap()
-                    ) {
+                    return if self
+                        .will_transform_async_function(*func.r#async(), *func.generator())
+                        && Self::is_class_method_like_ancestor(ancestors.next().unwrap())
+                    {
                         Some(func.scope_id().get().unwrap())
                     } else {
                         None

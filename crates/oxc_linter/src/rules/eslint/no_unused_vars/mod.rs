@@ -14,7 +14,7 @@ use std::ops::Deref;
 use allowed::FunctionParameterKind;
 use ignored::IgnoreReason;
 use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
-use oxc_ast::{AstKind, ast::CatchParameter};
+use oxc_ast::{AstKind, AstType, ast::CatchParameter};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
@@ -490,6 +490,10 @@ impl Symbol<'_, '_> {
     }
 
     fn is_in_declare_global(&self) -> bool {
+        if !self.nodes().contains(AstType::TSGlobalDeclaration) {
+            return false;
+        }
+
         self.scoping()
             .scope_ancestors(self.scope_id())
             .filter(|&scope_id| {
@@ -498,9 +502,7 @@ impl Symbol<'_, '_> {
             })
             .any(|ambient_module_scope_id| {
                 matches!(
-                    self.nodes()
-                        .get_node(self.scoping().get_node_id(ambient_module_scope_id))
-                        .kind(),
+                    self.nodes().kind(self.scoping().get_node_id(ambient_module_scope_id)),
                     AstKind::TSGlobalDeclaration(_)
                 )
             })

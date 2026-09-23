@@ -410,10 +410,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         if self.cur_kind().is_modifier_kind() {
             self.bump_any();
-            if self.cur_kind().is_identifier() {
+            if self.cur_kind().is_binding_identifier() {
                 return true;
             }
-        } else if !self.cur_kind().is_identifier() {
+        } else if !self.cur_kind().is_binding_identifier() {
             return false;
         } else {
             self.bump_any();
@@ -689,6 +689,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Declaration::ClassDeclaration(decl)
             }
             Kind::Import => {
+                self.verify_modifiers(
+                    modifiers,
+                    ModifierKinds::new([ModifierKind::Export]),
+                    true,
+                    |modifier, allowed| match modifier.kind {
+                        ModifierKind::Declare => {
+                            diagnostics::declare_modifier_on_import(modifier.span())
+                        }
+                        ModifierKind::Abstract => {
+                            diagnostics::illegal_abstract_modifier(modifier.span())
+                        }
+                        _ => diagnostics::modifier_cannot_be_used_here(modifier, allowed),
+                    },
+                );
                 self.bump_any();
                 let token = self.cur_token();
                 let mut import_kind = ImportOrExportKind::Value;

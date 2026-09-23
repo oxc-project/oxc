@@ -70,19 +70,14 @@ fn make_const_ident(rule: &RuleEntry<'_>) -> Ident {
     Ident::new(&name, Span::call_site())
 }
 
-/// Generate constants for rule IDs, each defined relative to the previous one.
+/// Generate constants for rule IDs as consecutive integer literals.
 fn generate_id_constants(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
     let constants: Vec<TokenStream> = rule_entries
         .iter()
         .enumerate()
         .map(|(idx, rule)| {
             let const_name = make_const_ident(rule);
-            if idx == 0 {
-                quote! { const #const_name: usize = 0usize; }
-            } else {
-                let prev_const_name = make_const_ident(&rule_entries[idx - 1]);
-                quote! { const #const_name: usize = #prev_const_name + 1usize; }
-            }
+            quote! { const #const_name: usize = #idx; }
         })
         .collect();
 

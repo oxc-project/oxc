@@ -257,9 +257,9 @@ impl<'a> PeepholeOptimizations {
     /// ```
     pub fn try_fold_labeled(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::LabeledStatement(s) = stmt else { return };
-        let id = s.label.name.as_str();
+        let id = s.label.name;
 
-        if ctx.options().drop_labels.contains(id) {
+        if ctx.options().drop_labels.contains(id.as_str()) {
             let new_stmt = Statement::new_empty_statement(s.span, ctx);
             ctx.replace_statement(stmt, new_stmt);
             return;
@@ -269,8 +269,8 @@ impl<'a> PeepholeOptimizations {
         // Check if we need to remove the whole block.
         match &mut s.body {
             Statement::BreakStatement(break_stmt)
-                if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
-            Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
+                if break_stmt.label.as_ref().is_some_and(|l| l.name == id) => {}
+            Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name == id))) => {}
             Statement::EmptyStatement(_) => {
                 let new_stmt = Statement::new_empty_statement(s.span, ctx);
                 ctx.replace_statement(stmt, new_stmt);
@@ -428,44 +428,28 @@ impl<'a> PeepholeOptimizations {
     pub fn try_fold_conditional_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ConditionalExpression(e) = expr else { return };
         let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
-        let new_expr = if e.test.may_have_side_effects(ctx) {
-            // "(a, true) ? b : c" => "a, b"
-            Expression::new_sequence_expression(
-                e.span,
-                [
-                    {
-                        let mut test = e.test.take_in(ctx);
-                        Self::remove_unused_expression(&mut test, ctx);
-                        test
-                    },
-                    if v { e.consequent.take_in(ctx) } else { e.alternate.take_in(ctx) },
-                ],
-                ctx,
-            )
-        } else {
-            let result_expr = if v { e.consequent.take_in(ctx) } else { e.alternate.take_in(ctx) };
-            let should_keep_as_sequence_expr = Self::should_keep_indirect_access(&result_expr, ctx);
-            // "(1 ? a.b : 0)()" => "(0, a.b)()"
-            if should_keep_as_sequence_expr {
-                Expression::new_sequence_expression(
-                    e.span,
-                    [
-                        Expression::new_numeric_literal(
-                            e.span,
-                            0.0,
-                            None,
-                            NumberBase::Decimal,
-                            ctx,
-                        ),
-                        result_expr,
-                    ],
-                    ctx,
-                )
+
+        ctx.drop_expression(if v { &e.alternate } else { &e.consequent });
+        ctx.replace_expression_with(expr, |e, ctx| {
+            let Expression::ConditionalExpression(e) = e else {
+                unreachable!();
+            };
+            let mut e = e.unbox();
+            let result_expr = if v { e.consequent } else { e.alternate };
+
+            if Self::remove_unused_expression(&mut e.test, ctx) {
+                ctx.drop_expression(&e.test);
+                // `(1 ? a.b : 0)()` => `(0, a.b)()`
+                if Self::should_keep_indirect_access(&result_expr, ctx) {
+                    Self::preserve_indirect_access(e.span, result_expr, ctx)
+                } else {
+                    result_expr
+                }
             } else {
-                result_expr
+                // `(a, true) ? b : c` => `a, b`
+                Expression::new_sequence_expression(e.span, [e.test, result_expr], ctx)
             }
-        };
-        ctx.replace_expression(expr, new_expr);
+        });
     }
 
     pub fn remove_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -720,7 +704,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         Expression::new_sequence_expression(
-            span,
+            span.merge(expr.span()),
             [Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx), expr],
             ctx,
         )

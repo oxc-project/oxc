@@ -28,10 +28,10 @@ fn mangle_with(
     let parsed = Parser::new(&allocator, source, source_type).parse();
     assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
     let mut program = parsed.program;
-    let mut mangler = PropertyMangler::new(options);
+    let mut mangler = PropertyMangler::new_in(options, &allocator);
     mangler.collect(&program);
     mangler.assign();
-    mangler.rewrite(&mut program, &allocator);
+    mangler.rewrite(&mut program);
     let code = Codegen::new().build(&program).code;
     (code, mangler.into_cache())
 }
@@ -492,10 +492,10 @@ fn duplicated_spans_do_not_skip_property_rewrites() {
     let mut program = parsed.program;
     ZeroSpans.visit_program(&mut program);
 
-    let mut mangler = PropertyMangler::new(options("^_"));
+    let mut mangler = PropertyMangler::new_in(options("^_"), &allocator);
     mangler.collect(&program);
     mangler.assign();
-    mangler.rewrite(&mut program, &allocator);
+    mangler.rewrite(&mut program);
 
     assert_eq!(
         Codegen::new().build(&program).code,
@@ -514,12 +514,12 @@ fn one_assignment_can_be_shared_across_programs() {
             .parse()
             .program;
 
-    let mut mangler = PropertyMangler::new(options("^_"));
+    let mut mangler = PropertyMangler::new_in(options("^_"), &allocator_a);
     mangler.collect(&program_a);
     mangler.collect(&program_b);
     mangler.assign();
-    mangler.rewrite(&mut program_a, &allocator_a);
-    mangler.rewrite(&mut program_b, &allocator_b);
+    mangler.rewrite(&mut program_a);
+    mangler.rewrite(&mut program_b);
 
     assert_eq!(Codegen::new().build(&program_a).code, codegen("a.e; a.t;", SourceType::mjs()));
     assert_eq!(
@@ -540,15 +540,15 @@ fn independently_collected_programs_can_be_merged_before_assignment() {
             .program;
 
     let options = options("^_");
-    let collected_a = PropertyMangleCollection::from_program(&options, &program_a);
-    let collected_b = PropertyMangleCollection::from_program(&options, &program_b);
+    let collected_a = PropertyMangleCollection::from_program(&options, &program_a, &allocator_a);
+    let collected_b = PropertyMangleCollection::from_program(&options, &program_b, &allocator_b);
 
-    let mut mangler = PropertyMangler::new(options);
-    mangler.merge_collected(collected_a);
-    mangler.merge_collected(collected_b);
+    let mut mangler = PropertyMangler::new_in(options, &allocator_a);
+    mangler.merge_collected(&collected_a);
+    mangler.merge_collected(&collected_b);
     mangler.assign();
-    mangler.rewrite(&mut program_a, &allocator_a);
-    mangler.rewrite(&mut program_b, &allocator_b);
+    mangler.rewrite(&mut program_a);
+    mangler.rewrite(&mut program_b);
 
     assert_eq!(Codegen::new().build(&program_a).code, codegen("a.e; a.t;", SourceType::mjs()));
     assert_eq!(

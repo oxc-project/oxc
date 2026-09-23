@@ -1,12 +1,13 @@
 //! Prettier conformance for the JSON family (json / jsonc / json5 / json-stringify).
 //!
-//! Compares output against the Prettier suite's `tests/format/json` snapshots via
-//! `oxc_formatter_tests::conformance`; each variant pins its failure report with `insta`.
+//! Compares output against the Prettier suite's `tests/format/json` snapshots via `oxc_formatter_tests::conformance`;
+//! each variant pins its failure report with `insta`.
 //!
-//! The `json/json` and `json/with-comment` dirs are shared between variants: each
-//! `format.test.js` call lists its own parser, and `exact_parser` keeps only the
-//! matching calls. Out-of-scope siblings (all variants):
-//! - `json-superset/`: inline `snippets`, not parseable by the spec parser
+//! The `json/json` and `json/with-comment` dirs are shared between variants:
+//! each `format.test.js` call lists its own parser, and `exact_parser` keeps only the matching calls.
+//! Out-of-scope siblings (all variants):
+//! - `json-superset/`: `snippets` carry inline `output`, so Prettier writes no `.snap`.
+//!   Distilled by hand into `fixtures/{json,json-stringify}/superset/strings.json` instead
 //! - `range/`: range-formatting, not whole-file
 //!
 //! Debug a specific test: `PRETTIER_FILTER=<substring> cargo test -p oxc_formatter_json --test conformance -- --nocapture`
@@ -27,7 +28,7 @@ use options::apply_json_options;
 
 const JSON: ConformanceConfig = ConformanceConfig {
     language: "json",
-    fixture_roots: &["json/json", "json/with-comment"],
+    fixture_roots: &["json/json", "json/with-comment", "json/json-test-suite"],
     exact_parser: Some("json"),
     ignore: &[],
     skip_spec: None,
@@ -35,7 +36,7 @@ const JSON: ConformanceConfig = ConformanceConfig {
 
 const JSONC: ConformanceConfig = ConformanceConfig {
     language: "jsonc",
-    fixture_roots: &["json/jsonc", "json/with-comment"],
+    fixture_roots: &["json/jsonc", "json/with-comment", "json/json-test-suite"],
     exact_parser: Some("jsonc"),
     ignore: &[],
     skip_spec: None,
@@ -43,7 +44,12 @@ const JSONC: ConformanceConfig = ConformanceConfig {
 
 const JSON5: ConformanceConfig = ConformanceConfig {
     language: "json5",
-    fixture_roots: &["json/json", "json/with-comment", "json/json5-as-json-with-trailing-commas"],
+    fixture_roots: &[
+        "json/json",
+        "json/with-comment",
+        "json/json5-as-json-with-trailing-commas",
+        "json/json-test-suite",
+    ],
     exact_parser: Some("json5"),
     ignore: &[],
     skip_spec: None,
@@ -51,7 +57,7 @@ const JSON5: ConformanceConfig = ConformanceConfig {
 
 const JSON_STRINGIFY: ConformanceConfig = ConformanceConfig {
     language: "json-stringify",
-    fixture_roots: &["json/json"],
+    fixture_roots: &["json/json", "json/json-test-suite"],
     exact_parser: Some("json-stringify"),
     ignore: &[],
     skip_spec: None,

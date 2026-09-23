@@ -1,7 +1,5 @@
 # externals/webawesome/page/page.styles.ts
 
-> Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md
-
 ## Option 1
 
 `````json

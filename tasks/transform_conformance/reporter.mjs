@@ -1,15 +1,17 @@
 // oxlint-disable no-console
 
 import { join as pathJoin } from "path";
-import { JsonReporter } from "vitest/node";
 
 const currentDir = pathJoin(import.meta.dirname, "./"),
   rootDir = pathJoin(currentDir, "../../"),
-  vitestPath = pathJoin(rootDir, "node_modules/.pnpm/@vitest+runner@");
+  vitestPath = pathJoin(rootDir, "node_modules/.pnpm/vitest@");
 
-export default class CustomReporter extends JsonReporter {
-  async writeReport(report) {
-    const { testResults, numPassedTestSuites, numTotalTestSuites } = JSON.parse(report);
+export default class CustomReporter {
+  onTestRunEnd(testModules) {
+    const numTotalTestSuites = testModules.length;
+    const numPassedTestSuites = testModules.filter(
+      (testModule) => testModule.state() === "passed",
+    ).length;
 
     const percentPassed = ((numPassedTestSuites * 100) / numTotalTestSuites).toFixed(2);
     console.log(`\nPassed: ${numPassedTestSuites} of ${numTotalTestSuites} (${percentPassed}%)`);
@@ -18,15 +20,18 @@ export default class CustomReporter extends JsonReporter {
 
     console.log("\nFailures:");
 
-    for (const testResult of testResults) {
-      if (testResult.status === "passed") continue;
+    for (const testModule of testModules) {
+      if (testModule.state() !== "failed") continue;
 
-      const name = testResult.name.replace(currentDir, "./");
-      const message = testResult.message
-        ? testResult.message.replace(rootDir, "./")
-        : testResult.assertionResults
-            .flatMap((result) => result.failureMessages.map(formatMessage))
-            .join("\n");
+      const name = testModule.moduleId.replace(currentDir, "./");
+      const moduleErrors = testModule.errors();
+      const message =
+        moduleErrors.length > 0
+          ? moduleErrors.map((error) => formatMessage(error.stack ?? error.message)).join("\n")
+          : [...testModule.children.allTests("failed")]
+              .flatMap((test) => test.result().errors ?? [])
+              .map((error) => formatMessage(error.stack ?? error.message))
+              .join("\n");
       console.log();
       console.log(name);
       console.log(message);
@@ -35,8 +40,9 @@ export default class CustomReporter extends JsonReporter {
 }
 
 function formatMessage(message) {
-  const lines = message.split("\n");
-  const index = lines.findIndex((line) => line.includes(vitestPath));
-  if (index !== -1) lines.length = index;
-  return lines.map((line) => line.replace("file://", "").replace(rootDir, "./")).join("\n");
+  return message
+    .split("\n")
+    .filter((line) => !line.includes(vitestPath) && line.trim() !== "at new Promise (<anonymous>)")
+    .map((line) => line.replace("file://", "").replace(rootDir, "./"))
+    .join("\n");
 }
