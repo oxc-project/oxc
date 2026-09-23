@@ -808,7 +808,7 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -834,8 +834,8 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -1173,7 +1173,7 @@ impl<'a> Expression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -2336,7 +2336,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -2362,8 +2362,8 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -2701,7 +2701,7 @@ impl<'a> ArrayExpressionElement<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -3771,7 +3771,7 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -3797,8 +3797,8 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -4136,7 +4136,7 @@ impl<'a> PropertyKey<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -4793,7 +4793,7 @@ impl<'a> NewExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new(
         span: Span,
@@ -4822,7 +4822,7 @@ impl<'a> NewExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn boxed(
         span: Span,
@@ -4847,8 +4847,8 @@ impl<'a> NewExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_with_pure(
         span: Span,
@@ -4878,8 +4878,8 @@ impl<'a> NewExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn boxed_with_pure(
         span: Span,
@@ -5713,7 +5713,7 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -5739,8 +5739,8 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -6078,7 +6078,7 @@ impl<'a> Argument<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -6628,7 +6628,7 @@ impl<'a> AssignmentTarget<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -6878,7 +6878,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -7281,7 +7281,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -7837,7 +7837,7 @@ impl<'a> ChainElement<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -11049,7 +11049,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -11075,8 +11075,8 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -11414,7 +11414,7 @@ impl<'a> ForStatementInit<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -11778,7 +11778,7 @@ impl<'a> ForStatementLeft<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -14111,7 +14111,7 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -14137,8 +14137,8 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -14476,7 +14476,7 @@ impl<'a> ArrowFunctionBody<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -17580,7 +17580,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -17606,8 +17606,8 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -17945,7 +17945,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -19771,7 +19771,7 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    /// * `arguments`
     #[inline]
     pub fn new_new_expression(
         span: Span,
@@ -19797,8 +19797,8 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `callee`
     /// * `type_arguments`
-    /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
-    /// * `pure`
+    /// * `arguments`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
     pub fn new_new_expression_with_pure(
         span: Span,
@@ -20136,7 +20136,7 @@ impl<'a> JSXExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new_ts_non_null_expression(
         span: Span,
@@ -27044,7 +27044,7 @@ impl<'a> TSNonNullExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn new(span: Span, expression: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
@@ -27058,7 +27058,7 @@ impl<'a> TSNonNullExpression<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`: The expression to assume as not null, e.g., `x` in `x!`.
+    /// * `expression`: The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     #[inline]
     pub fn boxed(
         span: Span,

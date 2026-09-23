@@ -520,8 +520,12 @@ pub struct JSXSpreadChild<'a> {
 /// ## Example
 ///
 /// ```tsx
-/// <Foo>Some text</Foo>     // `Some Text` is a JSXText,
-/// <Foo>"Some string"</Foo> // but `"Some string"` is a StringLiteral.
+/// // Both children are JSXText, including the quotation marks:
+/// const plain = <Foo>Some text</Foo>;
+/// const quoted = <Foo>"Some string"</Foo>;
+///
+/// // The expression container contains a StringLiteral:
+/// const expression = <Foo>{"Some string"}</Foo>;
 /// ```
 #[ast(visit)]
 #[derive(Debug)]

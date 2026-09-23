@@ -46,6 +46,8 @@
     "postbuild-dev": "node scripts/patch.js",
     "build-wasm": "pnpm run build-wasm-dev --release",
     "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads --dts transform-react.wasi.d.cts",
+    "build-wasip1": "pnpm run build-wasip1-dev --release",
+    "build-wasip1-dev": "pnpm run build-dev --target wasm32-wasip1 --dts transform-react.wasip1.d.cts",
     "test": "vitest run --dir ./test"
   },
   "devDependencies": {
@@ -74,6 +76,7 @@
       "riscv64gc-unknown-linux-gnu",
       "riscv64gc-unknown-linux-musl",
       "s390x-unknown-linux-gnu",
+      "wasm32-wasip1",
       "wasm32-wasip1-threads",
       "x86_64-apple-darwin",
       "x86_64-pc-windows-msvc",

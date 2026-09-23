@@ -413,10 +413,8 @@ impl<'a> PeepholeOptimizations {
         if s.block.body.is_empty()
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
-            let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = BlockStatement::boxed(finalizer.span, [], ctx);
-                std::mem::swap(finalizer, &mut block);
-                Statement::BlockStatement(block)
+            let new_stmt = if let Some(finalizer) = s.finalizer.take() {
+                Statement::BlockStatement(finalizer)
             } else {
                 Statement::new_empty_statement(s.span, ctx)
             };

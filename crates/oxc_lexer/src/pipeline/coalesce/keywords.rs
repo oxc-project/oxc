@@ -73,12 +73,22 @@ unsafe fn kw_verify_batch<const TS_KEY: bool>(
 
 #[inline(always)]
 fn bzhi(x: u64, n: u32) -> u64 {
-    #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+    #[cfg(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ))]
     unsafe {
         std::arch::x86_64::_bzhi_u64(x, n)
     }
 
-    #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    )))]
     {
         x & (u64::MAX >> (64 - n))
     }
