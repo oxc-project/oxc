@@ -93,36 +93,28 @@ pub struct OpMap {
 }
 
 impl OpMap {
+    /// Create an [`OpMap`].
     pub(super) fn new() -> OpMap {
-        let mut m = OpMap {
-            opmap_mul: OPMAP_MUL,
-            opmap_slot: OPMAP_SLOT,
-            op2_pack: [0; 256],
-            op3_pack: [0; 256],
-        };
-        m.build_op_pack();
-        m
-    }
+        let mut op2_pack = [0; 256];
+        let mut op3_pack = [0; 256];
 
-    fn build_op_pack(&mut self) {
-        self.op2_pack = [0; 256];
-        self.op3_pack = [0; 256];
-        for i in 0..OPMAP_OPS.len() {
-            let o = &OPMAP_OPS[i];
-            let h = o.slot(self.opmap_mul);
-            if o.len == 2 {
-                self.op2_pack[h] = 2u32
-                    | ((o.txt[0] as u32) << 8)
-                    | ((o.txt[1] as u32) << 16)
-                    | ((o.kind as u32) << 24);
-            } else if o.len == 3 {
-                self.op3_pack[h] = 3u64
-                    | ((o.txt[0] as u64) << 8)
-                    | ((o.txt[1] as u64) << 16)
-                    | ((o.txt[2] as u64) << 24)
-                    | ((o.kind as u64) << 32);
+        for op_def in &OPMAP_OPS {
+            let slot = op_def.slot(OPMAP_MUL);
+            if op_def.len == 2 {
+                op2_pack[slot] = 2u32
+                    | ((op_def.txt[0] as u32) << 8)
+                    | ((op_def.txt[1] as u32) << 16)
+                    | ((op_def.kind as u32) << 24);
+            } else if op_def.len == 3 {
+                op3_pack[slot] = 3u64
+                    | ((op_def.txt[0] as u64) << 8)
+                    | ((op_def.txt[1] as u64) << 16)
+                    | ((op_def.txt[2] as u64) << 24)
+                    | ((op_def.kind as u64) << 32);
             }
         }
+
+        Self { opmap_mul: OPMAP_MUL, opmap_slot: OPMAP_SLOT, op2_pack, op3_pack }
     }
 
     #[inline(always)]
