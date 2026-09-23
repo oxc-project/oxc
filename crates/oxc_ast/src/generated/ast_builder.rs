@@ -26926,7 +26926,7 @@ impl<'a> TSModuleReference<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
+    /// * `expression`: The string literal inside the `require` call, e.g., `"x"` in `require("x")`.
     #[inline]
     pub fn new_external_module_reference(
         span: Span,
@@ -27006,7 +27006,7 @@ impl<'a> TSExternalModuleReference<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
+    /// * `expression`: The string literal inside the `require` call, e.g., `"x"` in `require("x")`.
     #[inline]
     pub fn new(
         span: Span,
@@ -27024,7 +27024,7 @@ impl<'a> TSExternalModuleReference<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
+    /// * `expression`: The string literal inside the `require` call, e.g., `"x"` in `require("x")`.
     #[inline]
     pub fn boxed(
         span: Span,

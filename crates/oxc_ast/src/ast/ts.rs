@@ -1733,6 +1733,14 @@ pub enum TSModuleReference<'a> {
     QualifiedName(Box<'a, TSQualifiedName<'a>>) = 2,
 }
 
+/// External module reference inside an import-equals declaration.
+///
+/// ## Example
+///
+/// ```ts
+/// import x = require("x");
+///            ^^^^^^^^^^^^ expression
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
@@ -1740,6 +1748,7 @@ pub enum TSModuleReference<'a> {
 pub struct TSExternalModuleReference<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// The string literal inside the `require` call, e.g., `"x"` in `require("x")`.
     pub expression: StringLiteral<'a>,
 }
 
