@@ -69,15 +69,13 @@ impl<'a> PeepholeOptimizations {
             let expr = Self::minimize_not(test.span(), test, ctx, true);
 
             if let Some(left) = for_stmt.test.take() {
-                let mut logical_expr = Expression::new_logical_expression(
+                for_stmt.test = Some(Self::join_with_left_associative_op(
                     left.span(),
-                    left,
                     LogicalOperator::And,
+                    left,
                     expr,
                     ctx,
-                );
-                Self::try_fold_and_or(&mut logical_expr, ctx);
-                for_stmt.test = Some(logical_expr);
+                ));
             } else {
                 for_stmt.test = Some(expr);
             }
@@ -114,15 +112,13 @@ impl<'a> PeepholeOptimizations {
             let expr = test;
 
             if let Some(left) = for_stmt.test.take() {
-                let mut logical_expr = Expression::new_logical_expression(
+                for_stmt.test = Some(Self::join_with_left_associative_op(
                     left.span(),
-                    left,
                     LogicalOperator::And,
+                    left,
                     expr,
                     ctx,
-                );
-                Self::try_fold_and_or(&mut logical_expr, ctx);
-                for_stmt.test = Some(logical_expr);
+                ));
             } else {
                 for_stmt.test = Some(expr);
             }
