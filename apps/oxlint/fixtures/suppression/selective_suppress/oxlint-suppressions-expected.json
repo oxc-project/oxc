@@ -1,0 +1,12 @@
+{
+  "test.js": {
+    "no-console": {
+      "count": 1
+    }
+  },
+  "test.ts": {
+    "typescript/no-explicit-any": {
+      "count": 1
+    }
+  }
+}

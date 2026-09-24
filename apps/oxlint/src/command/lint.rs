@@ -79,6 +79,10 @@ pub struct SuppressionOptions {
     #[bpaf(switch, hide)]
     pub suppress_all: bool,
 
+    /// Generate suppressions for violations of the specified rule
+    #[bpaf(argument("RULE"), many, hide)]
+    pub suppress_rule: Vec<String>,
+
     /// Remove entries for violations that no longer exist
     #[bpaf(switch, hide)]
     pub prune_suppressions: bool,
@@ -798,9 +802,22 @@ mod lint_options {
     }
 
     #[test]
-    fn suppress_rules() {
+    fn suppress_all() {
         let options = get_lint_options("--suppress-all");
         assert!(options.suppression_options.suppress_all);
+        assert!(options.suppression_options.suppress_rule.is_empty());
+        assert!(!options.suppression_options.prune_suppressions);
+    }
+
+    #[test]
+    fn suppress_rule() {
+        let options =
+            get_lint_options("--suppress-rule no-console --suppress-rule typescript/array-type");
+        assert!(!options.suppression_options.suppress_all);
+        assert_eq!(
+            options.suppression_options.suppress_rule,
+            ["no-console", "typescript/array-type"]
+        );
         assert!(!options.suppression_options.prune_suppressions);
     }
 
@@ -809,6 +826,7 @@ mod lint_options {
         let options = get_lint_options("--prune-suppressions");
         assert!(options.suppression_options.prune_suppressions);
         assert!(!options.suppression_options.suppress_all);
+        assert!(options.suppression_options.suppress_rule.is_empty());
     }
 
     #[test]
