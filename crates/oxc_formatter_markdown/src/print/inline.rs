@@ -450,7 +450,17 @@ pub fn collect_inlines<'a>(
                 mark_delimiter(open, parts, false);
                 parts.push_str(style);
             }
-            Inline::Link(l) => link::collect_link(l, parts, f),
+            Inline::Link(l) => {
+                link::collect_link(l, parts, f);
+                // A title keeps its newlines (a label's are collapsed): as after an opaque node
+                if let LinkKind::Inline { title: Some(title), .. } = &l.kind
+                    && let (Some(first), Some(last)) = (title.first(), title.last())
+                    && let Some(risky) =
+                        tail_line_risky(children, first.span.start, last.span.end, None, f)
+                {
+                    f.context().raw_text().set(raw_for(risky));
+                }
+            }
             // Opaque to delimiter pairing (an image's alt text too: it is printed as written)
             _ => {
                 let start = parts.len();
@@ -495,27 +505,39 @@ pub fn collect_inlines<'a>(
                     _ => parts.push_str(raw),
                 }
                 parts.mark(Mark::Opaque { start, end: parts.len() });
-                // A newline inside the node starts a source line with the node's tail; what follows
-                // on that line may be cut by wrapping (`$$\n$$ text`: `$$` alone opens math),
-                // so such a line stays as written
-                if parent.paragraph
-                    && !code_span_joined
-                    && let Some(newline) = raw.rfind('\n')
-                {
-                    let line_start = child.span().start + u32::try_from(newline).unwrap_or(0) + 1;
-                    let line = line_from(
+                // A newline inside the node starts a source line with the node's tail;
+                // what follows on that line may be cut by wrapping (`$$\n$$ text`: `$$` alone opens math),
+                // so such a line stays as written.
+                if !code_span_joined
+                    && let Some(risky) = tail_line_risky(
                         children,
-                        line_start,
-                        code_span_tail.map(|tail| (tail, child.span().end)),
+                        child.span().start,
+                        child.span().end,
+                        code_span_tail,
                         f,
-                    );
-                    let risky = is_line_shape_start(&line.text)
-                        || line_or_prefix_opens_block(&line, true, f);
+                    )
+                {
                     f.context().raw_text().set(raw_for(risky));
                 }
             }
         }
     }
+}
+
+/// After a newline inside `start..end` (a node printed with its line breaks),
+/// whether the source line it starts is a shape or may open a block; `None` without a newline.
+/// `tail`: the printed form of that line up to `end`, when it differs from the source.
+fn tail_line_risky<'a>(
+    children: &[Inline<'_>],
+    start: u32,
+    end: u32,
+    tail: Option<&'a str>,
+    f: &MarkdownFormatter<'_, 'a>,
+) -> Option<bool> {
+    let newline = f.context().source_text().slice_range(start, end).rfind('\n')?;
+    let line_start = start + u32::try_from(newline).unwrap_or(0) + 1;
+    let line = line_from(children, line_start, tail.map(|tail| (tail, end)), f);
+    Some(is_line_shape_start(&line.text) || line_or_prefix_opens_block(&line, true, f))
 }
 
 /// Records a delimiter node whose opening marker was pushed at `open` and whose closing marker
