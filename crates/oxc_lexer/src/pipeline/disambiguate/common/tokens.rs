@@ -127,7 +127,6 @@ impl Tokens<'_> {
         }
     }
 
-    /// The significant token start before `pos` (skipping trivia), or `None` at the start.
     #[inline]
     pub(crate) fn peek(&self, i: usize) -> Peek {
         let pos = self.next_sig(i);
@@ -135,6 +134,7 @@ impl Tokens<'_> {
         Peek { pos, kind, byte: self.src[pos] }
     }
 
+    /// The significant token start before `pos` (skipping trivia), or `None` at the start.
     #[inline]
     pub(crate) fn prev_sig(&self, pos: usize) -> Option<usize> {
         walk::prev_sig(self.st, self.kind, pos)
@@ -171,8 +171,7 @@ impl Tokens<'_> {
         (i - p) as i32
     }
 
-    /// Fused operator at `pos`: `(len, kind)`; `kind` is the punct kind for a single byte (0 for
-    /// unknown).
+    /// Length of the fused operator at pos, 1 when no multi-byte operator starts there.
     #[inline]
     pub(crate) fn op_len(&self, pos: usize) -> usize {
         let lmax = (self.n - pos).min(4) as u32;

@@ -339,6 +339,8 @@ unsafe fn glue_number(
     }
 }
 
+// Cold path; kept out of line so it does not slow the coalesce loop.
+#[inline(never)]
 unsafe fn munch_walk(
     src: *const u8,
     n: usize,
