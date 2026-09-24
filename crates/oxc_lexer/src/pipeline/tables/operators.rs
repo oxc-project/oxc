@@ -114,14 +114,34 @@ const FOUR_BYTE_OP_LAST_BYTE: u8 = {
 };
 
 pub struct OpMap {
-    pub opmap_mul: u32,
-    pub op_pack: [u32; 256],
+    opmap_mul: u32,
+    op_pack: [u32; 256],
 }
 
 impl OpMap {
     /// Create an [`OpMap`].
     pub(super) fn new() -> OpMap {
         Self { opmap_mul: OPMAP_MUL, op_pack: OP_PACK }
+    }
+
+    /// Hash `key` and get the packed value for the slot in the hash table.
+    ///
+    /// `key` must contain:
+    /// - 3 bytes of source in bottom 3 bytes.
+    /// - Length of operator checking for in top byte (2 or 3).
+    ///
+    /// Returned value contains:
+    /// - First 3 bytes of matching operator in bottom 3 bytes.
+    /// - [`TokenKind`] of the operator in top byte as a `u8`.
+    ///
+    /// If no match, returns 0 (i.e. operator bytes `\0\0\0`, `TokenKind` byte 0).
+    ///
+    /// Hashmap collisions are possible, so caller must additionally check that
+    /// the first 3 bytes of `key` and the returned packed value match to confirm a match.
+    #[inline(always)]
+    pub fn opmap_pack(&self, key: u32) -> u32 {
+        let slot = self.slot(key);
+        self.op_pack[slot]
     }
 
     /// Check if 4 bytes of source contain a multi-byte operator in their first `len` bytes.
@@ -134,7 +154,7 @@ impl OpMap {
     pub fn opmap_lookup(&self, b0: u8, b1: u8, b2: u8, b3: u8, len: u32) -> u32 {
         let c2 = if len >= 3 { b2 } else { 0 };
         let key = op_key(b0, b1, c2, len);
-        let slot = op_slot(key, self.opmap_mul);
+        let slot = self.slot(key);
 
         // Compare the candidate's and operator's first 3 bytes.
         //
@@ -182,6 +202,11 @@ impl OpMap {
 
         // Return `TokenKind` as `u32`
         pack >> 24
+    }
+
+    #[inline(always)]
+    fn slot(&self, key: u32) -> usize {
+        op_slot(key, self.opmap_mul)
     }
 }
 
