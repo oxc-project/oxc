@@ -563,7 +563,8 @@ pub fn is_es5_component(node: &AstNode) -> bool {
     if let Some(member_expr) = call_expr.callee.as_member_expression()
         && let Expression::Identifier(ident) = member_expr.object()
     {
-        return ident.name == PRAGMA && member_expr.static_property_name() == Some(CREATE_CLASS);
+        return ident.name == PRAGMA
+            && member_expr.static_property_name().is_some_and(|name| name == CREATE_CLASS);
     }
 
     if let Some(ident_reference) = call_expr.callee.get_identifier_reference() {

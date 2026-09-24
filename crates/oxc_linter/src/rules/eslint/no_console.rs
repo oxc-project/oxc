@@ -125,7 +125,7 @@ impl Rule for NoConsole {
             _ => unreachable!(),
         };
 
-        if self.allow.iter().any(|allowed_name| allowed_name == prop_name) {
+        if self.allow.iter().any(|allowed_name| allowed_name.as_str() == prop_name) {
             return;
         }
 
@@ -219,6 +219,9 @@ fn test() {
     ];
 
     let fail = vec![
+        (r#"console["\uD800"]()"#, None, None),
+        (r"console[`\uDC00`]()", None, None),
+        (r#"console["a\uD800b"]()"#, Some(serde_json::json!([{ "allow": ["ab", "log"] }])), None),
         ("console.log()", None, None),
         ("foo(console.log)", None, None),
         ("console.log(foo)", None, None),

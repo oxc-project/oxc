@@ -523,7 +523,8 @@ fn get_method_name(call_expr: &CallExpression) -> Option<String> {
         "unknown"
     };
 
-    Some(format!("{}.{}", object_name, callee.static_property_name().unwrap()))
+    let method_name = callee.static_property_name()?.as_str()?;
+    Some(format!("{object_name}.{method_name}"))
 }
 
 #[test]
