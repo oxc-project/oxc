@@ -419,7 +419,7 @@ impl CliRunner {
             options.cwd(),
             "oxlint-suppressions.json",
             suppression_options.suppress_all,
-            suppression_options.suppress_rule.clone(),
+            &suppression_options.suppress_rule,
             suppression_options.prune_suppressions || fix_options.is_enabled(),
         );
 

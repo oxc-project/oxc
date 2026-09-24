@@ -85,7 +85,7 @@ impl SuppressionManager {
         cwd: &Path,
         file_path: &str,
         suppress_all: bool,
-        suppress_rules: Vec<String>,
+        suppress_rules: &[String],
         prune_suppression: bool,
     ) -> Self {
         let suppression_file_path = cwd.join(file_path);
