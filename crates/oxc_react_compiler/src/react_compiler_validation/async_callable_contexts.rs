@@ -91,6 +91,14 @@ impl DeferredCall {
 
 type DeferredCalls = FxHashMap<IdentifierId, DeferredCall>;
 
+/// Calls executed by a function are distinct from its returned values. A caller
+/// resolves captured or parameter callees before applying nested async effects.
+#[derive(Clone, PartialEq, Eq)]
+struct Call {
+    callees: Values,
+    arguments: Option<Arguments>,
+}
+
 /// Non-plain parameters are temporaries followed by prologue binding stores.
 /// Declaration locations identify those bindings without including body aliases.
 fn parameter_bindings(func: &HirFunction, env: &Environment<'_>) -> FxHashSet<IdentifierId> {
@@ -491,6 +499,7 @@ pub(super) struct AsyncCallables {
 
 #[derive(Clone, Default, PartialEq, Eq)]
 pub(super) struct ReturnedCallables {
+    calls: FxHashMap<InstructionId, Vec<Call>>,
     pub generator: bool,
     pub generator_reassignment: Option<(IdentifierId, Option<Span>)>,
     values: Values,
@@ -834,6 +843,59 @@ impl CallableState {
             deferred_captures: callable.deferred_captures,
             snapshot_captures: callable.snapshot_captures,
             context_values: Rc::new(contexts),
+        }
+    }
+
+    fn execute_call(
+        &mut self,
+        call: &Call,
+        visiting: &mut FxHashSet<IdentifierId>,
+        invocations: &mut Vec<AsyncInvocation>,
+    ) {
+        for (&id, callable) in &call.callees.contexts {
+            if callable.generator || !visiting.insert(id) {
+                continue;
+            }
+            if callable.is_async {
+                invocations.push(self.invocation(callable.clone(), call.arguments.as_ref()));
+            } else if let Some(summary) = &callable.returned {
+                let empty = Arguments::default();
+                let (substitutions, rest) = self.call_substitutions(
+                    callable,
+                    summary,
+                    call.arguments.as_ref().unwrap_or(&empty),
+                );
+                for nested in summary.calls.values().flatten() {
+                    let callees = self.substitute_values(
+                        &nested.callees,
+                        summary,
+                        &substitutions,
+                        &rest,
+                        &mut FxHashSet::default(),
+                    );
+                    let arguments = nested.arguments.as_ref().map(|arguments| Arguments {
+                        length: arguments.length,
+                        elements: arguments
+                            .elements
+                            .iter()
+                            .map(|(key, values)| {
+                                (
+                                    key.clone(),
+                                    self.substitute_values(
+                                        values,
+                                        summary,
+                                        &substitutions,
+                                        &rest,
+                                        &mut FxHashSet::default(),
+                                    ),
+                                )
+                            })
+                            .collect(),
+                    });
+                    self.execute_call(&Call { callees, arguments }, visiting, invocations);
+                }
+            }
+            visiting.remove(&id);
         }
     }
 
@@ -1481,18 +1543,35 @@ impl CallableState {
         let Some(returned) = &callable.returned else {
             return Values::default();
         };
-        let mut values = returned.values.clone();
         let (substitutions, rest_arguments) =
             self.call_substitutions(callable, returned, arguments);
+        self.substitute_values(
+            &returned.values,
+            returned,
+            &substitutions,
+            &rest_arguments,
+            visiting,
+        )
+    }
+
+    fn substitute_values(
+        &self,
+        original: &Values,
+        returned: &ReturnedCallables,
+        substitutions: &FxHashMap<IdentifierId, Values>,
+        rest_arguments: &FxHashMap<IdentifierId, Properties>,
+        visiting: &mut FxHashSet<IdentifierId>,
+    ) -> Values {
+        let mut values = original.clone();
         // Returning a parameter snapshots the selected callable; a newly
         // returned closure retains the caller's live binding information.
-        for identity in &returned.values.identities {
+        for identity in &original.identities {
             if let Some(selected) = self.substitute(
                 *identity,
-                &substitutions,
+                substitutions,
                 &returned.projections,
                 &returned.deferred_calls,
-                &rest_arguments,
+                rest_arguments,
                 visiting,
             ) {
                 values.identities.remove(identity);
@@ -1526,10 +1605,10 @@ impl CallableState {
                             }
                             self.substitute(
                                 *value,
-                                &substitutions,
+                                substitutions,
                                 &returned.projections,
                                 &returned.deferred_calls,
-                                &rest_arguments,
+                                rest_arguments,
                                 visiting,
                             )
                             .map_or_else(
@@ -1950,18 +2029,33 @@ pub(super) fn infer_async_callable_contexts(
                 }
                 let mut invocations = Vec::new();
                 let (arguments, _) = state.call_arguments(instruction);
-                for callable in state.invoked(&instruction.value).contexts.into_values() {
-                    if callable.is_async && !callable.generator {
-                        invocations.push(state.invocation(callable, Some(&arguments)));
-                    }
+                let calls: Vec<_> = [
+                    Call { callees: state.invoked(&instruction.value), arguments: Some(arguments) },
+                    Call {
+                        callees: state.invoked_callbacks(&instruction.value, env, false),
+                        arguments: state.callback_arguments(&instruction.value, env),
+                    },
+                ]
+                .into_iter()
+                .filter(|call| {
+                    call.callees.identities.iter().any(|id| state.projections.contains_key(id))
+                        || call.callees.contexts.values().any(|callable| {
+                            !callable.generator
+                                && (callable.is_async
+                                    || callable
+                                        .returned
+                                        .as_ref()
+                                        .is_some_and(|summary| !summary.calls.is_empty()))
+                        })
+                })
+                .collect();
+                for call in &calls {
+                    state.execute_call(call, &mut FxHashSet::default(), &mut invocations);
                 }
-                let callback_arguments = state.callback_arguments(&instruction.value, env);
-                for callable in
-                    state.invoked_callbacks(&instruction.value, env, false).contexts.into_values()
-                {
-                    if callable.is_async && !callable.generator {
-                        invocations.push(state.invocation(callable, callback_arguments.as_ref()));
-                    }
+                if calls.is_empty() {
+                    result.returned.calls.remove(&instruction_id);
+                } else {
+                    result.returned.calls.insert(instruction_id, calls);
                 }
                 let returning = state.invoked_callbacks(&instruction.value, env, true);
                 let mut identifiers = returning.identities;
