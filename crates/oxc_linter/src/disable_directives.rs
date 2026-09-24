@@ -347,9 +347,13 @@ impl DisableDirectives {
                 // For next-line directives, only check if the diagnostic starts within the interval
                 // We intentionally only check span.start (not span.end) to avoid suppressing
                 // diagnostics for large constructs that merely contain the disabled line
+                // A directive never suppresses a diagnostic about its own comment
+                // (e.g. unicorn/no-abusive-eslint-disable)
                 #[expect(clippy::suspicious_operation_groupings)]
                 {
-                    span.start >= interval.start && span.start < interval.stop
+                    span.start >= interval.start
+                        && span.start < interval.stop
+                        && !interval.val.comment_span().contains_inclusive(span)
                 }
             } else {
                 // For regular disable directives, check if there's any overlap
@@ -669,12 +673,14 @@ impl DisableDirectivesBuilder {
                     }
                 }
                 DirectiveKind::DisableLine => {
-                    // Get the span between the preceding newline to this comment
+                    // Get the span of the whole line containing the comment
                     let start = source_text[..comment_span.start as usize]
                         .lines()
                         .next_back()
                         .map_or(0, |line| comment_span.start - line.len() as u32);
-                    let stop = comment_span.start;
+                    let rest_of_line = &source_text[comment_span.end as usize..];
+                    let stop = comment_span.end
+                        + rest_of_line.find('\n').unwrap_or(rest_of_line.len()) as u32;
 
                     if rule_names.is_empty() {
                         self.add_interval(
@@ -1153,11 +1159,18 @@ no-debugger
             /* {prefix}-enablefoo, no-debugger, no-console */
                 debugger;
             "
-            )
+            ),
+            // The directive may appear anywhere on the line, including before the violation
+            format!("/* {prefix}-disable-line */ debugger;"),
+            format!("/* {prefix}-disable-line no-debugger */ debugger;"),
+            format!("debugger; /* {prefix}-disable-line no-debugger */ debugger;"),
         ];
 
         let fail = vec![
             "debugger".to_string(),
+            // `disable-line` only affects its own line, not adjacent lines
+            format!("/* {prefix}-disable-line */\ndebugger;"),
+            format!("debugger;\n/* {prefix}-disable-line */"),
             format!(
                 "
             debugger; // {prefix}-disable-line no-alert
