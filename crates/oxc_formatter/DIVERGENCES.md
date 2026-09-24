@@ -212,6 +212,9 @@ Block comments glued after the operator before it stay there, in order;
 Prettier prints the line comment first and the block on the value's line, crossing the block.
 A line comment before the operator rides its `line_suffix` past the operator and gets the same break;
 Prettier flushes it past the value.
+When the left side defers comments before the operator to the value (own-line, or a block ending its line),
+the line comment follows them on its own line in source order, as Prettier prints type aliases;
+Prettier flushes it past a fitting JS value (`const v4 = /* c */ 1; // d`).
 
 ```ts
 // input
