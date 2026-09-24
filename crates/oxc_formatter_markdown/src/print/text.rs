@@ -33,8 +33,9 @@ use super::{
 #[derive(Clone, Copy)]
 pub struct NextWord<'a> {
     pub word: &'a str,
-    /// The word is its text's only one.
-    pub alone_on_line: bool,
+    /// The source line from the word on, as it prints: the line a kept break puts the word at the start of.
+    /// Only `preserve` reads it (a text never spans a line, so only `next_word_of` fills it).
+    pub line: &'a str,
     /// The word's leading `*` / `_` run gets escaped (inside emphasis):
     /// printed, it starts with `\` and cannot open a block.
     pub escaped: bool,
@@ -61,13 +62,11 @@ pub struct TextContext<'a> {
     pub after_liquid: bool,
     /// The next sibling is a soft break (the text ends a source line).
     pub before_soft_break: bool,
-    /// Nothing follows the text on its source line (a node glued after it would be part of the line).
-    pub ends_line: bool,
     /// The first word the next sibling starts, for the whitespace that ends this text.
     pub next_word: Option<NextWord<'a>>,
     /// The text's last word with the nodes glued after it on the source line (`:-:` + `[[w]]`),
-    /// the word a break before it would put at a line start, and whether it ends the line.
-    pub glued_last_word: Option<(&'a str, bool)>,
+    /// the word a break before it would put at a line start.
+    pub glued_last_word: Option<&'a str>,
     /// The last word of the previous sibling text (a soft break's other side), for the CJK rules only;
     /// a trailing `\` there was escaped by the text (see `push_text`).
     pub prev_word: Option<&'a str>,
@@ -113,11 +112,11 @@ pub fn push_text<'a>(
                     let next = if is_last { cx.edge_next } else { Some(' ') };
                     leading_run_escaped(word, prev, next)
                 };
-                let (word, alone) = match cx.glued_last_word {
+                let word = match cx.glued_last_word {
                     Some(glued) if is_last => glued,
-                    _ => (word, is_last && cx.ends_line),
+                    _ => word,
                 };
-                Some(NextWord { word, alone_on_line: is_first && alone, escaped })
+                Some(NextWord { word, line: "", escaped })
             };
             let cx = TextContext {
                 next_word: next,
@@ -340,8 +339,7 @@ pub fn prevents_break(newline: bool, next: Option<NextWord<'_>>, prose_wrap: Pro
     // A lone `---` / `===` after a newline is going to be escaped as a fake setext underline instead
     !(prose_wrap == ProseWrap::Preserve
         && newline
-        && is_fake_setext_underline(next.word)
-        && next.alone_on_line)
+        && is_fake_setext_underline(next.line.trim_end_matches(is_split_whitespace)))
 }
 
 /// The parser's line-start classification (`lexical::line_start`), asked about the word alone:
@@ -349,25 +347,22 @@ pub fn prevents_break(newline: bool, next: Option<NextWord<'_>>, prose_wrap: Pro
 /// table rows, footnote definitions.
 /// (Prettier tests `/^>|^(?:[*+-]|#{1,6}|\d+[).])$/` only, which is how a wrapped `<div>` or `***` opens a block.)
 fn looks_like_block_start(next: NextWord<'_>, exact: bool) -> bool {
-    // Asked about the line the wrap would produce:
+    // `exact` (a kept break under `preserve`): the line is known, ask about it.
+    // Otherwise the line depends on the wrapping itself, so both candidates count:
     // the word alone (`***` is a break, `-|-` a delimiter row)
-    // or the word with content after it (`- x` interrupts a paragraph where an empty `-` does not).
-    // `exact`: the word's position is known; otherwise it depends on the wrapping itself, so both count.
-    if !may_open_block(next.word.as_bytes()[0]) {
+    // and the word with content after it (`- x` interrupts a paragraph where an empty `-` does not).
+    let target = if exact { next.line } else { next.word };
+    if !target.as_bytes().first().is_some_and(|&b| may_open_block(b)) {
         return false;
     }
     let constructs = Constructs::markdown();
-    if (!exact || next.alone_on_line) && lexical::line_start(&constructs, next.word, true).is_some()
-    {
-        return true;
-    }
-    if exact && next.alone_on_line {
-        return false;
-    }
     // A dialect line shape at a line start is printed raw from then on: never create one
-    // (asked about the word alone, so a `:::` word counts even where `::: note` would be an opener)
-    if is_line_shape_start(next.word) {
+    // (asked about the word alone, a `:::` word counts even where `::: note` would be an opener)
+    if lexical::line_start(&constructs, target, true).is_some() || is_line_shape_start(target) {
         return true;
+    }
+    if exact {
+        return false;
     }
     let mut buf = [0u8; 64];
     let len = next.word.len();
