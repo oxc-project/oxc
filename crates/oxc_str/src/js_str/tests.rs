@@ -14,8 +14,9 @@ fn from_utf16_in<'a>(units: &[u16], allocator: &'a Allocator) -> JSStr<'a> {
     builder.into_js_str()
 }
 
-/// Decode the input independently with Rust's UTF-16 decoder. Valid scalar
-/// values use std's UTF-8 encoder; errors supply the exact unpaired code unit.
+/// Decode the input independently with Rust's UTF-16 decoder.
+/// Valid scalar values use std's UTF-8 encoder.
+/// Errors supply the exact unpaired code unit.
 fn assert_value(value: JSStr<'_>, units: &[u16]) {
     let mut expected_points = Vec::new();
     let mut expected_bytes = Vec::new();

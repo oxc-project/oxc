@@ -2,36 +2,39 @@ use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{JSChar, JSStr};
 
-/// Build a JavaScript string in an arena, preserving lone surrogates.
+/// Build a [`JSStr`] in an arena, preserving lone surrogates.
 ///
-/// Appends concatenate UTF-16 values. A leading surrogate at the end of one
-/// append pairs with a trailing surrogate at the start of the next, including
-/// across empty appends. [`into_js_str`](Self::into_js_str) returns canonical WTF-8
-/// without copying the completed buffer.
+/// Appends concatenated UTF-16 values. A leading surrogate at the end of one append
+/// pairs with a trailing surrogate at the start of the next, including across empty appends.
+/// [`into_js_str`] returns canonical WTF-8 without copying the completed buffer.
 ///
 /// ```
-/// use oxc_allocator::Allocator;
+/// # use oxc_allocator::Allocator;
+/// # let allocator = Allocator::new();
 /// use oxc_str::JSStrBuilder;
 ///
-/// let allocator = Allocator::new();
 /// let mut builder = JSStrBuilder::new_in(&allocator);
 /// builder.push_code_unit(0xD800);
 /// builder.push_str("");
 /// builder.push_code_unit(0xDC00);
-/// assert_eq!(builder.into_js_str().as_str(), Some("𐀀"));
+/// let s = builder.into_js_str();
+///
+/// assert_eq!(s.as_str(), Some("𐀀"));
 /// ```
+///
+/// [`into_js_str`]: Self::into_js_str
 pub struct JSStrBuilder<'a> {
     /// Canonical WTF-8, excluding a held final leading surrogate.
     bytes: ArenaVec<'a, u8>,
-    /// Always in 0xD800..=0xDBFF when present, with three bytes of spare capacity
-    /// in `bytes`, so finishing the string never needs to grow the buffer.
+    /// Always in 0xD800..=0xDBFF when present, with three bytes of spare capacity in `bytes`,
+    /// so finishing the string never needs to grow the buffer.
     pending_lead_surrogate: Option<u16>,
     /// Describes only `bytes`, excluding `pending_lead_surrogate`.
     has_lone_surrogate: bool,
 }
 
 impl<'a> JSStrBuilder<'a> {
-    /// Construct an empty builder without allocating.
+    /// Create an empty [`JSStrBuilder`] without allocating.
     #[inline]
     pub fn new_in(allocator: &'a Allocator) -> Self {
         Self {
@@ -41,10 +44,12 @@ impl<'a> JSStrBuilder<'a> {
         }
     }
 
-    /// Reserve capacity in bytes. Zero capacity does not allocate.
+    /// Create an empty [`JSStrBuilder`] with reserved capacity.
+    ///
+    /// If `capacity` is 0, does not allocate.
     ///
     /// # Panics
-    /// Panics if capacity exceeds `u32::MAX` or `isize::MAX`.
+    /// Panics if `capacity` exceeds `u32::MAX` or `isize::MAX`.
     #[inline]
     pub fn with_capacity_in(capacity: usize, allocator: &'a Allocator) -> Self {
         Self {
@@ -54,14 +59,15 @@ impl<'a> JSStrBuilder<'a> {
         }
     }
 
-    /// Append UTF-8 text. Empty text preserves a pending leading surrogate.
+    /// Append a `&str`.
     #[inline]
     pub fn push_str(&mut self, value: &str) {
+        // Empty text preserves a pending leading surrogate
         if value.is_empty() {
             return;
         }
-        // Reserve before changing state, so a capacity panic cannot leave a
-        // flushed leading surrogate that a later append would fail to pair.
+        // Reserve before changing state, so a capacity panic cannot leave
+        // a flushed leading surrogate that a later append would fail to pair
         if self.pending_lead_surrogate.is_some() {
             self.bytes.reserve(value.len() + 3);
             self.flush_pending();
@@ -105,8 +111,10 @@ impl<'a> JSStrBuilder<'a> {
 
     /// Append one UTF-16 code unit.
     ///
-    /// Use this for input from a UTF-16 API; use [`push_js_char`](Self::push_js_char)
-    /// for an already decoded JavaScript code point.
+    /// Use this for input from a UTF-16 API.
+    /// Use [`push_js_char`] for an already decoded JavaScript code point.
+    ///
+    /// [`push_js_char`]: Self::push_js_char
     #[inline]
     pub fn push_code_unit(&mut self, unit: u16) {
         self.push_js_char(JSChar::from_code_unit(unit));
@@ -114,8 +122,8 @@ impl<'a> JSStrBuilder<'a> {
 
     /// Append potentially ill-formed UTF-16.
     ///
-    /// This accepts code-unit buffers from UTF-16 APIs without replacing lone
-    /// surrogates. A pair may span consecutive calls, including empty buffers.
+    /// This accepts code-unit buffers from UTF-16 APIs without replacing lone surrogates.
+    /// A pair may span consecutive calls, including empty buffers.
     #[inline]
     pub fn push_utf16(&mut self, units: &[u16]) {
         for &unit in units {
@@ -183,8 +191,9 @@ impl<'a> JSStrBuilder<'a> {
         self.flush_pending();
         let bytes = self.bytes.into_arena_slice();
         // SAFETY: Appends maintain canonical WTF-8 and the exact surrogate flag.
-        // The final pending surrogate has been flushed. `ArenaVec<u8>` bounds
-        // its length by u32::MAX and isize::MAX; the slice owns the arena lifetime.
+        // The final pending surrogate has been flushed.
+        // `ArenaVec<u8>` bounds its length by `u32::MAX` and `isize::MAX`.
+        // The slice owns the arena lifetime.
         unsafe { JSStr::from_bytes_unchecked(bytes, self.has_lone_surrogate) }
     }
 
@@ -202,7 +211,10 @@ impl<'a> JSStrBuilder<'a> {
         }
     }
 
-    /// `lead` and `trail` have already been checked at the append boundary.
+    /// Append a character formed from lead and trail surrogates.
+    ///
+    /// # Panics
+    /// Panics if `lead` and `trail` do not form a valid `char`.
     #[inline]
     fn append_pair(&mut self, lead: u16, trail: u16) {
         let value = 0x10000 + ((u32::from(lead) - 0xD800) << 10) + (u32::from(trail) - 0xDC00);

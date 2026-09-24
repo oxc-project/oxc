@@ -26,14 +26,14 @@ impl JSChar {
         if self.is_surrogate() {
             None
         } else {
-            // SAFETY: `JSChar` is at most 0x10_FFFF, and we excluded surrogates.
+            // SAFETY: `JSChar` is at most 0x10_FFFF, and we excluded surrogates
             Some(unsafe { char::from_u32_unchecked(self.0) })
         }
     }
 
     /// Construct a code point without checking its range.
     ///
-    /// # Safety
+    /// # SAFETY
     /// `value` must be at most `0x10_FFFF`.
     #[inline]
     pub(super) const unsafe fn from_u32_unchecked(value: u32) -> Self {
