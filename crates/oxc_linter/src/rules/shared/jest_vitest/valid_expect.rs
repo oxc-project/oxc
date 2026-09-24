@@ -65,6 +65,9 @@ pub struct ValidExpectConfig {
     /// When `true`, allow a string or template literal second argument as a custom message.
     #[serde(skip)]
     allow_string_message_arg: bool,
+    /// When `true`, allow Vitest's static `expect.assert` API.
+    #[serde(skip)]
+    allow_assert_api: bool,
     /// When `true`, async assertions must be awaited in all contexts (not just return statements).
     always_await: bool,
 }
@@ -76,6 +79,7 @@ impl Default for ValidExpectConfig {
             min_args: 1,
             max_args: 1,
             allow_string_message_arg: false,
+            allow_assert_api: false,
             always_await: false,
         }
     }
@@ -109,11 +113,23 @@ impl ValidExpectConfig {
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self { async_matchers, min_args, max_args, allow_string_message_arg: false, always_await }
+        Self {
+            async_matchers,
+            min_args,
+            max_args,
+            allow_string_message_arg: false,
+            allow_assert_api: false,
+            always_await,
+        }
     }
 
     pub fn allow_string_message_arg(mut self) -> Self {
         self.allow_string_message_arg = true;
+        self
+    }
+
+    pub fn allow_assert_api(mut self) -> Self {
+        self.allow_assert_api = true;
         self
     }
 
@@ -142,6 +158,15 @@ impl ValidExpectConfig {
         else {
             return;
         };
+        if self.allow_assert_api
+            && jest_fn_call
+                .head
+                .parent
+                .and_then(Expression::as_member_expression)
+                .is_some_and(|member| member.static_property_name() == Some("assert"))
+        {
+            return;
+        }
         let reporting_span = jest_fn_call.expect_error.map_or(call_expr.span, |_| {
             find_top_most_member_expression(node, ctx)
                 .map_or(call_expr.span, |top_most_member_expr| top_most_member_expr.span())
