@@ -514,6 +514,7 @@ declare_oxc_lint!(
     Extensions,
     import,
     restriction,
+    fix_conditional,
     config = MixedTupleRuleConfig<ExtensionRule, ImportExtensionsObject>,
     version = "1.2.0",
     short_description = "Enforce consistent use of file extensions in import paths.",
@@ -557,7 +558,7 @@ impl Rule for Extensions {
                 self.process_import(
                     ctx,
                     s.value.as_str(),
-                    call_expr.span,
+                    s.span,
                     false, // require() is never a type import
                     true,  // treat require as import for diagnostics
                 );
@@ -572,7 +573,7 @@ impl Rule for Extensions {
                 self.process_import(
                     ctx,
                     module_name.as_str(),
-                    module.statement_span,
+                    module.span,
                     module.is_type,
                     module.is_import,
                 );
@@ -642,11 +643,48 @@ impl Extensions {
                 require_extension,
             ) {
                 if extension_is_written {
-                    ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                        span, ext_str, is_import,
-                    ));
+                    let diagnostic =
+                        extension_should_not_be_included_in_diagnostic(span, ext_str, is_import);
+                    // Only autofix when we're confident the written segment really is a file
+                    // extension and not part of a compound filename. Without module resolution a
+                    // non-standard, unconfigured segment is ambiguous: `import x from './api.gen'`
+                    // may resolve to `api.gen.ts`, so stripping `.gen` would break the import.
+                    // In that case we still report, but withhold the fix.
+                    //
+                    // `ext_str` can carry a trailing `?query`/`#hash` (e.g. `js#section`), so match
+                    // confidence against the bare extension.
+                    let bare_ext = ext_str.split(['?', '#']).next().unwrap_or(ext_str);
+                    let extension_is_confirmed = written_is_genuine_extension
+                        || resolved_extension.is_some()
+                        || ExtensionsConfig::is_standard_extension(bare_ext)
+                        || config.has_rule(bare_ext);
+                    if extension_is_confirmed
+                        && let Some(ext_span) = written_extension_span(ctx, span)
+                    {
+                        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                            fixer.delete_range(ext_span).with_message("Remove the file extension.")
+                        });
+                    } else {
+                        ctx.diagnostic(diagnostic);
+                    }
                 } else {
-                    ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+                    let diagnostic = extension_missing_diagnostic(span, is_import);
+                    // The extension we add is taken from the module's resolved on-disk path, so
+                    // the rewritten specifier points at the exact file the import already
+                    // resolves to — a safe fix. When the module isn't resolved we don't know
+                    // which extension to add, so we emit a plain diagnostic.
+                    if let Some(resolved) = resolved_extension
+                        && let Some(insert_pos) = closing_quote_index(ctx, span)
+                    {
+                        let insertion = format!(".{resolved}");
+                        ctx.diagnostic_with_fix(diagnostic, move |fixer| {
+                            fixer
+                                .insert_text_before_range(Span::empty(insert_pos), insertion)
+                                .with_message("Add the file extension.")
+                        });
+                    } else {
+                        ctx.diagnostic(diagnostic);
+                    }
                 }
             }
         } else if matches!(require_extension, Some(ExtensionRule::Always)) {
@@ -842,6 +880,55 @@ fn get_file_extension_from_module_name(module_name: &str) -> Option<Cow<'_, str>
     }
 
     Some(extension.cow_to_ascii_lowercase())
+}
+
+/// Compute the [`Span`] of the written file extension (including its leading `.`) within a
+/// module specifier string literal, for the "remove extension" autofix.
+///
+/// `specifier_span` is the span of the whole string literal, quotes included. The returned span
+/// covers only the extension characters (e.g. the `.js` in `"./foo.js"`), so deleting it leaves a
+/// well-formed specifier. Any `?query` or `#hash` suffix is preserved.
+///
+/// Returns `None` if a precise extension span can't be determined (in which case no fix is offered).
+fn written_extension_span(ctx: &LintContext, specifier_span: Span) -> Option<Span> {
+    let raw = ctx.source_range(specifier_span);
+    // Strip the surrounding quotes (single, double, or backtick). Bail if it isn't quoted as
+    // expected (defensive; specifier literals always are).
+    let inner = raw.get(1..raw.len().checked_sub(1)?)?;
+    let inner_start = specifier_span.start + 1;
+
+    // The extension lives before any query/hash suffix.
+    let path_end = inner.find(['?', '#']).unwrap_or(inner.len());
+    let path = &inner[..path_end];
+
+    // Only the final path segment can hold the extension.
+    let file_name_start = path.rfind('/').map_or(0, |i| i + 1);
+    let file_name = &path[file_name_start..];
+
+    let dot_in_file_name = file_name.rfind('.')?;
+    // Empty extension ("./foo.") — nothing to remove.
+    if dot_in_file_name + 1 >= file_name.len() {
+        return None;
+    }
+
+    // Byte offsets within a specifier fit in `u32`: the whole source is already `u32`-bounded.
+    let ext_start = inner_start + u32::try_from(file_name_start + dot_in_file_name).unwrap();
+    let ext_end = inner_start + u32::try_from(path_end).unwrap();
+    Some(Span::new(ext_start, ext_end))
+}
+
+/// Byte offset at which to insert a missing extension (immediately before the closing quote), for
+/// the "add extension" autofix.
+///
+/// Returns `None` when the specifier carries a `?query` or `#hash` suffix, since the correct
+/// insertion point becomes ambiguous — matching Biome, which withholds the fix in that case.
+fn closing_quote_index(ctx: &LintContext, specifier_span: Span) -> Option<u32> {
+    let raw = ctx.source_range(specifier_span);
+    let inner = raw.get(1..raw.len().checked_sub(1)?)?;
+    if inner.contains(['?', '#']) {
+        return None;
+    }
+    Some(specifier_span.end - 1)
 }
 
 /// Get the actual file extension from the resolved module path.
@@ -1815,6 +1902,10 @@ fn test() {
         (r#"import x from "./typescript.js";"#, Some(json!(["never"]))),
         (r#"import x from "./typescript.js";"#, Some(json!([{ "js": "never" }]))),
         (r#"import x from "./typescript.js";"#, Some(json!(["always", { "js": "never" }]))),
+        // A non-standard, unconfigured segment on an unresolved import is still reported under
+        // `never` (matching eslint-plugin-import), but the autofix is withheld because `./api.gen`
+        // may resolve to `api.gen.ts` — see the corresponding no-op case in the fix vector.
+        (r#"import x from "./api.gen";"#, Some(json!(["never"]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
         //     r"import useState from '@foo/bar/useState';",
@@ -1834,5 +1925,131 @@ fn test() {
         // ),
     ];
 
-    Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail).test_and_snapshot();
+    // "never" / remove-extension fixes. These are pure text edits and need no module resolution,
+    // so they run in the default harness (import plugin disabled).
+    let fix = vec![
+        (r#"import foo from "./foo.js";"#, r#"import foo from "./foo";"#, Some(json!(["never"]))),
+        (
+            r#"import data from "./bar.json";"#,
+            r#"import data from "./bar";"#,
+            Some(json!(["never"])),
+        ),
+        (
+            r#"export { foo } from "./foo.js";"#,
+            r#"export { foo } from "./foo";"#,
+            Some(json!(["never"])),
+        ),
+        (r#"export * from "./foo.js";"#, r#"export * from "./foo";"#, Some(json!(["never"]))),
+        // Per-extension "never" override.
+        (
+            r#"import x from "./typescript.js";"#,
+            r#"import x from "./typescript";"#,
+            Some(json!([{ "js": "never" }])),
+        ),
+        // require() calls are fixed too.
+        (
+            r#"const { foo } = require("./foo.js");"#,
+            r#"const { foo } = require("./foo");"#,
+            Some(json!(["never"])),
+        ),
+        // Case-insensitive: the actual written casing is removed.
+        (
+            r#"import x from "./foo.JS";"#,
+            r#"import x from "./foo";"#,
+            Some(json!(["never", { "js": "never" }])),
+        ),
+        // Custom extension.
+        (
+            r#"import Component from "./Component.vue";"#,
+            r#"import Component from "./Component";"#,
+            Some(json!(["never", { "vue": "never" }])),
+        ),
+        // Query string / hash suffix is preserved when removing the extension.
+        (
+            r#"import x from "./foo.js?a=True";"#,
+            r#"import x from "./foo?a=True";"#,
+            Some(json!(["never"])),
+        ),
+        (
+            r#"import x from "./foo.js#section";"#,
+            r#"import x from "./foo#section";"#,
+            Some(json!(["never"])),
+        ),
+        // Single-quoted specifiers keep their quote style.
+        (r"import x from './foo.js';", r"import x from './foo';", Some(json!(["never"]))),
+        // A non-standard, unconfigured segment on an unresolved import is ambiguous: `./api.gen`
+        // may resolve to `api.gen.ts`. We still report, but must NOT strip `.gen` (no fix applied).
+        (r"import x from './api.gen';", r"import x from './api.gen';", Some(json!(["never"]))),
+        // ...but an explicitly-configured non-standard extension IS safe to strip.
+        (
+            r"import x from './api.gen';",
+            r"import x from './api';",
+            Some(json!(["never", { "gen": "never" }])),
+        ),
+        // Asset extensions (.css, .svg) aren't in the resolver's extension set, so a bare `never`
+        // can't confirm them and leaves them untouched (report only). Configure them explicitly to
+        // opt into stripping.
+        (
+            r"import s from './styles.css';",
+            r"import s from './styles.css';",
+            Some(json!(["never"])),
+        ),
+        (r"import i from './icon.svg';", r"import i from './icon.svg';", Some(json!(["never"]))),
+        (
+            r"import s from './styles.css';",
+            r"import s from './styles';",
+            Some(json!(["never", { "css": "never" }])),
+        ),
+        (
+            r"import i from './icon.svg';",
+            r"import i from './icon';",
+            Some(json!(["never", { "svg": "never" }])),
+        ),
+    ];
+
+    Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_add_extension_fix() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    // "always" / add-extension fixes. These are suggestions built from the resolved on-disk
+    // extension, so they require cross-module resolution — enabled via `with_import_plugin(true)`.
+    // The bare specifiers below resolve against real fixtures in `fixtures/import/`.
+    let fix = vec![
+        // `./typescript` resolves to `typescript.ts` → add `.ts`.
+        (
+            r#"import x from "./typescript";"#,
+            r#"import x from "./typescript.ts";"#,
+            Some(json!(["always"])),
+        ),
+        // `./foo` resolves to `foo.js` → add `.js`.
+        (r#"import a from "./foo";"#, r#"import a from "./foo.js";"#, Some(json!(["always"]))),
+        // `./bar` resolves to `bar.js` → add `.js`. Single quotes preserved.
+        (r"import b from './bar';", r"import b from './bar.js';", Some(json!(["always"]))),
+        // Export re-export form.
+        (
+            r#"export { x } from "./typescript";"#,
+            r#"export { x } from "./typescript.ts";"#,
+            Some(json!(["always"])),
+        ),
+        // `ignorePackages` still adds extensions to relative imports.
+        (
+            r#"import a from "./foo";"#,
+            r#"import a from "./foo.js";"#,
+            Some(json!(["ignorePackages"])),
+        ),
+    ];
+
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![];
+
+    Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail)
+        .with_import_plugin(true)
+        .expect_fix(fix)
+        .test();
 }
