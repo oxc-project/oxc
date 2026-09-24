@@ -869,13 +869,18 @@ fn lower_identifier<'a>(
             Ok(Place { identifier, effect: Effect::Unknown, reactive: false, span: Some(span) })
         }
         _ => {
-            if let VariableBinding::Global { name } = binding
-                && name == "eval"
-            {
-                builder.record_error(diagnostics::unsupported_eval(span))?;
-            }
             let non_local_binding = match binding {
-                VariableBinding::Global { name } => NonLocalBinding::Global { name },
+                VariableBinding::Global { name } => {
+                    match name.as_str() {
+                        "eval" => builder.record_error(diagnostics::unsupported_eval(span))?,
+                        "arguments" => {
+                            builder
+                                .record_error(diagnostics::unsupported_implicit_arguments(span))?;
+                        }
+                        _ => {}
+                    }
+                    NonLocalBinding::Global { name }
+                }
                 VariableBinding::ImportDefault { name, module } => {
                     NonLocalBinding::ImportDefault { name, module }
                 }
