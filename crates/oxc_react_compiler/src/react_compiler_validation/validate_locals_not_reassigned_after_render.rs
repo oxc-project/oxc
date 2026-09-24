@@ -13,7 +13,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
 use smallvec::smallvec;
 
-use super::async_callable_contexts::{AsyncInvocation, infer_async_callable_contexts};
+use super::async_callable_contexts::{
+    AsyncInvocation, ReturnedCallables, infer_async_callable_contexts,
+};
 use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::type_config::AliasingEffectConfig;
@@ -43,6 +45,7 @@ struct ReassignmentResult {
     returned: Option<Place>,
     returned_contexts: FxHashSet<IdentifierId>,
     returned_context_loads: FxHashSet<IdentifierId>,
+    returned_callables: ReturnedCallables,
 }
 
 /// Validates that local variables cannot be reassigned after render.
@@ -755,6 +758,7 @@ fn get_context_reassignment(
     let mut returning_seeds: Vec<(IdentifierId, Place)> = Vec::new();
     let mut no_alias_calls: Vec<(Vec<IdentifierId>, Vec<IdentifierId>, ContextValues)> = Vec::new();
     let mut async_function_values = FxHashSet::default();
+    let mut function_returns = FxHashMap::default();
     // Recursive results are computed once. They are needed again when an async
     // function is validated after the propagation graph reaches a fixpoint.
     let mut nested_reassignments: FxHashMap<IdentifierId, (ReassignmentResult, bool)> =
@@ -829,6 +833,8 @@ fn get_context_reassignment(
                     );
                     nested_reassignments
                         .insert(instr.lvalue.identifier, (reassignment.clone(), inner_is_async));
+                    function_returns
+                        .insert(instr.lvalue.identifier, reassignment.returned_callables.clone());
 
                     // Async reassignments produce their own diagnostic and do
                     // not taint the function value, matching the TS behavior.
@@ -980,6 +986,7 @@ fn get_context_reassignment(
         &async_function_values,
         &captured_contexts,
         &hoisted_function_values,
+        &function_returns,
         env,
     );
     async_function_values = async_callables.identifiers;
@@ -1068,7 +1075,10 @@ fn get_context_reassignment(
 
     // With the complete fixed-point map, validate uses in source CFG order so
     // diagnostics retain their existing ordering.
-    let mut result = ReassignmentResult::default();
+    let mut result = ReassignmentResult {
+        returned_callables: async_callables.returned,
+        ..ReassignmentResult::default()
+    };
     for (&block_id, block) in &func.body.blocks {
         let mut context_values = context_values_at_block_entry(
             func,
