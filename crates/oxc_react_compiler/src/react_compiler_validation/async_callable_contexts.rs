@@ -73,6 +73,23 @@ impl Arguments {
     }
 }
 
+/// A captured factory is resolved at its caller, where the live callee and its
+/// returned-callable summary are available. Instruction identities bound cycles.
+#[derive(Clone, Default, PartialEq, Eq)]
+struct DeferredCall {
+    callees: FxHashSet<IdentifierId>,
+    arguments: Arguments,
+}
+
+impl DeferredCall {
+    fn merge(&mut self, other: &Self) {
+        self.callees.extend(&other.callees);
+        self.arguments.merge(&other.arguments);
+    }
+}
+
+type DeferredCalls = FxHashMap<IdentifierId, DeferredCall>;
+
 /// Non-plain parameters are temporaries followed by prologue binding stores.
 /// Declaration locations identify those bindings without including body aliases.
 fn parameter_bindings(func: &HirFunction, env: &Environment<'_>) -> FxHashSet<IdentifierId> {
@@ -481,6 +498,7 @@ pub(super) struct ReturnedCallables {
     deferred_captures: FxHashSet<IdentifierId>,
     snapshot_captures: FxHashSet<IdentifierId>,
     projections: Projections,
+    deferred_calls: DeferredCalls,
     parameter_values: Captures,
 }
 
@@ -583,6 +601,7 @@ struct CallableState {
     array_lengths: FxHashMap<IdentifierId, usize>,
     arrays: FxHashSet<IdentifierId>,
     projections: Projections,
+    deferred_calls: DeferredCalls,
     pending: FxHashMap<IdentifierId, PendingCapture>,
 }
 
@@ -711,6 +730,7 @@ impl CallableState {
                             source,
                             &substitutions,
                             &summary.projections,
+                            &summary.deferred_calls,
                             &rest,
                             &mut FxHashSet::default(),
                         )
@@ -924,6 +944,13 @@ impl CallableState {
             .retain(|id, method| other.builtin_function_methods.get(id) == Some(method));
         self.array_lengths.retain(|id, length| other.array_lengths.get(id) == Some(length));
         self.arrays.extend(&other.arrays);
+        for (&id, call) in &other.deferred_calls {
+            if let Some(into) = self.deferred_calls.get_mut(&id) {
+                into.merge(call);
+            } else {
+                self.deferred_calls.insert(id, call.clone());
+            }
+        }
         for (&id, projections) in &other.projections {
             self.projections.entry(id).or_default().extend(projections.iter().cloned());
         }
@@ -1051,11 +1078,56 @@ impl CallableState {
         id: IdentifierId,
         substitutions: &FxHashMap<IdentifierId, Values>,
         projections: &Projections,
+        deferred_calls: &DeferredCalls,
         rest_arguments: &FxHashMap<IdentifierId, Properties>,
         visiting: &mut FxHashSet<IdentifierId>,
     ) -> Option<Values> {
         if let Some(values) = substitutions.get(&id) {
             return Some(values.clone());
+        }
+        if let Some(call) = deferred_calls.get(&id) {
+            if !visiting.insert(id) {
+                return None;
+            }
+            let mut callees = Values::default();
+            for &callee in &call.callees {
+                let selected = self
+                    .substitute(
+                        callee,
+                        substitutions,
+                        projections,
+                        deferred_calls,
+                        rest_arguments,
+                        visiting,
+                    )
+                    .unwrap_or_else(|| self.values(callee));
+                callees.extend(&selected);
+            }
+            let mut arguments = call.arguments.clone();
+            for values in arguments.elements.values_mut() {
+                for value in values.identities.clone() {
+                    if let Some(selected) = self.substitute(
+                        value,
+                        substitutions,
+                        projections,
+                        deferred_calls,
+                        rest_arguments,
+                        visiting,
+                    ) {
+                        values.identities.remove(&value);
+                        values.extend(&selected);
+                    }
+                }
+            }
+            let mut result = Values::default();
+            for callable in callees.contexts.values() {
+                result.extend(&self.returned_values(callable, &arguments, visiting));
+            }
+            if callees.contexts.is_empty() {
+                result.identities.insert(id);
+            }
+            visiting.remove(&id);
+            return Some(result);
         }
         let sources = projections.get(&id)?;
         if sources.is_empty() || !visiting.insert(id) {
@@ -1076,9 +1148,14 @@ impl CallableState {
                 }
                 continue;
             }
-            if let Some(objects) =
-                self.substitute(source.object, substitutions, projections, rest_arguments, visiting)
-            {
+            if let Some(objects) = self.substitute(
+                source.object,
+                substitutions,
+                projections,
+                deferred_calls,
+                rest_arguments,
+                visiting,
+            ) {
                 result.extend(&self.project(&objects, &source.key));
             } else {
                 result.identities.insert(id);
@@ -1174,6 +1251,16 @@ impl CallableState {
                     _ => self.arguments(args),
                 }
             }
+            InstructionValue::TaggedTemplateExpression { subexprs, .. } => Arguments {
+                elements: subexprs
+                    .iter()
+                    .enumerate()
+                    .map(|(index, place)| {
+                        (Some((index + 1).to_string()), self.values(place.identifier))
+                    })
+                    .collect(),
+                length: Some(subexprs.len() + 1),
+            },
             _ => Arguments::default(),
         };
         (arguments, binding)
@@ -1196,74 +1283,100 @@ impl CallableState {
             self.values.insert(instruction.lvalue.identifier, values);
             return;
         }
+        let invoked = self.invoked(&instruction.value);
         let mut result = Values::default();
-        for callable in self.invoked(&instruction.value).contexts.into_values() {
-            // Async calls produce promises, not the eventual returned callable.
-            if callable.is_async {
-                continue;
-            }
-            let Some(returned) = &callable.returned else { continue };
-            let mut values = returned.values.clone();
-            let (substitutions, rest_arguments) =
-                self.call_substitutions(&callable, returned, &arguments);
-            // Returning a parameter snapshots the selected callable; a newly
-            // returned closure retains the caller's live binding information.
-            for identity in &returned.values.identities {
-                if let Some(selected) = self.substitute(
-                    *identity,
-                    &substitutions,
-                    &returned.projections,
-                    &rest_arguments,
-                    &mut FxHashSet::default(),
-                ) {
-                    values.identities.remove(identity);
-                    values.extend(&selected);
-                }
-            }
-            for closure in values.contexts.values_mut() {
-                for (&binding, values) in Rc::make_mut(&mut closure.context_values).iter_mut() {
-                    if returned.external_contexts.contains(&binding)
-                        && let Some(current) = substitutions.get(&binding)
-                    {
-                        *values = current.identities.clone();
-                    } else {
-                        *values = values
-                            .iter()
-                            .flat_map(|value| {
-                                if let Some(elements) = rest_arguments.get(value)
-                                    && let Some(members) = closure.capture_members.get(&binding)
-                                {
-                                    return members
-                                        .iter()
-                                        .filter(|member| member.parse::<usize>().is_ok())
-                                        .flat_map(|member| {
-                                            elements
-                                                .get(&Some(member.clone()))
-                                                .into_iter()
-                                                .chain(elements.get(&None))
-                                        })
-                                        .flat_map(|value| value.identities.iter().copied())
-                                        .collect();
-                                }
-                                self.substitute(
-                                    *value,
-                                    &substitutions,
-                                    &returned.projections,
-                                    &rest_arguments,
-                                    &mut FxHashSet::default(),
-                                )
-                                .map_or_else(
-                                    || FxHashSet::from_iter([*value]),
-                                    |values| values.identities,
-                                )
-                            })
-                            .collect();
-                    }
-                }
-            }
-            result.extend(&values);
+        for callable in invoked.contexts.values() {
+            result.extend(&self.returned_values(callable, &arguments, &mut FxHashSet::default()));
+        }
+        let callees: FxHashSet<_> = invoked
+            .identities
+            .iter()
+            .filter(|id| self.projections.contains_key(id))
+            .copied()
+            .collect();
+        if !callees.is_empty() {
+            self.deferred_calls
+                .insert(instruction.lvalue.identifier, DeferredCall { callees, arguments });
+            self.projections.entry(instruction.lvalue.identifier).or_default();
+            result.identities.insert(instruction.lvalue.identifier);
         }
         self.values.insert(instruction.lvalue.identifier, result);
+    }
+
+    fn returned_values(
+        &self,
+        callable: &Callable,
+        arguments: &Arguments,
+        visiting: &mut FxHashSet<IdentifierId>,
+    ) -> Values {
+        // Async calls produce promises, not the eventual returned callable.
+        if callable.is_async {
+            return Values::default();
+        }
+        let Some(returned) = &callable.returned else {
+            return Values::default();
+        };
+        let mut values = returned.values.clone();
+        let (substitutions, rest_arguments) =
+            self.call_substitutions(callable, returned, arguments);
+        // Returning a parameter snapshots the selected callable; a newly
+        // returned closure retains the caller's live binding information.
+        for identity in &returned.values.identities {
+            if let Some(selected) = self.substitute(
+                *identity,
+                &substitutions,
+                &returned.projections,
+                &returned.deferred_calls,
+                &rest_arguments,
+                visiting,
+            ) {
+                values.identities.remove(identity);
+                values.extend(&selected);
+            }
+        }
+        for closure in values.contexts.values_mut() {
+            for (&binding, values) in Rc::make_mut(&mut closure.context_values).iter_mut() {
+                if returned.external_contexts.contains(&binding)
+                    && let Some(current) = substitutions.get(&binding)
+                {
+                    *values = current.identities.clone();
+                } else {
+                    *values = values
+                        .iter()
+                        .flat_map(|value| {
+                            if let Some(elements) = rest_arguments.get(value)
+                                && let Some(members) = closure.capture_members.get(&binding)
+                            {
+                                return members
+                                    .iter()
+                                    .filter(|member| member.parse::<usize>().is_ok())
+                                    .flat_map(|member| {
+                                        elements
+                                            .get(&Some(member.clone()))
+                                            .into_iter()
+                                            .chain(elements.get(&None))
+                                    })
+                                    .flat_map(|value| value.identities.iter().copied())
+                                    .collect();
+                            }
+                            self.substitute(
+                                *value,
+                                &substitutions,
+                                &returned.projections,
+                                &returned.deferred_calls,
+                                &rest_arguments,
+                                visiting,
+                            )
+                            .map_or_else(
+                                || FxHashSet::from_iter([*value]),
+                                |values| values.identities,
+                            )
+                        })
+                        .collect();
+                }
+            }
+        }
+        values
     }
 
     fn store(&mut self, object: IdentifierId, key: Option<String>, values: Values) {
@@ -1737,6 +1850,19 @@ pub(super) fn infer_async_callable_contexts(
         &result.returned.capture_reads,
         &parameters,
     );
+    for calls in states
+        .values()
+        .map(|state| &state.deferred_calls)
+        .chain(function_returns.values().map(|summary| &summary.deferred_calls))
+    {
+        for (&id, call) in calls {
+            if let Some(into) = result.returned.deferred_calls.get_mut(&id) {
+                into.merge(call);
+            } else {
+                result.returned.deferred_calls.insert(id, call.clone());
+            }
+        }
+    }
     for projections in states
         .values()
         .map(|state| &state.projections)
