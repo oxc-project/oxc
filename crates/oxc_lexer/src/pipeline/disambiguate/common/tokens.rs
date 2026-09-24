@@ -174,7 +174,7 @@ impl Tokens<'_> {
     /// Length of the fused operator at pos, 1 when no multi-byte operator starts there.
     #[inline]
     pub(crate) fn op_len(&self, pos: usize) -> usize {
-        let lmax = (self.n - pos).min(4) as u32;
+        let lmax = (self.n - pos) as u32;
         let bytes = <[u8; 4]>::try_from(&self.src[pos..pos + 4]).unwrap();
         opmap_longest(bytes, lmax).1 as usize
     }
