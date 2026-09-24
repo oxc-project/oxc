@@ -22,7 +22,7 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     BlockId, Effect, FunctionId, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionKind, InstructionValue, ParamPattern, Place, PlaceOrSpread, Terminal,
+    InstructionId, InstructionKind, InstructionValue, ParamPattern, Place, Terminal,
 };
 
 type ContextValues = FxHashMap<IdentifierId, FxHashSet<IdentifierId>>;
@@ -168,25 +168,6 @@ fn each_reassigning_operand(value: &InstructionValue<'_>, env: &Environment<'_>)
 /// Callback operands excluded by a no-alias signature. Mutations performed by
 /// these callbacks are synchronous, but a value returned from one can still
 /// contain an escaping closure.
-fn each_no_alias_callback_operand(
-    value: &InstructionValue<'_>,
-    env: &Environment<'_>,
-    require_result_flow: bool,
-) -> PlaceList {
-    let args = match value {
-        InstructionValue::CallExpression { args, .. }
-        | InstructionValue::MethodCall { args, .. } => args,
-        _ => return PlaceList::new(),
-    };
-    no_alias_callback_parameters(value, env, require_result_flow, args.len())
-        .into_iter()
-        .map(|index| match &args[index] {
-            PlaceOrSpread::Place(place) => *place,
-            PlaceOrSpread::Spread(spread) => spread.place,
-        })
-        .collect()
-}
-
 pub(super) fn no_alias_callback_parameters(
     value: &InstructionValue<'_>,
     env: &Environment<'_>,
@@ -251,9 +232,7 @@ pub(super) fn no_alias_callback_parameters(
             if parameter != function {
                 continue;
             }
-            if index < argument_count {
-                operands.push(index);
-            }
+            operands.push(index);
         }
     }
     operands
@@ -689,7 +668,7 @@ fn get_context_reassignment(
     let mut correlated_values = CorrelatedValues::default();
     let mut seeds: Vec<(IdentifierId, Place)> = Vec::new();
     let mut returning_seeds: Vec<(IdentifierId, Place)> = Vec::new();
-    let mut no_alias_calls: Vec<(Vec<IdentifierId>, Vec<IdentifierId>, ContextValues)> = Vec::new();
+    let mut no_alias_calls: Vec<(InstructionId, Vec<IdentifierId>, ContextValues)> = Vec::new();
     let mut async_function_values = FxHashSet::default();
     let mut function_returns = FxHashMap::default();
     // Recursive results are computed once. They are needed again when an async
@@ -903,10 +882,14 @@ fn get_context_reassignment(
                 }
             }
 
-            let callback_operands = each_no_alias_callback_operand(&instr.value, env, true);
-            if !callback_operands.is_empty() {
+            let argument_count = match &instr.value {
+                InstructionValue::CallExpression { args, .. }
+                | InstructionValue::MethodCall { args, .. } => args.len(),
+                _ => 0,
+            };
+            if !no_alias_callback_parameters(&instr.value, env, true, argument_count).is_empty() {
                 no_alias_calls.push((
-                    callback_operands.iter().map(|place| place.identifier).collect(),
+                    instruction_id,
                     each_instruction_lvalue_ids(instr),
                     context_values.clone(),
                 ));
@@ -924,6 +907,16 @@ fn get_context_reassignment(
     );
     async_function_values = async_callables.identifiers;
     let async_invocations = async_callables.invocations;
+    let no_alias_calls: Vec<_> = no_alias_calls
+        .into_iter()
+        .filter_map(|(instruction, results, contexts)| {
+            async_callables
+                .returning_callbacks
+                .get(&instruction)
+                .cloned()
+                .map(|callbacks| (callbacks, results, contexts))
+        })
+        .collect();
     propagate_captured_contexts(&mut captured_contexts, &propagation_edges);
     propagate_captured_contexts(&mut returned_captured_contexts, &propagation_edges);
     propagate_captured_contexts(&mut returned_loaded_contexts, &propagation_edges);

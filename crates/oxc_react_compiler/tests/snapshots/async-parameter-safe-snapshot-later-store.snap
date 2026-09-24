@@ -1,0 +1,18 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-parameter-safe-snapshot-later-store.js
+---
+function Component() {
+	let count = 0;
+	const cb = _temp;
+	const run = _temp2;
+	run(cb);
+	return null;
+}
+async function _temp2(cb_0) {
+	await 0;
+	cb_0();
+}
+function _temp() {
+	return null;
+}
