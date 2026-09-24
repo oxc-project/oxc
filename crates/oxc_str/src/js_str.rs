@@ -1,5 +1,5 @@
 use std::{
-    fmt::{self, Write},
+    fmt::{self, Debug, Write},
     hash::{Hash, Hasher},
     iter::FusedIterator,
     marker::PhantomData,
@@ -313,7 +313,7 @@ impl Hash for JSStr<'_> {
     }
 }
 
-impl fmt::Debug for JSStr<'_> {
+impl Debug for JSStr<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_char('"')?;
         for c in self.chars() {
