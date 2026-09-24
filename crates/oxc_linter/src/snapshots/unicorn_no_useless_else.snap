@@ -1,0 +1,520 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
+---
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:6:18]
+ 5 │                     } catch {}
+ 6 │                 } else {
+   ·                  ──────
+ 7 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:10:18]
+  9 │                     } catch {}
+ 10 │                 } else {
+    ·                  ──────
+ 11 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:6:26]
+ 5 │                             process.exit(1);
+ 6 │                         } else {
+   ·                          ──────
+ 7 │                             process.exit(2);
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     bar();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:8:18]
+ 7 │                     }
+ 8 │                 } else {
+   ·                  ──────
+ 9 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:9:18]
+  8 │                     }
+  9 │                 } else {
+    ·                  ──────
+ 10 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:6:18]
+ 5 │                     }
+ 6 │                 } else {
+   ·                  ──────
+ 7 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:6:18]
+ 5 │                     }
+ 6 │                 } else {
+   ·                  ──────
+ 7 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:6:18]
+ 5 │                     } while (true);
+ 6 │                 } else {
+   ·                  ──────
+ 7 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:10:18]
+  9 │                     }
+ 10 │                 } else {
+    ·                  ──────
+ 11 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:8:18]
+ 7 │                     }
+ 8 │                 } else {
+   ·                  ──────
+ 9 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:10:18]
+  9 │                     }
+ 10 │                 } else {
+    ·                  ──────
+ 11 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:5:22]
+ 4 │                         return;
+ 5 │                     } else if (b) {
+   ·                      ──────
+ 6 │                         throw new Error();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:5:22]
+ 4 │                         continue outer;
+ 5 │                     } else {
+   ·                      ──────
+ 6 │                         baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:8:18]
+ 7 │                     }
+ 8 │                 } else {
+   ·                  ──────
+ 9 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else { bar(); }
+   ·                  ──────
+ 5 │             }
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:3:14]
+ 2 │                 throw new Error();
+ 3 │             } else {
+   ·              ──────
+ 4 │                 bar();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     bar();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     bar();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     break;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     continue;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:5:22]
+ 4 │                         break;
+ 5 │                     } else {
+   ·                      ──────
+ 6 │                         qux();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:5:22]
+ 4 │                         throw new Error();
+ 5 │                     } else {
+   ·                      ──────
+ 6 │                         bar();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:3:28]
+ 2 │                     if (foo)
+ 3 │ ╭─▶                     return;
+ 4 │ │                   else
+ 5 │ ╰─▶                     bar();
+ 6 │                 }
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else if (bar) {
+   ·                  ──────
+ 5 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:8:18]
+ 7 │                     }
+ 8 │                 } else {
+   ·                  ──────
+ 9 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:5:22]
+ 4 │                         return;
+ 5 │                     } else {
+   ·                      ──────
+ 6 │                         throw new Error();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     // Keep this comment.
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     /*
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     const bar = 1;
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     let bar = 1;
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     class Bar {}
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     function bar() {}
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else /* comment */ {
+   ·                  ────────────────────
+ 5 │                     bar();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } /* comment */ else {
+   ·                  ────────────────────
+ 5 │                     bar();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     bar();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     bar()
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     return;
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     bar = function() {}
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:3:27]
+ 2 │                     if (foo)
+ 3 │ ╭─▶                     return
+ 4 │ │                   else
+ 5 │ ╰─▶                     [bar].forEach(baz)
+ 6 │                 }
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     process.exit();
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     true && process.exit();
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     [...process.exit()];
+ 4 │                 } else {
+   ·                  ──────
+ 5 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:3:37]
+ 2 │                     if (foo)
+ 3 │ ╭─▶                     process.exit(1);
+ 4 │ │                   else
+ 5 │ ╰─▶                     baz();
+ 6 │                 }
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:5:18]
+ 4 │                     process.exit(1);
+ 5 │                 } else {
+   ·                  ──────
+ 6 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:6:18]
+ 5 │                     }
+ 6 │                 } else {
+   ·                  ──────
+ 7 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:12:18]
+ 11 │                     }
+ 12 │                 } else {
+    ·                  ──────
+ 13 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:12:18]
+ 11 │                     }
+ 12 │                 } else {
+    ·                  ──────
+ 13 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:9:18]
+  8 │                     }
+  9 │                 } else {
+    ·                  ──────
+ 10 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:4:18]
+ 3 │                     process.exit(1);
+ 4 │                 } else if (bar) {
+   ·                  ──────
+ 5 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:9:18]
+  8 │                     }
+  9 │                 } else {
+    ·                  ──────
+ 10 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:8:18]
+ 7 │                     }
+ 8 │                 } else {
+   ·                  ──────
+ 9 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:5:22]
+ 4 │                         return;
+ 5 │                     } else {
+   ·                      ──────
+ 6 │                         process.exit(1);
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:8:18]
+ 7 │                     }
+ 8 │                 } else {
+   ·                  ──────
+ 9 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:12:18]
+ 11 │                     }
+ 12 │                 } else {
+    ·                  ──────
+ 13 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:9:18]
+  8 │                     }
+  9 │                 } else {
+    ·                  ──────
+ 10 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+    ╭─[no_useless_else.tsx:9:18]
+  8 │                     }
+  9 │                 } else {
+    ·                  ──────
+ 10 │                     baz();
+    ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
+
+  ⚠ unicorn(no-useless-else): Unexpected `else` after a statement that exits.
+   ╭─[no_useless_else.tsx:8:18]
+ 7 │                     }
+ 8 │                 } else {
+   ·                  ──────
+ 9 │                     baz();
+   ╰────
+  help: Remove the `else` block and move its contents outside of the `if` statement, since the preceding branch already always exits.
