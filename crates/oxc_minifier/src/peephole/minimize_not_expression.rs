@@ -66,6 +66,41 @@ impl<'a> PeepholeOptimizations {
                 bool_expr.value = !bool_expr.value;
                 true
             }
+            // `!(a ? !b : !c)` => `(a ? b : c)`
+            // `!(a ? b : !c)` => `(a ? !b : c)`
+            // `!(a ? !b : c)` => `(a ? b : !c)`
+            Expression::ConditionalExpression(cond_expr) if boolean_context => {
+                let try_compress = (
+                    Self::try_negate_expression(&mut cond_expr.consequent, ctx, boolean_context),
+                    Self::try_negate_expression(&mut cond_expr.alternate, ctx, boolean_context),
+                );
+                match try_compress {
+                    (true, true) => true,
+                    (true, false) => {
+                        ctx.replace_expression_with(&mut cond_expr.alternate, |e, ctx| {
+                            Expression::new_unary_expression(
+                                e.span(),
+                                UnaryOperator::LogicalNot,
+                                e,
+                                ctx,
+                            )
+                        });
+                        true
+                    }
+                    (false, true) => {
+                        ctx.replace_expression_with(&mut cond_expr.consequent, |e, ctx| {
+                            Expression::new_unary_expression(
+                                e.span(),
+                                UnaryOperator::LogicalNot,
+                                e,
+                                ctx,
+                            )
+                        });
+                        true
+                    }
+                    _ => false,
+                }
+            }
             // `!(a == b || c == d)` => `a != b && c != d`
             // `!(a == b && c == d)` => `a != b || c != d`
             // De Morgan's law, only when every comparison in the `&&`/`||` chain
@@ -144,6 +179,7 @@ impl<'a> PeepholeOptimizations {
                         _ => {}
                     }
                 }
+                Expression::NumericLiteral(_) if boolean_context => {}
                 Expression::Identifier(_)
                 | Expression::ThisExpression(_)
                 | Expression::NullLiteral(_)

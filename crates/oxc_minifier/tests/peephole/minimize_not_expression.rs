@@ -105,3 +105,11 @@ fn minimize_nots_with_binary_expressions() {
     test_same("var v = !(typeof x < 'string');");
     test_same("var v = !(typeof x > 'string');");
 }
+
+#[test]
+fn minimize_nots_with_conditional_expressions() {
+    test("if (!(a ? !b : !c)) throw x;", "if (a ? b : c) throw x;");
+    test("if (!(a ? b : !c)) throw x;", "if (a ? !b : c) throw x;");
+    test("if (!(a ? !b : c)) throw x;", "if (a ? b : !c) throw x;");
+    test_same("var v = !(a ? !b : !c);");
+}
