@@ -4,7 +4,7 @@ use std::{
 };
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 mod diff;
 mod tracking;
@@ -18,6 +18,8 @@ pub use diff::DiffManager;
 type StaticSuppressionMap = Arc<FxHashMap<Filename, FxHashMap<String, DiagnosticCounts>>>;
 
 type FileSuppressionsMap = FxHashMap<String, DiagnosticCounts>;
+
+type SuppressionRules = Arc<FxHashSet<String>>;
 
 /// Thread-safe accumulator for runtime suppression counts from both oxlint and tsgo passes.
 #[derive(Debug, Default)]
@@ -72,31 +74,48 @@ pub struct SuppressionManager {
     pub file_action: OxlintSuppressionFileAction,
     suppression_file_path: PathBuf,
     suppress_all: bool,
+    suppress_rules: SuppressionRules,
     prune_suppression: bool,
     //If the source of truth exists
     file_exists: bool,
 }
 
 impl SuppressionManager {
-    pub fn load(cwd: &Path, file_path: &str, suppress_all: bool, prune_suppression: bool) -> Self {
+    pub fn load(
+        cwd: &Path,
+        file_path: &str,
+        suppress_all: bool,
+        suppress_rules: Vec<String>,
+        prune_suppression: bool,
+    ) -> Self {
         let suppression_file_path = cwd.join(file_path);
         let file_exists = suppression_file_path.exists();
+        let suppress_rules = Arc::new(
+            suppress_rules
+                .iter()
+                .flat_map(|value| value.split(','))
+                .map(str::trim)
+                .map(str::to_owned)
+                .collect::<FxHashSet<_>>(),
+        );
+        let is_suppressing = suppress_all || !suppress_rules.is_empty();
 
         if !file_exists {
-            let file_action = if suppress_all {
+            let file_action = if is_suppressing {
                 OxlintSuppressionFileAction::Created
             } else {
                 OxlintSuppressionFileAction::None
             };
 
             let suppressions_by_file =
-                if suppress_all { Some(SuppressionTracking::default()) } else { None };
+                if is_suppressing { Some(SuppressionTracking::default()) } else { None };
 
             return Self {
                 suppressions_by_file,
                 file_action,
                 suppression_file_path,
                 suppress_all,
+                suppress_rules,
                 prune_suppression,
                 file_exists,
             };
@@ -108,6 +127,7 @@ impl SuppressionManager {
                 file_action: OxlintSuppressionFileAction::Exists,
                 suppression_file_path,
                 suppress_all,
+                suppress_rules,
                 prune_suppression,
                 file_exists,
             },
@@ -116,6 +136,7 @@ impl SuppressionManager {
                 file_action: OxlintSuppressionFileAction::Malformed(err),
                 suppression_file_path,
                 suppress_all,
+                suppress_rules,
                 prune_suppression,
                 file_exists,
             },
@@ -129,6 +150,7 @@ impl SuppressionManager {
             self.file_exists,
             self.file_action.ignore(),
             self.suppress_all,
+            Arc::clone(&self.suppress_rules),
         );
 
         Arc::new(diff_manager)
@@ -146,7 +168,7 @@ impl SuppressionManager {
         cwd: &Path,
     ) -> Result<(), OxcDiagnostic> {
         // Nothing to do if there's no suppression file and we're not creating one
-        if self.suppressions_by_file.is_none() && !self.suppress_all {
+        if self.suppressions_by_file.is_none() && !self.is_suppressing() {
             return Ok(());
         }
 
@@ -159,6 +181,8 @@ impl SuppressionManager {
         if self.is_updating_file() {
             let new_map = if self.suppress_all {
                 Self::compute_suppress(&static_map, &runtime_map)
+            } else if !self.suppress_rules.is_empty() {
+                Self::compute_suppress_rules(&static_map, &runtime_map, &self.suppress_rules)
             } else {
                 Self::compute_prune(&static_map, &runtime_map, cwd)
             };
@@ -198,6 +222,30 @@ impl SuppressionManager {
             // This ensures that rules which are no longer error-severity
             // (e.g. warnings) are removed from the suppression file.
             result.insert(filename.clone(), runtime_rules.clone());
+        }
+
+        result
+    }
+
+    /// Selective suppress mode: update only the requested rules for seen files.
+    /// Existing suppressions for all other rules and files remain unchanged.
+    fn compute_suppress_rules(
+        static_map: &StaticSuppressionMap,
+        runtime_map: &FxHashMap<Filename, FileSuppressionsMap>,
+        suppress_rules: &FxHashSet<String>,
+    ) -> FxHashMap<Filename, FileSuppressionsMap> {
+        let mut result: FxHashMap<Filename, FileSuppressionsMap> = static_map.as_ref().clone();
+
+        for (filename, runtime_rules) in runtime_map {
+            for rule in suppress_rules {
+                let Some(runtime_count) = runtime_rules.get(rule) else {
+                    continue;
+                };
+                result
+                    .entry(filename.clone())
+                    .or_default()
+                    .insert(rule.clone(), runtime_count.clone());
+            }
         }
 
         result
@@ -326,7 +374,11 @@ impl SuppressionManager {
     }
 
     fn is_updating_file(&self) -> bool {
-        self.suppress_all || self.prune_suppression
+        self.is_suppressing() || self.prune_suppression
+    }
+
+    fn is_suppressing(&self) -> bool {
+        self.suppress_all || !self.suppress_rules.is_empty()
     }
 
     fn write(&self) -> Result<(), OxcDiagnostic> {

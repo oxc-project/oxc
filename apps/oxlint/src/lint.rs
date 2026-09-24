@@ -96,6 +96,21 @@ impl CliRunner {
             ..
         } = self.options;
 
+        if !suppression_options.suppress_rule.is_empty() && suppression_options.suppress_all {
+            print_and_flush_stdout(
+                stdout,
+                "The `--suppress-all` option and the `--suppress-rule` option cannot be used together.\n",
+            );
+            return CliRunResult::InvalidOptionSuppressionCombination;
+        }
+        if !suppression_options.suppress_rule.is_empty() && suppression_options.prune_suppressions {
+            print_and_flush_stdout(
+                stdout,
+                "The `--suppress-rule` option and the `--prune-suppressions` option cannot be used together.\n",
+            );
+            return CliRunResult::InvalidOptionSuppressionCombination;
+        }
+
         if basic_options.init {
             return crate::mode::run_init(&self.cwd, stdout);
         }
@@ -404,6 +419,7 @@ impl CliRunner {
             options.cwd(),
             "oxlint-suppressions.json",
             suppression_options.suppress_all,
+            suppression_options.suppress_rule.clone(),
             suppression_options.prune_suppressions || fix_options.is_enabled(),
         );
 
@@ -428,11 +444,13 @@ impl CliRunner {
             return CliRunResult::InvalidOptionTypeCheckOnlyWithFix;
         }
         if type_check_only
-            && (suppression_options.suppress_all || suppression_options.prune_suppressions)
+            && (suppression_options.suppress_all
+                || !suppression_options.suppress_rule.is_empty()
+                || suppression_options.prune_suppressions)
         {
             print_and_flush_stdout(
                 stdout,
-                "The `--type-check-only` option cannot be used with suppression update flags.\nRemove `--suppress-all` and `--prune-suppressions`.\n",
+                "The `--type-check-only` option cannot be used with suppression update flags.\nRemove `--suppress-all`, `--suppress-rule`, and `--prune-suppressions`.\n",
             );
             return CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate;
         }
@@ -2215,6 +2233,135 @@ mod suppression {
                 "Expected an invalid option message for {flag}.\nOutput: {stdout}"
             );
         }
+
+        let (stdout, result) = Tester::new()
+            .with_cwd("fixtures/suppression/type_check_only_with_regular_rule".into())
+            .test_output(&["--type-check-only", "--suppress-rule", "no-console", "index.ts"]);
+        assert!(
+            matches!(result, CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate),
+            "Expected --suppress-rule to be rejected with --type-check-only, got {result:?}.\nOutput: {stdout}"
+        );
+        assert!(
+            stdout.contains("cannot be used with suppression update flags"),
+            "Expected an invalid option message for --suppress-rule.\nOutput: {stdout}"
+        );
+    }
+
+    #[test]
+    fn test_suppress_rule_rejects_conflicting_flags() {
+        for args in [
+            &["--suppress-rule", "no-console", "--suppress-all"][..],
+            &["--suppress-rule", "no-console", "--prune-suppressions"][..],
+        ] {
+            let (stdout, result) = Tester::new()
+                .with_cwd("fixtures/suppression/selective_suppress".into())
+                .test_output(args);
+            assert!(
+                matches!(result, CliRunResult::InvalidOptionSuppressionCombination),
+                "Expected conflicting suppression flags to be rejected, got {result:?}.\nOutput: {stdout}"
+            );
+            assert!(
+                stdout.contains("cannot be used together"),
+                "Expected a conflicting option message.\nOutput: {stdout}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_suppress_rule_only_suppresses_selected_errors() {
+        let args = &[
+            "--suppress-rule",
+            "no-console",
+            "--suppress-rule",
+            "no-unused-vars",
+            "--suppress-rule",
+            "typescript/no-explicit-any",
+        ];
+        let suppression = SuppressionTester::new()
+            .with_cwd("selective_suppress")
+            .with_setup_file(false)
+            .with_expected_file(true);
+
+        suppression.test(args);
+
+        let stdout = Tester::new()
+            .with_cwd("fixtures/suppression/selective_suppress".into())
+            .test_output_verbose(args);
+        let (_, result) = Tester::new()
+            .with_cwd("fixtures/suppression/selective_suppress".into())
+            .test_output(args);
+        assert!(
+            matches!(result, CliRunResult::LintFoundErrors),
+            "Expected the unselected error to fail linting, got {result:?}.\nOutput: {stdout}"
+        );
+        assert!(
+            !stdout.contains("eslint(no-console)"),
+            "Selected error should be suppressed.\nOutput: {stdout}"
+        );
+        assert!(
+            stdout.contains("eslint(no-debugger)"),
+            "Unselected error should remain visible.\nOutput: {stdout}"
+        );
+        assert!(
+            stdout.contains("eslint(no-unused-vars)"),
+            "Selected warning should remain visible.\nOutput: {stdout}"
+        );
+
+        Tester::new().with_cwd("fixtures/suppression/selective_suppress".into()).test(&[
+            "--fix",
+            "--suppress-rule",
+            "no-console",
+            "--suppress-rule",
+            "typescript/no-explicit-any",
+        ]);
+    }
+
+    #[test]
+    fn test_suppress_rule_comma_separated() {
+        for args in [
+            &["--suppress-rule", "no-console", "--suppress-rule", "no-debugger"][..],
+            &["--suppress-rule", "no-console,no-debugger"][..],
+            &["--suppress-rule", "no-console, no-debugger", "--suppress-rule", "no-console"][..],
+        ] {
+            let temp_dir = tempfile::tempdir().unwrap();
+            let cwd = temp_dir.path().canonicalize().unwrap();
+            std::fs::write(cwd.join("test.js"), "console.log(1); debugger;").unwrap();
+            std::fs::write(
+                cwd.join(".oxlintrc.json"),
+                r#"{"categories":{"correctness":"off"},"rules":{"no-console":"error","no-debugger":"error"}}"#,
+            )
+            .unwrap();
+
+            let (stdout, result) = Tester::new().with_cwd(cwd.clone()).test_output(args);
+            assert!(
+                matches!(result, CliRunResult::LintSucceeded),
+                "Expected both rules to be suppressed for {args:?}, got {result:?}.\nOutput: {stdout}"
+            );
+            let suppressions: serde_json::Value = serde_json::from_str(
+                &std::fs::read_to_string(cwd.join("oxlint-suppressions.json")).unwrap(),
+            )
+            .unwrap();
+            assert_eq!(
+                suppressions,
+                serde_json::json!({
+                    "test.js": {
+                        "no-console": { "count": 1 },
+                        "no-debugger": { "count": 1 }
+                    }
+                }),
+                "Unexpected suppressions for {args:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_suppress_rule_preserves_unselected_entries() {
+        SuppressionTester::new()
+            .with_cwd("selective_suppress_existing")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-rule", "no-console"]);
     }
 
     #[test]
