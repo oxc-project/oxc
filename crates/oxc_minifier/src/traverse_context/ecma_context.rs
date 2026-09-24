@@ -171,10 +171,11 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     /// Loosely check whether target engines support a feature for syntax generation.
     ///
-    /// This follows [`oxc_compat::EngineTargets::has_feature`] semantics. Side-effect analysis uses
-    /// the stricter [`oxc_compat::EngineTargets::supports_es_feature`] capability query instead.
+    /// This follows [`oxc_compat::EngineTargets::has_feature`] semantics, answered from a
+    /// bitmask computed once per run. Side-effect analysis uses the stricter
+    /// [`oxc_compat::EngineTargets::supports_es_feature`] capability query instead.
     pub fn supports_feature(&self, feature: ESFeature) -> bool {
-        !self.options().target.has_feature(feature)
+        self.state.supports_feature(feature)
     }
 
     pub fn source_type(&self) -> SourceType {
