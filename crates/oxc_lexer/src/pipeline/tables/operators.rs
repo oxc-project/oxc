@@ -1,3 +1,38 @@
+//! Perfect hash table mapping multi-byte operators (e.g. `===`, `>>>=`) to their [`TokenKind`].
+//!
+//! A candidate is the next 4 bytes of source plus a length to try (2, 3 or 4).
+//!
+//! [`op_key`] packs it into a `u32` key:
+//! - Bottom 3 bytes: The candidate's first 3 bytes, with the 3rd zeroed if the length is 2.
+//! - Top byte: The length.
+//!
+//! [`op_slot`] hashes the key by multiplying it by [`OPMAP_MUL`] and taking the top [`HASH_BITS`] bits
+//! of the product as the slot index.
+//!
+//! [`OP_PACK`] holds one `u32` per slot, built at compile time from [`OPMAP_OPS`]:
+//! - Bottom 3 bytes: Operator's first 3 bytes, with the 3rd byte 0 for a 2-byte operator.
+//! - Top byte: Operator's [`TokenKind`].
+//!
+//! Empty slots hold 0.
+//!
+//! So a lookup is a multiply, a load, and a comparison of the bottom 3 bytes of key and slot value.
+//! If they match, the top byte of the slot value is the [`TokenKind`].
+//! [`opmap_lookup`] does the whole lookup.
+//! [`opmap_pack`] returns the slot value, for callers which do the comparison themselves.
+//!
+//! Lengths are never compared. Instead, the table is built so that no candidate lands on the slot
+//! of an operator of a different length whose bottom 3 bytes match (e.g. `====` vs `===`).
+//! See the comments in [`opmap_lookup`] and `is_collision_free` in tests for how each case is ruled out.
+//!
+//! The key has no room for a 4th byte. `>>>=` is the only 4-byte operator,
+//! so `opmap_lookup` compares its last byte separately, against [`FOUR_BYTE_OP_LAST_BYTE`].
+//!
+//! [`OPMAP_MUL`] is hard-coded. `test_perfect_hash` test checks that it produces no collisions.
+//! If a change to the operator list breaks that, the test's failure message gives a replacement.
+//!
+//! [`opmap_lookup`]: OpMap::opmap_lookup
+//! [`opmap_pack`]: OpMap::opmap_pack
+
 use crate::token::TokenKind;
 
 /// Number of bits in operator perfect hash.
@@ -9,12 +44,14 @@ const HASH_TABLE_SIZE: usize = 1 << HASH_BITS;
 /// Multiplier for the operator perfect hash.
 const OPMAP_MUL: u32 = 0x0217_DFE7;
 
+/// An operator and its corresponding [`TokenKind`].
 struct OpDef {
     pub txt: &'static [u8],
     pub kind: TokenKind,
 }
 
 impl OpDef {
+    /// Create new [`OpDef`].
     const fn new(txt: &'static str, kind: TokenKind) -> Self {
         assert!(txt.len() >= 2 && txt.len() <= 4, "`txt` must be between 2 and 4 bytes long");
         Self { txt: txt.as_bytes(), kind }
@@ -30,15 +67,23 @@ impl OpDef {
         first_4_bytes(self.txt)
     }
 
+    /// Get hash key for this operator.
     const fn key(&self) -> u32 {
         op_key(self.bytes(), self.len())
     }
 
+    /// Get hash of this operator, which is the slot index into [`OP_PACK`],
+    /// using `mul` as the hash map multiplier.
+    ///
+    /// Returns a `usize` but it is guaranteed to be less than [`HASH_TABLE_SIZE`].
     const fn slot(&self, mul: u32) -> usize {
         op_slot(self.key(), mul)
     }
 }
 
+/// All multi-byte operators.
+///
+/// Only exists at build time and in tests, not referenced from any runtime code.
 static OPMAP_OPS: [OpDef; 33] = [
     OpDef::new("<=", TokenKind::Le),
     OpDef::new(">=", TokenKind::Ge),
@@ -75,11 +120,14 @@ static OPMAP_OPS: [OpDef; 33] = [
     OpDef::new("/=", TokenKind::SlashEq),
 ];
 
-const OPCH_LO: [u8; 16] = [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 10, 3, 7, 2];
-const OPCH_HI: [u8; 16] = [0, 0, 1, 2, 0, 4, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0];
-
+/// Returns `true` if a byte is one of the operator characters `=!<>+-*&|^%?.`.
+///
+/// Note `/` is excluded - callers handle it separately.
 #[inline(always)]
 pub const fn is_op_char(c: u8) -> bool {
+    const OPCH_LO: [u8; 16] = [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 10, 3, 7, 2];
+    const OPCH_HI: [u8; 16] = [0, 0, 1, 2, 0, 4, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0];
+
     (OPCH_LO[(c & 15) as usize] & OPCH_HI[(c >> 4) as usize]) != 0
 }
 
@@ -127,6 +175,7 @@ const FOUR_BYTE_OP_LAST_BYTE: u8 = {
     last_byte.expect("no 4-byte operator found")
 };
 
+/// Perfect hash table for multi-byte operators.
 pub struct OpMap {
     opmap_mul: u32,
     op_pack: [u32; HASH_TABLE_SIZE],
@@ -217,12 +266,16 @@ impl OpMap {
         pack >> 24
     }
 
+    /// Get hash of `key`, which is the slot index into [`OP_PACK`].
     #[inline(always)]
     fn slot(&self, key: u32) -> usize {
         op_slot(key, self.opmap_mul)
     }
 }
 
+/// Get hash key from `bytes` and `len`.
+///
+/// `len` must be between 2 and 4 (inclusive).
 #[inline(always)]
 const fn op_key(bytes: [u8; 4], len: u32) -> u32 {
     let mut key = u32::from_le_bytes(bytes);
@@ -231,6 +284,10 @@ const fn op_key(bytes: [u8; 4], len: u32) -> u32 {
     key
 }
 
+/// Get hash of `key`, which is the slot index into [`OP_PACK`],
+/// using `mul` as the hash map multiplier.
+///
+/// Returns a `usize` but it is guaranteed to be less than [`HASH_TABLE_SIZE`].
 #[inline(always)]
 const fn op_slot(key: u32, mul: u32) -> usize {
     (key.wrapping_mul(mul) >> (32 - HASH_BITS)) as usize
