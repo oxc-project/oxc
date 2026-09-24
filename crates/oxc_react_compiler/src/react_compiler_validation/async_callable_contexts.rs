@@ -4,7 +4,9 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::validate_locals_not_reassigned_after_render::no_alias_callback_parameters;
 use crate::react_compiler_hir::environment::Environment;
-use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
+use crate::react_compiler_hir::visitors::{
+    each_instruction_value_lvalue, each_instruction_value_operand, each_terminal_operand,
+};
 use crate::react_compiler_hir::{
     ArrayElement, ArrayPatternElement, BlockId, HirFunction, IdentifierId, Instruction,
     InstructionId, InstructionKind, InstructionValue, ObjectPropertyKey, ObjectPropertyOrSpread,
@@ -71,6 +73,46 @@ impl Arguments {
     }
 }
 
+/// Non-plain parameters are temporaries followed by prologue binding stores.
+/// Declaration locations identify those bindings without including body aliases.
+fn parameter_bindings(func: &HirFunction, env: &Environment<'_>) -> FxHashSet<IdentifierId> {
+    let parameters: Vec<_> = func
+        .params
+        .iter()
+        .map(|param| match param {
+            ParamPattern::Place(place) => place.identifier,
+            ParamPattern::Spread(spread) => spread.place.identifier,
+        })
+        .collect();
+    let spans: Vec<_> = parameters.iter().filter_map(|&id| env.identifiers[id].span).collect();
+    let mut bindings: FxHashSet<_> = parameters.into_iter().collect();
+    for instruction in &func.instructions {
+        for place in each_instruction_value_lvalue(&instruction.value) {
+            if env.identifiers[place.identifier].span.is_some_and(|span| {
+                spans
+                    .iter()
+                    .any(|parameter| parameter.start <= span.start && span.end <= parameter.end)
+            }) {
+                bindings.insert(place.identifier);
+            }
+        }
+    }
+    // Temporary parameter inputs are observed through their initialized bindings.
+    // Counting the whole prologue input would include unused sibling properties.
+    for param in &func.params {
+        match param {
+            ParamPattern::Place(place) if place.span.is_none() => {
+                bindings.remove(&place.identifier);
+            }
+            ParamPattern::Spread(spread) => {
+                bindings.remove(&spread.place.identifier);
+            }
+            _ => {}
+        }
+    }
+    bindings
+}
+
 /// Preserve capture provenance through local snapshots, including object
 /// projections. Instruction identities keep cyclic CFGs finite.
 fn propagate_capture_origins(
@@ -134,6 +176,7 @@ fn infer_capture_phases(
     func: &HirFunction,
     invocations: &FxHashMap<InstructionId, Vec<AsyncInvocation>>,
     member_reads: &FxHashMap<IdentifierId, FxHashSet<String>>,
+    parameters: &FxHashSet<IdentifierId>,
 ) -> (FxHashSet<IdentifierId>, FxHashSet<IdentifierId>, FxHashSet<IdentifierId>) {
     const EAGER: u8 = 1;
     const DEFERRED: u8 = 2;
@@ -141,10 +184,7 @@ fn infer_capture_phases(
         .context
         .iter()
         .map(|place| place.identifier)
-        .chain(func.params.iter().map(|param| match param {
-            ParamPattern::Place(place) => place.identifier,
-            ParamPattern::Spread(spread) => spread.place.identifier,
-        }))
+        .chain(parameters.iter().copied())
         .collect();
     let mut eager = FxHashSet::default();
     let mut deferred = FxHashSet::default();
@@ -267,10 +307,7 @@ fn infer_capture_members(
         .context
         .iter()
         .map(|place| place.identifier)
-        .chain(func.params.iter().map(|param| match param {
-            ParamPattern::Place(place) => place.identifier,
-            ParamPattern::Spread(spread) => spread.place.identifier,
-        }))
+        .chain(parameter_bindings(func, env))
         .map(|id| (id, FxHashSet::default()))
         .collect();
     if members.is_empty() {
@@ -444,6 +481,7 @@ pub(super) struct ReturnedCallables {
     deferred_captures: FxHashSet<IdentifierId>,
     snapshot_captures: FxHashSet<IdentifierId>,
     projections: Projections,
+    parameter_values: Captures,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -651,24 +689,60 @@ impl CallableState {
             && let Some(summary) = &callable.returned
         {
             let (substitutions, rest) = self.call_substitutions(&callable, summary, arguments);
+            for (&binding, sources) in &summary.parameter_values {
+                let mut flattened_rest = false;
+                let identities = sources
+                    .iter()
+                    .flat_map(|&source| {
+                        if let Some(elements) = rest.get(&source) {
+                            flattened_rest = true;
+                            let members = summary.capture_reads.get(&binding);
+                            return elements
+                                .iter()
+                                .filter(|(key, _)| {
+                                    key.as_ref().is_none_or(|key| {
+                                        members.is_none_or(|members| members.contains(key))
+                                    })
+                                })
+                                .flat_map(|(_, values)| values.identities.iter().copied())
+                                .collect();
+                        }
+                        self.substitute(
+                            source,
+                            &substitutions,
+                            &summary.projections,
+                            &rest,
+                            &mut FxHashSet::default(),
+                        )
+                        .map_or_else(|| FxHashSet::from_iter([source]), |values| values.identities)
+                    })
+                    .collect();
+                if flattened_rest {
+                    callable.capture_reads.remove(&binding);
+                }
+                Rc::make_mut(&mut callable.context_values).insert(binding, identities);
+            }
             for &(parameter, _) in &summary.params {
-                if let Some(values) = substitutions.get(&parameter) {
-                    let mut identities = values.identities.clone();
-                    if let Some(elements) = rest.get(&parameter)
-                        && let Some(members) = summary.capture_members.get(&parameter)
-                    {
-                        identities = members
-                            .iter()
-                            .filter(|member| member.parse::<usize>().is_ok())
-                            .flat_map(|member| {
-                                elements
-                                    .get(&Some(member.clone()))
-                                    .into_iter()
-                                    .chain(elements.get(&None))
-                            })
-                            .flat_map(|values| values.identities.iter().copied())
-                            .collect();
-                    }
+                if !summary.parameter_values.contains_key(&parameter)
+                    && let Some(values) = substitutions.get(&parameter)
+                {
+                    Rc::make_mut(&mut callable.context_values)
+                        .insert(parameter, values.identities.clone());
+                }
+                if let Some(elements) = rest.get(&parameter)
+                    && let Some(members) = summary.capture_members.get(&parameter)
+                {
+                    let identities = members
+                        .iter()
+                        .filter(|member| member.parse::<usize>().is_ok())
+                        .flat_map(|member| {
+                            elements
+                                .get(&Some(member.clone()))
+                                .into_iter()
+                                .chain(elements.get(&None))
+                        })
+                        .flat_map(|values| values.identities.iter().copied())
+                        .collect();
                     Rc::make_mut(&mut callable.context_values).insert(parameter, identities);
                 }
             }
@@ -744,6 +818,46 @@ impl CallableState {
             }
         }
         result
+    }
+
+    fn callback_arguments(
+        &self,
+        instruction: &InstructionValue<'_>,
+        env: &Environment<'_>,
+    ) -> Option<Arguments> {
+        let InstructionValue::MethodCall { receiver, property, .. } = instruction else {
+            return None;
+        };
+        let ty = &env.types[env.identifiers[property.identifier].type_];
+        let signature = env.get_function_signature(ty).ok().flatten()?;
+        if !matches!(
+            signature.canonical_name.as_deref(),
+            Some(
+                "Array.map"
+                    | "Array.flatMap"
+                    | "Array.forEach"
+                    | "Array.filter"
+                    | "Array.every"
+                    | "Array.some"
+                    | "Array.find"
+                    | "Array.findIndex"
+            )
+        ) {
+            return None;
+        }
+        let mut items = Values::default();
+        for (key, values) in self.properties(receiver.identifier) {
+            if key.as_ref().is_none_or(|key| key.parse::<usize>().is_ok()) {
+                items.extend(&values);
+            }
+        }
+        Some(Arguments {
+            elements: FxHashMap::from_iter([
+                (Some("0".to_string()), items),
+                (Some("2".to_string()), self.values(receiver.identifier)),
+            ]),
+            length: Some(3),
+        })
     }
 
     fn values(&self, identifier: IdentifierId) -> Values {
@@ -1488,6 +1602,7 @@ pub(super) fn infer_async_callable_contexts(
         pending_before: FxHashMap::default(),
         pending_at_exit: FxHashMap::default(),
     };
+    let parameters = parameter_bindings(func, env);
     let captured_bindings = captured_contexts.values().flatten().copied().collect();
     let mut states: FxHashMap<BlockId, CallableState> = FxHashMap::default();
     loop {
@@ -1534,6 +1649,17 @@ pub(super) fn infer_async_callable_contexts(
             }
             for &instruction_id in &block.instructions {
                 let instruction = &func.instructions[instruction_id.index()];
+                if let InstructionValue::LoadLocal { place, .. }
+                | InstructionValue::LoadContext { place, .. } = &instruction.value
+                    && parameters.contains(&place.identifier)
+                {
+                    result
+                        .returned
+                        .parameter_values
+                        .entry(place.identifier)
+                        .or_default()
+                        .extend(state.values(place.identifier).identities);
+                }
                 let mut invocations = Vec::new();
                 let (arguments, _) = state.call_arguments(instruction);
                 for callable in state.invoked(&instruction.value).contexts.into_values() {
@@ -1541,11 +1667,12 @@ pub(super) fn infer_async_callable_contexts(
                         invocations.push(state.invocation(callable, Some(&arguments)));
                     }
                 }
+                let callback_arguments = state.callback_arguments(&instruction.value, env);
                 for callable in
                     state.invoked_callbacks(&instruction.value, env, false).contexts.into_values()
                 {
                     if callable.is_async {
-                        invocations.push(state.invocation(callable, None));
+                        invocations.push(state.invocation(callable, callback_arguments.as_ref()));
                     }
                 }
                 let returning = state.invoked_callbacks(&instruction.value, env, true);
@@ -1604,7 +1731,12 @@ pub(super) fn infer_async_callable_contexts(
         result.returned.eager_captures,
         result.returned.deferred_captures,
         result.returned.snapshot_captures,
-    ) = infer_capture_phases(func, &result.invocations, &result.returned.capture_reads);
+    ) = infer_capture_phases(
+        func,
+        &result.invocations,
+        &result.returned.capture_reads,
+        &parameters,
+    );
     for projections in states
         .values()
         .map(|state| &state.projections)

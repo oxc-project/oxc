@@ -353,6 +353,9 @@ const ARRAY_MAP_ALIASING: AliasingSignatureConfig = AliasingSignatureConfig {
     ],
 };
 
+const ARRAY_FOREACH_ALIASING: AliasingSignatureConfig =
+    AliasingSignatureConfig { returns: "@unused", ..ARRAY_MAP_ALIASING };
+
 /// One property of an object shape: a method with a function signature, or a
 /// plain property like `length: Primitive`.
 enum PropDef {
@@ -521,6 +524,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "map",
                 MethodDef {
+                    canonical_name: Some("Array.map"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
@@ -534,6 +538,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "flatMap",
                 MethodDef {
+                    canonical_name: Some("Array.flatMap"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
@@ -541,6 +546,19 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
                     no_alias: true,
                     mutable_only_if_operands_are_mutable: true,
                     aliasing: Some(&ARRAY_MAP_ALIASING),
+                    ..MethodDef::DEFAULT
+                },
+            ),
+            Method(
+                "forEach",
+                MethodDef {
+                    canonical_name: Some("Array.forEach"),
+                    rest_param: Some(Effect::ConditionallyMutate),
+                    callee_effect: Effect::ConditionallyMutate,
+                    return_type: TypeDef::Primitive,
+                    return_value_kind: ValueKind::Primitive,
+                    no_alias: true,
+                    aliasing: Some(&ARRAY_FOREACH_ALIASING),
                     ..MethodDef::DEFAULT
                 },
             ),
@@ -959,6 +977,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "map",
                 MethodDef {
+                    canonical_name: Some("Array.map"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
                     callee_effect: Effect::ConditionallyMutate,
@@ -971,12 +990,26 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "flatMap",
                 MethodDef {
+                    canonical_name: Some("Array.flatMap"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
                     callee_effect: Effect::ConditionallyMutate,
                     return_value_kind: ValueKind::Mutable,
                     no_alias: true,
                     aliasing: Some(&ARRAY_MAP_ALIASING),
+                    ..MethodDef::DEFAULT
+                },
+            ),
+            Method(
+                "forEach",
+                MethodDef {
+                    canonical_name: Some("Array.forEach"),
+                    rest_param: Some(Effect::ConditionallyMutate),
+                    callee_effect: Effect::ConditionallyMutate,
+                    return_type: TypeDef::Primitive,
+                    return_value_kind: ValueKind::Primitive,
+                    no_alias: true,
+                    aliasing: Some(&ARRAY_FOREACH_ALIASING),
                     ..MethodDef::DEFAULT
                 },
             ),
