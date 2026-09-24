@@ -183,6 +183,34 @@ Prettier drops the alignment when the html starts at another column than the par
 An HTML block closed by its container's end carries that line ending as content (micromark's `trailing_newline`); it is not printed.
 Prettier prints it as a blank line of the blockquote, and inside a list item that line is not a fixpoint: every pass adds another.
 
+## lazy-html-block
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/lazy-html-block.md`
+
+```markdown
+<!-- input -->
+> a
+<a>
+> c
+
+<!-- ours -->
+> a
+>
+> <a>
+> c
+
+<!-- prettier (the html becomes paragraph text) -->
+> a
+> <a>
+> c
+```
+
+A complete type 7 tag on a lazy line opens an HTML block inside the container (micromark's rule, oxc-markdown-parser DIVERGENCES.md),
+though no type 7 block can interrupt a paragraph on a regular line.
+Printed with the container's prefix the line is no longer lazy, so a blank line keeps the block apart;
+Prettier prints it adjacent, and the next parse reads it as part of the paragraph.
+
 ## list-marker-after-ignored-list
 
 - Why: semantics
@@ -239,6 +267,9 @@ The parser opens one on any name-like fence line (`:::name[label]{attrs}`, `::: 
 
 Prettier has no directive construct (#19662 would add micromark's grammar only), so under `always` / `never` the fences are words of the paragraph and wrapping merges them into the text, which breaks the container for every dialect that reads it.
 
+An opener interrupts a paragraph (as in micromark's directive extension and markdown-it-container),
+so like any block it is printed after a blank line, under `preserve` too; Prettier keeps it on the paragraph's next line.
+
 ## line-shapes
 
 - Why: semantics
@@ -262,6 +293,28 @@ A paragraph line starting with `<<<` (VitePress snippet import), a component tag
 a stray `:::`, or `[!` as the first line of a blockquote (GitHub / Obsidian alert marker) keeps its line boundaries and is never re-wrapped (AGENTS.md "Dialects").
 Prettier joins and wraps them like any word: the alert above loses its marker line (GitHub needs `[!NOTE]` alone on it),
 a wrapped `<<<` line loses its `[title]`, and a component tag wrapped to column 0 opens an HTML block in MDX / VitePress.
+
+## definition-shaped-first-line
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/prose-wrap/definition-shaped-first-line.md`
+
+```markdown
+<!-- input -->
+[core]: https://example.com/a/very/long/path/that/fills/most/xxxxxxxxxxxxxxxxxxxxxxxx then more
+
+<!-- ours, proseWrap always -->
+[core]: https://example.com/a/very/long/path/that/fills/most/xxxxxxxxxxxxxxxxxxxxxxxx then more
+
+<!-- prettier, proseWrap always (a definition and a paragraph) -->
+[core]:
+https://example.com/a/very/long/path/that/fills/most/xxxxxxxxxxxxxxxxxxxxxxxx
+then more
+```
+
+A paragraph's first line shaped like a definition (`[label]: dest text`) is a paragraph only because of what follows the destination on the line,
+so it keeps its line boundaries and is never re-wrapped, under every `proseWrap`.
+Prettier wraps it like any line: a break right after the destination makes it a definition on the next parse.
 
 ## wrapped-block-starts
 
@@ -355,6 +408,8 @@ resumes at the container's content column, the only indentation the parser strip
 whatever whitespace follows is the node's content and is printed as is.
 Prettier prints code span lines from column 0 and the others from its own alignment (a task item's checkbox counts there, not for the parser),
 so the content of `` `x y` `` loses two spaces per pass and an HTML comment gains four.
+With no whitespace past the container's column the same column-0 line is a lazy continuation and reads the same,
+so there the difference is layout only (most real-world cases).
 
 ## wiki-link-code-span
 

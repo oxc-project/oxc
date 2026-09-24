@@ -25,7 +25,7 @@ use super::{
         print_delimited_word,
     },
     is_split_whitespace,
-    line_shape::{is_line_shape_start, may_open_block},
+    line_shape::{is_line_shape_start, line_opens_block, may_open_block},
     parts::{Parts, Sep},
 };
 
@@ -39,6 +39,9 @@ pub struct NextWord<'a> {
     /// The word's leading `*` / `_` run gets escaped (inside emphasis):
     /// printed, it starts with `\` and cannot open a block.
     pub escaped: bool,
+    /// The word starts a text of the same sentence: the CJK rules see it.
+    /// Past another node's edge they do not (Prettier's sentence ends there), so the whitespace may break and stays a space.
+    pub in_sentence: bool,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -116,7 +119,7 @@ pub fn push_text<'a>(
                     Some(glued) if is_last => glued,
                     _ => word,
                 };
-                Some(NextWord { word, line: "", escaped })
+                Some(NextWord { word, line: "", escaped, in_sentence: true })
             };
             let cx = TextContext {
                 next_word: next,
@@ -152,6 +155,8 @@ pub fn push_text<'a>(
             && is_last
             && !leading_ws
             && cx.after_soft_break
+            // Alone on its line: a node after it (`== `x``) makes the line text
+            && cx.next_word.is_none()
             && is_fake_setext_underline(word)
         {
             Cow::Owned(format!("\\{word}"))
@@ -208,7 +213,9 @@ pub fn push_whitespace<'a>(
     let (prev, next) = if cx.cj_spaces.is_some() {
         (
             cx.prev_word.and_then(|w| cjk::edges(w).map(|(_, last)| last)),
-            cx.next_word.and_then(|w| cjk::edges(w.word).map(|(first, _)| first)),
+            cx.next_word
+                .filter(|w| w.in_sentence)
+                .and_then(|w| cjk::edges(w.word).map(|(first, _)| first)),
         )
     } else {
         (None, None)
@@ -355,14 +362,15 @@ fn looks_like_block_start(next: NextWord<'_>, exact: bool) -> bool {
     if !target.as_bytes().first().is_some_and(|&b| may_open_block(b)) {
         return false;
     }
+    if exact {
+        // A `|` row is inert on its own: the delimiter row after it is what makes a table, and that break is kept apart
+        return line_opens_block(target, true) || is_line_shape_start(target);
+    }
     let constructs = Constructs::markdown();
     // A dialect line shape at a line start is printed raw from then on: never create one
     // (asked about the word alone, a `:::` word counts even where `::: note` would be an opener)
     if lexical::line_start(&constructs, target, true).is_some() || is_line_shape_start(target) {
         return true;
-    }
-    if exact {
-        return false;
     }
     let mut buf = [0u8; 64];
     let len = next.word.len();

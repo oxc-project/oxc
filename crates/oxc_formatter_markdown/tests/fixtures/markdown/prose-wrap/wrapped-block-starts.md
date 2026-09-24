@@ -28,6 +28,12 @@ padding words to push the risky token over the edge padding words to push the > 
 | x | y |
         |---|---|
 
+<!-- A `|` row alone opens nothing (the delimiter row does): the kept break before it stays -->
+
+A grammar line
+| alternative | another
+| last
+
 text then
     - item
 

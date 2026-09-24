@@ -11,7 +11,7 @@ use oxc_formatter_core::arena_cow_str;
 use oxc_markdown_parser::{
     Span,
     ast::{CodeSpan, Emphasis, HardBreakKind, Inline, LinkKind, Strong},
-    unicode,
+    escapes_next, unicode,
 };
 
 use crate::{
@@ -124,7 +124,7 @@ fn code_span_literal_runs<'a>(
     let mut at = first.span().start;
     for &(span, is_code) in opaque {
         if span.start > at {
-            mask |= run_mask(source.slice_range(at, span.start).as_bytes(), b'`');
+            mask |= run_mask(source.slice_range(at, span.start).as_bytes(), b'`', true);
         }
         if is_code {
             out.push((span.start, mask));
@@ -550,23 +550,33 @@ fn mark_delimiter(open: u32, parts: &mut Parts<'_>, strong: bool) {
 }
 
 /// Bit `n - 1` set: a run of exactly `n` `ch`s occurs in `bytes` (runs past 64 count as 64).
-fn run_mask(bytes: &[u8], ch: u8) -> u64 {
+/// `escapes`: `bytes` is markdown text, where a backslash-escaped `ch` is not part of a run.
+fn run_mask(bytes: &[u8], ch: u8, escapes: bool) -> u64 {
     let mut present: u64 = 0;
     let mut run = 0usize;
-    for &b in bytes.iter().chain(std::iter::once(&0)) {
-        if b == ch {
+    let mut i = 0;
+    loop {
+        let b = bytes.get(i).copied();
+        if b == Some(ch) {
             run += 1;
-        } else if run > 0 {
+            i += 1;
+            continue;
+        }
+        if run > 0 {
             present |= 1u64 << (run.min(64) - 1);
             run = 0;
         }
+        match b {
+            None => return present,
+            Some(b'\\') if escapes && escapes_next(bytes, i) => i += 2,
+            Some(_) => i += 1,
+        }
     }
-    present
 }
 
 /// The smallest run length of `ch` absent from `text`.
 fn min_absent_run(text: &str, ch: u8) -> usize {
-    run_mask(text.as_bytes(), ch).trailing_ones() as usize + 1
+    run_mask(text.as_bytes(), ch, false).trailing_ones() as usize + 1
 }
 
 /// Runs of tabs / newlines become one space (wiki link contents under wrapping).
@@ -606,7 +616,8 @@ fn next_word_of<'a>(
     let word = first_word(line)?;
     // A text's leading run after a soft break is escaped inside emphasis
     // (as `push_text` decides: a space before it, and after it the text's next character or the node edge)
-    let escaped = matches!(next, Inline::Text(_))
+    let in_sentence = matches!(next, Inline::Text(_));
+    let escaped = in_sentence
         && f.context().delimiter_depth().get() > 0
         && !f.context().literal_markers().get()
         && escape::leading_run_escaped(
@@ -614,7 +625,7 @@ fn next_word_of<'a>(
             Some(' '),
             edge_char(children, i + 1, delimiter, false, f),
         );
-    Some(words::NextWord { word, line, escaped })
+    Some(words::NextWord { word, line, escaped, in_sentence })
 }
 
 fn first_word(line: &str) -> Option<&str> {
