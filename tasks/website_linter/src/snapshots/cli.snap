@@ -104,7 +104,7 @@ Arguments:
 
   The supported syntax is the same as for `.eslintignore` and `.gitignore` files. You should quote your patterns in order to avoid shell interpretation of glob patterns.
 - **`    --no-ignore`** &mdash; 
-  Disable ignore sources; without a value, disables `cli`. Takes an optional comma-separated list of kinds attached with `=`, e.g. `--no-ignore=vcs,config`:
+  Disable ignore sources; without a value, disables `all`. Takes an optional comma-separated list of kinds attached with `=`, e.g. `--no-ignore=vcs,config`:
  * `vcs` - `.gitignore` files and `.git/info/exclude`
  * `cli` - `.eslintignore` files, `--ignore-path` and `--ignore-pattern` flags (those flags are ignored even when passed)
  * `config` - `ignorePatterns` in config files
