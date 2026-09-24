@@ -34,7 +34,7 @@ text
 A document whose first block is a thematic break gets `***`, never `---`:
 the next run (Prettier's and ours) would read `---` ... `---` as front matter and swallow `text` into it,
 which is what the input itself would be with a `---` at the end (`front-matter.md`).
-Prettier `main` prints `***` since #19839; the pin (3.9.6) still prints `---`.
+Prettier `main` prints `***` since #19839; the pin (3.9.8) still prints `---`.
 
 ## url-escaping
 
@@ -111,34 +111,6 @@ so an indent written as spaces plus a tab becomes a fenced block.
 A blockquote's trailing blank `>` line is dropped, whatever `proseWrap` is.
 Prettier drops it under `preserve` and `never` but prints a bare `>` under `always` when the block before it is `prettier-ignore`d.
 
-## list-indented-code-alignment
-
-- Why: semantics (prettier/prettier#19644, prettier/prettier#19647, prettier/prettier#19990)
-- Pin: `tests/fixtures/markdown/tab-width-4/list-indented-code-alignment.md`
-
-```markdown
-<!-- input, tabWidth 4 -->
-- foo
-
-      code
-
-<!-- ours -->
-- foo
-
-      code
-
-<!-- prettier -->
-- foo
-
-        code
-```
-
-An indented code block inside a list item is printed at the item's content column + 4, nothing more:
-the code's content is exactly what follows that column, so any extra alignment becomes part of it on the next parse.
-The pin aligns it by the task checkbox (continuation lines drift by 4 per run, #19644);
-#19647 aligned it by the tab width instead, which shifted the content whenever `tabWidth` exceeded the marker width.
-Prettier `main` prints it as we do since #19990 (the fixture's first four items are its fixture); the pin (3.9.6) still differs.
-
 ## ordered-marker-before-indented-code
 
 - Why: semantics
@@ -157,7 +129,7 @@ Prettier `main` prints it as we do since #19990 (the fixture's first four items 
 
 The marker of an ordered list stays unpadded when an item starts with indented code:
 the content column is the marker plus one space, so any padding lands inside the code
-(the rule of DIVERGENCES.md#list-indented-code-alignment, applied to the marker).
+(the rule indented code in a list item follows, applied to the marker).
 Prettier pads it when the code starts at a tab stop in the source, which `>2.     foo` does only because of the `>`.
 
 ## list-html-block-alignment
@@ -182,7 +154,7 @@ Prettier pads it when the code starts at a tab stop in the source, which `>2.   
 <textarea>
 ```
 
-An HTML block after a task item's paragraph keeps the item's content column, as indented code does (DIVERGENCES.md#list-indented-code-alignment).
+An HTML block after a task item's paragraph keeps the item's content column, as indented code does.
 Prettier drops the alignment when the html starts at another column than the paragraph (the checkbox counts for its printer, not for the parser), which moves the block out of the item.
 
 ## html-block-trailing-newline
@@ -238,63 +210,6 @@ Prettier prints it as a blank line of the blockquote, and inside a list item tha
 
 Adjacent lists alternate markers so they stay two lists. A list kept verbatim by `prettier-ignore` shows its own marker, so the list after it takes the other one;
 Prettier alternates from the marker it would have printed (`-`), prints `*` next to the verbatim `*` list, and the two merge into one list on the next parse.
-
-## single-tilde-strikethrough
-
-- Why: semantics (prettier/prettier#19739)
-- Pin: `tests/fixtures/markdown/single-tilde-strikethrough.md`
-- Conformance: `markdown/gfm-test-suite/snippet: example-491.md`
-
-```markdown
-<!-- input -->
-H~2~O
-
-<!-- ours -->
-H~2~O
-
-<!-- prettier -->
-H~~2~~O
-```
-
-A single-tilde span is not strikethrough (GitHub strikes `~~x~~` only) and is kept as written.
-The pin (3.9.6) parses it as strikethrough and rewrites it to `~~`, turning subscripts into strikes;
-Prettier `main` preserves it since #19739.
-
-## liquid-flow-tags
-
-- Why: semantics (prettier/prettier#19724, prettier/prettier#19838)
-- Pin: `tests/fixtures/markdown/prose-wrap/liquid-flow-tags.md`
-- Conformance: `markdown/liquid/character-after-closing-tokens.md`, `markdown/liquid/example-1.md`, `markdown/liquid/example-2.md`
-
-```markdown
-<!-- input -->
-{% css a %}
-{% js b %}
-
-{{ foo
-
-bar   baz }}
-
-<!-- ours -->
-{% css a %}
-{% js b %}
-
-{{ foo
-
-bar   baz }}
-
-<!-- prettier, proseWrap always -->
-{% css a %} {% js b %}
-
-{{ foo
-
-bar baz }}
-```
-
-A liquid tag standing on its own line is a flow node: it is kept verbatim, blank lines inside included,
-and two tags on adjacent lines stay on their lines.
-The pin (3.9.6) reads them as inline tags in a paragraph, so `always` joins them and a tag spanning a blank line falls apart into paragraphs whose whitespace collapses;
-Prettier `main` parses them as flow nodes since #19838.
 
 ## container-directive
 
