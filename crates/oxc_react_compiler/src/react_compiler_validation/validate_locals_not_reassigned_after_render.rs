@@ -314,7 +314,7 @@ fn add_invoked_async_contexts(
     active_contexts: &mut ContextValues,
 ) {
     for invocation in invocations {
-        for &context in &invocation.captures {
+        for &context in &invocation.deferred_captures {
             if let Some(values) = invocation.context_values.get(&context) {
                 active_contexts.entry(context).or_default().extend(values);
             } else {

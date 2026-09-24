@@ -71,51 +71,67 @@ impl Arguments {
     }
 }
 
-/// Only reads reachable before suspension observe the binding at invocation.
-/// Reads after an await observe its value when the current job yields instead.
-fn infer_eager_captures(
+/// Track both sides of suspension: an eager-only read cannot observe a later
+/// assignment, while a deferred read must be checked when the caller yields.
+fn infer_capture_phases(
     func: &HirFunction,
     invocations: &FxHashMap<InstructionId, Vec<AsyncInvocation>>,
-) -> FxHashSet<IdentifierId> {
+) -> (FxHashSet<IdentifierId>, FxHashSet<IdentifierId>) {
+    const EAGER: u8 = 1;
+    const DEFERRED: u8 = 2;
     let contexts: FxHashSet<_> = func.context.iter().map(|place| place.identifier).collect();
+    let mut eager = FxHashSet::default();
+    let mut deferred = FxHashSet::default();
     if contexts.is_empty() {
-        return contexts;
+        return (eager, deferred);
     }
-    let mut unsuspended = FxHashSet::default();
-    let mut captures = FxHashSet::default();
+    let mut phases = FxHashMap::default();
     loop {
         let mut changed = false;
         for (&id, block) in &func.body.blocks {
-            if id != func.body.entry && !block.preds.iter().any(|id| unsuspended.contains(id)) {
+            let mut phase = if id == func.body.entry { EAGER } else { 0 };
+            for predecessor in &block.preds {
+                phase |= phases.get(predecessor).copied().unwrap_or_default();
+            }
+            if phase == 0 {
                 continue;
             }
-            let mut suspended = false;
             for &id in &block.instructions {
                 for invocation in invocations.get(&id).into_iter().flatten() {
-                    captures.extend(invocation.eager_captures.intersection(&contexts).copied());
+                    if phase & EAGER != 0 {
+                        eager.extend(invocation.eager_captures.intersection(&contexts).copied());
+                    }
+                    if phase & DEFERRED != 0 {
+                        deferred.extend(invocation.eager_captures.intersection(&contexts).copied());
+                    }
+                    deferred.extend(invocation.deferred_captures.intersection(&contexts).copied());
                 }
                 match &func.instructions[id.index()].value {
-                    InstructionValue::Await { .. } => {
-                        suspended = true;
-                        break;
-                    }
+                    InstructionValue::Await { .. } => phase = DEFERRED,
                     InstructionValue::LoadContext { place, .. }
+                    | InstructionValue::LoadLocal { place, .. }
                         if contexts.contains(&place.identifier) =>
                     {
-                        captures.insert(place.identifier);
+                        if phase & EAGER != 0 {
+                            eager.insert(place.identifier);
+                        }
+                        if phase & DEFERRED != 0 {
+                            deferred.insert(place.identifier);
+                        }
                     }
                     _ => {}
                 }
             }
-            if !suspended {
-                changed |= unsuspended.insert(id);
+            if phases.get(&id) != Some(&phase) {
+                phases.insert(id, phase);
+                changed = true;
             }
         }
         if !changed {
             break;
         }
     }
-    captures
+    (eager, deferred)
 }
 
 /// Refine captures used only through named members. A direct escape, unknown
@@ -271,7 +287,7 @@ fn merge_properties(into: &mut Properties, other: &Properties) {
 }
 
 pub(super) struct AsyncInvocation {
-    pub captures: FxHashSet<IdentifierId>,
+    pub deferred_captures: FxHashSet<IdentifierId>,
     pub eager_captures: FxHashSet<IdentifierId>,
     pub context_values: Rc<Captures>,
 }
@@ -289,13 +305,14 @@ pub(super) struct ReturnedCallables {
     params: Vec<(IdentifierId, bool)>,
     capture_members: FxHashMap<IdentifierId, FxHashSet<String>>,
     eager_captures: FxHashSet<IdentifierId>,
+    deferred_captures: FxHashSet<IdentifierId>,
     projections: Projections,
 }
 
 #[derive(Clone, PartialEq, Eq)]
 struct Callable {
     is_async: bool,
-    captures: FxHashSet<IdentifierId>,
+    deferred_captures: FxHashSet<IdentifierId>,
     context_values: Rc<Captures>,
     returned: Option<Rc<ReturnedCallables>>,
     capture_members: FxHashMap<IdentifierId, FxHashSet<String>>,
@@ -830,7 +847,10 @@ impl CallableState {
                     id,
                     Callable {
                         is_async: async_functions.contains(&id),
-                        captures: captured_contexts.get(&id).cloned().unwrap_or_default(),
+                        deferred_captures: function_returns
+                            .get(&id)
+                            .map(|summary| summary.deferred_captures.clone())
+                            .unwrap_or_default(),
                         context_values: Rc::new(contexts),
                         returned: function_returns.get(&id).cloned().map(Rc::new),
                         bound_arguments: Arguments::default(),
@@ -884,7 +904,10 @@ impl CallableState {
                         *value,
                         Callable {
                             is_async: async_functions.contains(value),
-                            captures: captured_contexts.get(value).cloned().unwrap_or_default(),
+                            deferred_captures: function_returns
+                                .get(value)
+                                .map(|summary| summary.deferred_captures.clone())
+                                .unwrap_or_default(),
                             context_values: Rc::new(self.context_values.clone()),
                             returned: function_returns.get(value).cloned().map(Rc::new),
                             bound_arguments: Arguments::default(),
@@ -931,34 +954,31 @@ impl CallableState {
             }
             InstructionValue::ArrayExpression { elements, .. } => {
                 self.allocate(id);
-                self.properties.insert(id, Properties::default());
-                let mut index = Some(0usize);
+                let mut contents = Arguments::default();
                 for element in elements {
-                    match element {
-                        ArrayElement::Place(place) => self.store(
-                            id,
-                            index.map(|index| index.to_string()),
-                            self.values(place.identifier),
-                        ),
-                        ArrayElement::Spread(spread) => {
-                            // Unknown spread lengths make subsequent indices uncertain.
-                            let values = self
-                                .properties(spread.place.identifier)
-                                .into_values()
-                                .fold(Values::default(), |mut result, values| {
-                                    result.extend(&values);
-                                    result
-                                });
-                            self.store(id, None, values);
-                            index = None;
-                            continue;
+                    let next = match element {
+                        ArrayElement::Place(place) => Arguments {
+                            elements: FxHashMap::from_iter([(
+                                Some("0".to_string()),
+                                self.values(place.identifier),
+                            )]),
+                            length: Some(1),
+                        },
+                        ArrayElement::Spread(spread) => Arguments {
+                            elements: self.properties(spread.place.identifier),
+                            length: self.array_length(&self.values(spread.place.identifier)),
+                        },
+                        ArrayElement::Hole => {
+                            Arguments { elements: Properties::default(), length: Some(1) }
                         }
-                        ArrayElement::Hole => {}
-                    }
-                    index = index.map(|index| index + 1);
+                    };
+                    contents.append(&next);
                 }
-                if let Some(length) = index {
+                self.properties.insert(id, contents.elements);
+                if let Some(length) = contents.length {
                     self.array_lengths.insert(id, length);
+                } else {
+                    self.array_lengths.remove(&id);
                 }
             }
             InstructionValue::PropertyLoad { object, property, .. } => {
@@ -1075,7 +1095,7 @@ pub(super) fn infer_async_callable_contexts(
                 for callable in invoked.contexts.into_values() {
                     if callable.is_async {
                         invocations.push(AsyncInvocation {
-                            captures: callable.captures,
+                            deferred_captures: callable.deferred_captures,
                             eager_captures: callable.eager_captures,
                             context_values: callable.context_values,
                         });
@@ -1118,7 +1138,8 @@ pub(super) fn infer_async_callable_contexts(
         ParamPattern::Spread(spread) => (spread.place.identifier, true),
     }));
     result.returned.capture_members = infer_capture_members(func, env);
-    result.returned.eager_captures = infer_eager_captures(func, &result.invocations);
+    (result.returned.eager_captures, result.returned.deferred_captures) =
+        infer_capture_phases(func, &result.invocations);
     for projections in states
         .values()
         .map(|state| &state.projections)
