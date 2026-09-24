@@ -15,9 +15,9 @@ use serde::Serialize;
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{
     Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
-    Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
-    ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
-    TaggedTemplateExpression, TemplateLiteral,
+    ExportDefaultDeclarationKind, Expression, ExpressionStatement, IdentifierName,
+    ObjectExpression, ObjectProperty, ObjectPropertyKind, Program, PropertyKey, Statement,
+    StaticMemberExpression, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::VisitJs;
 use oxc_parser::Parser;
@@ -1159,32 +1159,46 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
     }
 
     fn visit_statement(&mut self, stmt: &Statement<'a>) {
-        let Statement::ExpressionStatement(expression_statement) = stmt else {
-            return;
+        // CommonJS rules use `module.exports = { ... }`, rules ported to ESM/TS use
+        // `export default { ... }`.
+        let rule_object = match stmt {
+            Statement::ExpressionStatement(expression_statement) => {
+                let Expression::AssignmentExpression(assignment_expression) =
+                    &expression_statement.expression
+                else {
+                    return;
+                };
+                let AssignmentTarget::StaticMemberExpression(static_member_expression) =
+                    &assignment_expression.left
+                else {
+                    return;
+                };
+                let Expression::Identifier(identifier) = &static_member_expression.object else {
+                    return;
+                };
+                if identifier.name != "module" {
+                    return;
+                }
+                if static_member_expression.property.name != "exports" {
+                    return;
+                }
+                let Expression::ObjectExpression(object_expression) = &assignment_expression.right
+                else {
+                    return;
+                };
+                object_expression
+            }
+            Statement::ExportDefaultDeclaration(export_default_declaration) => {
+                let ExportDefaultDeclarationKind::ObjectExpression(object_expression) =
+                    &export_default_declaration.declaration
+                else {
+                    return;
+                };
+                object_expression
+            }
+            _ => return,
         };
-        let Expression::AssignmentExpression(assignment_expression) =
-            &expression_statement.expression
-        else {
-            return;
-        };
-        let AssignmentTarget::StaticMemberExpression(static_member_expression) =
-            &assignment_expression.left
-        else {
-            return;
-        };
-        let Expression::Identifier(identifier) = &static_member_expression.object else {
-            return;
-        };
-        if identifier.name != "module" {
-            return;
-        }
-        if static_member_expression.property.name != "exports" {
-            return;
-        }
-        let Expression::ObjectExpression(object_expression) = &assignment_expression.right else {
-            return;
-        };
-        for object_property_kind in &object_expression.properties {
+        for object_property_kind in &rule_object.properties {
             let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind else {
                 continue;
             };
@@ -1442,6 +1456,18 @@ impl Display for RuleKind {
     }
 }
 
+/// Returns the first URL that exists, falling back to the last candidate so the
+/// caller still reports a sensible path when none of them resolve.
+fn first_existing_url(candidates: &[String]) -> String {
+    let (last, rest) = candidates.split_last().expect("expected at least one candidate URL");
+    for url in rest {
+        if oxc_tasks_common::agent().head(url).call().is_ok() {
+            return url.clone();
+        }
+    }
+    last.clone()
+}
+
 fn main() {
     let mut args = std::env::args();
     args.next();
@@ -1454,6 +1480,16 @@ fn main() {
     let update_tests_only = std::env::args().any(|arg| arg == "--update-tests");
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
     let camel_rule_name = rule_name.to_case(Case::Camel);
+
+    // Check whether this rule is marked as unsupported, and bail if it is.
+    if let Some((key, reason)) = find_unsupported_rule(&kebab_rule_name, rule_kind) {
+        eprintln!();
+        eprintln!("Error: This rule is either not planned or not possible to implement in Oxlint.");
+        eprintln!("The rule '{key}' will not be implemented for the following reason:");
+        eprintln!("> {reason}");
+        eprintln!();
+        std::process::exit(1);
+    }
 
     let rule_test_path = match rule_kind {
         RuleKind::ESLint => format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js"),
@@ -1486,7 +1522,12 @@ fn main() {
         RuleKind::Node => format!("{NODE_RULES_PATH}/{kebab_rule_name}.js"),
         RuleKind::Promise => format!("{PROMISE_RULES_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_RULES_PATH}/{kebab_rule_name}.ts"),
-        RuleKind::Vue => format!("{VUE_RULES_PATH}/{kebab_rule_name}.js"),
+        // eslint-plugin-vue is migrating its rules from JS to TS one at a time, so a
+        // rule's source may have either extension.
+        RuleKind::Vue => first_existing_url(&[
+            format!("{VUE_RULES_PATH}/{kebab_rule_name}.ts"),
+            format!("{VUE_RULES_PATH}/{kebab_rule_name}.js"),
+        ]),
         RuleKind::Oxc => String::new(),
     };
     let language = match rule_kind {
@@ -1495,16 +1536,6 @@ fn main() {
         RuleKind::React | RuleKind::ReactPerf | RuleKind::JSXA11y => "jsx",
         _ => "js",
     };
-
-    // Check whether this rule is marked as unsupported, and bail if it is.
-    if let Some((key, reason)) = find_unsupported_rule(&kebab_rule_name, rule_kind) {
-        eprintln!();
-        eprintln!("Error: This rule is either not planned or not possible to implement in Oxlint.");
-        eprintln!("The rule '{key}' will not be implemented for the following reason:");
-        eprintln!("> {reason}");
-        eprintln!();
-        std::process::exit(1);
-    }
 
     println!("Reading test file from {rule_test_path}");
 
