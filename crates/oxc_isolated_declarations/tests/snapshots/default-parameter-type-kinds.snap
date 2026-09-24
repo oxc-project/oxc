@@ -10,7 +10,7 @@ interface Source {
 }
 export declare function mapped(value: { [K in keyof Source]: Source[K] }, required: string): void;
 export declare function keyOf(value: keyof Source, required: string): void;
-export declare function readonlyTuple(value: readonly [string], required: string): void;
+export declare function readonlyTuple(value: readonly [string] | undefined, required: string): void;
 export declare function intersection(value: {
 	optional?: string;
 } & number[] | undefined, required: string): void;
@@ -44,15 +44,6 @@ export {};
  11 |   value: keyof Source = "value",
     :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  12 |   required: string,
-    `----
-
-  x TS9025: Declaration emit for this parameter requires implicitly adding
-  | undefined to it's type. This is not supported with --isolatedDeclarations.
-    ,-[16:3]
- 15 | export function readonlyTuple(
- 16 |   value: readonly [string] = [""],
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 17 |   required: string,
     `----
 
   x TS9025: Declaration emit for this parameter requires implicitly adding
