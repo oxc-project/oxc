@@ -7,7 +7,7 @@ use crate::pipeline::{
     bytes::{is_digit, is_word, is_ws},
     disambiguate::{gt_run_split, lt_run_split},
     scan::scan_number,
-    tables::{KwSet, Tables, is_op_char},
+    tables::{KwSet, Tables, is_op_char, opmap_lookup, opmap_pack},
     token_view,
 };
 
@@ -154,7 +154,7 @@ pub unsafe fn coalesce(
                     let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run);
                     if g != 0 {
                         // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
-                        cursor = munch_walk(t, src, n, st, opch, kind, p + g);
+                        cursor = munch_walk(src, n, st, opch, kind, p + g);
                         continue;
                     }
                 }
@@ -175,13 +175,13 @@ pub unsafe fn coalesce(
                         &lanes.disambiguate.closers,
                     );
                     if lt_run_split(&tokens, p) {
-                        cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
+                        cursor = munch_walk(src, n, st, opch, kind, p + 2);
                         continue;
                     }
                 }
                 if run == 2 {
                     let key = (q & 0xFFFF) | (2u32 << 24);
-                    let pack = t.op.opmap_pack(key);
+                    let pack = opmap_pack(key);
                     let mut ok = ((pack ^ key) & 0xFF_FFFF) == 0;
                     let kk = (pack >> 24) as u8;
                     ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8));
@@ -193,20 +193,20 @@ pub unsafe fn coalesce(
                     continue;
                 }
                 if run > 3 {
-                    cursor = munch_walk(t, src, n, st, opch, kind, p);
+                    cursor = munch_walk(src, n, st, opch, kind, p);
                     continue;
                 }
                 let b2 = (q >> 16) as u8;
                 let key3 = (q & 0xFF_FFFF) | (3u32 << 24);
-                let p3 = t.op.opmap_pack(key3);
+                let p3 = opmap_pack(key3);
                 let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
                 let key2a = (q & 0xFFFF) | (2u32 << 24);
-                let pa = t.op.opmap_pack(key2a);
+                let pa = opmap_pack(key2a);
                 let ka = (pa >> 24) as u8;
                 let mut ok2a = ((pa ^ key2a) & 0xFF_FFFF) == 0;
                 ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
                 let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
-                let pb = t.op.opmap_pack(key2b);
+                let pb = opmap_pack(key2b);
                 let kb = (pb >> 24) as u8;
                 let mut ok2b = ((pb ^ key2b) & 0xFF_FFFF) == 0;
                 ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8));
@@ -324,10 +324,10 @@ unsafe fn glue_number(
                 if g != 0 {
                     // The split `>`s stay single tokens, but whatever borders on them is still an operator run and has to be
                     // munched, or a following `&&` / `??` / `**` is emitted a byte at a time.
-                    return munch_walk(t, src, n, st, opch, kind, e2 + g);
+                    return munch_walk(src, n, st, opch, kind, e2 + g);
                 }
             }
-            let q = munch_walk(t, src, n, st, opch, kind, e2);
+            let q = munch_walk(src, n, st, opch, kind, e2);
             if q < n && *src.add(q) == b'.' && is_digit(*src.add(q + 1)) && bm_get(st, q) {
                 p = q;
                 continue;
@@ -339,7 +339,6 @@ unsafe fn glue_number(
 }
 
 unsafe fn munch_walk(
-    t: &Tables,
     src: *const u8,
     n: usize,
     st: *mut u64,
@@ -357,7 +356,7 @@ unsafe fn munch_walk(
         let mut opl: u32 = 0;
         let mut l = lmax;
         while l >= 2 {
-            let k = t.op.opmap_lookup(bytes, l);
+            let k = opmap_lookup(bytes, l);
             if k != 0
                 && !(k == tk!(OptionalChain) as u32 && pos + 2 < n && is_digit(*src.add(pos + 2)))
             {

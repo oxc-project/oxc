@@ -1,7 +1,10 @@
 //! The token stream as the disambiguation questions read it.
 
 use crate::{
-    pipeline::{bytes::is_digit, tables::Tables},
+    pipeline::{
+        bytes::is_digit,
+        tables::{Tables, opmap_lookup},
+    },
     token::{KW_KIND_BASE, OP_KIND_BASE, matches_tk, tk},
 };
 
@@ -157,7 +160,7 @@ impl Tokens<'_> {
         let mut l = 4u32;
         while l >= 2 {
             if pos + l as usize <= self.n {
-                let k = self.tables.op.opmap_lookup(bytes, l);
+                let k = opmap_lookup(bytes, l);
                 if k != 0 && !(k == tk!(OptionalChain) as u32 && is_digit(bytes[2])) {
                     return (l as usize, k);
                 }
