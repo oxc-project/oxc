@@ -1,10 +1,9 @@
 //! Punctuation in expression context: operators, arrows, separators, and the brackets that
 //! open and close frames.
 
-use crate::{
-    pipeline::tables::is_op_char,
-    token::{OP_KIND_BASE, matches_tk, tk},
-};
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
+
+use crate::pipeline::operators::is_op_char;
 
 use super::*;
 

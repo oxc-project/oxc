@@ -22,11 +22,13 @@ mod classify;
 mod coalesce;
 mod compress;
 mod disambiguate;
-pub(crate) use disambiguate::State as DisambiguateState;
 mod find;
 mod misc;
+mod operators;
 mod scan;
 mod tables;
+
+pub(crate) use disambiguate::State as DisambiguateState;
 
 use carve::carve;
 use classify::classify;

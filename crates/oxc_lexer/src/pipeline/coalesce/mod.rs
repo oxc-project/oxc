@@ -6,8 +6,9 @@ use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::{is_digit, is_word, is_ws},
     disambiguate::{gt_run_split, lt_run_split},
+    operators::{is_op_char, opmap_lookup, opmap_pack},
     scan::scan_number,
-    tables::{KwSet, Tables, is_op_char, opmap_lookup, opmap_pack},
+    tables::{KwSet, Tables},
     token_view,
 };
 

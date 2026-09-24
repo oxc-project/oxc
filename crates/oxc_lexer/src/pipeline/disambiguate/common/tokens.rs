@@ -1,12 +1,8 @@
 //! The token stream as the disambiguation questions read it.
 
-use crate::{
-    pipeline::{
-        bytes::is_digit,
-        tables::{Tables, opmap_lookup},
-    },
-    token::{KW_KIND_BASE, OP_KIND_BASE, matches_tk, tk},
-};
+use crate::token::{KW_KIND_BASE, OP_KIND_BASE, matches_tk, tk};
+
+use crate::pipeline::{bytes::is_digit, operators::opmap_lookup, tables::Tables};
 
 use super::{Brackets, Closers, bits, walk};
 

@@ -43,8 +43,8 @@ const OPMAP_MUL: u32 = 0x0217_DFE7;
 
 /// An operator and its corresponding [`TokenKind`].
 struct OpDef {
-    pub txt: &'static [u8],
-    pub kind: TokenKind,
+    txt: &'static [u8],
+    kind: TokenKind,
 }
 
 impl OpDef {
@@ -121,7 +121,7 @@ static OPMAP_OPS: [OpDef; 33] = [
 ///
 /// Note `/` is excluded - callers handle it separately.
 #[inline(always)]
-pub const fn is_op_char(c: u8) -> bool {
+pub(super) const fn is_op_char(c: u8) -> bool {
     const OPCH_LO: [u8; 16] = [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 10, 3, 7, 2];
     const OPCH_HI: [u8; 16] = [0, 0, 1, 2, 0, 4, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -187,7 +187,7 @@ const FOUR_BYTE_OP_LAST_BYTE: u8 = {
 /// Hashmap collisions are possible, so caller must additionally check that
 /// the first 3 bytes of `key` and the returned packed value match to confirm a match.
 #[inline(always)]
-pub fn opmap_pack(key: u32) -> u32 {
+pub(super) fn opmap_pack(key: u32) -> u32 {
     let slot = op_slot(key, OPMAP_MUL);
     OP_PACK[slot]
 }
@@ -199,7 +199,7 @@ pub fn opmap_pack(key: u32) -> u32 {
 ///
 /// `len` must be between 2 and 4 (inclusive).
 #[inline(always)]
-pub fn opmap_lookup(bytes: [u8; 4], len: u32) -> u32 {
+pub(super) fn opmap_lookup(bytes: [u8; 4], len: u32) -> u32 {
     let key = op_key(bytes, len);
     let slot = op_slot(key, OPMAP_MUL);
 

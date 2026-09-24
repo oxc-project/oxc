@@ -1,6 +1,5 @@
 mod classify_luts;
 mod keywords;
-mod operators;
 mod pair_luts;
 mod punct1;
 
@@ -12,8 +11,6 @@ pub(super) use keywords::KwSet;
     target_feature = "popcnt"
 )))]
 pub(super) use keywords::{is_kw_init, is_kw_init_ts};
-
-pub(super) use operators::{is_op_char, opmap_lookup, opmap_pack};
 
 #[cfg(not(all(
     target_arch = "x86_64",
