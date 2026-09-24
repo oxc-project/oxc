@@ -1,0 +1,273 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const url = "http://sindresorhus.com";
+   ·             ─────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const url = `http://sindresorhus.com/path`;
+   ·             ──────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:4]
+ 1 │ // http://sindresorhus.com
+   ·    ───────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:4]
+ 1 │ // http://sindresorhus.com,
+   ·    ───────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:25]
+ 1 │ const element = <a href="http://sindresorhus.com">https://sindresorhus.com</a>;
+   ·                         ─────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:52]
+ 1 │ const element = <a href="https://sindresorhus.com">http://sindresorhus.com</a>;
+   ·                                                    ───────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:2:25]
+ 1 │ const urls = [
+ 2 │                         "http://sindresorhus.com",
+   ·                         ─────────────────────────
+ 3 │                         "http://example.com",
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:3:25]
+ 2 │                         "http://sindresorhus.com",
+ 3 │                         "http://example.com",
+   ·                         ────────────────────
+ 4 │                     ];
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const url = "http://user:password@sindresorhus.com";
+   ·             ───────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const url = "http://sindresorhus.com/path@localhost";
+   ·             ────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const url = "http://êxample.com";
+   ·             ────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const url = "http://sindresorhus.com:8080/path";
+   ·             ───────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const url = "http://example.com/http://sindresorhus.com";
+   ·             ────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const url = "http://sindresorhus.com.";
+   ·             ──────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:66]
+ 1 │ const element = <svg xmlns="http://www.w3.org/2000/svg" data-url="http://sindresorhus.com"></svg>;
+   ·                                                                  ─────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:33]
+ 1 │ const element = <div data-xmlns="http://sindresorhus.com"></div>;
+   ·                                 ─────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:16]
+ 1 │ const $xmlns = "http://sindresorhus.com";
+   ·                ─────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const url = "http://www.w3.org/2000/svg/extra/path";
+   ·             ───────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const url = "http://www.w3.org";
+   ·             ───────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://example.com/identifier/value";
+   ·             ─────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://example.com/identifier/value/extra";
+   ·             ───────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://www.w3.org/2000/09/xmldsig-other#sha1";
+   ·             ──────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://www.w3.org/2000/09/xmldsig/path";
+   ·             ────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://www.w3.org/2002/06/xmldsig-filter2/extra";
+   ·             ─────────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://www.w3.org/2006/12/xml-c14n11?format=xml";
+   ·             ─────────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://www.w3.org/2005/xpath-functions/map/extra";
+   ·             ──────────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://www.w3.org/2001/XInclude/extra";
+   ·             ───────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://schemas.android.com/apk/res/android/extra";
+   ·             ──────────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://schemas.android.com/apk/res/android?theme=dark";
+   ·             ───────────────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://schemas.android.com/apk/res/123-invalid";
+   ·             ────────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://maven.apache.org/xsd/maven-4.0.0.xsd";
+   ·             ─────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://maven.apache.org/DOWNLOAD/1.0";
+   ·             ──────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://www.springframework.org/schema/beans/spring-beans.xsd";
+   ·             ──────────────────────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://www.springframework.org/schema/beans?version=1";
+   ·             ───────────────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://purl.org/dc/terms/title/document";
+   ·             ─────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://purl.org/dc/terms/title?format=xml";
+   ·             ───────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://purl.org/dc/terms/title.";
+   ·             ─────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
+
+  ⚠ unicorn(prefer-https): Prefer `https://` over `http://`.
+   ╭─[prefer_https.tsx:1:13]
+ 1 │ const uri = "http://schemas.android.com/apk/res/android.";
+   ·             ─────────────────────────────────────────────
+   ╰────
+  help: Change the URL to use the `https://` protocol.
