@@ -261,7 +261,7 @@ impl<'a> Normalize {
         stmt.replace_with(|stmt| {
             let Statement::WhileStatement(while_stmt) = stmt else { unreachable!() };
             let while_stmt = while_stmt.unbox();
-            let for_stmt = ForStatement::boxed_with_scope_id(
+            Statement::new_for_statement_with_scope_id(
                 while_stmt.span,
                 None,
                 Some(while_stmt.test),
@@ -269,8 +269,7 @@ impl<'a> Normalize {
                 while_stmt.body,
                 ctx.create_child_scope_of_current(ScopeFlags::empty()),
                 ctx,
-            );
-            Statement::ForStatement(for_stmt)
+            )
         });
     }
 

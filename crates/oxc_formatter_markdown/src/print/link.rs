@@ -36,7 +36,7 @@ pub fn collect_link<'a>(
             // A full reference's text wraps like any text: its `][label]` tail is short.
             // An inline link's does not: its `](url)` tail is unbreakable and usually what overflows,
             // so a break inside the text would only split it without fitting the line.
-            let inner = InlineParent { ends_line: false, ..InlineParent::default() };
+            let inner = InlineParent::default();
             let text_start = parts.len();
             if matches!(link.kind, LinkKind::Inline { .. }) {
                 with_depth(f, MarkdownFormatContext::no_wrap_depth, |f| {

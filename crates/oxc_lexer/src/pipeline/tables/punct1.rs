@@ -2,7 +2,13 @@ use crate::token::TokenKind;
 
 /// Single-byte punctuator and its [`TokenKind`].
 #[cfg_attr(
-    all(not(test), target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"),
+    all(
+        not(test),
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ),
     expect(dead_code, reason = "only used in scalar implementation and tests")
 )]
 pub struct Punct1 {
@@ -21,7 +27,13 @@ impl Punct1 {
 /// `#` maps to `Invalid` - a bare `#` is invalid on its own
 /// (private names and hashbangs are resolved earlier).
 #[cfg_attr(
-    all(not(test), target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"),
+    all(
+        not(test),
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ),
     expect(dead_code, reason = "only used in scalar implementation and tests")
 )]
 pub const PUNCT1: [Punct1; 26] = [
@@ -56,7 +68,12 @@ pub const PUNCT1: [Punct1; 26] = [
 #[cfg_attr(
     all(
         not(test),
-        not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))
+        not(all(
+            target_arch = "x86_64",
+            target_feature = "avx2",
+            target_feature = "bmi2",
+            target_feature = "popcnt"
+        ))
     ),
     expect(dead_code, reason = "only used in SIMD implementation and tests")
 )]

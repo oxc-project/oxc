@@ -4,7 +4,8 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bytes::{is_digit, is_word, is_ws},
-    tables::{PUNCT1, Tables, is_kw_init, is_kw_init_ts, is_op_char},
+    operators::is_op_char,
+    tables::{PUNCT1, Tables, is_kw_init, is_kw_init_ts},
 };
 
 const FL_WORD: u32 = 0;

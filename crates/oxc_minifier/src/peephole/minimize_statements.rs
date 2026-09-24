@@ -207,7 +207,7 @@ impl<'a> PeepholeOptimizations {
         ctx.replace_expression_with(target, |b, ctx| Self::join_sequence(a, b, ctx));
     }
 
-    fn join_sequence(
+    pub fn join_sequence(
         a: Expression<'a>,
         b: Expression<'a>,
         ctx: &TraverseCtx<'a>,
@@ -298,8 +298,9 @@ impl<'a> PeepholeOptimizations {
                     prev_var_decl.declarations.push(decl);
                     continue;
                 }
-                let new_decl = VariableDeclaration::boxed(span, kind, [decl], declare, ctx);
-                result.push(Statement::VariableDeclaration(new_decl));
+                let new_decl =
+                    Statement::new_variable_declaration(span, kind, [decl], declare, ctx);
+                result.push(new_decl);
             }
         }
     }

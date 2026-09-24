@@ -466,7 +466,7 @@ pub struct TSIndexedAccessType<'a> {
 /// ## Example
 ///
 /// ```ts
-/// type `StringNumberPair` = [string, number];
+/// type StringNumberPair = [string, number];
 /// ```
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types>
@@ -619,7 +619,7 @@ pub struct TSBooleanKeyword {
 ///
 /// ## Example
 /// ```ts
-/// type Foo = boolean;
+/// type Foo = number;
 /// ```
 ///
 /// ## Reference
@@ -655,8 +655,11 @@ pub struct TSNeverKeyword {
 /// TypeScript `intrinsic` Keyword
 ///
 /// Intrinsic types are built into TypeScript and are not user-defined.
+///
 /// ## Example
-/// `type Uppercase<T extends character> = intrinsic;`
+/// ```ts
+/// type Uppercase<S extends string> = intrinsic;
+/// ```
 ///
 /// ### References
 /// * [TypeScript Handbook - Intrinsic String Manipulation
@@ -852,8 +855,10 @@ pub struct TSTypeParameterInstantiation<'a> {
 /// type Box<T extends string = 'foo'> = { value: T };
 /// // name  ^                  ^^^^^ default
 ///
-/// function add<in T>(a: T, b: T): T { return a + b; }
-/// //           ^^ in: true
+/// interface Consumer<in T> {
+/// //                 ^^ in: true
+///   consume(value: T): void;
+/// }
 /// ```
 ///
 /// ## References
@@ -996,8 +1001,8 @@ pub struct TSInterfaceBody<'a> {
 
 /// TypeScript Property Signature
 ///
-/// Used in [classes](Class), [interfaces](TSInterfaceDeclaration), [mapped types](TSMappedType),
-/// etc. Part of a [`TSSignature`].
+/// A property member of an [interface](TSInterfaceDeclaration) or
+/// [type literal](TSTypeLiteral), represented as a [`TSSignature`] variant.
 ///
 /// ## Example
 /// ```ts
@@ -1745,8 +1750,8 @@ pub struct TSExternalModuleReference<'a> {
 
 /// TypeScript non-null expression (`!`)
 ///
-/// This expression assumes that the type of the inner expression is not null
-/// and changes it from `T | null` to just `T`.
+/// This expression asserts that the inner expression is neither `null` nor `undefined`,
+/// removing both from its type (for example, `T | null | undefined` becomes `T`).
 ///
 /// ## Example
 ///
@@ -1764,7 +1769,7 @@ pub struct TSExternalModuleReference<'a> {
 pub struct TSNonNullExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    /// The expression to assume as not null, e.g., `x` in `x!`.
+    /// The expression to assert as neither `null` nor `undefined`, e.g., `x` in `x!`.
     pub expression: Expression<'a>,
 }
 

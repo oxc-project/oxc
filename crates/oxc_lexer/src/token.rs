@@ -54,31 +54,6 @@ macro_rules! define_token_kind {
                 pub const $variant: u8 = TokenKind::$variant as u8;
             )+
         }
-
-        /// Get the numeric (`u8`) value of a [`TokenKind`].
-        ///
-        /// # Example
-        ///
-        /// ```ignore
-        /// let ident: u8 = tk!(Ident);
-        /// assert_eq!(ident, TokenKind::Ident as u8);
-        /// ```
-        ///
-        /// # Implementation detail
-        ///
-        /// Uses `const`s as intermediaries so that `tk!` can be used in match arms e.g.:
-        ///
-        /// ```ignore
-        /// match kind {
-        ///   tk!(Ident) => do_something(),
-        ///   tk!(PrivateIdent) => do_something_else(),
-        /// }
-        /// ```
-        macro_rules! tk {
-            ($kind:ident) => { $crate::token::__kind_u8::$kind };
-        }
-
-        pub(crate) use tk;
     };
 }
 
@@ -264,8 +239,50 @@ define_token_kind! {
     Invalid = 255 => "INVALID",
 }
 
+/// Get the numeric (`u8`) value of a [`TokenKind`], or an `|` pattern of several.
+///
+/// # Examples
+///
+/// ```ignore
+/// let ident: u8 = tk!(Ident);
+/// assert_eq!(ident, TokenKind::Ident as u8);
+/// ```
+///
+/// ```ignore
+/// match kind {
+///   tk!(Ident) => do_something(),
+///   tk!(Number | BigInt | String | RegExp) => do_something_else(),
+///   _ => {}
+/// }
+/// ```
+macro_rules! tk {
+    ($($kind:ident)|+) => { $( $crate::token::__kind_u8::$kind )|+ };
+}
+
+pub(crate) use tk;
+
+/// Match a `u8` against the value of multiple [`TokenKind`]s.
+///
+/// [`matches!`] with the kinds as one `|` list:
+///
+/// ```ignore
+/// fn is_ident_or_priv(kind: u8) -> bool {
+///     matches_tk!(kind, Ident | PrivateIdent)
+/// }
+/// ```
+///
+/// Equivalent to `matches!(kind, tk!(Ident | PrivateIdent))`.
+macro_rules! matches_tk {
+    ($value:expr, $($kind:ident)|+) => {
+        matches!($value, $( $crate::token::__kind_u8::$kind )|+)
+    };
+}
+
+pub(crate) use matches_tk;
+
 /// First punctuator kind - the token-kind space reserves [32, 128) for them.
 pub(crate) const OP_KIND_BASE: u8 = tk!(LBrace);
+#[cfg_attr(not(test), expect(dead_code, reason = "only used in tests"))]
 pub(crate) const OP_KIND_MAX: u8 = tk!(At);
 
 /// First keyword kind: every kind `>= KW_KIND_BASE` other than [`TokenKind::Invalid`] is a keyword.
