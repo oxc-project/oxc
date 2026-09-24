@@ -287,7 +287,10 @@ pub fn collect_inlines<'a>(
         // After a kept line break, a line that would open a block at column 0 stays paragraph text
         // behind four spaces (indented code cannot interrupt a paragraph)
         if after_kept_break
-            && matches!(child, Inline::Text(_) | Inline::HtmlInline(_) | Inline::Liquid(_))
+            && matches!(
+                child,
+                Inline::Text(_) | Inline::HtmlInline(_) | Inline::Liquid(_) | Inline::MathSpan(_)
+            )
             && printed_line_opens_block(children, i, &break_kept, f)
         {
             parts.push_str("    ");

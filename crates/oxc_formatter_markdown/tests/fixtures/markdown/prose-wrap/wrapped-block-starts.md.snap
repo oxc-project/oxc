@@ -35,6 +35,10 @@ padding words to push the risky token over the edge padding words to push the > 
 text then
     - item
 
+A math span starting a line after a hard break stays behind four spaces  
+	$$\
+b $$ c
+
 ==================== Output ====================
 ---------------------------------------
 { printWidth: 80, proseWrap: "always" }
@@ -81,6 +85,10 @@ not a quote tail words.
 
 text then - item
 
+A math span starting a line after a hard break stays behind four spaces  
+    $$\
+b $$ c
+
 ----------------------------------------
 { printWidth: 100, proseWrap: "always" }
 ----------------------------------------
@@ -117,6 +125,10 @@ words.
 
 text then - item
 
+A math span starting a line after a hard break stays behind four spaces  
+    $$\
+b $$ c
+
 --------------------------------------
 { printWidth: 80, proseWrap: "never" }
 --------------------------------------
@@ -150,6 +162,10 @@ padding words to push the risky token over the edge padding words to push the > 
 | x | y | |---|---|
 
 text then - item
+
+A math span starting a line after a hard break stays behind four spaces  
+    $$\
+b $$ c
 
 ---------------------------------------
 { printWidth: 100, proseWrap: "never" }
@@ -185,6 +201,10 @@ padding words to push the risky token over the edge padding words to push the > 
 
 text then - item
 
+A math span starting a line after a hard break stays behind four spaces  
+    $$\
+b $$ c
+
 -----------------------------------------
 { printWidth: 80, proseWrap: "preserve" }
 -----------------------------------------
@@ -219,6 +239,10 @@ padding words to push the risky token over the edge padding words to push the > 
 
 text then - item
 
+A math span starting a line after a hard break stays behind four spaces  
+    $$\
+b $$ c
+
 ------------------------------------------
 { printWidth: 100, proseWrap: "preserve" }
 ------------------------------------------
@@ -252,5 +276,9 @@ padding words to push the risky token over the edge padding words to push the > 
 | x | y | |---|---|
 
 text then - item
+
+A math span starting a line after a hard break stays behind four spaces  
+    $$\
+b $$ c
 
 ===================== End =====================
