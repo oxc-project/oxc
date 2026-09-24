@@ -1,0 +1,18 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-no-alias-spread-safe-overwrite.js
+---
+function Component(t0) {
+	let count = 0;
+	let bad = () => count++;
+	const callbacks = [async () => {
+		await 0;
+		bad();
+	}];
+	[0].filter(...callbacks);
+	bad = _temp;
+	return null;
+}
+function _temp() {
+	return null;
+}

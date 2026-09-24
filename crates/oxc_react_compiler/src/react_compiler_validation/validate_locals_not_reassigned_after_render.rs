@@ -13,9 +13,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
 use smallvec::smallvec;
 
-use super::async_callable_contexts::{
-    AsyncInvocation, ReturnedCallables, infer_async_callable_contexts,
-};
+use super::async_callable_contexts::{ReturnedCallables, infer_async_callable_contexts};
 use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::type_config::AliasingEffectConfig;
@@ -24,7 +22,7 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     BlockId, Effect, FunctionId, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionId, InstructionKind, InstructionValue, ParamPattern, Place, PlaceOrSpread, Terminal,
+    InstructionKind, InstructionValue, ParamPattern, Place, PlaceOrSpread, Terminal,
 };
 
 type ContextValues = FxHashMap<IdentifierId, FxHashSet<IdentifierId>>;
@@ -175,26 +173,42 @@ fn each_no_alias_callback_operand(
     env: &Environment<'_>,
     require_result_flow: bool,
 ) -> PlaceList {
-    let (signature_identifier, args) = match value {
-        InstructionValue::CallExpression { callee, args, .. } => {
-            (callee.identifier, args.as_slice())
-        }
-        InstructionValue::MethodCall { property, args, .. } => {
-            (property.identifier, args.as_slice())
-        }
+    let args = match value {
+        InstructionValue::CallExpression { args, .. }
+        | InstructionValue::MethodCall { args, .. } => args,
         _ => return PlaceList::new(),
+    };
+    no_alias_callback_parameters(value, env, require_result_flow, args.len())
+        .into_iter()
+        .map(|index| match &args[index] {
+            PlaceOrSpread::Place(place) => *place,
+            PlaceOrSpread::Spread(spread) => spread.place,
+        })
+        .collect()
+}
+
+pub(super) fn no_alias_callback_parameters(
+    value: &InstructionValue<'_>,
+    env: &Environment<'_>,
+    require_result_flow: bool,
+    argument_count: usize,
+) -> Vec<usize> {
+    let signature_identifier = match value {
+        InstructionValue::CallExpression { callee, .. } => callee.identifier,
+        InstructionValue::MethodCall { property, .. } => property.identifier,
+        _ => return Vec::new(),
     };
 
     let ty = &env.types[env.identifiers[signature_identifier].type_];
     let Some(signature) = env.get_function_signature(ty).ok().flatten() else {
-        return PlaceList::new();
+        return Vec::new();
     };
     if !signature.no_alias {
-        return PlaceList::new();
+        return Vec::new();
     }
     let Some(aliasing) = signature.aliasing else {
         if require_result_flow {
-            return PlaceList::new();
+            return Vec::new();
         }
         // Legacy no-alias signatures can invoke callbacks without retaining
         // their results. Read-only arguments cannot invoke a mutable callback.
@@ -210,32 +224,24 @@ fn each_no_alias_callback_operand(
                     | "Map.forEach"
             )
         );
-        return args
-            .iter()
-            .enumerate()
-            .filter_map(|(index, argument)| {
+        return (0..argument_count)
+            .filter(|&index| {
                 // These built-ins invoke only the first argument; thisArg can
                 // itself be a function without ever being called.
                 if only_first_callback && index != 0 {
-                    return None;
+                    return false;
                 }
                 let effect =
                     signature.positional_params.get(index).copied().or(signature.rest_param);
-                if !matches!(
+                matches!(
                     effect,
                     Some(Effect::ConditionallyMutate | Effect::Capture | Effect::Store)
-                ) {
-                    return None;
-                }
-                Some(match argument {
-                    PlaceOrSpread::Place(place) => *place,
-                    PlaceOrSpread::Spread(spread) => spread.place,
-                })
+                )
             })
             .collect();
     };
 
-    let mut operands = PlaceList::new();
+    let mut operands = Vec::new();
     for effect in aliasing.effects {
         let AliasingEffectConfig::Apply { function, into, .. } = effect else { continue };
         if require_result_flow && !aliasing_value_flows_to_return(&aliasing, into) {
@@ -245,11 +251,8 @@ fn each_no_alias_callback_operand(
             if parameter != function {
                 continue;
             }
-            if let Some(argument) = args.get(index) {
-                operands.push(match argument {
-                    PlaceOrSpread::Place(place) => *place,
-                    PlaceOrSpread::Spread(spread) => spread.place,
-                });
+            if index < argument_count {
+                operands.push(index);
             }
         }
     }
@@ -286,42 +289,6 @@ fn aliasing_value_flows_to_return(
         }
     }
     false
-}
-
-/// Return the function operand for instructions that invoke a callable value.
-fn invoked_function_operand(value: &InstructionValue<'_>) -> Option<Place> {
-    match value {
-        InstructionValue::CallExpression { callee, .. } => Some(*callee),
-        InstructionValue::MethodCall { property, .. } => Some(*property),
-        InstructionValue::TaggedTemplateExpression { tag, .. } => Some(*tag),
-        _ => None,
-    }
-}
-
-pub(super) fn each_invoked_async_operand(
-    value: &InstructionValue<'_>,
-    env: &Environment<'_>,
-) -> PlaceList {
-    let mut operands = each_no_alias_callback_operand(value, env, false);
-    if let Some(function) = invoked_function_operand(value) {
-        operands.push(function);
-    }
-    operands
-}
-
-fn add_invoked_async_contexts(
-    invocations: &[AsyncInvocation],
-    active_contexts: &mut ContextValues,
-) {
-    for invocation in invocations {
-        for &context in &invocation.deferred_captures {
-            if let Some(values) = invocation.context_values.get(&context) {
-                active_contexts.entry(context).or_default().extend(values);
-            } else {
-                insert_context_value(active_contexts, context, context);
-            }
-        }
-    }
 }
 
 fn insert_context_value(
@@ -603,40 +570,6 @@ fn update_context_values(
     } else {
         clear_context_value(values, identifier);
     }
-}
-
-/// Keep reaching values only on paths where an async invocation is pending.
-/// Merging an invocation from one branch with a store from another would invent
-/// a continuation that cannot occur at runtime.
-fn infer_active_async_contexts_by_block(
-    func: &HirFunction,
-    invocations: &FxHashMap<InstructionId, Vec<AsyncInvocation>>,
-    hoisted_function_values: &HoistedFunctionValues,
-) -> FxHashMap<BlockId, ContextValues> {
-    let mut contexts_by_block = FxHashMap::default();
-    let empty = ContextValues::default();
-    loop {
-        let mut changed = false;
-        for (&block_id, block) in &func.body.blocks {
-            let mut contexts =
-                context_values_at_block_entry(func, block_id, &empty, &contexts_by_block);
-            for &instruction_id in &block.instructions {
-                if let Some(invocations) = invocations.get(&instruction_id) {
-                    add_invoked_async_contexts(invocations, &mut contexts);
-                }
-                let value = &func.instructions[instruction_id.index()].value;
-                update_context_values(value, &mut contexts, hoisted_function_values, true);
-            }
-            if contexts_by_block.get(&block_id) != Some(&contexts) {
-                contexts_by_block.insert(block_id, contexts);
-                changed = true;
-            }
-        }
-        if !changed {
-            break;
-        }
-    }
-    contexts_by_block
 }
 
 /// Compute the possible current value of each context binding at every block exit.
@@ -1025,9 +958,6 @@ fn get_context_reassignment(
     propagate_captured_contexts(&mut captured_contexts, &propagation_edges);
     propagate_correlated_values(&mut correlated_values, &propagation_edges);
 
-    let active_async_contexts_by_block =
-        infer_active_async_contexts_by_block(func, &async_invocations, &hoisted_function_values);
-
     let returning_functions = propagate_reassignments(&returning_seeds, &propagation_edges);
     let mut reassigning_functions = propagate_reassignments(&seeds, &propagation_edges);
     loop {
@@ -1086,12 +1016,7 @@ fn get_context_reassignment(
             &initial_context_values,
             &context_values_by_block,
         );
-        let mut active_async_contexts = context_values_at_block_entry(
-            func,
-            block_id,
-            &ContextValues::default(),
-            &active_async_contexts_by_block,
-        );
+
         for &instruction_id in &block.instructions {
             let instr = &func.instructions[instruction_id.index()];
             if is_hoisted_function_store(&instr.value, &hoisted_function_values) {
@@ -1168,11 +1093,11 @@ fn get_context_reassignment(
 
             // An async continuation observes the live binding when execution
             // yields, not every intermediate store in the current synchronous job.
-            if matches!(instr.value, InstructionValue::Await { .. }) {
-                for &context in active_async_contexts.keys() {
+            if let Some(observation) = async_callables.pending_before.get(&instruction_id) {
+                for &context in &observation.deferred_captures {
                     if let Some(reassignment_place) = find_reassignment_for_operand(
                         context,
-                        &active_async_contexts,
+                        &observation.context_values,
                         &context_values_by_block,
                         &reassigning_functions,
                         &captured_contexts,
@@ -1200,7 +1125,6 @@ fn get_context_reassignment(
                         }
                     }
                 }
-                add_invoked_async_contexts(invocations, &mut active_async_contexts);
             }
             update_context_values(
                 &instr.value,
@@ -1208,20 +1132,14 @@ fn get_context_reassignment(
                 &hoisted_function_values,
                 false,
             );
-            update_context_values(
-                &instr.value,
-                &mut active_async_contexts,
-                &hoisted_function_values,
-                true,
-            );
         }
 
         // Leaving the function also allows pending async continuations to resume.
-        if matches!(block.terminal, Terminal::Return { .. } | Terminal::Throw { .. }) {
-            for &context in active_async_contexts.keys() {
+        if let Some(observation) = async_callables.pending_at_exit.get(&block_id) {
+            for &context in &observation.deferred_captures {
                 if let Some(reassignment_place) = find_reassignment_for_operand(
                     context,
-                    &active_async_contexts,
+                    &observation.context_values,
                     &context_values_by_block,
                     &reassigning_functions,
                     &captured_contexts,

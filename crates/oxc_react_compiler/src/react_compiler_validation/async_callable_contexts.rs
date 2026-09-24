@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use super::validate_locals_not_reassigned_after_render::each_invoked_async_operand;
+use super::validate_locals_not_reassigned_after_render::no_alias_callback_parameters;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
@@ -140,6 +140,7 @@ fn infer_capture_phases(
 fn infer_capture_members(
     func: &HirFunction,
     env: &Environment<'_>,
+    rest_arguments: bool,
 ) -> FxHashMap<IdentifierId, FxHashSet<String>> {
     let mut members: FxHashMap<_, FxHashSet<String>> =
         func.context.iter().map(|place| (place.identifier, FxHashSet::default())).collect();
@@ -159,14 +160,15 @@ fn infer_capture_members(
                 keys.insert(instruction.lvalue.identifier, value.to_string());
             }
             InstructionValue::PropertyLoad { object, property, .. } => {
-                if property.to_string().parse::<usize>().is_ok() {
+                if !rest_arguments || property.to_string().parse::<usize>().is_ok() {
                     receivers.insert(instruction.lvalue.identifier, object.identifier);
                 }
             }
             InstructionValue::ComputedLoad { object, property, .. }
-                if keys
-                    .get(&property.identifier)
-                    .is_some_and(|key| key.parse::<usize>().is_ok()) =>
+                if !rest_arguments
+                    || keys
+                        .get(&property.identifier)
+                        .is_some_and(|key| key.parse::<usize>().is_ok()) =>
             {
                 receivers.insert(instruction.lvalue.identifier, object.identifier);
             }
@@ -296,6 +298,8 @@ pub(super) struct AsyncCallables {
     pub identifiers: FxHashSet<IdentifierId>,
     pub invocations: FxHashMap<InstructionId, Vec<AsyncInvocation>>,
     pub returned: ReturnedCallables,
+    pub pending_before: FxHashMap<InstructionId, AsyncInvocation>,
+    pub pending_at_exit: FxHashMap<BlockId, AsyncInvocation>,
 }
 
 #[derive(Clone, Default, PartialEq, Eq)]
@@ -304,6 +308,7 @@ pub(super) struct ReturnedCallables {
     external_contexts: FxHashSet<IdentifierId>,
     params: Vec<(IdentifierId, bool)>,
     capture_members: FxHashMap<IdentifierId, FxHashSet<String>>,
+    capture_reads: FxHashMap<IdentifierId, FxHashSet<String>>,
     eager_captures: FxHashSet<IdentifierId>,
     deferred_captures: FxHashSet<IdentifierId>,
     projections: Projections,
@@ -316,6 +321,7 @@ struct Callable {
     context_values: Rc<Captures>,
     returned: Option<Rc<ReturnedCallables>>,
     capture_members: FxHashMap<IdentifierId, FxHashSet<String>>,
+    capture_reads: FxHashMap<IdentifierId, FxHashSet<String>>,
     eager_captures: FxHashSet<IdentifierId>,
     bound_arguments: Arguments,
 }
@@ -360,6 +366,39 @@ impl Values {
 }
 
 #[derive(Clone, Default, PartialEq, Eq)]
+struct PendingCapture {
+    roots: FxHashSet<IdentifierId>,
+    members: Option<FxHashSet<String>>,
+    observed: FxHashSet<IdentifierId>,
+    dependencies: FxHashMap<IdentifierId, Option<FxHashSet<String>>>,
+}
+
+fn merge_members(into: &mut Option<FxHashSet<String>>, other: &Option<FxHashSet<String>>) {
+    if let Some(into_members) = into {
+        if let Some(other) = other {
+            into_members.extend(other.iter().cloned());
+        } else {
+            *into = None;
+        }
+    }
+}
+
+impl PendingCapture {
+    fn merge(&mut self, other: &Self) {
+        self.roots.extend(&other.roots);
+        merge_members(&mut self.members, &other.members);
+        self.observed.extend(&other.observed);
+        for (&id, members) in &other.dependencies {
+            if let Some(into) = self.dependencies.get_mut(&id) {
+                merge_members(into, members);
+            } else {
+                self.dependencies.insert(id, members.clone());
+            }
+        }
+    }
+}
+
+#[derive(Clone, Default, PartialEq, Eq)]
 struct CallableState {
     values: FxHashMap<IdentifierId, Values>,
     context_values: Captures,
@@ -367,10 +406,165 @@ struct CallableState {
     keys: FxHashMap<IdentifierId, String>,
     builtin_function_methods: FxHashMap<IdentifierId, String>,
     array_lengths: FxHashMap<IdentifierId, usize>,
+    arrays: FxHashSet<IdentifierId>,
     projections: Projections,
+    pending: FxHashMap<IdentifierId, PendingCapture>,
 }
 
 impl CallableState {
+    fn refresh_capture(&self, capture: &mut PendingCapture) {
+        capture.observed.clear();
+        capture.dependencies.clear();
+        let mut pending: Vec<_> =
+            capture.roots.iter().map(|&id| (id, capture.members.clone())).collect();
+        while let Some((id, mut members)) = pending.pop() {
+            if self.arrays.contains(&id)
+                && members.as_ref().is_some_and(|members| {
+                    members.iter().any(|member| {
+                        matches!(
+                            member.as_str(),
+                            "forEach"
+                                | "map"
+                                | "flatMap"
+                                | "filter"
+                                | "find"
+                                | "findIndex"
+                                | "findLast"
+                                | "findLastIndex"
+                                | "some"
+                                | "every"
+                                | "reduce"
+                                | "reduceRight"
+                                | "sort"
+                                | "toSorted"
+                        ) && self.properties.get(&id).is_some_and(|properties| {
+                            !properties.contains_key(&Some(member.clone()))
+                        })
+                    })
+                })
+            {
+                // Inherited array callback consumers can pass any element to
+                // their callback. An own method still selects only that field.
+                members = None;
+            }
+            if let Some(existing) = capture.dependencies.get_mut(&id) {
+                let old = existing.clone();
+                merge_members(existing, &members);
+                if *existing == old {
+                    continue;
+                }
+            } else {
+                capture.dependencies.insert(id, members.clone());
+            }
+            let callable = self.values.get(&id).filter(|values| !values.contexts.is_empty());
+            if members.is_none()
+                && let Some(callable) = callable
+            {
+                capture.observed.insert(id);
+                capture.observed.extend(callable.contexts.keys().copied());
+                continue;
+            }
+            let Some(properties) = self.properties.get(&id) else {
+                capture.observed.insert(id);
+                continue;
+            };
+            let mut add = |values: &Values| {
+                pending.extend(values.identities.iter().map(|&id| (id, None)));
+            };
+            if let Some(members) = &members {
+                for member in members {
+                    if let Some(values) =
+                        properties.get(&Some(member.clone())).or_else(|| properties.get(&None))
+                    {
+                        add(values);
+                    }
+                }
+            } else {
+                for values in properties.values() {
+                    add(values);
+                }
+            }
+        }
+    }
+
+    fn capture(&self, binding: IdentifierId, callable: &Callable) -> PendingCapture {
+        let mut capture = PendingCapture {
+            roots: callable
+                .context_values
+                .get(&binding)
+                .cloned()
+                .unwrap_or_else(|| FxHashSet::from_iter([binding])),
+            members: callable.capture_reads.get(&binding).cloned(),
+            ..PendingCapture::default()
+        };
+        self.refresh_capture(&mut capture);
+        capture
+    }
+
+    fn invocation(&mut self, callable: Callable) -> AsyncInvocation {
+        let mut contexts = (*callable.context_values).clone();
+        for &binding in &callable.eager_captures {
+            contexts.insert(binding, self.capture(binding, &callable).observed);
+        }
+        for &binding in &callable.deferred_captures {
+            let capture = self.capture(binding, &callable);
+            if let Some(current) = self.pending.get_mut(&binding) {
+                current.merge(&capture);
+            } else {
+                self.pending.insert(binding, capture);
+            }
+        }
+        AsyncInvocation {
+            eager_captures: callable.eager_captures,
+            deferred_captures: callable.deferred_captures,
+            context_values: Rc::new(contexts),
+        }
+    }
+
+    fn pending_observation(&self) -> AsyncInvocation {
+        let mut contexts = self.context_values.clone();
+        for (&binding, capture) in &self.pending {
+            contexts.insert(binding, capture.observed.clone());
+        }
+        AsyncInvocation {
+            eager_captures: FxHashSet::default(),
+            deferred_captures: self.pending.keys().copied().collect(),
+            context_values: Rc::new(contexts),
+        }
+    }
+
+    fn invoked_callbacks(
+        &self,
+        instruction: &InstructionValue<'_>,
+        env: &Environment<'_>,
+    ) -> Values {
+        let args = match instruction {
+            InstructionValue::CallExpression { args, .. }
+            | InstructionValue::MethodCall { args, .. } => args,
+            _ => return Values::default(),
+        };
+        let arguments = self.arguments(args);
+        let count = arguments.length.unwrap_or_else(|| {
+            arguments
+                .elements
+                .keys()
+                .filter_map(|key| key.as_ref()?.parse::<usize>().ok())
+                .max()
+                .unwrap_or(0)
+                + 1
+        });
+        let mut result = Values::default();
+        for index in no_alias_callback_parameters(instruction, env, false, count) {
+            if let Some(values) = arguments.elements.get(&Some(index.to_string())) {
+                result.extend(values);
+            }
+            if let Some(values) = arguments.elements.get(&None) {
+                result.extend(values);
+            }
+        }
+        result
+    }
+
     fn values(&self, identifier: IdentifierId) -> Values {
         self.values.get(&identifier).cloned().unwrap_or_default()
     }
@@ -395,6 +589,11 @@ impl CallableState {
 
     fn update_context(&mut self, binding: IdentifierId) {
         let values = self.values(binding).identities;
+        if let Some(mut capture) = self.pending.remove(&binding) {
+            capture.roots.clone_from(&values);
+            self.refresh_capture(&mut capture);
+            self.pending.insert(binding, capture);
+        }
         self.context_values.insert(binding, values.clone());
         for value in self.values.values_mut() {
             value.update_context(binding, &values);
@@ -407,6 +606,13 @@ impl CallableState {
     }
 
     fn merge(&mut self, other: &Self) {
+        for (&binding, capture) in &other.pending {
+            if let Some(into) = self.pending.get_mut(&binding) {
+                into.merge(capture);
+            } else {
+                self.pending.insert(binding, capture.clone());
+            }
+        }
         for (&binding, values) in &other.context_values {
             self.context_values.entry(binding).or_default().extend(values);
         }
@@ -420,6 +626,7 @@ impl CallableState {
         self.builtin_function_methods
             .retain(|id, method| other.builtin_function_methods.get(id) == Some(method));
         self.array_lengths.retain(|id, length| other.array_lengths.get(id) == Some(length));
+        self.arrays.extend(&other.arrays);
         for (&id, projections) in &other.projections {
             self.projections.entry(id).or_default().extend(projections.iter().cloned());
         }
@@ -752,7 +959,7 @@ impl CallableState {
     fn store(&mut self, object: IdentifierId, key: Option<String>, values: Values) {
         let objects = self.values(object);
         let definite = objects.identities.len() == 1 && key.is_some();
-        for object in objects.identities {
+        for &object in &objects.identities {
             self.array_lengths.remove(&object);
             let properties = self.properties.entry(object).or_default();
             if key.is_none() {
@@ -766,6 +973,30 @@ impl CallableState {
                 let fallback = properties.get(&None).cloned().unwrap_or_default();
                 properties.entry(key.clone()).or_insert(fallback).extend(&values);
             }
+        }
+        // Update only pending reads touched by this write. Recomputing every
+        // capture after a CFG join would mix in stores from non-invoking paths.
+        let affected: Vec<_> = self
+            .pending
+            .iter()
+            .filter_map(|(&binding, capture)| {
+                objects
+                    .identities
+                    .iter()
+                    .any(|object| {
+                        capture.dependencies.get(object).is_some_and(|members| {
+                            key.as_ref().is_none_or(|key| {
+                                members.as_ref().is_none_or(|members| members.contains(key))
+                            })
+                        })
+                    })
+                    .then_some(binding)
+            })
+            .collect();
+        for binding in affected {
+            let mut capture = self.pending.remove(&binding).unwrap();
+            self.refresh_capture(&mut capture);
+            self.pending.insert(binding, capture);
         }
     }
 
@@ -858,6 +1089,10 @@ impl CallableState {
                             .get(&id)
                             .map(|summary| summary.eager_captures.clone())
                             .unwrap_or_default(),
+                        capture_reads: function_returns
+                            .get(&id)
+                            .map(|summary| summary.capture_reads.clone())
+                            .unwrap_or_default(),
                         capture_members: function_returns
                             .get(&id)
                             .map(|summary| summary.capture_members.clone())
@@ -915,6 +1150,10 @@ impl CallableState {
                                 .get(value)
                                 .map(|summary| summary.eager_captures.clone())
                                 .unwrap_or_default(),
+                            capture_reads: function_returns
+                                .get(value)
+                                .map(|summary| summary.capture_reads.clone())
+                                .unwrap_or_default(),
                             capture_members: function_returns
                                 .get(value)
                                 .map(|summary| summary.capture_members.clone())
@@ -954,6 +1193,7 @@ impl CallableState {
             }
             InstructionValue::ArrayExpression { elements, .. } => {
                 self.allocate(id);
+                self.arrays.insert(id);
                 let mut contents = Arguments::default();
                 for element in elements {
                     let next = match element {
@@ -1040,6 +1280,8 @@ pub(super) fn infer_async_callable_contexts(
         identifiers: FxHashSet::default(),
         invocations: FxHashMap::default(),
         returned: ReturnedCallables::default(),
+        pending_before: FxHashMap::default(),
+        pending_at_exit: FxHashMap::default(),
     };
     let captured_bindings = captured_contexts.values().flatten().copied().collect();
     let mut states: FxHashMap<BlockId, CallableState> = FxHashMap::default();
@@ -1089,19 +1331,16 @@ pub(super) fn infer_async_callable_contexts(
                 let instruction = &func.instructions[instruction_id.index()];
                 let mut invocations = Vec::new();
                 let mut invoked = state.invoked(&instruction.value);
-                for operand in each_invoked_async_operand(&instruction.value, env) {
-                    invoked.extend(&state.values(operand.identifier));
-                }
+                invoked.extend(&state.invoked_callbacks(&instruction.value, env));
                 for callable in invoked.contexts.into_values() {
                     if callable.is_async {
-                        invocations.push(AsyncInvocation {
-                            deferred_captures: callable.deferred_captures,
-                            eager_captures: callable.eager_captures,
-                            context_values: callable.context_values,
-                        });
+                        invocations.push(state.invocation(callable));
                     }
                 }
                 result.invocations.insert(instruction_id, invocations);
+                if matches!(instruction.value, InstructionValue::Await { .. }) {
+                    result.pending_before.insert(instruction_id, state.pending_observation());
+                }
                 state.apply(
                     instruction,
                     hoisted,
@@ -1110,6 +1349,9 @@ pub(super) fn infer_async_callable_contexts(
                     function_returns,
                     &captured_bindings,
                 );
+            }
+            if matches!(block.terminal, Terminal::Return { .. } | Terminal::Throw { .. }) {
+                result.pending_at_exit.insert(block_id, state.pending_observation());
             }
             if states.get(&block_id) != Some(&state) {
                 states.insert(block_id, state);
@@ -1137,7 +1379,8 @@ pub(super) fn infer_async_callable_contexts(
         ParamPattern::Place(place) => (place.identifier, false),
         ParamPattern::Spread(spread) => (spread.place.identifier, true),
     }));
-    result.returned.capture_members = infer_capture_members(func, env);
+    result.returned.capture_members = infer_capture_members(func, env, true);
+    result.returned.capture_reads = infer_capture_members(func, env, false);
     (result.returned.eager_captures, result.returned.deferred_captures) =
         infer_capture_phases(func, &result.invocations);
     for projections in states
