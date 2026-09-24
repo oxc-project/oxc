@@ -49,4 +49,24 @@ describe("isolated declaration", () => {
     expect(asyncResult.errors.length).toBe(syncResult.errors.length);
     expect(asyncResult.map).toMatchObject(syncResult.map!);
   });
+
+  it("supports JSON files", () => {
+    const json = JSON.stringify({
+      name: "unplugin",
+      type: "module",
+      keywords: ["a", "b"],
+      count: 3,
+    });
+    const ret = isolatedDeclarationSync("package.json", json);
+    expect(ret.errors).toEqual([]);
+    expect(ret.code).toBe(
+      "declare const _default: {\n" +
+        "\tname: string;\n" +
+        "\ttype: string;\n" +
+        "\tkeywords: string[];\n" +
+        "\tcount: number;\n" +
+        "};\n" +
+        "export default _default;\n",
+    );
+  });
 });
