@@ -255,6 +255,17 @@ impl ConfigStoreBuilder {
         // i.e., when the external JS linter is available/initialized. If the store is
         // disabled, configs that reference external plugins are accepted but the plugins
         // themselves are not loaded, to avoid failing config parsing.
+        //
+        // Accepting the config is deliberate; doing it without a trace is not. Record
+        // the specifiers so a consumer can report the skip — the store itself stays
+        // silent, so the language server (which wants exactly this silence) is
+        // unaffected.
+        if !external_plugins.is_empty() && !external_plugin_store.is_enabled() {
+            for entry in &external_plugins {
+                external_plugin_store.note_skipped_plugin(&entry.specifier);
+            }
+        }
+
         if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
             let Some(external_linter) = external_linter else {
                 #[expect(clippy::missing_panics_doc, reason = "infallible")]
