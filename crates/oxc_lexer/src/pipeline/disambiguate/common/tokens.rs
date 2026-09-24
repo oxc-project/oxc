@@ -153,15 +153,12 @@ impl Tokens<'_> {
     /// unknown).
     #[inline]
     pub(crate) fn munch(&self, pos: usize) -> (usize, u32) {
-        let b0 = self.src[pos];
-        let b1 = self.src[pos + 1];
-        let b2 = self.src[pos + 2];
-        let b3 = self.src[pos + 3];
+        let bytes = <[u8; 4]>::try_from(&self.src[pos..pos + 4]).unwrap();
         let mut l = 4u32;
         while l >= 2 {
             if pos + l as usize <= self.n {
-                let k = self.tables.op.opmap_lookup(b0, b1, b2, b3, l);
-                if k != 0 && !(k == tk!(OptionalChain) as u32 && is_digit(b2)) {
+                let k = self.tables.op.opmap_lookup(bytes, l);
+                if k != 0 && !(k == tk!(OptionalChain) as u32 && is_digit(bytes[2])) {
                     return (l as usize, k);
                 }
             }

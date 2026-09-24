@@ -352,15 +352,12 @@ unsafe fn munch_walk(
         bm_set(st, pos);
         let rem = end - pos;
         let lmax: u32 = if rem < 4 { rem as u32 } else { 4 };
-        let b0 = *src.add(pos);
-        let b1 = *src.add(pos + 1);
-        let b2 = *src.add(pos + 2);
-        let b3 = *src.add(pos + 3);
+        let bytes = *src.add(pos).cast::<[u8; 4]>();
         let mut opk: u32 = 0;
         let mut opl: u32 = 0;
         let mut l = lmax;
         while l >= 2 {
-            let k = t.op.opmap_lookup(b0, b1, b2, b3, l);
+            let k = t.op.opmap_lookup(bytes, l);
             if k != 0
                 && !(k == tk!(OptionalChain) as u32 && pos + 2 < n && is_digit(*src.add(pos + 2)))
             {

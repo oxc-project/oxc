@@ -25,10 +25,13 @@ impl OpDef {
         self.txt.len() as u32
     }
 
+    /// Get a `[u8; 4]` containing all the bytes of this operator and 0 for any remaining bytes.
+    const fn bytes(&self) -> [u8; 4] {
+        first_4_bytes(self.txt)
+    }
+
     const fn key(&self) -> u32 {
-        let txt = self.txt;
-        let c2 = if self.len() >= 3 { txt[2] } else { 0 };
-        op_key(txt[0], txt[1], c2, self.len())
+        op_key(self.bytes(), self.len())
     }
 
     const fn slot(&self, mul: u32) -> usize {
@@ -162,9 +165,8 @@ impl OpMap {
     ///
     /// `len` must be between 2 and 4 (inclusive).
     #[inline(always)]
-    pub fn opmap_lookup(&self, b0: u8, b1: u8, b2: u8, b3: u8, len: u32) -> u32 {
-        let c2 = if len >= 3 { b2 } else { 0 };
-        let key = op_key(b0, b1, c2, len);
+    pub fn opmap_lookup(&self, bytes: [u8; 4], len: u32) -> u32 {
+        let key = op_key(bytes, len);
         let slot = self.slot(key);
 
         // Compare the candidate's and operator's first 3 bytes.
@@ -177,7 +179,7 @@ impl OpMap {
         // So when bottom 3 bytes of `key` and `pack` are the same, it's a match
         // (except for the extra check for `len == 4` below).
         //
-        // If `b0`, `b1`, and `c2` are all 0, then it's possible that `key` hashes to an empty slot,
+        // If bottom 3 bytes of `key` are all 0, it's possible that `key` hashes to an empty slot,
         // so `pack == 0`. In that case `((pack ^ key) & 0xFF_FFFF) == 0` and the branch returning 0
         // is not taken. But in that case, `pack >> 24` is also 0, so 0 is returned either way.
         //
@@ -207,7 +209,7 @@ impl OpMap {
         // of a 4-byte operator. Compare that 4th byte here. After the check above, if `len == 4`,
         // the first 3 bytes of source are `>>>`. `>>>` and `>>>=` are rarely used, so this branch
         // is almost never taken - very predictable.
-        if len == 4 && b3 != FOUR_BYTE_OP_LAST_BYTE {
+        if len == 4 && bytes[3] != FOUR_BYTE_OP_LAST_BYTE {
             return 0;
         }
 
@@ -222,13 +224,27 @@ impl OpMap {
 }
 
 #[inline(always)]
-const fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
-    (c0 as u32) | ((c1 as u32) << 8) | ((c2 as u32) << 16) | (len << 24)
+const fn op_key(bytes: [u8; 4], len: u32) -> u32 {
+    let mut key = u32::from_le_bytes(bytes);
+    key &= if len >= 3 { 0xFF_FFFF } else { 0xFFFF };
+    key |= len << 24;
+    key
 }
 
 #[inline(always)]
 const fn op_slot(key: u32, mul: u32) -> usize {
     (key.wrapping_mul(mul) >> (32 - HASH_BITS)) as usize
+}
+
+/// Get a `[u8; 4]` containing all the bytes of `txt` and 0 for any remaining bytes.
+const fn first_4_bytes(txt: &[u8]) -> [u8; 4] {
+    let mut bytes = [0; 4];
+    let mut i = 0;
+    while i < txt.len() {
+        bytes[i] = txt[i];
+        i += 1;
+    }
+    bytes
 }
 
 #[cfg(test)]
@@ -296,14 +312,7 @@ mod tests {
         let opmap = OpMap::new();
 
         for (i, op_def) in OPMAP_OPS.iter().enumerate() {
-            let txt = op_def.txt;
-            let lookup_kind = opmap.opmap_lookup(
-                txt[0],
-                txt[1],
-                *txt.get(2).unwrap_or(&0),
-                *txt.get(3).unwrap_or(&0),
-                op_def.len(),
-            );
+            let lookup_kind = opmap.opmap_lookup(op_def.bytes(), op_def.len());
             assert!(lookup_kind == op_def.kind as u32, "OpDef {i}: `opmap_lookup` wrong kind");
         }
     }
@@ -328,14 +337,7 @@ mod tests {
             "\0\0", "\0\0\0", "\0\0\0=",
         ];
         for txt in cases {
-            let bytes = txt.as_bytes();
-            let kind = opmap.opmap_lookup(
-                bytes[0],
-                bytes[1],
-                *bytes.get(2).unwrap_or(&0),
-                *bytes.get(3).unwrap_or(&0),
-                bytes.len() as u32,
-            );
+            let kind = opmap.opmap_lookup(first_4_bytes(txt.as_bytes()), txt.len() as u32);
             assert!(kind == 0, "`opmap_lookup` should return 0 for {txt:?}");
         }
     }
@@ -379,12 +381,12 @@ mod tests {
             // 4-byte operators need no check here - the only candidate which could collide with
             // `>>>=` is `>>>`, and `>>>` is an operator itself, so it lands on `>>>`'s own slot,
             // which the check above keeps different from `>>>=`'s slot.
-            let txt = op_def.txt;
+            let bytes = op_def.bytes();
             if op_def.len() == 3 {
                 // A 4-byte candidate with first 3 bytes same as this 3-byte operator
                 // must not land on this operator's slot.
                 // `====` must not hash the same as `===`.
-                if op_slot(op_key(txt[0], txt[1], txt[2], 4), mul) == slot {
+                if op_slot(op_key(bytes, 4), mul) == slot {
                     return false;
                 }
             } else if op_def.len() == 2 {
@@ -392,12 +394,12 @@ mod tests {
                 // and 3rd byte is `\0`, must not land on this operator's slot
 
                 // `==\0` must not hash the same as `==`
-                if op_slot(op_key(txt[0], txt[1], 0, 3), mul) == slot {
+                if op_slot(op_key([bytes[0], bytes[1], 0, 0], 3), mul) == slot {
                     return false;
                 }
 
                 // `==\0=` must not hash the same as `==`
-                if op_slot(op_key(txt[0], txt[1], 0, 4), mul) == slot {
+                if op_slot(op_key([bytes[0], bytes[1], 0, 0], 4), mul) == slot {
                     return false;
                 }
             }
