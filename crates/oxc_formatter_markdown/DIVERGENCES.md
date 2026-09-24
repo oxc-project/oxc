@@ -34,7 +34,7 @@ text
 A document whose first block is a thematic break gets `***`, never `---`:
 the next run (Prettier's and ours) would read `---` ... `---` as front matter and swallow `text` into it,
 which is what the input itself would be with a `---` at the end (`front-matter.md`).
-Prettier `main` prints `***` since #19839; the pin (3.9.8) still prints `---`.
+Prettier `main` prints `***` since #19839; the pin (3.9.9) still prints `---`.
 
 ## url-escaping
 
