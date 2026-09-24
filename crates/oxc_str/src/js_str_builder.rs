@@ -83,7 +83,7 @@ impl<'a> JSStrBuilder<'a> {
 
     /// Append one JavaScript code point, pairing surrogates at the boundary.
     #[inline]
-    #[expect(clippy::cast_possible_truncation, reason = "leading surrogates fit in u16")]
+    #[expect(clippy::cast_possible_truncation, reason = "lone surrogates fit in `u16`")]
     pub fn push_js_char(&mut self, value: JSChar) {
         let point = value.to_u32();
         if let Some(lead) = self.pending_lead_surrogate
