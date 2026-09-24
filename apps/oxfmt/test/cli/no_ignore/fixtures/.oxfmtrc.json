@@ -1,0 +1,3 @@
+{
+  "ignorePatterns": ["config-ignored.js", "config-ignored-dir"]
+}

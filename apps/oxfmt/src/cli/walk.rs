@@ -10,7 +10,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::instrument;
 
 use oxc_config::{
-    GitignoreChecker, all_paths_have_vcs_boundary, configure_walk_builder, validate_glob_pattern,
+    GitignoreChecker, NoIgnoreKinds, all_paths_have_vcs_boundary, configure_walk_builder,
+    validate_glob_pattern,
 };
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 
@@ -111,6 +112,7 @@ impl ScopedWalker {
         &self,
         root_config_resolver: ConfigResolver,
         ignore_paths: &[PathBuf],
+        no_ignore: NoIgnoreKinds,
         with_node_modules: bool,
         detect_nested: bool,
         editorconfig_path: Option<&Path>,
@@ -119,13 +121,16 @@ impl ScopedWalker {
         tx_error: &DiagnosticSender,
     ) -> Result<bool, String> {
         let root_config_resolver = Arc::new(root_config_resolver);
+        let respect_gitignore = !no_ignore.vcs;
+        let respect_config_ignores = !no_ignore.config;
 
-        // Global ignores: .prettierignore, --ignore-path, CLI `!` patterns
-        let ignore_file_matchers: Arc<[Gitignore]> = Arc::from(build_global_ignore_matchers(
-            &self.cwd,
-            &self.exclude_patterns,
-            ignore_paths,
-        )?);
+        // Global ignores: .prettierignore, --ignore-path, CLI `!` patterns.
+        // Disabled as a whole by the `cli` kind of `--no-ignore`.
+        let ignore_file_matchers: Arc<[Gitignore]> = Arc::from(if no_ignore.cli {
+            vec![]
+        } else {
+            build_global_ignore_matchers(&self.cwd, &self.exclude_patterns, ignore_paths)?
+        });
 
         // Phase 1: Classify targets into directories (walk) and files (direct)
         let (walk_targets, file_targets) = {
@@ -157,7 +162,7 @@ impl ScopedWalker {
                 }
                 // Also, the walker never filters gitignored walk roots.
                 // (including roots inside a gitignored directory)
-                if gitignore_checker.is_gitignored_walk_root(path, &self.cwd) {
+                if respect_gitignore && gitignore_checker.is_gitignored_walk_root(path, &self.cwd) {
                     continue;
                 }
 
@@ -202,7 +207,7 @@ impl ScopedWalker {
                 }
                 let config_resolver = Arc::clone(&scope_cache[parent]);
 
-                if config_resolver.is_path_ignored(file, false) {
+                if respect_config_ignores && config_resolver.is_path_ignored(file, false) {
                     continue;
                 }
 
@@ -223,7 +228,6 @@ impl ScopedWalker {
         }
 
         // Phase 3: Walk directory targets.
-        let has_vcs_boundary = all_paths_have_vcs_boundary(&walk_targets, &self.cwd);
         // Build the glob matcher once for walk-time filtering.
         // When glob patterns exist, files are matched against them during `visit()`.
         // When no globs, `visit()` has zero overhead.
@@ -243,7 +247,7 @@ impl ScopedWalker {
         walk_and_stream(
             &self.cwd,
             &walk_targets,
-            has_vcs_boundary,
+            respect_gitignore,
             with_node_modules,
             WalkFilters {
                 ignore_file_matchers: Arc::clone(&ignore_file_matchers),
@@ -255,6 +259,7 @@ impl ScopedWalker {
                 nested_config_ctx: nested_config_ctx.clone(),
                 detect_nested,
                 walk_target_roots,
+                respect_config_ignores,
             },
             WalkSinks {
                 tx_entry: tx_entry.clone(),
@@ -357,6 +362,8 @@ struct WalkConfigState {
     nested_config_ctx: NestedConfigCtx,
     detect_nested: bool,
     walk_target_roots: Arc<[PathBuf]>,
+    /// `false` when the `config` kind of `--no-ignore` disables scope-local `ignorePatterns`.
+    respect_config_ignores: bool,
 }
 
 /// Walk-wide filter inputs (ignore matchers, glob filter, dedup set).
@@ -371,7 +378,7 @@ struct WalkFilters {
 fn walk_and_stream(
     cwd: &Path,
     target_paths: &[PathBuf],
-    has_vcs_boundary: bool,
+    respect_gitignore: bool,
     with_node_modules: bool,
     filters: WalkFilters,
     config_state: WalkConfigState,
@@ -380,6 +387,9 @@ fn walk_and_stream(
     let Some(first_path) = target_paths.first() else {
         return;
     };
+
+    // `require_git` is inert once the git layer is off, so skip the boundary stats
+    let has_vcs_boundary = respect_gitignore && all_paths_have_vcs_boundary(target_paths, cwd);
 
     let mut inner = ignore::WalkBuilder::new(first_path);
     for path in target_paths.iter().skip(1) {
@@ -424,7 +434,7 @@ fn walk_and_stream(
 
     // Git-related settings come from the shared helper to align with Oxlint.
     // NOTE: Prettier only reads `.gitignore` in the cwd and does not respect `.git/info/exclude`.
-    configure_walk_builder(&mut inner, has_vcs_boundary, true)
+    configure_walk_builder(&mut inner, has_vcs_boundary, respect_gitignore)
         // Do not follow symlinks like Prettier does.
         // See https://github.com/prettier/prettier/pull/14627
         .follow_links(false)
@@ -484,7 +494,8 @@ impl WalkVisitor {
 
         // Case 2: Nested config disabled, shares the root scope, no probe needed
         if !self.config_state.detect_nested {
-            let parent_ignored = root_config_resolver.is_path_ignored(parent, true);
+            let parent_ignored = self.config_state.respect_config_ignores
+                && root_config_resolver.is_path_ignored(parent, true);
             self.scope_cache
                 .insert(parent.to_path_buf(), (Arc::clone(root_config_resolver), parent_ignored));
             return Ok(());
@@ -567,7 +578,8 @@ impl WalkVisitor {
             .chain(std::iter::once(parent.to_path_buf()));
         for dir in dirs_to_cache {
             self.scope_cache.entry(dir).or_insert_with_key(|d| {
-                let parent_ignored = resolver.is_path_ignored(d, true);
+                let parent_ignored =
+                    self.config_state.respect_config_ignores && resolver.is_path_ignored(d, true);
                 (Arc::clone(&resolver), parent_ignored)
             });
         }
@@ -592,7 +604,9 @@ impl WalkVisitor {
         // Scope-local `ignorePatterns`:
         // - parent dir (cached) catches directory patterns like `lib`
         // - file-level catches patterns like `temp.js`
-        if *parent_ignored || resolver.is_path_ignored(&path, false) {
+        if *parent_ignored
+            || (self.config_state.respect_config_ignores && resolver.is_path_ignored(&path, false))
+        {
             return ignore::WalkState::Continue;
         }
         if let Some(glob_matcher) = &self.filters.glob_matcher
@@ -765,6 +779,7 @@ mod tests_scope_resolution {
                 nested_config_ctx: ctx,
                 detect_nested: true,
                 walk_target_roots: Arc::from(vec![walk_root.to_path_buf()]),
+                respect_config_ignores: true,
             },
             sinks: WalkSinks { tx_entry, tx_error, fatal_error: Arc::new(OnceLock::new()) },
             scope_cache: FxHashMap::default(),
