@@ -11,19 +11,24 @@ const OPMAP_MUL: u32 = 0x0217_DFE7;
 
 struct OpDef {
     pub txt: &'static [u8],
-    pub len: u8,
     pub kind: TokenKind,
 }
 
 impl OpDef {
     const fn new(txt: &'static str, kind: TokenKind) -> Self {
-        Self { txt: txt.as_bytes(), len: txt.len() as u8, kind }
+        assert!(txt.len() >= 2 && txt.len() <= 4, "`txt` must be between 2 and 4 bytes long");
+        Self { txt: txt.as_bytes(), kind }
+    }
+
+    /// Get length of this operator as a `u32`.
+    const fn len(&self) -> u32 {
+        self.txt.len() as u32
     }
 
     const fn key(&self) -> u32 {
         let txt = self.txt;
-        let c2 = if self.len >= 3 { txt[2] } else { 0 };
-        op_key(txt[0], txt[1], c2, self.len as u32)
+        let c2 = if self.len() >= 3 { txt[2] } else { 0 };
+        op_key(txt[0], txt[1], c2, self.len())
     }
 
     const fn slot(&self, mul: u32) -> usize {
@@ -88,7 +93,7 @@ static OP_PACK: [u32; HASH_TABLE_SIZE] = {
         let slot = op_def.slot(OPMAP_MUL);
 
         let txt = op_def.txt;
-        let bytes = if op_def.len == 2 {
+        let bytes = if op_def.len() == 2 {
             (txt[0] as u32) | ((txt[1] as u32) << 8)
         } else {
             (txt[0] as u32) | ((txt[1] as u32) << 8) | ((txt[2] as u32) << 16)
@@ -110,7 +115,7 @@ const FOUR_BYTE_OP_LAST_BYTE: u8 = {
     let mut i = 0_usize;
     while i < OPMAP_OPS.len() {
         let op_def = &OPMAP_OPS[i];
-        if op_def.len == 4 {
+        if op_def.len() == 4 {
             assert!(last_byte.is_none(), "more than one 4-byte operator");
             last_byte = Some(op_def.txt[3]);
         }
@@ -247,15 +252,6 @@ mod tests {
     }
 
     #[test]
-    fn test_op_defs_length() {
-        for (i, op_def) in OPMAP_OPS.iter().enumerate() {
-            let len = op_def.txt.len();
-            assert!(len >= 2 && len <= 4, "OpDef {i}: length out of range");
-            assert!(op_def.len as usize == len, "OpDef {i}: `len` and `txt.len()` do not match");
-        }
-    }
-
-    #[test]
     fn test_op_defs_token_kind_range() {
         for (i, op_def) in OPMAP_OPS.iter().enumerate() {
             let kind = op_def.kind as u8;
@@ -290,7 +286,7 @@ mod tests {
     // a 3-byte candidate - so `>>>` would be lexed as `>>>=`.
     #[test]
     fn test_op_defs_4_byte_operator_has_corresponding_3_byte_op() {
-        let op4 = OPMAP_OPS.iter().find(|op_def| op_def.len == 4).unwrap();
+        let op4 = OPMAP_OPS.iter().find(|op_def| op_def.len() == 4).unwrap();
         let first_3_bytes = &op4.txt[..3];
         assert!(OPMAP_OPS.iter().any(|op_def| op_def.txt == first_3_bytes));
     }
@@ -306,7 +302,7 @@ mod tests {
                 txt[1],
                 *txt.get(2).unwrap_or(&0),
                 *txt.get(3).unwrap_or(&0),
-                op_def.len as u32,
+                op_def.len(),
             );
             assert!(lookup_kind == op_def.kind as u32, "OpDef {i}: `opmap_lookup` wrong kind");
         }
@@ -384,14 +380,14 @@ mod tests {
             // `>>>=` is `>>>`, and `>>>` is an operator itself, so it lands on `>>>`'s own slot,
             // which the check above keeps different from `>>>=`'s slot.
             let txt = op_def.txt;
-            if op_def.len == 3 {
+            if op_def.len() == 3 {
                 // A 4-byte candidate with first 3 bytes same as this 3-byte operator
                 // must not land on this operator's slot.
                 // `====` must not hash the same as `===`.
                 if op_slot(op_key(txt[0], txt[1], txt[2], 4), mul) == slot {
                     return false;
                 }
-            } else if op_def.len == 2 {
+            } else if op_def.len() == 2 {
                 // A 3-byte or 4-byte candidate whose first 2 bytes are same as this operator,
                 // and 3rd byte is `\0`, must not land on this operator's slot
 
