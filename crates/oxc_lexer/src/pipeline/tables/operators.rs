@@ -1,13 +1,13 @@
 use crate::token::TokenKind;
 
 /// Number of bits in operator perfect hash.
-const HASH_BITS: usize = 8;
+const HASH_BITS: usize = 6;
 
 /// Number of entries in tables indexed by hash.
 const HASH_TABLE_SIZE: usize = 1 << HASH_BITS;
 
 /// Multiplier for the operator perfect hash.
-const OPMAP_MUL: u32 = 0x0101_0749;
+const OPMAP_MUL: u32 = 0x0217_DFE7;
 
 struct OpDef {
     pub txt: &'static [u8],
