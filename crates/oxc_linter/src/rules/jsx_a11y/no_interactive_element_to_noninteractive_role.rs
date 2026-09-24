@@ -32,7 +32,16 @@ pub struct NoInteractiveElementToNoninteractiveRole(
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct NoInteractiveElementToNoninteractiveRoleConfig {
     /// A mapping of HTML element names to arrays of ARIA role strings that are
-    /// allowed overrides for that element.
+    /// allowed overrides for that element. For example, `{ "tr": ["none", "presentation"] }`
+    /// permits `<tr role="none" />` without triggering the rule.
+    ///
+    /// Defaults are:
+    /// ```json
+    /// {
+    ///   "tr": ["none", "presentation"],
+    ///   "canvas": ["img"]
+    /// }
+    /// ```
     #[serde(default, flatten)]
     pub allowed_roles: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
