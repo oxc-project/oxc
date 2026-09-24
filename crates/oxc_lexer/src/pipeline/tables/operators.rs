@@ -1,5 +1,14 @@
 use crate::token::TokenKind;
 
+/// Number of bits in operator perfect hash.
+const HASH_BITS: usize = 8;
+
+/// Number of entries in tables indexed by hash.
+const HASH_TABLE_SIZE: usize = 1 << HASH_BITS;
+
+/// Multiplier for the operator perfect hash.
+const OPMAP_MUL: u32 = 0x0101_0749;
+
 struct OpDef {
     pub txt: &'static [u8],
     pub len: u8,
@@ -66,15 +75,12 @@ pub const fn is_op_char(c: u8) -> bool {
     (OPCH_LO[(c & 15) as usize] & OPCH_HI[(c >> 4) as usize]) != 0
 }
 
-/// Multiplier for the operator perfect hash.
-const OPMAP_MUL: u32 = 0x0101_0749;
-
 /// Operator bytes and [`TokenKind`], indexed by perfect hash slot.
 ///
 /// Only the first 3 bytes of the operator are stored, as the 4th byte contains the `TokenKind`.
 /// `opmap_lookup` compares the last byte of a 4-byte candidate separately.
-static OP_PACK: [u32; 256] = {
-    let mut op_pack = [0; 256];
+static OP_PACK: [u32; HASH_TABLE_SIZE] = {
+    let mut op_pack = [0; HASH_TABLE_SIZE];
 
     let mut i = 0_usize;
     while i < OPMAP_OPS.len() {
@@ -115,7 +121,7 @@ const FOUR_BYTE_OP_LAST_BYTE: u8 = {
 
 pub struct OpMap {
     opmap_mul: u32,
-    op_pack: [u32; 256],
+    op_pack: [u32; HASH_TABLE_SIZE],
 }
 
 impl OpMap {
@@ -217,7 +223,7 @@ const fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
 
 #[inline(always)]
 const fn op_slot(key: u32, mul: u32) -> usize {
-    (key.wrapping_mul(mul) >> 24) as usize
+    (key.wrapping_mul(mul) >> (32 - HASH_BITS)) as usize
 }
 
 #[cfg(test)]
@@ -362,7 +368,7 @@ mod tests {
     }
 
     fn is_collision_free(mul: u32) -> bool {
-        let mut used = [false; 256];
+        let mut used = [false; HASH_TABLE_SIZE];
         for op_def in &OPMAP_OPS {
             // Ensure all operators hash to different slots
             let slot = op_def.slot(mul);
