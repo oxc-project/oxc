@@ -2,7 +2,7 @@ use crate::{error::DiagCode, lanes::Lanes};
 
 use crate::pipeline::{
     bitmap::bm_get,
-    bytes::{is_id_start, is_word},
+    bytes::{is_id_start, is_word, line_break_in},
     disambiguate::{
         Tokens, Walks, arrow_after_params, jsx_site_is_expression, ts_type_region_open,
         type_parameter_list_head,
@@ -127,20 +127,6 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
         return v;
     }
     AngleVerdict::Jsx
-}
-
-/// Does `src[a..b]` hold a LineTerminator (LF, CR, or the 3-byte LS/PS)?
-#[inline]
-fn line_break_in(src: &[u8], a: usize, b: usize) -> bool {
-    let mut i = a;
-    while i < b {
-        match src[i] {
-            b'\n' | b'\r' => return true,
-            0xE2 if src[i + 1] == 0x80 && matches!(src[i + 2], 0xA8 | 0xA9) => return true,
-            _ => i += 1,
-        }
-    }
-    false
 }
 
 /// Is the ambiguous `<T>(` at `lt` JSX (true) or a type-parameter list (false)? The second

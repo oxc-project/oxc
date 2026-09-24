@@ -14,8 +14,9 @@ pub(super) fn keyword_type(kw: u8) -> bool {
     )
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub(super) enum FrameKind {
+    #[default]
     Root,
     // Braces.
     Block,
@@ -151,7 +152,7 @@ pub(super) const C_INTERFACE: u8 = 1;
 // TypeLit (`state`): the body of an interface, which ends the statement when closed.
 pub(super) const L_INTERFACE_BODY: u8 = 1;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub(super) struct Frame {
     pub(super) kind: FrameKind,
     pub(super) is_generator: bool,
@@ -170,11 +171,9 @@ pub(super) struct Frame {
     pub(super) reg: u8,
     /// Member modifier bits (Object / ClassBody).
     pub(super) mods: u8,
-    /// For-head: the binding came from a declaration (`for (let x of`).
-    pub(super) decl_binding: bool,
     pub(super) head: u8,
     pub(super) open_questions: u16,
-    pub(super) prologue: u8,
+    pub(super) prologue: bool,
 }
 
 impl Frame {
@@ -185,6 +184,11 @@ impl Frame {
         self.kind == FrameKind::ClassBody && self.state == M_VALUE
     }
 
+    pub(super) fn next_member(&mut self) {
+        self.state = M_KEY_POS;
+        self.mods = 0;
+    }
+
     pub(super) fn child(&self, kind: FrameKind) -> Frame {
         let init = self.field_init();
         Frame {
@@ -193,29 +197,66 @@ impl Frame {
             is_async: self.is_async && !init,
             strict: self.strict,
             reserved: self.reserved && !init,
-            is_value: false,
-            decl: false,
-            atom: false,
-            inner: false,
-            state: 0,
-            reg: 0,
-            mods: 0,
-            decl_binding: false,
-            head: 0,
-            open_questions: 0,
-            prologue: 0,
+            ..Frame::default()
         }
     }
 }
 
-/// Frames that hold statements (and so declarator state and statement registers).
-pub(super) fn is_stmt_holder(k: FrameKind) -> bool {
-    matches!(
-        k,
-        FrameKind::Root
-            | FrameKind::Block
+impl FrameKind {
+    pub(super) fn is_virtual(self) -> bool {
+        matches!(
+            self,
+            FrameKind::Concise
+                | FrameKind::TypeRegion
+                | FrameKind::Angle
+                | FrameKind::FnHead
+                | FrameKind::ClassHead
+        )
+    }
+
+    /// Frames that hold statements (and so declarator state and statement registers).
+    pub(super) fn is_stmt_holder(self) -> bool {
+        matches!(
+            self,
+            FrameKind::Root
+                | FrameKind::Block
+                | FrameKind::FnBody
+                | FrameKind::ArrowBody
+                | FrameKind::StaticBlock
+        )
+    }
+
+    pub(super) fn is_type_group(self) -> bool {
+        matches!(
+            self,
+            FrameKind::Angle | FrameKind::TypeParen | FrameKind::TypeBracket | FrameKind::TypeLit
+        )
+    }
+
+    pub(super) fn closer(self) -> u8 {
+        match self {
+            FrameKind::Block
             | FrameKind::FnBody
             | FrameKind::ArrowBody
+            | FrameKind::ClassBody
             | FrameKind::StaticBlock
-    )
+            | FrameKind::Object
+            | FrameKind::Pattern
+            | FrameKind::TypeLit
+            | FrameKind::EnumBody
+            | FrameKind::ModuleSpec
+            | FrameKind::Container => b'}',
+            FrameKind::Head
+            | FrameKind::Params
+            | FrameKind::Call
+            | FrameKind::Group
+            | FrameKind::TypeParen => b')',
+            FrameKind::Index
+            | FrameKind::Array
+            | FrameKind::ComputedKey
+            | FrameKind::TypeBracket
+            | FrameKind::ArrayPattern => b']',
+            _ => 0,
+        }
+    }
 }
