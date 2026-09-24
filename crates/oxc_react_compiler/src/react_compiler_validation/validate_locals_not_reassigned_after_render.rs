@@ -1186,7 +1186,7 @@ fn get_context_reassignment(
 
             if let Some(invocations) = async_invocations.get(&instruction_id) {
                 for invocation in invocations {
-                    for &context in &invocation.captures {
+                    for &context in &invocation.eager_captures {
                         if let Some(reassignment_place) = find_reassignment_for_operand(
                             context,
                             &invocation.context_values,
