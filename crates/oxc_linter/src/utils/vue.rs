@@ -247,7 +247,7 @@ pub fn vue_component_options_kind(
         return None;
     };
 
-    ctx.nodes().ancestors(object_node.id()).find_map(|ancestor| match ancestor.kind() {
+    match ctx.nodes().parent_kind(object_node.id()) {
         AstKind::ExportDefaultDeclaration(export_default_decl) => {
             if ctx.file_extension().is_none_or(|ext| ext != "vue") {
                 return None;
@@ -269,7 +269,7 @@ pub fn vue_component_options_kind(
             && new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "Vue"))
         .then_some(VueComponentObjectKind::Instance),
         _ => None,
-    })
+    }
 }
 
 /// Whether the given `ObjectExpression` is *any* Vue options object — the
