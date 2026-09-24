@@ -608,7 +608,7 @@ pub struct JsxOptions {
     pub pragma: Option<String>,
 
     /// Replace the component used when compiling JSX fragments. It should be a
-    /// valid JSX tag name.
+    /// valid JSX tag name or a quoted JavaScript string literal.
     ///
     /// Only used for `classic` {@link runtime}.
     ///

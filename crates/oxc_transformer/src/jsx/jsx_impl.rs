@@ -91,7 +91,8 @@
 use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_ecmascript::PropName;
-use oxc_span::{SPAN, Span};
+use oxc_parser::Parser;
+use oxc_span::{SPAN, SourceType, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{
     identifier::{is_identifier_name, is_white_space_single_line},
@@ -330,6 +331,8 @@ enum Pragma<'a> {
     This(Vec<Str<'a>>),
     /// `import.meta`, `import.meta.foo`, `import.meta.foo.bar.qux`
     ImportMeta(Vec<Str<'a>>),
+    /// A string literal used as the fragment type.
+    String { value: Str<'a>, lone_surrogates: bool },
 }
 
 impl<'a> Pragma<'a> {
@@ -371,6 +374,25 @@ impl<'a> Pragma<'a> {
         }
 
         Self::Double(Str::from("React"), Str::from(default_property_name))
+    }
+
+    fn parse_fragment(pragma: Option<&str>, ast: &AstBuilder<'a>) -> Self {
+        if let Some(pragma) = pragma
+            && matches!(pragma.as_bytes().first(), Some(b'\'' | b'"'))
+        {
+            let source = ast.allocator().alloc_str(pragma);
+            if let Ok(Expression::StringLiteral(literal)) =
+                Parser::new(ast.allocator(), source, SourceType::mjs()).parse_expression()
+                && literal.span.size() as usize == source.len()
+            {
+                return Self::String {
+                    value: literal.value,
+                    lone_surrogates: literal.lone_surrogates,
+                };
+            }
+        }
+
+        Self::parse_no_ctx(pragma, "Fragment", ast)
     }
 
     fn parse_impl(pragma: &str, ast: &AstBuilder<'a>) -> Option<Self> {
@@ -418,6 +440,15 @@ impl<'a> Pragma<'a> {
     }
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let (object, parts) = match self {
+            Self::String { value, lone_surrogates } => {
+                return Expression::new_string_literal_with_lone_surrogates(
+                    SPAN,
+                    *value,
+                    None,
+                    *lone_surrogates,
+                    ctx,
+                );
+            }
             Self::Double(first, second) => {
                 let object = get_read_identifier_reference(SPAN, *first, ctx);
                 return Expression::new_static_member_expression(
@@ -469,8 +500,7 @@ impl<'a> JsxImpl<'a> {
         let bindings = match options.runtime {
             JsxRuntime::Classic => {
                 let pragma = Pragma::parse_no_ctx(options.pragma.as_deref(), "createElement", ast);
-                let pragma_frag =
-                    Pragma::parse_no_ctx(options.pragma_frag.as_deref(), "Fragment", ast);
+                let pragma_frag = Pragma::parse_fragment(options.pragma_frag.as_deref(), ast);
                 Bindings::Classic(ClassicBindings { pragma, pragma_frag })
             }
             JsxRuntime::Automatic => {
@@ -1337,5 +1367,32 @@ mod test {
         let Expression::Identifier(object) = &member.object else { panic!() };
         assert_eq!(object.name, "React");
         assert_eq!(member.property.name, "Fragment");
+    }
+
+    #[test]
+    fn invalid_string_fragment_pragmas() {
+        setup!(traverse_ctx, _transform_ctx);
+
+        for pragma in [
+            "'unterminated",
+            "'mismatched\"",
+            "'fragment' + 'other'",
+            "'fragment'.name",
+            "'fragment'/*comment*/",
+            "'fragment' ",
+            "`fragment`",
+            "('fragment')",
+            r"'\u00ZZ'",
+            r"'\xGG'",
+            r"'\u{110000}'",
+        ] {
+            let pragma = Pragma::parse_fragment(Some(pragma), &traverse_ctx.ast);
+            let expr = pragma.create_expression(traverse_ctx);
+
+            let Expression::StaticMemberExpression(member) = &expr else { panic!() };
+            let Expression::Identifier(object) = &member.object else { panic!() };
+            assert_eq!(object.name, "React");
+            assert_eq!(member.property.name, "Fragment");
+        }
     }
 }
