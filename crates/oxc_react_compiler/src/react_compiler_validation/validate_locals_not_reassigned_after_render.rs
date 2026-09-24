@@ -733,16 +733,20 @@ fn get_context_reassignment(
                     let inner_is_async = is_async || inner_function.is_async;
 
                     // Recursively check the inner function
-                    let reassignment = get_context_reassignment(
+                    let mut reassignment = get_context_reassignment(
                         inner_function,
                         identifiers,
                         functions,
                         env,
                         &mut child_context_variables,
                         true,
-                        inner_is_async,
+                        inner_is_async && !inner_function.generator,
                         diagnostics,
                     );
+                    if inner_function.generator {
+                        reassignment.returned_callables.generator_reassignment =
+                            reassignment.reassignment.map(|place| (place.identifier, place.span));
+                    }
                     nested_reassignments
                         .insert(instr.lvalue.identifier, (reassignment.clone(), inner_is_async));
                     function_returns
@@ -1023,7 +1027,10 @@ fn get_context_reassignment(
                         .get(&instr.lvalue.identifier)
                         .cloned()
                         .expect("nested function was analyzed during graph construction");
-                    if inner_is_async && let Some(reassignment_place) = reassignment.reassignment {
+                    if inner_is_async
+                        && !reassignment.returned_callables.generator
+                        && let Some(reassignment_place) = reassignment.reassignment
+                    {
                         record_async_reassignment(reassignment_place, identifiers, diagnostics);
                         // Direct async reassignments are diagnosed immediately and
                         // do not propagate through the function value.
@@ -1104,6 +1111,14 @@ fn get_context_reassignment(
 
             if let Some(invocations) = async_invocations.get(&instruction_id) {
                 for invocation in invocations {
+                    if let Some((identifier, span)) = invocation.reassignment {
+                        record_async_reassignment(
+                            Place { identifier, span, effect: Effect::Unknown, reactive: false },
+                            identifiers,
+                            diagnostics,
+                        );
+                        return ReassignmentResult::default();
+                    }
                     for &context in &invocation.eager_captures {
                         if let Some(reassignment_place) = find_reassignment_for_operand(
                             context,

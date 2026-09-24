@@ -649,6 +649,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "add",
                 MethodDef {
+                    canonical_name: Some("Set.add"),
                     positional_params: &[Effect::Capture],
                     callee_effect: Effect::Store,
                     return_type: TypeDef::Object(BUILT_IN_SET_ID),
@@ -674,6 +675,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "clear",
                 MethodDef {
+                    canonical_name: Some("Set.clear"),
                     callee_effect: Effect::Store,
                     return_type: TypeDef::Primitive,
                     return_value_kind: ValueKind::Primitive,
@@ -818,6 +820,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "set",
                 MethodDef {
+                    canonical_name: Some("Map.set"),
                     positional_params: &[Effect::Capture, Effect::Capture],
                     callee_effect: Effect::Store,
                     return_type: TypeDef::Object(BUILT_IN_MAP_ID),
@@ -828,6 +831,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "clear",
                 MethodDef {
+                    canonical_name: Some("Map.clear"),
                     callee_effect: Effect::Store,
                     return_type: TypeDef::Primitive,
                     return_value_kind: ValueKind::Primitive,
@@ -1835,6 +1839,7 @@ fn build_typed_globals(
         let ctor = add_method(
             shapes,
             &MethodDef {
+                canonical_name: Some(name),
                 positional_params: &[Effect::ConditionallyMutateIterator],
                 return_type: TypeDef::Object(*shape_id),
                 return_value_kind: ValueKind::Mutable,
