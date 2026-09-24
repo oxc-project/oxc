@@ -353,8 +353,19 @@ const ARRAY_MAP_ALIASING: AliasingSignatureConfig = AliasingSignatureConfig {
     ],
 };
 
-const ARRAY_FOREACH_ALIASING: AliasingSignatureConfig =
-    AliasingSignatureConfig { returns: "@unused", ..ARRAY_MAP_ALIASING };
+const ARRAY_FOREACH_ALIASING: AliasingSignatureConfig = AliasingSignatureConfig {
+    effects: &[
+        ARRAY_MAP_ALIASING.effects[1],
+        ARRAY_MAP_ALIASING.effects[2],
+        ARRAY_MAP_ALIASING.effects[3],
+        AliasingEffectConfig::Create {
+            into: "@returns",
+            value: ValueKind::Primitive,
+            reason: ValueReason::KnownReturnSignature,
+        },
+    ],
+    ..ARRAY_MAP_ALIASING
+};
 
 /// One property of an object shape: a method with a function signature, or a
 /// plain property like `length: Primitive`.
