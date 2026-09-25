@@ -26,6 +26,15 @@ Englishの前でも消えます。
 括弧の前 (paren) と後ろ、ASCII 記号の
 :: 前後は空白になります。
 
+<!-- The rules stop at another node's edge, as Prettier's sentence does:
+     the whitespace there may break and a line break stays a space
+     (joined, `：www.` would no longer be an autolink literal) -->
+
+使用方法请参考文档中的说明，如果需要了解更多信息，请参考 [应用部署](./deployment.md)。
+
+更多细节，请参考文档：
+www.example.com 和 `code`。
+
 ==================== Output ====================
 ---------------------------------------
 { printWidth: 80, proseWrap: "always" }
@@ -45,6 +54,15 @@ Englishの前でも消えます。
 
 括弧の前 (paren) と後ろ、ASCII 記号の :: 前後は空白になります。
 
+<!-- The rules stop at another node's edge, as Prettier's sentence does:
+     the whitespace there may break and a line break stays a space
+     (joined, `：www.` would no longer be an autolink literal) -->
+
+使用方法请参考文档中的说明，如果需要了解更多信息，请参考
+[应用部署](./deployment.md)。
+
+更多细节，请参考文档： www.example.com 和 `code`。
+
 ----------------------------------------
 { printWidth: 100, proseWrap: "always" }
 ----------------------------------------
@@ -62,6 +80,14 @@ Englishの前でも消えます。
 営業時間は月〜金の9時〜18時です。詳しくは……後日お知らせします……
 
 括弧の前 (paren) と後ろ、ASCII 記号の :: 前後は空白になります。
+
+<!-- The rules stop at another node's edge, as Prettier's sentence does:
+     the whitespace there may break and a line break stays a space
+     (joined, `：www.` would no longer be an autolink literal) -->
+
+使用方法请参考文档中的说明，如果需要了解更多信息，请参考 [应用部署](./deployment.md)。
+
+更多细节，请参考文档： www.example.com 和 `code`。
 
 --------------------------------------
 { printWidth: 80, proseWrap: "never" }
@@ -81,6 +107,14 @@ Englishの前でも消えます。
 
 括弧の前 (paren) と後ろ、ASCII 記号の :: 前後は空白になります。
 
+<!-- The rules stop at another node's edge, as Prettier's sentence does:
+     the whitespace there may break and a line break stays a space
+     (joined, `：www.` would no longer be an autolink literal) -->
+
+使用方法请参考文档中的说明，如果需要了解更多信息，请参考 [应用部署](./deployment.md)。
+
+更多细节，请参考文档： www.example.com 和 `code`。
+
 ---------------------------------------
 { printWidth: 100, proseWrap: "never" }
 ---------------------------------------
@@ -98,6 +132,14 @@ Englishの前でも消えます。
 営業時間は月〜金の9時〜18時です。詳しくは……後日お知らせします……
 
 括弧の前 (paren) と後ろ、ASCII 記号の :: 前後は空白になります。
+
+<!-- The rules stop at another node's edge, as Prettier's sentence does:
+     the whitespace there may break and a line break stays a space
+     (joined, `：www.` would no longer be an autolink literal) -->
+
+使用方法请参考文档中的说明，如果需要了解更多信息，请参考 [应用部署](./deployment.md)。
+
+更多细节，请参考文档： www.example.com 和 `code`。
 
 -----------------------------------------
 { printWidth: 80, proseWrap: "preserve" }
@@ -126,6 +168,15 @@ Englishの前でも消えます。
 括弧の前 (paren) と後ろ、ASCII 記号の
 :: 前後は空白になります。
 
+<!-- The rules stop at another node's edge, as Prettier's sentence does:
+     the whitespace there may break and a line break stays a space
+     (joined, `：www.` would no longer be an autolink literal) -->
+
+使用方法请参考文档中的说明，如果需要了解更多信息，请参考 [应用部署](./deployment.md)。
+
+更多细节，请参考文档：
+www.example.com 和 `code`。
+
 ------------------------------------------
 { printWidth: 100, proseWrap: "preserve" }
 ------------------------------------------
@@ -152,5 +203,14 @@ Englishの前でも消えます。
 
 括弧の前 (paren) と後ろ、ASCII 記号の
 :: 前後は空白になります。
+
+<!-- The rules stop at another node's edge, as Prettier's sentence does:
+     the whitespace there may break and a line break stays a space
+     (joined, `：www.` would no longer be an autolink literal) -->
+
+使用方法请参考文档中的说明，如果需要了解更多信息，请参考 [应用部署](./deployment.md)。
+
+更多细节，请参考文档：
+www.example.com 和 `code`。
 
 ===================== End =====================

@@ -4,20 +4,26 @@
 use oxc_lexer::{DiagCode, LexOptions, Lexer, PAD, TokenKind, lex_utf8};
 
 fn kinds_of(code: &str, module: bool) -> Vec<TokenKind> {
+    kinds_with(code, LexOptions { source_type_module: module, ..Default::default() })
+}
+
+fn kinds_with(code: &str, opts: LexOptions) -> Vec<TokenKind> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
-    let opts = LexOptions { source_type_module: module, ..Default::default() };
     let mut lx = Lexer::new();
     let count = lx.lex(&buf, n, opts);
     lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
 
 fn diag_codes(code: &str, module: bool) -> Vec<DiagCode> {
+    diag_codes_with(code, LexOptions { source_type_module: module, ..Default::default() })
+}
+
+fn diag_codes_with(code: &str, opts: LexOptions) -> Vec<DiagCode> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
-    let opts = LexOptions { source_type_module: module, ..Default::default() };
     let (res, _arena) = lex_utf8(&buf, n, opts);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
@@ -30,6 +36,22 @@ fn script_html_open_comment_anywhere() {
         "script comment: {ks:?}"
     );
     assert!(diag_codes("x <!-- y\nz;", false).is_empty());
+}
+
+#[test]
+fn html_comment_content() {
+    let source = "<!--a\n-->\n<!--";
+    let mut buf = source.as_bytes().to_vec();
+    buf.resize(buf.len() + PAD, 0);
+    let options = LexOptions { source_type_module: false, ..Default::default() };
+    let (result, arena) = lex_utf8(&buf, source.len() as u32, options);
+    assert!(result.diagnostics().is_empty());
+    let comments = result.comments(&arena);
+    assert_eq!(comments.len(), 3);
+    for (comment, content) in comments.iter().zip(["a", "", ""]) {
+        assert!(comment.is_line());
+        assert_eq!(comment.content_span().source_text(source), content);
+    }
 }
 
 #[test]
@@ -69,5 +91,52 @@ fn mid_line_close_comment_unchanged() {
         let ks = kinds_of("a --> b;", module);
         assert!(ks.contains(&TokenKind::MinusMinus), "module={module}: {ks:?}");
         assert!(ks.contains(&TokenKind::Gt), "module={module}: {ks:?}");
+    }
+}
+
+fn kinds_of_jsx(code: &str, module: bool) -> Vec<TokenKind> {
+    kinds_with(code, LexOptions { source_type_module: module, jsx: true, ..Default::default() })
+}
+
+#[test]
+fn jsx_script_html_comments() {
+    // Annex B applies to a script whatever its JSX setting.
+    for src in ["x <!-- y\nz;", "<!-- c\nx;", "x = <a>{y}</a> <!-- c\nz;"] {
+        let ks = kinds_of_jsx(src, false);
+        assert!(!ks.contains(&TokenKind::Lt) && !ks.contains(&TokenKind::Bang), "{src:?}: {ks:?}");
+    }
+    // `-->` closes a comment a `<!--` opened: in a JSX script it is recognised after one.
+    for src in ["<!--\na;\n--> b;", "<!--\nx = 1;\n  --> c\ny;", "<!--\nx = 1;\n/* */ --> c\ny;"] {
+        let ks = kinds_of_jsx(src, false);
+        assert!(!ks.contains(&TokenKind::MinusMinus), "{src:?}: {ks:?}");
+        let ks = kinds_of_jsx(src, true);
+        assert!(ks.contains(&TokenKind::MinusMinus), "{src:?}: {ks:?}");
+    }
+    // Without a `<!--` before it, a JSX script keeps `-->` as operators: the finder that would
+    // stop at every `>` is only switched on by the opener.
+    let ks = kinds_of_jsx("a;\n--> b;", false);
+    assert!(ks.contains(&TokenKind::MinusMinus), "{ks:?}");
+    let ks = kinds_of_jsx("x <!-- y;", true);
+    assert!(ks.contains(&TokenKind::Lt) && ks.contains(&TokenKind::Bang), "{ks:?}");
+}
+
+#[test]
+fn tsx_script_lone_html_close_comment_stays_operators() {
+    // tsc has no HTML comments: the line is a decrement and a comparison, and tsc rejects it.
+    for src in ["a;\n--> b;", "f((\n--> c\n) => 1);", "x = <a/>;\n  --> c\ny;"] {
+        for module in [false, true] {
+            let opts = LexOptions {
+                source_type_module: module,
+                jsx: true,
+                ts: true,
+                ..Default::default()
+            };
+            let ks = kinds_with(src, opts);
+            assert!(
+                ks.contains(&TokenKind::MinusMinus) && ks.contains(&TokenKind::Gt),
+                "{src:?} module={module}: {ks:?}"
+            );
+            assert!(diag_codes_with(src, opts).is_empty(), "{src:?} module={module}");
+        }
     }
 }

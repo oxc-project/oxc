@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.85.0] - 2026-09-21
+
+### 🚀 Features
+
+- 415b742 oxlint,oxfmt: Do not discover nested config in Vite+ mode (#26763) (leaysgur)
+
+## [1.84.0] - 2026-09-21
+
+### 🚀 Features
+
+- 809090c oxlint,oxfmt: Find all `vite.config.*` variants (#26755) (leaysgur)
+- a047b67 linter: Report JavaScript plugin rule timings (#26415) (Alexander Lichter)
+
+### 🐛 Bug Fixes
+
+- 927bfa4 oxlint/lsp: Align nested config handling with `configPath` semantics (#26762) (leaysgur)
+- 7811f0a parser: Preserve reparsed `await` tokens (#26619) (camc314)
+
+### 📚 Documentation
+
+- aa7de00 lsp: Document that the `run` option only applies to push mode clients (#26670) (im10furry)
+
 ## [1.83.0] - 2026-09-14
 
 ### 🐛 Bug Fixes

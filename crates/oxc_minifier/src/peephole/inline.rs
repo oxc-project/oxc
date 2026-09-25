@@ -284,7 +284,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_for_statement_init(ctx: &TraverseCtx<'a>) -> bool {
-        ctx.ancestors().nth(1).is_some_and(Ancestor::is_parent_of_for_statement_left)
+        ctx.ancestor(1).is_parent_of_for_statement_left()
     }
 
     pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

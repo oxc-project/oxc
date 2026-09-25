@@ -55,11 +55,25 @@ describe("LSP initialization", () => {
       ],
     ],
     [{ "fmt.configPath": "./custom-config.json" }, ["custom-config.json", ".editorconfig"]],
+    // Vite+ mode: only `vite.config.*`, and nested configs are never discovered
+    [
+      undefined,
+      [
+        "vite.config.js",
+        "vite.config.mjs",
+        "vite.config.ts",
+        "vite.config.cjs",
+        "vite.config.mts",
+        "vite.config.cts",
+        ".editorconfig",
+      ],
+      { VP_VERSION: "1" },
+    ],
   ])(
     "should send correct dynamic watch pattern registration for config: %s",
-    async (lspConfig, expectedPatterns) => {
+    async (lspConfig, expectedPatterns, env?: Record<string, string>) => {
       const dirUri = pathToFileURL(import.meta.dirname).href;
-      await using client = createLspConnection();
+      await using client = createLspConnection(env);
       await client.initialize(
         [{ uri: dirUri, name: "test" }],
         {
