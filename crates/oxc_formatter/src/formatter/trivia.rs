@@ -564,27 +564,17 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
                     let first_line = lines.next().unwrap();
                     write!(f, [text(first_line.trim_end())]);
 
-                    // Only `/**` comments keep hard breaks below. `comment.is_jsdoc()` also accepts `/***`
-                    // and requires a leading comment, so check the text, like Prettier's `isJsdoc` in
-                    // `printIndentableBlockComment`.
+                    // Not `comment.is_jsdoc()`, which also accepts `/***`
                     let is_jsdoc = content.starts_with("/**") && !content.starts_with("/***");
 
                     // Indent the remaining lines by one space so that all `*` are aligned.
                     for line in lines {
                         let trimmed = line.trim();
-                        // A JSDoc line ending in two or more spaces keeps exactly two: a Markdown
-                        // hard line break that doc tools render (prettier/prettier#6793, #18594).
-                        // A bare `*` line has no text to break after.
-                        let hard_break = is_jsdoc && trimmed != "*" && line.ends_with("  ");
-                        write!(
-                            f,
-                            [
-                                hard_line_break(),
-                                " ",
-                                text(trimmed),
-                                hard_break.then_some(text("  "))
-                            ]
-                        );
+                        write!(f, [hard_line_break(), " ", text(trimmed)]);
+                        // Keep a Markdown hard line break in JSDoc, as 2 trailing spaces
+                        if is_jsdoc && trimmed != "*" && line.ends_with("  ") {
+                            write!(f, ["  "]);
+                        }
                     }
                 } else {
                     // Normalize line endings `\r\n` to `\n`
