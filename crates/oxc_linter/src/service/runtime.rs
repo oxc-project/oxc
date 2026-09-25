@@ -2,7 +2,7 @@ use std::{
     ffi::OsStr,
     fs,
     hash::BuildHasherDefault,
-    mem::take,
+    mem::{replace, take},
     path::{Path, PathBuf},
     sync::{Arc, Mutex, mpsc},
 };
@@ -660,10 +660,10 @@ impl Runtime {
                                     diff_manager,
                                 );
                             }
-                            fixed_code
+                            fixed_code.map(|fixed_code| (dep.source_text.to_string(), fixed_code))
                         });
 
-                    let Some(mut source_text) = fixed_code else {
+                    let Some((original_text, mut source_text)) = fixed_code else {
                         return;
                     };
 
@@ -676,7 +676,12 @@ impl Runtime {
                     // This picks up fixes which were skipped because they conflicted with other fixes,
                     // and fixes for problems introduced by the previous pass's fixes.
                     // Only diagnostics from the last pass are reported.
+                    //
+                    // If a pass's fixes produce the same text as 2 passes ago, fixes of different rules
+                    // are undoing each other. Stop fixing and warn about it, as ESLint does.
                     let mut fix_passes = 1;
+                    let mut previous_text = original_text.clone();
+                    let mut circular = false;
                     loop {
                         let allocator_guard = me.allocator_pool.get();
                         let allocator = &*allocator_guard;
@@ -693,16 +698,33 @@ impl Runtime {
                             rule_timing_store,
                         );
 
-                        let (pass, fixed_code) =
-                            me.fix_pass(path, text, pass, fix_passes < MAX_FIX_PASSES);
+                        let allow_fix = fix_passes < MAX_FIX_PASSES && !circular;
+                        let (pass, fixed_code) = me.fix_pass(path, text, pass, allow_fix);
                         if let Some(fixed_code) = fixed_code {
-                            source_text = fixed_code;
                             fix_passes += 1;
+                            if fixed_code == previous_text {
+                                circular = true;
+                                tx_error
+                                    .send(vec![
+                                        OxcDiagnostic::warn(format!(
+                                            "Circular fixes detected while fixing {}. It is likely that you have conflicting rules in your configuration.",
+                                            path.display()
+                                        ))
+                                        .into(),
+                                    ])
+                                    .unwrap();
+                            }
+                            previous_text = replace(&mut source_text, fixed_code);
                             continue;
                         }
 
                         me.report_lint_pass(path, text, pass, tx_error, diff_manager);
                         break;
+                    }
+
+                    // Fixes can end up back at the original text if they are circular
+                    if source_text == original_text {
+                        return;
                     }
 
                     if let Err(error) = file_system.write_file(path, &source_text) {
