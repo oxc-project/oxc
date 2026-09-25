@@ -78,9 +78,8 @@
 //!    — see [`DanglingIndentMode`] for which variant an empty container takes
 //! 3. Preserves comment relationships and spacing
 //! 4. Advances cursor for processed comments
-use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::{Comment, CommentContent, CommentKind};
-use oxc_formatter_core::SourceText;
+use oxc_formatter_core::{LINE_TERMINATORS, SourceText, arena_cow_str, normalize_newlines};
 use oxc_span::Span;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
@@ -560,8 +559,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
         } else {
             let content = f.source_text().text_for(&comment.span);
             if comment.is_multiline_block() {
-                let mut lines = LineTerminatorSplitter::new(content);
                 if is_alignable_comment(content) {
+                    let mut lines = LineTerminatorSplitter::new(content);
                     // `unwrap` is safe because `content` contains at least one line.
                     let first_line = lines.next().unwrap();
                     write!(f, [text(first_line.trim_end())]);
@@ -578,17 +577,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
                         }
                     }
                 } else {
-                    // Normalize line endings `\r\n` to `\n`
-                    let mut string =
-                        ArenaStringBuilder::with_capacity_in(content.len(), f.allocator());
-                    // `unwrap` is safe because `content` contains at least one line.
-                    string.push_str(lines.next().unwrap().trim_end());
-
-                    for str in lines {
-                        string.push('\n');
-                        string.push_str(str);
-                    }
-                    write!(f, [text(string.into_str())]);
+                    let normalized = normalize_newlines(content, LINE_TERMINATORS);
+                    write!(f, [text(arena_cow_str(&normalized, f))]);
                 }
             } else {
                 write!(f, [text(content.trim_end())]);
