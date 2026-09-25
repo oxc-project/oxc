@@ -661,3 +661,34 @@ var target = x ? y : /** @type {Document} */ ((root).head ?? fallback);
 A cast comment types the parenthesized expression directly after it.
 When the comment binds to an inner expression and the formatter adds parentheses around the whole (a `??` in a conditional branch, a sequence, a return argument), it prints inside the added pair so the cast keeps its target.
 Printed outside, the cast covers the whole expression and tsc types `root` as its uncast type again (`Property 'head' does not exist on type 'Node'`).
+
+## triple-star-jsdoc-hard-break
+
+- Why: uniform-rule (a block comment starting with `/**` is JSDoc)
+- Pin: `tests/fixtures/js/comments/jsdoc-trailing-double-space.js`
+
+```js
+// input
+/***
+ * a··
+ * b
+ */
+
+// ours
+/***
+ * a··
+ * b
+ */
+
+// prettier
+/***
+ * a
+ * b
+ */
+```
+
+`·` marks a trailing space.
+Prettier keeps the Markdown hard break in `/**` only, following jsdoc3.
+Tools disagree on `/***`: TypeScript (`isJSDocLikeText`, so editor hovers) treats it as JSDoc, jsdoc3 ignores it.
+Formatting it as JSDoc does not break jsdoc3, which ignores it either way.
+Type cast comments already follow the rule, in Prettier too.

@@ -564,8 +564,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
                     let first_line = lines.next().unwrap();
                     write!(f, [text(first_line.trim_end())]);
 
-                    // Not `comment.is_jsdoc()`, which also accepts `/***`
-                    let is_jsdoc = content.starts_with("/**") && !content.starts_with("/***");
+                    let is_jsdoc = is_jsdoc_comment(comment);
 
                     // Indent the remaining lines by one space so that all `*` are aligned.
                     for line in lines {
@@ -658,4 +657,12 @@ fn is_alignable_comment(lines: &str) -> bool {
 /// A multi-line block comment that [`is_alignable_comment`].
 pub fn is_alignable_block_comment(comment: &Comment, source_text: SourceText) -> bool {
     comment.is_multiline_block() && is_alignable_comment(source_text.text_for(&comment.span))
+}
+
+/// A block comment starting with `/**`, including `/***`, at any position.
+///
+/// Not `Comment::is_jsdoc()`, which is leading only.
+/// For `/***`, see `DIVERGENCES.md#triple-star-jsdoc-hard-break`.
+pub fn is_jsdoc_comment(comment: &Comment) -> bool {
+    matches!(comment.content, CommentContent::Jsdoc | CommentContent::JsdocLegal)
 }

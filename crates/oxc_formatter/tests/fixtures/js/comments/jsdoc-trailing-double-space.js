@@ -35,10 +35,11 @@ function nested() {
   return 1;
 }
 
+// DIVERGENCES.md#triple-star-jsdoc-hard-break
 /***
- * Not JSDoc, spaces go.  
+ * Also JSDoc, spaces stay.  
  */
-function notJsdoc() {}
+function tripleStar() {}
 
 /*
  * Plain block comment, spaces go.  
