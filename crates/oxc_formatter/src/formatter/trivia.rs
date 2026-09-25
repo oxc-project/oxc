@@ -564,9 +564,17 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
                     let first_line = lines.next().unwrap();
                     write!(f, [text(first_line.trim_end())]);
 
+                    // Not `comment.is_jsdoc()`, which also accepts `/***`
+                    let is_jsdoc = content.starts_with("/**") && !content.starts_with("/***");
+
                     // Indent the remaining lines by one space so that all `*` are aligned.
                     for line in lines {
-                        write!(f, [hard_line_break(), " ", text(line.trim())]);
+                        let trimmed = line.trim();
+                        write!(f, [hard_line_break(), " ", text(trimmed)]);
+                        // Keep a Markdown hard line break in JSDoc, as 2 trailing spaces
+                        if is_jsdoc && trimmed != "*" && line.ends_with("  ") {
+                            write!(f, ["  "]);
+                        }
                     }
                 } else {
                     // Normalize line endings `\r\n` to `\n`
