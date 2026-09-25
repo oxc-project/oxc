@@ -388,6 +388,17 @@ impl ConfigStore {
         self.base.base.config.options.report_unused_disable_directives
     }
 
+    /// Rule ids exempt from unused-disable-directive reporting, from the root config.
+    pub fn report_unused_disable_directives_exempt(&self) -> &[String] {
+        self.base
+            .base
+            .config
+            .options
+            .report_unused_disable_directives_exempt
+            .as_deref()
+            .unwrap_or(&[])
+    }
+
     /// Whether eslint-style disable directives are respected.
     pub fn respect_eslint_disable_directives(&self) -> bool {
         self.base.base.config.options.respect_eslint_disable_directives.unwrap_or(true)
