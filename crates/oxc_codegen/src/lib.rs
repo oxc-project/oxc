@@ -423,9 +423,9 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn print_code_point_escape(&mut self, cp: u32) {
         const HEX: &[u8; 16] = b"0123456789ABCDEF";
-        debug_assert!((0x10000..=0x10FFFF).contains(&cp));
+        debug_assert!((0x10000..=0x10_FFFF).contains(&cp));
 
-        if cp < 0x100000 {
+        if cp < 0x10_0000 {
             let bytes = [
                 b'\\',
                 b'u',
