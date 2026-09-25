@@ -15,6 +15,7 @@ use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_str::CompactStr;
 
 use crate::LintContext;
+use crate::OxlintSettings;
 pub use crate::utils::jest::parse_jest_fn::{
     ExpectError, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
@@ -165,13 +166,14 @@ pub struct PossibleJestNode<'a, 'b> {
 pub fn collect_possible_jest_call_node<'a, 'c>(
     ctx: &'c LintContext<'a>,
 ) -> Vec<PossibleJestNode<'a, 'c>> {
-    iter_possible_jest_call_node(ctx.semantic()).collect()
+    iter_possible_jest_call_node(ctx.semantic(), ctx.settings()).collect()
 }
 
 /// Iterate over all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be an iter over node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn iter_possible_jest_call_node<'a, 'c>(
     semantic: &'c Semantic<'a>,
+    settings: &'c OxlintSettings,
 ) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
@@ -181,11 +183,12 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
     //     expect(1 + 2).toEqual(3);
     // });
     // ```
-    let reference_id_with_original_list = collect_ids_referenced_to_import(semantic).chain(
-        collect_ids_referenced_to_global(semantic)
-            // set the original of global test function to None
-            .map(|id| (id, None)),
-    );
+    let reference_id_with_original_list = collect_ids_referenced_to_import(semantic, settings)
+        .chain(
+            collect_ids_referenced_to_global(semantic)
+                // set the original of global test function to None
+                .map(|id| (id, None)),
+        );
 
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.flat_map(move |(reference_id, original)| {
@@ -216,6 +219,7 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
 
 fn collect_ids_referenced_to_import<'a, 'c>(
     semantic: &'c Semantic<'a>,
+    settings: &'c OxlintSettings,
 ) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
     semantic
         .scoping()
@@ -231,10 +235,13 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(
-                    import_decl.source.value.as_str(),
-                    "@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest"
-                ) {
+                let source = import_decl.source.value.as_str();
+                // Bindings imported from `@jest/globals` or from a Vitest import
+                // source (either a built-in one or one configured via the
+                // `settings.vitest.vitestImports` setting) are candidates for
+                // Jest/Vitest function calls. The framework is determined later
+                // by `parse_jest_fn_call` via the file's framework flags.
+                if source == "@jest/globals" || settings.vitest.is_vitest_import_source(source) {
                     let original = find_original_name(import_decl, name);
                     return Some(
                         reference_ids.iter().map(move |&reference_id| (reference_id, original)),

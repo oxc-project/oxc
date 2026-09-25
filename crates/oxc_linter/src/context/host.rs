@@ -528,7 +528,7 @@ impl<'a> ContextHost<'a> {
         if self.plugins().has_test() {
             // let mut test_flags = FrameworkFlags::empty();
 
-            let vitest_like = has_vitest_imports(self.module_record());
+            let vitest_like = has_vitest_imports(self.module_record(), &self.config.settings);
             let jest_like =
                 is_jestlike_file(&self.file_path) || has_jest_imports(self.module_record());
 
