@@ -205,15 +205,14 @@ Prettier moves the comment inside for `keyof`/type-operator operands while keepi
 
 - Why: invariant (prettier/prettier#14617)
 - Pin: `tests/fixtures/js/comments/assignment-eol-line-comment.js`, `tests/fixtures/ts/comments/operator-eol-line-comment.ts`
+- Conformance: `js/comments/array-and-object.js`, `js/comments/assignment/variable-declarator.js`, `js/comments/variable-declarator.js`, `typescript/comments/type-literals.ts`
 
-Prettier's output crosses user content (the value the comment precedes, then the `;`) or changes line (own-lined in TS).
+Prettier's output crosses user content (the value the comment precedes, then the `;`) or changes line (own-lined).
 An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break).
-Block comments glued after the operator before it stay there, in order;
-Prettier prints the line comment first and the block on the value's line, crossing the block.
-A line comment before the operator rides its `line_suffix` past the operator and gets the same break;
-Prettier flushes it past the value.
-Comments the left side defers (own-line, or a block ending its line) lead the value, the line comment follows them in source order, as Prettier prints type aliases;
-for JS values, Prettier flushes the line comment past the value after a block (`const v = /* c */ 1; // d`) and before an own-line one.
+Block comments glued after the operator before it stay there, in order; Prettier prints the line comment first and the block on the value's line, crossing the block.
+A line comment before the operator rides its `line_suffix` past the operator and gets the same break; Prettier flushes it past the value.
+A single-line block comment ending the left side's line trails the left side; Prettier moves it across the operator.
+Comments the left side defers (own-line, or a multiline block ending its line) lead the value, the line comment follows them in source order, as Prettier prints type aliases; for JS values, Prettier prints the line comment before them.
 
 ```ts
 // input
@@ -223,6 +222,10 @@ const v2 = /* c */ // d
   1;
 const v3 // c
   = 1;
+const v4 /* c */
+  = 1;
+const v5 = // c
+  { a: 1 };
 type Alias = // c
   "VALUE";
 
@@ -233,6 +236,9 @@ const v2 = /* c */ // d
   1;
 const v3 = // c
   1;
+const v4 /* c */ = 1;
+const v5 = // c
+  { a: 1 };
 type Alias = // c
   "VALUE";
 
@@ -241,14 +247,19 @@ const v1 = 1; // c
 const v2 = // d
   /* c */ 1;
 const v3 = 1; // c
+const v4 = /* c */ 1;
+const v5 =
+  // c
+  { a: 1 };
 type Alias =
   // c
   "VALUE";
 ```
 
-Prettier treats the same shape three ways:
+Prettier treats the same shape differently:
 
-- JS keeps it only when the right-hand side breaks and flushes it past a fitting one (the prettier/prettier#14617-family attachment artifact)
+- JS keeps it only when the right-hand side breaks and flushes it past a fitting one (the prettier/prettier#14617-family attachment artifact),
+  except an object, array or template value, which gets it own-lined (`handleAssignmentLikeComments`)
 - TS type aliases and union-valued property signatures get it own-lined (the 3.9 union rewrite)
 - simple-typed property signatures get it flushed past the member and its `;` separator
 

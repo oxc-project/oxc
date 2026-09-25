@@ -138,36 +138,21 @@ pub enum AssignmentLikeLayout {
     SuppressedInitializer,
 }
 
-/// Based on Prettier's behavior:
-/// <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L853-L883>
-fn format_left_trailing_comments(
-    start: u32,
-    should_print_as_leading: bool,
-    f: &mut JsFormatter<'_, '_>,
-) {
+/// The left side's trailing comments up to the operator (see DIVERGENCES.md#eol-comment-after-assign-colon).
+fn format_left_trailing_comments(start: u32, f: &mut JsFormatter<'_, '_>) {
     let end_of_line_comments = f.context().comments().end_of_line_comments_after(start);
 
     let comments = if end_of_line_comments.is_empty() {
         let comments = f.context().comments().comments_before_character(start, b'=');
         if comments.iter().any(|c| c.preceded_by_newline()) { &[] } else { comments }
-    } else if should_print_as_leading || end_of_line_comments.last().is_some_and(|c| c.is_block()) {
-        // No trailing comments for these expressions or if the trailing comment is a block comment
+    } else if end_of_line_comments.last().is_some_and(|c| c.is_multiline_block()) {
+        // A line-ending multiline block is promoted own-line above the right-hand side
         &[]
     } else {
         end_of_line_comments
     };
 
     FormatTrailingComments::Comments(comments).fmt(f);
-}
-
-fn should_print_as_leading(expr: &Expression) -> bool {
-    matches!(
-        expr,
-        Expression::ObjectExpression(_)
-            | Expression::ArrayExpression(_)
-            | Expression::TemplateLiteral(_)
-            | Expression::TaggedTemplateExpression(_)
-    )
 }
 
 /// The minimum number of overlapping characters between left and right hand side
@@ -185,11 +170,7 @@ impl<'a> AssignmentLike<'a, '_> {
                             declarator.type_annotation()
                         ]
                     );
-                    format_left_trailing_comments(
-                        declarator.id.span().end,
-                        self.right_hugs_leading_comments(),
-                        f,
-                    );
+                    format_left_trailing_comments(declarator.id.span().end, f);
                 } else {
                     write!(
                         f,
@@ -204,11 +185,7 @@ impl<'a> AssignmentLike<'a, '_> {
             }
             AssignmentLike::AssignmentExpression(assignment) => {
                 write!(f, [FormatNodeWithoutTrailingComments(&assignment.left()),]);
-                format_left_trailing_comments(
-                    assignment.left.span().end,
-                    self.right_hugs_leading_comments(),
-                    f,
-                );
+                format_left_trailing_comments(assignment.left.span().end, f);
                 false
             }
             AssignmentLike::ObjectProperty(property) => {
@@ -328,7 +305,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 }
                 let start = type_alias_left_end(declaration);
 
-                format_left_trailing_comments(start, self.right_hugs_leading_comments(), f);
+                format_left_trailing_comments(start, f);
 
                 false
             }
@@ -541,37 +518,13 @@ impl<'a> AssignmentLike<'a, '_> {
 
     /// The comments glued after the operator up to a line comment ending its line (`= /* c */ // d`),
     /// printed right after the operator (see `Comments::mark_suppressed_after_operator` for their suppression target).
-    /// A right-hand side that hugs its leading comments (object, array, template) takes them instead.
     /// Comments the left side deferred are still pending: nothing glues, all lead the right-hand side in order.
-    fn operator_line_run(&self, operator_end: u32, f: &JsFormatter<'_, 'a>) -> &'a [Comment] {
-        if self.right_hugs_leading_comments()
-            || f.context().comments().has_comment_before(operator_end)
-        {
+    fn operator_line_run(operator_end: u32, f: &JsFormatter<'_, 'a>) -> &'a [Comment] {
+        if f.context().comments().has_comment_before(operator_end) {
             return &[];
         }
         let run = f.context().comments().end_of_line_comments_after(operator_end);
         if run.last().is_some_and(|c| c.is_line()) { run } else { &[] }
-    }
-
-    /// Prettier attaches the comments around the operator to these right-hand sides as leading (`handleAssignmentLikeComments`),
-    /// so nothing trails the left side or glues to the operator.
-    fn right_hugs_leading_comments(&self) -> bool {
-        match self {
-            Self::VariableDeclarator(declarator) => {
-                declarator.init.as_ref().is_some_and(should_print_as_leading)
-            }
-            Self::AssignmentExpression(assignment) => should_print_as_leading(&assignment.right),
-            Self::PropertyDefinition(property) => {
-                property.value.as_ref().is_some_and(should_print_as_leading)
-            }
-            Self::AccessorProperty(property) => {
-                property.value.as_ref().is_some_and(should_print_as_leading)
-            }
-            Self::TSTypeAliasDeclaration(decl) => {
-                matches!(decl.type_annotation, TSType::TSTypeLiteral(_))
-            }
-            Self::ObjectProperty(_) | Self::BindingProperty(_) => false,
-        }
     }
 
     /// End of the left-hand side (type annotation included), before the operator and any comments around it.
@@ -944,7 +897,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
                 f.context_mut().comments_mut().restore_view_limit(view_limit);
             }
             let operator_line_run =
-                operator_end.map_or(&[][..], |end| self.operator_line_run(end, f));
+                operator_end.map_or(&[][..], |end| Self::operator_line_run(end, f));
             // A line comment on the operator's line, before it (printed by the left side) or after it (the run):
             // the pending `line_suffix` must be followed by the break, or it flushes past the right-hand side
             let has_line_comment_on_operator_line = !operator_line_run.is_empty()

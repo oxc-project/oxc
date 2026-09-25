@@ -12,6 +12,9 @@
 type Alias = // c
   "VALUE";
 
+type AliasLiteral = // c
+  { a: 1 };
+
 type AliasUnion = // c
   | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines
   | BmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines;
@@ -24,13 +27,9 @@ interface I {
     | BmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines;
 }
 
-// Comments the left side defers lead the right-hand side, the line comment follows them in source order
+// A single-line block ending the left side's line trails the left side
+// (Prettier moves it across the operator, see DIVERGENCES.md#eol-comment-after-assign-colon)
 type Deferred /* c */
-= // d
-  "VALUE";
-
-type DeferredOwnLine
-// c
 = // d
   "VALUE";
 
@@ -41,3 +40,9 @@ type DeferredUnion<T> /* c */
 type DeferredIgnore /* c */
 = // prettier-ignore
   "A"  |  "B";
+
+// Own-line comments the left side defers lead the right-hand side, the line comment follows them in source order
+type DeferredOwnLine
+// c
+= // d
+  "VALUE";
