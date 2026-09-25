@@ -189,17 +189,22 @@ impl<const TABLE_SIZE: usize, Align> OpTable<TABLE_SIZE, Align> {
 
     /// Check if `bytes` starts with an operator from this hash table.
     ///
-    /// * If an operator is found, returns the [`TokenKind`] of the operator as a `u32`.
-    /// * Otherwise, returns 0.
+    /// * If an operator is found, returns `Some` containing the [`TokenKind`] of the operator as a `u32`.
+    /// * Otherwise, returns `None`.
     #[inline(always)]
-    fn lookup(&self, bytes: [u8; 4]) -> u32 {
+    fn lookup(&self, bytes: [u8; 4]) -> Option<u32> {
         let mask = if self.len == 2 { 0xFFFF } else { 0xFF_FFFF };
         let key = u32::from_le_bytes(bytes) & mask;
         let pack = self.pack(key);
-        // If bottom 3 bytes of `key` are all 0, it's possible that `key` hashes to an empty slot,
-        // so `pack == 0`. In that case `(pack & mask) == key` so `pack >> 24` is returned.
-        // But for empty slots, `pack >> 24` is also 0, so 0 is returned either way.
-        if (pack & mask) == key { pack >> 24 } else { 0 }
+
+        // If unmasked bytes of `bytes` are all zero, then `key` is 0.
+        // If the slot corresponding to `key: 0` was empty, `pack` would be 0,
+        // and `(pack & mask) == key` check would pass.
+        // We ensure that the tables are arranged so that slot is always occupied -
+        // `test_perfect_hash` test covers this.
+        // This means that `pack >> 24` cannot be 0 here - that branch always returns
+        // an operator `TokenKind`.
+        if (pack & mask) == key { Some(pack >> 24) } else { None }
     }
 }
 
@@ -309,13 +314,15 @@ pub(super) fn opmap_longest(bytes: [u8; 4], max_len: u32) -> (/* kind*/ u32, /* 
 
     if max_len >= 3 {
         let kind = OP3_TABLE.lookup(bytes);
-        if kind != 0 {
+        if let Some(kind) = kind {
             return (kind, 3);
         }
     }
 
     let kind = OP2_TABLE.lookup(bytes);
-    if kind != 0 && !(kind == tk!(OptionalChain) as u32 && is_digit(bytes[2])) {
+    if let Some(kind) = kind
+        && !(kind == tk!(OptionalChain) as u32 && is_digit(bytes[2]))
+    {
         return (kind, 2);
     }
 
@@ -386,7 +393,10 @@ mod tests {
             let bytes = op_def.bytes();
             let lookup_kind =
                 if op_def.len() == 2 { OP2_TABLE.lookup(bytes) } else { OP3_TABLE.lookup(bytes) };
-            assert!(lookup_kind == op_def.kind as u32, "OpDef {i}: `lookup` produced wrong kind");
+            assert!(
+                lookup_kind == Some(op_def.kind as u32),
+                "OpDef {i}: `lookup` produced wrong kind"
+            );
         }
     }
 
@@ -407,7 +417,7 @@ mod tests {
             let bytes = first_4_bytes(txt.as_bytes());
             let kind =
                 if txt.len() == 2 { OP2_TABLE.lookup(bytes) } else { OP3_TABLE.lookup(bytes) };
-            assert!(kind == 0, "`lookup` should return 0 for {txt:?}");
+            assert!(kind.is_none(), "`lookup` should return `None` for {txt:?}");
         }
     }
 
@@ -422,7 +432,7 @@ mod tests {
         let operator_count = OPMAP_OPS.iter().filter(|op_def| op_def.len() == len).count();
 
         // If table has no collisions, all good
-        if is_collision_free(table.data, operator_count) {
+        if is_collision_free(table.data, table.mul, operator_count) {
             return;
         }
 
@@ -430,7 +440,7 @@ mod tests {
         let mut mul = (1u32 << 24) | 1;
         while mul < (1u32 << 28) {
             let table_data = OpTableData::<TABLE_SIZE, Align>::new(len, mul);
-            if is_collision_free(&table_data, operator_count) {
+            if is_collision_free(&table_data, mul, operator_count) {
                 panic!(
                     "Current value for `OP{len}_MUL` produces collisions. Set it to 0x{:04X}_{:04X}.",
                     mul >> 16,
@@ -447,8 +457,15 @@ mod tests {
 
     fn is_collision_free<const TABLE_SIZE: usize, Align>(
         table_data: &OpTableData<TABLE_SIZE, Align>,
+        mul: u32,
         operator_count: usize,
     ) -> bool {
+        // Ensure `\0\0` and `\0\0\0` hash to a filled slot. `OpTable::lookup` requires this.
+        let slot_for_zero = table_data.slot(0, mul);
+        if table_data.values[slot_for_zero] == 0 {
+            return false;
+        }
+
         let filled_slots_count = table_data.values.iter().filter(|&&pack| pack != 0).count();
         filled_slots_count == operator_count
     }
