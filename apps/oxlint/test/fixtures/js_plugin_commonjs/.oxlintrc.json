@@ -1,0 +1,4 @@
+{
+  "jsPlugins": ["./plugin.js"],
+  "categories": { "correctness": "off" }
+}
