@@ -1,0 +1,53 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined.
+   ╭─[no_redeclare..cts:1:20]
+ 1 │ function f() { var Object; var Object; }
+   ·                    ───┬──      ───┬──
+   ·                       │           ╰── It can not be redeclared here.
+   ·                       ╰── 'Object' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined.
+   ╭─[no_redeclare..cts:1:12]
+ 1 │ function f(Object) { var Object; }
+   ·            ───┬──        ───┬──
+   ·               │             ╰── It can not be redeclared here.
+   ·               ╰── 'Object' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined.
+   ╭─[no_redeclare..cts:1:24]
+ 1 │ class C { static { var Object; var Object; } }
+   ·                        ───┬──      ───┬──
+   ·                           │           ╰── It can not be redeclared here.
+   ·                           ╰── 'Object' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined.
+   ╭─[no_redeclare..cts:1:19]
+ 1 │ namespace N { var Object; var Object; }
+   ·                   ───┬──      ───┬──
+   ·                      │           ╰── It can not be redeclared here.
+   ·                      ╰── 'Object' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
+   ╭─[no_redeclare..cts:1:22]
+ 1 │ if (condition) { var Object; }
+   ·                      ──────
+   ╰────
+  help: Use a different variable name to avoid shadowing the built-in global.
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
+   ╭─[no_redeclare..cts:1:10]
+ 1 │ for (var Object = 0; Object < 1; Object++) {}
+   ·          ──────
+   ╰────
+  help: Use a different variable name to avoid shadowing the built-in global.

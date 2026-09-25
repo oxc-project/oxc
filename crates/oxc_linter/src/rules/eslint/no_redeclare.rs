@@ -89,9 +89,11 @@ impl Rule for NoRedeclare {
         for symbol_id in ctx.scoping().symbol_ids() {
             let name = ctx.scoping().symbol_name(symbol_id);
             let decl_span = ctx.scoping().symbol_span(symbol_id);
-            let is_builtin = builtin_globals.is_some_and(|builtin_globals| {
-                builtin_globals.contains_key(name) || ctx.globals().is_enabled(name)
-            });
+            let is_builtin = ctx.scoping().symbol_scope_id(symbol_id)
+                == ctx.scoping().root_scope_id()
+                && builtin_globals.is_some_and(|builtin_globals| {
+                    builtin_globals.contains_key(name) || ctx.globals().is_enabled(name)
+                });
 
             if is_builtin {
                 ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, decl_span));
@@ -240,4 +242,78 @@ fn test() {
         .change_rule_path_extension(".ts")
         .with_snapshot_suffix("es-modules")
         .test_and_snapshot();
+}
+
+#[test]
+fn test_builtin_global_scopes() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "function f() { var Object; }",
+        "function f(Object) {}",
+        "function f({ Object }) {}",
+        "{ let Object; }",
+        "for (let Object = 0; Object < 1; Object++) {}",
+        "try {} catch (Object) {}",
+        "class C { static { var Object; } }",
+        "const f = function Object() {};",
+        "const C = class Object {};",
+        "namespace N { export const Object = 1; }",
+        "declare namespace N { const Object: unknown; }",
+        "export {}; declare global { var Object: unknown; }",
+    ];
+
+    let fail = vec![
+        "function f() { var Object; var Object; }",
+        "function f(Object) { var Object; }",
+        "class C { static { var Object; var Object; } }",
+        "namespace N { var Object; var Object; }",
+        "if (condition) { var Object; }",
+        "for (var Object = 0; Object < 1; Object++) {}",
+    ];
+
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail)
+        .change_rule_path_extension(".cts")
+        .with_snapshot_suffix("scoped-globals")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_configured_global_scopes() {
+    use crate::tester::Tester;
+
+    // Imports inside an ambient module do not redeclare a configured global.
+    // Issue: <https://github.com/oxc-project/oxc/issues/19157>
+    for global in ["readonly", "writable", "off"] {
+        let config = Some(serde_json::json!({ "globals": { "Mesh": global } }));
+        let pass = vec![
+            (
+                r#"declare module "troika-three-text" {
+                    import type { Mesh } from "three";
+                    export class Text extends Mesh {}
+                }"#,
+                None,
+                config.clone(),
+            ),
+            (
+                r#"declare module "troika-three-text" {
+                    import { Mesh } from "three";
+                    export class Text extends Mesh {}
+                }"#,
+                None,
+                config.clone(),
+            ),
+        ];
+
+        Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, vec![])
+            .change_rule_path_extension(".d.ts")
+            .test();
+
+        let pass = vec![("function f(Mesh) {}", None, config.clone())];
+        let fail = vec![("function f() { var Mesh; var Mesh; }", None, config)];
+
+        Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail)
+            .change_rule_path_extension(".cts")
+            .test();
+    }
 }
