@@ -9,10 +9,6 @@ on:
 permissions:
   pull-requests: read
 
-concurrency:
-  group: monitor-oxc-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: true
-
 jobs:
   trigger:
     if: >
@@ -29,6 +25,9 @@ jobs:
           github.event.comment.body == '/monitor-oxc run'
         )
       )
+    concurrency:
+      group: monitor-oxc-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
