@@ -459,6 +459,7 @@ fn emit_outlined_fn<'a>(
         params: ArenaVec::from_array_in([ParamPattern::Place(props_obj)], &env.allocator),
         returns: returns_place,
         context: ArenaVec::new_in(&env.allocator),
+        has_outer_lexical_reference: false,
         body: HIR { entry: BlockId::ENTRY, blocks },
         instructions: instr_table,
         generator: false,
