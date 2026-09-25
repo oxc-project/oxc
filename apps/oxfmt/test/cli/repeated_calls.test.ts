@@ -38,8 +38,7 @@ it("formats files on repeated CLI calls in the same process", async () => {
         },
         (options, code) => toFormatFileResult(pool!.run({ options, code }, { name: "formatFile" })),
         (options, code) => toNullable(pool!.run({ options, code }, { name: "formatEmbeddedCode" })),
-        (options, code) =>
-          toNullable(pool!.run({ options, code }, { name: "formatEmbeddedDoc" })),
+        (options, code) => toNullable(pool!.run({ options, code }, { name: "formatEmbeddedDoc" })),
         (options, classes) =>
           toNullable(pool!.run({ options, classes }, { name: "sortTailwindClasses" })),
       );
