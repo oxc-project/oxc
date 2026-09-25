@@ -20,7 +20,9 @@ use crate::{
         rules::OverrideRulesError,
     },
     external_linter::ExternalLinter,
-    external_plugin_store::{ExternalOptionsId, ExternalRuleId},
+    external_plugin_store::{
+        ExternalOptionsId, ExternalPluginIdentity, ExternalPluginIdentityConflict, ExternalRuleId,
+    },
     rules::RULES,
 };
 
@@ -675,6 +677,28 @@ impl ConfigStoreBuilder {
             });
         }
 
+        // `package_json` is the manifest of the package the resolved plugin file is part of,
+        // not the one of the config which asks for the plugin.
+        let identity = resolved.package_json().and_then(|package_json| {
+            let entry_path = plugin_path.strip_prefix(package_json.directory()).ok()?;
+            Some(ExternalPluginIdentity::new(
+                package_json.name()?,
+                package_json.version()?,
+                entry_path.to_path_buf(),
+                alias,
+            ))
+        });
+
+        match external_plugin_store.try_reuse_plugin(&plugin_path, identity.as_ref()) {
+            Ok(true) => return Ok(()),
+            Ok(false) => {}
+            Err(conflict) => {
+                return Err(ConfigBuilderError::ExternalPluginIdentityConflict {
+                    conflict: Box::new(conflict),
+                });
+            }
+        }
+
         // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = String::from(Url::from_file_path(&plugin_path).unwrap());
@@ -695,6 +719,7 @@ impl ConfigStoreBuilder {
             external_plugin_store.register_plugin(
                 plugin_path,
                 plugin_name,
+                identity,
                 result.offset,
                 result.rule_names,
             );
@@ -763,6 +788,11 @@ pub enum ConfigBuilderError {
     },
     ReservedExternalPluginName {
         plugin_name: String,
+    },
+    /// Two installations of the same plugin package, at different versions, would claim the same
+    /// plugin name.
+    ExternalPluginIdentityConflict {
+        conflict: Box<ExternalPluginIdentityConflict>,
     },
     /// A JS config extended via `extends` contained a relative JS plugin specifier.
     ///
@@ -839,6 +869,30 @@ impl Display for ConfigBuilderError {
                      See: https://oxc.rs/docs/guide/usage/linter/js-plugins.html",
                 )?;
                 Ok(())
+            }
+            ConfigBuilderError::ExternalPluginIdentityConflict { conflict } => {
+                let ExternalPluginIdentityConflict {
+                    registered_identity,
+                    registered_path,
+                    requested_identity,
+                    requested_path,
+                } = &**conflict;
+                write!(
+                    f,
+                    "JS plugin '{plugin}' is installed at two versions, \
+                     which would both be registered under the same plugin name.\n\
+                     \n\
+                     {registered_version} at {registered_path}\n\
+                     {requested_version} at {requested_path}\n\
+                     \n\
+                     Install the same version in both places, \
+                     or give one of them a different name with an alias in `jsPlugins`.",
+                    plugin = requested_identity.package_name(),
+                    registered_version = registered_identity.version(),
+                    registered_path = registered_path.display(),
+                    requested_version = requested_identity.version(),
+                    requested_path = requested_path.display(),
+                )
             }
             ConfigBuilderError::RelativeExternalPluginSpecifierInExtends { plugin_specifier } => {
                 write!(
@@ -1826,5 +1880,279 @@ mod test {
         .unwrap()
         .build(&mut external_plugin_store)
         .unwrap()
+    }
+
+    /// Deduplication of JS plugins which are installed separately in each package of a monorepo.
+    ///
+    /// The packages the identity is read from are in `fixtures/js_plugin_dedupe`.
+    mod external_plugin_dedupe {
+        use std::sync::{Arc, Mutex};
+
+        use rustc_hash::FxHashMap;
+
+        use crate::{
+            ExternalLinter, ExternalPluginStore, external_linter::LoadPluginResult,
+            external_plugin_store::ExternalRuleId,
+        };
+
+        use super::super::{
+            ConfigBuilderError, ConfigStoreBuilder, ResolveOptions, Resolver, normalize_plugin_name,
+        };
+        use super::PathBuf;
+
+        /// Stand-in for the JS side.
+        ///
+        /// Records which plugin modules are imported, and rejects a plugin name which is already
+        /// registered, as `registerPlugin` does. Registrations are held per workspace, because the
+        /// JS side holds one plugin and rule registry per workspace.
+        #[derive(Default)]
+        struct JsSide {
+            loaded_urls: Vec<String>,
+            workspaces: FxHashMap<String, JsWorkspace>,
+        }
+
+        #[derive(Default)]
+        struct JsWorkspace {
+            plugin_names: Vec<String>,
+            rule_count: usize,
+        }
+
+        fn external_linter(js_side: &Arc<Mutex<JsSide>>) -> ExternalLinter {
+            let js_side = Arc::clone(js_side);
+            ExternalLinter::new(
+                Arc::new(Box::new(move |url: String, plugin_name, _is_alias, workspace_uri| {
+                    // On JS side `plugin.meta.name` takes priority over the name Rust provides,
+                    // and is the only name left when the package provides none. The fixture
+                    // plugins define no `meta.name`, so the name of the directory the plugin is
+                    // installed in stands in for it, normalized as the JS side normalizes
+                    // `meta.name`.
+                    let name = plugin_name.unwrap_or_else(|| {
+                        normalize_plugin_name(url.rsplit('/').nth(1).unwrap()).into_owned()
+                    });
+
+                    let mut js_side = js_side.lock().unwrap();
+                    js_side.loaded_urls.push(url);
+
+                    let workspace =
+                        js_side.workspaces.entry(workspace_uri.unwrap_or_default()).or_default();
+                    if workspace.plugin_names.contains(&name) {
+                        return Err(format!("Error: Plugin name '{name}' is already registered."));
+                    }
+                    workspace.plugin_names.push(name.clone());
+
+                    let offset = workspace.rule_count;
+                    workspace.rule_count += 1;
+                    Ok(LoadPluginResult {
+                        name,
+                        offset,
+                        rule_names: vec!["no-debugger".to_string()],
+                    })
+                })),
+                Arc::new(Box::new(|_| Ok(()))),
+                Arc::new(Box::new(|_, _, _, _, _, _, _, _| unreachable!())),
+                Arc::new(Box::new(|_| Ok(()))),
+                Arc::new(Box::new(|_| Ok(()))),
+            )
+        }
+
+        /// Load a plugin as the config in `package_dir` of the fixture monorepo would.
+        fn load_plugin(
+            store: &mut ExternalPluginStore,
+            external_linter: &ExternalLinter,
+            package_dir: &str,
+            specifier: &str,
+            alias: Option<&str>,
+            workspace_uri: Option<&str>,
+        ) -> Result<(), ConfigBuilderError> {
+            let config_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("fixtures/js_plugin_dedupe/packages")
+                .join(package_dir);
+            let resolver = Resolver::new(ResolveOptions {
+                condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
+                ..Default::default()
+            });
+            ConfigStoreBuilder::load_external_plugin(
+                &config_dir,
+                specifier,
+                alias,
+                external_linter,
+                &resolver,
+                store,
+                workspace_uri,
+            )
+        }
+
+        fn loaded_count(js_side: &Arc<Mutex<JsSide>>) -> usize {
+            js_side.lock().unwrap().loaded_urls.len()
+        }
+
+        fn rule_id(store: &ExternalPluginStore, plugin_name: &str) -> ExternalRuleId {
+            store.lookup_rule_id(plugin_name, "no-debugger").unwrap()
+        }
+
+        #[test]
+        fn plugin_resolving_to_a_registered_path_is_reused() {
+            let js_side = Arc::new(Mutex::new(JsSide::default()));
+            let external_linter = external_linter(&js_side);
+            let mut store = ExternalPluginStore::new(true);
+
+            for _ in 0..2 {
+                load_plugin(&mut store, &external_linter, "a", "oxlint-plugin-dupe", None, None)
+                    .unwrap();
+            }
+
+            assert_eq!(loaded_count(&js_side), 1);
+        }
+
+        #[test]
+        fn plugin_installed_in_two_packages_at_same_version_is_loaded_once() {
+            let js_side = Arc::new(Mutex::new(JsSide::default()));
+            let external_linter = external_linter(&js_side);
+            let mut store = ExternalPluginStore::new(true);
+
+            load_plugin(&mut store, &external_linter, "a", "oxlint-plugin-dupe", None, None)
+                .unwrap();
+            load_plugin(&mut store, &external_linter, "b", "oxlint-plugin-dupe", None, None)
+                .unwrap();
+
+            assert_eq!(loaded_count(&js_side), 1);
+        }
+
+        #[test]
+        fn rules_of_a_reused_plugin_keep_their_ids() {
+            let js_side = Arc::new(Mutex::new(JsSide::default()));
+            let external_linter = external_linter(&js_side);
+            let mut store = ExternalPluginStore::new(true);
+
+            load_plugin(&mut store, &external_linter, "a", "oxlint-plugin-dupe", None, None)
+                .unwrap();
+            let first_rule_id = rule_id(&store, "dupe");
+            load_plugin(&mut store, &external_linter, "b", "oxlint-plugin-dupe", None, None)
+                .unwrap();
+
+            assert_eq!(rule_id(&store, "dupe"), first_rule_id);
+        }
+
+        #[test]
+        fn plugin_requested_under_an_alias_is_loaded_separately() {
+            let js_side = Arc::new(Mutex::new(JsSide::default()));
+            let external_linter = external_linter(&js_side);
+            let mut store = ExternalPluginStore::new(true);
+
+            load_plugin(
+                &mut store,
+                &external_linter,
+                "a",
+                "oxlint-plugin-dupe",
+                Some("dupe-alias"),
+                None,
+            )
+            .unwrap();
+            load_plugin(&mut store, &external_linter, "b", "oxlint-plugin-dupe", None, None)
+                .unwrap();
+
+            assert_eq!(loaded_count(&js_side), 2);
+            assert_ne!(rule_id(&store, "dupe-alias"), rule_id(&store, "dupe"));
+        }
+
+        #[test]
+        fn two_versions_of_a_plugin_report_both_versions_and_paths() {
+            let js_side = Arc::new(Mutex::new(JsSide::default()));
+            let external_linter = external_linter(&js_side);
+            let mut store = ExternalPluginStore::new(true);
+
+            load_plugin(&mut store, &external_linter, "a", "oxlint-plugin-dupe", None, None)
+                .unwrap();
+            let err =
+                load_plugin(&mut store, &external_linter, "c", "oxlint-plugin-dupe", None, None)
+                    .unwrap_err();
+
+            assert!(matches!(err, ConfigBuilderError::ExternalPluginIdentityConflict { .. }));
+            let message = err.to_string();
+            assert!(message.contains("oxlint-plugin-dupe"), "{message}");
+            assert!(message.contains("1.0.0"), "{message}");
+            assert!(message.contains("2.0.0"), "{message}");
+            assert!(
+                message.contains("packages/a/node_modules/oxlint-plugin-dupe/index.js"),
+                "{message}"
+            );
+            assert!(
+                message.contains("packages/c/node_modules/oxlint-plugin-dupe/index.js"),
+                "{message}"
+            );
+            assert_eq!(loaded_count(&js_side), 1);
+        }
+
+        #[test]
+        fn plugin_package_without_a_version_is_loaded_again() {
+            let js_side = Arc::new(Mutex::new(JsSide::default()));
+            let external_linter = external_linter(&js_side);
+            let mut store = ExternalPluginStore::new(true);
+
+            load_plugin(&mut store, &external_linter, "a", "oxlint-plugin-unversioned", None, None)
+                .unwrap();
+            let err = load_plugin(
+                &mut store,
+                &external_linter,
+                "b",
+                "oxlint-plugin-unversioned",
+                None,
+                None,
+            )
+            .unwrap_err();
+
+            assert_eq!(loaded_count(&js_side), 2);
+            let message = err.to_string();
+            assert!(
+                message.contains("Plugin name 'unversioned' is already registered"),
+                "{message}"
+            );
+        }
+
+        #[test]
+        fn plugin_package_without_a_name_is_loaded_again() {
+            let js_side = Arc::new(Mutex::new(JsSide::default()));
+            let external_linter = external_linter(&js_side);
+            let mut store = ExternalPluginStore::new(true);
+
+            load_plugin(&mut store, &external_linter, "a", "oxlint-plugin-nameless", None, None)
+                .unwrap();
+            let err = load_plugin(
+                &mut store,
+                &external_linter,
+                "b",
+                "oxlint-plugin-nameless",
+                None,
+                None,
+            )
+            .unwrap_err();
+
+            assert_eq!(loaded_count(&js_side), 2);
+            let message = err.to_string();
+            assert!(message.contains("Plugin name 'nameless' is already registered"), "{message}");
+        }
+
+        #[test]
+        fn plugin_is_not_reused_across_plugin_stores() {
+            let js_side = Arc::new(Mutex::new(JsSide::default()));
+            let external_linter = external_linter(&js_side);
+
+            // The language server builds one `ExternalPluginStore` per workspace folder,
+            // and the JS side holds one plugin registry per workspace.
+            for workspace_uri in ["file:///workspace-a", "file:///workspace-b"] {
+                let mut store = ExternalPluginStore::new(true);
+                load_plugin(
+                    &mut store,
+                    &external_linter,
+                    "a",
+                    "oxlint-plugin-dupe",
+                    None,
+                    Some(workspace_uri),
+                )
+                .unwrap();
+            }
+
+            assert_eq!(loaded_count(&js_side), 2);
+        }
     }
 }
