@@ -55,7 +55,7 @@ pub enum Term<'a> {
 }
 
 /// Simple form of assertion.
-/// e.g. `^`, `$`, `\b`, `\B`
+/// e.g. `^`, `$`, `\b`, `\B`, `\A`, `\z`, `\Z`
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq)]
@@ -72,6 +72,13 @@ pub enum BoundaryAssertionKind {
     End = 1,
     Boundary = 2,
     NegativeBoundary = 3,
+    /// `\A`: start of input, regardless of multiline mode. Unicode mode only.
+    StartBuffer = 4,
+    /// `\z`: end of input, regardless of multiline mode. Unicode mode only.
+    EndBuffer = 5,
+    /// `\Z`: end of input or before a final line terminator or CRLF sequence,
+    /// regardless of multiline mode. Unicode mode only.
+    EndBufferOptionalNewline = 6,
 }
 
 /// Lookaround assertion.

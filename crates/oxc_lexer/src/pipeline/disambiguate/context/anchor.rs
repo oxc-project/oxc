@@ -6,7 +6,10 @@
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use super::*;
-use crate::pipeline::disambiguate::{RULE_SCAN_CAP, common::Prev};
+use crate::pipeline::disambiguate::{
+    RULE_SCAN_CAP,
+    common::{Peek, Prev},
+};
 
 /// Where a bounded walk starts.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -17,12 +20,12 @@ pub(super) enum Anchor {
     /// `(` whose group holds the query.
     Expr(usize),
     /// The bounded walk already covers this point and continues from where it stopped.
-    Continue,
+    Continue { semi: u32, brace: u32 },
 }
 
 /// Is the word at `p` an attribute inside a JSX opening tag? Scans back over attribute names,
 /// values and `=` to the tag's `<`.
-pub(super) fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
+fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
     let mut q = tokens.prev_sig(p);
     let mut steps = 0u32;
     while let Some(w) = q {
@@ -63,12 +66,11 @@ pub(super) fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
 
 /// Can the token at `f` follow a statement keyword but not a property, member or attribute name?
 #[rustfmt::skip::macros(matches_tk)]
-pub(super) fn keyword_follower(tokens: &Tokens, f: usize) -> bool {
-    let k = tokens.base_kind(f);
-    if k >= OP_KIND_BASE {
-        return matches!(tokens.src[f], b'{' | b'-' | b'+' | b'~' | b'*' | b'@');
+fn keyword_follower(f: Peek) -> bool {
+    if f.kind >= OP_KIND_BASE {
+        return matches!(f.byte, b'{' | b'-' | b'+' | b'~' | b'*' | b'@');
     }
-    matches_tk!(k,
+    matches_tk!(f.kind,
         Ident | String | Number | BigInt | TemplateNoSub | TemplateHead | RegExp
         | PrivateIdent | JsxLt
     )
@@ -76,7 +78,7 @@ pub(super) fn keyword_follower(tokens: &Tokens, f: usize) -> bool {
 
 /// Does a statement start at `p` as far as the token before it can tell? `}` needs the JSX check
 /// (an attribute after a `{...}` value); a line break allows a statement after anything else.
-pub(super) fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
+fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
     match prev {
         Prev::None => true,
         Prev::Op(_, b';' | b'{' | b')' | b':') => true,
@@ -92,7 +94,7 @@ pub(super) fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
 /// `function` / `class` at `at` (`async` for `async function`): a declaration or an expression,
 /// read off the token before. `named` says a name follows (a label's `:` then precedes a
 /// declaration, a property's an expression; only a name allows ASI to start a declaration).
-pub(super) fn fn_class_anchor(
+fn fn_class_anchor(
     tokens: &Tokens,
     at: usize,
     prev: Prev,
@@ -181,15 +183,10 @@ pub(super) fn fn_class_anchor(
 /// `function` at `at` (or the `async` before it), with the token after `function` at `f`: a named
 /// function is a declaration or an expression by its context; an anonymous one is an expression,
 /// or a method named `function`, which is no anchor.
-pub(super) fn function_anchor(tokens: &Tokens, at: usize, prev: Prev, f: usize) -> Option<Anchor> {
-    if f >= tokens.n {
-        return None;
-    }
-    let fk = tokens.base_kind(f);
-    let fc = tokens.src[f];
-    if fk == tk!(Ident) || (fk >= OP_KIND_BASE && fc == b'*') {
+fn function_anchor(tokens: &Tokens, at: usize, prev: Prev, f: Peek) -> Option<Anchor> {
+    if f.kind == tk!(Ident) || (f.kind >= OP_KIND_BASE && f.byte == b'*') {
         fn_class_anchor(tokens, at, prev, false, true)
-    } else if fk >= OP_KIND_BASE && fc == b'(' {
+    } else if f.kind >= OP_KIND_BASE && f.byte == b'(' {
         match fn_class_anchor(tokens, at, prev, false, false) {
             Some(Anchor::Expr(a)) => Some(Anchor::Expr(a)),
             _ => None,
@@ -202,41 +199,32 @@ pub(super) fn function_anchor(tokens: &Tokens, at: usize, prev: Prev, f: usize) 
 /// Is the word at `p` an anchor? Also its keyword code (0: a plain name).
 pub(super) fn anchor_at(tokens: &Tokens, p: usize) -> (u8, Option<Anchor>) {
     let e = tokens.next_start(p + 1);
-    // Keywords are lowercase words of up to ten letters: skip the hash for the rest.
-    if !tokens.src[p].is_ascii_lowercase() || e - p > 10 {
-        return (0, None);
-    }
     let kw = tokens.word_kw(p, e - p);
-    let anchor = anchor_of(tokens, p, e, kw);
-    (kw, anchor)
+    (kw, anchor_of(tokens, p, e, kw))
 }
 
 #[rustfmt::skip::macros(tk)]
-pub(super) fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
+fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
     if kw == 0 {
         return None;
     }
     let prev = tokens.prev_token(p);
     // A property name.
-    if let Prev::Op(q, c) = prev
-        && (c == b'.' || (c == b'?' && tokens.src[q + 1] == b'.'))
-    {
+    if prev.is_member_dot(tokens.src) {
         return None;
     }
-    let f = tokens.next_sig(e);
-    if f >= tokens.n {
+    let f = tokens.peek(e);
+    if f.kind == tk!(Eof) {
         return None;
     }
-    let fk = tokens.base_kind(f);
-    let fc = tokens.src[f];
-    let f_kw = if fk == tk!(Ident) { tokens.ident_kw(f) } else { 0 };
-    let same_line = !tokens.line_break_between(e, f);
+    let f_kw = if f.kind == tk!(Ident) { tokens.ident_kw(f.pos) } else { 0 };
+    let same_line = !tokens.line_break_between(e, f.pos);
     match kw {
         tk!(KwFunction) => function_anchor(tokens, p, prev, f),
         tk!(KwClass) => {
-            if fk == tk!(Ident) {
+            if f.kind == tk!(Ident) {
                 fn_class_anchor(tokens, p, prev, true, true)
-            } else if fk >= OP_KIND_BASE && matches!(fc, b'{' | b'<') {
+            } else if f.kind >= OP_KIND_BASE && matches!(f.byte, b'{' | b'<') {
                 fn_class_anchor(tokens, p, prev, true, false)
             } else {
                 None
@@ -244,8 +232,7 @@ pub(super) fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<A
         }
         tk!(KwAsync) => {
             if f_kw == tk!(KwFunction) && same_line {
-                let e2 = tokens.next_start(f + 1);
-                function_anchor(tokens, p, prev, tokens.next_sig(e2))
+                function_anchor(tokens, p, prev, tokens.peek(f.pos + 1))
             } else {
                 None
             }
@@ -255,7 +242,7 @@ pub(super) fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<A
             | KwDo | KwTry | KwFinally | KwBreak | KwContinue | KwDebugger | KwIf | KwFor | KwWhile
             | KwSwitch | KwWith | KwCatch
         ) => {
-            if keyword_follower(tokens, f) && stmt_boundary(tokens, p, prev) {
+            if keyword_follower(f) && stmt_boundary(tokens, p, prev) {
                 Some(Anchor::Stmt(p))
             } else {
                 None
@@ -267,25 +254,29 @@ pub(super) fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<A
             }
             let ok = match kw {
                 tk!(KwLet) => {
-                    fk == tk!(Ident)
+                    f.kind == tk!(Ident)
                         && f_kw == 0
-                        && second_follower(tokens, f, &[b'=', b';', b':', b','])
+                        && second_follower(tokens, f.pos, &[b'=', b';', b':', b','])
                 }
                 tk!(KwType) => {
-                    fk == tk!(Ident) && f_kw == 0 && second_follower(tokens, f, &[b'=', b'<'])
+                    f.kind == tk!(Ident)
+                        && f_kw == 0
+                        && second_follower(tokens, f.pos, &[b'=', b'<'])
                 }
                 tk!(KwInterface) => {
-                    fk == tk!(Ident)
+                    f.kind == tk!(Ident)
                         && f_kw == 0
-                        && (second_follower(tokens, f, &[b'{', b'<'])
-                            || second_word(tokens, f) == tk!(KwExtends))
+                        && (second_follower(tokens, f.pos, &[b'{', b'<'])
+                            || second_word(tokens, f.pos) == tk!(KwExtends))
                 }
                 tk!(KwNamespace) => {
-                    fk == tk!(Ident) && f_kw == 0 && second_follower(tokens, f, &[b'{', b'.'])
+                    f.kind == tk!(Ident)
+                        && f_kw == 0
+                        && second_follower(tokens, f.pos, &[b'{', b'.'])
                 }
                 tk!(KwModule) => {
-                    ((fk == tk!(Ident) && f_kw == 0) || fk == tk!(String))
-                        && second_follower(tokens, f, &[b'{'])
+                    ((f.kind == tk!(Ident) && f_kw == 0) || f.kind == tk!(String))
+                        && second_follower(tokens, f.pos, &[b'{'])
                 }
                 tk!(KwDeclare) => matches_tk!(
                     f_kw,
@@ -312,37 +303,31 @@ pub(super) fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<A
 }
 
 /// Is the significant token after the word at `f` one of `ops`?
-pub(super) fn second_follower(tokens: &Tokens, f: usize, ops: &[u8]) -> bool {
-    let e = tokens.next_start(f + 1);
-    let s = tokens.next_sig(e);
-    s < tokens.n && tokens.base_kind(s) >= OP_KIND_BASE && ops.contains(&tokens.src[s])
+fn second_follower(tokens: &Tokens, f: usize, ops: &[u8]) -> bool {
+    let s = tokens.peek(f + 1);
+    s.kind >= OP_KIND_BASE && ops.contains(&s.byte)
 }
 
 /// Keyword code of the significant word after the word at `f` (0 if none).
-pub(super) fn second_word(tokens: &Tokens, f: usize) -> u8 {
-    let e = tokens.next_start(f + 1);
-    let s = tokens.next_sig(e);
-    if s < tokens.n && tokens.base_kind(s) == tk!(Ident) { tokens.ident_kw(s) } else { 0 }
+fn second_word(tokens: &Tokens, f: usize) -> u8 {
+    let s = tokens.peek(f + 1);
+    if s.kind == tk!(Ident) { tokens.ident_kw(s.pos) } else { 0 }
 }
 
 /// After the `}` at `c`: the position of a token that must start a statement or member there
 /// (a name, string, number, private name or decorator; not `as` / `satisfies` / `in` /
 /// `instanceof`, which continue a value), or None.
 pub(super) fn brace_boundary(tokens: &Tokens, c: usize) -> Option<usize> {
-    let f = tokens.next_sig(c + 1);
-    if f >= tokens.n {
-        return None;
-    }
-    let k = tokens.base_kind(f);
-    let ok = match k {
+    let f = tokens.peek(c + 1);
+    let ok = match f.kind {
         tk!(Ident) => !matches_tk!(
-            tokens.ident_kw(f),
+            tokens.ident_kw(f.pos),
             KwAs | KwSatisfies | KwIn | KwInstanceof | KwOf | KwImplements | KwExtends | KwFrom
         ),
         tk!(PrivateIdent | String | Number | BigInt) => true,
-        _ => k >= OP_KIND_BASE && tokens.src[f] == b'@',
+        _ => f.kind >= OP_KIND_BASE && f.byte == b'@',
     };
-    if ok { Some(f) } else { None }
+    ok.then_some(f.pos)
 }
 
 /// The `(` at `p` holds the query: where the walk starts when the token before makes the paren an

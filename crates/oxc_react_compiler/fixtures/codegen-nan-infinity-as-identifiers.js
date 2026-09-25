@@ -1,6 +1,6 @@
 // Constant propagation can produce NaN/Infinity from arithmetic.
-// These must be emitted as Identifier("NaN")/Identifier("Infinity"),
-// not NumericLiteral(NaN) which serializes to null in JSON.
+// These must be emitted as valid JavaScript expressions,
+// not non-finite NumericLiterals, which serialize to null in JSON.
 
 function Component({x}) {
   const nan = 0 / 0;

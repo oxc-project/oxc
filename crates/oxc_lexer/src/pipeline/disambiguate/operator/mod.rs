@@ -23,10 +23,11 @@
 
 use crate::{
     pipeline::bytes::is_digit,
-    token::{OP_KIND_BASE, matches_tk, tk},
+    token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
 };
 
 use super::{
+    WALK_SCAN_CAP,
     common::{Tokens, bits},
     context::{self, After, Walks},
 };
@@ -60,7 +61,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
     let mut q = bits::prev1(tokens.st, p);
     while let Some(qi) = q {
         let k = tokens.kind[qi];
-        if matches_tk!(k, Whitespace | LineComment | BlockComment | Hashbang) {
+        if is_trivia_byte(k) {
             q = bits::prev1(tokens.st, qi);
             continue;
         }
@@ -76,7 +77,11 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
             if !(ts && tokens.line_break_between(tokens.next_start(qi + 1), p)) {
                 return false;
             }
-            let from = if k == tk!(TemplateTail) { template_head(tokens, qi) } else { qi };
+            let from = if k == tk!(TemplateTail) {
+                tokens.template_head(qi, &mut 0, WALK_SCAN_CAP).unwrap_or(qi)
+            } else {
+                qi
+            };
             return context::after_from(tokens, walks, qi, from) == After::EndsDecl;
         }
         if matches_tk!(k, RegExp | PrivateIdent | PrivateIdentEscaped | JsxTagEnd | JsxLt) {
@@ -99,20 +104,18 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
             if prop_name(tokens, qi) {
                 return ts && newline && context::after(tokens, walks, qi) == After::EndsDecl;
             }
-            if k == tk!(Ident) && tokens.tables.keywords.is_regex_keyword_at(src, qi, e - qi) {
-                if ts && e - qi == 4 && tokens.ident_is(qi, b"void") {
+            let kw = tokens.word_kw(qi, e - qi);
+            if tokens.tables.keywords.is_regex_keyword(kw) {
+                if ts && kw == tk!(KwVoid) {
                     // `x as void / 2` is division; `void /re/` is not.
                     return context::after(tokens, walks, qi) != After::Value;
                 }
-                if !module
-                    && e - qi == 5
-                    && (tokens.ident_is(qi, b"yield") || tokens.ident_is(qi, b"await"))
-                {
+                if !module && matches_tk!(kw, KwYield | KwAwait) {
                     return context::after_scoped(tokens, walks, qi) != After::Value;
                 }
                 return true;
             }
-            if k == tk!(Ident) && e - qi == 2 && src[qi] == b'o' && src[qi + 1] == b'f' {
+            if kw == tk!(KwOf) {
                 return context::after(tokens, walks, qi) == After::Operand;
             }
             if newline {
@@ -204,27 +207,6 @@ fn prop_name(tokens: &Tokens, pos: usize) -> bool {
         && !(w >= 2 && src[w - 1] == b'.' && src[w - 2] == b'.')
 }
 
-/// The TemplateHead that opened the template whose TemplateTail is at `tail` (nested templates are
-/// crossed); `tail` itself if unbalanced.
-fn template_head(tokens: &Tokens, tail: usize) -> usize {
-    let mut depth = 0u32;
-    let mut q = tokens.prev_sig(tail);
-    while let Some(w) = q {
-        match tokens.kind[w] {
-            tk!(TemplateTail) => depth += 1,
-            tk!(TemplateHead) => {
-                if depth == 0 {
-                    return w;
-                }
-                depth -= 1;
-            }
-            _ => {}
-        }
-        q = tokens.prev_sig(w);
-    }
-    tail
-}
-
 #[inline]
 fn module_specifier_asi(tokens: &Tokens, spec: usize) -> bool {
     let Some(w) = tokens.prev_sig(spec) else {
@@ -263,7 +245,7 @@ fn tail_before(tokens: &Tokens, pos: usize) -> bool {
     if sk == tk!(Ident) {
         let e = tokens.next_start(sp + 1);
         return prop_name(tokens, sp)
-            || !tokens.tables.keywords.is_regex_keyword_at(src, sp, e - sp);
+            || !tokens.tables.keywords.is_regex_keyword(tokens.word_kw(sp, e - sp));
     }
     matches_tk!(sk, Number | BigInt | String | TemplateNoSub | TemplateTail | RegExp | PrivateIdent)
 }

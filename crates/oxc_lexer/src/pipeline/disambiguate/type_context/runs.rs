@@ -16,7 +16,9 @@
 
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
-use super::{bytes::lt_run_opens_type_args, type_list::type_args_at};
+use super::type_list::type_args_at;
+
+pub(crate) use super::bytes::lt_run_split;
 use crate::pipeline::disambiguate::{
     RULE_SCAN_CAP,
     common::{Prev, Tokens},
@@ -26,19 +28,12 @@ use crate::pipeline::disambiguate::{
 /// `coalesce` entry for a `>` run (`>>`, `>>>`, and a `>` glued to `=`): how many leading `>` bytes
 /// to leave unfused (each closes an open `<` list), or 0 to fuse.
 #[inline(never)]
-pub fn gt_run_split(tokens: &Tokens, walks: &mut Walks, p: usize, run: usize) -> usize {
+pub(crate) fn gt_run_split(tokens: &Tokens, walks: &mut Walks, p: usize, run: usize) -> usize {
     let mut g = 0usize;
     while g < run && tokens.src[p + g] == b'>' {
         g += 1;
     }
     run_shortcut(tokens, p, g).unwrap_or_else(|| context::angles_before(tokens, walks, p)).min(g)
-}
-
-/// `coalesce` entry for a `<<` run: true when the two `<` must stay separate
-/// tokens. Cold - `<<` is shift-left everywhere except this one shape.
-#[inline(never)]
-pub fn lt_run_split(tokens: &Tokens, p: usize) -> bool {
-    lt_run_opens_type_args(tokens, p)
 }
 
 /// The lists a `>` run of `run` bytes at `pos` closes, when its context cannot matter: the run
@@ -121,14 +116,12 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize) -> Option<usize> {
 ///   line (a type reference takes no arguments across a line break), or after `function` or
 ///   `class`.
 fn list_in_any_context(tokens: &Tokens, lt: usize) -> bool {
-    let t = tokens.next_sig(lt + 1);
-    if t < tokens.n && tokens.base_kind(t) == tk!(Ident) {
-        let x = tokens.next_sig(tokens.next_start(t + 1));
-        if x < tokens.n && tokens.ident_kw(x) == tk!(KwExtends) {
-            let f = tokens.next_sig(tokens.next_start(x + 1));
-            let tag = f < tokens.n
-                && tokens.base_kind(f) >= OP_KIND_BASE
-                && matches!(tokens.src[f], b'=' | b'>' | b'/');
+    let t = tokens.peek(lt + 1);
+    if t.kind == tk!(Ident) {
+        let x = tokens.peek(t.pos + 1);
+        if x.kind == tk!(Ident) && tokens.ident_kw(x.pos) == tk!(KwExtends) {
+            let f = tokens.peek(x.pos + 1);
+            let tag = f.kind >= OP_KIND_BASE && matches!(f.byte, b'=' | b'>' | b'/');
             if !tag {
                 return true;
             }

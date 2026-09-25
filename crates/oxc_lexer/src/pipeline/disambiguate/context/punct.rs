@@ -10,7 +10,7 @@ use super::*;
 impl Walk {
     pub(super) fn step_op(&mut self, tokens: &Tokens, pos: usize, newline: bool) -> usize {
         let c = tokens.src[pos];
-        let (mut len, _) = if is_op_char(c) || c == b'/' { tokens.munch(pos) } else { (1, 0) };
+        let mut len = if is_op_char(c) || c == b'/' { tokens.op_len(pos) } else { 1 };
         let c1 = tokens.src[pos + 1];
 
         // In a `for (` head an operator other than member access makes the binding an expression
@@ -177,7 +177,7 @@ impl Walk {
                         && tokens.ts
                         && !self.operand_allowed()
                         && !self.no_type_args
-                        && lt_run_opens_type_args(tokens, pos)
+                        && lt_run_split(tokens, pos)
                     {
                         // Two openers, not a shift.
                         self.less_than(tokens, pos);
@@ -229,8 +229,8 @@ impl Walk {
         let is_async = if self.closed_group { self.closed_group_async } else { self.arrow_async };
         self.prev_arrow = true;
         // Concise body unless `{` follows.
-        let nx = tokens.next_sig(pos + 2);
-        let block = nx < tokens.n && tokens.base_kind(nx) >= OP_KIND_BASE && tokens.src[nx] == b'{';
+        let nx = tokens.peek(pos + 2);
+        let block = nx.kind >= OP_KIND_BASE && nx.byte == b'{';
         if !block {
             let f = self.push(FrameKind::Concise);
             f.is_generator = false;
@@ -243,25 +243,21 @@ impl Walk {
     }
 
     pub(super) fn assign(&mut self) {
-        let si = self.stmt_frame();
-        let reg = self.stmt_reg();
-        if reg == S_TYPE_NAME && si == self.frames.len() - 1 {
+        let reg = self.top_reg();
+        if reg == S_TYPE_NAME {
             // `type X =`: the alias type.
             self.set_stmt_reg(S_NONE);
             self.open_region(R_STMT, true);
             return;
         }
-        if reg == S_IMPORT_NAME && si == self.frames.len() - 1 {
+        if reg == S_IMPORT_NAME {
             // `import X = ...`: a module reference.
             self.set_stmt_reg(S_NONE);
             self.open_region(R_STMT, true);
             return;
         }
-        if let Some(di) = self.decl_frame()
-            && self.frames[di].state == D_BOUND
-            && di == self.frames.len() - 1
-        {
-            self.frames[di].state = D_INIT;
+        if self.top_declarator() == D_BOUND {
+            self.top_mut().state = D_INIT;
         }
         if self.top_kind() == FrameKind::ClassBody {
             self.top_mut().state = M_VALUE;
@@ -271,13 +267,11 @@ impl Walk {
 
     pub(super) fn question(&mut self, tokens: &Tokens, pos: usize) {
         // Optional marker (`a?: T`, `a?,`, `a?)`) vs conditional.
-        let nx = tokens.next_sig(pos + 1);
-        let nc = if nx < tokens.n { tokens.src[nx] } else { 0 };
+        let nx = tokens.peek(pos + 1);
         let member = self.top_kind() == FrameKind::ClassBody;
-        let optional = nx < tokens.n
-            && tokens.base_kind(nx) >= OP_KIND_BASE
-            && (matches!(nc, b':' | b',' | b')' | b']' | b'>')
-                || (member && matches!(nc, b'(' | b'<')));
+        let optional = nx.kind >= OP_KIND_BASE
+            && (matches!(nx.byte, b':' | b',' | b')' | b']' | b'>')
+                || (member && matches!(nx.byte, b'(' | b'<')));
         if optional && !self.operand_allowed() {
             // Keep the member / parameter state.
             self.clear_prev();
@@ -287,7 +281,7 @@ impl Walk {
         self.operand_done();
     }
 
-    pub(super) fn colon(&mut self, tokens: &Tokens) {
+    fn colon(&mut self, tokens: &Tokens) {
         // A concise arrow body without a pending `?` of its own ends at a `:` (the `?` belongs to
         // the frame below).
         while self.top_kind() == FrameKind::Concise && self.top().open_questions == 0 {
@@ -356,11 +350,7 @@ impl Walk {
             }
             _ => {}
         }
-        if let Some(di) = self.decl_frame()
-            && tokens.ts
-            && self.frames[di].state == D_BOUND
-            && di == self.frames.len() - 1
-        {
+        if tokens.ts && self.top_declarator() == D_BOUND {
             // Declarator type annotation.
             self.open_region(R_INLINE, true);
             return;
@@ -382,15 +372,12 @@ impl Walk {
                 let f = self.top_mut();
                 f.state = F_ITER;
                 f.open_questions = 0;
-                f.decl_binding = false;
                 let si = self.stmt_frame();
                 self.frames[si].state = D_NONE;
                 self.operand_done();
             }
             FrameKind::ClassBody => {
-                let f = self.top_mut();
-                f.state = M_KEY_POS;
-                f.mods = 0;
+                self.top_mut().next_member();
                 self.operand_done();
             }
             _ => {
@@ -409,8 +396,7 @@ impl Walk {
         match top {
             FrameKind::Object | FrameKind::ClassBody => {
                 let f = self.top_mut();
-                f.state = M_KEY_POS;
-                f.mods = 0;
+                f.next_member();
                 f.open_questions = 0;
             }
             FrameKind::Head => {
@@ -419,11 +405,8 @@ impl Walk {
                 f.open_questions = 0;
             }
             _ => {
-                if let Some(di) = self.decl_frame()
-                    && di == self.frames.len() - 1
-                    && self.frames[di].state != D_NONE
-                {
-                    self.frames[di].state = D_BINDING;
+                if self.top_declarator() != D_NONE {
+                    self.top_mut().state = D_BINDING;
                 }
                 self.top_mut().open_questions = 0;
             }
@@ -439,7 +422,6 @@ impl Walk {
         let mut is_async = false;
         let mut strict = self.top().strict;
         let mut reserved = false;
-        let mut prologue = 0u8;
         if matches!(top, FrameKind::JsxTag | FrameKind::JsxElem) {
             kind = FrameKind::Container;
         } else if top == FrameKind::ClassHead {
@@ -470,7 +452,6 @@ impl Walk {
             value = h.is_value;
             generator = h.is_generator;
             is_async = h.is_async;
-            prologue = 1;
         } else if self.prev_arrow {
             kind = FrameKind::ArrowBody;
             is_async = self.arrow_async;
@@ -483,10 +464,7 @@ impl Walk {
             strict = true;
         } else {
             let reg = self.stmt_reg();
-            let binding = self.decl_frame().is_some_and(|di| {
-                self.frames[di].state == D_BINDING && di == self.frames.len() - 1
-            });
-            if binding {
+            if self.top_declarator() == D_BINDING {
                 kind = FrameKind::Pattern;
             } else if matches!(reg, S_IMPORT | S_EXPORT | S_IMPORT_NAME) {
                 kind = FrameKind::ModuleSpec;
@@ -515,14 +493,12 @@ impl Walk {
         let f = self.push(kind);
         f.is_value = value;
         f.strict = strict;
-        f.reserved =
-            reserved || (f.reserved && kind != FrameKind::FnBody && kind != FrameKind::ArrowBody);
-        f.prologue = prologue;
+        f.reserved |= reserved;
         if matches!(kind, FrameKind::FnBody | FrameKind::ArrowBody) {
             f.is_generator = generator;
             f.is_async = is_async;
             f.reserved = false;
-            f.prologue = 1;
+            f.prologue = true;
         }
         if kind == FrameKind::StaticBlock {
             f.is_generator = false;
@@ -532,37 +508,16 @@ impl Walk {
             f.decl = true;
             f.state = L_INTERFACE_BODY;
         }
-        self.expect = if matches!(
-            kind,
-            FrameKind::Block | FrameKind::FnBody | FrameKind::ArrowBody | FrameKind::StaticBlock
-        ) {
-            Expect::Statement
-        } else {
-            Expect::Operand
-        };
+        self.expect = if kind.is_stmt_holder() { Expect::Statement } else { Expect::Operand };
         self.clear_prev();
         self.decorator = 0;
     }
 
     pub(super) fn close_brace(&mut self) {
         // Virtual frames above the brace end with it.
-        let Some(f) = self.pop_to(&[
-            FrameKind::Block,
-            FrameKind::FnBody,
-            FrameKind::ArrowBody,
-            FrameKind::ClassBody,
-            FrameKind::StaticBlock,
-            FrameKind::Object,
-            FrameKind::Pattern,
-            FrameKind::TypeLit,
-            FrameKind::EnumBody,
-            FrameKind::ModuleSpec,
-            FrameKind::Container,
-        ]) else {
+        let Some(f) = self.pop_to(|k| k.closer() == b'}') else {
             // Unbalanced: treat as a block end.
-            self.unbalanced();
-            self.after_statement();
-            self.clear_prev();
+            self.unbalanced_close();
             return;
         };
         match f.kind {
@@ -580,9 +535,6 @@ impl Walk {
             FrameKind::Pattern => {
                 if let Some(di) = self.decl_frame() {
                     self.frames[di].state = D_BOUND;
-                    if self.frames[di].kind == FrameKind::Head {
-                        self.frames[di].decl_binding = true;
-                    }
                 }
                 self.value_done();
             }
@@ -595,12 +547,8 @@ impl Walk {
                         self.pop();
                     }
                     self.end_statement();
-                } else if let Some(i) = self.region_index() {
-                    let r = &mut self.frames[i];
-                    r.atom = true;
-                    r.inner = false;
-                    self.set_value();
-                    self.clear_prev();
+                } else if self.region_index().is_some() {
+                    self.type_atom(false);
                 } else {
                     self.after_statement();
                     self.clear_prev();
@@ -641,7 +589,7 @@ impl Walk {
     pub(super) fn open_paren(&mut self) {
         let top = self.top_kind();
         let si = self.stmt_frame();
-        let head = if is_stmt_holder(self.frames[si].kind) { self.frames[si].head } else { 0 };
+        let head = if self.frames[si].kind.is_stmt_holder() { self.frames[si].head } else { 0 };
         let kind;
         let mut generator = false;
         let mut is_async = false;
@@ -687,22 +635,13 @@ impl Walk {
         }
         if kind == FrameKind::Head {
             f.state = F_START;
-            f.decl_binding = false;
         }
         self.operand_done();
     }
 
     pub(super) fn close_paren(&mut self) {
-        let Some(f) = self.pop_to(&[
-            FrameKind::Head,
-            FrameKind::Params,
-            FrameKind::Call,
-            FrameKind::Group,
-            FrameKind::TypeParen,
-        ]) else {
-            self.unbalanced();
-            self.after_statement();
-            self.clear_prev();
+        let Some(f) = self.pop_to(|k| k.closer() == b')') else {
+            self.unbalanced_close();
             return;
         };
         match f.kind {
@@ -731,14 +670,11 @@ impl Walk {
 
     pub(super) fn open_bracket(&mut self) {
         let top = self.top_kind();
-        let binding = self
-            .decl_frame()
-            .is_some_and(|di| self.frames[di].state == D_BINDING && di == self.frames.len() - 1);
         let kind = if matches!(top, FrameKind::Object | FrameKind::ClassBody)
             && self.top().state == M_KEY_POS
         {
             FrameKind::ComputedKey
-        } else if binding {
+        } else if self.top_declarator() == D_BINDING {
             FrameKind::ArrayPattern
         } else if self.operand_allowed() {
             FrameKind::Array
@@ -751,16 +687,8 @@ impl Walk {
     }
 
     pub(super) fn close_bracket(&mut self) {
-        let Some(f) = self.pop_to(&[
-            FrameKind::Index,
-            FrameKind::Array,
-            FrameKind::ComputedKey,
-            FrameKind::TypeBracket,
-            FrameKind::ArrayPattern,
-        ]) else {
-            self.unbalanced();
-            self.after_statement();
-            self.clear_prev();
+        let Some(f) = self.pop_to(|k| k.closer() == b']') else {
+            self.unbalanced_close();
             return;
         };
         match f.kind {
@@ -771,9 +699,6 @@ impl Walk {
             FrameKind::ArrayPattern => {
                 if let Some(di) = self.decl_frame() {
                     self.frames[di].state = D_BOUND;
-                    if self.frames[di].kind == FrameKind::Head {
-                        self.frames[di].decl_binding = true;
-                    }
                 }
                 self.value_done();
             }

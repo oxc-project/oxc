@@ -12,6 +12,10 @@ use super::super::markers::{ListMarker, list_marker};
 /// Author opt-outs (`\- ` escape, blank line before an intended list) are pinned in
 /// `descriptions/043-list-interrupting-continuation`.
 pub(super) fn needs_mdast_parsing(text: &str) -> bool {
+    // Hard line break by 2 trailing spaces
+    if text.contains("  \n") {
+        return true;
+    }
     let bytes = text.as_bytes();
     let len = bytes.len();
     let mut i = 0;

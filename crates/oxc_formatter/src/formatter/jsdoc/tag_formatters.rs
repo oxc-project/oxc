@@ -473,10 +473,13 @@ impl JsdocFormatter<'_, '_> {
         }
 
         // Split description into first line and rest (avoids collecting all lines)
-        let (first_text_line, rest_of_desc) = match desc_raw.split_once('\n') {
-            Some((first, rest)) => (first.trim(), Some(rest)),
-            None => (desc_raw.trim(), None),
+        let (first_line, rest_of_desc) = match desc_raw.split_once('\n') {
+            Some((first, rest)) => (first, Some(rest)),
+            None => (desc_raw, None),
         };
+        let first_text_line = first_line.trim();
+        // Keep a Markdown hard line break, which `trim()` drops
+        let first_hard_break = rest_of_desc.is_some() && first_line.ends_with("  ");
 
         // If the description starts with a code fence, output the tag line alone
         // and treat the entire description as structural content with a blank line separator
@@ -626,6 +629,9 @@ impl JsdocFormatter<'_, '_> {
                 let mut s = if has_remaining {
                     let mut s = String::with_capacity(first_text.len() + 1 + remaining_desc.len());
                     s.push_str(&first_text);
+                    if first_hard_break {
+                        s.push_str("  ");
+                    }
                     s.push('\n');
                     s.push_str(&remaining_desc);
                     s
@@ -1130,8 +1136,11 @@ impl JsdocFormatter<'_, '_> {
         }
 
         let fits_on_one_line = prefix_len + str_width(&desc_text) <= self.wrap_width;
-        if fits_on_one_line || skip_wrapping {
-            // Fits on one line, or tag skips description formatting (no wrapping).
+        // Other descriptions go through wrapping, which collapses line breaks and spaces
+        let is_plain_one_liner =
+            fits_on_one_line && !desc_text.contains('\n') && !desc_text.contains("  ");
+        if is_plain_one_liner || skip_wrapping {
+            // Fits on one line as is, or tag skips description formatting (no wrapping).
             // Tags in TAGS_PEV_FORMATE_DESCRIPTION (e.g. @see) and unknown tags
             // keep their description on one line regardless of length.
             // When desc has embedded newlines (e.g. @module Name\n\nMore text),

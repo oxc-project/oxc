@@ -11,16 +11,14 @@
 //!   When the token alone doesn't settle it, the answer is [`Follow::Ctx`], and the caller decides.
 
 use crate::{
-    pipeline::{
-        bytes::{is_digit, is_id_start},
-        tables::Tables,
+    pipeline::bytes::{
+        block_comment_end, is_digit, is_id_start, line_break_in, line_terminator_after,
+        unicode_ws_len_at,
     },
-    token::{OP_KIND_BASE, matches_tk, tk},
+    token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
 };
 
-use crate::pipeline::disambiguate::common::{
-    Args, Tokens, bits, kind_at, lt_in_range, text, word_is_any, word_len,
-};
+use crate::pipeline::disambiguate::common::{Tokens, bits, kind_at, word_is_any, word_len};
 
 use super::bytes::{raw_template_end, scan_list_closer, skip_raw_literal, skip_ws_fwd};
 
@@ -28,13 +26,13 @@ const FOLLOW_SPLIT_WORDS: &[&[u8]] =
     &[b"in", b"instanceof", b"as", b"satisfies", b"extends", b"implements"];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub(super) enum Follow {
+enum Follow {
     Split,
     Fuse,
     Ctx,
 }
 
-pub(super) fn gt_follower(src: &[u8], n: usize, mut i: usize) -> Follow {
+fn gt_follower(src: &[u8], n: usize, mut i: usize) -> Follow {
     let mut broke = false;
     loop {
         if i >= n {
@@ -55,17 +53,17 @@ pub(super) fn gt_follower(src: &[u8], n: usize, mut i: usize) -> Follow {
                 let d = src[i + 1];
                 if d == b'/' {
                     broke = true;
-                    i = text::line_terminator_after(src, n, i + 2);
+                    i = line_terminator_after(src, n, i + 2);
                     continue;
                 }
                 if d != b'*' {
                     return Follow::Split;
                 }
-                let e = text::block_comment_end(src, n, i + 2);
+                let e = block_comment_end(src, n, i + 2);
                 if e >= n {
                     return Follow::Split;
                 }
-                if lt_in_range(src, i + 2, e) {
+                if line_break_in(src, i + 2, e) {
                     broke = true;
                 }
                 i = e + 1;
@@ -79,7 +77,7 @@ pub(super) fn gt_follower(src: &[u8], n: usize, mut i: usize) -> Follow {
                 i += 3;
                 continue;
             }
-            let wl = text::unicode_ws_len(src, i);
+            let wl = unicode_ws_len_at(src, i);
             if wl != 0 {
                 i += wl;
                 continue;
@@ -155,14 +153,8 @@ pub(super) fn gt_follower(src: &[u8], n: usize, mut i: usize) -> Follow {
 }
 
 #[rustfmt::skip::macros(matches_tk)]
-pub(super) fn type_list_legal(
-    t: &Tables,
-    src: &[u8],
-    st: &[u64],
-    kind: &[u8],
-    lo: usize,
-    hi: usize,
-) -> bool {
+fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
+    let Tokens { tables: t, src, st, kind, .. } = *tokens;
     let mut start = true;
     let mut braces: i32 = 0;
     let mut brackets: i32 = 0;
@@ -185,7 +177,7 @@ pub(super) fn type_list_legal(
     let mut w = bits::next1(st, lo, hi);
     while w < hi {
         let mut k = kind_at(kind, w);
-        if w == skip || matches_tk!(k, Whitespace | LineComment | BlockComment) {
+        if w == skip || is_trivia_byte(k) {
             w = bits::next1(st, w + 1, hi);
             continue;
         }
@@ -315,7 +307,7 @@ pub(super) fn type_list_legal(
                     if was_this || nx == b'=' || (nx == b'<' && !bits::get(st, w + 1)) {
                         return false;
                     }
-                    if !start && prev != usize::MAX && lt_in_range(src, prev, w) {
+                    if !start && prev != usize::MAX && line_break_in(src, prev, w) {
                         return false;
                     }
                     angle_bits = (angle_bits << 1) | u64::from(start);
@@ -428,18 +420,14 @@ fn type_illegal_kind(k: u8) -> bool {
 /// position: a balanced list whose contents are types and whose closer is followed by a token that
 /// cannot start an expression. In a type, every `<` after a name opens a list, so a `<` this
 /// accepts opens one in any context.
-pub(in crate::pipeline::disambiguate) fn type_args_at(tokens: &Tokens, lt: usize) -> bool {
+pub(crate) fn type_args_at(tokens: &Tokens, lt: usize) -> bool {
     let closers = tokens.closers;
     if let Some(r) = closers.get(lt) {
-        return match r.args() {
-            Args::Yes => true,
-            Args::No => false,
-            Args::Unknown => {
-                let yes = r.closer().is_some_and(|gt| list_is_type_args(tokens, lt, gt));
-                closers.set_args(lt, yes);
-                yes
-            }
-        };
+        return r.args.unwrap_or_else(|| {
+            let yes = r.closer().is_some_and(|gt| list_is_type_args(tokens, lt, gt));
+            closers.set_args(lt, yes);
+            yes
+        });
     }
     let yes = scan_list_closer(tokens, lt).is_some_and(|gt| list_is_type_args(tokens, lt, gt));
     closers.set_args(lt, yes);
@@ -447,12 +435,11 @@ pub(in crate::pipeline::disambiguate) fn type_args_at(tokens: &Tokens, lt: usize
 }
 
 fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize) -> bool {
-    let Tokens { tables: t, src, st, kind, n, .. } = *tokens;
-    if matches!(src[gt + 1], b'=' | b'>') {
+    if matches!(tokens.src[gt + 1], b'=' | b'>') {
         return false;
     }
-    match gt_follower(src, n, gt + 1) {
-        Follow::Split => type_list_legal(t, src, st, kind, lt + 1, gt),
+    match gt_follower(tokens.src, tokens.n, gt + 1) {
+        Follow::Split => type_list_legal(tokens, lt + 1, gt),
         Follow::Fuse | Follow::Ctx => false,
     }
 }

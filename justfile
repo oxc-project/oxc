@@ -214,6 +214,7 @@ ready-lexer:
   git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
   just conformance-lexer-simd
   git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
+  just doc -p oxc_lexer
 
 # ==================== LINTER ====================
 
