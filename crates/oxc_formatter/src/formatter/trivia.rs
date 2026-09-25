@@ -88,25 +88,23 @@ use crate::{JsLabels, write};
 
 use super::prelude::*;
 
-/// Returns true if:
-/// - `next_comment` is Some, and
-/// - both comments are documentation comments, and
-/// - both comments are multiline, and
-/// - the two comments are immediately adjacent to each other, with no characters between them.
+/// Returns true if both comments are alignable and immediately adjacent, with no characters between them.
 ///
 /// In this case, the comments are considered "nestled" - a pattern that JSDoc uses to represent
 /// overloaded types, which get merged together to create the final type for the subject. The
 /// comments must be kept immediately adjacent after formatting to preserve this behavior.
 ///
 /// There isn't much documentation about this behavior, but it is mentioned on the JSDoc repo
-/// for documentation: <https://github.com/jsdoc/jsdoc.github.io/issues/40>. Prettier also
-/// implements the same behavior: <https://github.com/prettier/prettier/pull/13445/files#diff-3d5eaa2a1593372823589e6e55e7ca905f7c64203ecada0aa4b3b0cdddd5c3ddR160-R178>
-fn should_nestle_adjacent_doc_comments(current: &Comment, next: &Comment) -> bool {
-    matches!(current.content, CommentContent::Jsdoc)
-        && matches!(next.content, CommentContent::Jsdoc)
-        && current.is_multiline_block()
-        && next.is_multiline_block()
-        && current.span.end == next.span.start
+/// for documentation: <https://github.com/jsdoc/jsdoc.github.io/issues/40>.
+/// Like Prettier's `mergeNestledJsdocComments`, alignable is the condition, not JSDoc.
+fn should_nestle_adjacent_comments(
+    current: &Comment,
+    next: &Comment,
+    source_text: SourceText,
+) -> bool {
+    current.span.end == next.span.start
+        && is_alignable_block_comment(current, source_text)
+        && is_alignable_block_comment(next, source_text)
 }
 
 /// Formats the leading comments of `node`
@@ -166,7 +164,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
                     0 if is_block => {
                         let should_nestle =
                             leading_comments_iter.peek().is_some_and(|next_comment| {
-                                should_nestle_adjacent_doc_comments(comment, next_comment)
+                                should_nestle_adjacent_comments(
+                                    comment,
+                                    next_comment,
+                                    f.source_text(),
+                                )
                             });
 
                         write!(f, [maybe_space(!should_nestle)]);
@@ -270,7 +272,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
                 total_lines_before += lines_before;
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
-                    should_nestle_adjacent_doc_comments(previous_comment, comment)
+                    should_nestle_adjacent_comments(previous_comment, comment, f.source_text())
                 });
 
                 // An own-line comment at the end of a nested structure:
@@ -449,7 +451,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
                     f.context_mut().comments_mut().increment_printed_count();
 
                     let should_nestle = previous_comment.is_some_and(|previous_comment| {
-                        should_nestle_adjacent_doc_comments(previous_comment, comment)
+                        should_nestle_adjacent_comments(previous_comment, comment, f.source_text())
                     });
 
                     write!(
