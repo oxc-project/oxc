@@ -280,7 +280,7 @@ jobs:
   publish-oxlint:
     name: Publish Oxlint
     needs: [check, build-oxlint, build-oxlint-freebsd, notify-approval]
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     environment: release
     permissions:
       id-token: write # for `pnpm publish --provenance`
@@ -332,6 +332,8 @@ jobs:
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to main package.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          # npm publish can finish before package metadata and tarballs are available.
+          node .github/scripts/wait-for-npm-packages.mjs ${npm_dir}/*
           # Publish `oxlint` package
           bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
           # Publish `@oxlint/plugins` package
@@ -559,7 +561,7 @@ jobs:
   publish-oxfmt:
     name: Publish Oxfmt
     needs: [check, build-oxfmt, build-oxfmt-freebsd, notify-approval]
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     environment: release
     permissions:
       id-token: write # for `pnpm publish --provenance`
@@ -598,6 +600,8 @@ jobs:
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to main package.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          # npm publish can finish before package metadata and tarballs are available.
+          node .github/scripts/wait-for-npm-packages.mjs ${npm_dir}/*
           bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
 
   github-release:
