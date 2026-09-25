@@ -351,9 +351,8 @@ unsafe fn munch_walk(
     while end - pos >= 2 {
         bm_set(st, pos);
         let rem = end - pos;
-        let lmax: u32 = if rem < 4 { rem as u32 } else { 4 };
         let bytes = *src.add(pos).cast::<[u8; 4]>();
-        let (opk, opl) = opmap_longest(bytes, lmax);
+        let (opk, opl) = opmap_longest(bytes, rem as u32);
         if opk != 0 {
             *kind.add(pos) = opk as u8;
             let mut j = 1usize;
