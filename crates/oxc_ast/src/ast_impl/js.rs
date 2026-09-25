@@ -2105,13 +2105,45 @@ impl ExportDefaultDeclarationKind<'_> {
 }
 
 impl Display for ModuleExportName<'_> {
+    /// Formats the name as it can appear in source.
+    ///
+    /// Lint fixes write this output into source text, so a string form is a
+    /// valid string literal: the original spelling when the node came from the
+    /// parser, otherwise the value in double quotes with JavaScript escapes.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::IdentifierName(identifier) => identifier.name.fmt(f),
             Self::IdentifierReference(identifier) => identifier.name.fmt(f),
-            Self::StringLiteral(literal) => write!(f, r#""{}""#, literal.value),
+            Self::StringLiteral(literal) => match literal.raw {
+                Some(raw) => raw.fmt(f),
+                None => write_string_literal(f, &literal.value),
+            },
         }
     }
+}
+
+/// Write `value` as a double-quoted JavaScript string literal.
+fn write_string_literal(f: &mut fmt::Formatter, value: &str) -> fmt::Result {
+    f.write_str("\"")?;
+    for c in value.chars() {
+        match c {
+            '\\' => f.write_str("\\\\")?,
+            '"' => f.write_str("\\\"")?,
+            '\n' => f.write_str("\\n")?,
+            '\r' => f.write_str("\\r")?,
+            '\t' => f.write_str("\\t")?,
+            '\u{8}' => f.write_str("\\b")?,
+            '\u{B}' => f.write_str("\\v")?,
+            '\u{C}' => f.write_str("\\f")?,
+            // NUL is written as `\u0000` so that a following digit cannot turn it
+            // into an octal escape.
+            '\0'..='\u{1F}' | '\u{7F}' | '\u{2028}' | '\u{2029}' => {
+                write!(f, "\\u{:04x}", c as u32)?;
+            }
+            _ => write!(f, "{c}")?,
+        }
+    }
+    f.write_str("\"")
 }
 
 impl<'a> ModuleExportName<'a> {
@@ -2177,6 +2209,51 @@ impl WithClauseKeyword {
         match self {
             Self::With => "with",
             Self::Assert => "assert",
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+    use oxc_span::SPAN;
+    use oxc_str::Str;
+
+    use crate::{
+        ast::{ModuleExportName, StringLiteral},
+        builder::AstBuilder,
+    };
+
+    #[test]
+    fn module_export_name_display_keeps_raw_spelling() {
+        let allocator = Allocator::new();
+        let ast = AstBuilder::new(&allocator);
+        let name = ModuleExportName::StringLiteral(StringLiteral::new(
+            SPAN,
+            "a\nb",
+            Some(Str::from("'a\\nb'")),
+            &ast,
+        ));
+        assert_eq!(name.to_string(), "'a\\nb'");
+    }
+
+    #[test]
+    fn module_export_name_display_escapes_synthesized_values() {
+        let allocator = Allocator::new();
+        let ast = AstBuilder::new(&allocator);
+        for (value, expected) in [
+            ("plain", r#""plain""#),
+            ("a\\b", r#""a\\b""#),
+            ("say \"hi\"", r#""say \"hi\"""#),
+            ("line\nbreak", r#""line\nbreak""#),
+            ("\r\t\u{8}\u{B}\u{C}", r#""\r\t\b\v\f""#),
+            ("\u{0}1", r#""\u00001""#),
+            ("\u{1}\u{7F}", r#""\u0001\u007f""#),
+            ("\u{2028}\u{2029}", r#""\u2028\u2029""#),
+            ("é😀'", r#""é😀'""#),
+        ] {
+            let name = ModuleExportName::StringLiteral(StringLiteral::new(SPAN, value, None, &ast));
+            assert_eq!(name.to_string(), expected, "{value:?}");
         }
     }
 }
