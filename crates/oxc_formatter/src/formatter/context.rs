@@ -3,7 +3,7 @@ use std::mem;
 use oxc_ast::Comment;
 use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{options::JsFormatOptions, utils::assignment_like::AssignmentLikeLayout};
 
@@ -90,6 +90,10 @@ pub struct JsFormatContext<'ast> {
 
     cached_elements: FxHashMap<Span, FormatElement<'ast>>,
 
+    /// Templates whose GraphQL content was successfully dispatched and formatted.
+    /// Argument layout reads this after formatting, so failed or disabled embeds keep their layout.
+    formatted_graphql_templates: FxHashSet<Span>,
+
     /// One-shot handoff of the assignment layout to the arrow expression on the RHS of an assignment-like,
     /// keyed by the arrow's span so no other node can consume it.
     /// Set (and cleared) by `WithAssignmentLayout` around formatting the arrow, taken by the arrow's `write`.
@@ -119,6 +123,7 @@ impl std::fmt::Debug for JsFormatContext<'_> {
             .field("source_type", &self.source_type)
             .field("comments", &self.comments)
             .field("cached_elements", &self.cached_elements)
+            .field("formatted_graphql_templates", &self.formatted_graphql_templates)
             .field("quote_needed_stack", &self.quote_needed_stack)
             .field("tailwind_classes", &self.tailwind_classes)
             .finish()
@@ -163,6 +168,7 @@ impl<'ast> JsFormatContext<'ast> {
             source_type,
             comments: Comments::new(source_text, comments),
             cached_elements: FxHashMap::default(),
+            formatted_graphql_templates: FxHashSet::default(),
             arrow_assignment_layout: None,
             quote_needed_stack: Vec::new(),
             tailwind_classes: Vec::new(),
@@ -198,6 +204,14 @@ impl<'ast> JsFormatContext<'ast> {
     /// Caches the formatted element for the given key.
     pub(crate) fn cache_element<T: GetSpan>(&mut self, key: &T, formatted: FormatElement<'ast>) {
         self.cached_elements.insert(key.span(), formatted);
+    }
+
+    pub(crate) fn mark_graphql_template_formatted(&mut self, span: Span) {
+        self.formatted_graphql_templates.insert(span);
+    }
+
+    pub(crate) fn is_graphql_template_formatted(&self, span: Span) -> bool {
+        self.formatted_graphql_templates.contains(&span)
     }
 
     /// See the [`Self::arrow_assignment_layout`] field.

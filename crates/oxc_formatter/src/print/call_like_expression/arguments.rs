@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 use crate::{
     Buffer, Format, FormatTrailingCommas, TrailingSeparator,
     ast_nodes::{AstNode, AstNodes},
-    format_args,
+    best_fitting, format_args,
     formatter::{
         Comments, JoinBuilderJsExt as _, JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{
@@ -61,6 +61,43 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
                 None
             };
 
+        if is_graphql_call_with_single_template_arg(self, call_expression) {
+            let argument = self.first().unwrap();
+            // Format once: dispatch can fail, and a second pass would consume comments again.
+            let element = f.intern(argument);
+            let content = format_with(|f: &mut JsFormatter<'_, 'a>| {
+                if let Some(element) = element.clone() {
+                    f.write_element(element);
+                }
+            });
+
+            if f.context().is_graphql_template_formatted(argument.span()) {
+                // Keep short calls compact, but allow the arguments to break before the
+                // surrounding assignment. Verbatim templates retain the original hugging layout.
+                write!(
+                    f,
+                    [
+                        expand_parent(),
+                        best_fitting![
+                            format_args!("(", group(&content).should_expand(true), ")"),
+                            group(&format_args!(
+                                "(",
+                                soft_block_indent(&format_args!(
+                                    content,
+                                    FormatTrailingCommas::All
+                                )),
+                                ")"
+                            ))
+                            .should_expand(true)
+                        ]
+                    ]
+                );
+            } else {
+                write!(f, [l_paren_token, content, r_paren_token]);
+            }
+            return;
+        }
+
         if is_simple_module_import
             || call_expression.is_some_and(|call| {
                 is_commonjs_or_amd_call(self, call, f)
@@ -76,7 +113,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
                         && is_test_call_expression(call))
             })
             || is_multiline_template_only_args(self, f.source_text())
-            || is_graphql_call_with_single_template_arg(self, call_expression)
             || is_huggable_html_embed_single_arg(self, f)
             || is_react_hook_with_deps_array(self, f.comments())
         {
@@ -1028,7 +1064,7 @@ fn is_multiline_template_only_args(arguments: &[Argument], source_text: SourceTe
 }
 
 /// Returns `true` if `arguments` is a single template literal inside a `graphql()` call.
-/// This triggers the "hugging" layout where the backtick is adjacent to `(`.
+/// Successfully embedded templates can expand; verbatim templates keep the hugging layout.
 fn is_graphql_call_with_single_template_arg<'a>(
     arguments: &[Argument],
     call: Option<&&AstNode<'a, CallExpression<'a>>>,

@@ -50,7 +50,7 @@ fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
 /// Returns `true` if formatting was performed, `false` if not applicable.
 ///
 /// NOTE: when this fires for a single-argument call,
-/// `arguments.rs` also applies a "hugging" layout (`graphql(`…`)` with no trailing comma).
+/// `arguments.rs` prefers a "hugging" layout, with an expanded alternative when it does not fit.
 /// See `is_graphql_call_with_single_template_arg()` in `arguments.rs`.
 pub(super) fn try_format_graphql_call<'a>(
     template: &AstNode<'a, TemplateLiteral<'a>>,

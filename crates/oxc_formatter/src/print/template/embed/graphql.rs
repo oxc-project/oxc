@@ -81,6 +81,7 @@ pub(super) fn format_graphql_doc<'a>(
     let allocator = f.allocator();
     let indent_width = f.options().indent_width;
     let mut ir_parts: Vec<Option<ArenaVec<'a, FormatElement<'a>>>> = Vec::with_capacity(num_quasis);
+    let mut did_dispatch = false;
     for info in &infos {
         let ir = if info.comments_only {
             build_graphql_comment_ir(info.text, allocator, indent_width)
@@ -88,6 +89,7 @@ pub(super) fn format_graphql_doc<'a>(
             let Some(ir) = dispatch_fragment_ir(f, "graphql", info.text, None) else {
                 return false;
             };
+            did_dispatch = true;
             Some(ir)
         };
         let ir = ir.map(|ir| super::escape_template_chars_in_ir(&ir, f));
@@ -149,6 +151,9 @@ pub(super) fn format_graphql_doc<'a>(
     });
 
     write!(f, ["`", block_indent(&format_content), "`"]);
+    if did_dispatch {
+        f.context_mut().mark_graphql_template_formatted(quasi.span);
+    }
     true
 }
 
