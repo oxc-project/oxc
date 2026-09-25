@@ -49,22 +49,20 @@ export function printNonNegativeFloat(
  * Print an integer of 1000 or more in its shortest form.
  *
  * `String` gives plain digits below 1e21 and exponent notation from there up, which have different forms
- * available to them, so they are separate cases. Both can go hexadecimal.
+ * available to them, so they are separate cases. Only plain digits need comparing with hexadecimal.
  */
 function printShortestInteger(state: State, value: number): void {
   const formatted = String(value);
 
   if (value >= 1e21) {
     debugAssert(formatted.includes("e+"), "`String` gives `e+` notation from 1e21 up");
-    // The `+` always goes, so the text is one shorter than `formatted`
-    if (printHexIfShorter(state, value, formatted.length - 1)) return;
+    // Below 1e25, shortened exponent notation takes at most 19 characters, versus at least 20 for hex.
+    // From 1e25 up, hex takes at least 23 characters, while exponent notation needs at most 21.
     printExponent(state, formatted, formatted.indexOf("e"));
     return;
   }
 
   const { length } = formatted;
-  if (printHexIfShorter(state, value, length)) return;
-
   // A run of trailing zeros as an exponent: `1000` -> `1e3`
   if (formatted.charCodeAt(length - 1) === 48 /* 0 */) {
     // The first digit is never a zero, so the run always stops
@@ -74,6 +72,7 @@ function printShortestInteger(state: State, value: number): void {
     // Worth it when the `e` and the exponent cost less than the zeros they replace
     const exponent = String(zeros);
     if (exponent.length + 1 < zeros) {
+      if (printHexIfShorter(state, value, length - zeros + 1 + exponent.length)) return;
       writeNoLast(state, formatted.slice(0, length - zeros));
       writeNoLast(state, "e");
       writeIdent(state, exponent);
@@ -81,7 +80,7 @@ function printShortestInteger(state: State, value: number): void {
     }
   }
 
-  write(state, formatted, CAT_INT_DIGIT);
+  if (!printHexIfShorter(state, value, length)) write(state, formatted, CAT_INT_DIGIT);
 }
 
 /**
@@ -182,9 +181,8 @@ function printExponent(state: State, formatted: string, exponentIndex: number): 
  * Hexadecimal has to win back the `0x` in front of it, which takes 13 digits at the very least,
  * so below that the conversion is not attempted at all.
  *
- * That bound is in decimal digits, and the caller with a number in exponent notation passes the length
- * of that instead, which is shorter - but such a number is at least 1e21, whose 18 hex digits make 20 characters,
- * so anything the early return skips there could not have won either.
+ * The caller may pass the length of a shortened exponent form instead of plain digits.
+ * That is no longer than the plain digits, so the early return remains valid.
  *
  * `BigInt` rather than `value.toString(16)`, whose result the specification leaves implementation-approximated
  * for every radix but 10, where the output here has to be exact.
