@@ -211,22 +211,20 @@ pub unsafe fn coalesce(
                 let kb = (pb >> 24) as u8;
                 let mut ok2b = ((pb ^ key2b) & 0xFF_FFFF) == 0;
                 ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8));
-                let sel3 = ok3;
-                let sel2a = !ok3 && ok2a;
-                let sel2b = !ok3 && !ok2a && ok2b;
-                let m0: u8 = 0u8.wrapping_sub((sel3 || sel2a) as u8);
-                let k0v: u8 = if sel3 { (p3 >> 24) as u8 } else { ka };
+                let c1 = ok3 | ok2a; // token at `p` is 2+ bytes
+                let sel2b = !c1 & ok2b; // 2-byte token starts at `p + 1`
+                let c2 = ok3 | sel2b; // `p + 2` is not a token start
+                let m0: u8 = 0u8.wrapping_sub(c1 as u8);
+                let k0v: u8 = if ok3 { (p3 >> 24) as u8 } else { ka };
                 *kind.add(p) = (*kind.add(p) & !m0) | (k0v & m0);
                 let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
                 *kind.add(p + 1) = (*kind.add(p + 1) & !m1) | (kb & m1);
-                let clr1 = ((sel3 || sel2a) as u64) << ((p + 1) & 63);
+                let clr1 = (c1 as u64) << ((p + 1) & 63);
                 *st.add((p + 1) >> 6) &= !clr1;
-                let clr2 = ((sel3 || sel2b) as u64) << ((p + 2) & 63);
+                let clr2 = (c2 as u64) << ((p + 2) & 63);
                 *st.add((p + 2) >> 6) &= !clr2;
-                let mut adv = if sel3 { 3 } else { run - 1 };
-                adv = if sel2a { 2 } else { adv };
-                adv = if sel2b { 3 } else { adv };
-                cursor = p + adv;
+                // `run == 3` in this arm
+                cursor = p + 2 + c2 as usize;
             }
         }
         if w & (KWB - 1) == KWB - 1 {
