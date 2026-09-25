@@ -24,9 +24,7 @@ interface I {
     | BmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines;
 }
 
-// Comments before the operator that the left side defers (an own-line one, or a
-// block ending its line) lead the right-hand side, and the line comment after
-// the operator follows them, in source order (issue #23665, Prettier-identical)
+// Comments the left side defers lead the right-hand side, the line comment follows them in source order
 type Deferred /* c */
 = // d
   "VALUE";
