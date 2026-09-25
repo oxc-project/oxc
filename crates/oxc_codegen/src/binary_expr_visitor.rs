@@ -214,11 +214,37 @@ impl<'a> BinaryExpressionVisitor<'a> {
                     self.left_precedence = Precedence::Call;
                 }
             }
+            BinaryishOperator::Binary(
+                BinaryOperator::GreaterThan
+                | BinaryOperator::ShiftRight
+                | BinaryOperator::ShiftRightZeroFill,
+            ) if p.is_typescript && matches!(e.left(), Expression::BinaryExpression(_)) => {
+                // TypeScript can reinterpret `<...>`, `<...>>`, and `<...>>>` as type
+                // arguments. Parenthesize any lower-precedence expression before a closer.
+                self.left_precedence = Precedence::Shift;
+            }
+            BinaryishOperator::Binary(BinaryOperator::LessThan | BinaryOperator::ShiftLeft)
+                if p.is_typescript && matches!(e.right(), Expression::BinaryExpression(_)) =>
+            {
+                // Keep a possible closer on the right from pairing with this opening angle.
+                self.right_precedence = Precedence::Shift;
+            }
             BinaryishOperator::Binary(BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd) => {
                 // Without parentheses, `|` or `&` becomes part of the type in
                 // `(value satisfies Type) | other` or `(value satisfies Type) & other`.
                 if matches!(e.left(), Expression::TSSatisfiesExpression(_)) {
                     self.left_precedence = Precedence::Compare;
+                }
+
+                if p.is_typescript {
+                    // `|` and `&` are valid inside TypeScript type arguments, so isolate
+                    // lower-precedence operands that may expose an opening angle.
+                    if matches!(e.left(), Expression::BinaryExpression(_)) {
+                        self.left_precedence = Precedence::Shift;
+                    }
+                    if matches!(e.right(), Expression::BinaryExpression(_)) {
+                        self.right_precedence = Precedence::Shift;
+                    }
                 }
             }
 
