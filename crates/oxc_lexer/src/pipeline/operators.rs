@@ -5,14 +5,14 @@
 //! There is only one 4-byte operator (`>>>=`), so it's not included in the hash table.
 //! [`opmap_longest`] checks it separately. [`opmap_pack`] only checks 2-byte and 3-byte operators.
 //!
-//! [`op_key`] packs bytes + length into a `u32` key:
+//! [`OpTable::lookup`] and code in `coalesce` pack a candidate into a `u32` key:
 //! - Bottom 3 bytes: The candidate's first 3 bytes, with the 3rd zeroed if the length is 2.
 //! - Top byte: 0.
 //!
-//! [`op_slot`] hashes the key by multiplying it by [`OPMAP_MUL`] and taking the top [`HASH_BITS`] bits
-//! of the product as the slot index.
+//! [`OpTableData::slot`] hashes the key by multiplying it by the multiplier and taking
+//! the top [`OpTableData::BITS`] bits of the product as the slot index.
 //!
-//! [`OP_PACK`] holds one `u32` per slot, built at compile time from [`OPMAP_OPS`]:
+//! [`OpTableData`] holds one `u32` per slot, built at compile time from [`OPMAP_OPS`]:
 //! - Bottom 3 bytes: Operator's first 3 bytes, with the 3rd byte 0 for a 2-byte operator.
 //! - Top byte: Operator's [`TokenKind`].
 //!
@@ -20,8 +20,8 @@
 //!
 //! So a lookup is a multiply, a load, and a comparison of the key and bottom bytes of slot value.
 //! If they match, the top byte of the slot value is the [`TokenKind`].
-//! [`opmap_lookup`] does the whole lookup.
-//! [`opmap_pack`] returns the slot value, for callers which do the comparison themselves.
+//! [`OpTable::pack`] returns the slot value, for callers which do the comparison themselves.
+//! [`OpTable::lookup`] does the whole lookup.
 //! [`opmap_longest`] checks for 4-byte, then 3-byte, then 2-byte operators in turn.
 //!
 //! [`OPMAP_MUL`] is hard-coded. `test_perfect_hash` test checks that it produces no collisions.
@@ -31,11 +31,8 @@ use crate::token::{TokenKind, tk};
 
 use crate::pipeline::bytes::is_digit;
 
-/// Number of bits in operator perfect hash.
-const HASH_BITS: usize = 6;
-
 /// Number of entries in tables indexed by hash.
-const HASH_TABLE_SIZE: usize = 1 << HASH_BITS;
+const HASH_TABLE_SIZE: usize = 64;
 
 /// Multiplier for the operator perfect hash.
 const OPMAP_MUL: u32 = 0x0241_72D5;
@@ -54,6 +51,7 @@ impl OpDef {
     }
 
     /// Get length of this operator as a `u32`.
+    #[cfg_attr(not(test), expect(dead_code))]
     const fn len(&self) -> u32 {
         self.txt.len() as u32
     }
@@ -65,15 +63,7 @@ impl OpDef {
 
     /// Get hash key for this operator.
     const fn key(&self) -> u32 {
-        op_key(self.bytes(), self.len())
-    }
-
-    /// Get hash of this operator, which is the slot index into [`OP_PACK`],
-    /// using `mul` as the hash map multiplier.
-    ///
-    /// Returns a `usize` but it is guaranteed to be less than [`HASH_TABLE_SIZE`].
-    const fn slot(&self, mul: u32) -> usize {
-        op_slot(self.key(), mul)
+        u32::from_le_bytes(self.bytes())
     }
 }
 
@@ -130,35 +120,127 @@ pub(super) const fn is_op_char(c: u8) -> bool {
     (OPCH_LO[(c & 15) as usize] & OPCH_HI[(c >> 4) as usize]) != 0
 }
 
-/// Operator bytes and [`TokenKind`], indexed by perfect hash slot.
-///
-/// Each entry contains:
-/// - First 3 bytes of the operator in bottom 3 bytes (0 for 3rd byte for 2-byte operators).
-/// - [`TokenKind`] in top byte.
-///
-/// The single 4-byte operator (`>>>=`) is not included in the table.
-/// [`opmap_longest`] checks for it without consulting the table.
-static OP_PACK: [u32; HASH_TABLE_SIZE] = {
-    let mut op_pack = [0; HASH_TABLE_SIZE];
+/// Hash table for 2-byte and 3-byte operators.
+static OP_TABLE_DATA: OpTableData<HASH_TABLE_SIZE> = OpTableData::new(OPMAP_MUL);
+const OP_TABLE: OpTable<HASH_TABLE_SIZE> = OpTable::new(&OP_TABLE_DATA, OPMAP_MUL);
 
-    let mut i = 0_usize;
-    while i < OPMAP_OPS.len() {
-        let op_def = &OPMAP_OPS[i];
-        let slot = op_def.slot(OPMAP_MUL);
+/// Operator hash table.
+struct OpTable<const TABLE_SIZE: usize> {
+    /// Lookup table data.
+    data: &'static OpTableData<TABLE_SIZE>,
+    /// Hash multiplier.
+    mul: u32,
+}
 
-        let txt = op_def.txt;
-        let bytes = if op_def.len() == 2 {
-            (txt[0] as u32) | ((txt[1] as u32) << 8)
-        } else {
-            (txt[0] as u32) | ((txt[1] as u32) << 8) | ((txt[2] as u32) << 16)
-        };
-        op_pack[slot] = bytes | ((op_def.kind as u32) << 24);
-
-        i += 1;
+impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
+    /// Create an operator perfect hash table, using multiplier `mul`.
+    const fn new(data: &'static OpTableData<TABLE_SIZE>, mul: u32) -> Self {
+        Self { data, mul }
     }
 
-    op_pack
-};
+    /// Hash `key` and get the packed value for an operator from this hash table.
+    ///
+    /// `key` must contain:
+    /// - Bytes 0-1: First 2 bytes of source
+    /// - Byte  2  : 3rd byte of source for 3-byte operators, or 0 for 2-byte operators
+    /// - Byte  3  : 0
+    ///
+    /// Returned value contains:
+    /// - Bytes 0-1: First 2 bytes of operator
+    /// - Byte  2  : 3rd byte of operator for 3-byte operators, or 0 for 2-byte operators
+    /// - Byte  3  : [`TokenKind`] of the operator as a `u8`
+    ///
+    /// If no match, returns 0 (i.e. operator bytes `\0\0\0`, `TokenKind` byte 0).
+    ///
+    /// Hashmap collisions are possible, so caller must confirm the match with
+    /// `(pack & 0xFF_FFFF) == key`.
+    #[inline(always)]
+    fn pack(&self, key: u32) -> u32 {
+        let slot = self.data.slot(key, self.mul);
+        self.data.values[slot]
+    }
+
+    /// Check if `bytes` starts with an operator with length `len` from this hash table.
+    ///
+    /// * If an operator is found, returns the [`TokenKind`] of the operator as a `u32`.
+    /// * Otherwise, returns 0.
+    #[inline(always)]
+    fn lookup(&self, bytes: [u8; 4], len: u32) -> u32 {
+        let mask = if len == 2 { 0xFFFF } else { 0xFF_FFFF };
+        let key = u32::from_le_bytes(bytes) & mask;
+
+        // Compare the candidate's and operator's first 3 bytes.
+        //
+        // - `key` has candidate's first 3 bytes in bottom 3 bytes.
+        //   When `len == 2`, the 3rd byte of `key` is 0.
+        // - `pack` has operator's first 3 bytes in bottom 3 bytes.
+        //   For 2-byte operators, the 3rd byte of `pack` is 0.
+        //
+        // So when bottom 3 bytes of `key` and `pack` are the same, it's a match
+        // (except for the extra check for 3-byte candidates below).
+        //
+        // If bottom 3 bytes of `key` are all 0, it's possible that `key` hashes to an empty slot,
+        // so `pack == 0`. In that case `(pack & 0xFF_FFFF) == key` and the branch returning 0
+        // is not taken. But in that case, `pack >> 24` is also 0, so 0 is returned either way.
+        let pack = self.pack(key);
+        if (pack & 0xFF_FFFF) != key {
+            return 0;
+        }
+
+        // Check a 3-byte candidate with `\0` as 3rd byte didn't match a 2-byte operator.
+        // A `\0` in this position would be a syntax error, so this branch is never taken in practice.
+        //
+        // This function is inlined into `opmap_longest`, so `len` is statically known here.
+        // Condition is shortened to `if (pack & 0xFF_0000) == 0` when `len == 3`,
+        // and the branch is removed entirely when `len == 2`.
+        if len == 3 && (pack & 0xFF_0000) == 0 {
+            return 0;
+        }
+
+        // Return `TokenKind` as `u32`
+        pack >> 24
+    }
+}
+
+/// Operator hash table data.
+///
+/// This has to be a separate type from [`OpTable`] as we want this stored in a `static`
+/// whereas [`OpTable`] should just be a `const`, so it doesn't bloat the binary.
+struct OpTableData<const TABLE_SIZE: usize> {
+    values: [u32; TABLE_SIZE],
+}
+
+impl<const TABLE_SIZE: usize> OpTableData<TABLE_SIZE> {
+    /// Number of bits in hash for this table.
+    const BITS: usize = TABLE_SIZE.trailing_zeros() as usize;
+
+    /// Create the data for an operator perfect hash table, using multiplier `mul`.
+    const fn new(mul: u32) -> Self {
+        assert!(TABLE_SIZE.is_power_of_two());
+
+        let mut table = Self { values: [0; TABLE_SIZE] };
+
+        let mut i = 0;
+        while i < OPMAP_OPS.len() {
+            let op_def = &OPMAP_OPS[i];
+            let key = op_def.key();
+            let slot = table.slot(key, mul);
+            table.values[slot] = key | ((op_def.kind as u32) << 24);
+            i += 1;
+        }
+
+        table
+    }
+
+    /// Get hash of `key`, which is the slot index into the table,
+    /// using `mul` as the hash map multiplier.
+    ///
+    /// Returns a `usize` but it is guaranteed to be less than `TABLE_SIZE`.
+    #[inline(always)]
+    const fn slot(&self, key: u32, mul: u32) -> usize {
+        (key.wrapping_mul(mul) >> (32 - Self::BITS)) as usize
+    }
+}
 
 /// Hash `key` and get the packed value for the slot in the hash table.
 ///
@@ -178,8 +260,7 @@ static OP_PACK: [u32; HASH_TABLE_SIZE] = {
 /// the bottom 3 bytes of `key` and the returned packed value are equal to confirm a match.
 #[inline(always)]
 pub(super) fn opmap_pack(key: u32) -> u32 {
-    let slot = op_slot(key, OPMAP_MUL);
-    OP_PACK[slot]
+    OP_TABLE.pack(key)
 }
 
 /// Check if up to 4 bytes of source contains a 2-byte, 3-byte, or 4-byte operator.
@@ -204,79 +285,18 @@ pub(super) fn opmap_longest(bytes: [u8; 4], max_len: u32) -> (/* kind*/ u32, /* 
     }
 
     if max_len >= 3 {
-        let kind = opmap_lookup(bytes, 3);
+        let kind = OP_TABLE.lookup(bytes, 3);
         if kind != 0 {
             return (kind, 3);
         }
     }
 
-    let kind = opmap_lookup(bytes, 2);
+    let kind = OP_TABLE.lookup(bytes, 2);
     if kind != 0 && !(kind == tk!(OptionalChain) as u32 && is_digit(bytes[2])) {
         return (kind, 2);
     }
 
     (0, 1)
-}
-
-/// Check if 2 or 3 bytes of source contain a multi-byte operator in their first `len` bytes.
-///
-/// * If an operator is found, returns the [`TokenKind`] of the operator as a `u32`.
-/// * Otherwise, returns 0.
-///
-/// `len` must be 2 or 3.
-#[inline(always)]
-fn opmap_lookup(bytes: [u8; 4], len: u32) -> u32 {
-    let key = op_key(bytes, len);
-    let slot = op_slot(key, OPMAP_MUL);
-
-    // Compare the candidate's and operator's first 3 bytes.
-    //
-    // - `key` has candidate's first 3 bytes in bottom 3 bytes.
-    //   When `len == 2`, the 3rd byte of `key` is 0.
-    // - `pack` has operator's first 3 bytes in bottom 3 bytes.
-    //   For 2-byte operators, the 3rd byte of `pack` is 0.
-    //
-    // So when bottom 3 bytes of `key` and `pack` are the same, it's a match
-    // (except for the extra check for 3-byte candidates below).
-    //
-    // If bottom 3 bytes of `key` are all 0, it's possible that `key` hashes to an empty slot,
-    // so `pack == 0`. In that case `(pack & 0xFF_FFFF) == key` and the branch returning 0
-    // is not taken. But in that case, `pack >> 24` is also 0, so 0 is returned either way.
-    let pack = OP_PACK[slot];
-    if (pack & 0xFF_FFFF) != key {
-        return 0;
-    }
-
-    // Check a 3-byte candidate with `\0` as 3rd byte didn't match a 2-byte operator.
-    // A `\0` in this position would be a syntax error, so this branch is never taken in practice.
-    //
-    // This function is inlined into `opmap_longest`, so `len` is statically known here.
-    // Condition is shortened to `if (pack & 0xFF_0000) == 0` when `len == 3`,
-    // and the branch is removed entirely when `len == 2`.
-    if len == 3 && (pack & 0xFF_0000) == 0 {
-        return 0;
-    }
-
-    // Return `TokenKind` as `u32`
-    pack >> 24
-}
-
-/// Get hash key from `bytes` and `len`.
-///
-/// `len` must be 2 or 3.
-#[inline(always)]
-const fn op_key(bytes: [u8; 4], len: u32) -> u32 {
-    let mask = if len == 3 { 0xFF_FFFF } else { 0xFFFF };
-    u32::from_le_bytes(bytes) & mask
-}
-
-/// Get hash of `key`, which is the slot index into [`OP_PACK`],
-/// using `mul` as the hash map multiplier.
-///
-/// Returns a `usize` but it is guaranteed to be less than [`HASH_TABLE_SIZE`].
-#[inline(always)]
-const fn op_slot(key: u32, mul: u32) -> usize {
-    (key.wrapping_mul(mul) >> (32 - HASH_BITS)) as usize
 }
 
 /// Get a `[u8; 4]` containing all the bytes of `txt` and 0 for any remaining bytes.
@@ -338,43 +358,44 @@ mod tests {
     }
 
     #[test]
-    fn test_opmap_lookup_correct_kinds() {
+    fn test_optable_lookup_correct_kinds() {
         for (i, op_def) in OPMAP_OPS.iter().enumerate() {
-            let lookup_kind = opmap_lookup(op_def.bytes(), op_def.len());
-            assert!(lookup_kind == op_def.kind as u32, "OpDef {i}: `opmap_lookup` wrong kind");
+            let lookup_kind = OP_TABLE.lookup(op_def.bytes(), op_def.len());
+            assert!(lookup_kind == op_def.kind as u32, "OpDef {i}: `lookup` produced wrong kind");
         }
     }
 
     #[test]
-    fn test_opmap_lookup_returns_zero_on_no_match() {
+    fn test_optable_lookup_returns_zero_on_no_match() {
         let cases = [
             // Not operators
             "..", "=/", "<<<", "&&&", "?..",
             // 3-byte candidate whose 1st 2 bytes are a 2-byte operator, and 3rd byte is `\0`.
             // `key` is identical for these and the 2-byte operators, so they hash to the same slot.
-            // `opmap_lookup` needs to ensure they aren't misidentified as matching.
+            // `lookup` needs to ensure they aren't misidentified as matching.
             "==\0", "<<\0", "||\0",
             // All bytes are 0, so `key` is 0. The check against `pack` passes if `key` hashes
-            // to an empty slot. `opmap_lookup` must still return 0.
+            // to an empty slot. `lookup` must still return 0.
             "\0\0", "\0\0\0",
         ];
         for txt in cases {
-            let kind = opmap_lookup(first_4_bytes(txt.as_bytes()), txt.len() as u32);
-            assert!(kind == 0, "`opmap_lookup` should return 0 for {txt:?}");
+            let kind = OP_TABLE.lookup(first_4_bytes(txt.as_bytes()), txt.len() as u32);
+            assert!(kind == 0, "`lookup` should return 0 for {txt:?}");
         }
     }
 
     #[test]
     fn test_perfect_hash() {
         // If `OPMAP_MUL` produces no collisions, all good
-        if is_collision_free(OPMAP_MUL) {
+        if is_collision_free(OP_TABLE.data) {
             return;
         }
 
         // There was a collision - find a new value for `OPMAP_MUL` which has no collisions
         let mut mul = (1u32 << 24) | 1;
         while mul < (1u32 << 28) {
-            if is_collision_free(mul) {
+            let table_data = OpTableData::<HASH_TABLE_SIZE>::new(mul);
+            if is_collision_free(&table_data) {
                 panic!(
                     "Current value for `OPMAP_MUL` produces collisions. Set it to 0x{:04X}_{:04X}.",
                     mul >> 16,
@@ -387,15 +408,8 @@ mod tests {
         panic!("Current value for `OPMAP_MUL` produces collisions. Could not find another value.");
     }
 
-    fn is_collision_free(mul: u32) -> bool {
-        let mut used = [false; HASH_TABLE_SIZE];
-        for op_def in &OPMAP_OPS {
-            let slot = op_def.slot(mul);
-            if used[slot] {
-                return false;
-            }
-            used[slot] = true;
-        }
-        true
+    fn is_collision_free<const TABLE_SIZE: usize>(table_data: &OpTableData<TABLE_SIZE>) -> bool {
+        let filled_slots_count = table_data.values.iter().filter(|&&pack| pack != 0).count();
+        filled_slots_count == OPMAP_OPS.len()
     }
 }
