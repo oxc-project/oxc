@@ -521,8 +521,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
         }
 
         // JSDoc formatting: if enabled, try to format JSDoc comments
-        let formatted_jsdoc = if comment.is_jsdoc()
-            && !comment.is_legal()
+        let formatted_jsdoc = if is_jsdoc_comment(comment)
             && let Some(jsdoc_options) = &f.options().jsdoc
         {
             let source: &str = &f.source_text();
