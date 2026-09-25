@@ -181,7 +181,7 @@ pub unsafe fn coalesce(
                     }
                 }
                 if run == 2 {
-                    let key = (q & 0xFFFF) | (2u32 << 24);
+                    let key = q & 0xFFFF;
                     let pack = opmap_pack(key);
                     let mut ok = ((pack ^ key) & 0xFF_FFFF) == 0;
                     let kk = (pack >> 24) as u8;
@@ -198,15 +198,15 @@ pub unsafe fn coalesce(
                     continue;
                 }
                 let b2 = (q >> 16) as u8;
-                let key3 = (q & 0xFF_FFFF) | (3u32 << 24);
+                let key3 = q & 0xFF_FFFF;
                 let p3 = opmap_pack(key3);
                 let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
-                let key2a = (q & 0xFFFF) | (2u32 << 24);
+                let key2a = q & 0xFFFF;
                 let pa = opmap_pack(key2a);
                 let ka = (pa >> 24) as u8;
                 let mut ok2a = ((pa ^ key2a) & 0xFF_FFFF) == 0;
                 ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
-                let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
+                let key2b = key3 >> 8;
                 let pb = opmap_pack(key2b);
                 let kb = (pb >> 24) as u8;
                 let mut ok2b = ((pb ^ key2b) & 0xFF_FFFF) == 0;
