@@ -280,6 +280,7 @@ impl Rule for NoDuplicateImports {
                 ));
             }
 
+            let mut previous_export_statement_span = None;
             for entry in &module_record.indirect_export_entries {
                 // Skip checking `export { ... };` without `from` clause, matching ESLint behavior.
                 //
@@ -294,6 +295,13 @@ impl Rule for NoDuplicateImports {
                 let Some(module_request) = &entry.module_request else {
                     continue;
                 };
+
+                // A single export declaration with multiple specifiers produces multiple entries.
+                if previous_export_statement_span == Some(entry.statement_span) {
+                    continue;
+                }
+                previous_export_statement_span = Some(entry.statement_span);
+
                 let source = &module_request.name;
                 let span = entry.span;
 
@@ -596,6 +604,10 @@ fn test() {
         (
             r#"export { something } from "os";
             export * from "os";"#,
+            Some(serde_json::json!([{ "includeExports": true }])),
+        ),
+        (
+            r#"export { value1, value2 } from "some-module";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
