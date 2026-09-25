@@ -1,4 +1,4 @@
-use crate::{LexOptions, Lexer, PAD, token::TokenKind};
+use crate::{LexOptions, Lexer, PAD, error::DiagCode, token::TokenKind};
 
 /// Minimal version of `SourceType` just for tests.
 ///
@@ -164,7 +164,7 @@ fn jsx_self_close_allows_whitespace() {
     assert!(!ks.contains(&TokenKind::JsxTagEnd), "lone slash: kinds {ks:?}");
 }
 
-pub(super) fn diag_codes_of(code: &str, file_type: FileType) -> Vec<u16> {
+pub(super) fn diag_codes_of(code: &str, file_type: FileType) -> Vec<DiagCode> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
@@ -473,7 +473,159 @@ fn relational_heads_before_a_balanced_run() {
     division("x = this<A<B>> / 2;", ScriptTS);
     regex("x ? a : [b][c]()\n{}\n/y/.exec(s);", ScriptJS);
     regex("f(class { accessor x = y })\n{ }\n/</.test(s);", ScriptJS);
+    // `b<c<d>>` is not a type-argument list: its closing `>` is glued to another `>` and rescans as
+    // `>>` (tsc's `reScanGreaterToken`), so every `<` compares and the run is `>>>` + `>`.
     let ks = kinds_of("x = a > b<c<d>>>>(e);", ScriptTS);
-    assert_eq!(ks.iter().filter(|k| **k == TokenKind::Gt).count(), 3, "{ks:?}");
-    assert!(ks.contains(&TokenKind::RShift), "{ks:?}");
+    assert_eq!(ks.iter().filter(|k| **k == TokenKind::Gt).count(), 2, "{ks:?}");
+    assert!(ks.contains(&TokenKind::URShift), "{ks:?}");
+}
+
+#[test]
+fn gt_runs_in_members_separated_only_by_line_breaks() {
+    // Without a `;` or `,` between members, the line break after the run ends the member: the
+    // name on the next line is another member, not the operand of a comparison, and a `<` there
+    // opens a signature's type parameters.
+    for code in [
+        "declare class C {\n  a: A\n  b: B<C<void>>\n  constructor(r: R)\n}",
+        "type T = {\n  a: A<'x', B<T, 'x'>>\n  b: A<'x', B<T, 'x'>>\n}",
+        "declare class C {\n  then: A<B<C>>['then']\n  finally: A<B<C>>\n}",
+        "let o: {\n  in: A<B<C>>\n  of: A<B<C>>\n} = y;",
+        "declare class C {\n  a(): void\n  b<T = null>(o: O<T>): P<Q<T>>\n}",
+        "interface I {\n  <T, V = W>(a: A, v?: V): P<Q<T>>\n  <T, V = W>(o: O<V>): P<Q<T>>\n}",
+        "interface I {\n  <T>(a: A): B extends C ? D : () => E<T>\n  <M>(b: B): E<F<M>>\n}",
+    ] {
+        gt_run_split(code);
+    }
+}
+
+#[test]
+fn gt_runs_after_arrows_mapped_types_and_import_types_inside_lists() {
+    // An arrow in a conditional type's branch, a mapped type with an `as` clause, or an
+    // `import("m")` chain inside a type-argument list does not end the list: the run after it
+    // still closes it.
+    for code in [
+        "type P<T> = T extends U ? (a: A) => B<T> : (a: A) => B<C<T>>;",
+        "type P<T> = R<T> extends Q<\n  infer U\n>\n  ? (...a: A<T>) => B<U>\n  : (...a: A<T>) => B<C<T>>;",
+        "type T = A<B<C, D<E, { [K in keyof S as K extends F ? never : K]: S[K] }> & G<H>>>;",
+        "declare const c: import(\"m\").A<B<import(\"m\").C<D<import(\"m\").E<F, G.H & G.I>>, J<import(\"m\").K, never>>>, \"ref\"> & import(\"m\").L<F>;",
+        "declare const p: {\n  a: {\n    b: () => P<import(\"m\").Q<import(\"n\").R<import(\"o\").S>>>;\n  };\n};",
+    ] {
+        gt_run_split(code);
+    }
+}
+
+#[test]
+fn gt_runs_closing_lists_that_open_in_any_context() {
+    // The token after the run fails TypeScript's expression speculation (`{`, a name), but the
+    // list can only be a list: a type parameter list `<T extends`, a name after a keyword only a
+    // type follows, a return type, a dotted name in a heritage clause.
+    for code in [
+        "const f = <T extends A<B>>(x: T) => x;",
+        "class C {\n  f = <T extends A<B>>(x: T) => x;\n}",
+        "class C extends A<B<C>> {}",
+        "class C extends a.b.A<B<C>> {}",
+        "class C implements I<J<K>> {}",
+        "interface I<A, B extends C<D>> {}",
+        "class C {\n  m(): A<B<C>> {}\n  static n(): A<B<C>> {}\n  async o(): A<B<C>> {}\n}",
+        "class C {\n  keyof(): A<B<C>> {}\n}",
+        "function f(): A<B<C>> {}",
+        "const f = function (): A<B<C>> {};",
+        "const o = { m(): A<B<C>> {} };",
+    ] {
+        gt_run_split(code);
+    }
+}
+
+#[test]
+fn relational_heads_that_look_like_type_references() {
+    // The same tokens read as an expression: a `case` label, a property named `function`.
+    for code in
+        ["switch (v) {\n  case (x): a < b < c >> d;\n}", "c ? o.function(x) : a < b < c >> d;"]
+    {
+        gt_run_fused(code);
+    }
+}
+
+#[test]
+fn gt_runs_after_parameter_lists_inside_types() {
+    // A run after a parameter list inside a type: rest and optional parameters, object types as
+    // parameter types, and multi-line type parameter lists.
+    for code in [
+        "type F<T extends (...a: any) => any> = (...a: P<T>) => Q<R<T>>;",
+        "declare class C {\n  m<T, V>(d: D, v?: X<V>): P<Q<T>>\n}",
+        "type P = A<B<C<D.E<F, import(\"m\").G>>>, H<import(\"m\").I, never>>;",
+        "declare class C {\n  m(r: R<T>, { a }?: {\n    a?: boolean;\n  }): P<void>;\n  n(o?: {\n    b: boolean;\n  }): P<Q<R, import(\"m\").S<T, U>>>;\n}",
+        "interface I {\n  <\n    A extends (...a: any[]) => any,\n    B = C<A>\n  >(a: A): <D extends E<A>>(d?: D, ...r: F<B>) => G<D, H<A>>\n\n  <J, K = L<J>>(j: J): J\n}",
+        "interface I {\n  <A>(a: A): B<A>\n\n  <C, D = E<C>>( // note\n    c: C\n  ): C\n}",
+    ] {
+        gt_run_split(code);
+    }
+}
+
+#[test]
+fn jsx_child_tag_after_comment_or_unicode_space() {
+    // Trivia between `<` and `/`, or around a closing name, leaves the same tag.
+    for (code, plain) in [
+        ("x = <a>x</*c*//a>;", "x = <a>x</a>;"),
+        ("x = <a>x<//c\n/a>;", "x = <a>x</a>;"),
+        ("x = <a></*c*/b/></a>;", "x = <a><b/></a>;"),
+        ("x = <a><//c\nb/></a>;", "x = <a><b/></a>;"),
+        ("x = <a>x<\u{a0}/a>;", "x = <a>x</a>;"),
+        ("x = <a>x<\u{2028}/a>;", "x = <a>x</a>;"),
+        ("x = <a>x</\u{a0}a>;", "x = <a>x</a>;"),
+        ("x = <a>x</a\u{a0}>;", "x = <a>x</a>;"),
+        ("x = <a/\u{a0}>;", "x = <a/>;"),
+        ("x = <a/\u{3000}>;", "x = <a/>;"),
+        ("x = <a b=\"1\"/\u{feff}>;", "x = <a b=\"1\"/>;"),
+        ("x = <a / /*c*/ >;", "x = <a/>;"),
+        ("x = <>x<\u{a0}/>;", "x = <>x</>;"),
+        ("x = <>x</\u{a0}>;", "x = <>x</>;"),
+    ] {
+        assert_eq!(kinds_of(code, ScriptJSX), kinds_of(plain, ScriptJSX), "{code:?}");
+        assert!(diag_codes_of(code, ScriptJSX).is_empty(), "{code:?}");
+    }
+}
+
+#[test]
+fn jsx_member_tag_name_matches_across_trivia() {
+    // A comment or Unicode whitespace before the `.` of a member name (`<A/*c*/.B>`) hides no
+    // mismatch: the closing tag names the same element.
+    for code in [
+        "x = <A/*c*/.B>x</A.B>;",
+        "x = <A\u{a0}.B>x</A.B>;",
+        "x = <A\u{2029}.B>x</A.B>;",
+        "x = <A /*c*/ .B>x</A.B>;",
+        "x = <a/*c*/:b>x</a:b>;",
+        "x = <A.B>x</A/*c*/.B>;",
+    ] {
+        assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+    }
+    for code in ["x = <A/*c*/.B>x</A.C>;", "x = <A\u{a0}.B>x</A>;"] {
+        assert!(!diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+    }
+}
+
+#[test]
+fn tsx_template_type_in_expression_type_arguments_is_not_jsx() {
+    // Asked from the JSX carve, the list `f<`${<T>(x: T) => T}`>` still has a raw template
+    // tail; the speculation must read the literal whole, so the `<T>` inside is a function
+    // type, not an unterminated element.
+    for code in [
+        "x = f<`${<T>(x: T) => T}`>(1);",
+        "x = f<`a${<T>(x: T) => T}b`>(1);",
+        "x = f<[`${<T>(x: T) => T}`]>(1);",
+        "x = f<A | `${<T>(x: T) => T}`>(1);",
+        "x = f<`${<T>(x: T) => T}${<U>(y: U) => U}`>(1);",
+        "x = f<`${`${<T>(x: T) => T}`}`>(1);",
+    ] {
+        assert!(diag_codes_of(code, ScriptTSX).is_empty(), "{code:?}");
+    }
+    gt_run_split("x = f<A<`${<T>(x: T) => T}`>>(1);");
+}
+
+#[test]
+fn bracket_bitmap_follows_the_token_starts() {
+    // The bracket word is built while the string in it is still raw text.
+    regex("if (a) /x/; if (s = \"(\") /re/.test(x);", ScriptJS);
+    gt_run_split("x = (a) / 2; y = f<B<(a: \"((\") => void>>(1);");
 }

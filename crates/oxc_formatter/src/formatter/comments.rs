@@ -113,9 +113,11 @@
 //! ## References
 //! - [Prettier handles special comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js)
 //! - [Prettier pre-processes comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/main/comments/attach.js)
-use oxc_ast::{Comment, CommentContent};
+use oxc_ast::Comment;
 use oxc_formatter_core::SourceText;
 use oxc_span::{GetSpan, Span};
+
+use super::trivia::is_jsdoc_comment;
 
 /// Saved comment cursor state for [`Comments::snapshot`] / [`Comments::restore`].
 #[derive(Clone, Copy)]
@@ -200,7 +202,12 @@ impl<'a> Comments<'a> {
     /// This is automatically called by the trivia formatting functions, but must be
     /// called manually if comments are formatted through other means.
     #[inline]
-    pub fn increment_printed_count(&mut self) {
+    pub fn increment_printed_count(&mut self, comment: &Comment) {
+        debug_assert_eq!(
+            self.first_unprinted_span(),
+            Some(comment.span),
+            "the claimed comment must be the first unprinted one"
+        );
         self.printed_count += 1;
     }
 
@@ -713,7 +720,7 @@ impl Comments<'_> {
                     .is_some_and(|&byte| byte.is_ascii_whitespace() || byte == b'{')
         }
 
-        if !matches!(comment.content, CommentContent::Jsdoc) {
+        if !is_jsdoc_comment(comment) {
             return false;
         }
 

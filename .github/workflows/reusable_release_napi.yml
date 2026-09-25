@@ -81,6 +81,10 @@ jobs:
             build: pnpm build-wasm
 
           - os: ubuntu-latest
+            target: wasm32-wasip1
+            build: pnpm build-wasip1
+
+          - os: ubuntu-latest
             target: s390x-unknown-linux-gnu
             build: |
               export CFLAGS="-fuse-ld=lld"
@@ -205,7 +209,7 @@ jobs:
     needs:
       - build
       - build-freebsd
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       id-token: write # for `pnpm publish --provenance`
     env:
@@ -243,4 +247,6 @@ jobs:
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to `package_path`.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          # npm publish can finish before package metadata and tarballs are available.
+          node .github/scripts/wait-for-npm-packages.mjs ${npm_dir}/*
           bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}

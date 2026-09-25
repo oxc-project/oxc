@@ -1,0 +1,22 @@
+---
+source: crates/oxc_formatter_markdown/tests/conformance.rs
+expression: report
+---
+markdown compatibility: 1263/1275 (99.06%), 0 files skipped
+
+# Failed
+
+| Spec path | Failed or Passed | Match ratio |
+| :-------- | :--------------: | :---------: |
+| markdown/blockquote/notext-end.md | 💥💥✨ | 60.74% |
+| markdown/commonmark-test-suite/snippet: example-11.md (Tabs) | 💥 | 0.00% |
+| markdown/commonmark-test-suite/snippet: example-2.md (Tabs) | 💥 | 0.00% |
+| markdown/commonmark-test-suite/snippet: example-412.md (Emphasis and strong emphasis) | 💥 | 0.00% |
+| markdown/commonmark-test-suite/snippet: example-50.md (Thematic breaks) | 💥 | 0.00% |
+| markdown/commonmark-test-suite/snippet: example-51.md (Thematic breaks) | 💥 | 0.00% |
+| markdown/commonmark-test-suite/snippet: example-52.md (Thematic breaks) | 💥 | 0.00% |
+| markdown/commonmark-test-suite/snippet: example-53.md (Thematic breaks) | 💥 | 0.00% |
+| markdown/commonmark-test-suite/snippet: example-54.md (Thematic breaks) | 💥 | 0.00% |
+| markdown/link/encodedLink.md | 💥 | 86.67% |
+| markdown/paragraph/cjk.md | 💥💥✨ | 60.00% |
+| markdown/thematicBreak/simple.md | 💥 | 0.00% |

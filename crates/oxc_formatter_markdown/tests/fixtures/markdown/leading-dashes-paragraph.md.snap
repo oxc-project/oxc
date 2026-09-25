@@ -1,0 +1,25 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+  
+---:::a
+}}<span x=1>---English words
+---[x]: /u##
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+\---:::a
+}}<span x=1>---English words
+---[x]: /u##
+
+-------------------
+{ printWidth: 100 }
+-------------------
+\---:::a
+}}<span x=1>---English words
+---[x]: /u##
+
+===================== End =====================

@@ -2,7 +2,7 @@
 //! [`Symbol`] are considered a usage.
 
 use itertools::Itertools;
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::{AstKind, AstType, ast::*};
 use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
 
@@ -477,6 +477,19 @@ impl<'a> Symbol<'_, 'a> {
                 {
                     return false;
                 }
+                AstKind::NewExpression(new_expr)
+                    if new_expr.callee.span().contains_inclusive(ref_span)
+                        || new_expr
+                            .arguments_span()
+                            .is_some_and(|span| span.contains_inclusive(ref_span)) =>
+                {
+                    return false;
+                }
+                AstKind::ComputedMemberExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_) => {
+                    is_used_by_others = true;
+                }
                 // When symbol is being assigned a new value, we flag the reference
                 // as only affecting itself until proven otherwise.
                 AstKind::UpdateExpression(UpdateExpression { argument, .. })
@@ -560,6 +573,30 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::WhileStatement(WhileStatement { test, .. })
                 | AstKind::DoWhileStatement(DoWhileStatement { test, .. })
                     if test.span().contains_inclusive(ref_span) =>
+                {
+                    return false;
+                }
+                AstKind::ConditionalExpression(expr)
+                    if expr.test.span().contains_inclusive(ref_span) =>
+                {
+                    is_used_by_others = true;
+                }
+                AstKind::LogicalExpression(expr)
+                    if expr.left.span().contains_inclusive(ref_span) =>
+                {
+                    is_used_by_others = true;
+                }
+                AstKind::SwitchStatement(stmt)
+                    if stmt.discriminant.span().contains_inclusive(ref_span) =>
+                {
+                    return false;
+                }
+
+                AstKind::SwitchCase(case)
+                    if case
+                        .test
+                        .as_ref()
+                        .is_some_and(|test| test.span().contains_inclusive(ref_span)) =>
                 {
                     return false;
                 }
@@ -707,6 +744,10 @@ impl<'a> Symbol<'_, 'a> {
     /// foo.bar;
     /// ```
     fn is_discarded_read(&self, reference: &Reference) -> bool {
+        if !self.nodes().contains(AstType::SequenceExpression) {
+            return false;
+        }
+
         for (parent, grandparent) in
             self.iter_relevant_parent_and_grandparent_kinds(reference.node_id())
         {
@@ -749,13 +790,21 @@ impl<'a> Symbol<'_, 'a> {
                 {
                     return false;
                 }
-                // x && (a = x)
+                // The left operand controls whether the right operand is evaluated,
+                // even if the logical expression's result is discarded.
                 (AstKind::LogicalExpression(expr), _)
-                    if expr.left.span().contains_inclusive(ref_span())
-                        && expr.right.get_inner_expression().is_assignment() =>
+                    if expr.left.span().contains_inclusive(ref_span()) =>
                 {
                     return false;
                 }
+                // Reading a property consumes its object and key, even if the
+                // member expression's result is discarded.
+                (
+                    AstKind::ComputedMemberExpression(_)
+                    | AstKind::StaticMemberExpression(_)
+                    | AstKind::PrivateFieldExpression(_),
+                    _,
+                ) => return false,
                 // x instanceof Foo && (a = x)
                 (AstKind::BinaryExpression(expr), _)
                     if expr.operator.is_relational()

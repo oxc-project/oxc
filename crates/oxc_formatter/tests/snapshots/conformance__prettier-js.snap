@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-js compatibility: 768/811 (94.70%), 23 files skipped
+js compatibility: 766/811 (94.45%), 23 files skipped
 
 # Failed
 
@@ -15,13 +15,15 @@ js compatibility: 768/811 (94.70%), 23 files skipped
 | js/call/no-argument/no-arguments.js | 💥 | 57.53% |
 | js/class-comment/misc.js | 💥 | 66.67% |
 | js/class-comment/superclass.js | 💥 | 70.33% |
+| js/comments/array-and-object.js | 💥💥 | 62.50% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
 | js/comments/return-statement-2.js | 💥💥 | 87.32% |
 | js/comments/return-statement.js | 💥💥 | 97.25% |
 | js/comments/tagged-template-literal.js | 💥💥 | 89.66% |
 | js/comments/try.js | 💥💥 | 66.67% |
-| js/comments/assignment/variable-declarator.js | 💥 | 88.00% |
+| js/comments/variable-declarator.js | 💥💥 | 82.35% |
+| js/comments/assignment/variable-declarator.js | 💥 | 84.00% |
 | js/comments/between-head-and-body/between-head-and-body.js | 💥 | 90.85% |
 | js/comments/between-head-and-body/empty-statement.js | 💥 | 86.05% |
 | js/comments/first-argument/first-argument.js | 💥 | 92.98% |

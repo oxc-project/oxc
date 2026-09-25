@@ -242,7 +242,8 @@ bitflags! {
         const D = 1 << 6;
         /// Unicode sets flag
         ///
-        /// Similar to the `u` flag, but also enables the `\\p{}` and `\\P{}` syntax.
+        /// Enables Unicode set notation in character classes (intersection, subtraction,
+        /// and nested classes) and matching Unicode properties of strings.
         /// Added by the [`v` flag proposal](https://github.com/tc39/proposal-regexp-set-notation).
         const V = 1 << 7;
     }

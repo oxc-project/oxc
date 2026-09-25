@@ -1,0 +1,59 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[core]: https://example.com/a/very/long/path/that/fills/most/xxxxxxxxxxxxxxxxxxxxxxxx then more
+
+[core]: fix: Error in the integration where an event would not be sent in case of
+non-assignable object properties.
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+[core]: https://example.com/a/very/long/path/that/fills/most/xxxxxxxxxxxxxxxxxxxxxxxx then more
+
+[core]: fix: Error in the integration where an event would not be sent in case of
+non-assignable object properties.
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+[core]: https://example.com/a/very/long/path/that/fills/most/xxxxxxxxxxxxxxxxxxxxxxxx then more
+
+[core]: fix: Error in the integration where an event would not be sent in case of
+non-assignable object properties.
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+[core]: https://example.com/a/very/long/path/that/fills/most/xxxxxxxxxxxxxxxxxxxxxxxx then more
+
+[core]: fix: Error in the integration where an event would not be sent in case of
+non-assignable object properties.
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+[core]: https://example.com/a/very/long/path/that/fills/most/xxxxxxxxxxxxxxxxxxxxxxxx then more
+
+[core]: fix: Error in the integration where an event would not be sent in case of
+non-assignable object properties.
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+[core]: https://example.com/a/very/long/path/that/fills/most/xxxxxxxxxxxxxxxxxxxxxxxx then more
+
+[core]: fix: Error in the integration where an event would not be sent in case of
+non-assignable object properties.
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+[core]: https://example.com/a/very/long/path/that/fills/most/xxxxxxxxxxxxxxxxxxxxxxxx then more
+
+[core]: fix: Error in the integration where an event would not be sent in case of
+non-assignable object properties.
+
+===================== End =====================

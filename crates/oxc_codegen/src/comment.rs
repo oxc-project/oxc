@@ -416,8 +416,25 @@ impl Codegen<'_> {
         };
         let comment_source = comment.span.source_text(source_text);
         match comment.kind {
-            CommentKind::Line | CommentKind::SingleLineBlock => {
+            CommentKind::Line | CommentKind::HtmlOpen | CommentKind::SingleLineBlock => {
                 self.print_str_escaping_script_close_tag(comment_source);
+            }
+            CommentKind::HtmlClose => {
+                // `-->` is only a comment at the start of a line, allowing indentation.
+                // Annotation emission can place it after code even without minification.
+                let is_mid_line = self
+                    .code()
+                    .as_bytes()
+                    .iter()
+                    .rfind(|&&byte| !matches!(byte, b' ' | b'\t'))
+                    .is_some_and(|&byte| byte != b'\n');
+                let text = if is_mid_line {
+                    self.print_str("//");
+                    comment.content_span().source_text(source_text)
+                } else {
+                    comment_source
+                };
+                self.print_str_escaping_script_close_tag(text);
             }
             CommentKind::MultiLineBlock => {
                 for line in LineTerminatorSplitter::new(comment_source) {

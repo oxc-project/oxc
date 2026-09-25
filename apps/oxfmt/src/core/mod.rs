@@ -10,12 +10,9 @@ pub mod utils;
 mod external_services;
 
 pub use config::{
-    ConfigResolver, NestedConfigCtx, ResolveOutcome, resolve_editorconfig_path,
+    ConfigResolver, NestedConfigCtx, ResolveOutcome, config_discovery, resolve_editorconfig_path,
     resolve_file_scope_config,
 };
-// `config_discovery` is consumed only by LSP code paths (napi-gated).
-#[cfg(feature = "napi")]
-pub use config::config_discovery;
 #[cfg(feature = "napi")]
 pub use config::{
     EmbeddedCallbackResolved, JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader,

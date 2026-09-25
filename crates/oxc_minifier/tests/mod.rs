@@ -167,3 +167,32 @@ fn run_with_iterations(
         .code;
     (code, iterations)
 }
+
+#[test]
+fn minified_template_dollar_escapes() {
+    fn minify(source: &str) -> String {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+        assert!(ret.diagnostics.is_empty());
+        let mut program = ret.program;
+        let ret = oxc_minifier::Minifier::new(oxc_minifier::MinifierOptions::default())
+            .minify(&allocator, &mut program);
+        Codegen::new()
+            .with_options(CodegenOptions::minify())
+            .with_scoping(ret.scoping)
+            .build(&program)
+            .code
+    }
+
+    for (source, expected) in [
+        (r"use(`^${pattern}\$`)", r"use(`^${pattern}$`);"),
+        (r"use(`\$${pattern}\$`)", r"use(`$${pattern}$`);"),
+        (r"use(`\${pattern}${suffix}`)", r"use(`\${pattern}${suffix}`);"),
+        (r"use(String.raw`\$${pattern}\$`)", r"use(String.raw`\$${pattern}\$`);"),
+        (r"use(`\\\$${pattern}\$`)", r"use(`\\$${pattern}$`);"),
+    ] {
+        let output = minify(source);
+        assert_eq!(output, expected);
+        assert_eq!(minify(&output), output);
+    }
+}

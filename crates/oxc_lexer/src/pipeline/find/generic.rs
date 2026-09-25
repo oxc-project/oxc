@@ -1,4 +1,4 @@
-use super::super::chunk::{eqm, load64};
+use crate::pipeline::chunk::{eqm, load64};
 
 #[inline]
 pub unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
@@ -83,7 +83,7 @@ macro_rules! define_find_function {
         $(#[$attr])*
         #[inline]
         pub unsafe fn $name(src: *const u8, n: usize, mut i: usize) -> usize {
-            use super::super::chunk::{load64, eqm};
+            use crate::pipeline::chunk::{load64, eqm};
 
             while i + 8 <= n {
                 let x = load64(src, i);
@@ -105,3 +105,15 @@ macro_rules! define_find_function {
     };
 }
 pub(super) use define_find_function;
+
+/// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
+#[inline]
+pub fn bracket_bits(src: &[u8], base: usize) -> u64 {
+    let mut out = 0u64;
+    for (i, &c) in src[base..base + 64].iter().enumerate() {
+        if matches!(c, b'(' | b')' | b'[' | b']' | b'{' | b'}') {
+            out |= 1u64 << i;
+        }
+    }
+    out
+}

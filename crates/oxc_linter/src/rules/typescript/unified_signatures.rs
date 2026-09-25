@@ -1,5 +1,4 @@
-use std::mem;
-
+use itertools::Itertools;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -127,6 +126,18 @@ enum SignatureDefinition<'a> {
     TSConstructSignatureDeclaration(&'a TSConstructSignatureDeclaration<'a>),
 }
 
+impl GetSpan for SignatureDefinition<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Function(function) => function.span,
+            Self::MethodDefinition(method) => method.value.span,
+            Self::TSMethodSignature(signature) => signature.span,
+            Self::TSCallSignatureDeclaration(signature) => signature.span,
+            Self::TSConstructSignatureDeclaration(signature) => signature.span,
+        }
+    }
+}
+
 impl<'a> SignatureDefinition<'a> {
     fn type_parameters(self) -> Option<&'a TSTypeParameterDeclaration<'a>> {
         match self {
@@ -206,6 +217,7 @@ enum Parameter<'a> {
 
 #[derive(Clone, Copy)]
 enum Unify<'a> {
+    IdenticalParameters { first: Span, second: Span },
     SingleParameterDifference { p0: Parameter<'a>, p1: Parameter<'a> },
     ExtraParameter { extra_parameter: Parameter<'a>, anchor_parameter: Option<Parameter<'a>> },
 }
@@ -455,7 +467,13 @@ fn compare_signatures<'a>(
     let second_parameters = signature_parameters(second.signature);
 
     if first_parameters.len() == second_parameters.len() {
-        return signatures_differ_by_single_parameter(&first_parameters, &second_parameters, ctx);
+        return signatures_have_same_amount_of_parameters(
+            &first_parameters,
+            &second_parameters,
+            first.signature.span(),
+            second.signature.span(),
+            ctx,
+        );
     }
 
     signatures_differ_by_optional_or_rest_parameter(&first_parameters, &second_parameters, ctx)
@@ -494,13 +512,16 @@ fn signatures_can_be_unified<'a>(
         return false;
     }
 
-    types_are_equal(first_signature.return_type(), second_signature.return_type(), source_text)
-        && type_parameter_declarations_are_equal(
-            first_signature.type_parameters(),
-            second_signature.type_parameters(),
-        )
-        && signature_uses_outer_type_parameter(first_signature, outer_type_parameters)
-            == signature_uses_outer_type_parameter(second_signature, outer_type_parameters)
+    types_are_equal(
+        first_signature.return_type().map(|annotation| &annotation.type_annotation),
+        second_signature.return_type().map(|annotation| &annotation.type_annotation),
+        source_text,
+    ) && type_parameter_declarations_are_equal(
+        first_signature.type_parameters(),
+        second_signature.type_parameters(),
+        source_text,
+    ) && signature_uses_outer_type_parameter(first_signature, outer_type_parameters)
+        == signature_uses_outer_type_parameter(second_signature, outer_type_parameters)
 }
 
 fn get_block_comment_for_node<'a>(node_start: u32, ctx: &LintContext<'a>) -> Option<&'a str> {
@@ -516,6 +537,7 @@ fn get_block_comment_for_node<'a>(node_start: u32, ctx: &LintContext<'a>) -> Opt
 fn type_parameter_declarations_are_equal(
     first: Option<&TSTypeParameterDeclaration<'_>>,
     second: Option<&TSTypeParameterDeclaration<'_>>,
+    source_text: &str,
 ) -> bool {
     match (first, second) {
         (None, None) => true,
@@ -525,23 +547,19 @@ fn type_parameter_declarations_are_equal(
                     .params
                     .iter()
                     .zip(second.params.iter())
-                    .all(|(first, second)| type_parameters_are_equal(first, second))
+                    .all(|(first, second)| type_parameters_are_equal(first, second, source_text))
         }
         _ => false,
     }
 }
 
-fn type_parameters_are_equal(first: &TSTypeParameter<'_>, second: &TSTypeParameter<'_>) -> bool {
+fn type_parameters_are_equal(
+    first: &TSTypeParameter<'_>,
+    second: &TSTypeParameter<'_>,
+    source_text: &str,
+) -> bool {
     first.name.name == second.name.name
-        && constraints_are_equal(first.constraint.as_ref(), second.constraint.as_ref())
-}
-
-fn constraints_are_equal(first: Option<&TSType<'_>>, second: Option<&TSType<'_>>) -> bool {
-    match (first, second) {
-        (None, None) => true,
-        (Some(first), Some(second)) => mem::discriminant(first) == mem::discriminant(second),
-        _ => false,
-    }
+        && types_are_equal(first.constraint.as_ref(), second.constraint.as_ref(), source_text)
 }
 
 fn signature_uses_outer_type_parameter(
@@ -550,10 +568,7 @@ fn signature_uses_outer_type_parameter(
 ) -> bool {
     signature_parameters(signature).into_iter().any(|parameter| {
         parameter_type_annotation(parameter).is_some_and(|type_annotation| {
-            type_contains_outer_type_parameter(
-                &type_annotation.type_annotation,
-                outer_type_parameters,
-            )
+            type_contains_outer_type_parameter(type_annotation, outer_type_parameters)
         })
     })
 }
@@ -594,22 +609,32 @@ fn signature_parameters(signature: SignatureDefinition<'_>) -> Vec<Parameter<'_>
     parameters
 }
 
-fn signatures_differ_by_single_parameter<'a>(
+fn signatures_have_same_amount_of_parameters<'a>(
     first: &[Parameter<'a>],
     second: &[Parameter<'a>],
+    first_signature: Span,
+    second_signature: Span,
     ctx: &LintContext<'a>,
 ) -> Option<Unify<'a>> {
     let first_param = first.first().copied();
     let second_param = second.first().copied();
 
+    if first_param.is_some_and(is_this_param) != second_param.is_some_and(is_this_param) {
+        return None;
+    }
     if first_param.is_some_and(is_this_void_param) || second_param.is_some_and(is_this_void_param) {
         return None;
     }
 
     let source_text = ctx.source_text();
-    let index = get_index_of_first_difference(first, second, |first, second| {
+    let Some(index) = get_index_of_first_difference(first, second, |first, second| {
         parameters_are_equal(*first, *second, source_text)
-    })?;
+    }) else {
+        return Some(Unify::IdenticalParameters {
+            first: first_signature,
+            second: second_signature,
+        });
+    };
 
     if !first[index + 1..]
         .iter()
@@ -686,17 +711,24 @@ fn report_failure(unify: Unify<'_>, only_two_overloads: bool, ctx: &LintContext<
     };
 
     match unify {
+        Unify::IdenticalParameters { first, second } => {
+            ctx.diagnostic(unified_signatures_diagnostic(
+                format!("{failure_string_start} with identical parameters."),
+                [
+                    second.primary_label("this signature can be unified"),
+                    first.label("with this overload signature"),
+                ],
+            ));
+        }
         Unify::SingleParameterDifference { p0, p1 } => {
-            let source_text = ctx.source_text();
-            let type1 = parameter_type_annotation(p0).map_or("unknown", |type_annotation| {
-                type_annotation.type_annotation.span().source_text(source_text)
-            });
-            let type2 = parameter_type_annotation(p1).map_or("unknown", |type_annotation| {
-                type_annotation.type_annotation.span().source_text(source_text)
-            });
+            let types = get_unified_type_text(
+                parameter_type_annotation(p0),
+                parameter_type_annotation(p1),
+                ctx.source_text(),
+            );
 
             ctx.diagnostic(unified_signatures_diagnostic(
-                format!("{failure_string_start} taking `{type1} | {type2}`."),
+                format!("{failure_string_start} taking `{types}`."),
                 [
                     parameter_span(p1).primary_label("this parameter can be unified"),
                     parameter_span(p0).label("with this overload parameter"),
@@ -723,12 +755,61 @@ fn report_failure(unify: Unify<'_>, only_two_overloads: bool, ctx: &LintContext<
     }
 }
 
-fn parameter_type_annotation(parameter: Parameter<'_>) -> Option<&TSTypeAnnotation<'_>> {
-    match parameter {
+fn get_unified_type_text(
+    first: Option<&TSType<'_>>,
+    second: Option<&TSType<'_>>,
+    source_text: &str,
+) -> String {
+    let (Some(first), Some(second)) = (first, second) else {
+        return get_union_member_text(
+            first.or(second).expect("one of the differing parameters must have a type annotation"),
+            source_text,
+        );
+    };
+
+    let mut members = Vec::new();
+    collect_union_members(first, &mut members);
+    collect_union_members(second, &mut members);
+    let mut seen = FxHashSet::default();
+    members
+        .into_iter()
+        .filter(|member| seen.insert(member.span().source_text(source_text)))
+        .map(|member| get_union_member_text(member, source_text))
+        .join(" | ")
+}
+
+fn collect_union_members<'t, 'a>(ty: &'t TSType<'a>, members: &mut Vec<&'t TSType<'a>>) {
+    // Unlike ESTree, Oxc retains parenthesized type nodes.
+    let ty = ty.without_parenthesized();
+    if let TSType::TSUnionType(union) = ty {
+        for member in &union.types {
+            collect_union_members(member, members);
+        }
+    } else {
+        members.push(ty);
+    }
+}
+
+fn get_union_member_text(ty: &TSType<'_>, source_text: &str) -> String {
+    let ty = ty.without_parenthesized();
+    let text = ty.span().source_text(source_text);
+    if matches!(
+        ty,
+        TSType::TSConditionalType(_) | TSType::TSConstructorType(_) | TSType::TSFunctionType(_)
+    ) {
+        format!("({text})")
+    } else {
+        text.to_string()
+    }
+}
+
+fn parameter_type_annotation(parameter: Parameter<'_>) -> Option<&TSType<'_>> {
+    let annotation = match parameter {
         Parameter::This(this_param) => this_param.type_annotation.as_deref(),
         Parameter::Formal(parameter) => parameter.type_annotation.as_deref(),
         Parameter::Rest(parameter) => parameter.type_annotation.as_deref(),
-    }
+    }?;
+    Some(&annotation.type_annotation)
 }
 
 fn parameter_may_be_missing(parameter: Parameter<'_>) -> bool {
@@ -750,7 +831,7 @@ fn is_this_void_param(parameter: Parameter<'_>) -> bool {
     matches!(
         parameter_type_annotation(parameter),
         Some(type_annotation)
-            if matches!(&type_annotation.type_annotation, TSType::TSVoidKeyword(_))
+            if matches!(type_annotation, TSType::TSVoidKeyword(_))
     )
 }
 
@@ -798,15 +879,15 @@ fn parameters_are_equal(first: Parameter<'_>, second: Parameter<'_>, source_text
 }
 
 fn types_are_equal(
-    first: Option<&TSTypeAnnotation<'_>>,
-    second: Option<&TSTypeAnnotation<'_>>,
+    first: Option<&TSType<'_>>,
+    second: Option<&TSType<'_>>,
     source_text: &str,
 ) -> bool {
     match (first, second) {
         (None, None) => true,
         (Some(first), Some(second)) => {
-            first.type_annotation.span().source_text(source_text)
-                == second.type_annotation.span().source_text(source_text)
+            first.without_parenthesized().span().source_text(source_text)
+                == second.without_parenthesized().span().source_text(source_text)
         }
         _ => false,
     }
@@ -1298,6 +1379,43 @@ fn test() {
                 ",
             None,
         ),
+        (
+            "type A = 1 | 2;
+type B = 3 | 4;
+function f<T extends A>(x: T, y: string): void;
+function f<T extends B>(x: T): void;",
+            None,
+        ),
+        (
+            "function f<T extends 1 | 2>(x: T, y: string): void;
+function f<T extends 3 | 4>(x: T): void;",
+            None,
+        ),
+        (
+            "function f<T extends number>(x: T[]): void;
+function f<R extends number>(x: R): void;",
+            None,
+        ),
+        ("function f<T>(x: T): void; function f<T extends A>(x: T): void;", None),
+        (
+            "function f<T extends { a: string }>(x: T): void; function f<T extends { a: number }>(x: T): void;",
+            None,
+        ),
+        ("function f<T extends A>(x: T): void; function f<T extends B>(x: T[]): void;", None),
+        ("function f(this: void): void; function f(this: void): void;", None),
+        ("function f(x?: number): void; function f(x: number): void;", None),
+        (
+            "function f(a: number): void; function f(b: number): void;",
+            Some(serde_json::json!([{"ignoreDifferentlyNamedParameters": true}])),
+        ),
+        (
+            "/** first */ function f(x: number): void; /** second */ function f(x: number): void;",
+            Some(serde_json::json!([{"ignoreOverloadsWithDifferentJSDoc": true}])),
+        ),
+        ("declare function f(this: string): void; declare function f(x: string): void;", None),
+        ("declare function f(x: string): void; declare function f(this: string): void;", None),
+        ("declare function f(this: string): void; declare function f(x: number): void;", None),
+        ("declare function f(x: number): void; declare function f(this: string): void;", None),
     ];
 
     let fail = vec![
@@ -1688,6 +1806,159 @@ fn test() {
                   ",
             None,
         ),
+        (
+            "function f(x: string | number): void;
+function f(x: number | boolean): void;",
+            None,
+        ),
+        (
+            "function f(value): void;
+function f(value: string): void;",
+            None,
+        ),
+        (
+            "function f(value: string): void;
+function f(value): void;",
+            None,
+        ),
+        (
+            "type Alias = string;
+function f(x: Alias): void;
+function f(x: Alias | number): void;",
+            None,
+        ),
+        (
+            "type Name = string;
+function f(x: Name): void;
+function f(x: string | Name): void;",
+            None,
+        ),
+        (
+            "function f<T>(x: T): void;
+function f<T>(x: T | string): void;",
+            None,
+        ),
+        (
+            "function f(x: 'a|b'): void;
+function f(x: 'a|b' | string): void;",
+            None,
+        ),
+        (
+            "function f(x: string /* first */ | number): void;
+function f(x: number | /* second */ string): void;",
+            None,
+        ),
+        (
+            "declare function fn(a: number): void;
+declare function fn(a: (/* before */ string /* after */)): void;",
+            None,
+        ),
+        (
+            "function f(x: string & { brand: true }): void;
+function f(x: number | string & /* brand */ { brand: true }): void;",
+            None,
+        ),
+        (
+            "function f(x: string & { brand: true }): void;
+function f(x: number | string & { brand: true }): void;",
+            None,
+        ),
+        (
+            "function f<T, U>(x: () => void): void;
+function f<T, U>(x: T extends U ? string : number): void;",
+            None,
+        ),
+        (
+            "interface Value {}
+function f(x: new () => Value): void;
+function f(x: string): void;",
+            None,
+        ),
+        (
+            "interface I {
+  f(x: string | number): void;
+  f(x: number | boolean): void;
+  f(x: symbol): string;
+}",
+            None,
+        ),
+        (
+            "function f(x: 'a' | 'b'): void;
+function f(x: 'b' | 'c'): void;",
+            None,
+        ),
+        (
+            "function f(x: Array<string> | boolean): void;
+function f(x: Array<number> | boolean): void;",
+            None,
+        ),
+        (
+            "function f(x: Promise | boolean): void;
+function f(x: Promise<string> | boolean): void;",
+            None,
+        ),
+        (
+            "namespace Namespace {
+  export type Value = string;
+}
+function f(x: Namespace.Value): void;
+function f(x: Namespace.Value | string): void;",
+            None,
+        ),
+        (
+            "declare function f(a: number): void;
+declare function f(a: number): void;",
+            None,
+        ),
+        (
+            "declare function f(a: number): void;
+declare function f(a: number): void;
+declare function f(a: string): string;",
+            None,
+        ),
+        (
+            "function f(a: number): void;
+function f(a: number): void;
+function f(a: number): void {}",
+            None,
+        ),
+        (
+            "class A {
+  f(a: number): void;
+  f(a: number): void;
+  f(a: number): void {}
+}",
+            None,
+        ),
+        ("function f(): void; function f(): void;", None),
+        ("function f(value): void; function f(value): void;", None),
+        ("function f(...values: string[]): void; function f(...values: string[]): void;", None),
+        ("function f(x?: string): void; function f(x?: string): void;", None),
+        ("function f(this: string): void; function f(this: string): void;", None),
+        ("interface I { (): void; (): void; }", None),
+        ("interface I { new (): I; new (): I; }", None),
+        ("interface I { f(): void; f(): void; }", None),
+        (
+            "class C { constructor(x: number); constructor(x: number); constructor(x: number) {} }",
+            None,
+        ),
+        (
+            "function f(x: string | (number | boolean)): void; function f(x: (boolean | string)): void;",
+            None,
+        ),
+        ("function f(x: (() => void) | string): void; function f(x: () => void): void;", None),
+        ("function f<T extends A>(x: T): void; function f<T extends A>(x: T[]): void;", None),
+        (
+            "function f<T extends 1 | 2>(x: T): void; function f<T extends 1 | 2>(x: T, y: string): void;",
+            None,
+        ),
+        ("function f<T extends (A)>(x: T): void; function f<T extends A>(x: T[]): void;", None),
+        ("function f(a: number): void; function f(b: number): void;", None),
+        (
+            "/** same */ function f(x: number): void; /** same */ function f(x: number): void;",
+            Some(serde_json::json!([{"ignoreOverloadsWithDifferentJSDoc": true}])),
+        ),
+        ("function f(x): void; function f(x: () => void): void;", None),
     ];
 
     Tester::new(UnifiedSignatures::NAME, UnifiedSignatures::PLUGIN, pass, fail).test_and_snapshot();
