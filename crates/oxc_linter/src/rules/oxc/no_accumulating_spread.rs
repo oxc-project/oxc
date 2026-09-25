@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, AssignmentExpression, AssignmentTarget, BindingPattern, CallExpression,
-        Expression, ForInStatement, ForOfStatement, ForStatement, VariableDeclarationKind,
+        Expression, ForInStatement, ForOfStatement, ForStatement, IdentifierReference,
+        SimpleAssignmentTarget, VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -132,11 +133,13 @@ declare_oxc_lint!(
 
 impl Rule for NoAccumulatingSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // only check spreads on identifiers
         let AstKind::SpreadElement(spread) = node.kind() else {
             return;
         };
-        let Expression::Identifier(ident) = &spread.argument else {
+        // Accepts both direct accumulator spreads (`...acc`) and spreads of a member access
+        // rooted at the accumulator (`...acc[key]`, `...acc.foo`), since both still copy an
+        // ever-growing structure derived from the accumulator on every iteration.
+        let Some(ident) = get_root_identifier(&spread.argument) else {
             return;
         };
 
@@ -173,35 +176,44 @@ fn check_reduce_usage<'a>(
         return;
     };
 
-    // We're only looking for the first parameter, since that's where acc is.
-    // Skip non-parameter or non-first-parameter declarations.
-    let first_param_symbol_id =
-        params.items.first().and_then(|item| get_identifier_symbol_id(&item.pattern));
-    if first_param_symbol_id.is_none_or(|id| id != referenced_symbol_id) {
+    // We're only looking for the first parameter, since that's where acc is. This also matches
+    // when the accumulator itself is destructured, e.g. `({ a, b }, item) => ({ ...a, ...item })`,
+    // since `a`/`b` are still parts of the accumulator.
+    let Some(first_param) = params.items.first() else {
+        return;
+    };
+    if !binding_pattern_contains_symbol(&first_param.pattern, referenced_symbol_id) {
         return;
     }
 
-    // invalid number of parameters to reduce callback
-    let params_count = params.parameters_count();
-    if params_count != 2 {
-        return;
-    }
+    // Note: extra unused params (beyond accumulator, currentValue, currentIndex, array) are
+    // still valid JS and don't change reduce's behavior, so we don't restrict the param count
+    // here. The checks above (first param is the accumulator) and below (call is reduce/
+    // reduceRight with 1-2 args) are sufficient to confirm this is a real reduce callback.
 
-    // Check if the declaration resides within a call to reduce()
-    for parent in ctx.nodes().ancestors(declaration.id()) {
-        if let AstKind::CallExpression(call_expr) = parent.kind()
-            && is_method_call(call_expr, None, Some(&["reduce", "reduceRight"]), Some(1), Some(2))
-            && ctx
-                .nodes()
-                .ancestors(spread_node_id)
-                .take_while(|n| !n.kind().span().contains_inclusive(declaration.span()))
-                .all(|n| {
-                    !matches!(n.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_))
-                })
-        {
-            ctx.diagnostic(get_reduce_diagnostic(call_expr, spread_span));
-            return;
-        }
+    // The callback must be a direct argument to reduce()/reduceRight() - stop at the nearest
+    // enclosing call, since anything further up (e.g. an unrelated outer .reduce() that merely
+    // contains this callback lexically, as in `arr.reduce((r, x) => { ...; other.map(cb) })`)
+    // does not make `cb` a reduce callback.
+    let Some(call_expr_node) = ctx
+        .nodes()
+        .ancestors(declaration.id())
+        .find(|n| matches!(n.kind(), AstKind::CallExpression(_)))
+    else {
+        return;
+    };
+    let AstKind::CallExpression(call_expr) = call_expr_node.kind() else { unreachable!() };
+
+    if is_method_call(call_expr, None, Some(&["reduce", "reduceRight"]), Some(1), Some(2))
+        && ctx
+            .nodes()
+            .ancestors(spread_node_id)
+            .take_while(|n| !n.kind().span().contains_inclusive(declaration.span()))
+            .all(|n| {
+                !matches!(n.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_))
+            })
+    {
+        ctx.diagnostic(get_reduce_diagnostic(call_expr, spread_span));
     }
 }
 
@@ -223,7 +235,9 @@ fn check_loop_usage<'a>(
         return;
     };
 
-    let Some(assignment_expr) = find_assignment_expression(referenced_symbol_id, ctx) else {
+    let Some(assignment_expr) =
+        find_assignment_expression(spread_node_id, referenced_symbol_id, ctx)
+    else {
         return;
     };
 
@@ -243,37 +257,49 @@ fn check_loop_usage<'a>(
     );
 }
 
-/// Find the assignment expression that writes to the referenced symbol
+/// Find the nearest enclosing assignment expression whose target resolves back to
+/// `referenced_symbol_id`, either directly (`foo = ...`) or via a member access rooted at it
+/// (`foo.list = ...`, `foo[key] = ...`).
 fn find_assignment_expression<'a>(
+    spread_node_id: NodeId,
     referenced_symbol_id: SymbolId,
     ctx: &LintContext<'a>,
 ) -> Option<&'a AssignmentExpression<'a>> {
-    let write_reference =
-        ctx.semantic().symbol_references(referenced_symbol_id).find(|r| r.is_write())?;
-    let parent_node = ctx.nodes().parent_node(write_reference.node_id());
-
-    if let AstKind::AssignmentExpression(expr) = parent_node.kind() {
-        // Verify this assignment is to our symbol
-        if is_assignment_to_symbol(&expr.left, referenced_symbol_id, ctx) {
+    for parent in ctx.nodes().ancestors(spread_node_id) {
+        if let AstKind::AssignmentExpression(expr) = parent.kind()
+            && is_assignment_to_symbol(&expr.left, referenced_symbol_id, ctx)
+        {
             return Some(expr);
         }
     }
     None
 }
 
-/// Check if the assignment target is our referenced symbol
+/// Check if the assignment target is our referenced symbol, either directly or via a member
+/// access rooted at it (e.g. `foo.list = ...` when `foo` is the referenced symbol).
 fn is_assignment_to_symbol(
     assignment_target: &AssignmentTarget,
     referenced_symbol_id: SymbolId,
     ctx: &LintContext,
 ) -> bool {
-    if let AssignmentTarget::AssignmentTargetIdentifier(ident) = assignment_target {
-        let scoping = ctx.semantic().scoping();
-        let reference = scoping.get_reference(ident.reference_id());
-        reference.symbol_id() == Some(referenced_symbol_id)
-    } else {
-        false
-    }
+    let scoping = ctx.semantic().scoping();
+    let root_ident = match assignment_target {
+        AssignmentTarget::AssignmentTargetIdentifier(ident) => ident,
+        _ => {
+            let Some(member_expr) = assignment_target
+                .as_simple_assignment_target()
+                .and_then(SimpleAssignmentTarget::as_member_expression)
+            else {
+                return false;
+            };
+            let Some(ident) = get_root_identifier(member_expr.object()) else {
+                return false;
+            };
+            ident
+        }
+    };
+    let reference = scoping.get_reference(root_ident.reference_id());
+    reference.symbol_id() == Some(referenced_symbol_id)
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -370,11 +396,55 @@ fn get_reduce_diagnostic<'a>(
     reduce_unknown(spread_span, reduce_call_span)
 }
 
-fn get_identifier_symbol_id(ident: &BindingPattern<'_>) -> Option<SymbolId> {
-    match ident {
-        BindingPattern::BindingIdentifier(ident) => Some(ident.symbol_id()),
-        BindingPattern::AssignmentPattern(ident) => get_identifier_symbol_id(&ident.left),
-        _ => None,
+/// Returns whether any identifier bound directly within `pattern` is `symbol_id`, e.g. `a` and
+/// `b` in `({ a, b }) => ...` when destructuring the accumulator.
+fn binding_pattern_contains_symbol(pattern: &BindingPattern<'_>, symbol_id: SymbolId) -> bool {
+    match pattern {
+        BindingPattern::BindingIdentifier(ident) => ident.symbol_id() == symbol_id,
+        BindingPattern::AssignmentPattern(assignment) => {
+            binding_pattern_contains_symbol(&assignment.left, symbol_id)
+        }
+        BindingPattern::ObjectPattern(object) => {
+            object
+                .properties
+                .iter()
+                .any(|prop| binding_pattern_contains_symbol(&prop.value, symbol_id))
+                || object
+                    .rest
+                    .as_ref()
+                    .is_some_and(|rest| binding_pattern_contains_symbol(&rest.argument, symbol_id))
+        }
+        BindingPattern::ArrayPattern(array) => {
+            array
+                .elements
+                .iter()
+                .flatten()
+                .any(|elem| binding_pattern_contains_symbol(elem, symbol_id))
+                || array
+                    .rest
+                    .as_ref()
+                    .is_some_and(|rest| binding_pattern_contains_symbol(&rest.argument, symbol_id))
+        }
+    }
+}
+
+/// Walks through a chain of member expressions (and optional chains, e.g. `acc?.[key]`) to find
+/// the root identifier, e.g. `acc` in `acc[key].prop`. Returns `None` if the root isn't an
+/// identifier (e.g. `foo().bar`).
+fn get_root_identifier<'a, 'b>(expr: &'b Expression<'a>) -> Option<&'b IdentifierReference<'a>> {
+    let mut expr = expr.get_inner_expression();
+    loop {
+        match expr {
+            Expression::Identifier(ident) => return Some(ident),
+            Expression::ChainExpression(chain) => {
+                let member_expr = chain.expression.member_expression()?;
+                expr = member_expr.object().get_inner_expression();
+            }
+            _ => {
+                let member_expr = expr.as_member_expression()?;
+                expr = member_expr.object().get_inner_expression();
+            }
+        }
     }
 }
 
@@ -444,9 +514,6 @@ fn test() {
         // Object - Allow spreading the item into the accumulator
         "foo.reduce((acc, bar) => {acc[bar.key] = { ...bar.value }; return acc;}, {})",
         "foo.reduceRight((acc, bar) => {acc[bar.key] = { ...bar.value }; return acc;}, {})",
-        // Callbacks with wrong number of parameters
-        "foo.reduce((acc,value,index,array,somethingExtra) => [...acc, value], [])",
-        "foo.reduce((acc) => [...acc], [])",
         // Wrong number of arguments to known method (reduce can have 1 or 2 args, but not more)
         "foo.reduce((acc, bar) => [...acc, bar], [], 123)",
         // loops, array case
@@ -465,6 +532,22 @@ fn test() {
         "let foo = {}; for (const i of [1,2,3]) { foo[i] = i; }",
         "let foo = {}; while (Object.keys(foo).length < 10) { foo[Object.keys(foo).length] = Object.keys(foo).length; }",
         "function doSomething(list) { return list.reduce((acc, each) => { return each.subList.flatMap((subEach) => { return [...acc, subEach.subList] }) }, []) }",
+        // Destructured accumulator: spreading an unrelated (non-accumulator) binding is fine
+        "arr.reduce(({ a }, x) => ({ ...x }), { a: 1 })",
+        // Optional-chained member access on an unrelated (non-accumulator) variable is fine
+        "foo.reduce((acc, bar) => ({ ...obj?.[bar.key] }), {})",
+        // Loop: mutating an unrelated variable's property isn't an accumulating spread on `foo`
+        "let foo = {}; let bar = []; for (let i = 0; i < 10; i++) { foo.list = [...bar, i]; }",
+        // A spread inside a nested callback's own param (e.g. a `.map()` callback within a
+        // reduce callback's body) isn't an accumulating spread just because it's lexically
+        // inside a reduce call - `view` here belongs to `.map()`, not `.reduce()`.
+        r"
+        const views = Object.keys(contrib).reduce((result, location) => {
+            const viewsForLocation: IView[] = contrib[location];
+            result.push(...viewsForLocation.map(view => ({ ...view, location })));
+            return result;
+        }, [] as Array<{ id: string; name: string; location: string }>);
+        ",
     ];
 
     let fail = vec![
@@ -513,6 +596,19 @@ fn test() {
         // Object - Body return with item spread
         "foo.reduce((acc, bar) => {return {...acc, ...bar};}, {})",
         "foo.reduceRight((acc, bar) => {return {...acc, ...bar};}, {})",
+        // Callbacks using the currentIndex / array params should still be caught
+        "foo.reduce((acc, bar, index) => [...acc, bar], [])",
+        "foo.reduce((acc, bar, index, array) => [...acc, bar], [])",
+        // Destructured non-accumulator params should still be caught
+        "collaboratorInfo.reduce((acc, { formId, userAccountId }) => { return { ...acc, [formId]: userAccountId }; }, {})",
+        "foo.reduce((acc, bar, index) => ({...acc, [index]: bar}), {})",
+        // Extra unused params don't prevent this from being a real reduce callback
+        "foo.reduce((acc,value,index,array,somethingExtra) => [...acc, value], [])",
+        "foo.reduce((acc) => [...acc], [])",
+        // Spreading a member access rooted at the accumulator is still an accumulating spread
+        "foo.reduce((acc, bar) => { acc[bar.key] = [...acc[bar.key], bar.value]; return acc; }, {})",
+        "foo.reduce((acc, bar) => { acc[bar.key] = { ...acc[bar.key], ...bar.value }; return acc; }, {})",
+        "foo.reduce((acc, bar) => { acc.list = [...acc.list, bar]; return acc; }, { list: [] })",
         // loops, array case
         "let foo = []; for (let i = 0; i < 10; i++) { foo = [...foo, i]; }",
         "let foo = []; for (const i = 0; i < 10; i++) { foo = [...foo, i]; }",
@@ -529,6 +625,18 @@ fn test() {
         "let foo = {}; for (let i of [1,2,3]) { foo = { ...foo, [i]: i }; }",
         "let foo = {}; for (const i of [1,2,3]) { foo = { ...foo, [i]: i }; }",
         "let foo = {}; while (Object.keys(foo).length < 10) { foo = { ...foo, [Object.keys(foo).length]: Object.keys(foo).length }; }",
+        // Destructured accumulator: spreading a part of the destructured accumulator is still
+        // an accumulating spread
+        "arr.reduce(({ list }, x) => ({ list: [...list, x] }), { list: [] })",
+        "arr.reduce(({ a, ...rest }, x) => ({ ...rest, x }), { a: 1 })",
+        "arr.reduce(([first, ...others], x) => [...others, x], [])",
+        // Optional chaining on the spread target is still an accumulating spread
+        "foo.reduce((acc, bar) => ({ ...acc?.[bar.key] }), {})",
+        "foo.reduce((acc, bar) => ({ ...acc?.nested }), { nested: {} })",
+        // Loop: mutating the accumulator through a member expression is still an
+        // accumulating spread
+        "let foo = { list: [] }; for (let i = 0; i < 10; i++) { foo.list = [...foo.list, i]; }",
+        "let foo = { list: [] }; for (let i = 0; i < 10; i++) { foo['list'] = [...foo['list'], i]; }",
     ];
 
     Tester::new(NoAccumulatingSpread::NAME, NoAccumulatingSpread::PLUGIN, pass, fail)
