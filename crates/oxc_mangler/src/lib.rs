@@ -11,12 +11,16 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 pub use base54::base54;
 use oxc_allocator::{Allocator, ArenaVec, BitSet};
-use oxc_ast::ast::{Declaration, Program, Statement};
+use oxc_ast::{
+    AstKind,
+    ast::{Declaration, Program, Statement},
+};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
 use oxc_span::SourceType;
 use oxc_str::{ArenaIdentHashSet, CompactStr, Ident};
+use oxc_syntax::scope::ScopeId;
 
 pub(crate) mod base54;
 mod keep_names;
@@ -410,16 +414,58 @@ impl<'t> Mangler<'t> {
         names.apply(allocator, scoping, &ranking);
     }
 
-    /// Collects and generates mangled names for private members using semantic information
-    /// Returns a Vec where each element corresponds to a class in declaration order
+    /// Collects and generates mangled names for private members using semantic information.
+    /// Returns a Vec where each element corresponds to a class in declaration order.
+    ///
+    /// If a class (or any nested scope inside it) contains a direct `eval(...)` call,
+    /// private members are NOT mangled, because eval can reference them by string name.
     fn collect_private_members_from_semantic(
         semantic: &Semantic<'_>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
         let classes = semantic.classes();
+        let scoping = semantic.scoping();
+        let nodes = semantic.nodes();
+
+        // Precompute which scopes contain direct eval
+        let mut eval_scopes = FxHashSet::<ScopeId>::default();
+        for scope_id in scoping.scope_descendants_from_root() {
+            if scoping.scope_flags(scope_id).contains_direct_eval() {
+                eval_scopes.insert(scope_id);
+            }
+        }
 
         let mut class_private_mappings: IndexVec<ClassId, FxHashMap<String, CompactStr>> =
             IndexVec::with_capacity(classes.len());
         for (class_id, class_elements) in classes.elements.iter_enumerated() {
+            // Get the class node to find its scope_id
+            let class_node_id = classes.get_node_id(class_id);
+            let AstKind::Class(class) = nodes.get_node(class_node_id).kind() else {
+                unreachable!("ClassTable node should always be a Class");
+            };
+            let class_scope_id =
+                class.scope_id.get().expect("Class should have a scope_id after semantic analysis");
+
+            // Check if any descendant scope of this class (or the class scope itself) contains
+            // direct eval. If so, we must NOT mangle private members in this class.
+            let has_direct_eval = scoping.scope_descendants_from_root().any(|scope_id| {
+                eval_scopes.contains(&scope_id)
+                    && (scope_id == class_scope_id
+                        || scoping.scope_is_descendant_of(scope_id, class_scope_id))
+            });
+
+            // If a parent class contains eval, don't mangle this nested class either,
+            // because the parent's private names would be referenced in eval strings.
+            let parent_has_direct_eval = classes
+                .ancestors(class_id)
+                .skip(1)
+                .any(|ancestor_id| class_private_mappings[ancestor_id].is_empty());
+
+            if has_direct_eval || parent_has_direct_eval {
+                // Don't mangle private members when eval is present
+                class_private_mappings.push(FxHashMap::with_hasher(FxBuildHasher));
+                continue;
+            }
+
             // Nested classes are declared after their lexical parents, so their mappings have
             // already been collected.
             let parent_private_member_count = classes
