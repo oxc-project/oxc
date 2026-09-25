@@ -32,6 +32,12 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────
    ╰────
 
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import withPatterns from "foo/bar";
+   · ───────────────────────────────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): 'foo/baz' import is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import withPatterns from "foo/baz";
@@ -505,6 +511,12 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────
    ╰────
 
+  ⚠ eslint(no-restricted-imports): '#foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import absoluteWithPatterns from '#foo/bar';
+   · ────────────────────────────────────────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo } from '../../my/relative-module';
@@ -815,6 +827,92 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────
    ╰────
   help: foo is forbidden, use bar instead
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import { foo1 } from 'foo';
+   · ───────────────────────────
+ 2 │ import { foo2 } from 'foo/bar';
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:2:1]
+ 1 │ import { foo1 } from 'foo';
+ 2 │ import { foo2 } from 'foo/bar';
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import "foo/bar";
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ export * from "foo/bar";
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar/baz' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import withPatterns from "foo/bar/baz";
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): '@scope/pkg/sub' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import withPatterns from "@scope/pkg/sub";
+   · ──────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import withPatterns from "foo/bar";
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import withGitignores from "foo/bar";
+   · ─────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'restricted' import from 'foo/bar' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
+ 1 │ import { restricted } from "foo/bar";
+   ·          ──────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'lodash/map' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import a from "lodash/map";
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'import2/bad/x' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import a from "import2/bad/x";
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import a from "foo/bar";
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import a from "foo/bar";
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import a from "foo/bar";
+   · ────────────────────────
+   ╰────
 
   ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:1]
