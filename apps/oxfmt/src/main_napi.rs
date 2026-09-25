@@ -7,7 +7,7 @@ use oxc_napi::OxcError;
 use serde_json::Value;
 
 use crate::{
-    api::{format_api, text_to_doc_api},
+    api::{format_api, resolve_config_api, text_to_doc_api},
     cli::{MigrateSource, Mode, StdinRunner, WalkRunner, format_command, init_rayon},
     core::{
         ExternalServices, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
@@ -173,6 +173,38 @@ pub async fn format(
     );
 
     FormatResult { code, errors }
+}
+
+// ---
+
+#[napi(object)]
+pub struct ResolveConfigResult {
+    /// The effective config for the file, which can be passed to `format()`.
+    #[napi(ts_type = "Record<string, any>")]
+    pub config: Value,
+    /// Whether the file is ignored by `.prettierignore` or the config's `ignorePatterns`.
+    pub ignored: bool,
+}
+
+/// NAPI based config resolution API entry point.
+///
+/// Resolves the config for a file the same way `oxfmt --stdin-filepath` does.
+///
+/// # Errors
+/// Returns error if config loading, parsing, or validation fails.
+#[expect(clippy::allow_attributes)]
+#[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
+#[napi]
+pub async fn resolve_config(
+    filename: String,
+    cwd: Option<String>,
+    #[napi(ts_arg_type = "(path: string) => Promise<any>")] load_js_config_cb: JsLoadJsConfigCb,
+) -> napi::Result<ResolveConfigResult> {
+    let resolve_config_api::ApiResolveConfigResult { config, ignored } =
+        resolve_config_api::run(&filename, cwd.as_deref(), load_js_config_cb)
+            .map_err(napi::Error::from_reason)?;
+
+    Ok(ResolveConfigResult { config, ignored })
 }
 
 // ---
