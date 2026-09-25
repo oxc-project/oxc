@@ -60,8 +60,8 @@ processing files concurrently, but can be slower for a single small file.
 
 `TransformResult` contains `code`, an optional source `map`, `errors`, and a
 `fatal` flag. Fatal diagnostics appear in `errors` without producing code.
-Recoverable React Compiler diagnostics are omitted by default, matching Babel's
-default `logger: null`; set `reactCompiler.reportDiagnostics` to include them in
+Recoverable React Compiler diagnostics are omitted by default;
+set `reactCompiler.reportDiagnostics` to include them in
 `errors` while code is still produced, and use `fatal` to determine whether the
 output is usable.
 
@@ -196,8 +196,7 @@ import `react-compiler-runtime`, which must be available to the generated code.
 
 Callback-valued options such as `logger`, function-valued `sources`, and type
 provider callbacks are not supported by the native binding. `sources` accepts
-an array of filename substrings instead, and `reportDiagnostics: true` returns
-the recoverable diagnostics a `logger` would otherwise receive in `errors`.
+an array of filename substrings instead.
 
 ## Notes
 

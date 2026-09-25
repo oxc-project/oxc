@@ -203,10 +203,8 @@ export interface ReactCompilerOptions {
   /**
    * Include recoverable React Compiler diagnostics in `errors`.
    *
-   * By default only fatal diagnostics are reported, matching Babel's default
-   * `logger: null`. Enable this to also receive the diagnostic behind every
-   * function the compiler left untouched (bail-outs, rule suppressions, lint
-   * findings) while code is still produced. Fatal diagnostics are reported
+   * Enable this to receive recoverable diagnostics (bail-outs, rule suppressions,
+   * lint findings) while code is still produced. Fatal diagnostics are reported
    * regardless of this option.
    *
    * @default false

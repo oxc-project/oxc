@@ -105,8 +105,7 @@ fn transform_impl(
     let react_output = match react_compiler_options {
         None => None,
         Some(options) => match react_compiler_compile(&program, &semantic, &allocator, options) {
-            // Match Babel's default `logger: null` by omitting recoverable diagnostics
-            // unless `reportDiagnostics` asks for them.
+            // Include recoverable diagnostics only when requested.
             CompileResult::Success { output, diagnostics: react_diagnostics } => {
                 if report_diagnostics {
                     diagnostics.extend(react_diagnostics);
