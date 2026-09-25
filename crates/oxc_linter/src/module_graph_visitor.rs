@@ -1,6 +1,5 @@
 use std::{
     marker::PhantomData,
-    path::PathBuf,
     sync::{Arc, Weak},
 };
 
@@ -129,7 +128,7 @@ impl<T> Default for ModuleGraphVisitorBuilder<'_, T> {
 
 pub struct ModuleGraphVisitResult<T> {
     pub result: T,
-    pub _traversed: FxHashSet<PathBuf>,
+    pub _traversed: FxHashSet<usize>,
     pub _max_depth: u32,
 }
 
@@ -141,7 +140,9 @@ impl<T> ModuleGraphVisitResult<T> {
 
 #[derive(Debug)]
 struct ModuleGraphVisitor {
-    traversed: FxHashSet<PathBuf>,
+    /// Keys are `Path::as_os_str` pointers into `ModuleRecord::resolved_absolute_path`.
+    /// Those `PathBuf`s are owned by `Arc<ModuleRecord>` values that stay alive for the walk.
+    traversed: FxHashSet<usize>,
     depth: u32,
     max_depth: u32,
 }
@@ -219,7 +220,7 @@ impl ModuleGraphVisitor {
             }
 
             let path = &loaded_module_record.resolved_absolute_path;
-            if !self.traversed.insert(path.clone()) {
+            if !self.traversed.insert(path.as_os_str().as_encoded_bytes().as_ptr() as usize) {
                 continue;
             }
 
