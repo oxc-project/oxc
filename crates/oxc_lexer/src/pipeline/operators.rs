@@ -206,6 +206,10 @@ impl<const TABLE_SIZE: usize> OpTable<TABLE_SIZE> {
 ///
 /// This has to be a separate type from [`OpTable`] as we want this stored in a `static`
 /// whereas [`OpTable`] should just be a `const`, so it doesn't bloat the binary.
+///
+/// Aligned on a 128-byte boundary, so whole table sits in 2 x 128-byte cache lines
+/// on Apple Silicon, and paired cache lines on `x86_64`.
+#[repr(C, align(128))]
 struct OpTableData<const TABLE_SIZE: usize> {
     values: [u32; TABLE_SIZE],
 }
