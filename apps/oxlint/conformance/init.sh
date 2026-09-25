@@ -272,3 +272,16 @@ npm install
 
 # Return to `submodules` directory
 cd ..
+
+###############################################################################
+# Microsoft SDL
+###############################################################################
+
+# Clone `eslint-plugin-sdl` repo into `submodules/sdl`
+clone_repo sdl
+
+# Install dependencies from the upstream lockfile
+npm ci
+
+# Return to `submodules` directory
+cd ..
