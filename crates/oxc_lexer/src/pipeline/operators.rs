@@ -28,7 +28,7 @@
 //! that they produce no collisions. If a change to the operator list breaks that,
 //! the test's failure message gives a replacement.
 
-use crate::token::{TokenKind, tk};
+use crate::token::TokenKind;
 
 use crate::pipeline::bytes::is_digit;
 
@@ -189,10 +189,10 @@ impl<const TABLE_SIZE: usize, Align> OpTable<TABLE_SIZE, Align> {
 
     /// Check if `bytes` starts with an operator from this hash table.
     ///
-    /// * If an operator is found, returns `Some` containing the [`TokenKind`] of the operator as a `u32`.
+    /// * If an operator is found, returns `Some` containing the [`TokenKind`] of the operator.
     /// * Otherwise, returns `None`.
     #[inline(always)]
-    fn lookup(&self, bytes: [u8; 4]) -> Option<u32> {
+    fn lookup(&self, bytes: [u8; 4]) -> Option<TokenKind> {
         let mask = if self.len == 2 { 0xFFFF } else { 0xFF_FFFF };
         let key = u32::from_le_bytes(bytes) & mask;
         let pack = self.pack(key);
@@ -204,7 +204,14 @@ impl<const TABLE_SIZE: usize, Align> OpTable<TABLE_SIZE, Align> {
         // `test_perfect_hash` test covers this.
         // This means that `pack >> 24` cannot be 0 here - that branch always returns
         // an operator `TokenKind`.
-        if (pack & mask) == key { Some(pack >> 24) } else { None }
+        if (pack & mask) == key {
+            // SAFETY: The top byte of all `pack` values for non-empty slots is derived
+            // from a valid `TokenKind`. See above for why the slot can't be empty here.
+            let kind = unsafe { TokenKind::from_u8_unchecked((pack >> 24) as u8) };
+            Some(kind)
+        } else {
+            None
+        }
     }
 }
 
@@ -300,33 +307,33 @@ pub(super) fn opmap_pack3(key: u32) -> u32 {
 /// in last 3 or 4 bytes, no matching operator can be found.
 ///
 /// If an operator is found, returns a tuple `(kind, len)` where:
-/// - `kind` is the [`TokenKind`] of the operator as a `u32`
+/// - `kind` is the [`TokenKind`] of the operator
 /// - `len` is the length of the found operator in bytes
 ///
-/// If no operator is found, returns 0 as `kind`, and 1 as `len`.
+/// If no operator is found, returns `None` as `kind`, and 1 as `len`.
 ///
 /// `?.` followed by a digit is rejected as a match.
 #[inline(always)]
-pub(super) fn opmap_longest(bytes: [u8; 4], max_len: u32) -> (/* kind*/ u32, /* len */ u32) {
+pub(super) fn opmap_longest(bytes: [u8; 4], max_len: u32) -> (Option<TokenKind>, u32) {
     if max_len >= 4 && bytes == FOUR_BYTE_OP_BYTES {
-        return (FOUR_BYTE_OP_KIND as u32, 4);
+        return (Some(FOUR_BYTE_OP_KIND), 4);
     }
 
     if max_len >= 3 {
         let kind = OP3_TABLE.lookup(bytes);
         if let Some(kind) = kind {
-            return (kind, 3);
+            return (Some(kind), 3);
         }
     }
 
     let kind = OP2_TABLE.lookup(bytes);
     if let Some(kind) = kind
-        && !(kind == tk!(OptionalChain) as u32 && is_digit(bytes[2]))
+        && !(kind == TokenKind::OptionalChain && is_digit(bytes[2]))
     {
-        return (kind, 2);
+        return (Some(kind), 2);
     }
 
-    (0, 1)
+    (None, 1)
 }
 
 /// Get a `[u8; 4]` containing all the bytes of `txt` and 0 for any remaining bytes.
@@ -393,10 +400,7 @@ mod tests {
             let bytes = op_def.bytes();
             let lookup_kind =
                 if op_def.len() == 2 { OP2_TABLE.lookup(bytes) } else { OP3_TABLE.lookup(bytes) };
-            assert!(
-                lookup_kind == Some(op_def.kind as u32),
-                "OpDef {i}: `lookup` produced wrong kind"
-            );
+            assert!(lookup_kind == Some(op_def.kind), "OpDef {i}: `lookup` produced wrong kind");
         }
     }
 
