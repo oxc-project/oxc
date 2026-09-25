@@ -263,15 +263,15 @@ function traverseNode(node: Node, enter: (node: Node) => void, leave: (node: Nod
   const keys = visitorKeys[node.type as keyof typeof visitorKeys];
   const keysLen = keys.length;
   for (let i = 0; i < keysLen; i++) {
-    const child = (node as any)[keys[i]] as Node | (Node | null)[] | null;
+    const child = (node as any)[keys[i]] as Node | (Node | null | undefined)[] | null | undefined;
 
-    if (child === null) continue;
+    if (child == null) continue;
 
     if (Array.isArray(child)) {
       const len = child.length;
       for (let i = 0; i < len; i++) {
         const element = child[i];
-        if (element !== null) traverseNode(element, enter, leave);
+        if (element != null) traverseNode(element, enter, leave);
       }
     } else {
       traverseNode(child, enter, leave);
