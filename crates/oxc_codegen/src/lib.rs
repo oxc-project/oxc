@@ -423,16 +423,38 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn print_code_point_escape(&mut self, cp: u32) {
         const HEX: &[u8; 16] = b"0123456789ABCDEF";
-        self.print_str("\\u{");
-        let mut started = false;
-        for shift in (0..8).rev() {
-            let nibble = (cp >> (shift * 4)) & 0xF;
-            if nibble != 0 || started || shift == 0 {
-                started = true;
-                self.print_ascii_byte(HEX[nibble as usize]);
-            }
+        debug_assert!((0x10000..=0x10FFFF).contains(&cp));
+
+        if cp < 0x100000 {
+            let bytes = [
+                b'\\',
+                b'u',
+                b'{',
+                HEX[(cp >> 16) as usize & 0xF],
+                HEX[(cp >> 12) as usize & 0xF],
+                HEX[(cp >> 8) as usize & 0xF],
+                HEX[(cp >> 4) as usize & 0xF],
+                HEX[cp as usize & 0xF],
+                b'}',
+            ];
+            // SAFETY: all 9 bytes are ASCII.
+            unsafe { self.code.print_bytes_unchecked(&bytes) };
+        } else {
+            let bytes = [
+                b'\\',
+                b'u',
+                b'{',
+                HEX[(cp >> 20) as usize & 0xF],
+                HEX[(cp >> 16) as usize & 0xF],
+                HEX[(cp >> 12) as usize & 0xF],
+                HEX[(cp >> 8) as usize & 0xF],
+                HEX[(cp >> 4) as usize & 0xF],
+                HEX[cp as usize & 0xF],
+                b'}',
+            ];
+            // SAFETY: all 10 bytes are ASCII.
+            unsafe { self.code.print_bytes_unchecked(&bytes) };
         }
-        self.print_ascii_byte(b'}');
     }
 
     #[inline]

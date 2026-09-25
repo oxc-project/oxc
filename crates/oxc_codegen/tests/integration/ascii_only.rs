@@ -39,6 +39,11 @@ fn string_literals() {
     test("let x = '日本語';", "let x = \"\\u65E5\\u672C\\u8A9E\";\n");
     // Above the BMP: ES2015 code point escape.
     test("let x = '😀';", "let x = \"\\u{1F600}\";\n");
+    // The five- and six-digit escape paths meet at U+100000.
+    test(
+        "let x = '\u{FFFFF}\u{100000}\u{10FFFF}';",
+        "let x = \"\\u{FFFFF}\\u{100000}\\u{10FFFF}\";\n",
+    );
     // Existing escapes and line separators retain their values.
     test("let x = '\\u00E9';", "let x = \"\\u00E9\";\n");
     test("let x = '\u{2028}';", "let x = \"\\u2028\";\n");
