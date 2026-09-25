@@ -281,6 +281,7 @@ const WEBSITE_BASE_RULES_URL: &str = "https://oxc.rs/docs/guide/usage/linter/rul
 #[expect(clippy::struct_field_names)]
 pub struct Linter {
     options: LintOptions,
+    apply_fixes: bool,
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
     workspace_uri: Option<Box<str>>,
@@ -292,7 +293,8 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter, workspace_uri: None }
+        let apply_fixes = options.fix.is_some();
+        Self { options, apply_fixes, config, external_linter, workspace_uri: None }
     }
 
     #[must_use]
@@ -305,6 +307,15 @@ impl Linter {
     #[must_use]
     pub fn with_fix(mut self, kind: FixKind) -> Self {
         self.options.fix = kind;
+        self.apply_fixes = kind.is_some();
+        self
+    }
+
+    /// Collect fixes for reporting without applying them to source files.
+    #[must_use]
+    pub fn with_fix_for_report(mut self, kind: FixKind) -> Self {
+        self.options.fix = kind;
+        self.apply_fixes = false;
         self
     }
 
@@ -314,8 +325,8 @@ impl Linter {
         self
     }
 
-    pub(crate) fn options(&self) -> &LintOptions {
-        &self.options
+    pub(crate) fn should_apply_fixes(&self) -> bool {
+        self.apply_fixes
     }
 
     pub(crate) fn respect_eslint_disable_directives(&self) -> bool {

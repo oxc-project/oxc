@@ -17,7 +17,7 @@ use oxc_diagnostics::{
 };
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
-    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    ExternalPluginStore, FixKind, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
     LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
@@ -31,7 +31,7 @@ use crate::{
         CliConfigLoadError, ConfigLoadError, ConfigLoader, config_discovery,
         materialize_default_plugins,
     },
-    output_formatter::{LintCommandInfo, OutputFormatter},
+    output_formatter::{LintCommandInfo, OutputFormat, OutputFormatter},
     walk::Walk,
 };
 use oxc_linter::LintIgnoreMatcher;
@@ -478,9 +478,19 @@ impl CliRunner {
             }
         }
 
-        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
-            .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+        let fix_kind = fix_options.fix_kind();
+        let collect_fixes_for_report =
+            format_str == OutputFormat::Json && fix_kind.is_none() && !misc_options.silent;
+        let linter = Linter::new(LintOptions::default(), config_store, external_linter);
+        // JSON is also a machine-readable discovery format: collect every replacement when no
+        // application mode was requested and output is not silent, while leaving the runner in
+        // non-mutating mode.
+        let linter = if collect_fixes_for_report {
+            linter.with_fix_for_report(FixKind::All)
+        } else {
+            linter.with_fix(fix_kind)
+        }
+        .with_report_unused_directives(report_unused_directives);
 
         let number_of_files = files_to_lint.len();
         let tsconfig = basic_options.tsconfig;
@@ -519,11 +529,16 @@ impl CliRunner {
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
-        let lint_runner = match LintRunner::builder(options, linter)
+        let lint_runner_builder = LintRunner::builder(options, linter)
             .with_type_aware(type_aware)
             .with_type_check(type_check)
-            .with_silent(misc_options.silent)
-            .with_fix_kind(fix_options.fix_kind())
+            .with_silent(misc_options.silent);
+        let lint_runner_builder = if collect_fixes_for_report {
+            lint_runner_builder.with_fix_for_report(FixKind::All)
+        } else {
+            lint_runner_builder.with_fix_kind(fix_kind)
+        };
+        let lint_runner = match lint_runner_builder
             .with_type_check_only(type_check_only)
             .with_timings(debug_timings)
             .build()
@@ -1301,6 +1316,25 @@ mod test {
     }
 
     #[test]
+    fn test_json_collects_native_fixes_without_applying_them() {
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let path = temp_dir.path().join("input.js");
+        let source = "debugger;\n";
+        fs::write(&path, source).unwrap();
+
+        let output = Tester::new().with_cwd(temp_dir.path().to_path_buf()).test_output_verbose(&[
+            "--format=json",
+            "-D",
+            "no-debugger",
+            "input.js",
+        ]);
+
+        assert!(output.contains("no-debugger"), "Expected no-debugger diagnostic: {output}");
+        assert!(output.contains(r#""fixes": ["#), "Expected fix metadata in JSON: {output}");
+        assert_eq!(fs::read_to_string(path).unwrap(), source);
+    }
+
+    #[test]
     fn test_print_config_ban_all_rules() {
         let args = &["-A", "all", "--print-config"];
         Tester::new().with_cwd("fixtures".into()).test_and_snapshot(args);
@@ -1951,6 +1985,32 @@ export { redundant };
 ",
             &["--type-aware", "-D", "no-unnecessary-type-assertion"],
         );
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_json_collects_tsgolint_fixes_without_applying_them() {
+        let temp_dir =
+            tempfile::tempdir_in("fixtures/cli/tsgolint_fix").expect("Could not create a temp dir");
+        let path = temp_dir.path().join("fix.ts");
+        let source = "const str: string = 'hello';\nconst redundant = str as string;\n";
+        fs::write(&path, source).unwrap();
+        fs::write(temp_dir.path().join("tsconfig.json"), "{}").unwrap();
+
+        let output = Tester::new().with_cwd(temp_dir.path().to_path_buf()).test_output_verbose(&[
+            "--format=json",
+            "--type-aware",
+            "-D",
+            "no-unnecessary-type-assertion",
+            "fix.ts",
+        ]);
+
+        assert!(
+            output.contains("no-unnecessary-type-assertion"),
+            "Expected tsgolint diagnostic: {output}"
+        );
+        assert!(output.contains(r#""fixes": ["#), "Expected fix metadata in JSON: {output}");
+        assert_eq!(fs::read_to_string(path).unwrap(), source);
     }
 
     #[test]
