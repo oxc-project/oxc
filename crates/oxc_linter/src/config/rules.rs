@@ -15,7 +15,7 @@ use schemars::schema::SingleOrVec;
 use serde::{
     Deserialize, Serialize, Serializer,
     de::{self, Deserializer, Visitor},
-    ser::SerializeMap,
+    ser::{SerializeMap, SerializeSeq},
 };
 use smallvec::SmallVec;
 
@@ -592,12 +592,26 @@ impl Serialize for OxlintRules {
                 rules.serialize_entry(&key, rule.severity.as_str())?;
             } else {
                 // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
-                let value = (rule.severity.as_str(), &rule.config);
-                rules.serialize_entry(&key, &value)?;
+                rules.serialize_entry(&key, &RuleValue(rule))?;
             }
         }
 
         rules.end()
+    }
+}
+
+/// `[severity, ...options]` — the array form `parse_rule_value` reads, so serialized rules
+/// round-trip.
+struct RuleValue<'a>(&'a ESLintRule);
+
+impl Serialize for RuleValue<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut seq = s.serialize_seq(Some(1 + self.0.config.len()))?;
+        seq.serialize_element(self.0.severity.as_str())?;
+        for option in &self.0.config {
+            seq.serialize_element(option)?;
+        }
+        seq.end()
     }
 }
 
@@ -766,6 +780,25 @@ mod test {
     };
 
     use super::{OxlintRules, RuleSet};
+
+    #[test]
+    fn test_serialize_roundtrip() {
+        let input = json!({
+            "no-console": "off",
+            "eqeqeq": ["warn", "always"],
+            "unicorn/some-rule": ["error", { "foo": "bar" }, ["len", "also"]],
+            "@scope/plugin/rule": ["error", { "a": 1 }],
+        });
+        let rules = OxlintRules::deserialize(&input).unwrap();
+        let serialized = serde_json::to_value(&rules).unwrap();
+        let reparsed = OxlintRules::deserialize(&serialized).unwrap();
+        assert_eq!(rules.rules, reparsed.rules);
+        assert_eq!(serialized["eqeqeq"], json!(["warn", "always"]));
+        assert_eq!(
+            serialized["unicorn/some-rule"],
+            json!(["deny", { "foo": "bar" }, ["len", "also"]])
+        );
+    }
 
     #[test]
     fn test_parse_rules() {
