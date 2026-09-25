@@ -119,6 +119,11 @@ pub struct ScopeResolver<'s, 'a> {
     /// starting at the enclosing ObjectProperty (Babel's ObjectMethod spans the
     /// whole property, including `get `/`set ` prefixes and computed keys).
     function_scope_ranges: Vec<(u32, u32)>,
+    /// Non-empty lexical scope ranges sorted by effective source start and then depth.
+    /// Switch scopes start after their discriminant, matching semantic traversal.
+    /// This supports position lookups in `O(log S + depth)` without rescanning
+    /// all scopes for every JSX tag that lacks a semantic reference.
+    scopes_by_start: Vec<(u32, u32, usize, ScopeId)>,
 }
 
 impl<'s, 'a> ScopeResolver<'s, 'a> {
@@ -134,15 +139,33 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             allocator,
             function_scopes: Vec::new(),
             function_scope_ranges: Vec::new(),
+            scopes_by_start: Vec::new(),
         };
 
+        let mut scope_depths = Vec::new();
         for scope_id in scoping.scope_descendants_from_root() {
+            let depth = scoping
+                .scope_parent_id(scope_id)
+                .map_or(0, |parent| scope_depths[parent.index()] + 1);
+            if scope_depths.len() <= scope_id.index() {
+                scope_depths.resize(scope_id.index() + 1, 0);
+            }
+            scope_depths[scope_id.index()] = depth;
+
+            let node = nodes.get_node(scoping.get_node_id(scope_id));
+            let span = node.kind().span();
+            let scope_start = match node.kind() {
+                AstKind::SwitchStatement(stmt) => stmt.discriminant.span().end,
+                _ => span.start,
+            };
+            if span.end > scope_start {
+                resolver.scopes_by_start.push((scope_start, span.end, depth, scope_id));
+            }
+
             if resolver.scope_kind(scope_id) != ScopeKind::Function {
                 continue;
             }
             resolver.function_scopes.push(scope_id);
-            let node = nodes.get_node(scoping.get_node_id(scope_id));
-            let span = node.kind().span();
             if span.end > span.start {
                 resolver.function_scope_ranges.push((span.start, span.end));
             }
@@ -161,6 +184,14 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
                 }
             }
         }
+
+        resolver.scopes_by_start.sort_unstable_by(|a, b| {
+            a.0.cmp(&b.0)
+                .then(a.2.cmp(&b.2))
+                // Prefer the narrower range when starts and depths match.
+                .then(b.1.cmp(&a.1))
+                .then(a.3.index().cmp(&b.3.index()))
+        });
 
         resolver
     }
@@ -446,6 +477,86 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
     /// walking up the parent chain. Returns None for globals.
     pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
         self.scoping().find_binding(scope_id, name.into())
+    }
+
+    /// Look up a binding by name while preserving the separate parameter and
+    /// function-body environments used at runtime. Oxc stores both environments
+    /// in one function scope after semantic traversal, so a body declaration must
+    /// not shadow an outer binding while a parameter initializer is evaluated.
+    fn find_binding_from_scope_at_position(
+        &self,
+        scope_id: ScopeId,
+        name: &str,
+        position: u32,
+    ) -> Option<SymbolId> {
+        self.ancestors(scope_id).find_map(|scope_id| {
+            let symbol_id = self.get_binding(scope_id, name)?;
+            let node = self.nodes.get_node(self.scoping().get_node_id(scope_id));
+            let body_start = match node.kind() {
+                AstKind::Function(function) => function.body.as_ref().map(|body| body.span.start),
+                AstKind::ArrowFunctionExpression(arrow) => arrow.get_expression().map_or_else(
+                    || arrow.get_function_body().map(|body| body.span.start),
+                    |expression| Some(expression.span().start),
+                ),
+                _ => None,
+            };
+            let Some(body_start) = body_start else {
+                return Some(symbol_id);
+            };
+            if position >= body_start {
+                return Some(symbol_id);
+            }
+
+            // Parameters and named function-expression bindings are declared
+            // before the body. Body-level `var` and function declarations are not
+            // visible until parameter initialization has completed.
+            self.scoping
+                .symbol_declarations(symbol_id)
+                .any(|declaration_id| {
+                    self.nodes.get_node(declaration_id).kind().span().start < body_start
+                })
+                .then_some(symbol_id)
+        })
+    }
+
+    /// Look up a binding by name from the innermost lexical scope containing
+    /// `position`, limited to scopes within `ancestor`.
+    ///
+    /// Lexical scope ranges are properly nested. Start with the last scope that
+    /// begins at or before the position, then walk through its ancestors until
+    /// one contains the position. This avoids scanning every scope for each
+    /// position lookup.
+    pub fn find_binding_at_position(
+        &self,
+        name: &str,
+        ancestor: ScopeId,
+        position: u32,
+    ) -> Option<SymbolId> {
+        let index = self
+            .scopes_by_start
+            .partition_point(|&(start, _, _, _)| start <= position)
+            .checked_sub(1);
+        let Some(index) = index else {
+            return self.find_binding_from_scope_at_position(ancestor, name, position);
+        };
+
+        let mut scope_id = self.scopes_by_start[index].3;
+        loop {
+            let node_id = self.scoping().get_node_id(scope_id);
+            let span = self.nodes.get_node(node_id).kind().span();
+            if position >= span.start && position < span.end {
+                if self.ancestors(scope_id).any(|id| id == ancestor) {
+                    return self.find_binding_from_scope_at_position(scope_id, name, position);
+                }
+                break;
+            }
+            let Some(parent) = self.scope_parent(scope_id) else {
+                break;
+            };
+            scope_id = parent;
+        }
+
+        self.find_binding_from_scope_at_position(ancestor, name, position)
     }
 
     /// Whether `name` is referenced as a global (unresolved reference) anywhere in the file.

@@ -267,6 +267,7 @@ pub(crate) mod typescript {
     pub mod no_extraneous_class;
     pub mod no_floating_promises;
     pub mod no_for_in_array;
+    pub mod no_generated_empty_object_type;
     pub mod no_implied_eval;
     pub mod no_import_type_side_effects;
     pub mod no_inferrable_types;

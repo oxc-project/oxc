@@ -14,6 +14,7 @@
     "typescript/no-duplicate-type-constituents": "error",
     "typescript/no-floating-promises": "error",
     "typescript/no-for-in-array": "error",
+    "typescript/no-generated-empty-object-type": "error",
     "typescript/no-implied-eval": "error",
     "typescript/no-meaningless-void-operator": "error",
     "typescript/no-misused-spread": "error",
