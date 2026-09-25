@@ -242,6 +242,7 @@ struct RestrictedPath {
     import_names: Option<Vec<CompactStr>>,
     allow_import_names: Option<Vec<CompactStr>>,
     allow_type_imports: Option<bool>,
+    allow_dynamic_import: Option<bool>,
     message: Option<CompactStr>,
 }
 
@@ -258,6 +259,7 @@ struct RestrictedPattern {
     #[serde(default, deserialize_with = "deserialize_required_regex_option")]
     allow_import_name_pattern: Option<Regex>,
     allow_type_imports: Option<bool>,
+    allow_dynamic_import: Option<bool>,
     case_sensitive: Option<bool>,
     message: Option<CompactStr>,
 }
@@ -413,6 +415,34 @@ declare_oxc_lint!(
     ///
     /// import type foo from 'import-foo';
     /// export type { Foo } from 'import-foo';
+    /// ```
+    ///
+    /// #### allowDynamicImport
+    ///
+    /// Whether to allow dynamic `import()` expressions for a path. Default: `false`.
+    ///
+    /// This is useful when a module is restricted from static imports (e.g. to avoid
+    /// bundle/chunk-size regressions) but dynamic `import()` is fine, since bundlers
+    /// typically code-split dynamic imports into their own chunk regardless of call site.
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// /* no-restricted-imports: ["error", { paths: [{
+    ///   "name": "foo"
+    /// }]}] */
+    ///
+    /// import foo from 'foo';
+    /// import('foo');
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// /* no-restricted-imports: ["error", { paths: [{
+    ///   "name": "foo",
+    ///   "allowDynamicImport": true
+    /// }]}] */
+    ///
+    /// import('foo');
     /// ```
     ///
     /// #### patterns
@@ -586,6 +616,11 @@ declare_oxc_lint!(
     ///
     /// import { isEmpty } from 'utils/collection-utils';
     /// ```
+    ///
+    /// ##### allowDynamicImport
+    ///
+    /// You can also specify `allowDynamicImport` within objects inside the `patterns` array,
+    /// with the same meaning as the `allowDynamicImport` option for `paths`.
     NoRestrictedImports,
     eslint,
     restriction,
@@ -621,6 +656,7 @@ fn add_configuration_path_from_string(paths: &mut Vec<RestrictedPath>, module_na
         import_names: None,
         allow_import_names: None,
         allow_type_imports: None,
+        allow_dynamic_import: None,
         message: None,
     });
 }
@@ -680,6 +716,7 @@ fn add_configuration_patterns_from_string(paths: &mut Vec<RestrictedPattern>, mo
         allow_import_names: None,
         allow_import_name_pattern: None,
         allow_type_imports: None,
+        allow_dynamic_import: None,
         case_sensitive: None,
         message: None,
     });
@@ -1304,6 +1341,10 @@ impl NoRestrictedImports {
                 continue;
             }
 
+            if is_dynamic_import && path.allow_dynamic_import.unwrap_or(false) {
+                continue;
+            }
+
             let result = &path.get_string_literal_result(source_literal, is_type);
 
             if *result == ImportNameResult::Allowed {
@@ -1326,6 +1367,10 @@ impl NoRestrictedImports {
                     || pattern.allow_import_names.is_some()
                     || pattern.allow_import_name_pattern.is_some())
             {
+                continue;
+            }
+
+            if is_dynamic_import && pattern.allow_dynamic_import.unwrap_or(false) {
                 continue;
             }
 
@@ -2049,6 +2094,19 @@ fn test() {
             "import('foo/bar');",
             Some(serde_json::json!([{
                 "patterns": [{ "group": ["foo/*"], "allowImportNames": ["bar"] }]
+            }])),
+        ),
+        // `allowDynamicImport` exempts dynamic `import()` from an otherwise restricted path/pattern
+        (
+            "import('foo');",
+            Some(serde_json::json!([{
+                "paths": [{ "name": "foo", "allowDynamicImport": true }]
+            }])),
+        ),
+        (
+            "import('foo/bar');",
+            Some(serde_json::json!([{
+                "patterns": [{ "group": ["foo/*"], "allowDynamicImport": true }]
             }])),
         ),
     ];
@@ -3338,6 +3396,19 @@ fn test() {
         (
             "import('openai/resources');",
             Some(serde_json::json!([{ "patterns": [{ "group": ["openai", "openai/*"] }] }])),
+        ),
+        // `allowDynamicImport` only exempts dynamic `import()`, static imports are still restricted
+        (
+            "import foo from 'foo';",
+            Some(serde_json::json!([{
+                "paths": [{ "name": "foo", "allowDynamicImport": true }]
+            }])),
+        ),
+        (
+            "import foo from 'foo/bar';",
+            Some(serde_json::json!([{
+                "patterns": [{ "group": ["foo/*"], "allowDynamicImport": true }]
+            }])),
         ),
     ];
 

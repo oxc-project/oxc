@@ -4008,6 +4008,7 @@ export interface NoRestrictedGlobalsObjectConfig {
   globals: GlobalNameOrObject[];
 }
 export interface RestrictedPath {
+  allowDynamicImport?: boolean;
   allowImportNames?: string[];
   allowTypeImports?: boolean;
   importNames?: string[];
@@ -4019,6 +4020,7 @@ export interface NoRestrictedImportsConfig {
   patterns?: PossiblePatterns[];
 }
 export interface RestrictedPattern {
+  allowDynamicImport?: boolean;
   allowImportNamePattern?: string;
   allowImportNames?: string[];
   allowTypeImports?: boolean;
