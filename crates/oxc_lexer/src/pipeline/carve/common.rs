@@ -1,3 +1,5 @@
+use oxc_ast::CommentKind;
+
 use crate::{comment_meta, error::DiagCode, lanes::Lanes, token::tk};
 
 use crate::pipeline::{
@@ -290,6 +292,7 @@ pub(super) unsafe fn lex_html_open_comment(
     let m = comment_meta::meta_byte_exact(&srcs[..n], (s + 2) as u32, end as u32, false);
     lanes.comment_meta.push(m);
     lanes.push_comment_record(srcs, n, s as u32, end as u32, false, m);
+    lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlOpen;
     end
 }
 
@@ -334,6 +337,7 @@ pub(super) unsafe fn lex_html_close_comment(
     let m = comment_meta::meta_byte_exact(&srcs[..n], (start + 1) as u32, end as u32, false);
     lanes.comment_meta.push(m);
     lanes.push_comment_record(srcs, n, start as u32, end as u32, false, m);
+    lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlClose;
     end
 }
 
