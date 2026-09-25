@@ -4,7 +4,7 @@ use serde::Serialize;
 
 use oxc_diagnostics::{
     Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info, InfoPosition},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info, InfoPosition, batch_infos},
 };
 use oxc_linter::rules::{RULES, RuleEnum};
 
@@ -232,8 +232,7 @@ impl SarifBuilder {
         }
     }
 
-    fn add_diagnostic(&mut self, diagnostic: &Error) {
-        let info = Info::new(diagnostic);
+    fn add_diagnostic(&mut self, diagnostic: &Error, info: &Info) {
         let severity = diagnostic.severity().unwrap_or(info.severity);
         let level = sarif_level(severity);
         let message = sarif_message(if info.message.is_empty() {
@@ -241,11 +240,11 @@ impl SarifBuilder {
         } else {
             info.message.clone()
         });
-        let location = self.location_from_info(&info);
+        let location = self.location_from_info(info);
 
-        if let Some(rule_id) = info.rule_id {
-            let rule_index = self.get_rule_index(&rule_id);
-            self.push_result(rule_id, rule_index, level, message, location);
+        if let Some(rule_id) = info.rule_id.as_ref() {
+            let rule_index = self.get_rule_index(rule_id);
+            self.push_result(rule_id.clone(), rule_index, level, message, location);
         } else if location.is_some() {
             let rule_index = self.get_synthetic_artifact_rule_index();
             self.push_result(
@@ -454,9 +453,12 @@ fn nonzero(value: usize) -> Option<usize> {
 
 fn format_sarif(diagnostics: &mut Vec<Error>) -> String {
     let mut builder = SarifBuilder::new();
-    for diagnostic in diagnostics.drain(..) {
-        builder.add_diagnostic(&diagnostic);
+    // Resolve line/column for the whole batch at once, so diagnostics of the same file share one
+    // scan of its source instead of rescanning it per diagnostic.
+    for (diagnostic, info) in batch_infos(diagnostics) {
+        builder.add_diagnostic(diagnostic, &info);
     }
+    diagnostics.clear();
 
     serde_json::to_string_pretty(&builder.finish()).expect("Failed to serialize")
 }

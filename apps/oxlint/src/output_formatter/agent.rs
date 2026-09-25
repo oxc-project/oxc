@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_diagnostics::{
     Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info, batch_infos},
 };
 
 use crate::output_formatter::InternalFormatter;
@@ -30,29 +30,42 @@ impl DiagnosticReporter for AgentReporter {
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
-        Some(format_agent(&error))
+        Some(format_agent(&error, &Info::new(&error)))
+    }
+
+    fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+        // Resolve line/column for the whole batch at once, so diagnostics of the same file share
+        // one scan of its source instead of rescanning it per diagnostic.
+        for (error, info) in batch_infos(&errors) {
+            emit(&format_agent(error, &info));
+        }
     }
 }
 
-fn format_agent(diagnostic: &Error) -> String {
-    let Info { start, filename, message: info_message, rule_id, .. } = Info::new(diagnostic);
+fn format_agent(diagnostic: &Error, info: &Info) -> String {
+    let Info { start, filename, message: info_message, rule_id, .. } = info;
     let filename = if filename.is_empty() {
-        diagnostic
-            .source_code()
-            .and_then(|source| source.name())
-            .map_or_else(|| "<unknown>".to_string(), ToString::to_string)
+        Cow::Owned(
+            diagnostic
+                .source_code()
+                .and_then(|source| source.name())
+                .map_or_else(|| "<unknown>".to_string(), ToString::to_string),
+        )
     } else {
-        filename
+        Cow::Borrowed(filename.as_str())
     };
     let severity = match diagnostic.severity() {
         Some(Severity::Warning) => "warning",
         Some(Severity::Advice) => "advice",
         _ => "error",
     };
-    let rule = rule_id.map_or_else(String::new, |rule_id| format!(" {rule_id}"));
+    let rule = rule_id.as_deref().map_or_else(String::new, |rule_id| format!(" {rule_id}"));
     // `Info` only fills in the message when the diagnostic has a resolvable label.
-    let rendered_message =
-        if info_message.is_empty() { diagnostic.to_string() } else { info_message };
+    let rendered_message = if info_message.is_empty() {
+        Cow::Owned(diagnostic.to_string())
+    } else {
+        Cow::Borrowed(info_message)
+    };
     let message = compact_message(&rendered_message);
     let help = diagnostic
         .help()
