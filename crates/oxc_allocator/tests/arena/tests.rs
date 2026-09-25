@@ -116,6 +116,104 @@ fn alloc_with_strong_alignment() {
     b.alloc_layout(Layout::from_size_align(4096, 64).unwrap());
 }
 
+// Constants and helper for the `*_updates_cursor` tests.
+//
+// Each of those tests makes 2 consecutive allocations and checks:
+// 1. The 2nd allocation is placed directly below the 1st (the arena bumps downwards).
+// 2. The 2 values don't overwrite each other.
+//
+// Each runs on both the fast path (arena with spare capacity) and the slow path
+// (1st allocation in an empty arena has to allocate a chunk).
+
+const A: u64 = 0x1111_1111_1111_1111;
+const B: u64 = 0x2222_2222_2222_2222;
+const C: u64 = 0x3333_3333_3333_3333;
+
+fn addr<T>(r: &T) -> usize {
+    ptr::from_ref(r).addr()
+}
+
+#[test]
+fn alloc_updates_cursor() {
+    fn check(arena: &Arena) {
+        let a = arena.alloc(A);
+        let b = arena.alloc(B);
+        assert_eq!(addr(b), addr(a) - 8);
+        assert_eq!((*a, *b), (A, B));
+    }
+
+    // Fast path
+    check(&Arena::with_capacity(0x1000));
+    // Slow path
+    check(&Arena::new());
+}
+
+#[test]
+fn try_alloc_updates_cursor() {
+    fn check(arena: &Arena) {
+        let a = arena.try_alloc(A).unwrap();
+        let b = arena.try_alloc(B).unwrap();
+        assert_eq!(addr(b), addr(a) - 8);
+        assert_eq!((*a, *b), (A, B));
+    }
+
+    // Fast path
+    check(&Arena::with_capacity(0x1000));
+    // Slow path
+    check(&Arena::new());
+}
+
+#[test]
+fn alloc_layout_updates_cursor() {
+    fn check(arena: &Arena) {
+        let layout = Layout::new::<u64>();
+        let a = arena.alloc_layout(layout).cast::<u64>();
+        unsafe { a.write(A) };
+        let b = arena.alloc_layout(layout).cast::<u64>();
+        unsafe { b.write(B) };
+        assert_eq!(b.addr().get(), a.addr().get() - 8);
+        assert_eq!(unsafe { (a.read(), b.read()) }, (A, B));
+    }
+
+    // Fast path
+    check(&Arena::with_capacity(0x1000));
+    // Slow path
+    check(&Arena::new());
+}
+
+#[test]
+fn try_alloc_layout_updates_cursor() {
+    fn check(arena: &Arena) {
+        let layout = Layout::new::<u64>();
+        let a = arena.try_alloc_layout(layout).unwrap().cast::<u64>();
+        unsafe { a.write(A) };
+        let b = arena.try_alloc_layout(layout).unwrap().cast::<u64>();
+        unsafe { b.write(B) };
+        assert_eq!(b.addr().get(), a.addr().get() - 8);
+        assert_eq!(unsafe { (a.read(), b.read()) }, (A, B));
+    }
+
+    // Fast path
+    check(&Arena::with_capacity(0x1000));
+    // Slow path
+    check(&Arena::new());
+}
+
+#[test]
+fn alloc_str_updates_cursor() {
+    fn check(arena: &Arena) {
+        let a = arena.alloc_str("hello");
+        let b = arena.alloc_str("world!");
+        assert_eq!(b.as_ptr().addr(), a.as_ptr().addr() - 6);
+        assert_eq!((&*a, &*b), ("hello", "world!"));
+    }
+
+    // Fast path
+    check(&Arena::with_capacity(0x1000));
+    // Slow path
+    check(&Arena::new());
+}
+
 #[test]
 fn alloc_slice_copy() {
     let b = Arena::new();
@@ -124,6 +222,21 @@ fn alloc_slice_copy() {
     let dst = b.alloc_slice_copy(src);
 
     assert_eq!(src, dst);
+}
+
+#[test]
+fn alloc_slice_copy_updates_cursor() {
+    fn check(arena: &Arena) {
+        let a = arena.alloc_slice_copy(&[A, A]);
+        let b = arena.alloc_slice_copy(&[B, B]);
+        assert_eq!(addr(&b[0]), addr(&a[0]) - 16);
+        assert_eq!((a[0], a[1], b[0], b[1]), (A, A, B, B));
+    }
+
+    // Fast path
+    check(&Arena::with_capacity(0x1000));
+    // Slow path
+    check(&Arena::new());
 }
 
 #[test]
@@ -141,6 +254,57 @@ fn alloc_slice_clone() {
     let dst = b.alloc_slice_clone(&src);
 
     assert_eq!(src, dst);
+}
+
+/// `alloc_slice_clone` must commit the bump pointer after each allocation,
+/// on both the fast path and the slow path (1st allocation in an empty arena has to allocate a chunk).
+///
+/// It must commit *before* cloning the elements, so a `Clone` impl which itself allocates from
+/// the same arena does not get overlapping memory.
+#[test]
+fn alloc_slice_clone_updates_cursor() {
+    #[derive(Clone)]
+    struct Val(u64);
+
+    fn check(arena: &Arena) {
+        let a = arena.alloc_slice_clone(&[Val(A), Val(A)]);
+        let b = arena.alloc_slice_clone(&[Val(B), Val(B)]);
+        assert_eq!(addr(&b[0]), addr(&a[0]) - 16);
+        assert_eq!((a[0].0, a[1].0, b[0].0, b[1].0), (A, A, B, B));
+    }
+
+    // `Clone` impl which performs another allocation from the same arena.
+    // The inner allocations must sit below the outer slice - no overlap.
+    // Each element records its inner allocation's address.
+    // `Reentrant` is 16 bytes, so the outer slice is 32 bytes. Clones run interleaved with
+    // the element writes, so the 1st inner allocation is 8 bytes below the slice, the 2nd 16 below.
+    struct Reentrant<'a> {
+        arena: &'a Arena,
+        inner_addr: usize,
+    }
+
+    impl Clone for Reentrant<'_> {
+        fn clone(&self) -> Self {
+            let inner = self.arena.alloc(C);
+            assert_eq!(*inner, C);
+            Self { arena: self.arena, inner_addr: addr(inner) }
+        }
+    }
+
+    fn check_reentrant(arena: &Arena) {
+        let src = [Reentrant { arena, inner_addr: 0 }, Reentrant { arena, inner_addr: 0 }];
+        let outer = arena.alloc_slice_clone(&src);
+        assert_eq!(outer[0].inner_addr, addr(&outer[0]) - 8);
+        assert_eq!(outer[1].inner_addr, addr(&outer[0]) - 16);
+    }
+
+    // Fast path
+    check(&Arena::with_capacity(0x1000));
+    check_reentrant(&Arena::with_capacity(0x1000));
+
+    // Slow path
+    check(&Arena::new());
+    check_reentrant(&Arena::new());
 }
 
 #[test]
