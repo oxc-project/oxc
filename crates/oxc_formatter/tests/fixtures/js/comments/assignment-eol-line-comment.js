@@ -56,3 +56,32 @@ class C3 {
   f // c
     = 1;
 }
+// Comments the left side defers lead the right-hand side, the line comment follows them in source order
+// (Prettier flushes the line comment past the value: `const b6 = /* c */ 1; // d`)
+const b6 /* c */
+= // d
+  1;
+b7 /* c */
+= // d
+  1;
+const b8
+// c
+= // d
+  1;
+a.b
+// c
+= // d
+  1;
+const b9 /* c */
+= // oxfmt-ignore
+  [1,   2];
+class C4 {
+  f /* c */
+  = // d
+    1;
+}
+const o4 = {
+  p /* c */
+  : // d
+    1,
+};

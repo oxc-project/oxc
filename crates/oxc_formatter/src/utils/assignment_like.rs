@@ -542,8 +542,11 @@ impl<'a> AssignmentLike<'a, '_> {
     /// The comments glued after the operator up to a line comment ending its line (`= /* c */ // d`),
     /// printed right after the operator (see `Comments::mark_suppressed_after_operator` for their suppression target).
     /// A right-hand side that hugs its leading comments (object, array, template) takes them instead.
+    /// Comments the left side deferred are still pending: nothing glues, all lead the right-hand side in order.
     fn operator_line_run(&self, operator_end: u32, f: &JsFormatter<'_, 'a>) -> &'a [Comment] {
-        if self.right_hugs_leading_comments() {
+        if self.right_hugs_leading_comments()
+            || f.context().comments().has_comment_before(operator_end)
+        {
             return &[];
         }
         let run = f.context().comments().end_of_line_comments_after(operator_end);

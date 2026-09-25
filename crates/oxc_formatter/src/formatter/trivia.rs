@@ -44,7 +44,7 @@
 //! **Implementation**:
 //! 1. Calls `comments_before(node.span.start)` to get unprinted leading comments
 //! 2. Formats each comment with spacing based on line breaks in original source
-//! 3. Advances cursor by calling `increment_printed_count()` for each comment
+//! 3. Advances cursor by calling `increment_printed_count(comment)` for each comment
 //! 4. Handles special cases like JSDoc comment "nestling"
 //!
 //! ### Trailing Comment Formatting ([`FormatTrailingComments`])
@@ -149,7 +149,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
         ) {
             let mut leading_comments_iter = comments.into_iter().peekable();
             while let Some(comment) = leading_comments_iter.next() {
-                f.context_mut().comments_mut().increment_printed_count();
+                f.context_mut().comments_mut().increment_printed_count(comment);
                 write!(f, format_comment_text(comment));
 
                 let lines_after = f
@@ -265,7 +265,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
             let mut previous_comment: Option<&Comment> = None;
 
             for comment in comments {
-                f.context_mut().comments_mut().increment_printed_count();
+                f.context_mut().comments_mut().increment_printed_count(comment);
 
                 let lines_before = f.lines_before(comment.span);
                 total_lines_before += lines_before;
@@ -447,7 +447,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
                 let mut previous_comment: Option<&Comment> = None;
 
                 for comment in comments {
-                    f.context_mut().comments_mut().increment_printed_count();
+                    f.context_mut().comments_mut().increment_printed_count(comment);
 
                     let should_nestle = previous_comment.is_some_and(|previous_comment| {
                         should_nestle_adjacent_comments(previous_comment, comment, f.source_text())
@@ -603,7 +603,7 @@ impl<'a> FormatCommentBeforeContent<'a> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentBeforeContent<'_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        f.context_mut().comments_mut().increment_printed_count();
+        f.context_mut().comments_mut().increment_printed_count(self.0);
         write!(f, format_comment_text(self.0));
         if self.0.is_line() {
             write!(f, hard_line_break());

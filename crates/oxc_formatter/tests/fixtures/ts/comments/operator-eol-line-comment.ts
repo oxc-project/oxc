@@ -23,3 +23,21 @@ interface I {
     | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines
     | BmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines;
 }
+
+// Comments the left side defers lead the right-hand side, the line comment follows them in source order
+type Deferred /* c */
+= // d
+  "VALUE";
+
+type DeferredOwnLine
+// c
+= // d
+  "VALUE";
+
+type DeferredUnion<T> /* c */
+= // d
+  | "A" | T;
+
+type DeferredIgnore /* c */
+= // prettier-ignore
+  "A"  |  "B";
