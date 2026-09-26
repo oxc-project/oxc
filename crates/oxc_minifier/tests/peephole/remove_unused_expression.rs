@@ -507,6 +507,14 @@ fn test_fold_iife() {
     test("(() => { return x })()", "x;");
     test_same("(function () { return x })()");
 
+    test("(() => o.f)()()", "(0, o.f)()");
+    test("(() => { return o.f })()()", "(0, o.f)()");
+    test("(() => o?.f)()``", "(0, o?.f)``");
+    test("(() => eval)()(x)", "(0, eval)(x)");
+    test("delete (() => o.f)()", "delete (0, o.f)");
+    test("v = typeof (() => x)()", "v = typeof (0, x)");
+    test("(() => o.f())()()", "o.f()()");
+
     test("var a = /* @__PURE__ */ (() => x)()", "var a = x");
     test_same("var a = /* @__PURE__ */ (() => x)(y, z)");
     test("(/* @__PURE__ */ (() => !0)() ? () => x() : () => {})();", "x();");
@@ -669,6 +677,42 @@ fn remove_unused_assignment_expression() {
         &options,
     );
     test_same_options("function foo(t) { return t = x(); } foo();", &options);
+
+    test_options(
+        "function foo() { let t; return (t = o.f)() } foo();",
+        "function foo() { return (0, o.f)() } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t; return (t = o?.f)`` } foo();",
+        "function foo() { return (0, o?.f)`` } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t; return (t = eval)(x) } foo();",
+        "function foo() { return (0, eval)(x) } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t; return delete (t = o.f) } foo();",
+        "function foo() { return delete (0, o.f) } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t = {}; return (t.x = o.f)() } foo();",
+        "function foo() { return (0, o.f)() } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t; return (t = o.f) == null ? void 0 : t() } foo();",
+        "function foo() { return (0, o.f)?.() } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t; return t = o.f } foo();",
+        "function foo() { return o.f } foo();",
+        &options,
+    );
 
     // For loops
     test_options("for (let i;;) i = 0", "for (;;);", &options);
