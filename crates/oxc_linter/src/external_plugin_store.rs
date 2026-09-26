@@ -147,6 +147,16 @@ impl ExternalPluginStore {
         (&plugin.name, &external_rule.name)
     }
 
+    /// Options recorded for `options_id`.
+    ///
+    /// [`ExternalOptionsId::NONE`] returns an empty slice.
+    pub(crate) fn rule_options(
+        &self,
+        options_id: ExternalOptionsId,
+    ) -> &SmallVec<[serde_json::Value; 1]> {
+        &self.options[options_id].1
+    }
+
     /// Add options to the store and return its [`ExternalOptionsId`].
     /// If `options` is empty, returns [`ExternalOptionsId::NONE`] without adding to the store.
     pub fn add_options(
