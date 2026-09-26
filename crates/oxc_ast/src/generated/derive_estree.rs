@@ -1992,7 +1992,7 @@ impl ESTree for RegExpLiteral<'_> {
         state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("value", &crate::serialize::literal::RegExpLiteralValue(self));
         state.serialize_field("raw", &self.raw);
-        state.serialize_field("regex", &self.regex);
+        state.serialize_field("regex", &crate::serialize::literal::RegExpLiteralRegex(self));
         state.serialize_span(self.span);
         state.end();
     }
