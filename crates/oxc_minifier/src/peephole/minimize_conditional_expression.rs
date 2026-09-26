@@ -154,11 +154,19 @@ impl<'a> PeepholeOptimizations {
             ));
         }
 
-        // "a ? c : (b, c)" => "(a || b), c"
+        // `a ? c : (b, c)` => `(a || b), c`
+        // `a ? d : (b, c, d)` => `(a || (b, c)), d`
         if let Expression::SequenceExpression(alternate) = &mut expr.alternate
-            && alternate.expressions.len() == 2
-            && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
+            && alternate.expressions.len() > 1
+            && let Some(last) = alternate.expressions.last()
+            && ctx.expr_eq(last, &expr.consequent)
         {
+            let last_expr = alternate.expressions.pop().unwrap();
+            let seq_prefix = if alternate.expressions.len() == 1 {
+                alternate.expressions.pop().unwrap()
+            } else {
+                Expression::SequenceExpression(alternate.take_in_box(ctx))
+            };
             return Some(Expression::new_sequence_expression(
                 expr.span,
                 [
@@ -166,20 +174,29 @@ impl<'a> PeepholeOptimizations {
                         expr.test.span(),
                         LogicalOperator::Or,
                         expr.test.take_in(ctx),
-                        alternate.expressions[0].take_in(ctx),
+                        seq_prefix,
                         ctx,
                     ),
-                    expr.consequent.take_in(ctx),
+                    last_expr,
                 ],
                 ctx,
             ));
         }
 
-        // "a ? (b, c) : c" => "(a && b), c"
+        // `a ? (b, c) : c` => `(a && b), c`
+        // `a ? (b, c, d) : d` => `(a && (b, c)), d`
         if let Expression::SequenceExpression(consequent) = &mut expr.consequent
-            && consequent.expressions.len() == 2
-            && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
+            && consequent.expressions.len() > 1
+            && let Some(last) = consequent.expressions.last()
+            && ctx.expr_eq(last, &expr.alternate)
         {
+            let last_expr = consequent.expressions.pop().unwrap();
+            let seq_prefix = if consequent.expressions.len() == 1 {
+                consequent.expressions.pop().unwrap()
+            } else {
+                Expression::SequenceExpression(consequent.take_in_box(ctx))
+            };
+
             return Some(Expression::new_sequence_expression(
                 expr.span,
                 [
@@ -187,10 +204,10 @@ impl<'a> PeepholeOptimizations {
                         expr.test.span(),
                         LogicalOperator::And,
                         expr.test.take_in(ctx),
-                        consequent.expressions[0].take_in(ctx),
+                        seq_prefix,
                         ctx,
                     ),
-                    expr.alternate.take_in(ctx),
+                    last_expr,
                 ],
                 ctx,
             ));

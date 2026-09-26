@@ -45,7 +45,9 @@ fn minimize_conditional_exprs() {
     test("a ? b ? c : d : d", "a && b ? c : d");
     test("a ? b : c ? b : d", "a || c ? b : d");
     test("a ? c : (b, c)", "(a || b), c");
+    test("a ? d : (b, c, d)", "a || (b, c), d;");
     test("a ? (b, c) : c", "(a && b), c");
+    test("a ? (b, c, d) : d", "a && (b, c), d;");
     test("a ? b || c : c", "(a && b) || c");
     test("a ? c : b && c", "(a || b) && c");
     test(
