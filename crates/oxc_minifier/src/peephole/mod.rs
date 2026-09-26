@@ -411,7 +411,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::IfStatement(_) => Self::try_fold_if(stmt, ctx),
                 Statement::ForStatement(_) => Self::try_fold_for(stmt, ctx),
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
-                Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
+                Statement::LabeledStatement(_) => {
+                    Self::try_fold_labeled(stmt, ctx);
+                    ctx.state.labels.stack.pop();
+                }
                 Statement::SwitchStatement(_) => {
                     Self::drop_unreachable_switch_cases(stmt, ctx);
                     Self::try_fold_switch(stmt, ctx);
@@ -451,7 +454,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                 }
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
-                Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
+                Statement::LabeledStatement(_) => {
+                    Self::try_fold_labeled(stmt, ctx);
+                    ctx.state.labels.stack.pop();
+                }
                 Statement::SwitchStatement(_) => {
                     Self::drop_unreachable_switch_cases(stmt, ctx);
                     Self::try_fold_switch(stmt, ctx);
@@ -648,6 +654,30 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 _ => {}
             }
         }
+    }
+
+    fn enter_break_statement(&mut self, stmt: &mut BreakStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(label) = &stmt.label {
+            ctx.state.labels.reference(label.name);
+        }
+    }
+
+    fn enter_continue_statement(
+        &mut self,
+        stmt: &mut ContinueStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(label) = &stmt.label {
+            ctx.state.labels.reference(label.name);
+        }
+    }
+
+    fn enter_labeled_statement(
+        &mut self,
+        stmt: &mut LabeledStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        ctx.state.labels.add(stmt.label.name, stmt.node_id());
     }
 
     fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {

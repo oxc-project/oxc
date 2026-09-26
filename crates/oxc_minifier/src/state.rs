@@ -1,6 +1,6 @@
 use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_semantic::Scoping;
+use oxc_semantic::{Scoping, label::UnusedLabels};
 use oxc_span::SourceType;
 use oxc_str::{Ident, IdentHashSet};
 use oxc_syntax::scope::ScopeId;
@@ -112,6 +112,8 @@ pub struct MinifierState<'a> {
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
+
+    pub labels: UnusedLabels<'a>,
 }
 
 impl<'a> MinifierState<'a> {
@@ -134,6 +136,7 @@ impl<'a> MinifierState<'a> {
             }),
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
+            labels: UnusedLabels::default(),
         }
     }
 
