@@ -11,8 +11,6 @@
 //! monomorphized over the [`AstBuild`] type (of which there are few), rather than over every
 //! [`GetAstBuilder`] type the method is called with (of which there may be many).
 
-#![expect(clippy::default_trait_access)]
-
 use std::cell::Cell;
 
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, IntoIn};
@@ -56,7 +54,7 @@ impl<'a> Program<'a> {
             hashbang,
             directives: directives.into_in(builder.allocator()),
             body: body.into_in(builder.allocator()),
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -1358,7 +1356,7 @@ impl<'a> IdentifierReference<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             name: name.into(),
-            reference_id: Default::default(),
+            reference_id: Cell::new(builder.reference_id()),
         }
     }
 
@@ -1445,7 +1443,7 @@ impl<'a> BindingIdentifier<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             name: name.into(),
-            symbol_id: Default::default(),
+            symbol_id: Cell::new(builder.symbol_id()),
         }
     }
 
@@ -9265,7 +9263,7 @@ impl<'a> BlockStatement<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             body: body.into_in(builder.allocator()),
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -10221,7 +10219,7 @@ impl<'a> ForStatement<'a> {
             test,
             update,
             body,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -11575,7 +11573,7 @@ impl<'a> ForInStatement<'a> {
             left,
             right,
             body,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -11965,7 +11963,7 @@ impl<'a> ForOfStatement<'a> {
             left,
             right,
             body,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -12194,7 +12192,7 @@ impl<'a> WithStatement<'a> {
             span,
             object,
             body,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -12295,7 +12293,7 @@ impl<'a> SwitchStatement<'a> {
             span,
             discriminant,
             cases: cases.into_in(builder.allocator()),
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -12542,7 +12540,7 @@ impl<'a> CatchClause<'a> {
             span,
             param,
             body,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -13009,7 +13007,7 @@ impl<'a> Function<'a> {
             params,
             return_type,
             body,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
             pure: Default::default(),
             pife: Default::default(),
         }
@@ -14643,7 +14641,7 @@ impl<'a> ArrowFunctionExpression<'a> {
             params,
             return_type,
             body,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
             pure: Default::default(),
             pife: Default::default(),
         }
@@ -14854,7 +14852,7 @@ impl<'a> Class<'a> {
             body,
             r#abstract,
             declare,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -15562,7 +15560,7 @@ impl<'a> StaticBlock<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             body: body.into_in(builder.allocator()),
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -20899,7 +20897,7 @@ impl<'a> TSEnumBody<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             members: members.into_in(builder.allocator()),
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -22097,7 +22095,7 @@ impl<'a> TSConditionalType<'a> {
             extends_type,
             true_type,
             false_type,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -24154,7 +24152,7 @@ impl<'a> TSTypeAliasDeclaration<'a> {
             type_parameters,
             type_annotation,
             declare,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -24313,7 +24311,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
             extends: extends.into_in(builder.allocator()),
             body,
             declare,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -24884,7 +24882,7 @@ impl<'a> TSCallSignatureDeclaration<'a> {
             this_param,
             params,
             return_type,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -25028,7 +25026,7 @@ impl<'a> TSMethodSignature<'a> {
             this_param,
             params,
             return_type,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -25200,7 +25198,7 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
             type_parameters,
             params,
             return_type,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -25446,7 +25444,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
             id,
             body,
             declare,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -25560,7 +25558,7 @@ impl<'a> TSNamespaceDeclaration<'a> {
             body,
             kind,
             declare,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -25759,7 +25757,7 @@ impl<'a> TSGlobalDeclaration<'a> {
             global_span,
             body,
             declare,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -26279,7 +26277,7 @@ impl<'a> TSFunctionType<'a> {
             this_param,
             params,
             return_type,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -26411,7 +26409,7 @@ impl<'a> TSConstructorType<'a> {
             type_parameters,
             params,
             return_type,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 
@@ -26549,7 +26547,7 @@ impl<'a> TSMappedType<'a> {
             type_annotation,
             optional,
             readonly,
-            scope_id: Default::default(),
+            scope_id: Cell::new(builder.scope_id()),
         }
     }
 

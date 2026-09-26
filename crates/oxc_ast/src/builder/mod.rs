@@ -75,8 +75,10 @@
 //!
 //! Explanation of the motivation for this change here: <https://github.com/oxc-project/oxc/issues/23043>.
 
+use std::ops::{AddAssign, Sub};
+
 use oxc_allocator::{Allocator, GetAllocator};
-use oxc_syntax::node::NodeId;
+use oxc_syntax::{node::NodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 mod custom;
 
@@ -89,9 +91,12 @@ mod custom;
 /// builder directly, or with a type which exposes one by implementing [`GetAstBuilder`]
 /// (e.g. parser or traverse context).
 ///
+/// The parser wraps [`AstBuilder`] in an [`AstBuild`]er which counts AST nodes, scopes, symbols,
+/// and references via these hooks (to accurately pre-allocate `Vec`s in `SemanticBuilder`).
+/// See [`AstCounts`].
+///
 /// Further [`AstBuild`] implementations will be added later:
 ///
-/// * Version for parser which counts AST nodes (to accurately pre-allocate `Vec`s in `SemanticBuilder`).
 /// * Version for transformer/minifier which assigns unique [`NodeId`]s to all AST nodes.
 ///
 /// [`AstBuild`] types must also implement:
@@ -105,6 +110,65 @@ mod custom;
 pub trait AstBuild<'a>: GetAstBuilder<'a, Builder = Self> + GetAllocator<'a> {
     /// Get [`NodeId`] to assign to an AST node.
     fn node_id(&self) -> NodeId;
+
+    /// Get [`ScopeId`] to assign to an AST node's `scope_id` field.
+    #[inline]
+    fn scope_id(&self) -> Option<ScopeId> {
+        None
+    }
+
+    /// Get [`SymbolId`] to assign to a `BindingIdentifier`'s `symbol_id` field.
+    #[inline]
+    fn symbol_id(&self) -> Option<SymbolId> {
+        None
+    }
+
+    /// Get [`ReferenceId`] to assign to an `IdentifierReference`'s `reference_id` field.
+    #[inline]
+    fn reference_id(&self) -> Option<ReferenceId> {
+        None
+    }
+}
+
+/// Counts of AST nodes, scopes, symbols, and references created by an [`AstBuild`]er.
+///
+/// Produced by the parser while building the AST, and used to pre-allocate sufficient capacity
+/// in `AstNodes`, `ScopeTree`, and `SymbolTable` in `oxc_semantic`, without traversing the AST.
+///
+/// Counts are upper bounds: the parser may build nodes which don't end up in the AST
+/// (e.g. cover grammar conversions).
+#[derive(Clone, Copy, Default, Debug)]
+pub struct AstCounts {
+    /// Number of AST nodes.
+    pub nodes: u32,
+    /// Number of scopes.
+    pub scopes: u32,
+    /// Number of symbols.
+    pub symbols: u32,
+    /// Number of identifier references.
+    pub references: u32,
+}
+
+impl Sub for AstCounts {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {
+            nodes: self.nodes - other.nodes,
+            scopes: self.scopes - other.scopes,
+            symbols: self.symbols - other.symbols,
+            references: self.references - other.references,
+        }
+    }
+}
+
+impl AddAssign for AstCounts {
+    fn add_assign(&mut self, other: Self) {
+        self.nodes += other.nodes;
+        self.scopes += other.scopes;
+        self.symbols += other.symbols;
+        self.references += other.references;
+    }
 }
 
 /// Trait for types which provide access to an [`AstBuild`]er.
