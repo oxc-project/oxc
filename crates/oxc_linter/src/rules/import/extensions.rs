@@ -380,18 +380,19 @@ impl ExtensionsConfig {
             })
             .unwrap_or_default();
 
+        // Extensions can be configured directly in the options object (`{ "js": "never" }`)
+        // or nested under `pattern` (`{ "pattern": { "js": "never" } }`), next to the other options.
+        let pattern = value.get("pattern").and_then(Value::as_object);
+        let objects = [value.as_object(), pattern];
+
         // Pre-allocate HashMap with estimated capacity for better performance
-        let capacity = if let Some(obj) = value.as_object() {
-            // Estimate: most fields are extension configs, reserve space
-            obj.len()
-        } else {
-            0
-        };
+        // Estimate: most fields are extension configs, reserve space
+        let capacity = objects.iter().flatten().map(|obj| obj.len()).sum();
 
         let mut extensions = FxHashMap::with_capacity_and_hasher(capacity, FxBuildHasher);
 
         // Process known extensions from the configuration
-        if let Some(obj) = value.as_object() {
+        for obj in objects.into_iter().flatten() {
             for (key, val) in obj {
                 // Skip non-extension config fields
                 if matches!(
@@ -525,9 +526,7 @@ impl Rule for Extensions {
             let default = ExtensionRule::from_str(first_arg);
 
             if let Some(val) = value.get(1) {
-                let root = val.get("pattern").unwrap_or(val);
-
-                let config = ExtensionsConfig::from_json_value(root, default);
+                let config = ExtensionsConfig::from_json_value(val, default);
 
                 Ok(Self(Box::new(config)))
             } else {
@@ -1326,6 +1325,26 @@ fn test() {
         (r"import { helper } from './helper.spec';", Some(json!([{ "js": "never" }]))),
         // `./typescript.js` resolves to `typescript.ts`; the written `.js` is allowed under `js: always`.
         (r#"import x from "./typescript.js";"#, Some(json!(["always", { "js": "always" }]))),
+        // Options next to `pattern` apply to the whole rule
+        (
+            r#"
+                import lib from "pkg";
+                import foo from "./foo.js";
+            "#,
+            Some(json!(["always", { "ignorePackages": true, "pattern": { "js": "always" } }])),
+        ),
+        (
+            r"import { x } from 'rootverse+debug:src';",
+            Some(json!([
+                "always",
+                {
+                    "pattern": { "ts": "always" },
+                    "pathGroupOverrides": [
+                        { "pattern": "rootverse{*,*/**}", "action": "ignore" }
+                    ]
+                }
+            ])),
+        ),
         // Subpath imports
         // https://nodejs.org/api/packages.html#subpath-imports
         // (
@@ -1815,6 +1834,12 @@ fn test() {
         (r#"import x from "./typescript.js";"#, Some(json!(["never"]))),
         (r#"import x from "./typescript.js";"#, Some(json!([{ "js": "never" }]))),
         (r#"import x from "./typescript.js";"#, Some(json!(["always", { "js": "never" }]))),
+        // Options next to `pattern` apply to the whole rule
+        (
+            r#"import type { MyType } from "./typescript.js";"#,
+            Some(json!(["always", { "checkTypeImports": true, "pattern": { "js": "never" } }])),
+        ),
+        (r#"import x from "./typescript.js";"#, Some(json!([{ "pattern": { "js": "never" } }]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
         //     r"import useState from '@foo/bar/useState';",
