@@ -2,10 +2,13 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function, FunctionBody,
-        FunctionType, MethodDefinition, ObjectProperty, PropertyKey,
+        FunctionType, MethodDefinition, ObjectProperty, PropertyKey, VariableDeclaration,
     },
 };
-use oxc_ast_visit::{VisitJs, walk_js::walk_for_of_statement};
+use oxc_ast_visit::{
+    VisitJs,
+    walk_js::{walk_for_of_statement, walk_variable_declaration},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -233,6 +236,14 @@ impl<'a> VisitJs<'a> for AwaitFinder {
         }
     }
 
+    fn visit_variable_declaration(&mut self, decl: &VariableDeclaration<'a>) {
+        if decl.kind.is_await() {
+            self.found = true;
+        } else {
+            walk_variable_declaration(self, decl);
+        }
+    }
+
     fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
@@ -287,6 +298,9 @@ fn test() {
            }
         };
         ",
+        "async function foo() { await using x = getResource() }",
+        "async function foo() { { await using x = getResource() } }",
+        "async function foo() { for (await using x of xs) {} }",
     ];
 
     let fail = vec![
@@ -300,6 +314,8 @@ fn test() {
         "(class { async ''() { doSomething() } })",
         "async function foo() { async () => { await doSomething() } }",
         "async function foo() { await (async () => { doSomething() }) }",
+        "async function foo() { using x = getResource() }",
+        "async function foo() { async () => { await using x = getResource() } }",
     ];
 
     let fix = vec![

@@ -71,3 +71,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ─────────────────────────────
    ╰────
   help: Consider removing the `async` keyword.
+
+  ⚠ eslint(require-await): Async function has no `await` expression.
+   ╭─[require_await.mts:1:16]
+ 1 │ async function foo() { using x = getResource() }
+   ·                ───
+   ╰────
+  help: Consider removing the `async` keyword.
+
+  ⚠ eslint(require-await): Async function has no `await` expression.
+   ╭─[require_await.mts:1:16]
+ 1 │ async function foo() { async () => { await using x = getResource() } }
+   ·                ───
+   ╰────
+  help: Consider removing the `async` keyword.
