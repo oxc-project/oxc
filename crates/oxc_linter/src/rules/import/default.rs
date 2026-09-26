@@ -20,6 +20,9 @@ declare_oxc_lint!(
     /// If a default import is requested, this rule will report if there is no
     /// default export in the imported module.
     ///
+    /// Type-only imports are ignored because they do not require a runtime export.
+    /// Use TypeScript to check that the imported type exists.
+    ///
     /// ### Why is this bad?
     ///
     /// Using a default import when there is no default export can lead to
@@ -57,6 +60,10 @@ impl Rule for Default {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
         for import_entry in &module_record.import_entries {
+            if import_entry.is_type {
+                continue;
+            }
+
             let ImportImportName::Default(default_span) = import_entry.import_name else {
                 continue;
             };
@@ -154,5 +161,40 @@ fn test() {
     Tester::new(Default::NAME, Default::PLUGIN, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_type_imports() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        r#"import type SearchSpecification from "default-type/SearchSpecification";"#,
+        r#"
+            import type SearchSpecification from "default-type/SearchSpecification";
+            import foo from "./default-export";
+        "#,
+    ];
+
+    let fail = vec![
+        r#"import SearchSpecification from "default-type/SearchSpecification";"#,
+        r#"
+            import type SearchSpecification from "default-type/SearchSpecification";
+            import search from "default-type/SearchSpecification";
+        "#,
+        r#"
+            import search from "default-type/SearchSpecification";
+            import type SearchSpecification from "default-type/SearchSpecification";
+        "#,
+        r#"
+            import SearchSpecification from "default-type/SearchSpecification";
+            type Specification = SearchSpecification;
+        "#,
+    ];
+
+    Tester::new(Default::NAME, Default::PLUGIN, pass, fail)
+        .change_rule_path("type-imports.ts")
+        .with_import_plugin(true)
+        .with_snapshot_suffix("type_imports")
         .test_and_snapshot();
 }
