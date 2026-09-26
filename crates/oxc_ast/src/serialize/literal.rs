@@ -329,3 +329,51 @@ impl TemplateElementValue<'_, '_> {
         state.end();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::cell::Cell;
+
+    use oxc_estree::{CompactSerializer, ESTree};
+    use oxc_span::Span;
+
+    use crate::ast::{RegExp, RegExpFlags, RegExpLiteral, RegExpPattern};
+
+    fn serialize_regex(raw: Option<&str>, flags: RegExpFlags) -> String {
+        let literal = RegExpLiteral {
+            node_id: Cell::default(),
+            span: Span::default(),
+            regex: RegExp { pattern: RegExpPattern { text: "a".into(), pattern: None }, flags },
+            raw: raw.map(Into::into),
+        };
+        let mut serializer = CompactSerializer::with_capacity(128, false, false);
+        literal.serialize(&mut serializer);
+        serializer.into_string()
+    }
+
+    #[test]
+    fn regexp_preserves_source_flag_order() {
+        let flags = RegExpFlags::G | RegExpFlags::I;
+        for raw in ["/a/ig", r"/a\/é/ig"] {
+            assert!(
+                serialize_regex(Some(raw), flags)
+                    .contains(r#""regex":{"pattern":"a","flags":"ig"}"#)
+            );
+        }
+        assert!(
+            serialize_regex(Some("/a/"), RegExpFlags::empty())
+                .contains(r#""regex":{"pattern":"a","flags":""}"#)
+        );
+    }
+
+    #[test]
+    fn regexp_uses_canonical_flags_without_matching_raw() {
+        let flags = RegExpFlags::G | RegExpFlags::I;
+        for raw in [None, Some("/a/m"), Some("/a/im"), Some("/a/gg"), Some("/a/gz"), Some("ig")] {
+            assert!(
+                serialize_regex(raw, flags).contains(r#""regex":{"pattern":"a","flags":"gi"}"#),
+                "raw: {raw:?}"
+            );
+        }
+    }
+}

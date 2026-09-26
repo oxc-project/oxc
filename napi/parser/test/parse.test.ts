@@ -1,7 +1,7 @@
 import { Worker } from "node:worker_threads";
 import { describe, expect, it, test } from "vitest";
 
-import { parse, parseSync } from "../src-js/index.js";
+import { parse, parseSync, rawTransferSupported } from "../src-js/index.js";
 import { parseSync as parseRawSync } from "./parser.ts";
 import type {
   ExpressionStatement,
@@ -281,6 +281,42 @@ describe("parse", () => {
   });
 
   describe("`RegExpLiteral`", () => {
+    it.each(["js", "ts"])("preserves flag spelling across ESTree transfer modes in %s", (lang) => {
+      const code = "/* 😀 */ /\\w/yvsimg; /a\\/é/ig; /a/";
+      for (const options of [
+        { experimentalRawTransfer: false },
+        { experimentalRawTransfer: true, range: false },
+        { experimentalRawTransfer: true, range: true },
+        { experimentalRawTransfer: true, experimentalParent: true },
+        { experimentalRawTransfer: true, range: true, experimentalParent: true },
+      ]) {
+        if (options.experimentalRawTransfer && !rawTransferSupported()) continue;
+        const ret = parseRawSync(`test.${lang}`, code, options);
+        expect(ret.errors).toEqual([]);
+        const flags = ret.program.body.map((statement) => {
+          if (statement.type !== "ExpressionStatement") throw new Error("Expected expression");
+          const node = statement.expression;
+          if (node.type !== "Literal" || !("regex" in node)) throw new Error("Expected regex");
+          expect(node.value).toBeInstanceOf(RegExp);
+          return [node.regex.flags, (node.value as RegExp).flags];
+        });
+        expect(flags).toEqual([
+          ["yvsimg", "gimsvy"],
+          ["ig", "gi"],
+          ["", ""],
+        ]);
+
+        const recovered = parseRawSync(`test.${lang}`, "/a/vu", options);
+        expect(recovered.errors).toHaveLength(1);
+        const statement = recovered.program.body[0];
+        if (statement.type !== "ExpressionStatement") throw new Error("Expected expression");
+        expect(statement.expression).toMatchObject({
+          regex: { pattern: "a", flags: "vu" },
+          value: null,
+        });
+      }
+    });
+
     it("has `value` as `RegExp` when valid regexp", () => {
       const ret = parseSync("test.js", "/abc/gu");
       expect(ret.errors.length).toBe(0);
