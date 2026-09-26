@@ -593,3 +593,18 @@ fn test_import_value_redeclaration_in_module() {
     // TypeScript should NOT report this error (declaration merging)
     SemanticTester::ts("import { Foo } from './foo.js'; var Foo;").has_root_symbol("Foo").test();
 }
+
+#[test]
+fn test_implicit_arguments_unresolved_references() {
+    let tester = SemanticTester::ts(
+        "const arguments = []; function f(value = arguments) { return () => arguments; }",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let references = scoping.root_unresolved_references().get("arguments").unwrap();
+    assert_eq!(references.len(), 2);
+    assert_ne!(references[0], references[1]);
+    for &reference_id in references {
+        assert!(scoping.get_reference(reference_id).symbol_id().is_none());
+    }
+}
