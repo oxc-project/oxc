@@ -55,15 +55,9 @@ impl<'a> PeepholeOptimizations {
             Expression::SequenceExpression(sequence_expr)
                 if sequence_expr.expressions.len() > 1 =>
             {
-                let ConditionalExpression { mut test, consequent, alternate, span, .. } =
+                let ConditionalExpression { test, consequent, alternate, span, .. } =
                     expr.take_in(ctx);
-                let Expression::SequenceExpression(sequence_expr) = &mut test else {
-                    unreachable!()
-                };
-                let new_test = sequence_expr.expressions.pop().unwrap();
-                let expr = Self::minimize_conditional(span, new_test, consequent, alternate, ctx);
-                sequence_expr.expressions.push(expr);
-                return Some(test);
+                return Some(Self::minimize_conditional(span, test, consequent, alternate, ctx));
             }
             // "!a ? b : c" => "a ? c : b"
             Expression::UnaryExpression(test_expr) if test_expr.operator.is_not() => {
