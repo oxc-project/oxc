@@ -22,6 +22,7 @@ import {
   markMapAtStartOffset,
   markMapStart,
   write,
+  writeGroupOpen,
   writeIdent,
   writeNoLast,
   writeWithMap,
@@ -196,10 +197,12 @@ export function printExpression(
       const { expression } = node;
       const inner = withoutParens(expression);
       if (inner.type === "FunctionExpression" || inner.type === "ArrowFunctionExpression") {
-        write(state, "(", CAT_OTHER);
+        const wrap =
+          inner.type === "ArrowFunctionExpression" || state.groupStart !== state.output.length;
+        if (wrap) writeGroupOpen(state);
         printExpression(inner, state, PREC_LOWEST, CTX_NONE);
-        write(state, ")", CAT_CLOSE_BRACKET);
-        if (SOURCEMAPS && precedence === PREC_POSTFIX) {
+        if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+        if (SOURCEMAPS && wrap && precedence === PREC_POSTFIX) {
           markMapAfter(state, inner.start, inner.end, inner);
           const wrappers: ESTree.ParenthesizedExpression[] = [];
           let wrapper = expression;
@@ -213,7 +216,12 @@ export function printExpression(
           }
         }
       } else {
+        // A leading function keeps the PIFE hint even when the parentheses enclose
+        // a larger expression, such as `(function () {}())`.
+        const previousPifeStart = state.pifeStart;
+        state.pifeStart = expression.start;
         printExpression(expression, state, precedence, ctx);
+        state.pifeStart = previousPifeStart;
       }
       break;
     }
@@ -234,7 +242,7 @@ export function printExpression(
       break;
     case "TSInstantiationExpression": {
       const wrap = precedence >= PREC_POSTFIX;
-      if (wrap) write(state, "(", CAT_OTHER);
+      if (wrap) writeGroupOpen(state);
       printExpression(node.expression, state, PREC_PREFIX, ctx);
       printTypeArguments(node.typeArguments, state);
       if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
@@ -330,6 +338,7 @@ function printCallExpression(
     // A statement or an `export default` mark is left intact.
     // A concise arrow body's mark is deliberately left to die at the paren, as `oxc_codegen` does.
     writeNoLast(state, "(");
+    state.groupStart = state.output.length;
 
     // `CAT_START_OF_STMT` or `CAT_START_OF_DEFAULT_EXPORT`, which are adjacent - see `categories.ts`
     if ((state.last | 1) !== CAT_START_OF_STMT) state.last = CAT_OTHER;
@@ -633,7 +642,7 @@ function printAssignmentExpression(
     wrap = ((state.last - 1) | 1) === CAT_START_OF_STMT;
   }
 
-  if (wrap) write(state, "(", CAT_OTHER);
+  if (wrap) writeGroupOpen(state);
 
   markMapStart(state, node.start, node.end, node);
 
@@ -659,7 +668,7 @@ function printUpdateExpression(
 ): void {
   const selfPrecedence = node.prefix ? PREC_PREFIX : PREC_POSTFIX;
   const wrap = precedence >= selfPrecedence;
-  if (wrap) write(state, "(", CAT_OTHER);
+  if (wrap) writeGroupOpen(state);
 
   const operatorCode = updateOperatorCode(node.operator);
 
@@ -739,7 +748,7 @@ function printConditionalExpression(
   // so `in` is only forbidden further down when the expression is printed bare
   let innerCtx = 0;
   if (wrap) {
-    write(state, "(", CAT_OTHER);
+    writeGroupOpen(state);
   } else {
     innerCtx = ctx & CTX_FORBID_IN;
   }
@@ -776,7 +785,7 @@ function printSequenceExpression(
   ctx: number,
 ): void {
   const wrap = precedence >= PREC_COMMA;
-  if (wrap) write(state, "(", CAT_OTHER);
+  if (wrap) writeGroupOpen(state);
 
   const innerCtx = ctx & ~CTX_FORBID_CALL;
   const { expressions } = node;
@@ -995,7 +1004,7 @@ function printChainExpression(
 ): void {
   const wrap = precedence >= PREC_POSTFIX || (ctx & CTX_FORBID_CALL) !== 0;
   if (wrap) {
-    write(state, "(", CAT_OTHER);
+    writeGroupOpen(state);
     printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
     write(state, ")", CAT_CLOSE_BRACKET);
   } else {

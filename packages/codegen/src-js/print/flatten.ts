@@ -85,6 +85,7 @@ export const OUTPUT_CHUNK_LENGTH = 16 * 1024;
 export function spillOutputChunk(state: State): void {
   const { output } = state;
   state.output = "";
+  state.groupStart = -1;
 
   // Only sourcemap builds need this
   if (SOURCEMAPS) state.spilledOutputLength += output.length;

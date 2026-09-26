@@ -2,7 +2,7 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import { CAT_CLOSE_BRACKET, CAT_OTHER } from "./categories.ts";
-import { write } from "./write.ts";
+import { write, writeGroupOpen } from "./write.ts";
 import { printPrivateInExpression, printExpression } from "./expression.ts";
 import { BIN_PRECEDENCE, CTX_FORBID_IN, PADDED_BIN_OPERATORS } from "./operators.ts";
 import { withoutParens } from "./parens.ts";
@@ -45,6 +45,7 @@ export function printBinaryish(
   precedence: number,
   ctx: number,
 ): void {
+  const previousPifeStart = state.pifeStart;
   // The pending outer levels are threaded through `parent` rather than a separate stack array.
   let v: BinaryVisitor | null = {
     e: node,
@@ -60,7 +61,11 @@ export function printBinaryish(
   for (;;) {
     binCheckAndPrepare(v, state);
 
-    const left = withoutParens(v.e.left);
+    let { left }: { left: ESTree.Expression } = v.e;
+    while (left.type === "ParenthesizedExpression") {
+      state.pifeStart = left.expression.start;
+      left = left.expression;
+    }
     if (left.type === "BinaryExpression" || left.type === "LogicalExpression") {
       if (left.type === "BinaryExpression" && left.left.type === "PrivateIdentifier") {
         // Private-in expression as the left operand
@@ -96,6 +101,7 @@ export function printBinaryish(
   while ((v = v.parent) !== null) {
     binVisitRightAndFinish(v, state);
   }
+  state.pifeStart = previousPifeStart;
 }
 
 /**
@@ -118,7 +124,7 @@ function binCheckAndPrepare(v: BinaryVisitor, state: State): void {
   v.wrap = precedenceCheck || (eOperator === "in" && (v.ctx & CTX_FORBID_IN) !== 0);
 
   if (v.wrap) {
-    write(state, "(", CAT_OTHER);
+    writeGroupOpen(state);
     v.ctx &= ~CTX_FORBID_IN;
   }
   // One level below the operator's own precedence. The precedence scale has no gaps, so this is
