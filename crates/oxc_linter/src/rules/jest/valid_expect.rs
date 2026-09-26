@@ -31,6 +31,24 @@ impl Rule for ValidExpect {
 }
 
 #[test]
+fn test_assert_api() {
+    use crate::tester::Tester;
+
+    let pass = vec!["expect(value).toBeDefined();"];
+    let fail = vec![
+        "expect.assert.isDefined(value);",
+        "expect['assert'].exists(value);",
+        "import { expect as check } from '@jest/globals'; check.assert.isDefined(value);",
+    ];
+
+    Tester::new(ValidExpect::NAME, ValidExpect::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test();
+}
+
+#[test]
 fn test() {
     use crate::tester::Tester;
 
