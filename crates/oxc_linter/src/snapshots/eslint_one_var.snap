@@ -973,6 +973,41 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ declare var a: string, b: number;
+   · ─────────────────────────────────
+   ╰────
+  help: Split variable declarations
+
+  ⚠ eslint(one-var): Split 'const' declarations into multiple statements.
+   ╭─[one_var.tsx:1:1]
+ 1 │ declare const a: string, b: number;
+   · ───────────────────────────────────
+   ╰────
+  help: Split variable declarations
+
+  ⚠ eslint(one-var): Split 'let' declarations into multiple statements.
+   ╭─[one_var.tsx:1:8]
+ 1 │ export declare let a: string, b: number;
+   ·        ─────────────────────────────────
+   ╰────
+  help: Split variable declarations
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:23]
+ 1 │ declare namespace N { var a, b; }
+   ·                       ─────────
+   ╰────
+  help: Split variable declarations
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
+   ╭─[one_var.tsx:1:18]
+ 1 │ declare global { var a: string, b: number; }
+   ·                  ─────────────────────────
+   ╰────
+  help: Split variable declarations
+
+  ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
    ╭─[one_var.tsx:1:10]
  1 │ if (foo) var x, y;
    ·          ─────────
