@@ -174,9 +174,12 @@ impl Tokens<'_> {
     /// Length of the fused operator at pos, 1 when no multi-byte operator starts there.
     #[inline]
     pub(crate) fn op_len(&self, pos: usize) -> usize {
-        let lmax = (self.n - pos) as u32;
         let bytes = <[u8; 4]>::try_from(&self.src[pos..pos + 4]).unwrap();
-        opmap_longest(bytes, lmax).1 as usize
+        // Provide `max_len` as static value 4 to remove branches in `opmap_longest`.
+        // When at the very end of source, `bytes` can contain `\0` padding bytes,
+        // but these bytes cannot match any operator. This adds redundant work at the very end
+        // of the file (very rare case) in return for fewer branches everywhere else (common).
+        opmap_longest(bytes, 4).1 as usize
     }
 
     /// The TemplateHead of the template whose tail or middle is at tail; None past cap steps.
