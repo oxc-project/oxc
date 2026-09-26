@@ -22,6 +22,7 @@ pub enum CliRunResult {
     ConfigFileInitFailed,
     ConfigFileInitSucceeded,
     TsGoLintError,
+    OutputFileError,
 }
 
 impl Termination for CliRunResult {
@@ -46,7 +47,8 @@ impl Termination for CliRunResult {
             | Self::InvalidOptionSeverityWithoutPluginName
             | Self::InvalidOptionSeverityWithoutRuleName
             | Self::LintUnprunedSuppressions
-            | Self::TsGoLintError => ExitCode::FAILURE,
+            | Self::TsGoLintError
+            | Self::OutputFileError => ExitCode::FAILURE,
         }
     }
 }
