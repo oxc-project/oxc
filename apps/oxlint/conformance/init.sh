@@ -272,3 +272,35 @@ npm install
 
 # Return to `submodules` directory
 cd ..
+
+###############################################################################
+# TanStack Query
+###############################################################################
+
+# Clone the TanStack Query repo into `submodules/tanstack_query`
+clone_repo tanstack_query
+
+# Install the plugin and root test tooling using the upstream workspace lockfile.
+pnpm install --filter root --filter @tanstack/eslint-plugin-query --frozen-lockfile --config.strict-dep-builds=false
+
+# The conformance runner loads tests synchronously and supplies its own hooks.
+# Replace top-level await parser imports and remove upstream Vitest hook assignments.
+node <<'NODE'
+const fs = require("node:fs");
+const path = require("node:path");
+const dir = "packages/eslint-plugin-query/src/__tests__";
+for (const filename of fs.readdirSync(dir)) {
+  if (!filename.endsWith(".test.ts")) continue;
+  const filePath = path.join(dir, filename);
+  let code = fs.readFileSync(filePath, "utf8");
+  code = code.replace(/^RuleTester\.(afterAll|describe|it) = .*\n/gm, "");
+  const parserImport = /await import\(['"]@typescript-eslint\/parser['"]\)/g;
+  if (parserImport.test(code)) {
+    code = `import * as tsParser from "@typescript-eslint/parser";\n${code.replace(parserImport, "tsParser")}`;
+  }
+  fs.writeFileSync(filePath, code);
+}
+NODE
+
+# Return to `submodules` directory
+cd ..
