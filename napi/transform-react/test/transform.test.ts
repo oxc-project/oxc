@@ -15,6 +15,21 @@ export function Component(props: Props) {
 }
 `;
 
+const enumFixture = `// @license MIT
+  enum Direction {
+    Up = 1,
+    Down = 2,
+  }
+
+  const enum Status {
+    Active = "active",
+  }
+
+  export function App() {
+    return <div>{Direction.Up}:{Status.Active}</div>;
+  }
+`;
+
 describe("transformSync", () => {
   it("runs React Compiler before TypeScript and JSX transforms", () => {
     const result = transformSync("Component.tsx", fixture);
@@ -502,6 +517,41 @@ export function Component({ value }: { value: string }) {
     expect(result.code).toContain("$RefreshSig$");
     expect(result.code).toContain("$RefreshReg$");
     expect(result.code).toContain("useState{[count, setCount](0)}");
+  });
+
+  it("does not inline enums by default", () => {
+    const result = transformSync("App.tsx", enumFixture, {
+      reactCompiler: false,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("Direction.Up");
+    expect(result.code).toContain("Status.Active");
+  });
+
+  it("inlines const enums when optimizeConstEnums is true", () => {
+    const result = transformSync("App.tsx", enumFixture, {
+      reactCompiler: false,
+      typescript: {
+        optimizeConstEnums: true,
+        optimizeEnums: false,
+      },
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("Direction.Up");
+    expect(result.code).not.toContain("Status.Active");
+  });
+
+  it("inlines enums when optimizeConstEnums and optimizeEnums are true", () => {
+    const result = transformSync("App.tsx", enumFixture, {
+      reactCompiler: false,
+      typescript: {
+        optimizeConstEnums: true,
+        optimizeEnums: true,
+      },
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).not.toContain("Direction.Up");
+    expect(result.code).not.toContain("Status.Active");
   });
 });
 

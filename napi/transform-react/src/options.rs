@@ -36,6 +36,12 @@ pub struct TransformOptions {
     #[napi(ts_type = "'preserve' | JsxOptions")]
     pub jsx: Option<Either<String, JsxOptions>>,
 
+    /// Configure how Typescript is transformed.
+    ///
+    /// @see <https://oxc.rs/docs/guide/usage/transformer/typescript>
+    #[napi(ts_type = "TypeScriptOptions")]
+    pub typescript: Option<TypeScriptOptions>,
+
     /// Configure React Compiler, or disable it with `false`.
     ///
     /// @default true
@@ -188,6 +194,26 @@ pub struct JsxOptions {
     pub refresh: Option<Either<bool, ReactRefreshOptions>>,
 }
 
+/// Configure how Typescript is transformed.
+///
+/// @see <https://oxc.rs/docs/guide/usage/transformer/typescript>
+#[napi(object)]
+#[derive(Debug)]
+pub struct TypeScriptOptions {
+    /// Inlines const enum values and removes the declaration.
+    ///
+    /// @default false
+    pub optimize_const_enums: Option<bool>,
+
+    /// Inlines regular (non-const) enum member accesses when all members
+    /// satisfy const enum constraints (i.e., their values are statically evaluable).
+    /// Non-exported enum declarations are also removed when all members are
+    /// evaluable and no references to the enum as a runtime value exist.
+    ///
+    /// @default false
+    pub optimize_enums: Option<bool>,
+}
+
 /// React Fast Refresh options.
 #[napi(object)]
 #[derive(Debug)]
@@ -313,10 +339,16 @@ impl TransformOptions {
             Some(Either::B(options)) => oxc::transformer::JsxOptions::from(options),
         };
 
+        let typescript: oxc::transformer::TypeScriptOptions = match self.typescript {
+            None => oxc::transformer::TypeScriptOptions::default(),
+            Some(options) => oxc::transformer::TypeScriptOptions::from(options),
+        };
+
         Ok((
             react_compiler,
             oxc::transformer::TransformOptions {
                 jsx,
+                typescript,
                 ..oxc::transformer::TransformOptions::default()
             },
         ))
@@ -422,6 +454,19 @@ impl From<JsxOptions> for oxc::transformer::JsxOptions {
                 Either::B(options) => Some(oxc::transformer::ReactRefreshOptions::from(options)),
             }),
             ..Self::default()
+        }
+    }
+}
+
+impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
+    fn from(options: TypeScriptOptions) -> Self {
+        let defaults = Self::default();
+        Self {
+            optimize_const_enums: options
+                .optimize_const_enums
+                .unwrap_or(defaults.optimize_const_enums),
+            optimize_enums: options.optimize_enums.unwrap_or(defaults.optimize_enums),
+            ..defaults
         }
     }
 }
