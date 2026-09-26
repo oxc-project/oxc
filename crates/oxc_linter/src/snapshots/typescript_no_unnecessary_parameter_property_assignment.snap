@@ -226,3 +226,65 @@ source: crates/oxc_linter/src/tester.rs
  6 │             })();
    ╰────
   help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
+ 3 │           constructor(public name: string) {
+ 4 │             this.name = name;
+   ·             ────────────────
+ 5 │             name = name.trim();
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:6:13]
+ 5 │             this.name = name;
+ 6 │             this.age = age;
+   ·             ──────────────
+ 7 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:6:13]
+ 5 │             local = local.trim();
+ 6 │             this.name = name;
+   ·             ────────────────
+ 7 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:84]
+ 1 │ class User { constructor(public name: string) { { let name = ''; name = 'other'; } this.name = name; } }
+   ·                                                                                    ────────────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:82]
+ 1 │ class User { constructor(public name: string) { function f() { name = 'other'; } this.name = name; } }
+   ·                                                                                  ────────────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:86]
+ 1 │ class User { constructor(public name: string) { const f = () => { name = 'other'; }; this.name = name; } }
+   ·                                                                                      ────────────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:69]
+ 1 │ class User { constructor(public name: string) { let local; local = (this.name = name); } }
+   ·                                                                     ────────────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:68]
+ 1 │ class User { constructor(public name: string) { let local; local = this.name = name; } }
+   ·                                                                    ────────────────
+   ╰────
+  help: Remove the unnecessary assignment
