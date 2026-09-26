@@ -17,8 +17,9 @@ The `oxfmt` implemented under this directory serves several purposes.
   - Entry point: `main()` in `src/main.rs`
   - Build with `cargo build --no-default-features`
 - Node.js API using napi-rs
-  - Caller-supplied options, no config discovery
-  - Entry point: `src-js/index.ts` which uses `format()` from `src/main_napi.rs`
+  - `format()` takes caller-supplied options, no config discovery
+  - `resolveConfig()` resolves config and ignore status for a file, the same as Stdin
+  - Entry point: `src-js/index.ts` which uses `format()` and `resolveConfig()` from `src/main_napi.rs`
   - Build with `pnpm build`
 
 Cross-cutting behavior is applied through several entry points:
@@ -27,6 +28,7 @@ Cross-cutting behavior is applied through several entry points:
 - Stdin: `src/cli/stdin_runner.rs`
 - LSP: `src/lsp/server_formatter.rs`
 - NAPI direct-document API: `src/api/format_api.rs`
+- NAPI `resolveConfig()` API: `src/api/resolve_config_api.rs`, sharing Stdin's `resolve_explicit_file()`
 - NAPI `textToDoc()` API for `prettier-plugin-oxfmt`: `src/api/text_to_doc_api.rs`
 
 Check the relevant path before assuming that behavior is shared across entry points.

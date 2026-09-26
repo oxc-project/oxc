@@ -716,9 +716,10 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { Severity, format, jsTextToDoc, runCli } = nativeBinding
+const { Severity, format, jsTextToDoc, resolveConfig, runCli } = nativeBinding
 export { Severity }
 export { format }
 export { jsTextToDoc }
+export { resolveConfig }
 export { runCli }
 export const __napiBindingTarget = __napiLoadedBindingTarget
