@@ -1689,21 +1689,6 @@ const TYPED_GLOBAL_OBJECTS: &[GlobalObjectDef] = &[
             },
         )],
     },
-    // Date
-    GlobalObjectDef {
-        name: "Date",
-        props: &[Method(
-            "now",
-            MethodDef {
-                rest_param: Some(Effect::Read),
-                return_type: TypeDef::Poly,
-                return_value_kind: ValueKind::Mutable,
-                impure: true,
-                canonical_name: Some("Date.now"),
-                ..MethodDef::DEFAULT
-            },
-        )],
-    },
     // console
     GlobalObjectDef {
         name: "console",
@@ -1752,12 +1737,46 @@ fn build_typed_globals(
 ) -> Vec<(Ident<'static>, Type<'static>)> {
     let mut typed_globals: Vec<(Ident, Type)> = Vec::new();
 
-    // Object, Array, Math, performance, Date, console
+    // Object, Array, Math, performance, console
     for def in TYPED_GLOBAL_OBJECTS {
         let global = add_object_from_def(shapes, Some(Ident::from(def.name)), def.props);
         typed_globals.push((Ident::from(def.name), global.clone()));
         globals.insert(Ident::from(def.name), global);
     }
+
+    // Date: constructor is a function so `new Date()` gets a call signature.
+    // Zero-arg construction reads the clock (`impure_if_no_args`); `Date.now`
+    // remains a static method on the same shape.
+    let date_now = add_method(
+        shapes,
+        &MethodDef {
+            rest_param: Some(Effect::Read),
+            return_type: TypeDef::Poly,
+            return_value_kind: ValueKind::Mutable,
+            impure: true,
+            canonical_name: Some("Date.now"),
+            ..MethodDef::DEFAULT
+        },
+        None,
+        false,
+    );
+    let date_global = add_function(
+        shapes,
+        vec![(Ident::from("now"), date_now)],
+        FunctionSignatureBuilder {
+            rest_param: Some(Effect::Read),
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Mutable,
+            impure: true,
+            impure_if_no_args: true,
+            canonical_name: Some(Cow::Borrowed("Date")),
+            ..Default::default()
+        },
+        Some(Ident::from("Date")),
+        false,
+    );
+    typed_globals.push((Ident::from("Date"), date_global.clone()));
+    globals.insert(Ident::from("Date"), date_global);
 
     // Simple global functions returning Primitive
     for name in PRIMITIVE_GLOBAL_FNS {

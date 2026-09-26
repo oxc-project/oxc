@@ -2485,7 +2485,10 @@ fn compute_effects_for_legacy_signature<'a>(
         reason: return_value_reason,
     });
 
-    if signature.impure && env.config.validate_no_impure_functions_in_render {
+    if signature.impure
+        && env.config.validate_no_impure_functions_in_render
+        && (!signature.impure_if_no_args || args.is_empty())
+    {
         let diagnostic =
             diagnostics::impure_function(signature.canonical_name.as_deref(), span.copied());
         let error = env.intern_aliasing_diagnostic(receiver.identifier, diagnostic);
