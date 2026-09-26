@@ -1795,6 +1795,17 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_skips_rules() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_rules".into())
+            .test_and_snapshot_multiple(&[
+                &["--type-check-only", "index.ts"],
+                &["--type-check-only", "type-error.ts"],
+            ]);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_only_reports_syntax_errors() {
         let args = &["--type-check-only"];
         Tester::new()
