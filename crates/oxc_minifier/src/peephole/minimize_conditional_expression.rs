@@ -165,7 +165,7 @@ impl<'a> PeepholeOptimizations {
             let seq_prefix = if alternate.expressions.len() == 1 {
                 alternate.expressions.pop().unwrap()
             } else {
-                Expression::SequenceExpression(alternate.take_in_box(ctx))
+                expr.alternate.take_in(ctx)
             };
             return Some(Expression::new_sequence_expression(
                 expr.span,
@@ -194,7 +194,7 @@ impl<'a> PeepholeOptimizations {
             let seq_prefix = if consequent.expressions.len() == 1 {
                 consequent.expressions.pop().unwrap()
             } else {
-                Expression::SequenceExpression(consequent.take_in_box(ctx))
+                expr.consequent.take_in(ctx)
             };
 
             return Some(Expression::new_sequence_expression(
