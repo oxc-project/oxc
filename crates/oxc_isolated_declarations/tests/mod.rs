@@ -45,6 +45,19 @@ fn transform(path: &Path, source_text: &str) -> String {
 }
 
 #[test]
+fn readonly_parameters() {
+    let source_text = include_str!("fixtures/readonly-parameters.ts");
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, source_text, SourceType::ts()).parse();
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+
+    let declarations =
+        IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions::default())
+            .build(&parsed.program);
+    assert!(declarations.diagnostics.is_empty(), "{:?}", declarations.diagnostics);
+}
+
+#[test]
 fn snapshots() {
     insta::glob!("fixtures/*.{ts,tsx}", |path| {
         let source_text = fs::read_to_string(path).unwrap();
