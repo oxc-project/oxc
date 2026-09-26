@@ -256,6 +256,9 @@ impl<'a> PeepholeOptimizations {
             &mut var_decl.declarations,
             ctx,
         );
+        for decl in &mut var_decl.declarations {
+            Self::remove_unused_object_pattern_properties(decl, ctx);
+        }
 
         // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if !ctx.options().join_vars

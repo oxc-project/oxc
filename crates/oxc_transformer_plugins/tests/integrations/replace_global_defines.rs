@@ -430,7 +430,12 @@ fn optional_chain() {
 #[test]
 fn dot_define_with_destruct() {
     let c = config(&[("process.env.NODE_ENV", "{'a': 1, b: 2, c: true, d: {a: b}}")]);
-    test("const {a, c} = process.env.NODE_ENV", "const { a, c } = {\n\t'a': 1,\n\tc: true};", &c);
+    // Exported so that DCE keeps the bindings.
+    test(
+        "export const {a, c} = process.env.NODE_ENV",
+        "export const { a, c } = {\n\t'a': 1,\n\tc: true};",
+        &c,
+    );
     // bailout
     test(
         "const {[any]: alias} = process.env.NODE_ENV",
@@ -441,7 +446,11 @@ fn dot_define_with_destruct() {
     // should filterout unused key even rhs objectExpr has SpreadElement
 
     let c = config(&[("process.env.NODE_ENV", "{'a': 1, b: 2, c: true, ...unknown}")]);
-    test("const {a} = process.env.NODE_ENV", "const { a } = {\n\t'a': 1,\n\t...unknown\n};\n", &c);
+    test(
+        "export const {a} = process.env.NODE_ENV",
+        "export const { a } = {\n\t'a': 1,\n\t...unknown\n};\n",
+        &c,
+    );
 }
 
 #[test]
