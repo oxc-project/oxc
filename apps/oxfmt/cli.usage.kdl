@@ -1,0 +1,60 @@
+name oxfmt
+bin oxfmt
+version "0.70.0"
+usage "oxfmt [-c=PATH] [PATH]..."
+help_template #"""
+{{usage}}
+
+{{commands}}
+
+{{grouped_flags}}
+
+{{ungrouped_args}}
+
+{{ungrouped_flags}}
+
+{{after_help}}
+"""#
+unknown_flags error
+args_override_self #false
+flagset mode-options {
+    flag --init help="Initialize `.oxfmtrc.json` with default values" help_heading="Mode Options"
+    flag --migrate help="Migrate configuration to `.oxfmtrc.json` from specified source. Available sources: prettier, biome." help_heading="Mode Options" {
+        arg <SOURCE> {
+            choices ignore_case=#true {
+                choice prettier help="Migrate from Prettier configuration"
+                choice biome help="Migrate from Biome configuration"
+            }
+        }
+    }
+    flag --lsp help="Start language server protocol (LSP) server" help_heading="Mode Options"
+    flag --stdin-filepath help="Specify the file name to use to infer which parser to use" help_heading="Mode Options" {
+        arg <PATH>
+    }
+    flag --write help="Format and write files in place (default)" help_heading="Output Options"
+    flag --check help="Check if files are formatted, also show statistics" help_heading="Output Options"
+    flag --list-different help="List files that would be changed" help_heading="Output Options"
+}
+use mode-options
+flag "-c --config" help="Path to the configuration file (.json, .jsonc, .ts, .mts, .cts, .js, .mjs, .cjs)" help_heading="Config Options" {
+    arg <PATH>
+}
+flag --disable-nested-config help="Do not search for configuration files in subdirectories" help_heading="Config Options"
+flag --ignore-path help="Path to ignore file(s). Can be specified multiple times. If not specified, .gitignore and .prettierignore in the current directory are used." var=#true help_heading="Ignore Options" {
+    arg <PATH>
+}
+flag --with-node-modules help="Format code in node_modules directory (skipped by default)" help_heading="Ignore Options"
+flag --no-error-on-unmatched-pattern help="Do not exit with error when pattern is unmatched" help_heading="Runtime Options"
+flag --threads help="Number of threads to use. Set to 1 for using only 1 CPU core." help_heading="Runtime Options" {
+    arg <INT>
+}
+flag "-h --help" help="Print help" action=help builtin=#true
+flag "-V --version" help="Print version" action=version builtin=#true
+arg "[PATH]..." help="Single file, path or list of paths. Glob patterns are also supported. (Be sure to quote them, otherwise your shell may expand them before passing.) Exclude patterns with `!` prefix like `'!**/fixtures/*.js'` are also supported. If not provided, current working directory is used."
+complete path type=path
+group mode "--init" "--migrate" "--lsp" "--stdin-filepath" "--write" "--check" "--list-different"
+example "oxfmt --check ." header="Check formatting"
+example "oxfmt --write src" header="Format files"
+exit_code 0 "files are formatted or were formatted successfully"
+exit_code 1 "invalid configuration or formatting differences were found"
+exit_code 2 "no files were found or formatting failed"
