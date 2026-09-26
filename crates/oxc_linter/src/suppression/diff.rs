@@ -11,6 +11,12 @@ use crate::{
     },
 };
 
+#[derive(Clone, Copy)]
+enum SuppressionMatch {
+    AtOrBelowBaseline,
+    ExactBaseline,
+}
+
 pub struct DiffManager {
     tracking_map: StaticSuppressionMap,
     runtime_map: RuntimeSuppressionMap,
@@ -56,14 +62,51 @@ impl DiffManager {
         let suppression_file =
             SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
 
-        let (filtered_diagnostics, runtime_counts) =
-            Self::suppress_lint_diagnostics(&suppression_file, messages);
+        let (surfaced, _suppressed, runtime_counts) = Self::partition_lint_diagnostics(
+            &suppression_file,
+            messages,
+            SuppressionMatch::AtOrBelowBaseline,
+        );
 
         if let Some(counts) = runtime_counts {
             self.runtime_map.merge_file(filename, counts);
         }
 
-        filtered_diagnostics
+        surfaced
+    }
+
+    /// Partition a file's messages into `(surfaced, suppressed)` using the recorded baseline,
+    /// without mutating runtime state.
+    ///
+    /// Only rules whose runtime count exactly matches the baseline are suppressed. Rules whose
+    /// count increased or decreased are surfaced in full so the language server can prompt users
+    /// to fix new violations or prune stale suppressions.
+    pub fn partition_file(
+        &self,
+        file_path: &Path,
+        cwd: &Path,
+        messages: Vec<Message>,
+    ) -> (Vec<Message>, Vec<Message>) {
+        if self.ignore_diff {
+            return (messages, Vec::new());
+        }
+
+        let Ok(file_path) = file_path.strip_prefix(cwd) else {
+            return (messages, Vec::new());
+        };
+
+        let filename = Filename::new(file_path);
+        let suppression_data = self.tracking_map.get(&filename);
+        let suppression_file =
+            SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
+
+        let (surfaced, suppressed, _runtime_counts) = Self::partition_lint_diagnostics(
+            &suppression_file,
+            messages,
+            SuppressionMatch::ExactBaseline,
+        );
+
+        (surfaced, suppressed)
     }
 
     /// Mark that a file was seen but produced no violations (e.g. all fixed).
@@ -90,10 +133,18 @@ impl DiffManager {
         self.runtime_map
     }
 
-    fn suppress_lint_diagnostics(
+    /// Partition messages into `(surfaced, suppressed, runtime_counts)` for a file.
+    ///
+    /// `surfaced` are the diagnostics that should be reported according to `suppression_match`,
+    /// plus all warnings. `suppressed` are the error-severity diagnostics covered by the baseline.
+    /// Callers that only care about surfaced diagnostics (e.g. the CLI) discard `suppressed`;
+    /// callers that want to render suppressed diagnostics differently (e.g. the language server)
+    /// keep them.
+    fn partition_lint_diagnostics(
         suppression_file_state: &SuppressionFile<'_>,
         lint_diagnostics: Vec<Message>,
-    ) -> (Vec<Message>, Option<FxHashMap<String, DiagnosticCounts>>) {
+        suppression_match: SuppressionMatch,
+    ) -> (Vec<Message>, Vec<Message>, Option<FxHashMap<String, DiagnosticCounts>>) {
         let build_suppression_map = |diagnostics: &Vec<Message>| {
             let mut suppression_tracking: FxHashMap<String, DiagnosticCounts> =
                 FxHashMap::default();
@@ -114,51 +165,59 @@ impl DiffManager {
         };
 
         match suppression_file_state.suppression_state() {
-            SuppressionFileState::Ignored => (lint_diagnostics, None),
+            SuppressionFileState::Ignored => (lint_diagnostics, Vec::new(), None),
             SuppressionFileState::New => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
-                // Filter out error-severity diagnostics — they are being written
-                // to the new suppressions file. Only warnings pass through.
-                let filtered = lint_diagnostics
-                    .into_iter()
-                    .filter(|message| message.error.severity != Severity::Error)
-                    .collect();
+                if matches!(suppression_match, SuppressionMatch::ExactBaseline) {
+                    return (lint_diagnostics, Vec::new(), Some(runtime_suppression_tracking));
+                }
 
-                (filtered, Some(runtime_suppression_tracking))
+                // Error-severity diagnostics are being written to the new suppressions file, so
+                // they are suppressed. Only warnings surface.
+                let (suppressed, surfaced): (Vec<Message>, Vec<Message>) = lint_diagnostics
+                    .into_iter()
+                    .partition(|message| message.error.severity == Severity::Error);
+
+                (surfaced, suppressed, Some(runtime_suppression_tracking))
             }
             SuppressionFileState::Exists => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
                 let Some(recorded_violations) = suppression_file_state.suppression_data() else {
-                    return (lint_diagnostics, Some(runtime_suppression_tracking));
+                    return (lint_diagnostics, Vec::new(), Some(runtime_suppression_tracking));
                 };
 
-                let diagnostics_filtered = lint_diagnostics
-                    .into_iter()
-                    .filter(|message| {
-                        // Warnings are not suppressed — always pass through
-                        if message.error.severity != Severity::Error {
-                            return true;
+                let is_surfaced = |message: &Message| {
+                    // Warnings are not suppressed — always pass through
+                    if message.error.severity != Severity::Error {
+                        return true;
+                    }
+
+                    let Some(key) = oxc_code_short_canonical_name(&message.error.code) else {
+                        return true;
+                    };
+
+                    let Some(count_file) = recorded_violations.get(&key) else {
+                        return true;
+                    };
+
+                    let Some(count_runtime) = runtime_suppression_tracking.get(&key) else {
+                        return false;
+                    };
+
+                    match suppression_match {
+                        SuppressionMatch::AtOrBelowBaseline => {
+                            count_file.count < count_runtime.count
                         }
+                        SuppressionMatch::ExactBaseline => count_file.count != count_runtime.count,
+                    }
+                };
 
-                        let Some(key) = oxc_code_short_canonical_name(&message.error.code) else {
-                            return true;
-                        };
+                let (surfaced, suppressed): (Vec<Message>, Vec<Message>) =
+                    lint_diagnostics.into_iter().partition(is_surfaced);
 
-                        let Some(count_file) = recorded_violations.get(&key) else {
-                            return true;
-                        };
-
-                        let Some(count_runtime) = runtime_suppression_tracking.get(&key) else {
-                            return false;
-                        };
-
-                        count_file.count < count_runtime.count
-                    })
-                    .collect();
-
-                (diagnostics_filtered, Some(runtime_suppression_tracking))
+                (surfaced, suppressed, Some(runtime_suppression_tracking))
             }
         }
     }
