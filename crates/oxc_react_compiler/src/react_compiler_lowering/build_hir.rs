@@ -211,7 +211,7 @@ fn lower_block_statement<'a>(
     block_scope: Option<ScopeId>,
     parent_scope: Option<ScopeId>,
 ) -> Result<(), OxcDiagnostic> {
-    let _ = lower_block_statement_inner(builder, statements, block_scope, None, parent_scope);
+    lower_block_statement_inner(builder, statements, block_scope, None, parent_scope)?;
     Ok(())
 }
 
@@ -220,7 +220,7 @@ fn lower_block_statement_with_scope<'a>(
     statements: &[oxc::Statement<'a>],
     scope_override: ScopeId,
 ) -> Result<(), OxcDiagnostic> {
-    let _ = lower_block_statement_inner(builder, statements, None, Some(scope_override), None);
+    lower_block_statement_inner(builder, statements, None, Some(scope_override), None)?;
     Ok(())
 }
 
@@ -869,13 +869,18 @@ fn lower_identifier<'a>(
             Ok(Place { identifier, effect: Effect::Unknown, reactive: false, span: Some(span) })
         }
         _ => {
-            if let VariableBinding::Global { name } = binding
-                && name == "eval"
-            {
-                builder.record_error(diagnostics::unsupported_eval(span))?;
-            }
             let non_local_binding = match binding {
-                VariableBinding::Global { name } => NonLocalBinding::Global { name },
+                VariableBinding::Global { name } => {
+                    match name.as_str() {
+                        "eval" => builder.record_error(diagnostics::unsupported_eval(span))?,
+                        "arguments" => {
+                            builder
+                                .record_error(diagnostics::unsupported_implicit_arguments(span))?;
+                        }
+                        _ => {}
+                    }
+                    NonLocalBinding::Global { name }
+                }
                 VariableBinding::ImportDefault { name, module } => {
                     NonLocalBinding::ImportDefault { name, module }
                 }
@@ -4714,7 +4719,7 @@ fn lower_jsx_element_expr<'a>(
             JsxTag::Builtin(b) => b.name,
             _ => Ident::from("fbt"),
         };
-        // Get the opening element's name identifier and check if it's a local binding.
+        // Get the opening element's name identifier and resolve any local binding.
         let jsx_id_name = match &jsx_element.opening_element.name {
             oxc::JSXElementName::Identifier(id) => Some((id.name.as_str(), id.span)),
             oxc::JSXElementName::IdentifierReference(id) => Some((id.name.as_str(), id.span)),
@@ -4722,11 +4727,8 @@ fn lower_jsx_element_expr<'a>(
         };
         if let Some((name, span)) = jsx_id_name {
             let id_span = Some(span);
-            // Check if fbt/fbs tag name resolves to a local binding.
-            // JSX identifiers may not be in our position-based reference map,
-            // so check if ANY binding with this name exists in the function scope.
-            let is_local_binding = builder.has_local_binding(name);
-            if is_local_binding {
+            // JSX identifiers have no semantic reference, so resolve by name.
+            if builder.resolve_local_binding_by_name(name, id_span)?.is_some() {
                 return Err(diagnostics::local_fbt_tag(&tag_name, id_span));
             }
         }

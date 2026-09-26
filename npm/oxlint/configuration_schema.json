@@ -8042,6 +8042,9 @@
         "typescript/no-for-in-array": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "typescript/no-generated-empty-object-type": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "typescript/no-implied-eval": {
           "$ref": "#/definitions/RuleNoConfig"
         },

@@ -132,7 +132,7 @@ fn double_gap(
     // A type 7 HTML block can only follow a paragraph without a blank line as a lazy line of a container
     // (a micromark quirk, oxc-markdown-parser DIVERGENCES.md);
     // printed with the container's prefix it needs the blank line to stay a block.
-    // Prettier prints it adjacent, where it becomes paragraph text.
+    // Prettier prints it adjacent, where it becomes paragraph text (DIVERGENCES.md#lazy-html-block).
     let html_after_paragraph =
         matches!((previous, node), (Block::Paragraph(_), Block::HtmlBlock(h)) if h.kind != 7);
     let liquid = matches!(previous, Block::Liquid(_)) || matches!(node, Block::Liquid(_));

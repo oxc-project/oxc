@@ -19,7 +19,10 @@ use crate::{
     formatter::{
         Comments, JsFormatter,
         prelude::*,
-        trivia::{FormatLeadingComments, FormatTrailingComments, is_alignable_block_comment},
+        trivia::{
+            FormatLeadingComments, FormatTrailingComments, is_alignable_block_comment,
+            is_jsdoc_comment,
+        },
     },
     parentheses::NeedsParentheses,
     print::FormatWrite,
@@ -302,7 +305,7 @@ impl LeadingCommentsInfo {
             info.has_line_ending_trailing_non_jsdoc_block_comment |= comment.is_block()
                 && comment.is_trailing()
                 && comment.followed_by_newline()
-                && !matches!(comment.content, CommentContent::Jsdoc | CommentContent::JsdocLegal);
+                && !is_jsdoc_comment(comment);
             info.has_line_ending_trailing_jsdoc_comment |=
                 is_line_ending_trailing_jsdoc_comment(comment);
         }
@@ -313,9 +316,7 @@ impl LeadingCommentsInfo {
 /// A trailing (same-line start) jsdoc comment that ends its source line;
 /// NOT own-line (that vocabulary means preceded by a newline, see `formatter/trivia.rs`)
 pub fn is_line_ending_trailing_jsdoc_comment(comment: &Comment) -> bool {
-    matches!(comment.content, CommentContent::Jsdoc | CommentContent::JsdocLegal)
-        && comment.is_trailing()
-        && comment.followed_by_newline()
+    is_jsdoc_comment(comment) && comment.is_trailing() && comment.followed_by_newline()
 }
 
 /// Whether `ty` is a union that runs this printer.

@@ -145,13 +145,16 @@ The `as`/`satisfies` operator gap follows the same policy (`as_or_satisfies_expr
   so once the expression's source parens are dropped, only same-line single-line block comments stay on the expression side;
   everything else normalizes to the type side so the output re-parses
 - paragraph-like promotion: a line-ending multiline block goes own-line above the type.
-  `=`/`:` reach the same outputs through `AssignmentLike` (DIVERGENCES.md#eol-comment-after-assign-colon);
+  Declarators, assignments and type aliases reach the same outputs at `=` through `AssignmentLike` (DIVERGENCES.md#eol-comment-after-assign-colon);
+  property keys and class fields keep it on the left;
   the head-body `write_*` helpers split on `preceded_by_newline` alone and do not promote
 - a union type claims the after-operator comments itself, the same placement as after a type alias's `=` (`union_type.rs`);
   the operator side breaks only for a riding line comment before the operator.
   A suppressed union never runs that printer, so the cast site and `AssignmentLike` lay it out like any other type
 - an assignment-like's `=` / `:` (`AssignmentLike`): the left side's trailing run stops at the operator (comments past it are hidden while it prints);
-  a glued run ending in a line comment prints right after the operator (`operator_line_run`), a block-ending one leads the right-hand side
+  a glued run ending in a line comment prints right after the operator (`operator_line_run`), a block-ending one leads the right-hand side;
+  a line-ending single-line block before the operator trails the left side;
+  with comments the left side deferred still pending, nothing glues (same as the cast site)
 
 Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`);
 their rustdocs cover how the head's generic trailing pass is kept from claiming the gap.

@@ -151,11 +151,11 @@ ast:
 
 # `oxc_lexer` compiles to one of two implementations, chosen at build time:
 #
-# * SIMD core, on x86_64 with `avx2` + `bmi2` enabled
+# * SIMD core, on x86_64 with `avx2` + `bmi2` + `popcnt` enabled
 # * Scalar fallback, everywhere else
 #
-# Both need testing, and they should produce identical results. Neither `avx2` nor `bmi2` is in the x86_64 baseline
-# on any platform, so reaching the SIMD core always means asking for them explicitly - even on an x86_64 host.
+# Both need testing, and they should produce identical results. None of `avx2`, `bmi2` and `popcnt` is in the x86_64
+# baseline on any platform, so reaching the SIMD core always means asking for them explicitly - even on an x86_64 host.
 # The flags live in `.cargo/lexer-simd.toml`, passed with `cargo --config`, which avoids shell quoting entirely
 # (this justfile runs PowerShell on Windows).
 #
@@ -214,6 +214,7 @@ ready-lexer:
   git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
   just conformance-lexer-simd
   git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
+  just doc -p oxc_lexer
 
 # ==================== LINTER ====================
 

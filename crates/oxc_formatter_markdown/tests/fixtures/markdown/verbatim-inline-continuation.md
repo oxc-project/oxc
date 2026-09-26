@@ -6,8 +6,8 @@
 - [ ] **CI is green** - <!-- if any check is red or skipped, name it and say why. "Deploy" and
       "Tear down PR preview" showing skipped is expected. -->
 
-- [ ] a $x
-      y$ b
+- [ ] a $$x
+      y$$ b
 
 - [ ] ![alt
       text](u) and [t](u "one

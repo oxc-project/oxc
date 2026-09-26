@@ -1,11 +1,15 @@
+use oxc_ast::CommentKind;
+
 use crate::{comment_meta, error::DiagCode, lanes::Lanes, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::hex_val,
     disambiguate::not_operator_position,
+    find::find_line_terminator,
     scan::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
     tables::Tables,
+    token_view,
 };
 
 /// Lex the string literal opening at `s`. Returns the resume index. Shared
@@ -86,7 +90,6 @@ pub(super) unsafe fn lex_slash(
     kind: *mut u8,
     opch: *mut u64,
     word: *const u64,
-    digit: *const u64,
     ts: bool,
     s: usize,
     lanes: &mut Lanes,
@@ -96,7 +99,24 @@ pub(super) unsafe fn lex_slash(
         lex_line_comment(src, srcs, n, st, kind, s, lanes)
     } else if d == b'*' {
         lex_block_comment(src, srcs, n, st, kind, s, lanes)
-    } else if not_operator_position(t, src, st, kind, word, digit, n, s, ts, lanes.module) {
+    } else if not_operator_position(
+        &token_view(
+            t,
+            src,
+            st,
+            opch,
+            word,
+            kind,
+            n,
+            ts,
+            0,
+            lanes.module,
+            &lanes.disambiguate.brackets,
+            &lanes.disambiguate.closers,
+        ),
+        &mut lanes.disambiguate.walks,
+        s,
+    ) {
         lex_regex(src, srcs, n, st, kind, word, s, lanes)
     } else if s + 1 < n && *src.add(s + 1) == b'=' {
         // `/=`: absorb the `=`.
@@ -226,4 +246,143 @@ pub(super) unsafe fn skip_unicode_brace_escape(src: *const u8, n: usize, s: usiz
         j += 1;
     }
     j
+}
+
+/// Annex B B.1.1: does the `<` at `s` open a `<!--` comment? Always in a script; in a module
+/// only at line start, where it is diagnosed rather than read as operators. Shared by `carve`
+/// and `carve_jsx` JS mode: the goal, not the JSX setting, decides.
+#[inline(always)]
+pub(super) fn html_open_comment_at(srcs: &[u8], n: usize, s: usize, module: bool) -> bool {
+    s + 3 < n
+        && srcs[s + 1] == b'!'
+        && srcs[s + 2] == b'-'
+        && srcs[s + 3] == b'-'
+        && (!module || html_close_at_line_start(srcs, s))
+}
+
+/// Lex the `<!--` comment opening at `s` (see [`html_open_comment_at`]). Returns the resume
+/// index. Cold: a literal `<!--`.
+#[cold]
+pub(super) unsafe fn lex_html_open_comment(
+    src: *const u8,
+    srcs: &[u8],
+    n: usize,
+    st: *mut u64,
+    kind: *mut u8,
+    opch: *mut u64,
+    s: usize,
+    lanes: &mut Lanes,
+) -> usize {
+    if lanes.module {
+        lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
+    }
+    let end = find_line_terminator(src, n, s + 4);
+    *kind.add(s) = tk!(LineComment);
+    if end > s + 1 {
+        bm_clear_range(st, s + 1, end - 1);
+    }
+    if end < n {
+        bm_set(st, end);
+    }
+    // `<`, `!`, `-` are opchars: clear the span from `opch` or `coalesce`
+    // would re-tokenize `<!--` as operators.
+    bm_clear_range(opch, s, end - 1);
+    // meta_byte_exact skips a 2-byte delimiter; pass s + 2 so the 4-byte
+    // `<!--` is skipped. The record keeps (s, end).
+    let m = comment_meta::meta_byte_exact(&srcs[..n], (s + 2) as u32, end as u32, false);
+    lanes.comment_meta.push(m);
+    lanes.push_comment_record(srcs, n, s as u32, end as u32, false, m);
+    lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlOpen;
+    end
+}
+
+/// Annex B B.1.3: does the `>` at `s` end a `-->` that opens a comment? Only in a script, and
+/// only at line start.
+#[inline(always)]
+pub(super) fn html_close_comment_at(srcs: &[u8], s: usize, module: bool) -> bool {
+    !module
+        && s >= 2
+        && srcs[s - 1] == b'-'
+        && srcs[s - 2] == b'-'
+        && html_close_at_line_start(srcs, s - 2)
+}
+
+/// Lex the `-->` comment whose `>` is at `s` (see [`html_close_comment_at`]). Returns the
+/// resume index. Cold: a literal `-->` at line start.
+#[cold]
+pub(super) unsafe fn lex_html_close_comment(
+    src: *const u8,
+    srcs: &[u8],
+    n: usize,
+    st: *mut u64,
+    kind: *mut u8,
+    opch: *mut u64,
+    s: usize,
+    lanes: &mut Lanes,
+) -> usize {
+    let start = s - 2;
+    let end = find_line_terminator(src, n, s + 1);
+    *kind.add(start) = tk!(LineComment);
+    bm_set(st, start);
+    if end > start + 1 {
+        bm_clear_range(st, start + 1, end - 1);
+    }
+    if end < n {
+        bm_set(st, end);
+    }
+    // Clear the span from `opch` (see `<!--` above).
+    bm_clear_range(opch, start, end - 1);
+    // `-->` is a 3-byte delimiter; pass start + 1 so the 2-byte-delimiter
+    // body resolves to [s + 1, end).
+    let m = comment_meta::meta_byte_exact(&srcs[..n], (start + 1) as u32, end as u32, false);
+    lanes.comment_meta.push(m);
+    lanes.push_comment_record(srcs, n, start as u32, end as u32, false, m);
+    lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlClose;
+    end
+}
+
+/// Annex B B.1.3: a `-->` close-comment counts only at line start - scanning
+/// back must reach a LineTerminator (or start of input) crossing nothing but
+/// whitespace and block comments; a newline inside a crossed block comment
+/// also qualifies. Cold: called only on a literal `-->`.
+fn html_close_at_line_start(src: &[u8], mut q: usize) -> bool {
+    loop {
+        if q == 0 {
+            return true; // start of input
+        }
+        let c = src[q - 1];
+        match c {
+            b' ' | b'\t' | 0x0b | 0x0c => q -= 1,
+            b'\n' | b'\r' => return true,
+            // LS/PS ending at q-1.
+            0xA8 | 0xA9 => {
+                return q >= 3 && src[q - 2] == 0x80 && src[q - 3] == 0xE2;
+            }
+            // `*/` at (q-2, q-1): skip back to its `/*`; a newline inside the
+            // comment body satisfies the rule.
+            b'/' if q >= 2 && src[q - 2] == b'*' => {
+                let mut m = q - 2;
+                let mut saw_nl = false;
+                loop {
+                    if m < 2 {
+                        return saw_nl; // unbalanced `*/`
+                    }
+                    if src[m - 2] == b'/' && src[m - 1] == b'*' {
+                        q = m - 2;
+                        break;
+                    }
+                    let b = src[m - 1];
+                    if b == b'\n' || b == b'\r' {
+                        saw_nl = true;
+                    }
+                    m -= 1;
+                }
+                if saw_nl {
+                    return true;
+                }
+                // single-line block comment skipped; keep scanning
+            }
+            _ => return false,
+        }
+    }
 }

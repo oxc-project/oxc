@@ -90,6 +90,11 @@ const categories: Category[] = [
         excludes: ["format.test.js"],
       },
       {
+        dir: join(EXTERNALS_DIR, "prettier", "js/embeded"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      {
         dir: join(EXTERNALS_DIR, "webawesome"),
         ext: ".ts",
       },

@@ -50,8 +50,28 @@ pub fn run_lexer_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
 }
 
 pub fn run_lexer_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
+    const SKIP: &[&str] = &[
+        // Both contain `\ declare`. The parser reads `\`, the space and `declare` as one token,
+        // and reports an escaped keyword. That's probably a parser bug, so don't try to match it.
+        "slashBeforeVariableDeclaration1.ts",
+        "parserSkippedTokens19.ts",
+        // Unclear whether `\u` escapes should be allowed in JSX identifiers.
+        // JSX spec seems to suggest yes, but Babel and TypeScript say no,
+        // and have tests specifically checking that it produces errors.
+        // `oxc_parser` has only partial support, and it looks accidental. In `oxc_parser`:
+        // * Any escape after a `-` ends the name.
+        //   `<a data-\u0076ideo="x" />` is parsed as 2 attributes (`data-` and `\u0076ideo`).
+        //   `<a-\u0063></a-\u0063>` is rejected.
+        // * Escapes aren't decoded. `JSXIdentifier.name` is the raw source text
+        //   (`\u0061`, not `a`), unlike `Identifier.name`.
+        //   It's also marked `json_safe`, so ESTree JSON for `<\u{61} />` is invalid.
+        // We need to make `oxc_parser` do the right thing before trying to replicate it.
+        "unicodeEscapesInJsxtags.tsx",
+    ];
+
     files
         .par_iter()
+        .filter(|file| !SKIP.iter().any(|skip| file.path.ends_with(skip)))
         .map(|file| {
             let source_type = SourceType::from_path(&file.path).unwrap_or_default();
             let result = lex_diff(&file.code, source_type);
@@ -61,8 +81,13 @@ pub fn run_lexer_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
 }
 
 pub fn run_lexer_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
+    // Both need unambiguous mode, which `oxc_lexer` doesn't support. The parser switches
+    // to module mode when it finds `export`, and that turns `await /x/` into a regex.
+    const SKIP: &[&str] = &["babel-16776-m.js", "unambiguous-await-regex.js"];
+
     files
         .par_iter()
+        .filter(|file| !SKIP.iter().any(|skip| file.path.ends_with(skip)))
         .map(|file| {
             let result = lex_diff(&file.code, file.source_type);
             CoverageResult { path: file.path.clone(), should_fail: false, result }

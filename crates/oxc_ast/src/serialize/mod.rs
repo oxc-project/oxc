@@ -218,7 +218,11 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
 #[ast_meta]
 #[estree(
     ts_type = "string",
-    raw_deser = "SOURCE_TEXT.slice(THIS.start + 2, THIS.end - (THIS.type === 'Line' ? 0 : 2))",
+    raw_deser = "
+        // HTML comment discriminants equal their delimiter lengths (3 or 4).
+        const kind = DESER[u8](POS_OFFSET.kind);
+        SOURCE_TEXT.slice(THIS.start + (kind < 3 ? 2 : kind), THIS.end - (THIS.type === 'Line' ? 0 : 2))
+    ",
     raw_deser_inline
 )]
 pub struct CommentValue<'b>(#[expect(dead_code)] pub &'b Comment);

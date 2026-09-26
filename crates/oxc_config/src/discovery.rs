@@ -5,6 +5,12 @@ use std::{
 
 use oxc_diagnostics::OxcDiagnostic;
 
+/// Returns the value of the `VP_VERSION` environment variable, if set.
+/// Vite+ sets it when launching oxlint / oxfmt, which switches config discovery to Vite+ mode.
+pub fn vp_version() -> Option<std::ffi::OsString> {
+    std::env::var_os("VP_VERSION")
+}
+
 /// Return `true` when `path` uses a JavaScript or TypeScript config extension.
 pub fn is_js_config_path(path: &Path) -> bool {
     matches!(
@@ -35,49 +41,73 @@ impl DiscoveredConfigFile {
     }
 }
 
-/// File names accepted by [`ConfigDiscovery`].
-///
-/// Callers provide the names instead of hardcoding them in the discovery logic
-/// so the same matcher can be reused for different config naming schemes.
-#[derive(Debug, Clone, Copy)]
-pub struct ConfigFileNames {
-    /// JSON config file name, such as `.oxlintrc.json`.
-    pub json: &'static str,
-    /// JSONC config file name, such as `.oxlintrc.jsonc`.
-    pub jsonc: &'static str,
-    /// JavaScript or TypeScript config file names, such as `oxlint.config.ts`
-    /// and `oxlint.config.mts`.
-    pub js: &'static [&'static str],
-    /// Vite config file name used when Vite mode is enabled.
-    pub vite: &'static str,
-}
+/// A supported file name and the [`DiscoveredConfigFile`] variant it maps to.
+type ConfigFileEntry = (&'static str, fn(PathBuf) -> DiscoveredConfigFile);
 
-/// Finds supported config files using a caller-provided set of file names.
+const OXLINT_CONFIG_FILE_NAMES: &[ConfigFileEntry] = &[
+    (".oxlintrc.json", DiscoveredConfigFile::Json),
+    (".oxlintrc.jsonc", DiscoveredConfigFile::Jsonc),
+    ("oxlint.config.ts", DiscoveredConfigFile::Js),
+    ("oxlint.config.mts", DiscoveredConfigFile::Js),
+];
+
+const OXFMT_CONFIG_FILE_NAMES: &[ConfigFileEntry] = &[
+    (".oxfmtrc.json", DiscoveredConfigFile::Json),
+    (".oxfmtrc.jsonc", DiscoveredConfigFile::Jsonc),
+    ("oxfmt.config.ts", DiscoveredConfigFile::Js),
+    ("oxfmt.config.mts", DiscoveredConfigFile::Js),
+];
+
+/// Config file names used in Vite+ mode, in Vite's own resolution order.
+const VITE_PLUS_CONFIG_FILE_NAMES: &[ConfigFileEntry] = &[
+    ("vite.config.js", DiscoveredConfigFile::Vite),
+    ("vite.config.mjs", DiscoveredConfigFile::Vite),
+    ("vite.config.ts", DiscoveredConfigFile::Vite),
+    ("vite.config.cjs", DiscoveredConfigFile::Vite),
+    ("vite.config.mts", DiscoveredConfigFile::Vite),
+    ("vite.config.cts", DiscoveredConfigFile::Vite),
+];
+
+/// Finds supported config files for one tool, or for Vite+ mode.
 #[derive(Debug, Clone, Copy)]
 pub struct ConfigDiscovery {
-    config_file_names: ConfigFileNames,
-    vite_plus_mode: bool,
+    /// Supported file names in priority order.
+    entries: &'static [ConfigFileEntry],
+    /// When several entries exist in one directory,
+    /// pick the first one in `entries` order instead of reporting a [`ConfigConflict`].
+    first_wins: bool,
+    /// Whether configs in subdirectories of the root are discovered.
+    nested_configs: bool,
 }
 
 impl ConfigDiscovery {
-    /// Create a config discovery helper for the provided file names and mode.
-    pub fn new(config_file_names: ConfigFileNames, vite_plus_mode: bool) -> Self {
-        Self { config_file_names, vite_plus_mode }
+    /// Config discovery for oxlint: `.oxlintrc.json(c)` and `oxlint.config.(m)ts`.
+    pub fn oxlint() -> Self {
+        Self { entries: OXLINT_CONFIG_FILE_NAMES, first_wins: false, nested_configs: true }
+    }
+
+    /// Config discovery for oxfmt: `.oxfmtrc.json(c)` and `oxfmt.config.(m)ts`.
+    pub fn oxfmt() -> Self {
+        Self { entries: OXFMT_CONFIG_FILE_NAMES, first_wins: false, nested_configs: true }
+    }
+
+    /// Config discovery for Vite+ mode, which only looks for `vite.config.*`.
+    ///
+    /// Vite+ reads `lint` / `fmt` from whichever of these it finds first,
+    /// so multiple files are resolved the same way instead of being a conflict.
+    /// Vite+ also uses a single config per project, so nested configs are not discovered.
+    pub fn vite_plus() -> Self {
+        Self { entries: VITE_PLUS_CONFIG_FILE_NAMES, first_wins: true, nested_configs: false }
+    }
+
+    /// Callers combine this with their own `--disable-nested-config` style options.
+    pub fn nested_configs(&self) -> bool {
+        self.nested_configs
     }
 
     /// Return supported config file names in discovery order.
-    ///
-    /// In Vite+ mode, only the configured Vite file name is returned. In
-    /// regular mode, JSON, JSONC, and JavaScript/TypeScript config names are
-    /// returned in that order.
     pub fn config_file_names(&self) -> Vec<&'static str> {
-        if self.vite_plus_mode {
-            return vec![self.config_file_names.vite];
-        }
-
-        let mut names = vec![self.config_file_names.json, self.config_file_names.jsonc];
-        names.extend_from_slice(self.config_file_names.js);
-        names
+        self.entries.iter().map(|(name, _)| *name).collect()
     }
 
     /// Find the unique config file directly inside `dir` using a single `read_dir`.
@@ -95,6 +125,7 @@ impl ConfigDiscovery {
     ///
     /// # Errors
     /// Returns [`ConfigConflict`] when more than one supported config file is found directly inside `dir`.
+    /// In Vite+ mode (see [`ConfigDiscovery::vite_plus`]), the first one in Vite's order wins instead.
     pub fn find_unique_config_by_readdir(
         &self,
         dir: &Path,
@@ -104,18 +135,10 @@ impl ConfigDiscovery {
             return Ok(None);
         };
 
-        let names = &self.config_file_names;
+        // `(priority, config)` so Vite+ mode can pick the first entry in `entries` order.
         let mut matches = Vec::new();
         for entry in entries.flatten() {
-            let name = entry.file_name();
-            let name_supported = if self.vite_plus_mode {
-                name == names.vite
-            } else {
-                name == names.json || name == names.jsonc || names.js.iter().any(|js| name == *js)
-            };
-            if !name_supported {
-                continue;
-            }
+            let Some(priority) = self.priority(&entry.file_name()) else { continue };
 
             // NOTE: `Path::is_file()` follows symlinks; `FileType::is_file()` does not.
             let is_match = if follow_symlinks {
@@ -125,19 +148,22 @@ impl ConfigDiscovery {
                 #[expect(clippy::filetype_is_file)]
                 file_type.is_file()
             };
-            if !is_match {
-                continue;
-            }
-
-            if let Some(config) = self.discover_config_file(&entry.path()) {
-                matches.push(config);
+            if is_match {
+                matches.push((priority, self.entries[priority].1(entry.path())));
             }
         }
 
         match matches.len() {
             0 => Ok(None),
-            1 => Ok(matches.into_iter().next()),
-            _ => Err(ConfigConflict::new(dir.to_path_buf(), matches)),
+            1 => Ok(matches.pop().map(|(_, config)| config)),
+            _ if self.first_wins => Ok(matches
+                .into_iter()
+                .min_by_key(|(priority, _)| *priority)
+                .map(|(_, config)| config)),
+            _ => Err(ConfigConflict::new(
+                dir.to_path_buf(),
+                matches.into_iter().map(|(_, config)| config).collect(),
+            )),
         }
     }
 
@@ -147,24 +173,13 @@ impl ConfigDiscovery {
     /// walkers that already know the candidate is a file.
     pub fn discover_config_file(&self, candidate: &Path) -> Option<DiscoveredConfigFile> {
         let file_name = candidate.file_name()?;
+        let (_, discovered) = self.entries.iter().find(|(name, _)| file_name == *name)?;
+        Some(discovered(candidate.to_path_buf()))
+    }
 
-        if self.vite_plus_mode {
-            if file_name == self.config_file_names.vite {
-                return Some(DiscoveredConfigFile::Vite(candidate.to_path_buf()));
-            }
-            return None;
-        }
-
-        if file_name == self.config_file_names.json {
-            return Some(DiscoveredConfigFile::Json(candidate.to_path_buf()));
-        }
-        if file_name == self.config_file_names.jsonc {
-            return Some(DiscoveredConfigFile::Jsonc(candidate.to_path_buf()));
-        }
-        if self.config_file_names.js.iter().any(|js| file_name == *js) {
-            return Some(DiscoveredConfigFile::Js(candidate.to_path_buf()));
-        }
-        None
+    /// Position of `file_name` in the configured entries, or `None` when it is not a config name.
+    fn priority(&self, file_name: &OsStr) -> Option<usize> {
+        self.entries.iter().position(|(name, _)| file_name == *name)
     }
 }
 
@@ -257,21 +272,16 @@ fn format_conflicting_config_names(config_names: &[String]) -> String {
 mod test {
     use std::{fs, path::Path};
 
-    use super::{ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path};
+    use super::{ConfigDiscovery, DiscoveredConfigFile, is_js_config_path};
 
-    const NAMES: ConfigFileNames = ConfigFileNames {
-        json: ".oxlintrc.json",
-        jsonc: ".oxlintrc.jsonc",
-        js: &["oxlint.config.ts", "oxlint.config.mts"],
-        vite: "vite.config.ts",
-    };
+    const JSON: &str = ".oxlintrc.json";
 
     fn discovery() -> ConfigDiscovery {
-        ConfigDiscovery::new(NAMES, false)
+        ConfigDiscovery::oxlint()
     }
 
     fn vite_discovery() -> ConfigDiscovery {
-        ConfigDiscovery::new(NAMES, true)
+        ConfigDiscovery::vite_plus()
     }
 
     #[test]
@@ -315,7 +325,7 @@ mod test {
     #[test]
     fn readdir_finds_unique_json_config() {
         let temp_dir = tempfile::tempdir().unwrap();
-        let cfg_path = temp_dir.path().join(NAMES.json);
+        let cfg_path = temp_dir.path().join(JSON);
         fs::write(&cfg_path, "{}").unwrap();
 
         let found = discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap();
@@ -325,7 +335,7 @@ mod test {
     #[test]
     fn readdir_finds_unique_mts_config() {
         let temp_dir = tempfile::tempdir().unwrap();
-        let cfg_path = temp_dir.path().join(NAMES.js[1]);
+        let cfg_path = temp_dir.path().join("oxlint.config.mts");
         fs::write(&cfg_path, "export default {};").unwrap();
 
         let found = discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap();
@@ -335,7 +345,7 @@ mod test {
     #[test]
     fn readdir_returns_conflict_for_multiple_js_configs() {
         let temp_dir = tempfile::tempdir().unwrap();
-        for name in NAMES.js {
+        for name in ["oxlint.config.ts", "oxlint.config.mts"] {
             fs::write(temp_dir.path().join(name), "export default {};").unwrap();
         }
 
@@ -345,8 +355,8 @@ mod test {
     #[test]
     fn readdir_returns_conflict_for_multiple_configs() {
         let temp_dir = tempfile::tempdir().unwrap();
-        fs::write(temp_dir.path().join(NAMES.json), "{}").unwrap();
-        fs::write(temp_dir.path().join(NAMES.jsonc), "{}").unwrap();
+        fs::write(temp_dir.path().join(JSON), "{}").unwrap();
+        fs::write(temp_dir.path().join(".oxlintrc.jsonc"), "{}").unwrap();
 
         assert!(discovery().find_unique_config_by_readdir(temp_dir.path(), false).is_err());
     }
@@ -356,7 +366,7 @@ mod test {
         let temp_dir = tempfile::tempdir().unwrap();
         // A directory whose name collides with a supported config must not be
         // treated as a config file.
-        fs::create_dir(temp_dir.path().join(NAMES.json)).unwrap();
+        fs::create_dir(temp_dir.path().join(JSON)).unwrap();
 
         assert!(
             discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap().is_none()
@@ -364,15 +374,27 @@ mod test {
     }
 
     #[test]
-    fn readdir_vite_mode_only_recognizes_vite_name() {
+    fn readdir_vite_mode_only_recognizes_vite_names() {
         let temp_dir = tempfile::tempdir().unwrap();
         // JSON config is ignored in Vite+ mode even though it exists.
-        fs::write(temp_dir.path().join(NAMES.json), "{}").unwrap();
-        fs::write(temp_dir.path().join(NAMES.vite), "").unwrap();
+        fs::write(temp_dir.path().join(JSON), "{}").unwrap();
+        fs::write(temp_dir.path().join("vite.config.ts"), "").unwrap();
 
         let found = vite_discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap();
         assert!(
-            matches!(found, Some(DiscoveredConfigFile::Vite(p)) if p.file_name().unwrap() == NAMES.vite)
+            matches!(found, Some(DiscoveredConfigFile::Vite(p)) if p.file_name().unwrap() == "vite.config.ts")
+        );
+    }
+
+    #[test]
+    fn readdir_vite_mode_picks_first_by_vite_order_instead_of_conflict() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("vite.config.ts"), "").unwrap();
+        fs::write(temp_dir.path().join("vite.config.mjs"), "").unwrap();
+
+        let found = vite_discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap();
+        assert!(
+            matches!(found, Some(DiscoveredConfigFile::Vite(p)) if p.file_name().unwrap() == "vite.config.mjs")
         );
     }
 
@@ -388,7 +410,7 @@ mod test {
         let target = target_dir.path().join("real.json");
         fs::write(&target, "{}").unwrap();
 
-        let link = temp_dir.path().join(NAMES.json);
+        let link = temp_dir.path().join(JSON);
         symlink(&target, &link).unwrap();
 
         // follow_symlinks=false: symlinked configs are ignored.
@@ -409,7 +431,7 @@ mod test {
         let temp_dir = tempfile::tempdir().unwrap();
         // Symlink target does not exist; even with follow_symlinks=true this
         // must not be reported as a config file.
-        symlink("/nonexistent/target", temp_dir.path().join(NAMES.json)).unwrap();
+        symlink("/nonexistent/target", temp_dir.path().join(JSON)).unwrap();
 
         assert!(
             discovery().find_unique_config_by_readdir(temp_dir.path(), true).unwrap().is_none()
