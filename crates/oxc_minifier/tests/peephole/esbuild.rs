@@ -1329,11 +1329,11 @@ fn test_flatten_values() {
     test("(null ?? x)``", "x``;");
     test("(null ?? x.y)``", "(0, x.y)``;");
     test("(null ?? x[y])``", "(0, x[y])``;");
-    // test("function f(a) { let c = a.b; return c`` }", "function f(a) { return (0, a.b)``;}");
-    // test(
-    //     "function f(a) { let c = a.b; return c`${x}` }",
-    //     "function f(a) { return (0, a.b)`${x}`;}",
-    // );
+    test("function f(a) { let c = a.b; return c`` }", "function f(a) { return (0, a.b)``;}");
+    test(
+        "function f(a) { let c = a.b; return c`${x}` }",
+        "function f(a) { return (0, a.b)`${x}`;}",
+    );
     test("return typeof (123, x)", "return typeof (0, x);");
     test("return typeof (123, x.y)", "return typeof x.y;");
     test("return typeof (123, x); var x", "return typeof x;var x;");
