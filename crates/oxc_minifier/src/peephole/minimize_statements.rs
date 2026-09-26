@@ -1784,6 +1784,15 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::TaggedTemplateExpression(tagged_expr) => {
+                // A member tag would change `this`: `let c = a.b; c``` => `(0, a.b)```
+                let keep_indirect = tagged_expr.tag.is_specific_id(search_for)
+                    && match &*replacement {
+                        match_member_expression!(Expression) => true,
+                        Expression::ChainExpression(chain) => {
+                            matches!(&chain.expression, match_member_expression!(ChainElement))
+                        }
+                        _ => false,
+                    };
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut tagged_expr.tag,
                     search_for,
@@ -1791,6 +1800,11 @@ impl<'a> PeepholeOptimizations {
                     replacement_has_side_effect,
                     ctx,
                 ) {
+                    if changed && keep_indirect {
+                        ctx.replace_expression_with(&mut tagged_expr.tag, |tag, ctx| {
+                            Self::preserve_indirect_access(tag.span(), tag, ctx)
+                        });
+                    }
                     return Some(changed);
                 }
                 for elem in &mut tagged_expr.quasi.expressions {

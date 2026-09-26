@@ -1911,7 +1911,8 @@ impl<'a> PeepholeOptimizations {
                 let new_value = if is_pure && Self::is_expression_result_unused(ctx) {
                     Expression::new_void_0(call_expr.span, ctx)
                 } else if let Some(taken) = Self::try_take_iife_body(expr, is_pure, ctx) {
-                    taken
+                    // Replace "(() => o.f)()()" with "(0, o.f)()"
+                    Self::preserve_indirect_access_if_needed(call_expr.span, taken, ctx)
                 } else {
                     return;
                 };
@@ -1948,7 +1949,8 @@ impl<'a> PeepholeOptimizations {
                             Expression::new_void_0(call_expr.span, ctx)
                         } else if let Some(taken) = Self::try_take_iife_body(argument, is_pure, ctx)
                         {
-                            taken
+                            // Replace "(() => { return o.f })()()" with "(0, o.f)()"
+                            Self::preserve_indirect_access_if_needed(call_expr.span, taken, ctx)
                         } else {
                             return;
                         };

@@ -794,7 +794,10 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.references.has_reads() {
             return false;
         }
+        let span = assign_expr.span;
         let new_expr = assign_expr.right.take_in(ctx);
+        // `(a = o.f)()` => `(0, o.f)()`
+        let new_expr = Self::preserve_indirect_access_if_needed(span, new_expr, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -869,7 +872,10 @@ impl<'a> PeepholeOptimizations {
         // refs dead). Safe in value positions too — a plain `=` assignment's
         // value IS the RHS value.
         let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
+        let span = assign_expr.span;
         let new_expr = assign_expr.right.take_in(ctx);
+        // `(b.x = o.f)()` => `(0, o.f)()`
+        let new_expr = Self::preserve_indirect_access_if_needed(span, new_expr, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }

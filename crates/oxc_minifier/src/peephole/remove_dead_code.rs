@@ -655,6 +655,10 @@ impl<'a> PeepholeOptimizations {
                 match access_value {
                     Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
                     match_member_expression!(Expression) => true,
+                    // Example case: `(0, o?.f)()` (`this` is undefined) -> `(o?.f)()` (`this` is `o`)
+                    Expression::ChainExpression(chain) => {
+                        matches!(&chain.expression, match_member_expression!(ChainElement))
+                    }
                     _ => false,
                 }
             }
@@ -706,6 +710,19 @@ impl<'a> PeepholeOptimizations {
             [Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx), expr],
             ctx,
         )
+    }
+
+    /// Wrap `expr` as `(0, expr)` only if [`Self::should_keep_indirect_access`] flags it.
+    pub fn preserve_indirect_access_if_needed(
+        span: Span,
+        expr: Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        if Self::should_keep_indirect_access(&expr, ctx) {
+            Self::preserve_indirect_access(span, expr, ctx)
+        } else {
+            expr
+        }
     }
 
     pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
