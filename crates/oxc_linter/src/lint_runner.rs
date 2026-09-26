@@ -228,6 +228,7 @@ impl LintRunnerBuilder {
                     state
                         .with_silent(self.silent)
                         .with_type_check(self.type_check)
+                        .with_type_check_only(self.type_check_only)
                         .with_timings(self.timings)
                         .with_ignore_fixes(self.with_ignore_fixes),
                 ),

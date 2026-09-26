@@ -41,6 +41,8 @@ pub struct TsGoLintState {
     fix_suggestions: bool,
     /// If `true`, include TypeScript compiler syntactic and semantic diagnostics.
     type_check: bool,
+    /// If `true`, skip type-aware lint rules while retaining TypeScript diagnostics.
+    type_check_only: bool,
     /// If `true`, request that per-rule debug timings be returned from `tsgolint`.
     timings: bool,
     /// If `true`, the linter will create "ignore this section / line" fixes for all diagnostics
@@ -60,6 +62,7 @@ impl TsGoLintState {
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
+            type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
         }
@@ -84,6 +87,7 @@ impl TsGoLintState {
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
+            type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
         })
@@ -105,6 +109,15 @@ impl TsGoLintState {
     #[must_use]
     pub fn with_type_check(mut self, yes: bool) -> Self {
         self.type_check = yes;
+        self
+    }
+
+    /// Set to `true` to skip type-aware lint rules.
+    ///
+    /// Default is `false`.
+    #[must_use]
+    pub fn with_type_check_only(mut self, yes: bool) -> Self {
+        self.type_check_only = yes;
         self
     }
 
@@ -560,13 +573,31 @@ impl TsGoLintState {
         source_overrides: Option<FxHashMap<String, String>>,
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
     ) -> Payload {
+        if self.type_check_only {
+            let file_paths: Vec<String> = paths
+                .iter()
+                .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
+                .map(|path| path.to_string_lossy().into_owned())
+                .collect();
+            return Payload {
+                version: 2,
+                configs: if file_paths.is_empty() {
+                    vec![]
+                } else {
+                    vec![Config { file_paths, rules: vec![] }]
+                },
+                source_overrides,
+                report_syntactic: self.type_check,
+                report_semantic: self.type_check,
+            };
+        }
+
         let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
 
         for path in paths {
             if SourceType::from_path(Path::new(path)).is_ok() {
-                let path_buf = PathBuf::from(path);
                 let file_path = path.to_string_lossy().to_string();
-
+                let path_buf = PathBuf::from(path);
                 let resolved_config = resolved_configs
                     .entry(path_buf.clone())
                     .or_insert_with(|| self.config_store.resolve(&path_buf));
