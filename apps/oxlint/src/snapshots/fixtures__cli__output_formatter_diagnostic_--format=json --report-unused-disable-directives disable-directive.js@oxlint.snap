@@ -5,9 +5,9 @@ source: apps/oxlint/src/tester.rs
 arguments: --format=json --report-unused-disable-directives disable-directive.js
 working directory: fixtures/cli/output_formatter_diagnostic
 ----------
-{ "diagnostics": [{"message": "Unused eslint-disable directive (no problems were reported).","severity": "warning","filename": "disable-directive.js","labels": [{"span": {"offset": 231,"length": 39,"line": 9,"column": 1}}]},
-{"message": "Unused oxlint-disable directive (no problems were reported).","severity": "warning","filename": "disable-directive.js","labels": [{"span": {"offset": 287,"length": 39,"line": 12,"column": 1}}]},
-{"message": "Unused oxlint-disable directive (no problems were reported).","severity": "warning","filename": "disable-directive.js","labels": [{"span": {"offset": 343,"length": 46,"line": 15,"column": 1}}]}],
+{ "diagnostics": [{"message": "Unused eslint-disable directive (no problems were reported from no-debugger).","severity": "warning","filename": "disable-directive.js","labels": [{"span": {"offset": 259,"length": 11,"line": 9,"column": 29}}]},
+{"message": "Unused oxlint-disable directive (no problems were reported from no-debugger).","severity": "warning","filename": "disable-directive.js","labels": [{"span": {"offset": 315,"length": 11,"line": 12,"column": 29}}]},
+{"message": "Unused oxlint-disable directive (no problems were reported from eslint/no-debugger).","severity": "warning","filename": "disable-directive.js","labels": [{"span": {"offset": 371,"length": 18,"line": 15,"column": 29}}]}],
               "number_of_files": 1,
               "number_of_rules": 2,
               "threads_count": 1,
