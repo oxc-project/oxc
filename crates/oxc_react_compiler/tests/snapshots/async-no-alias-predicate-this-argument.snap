@@ -1,0 +1,42 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-no-alias-predicate-this-argument.js
+---
+function Component() {
+	let count = 0;
+	const bad = () => count++;
+	const receiver = async () => {
+		await 0;
+		bad();
+	};
+	const values = [0];
+	values.filter(_temp, receiver);
+	values.every(_temp2, receiver);
+	values.some(_temp3, receiver);
+	values.find(_temp4, receiver);
+	values.findIndex(_temp5, receiver);
+	new Set(values).forEach(_temp6, receiver);
+	new Map().forEach(_temp7, receiver);
+	return null;
+}
+function _temp7() {
+	return null;
+}
+function _temp6() {
+	return null;
+}
+function _temp5() {
+	return true;
+}
+function _temp4() {
+	return true;
+}
+function _temp3() {
+	return true;
+}
+function _temp2() {
+	return true;
+}
+function _temp() {
+	return true;
+}

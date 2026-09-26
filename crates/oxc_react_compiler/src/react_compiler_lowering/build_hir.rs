@@ -4089,15 +4089,7 @@ fn lower_expression<'a>(
                 }
                 Some(SimpleAssignmentTargetRef::Identifier(ident)) => {
                     let symbol = builder.scope().resolve_reference(ident);
-                    if builder.is_context_identifier(symbol) {
-                        builder.record_error(
-                            diagnostics::todo_build_hir_lower_expression_handle_update_expression_variables_captured_within_lambdas(span),
-                        )?;
-                        return Ok(InstructionValue::Primitive {
-                            value: PrimitiveValue::Undefined,
-                            span,
-                        });
-                    }
+                    let is_context = builder.is_context_identifier(symbol);
 
                     let ident_span = ident.span;
                     let binding = builder.resolve_identifier(ident.name, ident_span, symbol)?;
@@ -4140,14 +4132,30 @@ fn lower_expression<'a>(
                     let operation = update.operator;
 
                     if update.prefix {
-                        Ok(InstructionValue::PrefixUpdate {
+                        if is_context {
+                            Ok(InstructionValue::PrefixUpdateContext {
+                                lvalue: lvalue_place,
+                                operation,
+                                value,
+                                span,
+                            })
+                        } else {
+                            Ok(InstructionValue::PrefixUpdateLocal {
+                                lvalue: lvalue_place,
+                                operation,
+                                value,
+                                span,
+                            })
+                        }
+                    } else if is_context {
+                        Ok(InstructionValue::PostfixUpdateContext {
                             lvalue: lvalue_place,
                             operation,
                             value,
                             span,
                         })
                     } else {
-                        Ok(InstructionValue::PostfixUpdate {
+                        Ok(InstructionValue::PostfixUpdateLocal {
                             lvalue: lvalue_place,
                             operation,
                             value,

@@ -571,8 +571,18 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                 }
                 (lvalues, vec![])
             }
-            InstructionValue::PrefixUpdate { lvalue: upd_lvalue, value: upd_value, .. }
-            | InstructionValue::PostfixUpdate { lvalue: upd_lvalue, value: upd_value, .. } => {
+            InstructionValue::PrefixUpdateLocal {
+                lvalue: upd_lvalue, value: upd_value, ..
+            }
+            | InstructionValue::PrefixUpdateContext {
+                lvalue: upd_lvalue, value: upd_value, ..
+            }
+            | InstructionValue::PostfixUpdateLocal {
+                lvalue: upd_lvalue, value: upd_value, ..
+            }
+            | InstructionValue::PostfixUpdateContext {
+                lvalue: upd_lvalue, value: upd_value, ..
+            } => {
                 let mut lvalues = vec![LValueMemoization {
                     place_identifier: upd_lvalue.identifier,
                     level: MemoizationLevel::Conditional,

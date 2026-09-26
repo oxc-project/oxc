@@ -1,0 +1,18 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-array-destructured-safe-member.js
+---
+function Component(t0) {
+	let count = 0;
+	const cb = () => count++;
+	const obj = [async () => {
+		await 0;
+		cb();
+	}, _temp];
+	const [, safe] = obj;
+	safe();
+	return null;
+}
+function _temp() {
+	return null;
+}

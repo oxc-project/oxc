@@ -319,6 +319,54 @@ const FREEZE_ARGS_FN: MethodDef = MethodDef {
     ..MethodDef::DEFAULT
 };
 
+/// Array mapping methods capture their callback's return value into the result.
+const ARRAY_MAP_ALIASING: AliasingSignatureConfig = AliasingSignatureConfig {
+    receiver: "@receiver",
+    params: &["@callback"],
+    rest: None,
+    returns: "@returns",
+    temporaries: &["@item", "@callbackReturn", "@thisArg"],
+    effects: &[
+        AliasingEffectConfig::Create {
+            into: "@returns",
+            value: ValueKind::Mutable,
+            reason: ValueReason::KnownReturnSignature,
+        },
+        AliasingEffectConfig::CreateFrom { from: "@receiver", into: "@item" },
+        AliasingEffectConfig::Create {
+            into: "@thisArg",
+            value: ValueKind::Primitive,
+            reason: ValueReason::KnownReturnSignature,
+        },
+        AliasingEffectConfig::Apply {
+            receiver: "@thisArg",
+            function: "@callback",
+            mutates_function: false,
+            args: &[
+                ApplyArgConfig::Place("@item"),
+                ApplyArgConfig::Hole,
+                ApplyArgConfig::Place("@receiver"),
+            ],
+            into: "@callbackReturn",
+        },
+        AliasingEffectConfig::Capture { from: "@callbackReturn", into: "@returns" },
+    ],
+};
+
+const ARRAY_FOREACH_ALIASING: AliasingSignatureConfig = AliasingSignatureConfig {
+    effects: &[
+        ARRAY_MAP_ALIASING.effects[1],
+        ARRAY_MAP_ALIASING.effects[2],
+        ARRAY_MAP_ALIASING.effects[3],
+        AliasingEffectConfig::Create {
+            into: "@returns",
+            value: ValueKind::Primitive,
+            reason: ValueReason::KnownReturnSignature,
+        },
+    ],
+    ..ARRAY_MAP_ALIASING
+};
+
 /// One property of an object shape: a method with a function signature, or a
 /// plain property like `length: Primitive`.
 enum PropDef {
@@ -487,70 +535,48 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "map",
                 MethodDef {
+                    canonical_name: Some("Array.map"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
                     return_value_kind: ValueKind::Mutable,
                     no_alias: true,
                     mutable_only_if_operands_are_mutable: true,
-                    aliasing: Some(&AliasingSignatureConfig {
-                        receiver: "@receiver",
-                        params: &["@callback"],
-                        rest: None,
-                        returns: "@returns",
-                        temporaries: &["@item", "@callbackReturn", "@thisArg"],
-                        effects: &[
-                            // Map creates a new mutable array
-                            AliasingEffectConfig::Create {
-                                into: "@returns",
-                                value: ValueKind::Mutable,
-                                reason: ValueReason::KnownReturnSignature,
-                            },
-                            // The first arg to the callback is an item extracted from the receiver array
-                            AliasingEffectConfig::CreateFrom { from: "@receiver", into: "@item" },
-                            // The undefined this for the callback
-                            AliasingEffectConfig::Create {
-                                into: "@thisArg",
-                                value: ValueKind::Primitive,
-                                reason: ValueReason::KnownReturnSignature,
-                            },
-                            // Calls the callback, returning the result into a temporary
-                            AliasingEffectConfig::Apply {
-                                receiver: "@thisArg",
-                                function: "@callback",
-                                mutates_function: false,
-                                args: &[
-                                    ApplyArgConfig::Place("@item"),
-                                    ApplyArgConfig::Hole,
-                                    ApplyArgConfig::Place("@receiver"),
-                                ],
-                                into: "@callbackReturn",
-                            },
-                            // Captures the result of the callback into the return array
-                            AliasingEffectConfig::Capture {
-                                from: "@callbackReturn",
-                                into: "@returns",
-                            },
-                        ],
-                    }),
+                    aliasing: Some(&ARRAY_MAP_ALIASING),
                     ..MethodDef::DEFAULT
                 },
             ),
             Method(
                 "flatMap",
                 MethodDef {
+                    canonical_name: Some("Array.flatMap"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
                     return_value_kind: ValueKind::Mutable,
                     no_alias: true,
                     mutable_only_if_operands_are_mutable: true,
+                    aliasing: Some(&ARRAY_MAP_ALIASING),
+                    ..MethodDef::DEFAULT
+                },
+            ),
+            Method(
+                "forEach",
+                MethodDef {
+                    canonical_name: Some("Array.forEach"),
+                    rest_param: Some(Effect::ConditionallyMutate),
+                    callee_effect: Effect::ConditionallyMutate,
+                    return_type: TypeDef::Primitive,
+                    return_value_kind: ValueKind::Primitive,
+                    no_alias: true,
+                    aliasing: Some(&ARRAY_FOREACH_ALIASING),
                     ..MethodDef::DEFAULT
                 },
             ),
             Method(
                 "filter",
                 MethodDef {
+                    canonical_name: Some("Array.filter"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
@@ -563,6 +589,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "every",
                 MethodDef {
+                    canonical_name: Some("Array.every"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Primitive,
@@ -575,6 +602,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "some",
                 MethodDef {
+                    canonical_name: Some("Array.some"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Primitive,
@@ -587,6 +615,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "find",
                 MethodDef {
+                    canonical_name: Some("Array.find"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Poly,
@@ -599,6 +628,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "findIndex",
                 MethodDef {
+                    canonical_name: Some("Array.findIndex"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Primitive,
@@ -619,6 +649,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "add",
                 MethodDef {
+                    canonical_name: Some("Set.add"),
                     positional_params: &[Effect::Capture],
                     callee_effect: Effect::Store,
                     return_type: TypeDef::Object(BUILT_IN_SET_ID),
@@ -644,6 +675,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "clear",
                 MethodDef {
+                    canonical_name: Some("Set.clear"),
                     callee_effect: Effect::Store,
                     return_type: TypeDef::Primitive,
                     return_value_kind: ValueKind::Primitive,
@@ -723,6 +755,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "forEach",
                 MethodDef {
+                    canonical_name: Some("Set.forEach"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Primitive,
@@ -787,6 +820,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "set",
                 MethodDef {
+                    canonical_name: Some("Map.set"),
                     positional_params: &[Effect::Capture, Effect::Capture],
                     callee_effect: Effect::Store,
                     return_type: TypeDef::Object(BUILT_IN_MAP_ID),
@@ -797,6 +831,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "clear",
                 MethodDef {
+                    canonical_name: Some("Map.clear"),
                     callee_effect: Effect::Store,
                     return_type: TypeDef::Primitive,
                     return_value_kind: ValueKind::Primitive,
@@ -817,6 +852,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "forEach",
                 MethodDef {
+                    canonical_name: Some("Map.forEach"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     callee_effect: Effect::ConditionallyMutate,
                     return_type: TypeDef::Primitive,
@@ -956,28 +992,46 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "map",
                 MethodDef {
+                    canonical_name: Some("Array.map"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
                     callee_effect: Effect::ConditionallyMutate,
                     return_value_kind: ValueKind::Mutable,
                     no_alias: true,
+                    aliasing: Some(&ARRAY_MAP_ALIASING),
                     ..MethodDef::DEFAULT
                 },
             ),
             Method(
                 "flatMap",
                 MethodDef {
+                    canonical_name: Some("Array.flatMap"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
                     callee_effect: Effect::ConditionallyMutate,
                     return_value_kind: ValueKind::Mutable,
                     no_alias: true,
+                    aliasing: Some(&ARRAY_MAP_ALIASING),
+                    ..MethodDef::DEFAULT
+                },
+            ),
+            Method(
+                "forEach",
+                MethodDef {
+                    canonical_name: Some("Array.forEach"),
+                    rest_param: Some(Effect::ConditionallyMutate),
+                    callee_effect: Effect::ConditionallyMutate,
+                    return_type: TypeDef::Primitive,
+                    return_value_kind: ValueKind::Primitive,
+                    no_alias: true,
+                    aliasing: Some(&ARRAY_FOREACH_ALIASING),
                     ..MethodDef::DEFAULT
                 },
             ),
             Method(
                 "filter",
                 MethodDef {
+                    canonical_name: Some("Array.filter"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Object(BUILT_IN_ARRAY_ID),
                     callee_effect: Effect::ConditionallyMutate,
@@ -1009,6 +1063,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "every",
                 MethodDef {
+                    canonical_name: Some("Array.every"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Primitive,
                     callee_effect: Effect::ConditionallyMutate,
@@ -1021,6 +1076,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "some",
                 MethodDef {
+                    canonical_name: Some("Array.some"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Primitive,
                     callee_effect: Effect::ConditionallyMutate,
@@ -1033,6 +1089,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "find",
                 MethodDef {
+                    canonical_name: Some("Array.find"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Object(BUILT_IN_MIXED_READONLY_ID),
                     callee_effect: Effect::ConditionallyMutate,
@@ -1045,6 +1102,7 @@ const BUILTIN_SHAPE_DEFS: &[ShapeDef] = &[
             Method(
                 "findIndex",
                 MethodDef {
+                    canonical_name: Some("Array.findIndex"),
                     rest_param: Some(Effect::ConditionallyMutate),
                     return_type: TypeDef::Primitive,
                     callee_effect: Effect::ConditionallyMutate,
@@ -1781,6 +1839,7 @@ fn build_typed_globals(
         let ctor = add_method(
             shapes,
             &MethodDef {
+                canonical_name: Some(name),
                 positional_params: &[Effect::ConditionallyMutateIterator],
                 return_type: TypeDef::Object(*shape_id),
                 return_value_kind: ValueKind::Mutable,

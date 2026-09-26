@@ -1,0 +1,16 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-property-load-before-later-store.js
+---
+function Component(t0) {
+	let count = 0;
+	const cb = () => count++;
+	const obj = { run() {} };
+	const run = obj.run;
+	obj.run = async () => {
+		await 0;
+		cb();
+	};
+	run();
+	return null;
+}
