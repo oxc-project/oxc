@@ -3,11 +3,17 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::side_effects::is_typed_array_constructor;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::symbol::SymbolId;
+use smallvec::SmallVec;
 
 use crate::{
-    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
+    AstNode,
+    ast_util::{get_symbol_id_of_variable, is_method_call, variable_declaration_kind},
+    context::LintContext,
+    rule::Rule,
     utils::does_expr_match_any_path,
 };
 
@@ -25,6 +31,11 @@ declare_oxc_lint!(
     ///
     /// Disallows the use of the `thisArg` parameter in array iteration methods such as
     /// `map`, `filter`, `some`, `every`, and similar.
+    ///
+    /// Skips non-array receivers identified from simple `const` initializers or
+    /// constructor expressions. Array and typed-array constructor names are still
+    /// checked. Custom constructors, including subclasses of Array, are skipped.
+    /// Unknown receivers are still checked; this does not use TypeScript type information.
     ///
     /// ### Why is this bad?
     ///
@@ -64,7 +75,7 @@ impl Rule for NoArrayMethodThisArgument {
     }
 }
 
-fn check_array_prototype_methods(call_expr: &CallExpression, ctx: &LintContext) {
+fn check_array_prototype_methods<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     if call_expr.optional
         || !is_method_call(
             call_expr,
@@ -93,6 +104,10 @@ fn check_array_prototype_methods(call_expr: &CallExpression, ctx: &LintContext) 
             &call_expr.callee,
             IGNORED.iter().map(|path| path.iter().copied()),
         )
+        || call_expr
+            .callee
+            .get_member_expr()
+            .is_some_and(|member| should_skip_known_non_array_receiver(member.object(), ctx))
     {
         return;
     }
@@ -100,6 +115,57 @@ fn check_array_prototype_methods(call_expr: &CallExpression, ctx: &LintContext) 
     ctx.diagnostic(no_array_method_this_argument_diagnostic(
         call_expr.arguments.first().map_or(call_expr.span, GetSpan::span),
     ));
+}
+
+fn should_skip_known_non_array_receiver<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+    let mut expr = expr.without_parentheses();
+    // Like Unicorn, still report mismatches written directly at the call site.
+    if expr.is_literal()
+        || matches!(
+            expr,
+            Expression::ArrayExpression(_)
+                | Expression::ObjectExpression(_)
+                | Expression::FunctionExpression(_)
+                | Expression::TemplateLiteral(_)
+        )
+    {
+        return false;
+    }
+
+    let mut visited = SmallVec::<[SymbolId; 4]>::new();
+    while let Expression::Identifier(ident) = expr {
+        let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else { return false };
+        if visited.contains(&symbol_id) {
+            return false;
+        }
+        visited.push(symbol_id);
+
+        let declaration = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+        let AstKind::VariableDeclarator(declaration) = declaration.kind() else { return false };
+        if !variable_declaration_kind(declaration, ctx).is_const()
+            || declaration.id.get_binding_identifier().is_none()
+        {
+            return false;
+        }
+        let Some(initializer) = &declaration.init else { return false };
+        expr = initializer.without_parentheses();
+    }
+
+    match expr {
+        Expression::NewExpression(new_expr) => {
+            let Expression::Identifier(callee) = new_expr.callee.without_parentheses() else {
+                return false;
+            };
+            !matches!(callee.name.as_str(), "Array" | "Float16Array")
+                && !is_typed_array_constructor(callee.name.as_str())
+        }
+        Expression::ObjectExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::ClassExpression(_)
+        | Expression::TemplateLiteral(_) => true,
+        _ => expr.is_literal(),
+    }
 }
 
 fn check_array_from(call_expr: &CallExpression, ctx: &LintContext) {
@@ -260,6 +326,21 @@ fn test() {
         "Array.fromAsync(iterableOrArrayLike, 1, thisArgument)",
         "async () => Array.from(iterableOrArrayLike, await callback, thisArgument)",
         "async () => Array.fromAsync(iterableOrArrayLike, await callback, thisArgument)",
+        "const object = { find: (predicate, projection) => [] }; object.find(item => item, { shareModelId: 1 });",
+        "const map = new Map(); map.forEach(callback, thisArgument);",
+        "const set = new Set(); set.forEach(callback, thisArgument);",
+        "const service = new SearchService(); service.find(callback, options);",
+        "new Map().forEach(callback, thisArgument);",
+        "new Set().forEach(callback, thisArgument);",
+        "const object = {}; const alias = object; alias.map(callback, options);",
+        "const object = ({}); (object).find(callback, options);",
+        "const object = {}; object?.find(callback, options);",
+        "const receiver = function () {}; receiver.map(callback, options);",
+        "const receiver = () => {}; receiver.map(callback, options);",
+        "const receiver = class {}; receiver.find(callback, options);",
+        "const receiver = 'text'; receiver.find(callback, options);",
+        "const receiver = `text`; receiver.find(callback, options);",
+        "(() => {}).map(callback, options);",
     ];
 
     let fail = vec![
@@ -313,4 +394,62 @@ fn test() {
 
     Tester::new(NoArrayMethodThisArgument::NAME, NoArrayMethodThisArgument::PLUGIN, pass, fail)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_receiver_controls() {
+    use crate::tester::Tester;
+
+    let mut fail = vec![
+        "const array = []; array.map(callback, thisArgument);",
+        "const array = []; const alias = array; alias.map(callback, thisArgument);",
+        "new Array().map(callback, thisArgument);",
+        "const array = new Array(); array.map(callback, thisArgument);",
+        "const array = Array.from(values); array.map(callback, thisArgument);",
+        "const array = Array.of(1); array.map(callback, thisArgument);",
+        "let receiver = {}; receiver.find(callback, options);",
+        "let receiver = {}; receiver = []; receiver.find(callback, options);",
+        "var receiver = {}; receiver.find(callback, options);",
+        "const { receiver } = {}; receiver.find(callback, options);",
+        "const [receiver] = [{}]; receiver.find(callback, options);",
+        "function test(receiver) { receiver.find(callback, options); }",
+        "const receiver = getReceiver(); receiver.find(callback, options);",
+        "const receiver = other; const other = receiver; receiver.find(callback, options);",
+        "const receiver = receiver; receiver.find(callback, options);",
+        "({ find() {} }).find(callback, options);",
+        "(function () {}).map(callback, options);",
+        "'text'.find(callback, options);",
+        "`text`.find(callback, options);",
+        "const receiver = {} as unknown as number[]; receiver.map(callback, options);",
+        "const receiver = condition ? [] : {}; receiver.find(callback, options);",
+        "new globalThis.Array().map(callback, thisArgument);",
+    ]
+    .into_iter()
+    .map(str::to_string)
+    .collect::<Vec<_>>();
+
+    for constructor in [
+        "Int8Array",
+        "Uint8Array",
+        "Uint8ClampedArray",
+        "Int16Array",
+        "Uint16Array",
+        "Int32Array",
+        "Uint32Array",
+        "Float16Array",
+        "Float32Array",
+        "Float64Array",
+        "BigInt64Array",
+        "BigUint64Array",
+    ] {
+        fail.push(format!("const array = new {constructor}(); array.map(callback, thisArgument);"));
+    }
+
+    Tester::new(
+        NoArrayMethodThisArgument::NAME,
+        NoArrayMethodThisArgument::PLUGIN,
+        Vec::<String>::new(),
+        fail,
+    )
+    .test();
 }
