@@ -50,6 +50,16 @@ impl JSChar {
         self.0 >= 0xD800 && self.0 <= 0xDFFF
     }
 
+    #[inline]
+    pub(super) const fn is_lead_surrogate(self) -> bool {
+        self.0 >= 0xD800 && self.0 <= 0xDBFF
+    }
+
+    #[inline]
+    pub(super) const fn is_trail_surrogate(self) -> bool {
+        self.0 >= 0xDC00 && self.0 <= 0xDFFF
+    }
+
     /// Encode one code point. The caller handles pairing adjacent surrogates.
     #[inline]
     #[expect(clippy::cast_possible_truncation, reason = "each byte is masked or range-checked")]

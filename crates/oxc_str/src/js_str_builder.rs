@@ -85,24 +85,22 @@ impl<'a> JSStrBuilder<'a> {
     #[inline]
     #[expect(clippy::cast_possible_truncation, reason = "lone surrogates fit in `u16`")]
     pub fn push_js_char(&mut self, value: JSChar) {
-        let point = value.to_u32();
         if let Some(lead) = self.pending_lead_surrogate
-            && (0xDC00..=0xDFFF).contains(&point)
+            && value.is_trail_surrogate()
         {
             self.bytes.reserve(4);
-            self.append_pair(lead, point as u16);
+            self.append_pair(lead, value.to_u32() as u16);
             self.pending_lead_surrogate = None;
             return;
         }
 
         let mut buffer = [0; 4];
         let bytes = value.encode(&mut buffer);
-        let is_lead = (0xD800..=0xDBFF).contains(&point);
         let additional = self.pending_bytes() + bytes.len();
         self.bytes.reserve(additional);
         self.flush_pending();
-        if is_lead {
-            self.pending_lead_surrogate = Some(point as u16);
+        if value.is_lead_surrogate() {
+            self.pending_lead_surrogate = Some(value.to_u32() as u16);
         } else {
             self.bytes.extend_from_slice_copy(bytes);
             self.has_lone_surrogate |= value.is_surrogate();
