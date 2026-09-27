@@ -49,6 +49,8 @@ fn minimize_bitwise_binary_expr() {
     // `a & 0xffffffff` -> `a | 0`.
     fold("a & 0xffffffff", "a | 0");
     fold("4294967295 & a", "0 | a");
+    fold("a & 4294967294.9999999", "a | 0");
+    fold("a & 4294967294.999999", "a | 4294967294");
 
     fold_same("a + 0");
     fold_same("a | 1");

@@ -13,16 +13,17 @@ impl<'a> PeepholeOptimizations {
 
         match bin_expr.operator {
             BinaryOperator::BitwiseAnd => {
-                if let Expression::NumericLiteral(n) = &mut bin_expr.right
-                    && n.value == u32::MAX as f64
+                // u32::MAX -> 2^32-1 -> 4_294_967_295
+                if bin_expr.right.is_number_value(4_294_967_295.0)
+                    && let Expression::NumericLiteral(n) = &mut bin_expr.right
                 {
                     // `a & 0xffffffff` -> `a | 0`
                     ctx.notice_change();
                     n.value = 0.0;
                     n.raw = None;
                     bin_expr.operator = BinaryOperator::BitwiseOR;
-                } else if let Expression::NumericLiteral(n) = &mut bin_expr.left
-                    && n.value == u32::MAX as f64
+                } else if bin_expr.left.is_number_value(4_294_967_295.0)
+                    && let Expression::NumericLiteral(n) = &mut bin_expr.left
                 {
                     // `0xffffffff & a` -> `0 | a`
                     ctx.notice_change();
@@ -87,9 +88,7 @@ impl<'a> PeepholeOptimizations {
             {
                 // `(a OP b) | 0` -> `a OP b`
                 ctx.replace_expression_with(expr, Self::unwrap_left_from_binary_expr);
-                return;
-            }
-            if bin_expr.left.is_number_0()
+            } else if bin_expr.left.is_number_0()
                 && matches!(&bin_expr.right, Expression::BinaryExpression(e) if matches!(
                     e.operator,
                     BinaryOperator::ShiftLeft
@@ -101,7 +100,6 @@ impl<'a> PeepholeOptimizations {
             {
                 // `0 | (a OP b)` -> `a OP b`
                 ctx.replace_expression_with(expr, Self::unwrap_right_from_binary_expr);
-                return;
             }
         }
     }
