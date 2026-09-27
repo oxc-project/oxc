@@ -20,7 +20,7 @@ use crate::{
 
 use crate::pipeline::disambiguate::common::{Tokens, bits, kind_at, word_is_any, word_len};
 
-use super::bytes::{raw_template_end, scan_list_closer, skip_raw_literal, skip_ws_fwd};
+use super::bytes::{list_closer, raw_template_end, skip_raw_literal, skip_ws_fwd};
 
 const FOLLOW_SPLIT_WORDS: &[&[u8]] =
     &[b"in", b"instanceof", b"as", b"satisfies", b"extends", b"implements"];
@@ -422,14 +422,10 @@ fn type_illegal_kind(k: u8) -> bool {
 /// accepts opens one in any context.
 pub(crate) fn type_args_at(tokens: &Tokens, lt: usize) -> bool {
     let closers = tokens.closers;
-    if let Some(r) = closers.get(lt) {
-        return r.args.unwrap_or_else(|| {
-            let yes = r.closer().is_some_and(|gt| list_is_type_args(tokens, lt, gt));
-            closers.set_args(lt, yes);
-            yes
-        });
+    if let Some(yes) = closers.get(lt).and_then(|r| r.args) {
+        return yes;
     }
-    let yes = scan_list_closer(tokens, lt).is_some_and(|gt| list_is_type_args(tokens, lt, gt));
+    let yes = list_closer(tokens, lt).is_some_and(|gt| list_is_type_args(tokens, lt, gt));
     closers.set_args(lt, yes);
     yes
 }
