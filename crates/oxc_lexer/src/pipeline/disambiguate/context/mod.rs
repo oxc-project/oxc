@@ -40,7 +40,7 @@ mod words;
 use frame::*;
 use walker::{Expect, Jump, Walk};
 
-pub(super) use scan::{after, after_from, angles_before, before};
+pub(super) use scan::{after, angles_before, before};
 
 #[cfg(test)]
 mod tests;
@@ -106,17 +106,23 @@ impl Walks {
         self.full.reset(module);
         self.local.seed_lost = true;
     }
+
+    /// The full walk advanced to pos, restarted if it has passed the token there.
+    fn full_to(&mut self, tokens: &Tokens, pos: usize) -> &mut Walk {
+        let w = &mut self.full;
+        let inside_last = pos < w.walked_to && pos >= w.last_start;
+        if w.walked_to > pos && !inside_last {
+            w.reset(tokens.module);
+        }
+        w.advance(tokens, pos);
+        w
+    }
 }
 
 /// [`after`] on the full walk from the start of the source: needed when the answer depends on the
 /// enclosing functions (`yield` / `await`).
 pub(super) fn after_scoped(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
-    let w = &mut walks.full;
-    let inside_last = pos < w.walked_to && pos >= w.last_start;
-    if w.walked_to > pos && !inside_last {
-        w.reset(tokens.module);
-    }
-    w.advance(tokens, pos);
+    let w = walks.full_to(tokens, pos);
     // A query inside the token just processed (the tail of a fused operator run such as `>>>`)
     // is answered by the state after it.
     if w.walked_to > pos { w.classify_after() } else { w.after_token(tokens, pos) }

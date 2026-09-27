@@ -24,7 +24,6 @@
 use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 
 use super::{
-    WALK_SCAN_CAP,
     common::{Tokens, bits},
     context::{self, After, Walks},
 };
@@ -63,36 +62,17 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
             continue;
         }
         if k == tk!(String) {
-            let e = tokens.next_start(qi + 1);
-            if !tokens.line_break_between(e, p) {
-                return false;
-            }
-            return context::after(tokens, walks, qi) == After::EndsDecl;
+            return ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p);
         }
-        if matches_tk!(k, TemplateNoSub | TemplateTail) {
-            if !(ts && tokens.line_break_between(tokens.next_start(qi + 1), p)) {
-                return false;
-            }
-            let from = if k == tk!(TemplateTail) {
-                tokens.template_head(qi, &mut 0, WALK_SCAN_CAP).unwrap_or(qi)
-            } else {
-                qi
-            };
-            return context::after_from(tokens, walks, qi, from) == After::EndsDecl;
+        if matches_tk!(k, Number | TemplateNoSub | TemplateTail) {
+            // A literal ends a value: division, unless TS ASI applies.
+            return ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p);
         }
         if matches_tk!(k, RegExp | PrivateIdent | PrivateIdentEscaped | JsxTagEnd | JsxLt) {
             return false;
         }
         if matches_tk!(k, TemplateHead | TemplateMiddle) {
             return true;
-        }
-        if k == tk!(Number) {
-            // A word run that starts with a digit is a numeric literal, and a numeric literal ends
-            // a value: division, unless TS ASI applies.
-            let we = tokens.next_start(qi + 1);
-            return ts
-                && tokens.line_break_between(we, p)
-                && context::after(tokens, walks, qi) == After::EndsDecl;
         }
         if matches_tk!(k, Ident | IdentEscaped) {
             let e = tokens.next_start(qi + 1);
@@ -147,34 +127,27 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
             }
             // `}` closed either a block (regex follows) or a value (division).
             if ch == b'}' {
-                let from = tokens.match_delim_back(qi).unwrap_or(qi);
-                return context::after_from(tokens, walks, qi, from) != After::Value;
+                return context::after(tokens, walks, qi) != After::Value;
             }
-            if ch == b')' {
-                if paren_close_is_regex(tokens, qi) {
-                    return true;
-                }
-                if !(ts && tokens.line_break_between(qi + 1, p)) {
-                    return false;
-                }
-                let from = tokens.match_delim_back(qi).unwrap_or(qi);
-                return context::after_from(tokens, walks, qi, from) == After::EndsDecl;
+            if ch == b')' && paren_close_is_regex(tokens, qi) {
+                return true;
+            }
+            if ch == b')' || ch == b']' {
+                return ts && ends_decl(tokens, walks, qi, qi + 1, p);
             }
             if ts && ch == b'>' && !(qi > 0 && src[qi - 1] == b'=') {
                 return context::after(tokens, walks, qi) != After::Value;
-            }
-            if ch == b']' {
-                if !(ts && tokens.line_break_between(qi + 1, p)) {
-                    return false;
-                }
-                let from = tokens.match_delim_back(qi).unwrap_or(qi);
-                return context::after_from(tokens, walks, qi, from) == After::EndsDecl;
             }
             return true;
         }
         return true;
     }
     true
+}
+
+/// Does a line break between e and p end the declaration the token at q completes?
+fn ends_decl(tokens: &Tokens, walks: &mut Walks, q: usize, e: usize, p: usize) -> bool {
+    tokens.line_break_between(e, p) && context::after(tokens, walks, q) == After::EndsDecl
 }
 
 fn paren_close_is_regex(tokens: &Tokens, qi: usize) -> bool {

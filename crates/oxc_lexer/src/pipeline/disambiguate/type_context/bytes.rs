@@ -14,7 +14,8 @@
 
 use crate::{
     pipeline::bytes::{
-        block_comment_end, is_id_start, is_ws, line_terminator_after, unicode_ws_len_at,
+        block_comment_end, is_id_start, is_ws, line_break_in, line_terminator_after,
+        unicode_ws_len_at,
     },
     token::{OP_KIND_BASE, matches_tk, tk},
 };
@@ -76,14 +77,7 @@ pub(crate) fn lt_run_split(tokens: &Tokens, lt: usize) -> bool {
         return false;
     };
     let lp = skip_trivia_fwd(src, n, gt + 1);
-    if lp >= n || src[lp] != b'(' {
-        return false;
-    }
-    let Some(rp) = group_closer(tokens, lp) else {
-        return false;
-    };
-    let ar = skip_trivia_fwd(src, n, rp + 1);
-    if ar + 1 >= n || src[ar] != b'=' || src[ar + 1] != b'>' {
+    if lp >= n || src[lp] != b'(' || !arrow_after_params(tokens, lp) {
         return false;
     }
     // The outer list must close too, or this was a comparison against a
@@ -100,26 +94,39 @@ pub(super) fn arrow_after_params(tokens: &Tokens, lp: usize) -> bool {
     ar < n && src[ar] == b'=' && src[ar + 1] == b'>'
 }
 
-pub(super) fn skip_trivia_fwd(src: &[u8], n: usize, mut i: usize) -> usize {
+pub(super) fn skip_trivia_fwd(src: &[u8], n: usize, i: usize) -> usize {
+    skip_trivia_nl(src, n, i).0
+}
+
+/// The first non-trivia byte at or after i (or n), and whether a line terminator came first.
+#[inline(always)]
+pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize) -> (usize, bool) {
+    let mut broke = false;
+    if i < n && !is_ws(src[i]) && src[i] != b'/' && src[i] < 0x80 {
+        return (i, false);
+    }
     while i < n {
         let c = src[i];
         if is_ws(c) {
+            broke |= c == b'\n' || c == b'\r';
             i += 1;
         } else if c == b'/' && src[i + 1] == b'/' {
             i = line_terminator_after(src, n, i + 2);
         } else if c == b'/' && src[i + 1] == b'*' {
             let e = block_comment_end(src, n, i + 2);
             if e >= n {
-                return n;
+                return (n, broke);
             }
+            broke |= line_break_in(src, i + 2, e);
             i = e + 1;
         } else if c >= 0x80 && unicode_ws_len_at(src, i) != 0 {
+            broke |= line_break_in(src, i, i + 3);
             i += unicode_ws_len_at(src, i);
         } else {
             break;
         }
     }
-    i
+    (i, broke)
 }
 
 pub(super) fn list_closer(tokens: &Tokens, lt: usize) -> Option<usize> {

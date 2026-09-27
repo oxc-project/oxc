@@ -216,7 +216,7 @@ impl Walk {
             }
             tk!(
                 KwReturn | KwThrow | KwYield | KwAwait | KwTypeof | KwVoid | KwDelete | KwNew | KwIn
-                | KwInstanceof | KwOf | KwDebugger | KwExtends | KwImplements
+                | KwInstanceof | KwOf | KwDebugger | KwExtends | KwImplements | KwFrom
             ) => {
                 if self.top_kind() == FrameKind::Head && matches_tk!(kw, KwOf | KwIn) {
                     self.top_mut().state = F_NO_OF;
@@ -308,9 +308,6 @@ impl Walk {
                 // A declared module may have no body.
                 self.keyword(kw);
                 self.set_stmt_reg(S_DECLARE_MODULE);
-            }
-            tk!(KwFrom) => {
-                self.keyword(tk!(KwFrom));
             }
             _ => {
                 // A plain name, or any other keyword spelling used as one.

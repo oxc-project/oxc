@@ -10,92 +10,45 @@
 //!   A `(` can, as in `f<T>(x)`. An identifier can't, as in `a < b > c`.
 
 use crate::{
-    pipeline::bytes::{
-        block_comment_end, is_digit, is_id_start, line_break_in, line_terminator_after,
-        unicode_ws_len_at,
-    },
+    pipeline::bytes::{is_digit, is_id_start, line_break_in},
     token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
 };
 
 use crate::pipeline::disambiguate::common::{Tokens, bits, word_len};
 
-use super::bytes::{list_closer, raw_template_end, skip_raw_literal, skip_trivia_fwd};
+use super::bytes::{
+    list_closer, raw_template_end, skip_raw_literal, skip_trivia_fwd, skip_trivia_nl,
+};
 
-fn gt_follower(tokens: &Tokens, mut i: usize) -> bool {
+fn gt_follower(tokens: &Tokens, i: usize) -> bool {
     let (src, n) = (tokens.src, tokens.n);
-    let mut broke = false;
-    loop {
-        if i >= n {
-            return true;
+    let (i, broke) = skip_trivia_nl(src, n, i);
+    if i >= n {
+        return true;
+    }
+    let c = src[i];
+    let nx = src[i + 1];
+    if broke {
+        // After a line break only a <, a > or a unary sign rules the list out.
+        return !(c == b'>'
+            || (c == b'<' && nx != b'<' && nx != b'=')
+            || (matches!(c, b'+' | b'-') && nx != b'=' && nx != c));
+    }
+    match c {
+        b'(' | b'`' | b'=' | b')' | b']' | b'}' | b',' | b';' | b':' | b'?' | b'|' | b'&'
+        | b'*' | b'%' | b'^' => true,
+        b'!' | b'+' | b'-' => nx == b'=',
+        b'.' => !is_digit(nx),
+        b'<' => nx == b'<' || nx == b'=',
+        // An identifier with a leading Unicode escape starts an expression like any other name.
+        b'\\' => nx != b'u',
+        _ if is_digit(c) => false,
+        _ if is_id_start(c) => {
+            let kw = tokens.tables.keywords.kwts.lookup_at(src, i, word_len(src, i)) as u8;
+            matches_tk!(kw, KwIn | KwInstanceof | KwAs | KwSatisfies | KwExtends)
         }
-        let c = src[i];
-        match c {
-            b' ' | b'\t' | 0x0b | 0x0c => {
-                i += 1;
-                continue;
-            }
-            b'\n' | b'\r' => {
-                broke = true;
-                i += 1;
-                continue;
-            }
-            b'/' => {
-                let d = src[i + 1];
-                if d == b'/' {
-                    broke = true;
-                    i = line_terminator_after(src, n, i + 2);
-                    continue;
-                }
-                if d != b'*' {
-                    return true;
-                }
-                let e = block_comment_end(src, n, i + 2);
-                if e >= n {
-                    return true;
-                }
-                broke |= line_break_in(src, i + 2, e);
-                i = e + 1;
-                continue;
-            }
-            _ => {}
-        }
-        if c >= 0x80 {
-            if c == 0xe2 && src[i + 1] == 0x80 && (src[i + 2] == 0xa8 || src[i + 2] == 0xa9) {
-                broke = true;
-                i += 3;
-                continue;
-            }
-            let wl = unicode_ws_len_at(src, i);
-            if wl != 0 {
-                i += wl;
-                continue;
-            }
-            return broke;
-        }
-        let nx = src[i + 1];
-        if broke {
-            // After a line break only a <, a > or a unary sign rules the list out.
-            return !(c == b'>'
-                || (c == b'<' && nx != b'<' && nx != b'=')
-                || (matches!(c, b'+' | b'-') && nx != b'=' && nx != c));
-        }
-        return match c {
-            b'(' | b'`' | b'=' | b')' | b']' | b'}' | b',' | b';' | b':' | b'?' | b'|' | b'&'
-            | b'*' | b'%' | b'^' => true,
-            b'!' | b'+' | b'-' => nx == b'=',
-            b'.' => !is_digit(nx),
-            b'<' => nx == b'<' || nx == b'=',
-            // An identifier written with a leading Unicode escape starts an expression like any
-            // other name.
-            b'\\' => nx != b'u',
-            _ if is_digit(c) => false,
-            _ if is_id_start(c) => {
-                let kw = tokens.tables.keywords.kwts.lookup_at(src, i, word_len(src, i)) as u8;
-                matches_tk!(kw, KwIn | KwInstanceof | KwAs | KwSatisfies | KwExtends)
-            }
-            b'{' | b'[' | b'>' | b'~' | b'@' | b'#' | b'"' | b'\'' => false,
-            _ => true,
-        };
+        b'{' | b'[' | b'>' | b'~' | b'@' | b'#' | b'"' | b'\'' => false,
+        _ => true,
     }
 }
 
