@@ -112,7 +112,7 @@ fn scan_with(
             let c = tokens.src[p];
             match c {
                 b')' | b']' | b'}' => {
-                    let o = tokens.match_back(p)?;
+                    let o = tokens.match_delim_back(p)?;
                     if cont.is_some_and(|c| o < c) {
                         return Some(Scan { anchor: lv.resume_point(), angles: unmatched_lt });
                     }

@@ -78,12 +78,8 @@ impl Walk {
             b'?' => {
                 if len >= 2 {
                     // `?.` / `??` / `??=`
-                    if c1 == b'.' {
-                        self.operand_done();
-                        self.after_dot = true;
-                    } else {
-                        self.operand_done();
-                    }
+                    self.operand_done();
+                    self.after_dot = c1 == b'.';
                     return pos + len;
                 }
                 self.question(tokens, pos);
@@ -210,7 +206,6 @@ impl Walk {
 
     pub(super) fn arrow(&mut self, tokens: &Tokens, pos: usize) {
         let is_async = if self.closed_group { self.closed_group_async } else { self.arrow_async };
-        self.prev_arrow = true;
         // Concise body unless `{` follows.
         let nx = tokens.peek(pos + 2);
         let block = nx.kind >= OP_KIND_BASE && nx.byte == b'{';
@@ -225,15 +220,8 @@ impl Walk {
     }
 
     pub(super) fn assign(&mut self) {
-        let reg = self.top_reg();
-        if reg == S_TYPE_NAME {
+        if matches!(self.top_reg(), S_TYPE_NAME | S_IMPORT_NAME) {
             // `type X =`: the alias type.
-            self.set_stmt_reg(S_NONE);
-            self.open_region(R_STMT);
-            return;
-        }
-        if reg == S_IMPORT_NAME {
-            // `import X = ...`: a module reference.
             self.set_stmt_reg(S_NONE);
             self.open_region(R_STMT);
             return;
@@ -282,15 +270,8 @@ impl Walk {
                 self.operand_done();
                 return;
             }
-            FrameKind::ClassBody => {
-                if tokens.ts {
-                    self.open_region(R_INLINE);
-                } else {
-                    self.operand_done();
-                }
-                return;
-            }
-            FrameKind::Params => {
+            // A member, parameter or index signature annotation.
+            FrameKind::ClassBody | FrameKind::Params | FrameKind::ComputedKey => {
                 if tokens.ts {
                     self.open_region(R_INLINE);
                 } else {
@@ -310,15 +291,6 @@ impl Walk {
             FrameKind::FnHead => {
                 // Return type.
                 self.open_region(R_INLINE);
-                return;
-            }
-            FrameKind::ComputedKey => {
-                // Index signature `[k: string]`.
-                if tokens.ts {
-                    self.open_region(R_INLINE);
-                } else {
-                    self.operand_done();
-                }
                 return;
             }
             _ => {}
@@ -539,7 +511,7 @@ impl Walk {
             kind = FrameKind::Head;
         } else if self.operand_allowed() || self.prev_kw == tk!(KwNew) {
             kind = FrameKind::Group;
-            is_async = self.prev_async;
+            is_async = self.prev_kw == tk!(KwAsync);
         } else {
             kind = FrameKind::Call;
         }

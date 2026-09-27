@@ -18,6 +18,14 @@ pub(super) enum Jump {
     Sep { at: u32, semi: u32, comma: u32, brace: u32 },
 }
 
+impl Jump {
+    fn at(self) -> usize {
+        match self {
+            Jump::Skip { at, .. } | Jump::Angle { at, .. } | Jump::Sep { at, .. } => at as usize,
+        }
+    }
+}
+
 /// What may come next at the walk's position.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub(super) enum Expect {
@@ -74,8 +82,6 @@ pub(super) struct Walk {
     pub(super) closed_group_async: bool,
     /// Previous token closed a Params frame.
     pub(super) closed_params: bool,
-    /// The previous significant token was `async` (same line as this one).
-    pub(super) prev_async: bool,
     /// `export default` was just seen.
     pub(super) export_default: bool,
     /// Decorator at statement level / operand level (0 none).
@@ -316,11 +322,7 @@ impl Walk {
     fn jump(&mut self, pos: usize, end: usize, limit: usize) -> usize {
         while self.next_jump < self.jumps.len() {
             let j = self.jumps[self.next_jump];
-            let at = match j {
-                Jump::Skip { at, .. } | Jump::Angle { at, .. } | Jump::Sep { at, .. } => {
-                    at as usize
-                }
-            };
+            let at = j.at();
             if at > pos {
                 break;
             }
@@ -374,15 +376,7 @@ impl Walk {
         }
         self.walked_to = to;
         self.prev_end = to;
-        while self.next_jump < self.jumps.len() {
-            let at = match self.jumps[self.next_jump] {
-                Jump::Skip { at, .. } | Jump::Angle { at, .. } | Jump::Sep { at, .. } => {
-                    at as usize
-                }
-            };
-            if at >= to {
-                break;
-            }
+        while self.next_jump < self.jumps.len() && self.jumps[self.next_jump].at() < to {
             self.next_jump += 1;
         }
     }
@@ -538,7 +532,6 @@ impl Walk {
         self.arrow_async = false;
         self.closed_group = false;
         self.closed_params = false;
-        self.prev_async = false;
     }
 
     pub(super) fn type_atom(&mut self, inner: bool) {

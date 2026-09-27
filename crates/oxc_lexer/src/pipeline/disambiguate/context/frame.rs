@@ -1,19 +1,6 @@
 //! What the walk remembers per frame: the kind of every open bracket or virtual frame,
 //! its per-kind state, and the keyword codes the walk reads off the source.
 
-use crate::token::matches_tk;
-
-/// A keyword that is a whole type by itself (`any`, `null`, `this`, ...): it takes no type
-/// arguments, so a `<` after it is a comparison.
-#[rustfmt::skip::macros(matches_tk)]
-pub(super) fn keyword_type(kw: u8) -> bool {
-    matches_tk!(
-        kw,
-        KwAny | KwBigInt | KwBoolean | KwNever | KwNumber | KwObject | KwString | KwSymbol
-        | KwUndefined | KwUnknown | KwVoid | KwNull | KwThis | KwTrue | KwFalse
-    )
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub(super) enum FrameKind {
     #[default]

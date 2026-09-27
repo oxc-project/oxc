@@ -8,7 +8,6 @@
 //!   `a<b + 1, c>` doesn't, because `+` can't appear in a type.
 //! - [`gt_follower`]: Can the token after the `>` follow type arguments?
 //!   A `(` can, as in `f<T>(x)`. An identifier can't, as in `a < b > c`.
-//!   When the token alone doesn't settle it, the answer is [`Follow::Ctx`], and the caller decides.
 
 use crate::{
     pipeline::bytes::{
@@ -18,24 +17,16 @@ use crate::{
     token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
 };
 
-use crate::pipeline::disambiguate::common::{Tokens, bits, kind_at, word_is_any, word_len};
+use crate::pipeline::disambiguate::common::{Tokens, bits, word_len};
 
 use super::bytes::{list_closer, raw_template_end, skip_raw_literal, skip_trivia_fwd};
 
-const FOLLOW_SPLIT_WORDS: &[&[u8]] = &[b"in", b"instanceof", b"as", b"satisfies", b"extends"];
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Follow {
-    Split,
-    Fuse,
-    Ctx,
-}
-
-fn gt_follower(src: &[u8], n: usize, mut i: usize) -> Follow {
+fn gt_follower(tokens: &Tokens, mut i: usize) -> bool {
+    let (src, n) = (tokens.src, tokens.n);
     let mut broke = false;
     loop {
         if i >= n {
-            return Follow::Split;
+            return true;
         }
         let c = src[i];
         match c {
@@ -56,15 +47,13 @@ fn gt_follower(src: &[u8], n: usize, mut i: usize) -> Follow {
                     continue;
                 }
                 if d != b'*' {
-                    return Follow::Split;
+                    return true;
                 }
                 let e = block_comment_end(src, n, i + 2);
                 if e >= n {
-                    return Follow::Split;
+                    return true;
                 }
-                if line_break_in(src, i + 2, e) {
-                    broke = true;
-                }
+                broke |= line_break_in(src, i + 2, e);
                 i = e + 1;
                 continue;
             }
@@ -81,72 +70,31 @@ fn gt_follower(src: &[u8], n: usize, mut i: usize) -> Follow {
                 i += wl;
                 continue;
             }
-            return if broke { Follow::Split } else { Follow::Fuse };
+            return broke;
         }
         let nx = src[i + 1];
         if broke {
-            return match c {
-                b'<' if nx != b'<' && nx != b'=' => Follow::Ctx,
-                b'+' | b'-' if nx != b'=' && nx != c => Follow::Ctx,
-                b'>' => Follow::Ctx,
-                _ => Follow::Split,
-            };
+            // After a line break only a <, a > or a unary sign rules the list out.
+            return !(c == b'>'
+                || (c == b'<' && nx != b'<' && nx != b'=')
+                || (matches!(c, b'+' | b'-') && nx != b'=' && nx != c));
         }
         return match c {
             b'(' | b'`' | b'=' | b')' | b']' | b'}' | b',' | b';' | b':' | b'?' | b'|' | b'&'
-            | b'*' | b'%' | b'^' => Follow::Split,
-            b'!' => {
-                if nx == b'=' {
-                    Follow::Split
-                } else {
-                    Follow::Fuse
-                }
-            }
-            b'.' => {
-                if is_digit(nx) {
-                    Follow::Fuse
-                } else {
-                    Follow::Split
-                }
-            }
-            b'{' | b'[' | b'>' => Follow::Ctx,
-            b'+' | b'-' => {
-                if nx == b'=' {
-                    Follow::Split
-                } else {
-                    Follow::Fuse
-                }
-            }
-            b'<' => {
-                if nx == b'<' || nx == b'=' {
-                    Follow::Split
-                } else {
-                    Follow::Fuse
-                }
-            }
-            b'~' | b'@' | b'#' | b'"' | b'\'' => Follow::Fuse,
+            | b'*' | b'%' | b'^' => true,
+            b'!' | b'+' | b'-' => nx == b'=',
+            b'.' => !is_digit(nx),
+            b'<' => nx == b'<' || nx == b'=',
             // An identifier written with a leading Unicode escape starts an expression like any
             // other name.
-            b'\\' => {
-                if nx == b'u' {
-                    Follow::Fuse
-                } else {
-                    Follow::Split
-                }
+            b'\\' => nx != b'u',
+            _ if is_digit(c) => false,
+            _ if is_id_start(c) => {
+                let kw = tokens.tables.keywords.kwts.lookup_at(src, i, word_len(src, i)) as u8;
+                matches_tk!(kw, KwIn | KwInstanceof | KwAs | KwSatisfies | KwExtends)
             }
-            _ => {
-                if is_digit(c) {
-                    Follow::Fuse
-                } else if is_id_start(c) {
-                    if word_is_any(src, i, FOLLOW_SPLIT_WORDS) {
-                        Follow::Split
-                    } else {
-                        Follow::Fuse
-                    }
-                } else {
-                    Follow::Split
-                }
-            }
+            b'{' | b'[' | b'>' | b'~' | b'@' | b'#' | b'"' | b'\'' => false,
+            _ => true,
         };
     }
 }
@@ -177,7 +125,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
     let mut prev = usize::MAX;
     let mut w = bits::next1(st, lo, hi);
     while w < hi {
-        let mut k = kind_at(kind, w);
+        let mut k = tokens.base_kind(w);
         if w == skip || is_trivia_byte(k) {
             w = bits::next1(st, w + 1, hi);
             continue;
@@ -220,12 +168,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                 if dotted { 0 } else { t.keywords.kwts.lookup_at(src, w, word_len(src, w)) as u8 };
             // A keyword type (`this`, `any`, `null`, ...) takes no type arguments; in a type
             // query it names a value, which may (`typeof this<A>`).
-            this_head = matches_tk!(kk,
-                            KwThis | KwAny | KwUnknown | KwString | KwNumber | KwBoolean | KwSymbol
-                            | KwObject | KwNever | KwUndefined | KwNull | KwVoid | KwTrue | KwFalse
-                            | KwBigInt
-                        )
-                && last_kw != tk!(KwTypeof);
+            this_head = keyword_type(kk) && last_kw != tk!(KwTypeof);
             if !start && braces == 0 && !matches_tk!(kk, KwExtends | KwIs | KwIn) {
                 return false;
             }
@@ -269,7 +212,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
             // (a template type), instead of its tail as tokens.
             if k == tk!(TemplateHead) {
                 let (close, end) = raw_template_end(src, hi, w);
-                if close < hi && kind_at(kind, close) >= OP_KIND_BASE {
+                if close < hi && tokens.base_kind(close) >= OP_KIND_BASE {
                     if end > hi {
                         return false;
                     }
@@ -428,6 +371,16 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
     true
 }
 
+/// A keyword that is a whole type by itself, as any, null or this, and takes no type arguments.
+#[rustfmt::skip::macros(matches_tk)]
+pub(crate) fn keyword_type(kw: u8) -> bool {
+    matches_tk!(
+        kw,
+        KwAny | KwBigInt | KwBoolean | KwNever | KwNumber | KwObject | KwString | KwSymbol
+        | KwUndefined | KwUnknown | KwVoid | KwNull | KwThis | KwTrue | KwFalse
+    )
+}
+
 #[inline(always)]
 #[rustfmt::skip::macros(matches_tk)]
 fn type_illegal_kind(k: u8) -> bool {
@@ -455,13 +408,9 @@ pub(crate) fn type_args_at(tokens: &Tokens, lt: usize) -> bool {
 }
 
 fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize) -> bool {
-    if matches!(tokens.src[gt + 1], b'=' | b'>') {
-        return false;
-    }
-    match gt_follower(tokens.src, tokens.n, gt + 1) {
-        Follow::Split => type_list_legal(tokens, lt + 1, gt),
-        Follow::Fuse | Follow::Ctx => false,
-    }
+    !matches!(tokens.src[gt + 1], b'=' | b'>')
+        && gt_follower(tokens, gt + 1)
+        && type_list_legal(tokens, lt + 1, gt)
 }
 
 #[inline(always)]
