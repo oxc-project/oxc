@@ -8,7 +8,7 @@
 //!
 //! - Operators and numbers such as `x++`, `a?.b` and `1.5e+3` aren't formed into their final
 //!   tokens until `coalesce`, which runs later, so the bytes around a punctuator are read
-//!   directly ([incdec_is_postfix], [Tokens::property_name]).
+//!   directly ([Tokens::property_name]).
 //! - After `)`, what the parens closed decides it: `if (c) /re/` has a regex, but `f(c) / 2` has
 //!   a division ([`paren_close_is_regex`]).
 //!
@@ -67,8 +67,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
             if !tokens.line_break_between(e, p) {
                 return false;
             }
-            return module_specifier_asi(tokens, qi)
-                || (ts && context::after(tokens, walks, qi) == After::EndsDecl);
+            return context::after(tokens, walks, qi) == After::EndsDecl;
         }
         if matches_tk!(k, TemplateNoSub | TemplateTail) {
             if !(ts && tokens.line_break_between(tokens.next_start(qi + 1), p)) {
@@ -137,15 +136,12 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
             if ch == b'.' {
                 // Only a trailing-dot numeric literal (`1./2`) makes `.` end a value; member
                 // access, `...` and `?.` all precede an operand.
-                return !bits::prev1(tokens.st, qi).is_some_and(|q2| {
-                    tokens.kind[q2] == tk!(Number) && tokens.next_start(q2 + 1) == qi
-                });
+                return !tokens.numeric_dot(qi);
             }
             if ch == b'+' || ch == b'-' {
-                // Tail of `++`/`--`: postfix ends a value, prefix does not; a run of three or more
-                // always ends in a prefix pair or a lone sign.
+                // The tail of a ++ or --: postfix ends a value, prefix does not.
                 if qi > 0 && src[qi - 1] == ch {
-                    return !incdec_is_postfix(tokens, qi - 1);
+                    return context::after(tokens, walks, qi) != After::Value;
                 }
                 return true;
             }
@@ -179,49 +175,6 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
         return true;
     }
     true
-}
-
-#[inline]
-fn module_specifier_asi(tokens: &Tokens, spec: usize) -> bool {
-    let Some(w) = tokens.prev_sig(spec) else {
-        return false;
-    };
-    tokens.kind[w] == tk!(Ident)
-        && !tokens.property_name(w)
-        && (tokens.ident_is(w, b"from") || tokens.ident_is(w, b"import"))
-}
-
-/// Is the `++`/`--` whose first byte is at `first` postfix? It is when a value ends right before it
-/// on the same line; `tail_before` is the shared definition of "ends a value".
-fn incdec_is_postfix(tokens: &Tokens, first: usize) -> bool {
-    tokens.prev_sig(first).is_some_and(|q| {
-        tail_before(tokens, first) && !tokens.line_break_between(tokens.next_start(q + 1), first)
-    })
-}
-
-fn tail_before(tokens: &Tokens, pos: usize) -> bool {
-    let src = tokens.src;
-    let mut s = tokens.prev_sig(pos);
-    while let Some(w) = s {
-        if tokens.base_kind(w) >= OP_KIND_BASE && src[w] == b'!' && src[w + 1] != b'=' {
-            s = tokens.prev_sig(w);
-            continue;
-        }
-        break;
-    }
-    let Some(sp) = s else {
-        return false;
-    };
-    let sk = tokens.base_kind(sp);
-    if sk >= OP_KIND_BASE {
-        return matches!(src[sp], b')' | b']');
-    }
-    if sk == tk!(Ident) {
-        let e = tokens.next_start(sp + 1);
-        return tokens.property_name(sp)
-            || !tokens.tables.keywords.is_regex_keyword(tokens.word_kw(sp, e - sp));
-    }
-    matches_tk!(sk, Number | BigInt | String | TemplateNoSub | TemplateTail | RegExp | PrivateIdent)
 }
 
 fn paren_close_is_regex(tokens: &Tokens, qi: usize) -> bool {

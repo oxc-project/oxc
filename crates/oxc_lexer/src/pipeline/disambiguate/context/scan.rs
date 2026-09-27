@@ -234,7 +234,9 @@ fn local_walk<R>(
     }
     let w = &mut walks.local;
     let s = w.local_scan(tokens, from)?;
-    w.run_local(tokens, s, pos, from).then(|| f(w, tokens))
+    w.run_local(tokens, s, pos, from);
+    let r = f(w, tokens);
+    (!w.seed_lost).then_some(r)
 }
 
 /// Context at the token starting at `pos` (not through it).

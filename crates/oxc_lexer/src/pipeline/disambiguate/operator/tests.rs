@@ -218,6 +218,8 @@ fn prefix_incdec_then_slash_is_regex() {
     regex("return++/re/.lastIndex;", ScriptJS);
     regex("a + ++/re/.lastIndex;", ScriptJS);
     regex("a ** ++/re/.lastIndex;", ScriptJS);
+    regex("if (a) ++/re/.lastIndex;", ScriptJS);
+    regex("while (a) --/re/.lastIndex;", ScriptJS);
 }
 
 #[test]
@@ -1030,4 +1032,25 @@ fn export_async_function_is_a_declaration() {
 fn interface_members_on_separate_lines() {
     // The full walk steps through the body: a line between members does not end the interface.
     regex("interface I {\n  x: A<B<C>>\n  y: D\n}\n/re/g", ScriptTS);
+}
+
+#[test]
+fn yield_and_await_inside_the_function_a_bounded_walk_starts_in() {
+    division("function* g() { const a = 1; yield {} / 2; }", ScriptJS);
+    division("function* g() { const a = 1; yield {} / 2; }", ModuleJS);
+    division("async function f() { const a = 1; await {} / 2; }", ScriptJS);
+    division("({ *function() { yield {} / 2 } });", ScriptJS);
+    division("class C { *function() { yield {} / 2 } }", ScriptJS);
+}
+
+#[test]
+fn from_as_a_name_before_a_string() {
+    division("let from = 1;\nfrom\n\"y\"\n/2/1;", ScriptJS);
+    division("let from = 1;\nfrom\n\"y\"\n/2/1;", ScriptTS);
+}
+
+#[test]
+fn keyword_after_a_number_with_a_trailing_dot() {
+    regex("x = 1. in /re/;", ScriptJS);
+    regex("x = 1. instanceof /re/.constructor;", ScriptJS);
 }

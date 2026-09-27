@@ -98,10 +98,9 @@ impl Walk {
                     self.operand_done();
                     return pos + 3;
                 }
-                if self.prev_num && self.prev_end == pos {
+                if tokens.numeric_dot(pos) {
                     // `1.` continues the numeric literal.
                     self.set_value();
-                    self.prev_num = false;
                     return pos + 1;
                 }
                 self.operand_done();

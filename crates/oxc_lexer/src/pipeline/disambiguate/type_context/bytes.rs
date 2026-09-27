@@ -60,7 +60,7 @@ pub(crate) fn lt_run_split(tokens: &Tokens, lt: usize) -> bool {
     let Tokens { src, st, n, .. } = *tokens;
     // A TypeParameter starts with an identifier (or the `const` modifier),
     // which is what makes `<<=` cost two bytes to reject.
-    let head = skip_ws_fwd(src, lt + 2, n);
+    let head = skip_trivia_fwd(src, n, lt + 2);
     if head >= n {
         return false;
     }
@@ -75,14 +75,14 @@ pub(crate) fn lt_run_split(tokens: &Tokens, lt: usize) -> bool {
     let Some(gt) = list_closer(tokens, lt + 1) else {
         return false;
     };
-    let lp = skip_ws_fwd(src, gt + 1, n);
+    let lp = skip_trivia_fwd(src, n, gt + 1);
     if lp >= n || src[lp] != b'(' {
         return false;
     }
     let Some(rp) = group_closer(tokens, lp) else {
         return false;
     };
-    let ar = skip_ws_fwd(src, rp + 1, n);
+    let ar = skip_trivia_fwd(src, n, rp + 1);
     if ar + 1 >= n || src[ar] != b'=' || src[ar + 1] != b'>' {
         return false;
     }
@@ -100,15 +100,7 @@ pub(super) fn arrow_after_params(tokens: &Tokens, lp: usize) -> bool {
     ar < n && src[ar] == b'=' && src[ar + 1] == b'>'
 }
 
-#[inline]
-pub(super) fn skip_ws_fwd(src: &[u8], mut i: usize, lim: usize) -> usize {
-    while i < lim && is_ws(src[i]) {
-        i += 1;
-    }
-    i
-}
-
-fn skip_trivia_fwd(src: &[u8], n: usize, mut i: usize) -> usize {
+pub(super) fn skip_trivia_fwd(src: &[u8], n: usize, mut i: usize) -> usize {
     while i < n {
         let c = src[i];
         if is_ws(c) {

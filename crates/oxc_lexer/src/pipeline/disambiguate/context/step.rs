@@ -292,6 +292,5 @@ impl Walk {
             _ => {}
         }
         self.value_done();
-        self.prev_num = matches_tk!(k, Number | BigInt);
     }
 }

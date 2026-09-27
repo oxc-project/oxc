@@ -62,9 +62,6 @@ pub(super) struct Walk {
     /// What may come next.
     pub(super) expect: Expect,
     pub(super) prev_end: usize,
-    /// The previous significant token was a numeric literal ending exactly at `prev_end` (so a `.`
-    /// there continues the number).
-    pub(super) prev_num: bool,
     /// Previous token was `.` / `?.`: the next word is a property name.
     pub(super) after_dot: bool,
     /// Keyword code of the previous significant token, 0 if none.
@@ -131,8 +128,7 @@ impl Walk {
     }
 
     pub(super) fn push(&mut self, kind: FrameKind) -> &mut Frame {
-        let f = self.top().child(kind);
-        self.frames.push(f);
+        self.frames.push(Frame { kind, ..Frame::default() });
         self.frames.last_mut().unwrap()
     }
 
@@ -206,23 +202,20 @@ impl Walk {
     }
 
     /// Innermost function-like scope: where `yield` / `await` look up their keyword-ness.
-    fn scope(&self) -> &Frame {
+    fn scope(&self) -> usize {
         let mut i = self.frames.len() - 1;
         loop {
-            match self.frames[i].kind {
+            let f = &self.frames[i];
+            match f.kind {
                 FrameKind::Root
                 | FrameKind::FnBody
                 | FrameKind::ArrowBody
                 | FrameKind::Concise
-                | FrameKind::ClassBody
                 | FrameKind::StaticBlock
-                | FrameKind::Params => return &self.frames[i],
-                _ => {}
+                | FrameKind::Params => return i,
+                FrameKind::ClassBody if f.field_init() => return i,
+                _ => i -= 1,
             }
-            if i == 0 {
-                return &self.frames[0];
-            }
-            i -= 1;
         }
     }
 
@@ -503,15 +496,14 @@ impl Walk {
         if self.operand_allowed() { After::Operand } else { After::Value }
     }
 
-    /// Is the identifier `yield` at the (unprocessed) token `pos` a keyword?
-    pub(super) fn yield_is_keyword(&self) -> bool {
-        let s = self.scope();
-        !s.field_init() && s.is_generator
-    }
-
-    pub(super) fn await_is_keyword(&self) -> bool {
-        let s = self.scope();
-        !s.field_init() && s.is_async
+    /// Is yield or await a keyword here? A bounded walk that cannot tell loses its footing.
+    pub(super) fn scoped_keyword(&mut self, generator: bool) -> bool {
+        let i = self.scope();
+        if i == 0 && self.seed_depth != 0 {
+            self.seed_lost = true;
+        }
+        let s = &self.frames[i];
+        !s.field_init() && if generator { s.is_generator } else { s.is_async }
     }
 
     pub(super) fn site(&self) -> Site {
@@ -566,7 +558,6 @@ impl Walk {
         self.closed_group = false;
         self.closed_params = false;
         self.prev_async = false;
-        self.prev_num = false;
     }
 
     pub(super) fn type_atom(&mut self, inner: bool) {

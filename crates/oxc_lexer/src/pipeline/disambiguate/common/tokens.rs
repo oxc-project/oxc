@@ -175,9 +175,23 @@ impl Tokens<'_> {
             b'.' => {
                 !(src[q + 1] == b'.' && src[q + 2] == b'.')
                     && !(q >= 2 && src[q - 1] == b'.' && src[q - 2] == b'.')
+                    && !self.numeric_dot(q)
             }
             _ => false,
         }
+    }
+
+    /// Does the . at q end a decimal integer literal (1.) rather than access a member?
+    pub(crate) fn numeric_dot(&self, q: usize) -> bool {
+        let Some(p) = bits::prev1(self.st, q) else {
+            return false;
+        };
+        let digits = &self.src[p..q];
+        // A fraction, a prefixed or exponent literal, or a legacy octal takes no dot.
+        self.kind[p] == tk!(Number)
+            && (p == 0 || self.src[p - 1] != b'.')
+            && digits.iter().all(|&c| is_digit(c) || c == b'_')
+            && !(digits.len() > 1 && digits[0] == b'0' && digits.iter().all(|&c| c < b'8'))
     }
 
     /// Number of `c` bytes the token at `p` starts with (a fused `>>>` counts three, a lone `>`
