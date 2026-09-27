@@ -164,13 +164,6 @@ impl Walk {
         i
     }
 
-    /// The frame whose declarator state (`let x`, `for (let x`) governs the next token, if the
-    /// innermost real frame can hold one.
-    pub(super) fn decl_frame(&self) -> Option<usize> {
-        let i = self.stmt_frame();
-        if self.frames[i].kind.is_stmt_holder() { Some(i) } else { None }
-    }
-
     /// Statement register of the innermost statement holder (S_NONE inside expression frames).
     pub(super) fn stmt_reg(&self) -> u8 {
         let i = self.stmt_frame();
@@ -204,7 +197,6 @@ impl Walk {
                 | FrameKind::FnBody
                 | FrameKind::ArrowBody
                 | FrameKind::Concise
-                | FrameKind::StaticBlock
                 | FrameKind::Params => return i,
                 FrameKind::ClassBody if f.field_init() => return i,
                 _ => i -= 1,
@@ -417,8 +409,6 @@ impl Walk {
                     | FrameKind::Group
                     | FrameKind::TypeLit
                     | FrameKind::ModuleSpec
-                    | FrameKind::Pattern
-                    | FrameKind::ArrayPattern
                     | FrameKind::TypeParen
                     | FrameKind::TypeBracket
                     | FrameKind::Head
@@ -519,8 +509,11 @@ impl Walk {
         self.set_value();
         self.clear_prev();
         // The first value in a `for (` head is its binding.
-        if self.top_kind() == FrameKind::Head && self.top().state == F_START {
-            self.top_mut().state = F_BOUND;
+        let f = self.top_mut();
+        if f.kind == FrameKind::Head && f.state == F_START {
+            f.state = F_BOUND;
+        } else if f.kind.is_stmt_holder() && f.state == D_BINDING {
+            f.state = D_BOUND;
         }
     }
 

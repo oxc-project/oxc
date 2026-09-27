@@ -10,9 +10,7 @@ pub(super) enum FrameKind {
     FnBody,
     ArrowBody,
     ClassBody,
-    StaticBlock,
     Object,
-    Pattern,
     TypeLit,
     ModuleSpec,
     Container,
@@ -29,7 +27,6 @@ pub(super) enum FrameKind {
     Array,
     ComputedKey,
     TypeBracket,
-    ArrayPattern,
     // JSX.
     JsxTag,
     JsxElem,
@@ -79,8 +76,6 @@ pub(super) const F_START: u8 = 0;
 pub(super) const F_BOUND: u8 = 1;
 
 pub(super) const F_EXPR: u8 = 2;
-
-pub(super) const F_ITER: u8 = 3;
 
 // Member state on Object / ClassBody / TypeLit (`state`).
 pub(super) const M_KEY_POS: u8 = 0;
@@ -167,11 +162,7 @@ impl FrameKind {
     pub(super) fn is_stmt_holder(self) -> bool {
         matches!(
             self,
-            FrameKind::Root
-                | FrameKind::Block
-                | FrameKind::FnBody
-                | FrameKind::ArrowBody
-                | FrameKind::StaticBlock
+            FrameKind::Root | FrameKind::Block | FrameKind::FnBody | FrameKind::ArrowBody
         )
     }
 
@@ -188,9 +179,7 @@ impl FrameKind {
             | FrameKind::FnBody
             | FrameKind::ArrowBody
             | FrameKind::ClassBody
-            | FrameKind::StaticBlock
             | FrameKind::Object
-            | FrameKind::Pattern
             | FrameKind::TypeLit
             | FrameKind::ModuleSpec
             | FrameKind::Container => b'}',
@@ -199,10 +188,7 @@ impl FrameKind {
             | FrameKind::Call
             | FrameKind::Group
             | FrameKind::TypeParen => b')',
-            FrameKind::Array
-            | FrameKind::ComputedKey
-            | FrameKind::TypeBracket
-            | FrameKind::ArrayPattern => b']',
+            FrameKind::Array | FrameKind::ComputedKey | FrameKind::TypeBracket => b']',
             _ => 0,
         }
     }

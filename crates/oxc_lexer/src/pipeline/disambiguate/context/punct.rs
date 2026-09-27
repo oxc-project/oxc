@@ -196,9 +196,6 @@ impl Walk {
             _ => {
                 // Every other operator expects an operand.
                 self.operand_done();
-                if self.top_kind() == FrameKind::Head && self.top().state != F_ITER {
-                    self.top_mut().state = F_EXPR;
-                }
                 pos + len
             }
         }
@@ -324,7 +321,7 @@ impl Walk {
         match self.top_kind() {
             FrameKind::Head => {
                 let f = self.top_mut();
-                f.state = F_ITER;
+                f.state = F_EXPR;
                 f.open_questions = 0;
                 let si = self.stmt_frame();
                 self.frames[si].state = D_NONE;
@@ -402,19 +399,12 @@ impl Walk {
             && self.top().mods & MOD_STATIC != 0
             && self.top().state == M_KEY_POS
         {
-            kind = FrameKind::StaticBlock;
+            kind = FrameKind::FnBody;
             // Await is the operator in a static block, yield a name.
             is_async = true;
         } else {
-            let reg = self.stmt_reg();
-            if self.top_declarator() == D_BINDING {
-                kind = FrameKind::Pattern;
-            } else if matches!(reg, S_IMPORT | S_EXPORT | S_IMPORT_NAME) {
+            if matches!(self.stmt_reg(), S_IMPORT | S_EXPORT | S_IMPORT_NAME) {
                 kind = FrameKind::ModuleSpec;
-            } else if matches!(top, FrameKind::Object) && self.top().state != M_VALUE {
-                // `{` at key position of an object literal: malformed; treat as a nested object.
-                kind = FrameKind::Object;
-                value = true;
             } else if self.at_stmt_start() {
                 kind = FrameKind::Block;
             } else if self.operand_allowed() {
@@ -430,7 +420,7 @@ impl Walk {
         }
         let f = self.push(kind);
         f.is_value = value;
-        if matches!(kind, FrameKind::FnBody | FrameKind::ArrowBody | FrameKind::StaticBlock) {
+        if matches!(kind, FrameKind::FnBody | FrameKind::ArrowBody) {
             f.is_generator = generator;
             f.is_async = is_async;
         }
@@ -453,12 +443,6 @@ impl Walk {
             }
             FrameKind::Container => {
                 self.clear_prev();
-            }
-            FrameKind::Pattern => {
-                if let Some(di) = self.decl_frame() {
-                    self.frames[di].state = D_BOUND;
-                }
-                self.value_done();
             }
             FrameKind::ModuleSpec => {
                 self.operand_done();
@@ -516,7 +500,6 @@ impl Walk {
             kind = FrameKind::Call;
         }
         let f = self.push(kind);
-        f.open_questions = 0;
         if kind == FrameKind::Params {
             f.is_generator = generator;
             f.is_async = is_async;
@@ -564,13 +547,10 @@ impl Walk {
             && self.top().state == M_KEY_POS
         {
             FrameKind::ComputedKey
-        } else if self.top_declarator() == D_BINDING {
-            FrameKind::ArrayPattern
         } else {
             FrameKind::Array
         };
-        let f = self.push(kind);
-        f.open_questions = 0;
+        self.push(kind);
         self.operand_done();
     }
 
@@ -582,12 +562,6 @@ impl Walk {
         match f.kind {
             FrameKind::ComputedKey => {
                 self.top_mut().state = M_KEY_SEEN;
-                self.value_done();
-            }
-            FrameKind::ArrayPattern => {
-                if let Some(di) = self.decl_frame() {
-                    self.frames[di].state = D_BOUND;
-                }
                 self.value_done();
             }
             _ => {
