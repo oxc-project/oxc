@@ -235,8 +235,7 @@ impl Walk {
             b'!' => {
                 // `x as T!`: not a type token.
                 self.end_region_for();
-                self.set_value();
-                self.clear_prev();
+                self.value_done();
                 pos + 1
             }
             _ => {
@@ -262,14 +261,12 @@ impl Walk {
             A_EXPR_ARGS => {
                 // Type arguments on an expression: the instantiation is a value, and no second list
                 // may follow.
-                self.set_value();
-                self.clear_prev();
+                self.value_done();
                 self.no_type_args = true;
             }
             A_DECL_PARAMS => {
                 // Type parameters of a declaration head.
-                self.set_value();
-                self.clear_prev();
+                self.value_done();
                 match self.top_kind() {
                     FrameKind::FnHead => self.prev_kw = tk!(KwFunction),
                     FrameKind::ClassHead => self.prev_kw = tk!(KwClass),

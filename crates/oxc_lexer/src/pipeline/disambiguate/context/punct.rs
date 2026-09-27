@@ -124,8 +124,7 @@ impl Walk {
             b'!' => {
                 if len == 1 && tokens.ts && !self.operand_allowed() && !newline {
                     // Postfix non-null / definite assignment.
-                    self.set_value();
-                    self.clear_prev();
+                    self.value_done();
                     return pos + 1;
                 }
                 self.operand_done();
@@ -135,8 +134,7 @@ impl Walk {
                 if len == 2 && c1 == c {
                     // `++` / `--`: postfix keeps the value.
                     if !self.operand_allowed() && !newline {
-                        self.set_value();
-                        self.clear_prev();
+                        self.value_done();
                     } else {
                         self.operand_done();
                     }
@@ -149,8 +147,7 @@ impl Walk {
                 if len == 1 {
                     if self.top_kind() == FrameKind::FnHead {
                         self.top_mut().is_generator = true;
-                        self.set_value();
-                        self.clear_prev();
+                        self.value_done();
                         self.prev_kw = tk!(KwFunction);
                         return pos + 1;
                     }
@@ -206,11 +203,6 @@ impl Walk {
                         || self.export_default;
                     self.decorator = if decl { 1 } else { 2 };
                 }
-                self.operand_done();
-                pos + 1
-            }
-            b'#' => {
-                // Stray `#` (private names are tk!(PrivateIdent) tokens).
                 self.operand_done();
                 pos + 1
             }
@@ -436,7 +428,7 @@ impl Walk {
                 self.decorator = 0;
                 return;
             }
-            if self.top().state == C_EXTENDS && self.prev_kw == tk!(KwExtends) {
+            if self.prev_kw == tk!(KwExtends) {
                 // Object literal as heritage.
                 kind = FrameKind::Object;
                 value = true;
@@ -468,11 +460,6 @@ impl Walk {
                 kind = FrameKind::Pattern;
             } else if matches!(reg, S_IMPORT | S_EXPORT | S_IMPORT_NAME) {
                 kind = FrameKind::ModuleSpec;
-            } else if reg == S_ENUM {
-                kind = FrameKind::EnumBody;
-            } else if reg == S_NAMESPACE || reg == S_DECLARE_MODULE || self.prev_kw == tk!(KwGlobal)
-            {
-                kind = FrameKind::Block;
             } else if matches!(top, FrameKind::Object) && self.top().state != M_VALUE {
                 // `{` at key position of an object literal: malformed; treat as a nested object.
                 kind = FrameKind::Object;
@@ -487,7 +474,7 @@ impl Walk {
             }
         }
         // Statement frames reset their registers when a block opens.
-        if kind == FrameKind::EnumBody || kind == FrameKind::Block || kind == FrameKind::TypeLit {
+        if kind == FrameKind::Block {
             self.set_stmt_reg(S_NONE);
         }
         let f = self.push(kind);
@@ -503,10 +490,6 @@ impl Walk {
         if kind == FrameKind::StaticBlock {
             f.is_generator = false;
             f.is_async = false;
-        }
-        if kind == FrameKind::TypeLit {
-            f.decl = true;
-            f.state = L_INTERFACE_BODY;
         }
         self.expect = if kind.is_stmt_holder() { Expect::Statement } else { Expect::Operand };
         self.clear_prev();
@@ -557,8 +540,7 @@ impl Walk {
             FrameKind::FnBody
             | FrameKind::ClassBody
             | FrameKind::StaticBlock
-            | FrameKind::Block
-            | FrameKind::EnumBody => {
+            | FrameKind::Block => {
                 // A statement-level body: a new statement may start; inside a class body a new
                 // member may start.
                 if matches!(self.top_kind(), FrameKind::ClassBody | FrameKind::Object) {
@@ -588,12 +570,10 @@ impl Walk {
 
     pub(super) fn open_paren(&mut self) {
         let top = self.top_kind();
-        let si = self.stmt_frame();
-        let head = if self.frames[si].kind.is_stmt_holder() { self.frames[si].head } else { 0 };
+        let for_head = self.prev_kw == tk!(KwFor);
         let kind;
         let mut generator = false;
         let mut is_async = false;
-        let mut head_kind = 0u8;
         if top == FrameKind::FnHead {
             kind = FrameKind::Params;
             generator = self.top().is_generator;
@@ -610,12 +590,10 @@ impl Walk {
             kind = FrameKind::Params;
             generator = m & MOD_GEN != 0;
             is_async = m & MOD_ASYNC != 0;
-        } else if head != 0
-            && matches_tk!(self.prev_kw, KwIf | KwWhile | KwFor | KwWith | KwSwitch | KwCatch)
+        } else if matches_tk!(self.prev_kw, KwIf | KwWhile | KwFor | KwWith | KwSwitch | KwCatch)
+            && self.frames[self.stmt_frame()].kind.is_stmt_holder()
         {
             kind = FrameKind::Head;
-            head_kind = head;
-            self.frames[si].head = 0;
         } else if self.operand_allowed() || self.prev_kw == tk!(KwNew) {
             kind = FrameKind::Group;
             is_async = self.prev_async;
@@ -623,7 +601,6 @@ impl Walk {
             kind = FrameKind::Call;
         }
         let f = self.push(kind);
-        f.head = head_kind;
         f.open_questions = 0;
         if kind == FrameKind::Params {
             f.is_generator = generator;
@@ -636,6 +613,7 @@ impl Walk {
         }
         if kind == FrameKind::Head {
             f.state = F_START;
+            f.for_head = for_head;
         }
         self.operand_done();
     }
@@ -650,12 +628,9 @@ impl Walk {
                 // A statement (or `{`) follows.
                 self.expect = Expect::Statement;
                 self.clear_prev();
-                let si = self.stmt_frame();
-                self.frames[si].head = 0;
             }
             FrameKind::Params => {
-                self.set_value();
-                self.clear_prev();
+                self.value_done();
                 self.closed_params = true;
             }
             FrameKind::Group => {
@@ -677,10 +652,8 @@ impl Walk {
             FrameKind::ComputedKey
         } else if self.top_declarator() == D_BINDING {
             FrameKind::ArrayPattern
-        } else if self.operand_allowed() {
-            FrameKind::Array
         } else {
-            FrameKind::Index
+            FrameKind::Array
         };
         let f = self.push(kind);
         f.open_questions = 0;

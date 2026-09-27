@@ -241,4 +241,13 @@ impl Tokens<'_> {
     pub(crate) fn match_delim_back(&self, from: usize, open: u8, close: u8) -> Option<usize> {
         walk::match_delim_back(self, from, open, close)
     }
+
+    /// The opener of the closer at from, whichever bracket it is.
+    pub(crate) fn match_back(&self, from: usize) -> Option<usize> {
+        match self.src[from] {
+            b')' => self.match_delim_back(from, b'(', b')'),
+            b']' => self.match_delim_back(from, b'[', b']'),
+            _ => self.match_delim_back(from, b'{', b'}'),
+        }
+    }
 }

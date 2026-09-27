@@ -88,8 +88,6 @@ pub(super) struct Walk {
     /// Set by the last processed token when the statement it completed cannot be continued by
     /// anything (`break label`, module specifier).
     pub(super) stmt_done: bool,
-    /// Last `after_token` query, so a site asking twice gets one answer.
-    pub(super) last_query: Option<(usize, After)>,
     /// Start of the last processed token (a query inside it, e.g. at the last `>` of a fused `>>>`,
     /// reports the state after it).
     pub(super) last_start: usize,
@@ -299,7 +297,6 @@ impl Walk {
         let f = &mut self.frames[i];
         f.state = D_NONE;
         f.reg = S_NONE;
-        f.head = 0;
         f.open_questions = 0;
         self.export_default = false;
         self.decorator = 0;
@@ -457,11 +454,9 @@ impl Walk {
                     | FrameKind::Params
                     | FrameKind::Group
                     | FrameKind::TypeLit
-                    | FrameKind::EnumBody
                     | FrameKind::ModuleSpec
                     | FrameKind::Pattern
                     | FrameKind::ArrayPattern
-                    | FrameKind::Index
                     | FrameKind::TypeParen
                     | FrameKind::TypeBracket
                     | FrameKind::Head
@@ -586,8 +581,7 @@ impl Walk {
             r.atom = true;
             r.inner = inner;
         }
-        self.set_value();
-        self.clear_prev();
+        self.value_done();
     }
 
     pub(super) fn type_operator(&mut self) {

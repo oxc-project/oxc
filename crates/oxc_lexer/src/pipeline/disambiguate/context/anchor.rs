@@ -42,13 +42,7 @@ fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
             match tokens.src[w] {
                 b'=' => {}
                 b'}' | b')' | b']' => {
-                    let c = tokens.src[w];
-                    let open = match c {
-                        b')' => b'(',
-                        b']' => b'[',
-                        _ => b'{',
-                    };
-                    let Some(o) = tokens.match_delim_back(w, open, c) else {
+                    let Some(o) = tokens.match_back(w) else {
                         return false;
                     };
                     q = tokens.prev_sig(o);

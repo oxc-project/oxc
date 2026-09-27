@@ -57,12 +57,7 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize) -> Option<usize> {
             let c = tokens.src[p];
             match c {
                 b')' | b']' | b'}' => {
-                    let open = match c {
-                        b')' => b'(',
-                        b']' => b'[',
-                        _ => b'{',
-                    };
-                    let o = tokens.match_delim_back(p, open, c)?;
+                    let o = tokens.match_back(p)?;
                     q = tokens.prev_sig(o);
                     continue;
                 }
