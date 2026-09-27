@@ -57,14 +57,16 @@ fn layouts_and_traits() {
     assert_eq!(size_of::<JSStr<'_>>(), if cfg!(target_pointer_width = "64") { 16 } else { 12 });
     assert_eq!(size_of::<Option<JSStr<'_>>>(), size_of::<JSStr<'_>>());
     assert_eq!(align_of::<JSStr<'_>>(), align_of::<usize>());
+
     assert!(implements!(JSStr: Send));
     assert!(implements!(JSStr: Sync));
     assert!(implements!(JSStr: Copy));
-    assert!(!implements!(JSStr: std::fmt::Display));
-    assert!(!implements!(JSStr: AsRef<str>));
-    assert!(!implements!(JSStr: std::ops::Deref));
-    assert!(!implements!(JSStr: Ord));
-    assert!(!implements!(JSStrBuilder: Send));
+    assert!(implements!(JSStr: !std::fmt::Display));
+    assert!(implements!(JSStr: !AsRef<str>));
+    assert!(implements!(JSStr: !std::ops::Deref));
+    assert!(implements!(JSStr: !Ord));
+
+    assert!(implements!(JSStrBuilder: !Send));
 }
 
 #[test]
