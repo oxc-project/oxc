@@ -1,6 +1,6 @@
 use oxc_allocator::{ArenaVec, GetAllocator};
 
-use crate::{JSChar, JSStr};
+use crate::{JSChar, JSStr, wtf8::*};
 
 /// Build a [`JSStr`] in an arena, preserving lone surrogates.
 ///
@@ -69,7 +69,7 @@ impl<'a> JSStrBuilder<'a> {
         // Reserve before changing state, so a capacity panic cannot leave
         // a flushed leading surrogate that a later append would fail to pair
         if self.pending_lead_surrogate.is_some() {
-            self.bytes.reserve(value.len() + 3);
+            self.bytes.reserve(value.len() + SURROGATE_BYTE_LEN);
             self.flush_pending();
         }
         self.bytes.extend_from_slice_copy(value.as_bytes());
@@ -78,7 +78,7 @@ impl<'a> JSStrBuilder<'a> {
     /// Append a Unicode scalar value.
     #[inline]
     pub fn push(&mut self, value: char) {
-        self.push_str(value.encode_utf8(&mut [0; 4]));
+        self.push_str(value.encode_utf8(&mut [0; char::MAX_LEN_UTF8]));
     }
 
     /// Append one JavaScript code point, pairing surrogates at the boundary.
@@ -88,13 +88,13 @@ impl<'a> JSStrBuilder<'a> {
         if let Some(lead) = self.pending_lead_surrogate
             && value.is_trail_surrogate()
         {
-            self.bytes.reserve(4);
+            self.bytes.reserve(char::MAX_LEN_UTF8);
             self.append_pair(lead, value.to_u32() as u16);
             self.pending_lead_surrogate = None;
             return;
         }
 
-        let mut buffer = [0; 4];
+        let mut buffer = [0; char::MAX_LEN_UTF8];
         let bytes = value.encode(&mut buffer);
         let additional = self.pending_bytes() + bytes.len();
         self.bytes.reserve(additional);
@@ -145,10 +145,12 @@ impl<'a> JSStrBuilder<'a> {
     #[cold]
     #[inline(never)]
     fn push_js_str_slow(&mut self, value: JSStr<'_>) {
-        // A surrogate's WTF-8 encoding is 0xED, then two continuation bytes
-        // holding the low twelve bits.
+        // A surrogate's WTF-8 encoding is `SURROGATE_FIRST_BYTE`, then two
+        // continuation bytes holding the low twelve bits.
         fn decode_surrogate(second: u8, third: u8) -> u16 {
-            0xD000 | (u16::from(second & 0x3F) << 6) | u16::from(third & 0x3F)
+            (u16::from(SURROGATE_FIRST_BYTE & THREE_BYTE_MASK) << 12)
+                | (u16::from(second & CONT_MASK) << 6)
+                | u16::from(third & CONT_MASK)
         }
 
         debug_assert!(value.has_lone_surrogate());
@@ -159,19 +161,26 @@ impl<'a> JSStrBuilder<'a> {
         let mut trimmed = false;
 
         if let Some(lead) = self.pending_lead_surrogate
-            && let [0xED, second @ (0xB0..), third, ..] = bytes
+            && let [SURROGATE_FIRST_BYTE, second @ (TRAIL_SURROGATE_SECOND_BYTE_MIN..), third, ..] =
+                bytes
         {
             self.append_pair(lead, decode_surrogate(*second, *third));
             self.pending_lead_surrogate = None;
-            bytes = &bytes[3..];
+            bytes = &bytes[SURROGATE_BYTE_LEN..];
             trimmed = true;
         } else {
             self.flush_pending();
         }
 
-        if let [.., 0xED, second @ 0xA0..=0xAF, third] = bytes {
+        if let [
+            ..,
+            SURROGATE_FIRST_BYTE,
+            second @ LEAD_SURROGATE_SECOND_BYTE_MIN..=LEAD_SURROGATE_SECOND_BYTE_MAX,
+            third,
+        ] = bytes
+        {
             self.pending_lead_surrogate = Some(decode_surrogate(*second, *third));
-            bytes = &bytes[..bytes.len() - 3];
+            bytes = &bytes[..bytes.len() - SURROGATE_BYTE_LEN];
             trimmed = true;
         }
 
@@ -180,7 +189,9 @@ impl<'a> JSStrBuilder<'a> {
         // An already-set output flag needs no further scan.
         self.has_lone_surrogate = self.has_lone_surrogate
             || !trimmed
-            || bytes.windows(3).any(|bytes| bytes[0] == 0xED && bytes[1] >= 0xA0);
+            || bytes.windows(SURROGATE_BYTE_LEN).any(|bytes| {
+                bytes[0] == SURROGATE_FIRST_BYTE && bytes[1] >= SURROGATE_SECOND_BYTE_MIN
+            });
         self.bytes.extend_from_slice_copy(bytes);
     }
 
@@ -199,14 +210,16 @@ impl<'a> JSStrBuilder<'a> {
 
     #[inline]
     fn pending_bytes(&self) -> usize {
-        if self.pending_lead_surrogate.is_some() { 3 } else { 0 }
+        if self.pending_lead_surrogate.is_some() { SURROGATE_BYTE_LEN } else { 0 }
     }
 
     /// Call only after reserving space and deciding the next append cannot pair.
     #[inline]
     fn flush_pending(&mut self) {
         if let Some(lead) = self.pending_lead_surrogate.take() {
-            self.bytes.extend_from_slice_copy(JSChar::from_code_unit(lead).encode(&mut [0; 4]));
+            self.bytes.extend_from_slice_copy(
+                JSChar::from_code_unit(lead).encode(&mut [0; char::MAX_LEN_UTF8]),
+            );
             self.has_lone_surrogate = true;
         }
     }
@@ -217,8 +230,10 @@ impl<'a> JSStrBuilder<'a> {
     /// Panics if `lead` and `trail` do not form a valid `char`.
     #[inline]
     fn append_pair(&mut self, lead: u16, trail: u16) {
-        let value = 0x10000 + ((u32::from(lead) - 0xD800) << 10) + (u32::from(trail) - 0xDC00);
+        let value = SUPPLEMENTARY_MIN
+            + ((u32::from(lead) - LEAD_SURROGATE_MIN) << 10)
+            + (u32::from(trail) - TRAIL_SURROGATE_MIN);
         let c = char::from_u32(value).unwrap();
-        self.bytes.extend_from_slice_copy(c.encode_utf8(&mut [0; 4]).as_bytes());
+        self.bytes.extend_from_slice_copy(c.encode_utf8(&mut [0; char::MAX_LEN_UTF8]).as_bytes());
     }
 }

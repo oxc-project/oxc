@@ -9,7 +9,7 @@ use std::{
 
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, GetAllocator};
 
-use crate::{Ident, JSChar, JSStrBuilder, Str};
+use crate::{Ident, JSChar, JSStrBuilder, Str, wtf8::*};
 
 /// An immutable JavaScript string borrowed from source text or arena memory.
 ///
@@ -192,11 +192,13 @@ impl<'a> JSStr<'a> {
     pub fn len_utf16(self) -> usize {
         // Every non-continuation byte starts one code point.
         // Four-byte code points contribute a second code unit.
-        // Valid WTF-8 has no other bytes >= 0xF0, so this counts code units
+        // Valid WTF-8 has no other bytes >= `FOUR_BYTE_TAG`, so this counts code units
         // without decoding individual points.
         self.as_bytes()
             .iter()
-            .map(|&byte| usize::from(byte & 0xC0 != 0x80) + usize::from(byte >= 0xF0))
+            .map(|&byte| {
+                usize::from(byte & !CONT_MASK != CONT_TAG) + usize::from(byte >= FOUR_BYTE_TAG)
+            })
             .sum()
     }
 
@@ -405,23 +407,24 @@ impl Iterator for JSChars<'_> {
     #[inline]
     fn next(&mut self) -> Option<JSChar> {
         let (&first, rest) = self.remaining.split_first()?;
-        let (value, len) = if first < 0x80 {
+        let (value, len) = if first.is_ascii() {
             (u32::from(first), 0)
         } else {
             // SAFETY: `remaining` is complete, valid WTF-8 at a code-point boundary.
             // Its leading byte therefore determines how many continuation bytes are present.
             // Their bit patterns and the encoding's range restrictions guarantee a value <= 0x10_FFFF.
             unsafe {
-                let second = u32::from(*rest.get_unchecked(0) & 0x3F);
-                if first < 0xE0 {
-                    ((u32::from(first & 0x1F) << 6) | second, 1)
+                let second = u32::from(*rest.get_unchecked(0) & CONT_MASK);
+                if first < THREE_BYTE_TAG {
+                    ((u32::from(first & TWO_BYTE_MASK) << 6) | second, 1)
                 } else {
-                    let third = u32::from(*rest.get_unchecked(1) & 0x3F);
-                    if first < 0xF0 {
-                        ((u32::from(first & 0x0F) << 12) | (second << 6) | third, 2)
+                    let third = u32::from(*rest.get_unchecked(1) & CONT_MASK);
+                    if first < FOUR_BYTE_TAG {
+                        ((u32::from(first & THREE_BYTE_MASK) << 12) | (second << 6) | third, 2)
                     } else {
-                        let fourth = u32::from(*rest.get_unchecked(2) & 0x3F);
-                        ((u32::from(first & 7) << 18) | (second << 12) | (third << 6) | fourth, 3)
+                        let fourth = u32::from(*rest.get_unchecked(2) & CONT_MASK);
+                        let first = u32::from(first & FOUR_BYTE_MASK);
+                        ((first << 18) | (second << 12) | (third << 6) | fourth, 3)
                     }
                 }
             }
@@ -435,13 +438,13 @@ impl Iterator for JSChars<'_> {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = self.remaining.len();
-        (len.div_ceil(4), Some(len))
+        (len.div_ceil(char::MAX_LEN_UTF8), Some(len))
     }
 }
 
 impl FusedIterator for JSChars<'_> {}
 
-/// Iterator over `u16` code points comprising a [`JSStr`].
+/// Iterator over `u16` code units comprising a [`JSStr`].
 #[derive(Clone)]
 struct EncodeUtf16<'a> {
     chars: JSChars<'a>,
@@ -461,12 +464,12 @@ impl Iterator for EncodeUtf16<'_> {
             return Some(trail);
         }
         let value = self.chars.next()?.to_u32();
-        if value <= 0xFFFF {
+        if value < SUPPLEMENTARY_MIN {
             Some(value as u16)
         } else {
-            let offset = value - 0x10000;
-            self.pending = 0xDC00 | (offset & 0x3FF) as u16;
-            Some(0xD800 | (offset >> 10) as u16)
+            let offset = value - SUPPLEMENTARY_MIN;
+            self.pending = (TRAIL_SURROGATE_MIN | (offset & SURROGATE_PAYLOAD_MASK)) as u16;
+            Some((LEAD_SURROGATE_MIN | (offset >> 10)) as u16)
         }
     }
 }

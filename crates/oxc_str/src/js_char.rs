@@ -1,3 +1,5 @@
+use crate::wtf8::*;
+
 /// A JavaScript string code point, including lone surrogates.
 ///
 /// The value is always in `0..=0x10_FFFF`. Unlike [`char`], this includes the
@@ -11,7 +13,7 @@ impl JSChar {
     /// Construct a code point, returning `None` if `value > 0x10_FFFF`.
     #[inline]
     pub const fn from_u32(value: u32) -> Option<Self> {
-        if value <= 0x10_FFFF { Some(Self(value)) } else { None }
+        if value <= CODE_POINT_MAX { Some(Self(value)) } else { None }
     }
 
     /// Return the code point's numeric value.
@@ -47,45 +49,45 @@ impl JSChar {
 
     #[inline]
     pub(super) const fn is_surrogate(self) -> bool {
-        self.0 >= 0xD800 && self.0 <= 0xDFFF
+        self.0 >= LEAD_SURROGATE_MIN && self.0 <= TRAIL_SURROGATE_MAX
     }
 
     #[inline]
     pub(super) const fn is_lead_surrogate(self) -> bool {
-        self.0 >= 0xD800 && self.0 <= 0xDBFF
+        self.0 >= LEAD_SURROGATE_MIN && self.0 <= LEAD_SURROGATE_MAX
     }
 
     #[inline]
     pub(super) const fn is_trail_surrogate(self) -> bool {
-        self.0 >= 0xDC00 && self.0 <= 0xDFFF
+        self.0 >= TRAIL_SURROGATE_MIN && self.0 <= TRAIL_SURROGATE_MAX
     }
 
     /// Encode one code point. The caller handles pairing adjacent surrogates.
     #[inline]
     #[expect(clippy::cast_possible_truncation, reason = "each byte is masked or range-checked")]
-    pub(super) fn encode(self, buffer: &mut [u8; 4]) -> &[u8] {
+    pub(super) fn encode(self, buffer: &mut [u8; char::MAX_LEN_UTF8]) -> &[u8] {
         let value = self.0;
         let len = match value {
-            0..=0x7F => {
+            0..=ONE_BYTE_CODE_POINT_MAX => {
                 buffer[0] = value as u8;
                 1
             }
-            0x80..=0x7FF => {
-                buffer[0] = 0xC0 | (value >> 6) as u8;
-                buffer[1] = 0x80 | (value & 0x3F) as u8;
+            TWO_BYTE_CODE_POINT_MIN..=TWO_BYTE_CODE_POINT_MAX => {
+                buffer[0] = TWO_BYTE_TAG | (value >> 6) as u8;
+                buffer[1] = CONT_TAG | (value as u8 & CONT_MASK);
                 2
             }
-            0x800..=0xFFFF => {
-                buffer[0] = 0xE0 | (value >> 12) as u8;
-                buffer[1] = 0x80 | ((value >> 6) & 0x3F) as u8;
-                buffer[2] = 0x80 | (value & 0x3F) as u8;
+            THREE_BYTE_CODE_POINT_MIN..=THREE_BYTE_CODE_POINT_MAX => {
+                buffer[0] = THREE_BYTE_TAG | (value >> 12) as u8;
+                buffer[1] = CONT_TAG | ((value >> 6) as u8 & CONT_MASK);
+                buffer[2] = CONT_TAG | (value as u8 & CONT_MASK);
                 3
             }
             _ => {
-                buffer[0] = 0xF0 | (value >> 18) as u8;
-                buffer[1] = 0x80 | ((value >> 12) & 0x3F) as u8;
-                buffer[2] = 0x80 | ((value >> 6) & 0x3F) as u8;
-                buffer[3] = 0x80 | (value & 0x3F) as u8;
+                buffer[0] = FOUR_BYTE_TAG | (value >> 18) as u8;
+                buffer[1] = CONT_TAG | ((value >> 12) as u8 & CONT_MASK);
+                buffer[2] = CONT_TAG | ((value >> 6) as u8 & CONT_MASK);
+                buffer[3] = CONT_TAG | (value as u8 & CONT_MASK);
                 4
             }
         };

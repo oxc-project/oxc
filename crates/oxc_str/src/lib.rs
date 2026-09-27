@@ -34,6 +34,7 @@ mod js_char;
 mod js_str;
 mod js_str_builder;
 mod str;
+mod wtf8;
 
 pub use compact_str::{CompactStr, MAX_INLINE_LEN};
 pub use ident::{ArenaIdentHashMap, ArenaIdentHashSet, Ident, IdentHashMap, IdentHashSet};
