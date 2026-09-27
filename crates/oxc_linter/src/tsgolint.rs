@@ -1238,7 +1238,7 @@ fn should_skip_diagnostic(
     path: &Path,
     tsgolint_diagnostic: &TsGoLintRuleDiagnostic,
 ) -> bool {
-    let span = if tsgolint_diagnostic.span.is_unspanned() {
+    let main_span = if tsgolint_diagnostic.span.is_unspanned() {
         tsgolint_diagnostic
             .labeled_ranges
             .first()
@@ -1247,11 +1247,26 @@ fn should_skip_diagnostic(
         tsgolint_diagnostic.span
     };
 
+    // oxlint prints the position of the first labeled range rather than the main span
+    // (e.g. tsgolint reports the `=`/`=>` token as the main span and the expression as
+    // a labeled range), so check disable directives against the labeled ranges as well.
+    // This way a directive targeting the printed line suppresses the diagnostic.
+    let mut spans = iter::once(main_span).chain(
+        tsgolint_diagnostic
+            .labeled_ranges
+            .iter()
+            .map(|range| Span::new(range.range.pos, range.range.end)),
+    );
+
     if let Some(directives) = disable_directives_map.get(path) {
-        directives.contains(&tsgolint_diagnostic.rule, span)
-            || directives.contains(&format!("typescript-eslint/{}", tsgolint_diagnostic.rule), span)
-            || directives
-                .contains(&format!("@typescript-eslint/{}", tsgolint_diagnostic.rule), span)
+        let rule = &tsgolint_diagnostic.rule;
+        let typescript_eslint_rule = format!("typescript-eslint/{rule}");
+        let at_typescript_eslint_rule = format!("@typescript-eslint/{rule}");
+        spans.any(|span| {
+            directives.contains(rule, span)
+                || directives.contains(&typescript_eslint_rule, span)
+                || directives.contains(&at_typescript_eslint_rule, span)
+        })
     } else {
         debug_assert!(
             false,
@@ -1786,6 +1801,74 @@ mod test {
         assert!(rules.contains(&rule1), "Rule with ignoreVoid: true should be present");
         assert!(rules.contains(&rule2), "Rule with ignoreVoid: false should be present");
         assert!(rules.contains(&rule3), "Rule with no options should be present");
+    }
+
+    #[test]
+    fn test_should_skip_diagnostic_checks_labeled_ranges() {
+        // <https://github.com/oxc-project/oxc/issues/27084>
+        // tsgolint reports the `=>`/`=` token as the main span and the expression as a
+        // labeled range; oxlint prints the labeled range's position. A disable directive
+        // targeting the printed line must suppress the diagnostic.
+        use oxc_allocator::Allocator;
+        use oxc_parser::Parser;
+        use oxc_semantic::SemanticBuilder;
+        use oxc_span::SourceType;
+        use rustc_hash::FxHashMap;
+        use std::path::PathBuf;
+
+        use super::should_skip_diagnostic;
+        use crate::disable_directives::{DisableDirectives, DisableDirectivesBuilder};
+
+        fn build_directives(source_text: &str) -> DisableDirectives {
+            let allocator = Allocator::default();
+            let ret = Parser::new(&allocator, source_text, SourceType::ts()).parse();
+            assert!(ret.diagnostics.is_empty());
+            let semantic =
+                SemanticBuilder::new_linter().build(allocator.alloc(ret.program)).semantic;
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments())
+        }
+
+        fn make_diagnostic(rule: &str) -> TsGoLintRuleDiagnostic {
+            TsGoLintRuleDiagnostic {
+                span: Span::new(42, 44), // the `=>` token (main span)
+                rule: rule.into(),
+                message: RuleMessage {
+                    id: "some_id".into(),
+                    description: "Some description".into(),
+                    help: None,
+                },
+                fixes: vec![],
+                suggestions: vec![],
+                labeled_ranges: vec![
+                    // the expression `anyv()`, which oxlint prints
+                    LabeledRange { label: "anyv()".into(), range: Range { pos: 105, end: 111 } },
+                ],
+                file_path: "probe.ts".into(),
+            }
+        }
+
+        let source_text = "export const a = (\n  x: number,\n): string =>\n  // oxlint-disable-next-line typescript/no-unsafe-return\n  anyv()\n";
+        // Sanity-check the hardcoded spans above against the fixture source.
+        assert_eq!(&source_text[42..44], "=>");
+        assert_eq!(&source_text[105..111], "anyv()");
+
+        let path = PathBuf::from("probe.ts");
+        let mut map = FxHashMap::default();
+        map.insert(path.clone(), build_directives(source_text));
+
+        // Directive targets the printed line (the labeled range) -> suppressed.
+        assert!(should_skip_diagnostic(&map, &path, &make_diagnostic("no-unsafe-return")));
+        // Directive names a different rule -> not suppressed.
+        assert!(!should_skip_diagnostic(&map, &path, &make_diagnostic("no-unsafe-assignment")));
+
+        // Directive on the main span's line still suppresses (existing behavior).
+        let source_text = "export const a = (): string => anyv() // oxlint-disable-line typescript/no-unsafe-return\n";
+        let mut map = FxHashMap::default();
+        map.insert(path.clone(), build_directives(source_text));
+        let mut diagnostic = make_diagnostic("no-unsafe-return");
+        diagnostic.span = Span::new(28, 30); // `=>` on line 1
+        assert_eq!(&source_text[28..30], "=>");
+        assert!(should_skip_diagnostic(&map, &path, &diagnostic));
     }
 
     #[test]
