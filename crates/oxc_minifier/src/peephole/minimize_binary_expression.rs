@@ -92,7 +92,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn unwrap_left_from_binary_expr(
+    fn unwrap_left_from_binary_expr(
         e: Expression<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -100,7 +100,7 @@ impl<'a> PeepholeOptimizations {
         e.unbox().left
     }
 
-    pub fn unwrap_right_from_binary_expr(
+    fn unwrap_right_from_binary_expr(
         e: Expression<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
