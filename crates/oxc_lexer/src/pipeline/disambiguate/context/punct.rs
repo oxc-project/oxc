@@ -227,7 +227,6 @@ impl Walk {
             let f = self.push(FrameKind::Concise);
             f.is_generator = false;
             f.is_async = is_async;
-            f.reserved = false;
         }
         self.operand_done();
         self.prev_arrow = true;
@@ -412,8 +411,6 @@ impl Walk {
         let mut value = false;
         let mut generator = false;
         let mut is_async = false;
-        let mut strict = self.top().strict;
-        let mut reserved = false;
         if matches!(top, FrameKind::JsxTag | FrameKind::JsxElem) {
             kind = FrameKind::Container;
         } else if top == FrameKind::ClassHead {
@@ -436,7 +433,6 @@ impl Walk {
                 let h = self.pop();
                 kind = FrameKind::ClassBody;
                 value = h.is_value;
-                strict = true;
             }
         } else if top == FrameKind::FnHead {
             let h = self.pop();
@@ -452,8 +448,8 @@ impl Walk {
             && self.top().state == M_KEY_POS
         {
             kind = FrameKind::StaticBlock;
-            reserved = true;
-            strict = true;
+            // Await is the operator in a static block, yield a name.
+            is_async = true;
         } else {
             let reg = self.stmt_reg();
             if self.top_declarator() == D_BINDING {
@@ -479,17 +475,9 @@ impl Walk {
         }
         let f = self.push(kind);
         f.is_value = value;
-        f.strict = strict;
-        f.reserved |= reserved;
-        if matches!(kind, FrameKind::FnBody | FrameKind::ArrowBody) {
+        if matches!(kind, FrameKind::FnBody | FrameKind::ArrowBody | FrameKind::StaticBlock) {
             f.is_generator = generator;
             f.is_async = is_async;
-            f.reserved = false;
-            f.prologue = true;
-        }
-        if kind == FrameKind::StaticBlock {
-            f.is_generator = false;
-            f.is_async = false;
         }
         self.expect = if kind.is_stmt_holder() { Expect::Statement } else { Expect::Operand };
         self.clear_prev();
@@ -605,7 +593,6 @@ impl Walk {
         if kind == FrameKind::Params {
             f.is_generator = generator;
             f.is_async = is_async;
-            f.reserved = false;
         }
         if kind == FrameKind::Group && is_async {
             // Kept off is_async, which nested frames would inherit as an await context.

@@ -112,13 +112,7 @@ impl Walk {
         let gts = std::mem::take(&mut self.gts);
         *self = Walk { frames, jumps, gts, ..Walk::default() };
         self.frames.clear();
-        self.frames.push(Frame {
-            kind: FrameKind::Root,
-            is_async: module,
-            strict: module,
-            prologue: true,
-            ..Frame::default()
-        });
+        self.frames.push(Frame { kind: FrameKind::Root, is_async: module, ..Frame::default() });
     }
 
     #[inline]
@@ -512,12 +506,12 @@ impl Walk {
     /// Is the identifier `yield` at the (unprocessed) token `pos` a keyword?
     pub(super) fn yield_is_keyword(&self) -> bool {
         let s = self.scope();
-        !s.field_init() && (s.is_generator || s.strict || s.reserved)
+        !s.field_init() && s.is_generator
     }
 
     pub(super) fn await_is_keyword(&self) -> bool {
         let s = self.scope();
-        !s.field_init() && (s.is_async || s.reserved)
+        !s.field_init() && s.is_async
     }
 
     pub(super) fn site(&self) -> Site {

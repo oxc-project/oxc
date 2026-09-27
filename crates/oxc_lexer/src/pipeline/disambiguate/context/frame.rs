@@ -134,8 +134,6 @@ pub(super) struct Frame {
     pub(super) kind: FrameKind,
     pub(super) is_generator: bool,
     pub(super) is_async: bool,
-    pub(super) strict: bool,
-    pub(super) reserved: bool,
     /// Braces: closing this frame ends a value.
     pub(super) is_value: bool,
     /// Type frames: part of a declaration type (vs embedded in an expression).
@@ -151,7 +149,6 @@ pub(super) struct Frame {
     /// Head: the parens of a for, where of may be the keyword.
     pub(super) for_head: bool,
     pub(super) open_questions: u16,
-    pub(super) prologue: bool,
 }
 
 impl Frame {
@@ -173,8 +170,6 @@ impl Frame {
             kind,
             is_generator: self.is_generator && !init,
             is_async: self.is_async && !init,
-            strict: self.strict,
-            reserved: self.reserved && !init,
             ..Frame::default()
         }
     }

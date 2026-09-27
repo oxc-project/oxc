@@ -124,19 +124,11 @@ impl Walk {
         {
             self.end_statement();
         }
-        // The directive prologue ends at the first statement that is not a string literal.
-        if self.at_stmt_start() {
-            let si = self.stmt_frame();
-            if self.frames[si].prologue && k != tk!(String) {
-                self.frames[si].prologue = false;
-            }
-        }
-
         let end = match k {
             tk!(Ident) => self.step_word(tokens, pos, newline),
             tk!(Number | BigInt | String | RegExp | TemplateNoSub | PrivateIdent) => {
                 let e = tokens.next_start(pos + 1);
-                self.literal(tokens, pos, k, e);
+                self.literal(tokens, k, e);
                 e
             }
             tk!(TemplateHead) => {
@@ -255,31 +247,12 @@ impl Walk {
         }
     }
 
-    fn literal(&mut self, tokens: &Tokens, pos: usize, k: u8, end: usize) {
+    fn literal(&mut self, tokens: &Tokens, k: u8, end: usize) {
         if self.in_type() {
             self.type_atom(false);
             return;
         }
-        // Directive prologue.
         if k == tk!(String) {
-            let si = self.stmt_frame();
-            if self.frames[si].prologue && self.at_stmt_start() {
-                let j = tokens.peek(end);
-                let confirmed = j.kind == tk!(Eof)
-                    || (j.kind >= OP_KIND_BASE && matches!(j.byte, b';' | b'}'))
-                    || (tokens.line_break_between(end, j.pos)
-                        && !continues_expression(tokens, j.pos));
-                if confirmed {
-                    if end - pos == 12
-                        && tokens.ident_is(pos + 1, b"use strict")
-                        && tokens.src[end - 1] == tokens.src[pos]
-                    {
-                        self.frames[si].strict = true;
-                    }
-                } else {
-                    self.frames[si].prologue = false;
-                }
-            }
             // Module specifier: `import "x"`, `... from "x"`.
             let reg = self.stmt_reg();
             if (matches!(reg, S_IMPORT | S_IMPORT_NAME)
