@@ -1,8 +1,6 @@
 //! Punctuation inside a type: type regions and how each kind of region ends, angle lists,
 //! and the `<` that may open one.
 
-use crate::token::tk;
-
 use super::*;
 
 impl Walk {
@@ -208,51 +206,32 @@ impl Walk {
         match a.state {
             A_ASSERT => {
                 // Type assertion `<T>`: an operand follows.
-                if self.top_kind() == FrameKind::TypeRegion && self.top().state == R_ASSERT {
-                    self.pop();
-                }
                 self.operand_done();
             }
-            A_EXPR_ARGS => {
-                // Type arguments on an expression: the instantiation is a value, and no second list
-                // may follow.
+            A_VALUE => {
+                // The head or instantiation is a value, and no second list may follow.
                 self.value_done();
                 self.no_type_args = true;
-            }
-            A_DECL_PARAMS => {
-                // Type parameters of a declaration head.
-                self.value_done();
-                match self.top_kind() {
-                    FrameKind::FnHead => self.prev_kw = tk!(KwFunction),
-                    FrameKind::ClassHead => self.prev_kw = tk!(KwClass),
-                    _ => {}
-                }
             }
             _ => self.type_atom(false),
         }
     }
 
     pub(super) fn less_than(&mut self, tokens: &Tokens, pos: usize) {
-        // Type parameters of a declaration head or member.
-        if tokens.ts && self.type_params_expected() {
-            self.push(FrameKind::Angle).state = A_DECL_PARAMS;
-            self.operand_done();
-            return;
-        }
-        if tokens.ts && self.operand_allowed() {
-            // `<T>x` assertion / `<T,>() =>` generic arrow: a type list.
-            self.open_region(R_ASSERT);
-            self.push(FrameKind::Angle).state = A_ASSERT;
-            self.operand_done();
-            return;
-        }
-        if tokens.ts && !self.operand_allowed() && !self.no_type_args {
-            // After a value: type arguments (`f<T>(x)`) or less-than.
-            if type_args_at(tokens, pos) {
-                self.push(FrameKind::Angle).state = A_EXPR_ARGS;
-                self.operand_done();
-                return;
-            }
+        // Declaration type parameters, an assertion or generic arrow, type arguments, or less-than.
+        let list = if !tokens.ts {
+            0
+        } else if self.type_params_expected() {
+            A_VALUE
+        } else if self.operand_allowed() {
+            A_ASSERT
+        } else if !self.no_type_args && type_args_at(tokens, pos) {
+            A_VALUE
+        } else {
+            0
+        };
+        if list != 0 {
+            self.push(FrameKind::Angle).state = list;
         }
         self.operand_done();
     }

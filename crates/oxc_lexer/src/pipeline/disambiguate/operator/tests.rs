@@ -1075,3 +1075,10 @@ fn of_after_any_value_in_a_for_head() {
     regex("for (let x = 1 of /re/g.exec(s)) {}", ScriptTS);
     division("for (x = of / 2;;) {}", ScriptJS);
 }
+
+#[test]
+fn walk_past_a_function_expression() {
+    division("x = { f: function() {}, g: {} / 2 };", ScriptJS);
+    division("x = { f: class {}, g: {} / 2 };", ScriptJS);
+    division("x = { f: function() {}, g: [{} / 2] };", ScriptJS);
+}

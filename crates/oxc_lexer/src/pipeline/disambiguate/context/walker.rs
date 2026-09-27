@@ -80,8 +80,6 @@ pub(super) struct Walk {
     /// Previous token closed a Group (`)`), and whether `async` preceded it.
     pub(super) closed_group: bool,
     pub(super) closed_group_async: bool,
-    /// Previous token closed a Params frame.
-    pub(super) closed_params: bool,
     /// `export default` was just seen.
     pub(super) export_default: bool,
     /// Decorator at statement level / operand level (0 none).
@@ -451,7 +449,7 @@ impl Walk {
             }
         }
         // A bodiless function signature: `function f(a)` then a line break.
-        if self.top_kind() == FrameKind::FnHead && self.closed_params {
+        if self.top_kind() == FrameKind::FnHead && !self.operand_allowed() {
             return After::EndsDecl;
         }
         // `let x` with nothing after the binding.
@@ -521,7 +519,6 @@ impl Walk {
         self.prev_arrow = false;
         self.arrow_async = false;
         self.closed_group = false;
-        self.closed_params = false;
     }
 
     pub(super) fn type_atom(&mut self, inner: bool) {
