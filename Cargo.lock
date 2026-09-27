@@ -1844,6 +1844,7 @@ dependencies = [
  "oxc_estree_tokens",
  "oxc_formatter",
  "oxc_isolated_declarations",
+ "oxc_lexer",
  "oxc_linter",
  "oxc_mangler",
  "oxc_minifier",
