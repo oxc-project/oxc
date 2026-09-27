@@ -13,46 +13,50 @@ use crate::{Ident, JSChar, JSStrBuilder, Str};
 
 /// An immutable JavaScript string borrowed from source text or arena memory.
 ///
-/// JavaScript strings can contain lone surrogates, which Rust's [`prim@str`] cannot
-/// represent. `JSStr` stores [canonical WTF-8](https://wtf-8.codeberg.page/):
-/// Unicode scalar values use UTF-8, lone surrogates use three bytes, and a
-/// surrogate pair uses one four-byte supplementary character.
+/// JavaScript strings can contain lone surrogates, which Rust's [`str`] cannot represent.
+///
+/// [`JSStr`] stores [canonical WTF-8]:
+/// * Unicode scalar values use UTF-8.
+/// * Lone surrogates use three bytes.
+/// * Surrogate pairs use one four-byte supplementary character.
 ///
 /// # Invariants
 ///
 /// * The bytes are canonical WTF-8. In particular, a lead surrogate encoding
 ///   cannot be immediately followed by a trail surrogate encoding.
-/// * `has_lone_surrogate` is true if and only if the bytes encode a lone surrogate.
-///   When false, the bytes are valid UTF-8.
+/// * `has_lone_surrogate` is `true` if and only if the bytes encode at least 1 lone surrogate.
+///   When `false`, the bytes are valid UTF-8.
 /// * The pointer references `len` initialized bytes, valid and immutable for `'a`.
 /// * The byte length fits in `u32` and does not exceed `isize::MAX`.
 ///
-/// All constructors maintain these invariants. [`as_bytes`](Self::as_bytes)
-/// exposes the bytes read-only and [`from_bytes_unchecked`](Self::from_bytes_unchecked)
-/// re-borrows them under the same invariants; consumers read the value with
-/// [`as_str`](Self::as_str), [`chars`](Self::chars), or
-/// [`encode_utf16`](Self::encode_utf16).
+/// All constructors maintain these invariants.
+/// * [`as_bytes`] exposes the bytes read-only.
+/// * [`from_bytes_unchecked`] re-borrows them under the same invariants.
+///
+/// Consumers read the value with [`as_str`], [`chars`], or [`encode_utf16`].
 ///
 /// Equality uses the canonical bytes, and UTF-8 values hash like `str`. Ordering
 /// by these bytes would differ from JavaScript's UTF-16 ordering, so `JSStr`
 /// does not implement `Ord`.
 ///
 /// ```
-/// use oxc_allocator::Allocator;
+/// # use oxc_allocator::Allocator;
+/// # let allocator = Allocator::new();
 /// use oxc_str::JSStrBuilder;
 ///
-/// let allocator = Allocator::new();
 /// let mut builder = JSStrBuilder::new_in(&&allocator);
 /// builder.push_code_unit(0xD800);
 /// builder.push('a');
-/// let value = builder.into_js_str();
-/// assert_eq!(value.as_str(), None);
-/// assert_eq!(value.encode_utf16().collect::<Vec<_>>(), [0xD800, 0x61]);
+/// let s = builder.into_js_str();
+///
+/// assert_eq!(s.as_str(), None);
+/// assert_eq!(s.encode_utf16().collect::<Vec<_>>(), [0xD800, 0x61]);
 /// ```
 ///
 /// Borrowing source text does not extend its lifetime:
+///
 /// ```compile_fail
-/// use oxc_str::JSStr;
+/// # use oxc_str::JSStr;
 /// let value;
 /// {
 ///     let source = String::from("hello");
@@ -62,9 +66,10 @@ use crate::{Ident, JSChar, JSStrBuilder, Str};
 /// ```
 ///
 /// Arena-backed strings prevent resetting the arena while still in use:
+///
 /// ```compile_fail
-/// use oxc_allocator::Allocator;
-/// use oxc_str::JSStrBuilder;
+/// # use oxc_allocator::Allocator;
+/// # use oxc_str::JSStrBuilder;
 /// let mut allocator = Allocator::new();
 /// let mut builder = JSStrBuilder::new_in(&&allocator);
 /// builder.push_code_unit(0xD800);
@@ -72,6 +77,14 @@ use crate::{Ident, JSChar, JSStrBuilder, Str};
 /// allocator.reset();
 /// println!("{value:?}");
 /// ```
+///
+/// [`str`]: prim@str
+/// [canonical WTF-8]: https://wtf-8.codeberg.page/
+/// [`as_bytes`]: Self::as_bytes
+/// [`from_bytes_unchecked`]: Self::from_bytes_unchecked
+/// [`as_str`]: Self::as_str
+/// [`chars`]: Self::chars
+/// [`encode_utf16`]: Self::encode_utf16
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct JSStr<'a> {
@@ -91,15 +104,18 @@ impl JSStr<'static> {
 
 impl<'a> JSStr<'a> {
     /// Borrow UTF-8 bytes. Their validity already proves the WTF-8 invariant.
+    ///
+    /// # Panics
+    /// Panics if `value.len()` exceeds `u32::MAX`.
     #[inline]
     const fn from_str(value: &'a str) -> Self {
         assert!(value.len() <= u32::MAX as usize, "JavaScript string exceeds u32::MAX bytes");
-        // SAFETY: `str` is UTF-8 (thus canonical WTF-8 without surrogates), and
-        // its bytes are immutable and valid for `'a`. The length was checked.
+        // SAFETY: `str` is UTF-8 (thus canonical WTF-8 without surrogates),
+        // and its bytes are immutable and valid for `'a`. The length was checked.
         unsafe { Self::from_bytes_unchecked(value.as_bytes(), false) }
     }
 
-    /// Copy UTF-8 text into an arena.
+    /// Copy UTF-8 text into arena.
     ///
     /// # Panics
     /// Panics if the byte length exceeds `u32::MAX`.
@@ -111,8 +127,8 @@ impl<'a> JSStr<'a> {
 
     /// Concatenate JavaScript strings into an arena.
     ///
-    /// Leading and trailing surrogates pair across string boundaries, including
-    /// empty strings between them. Inputs are copied into the destination arena.
+    /// Leading and trailing surrogates pair across string boundaries, including empty strings between them.
+    /// Inputs are copied into the destination arena.
     ///
     /// # Panics
     /// Panics if the sum of input byte lengths exceeds `u32::MAX` or `isize::MAX`.
@@ -134,21 +150,23 @@ impl<'a> JSStr<'a> {
 
     /// Borrow the value as UTF-8, or return `None` if it contains a lone surrogate.
     ///
-    /// This checks the cached flag in O(1); it does not scan the bytes.
+    /// This checks the cached flag in O(1). It does not scan the bytes.
     #[inline]
     pub fn as_str(self) -> Option<&'a str> {
         if self.has_lone_surrogate() {
             None
         } else {
-            // SAFETY: By `JSStr`'s invariant, canonical WTF-8 with a false
-            // surrogate flag is valid UTF-8.
+            // SAFETY: By `JSStr`'s invariant, canonical WTF-8 with no lone surrogates
+            // is valid UTF-8
             Some(unsafe { str::from_utf8_unchecked(self.as_bytes()) })
         }
     }
 
     /// Return the byte length of the WTF-8 representation.
     ///
-    /// Use [`len_utf16`](Self::len_utf16) for JavaScript's string length.
+    /// Use [`len_utf16`] for JavaScript's string length.
+    ///
+    /// [`len_utf16`]: Self::len_utf16
     #[inline]
     pub const fn len(self) -> usize {
         self.len as usize
@@ -160,7 +178,9 @@ impl<'a> JSStr<'a> {
         self.len == 0
     }
 
-    /// Return whether the string contains a lone surrogate, in O(1).
+    /// Return whether the string contains a lone surrogate.
+    ///
+    /// This checks the cached flag in O(1). It does not scan the bytes.
     #[inline]
     pub const fn has_lone_surrogate(self) -> bool {
         self.has_lone_surrogate
@@ -170,9 +190,10 @@ impl<'a> JSStr<'a> {
     ///
     /// This scans the bytes in O(n) time.
     pub fn len_utf16(self) -> usize {
-        // Every non-continuation byte starts one code point. Four-byte code
-        // points contribute a second code unit. Valid WTF-8 has no other bytes
-        // >= 0xF0, so this counts code units without decoding individual points.
+        // Every non-continuation byte starts one code point.
+        // Four-byte code points contribute a second code unit.
+        // Valid WTF-8 has no other bytes >= 0xF0, so this counts code units
+        // without decoding individual points.
         self.as_bytes()
             .iter()
             .map(|&byte| usize::from(byte & 0xC0 != 0x80) + usize::from(byte >= 0xF0))
@@ -193,10 +214,12 @@ impl<'a> JSStr<'a> {
 
     /// Borrow the underlying canonical WTF-8 bytes.
     ///
-    /// Together with [`has_lone_surrogate`](Self::has_lone_surrogate), the
-    /// bytes are a complete representation: storage held outside an arena can
-    /// keep them and borrow the value back with
-    /// [`from_bytes_unchecked`](Self::from_bytes_unchecked).
+    /// Together with [`has_lone_surrogate`], the bytes are a complete representation.
+    /// Storage held outside an arena can keep them and convert back to a [`JSStr`]
+    /// with [`from_bytes_unchecked`].
+    ///
+    /// [`has_lone_surrogate`]: Self::has_lone_surrogate
+    /// [`from_bytes_unchecked`]: Self::from_bytes_unchecked
     #[inline]
     pub fn as_bytes(self) -> &'a [u8] {
         // SAFETY: `JSStr`'s pointer references `len` initialized bytes, valid
@@ -205,17 +228,19 @@ impl<'a> JSStr<'a> {
     }
 
     /// Borrow bytes whose encoding and metadata have already been established,
-    /// such as bytes previously taken from [`as_bytes`](Self::as_bytes)
-    /// together with the value's surrogate flag.
+    /// such as bytes previously taken from [`as_bytes`] together with the lone surrogate flag.
     ///
-    /// # Safety
-    /// * `bytes` must be canonical WTF-8: valid WTF-8 in which a lead
-    ///   surrogate encoding is never followed by a trail surrogate encoding.
+    /// # SAFETY
+    ///
+    /// * `bytes` must be canonical WTF-8 - valid WTF-8 in which a lead surrogate encoding
+    ///   is never followed by a trail surrogate encoding.
     /// * `has_lone_surrogate` must exactly describe whether they encode a lone surrogate.
     /// * `bytes.len()` must fit in `u32`.
     ///
-    /// The reference itself guarantees initialization, immutability, lifetime,
-    /// and the `isize::MAX` bound.
+    /// The `&[u8]` reference itself guarantees initialization, immutability, lifetime,
+    /// and that `bytes.len()` cannot exceed `isize::MAX`.
+    ///
+    /// [`as_bytes`]: Self::as_bytes
     #[inline]
     #[expect(clippy::cast_possible_truncation, reason = "the caller guarantees the length fits")]
     pub const unsafe fn from_bytes_unchecked(bytes: &'a [u8], has_lone_surrogate: bool) -> Self {
@@ -228,14 +253,17 @@ impl<'a> JSStr<'a> {
     }
 }
 
-// SAFETY: The only referenced storage is an immutable byte slice valid for
-// `'a`. `JSStr` exposes neither mutation nor an allocator reference.
+/// SAFETY: The only referenced storage is an immutable byte slice valid for `'a`.
+/// `JSStr` exposes neither mutation nor an allocator reference.
 unsafe impl Send for JSStr<'_> {}
-// SAFETY: Sharing `JSStr` only shares immutable bytes, as with `&[u8]`.
+/// SAFETY: Sharing `JSStr` only shares immutable bytes, as with `&[u8]`.
 unsafe impl Sync for JSStr<'_> {}
 
 impl<'a> From<&'a str> for JSStr<'a> {
-    /// Borrow UTF-8 without allocating. Panics if its byte length exceeds `u32::MAX`.
+    /// Borrow UTF-8 without allocating.
+    ///
+    /// # Panics
+    /// Panics if `value.len()` exceeds `u32::MAX`.
     #[inline]
     fn from(value: &'a str) -> Self {
         Self::from_str(value)
@@ -323,8 +351,8 @@ impl fmt::Debug for JSStr<'_> {
         f.write_char('"')?;
         for c in self.chars() {
             if let Some(c) = c.to_char() {
-                // `char::escape_debug` escapes a quote for `char` literals;
-                // `str`'s Debug prints it plain, and this output is a string.
+                // `char::escape_debug` escapes a quote for `char` literals.
+                // `str`'s `Debug` prints it plain, and this output is a string.
                 if c == '\'' {
                     f.write_char(c)?;
                 } else {
@@ -363,7 +391,9 @@ impl<'a> Dummy<'a> for JSStr<'a> {
     }
 }
 
-/// `remaining` is always canonical WTF-8 starting at a code-point boundary.
+/// Iterator over [`JSChar`]s comprising a [`JSStr`].
+//
+// `remaining` is always canonical WTF-8 starting at a code-point boundary.
 #[derive(Clone)]
 struct JSChars<'a> {
     remaining: &'a [u8],
@@ -378,10 +408,9 @@ impl Iterator for JSChars<'_> {
         let (value, len) = if first < 0x80 {
             (u32::from(first), 0)
         } else {
-            // SAFETY: `remaining` is complete, valid WTF-8 at a code-point
-            // boundary. Its leading byte therefore determines how many
-            // continuation bytes are present. Their bit patterns and the
-            // encoding's range restrictions guarantee a value <= 0x10FFFF.
+            // SAFETY: `remaining` is complete, valid WTF-8 at a code-point boundary.
+            // Its leading byte therefore determines how many continuation bytes are present.
+            // Their bit patterns and the encoding's range restrictions guarantee a value <= 0x10_FFFF.
             unsafe {
                 let second = u32::from(*rest.get_unchecked(0) & 0x3F);
                 if first < 0xE0 {
@@ -397,10 +426,10 @@ impl Iterator for JSChars<'_> {
                 }
             }
         };
-        // SAFETY: The complete code point has `len` continuation bytes, as
-        // established above. The suffix begins at the next code-point boundary.
+        // SAFETY: The complete code point has `len` continuation bytes, as established above.
+        // The suffix begins at the next code-point boundary.
         self.remaining = unsafe { rest.get_unchecked(len..) };
-        // SAFETY: Decoding valid WTF-8 produces a code point <= 0x10FFFF.
+        // SAFETY: Decoding valid WTF-8 produces a code point <= 0x10_FFFF
         Some(unsafe { JSChar::from_u32_unchecked(value) })
     }
 
@@ -412,10 +441,11 @@ impl Iterator for JSChars<'_> {
 
 impl FusedIterator for JSChars<'_> {}
 
+/// Iterator over `u16` code points comprising a [`JSStr`].
 #[derive(Clone)]
 struct EncodeUtf16<'a> {
     chars: JSChars<'a>,
-    /// Zero when empty, otherwise a trailing surrogate (which cannot be zero).
+    /// 0 when empty, otherwise a trailing surrogate (which cannot be 0).
     pending: u16,
 }
 
