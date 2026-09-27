@@ -100,7 +100,7 @@ impl Walk {
             }
             tk!(KwOf) => {
                 if !(self.top_kind() == FrameKind::Head
-                    && self.top().head == H_FOR
+                    && self.top().for_head
                     && self.top().state == F_BOUND)
                 {
                     return 0;
@@ -194,12 +194,11 @@ impl Walk {
         }
     }
 
-    /// A statement register that takes this word as a declared name (`break label`, `type X`,
-    /// `namespace N`, `enum E`, `import x`, `export as namespace N`). True when it did.
+    /// True when a statement register takes the word as its name (break label, type X, import x).
     fn declared_name(&mut self, tokens: &Tokens, end: usize, kw: u8) -> bool {
         match self.stmt_reg() {
             S_BREAK => {
-                // `break label`: the statement is complete.
+                // break label, export as namespace N: the statement is complete.
                 self.set_stmt_reg(S_NONE);
                 self.value_done();
                 self.stmt_done = true;
@@ -207,10 +206,6 @@ impl Walk {
             }
             S_TYPE => {
                 self.set_stmt_reg(S_TYPE_NAME);
-                self.value_done();
-            }
-            S_NAMESPACE | S_ENUM if kw == 0 || kw == tk!(KwGlobal) => {
-                // The declared name (dotted for namespaces).
                 self.value_done();
             }
             S_IMPORT if kw == 0 || kw == tk!(KwType) => {
@@ -228,15 +223,9 @@ impl Walk {
                 self.value_done();
             }
             S_EXPORT_AS if kw == tk!(KwNamespace) => {
-                self.set_stmt_reg(S_EXPORT_AS_NS);
+                self.set_stmt_reg(S_BREAK);
                 self.set_operand();
                 self.prev_kw = tk!(KwNamespace);
-            }
-            S_EXPORT_AS_NS => {
-                self.set_stmt_reg(S_NONE);
-                self.value_done();
-                self.stmt_done = true;
-                self.after_statement();
             }
             _ => return false,
         }
@@ -262,8 +251,7 @@ impl Walk {
                 f.is_value = value;
                 f.is_async = is_async;
                 f.is_generator = false;
-                self.set_value();
-                self.clear_prev();
+                self.value_done();
                 self.prev_kw = tk!(KwFunction);
                 self.export_default = false;
             }
@@ -275,44 +263,21 @@ impl Walk {
                 };
                 let f = self.push(FrameKind::ClassHead);
                 f.is_value = value;
-                self.set_value();
-                self.clear_prev();
+                self.value_done();
                 self.prev_kw = tk!(KwClass);
                 self.export_default = false;
                 self.decorator = 0;
-            }
-            tk!(KwExtends) => {
-                // Class heritage expression.
-                if self.top_kind() == FrameKind::ClassHead {
-                    self.top_mut().state = C_EXTENDS;
-                }
-                self.keyword(tk!(KwExtends));
-            }
-            tk!(KwImplements) => {
-                // Type references follow.
-                self.top_mut().state = C_IMPLEMENTS;
-                self.keyword(tk!(KwImplements));
             }
             tk!(KwWith) if matches!(stmt_reg, S_IMPORT | S_IMPORT_NAME | S_EXPORT) => {
                 // Import attributes: `from "x" with { type: "json" }`.
                 self.keyword(tk!(KwWith));
             }
             tk!(KwIf | KwWhile | KwFor | KwWith | KwSwitch | KwCatch) => {
-                self.operand_done();
+                self.keyword(kw);
                 if kw == tk!(KwCatch) {
                     // `catch {` without a binding.
                     self.expect = Expect::Statement;
                 }
-                self.prev_kw = kw;
-                let hi = self.stmt_frame();
-                self.frames[hi].head = match kw {
-                    tk!(KwIf) => H_IF,
-                    tk!(KwWhile) => H_WHILE,
-                    tk!(KwFor) => H_FOR,
-                    tk!(KwWith) => H_WITH,
-                    tk!(KwSwitch) => H_SWITCH,
-                    _ => H_CATCH,
-                };
             }
             tk!(KwElse | KwDo | KwTry | KwFinally) => {
                 self.expect = Expect::Statement;
@@ -321,7 +286,7 @@ impl Walk {
             }
             tk!(
                 KwReturn | KwThrow | KwYield | KwAwait | KwTypeof | KwVoid | KwDelete | KwNew | KwIn
-                | KwInstanceof | KwOf | KwDebugger
+                | KwInstanceof | KwOf | KwDebugger | KwExtends | KwImplements
             ) => {
                 if self.top_kind() == FrameKind::Head && matches_tk!(kw, KwOf | KwIn) {
                     self.top_mut().state = F_ITER;
@@ -366,8 +331,7 @@ impl Walk {
                 let nx = tokens.peek(end);
                 if nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'.') {
                     // `import(...)` / `import.meta`: an expression.
-                    self.set_value();
-                    self.clear_prev();
+                    self.value_done();
                     self.prev_kw = tk!(KwImport);
                 } else {
                     self.set_stmt_reg(S_IMPORT);
@@ -416,16 +380,11 @@ impl Walk {
                 let f = self.push(FrameKind::ClassHead);
                 f.is_value = false;
                 f.reg = C_INTERFACE;
-                self.set_value();
-                self.clear_prev();
+                self.value_done();
                 self.prev_kw = tk!(KwInterface);
             }
-            tk!(KwEnum) => {
-                self.set_stmt_reg(S_ENUM);
-                self.keyword(tk!(KwEnum));
-            }
-            tk!(KwNamespace | KwModule) => {
-                self.set_stmt_reg(S_NAMESPACE);
+            tk!(KwNamespace | KwModule | KwEnum) => {
+                self.set_stmt_reg(S_NONE);
                 let declare = self.prev_kw == tk!(KwDeclare);
                 self.keyword(kw);
                 if declare && kw == tk!(KwModule) {

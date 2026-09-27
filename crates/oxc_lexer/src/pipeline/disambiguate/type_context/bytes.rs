@@ -96,7 +96,7 @@ pub(crate) fn lt_run_split(tokens: &Tokens, lt: usize) -> bool {
     list_closer(tokens, lt).is_some()
 }
 
-pub(crate) fn arrow_after_params(tokens: &Tokens, lp: usize) -> bool {
+pub(super) fn arrow_after_params(tokens: &Tokens, lp: usize) -> bool {
     let Tokens { src, n, .. } = *tokens;
     let Some(rp) = group_closer(tokens, lp) else {
         return false;

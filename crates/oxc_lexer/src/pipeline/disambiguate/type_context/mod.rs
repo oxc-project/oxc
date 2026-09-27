@@ -24,9 +24,8 @@ mod runs;
 mod tsx;
 mod type_list;
 
-pub(crate) use bytes::arrow_after_params;
 pub(crate) use runs::{gt_run_split, lt_run_split};
-pub(crate) use tsx::{jsx_site_is_expression, ts_type_region_open, type_parameter_list_head};
+pub(crate) use tsx::jsx_over_generic;
 pub(super) use type_list::type_args_at;
 
 #[cfg(test)]
