@@ -27,11 +27,13 @@ fn yield_keyword_stays_regex() {
 }
 
 #[test]
-fn strict_yield_stays_regex() {
-    regex("\"use strict\"; var r = yield /2/g;", ScriptJS);
-    regex("'use strict'\nvar r = yield /2/g;", ScriptJS);
-    regex("function f() { \"use strict\"; return yield /2/g; }", ScriptJS);
-    regex("class C { m() { return yield /2/g; } }", ScriptJS);
+fn strict_yield_outside_a_generator_divides() {
+    // Strict mode makes yield a reserved word, an early error; the grammar still reads a name.
+    division("\"use strict\"; var r = yield /2/g;", ScriptJS);
+    division("'use strict'\nvar r = yield /2/g;", ScriptJS);
+    division("function f() { \"use strict\"; return yield /2/g; }", ScriptJS);
+    division("class C { m() { return yield /2/g; } }", ScriptJS);
+    division("class C { static { yield /2/g; } }", ScriptJS);
     division("var s = \"use strict\"; var yield = 1; var r = yield /2/g;", ScriptJS);
 }
 
@@ -85,17 +87,6 @@ fn module_goal_keeps_yield_and_await_reserved() {
 fn property_spellings_unaffected() {
     division("x.yield / 2;", ScriptJS);
     division("x.await / 2;", ScriptJS);
-}
-
-#[test]
-fn fake_directive_expression_continuation() {
-    division("\"use strict\"\n+ 1; var yield = 1; var r = yield /2/g;", ScriptJS);
-    division("\"use strict\"\n.length; var yield = 1; var r = yield /2/g;", ScriptJS);
-}
-
-#[test]
-fn leading_semicolon_ends_prologue() {
-    division("; \"use strict\"; var yield = 1; var r = yield /2/g;", ScriptJS);
 }
 
 #[test]
