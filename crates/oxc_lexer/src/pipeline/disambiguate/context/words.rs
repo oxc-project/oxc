@@ -220,7 +220,6 @@ impl Walk {
 
     /// The transition of the keyword `kw` (0: a plain name) in expression or statement position.
     fn keyword_word(&mut self, tokens: &Tokens, end: usize, kw: u8) {
-        let stmt_reg = self.stmt_reg();
         let at_start = self.at_stmt_start();
         match kw {
             0 => self.plain_word(tokens, end, at_start),
@@ -232,7 +231,7 @@ impl Walk {
                     && !self.export_default
                     && self.decorator == 0
                     && self.operand_allowed();
-                let is_async = self.prev_async;
+                let is_async = self.prev_kw == tk!(KwAsync);
                 let f = self.push(FrameKind::FnHead);
                 f.is_value = value;
                 f.is_async = is_async;
@@ -254,10 +253,6 @@ impl Walk {
                 self.export_default = false;
                 self.decorator = 0;
             }
-            tk!(KwWith) if matches!(stmt_reg, S_IMPORT | S_IMPORT_NAME | S_EXPORT) => {
-                // Import attributes: `from "x" with { type: "json" }`.
-                self.keyword(tk!(KwWith));
-            }
             tk!(KwIf | KwWhile | KwFor | KwWith | KwSwitch | KwCatch) => {
                 self.keyword(kw);
                 if kw == tk!(KwCatch) {
@@ -265,7 +260,7 @@ impl Walk {
                     self.expect = Expect::Statement;
                 }
             }
-            tk!(KwElse | KwDo | KwTry | KwFinally) => {
+            tk!(KwElse | KwDo | KwTry | KwFinally | KwDeclare | KwAbstract | KwGlobal) => {
                 self.expect = Expect::Statement;
                 self.clear_prev();
                 self.prev_kw = kw;
@@ -353,7 +348,6 @@ impl Walk {
                 // A modifier: the function or arrow it modifies decides expression-ness, so it is
                 // transparent.
                 self.clear_prev();
-                self.prev_async = true;
                 self.prev_kw = tk!(KwAsync);
             }
             tk!(KwType) => {
@@ -377,10 +371,6 @@ impl Walk {
                     // `declare module "x"` may have no body.
                     self.set_stmt_reg(S_DECLARE_MODULE);
                 }
-            }
-            tk!(KwDeclare | KwAbstract | KwGlobal) => {
-                self.keyword(kw);
-                self.expect = Expect::Statement;
             }
             tk!(KwFrom) => {
                 self.keyword(tk!(KwFrom));
@@ -408,7 +398,7 @@ impl Walk {
             }
         }
         // `async x => ...`: remember the modifier for the arrow.
-        let is_async = self.prev_async;
+        let is_async = self.prev_kw == tk!(KwAsync);
         self.value_done();
         self.arrow_async = is_async;
     }

@@ -26,7 +26,7 @@ mod type_list;
 
 pub(crate) use runs::{gt_run_split, lt_run_split};
 pub(crate) use tsx::jsx_over_generic;
-pub(super) use type_list::type_args_at;
+pub(super) use type_list::{keyword_type, type_args_at};
 
 #[cfg(test)]
 mod tests;

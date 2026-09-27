@@ -25,7 +25,7 @@
 //! - [`scan`]: the scan back to an anchor, and the entry points every question goes through.
 
 use super::common::Tokens;
-use super::type_context::{lt_run_split, type_args_at};
+use super::type_context::{keyword_type, lt_run_split, type_args_at};
 
 mod anchor;
 mod frame;

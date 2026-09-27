@@ -39,8 +39,7 @@ fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
         );
     }
     if k == tk!(Ident) {
-        let e = tokens.next_start(pos + 1);
-        let kw = tokens.word_kw(pos, e - pos);
+        let kw = tokens.ident_kw(pos);
         return matches_tk!(kw, KwIn | KwInstanceof)
             || (tokens.ts && matches_tk!(kw, KwAs | KwSatisfies));
     }
@@ -131,17 +130,9 @@ impl Walk {
                 self.literal(tokens, k, e);
                 e
             }
-            tk!(TemplateHead) => {
+            tk!(TemplateHead | TemplateMiddle) => {
                 let e = tokens.next_start(pos + 1);
-                let in_type = self.in_type();
-                let f = self.push(FrameKind::Sub);
-                f.decl = in_type;
-                self.set_operand();
-                e
-            }
-            tk!(TemplateMiddle) => {
-                let e = tokens.next_start(pos + 1);
-                if self.pop_to(|k| k == FrameKind::Sub).is_none() {
+                if k == tk!(TemplateMiddle) && self.pop_to(|k| k == FrameKind::Sub).is_none() {
                     self.unbalanced();
                 }
                 let in_type = self.in_type();
@@ -195,11 +186,8 @@ impl Walk {
             if unnamed && (k == tk!(Ident) || (k >= OP_KIND_BASE && c == b'*')) {
                 return;
             }
-            if k == tk!(Ident) {
-                let e = tokens.next_start(pos + 1);
-                if matches_tk!(tokens.word_kw(pos, e - pos), KwExtends | KwImplements) {
-                    return;
-                }
+            if k == tk!(Ident) && matches_tk!(tokens.ident_kw(pos), KwExtends | KwImplements) {
+                return;
             }
             self.end_statement();
             return;

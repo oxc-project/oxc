@@ -250,16 +250,12 @@ impl Tokens<'_> {
     /// The opener of the `)`, `]` or `}` at `from`, or `None` if unbalanced
     /// (see [`walk::match_delim_back`]).
     #[inline]
-    pub(crate) fn match_delim_back(&self, from: usize, open: u8, close: u8) -> Option<usize> {
+    pub(crate) fn match_delim_back(&self, from: usize) -> Option<usize> {
+        let (open, close) = match self.src[from] {
+            b')' => (b'(', b')'),
+            b']' => (b'[', b']'),
+            _ => (b'{', b'}'),
+        };
         walk::match_delim_back(self, from, open, close)
-    }
-
-    /// The opener of the closer at from, whichever bracket it is.
-    pub(crate) fn match_back(&self, from: usize) -> Option<usize> {
-        match self.src[from] {
-            b')' => self.match_delim_back(from, b'(', b')'),
-            b']' => self.match_delim_back(from, b'[', b']'),
-            _ => self.match_delim_back(from, b'{', b'}'),
-        }
     }
 }

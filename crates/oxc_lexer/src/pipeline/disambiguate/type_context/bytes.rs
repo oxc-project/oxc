@@ -21,7 +21,7 @@ use crate::{
 
 use crate::pipeline::disambiguate::{
     FORWARD_SCAN_CAP,
-    common::{Closers, Open, Tokens, bits, kind_at},
+    common::{Closers, Open, Tokens, bits},
 };
 
 /// Bytes the forward angle match reacts to. Everything else is skipped without touching a bitmap.
@@ -137,16 +137,17 @@ fn group_closer(tokens: &Tokens, lp: usize) -> Option<usize> {
 }
 
 #[inline]
-fn past_raw(src: &[u8], kind: &[u8], lim: usize, i: usize) -> Option<usize> {
+fn past_raw(tokens: &Tokens, lim: usize, i: usize) -> Option<usize> {
+    let (src, kind) = (tokens.src, tokens.kind);
     let j = skip_raw_literal(src, kind, lim, i);
     if j != i {
         return (j < lim).then_some(j);
     }
     // Asked from the JSX carve, a template head may be carved while its tail is still
     // raw text (its substitution `}` a punctuator): cross the literal whole.
-    if kind_at(kind, i) == tk!(TemplateHead) {
+    if tokens.base_kind(i) == tk!(TemplateHead) {
         let (close, end) = raw_template_end(src, lim, i);
-        if close < lim && kind_at(kind, close) >= OP_KIND_BASE {
+        if close < lim && tokens.base_kind(close) >= OP_KIND_BASE {
             return (end <= lim).then_some(end);
         }
     }
@@ -156,7 +157,7 @@ fn past_raw(src: &[u8], kind: &[u8], lim: usize, i: usize) -> Option<usize> {
 /// The > closing the < at start, if the brackets inside balance and no ; on its level ends it.
 #[inline(never)]
 fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
-    let Tokens { src, st, opch, kind, n, closers, .. } = *tokens;
+    let Tokens { src, st, opch, n, closers, .. } = *tokens;
     let budget = start + FORWARD_SCAN_CAP;
     let mut stack = closers.lists.borrow_mut();
     stack.clear();
@@ -165,7 +166,7 @@ fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
     let mut i = start + 1;
     while i < n {
         if bits::get(st, i) {
-            match past_raw(src, kind, n, i) {
+            match past_raw(tokens, n, i) {
                 Some(j) if j != i => {
                     i = j;
                     continue;
@@ -218,8 +219,7 @@ fn resolve_lists(tokens: &Tokens, start: usize) -> Option<usize> {
                 }
                 b'{' => braces += 1,
                 b'}' => {
-                    let kk = kind_at(kind, i);
-                    if !matches_tk!(kk, TemplateMiddle | TemplateTail) {
+                    if !matches_tk!(tokens.base_kind(i), TemplateMiddle | TemplateTail) {
                         braces -= 1;
                         kill(&mut stack, closers, i > budget, |e| e.braces > braces);
                     }
@@ -266,7 +266,7 @@ fn kill(stack: &mut Vec<Open>, closers: &Closers, record: bool, doomed: impl Fn(
 
 #[inline(never)]
 fn resolve_groups(tokens: &Tokens, start: usize) -> Option<usize> {
-    let Tokens { src, st, kind, n, closers, .. } = *tokens;
+    let Tokens { src, st, n, closers, .. } = *tokens;
     let budget = start + FORWARD_SCAN_CAP;
     let mut open = closers.groups.borrow_mut();
     open.clear();
@@ -274,7 +274,7 @@ fn resolve_groups(tokens: &Tokens, start: usize) -> Option<usize> {
     let mut i = start + 1;
     while i < n {
         if bits::get(st, i) {
-            match past_raw(src, kind, n, i) {
+            match past_raw(tokens, n, i) {
                 Some(j) if j != i => {
                     i = j;
                     continue;

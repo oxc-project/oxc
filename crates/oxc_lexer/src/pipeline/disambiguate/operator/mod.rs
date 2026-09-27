@@ -147,7 +147,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
             }
             // `}` closed either a block (regex follows) or a value (division).
             if ch == b'}' {
-                let from = tokens.match_delim_back(qi, b'{', b'}').unwrap_or(qi);
+                let from = tokens.match_delim_back(qi).unwrap_or(qi);
                 return context::after_from(tokens, walks, qi, from) != After::Value;
             }
             if ch == b')' {
@@ -157,7 +157,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
                 if !(ts && tokens.line_break_between(qi + 1, p)) {
                     return false;
                 }
-                let from = tokens.match_delim_back(qi, b'(', b')').unwrap_or(qi);
+                let from = tokens.match_delim_back(qi).unwrap_or(qi);
                 return context::after_from(tokens, walks, qi, from) == After::EndsDecl;
             }
             if ts && ch == b'>' && !(qi > 0 && src[qi - 1] == b'=') {
@@ -167,7 +167,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
                 if !(ts && tokens.line_break_between(qi + 1, p)) {
                     return false;
                 }
-                let from = tokens.match_delim_back(qi, b'[', b']').unwrap_or(qi);
+                let from = tokens.match_delim_back(qi).unwrap_or(qi);
                 return context::after_from(tokens, walks, qi, from) == After::EndsDecl;
             }
             return true;
@@ -178,28 +178,13 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
 }
 
 fn paren_close_is_regex(tokens: &Tokens, qi: usize) -> bool {
-    let Some(lp) = tokens.match_delim_back(qi, b'(', b')') else {
+    let word =
+        |p: Option<usize>| p.filter(|&w| tokens.kind[w] == tk!(Ident) && !tokens.property_name(w));
+    let Some(w) = tokens.match_delim_back(qi).and_then(|lp| word(tokens.prev_sig(lp))) else {
         return false;
     };
-    let Some(mut w) = tokens.prev_sig(lp) else {
-        return false;
-    };
-    if tokens.kind[w] != tk!(Ident) {
-        return false;
-    }
     if tokens.ident_is(w, b"await") {
-        let Some(q2) = tokens.prev_sig(w) else {
-            return false;
-        };
-        if tokens.kind[q2] != tk!(Ident) {
-            return false;
-        }
-        w = q2;
-        return !tokens.property_name(w) && tokens.ident_is(w, b"for");
+        return word(tokens.prev_sig(w)).is_some_and(|f| tokens.ident_is(f, b"for"));
     }
-    !tokens.property_name(w)
-        && (tokens.ident_is(w, b"if")
-            || tokens.ident_is(w, b"while")
-            || tokens.ident_is(w, b"for")
-            || tokens.ident_is(w, b"with"))
+    [b"if" as &[u8], b"while", b"for", b"with"].iter().any(|kw| tokens.ident_is(w, kw))
 }

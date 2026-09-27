@@ -57,7 +57,7 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize) -> Option<usize> {
             let c = tokens.src[p];
             match c {
                 b')' | b']' | b'}' => {
-                    let o = tokens.match_back(p)?;
+                    let o = tokens.match_delim_back(p)?;
                     q = tokens.prev_sig(o);
                     continue;
                 }
@@ -165,7 +165,7 @@ fn return_type_colon(tokens: &Tokens, c: usize) -> bool {
     let Prev::Op(rp, b')') = tokens.prev_token(c) else {
         return false;
     };
-    let Some(lp) = tokens.match_delim_back(rp, b'(', b')') else {
+    let Some(lp) = tokens.match_delim_back(rp) else {
         return false;
     };
     match tokens.prev_token(lp) {
