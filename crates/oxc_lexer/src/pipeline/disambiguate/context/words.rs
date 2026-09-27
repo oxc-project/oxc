@@ -75,9 +75,10 @@ impl Walk {
                 }
             }
             tk!(KwOf) => {
+                // tsc reads of after any value that ends the first expression of the head.
                 if !(self.top_kind() == FrameKind::Head
-                    && self.top().for_head
-                    && self.top().state == F_BOUND)
+                    && self.top().state == F_OF
+                    && !self.operand_allowed())
                 {
                     return 0;
                 }
@@ -232,7 +233,7 @@ impl Walk {
                 | KwInstanceof | KwOf | KwDebugger | KwExtends | KwImplements
             ) => {
                 if self.top_kind() == FrameKind::Head && matches_tk!(kw, KwOf | KwIn) {
-                    self.top_mut().state = F_EXPR;
+                    self.top_mut().state = F_NO_OF;
                 }
                 self.keyword(kw);
             }

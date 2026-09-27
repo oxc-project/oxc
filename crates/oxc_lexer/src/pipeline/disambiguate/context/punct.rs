@@ -13,16 +13,6 @@ impl Walk {
         let mut len = if is_op_char(c) || c == b'/' { tokens.op_len(pos) } else { 1 };
         let c1 = tokens.src[pos + 1];
 
-        // In a `for (` head an operator other than member access makes the binding an expression
-        // (`for (x = of / 2;;)`), so a later `of` is a plain identifier.
-        if self.top_kind() == FrameKind::Head
-            && self.top().state == F_BOUND
-            && !matches!(c, b'.' | b'[' | b'(' | b')' | b']' | b'}' | b'{' | b',' | b';')
-            && !(c == b'?' && c1 == b'.')
-        {
-            self.top_mut().state = F_EXPR;
-        }
-
         // Type context: brackets and separators belong to the type.
         if self.in_type() {
             // `>` closes one Angle per byte; `<<` opens two.
@@ -321,7 +311,7 @@ impl Walk {
         match self.top_kind() {
             FrameKind::Head => {
                 let f = self.top_mut();
-                f.state = F_EXPR;
+                f.state = F_NO_OF;
                 f.open_questions = 0;
                 let si = self.stmt_frame();
                 self.frames[si].state = D_NONE;
@@ -345,11 +335,6 @@ impl Walk {
             FrameKind::Object | FrameKind::ClassBody => {
                 let f = self.top_mut();
                 f.next_member();
-                f.open_questions = 0;
-            }
-            FrameKind::Head => {
-                let f = self.top_mut();
-                f.state = F_START;
                 f.open_questions = 0;
             }
             _ => {
@@ -403,7 +388,7 @@ impl Walk {
             // Await is the operator in a static block, yield a name.
             is_async = true;
         } else {
-            if matches!(self.stmt_reg(), S_IMPORT | S_EXPORT | S_IMPORT_NAME) {
+            if matches!(self.stmt_reg(), S_IMPORT | S_EXPORT | S_IMPORT_NAME | S_ATTRS) {
                 kind = FrameKind::ModuleSpec;
             } else if self.at_stmt_start() {
                 kind = FrameKind::Block;
@@ -444,7 +429,8 @@ impl Walk {
             FrameKind::Container => {
                 self.clear_prev();
             }
-            FrameKind::ModuleSpec => {
+            // An attributes clause ends its declaration, like a body.
+            FrameKind::ModuleSpec if self.stmt_reg() != S_ATTRS => {
                 self.operand_done();
             }
             FrameKind::ArrowBody => {
@@ -508,9 +494,8 @@ impl Walk {
             // Kept off is_async, which nested frames would inherit as an await context.
             f.mods = MOD_ASYNC;
         }
-        if kind == FrameKind::Head {
-            f.state = F_START;
-            f.for_head = for_head;
+        if kind == FrameKind::Head && !for_head {
+            f.state = F_NO_OF;
         }
         self.operand_done();
     }

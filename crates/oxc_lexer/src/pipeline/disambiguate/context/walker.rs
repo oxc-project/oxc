@@ -508,11 +508,8 @@ impl Walk {
     pub(super) fn value_done(&mut self) {
         self.set_value();
         self.clear_prev();
-        // The first value in a `for (` head is its binding.
         let f = self.top_mut();
-        if f.kind == FrameKind::Head && f.state == F_START {
-            f.state = F_BOUND;
-        } else if f.kind.is_stmt_holder() && f.state == D_BINDING {
+        if f.kind.is_stmt_holder() && f.state == D_BINDING {
             f.state = D_BOUND;
         }
     }

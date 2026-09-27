@@ -1060,3 +1060,18 @@ fn keyword_after_a_number_with_a_trailing_dot() {
     regex("x = 1. in /re/;", ScriptJS);
     regex("x = 1. instanceof /re/.constructor;", ScriptJS);
 }
+
+#[test]
+fn statement_after_import_attributes() {
+    division("import a from \"b\" with { type: \"json\" }\nlet x = a\n/re/g;", ModuleJS);
+    regex("import a from \"b\" with { type: \"json\" }\nlet x\n/re/g;", ModuleJS);
+    regex("export { a } from \"b\" with { type: \"json\" }\nfunction f() {}\n/re/g;", ModuleJS);
+}
+
+#[test]
+fn of_after_any_value_in_a_for_head() {
+    regex("for (x! of /re/g.exec(s)) {}", ScriptTS);
+    regex("for (var x: T of /re/g.exec(s)) {}", ScriptTS);
+    regex("for (let x = 1 of /re/g.exec(s)) {}", ScriptTS);
+    division("for (x = of / 2;;) {}", ScriptJS);
+}
