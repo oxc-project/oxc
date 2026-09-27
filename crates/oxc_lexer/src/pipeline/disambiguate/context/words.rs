@@ -144,7 +144,7 @@ impl Walk {
                     return 0;
                 }
             }
-            tk!(KwFrom) if !matches!(self.stmt_reg(), S_IMPORT | S_EXPORT | S_IMPORT_NAME) => {
+            tk!(KwFrom) if !matches!(self.stmt_reg(), S_IMPORT | S_EXPORT) => {
                 return 0;
             }
             _ => {}
@@ -162,15 +162,6 @@ impl Walk {
                 self.stmt_done = true;
                 self.after_statement();
             }
-            S_TYPE => {
-                self.set_stmt_reg(S_TYPE_NAME);
-                self.value_done();
-            }
-            S_IMPORT if kw == 0 => {
-                // `import x` / `import type x` / `import x = ...`
-                self.set_stmt_reg(S_IMPORT_NAME);
-                self.value_done();
-            }
             S_EXPORT_AS if kw == tk!(KwNamespace) => {
                 self.set_stmt_reg(S_BREAK);
                 self.set_operand();
@@ -183,12 +174,7 @@ impl Walk {
 
     /// The transition of the keyword `kw` (0: a plain name) in expression or statement position.
     fn keyword_word(&mut self, tokens: &Tokens, end: usize, kw: u8) {
-        let at_start = self.at_stmt_start();
         match kw {
-            0 => self.plain_word(tokens, end, at_start),
-            tk!(KwThis | KwSuper | KwNull | KwTrue | KwFalse) => {
-                self.plain_word(tokens, end, false);
-            }
             tk!(KwFunction) => {
                 let value = !self.at_stmt_start()
                     && !self.export_default
@@ -306,7 +292,7 @@ impl Walk {
                 self.prev_kw = tk!(KwAsync);
             }
             tk!(KwType) => {
-                self.set_stmt_reg(S_TYPE);
+                self.set_stmt_reg(S_TYPE_NAME);
                 self.keyword(tk!(KwType));
             }
             tk!(KwInterface) => {
@@ -327,21 +313,14 @@ impl Walk {
                 self.keyword(tk!(KwFrom));
             }
             _ => {
-                // Any other keyword spelling used as a plain word.
-                self.plain_word(tokens, end, at_start);
+                // A plain name, or any other keyword spelling used as one.
+                self.plain_word();
             }
         }
     }
 
     /// A plain identifier (or keyword used as a name) in expression / statement position.
-    fn plain_word(&mut self, tokens: &Tokens, end: usize, at_start: bool) {
-        // Label candidate: a lone identifier at statement start.
-        if at_start && self.stmt_reg() == S_NONE && self.top_kind() != FrameKind::Head {
-            let nx = tokens.peek(end);
-            if nx.kind >= OP_KIND_BASE && nx.byte == b':' && tokens.src[nx.pos + 1] != b':' {
-                self.set_stmt_reg(S_LABEL);
-            }
-        }
+    fn plain_word(&mut self) {
         // `async x => ...`: remember the modifier for the arrow.
         let is_async = self.prev_kw == tk!(KwAsync);
         self.value_done();

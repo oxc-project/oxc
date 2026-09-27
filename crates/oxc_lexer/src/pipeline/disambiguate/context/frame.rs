@@ -52,21 +52,15 @@ pub(super) const S_NONE: u8 = 0;
 
 pub(super) const S_CASE: u8 = 1;
 
-pub(super) const S_LABEL: u8 = 2;
-
 pub(super) const S_IMPORT: u8 = 3;
 
 pub(super) const S_EXPORT: u8 = 4;
-
-pub(super) const S_TYPE: u8 = 5;
 
 pub(super) const S_TYPE_NAME: u8 = 6;
 
 pub(super) const S_BREAK: u8 = 7;
 
 pub(super) const S_EXPORT_AS: u8 = 11;
-
-pub(super) const S_IMPORT_NAME: u8 = 13;
 
 pub(super) const S_DECLARE_MODULE: u8 = 14;
 
@@ -92,15 +86,13 @@ pub(super) const MOD_GEN: u8 = 2;
 pub(super) const MOD_STATIC: u8 = 4;
 
 // TypeRegion end rule (`state`).
-pub(super) const R_ASSERT: u8 = 1; // `<T>x`: ends at its closing `>`
 pub(super) const R_ARROW_RET: u8 = 2; // `(a): T =>`: ends at `=>`
 pub(super) const R_INLINE: u8 = 3; // declarator/param/member annotation: ends at `=`/`,`/closer/`{`
 pub(super) const R_STMT: u8 = 4; // alias / import-equals / bodiless module: ends at `;`/ASI
 pub(super) const R_EXPR: u8 = 5; // `as T` / `satisfies T`: ends at any expression token
 
 // What an Angle list is (`state`).
-pub(super) const A_DECL_PARAMS: u8 = 1; // type parameters of a declaration head or member
-pub(super) const A_EXPR_ARGS: u8 = 2; // type arguments on an expression: `f<T>(x)`
+pub(super) const A_VALUE: u8 = 1; // declaration type parameters or `f<T>(x)` type arguments
 pub(super) const A_IN_TYPE: u8 = 3; // a list inside a type
 pub(super) const A_ASSERT: u8 = 4; // `<T>x` assertion or `<T,>() =>` generic arrow
 

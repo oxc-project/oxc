@@ -240,8 +240,7 @@ impl Walk {
         if k == tk!(String) {
             // Module specifier: `import "x"`, `... from "x"`.
             let reg = self.stmt_reg();
-            if (matches!(reg, S_IMPORT | S_IMPORT_NAME)
-                && matches_tk!(self.prev_kw, KwImport | KwFrom))
+            if (reg == S_IMPORT && matches_tk!(self.prev_kw, KwImport | KwFrom))
                 || (reg == S_EXPORT && self.prev_kw == tk!(KwFrom))
             {
                 self.value_done();

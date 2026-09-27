@@ -207,7 +207,7 @@ impl Walk {
     }
 
     pub(super) fn assign(&mut self) {
-        if matches!(self.top_reg(), S_TYPE_NAME | S_IMPORT_NAME) {
+        if matches!(self.top_reg(), S_TYPE_NAME | S_IMPORT) {
             // `type X =`: the alias type.
             self.set_stmt_reg(S_NONE);
             self.open_region(R_STMT);
@@ -282,14 +282,10 @@ impl Walk {
             }
             _ => {}
         }
-        match self.stmt_reg() {
-            S_CASE | S_LABEL => {
-                self.set_stmt_reg(S_NONE);
-                self.after_statement();
-                self.clear_prev();
-                return;
-            }
-            _ => {}
+        if self.stmt_reg() == S_CASE {
+            self.after_statement();
+            self.clear_prev();
+            return;
         }
         if tokens.ts && self.top_declarator() == D_BOUND {
             // Declarator type annotation.
@@ -301,6 +297,12 @@ impl Walk {
             let is_async = self.closed_group_async;
             self.open_region(R_ARROW_RET);
             self.top_mut().mods = if is_async { MOD_ASYNC } else { 0 };
+            return;
+        }
+        if top.is_stmt_holder() {
+            // Any other colon among statements ends a label.
+            self.after_statement();
+            self.clear_prev();
             return;
         }
         self.operand_done();
@@ -388,7 +390,7 @@ impl Walk {
             // Await is the operator in a static block, yield a name.
             is_async = true;
         } else {
-            if matches!(self.stmt_reg(), S_IMPORT | S_EXPORT | S_IMPORT_NAME | S_ATTRS) {
+            if matches!(self.stmt_reg(), S_IMPORT | S_EXPORT | S_ATTRS) {
                 kind = FrameKind::ModuleSpec;
             } else if self.at_stmt_start() {
                 kind = FrameKind::Block;
@@ -510,10 +512,6 @@ impl Walk {
                 // A statement (or `{`) follows.
                 self.expect = Expect::Statement;
                 self.clear_prev();
-            }
-            FrameKind::Params => {
-                self.value_done();
-                self.closed_params = true;
             }
             FrameKind::Group => {
                 self.value_done();
