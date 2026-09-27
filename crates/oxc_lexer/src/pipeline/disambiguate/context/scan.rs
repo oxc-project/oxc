@@ -234,6 +234,9 @@ fn local_walk<R>(
     from: usize,
     f: impl FnOnce(&mut Walk, &Tokens) -> R,
 ) -> Option<R> {
+    if !walks.shortcuts() {
+        return None;
+    }
     let w = &mut walks.local;
     let s = w.local_scan(tokens, from)?;
     w.run_local(tokens, s, pos, from).then(|| f(w, tokens))
@@ -255,6 +258,9 @@ pub(crate) fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
 /// Open `<` lists a `>` run at `pos` would close. When the scan back to the anchor meets no open
 /// `<` on the run's level there is nothing to close, and no walk is needed.
 pub(crate) fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
+    if !walks.shortcuts() {
+        return before(tokens, walks, pos).angles;
+    }
     let local = {
         let w = &mut walks.local;
         match w.local_scan(tokens, pos) {

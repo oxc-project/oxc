@@ -981,3 +981,53 @@ fn class_field_initializer_is_outside_yield_and_await_contexts() {
     regex("class A { static { await /re/.test(x) } }", ScriptJS);
     regex("async function f() { class A { async m() { await /re/.test(x) } } }", ScriptJS);
 }
+
+#[test]
+fn of_ending_a_declaration_before_a_line_break() {
+    // ASI ends the declaration or the break, so a regex starts the next statement.
+    regex("let of\n/re/g.test(s)", ScriptJS);
+    regex("var of\n/re/g.test(s)", ScriptJS);
+    regex("of: for (;;) { break of\n/re/g.test(s) }", ScriptJS);
+}
+
+#[test]
+fn async_call_arguments_keep_the_enclosing_await_context() {
+    // A call to a function named async: its class argument is outside any await context.
+    division("async (class { [await / 2 / 1]() {} });", ScriptJS);
+}
+
+#[test]
+fn spread_class_expression_with_a_heritage_list() {
+    // A spread is not member access, so the heritage comma belongs to the class head.
+    division("x = [...class implements A, B {} / 2];", ScriptTS);
+}
+
+#[test]
+fn declaration_after_a_name_or_type_ended_by_a_line_break() {
+    // The word or postfix operator before the line break ends a value, so ASI starts a declaration.
+    regex("let of\nfunction f() {}\n/re/g", ScriptJS);
+    regex("var await\nfunction f() {}\n/re/g", ScriptJS);
+    regex("declare function f(): void\nfunction f() {}\n/re/g", ScriptTS);
+    regex("let x: void\nclass K {}\n/re/g", ScriptTS);
+    regex("let x = y!\nfunction f() {}\n/re/g", ScriptTS);
+}
+
+#[test]
+fn only_an_export_clause_opens_module_braces() {
+    // Braces after export are an export clause only when they follow it directly.
+    division("export = { a: 1 }\n/re/g", ScriptTS);
+    division("export const x = { a: 1 } / 2;", ModuleJS);
+    regex("export declare global {}\nfunction f() {}\n/re/g", ScriptTS);
+}
+
+#[test]
+fn export_async_function_is_a_declaration() {
+    // The full walk sees async between export and function: still a declaration.
+    regex("export async function f() {}\n/re/g", ModuleJS);
+}
+
+#[test]
+fn interface_members_on_separate_lines() {
+    // The full walk steps through the body: a line between members does not end the interface.
+    regex("interface I {\n  x: A<B<C>>\n  y: D\n}\n/re/g", ScriptTS);
+}

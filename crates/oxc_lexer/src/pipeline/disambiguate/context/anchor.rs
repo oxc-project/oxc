@@ -152,9 +152,13 @@ fn fn_class_anchor(
                     expr
                 }
             }
+            // A TypeScript postfix non-null ends a value at a line break too.
+            b'!' if tokens.ts && named && broken(q) => None,
             _ => expr,
         },
         Prev::Word(_, tk!(KwElse | KwDo | KwExport | KwDefault | KwDeclare | KwAbstract)) => stmt,
+        // A name or type these spell ends a value at a line break: the walk decides.
+        Prev::Word(q, tk!(KwAwait | KwOf | KwVoid)) if named && broken(q) => None,
         // Restricted productions: a line break ends the statement.
         Prev::Word(q, tk!(KwReturn | KwYield)) => {
             if named && broken(q) {
@@ -210,7 +214,7 @@ fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
     }
     let prev = tokens.prev_token(p);
     // A property name.
-    if prev.is_member_dot(tokens.src) {
+    if prev.is_member_dot(tokens) {
         return None;
     }
     let f = tokens.peek(e);

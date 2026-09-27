@@ -110,9 +110,7 @@ impl Walk {
                 let nx = tokens.peek(end);
                 let ok = nx.kind == tk!(Ident)
                     || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'[' | b'{'));
-                let at_stmt = self.at_stmt_start()
-                    || self.top_kind() == FrameKind::Head
-                    || matches_tk!(self.prev_kw, KwDeclare | KwExport);
+                let at_stmt = self.at_stmt_start() || self.top_kind() == FrameKind::Head;
                 if !ok || !at_stmt {
                     return 0;
                 }
@@ -121,7 +119,7 @@ impl Walk {
                 let nx = tokens.peek(end);
                 let ok = nx.kind == tk!(Ident)
                     && !tokens.line_break_between(end, nx.pos)
-                    && (self.at_stmt_start() || matches_tk!(self.prev_kw, KwDeclare | KwExport));
+                    && self.at_stmt_start();
                 if !ok {
                     return 0;
                 }
@@ -146,7 +144,7 @@ impl Walk {
                     || (kw == tk!(KwGlobal) && nx.kind >= OP_KIND_BASE && nx.byte == b'{'))
                     && !tokens.line_break_between(end, nx.pos);
                 let at_stmt = self.at_stmt_start()
-                    || matches_tk!(self.prev_kw, KwExport | KwDeclare | KwDefault | KwAbstract)
+                    || self.prev_kw == tk!(KwDefault)
                     || (kw == tk!(KwNamespace) && self.stmt_reg() == S_EXPORT_AS);
                 if !(tokens.ts && starts_decl && at_stmt) {
                     return 0;
@@ -155,8 +153,7 @@ impl Walk {
             tk!(KwAs | KwSatisfies) => {
                 // Only after a value in an expression, in TS; `export as` opens `export as
                 // namespace X`.
-                let export_as =
-                    kw == tk!(KwAs) && self.stmt_reg() == S_EXPORT && self.prev_kw == tk!(KwExport);
+                let export_as = kw == tk!(KwAs) && self.prev_kw == tk!(KwExport);
                 let in_module_clause = self.top_kind() == FrameKind::ModuleSpec
                     || matches!(self.stmt_reg(), S_IMPORT | S_EXPORT);
                 if !export_as && (!tokens.ts || self.operand_allowed() || in_module_clause) {
@@ -259,8 +256,7 @@ impl Walk {
                 let value = !self.at_stmt_start()
                     && !self.export_default
                     && self.decorator == 0
-                    && self.operand_allowed()
-                    && !matches_tk!(self.prev_kw, KwExport | KwDeclare);
+                    && self.operand_allowed();
                 let is_async = self.prev_async;
                 let f = self.push(FrameKind::FnHead);
                 f.is_value = value;
@@ -275,10 +271,7 @@ impl Walk {
                 let value = if self.decorator != 0 {
                     self.decorator == 2
                 } else {
-                    !self.at_stmt_start()
-                        && !self.export_default
-                        && self.operand_allowed()
-                        && !matches_tk!(self.prev_kw, KwExport | KwDeclare | KwAbstract)
+                    !self.at_stmt_start() && !self.export_default && self.operand_allowed()
                 };
                 let f = self.push(FrameKind::ClassHead);
                 f.is_value = value;
@@ -382,11 +375,19 @@ impl Walk {
                 }
             }
             tk!(KwExport) => {
-                self.set_stmt_reg(S_EXPORT);
+                // Only a clause (export {, export *, export type {) keeps the register.
+                let mut nx = tokens.peek(end);
+                if nx.kind == tk!(Ident) && tokens.ident_is(nx.pos, b"type") {
+                    nx = tokens.peek(nx.pos + 4);
+                }
+                let clause = nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'{' | b'*');
+                self.set_stmt_reg(if clause { S_EXPORT } else { S_NONE });
                 self.keyword(tk!(KwExport));
+                // What follows is read at statement position, as a declaration.
+                self.expect = Expect::Statement;
             }
             tk!(KwAs) => {
-                if stmt_reg == S_EXPORT && self.prev_kw == tk!(KwExport) {
+                if self.prev_kw == tk!(KwExport) {
                     self.set_stmt_reg(S_EXPORT_AS);
                     self.keyword(tk!(KwAs));
                 } else {
@@ -434,9 +435,7 @@ impl Walk {
             }
             tk!(KwDeclare | KwAbstract | KwGlobal) => {
                 self.keyword(kw);
-                if kw == tk!(KwGlobal) {
-                    self.expect = Expect::Statement;
-                }
+                self.expect = Expect::Statement;
             }
             tk!(KwStatic) => {
                 self.top_mut().mods |= MOD_STATIC;

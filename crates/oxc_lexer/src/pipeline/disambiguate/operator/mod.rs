@@ -8,7 +8,7 @@
 //!
 //! - Operators and numbers such as `x++`, `a?.b` and `1.5e+3` aren't formed into their final
 //!   tokens until `coalesce`, which runs later, so the bytes around a punctuator are read
-//!   directly ([`incdec_is_postfix`], [`prop_name`]).
+//!   directly ([incdec_is_postfix], [Tokens::property_name]).
 //! - After `)`, what the parens closed decides it: `if (c) /re/` has a regex, but `f(c) / 2` has
 //!   a division ([`paren_close_is_regex`]).
 //!
@@ -21,10 +21,7 @@
 //! - In TypeScript, a `>` which may close type arguments, a `void` which is a type rather than
 //!   the operator, and the line breaks after which a declaration ends without a semicolon.
 
-use crate::{
-    pipeline::bytes::is_digit,
-    token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
-};
+use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 
 use super::{
     WALK_SCAN_CAP,
@@ -101,7 +98,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
         if matches_tk!(k, Ident | IdentEscaped) {
             let e = tokens.next_start(qi + 1);
             let newline = tokens.line_break_between(e, p);
-            if prop_name(tokens, qi) {
+            if tokens.property_name(qi) {
                 return ts && newline && context::after(tokens, walks, qi) == After::EndsDecl;
             }
             let kw = tokens.word_kw(qi, e - qi);
@@ -116,7 +113,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
                 return true;
             }
             if kw == tk!(KwOf) {
-                return context::after(tokens, walks, qi) == After::Operand;
+                return context::after(tokens, walks, qi) != After::Value;
             }
             if newline {
                 return context::after(tokens, walks, qi) == After::EndsDecl;
@@ -184,36 +181,13 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
     true
 }
 
-/// Is the word at `pos` a property name: does a lone `.` (member access or `?.`, not the last dot
-/// of `...`) precede it as a token? Trivia in between does not matter: `x. return / 2` divides.
-#[inline]
-fn prop_name(tokens: &Tokens, pos: usize) -> bool {
-    let Some(w) = tokens.prev_sig(pos) else {
-        return false;
-    };
-    if tokens.kind[w] < OP_KIND_BASE {
-        return false;
-    }
-    let src = tokens.src;
-    let c = src[w];
-    if c == b'?' {
-        // A `?.` that `coalesce` has already fused starts at the `?`.
-        return src[w + 1] == b'.' && !is_digit(src[w + 2]);
-    }
-    // A lone `.`: not a `...`, whether the run is still three token starts (the previous token is
-    // then its last dot) or already fused (its first).
-    c == b'.'
-        && !(src[w + 1] == b'.' && src[w + 2] == b'.')
-        && !(w >= 2 && src[w - 1] == b'.' && src[w - 2] == b'.')
-}
-
 #[inline]
 fn module_specifier_asi(tokens: &Tokens, spec: usize) -> bool {
     let Some(w) = tokens.prev_sig(spec) else {
         return false;
     };
     tokens.kind[w] == tk!(Ident)
-        && !prop_name(tokens, w)
+        && !tokens.property_name(w)
         && (tokens.ident_is(w, b"from") || tokens.ident_is(w, b"import"))
 }
 
@@ -244,7 +218,7 @@ fn tail_before(tokens: &Tokens, pos: usize) -> bool {
     }
     if sk == tk!(Ident) {
         let e = tokens.next_start(sp + 1);
-        return prop_name(tokens, sp)
+        return tokens.property_name(sp)
             || !tokens.tables.keywords.is_regex_keyword(tokens.word_kw(sp, e - sp));
     }
     matches_tk!(sk, Number | BigInt | String | TemplateNoSub | TemplateTail | RegExp | PrivateIdent)
@@ -268,9 +242,9 @@ fn paren_close_is_regex(tokens: &Tokens, qi: usize) -> bool {
             return false;
         }
         w = q2;
-        return !prop_name(tokens, w) && tokens.ident_is(w, b"for");
+        return !tokens.property_name(w) && tokens.ident_is(w, b"for");
     }
-    !prop_name(tokens, w)
+    !tokens.property_name(w)
         && (tokens.ident_is(w, b"if")
             || tokens.ident_is(w, b"while")
             || tokens.ident_is(w, b"for")

@@ -169,7 +169,7 @@ pub(super) struct Frame {
     pub(super) inner: bool,
     pub(super) state: u8,
     pub(super) reg: u8,
-    /// Member modifier bits (Object / ClassBody).
+    /// Modifier bits: an Object or ClassBody member's, or the async before a Group.
     pub(super) mods: u8,
     pub(super) head: u8,
     pub(super) open_questions: u16,

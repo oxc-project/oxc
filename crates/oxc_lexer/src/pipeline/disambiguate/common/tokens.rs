@@ -2,7 +2,11 @@
 
 use crate::token::{KW_KIND_BASE, OP_KIND_BASE, is_trivia_byte, tk};
 
-use crate::pipeline::{bytes::line_break_in, operators::opmap_longest, tables::Tables};
+use crate::pipeline::{
+    bytes::{is_digit, line_break_in},
+    operators::opmap_longest,
+    tables::Tables,
+};
 
 use super::{Brackets, Closers, bits, walk};
 
@@ -57,8 +61,8 @@ pub(crate) struct Peek {
 }
 
 impl Prev {
-    pub(crate) fn is_member_dot(self, src: &[u8]) -> bool {
-        matches!(self, Prev::Op(q, c) if c == b'.' || (c == b'?' && src[q + 1] == b'.'))
+    pub(crate) fn is_member_dot(self, tokens: &Tokens) -> bool {
+        matches!(self, Prev::Op(q, _) if tokens.member_dot(q))
     }
 }
 
@@ -156,8 +160,24 @@ impl Tokens<'_> {
     }
 
     /// Is the word at `w` a property name (`x.if`, `x?.if`)?
+    #[inline]
     pub(crate) fn property_name(&self, w: usize) -> bool {
-        self.prev_token(w).is_member_dot(self.src)
+        self.prev_sig(w).is_some_and(|q| self.kind[q] >= OP_KIND_BASE && self.member_dot(q))
+    }
+
+    /// Is the operator at q a member access dot, not a spread dot or the start of ?.5?
+    #[inline]
+    pub(crate) fn member_dot(&self, q: usize) -> bool {
+        let src = self.src;
+        match src[q] {
+            b'?' => src[q + 1] == b'.' && !is_digit(src[q + 2]),
+            // A spread is three token starts before coalesce, ending here, or one after it.
+            b'.' => {
+                !(src[q + 1] == b'.' && src[q + 2] == b'.')
+                    && !(q >= 2 && src[q - 1] == b'.' && src[q - 2] == b'.')
+            }
+            _ => false,
+        }
     }
 
     /// Number of `c` bytes the token at `p` starts with (a fused `>>>` counts three, a lone `>`
