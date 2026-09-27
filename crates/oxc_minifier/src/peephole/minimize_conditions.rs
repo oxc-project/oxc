@@ -236,10 +236,7 @@ impl<'a> PeepholeOptimizations {
 
         expr.operator = new_op;
         ctx.drop_expression(&binary_expr.left);
-        ctx.replace_expression_with(&mut expr.right, |e, _ctx| {
-            let Expression::BinaryExpression(e) = e else { unreachable!() };
-            e.unbox().right
-        });
+        ctx.replace_expression_with(&mut expr.right, Self::unwrap_right_from_binary_expr);
     }
 
     /// Compress `a -= 1` to `--a` and `a -= -1` to `++a`
