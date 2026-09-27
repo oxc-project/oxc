@@ -44,36 +44,10 @@ impl<'a> PeepholeOptimizations {
             _ => {}
         }
 
-        if let Expression::BinaryExpression(e) = &bin_expr.left
-            && e.operator == BinaryOperator::BitwiseOR
-        {
-            if e.left.is_number_0() {
-                // `(0 | a) OP b` -> `a OP b`
-                ctx.replace_expression_with(
-                    &mut bin_expr.left,
-                    Self::unwrap_right_from_binary_expr,
-                );
-            } else if e.right.is_number_0() {
-                // `(a | 0) OP b` -> `a OP b`
-                ctx.replace_expression_with(&mut bin_expr.left, Self::unwrap_left_from_binary_expr);
-            }
-        } else if let Expression::BinaryExpression(e) = &bin_expr.right
-            && e.operator == BinaryOperator::BitwiseOR
-        {
-            if e.left.is_number_0() {
-                // `a OP (0 | b)` -> `a OP b`
-                ctx.replace_expression_with(
-                    &mut bin_expr.right,
-                    Self::unwrap_right_from_binary_expr,
-                );
-            } else if e.right.is_number_0() {
-                // `a OP (b | 0)` -> `a OP b`
-                ctx.replace_expression_with(
-                    &mut bin_expr.right,
-                    Self::unwrap_left_from_binary_expr,
-                );
-            }
-        }
+        // `(0 | a) OP b` or `(a | 0) OP b` -> `a OP b`
+        Self::try_replace_or_number_0(&mut bin_expr.left, ctx);
+        // `a OP (0 | b)` or `a OP (b | 0)` -> `a OP b`
+        Self::try_replace_or_number_0(&mut bin_expr.right, ctx);
 
         if bin_expr.operator == BinaryOperator::BitwiseOR {
             if bin_expr.right.is_number_0()
@@ -100,6 +74,20 @@ impl<'a> PeepholeOptimizations {
             {
                 // `0 | (a OP b)` -> `a OP b`
                 ctx.replace_expression_with(expr, Self::unwrap_right_from_binary_expr);
+            }
+        }
+    }
+
+    fn try_replace_or_number_0(bin_expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::BinaryExpression(e) = &bin_expr
+            && e.operator == BinaryOperator::BitwiseOR
+        {
+            if e.left.is_number_0() {
+                // `(0 | a)` -> `a`
+                ctx.replace_expression_with(bin_expr, Self::unwrap_right_from_binary_expr);
+            } else if e.right.is_number_0() {
+                // `(a | 0)` -> `a`
+                ctx.replace_expression_with(bin_expr, Self::unwrap_left_from_binary_expr);
             }
         }
     }
