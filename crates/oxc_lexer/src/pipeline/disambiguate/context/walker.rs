@@ -133,15 +133,7 @@ impl Walk {
     }
 
     pub(super) fn pop(&mut self) -> Frame {
-        if self.frames.len() > 1 {
-            let f = self.frames.pop().unwrap();
-            if self.frames.len() < self.seed_depth {
-                self.seed_lost = true;
-            }
-            f
-        } else {
-            *self.top()
-        }
+        if self.frames.len() > 1 { self.frames.pop().unwrap() } else { *self.top() }
     }
 
     /// A closer with no frame to close: past here a bounded walk guesses.
@@ -160,15 +152,10 @@ impl Walk {
     /// Index of the innermost frame that owns statements / declarations.
     pub(super) fn stmt_frame(&self) -> usize {
         let mut i = self.frames.len() - 1;
-        loop {
-            if !self.frames[i].kind.is_virtual() {
-                return i;
-            }
-            if i == 0 {
-                return 0;
-            }
+        while self.frames[i].kind.is_virtual() {
             i -= 1;
         }
+        i
     }
 
     /// The frame whose declarator state (`let x`, `for (let x`) governs the next token, if the
@@ -236,9 +223,6 @@ impl Walk {
             if !k.is_virtual() {
                 return None;
             }
-            if i == 0 {
-                return None;
-            }
             i -= 1;
         }
     }
@@ -266,9 +250,6 @@ impl Walk {
             if wanted(k) {
                 let f = self.frames[i];
                 self.frames.truncate(i);
-                if i < self.seed_depth {
-                    self.seed_lost = true;
-                }
                 return Some(f);
             }
             if !k.is_virtual() {
@@ -469,7 +450,7 @@ impl Walk {
         // A declaration-type region whose last token completed a type.
         if let Some(i) = self.region_index() {
             let r = &self.frames[i];
-            if r.decl && r.atom && matches!(r.state, R_INLINE | R_STMT | R_INTERFACE) {
+            if r.atom && matches!(r.state, R_INLINE | R_STMT) {
                 // Parameter annotations (`(a: T` then `/`) are never followed by a regex; only
                 // statement-level regions matter.
                 let below = if i > 0 { self.frames[i - 1].kind } else { FrameKind::Root };

@@ -89,7 +89,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
         if k == tk!(Number) {
             // A word run that starts with a digit is a numeric literal, and a numeric literal ends
             // a value: division, unless TS ASI applies.
-            let we = bits::next0(tokens.word, qi, tokens.n);
+            let we = tokens.next_start(qi + 1);
             return ts
                 && tokens.line_break_between(we, p)
                 && context::after(tokens, walks, qi) == After::EndsDecl;

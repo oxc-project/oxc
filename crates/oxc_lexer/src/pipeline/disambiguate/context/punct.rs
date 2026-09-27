@@ -185,14 +185,6 @@ impl Walk {
                 self.less_than(tokens, pos);
                 pos + 1
             }
-            b'>' => {
-                if self.top_kind() == FrameKind::Angle {
-                    self.close_angle();
-                    return pos + 1;
-                }
-                self.operand_done();
-                pos + len
-            }
             b'@' => {
                 if self.decorator == 0 {
                     // `export @dec class` and `export default @dec class` decorate declarations.
@@ -237,13 +229,13 @@ impl Walk {
         if reg == S_TYPE_NAME {
             // `type X =`: the alias type.
             self.set_stmt_reg(S_NONE);
-            self.open_region(R_STMT, true);
+            self.open_region(R_STMT);
             return;
         }
         if reg == S_IMPORT_NAME {
             // `import X = ...`: a module reference.
             self.set_stmt_reg(S_NONE);
-            self.open_region(R_STMT, true);
+            self.open_region(R_STMT);
             return;
         }
         if self.top_declarator() == D_BOUND {
@@ -292,7 +284,7 @@ impl Walk {
             }
             FrameKind::ClassBody => {
                 if tokens.ts {
-                    self.open_region(R_INLINE, true);
+                    self.open_region(R_INLINE);
                 } else {
                     self.operand_done();
                 }
@@ -300,7 +292,7 @@ impl Walk {
             }
             FrameKind::Params => {
                 if tokens.ts {
-                    self.open_region(R_INLINE, true);
+                    self.open_region(R_INLINE);
                 } else {
                     self.operand_done();
                 }
@@ -309,7 +301,7 @@ impl Walk {
             FrameKind::Group | FrameKind::Call => {
                 if tokens.ts && !self.operand_allowed() {
                     // Arrow parameter annotation.
-                    self.open_region(R_INLINE, true);
+                    self.open_region(R_INLINE);
                 } else {
                     self.operand_done();
                 }
@@ -317,13 +309,13 @@ impl Walk {
             }
             FrameKind::FnHead => {
                 // Return type.
-                self.open_region(R_INLINE, true);
+                self.open_region(R_INLINE);
                 return;
             }
             FrameKind::ComputedKey => {
                 // Index signature `[k: string]`.
                 if tokens.ts {
-                    self.open_region(R_INLINE, true);
+                    self.open_region(R_INLINE);
                 } else {
                     self.operand_done();
                 }
@@ -342,13 +334,13 @@ impl Walk {
         }
         if tokens.ts && self.top_declarator() == D_BOUND {
             // Declarator type annotation.
-            self.open_region(R_INLINE, true);
+            self.open_region(R_INLINE);
             return;
         }
         if tokens.ts && self.closed_group && top != FrameKind::Head {
             // `(a): T =>` arrow return type; remember the group's `async`.
             let is_async = self.closed_group_async;
-            self.open_region(R_ARROW_RET, true);
+            self.open_region(R_ARROW_RET);
             self.top_mut().mods = if is_async { MOD_ASYNC } else { 0 };
             return;
         }
@@ -379,9 +371,6 @@ impl Walk {
 
     pub(super) fn comma(&mut self) {
         self.pop_concise();
-        while self.top_kind() == FrameKind::TypeRegion {
-            self.pop();
-        }
         let top = self.top_kind();
         match top {
             FrameKind::Object | FrameKind::ClassBody => {
@@ -410,16 +399,11 @@ impl Walk {
         let mut value = false;
         let mut generator = false;
         let mut is_async = false;
-        if matches!(top, FrameKind::JsxTag | FrameKind::JsxElem) {
-            kind = FrameKind::Container;
-        } else if top == FrameKind::ClassHead {
+        if top == FrameKind::ClassHead {
             if self.top().reg == C_INTERFACE {
                 // Interface body: a type literal that ends the statement.
                 self.pop();
-                let f = self.push(FrameKind::TypeLit);
-                f.decl = true;
-                f.is_value = false;
-                f.state = L_INTERFACE_BODY;
+                self.push(FrameKind::TypeLit).state = L_INTERFACE_BODY;
                 self.operand_done();
                 self.decorator = 0;
                 return;
@@ -491,11 +475,7 @@ impl Walk {
             return;
         };
         match f.kind {
-            FrameKind::Object | FrameKind::TypeLit if f.is_value => {
-                self.value_done();
-                self.member_done();
-            }
-            FrameKind::FnBody | FrameKind::ClassBody if f.is_value => {
+            FrameKind::Object | FrameKind::FnBody | FrameKind::ClassBody if f.is_value => {
                 self.value_done();
                 self.member_done();
             }
@@ -511,37 +491,6 @@ impl Walk {
             FrameKind::ModuleSpec => {
                 self.operand_done();
             }
-            FrameKind::TypeLit => {
-                if f.state == L_INTERFACE_BODY {
-                    if self.top_kind() == FrameKind::TypeRegion {
-                        self.pop();
-                    }
-                    self.end_statement();
-                } else if self.region_index().is_some() {
-                    self.type_atom(false);
-                } else {
-                    self.after_statement();
-                    self.clear_prev();
-                }
-            }
-            FrameKind::FnBody
-            | FrameKind::ClassBody
-            | FrameKind::StaticBlock
-            | FrameKind::Block => {
-                // A statement-level body: a new statement may start; inside a class body a new
-                // member may start.
-                if matches!(self.top_kind(), FrameKind::ClassBody | FrameKind::Object) {
-                    self.member_done();
-                    self.operand_done();
-                } else if f.kind == FrameKind::FnBody
-                    && matches!(self.top_kind(), FrameKind::TypeLit)
-                {
-                    self.operand_done();
-                } else {
-                    self.after_statement();
-                    self.clear_prev();
-                }
-            }
             FrameKind::ArrowBody => {
                 // The arrow function is complete: it cannot be continued.
                 self.pop_concise();
@@ -549,8 +498,15 @@ impl Walk {
                 self.clear_prev();
             }
             _ => {
-                self.after_statement();
-                self.clear_prev();
+                // A statement-level body: a new statement may start; inside a class body a new
+                // member may start.
+                if matches!(self.top_kind(), FrameKind::ClassBody | FrameKind::Object) {
+                    self.member_done();
+                    self.operand_done();
+                } else {
+                    self.after_statement();
+                    self.clear_prev();
+                }
             }
         }
     }
