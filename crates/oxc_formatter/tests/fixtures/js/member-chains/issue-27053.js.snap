@@ -1,0 +1,41 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// https://github.com/oxc-project/oxc/issues/27053
+// Member chain with a long object argument must be idempotent:
+// the first pass must reach the same fixpoint as the second pass.
+const { error } = await client.from('sent_messages').insert({ id: sid, account_id: accountId, subject: 'x', body: 'x', message_id: id, recipient_count: count});
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// https://github.com/oxc-project/oxc/issues/27053
+// Member chain with a long object argument must be idempotent:
+// the first pass must reach the same fixpoint as the second pass.
+const { error } = await client.from("sent_messages").insert({
+  id: sid,
+  account_id: accountId,
+  subject: "x",
+  body: "x",
+  message_id: id,
+  recipient_count: count,
+});
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// https://github.com/oxc-project/oxc/issues/27053
+// Member chain with a long object argument must be idempotent:
+// the first pass must reach the same fixpoint as the second pass.
+const { error } = await client.from("sent_messages").insert({
+  id: sid,
+  account_id: accountId,
+  subject: "x",
+  body: "x",
+  message_id: id,
+  recipient_count: count,
+});
+
+===================== End =====================

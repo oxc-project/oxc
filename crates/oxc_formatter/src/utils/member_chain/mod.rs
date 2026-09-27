@@ -173,6 +173,35 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         self.tail.last().unwrap_or(&self.head)
     }
 
+    /// Returns true if the last call's source text is at least as long as the line width
+    /// and its last argument is an object expression.
+    ///
+    /// Such a call cannot be printed on a single line (it never starts at column
+    /// 0): the printer will break its contents by width. This is only meaningful
+    /// when the last group has no forced breaks; otherwise `will_break` already
+    /// reflects the broken layout. The object check narrows this to the reported
+    /// case (a long inline object argument) where the one-call-per-line fallback
+    /// diverges from the second-pass fixpoint.
+    fn last_group_exceeds_line_width(&self, f: &JsFormatter<'_, 'a>) -> bool {
+        let Some(last_group) = self.tail.last() else { return false };
+        let Some(ChainMember::CallExpression { expression, .. }) = last_group.members().last()
+        else {
+            return false;
+        };
+        let call = expression.as_ref();
+        // Only for a trailing object argument: other argument shapes (e.g. arrow
+        // functions) keep the existing layout choice.
+        if !matches!(call.arguments.last(), Some(Argument::ObjectExpression(_))) {
+            return false;
+        }
+        // The call's span includes its callee; measure only the `.method(args)`
+        // part from the end of the callee. The call never starts at column 0
+        // (the head precedes it), so `>=` is the right comparison.
+        let callee_end = call.callee.span().end;
+        let len = call.span.end - callee_end;
+        len as usize >= f.options().line_width.value() as usize
+    }
+
     /// Returns an iterator over all members in the member chain
     fn members(&self) -> impl Iterator<Item = &ChainMember<'a, 'b>> {
         self.head.members().iter().chain(self.tail.members())
@@ -238,6 +267,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
         let format_content = format_with(|f| {
             if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {
                 write!(f, [group(&format_expanded)]);
+            } else if !self.last_group().will_break(f) && self.last_group_exceeds_line_width(f) {
+                // The last group has no forced breaks but is too long for one line,
+                // so the printer will break its contents by width. `will_break`
+                // cannot see width-driven breaks, so without this the chain picks
+                // the one-call-per-line layout on the first pass and only reaches
+                // the joined layout on a second pass. Keep the calls joined and
+                // let the last group break: this is the layout a second pass
+                // would reach, making the first pass idempotent.
+                write!(f, [group(&format_one_line)]);
             } else {
                 let has_empty_line_before_tail =
                     self.tail.first().is_some_and(MemberChainGroup::needs_empty_line);
