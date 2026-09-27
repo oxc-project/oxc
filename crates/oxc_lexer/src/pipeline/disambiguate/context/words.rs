@@ -86,15 +86,10 @@ impl Walk {
     /// `await`, `of`, `let`, `using`, `async`, the TypeScript declaration words, `as`,
     /// `satisfies`, `static`, `implements`, `from`) is a plain name (0) unless its position and
     /// the token after it say otherwise; every other code stands.
-    fn resolve_keyword(&self, tokens: &Tokens, end: usize, kw: u8) -> u8 {
+    fn resolve_keyword(&mut self, tokens: &Tokens, end: usize, kw: u8) -> u8 {
         match kw {
-            tk!(KwYield) => {
-                if !self.yield_is_keyword() {
-                    return 0;
-                }
-            }
-            tk!(KwAwait) => {
-                if !self.await_is_keyword() {
+            tk!(KwYield | KwAwait) => {
+                if !self.scoped_keyword(kw == tk!(KwYield)) {
                     return 0;
                 }
             }

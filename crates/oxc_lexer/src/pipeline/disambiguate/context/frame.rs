@@ -163,16 +163,6 @@ impl Frame {
         self.state = M_KEY_POS;
         self.mods = 0;
     }
-
-    pub(super) fn child(&self, kind: FrameKind) -> Frame {
-        let init = self.field_init();
-        Frame {
-            kind,
-            is_generator: self.is_generator && !init,
-            is_async: self.is_async && !init,
-            ..Frame::default()
-        }
-    }
 }
 
 impl FrameKind {

@@ -20,10 +20,9 @@ use crate::{
 
 use crate::pipeline::disambiguate::common::{Tokens, bits, kind_at, word_is_any, word_len};
 
-use super::bytes::{list_closer, raw_template_end, skip_raw_literal, skip_ws_fwd};
+use super::bytes::{list_closer, raw_template_end, skip_raw_literal, skip_trivia_fwd};
 
-const FOLLOW_SPLIT_WORDS: &[&[u8]] =
-    &[b"in", b"instanceof", b"as", b"satisfies", b"extends", b"implements"];
+const FOLLOW_SPLIT_WORDS: &[&[u8]] = &[b"in", b"instanceof", b"as", b"satisfies", b"extends"];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Follow {
@@ -163,6 +162,8 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
     let mut paren_ok = false;
     let mut cond_ok = false;
     let mut parens: i32 = 0;
+    // Conditional types whose : is still to come, outside braces, brackets and parens.
+    let mut colons: u32 = 0;
     let mut this_head = false;
     // Keyword kind of the previous token (0 when it was not a keyword) and whether that keyword
     // is a whole type that no `.` may follow.
@@ -213,7 +214,10 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
         let was_elem_start = elem_start;
         elem_start = false;
         if matches_tk!(k, Ident | IdentEscaped) {
-            let kk = t.keywords.kwts.lookup_at(src, w, word_len(src, w)) as u8;
+            // A qualified name's part is a name (z.infer, a.typeof).
+            let dotted = prev != usize::MAX && tokens.member_dot(prev);
+            let kk =
+                if dotted { 0 } else { t.keywords.kwts.lookup_at(src, w, word_len(src, w)) as u8 };
             // A keyword type (`this`, `any`, `null`, ...) takes no type arguments; in a type
             // query it names a value, which may (`typeof this<A>`).
             this_head = matches_tk!(kk,
@@ -243,7 +247,14 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
             no_dot = last_kw != tk!(KwTypeof)
                 && matches_tk!(kk, KwThis | KwNull | KwTrue | KwFalse | KwVoid);
             prev_kw = kk;
-            start = type_prefix_kind(kk);
+            // At the start of a type only an operator takes an operand; any other word is a name.
+            start = if start {
+                type_prefix_kind(kk)
+                    || (kk == tk!(KwAbstract)
+                        && tokens.ident_is(skip_trivia_fwd(src, hi, w + 8), b"new"))
+            } else {
+                matches_tk!(kk, KwExtends | KwIs | KwIn | KwAs)
+            };
         } else if matches_tk!(k, Number | BigInt | String | TemplateNoSub | TemplateTail) {
             if !start && braces == 0 && k != tk!(TemplateTail) {
                 return false;
@@ -307,6 +318,10 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                     if was_this || nx == b'=' || (nx == b'<' && !bits::get(st, w + 1)) {
                         return false;
                     }
+                    // No function type follows an operator that takes an operand.
+                    if braces == 0 && type_prefix_kind(last_kw) && last_kw != tk!(KwNew) {
+                        return false;
+                    }
                     if !start && prev != usize::MAX && line_break_in(src, prev, w) {
                         return false;
                     }
@@ -335,7 +350,15 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                     }
                     start = true;
                 }
-                b':' => start = true,
+                b':' => {
+                    if braces == 0 && brackets == 0 && parens == 0 {
+                        if colons == 0 {
+                            return false;
+                        }
+                        colons -= 1;
+                    }
+                    start = true;
+                }
                 b'.' => {
                     if was_no_dot {
                         return false;
@@ -364,12 +387,13 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                     }
                     if braces == 0 && brackets == 0 {
                         let optional = parens > 0
-                            && matches!(src[skip_ws_fwd(src, w + 1, hi)], b':' | b',' | b')');
+                            && matches!(src[skip_trivia_fwd(src, hi, w + 1)], b':' | b',' | b')');
                         if !optional {
                             if !cond_ok {
                                 return false;
                             }
                             cond_ok = false;
+                            colons += u32::from(parens == 0);
                         }
                     }
                     start = true;
@@ -409,7 +433,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
 fn type_illegal_kind(k: u8) -> bool {
     matches_tk!(
         k,
-        KwAwait | KwYield | KwDelete | KwFunction | KwClass | KwInstanceof | KwSuper | KwSwitch
+        KwDelete | KwFunction | KwClass | KwInstanceof | KwSuper | KwSwitch
         | KwCase | KwReturn | KwThrow | KwVar | KwConst | KwIf | KwElse | KwFor | KwWhile | KwDo
         | KwBreak | KwContinue | KwWith | KwTry | KwCatch | KwFinally | KwDebugger | KwDefault
         | KwExport | KwEnum
@@ -445,7 +469,6 @@ fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize) -> bool {
 fn type_prefix_kind(k: u8) -> bool {
     matches_tk!(
         k,
-        KwKeyof | KwTypeof | KwReadonly | KwUnique | KwInfer | KwAbstract | KwNew | KwAsserts
-        | KwImport | KwExtends | KwIs | KwIn | KwAs
+        KwKeyof | KwTypeof | KwReadonly | KwUnique | KwInfer | KwNew | KwImport
     )
 }

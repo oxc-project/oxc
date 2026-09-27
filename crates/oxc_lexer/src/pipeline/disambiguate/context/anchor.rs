@@ -146,6 +146,8 @@ fn fn_class_anchor(
                     expr
                 }
             }
+            // A generator method named function, as in { *function() {} }.
+            b'*' if !named => None,
             // A TypeScript postfix non-null ends a value at a line break too.
             b'!' if tokens.ts && named && broken(q) => None,
             _ => expr,
