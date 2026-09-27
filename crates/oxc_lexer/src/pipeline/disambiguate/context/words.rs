@@ -5,28 +5,10 @@ use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use super::*;
 
-/// Does the word start a statement no expression can continue? Reserved statement keywords always
-/// do, contextual ones only after a line break.
-#[rustfmt::skip::macros(tk)]
-fn is_stmt_keyword(kw: u8, newline: bool, ts: bool) -> bool {
-    match kw {
-        tk!(
-            KwIf | KwFor | KwWhile | KwReturn | KwVar | KwConst | KwSwitch | KwTry | KwThrow | KwDo
-            | KwWith | KwBreak | KwContinue | KwDebugger | KwFunction | KwClass | KwImport
-            | KwExport | KwEnum
-        ) => true,
-        tk!(
-            KwLet | KwAsync | KwType | KwInterface | KwDeclare | KwNamespace | KwModule | KwAbstract
-            | KwUsing
-        ) => newline && (ts || matches_tk!(kw, KwLet | KwAsync | KwUsing)),
-        _ => false,
-    }
-}
-
 #[rustfmt::skip::macros(matches_tk, tk)]
 impl Walk {
     /// Step the word at `pos`; returns its end.
-    pub(super) fn step_word(&mut self, tokens: &Tokens, pos: usize, newline: bool) -> usize {
+    pub(super) fn step_word(&mut self, tokens: &Tokens, pos: usize) -> usize {
         let end = tokens.next_start(pos + 1);
         let kw = if self.after_dot { 0 } else { tokens.word_kw(pos, end - pos) };
 
@@ -46,7 +28,6 @@ impl Walk {
         {
             return self.member_word(tokens, pos, end, kw);
         }
-        self.statement_keyword_break(kw, newline, tokens.ts);
         if self.declared_name(kw) {
             return end;
         }
@@ -130,13 +111,10 @@ impl Walk {
                     return 0;
                 }
             }
-            tk!(
-                KwType | KwInterface | KwNamespace | KwModule | KwDeclare | KwAbstract | KwGlobal
-            ) => {
+            tk!(KwType | KwInterface | KwNamespace | KwModule | KwDeclare) => {
                 // Statement-level TS declarations only.
                 let nx = tokens.peek(end);
-                let starts_decl = (matches_tk!(nx.kind, Ident | String)
-                    || (kw == tk!(KwGlobal) && nx.kind >= OP_KIND_BASE && nx.byte == b'{'))
+                let starts_decl = matches_tk!(nx.kind, Ident | String)
                     && !tokens.line_break_between(end, nx.pos);
                 let at_stmt = self.at_stmt_start()
                     || self.prev_kw == tk!(KwDefault)
@@ -171,22 +149,6 @@ impl Walk {
             _ => {}
         }
         kw
-    }
-
-    /// A statement keyword that cannot continue an expression starts a new statement even
-    /// without a separator.
-    fn statement_keyword_break(&mut self, kw: u8, newline: bool, ts: bool) {
-        let import_attrs =
-            kw == tk!(KwWith) && matches!(self.stmt_reg(), S_IMPORT | S_IMPORT_NAME | S_EXPORT);
-        if !self.operand_allowed()
-            && kw != 0
-            && self.decorator == 0
-            && !import_attrs
-            && is_stmt_keyword(kw, newline, ts)
-            && (self.top_kind().is_stmt_holder() || self.top_kind() == FrameKind::FnHead)
-        {
-            self.end_statement();
-        }
     }
 
     /// True when a statement register takes the word as its name (break label, type X, import x).
@@ -260,7 +222,7 @@ impl Walk {
                     self.expect = Expect::Statement;
                 }
             }
-            tk!(KwElse | KwDo | KwTry | KwFinally | KwDeclare | KwAbstract | KwGlobal) => {
+            tk!(KwElse | KwDo | KwTry | KwFinally | KwDeclare) => {
                 self.expect = Expect::Statement;
                 self.clear_prev();
                 self.prev_kw = kw;
@@ -270,7 +232,7 @@ impl Walk {
                 | KwInstanceof | KwOf | KwDebugger | KwExtends | KwImplements
             ) => {
                 if self.top_kind() == FrameKind::Head && matches_tk!(kw, KwOf | KwIn) {
-                    self.top_mut().state = F_ITER;
+                    self.top_mut().state = F_EXPR;
                 }
                 self.keyword(kw);
             }
@@ -295,16 +257,8 @@ impl Walk {
                 self.keyword(kw);
             }
             tk!(KwVar | KwConst | KwLet | KwUsing) => {
-                if kw == tk!(KwConst) {
-                    // `const enum`
-                    let nx = tokens.peek(end);
-                    if nx.kind == tk!(Ident) && tokens.ident_is(nx.pos, b"enum") {
-                        self.keyword(tk!(KwConst));
-                        return;
-                    }
-                }
-                if let Some(di) = self.decl_frame() {
-                    self.frames[di].state = D_BINDING;
+                if self.top_kind().is_stmt_holder() {
+                    self.top_mut().state = D_BINDING;
                 }
                 self.keyword(kw);
             }
@@ -363,14 +317,10 @@ impl Walk {
                 self.value_done();
                 self.prev_kw = tk!(KwInterface);
             }
-            tk!(KwNamespace | KwModule | KwEnum) => {
-                self.set_stmt_reg(S_NONE);
-                let declare = self.prev_kw == tk!(KwDeclare);
+            tk!(KwModule) if self.prev_kw == tk!(KwDeclare) => {
+                // A declared module may have no body.
                 self.keyword(kw);
-                if declare && kw == tk!(KwModule) {
-                    // `declare module "x"` may have no body.
-                    self.set_stmt_reg(S_DECLARE_MODULE);
-                }
+                self.set_stmt_reg(S_DECLARE_MODULE);
             }
             tk!(KwFrom) => {
                 self.keyword(tk!(KwFrom));
@@ -384,12 +334,6 @@ impl Walk {
 
     /// A plain identifier (or keyword used as a name) in expression / statement position.
     fn plain_word(&mut self, tokens: &Tokens, end: usize, at_start: bool) {
-        // Declarator binding.
-        if self.top_declarator() == D_BINDING {
-            self.top_mut().state = D_BOUND;
-            self.value_done();
-            return;
-        }
         // Label candidate: a lone identifier at statement start.
         if at_start && self.stmt_reg() == S_NONE && self.top_kind() != FrameKind::Head {
             let nx = tokens.peek(end);

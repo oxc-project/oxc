@@ -124,7 +124,7 @@ impl Walk {
             self.end_statement();
         }
         let end = match k {
-            tk!(Ident) => self.step_word(tokens, pos, newline),
+            tk!(Ident) => self.step_word(tokens, pos),
             tk!(Number | BigInt | String | RegExp | TemplateNoSub | PrivateIdent) => {
                 let e = tokens.next_start(pos + 1);
                 self.literal(tokens, k, e);
@@ -270,9 +270,6 @@ impl Walk {
                 self.top_mut().state = M_KEY_SEEN;
                 self.value_done();
                 return;
-            }
-            FrameKind::Head if self.top().state == F_START => {
-                self.top_mut().state = F_EXPR;
             }
             _ => {}
         }

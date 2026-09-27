@@ -255,8 +255,5 @@ impl Walk {
             }
         }
         self.operand_done();
-        if self.top_kind() == FrameKind::Head && self.top().state != F_ITER {
-            self.top_mut().state = F_EXPR;
-        }
     }
 }
