@@ -116,11 +116,7 @@ fn list_in_any_context(tokens: &Tokens, lt: usize) -> bool {
     if t.kind == tk!(Ident) {
         let x = tokens.peek(t.pos + 1);
         if x.kind == tk!(Ident) && tokens.ident_kw(x.pos) == tk!(KwExtends) {
-            let f = tokens.peek(x.pos + 1);
-            let tag = f.kind >= OP_KIND_BASE && matches!(f.byte, b'=' | b'>' | b'/');
-            if !tag {
-                return true;
-            }
+            return true;
         }
     }
     match tokens.prev_token(lt) {

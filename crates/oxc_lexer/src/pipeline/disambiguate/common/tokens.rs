@@ -23,8 +23,6 @@ pub(crate) struct Tokens<'a> {
     pub(crate) st: &'a [u64],
     /// Operator characters.
     pub(crate) opch: &'a [u64],
-    /// Identifier characters.
-    pub(crate) word: &'a [u64],
     /// The kind at each token start.
     pub(crate) kind: &'a [u8],
     /// Source length.

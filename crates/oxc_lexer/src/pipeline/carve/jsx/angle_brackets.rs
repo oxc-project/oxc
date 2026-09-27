@@ -44,7 +44,6 @@ pub(super) unsafe fn jsx_over_type_params(
                 src,
                 st,
                 opch,
-                word,
                 kind,
                 n,
                 ts,

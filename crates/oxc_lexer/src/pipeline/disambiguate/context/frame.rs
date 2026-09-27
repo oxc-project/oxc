@@ -115,7 +115,6 @@ pub(super) const R_ARROW_RET: u8 = 2; // `(a): T =>`: ends at `=>`
 pub(super) const R_INLINE: u8 = 3; // declarator/param/member annotation: ends at `=`/`,`/closer/`{`
 pub(super) const R_STMT: u8 = 4; // alias / import-equals / bodiless module: ends at `;`/ASI
 pub(super) const R_EXPR: u8 = 5; // `as T` / `satisfies T`: ends at any expression token
-pub(super) const R_INTERFACE: u8 = 6; // `interface X ... { }`: ends after its body
 
 // What an Angle list is (`state`).
 pub(super) const A_DECL_PARAMS: u8 = 1; // type parameters of a declaration head or member

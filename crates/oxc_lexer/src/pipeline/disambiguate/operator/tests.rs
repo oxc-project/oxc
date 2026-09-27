@@ -1044,6 +1044,12 @@ fn yield_and_await_inside_the_function_a_bounded_walk_starts_in() {
 }
 
 #[test]
+fn expression_after_an_as_type() {
+    regex("y = x as T || (() => { if (a) {} /re/ });", ScriptTS);
+    regex("y = x as T ? a : function () { if (c) {} /re/ };", ScriptTS);
+}
+
+#[test]
 fn from_as_a_name_before_a_string() {
     division("let from = 1;\nfrom\n\"y\"\n/2/1;", ScriptJS);
     division("let from = 1;\nfrom\n\"y\"\n/2/1;", ScriptTS);

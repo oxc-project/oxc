@@ -6,12 +6,8 @@ use crate::token::tk;
 use super::*;
 
 impl Walk {
-    pub(super) fn open_region(&mut self, rule: u8, decl: bool) {
-        let f = self.push(FrameKind::TypeRegion);
-        f.decl = decl;
-        f.state = rule;
-        f.atom = false;
-        f.inner = false;
+    pub(super) fn open_region(&mut self, rule: u8) {
+        self.push(FrameKind::TypeRegion).state = rule;
         self.operand_done();
     }
 
@@ -33,14 +29,7 @@ impl Walk {
         let top = self.top_kind();
         match c {
             b'(' => {
-                if top == FrameKind::TypeRegion && self.top().atom && self.top().state == R_EXPR {
-                    // `x as T (` cannot continue the type.
-                    self.end_region_for();
-                    self.open_paren();
-                    return pos + 1;
-                }
-                let f = self.push(FrameKind::TypeParen);
-                f.decl = true;
+                self.push(FrameKind::TypeParen);
                 self.operand_done();
                 pos + 1
             }
@@ -56,17 +45,7 @@ impl Walk {
                 pos + 1
             }
             b'[' => {
-                if top == FrameKind::TypeRegion
-                    && self.top().atom
-                    && self.top().state == R_EXPR
-                    && tokens.line_break_between(self.prev_end, pos)
-                {
-                    self.end_region_for();
-                    self.open_bracket();
-                    return pos + 1;
-                }
-                let f = self.push(FrameKind::TypeBracket);
-                f.decl = true;
+                self.push(FrameKind::TypeBracket);
                 self.operand_done();
                 pos + 1
             }
@@ -83,24 +62,12 @@ impl Walk {
             b'{' => {
                 if top == FrameKind::TypeRegion && self.top().atom {
                     // A body follows a completed type (`): T {`).
-                    let r = self.pop();
-                    if r.state == R_INTERFACE {
-                        // `interface X extends Y {`: the body.
-                        let f = self.push(FrameKind::TypeLit);
-                        f.decl = true;
-                        f.is_value = false;
-                        f.state = L_INTERFACE_BODY;
-                        self.operand_done();
-                        return pos + 1;
-                    }
+                    self.pop();
                     self.set_value();
                     self.open_brace();
                     return pos + 1;
                 }
-                let expr = self.region_index().is_some_and(|i| !self.frames[i].decl);
-                let f = self.push(FrameKind::TypeLit);
-                f.decl = !expr;
-                f.is_value = expr;
+                self.push(FrameKind::TypeLit);
                 self.operand_done();
                 pos + 1
             }
@@ -109,9 +76,6 @@ impl Walk {
                     let f = self.pop();
                     if f.state == L_INTERFACE_BODY {
                         // Interface body done: statement over.
-                        if self.top_kind() == FrameKind::TypeRegion {
-                            self.pop();
-                        }
                         self.end_statement();
                         return pos + 1;
                     }
@@ -130,10 +94,7 @@ impl Walk {
                     self.operand_done();
                     return pos + 1;
                 }
-                let decl = self.region_index().is_none_or(|i| self.frames[i].decl);
-                let f = self.push(FrameKind::Angle);
-                f.decl = decl;
-                f.state = A_IN_TYPE;
+                self.push(FrameKind::Angle).state = A_IN_TYPE;
                 self.operand_done();
                 pos + 1
             }
@@ -203,12 +164,6 @@ impl Walk {
                     self.end_region_for();
                     self.operand_done();
                     return pos + len;
-                }
-                if c == b'?' && tokens.src[pos + 1] == b'.' {
-                    self.end_region_for();
-                    self.operand_done();
-                    self.after_dot = true;
-                    return pos + 2;
                 }
                 if c == b'.' && len == 3 {
                     self.type_operator();
@@ -280,27 +235,21 @@ impl Walk {
     pub(super) fn less_than(&mut self, tokens: &Tokens, pos: usize) {
         // Type parameters of a declaration head or member.
         if tokens.ts && self.type_params_expected() {
-            let f = self.push(FrameKind::Angle);
-            f.decl = true;
-            f.state = A_DECL_PARAMS;
+            self.push(FrameKind::Angle).state = A_DECL_PARAMS;
             self.operand_done();
             return;
         }
         if tokens.ts && self.operand_allowed() {
             // `<T>x` assertion / `<T,>() =>` generic arrow: a type list.
-            self.open_region(R_ASSERT, false);
-            let f = self.push(FrameKind::Angle);
-            f.decl = false;
-            f.state = A_ASSERT;
+            self.open_region(R_ASSERT);
+            self.push(FrameKind::Angle).state = A_ASSERT;
             self.operand_done();
             return;
         }
         if tokens.ts && !self.operand_allowed() && !self.no_type_args {
             // After a value: type arguments (`f<T>(x)`) or less-than.
             if type_args_at(tokens, pos) {
-                let f = self.push(FrameKind::Angle);
-                f.decl = false;
-                f.state = A_EXPR_ARGS;
+                self.push(FrameKind::Angle).state = A_EXPR_ARGS;
                 self.operand_done();
                 return;
             }

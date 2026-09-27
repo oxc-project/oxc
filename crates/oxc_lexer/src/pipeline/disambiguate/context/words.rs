@@ -47,7 +47,7 @@ impl Walk {
             return self.member_word(tokens, pos, end, kw);
         }
         self.statement_keyword_break(kw, newline, tokens.ts);
-        if self.declared_name(tokens, end, kw) {
+        if self.declared_name(kw) {
             return end;
         }
         self.keyword_word(tokens, end, kw);
@@ -190,7 +190,7 @@ impl Walk {
     }
 
     /// True when a statement register takes the word as its name (break label, type X, import x).
-    fn declared_name(&mut self, tokens: &Tokens, end: usize, kw: u8) -> bool {
+    fn declared_name(&mut self, kw: u8) -> bool {
         match self.stmt_reg() {
             S_BREAK => {
                 // break label, export as namespace N: the statement is complete.
@@ -203,17 +203,8 @@ impl Walk {
                 self.set_stmt_reg(S_TYPE_NAME);
                 self.value_done();
             }
-            S_IMPORT if kw == 0 || kw == tk!(KwType) => {
+            S_IMPORT if kw == 0 => {
                 // `import x` / `import type x` / `import x = ...`
-                if kw == tk!(KwType) && self.prev_kw == tk!(KwImport) {
-                    let nx = tokens.peek(end);
-                    if nx.kind == tk!(Ident)
-                        || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'{' | b'*'))
-                    {
-                        self.prev_kw = tk!(KwType);
-                        return true;
-                    }
-                }
                 self.set_stmt_reg(S_IMPORT_NAME);
                 self.value_done();
             }
@@ -350,12 +341,12 @@ impl Walk {
                     self.set_stmt_reg(S_EXPORT_AS);
                     self.keyword(tk!(KwAs));
                 } else {
-                    self.open_region(R_EXPR, false);
+                    self.open_region(R_EXPR);
                     self.prev_kw = tk!(KwAs);
                 }
             }
             tk!(KwSatisfies) => {
-                self.open_region(R_EXPR, false);
+                self.open_region(R_EXPR);
                 self.prev_kw = tk!(KwSatisfies);
             }
             tk!(KwAsync) => {
@@ -390,10 +381,6 @@ impl Walk {
             tk!(KwDeclare | KwAbstract | KwGlobal) => {
                 self.keyword(kw);
                 self.expect = Expect::Statement;
-            }
-            tk!(KwStatic) => {
-                self.top_mut().mods |= MOD_STATIC;
-                self.keyword(tk!(KwStatic));
             }
             tk!(KwFrom) => {
                 self.keyword(tk!(KwFrom));

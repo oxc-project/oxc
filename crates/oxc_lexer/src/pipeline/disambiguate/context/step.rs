@@ -111,7 +111,7 @@ impl Walk {
             && self.top().atom
             && !continues_type_after_break(tokens, pos)
         {
-            self.end_region_by_break(tokens, pos);
+            self.end_region_by_break();
         }
         // Restricted productions: `return` / `throw` / `yield` / `break` / `continue` followed by a
         // line break end their statement.
@@ -216,10 +216,10 @@ impl Walk {
         }
     }
 
-    fn end_region_by_break(&mut self, tokens: &Tokens, pos: usize) {
+    fn end_region_by_break(&mut self) {
         let r = self.pop();
         match r.state {
-            R_STMT | R_INTERFACE => self.end_statement(),
+            R_STMT => self.end_statement(),
             R_INLINE => {
                 // A declarator / member annotation ended by a line break.
                 match self.top_kind() {
@@ -239,9 +239,6 @@ impl Walk {
                 // `x as T` then a new line: the value is complete.
                 self.set_value();
                 self.no_type_args = true;
-                if !continues_expression(tokens, pos) {
-                    self.asi(tokens, pos);
-                }
             }
             _ => self.set_value(),
         }
