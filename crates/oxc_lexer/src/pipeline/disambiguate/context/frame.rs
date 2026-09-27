@@ -70,12 +70,12 @@ pub(super) const S_IMPORT_NAME: u8 = 13;
 
 pub(super) const S_DECLARE_MODULE: u8 = 14;
 
-// For-head state (`state`).
-pub(super) const F_START: u8 = 0;
+pub(super) const S_ATTRS: u8 = 15;
 
-pub(super) const F_BOUND: u8 = 1;
+// Head state: a for head before its first semicolon, where of after a value is the keyword.
+pub(super) const F_OF: u8 = 0;
 
-pub(super) const F_EXPR: u8 = 2;
+pub(super) const F_NO_OF: u8 = 1;
 
 // Member state on Object / ClassBody / TypeLit (`state`).
 pub(super) const M_KEY_POS: u8 = 0;
@@ -127,8 +127,6 @@ pub(super) struct Frame {
     pub(super) reg: u8,
     /// Modifier bits: an Object or ClassBody member's, or the async before a Group.
     pub(super) mods: u8,
-    /// Head: the parens of a for, where of may be the keyword.
-    pub(super) for_head: bool,
     pub(super) open_questions: u16,
 }
 

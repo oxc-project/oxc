@@ -250,7 +250,7 @@ impl Walk {
                     && !tokens.line_break_between(end, nx.pos)
                     && (tokens.ident_is(nx.pos, b"with") || tokens.ident_is(nx.pos, b"assert"));
                 if attrs {
-                    self.set_stmt_reg(S_IMPORT);
+                    self.set_stmt_reg(S_ATTRS);
                     return;
                 }
                 self.stmt_done = true;
