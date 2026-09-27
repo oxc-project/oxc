@@ -359,7 +359,7 @@ impl Walk {
             // `(a): T =>` arrow return type; remember the group's `async`.
             let is_async = self.closed_group_async;
             self.open_region(R_ARROW_RET, true);
-            self.top_mut().is_async = is_async;
+            self.top_mut().mods = if is_async { MOD_ASYNC } else { 0 };
             return;
         }
         self.operand_done();
@@ -630,8 +630,9 @@ impl Walk {
             f.is_async = is_async;
             f.reserved = false;
         }
-        if kind == FrameKind::Group {
-            f.is_async = is_async;
+        if kind == FrameKind::Group && is_async {
+            // Kept off is_async, which nested frames would inherit as an await context.
+            f.mods = MOD_ASYNC;
         }
         if kind == FrameKind::Head {
             f.state = F_START;
@@ -660,7 +661,7 @@ impl Walk {
             FrameKind::Group => {
                 self.value_done();
                 self.closed_group = true;
-                self.closed_group_async = f.is_async;
+                self.closed_group_async = f.mods & MOD_ASYNC != 0;
             }
             _ => {
                 self.value_done();

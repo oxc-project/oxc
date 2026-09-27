@@ -33,7 +33,8 @@ pub(crate) fn gt_run_split(tokens: &Tokens, walks: &mut Walks, p: usize, run: us
     while g < run && tokens.src[p + g] == b'>' {
         g += 1;
     }
-    run_shortcut(tokens, p, g).unwrap_or_else(|| context::angles_before(tokens, walks, p)).min(g)
+    let quick = if walks.shortcuts() { run_shortcut(tokens, p, g) } else { None };
+    quick.unwrap_or_else(|| context::angles_before(tokens, walks, p)).min(g)
 }
 
 /// The lists a `>` run of `run` bytes at `pos` closes, when its context cannot matter: the run

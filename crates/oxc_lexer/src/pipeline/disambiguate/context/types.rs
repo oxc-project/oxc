@@ -176,7 +176,7 @@ impl Walk {
                     if top == FrameKind::TypeRegion && self.top().state == R_ARROW_RET {
                         let r = self.pop();
                         self.closed_group = true;
-                        self.closed_group_async = r.is_async;
+                        self.closed_group_async = r.mods & MOD_ASYNC != 0;
                         self.arrow(tokens, pos);
                         return pos + 2;
                     }

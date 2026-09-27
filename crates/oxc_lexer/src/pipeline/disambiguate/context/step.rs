@@ -218,22 +218,9 @@ impl Walk {
                 self.top_mut().next_member();
                 self.set_operand();
             }
-            FrameKind::Object
-            | FrameKind::Call
-            | FrameKind::Group
-            | FrameKind::Array
-            | FrameKind::Index
-            | FrameKind::Params
-            | FrameKind::Sub
-            | FrameKind::Container
-            | FrameKind::Head
-            | FrameKind::ComputedKey => {
-                // No statements here; nothing to end.
-            }
-            FrameKind::Angle => {
-                // Inside a `<...>` list a line break is trivia: `<T\nextends U>` is one list.
-            }
-            _ => self.end_statement(),
+            k if k.is_stmt_holder() => self.end_statement(),
+            // Lists, calls, literals and types hold no statements: nothing ends.
+            _ => {}
         }
     }
 

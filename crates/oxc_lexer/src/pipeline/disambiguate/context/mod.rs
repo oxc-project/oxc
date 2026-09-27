@@ -75,11 +75,29 @@ pub(super) struct Site {
 pub(crate) struct Walks {
     full: Walk,
     local: Walk,
+    /// Tests: every question goes to the full walk, with no anchors or shortcuts.
+    #[cfg(test)]
+    pub(crate) full_walk_only: bool,
 }
 
 impl Walks {
     pub(crate) fn new() -> Walks {
-        Walks { full: Walk::new(), local: Walk::new() }
+        Walks {
+            full: Walk::new(),
+            local: Walk::new(),
+            #[cfg(test)]
+            full_walk_only: false,
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn shortcuts(&self) -> bool {
+        !self.full_walk_only
+    }
+
+    #[cfg(not(test))]
+    pub(crate) fn shortcuts(&self) -> bool {
+        true
     }
 
     /// A new lex, or a new pass over it by a stage that sees other token kinds: the full walk
