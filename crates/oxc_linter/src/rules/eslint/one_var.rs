@@ -535,7 +535,9 @@ fn report_split(
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let keyword = declaration.kind.as_str();
         let exported = matches!(ctx.nodes().parent_kind(node.id()), AstKind::ExportDeclaration(_));
-        let prefix = if exported { format!("export {keyword} ") } else { format!("{keyword} ") };
+        let export = if exported { "export " } else { "" };
+        let declare = if declaration.declare { "declare " } else { "" };
+        let prefix = format!("{export}{declare}{keyword} ");
         let mut fixes = fixer.new_fix_with_capacity((declaration.declarations.len() - 1) * 2);
         for [left, right] in declaration.declarations.array_windows() {
             let offset = ctx
@@ -1331,6 +1333,11 @@ fn test() {
             Some(serde_json::json!(["always"])),
         ),
         ("declare const foo: number; const bar = 2;", Some(serde_json::json!(["always"]))),
+        ("declare var a: string, b: number;", Some(serde_json::json!(["never"]))),
+        ("declare const a: string, b: number;", Some(serde_json::json!(["never"]))),
+        ("export declare let a: string, b: number;", Some(serde_json::json!(["never"]))),
+        ("declare namespace N { var a, b; }", Some(serde_json::json!(["never"]))),
+        ("declare global { var a: string, b: number; }", Some(serde_json::json!(["never"]))),
         ("if (foo) var x, y;", Some(serde_json::json!(["never"]))),
         ("if (foo) var x, y;", Some(serde_json::json!([{ "var": "never" }]))),
         ("if (foo) var x, y;", Some(serde_json::json!([{ "uninitialized": "never" }]))),
@@ -1898,6 +1905,31 @@ fn test() {
             "declare const foo: number; const bar = 2;",
             "declare const foo: number; const bar = 2;",
             Some(serde_json::json!(["always"])),
+        ),
+        (
+            "declare var a: string, b: number;",
+            "declare var a: string; declare var b: number;",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "declare const a: string, b: number;",
+            "declare const a: string; declare const b: number;",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "export declare let a: string, b: number;",
+            "export declare let a: string; export declare let b: number;",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "declare namespace N { var a, b; }",
+            "declare namespace N { var a; var b; }",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "declare global { var a: string, b: number; }",
+            "declare global { var a: string; var b: number; }",
+            Some(serde_json::json!(["never"])),
         ),
         (
             "class C { static { let x, y; } }",

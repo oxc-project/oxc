@@ -1,7 +1,8 @@
 use crate::{error::DiagCode, token::TokenKind};
 
 use crate::pipeline::disambiguate::tests::{
-    FileType, diag_codes_of, division, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, stream,
+    FileType, diag_codes_of, division, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, regex,
+    stream,
 };
 
 use crate::pipeline::disambiguate::FORWARD_SCAN_CAP;
@@ -1206,4 +1207,35 @@ fn yield_and_await_are_type_names_in_a_type_list() {
 #[test]
 fn implements_after_a_run_starts_an_expression() {
     gt_run_fused("x = a<b<c>> implements;");
+}
+
+#[test]
+fn return_type_run_after_a_walk_that_stopped_in_a_method_body() {
+    gt_run_split("class A { m() { x as P<Q<T>>; } n() {} o(): P<Q<T>> {} }");
+}
+
+#[test]
+fn expression_operators_in_a_type_literal_rule_out_type_arguments() {
+    // No type takes a binary sign, a ternary without extends, or a sign before a name.
+    for code in [
+        "x = f<{a: b + c}>\n/re/g;",
+        "x = f<{a: b - c}>\n/re/g;",
+        "x = f<{a: b ? c : d}>\n/re/g;",
+        "x = f<{a: [b ? c : d]}>\n/re/g;",
+        "x = f<-b>\n/re/g;",
+    ] {
+        regex(code, ScriptTS);
+    }
+    for code in [
+        "x = f<{+readonly [K in T]+?: V}>\n/2/g;",
+        "x = f<{-readonly [K in T]-?: V}>\n/2/g;",
+        "x = f<{a?(): b, c: d extends e ? f : g}>\n/2/g;",
+        "x = f<{a: [b?, c?: d]}>\n/2/g;",
+        "x = f<- 1n>\n/2/g;",
+        "x = f<{get [a + b](): c}>\n/2/g;",
+        "x = f<{a: b\nc?: d}>\n/2/g;",
+        "x = f<{a: b\n<T>(): c}>\n/2/g;",
+    ] {
+        division(code, ScriptTS);
+    }
 }

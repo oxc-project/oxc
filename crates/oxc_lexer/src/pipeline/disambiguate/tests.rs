@@ -43,12 +43,18 @@ impl FileType {
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.
 use FileType::*;
 
-fn lex(code: &str, file_type: FileType, full_walk_only: bool) -> (Lexer, usize) {
+fn lex(
+    code: &str,
+    file_type: FileType,
+    full_walk_only: bool,
+    no_run_rules: bool,
+) -> (Lexer, usize) {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
     let mut lx = Lexer::new();
     lx.lanes.disambiguate.walks.full_walk_only = full_walk_only;
+    lx.lanes.disambiguate.walks.no_run_rules = no_run_rules;
     let count = lx.lex(&buf, n, file_type.options());
     (lx, count)
 }
@@ -56,14 +62,17 @@ fn lex(code: &str, file_type: FileType, full_walk_only: bool) -> (Lexer, usize) 
 /// Lex with the bounded walks and shortcuts, then with the full walk alone: both must agree.
 #[track_caller]
 fn lex_checked(code: &str, file_type: FileType) -> (Lexer, usize) {
-    let (lx, count) = lex(code, file_type, false);
-    let (full, full_count) = lex(code, file_type, true);
+    let (lx, count) = lex(code, file_type, false, false);
+    let (walk, walk_count) = lex(code, file_type, false, true);
+    let (full, full_count) = lex(code, file_type, true, false);
     let tokens = |lx: &Lexer, count: usize| {
         let kinds = lx.kinds()[..count].iter().zip(&lx.spans).map(|(k, s)| (*k, s.start, s.end));
         let diags = lx.lanes.diags.iter().map(|d| (d.code, d.off, d.len));
         (kinds.collect::<Vec<_>>(), diags.collect::<Vec<_>>())
     };
     assert_eq!(tokens(&lx, count), tokens(&full, full_count), "full walk disagrees on {code:?}");
+    // The run rules must not hide a walk that answers differently.
+    assert_eq!(tokens(&walk, walk_count), tokens(&full, full_count), "walk disagrees on {code:?}");
     (lx, count)
 }
 
