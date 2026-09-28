@@ -500,7 +500,7 @@ pub struct StyledComponentsOptions {
 
     /// Adds a namespace prefix to component identifiers to ensure class names are unique.
     ///
-    /// Example: With `namespace: "my-app"`, generates `componentId: "my-app__sc-3rfj0a-1"`
+    /// Example: With `namespace: "my-app"`, generates `componentId: "my-app__sc-Ab3_Xz-1"`
     pub namespace: Option<String>,
 
     /// List of file names that are considered meaningless for component naming purposes.

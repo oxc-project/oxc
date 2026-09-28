@@ -412,7 +412,7 @@ export interface StyledComponentsOptions {
   /**
    * Adds a namespace prefix to component identifiers to ensure class names are unique.
    *
-   * Example: With `namespace: "my-app"`, generates `componentId: "my-app__sc-3rfj0a-1"`
+   * Example: With `namespace: "my-app"`, generates `componentId: "my-app__sc-Ab3_Xz-1"`
    */
   namespace?: string
   /**

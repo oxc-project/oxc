@@ -72,6 +72,28 @@ use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
 
+const FILE_HASH_LEN: usize = 6;
+
+#[inline]
+fn base64url_encode_file_hash(mut num: u64) -> InlineString<7, u8> {
+    // Use the URL-safe alphabet because component IDs are CSS class names.
+    const BASE64URL_BYTES: &[u8; 64] =
+        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+    // Retain six Base64 digits (36 bits), so the result is at most six characters long.
+    num &= 0xF_FFFF_FFFF;
+
+    let mut str = InlineString::new();
+    while num != 0 {
+        // SAFETY: `num` is less than `1 << 36` to start with and is shifted right 6 bits
+        // on each iteration, so we cannot push more than 6 bytes. `InlineString` has a
+        // capacity of 7, and all bytes in `BASE64URL_BYTES` are ASCII.
+        unsafe { str.push_unchecked(BASE64URL_BYTES[(num & 0b11_1111) as usize]) };
+        num >>= 6;
+    }
+    str
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 /// Configuration for the styled-components transform.
@@ -164,7 +186,7 @@ pub struct StyledComponentsOptions {
     /// This is particularly useful when working with micro-frontends where class name
     /// collisions can occur. The namespace will be prepended to generated component IDs.
     ///
-    /// Example: With `namespace: "my-app"`, generates `componentId: "my-app__sc-3rfj0a-1"`
+    /// Example: With `namespace: "my-app"`, generates `componentId: "my-app__sc-Ab3_Xz-1"`
     ///
     /// Default: `None`
     #[serde(default)]
@@ -610,8 +632,7 @@ impl<'a> StyledComponents<'a> {
         let prefix = if let Some(prefix) = self.component_id_prefix.as_deref() {
             prefix
         } else {
-            const HASH_LEN: usize = 6;
-            const PREFIX_LEN: usize = "sc-".len() + HASH_LEN + "-".len();
+            const PREFIX_LEN: usize = "sc-".len() + FILE_HASH_LEN + "-".len();
             const NAMESPACED_PREFIX_LEN: usize = "__".len() + PREFIX_LEN;
 
             let mut prefix = if let Some(namespace) = &self.options.namespace {
@@ -637,23 +658,6 @@ impl<'a> StyledComponents<'a> {
 
     /// Generates a unique file hash based on the source path or source code.
     fn get_file_hash(state: &TransformState<'a>) -> InlineString<7, u8> {
-        #[inline]
-        fn base36_encode(mut num: u64) -> InlineString<7, u8> {
-            const BASE36_BYTES: &[u8; 36] = b"abcdefghijklmnopqrstuvwxyz0123456789";
-
-            num %= 36_u64.pow(6); // 36^6, to ensure the result is <= 6 characters long.
-
-            let mut str = InlineString::new();
-            while num != 0 {
-                // SAFETY: `num < 36.pow(6)` to start with, is and divided by 36 on each turn of loop,
-                // so we cannot push more than 6 bytes. Capacity of `InlineString` is 7.
-                // All bytes in `BASE36_BYTES` are ASCII.
-                unsafe { str.push_unchecked(BASE36_BYTES[(num % 36) as usize]) };
-                num /= 36;
-            }
-            str
-        }
-
         let mut hasher = FxHasher::default();
         if state.source_path.is_absolute() {
             state.source_path.hash(&mut hasher);
@@ -661,7 +665,7 @@ impl<'a> StyledComponents<'a> {
             state.source_text.hash(&mut hasher);
         }
 
-        base36_encode(hasher.finish())
+        base64url_encode_file_hash(hasher.finish())
     }
 
     /// Returns the block name based on the file stem or parent directory name.
@@ -1150,6 +1154,17 @@ mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::{ast::TemplateElementValue, builder::AstBuilder};
     use oxc_span::SPAN;
+
+    #[test]
+    fn base64url_file_hash() {
+        assert_eq!(base64url_encode_file_hash(0).as_str(), "");
+        assert_eq!(base64url_encode_file_hash(1).as_str(), "B");
+        assert_eq!(base64url_encode_file_hash(62).as_str(), "-");
+        assert_eq!(base64url_encode_file_hash(63).as_str(), "_");
+        assert_eq!(base64url_encode_file_hash(64).as_str(), "AB");
+        assert_eq!(base64url_encode_file_hash((1 << 36) - 1).as_str(), "______");
+        assert_eq!(base64url_encode_file_hash(1 << 36).as_str(), "");
+    }
 
     fn minify_raw(input: &str) -> String {
         let allocator = Allocator::default();

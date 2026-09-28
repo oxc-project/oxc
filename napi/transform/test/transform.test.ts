@@ -546,7 +546,7 @@ describe("styled-components", () => {
 			"import styled, { css } from "styled-components";
 			styled.div.withConfig({
 				displayName: "test",
-				componentId: "sc-3q0sbi-0"
+				componentId: "sc-9d4Bz6-0"
 			})\`color:red;\`;
 			const v = /* @__PURE__ */ css(["color: red;"]);
 			"
