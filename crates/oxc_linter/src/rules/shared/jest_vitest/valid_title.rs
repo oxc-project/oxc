@@ -253,7 +253,7 @@ impl ValidTitleConfig {
                 if let Some(quasi) = tagged_template.quasi.single_quasi() {
                     validate_title(
                         quasi.as_str(),
-                        tagged_template.span,
+                        tagged_template.quasi.span,
                         config,
                         &jest_fn_call.name,
                         ctx,
@@ -414,11 +414,11 @@ fn validate_title(
         return;
     }
 
-    if let Some(disallowed_words_reg) = &config.disallowed_words_reg {
-        if let Some(matched) = disallowed_words_reg.find(title) {
-            ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
-            return;
-        }
+    if let Some(disallowed_words_reg) = &config.disallowed_words_reg
+        && let Some(matched) = disallowed_words_reg.find(title)
+    {
+        ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
+        return;
     }
 
     let trimmed_title = title.trim();

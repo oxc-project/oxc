@@ -39,7 +39,7 @@ impl Rule for ValidTitle {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     let pass = vec![
         ("describe('the correct way to properly handle all the things', () => {});", None),
@@ -749,6 +749,25 @@ fn test() {
             "test('that it doesn\\'t break', () => {});",
         ),
     ];
+
+    let fix = fix
+        .into_iter()
+        .map(Into::into)
+        .chain([
+            (
+                "it(String.raw`it duplicates`, () => {});",
+                "it(String.raw`duplicates`, () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+            (
+                "it(String.raw` leading space`, () => {});",
+                "it(String.raw`leading space`, () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+        ])
+        .collect::<Vec<ExpectFixTestCase>>();
 
     Tester::new(ValidTitle::NAME, ValidTitle::PLUGIN, pass, fail)
         .with_vitest_plugin(true)
