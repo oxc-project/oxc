@@ -6,9 +6,11 @@ import {
   createMessageConnection,
   DidChangeConfigurationNotification,
   DidChangeTextDocumentNotification,
+  DidChangeWatchedFilesNotification,
   DidOpenTextDocumentNotification,
   DocumentFormattingRequest,
   ExitNotification,
+  FileChangeType,
   InitializedNotification,
   InitializeRequest,
   RegistrationRequest,
@@ -20,6 +22,7 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 import type {
   ClientCapabilities,
+  FileEvent,
   Registration,
   TextEdit,
 } from "vscode-languageserver-protocol/node";
@@ -58,6 +61,12 @@ export function createLspConnection(env: Record<string, string> = {}) {
 
     async didChangeConfiguration(settings: unknown) {
       await connection.sendNotification(DidChangeConfigurationNotification.type, { settings });
+    },
+
+    async didChangeWatchedFiles(uris: string[]) {
+      await connection.sendNotification(DidChangeWatchedFilesNotification.type, {
+        changes: uris.map((uri): FileEvent => ({ uri, type: FileChangeType.Changed })),
+      });
     },
 
     async didOpen(uri: string, languageId: string, text: string) {

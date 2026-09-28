@@ -42,6 +42,7 @@ describe("LSP initialization", () => {
         "**/oxfmt.config.ts",
         "**/oxfmt.config.mts",
         ".editorconfig",
+        ".prettierignore",
       ],
     ],
     [
@@ -52,9 +53,13 @@ describe("LSP initialization", () => {
         "**/oxfmt.config.ts",
         "**/oxfmt.config.mts",
         ".editorconfig",
+        ".prettierignore",
       ],
     ],
-    [{ "fmt.configPath": "./custom-config.json" }, ["custom-config.json", ".editorconfig"]],
+    [
+      { "fmt.configPath": "./custom-config.json" },
+      ["custom-config.json", ".editorconfig", ".prettierignore"],
+    ],
     // Vite+ mode: only `vite.config.*`, and nested configs are never discovered
     [
       undefined,
@@ -66,6 +71,7 @@ describe("LSP initialization", () => {
         "vite.config.mts",
         "vite.config.cts",
         ".editorconfig",
+        ".prettierignore",
       ],
       { VP_VERSION: "1" },
     ],

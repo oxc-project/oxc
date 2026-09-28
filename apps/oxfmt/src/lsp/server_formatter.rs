@@ -63,19 +63,6 @@ impl ServerFormatterBuilder {
         // Resolve workspace-level concerns only here.
         // Per-file config resolution is deferred to format time.
 
-        // NOTE: `.gitignore` is intentionally NOT included here.
-        // An LSP document is explicitly formatted by the user.
-        // (CLI also formats explicitly specified git ignored files.)
-        let ignore_matchers = match resolve_ignore_paths(&root_path, &[])
-            .and_then(|paths| build_global_ignore_matchers(&root_path, &[], &paths))
-        {
-            Ok(matchers) => matchers,
-            Err(err) => {
-                warn!("Failed to load .prettierignore: {err}, proceeding without ignore globs");
-                vec![]
-            }
-        };
-
         // If `configPath` is explicitly set, load it eagerly as the single config for all files.
         let use_nested_config = options.use_nested_configs();
         let explicit_config_path = options.config_path.as_ref().map(PathBuf::from);
@@ -95,7 +82,6 @@ impl ServerFormatterBuilder {
                 root_path.to_path_buf(),
                 source_formatter,
                 JsConfigLoaderCb::clone(&self.js_config_loader),
-                ignore_matchers,
                 explicit_config_path,
                 use_nested_config,
             ),
@@ -125,8 +111,6 @@ pub struct ServerFormatter {
     root_path: PathBuf,
     source_formatter: SourceFormatter,
     js_config_loader: JsConfigLoaderCb,
-    /// `.prettierignore` matchers (workspace-level, shared across all scopes).
-    ignore_matchers: Vec<Gitignore>,
     /// Explicit `fmt.configPath` from LSP settings.
     /// When set, all files use this single config.
     explicit_config_path: Option<PathBuf>,
@@ -139,7 +123,14 @@ pub struct ServerFormatter {
     /// without blocking concurrent format requests:
     /// in-flight readers clone the `Arc` and continue using the old snapshot,
     /// while subsequent reads see the new one.
-    state: RwLock<Arc<ConfigScopes>>,
+    state: RwLock<Arc<FormatterState>>,
+}
+
+/// Per-rebuild snapshot of everything read from workspace files.
+struct FormatterState {
+    scopes: ConfigScopes,
+    /// `.prettierignore` matchers (workspace-level, shared across all scopes).
+    ignore_matchers: Vec<Gitignore>,
 }
 
 impl Tool for ServerFormatter {
@@ -191,6 +182,7 @@ impl Tool for ServerFormatter {
         };
 
         patterns.push(".editorconfig".to_string());
+        patterns.push(".prettierignore".to_string());
         patterns
     }
 
@@ -205,7 +197,7 @@ impl Tool for ServerFormatter {
         //
         // `NestedConfigCtx` has no per-entry invalidation API by design (its caches live as long as the `ConfigScopes`).
         // Rebuilding is cheap: the ctx itself starts empty (lazy probes),
-        // and only the root resolver and `.editorconfig` do eager file IO.
+        // and only the root resolver, `.editorconfig` and `.prettierignore` do eager file IO.
         // The trade-off is over-eviction, a config change in one nested dir also drops cached probes elsewhere.
         // But format requests are sporadic enough that lazy re-population costs nothing observable.
         let new_state = Self::build_state(
@@ -283,7 +275,6 @@ impl ServerFormatter {
         root_path: PathBuf,
         source_formatter: SourceFormatter,
         js_config_loader: JsConfigLoaderCb,
-        ignore_matchers: Vec<Gitignore>,
         explicit_config_path: Option<PathBuf>,
         use_nested_config: bool,
     ) -> Self {
@@ -297,28 +288,28 @@ impl ServerFormatter {
             root_path,
             source_formatter,
             js_config_loader,
-            ignore_matchers,
             explicit_config_path,
             use_nested_config,
             state: RwLock::new(Arc::new(state)),
         }
     }
 
-    /// Build a fresh [`ConfigScopes`] from scratch.
+    /// Build a fresh [`FormatterState`] from scratch.
     ///
     /// Called once in [`Self::new`] and again on every watched-file change.
-    /// `.editorconfig` is re-resolved here so add/remove events are picked up
+    /// `.editorconfig` and `.prettierignore` are re-resolved here so add/remove events are picked up
     /// without a separate code path.
     ///
     /// LSP must keep editing usable even when the user's config is broken,
     /// so the root falls back to the default empty config with a warning instead of bubbling the error up.
+    /// Likewise, a broken `.prettierignore` is skipped with a warning.
     fn build_state(
         root_path: &Path,
         explicit_config_path: Option<&Path>,
         use_nested_config: bool,
         js_config_loader: &JsConfigLoaderCb,
-    ) -> ConfigScopes {
-        ConfigScopes::load(
+    ) -> FormatterState {
+        let scopes = ConfigScopes::load(
             root_path,
             explicit_config_path,
             use_nested_config,
@@ -327,24 +318,43 @@ impl ServerFormatter {
         .unwrap_or_else(|err| {
             warn!("{err}\nFalling back to default config for {}", root_path.display());
             ConfigScopes::with_default_root(root_path, use_nested_config, Some(js_config_loader))
-        })
+        });
+
+        // NOTE: `.gitignore` is intentionally NOT included here.
+        // An LSP document is explicitly formatted by the user.
+        // (CLI also formats explicitly specified git ignored files.)
+        let ignore_matchers = resolve_ignore_paths(root_path, &[])
+            .and_then(|paths| build_global_ignore_matchers(root_path, &[], &paths))
+            .unwrap_or_else(|err| {
+                warn!("Failed to load .prettierignore: {err}, proceeding without ignore globs");
+                vec![]
+            });
+
+        FormatterState { scopes, ignore_matchers }
+    }
+
+    /// Snapshot the current state.
+    /// In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
+    fn snapshot(&self) -> Arc<FormatterState> {
+        Arc::clone(&self.state.read().expect("state rwlock poisoned"))
     }
 
     /// Resolve config and format a file at the given path.
     /// Returns `None` if the file is unsupported or ignored.
-    fn resolve_and_format(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
-        // Snapshot the current state.
-        // In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
-        let state = Arc::clone(&self.state.read().expect("state rwlock poisoned"));
-
-        let resolver = match state.resolve(path) {
+    fn resolve_and_format(
+        &self,
+        scopes: &ConfigScopes,
+        path: &Path,
+        source_text: &str,
+    ) -> Option<FormatResult> {
+        let resolver = match scopes.resolve(path) {
             Ok(r) => r,
             Err(err) => {
                 warn!(
                     "Failed to resolve nested config for {}: {err}, falling back to root",
                     path.display()
                 );
-                Arc::clone(state.root())
+                Arc::clone(scopes.root())
             }
         };
 
@@ -377,11 +387,12 @@ impl ServerFormatter {
     }
 
     fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
-        if is_ignored(&self.ignore_matchers, path, false, true) {
+        let state = self.snapshot();
+        if is_ignored(&state.ignore_matchers, path, false, true) {
             debug!("File is ignored by .prettierignore: {}", path.display());
             return None;
         }
-        self.resolve_and_format(path, source_text)
+        self.resolve_and_format(&state.scopes, path, source_text)
     }
 
     fn format_in_memory(
@@ -395,7 +406,7 @@ impl ServerFormatter {
             debug!("Unsupported language id for in-memory formatting: {language_id:?}");
             return None;
         };
-        self.resolve_and_format(&path, source_text)
+        self.resolve_and_format(&self.snapshot().scopes, &path, source_text)
     }
 }
 

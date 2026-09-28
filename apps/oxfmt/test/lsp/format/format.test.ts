@@ -1,3 +1,5 @@
+import fs from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -134,6 +136,30 @@ describe("LSP formatting", () => {
       ]);
 
       expect(await formatFixture(FIXTURES_DIR, path, "typescript", client)).toMatchSnapshot();
+    });
+
+    it("should reload `.prettierignore` on watched file change", async () => {
+      const dir = await fs.mkdtemp(join(tmpdir(), "oxfmt-lsp-prettierignore-"));
+      try {
+        const filePath = join(dir, "a.ts");
+        await fs.writeFile(filePath, "const   x   =   1\n");
+        const rootUri = pathToFileURL(dir).href;
+        const fileUri = pathToFileURL(filePath).href;
+
+        await using client = createLspConnection();
+        await client.initialize([{ uri: rootUri, name: "test" }], {}, [
+          { workspaceUri: rootUri, options: null },
+        ]);
+        await client.didOpen(fileUri, "typescript", "const   x   =   1\n");
+        expect(await client.format(fileUri)).not.toHaveLength(0);
+
+        await fs.writeFile(join(dir, ".prettierignore"), "a.ts\n");
+        await client.didChangeWatchedFiles([pathToFileURL(join(dir, ".prettierignore")).href]);
+        // No edits (`null`) once ignored
+        expect(await client.format(fileUri)).toBeNull();
+      } finally {
+        await fs.rm(dir, { recursive: true, force: true });
+      }
     });
   });
 
