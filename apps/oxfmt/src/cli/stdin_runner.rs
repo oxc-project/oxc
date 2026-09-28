@@ -7,9 +7,9 @@ use std::{
 
 use super::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
-    ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
-    ResolveOutcome, SourceFormatter, build_global_ignore_matchers, classify_file_kind, is_ignored,
-    resolve_editorconfig_path, resolve_file_scope_config, resolve_ignore_paths, utils,
+    ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
+    SourceFormatter, build_global_ignore_matchers, classify_file_kind, is_ignored,
+    resolve_ignore_paths, utils,
 };
 
 pub struct StdinRunner {
@@ -58,26 +58,18 @@ impl StdinRunner {
         }
 
         // Load config
-        let editorconfig_path = resolve_editorconfig_path(&cwd);
-        let mut config_resolver = match ConfigResolver::from_config(
+        let config_scopes = match ConfigScopes::load(
             &cwd,
             config_options.config.as_deref(),
-            editorconfig_path.as_deref(),
+            config_options.use_nested_configs(),
             Some(&self.js_config_loader),
         ) {
-            Ok(r) => r,
+            Ok(scopes) => scopes,
             Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to load configuration file.\n{err}\n"),
-                );
+                utils::print_and_flush(stderr, &format!("{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        if let Err(err) = config_resolver.build_and_validate() {
-            utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
-            return CliRunResult::InvalidOptionConfig;
-        }
 
         // Use `block_in_place()` to avoid nested async runtime access
         if let Err(err) =
@@ -90,18 +82,7 @@ impl StdinRunner {
         // Resolve filepath to absolute for nested config resolution and ignore check
         let filepath = utils::normalize_relative_path(&cwd, &filepath);
 
-        // Follow the same logic as `walk_runner` to resolve `config_resolver`.
-        let nested_ctx = config_options.use_nested_configs().then(|| {
-            NestedConfigCtx::new(
-                editorconfig_path.as_deref().map(Arc::from),
-                Some(Arc::clone(&self.js_config_loader)),
-            )
-        });
-        let config_resolver = match resolve_file_scope_config(
-            &filepath,
-            &Arc::new(config_resolver),
-            nested_ctx.as_ref(),
-        ) {
+        let config_resolver = match config_scopes.resolve(&filepath) {
             Ok(resolved) => resolved,
             Err(err) => {
                 utils::print_and_flush(

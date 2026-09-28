@@ -10,10 +10,7 @@ pub mod utils;
 #[cfg(feature = "napi")]
 mod external_services;
 
-pub use config::{
-    ConfigResolver, NestedConfigCtx, ResolveOutcome, config_discovery, resolve_editorconfig_path,
-    resolve_file_scope_config,
-};
+pub use config::{ConfigResolver, ConfigScopes, ResolveOutcome, config_discovery};
 #[cfg(feature = "napi")]
 pub use config::{
     EmbeddedCallbackResolved, JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader,

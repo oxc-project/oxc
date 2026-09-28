@@ -3,11 +3,12 @@ mod editorconfig;
 mod js_config;
 mod nested;
 mod overrides;
+mod scopes;
 
-pub use editorconfig::resolve_editorconfig_path;
 #[cfg(feature = "napi")]
 pub use js_config::{JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader};
 pub use nested::NestedConfigCtx;
+pub use scopes::ConfigScopes;
 
 use std::{
     borrow::Cow,
@@ -28,9 +29,7 @@ use oxc_formatter::JsFormatOptions;
 use oxc_formatter_core::CoreFormatOptions;
 
 use self::{
-    editorconfig::{
-        apply_editorconfig, load_editorconfig, resolve_editorconfig_overrides, root_properties,
-    },
+    editorconfig::{apply_editorconfig, resolve_editorconfig_overrides, root_properties},
     overrides::OxfmtrcOverrides,
 };
 #[cfg(feature = "napi")]
@@ -275,15 +274,12 @@ impl ConfigResolver {
     ///
     /// # Errors
     /// Returns error if config file loading or parsing fails.
-    pub fn from_config(
+    fn from_config(
         cwd: &Path,
         oxfmtrc_path: Option<&Path>,
-        editorconfig_path: Option<&Path>,
+        editorconfig: Option<EditorConfig>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> Result<Self, String> {
-        // Always load the nearest `.editorconfig` if exists
-        let editorconfig = load_editorconfig(editorconfig_path)?;
-
         // Explicit path: normalize and load directly
         if let Some(config_path) = oxfmtrc_path {
             let path = utils::normalize_relative_path(cwd, config_path);
@@ -514,39 +510,6 @@ impl ConfigResolver {
 
         Ok((Arc::new(format_config), Cow::Owned(validated)))
     }
-}
-
-/// Resolve the nearest config scope for a file, or fall back to the root resolver.
-///
-/// `ctx` is `None` when the caller wants to bypass nested-config detection.
-/// In that case the root resolver is returned unconditionally.
-///
-/// When `ctx` is `Some`, the ancestor chain of `file` is walked,
-/// short-circuiting on `root_config_resolver.config_dir()` to avoid re-loading the root via `ctx`.
-/// (which would create a duplicate `Arc` and, with `napi`, re-invoke the JS config loader)
-pub fn resolve_file_scope_config(
-    file: &Path,
-    root_config_resolver: &Arc<ConfigResolver>,
-    ctx: Option<&NestedConfigCtx>,
-) -> Result<Arc<ConfigResolver>, String> {
-    let Some(ctx) = ctx else {
-        return Ok(Arc::clone(root_config_resolver));
-    };
-    let Some(parent) = file.parent() else {
-        return Ok(Arc::clone(root_config_resolver));
-    };
-
-    let root_config_dir = root_config_resolver.config_dir();
-    for dir in parent.ancestors() {
-        if Some(dir) == root_config_dir {
-            return Ok(Arc::clone(root_config_resolver));
-        }
-        if let Some(r) = ctx.probe_dir(dir)? {
-            return Ok(r);
-        }
-    }
-
-    Ok(Arc::clone(root_config_resolver))
 }
 
 /// Load a JS/TS config file via NAPI and return the raw JSON value.

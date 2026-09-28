@@ -16,10 +16,9 @@ use oxc_language_server::{
 };
 
 use crate::core::{
-    ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
-    ResolveOutcome, SourceFormatter, build_global_ignore_matchers, classify_file_kind,
-    config_discovery, is_ignored, resolve_editorconfig_path, resolve_file_scope_config,
-    resolve_ignore_paths, utils,
+    ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
+    SourceFormatter, build_global_ignore_matchers, classify_file_kind, config_discovery,
+    is_ignored, resolve_ignore_paths, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -122,21 +121,6 @@ impl ToolBuilder for ServerFormatterBuilder {
 
 // ---
 
-/// Per-rebuild config snapshot.
-///
-/// Held behind `RwLock<Arc<_>>` on [`ServerFormatter`] so a watch event can
-/// swap a fresh state in without blocking concurrent format requests:
-/// in-flight readers clone the `Arc` and continue using the old snapshot,
-/// while subsequent reads see the new one.
-struct FormatterState {
-    /// Workspace-root resolver.
-    /// Used as the fallback when no nested config matches.
-    root_resolver: Arc<ConfigResolver>,
-    /// Lazy nested-config probe cache.
-    /// Each ancestor directory is loaded at most once for the lifetime of this state.
-    nested_ctx: NestedConfigCtx,
-}
-
 pub struct ServerFormatter {
     root_path: PathBuf,
     source_formatter: SourceFormatter,
@@ -150,7 +134,12 @@ pub struct ServerFormatter {
     /// Disabled by an explicit `fmt.configPath` or `fmt.disableNestedConfig` in LSP settings.
     use_nested_config: bool,
     /// Current config snapshot. Swapped wholesale on watched-file changes.
-    state: RwLock<Arc<FormatterState>>,
+    ///
+    /// Held behind `RwLock<Arc<_>>` so a watch event can swap a fresh state in
+    /// without blocking concurrent format requests:
+    /// in-flight readers clone the `Arc` and continue using the old snapshot,
+    /// while subsequent reads see the new one.
+    state: RwLock<Arc<ConfigScopes>>,
 }
 
 impl Tool for ServerFormatter {
@@ -214,14 +203,15 @@ impl Tool for ServerFormatter {
     ) -> ToolRestartChanges {
         // Rebuild the snapshot wholesale.
         //
-        // `NestedConfigCtx` has no per-entry invalidation API by design (its caches are walk-scoped).
+        // `NestedConfigCtx` has no per-entry invalidation API by design (its caches live as long as the `ConfigScopes`).
         // Rebuilding is cheap: the ctx itself starts empty (lazy probes),
-        // and only the root resolver does eager file IO.
+        // and only the root resolver and `.editorconfig` do eager file IO.
         // The trade-off is over-eviction, a config change in one nested dir also drops cached probes elsewhere.
         // But format requests are sporadic enough that lazy re-population costs nothing observable.
         let new_state = Self::build_state(
             &self.root_path,
             self.explicit_config_path.as_deref(),
+            self.use_nested_config,
             &self.js_config_loader,
         );
         *self.state.write().expect("state rwlock poisoned") = Arc::new(new_state);
@@ -297,8 +287,12 @@ impl ServerFormatter {
         explicit_config_path: Option<PathBuf>,
         use_nested_config: bool,
     ) -> Self {
-        let state =
-            Self::build_state(&root_path, explicit_config_path.as_deref(), &js_config_loader);
+        let state = Self::build_state(
+            &root_path,
+            explicit_config_path.as_deref(),
+            use_nested_config,
+            &js_config_loader,
+        );
         Self {
             root_path,
             source_formatter,
@@ -310,63 +304,29 @@ impl ServerFormatter {
         }
     }
 
-    /// Build a fresh [`FormatterState`] from scratch.
+    /// Build a fresh [`ConfigScopes`] from scratch.
     ///
     /// Called once in [`Self::new`] and again on every watched-file change.
     /// `.editorconfig` is re-resolved here so add/remove events are picked up
     /// without a separate code path.
+    ///
+    /// LSP must keep editing usable even when the user's config is broken,
+    /// so the root falls back to the default empty config with a warning instead of bubbling the error up.
     fn build_state(
         root_path: &Path,
         explicit_config_path: Option<&Path>,
+        use_nested_config: bool,
         js_config_loader: &JsConfigLoaderCb,
-    ) -> FormatterState {
-        let editorconfig_path = resolve_editorconfig_path(root_path);
-        let root_resolver = Self::load_root_resolver(
+    ) -> ConfigScopes {
+        ConfigScopes::load(
             root_path,
             explicit_config_path,
-            editorconfig_path.as_deref(),
-            js_config_loader,
-        );
-        let nested_ctx = NestedConfigCtx::new(
-            editorconfig_path.as_deref().map(Arc::from),
-            Some(JsConfigLoaderCb::clone(js_config_loader)),
-        );
-        FormatterState { root_resolver: Arc::new(root_resolver), nested_ctx }
-    }
-
-    /// Load the workspace-root resolver,
-    /// falling back to the default empty config on any load or validation error.
-    ///
-    /// LSP must keep editing usable even when the user's config is broken,
-    /// so we surface a warning instead of bubbling the error up.
-    fn load_root_resolver(
-        root_path: &Path,
-        explicit_config_path: Option<&Path>,
-        editorconfig_path: Option<&Path>,
-        js_config_loader: &JsConfigLoaderCb,
-    ) -> ConfigResolver {
-        let result = ConfigResolver::from_config(
-            root_path,
-            explicit_config_path,
-            editorconfig_path,
+            use_nested_config,
             Some(js_config_loader),
         )
-        .and_then(|mut resolver| {
-            resolver.build_and_validate()?;
-            Ok(resolver)
-        });
-
-        result.unwrap_or_else(|err| {
-            warn!(
-                "Failed to load config at {}: {err}, falling back to default",
-                root_path.display()
-            );
-            let mut resolver = ConfigResolver::from_json_config(None, None)
-                .expect("Default ConfigResolver should never fail");
-            resolver
-                .build_and_validate()
-                .expect("Default ConfigResolver validation should never fail");
-            resolver
+        .unwrap_or_else(|err| {
+            warn!("{err}\nFalling back to default config for {}", root_path.display());
+            ConfigScopes::with_default_root(root_path, use_nested_config, Some(js_config_loader))
         })
     }
 
@@ -377,16 +337,14 @@ impl ServerFormatter {
         // In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
         let state = Arc::clone(&self.state.read().expect("state rwlock poisoned"));
 
-        // Passing `None` tells `resolve_file_scope_config` to bypass nested probing
-        let nested_ctx = self.use_nested_config.then_some(&state.nested_ctx);
-        let resolver = match resolve_file_scope_config(path, &state.root_resolver, nested_ctx) {
+        let resolver = match state.resolve(path) {
             Ok(r) => r,
             Err(err) => {
                 warn!(
                     "Failed to resolve nested config for {}: {err}, falling back to root",
                     path.display()
                 );
-                Arc::clone(&state.root_resolver)
+                Arc::clone(state.root())
             }
         };
 
