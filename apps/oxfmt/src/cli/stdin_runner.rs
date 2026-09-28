@@ -5,6 +5,8 @@ use std::{
     sync::Arc,
 };
 
+use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
+
 use super::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
     ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
@@ -115,7 +117,7 @@ impl StdinRunner {
             return CliRunResult::FormatSucceeded;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+        let Some(kind) = classify_file_kind(Arc::from(filepath.as_path())) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };
@@ -141,10 +143,16 @@ impl StdinRunner {
                 utils::print_and_flush(stdout, &code);
                 CliRunResult::FormatSucceeded
             }
-            FormatResult::Error(errors) => {
-                for err in errors {
-                    utils::print_and_flush(stderr, &format!("{err}\n"));
+            FormatResult::Error(diagnostics) => {
+                let handler = GraphicalReportHandler::new();
+                let mut output = String::new();
+                for error in
+                    DiagnosticService::wrap_diagnostics(&cwd, &filepath, &source_text, diagnostics)
+                {
+                    // Writing to `String` never fails
+                    let _ = handler.render_report(&mut output, error.as_ref());
                 }
+                utils::print_and_flush(stderr, &output);
                 CliRunResult::FormatFailed
             }
         }
