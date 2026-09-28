@@ -1919,7 +1919,7 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
             let Some(body) = f.get_function_body_mut() else { return };
-            if body.statements.len() != 1 {
+            if body.statements.len() != 1 || !body.directives.is_empty() {
                 return;
             }
             match &mut body.statements[0] {
