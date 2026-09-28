@@ -18,8 +18,9 @@ fn minimize_bitwise_binary_expr() {
     fold("0 | (a << b)", "a << b");
     fold("a >> b | 0", "a >> b");
     fold("0 | (a >> b)", "a >> b");
-    fold("a >>> b | 0", "a >>> b");
-    fold("0 | (a >>> b)", "a >>> b");
+    fold_same("a >>> b | 0");
+    fold_same("0 | (a >>> b)");
+    fold_same("(-1 >>> a) | b");
     fold("a | b | 0", "a | b");
     fold("0 | (a | b)", "a | b");
     fold("a ^ b | 0", "a ^ b");

@@ -51,17 +51,21 @@ impl<'a> PeepholeOptimizations {
 
         if bin_expr.operator == BinaryOperator::BitwiseOR {
             if bin_expr.right.is_number_0()
-                && matches!(&bin_expr.left, Expression::BinaryExpression(e) if e.operator.is_bitwise())
+                && matches!(&bin_expr.left, Expression::BinaryExpression(e) if Self::is_bitwise_without_shift_zero(e.operator))
             {
                 // `(a OP b) | 0` -> `a OP b`
                 ctx.replace_expression_with(expr, Self::unwrap_left_from_binary_expr);
             } else if bin_expr.left.is_number_0()
-                && matches!(&bin_expr.right, Expression::BinaryExpression(e) if e.operator.is_bitwise())
+                && matches!(&bin_expr.right, Expression::BinaryExpression(e) if Self::is_bitwise_without_shift_zero(e.operator))
             {
                 // `0 | (a OP b)` -> `a OP b`
                 ctx.replace_expression_with(expr, Self::unwrap_right_from_binary_expr);
             }
         }
+    }
+
+    fn is_bitwise_without_shift_zero(operator: BinaryOperator) -> bool {
+        operator.is_bitwise() && operator != BinaryOperator::ShiftRightZeroFill
     }
 
     fn try_replace_or_number_0(bin_expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
