@@ -62,6 +62,23 @@ export interface FormatResult {
 export declare function jsTextToDoc(sourceExt: string, sourceText: string, oxfmtPluginOptionsJson: string, parentContext: string, formatFileCb: (options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string | null>, formatEmbeddedDocCb: (options: Record<string, any>, code: string) => Promise<string | null>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<string | null>
 
 /**
+ * NAPI based config resolution API entry point.
+ *
+ * Resolves the config for a file the same way `oxfmt --stdin-filepath` does.
+ *
+ * # Errors
+ * Returns error if config loading, parsing, or validation fails.
+ */
+export declare function resolveConfig(filename: string, cwd: string | undefined | null, loadJsConfigCb: (path: string) => Promise<any>): Promise<ResolveConfigResult>
+
+export interface ResolveConfigResult {
+  /** The effective config for the file, which can be passed to `format()`. */
+  config: Record<string, any>
+  /** Whether the file is ignored by `.prettierignore` or the config's `ignorePatterns`. */
+  ignored: boolean
+}
+
+/**
  * NAPI based JS CLI entry point.
  * For pure Rust CLI entry point, see `main.rs`.
  *

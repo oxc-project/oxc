@@ -450,6 +450,15 @@ impl ConfigResolver {
         Ok(into_outcome(format_config, &validated, kind))
     }
 
+    /// Resolve the effective `FormatConfig` for a specific file path,
+    /// for the NAPI `resolveConfig()` API.
+    ///
+    /// See [`Self::resolve_options`] for the merge priority and errors.
+    #[cfg(feature = "napi")]
+    pub fn resolve_format_config(&self, path: &Path) -> Result<Arc<FormatConfig>, String> {
+        self.resolve_options(path).map(|(format_config, _)| format_config)
+    }
+
     /// Resolve `FormatConfig` for a specific file path.
     ///
     /// Priority (later wins):

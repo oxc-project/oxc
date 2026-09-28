@@ -62,7 +62,7 @@ export function defineConfig<T extends OxfmtConfig>(config: T & OxfmtConfig): T 
   return config;
 }
 
-// NOTE: Native bindings are loaded lazily on first `format()`/`jsTextToDoc()` call,
+// NOTE: Native bindings are loaded lazily on first `format()`/`resolveConfig()`/`jsTextToDoc()` call,
 // instead of via a static `import "./bindings"`.
 //
 // A static import would run `requireNative()` which `dlopen`s the native `.node` addon.
@@ -96,6 +96,45 @@ export async function format(fileName: string, sourceText: string, options?: For
     (options, code) => toNullable(formatEmbeddedDoc({ options, code })),
     (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
+}
+
+export interface ResolveConfigOptions {
+  /**
+   * Directory to resolve the config from, as if the CLI were run there.
+   * Defaults to `process.cwd()`.
+   */
+  cwd?: string;
+}
+
+export interface ResolveConfigResult {
+  /**
+   * The effective config for the file, ready to pass to `format()`.
+   * Includes matching `overrides` and `.editorconfig` values.
+   */
+  config: FormatConfig;
+  /**
+   * Whether the file is excluded by `.prettierignore` or the config's `ignorePatterns`.
+   */
+  ignored: boolean;
+}
+
+/**
+ * Resolve the config for the given file the same way `oxfmt --stdin-filepath` does.
+ */
+export async function resolveConfig(
+  fileName: string,
+  options?: ResolveConfigOptions,
+): Promise<ResolveConfigResult> {
+  if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
+
+  BINDINGS_CACHE ??= await import("./bindings");
+  const { loadJsConfig, loadVitePlusConfig } = await import("./cli/js_config");
+  const result = await BINDINGS_CACHE.resolveConfig(
+    fileName,
+    options?.cwd,
+    process.env.VP_VERSION ? loadVitePlusConfig : loadJsConfig,
+  );
+  return { config: result.config as FormatConfig, ignored: result.ignored };
 }
 
 /**

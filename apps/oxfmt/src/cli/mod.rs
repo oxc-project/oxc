@@ -16,5 +16,5 @@ pub use command::{FormatCommand, Mode, format_command};
 pub use init::init_rayon;
 pub use result::CliRunResult;
 #[cfg(feature = "napi")]
-pub use stdin_runner::StdinRunner;
+pub use stdin_runner::{ExplicitFileConfig, StdinRunner, resolve_explicit_file};
 pub use walk_runner::WalkRunner;
