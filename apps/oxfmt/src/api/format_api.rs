@@ -34,6 +34,14 @@ pub fn run(
     // NOTE: In NAPI context, we don't have a config file path, since options are passed directly as a JSON.
     // However, relative -> absolute path conversion is needed for Tailwind plugin to work correctly,
     // use current working directory as the base.
+    // (Otherwise, the plugin resolves them against the Prettier config file, see `resolve_tailwind_paths()`.)
+    //
+    // `cwd` is intentionally not an API parameter, same as Prettier's `format()`.
+    // Options are expected to be resolved by the caller, relative paths just fall back to `process.cwd()`.
+    // To resolve against another base, resolve options beforehand (e.g. from the config file dir).
+    //
+    // Normalizing `filename` is not strictly required, since downstream consumers resolve it against `process.cwd()` too.
+    // It only keeps paths absolute and consistent inside, e.g. for error messages.
     let cwd = env::current_dir().expect("Failed to get current working directory");
     let num_of_threads = 1;
 
