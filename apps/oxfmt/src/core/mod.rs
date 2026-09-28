@@ -1,6 +1,7 @@
 mod config;
 pub mod embed;
 mod format;
+mod global_ignore;
 pub mod options;
 pub mod oxfmtrc;
 mod support;
@@ -19,6 +20,7 @@ pub use config::{
     resolve_for_api, resolve_for_embedded_js,
 };
 pub use format::{FormatResult, FormatStrategy, SourceFormatter};
+pub use global_ignore::{build_global_ignore_matchers, is_ignored, resolve_ignore_paths};
 pub use support::classify_file_kind;
 
 #[cfg(feature = "napi")]

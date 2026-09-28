@@ -14,12 +14,11 @@ use oxc_config::{
 };
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 
-use super::resolve::{build_global_ignore_matchers, is_ignored};
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
 use crate::core::{
-    ConfigResolver, FormatStrategy, NestedConfigCtx, ResolveOutcome, classify_file_kind,
-    resolve_file_scope_config,
+    ConfigResolver, FormatStrategy, NestedConfigCtx, ResolveOutcome, build_global_ignore_matchers,
+    classify_file_kind, is_ignored, resolve_file_scope_config,
 };
 
 /// Orchestrates file discovery with nested config and ignore handling.

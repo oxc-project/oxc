@@ -5,14 +5,11 @@ use std::{
     sync::Arc,
 };
 
-use super::{
-    CliRunResult, FormatCommand, Mode,
-    resolve::{build_global_ignore_matchers, is_ignored, resolve_ignore_paths},
-};
+use super::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
     ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
-    ResolveOutcome, SourceFormatter, classify_file_kind, resolve_editorconfig_path,
-    resolve_file_scope_config, utils,
+    ResolveOutcome, SourceFormatter, build_global_ignore_matchers, classify_file_kind, is_ignored,
+    resolve_editorconfig_path, resolve_file_scope_config, resolve_ignore_paths, utils,
 };
 
 pub struct StdinRunner {

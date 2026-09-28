@@ -120,6 +120,21 @@ describe("LSP formatting", () => {
     ])("should handle %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });
+
+    // Workspace root must be the fixture dir (not the file's dir) for `vendor/` to match
+    it.each([
+      "ignore-prettierignore-patterns/vendor/a.ts",
+      "ignore-prettierignore-patterns/drop.gen.ts",
+      "ignore-prettierignore-patterns/keep.gen.ts",
+    ])("should handle %s", async (path) => {
+      const rootUri = pathToFileURL(join(FIXTURES_DIR, "ignore-prettierignore-patterns")).href;
+      await using client = createLspConnection();
+      await client.initialize([{ uri: rootUri, name: "test" }], {}, [
+        { workspaceUri: rootUri, options: null },
+      ]);
+
+      expect(await formatFixture(FIXTURES_DIR, path, "typescript", client)).toMatchSnapshot();
+    });
   });
 
   describe("initializationOptions", () => {

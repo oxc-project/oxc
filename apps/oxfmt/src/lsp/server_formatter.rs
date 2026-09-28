@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
+use ignore::gitignore::Gitignore;
 use tower_lsp_server::gen_lsp_types::{
     DocumentFormattingProvider, Pattern, Range, ServerCapabilities, TextEdit, Uri,
 };
@@ -17,8 +17,9 @@ use oxc_language_server::{
 
 use crate::core::{
     ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
-    ResolveOutcome, SourceFormatter, classify_file_kind, config_discovery,
-    resolve_editorconfig_path, resolve_file_scope_config, utils,
+    ResolveOutcome, SourceFormatter, build_global_ignore_matchers, classify_file_kind,
+    config_discovery, is_ignored, resolve_editorconfig_path, resolve_file_scope_config,
+    resolve_ignore_paths, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -63,11 +64,16 @@ impl ServerFormatterBuilder {
         // Resolve workspace-level concerns only here.
         // Per-file config resolution is deferred to format time.
 
-        let prettierignore_glob = match Self::create_prettierignore_glob(&root_path) {
-            Ok(glob) => Some(glob),
+        // NOTE: `.gitignore` is intentionally NOT included here.
+        // An LSP document is explicitly formatted by the user.
+        // (CLI also formats explicitly specified git ignored files.)
+        let ignore_matchers = match resolve_ignore_paths(&root_path, &[])
+            .and_then(|paths| build_global_ignore_matchers(&root_path, &[], &paths))
+        {
+            Ok(matchers) => matchers,
             Err(err) => {
-                warn!("Failed to create gitignore globs: {err}, proceeding without ignore globs");
-                None
+                warn!("Failed to load .prettierignore: {err}, proceeding without ignore globs");
+                vec![]
             }
         };
 
@@ -90,7 +96,7 @@ impl ServerFormatterBuilder {
                 root_path.to_path_buf(),
                 source_formatter,
                 JsConfigLoaderCb::clone(&self.js_config_loader),
-                prettierignore_glob,
+                ignore_matchers,
                 explicit_config_path,
                 use_nested_config,
             ),
@@ -111,19 +117,6 @@ impl ToolBuilder for ServerFormatterBuilder {
     fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
         let (tool, client_messages) = self.build(root_uri, options);
         ToolBuildResult { tool: Box::new(tool), client_messages }
-    }
-}
-
-impl ServerFormatterBuilder {
-    /// Create `.prettierignore` glob (workspace-level only).
-    fn create_prettierignore_glob(root_path: &Path) -> Result<Gitignore, String> {
-        let mut builder = GitignoreBuilder::new(root_path);
-        for ignore_path in &load_ignore_paths(root_path) {
-            if builder.add(ignore_path).is_some() {
-                return Err(format!("Failed to add ignore file: {}", ignore_path.display()));
-            }
-        }
-        builder.build().map_err(|_| "Failed to build ignore globs".to_string())
     }
 }
 
@@ -148,8 +141,8 @@ pub struct ServerFormatter {
     root_path: PathBuf,
     source_formatter: SourceFormatter,
     js_config_loader: JsConfigLoaderCb,
-    /// `.prettierignore` glob (workspace-level, shared across all scopes).
-    prettierignore_glob: Option<Gitignore>,
+    /// `.prettierignore` matchers (workspace-level, shared across all scopes).
+    ignore_matchers: Vec<Gitignore>,
     /// Explicit `fmt.configPath` from LSP settings.
     /// When set, all files use this single config.
     explicit_config_path: Option<PathBuf>,
@@ -300,7 +293,7 @@ impl ServerFormatter {
         root_path: PathBuf,
         source_formatter: SourceFormatter,
         js_config_loader: JsConfigLoaderCb,
-        prettierignore_glob: Option<Gitignore>,
+        ignore_matchers: Vec<Gitignore>,
         explicit_config_path: Option<PathBuf>,
         use_nested_config: bool,
     ) -> Self {
@@ -310,7 +303,7 @@ impl ServerFormatter {
             root_path,
             source_formatter,
             js_config_loader,
-            prettierignore_glob,
+            ignore_matchers,
             explicit_config_path,
             use_nested_config,
             state: RwLock::new(Arc::new(state)),
@@ -426,10 +419,7 @@ impl ServerFormatter {
     }
 
     fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
-        if self.prettierignore_glob.as_ref().is_some_and(|glob| {
-            path.starts_with(glob.path())
-                && glob.matched_path_or_any_parents(path, path.is_dir()).is_ignore()
-        }) {
+        if is_ignored(&self.ignore_matchers, path, false, true) {
             debug!("File is ignored by .prettierignore: {}", path.display());
             return None;
         }
@@ -525,15 +515,6 @@ fn compute_minimal_text_edit<'a>(
     let replacement = &formatted_text[replacement_start..replacement_end];
 
     (start, end, replacement)
-}
-
-// Almost the same as `cli::walk::load_ignore_paths`, but does not handle custom ignore files.
-//
-// NOTE: `.gitignore` is intentionally NOT included here.
-// An LSP document is explicitly formatted by the user.
-fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
-    let path = cwd.join(".prettierignore");
-    if path.exists() { vec![path] } else { vec![] }
 }
 
 // ---

@@ -12,7 +12,6 @@ use oxc_diagnostics::{DiagnosticService, GraphicalTheme};
 use super::{
     command::{FormatCommand, Mode, OutputMode},
     reporter::DefaultReporter,
-    resolve::resolve_ignore_paths,
     result::CliRunResult,
     service::{FormatService, SuccessResult},
     walk::ScopedWalker,
@@ -20,7 +19,8 @@ use super::{
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
 use crate::core::{
-    ConfigResolver, FormatStrategy, SourceFormatter, resolve_editorconfig_path, utils,
+    ConfigResolver, FormatStrategy, SourceFormatter, resolve_editorconfig_path,
+    resolve_ignore_paths, utils,
 };
 
 pub struct WalkRunner {
