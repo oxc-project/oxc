@@ -348,7 +348,7 @@ impl ServerFormatter {
             }
         };
 
-        if resolver.is_path_ignored(path, path.is_dir()) {
+        if resolver.is_path_ignored(path, false) {
             debug!("File is ignored by config ignorePatterns: {}", path.display());
             return None;
         }
