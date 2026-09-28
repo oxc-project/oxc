@@ -317,6 +317,22 @@ fn test() {
             "it('it duplicates the prefix', () => {});",
             Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
         ),
+        (
+            "it('it\\u0020duplicates', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it('it\\u0020duplicates more', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it('it \\u0020duplicates', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it(`it\\u0020duplicates`, () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
         // TODO: The regex `(?:#(?!unit|e2e))\w+` in those test cases is not valid in Rust
         // (
         //     "
@@ -781,6 +797,31 @@ fn test() {
             (
                 "it(String.raw` leading space`, () => {});",
                 "it(String.raw`leading space`, () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+            // Escaped prefix separators must not remove the wrong part of the title.
+            (
+                "it('it\\u0020duplicates', () => {});",
+                "it('it\\u0020duplicates', () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+            (
+                "it('it\\u0020duplicates more', () => {});",
+                "it('it\\u0020duplicates more', () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+            (
+                "it('it \\u0020duplicates', () => {});",
+                "it('it \\u0020duplicates', () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+            (
+                "it(`it\\u0020duplicates`, () => {});",
+                "it(`it\\u0020duplicates`, () => {});",
                 Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
             )
                 .into(),
