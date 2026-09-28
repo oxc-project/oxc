@@ -229,28 +229,19 @@ impl OnlyExportComponents {
     }
 
     fn can_be_react_function_component(&self, init: Option<&Expression>) -> bool {
-        if let Some(raw_init) = init {
-            if self.allow_compound_components
-                && let Expression::ObjectExpression(object) = raw_init.get_inner_expression()
-            {
-                return self.is_compound_component(object);
-            }
+        let Some(raw_init) = init else { return false };
+        if self.allow_compound_components
+            && let Expression::ObjectExpression(object) = raw_init.get_inner_expression()
+        {
+            return self.is_compound_component(object);
+        }
 
-            let js_init = Self::skip_ts_expression(raw_init);
-
-            match js_init {
-                Expression::ArrowFunctionExpression(_) => true,
-                Expression::CallExpression(call_expr) => {
-                    if let Expression::Identifier(callee) = &call_expr.callee {
-                        self.is_react_hoc(&callee.name)
-                    } else {
-                        false
-                    }
-                }
-                _ => false,
+        match Self::skip_ts_expression(raw_init) {
+            Expression::ArrowFunctionExpression(_) => true,
+            Expression::CallExpression(call_expr) => {
+                matches!(&call_expr.callee, Expression::Identifier(callee) if self.is_react_hoc(&callee.name))
             }
-        } else {
-            false
+            _ => false,
         }
     }
 
@@ -637,13 +628,10 @@ impl OnlyExportComponents {
             let local_name = export_spec.local.name();
             let span = export_spec.local.span();
 
-            let export = if exported_name == Some("default") {
-                self.classify_export_reference(ctx, local_name.as_str(), local_name.as_str(), span)
-            } else if let Some(name) = exported_name {
+            let export = exported_name.map_or(ExportType::NonComponent(span), |name| {
+                let name = if name == "default" { local_name.as_str() } else { name };
                 self.classify_export_reference(ctx, name, local_name.as_str(), span)
-            } else {
-                ExportType::NonComponent(span)
-            };
+            });
             analysis.add_export(export);
         }
 
