@@ -38,7 +38,7 @@ mod walker;
 mod words;
 
 use frame::*;
-use walker::{Expect, Jump, Walk};
+use walker::{Expect, Jump, Walk, group_frame};
 
 pub(super) use scan::{after, angles_before, before};
 

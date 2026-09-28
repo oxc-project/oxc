@@ -64,10 +64,13 @@ impl Level<'_> {
     }
 
     /// The walk continues inside this level: the points where it may resume.
-    fn resume_point(&self) -> Anchor {
+    /// A nonzero close is the closer of the group it stopped in, opened at open.
+    fn resume_point(&self, open: usize, close: usize) -> Anchor {
         Anchor::Continue {
             semi: self.semi.map_or(0, |s| s as u32),
             brace: self.brace.map_or(0, |b| b as u32),
+            open: open as u32,
+            close: close as u32,
         }
     }
 }
@@ -75,12 +78,14 @@ impl Level<'_> {
 /// Scan back from `from` (exclusive) to the anchor of a query, recording the walk's jumps in
 /// jumps (nearest first). cont is where the current bounded walk stopped: reaching it, or a
 /// group holding it, means the walk continues from there. None past the scan cap.
+/// A group holding cont is crossed only if can_leave accepts its opener.
 fn scan(
     tokens: &Tokens,
     jumps: &mut Vec<Jump>,
     gts: &mut Vec<u32>,
     from: usize,
-    cont: Option<usize>,
+    mut cont: Option<usize>,
+    can_leave: impl Fn(usize) -> bool,
 ) -> Option<Scan> {
     jumps.clear();
     gts.clear();
@@ -97,7 +102,7 @@ fn scan(
             return Some(Scan { anchor: Anchor::Stmt(0), angles: unmatched_lt });
         };
         if cont.is_some_and(|c| p < c) {
-            return Some(Scan { anchor: lv.resume_point(), angles: unmatched_lt });
+            return Some(Scan { anchor: lv.resume_point(0, 0), angles: unmatched_lt });
         }
         steps += 1;
         if steps > WALK_SCAN_CAP {
@@ -110,7 +115,12 @@ fn scan(
                 b')' | b']' | b'}' => {
                     let o = tokens.match_delim_back(p)?;
                     if cont.is_some_and(|c| o < c) {
-                        return Some(Scan { anchor: lv.resume_point(), angles: unmatched_lt });
+                        if can_leave(o) {
+                            let anchor = lv.resume_point(o, p);
+                            return Some(Scan { anchor, angles: unmatched_lt });
+                        }
+                        // The group holds the walk's seed: find an anchor before it instead.
+                        cont = None;
                     }
                     if c == b'}' && lv.brace.is_none() && lv.closers.is_empty() {
                         lv.brace = brace_boundary(tokens, p);
@@ -198,7 +208,9 @@ fn scan(
             // in, so the level changes there.
             let head = tokens.template_head(p, &mut steps, WALK_SCAN_CAP)?;
             if cont.is_some_and(|c| head < c) {
-                return Some(Scan { anchor: lv.resume_point(), angles: unmatched_lt });
+                // The walk stopped inside the template: it steps on through the rest of it.
+                let anchor = Anchor::Continue { semi: 0, brace: 0, open: 0, close: 0 };
+                return Some(Scan { anchor, angles: unmatched_lt });
             }
             if k == tk!(TemplateMiddle) {
                 lv.record(jumps, p);
@@ -285,35 +297,45 @@ pub(crate) fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
 
 impl Walk {
     fn local_scan(&mut self, tokens: &Tokens, from: usize) -> Option<Scan> {
-        let cont = (self.seed_depth != 0 && !self.seed_lost && self.walked_to <= from)
-            .then_some(self.walked_to);
-        scan(tokens, &mut self.jumps, &mut self.gts, from, cont)
+        let (frames, floor) = (&self.frames, self.seed_depth);
+        let valid = floor != 0 && !self.seed_lost && frames.len() >= floor;
+        let cont = (valid && self.walked_to <= from).then_some(self.walked_to);
+        let can_leave = |open| group_frame(frames, open, floor).is_some();
+        scan(tokens, &mut self.jumps, &mut self.gts, from, cont, can_leave)
     }
 
     fn run_local(&mut self, tokens: &Tokens, s: Scan, pos: usize, from: usize) -> bool {
-        self.start(tokens.module, s.anchor, pos, from);
+        self.start(tokens, s.anchor, pos, from);
         self.advance(tokens, pos);
         !self.seed_lost
     }
 
     /// Seed the walk at `anchor` for a query at `pos` whose closer group opens at `from`, with the
     /// scan's jumps in `jumps` (nearest first).
-    pub(super) fn start(&mut self, module: bool, anchor: Anchor, pos: usize, from: usize) {
+    pub(super) fn start(&mut self, tokens: &Tokens, anchor: Anchor, pos: usize, from: usize) {
         self.jumps.reverse();
         if from < pos {
             self.jumps.push(Jump::Skip { at: from as u32, to: pos as u32 });
         }
         self.next_jump = 0;
         match anchor {
-            Anchor::Continue { semi, brace } => self.resume(semi as usize, brace as usize, pos),
+            Anchor::Continue { semi, brace, open, close } => {
+                if close != 0 {
+                    self.leave_group(tokens, open as usize, close as usize);
+                }
+                self.resume(semi as usize, brace as usize, pos);
+            }
             Anchor::Stmt(at) | Anchor::Expr(at) => {
-                self.reset(module);
+                self.reset(tokens.module);
                 self.walked_to = at;
                 self.prev_end = at;
-                if matches!(anchor, Anchor::Expr(_)) {
+                // An operand anchor is certain only inside the construct it opens.
+                let expr = matches!(anchor, Anchor::Expr(_));
+                if expr {
                     self.expect = Expect::Operand;
                 }
-                self.seed_depth = self.frames.len();
+                self.seed_depth = self.frames.len() + usize::from(expr);
+                self.seed_at = at;
                 self.seed_lost = false;
             }
         }

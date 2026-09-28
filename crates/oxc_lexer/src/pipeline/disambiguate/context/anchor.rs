@@ -20,7 +20,8 @@ pub(super) enum Anchor {
     /// `(` whose group holds the query.
     Expr(usize),
     /// The bounded walk already covers this point and continues from where it stopped.
-    Continue { semi: u32, brace: u32 },
+    /// It first leaves the group from open to close that it stopped in, when close is not 0.
+    Continue { semi: u32, brace: u32, open: u32, close: u32 },
 }
 
 /// Is the word at `p` an attribute inside a JSX opening tag? Scans back over attribute names,
