@@ -423,12 +423,23 @@ fn validate_title(
 
     let trimmed_title = title.trim();
     if !config.ignore_spaces && trimmed_title != title {
-        ctx.diagnostic_with_fix(accidental_space_diagnostic(span), |fixer| {
-            let inner_span = span.shrink(1);
-            let raw_text = fixer.source_range(inner_span);
-            let trimmed_raw = raw_text.trim().to_string();
-            fixer.replace(inner_span, trimmed_raw)
-        });
+        let inner_span = span.shrink(1);
+        let raw_text = ctx.source_range(inner_span);
+        let leading_space_len = title.len() - title.trim_start().len();
+        let trailing_space_len = title.len() - title.trim_end().len();
+        let raw_leading_space_len = raw_text.len() - raw_text.trim_start().len();
+        let raw_trailing_space_len = raw_text.len() - raw_text.trim_end().len();
+
+        if leading_space_len != raw_leading_space_len
+            || trailing_space_len != raw_trailing_space_len
+        {
+            // Escaped whitespace cannot be removed by trimming the raw source text.
+            ctx.diagnostic(accidental_space_diagnostic(span));
+        } else {
+            ctx.diagnostic_with_fix(accidental_space_diagnostic(span), |fixer| {
+                fixer.replace(inner_span, raw_text.trim().to_string())
+            });
+        }
     }
 
     let un_prefixed_name = name.trim_start_matches(['f', 'x']);

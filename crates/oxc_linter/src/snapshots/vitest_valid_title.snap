@@ -100,6 +100,27 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the leading or trailing spaces
 
+  ⚠ vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it('\u0020works', () => {});
+   ·    ─────────────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it('works\u0020', () => {});
+   ·    ─────────────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it(`\u0020works`, () => {});
+   ·    ─────────────
+   ╰────
+  help: Remove the leading or trailing spaces
+
   ⚠ vitest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:4]
  1 │ it('it duplicates the prefix', () => {});

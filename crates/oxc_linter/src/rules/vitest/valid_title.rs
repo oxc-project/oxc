@@ -301,6 +301,19 @@ fn test() {
             "it(' leading space', () => {});",
             Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
         ),
+        // Escaped whitespace is visible in the evaluated title but cannot be trimmed from source.
+        (
+            "it('\\u0020works', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it('works\\u0020', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it(`\\u0020works`, () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
         (
             "it('it duplicates the prefix', () => {});",
             Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
