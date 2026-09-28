@@ -250,9 +250,9 @@ impl ValidTitleConfig {
                     return;
                 }
 
-                if let Some(quasi) = tagged_template.quasi.single_quasi() {
+                if tagged_template.quasi.is_no_substitution_template() {
                     validate_title(
-                        quasi.as_str(),
+                        tagged_template.quasi.quasis[0].value.raw.as_str(),
                         tagged_template.quasi.span,
                         config,
                         &jest_fn_call.name,

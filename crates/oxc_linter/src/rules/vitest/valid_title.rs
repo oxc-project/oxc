@@ -229,6 +229,15 @@ fn test() {
             Some(serde_json::json!([{ "disallowedWords": ["foo+bar"] }])),
         ),
         ("test('foo', () => {});", Some(serde_json::json!([{ "disallowedWords": ["foo|bar"] }]))),
+        // `String.raw` evaluates the raw quasi, not its cooked value.
+        (
+            "it(String.raw`\\x69t duplicates`, () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it(String.raw`\\x73hould run`, () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
     ];
 
     let fail = vec![
