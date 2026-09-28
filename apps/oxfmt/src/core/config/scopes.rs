@@ -88,20 +88,21 @@ impl ConfigScopes {
         use_nested: bool,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> Self {
+        let root = Arc::new(root);
         let has_editorconfig = editorconfig.is_some();
         let nested_ctx = NestedConfigCtx::new(
+            &root,
             editorconfig,
             #[cfg(feature = "napi")]
             js_config_loader.cloned(),
         );
-        Self { root: Arc::new(root), nested_ctx, use_nested, has_editorconfig }
+        Self { root, nested_ctx, use_nested, has_editorconfig }
     }
 
     /// Resolve the config scope for a single file: the nearest nested config, or the root.
     ///
-    /// When nested detection is enabled, the ancestor chain of `path` is walked,
-    /// short-circuiting on the root's `config_dir()` to avoid re-loading the root via `nested_ctx`.
-    /// (which would create a duplicate `Arc` and, with `napi`, re-invoke the JS config loader)
+    /// When nested detection is enabled, the ancestor chain of `path` is walked.
+    /// The root is registered in `nested_ctx`, so reaching its `config_dir()` returns it without reloading.
     ///
     /// # Errors
     /// Returns error if a nested config fails to load.
@@ -113,11 +114,7 @@ impl ConfigScopes {
             return Ok(Arc::clone(&self.root));
         };
 
-        let root_config_dir = self.root.config_dir();
         for dir in parent.ancestors() {
-            if Some(dir) == root_config_dir {
-                return Ok(Arc::clone(&self.root));
-            }
             if let Some(r) = self.nested_ctx.probe_dir(dir)? {
                 return Ok(r);
             }
@@ -142,6 +139,6 @@ impl ConfigScopes {
     ///
     /// Nested configs are detected lazily, call this after resolving files.
     pub fn any_config_found(&self) -> bool {
-        self.root.config_dir().is_some() || self.nested_ctx.config_found() || self.has_editorconfig
+        self.nested_ctx.config_found() || self.has_editorconfig
     }
 }

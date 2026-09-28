@@ -49,15 +49,22 @@ pub struct NestedConfigCtx {
 
 impl NestedConfigCtx {
     pub fn new(
+        root: &Arc<ConfigResolver>,
         editorconfig: Option<EditorConfig>,
         #[cfg(feature = "napi")] js_config_loader: Option<JsConfigLoaderCb>,
     ) -> Self {
+        // Register the root, so probing its dir returns the already loaded resolver
+        // instead of reading it again or invoking the JS loader twice.
+        let mut scope_by_dir = FxHashMap::default();
+        if let Some(dir) = root.config_dir() {
+            scope_by_dir.insert(dir.to_path_buf(), Arc::clone(root));
+        }
         Self {
             discovery: config_discovery(),
             editorconfig: editorconfig.map(Arc::new),
             #[cfg(feature = "napi")]
             js_config_loader,
-            scope_by_dir: Arc::new(RwLock::new(FxHashMap::default())),
+            scope_by_dir: Arc::new(RwLock::new(scope_by_dir)),
             config_load_cache: Arc::new(Mutex::new(FxHashMap::default())),
         }
     }
@@ -72,7 +79,7 @@ impl NestedConfigCtx {
         self.scope_by_dir.read().expect("scope_by_dir rwlock poisoned").get(dir).cloned()
     }
 
-    /// Whether any nested config has been registered.
+    /// Whether any config has been registered, including the preloaded root.
     pub fn config_found(&self) -> bool {
         !self.scope_by_dir.read().expect("scope_by_dir rwlock poisoned").is_empty()
     }

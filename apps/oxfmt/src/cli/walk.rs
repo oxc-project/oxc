@@ -469,7 +469,6 @@ impl WalkVisitor {
             .map(PathBuf::as_path)
             .filter(|t| parent.starts_with(t))
             .max_by_key(|t| t.components().count());
-        let root_config_dir = root_config_resolver.config_dir();
 
         // Pass 1: cheap ancestor lookup (no probe).
         let mut visited: Vec<PathBuf> = vec![];
@@ -481,12 +480,7 @@ impl WalkVisitor {
                 hit_via_lookup = Some(Arc::clone(r));
                 break;
             }
-            // (2) root config
-            if Some(dir) == root_config_dir {
-                hit_via_lookup = Some(Arc::clone(root_config_resolver));
-                break;
-            }
-            // (3) shared cache, covered by other visitors' probes
+            // (2) shared cache, covered by other visitors' probes (and the root config)
             if let Some(r) = self.config_state.scopes.nested_ctx().lookup_scope(dir) {
                 hit_via_lookup = Some(r);
                 break;
@@ -879,6 +873,36 @@ mod tests_scope_resolution {
             Arc::ptr_eq(&resolved, scopes.root()),
             "Phase 2 must return the pre-built root Arc directly (no config_load_cache round-trip)"
         );
+    }
+
+    /// Direct file targets and directory walks must share the preloaded root config.
+    #[cfg(feature = "napi")]
+    #[test]
+    fn walk_reuses_loaded_root_config() {
+        let tmp = TempDir::new().expect("tempdir");
+        let repo = tmp.path();
+        fs::write(repo.join("oxfmt.config.ts"), "export default {};\n").expect("write config");
+        fs::write(repo.join("file.ts"), "const x = 1;\n").expect("write source");
+
+        let counter = Arc::new(AtomicUsize::new(0));
+        let counter_in_cb = Arc::clone(&counter);
+        let cb: JsConfigLoaderCb = Arc::new(move |_path: String| {
+            counter_in_cb.fetch_add(1, Ordering::Relaxed);
+            Ok(serde_json::json!({}))
+        });
+        let scopes = ConfigScopes::load(repo, None, true, Some(&cb)).expect("load scopes");
+        let walker =
+            ScopedWalker::new(repo.to_path_buf(), &[PathBuf::from("file.ts"), PathBuf::from(".")])
+                .expect("create walker");
+        let (tx_entry, rx_entry) = mpsc::channel();
+        let (tx_error, rx_error) = mpsc::channel();
+        walker.run(&scopes, &[], false, &tx_entry, &tx_error).expect("walk");
+
+        assert_eq!(rx_entry.try_iter().count(), 2, "both config and source must be visited");
+        assert_eq!(rx_error.try_iter().count(), 0);
+        assert_eq!(counter.load(Ordering::Relaxed), 1, "walk must not reload the root config");
+        let probed = scopes.nested_ctx().probe_dir(repo).expect("probe root").expect("root config");
+        assert!(Arc::ptr_eq(&probed, scopes.root()), "root probes must reuse the loaded resolver");
     }
 
     /// `config_load_cache` + `OnceLock` must dedupe NAPI loader invocations
