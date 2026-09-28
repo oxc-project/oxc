@@ -51,10 +51,10 @@ pub fn run(
         format_embedded_doc_cb,
         sort_tailwind_classes_cb,
     );
+    let _cleanup = external_services.cleanup_guard();
 
     let filepath = utils::normalize_relative_path(&cwd, Path::new(filename));
     let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
-        external_services.cleanup();
         return ApiFormatResult {
             code: source_text,
             errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
@@ -63,7 +63,6 @@ pub fn run(
     let strategy = match resolve_for_api(options.unwrap_or_default(), kind, &cwd) {
         Ok(ResolveOutcome::Format(strategy)) => strategy,
         Ok(ResolveOutcome::MissingPlugin(plugin)) => {
-            external_services.cleanup();
             return ApiFormatResult {
                 code: source_text,
                 errors: vec![OxcError::new(format!(
@@ -72,7 +71,6 @@ pub fn run(
             };
         }
         Err(err) => {
-            external_services.cleanup();
             return ApiFormatResult {
                 code: source_text,
                 errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
@@ -81,21 +79,15 @@ pub fn run(
     };
 
     // Create formatter and format
-    let formatter = SourceFormatter::new(num_of_threads)
-        .with_external_services(Some(external_services.clone()));
+    let formatter =
+        SourceFormatter::new(num_of_threads).with_external_services(Some(external_services));
 
     // Use `block_in_place()` to avoid nested async runtime access
-    let result = match tokio::task::block_in_place(|| formatter.format(&source_text, strategy)) {
+    match tokio::task::block_in_place(|| formatter.format(&source_text, strategy)) {
         FormatResult::Success { code, .. } => ApiFormatResult { code, errors: vec![] },
         FormatResult::Error(diagnostics) => {
             let errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
             ApiFormatResult { code: source_text, errors }
         }
-    };
-
-    // Explicitly drop ThreadsafeFunctions before returning to prevent
-    // use-after-free during V8 cleanup (Node.js issue with TSFN cleanup timing)
-    external_services.cleanup();
-
-    result
+    }
 }
