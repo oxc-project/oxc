@@ -549,7 +549,7 @@ impl<'a> OptionalChaining<'a> {
         {
             if ident.name == "eval" {
                 // `eval?.()` is an indirect eval call transformed to `(0,eval)()`
-                let zero = Expression::new_number_0(ctx);
+                let zero = Expression::new_number_0(SPAN, ctx);
                 expr.replace_with(|original_callee| {
                     Expression::new_sequence_expression(SPAN, [zero, original_callee], ctx)
                 });

@@ -1018,13 +1018,7 @@ impl<'a> PeepholeOptimizations {
         if let Some(old) = for_stmt.test.take() {
             ctx.drop_expression(&old);
         }
-        for_stmt.test = Some(Expression::new_numeric_literal(
-            for_stmt.span,
-            0.0,
-            None,
-            NumberBase::Decimal,
-            ctx,
-        ));
+        for_stmt.test = Some(Expression::new_number_0(for_stmt.span, ctx));
         if let Some(old) = for_stmt.update.take() {
             ctx.drop_expression(&old);
         }
