@@ -211,6 +211,37 @@ though no type 7 block can interrupt a paragraph on a regular line.
 Printed with the container's prefix the line is no longer lazy, so a blank line keeps the block apart;
 Prettier prints it adjacent, and the next parse reads it as part of the paragraph.
 
+## list-after-html-block
+
+- Why: semantics (prettier/prettier#17690)
+- Pin: `tests/fixtures/markdown/list-after-html-block.md`
+
+```markdown
+<!-- input -->
+- a
+
+  <div>
+
+  - b
+
+<!-- ours -->
+- a
+
+  <div>
+
+  - b
+
+<!-- prettier (the list item becomes html, one per pass) -->
+- a
+
+  <div>
+  - b
+```
+
+A nested list after a type 6 / 7 HTML block keeps its blank line: only a blank line ends such a block.
+Prettier joins any list in a list item to the previous block, and the next parse reads the first list line as part of the html.
+Types 1 to 5 end at their end marker, so a list after them is printed adjacent as Prettier does.
+
 ## list-marker-after-ignored-list
 
 - Why: semantics

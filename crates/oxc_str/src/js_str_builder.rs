@@ -1,0 +1,239 @@
+use oxc_allocator::{ArenaVec, GetAllocator};
+
+use crate::{JSChar, JSStr, wtf8::*};
+
+/// Build a [`JSStr`] in an arena, preserving lone surrogates.
+///
+/// Appends concatenated UTF-16 values. A leading surrogate at the end of one append
+/// pairs with a trailing surrogate at the start of the next, including across empty appends.
+/// [`into_js_str`] returns canonical WTF-8 without copying the completed buffer.
+///
+/// ```
+/// # use oxc_allocator::Allocator;
+/// # let allocator = Allocator::new();
+/// use oxc_str::JSStrBuilder;
+///
+/// let mut builder = JSStrBuilder::new_in(&&allocator);
+/// builder.push_code_unit(0xD800);
+/// builder.push_str("");
+/// builder.push_code_unit(0xDC00);
+/// let s = builder.into_js_str();
+///
+/// assert_eq!(s.as_str(), Some("𐀀"));
+/// ```
+///
+/// [`into_js_str`]: Self::into_js_str
+pub struct JSStrBuilder<'a> {
+    /// Canonical WTF-8, excluding a held final leading surrogate.
+    bytes: ArenaVec<'a, u8>,
+    /// Always in 0xD800..=0xDBFF when present, with three bytes of spare capacity in `bytes`,
+    /// so finishing the string never needs to grow the buffer.
+    pending_lead_surrogate: Option<u16>,
+    /// Describes only `bytes`, excluding `pending_lead_surrogate`.
+    has_lone_surrogate: bool,
+}
+
+impl<'a> JSStrBuilder<'a> {
+    /// Create an empty [`JSStrBuilder`] without allocating.
+    #[inline]
+    pub fn new_in(allocator: &impl GetAllocator<'a>) -> Self {
+        Self {
+            bytes: ArenaVec::new_in(allocator),
+            pending_lead_surrogate: None,
+            has_lone_surrogate: false,
+        }
+    }
+
+    /// Create an empty [`JSStrBuilder`] with reserved capacity.
+    ///
+    /// If `capacity` is 0, does not allocate.
+    ///
+    /// # Panics
+    /// Panics if `capacity` exceeds `u32::MAX` or `isize::MAX`.
+    #[inline]
+    pub fn with_capacity_in(capacity: usize, allocator: &impl GetAllocator<'a>) -> Self {
+        Self {
+            bytes: ArenaVec::with_capacity_in(capacity, allocator),
+            pending_lead_surrogate: None,
+            has_lone_surrogate: false,
+        }
+    }
+
+    /// Append a `&str`.
+    #[inline]
+    pub fn push_str(&mut self, value: &str) {
+        // Empty text preserves a pending leading surrogate
+        if value.is_empty() {
+            return;
+        }
+        // Reserve before changing state, so a capacity panic cannot leave
+        // a flushed leading surrogate that a later append would fail to pair
+        if self.pending_lead_surrogate.is_some() {
+            self.bytes.reserve(value.len() + SURROGATE_BYTE_LEN);
+            self.flush_pending();
+        }
+        self.bytes.extend_from_slice_copy(value.as_bytes());
+    }
+
+    /// Append a Unicode scalar value.
+    #[inline]
+    pub fn push(&mut self, value: char) {
+        self.push_str(value.encode_utf8(&mut [0; char::MAX_LEN_UTF8]));
+    }
+
+    /// Append one JavaScript code point, pairing surrogates at the boundary.
+    #[inline]
+    #[expect(clippy::cast_possible_truncation, reason = "lone surrogates fit in `u16`")]
+    pub fn push_js_char(&mut self, value: JSChar) {
+        if let Some(lead) = self.pending_lead_surrogate
+            && value.is_trail_surrogate()
+        {
+            self.bytes.reserve(char::MAX_LEN_UTF8);
+            self.append_pair(lead, value.to_u32() as u16);
+            self.pending_lead_surrogate = None;
+            return;
+        }
+
+        let mut buffer = [0; char::MAX_LEN_UTF8];
+        let bytes = value.encode(&mut buffer);
+        let additional = self.pending_bytes() + bytes.len();
+        self.bytes.reserve(additional);
+        self.flush_pending();
+        if value.is_lead_surrogate() {
+            self.pending_lead_surrogate = Some(value.to_u32() as u16);
+        } else {
+            self.bytes.extend_from_slice_copy(bytes);
+            self.has_lone_surrogate |= value.is_surrogate();
+        }
+    }
+
+    /// Append one UTF-16 code unit.
+    ///
+    /// Use this for input from a UTF-16 API.
+    /// Use [`push_js_char`] for an already decoded JavaScript code point.
+    ///
+    /// [`push_js_char`]: Self::push_js_char
+    #[inline]
+    pub fn push_code_unit(&mut self, unit: u16) {
+        self.push_js_char(JSChar::from_code_unit(unit));
+    }
+
+    /// Append potentially ill-formed UTF-16.
+    ///
+    /// This accepts code-unit buffers from UTF-16 APIs without replacing lone surrogates.
+    /// A pair may span consecutive calls, including empty buffers.
+    #[inline]
+    pub fn push_utf16(&mut self, units: &[u16]) {
+        for &unit in units {
+            self.push_code_unit(unit);
+        }
+    }
+
+    /// Append a JavaScript string, repairing a surrogate pair at the boundary.
+    ///
+    /// UTF-8 inputs are copied without scanning. For inputs with lone surrogates,
+    /// only the boundary encodings change; the interior is copied as bytes.
+    #[inline]
+    pub fn push_js_str(&mut self, value: JSStr<'_>) {
+        if let Some(value) = value.as_str() {
+            self.push_str(value);
+        } else {
+            self.push_js_str_slow(value);
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn push_js_str_slow(&mut self, value: JSStr<'_>) {
+        // A surrogate's WTF-8 encoding is `SURROGATE_FIRST_BYTE`, then two
+        // continuation bytes holding the low twelve bits.
+        fn decode_surrogate(second: u8, third: u8) -> u16 {
+            (u16::from(SURROGATE_FIRST_BYTE & THREE_BYTE_MASK) << 12)
+                | (u16::from(second & CONT_MASK) << 6)
+                | u16::from(third & CONT_MASK)
+        }
+
+        debug_assert!(value.has_lone_surrogate());
+
+        let mut bytes = value.as_bytes();
+        let additional = bytes.len() + self.pending_bytes();
+        self.bytes.reserve(additional);
+        let mut trimmed = false;
+
+        if let Some(lead) = self.pending_lead_surrogate
+            && let [SURROGATE_FIRST_BYTE, second @ (TRAIL_SURROGATE_SECOND_BYTE_MIN..), third, ..] =
+                bytes
+        {
+            self.append_pair(lead, decode_surrogate(*second, *third));
+            self.pending_lead_surrogate = None;
+            bytes = &bytes[SURROGATE_BYTE_LEN..];
+            trimmed = true;
+        } else {
+            self.flush_pending();
+        }
+
+        if let [
+            ..,
+            SURROGATE_FIRST_BYTE,
+            second @ LEAD_SURROGATE_SECOND_BYTE_MIN..=LEAD_SURROGATE_SECOND_BYTE_MAX,
+            third,
+        ] = bytes
+        {
+            self.pending_lead_surrogate = Some(decode_surrogate(*second, *third));
+            bytes = &bytes[..bytes.len() - SURROGATE_BYTE_LEN];
+            trimmed = true;
+        }
+
+        // Without trimming, the appended bytes still contain a lone surrogate.
+        // Trimming may remove the only one, so inspect the interior in that case.
+        // An already-set output flag needs no further scan.
+        self.has_lone_surrogate = self.has_lone_surrogate
+            || !trimmed
+            || bytes.windows(SURROGATE_BYTE_LEN).any(|bytes| {
+                bytes[0] == SURROGATE_FIRST_BYTE && bytes[1] >= SURROGATE_SECOND_BYTE_MIN
+            });
+        self.bytes.extend_from_slice_copy(bytes);
+    }
+
+    /// Consume the builder and return a string without copying or rescanning the buffer.
+    #[inline]
+    pub fn into_js_str(mut self) -> JSStr<'a> {
+        // A pending surrogate always has three bytes of capacity reserved for it.
+        self.flush_pending();
+        let bytes = self.bytes.into_arena_slice();
+        // SAFETY: Appends maintain canonical WTF-8 and the exact surrogate flag.
+        // The final pending surrogate has been flushed.
+        // `ArenaVec<u8>` bounds its length by `u32::MAX` and `isize::MAX`.
+        // The slice owns the arena lifetime.
+        unsafe { JSStr::from_bytes_unchecked(bytes, self.has_lone_surrogate) }
+    }
+
+    #[inline]
+    fn pending_bytes(&self) -> usize {
+        if self.pending_lead_surrogate.is_some() { SURROGATE_BYTE_LEN } else { 0 }
+    }
+
+    /// Call only after reserving space and deciding the next append cannot pair.
+    #[inline]
+    fn flush_pending(&mut self) {
+        if let Some(lead) = self.pending_lead_surrogate.take() {
+            self.bytes.extend_from_slice_copy(
+                JSChar::from_code_unit(lead).encode(&mut [0; char::MAX_LEN_UTF8]),
+            );
+            self.has_lone_surrogate = true;
+        }
+    }
+
+    /// Append a character formed from lead and trail surrogates.
+    ///
+    /// # Panics
+    /// Panics if `lead` and `trail` do not form a valid `char`.
+    #[inline]
+    fn append_pair(&mut self, lead: u16, trail: u16) {
+        let value = SUPPLEMENTARY_MIN
+            + ((u32::from(lead) - LEAD_SURROGATE_MIN) << 10)
+            + (u32::from(trail) - TRAIL_SURROGATE_MIN);
+        let c = char::from_u32(value).unwrap();
+        self.bytes.extend_from_slice_copy(c.encode_utf8(&mut [0; char::MAX_LEN_UTF8]).as_bytes());
+    }
+}

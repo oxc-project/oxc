@@ -29,21 +29,6 @@ pub(crate) fn next1(bits: &[u64], i: usize, n: usize) -> usize {
     n
 }
 
-/// The first clear bit at or after `i`, or `n`.
-#[inline(always)]
-pub(crate) fn next0(bits: &[u64], i: usize, n: usize) -> usize {
-    let mut w = i >> 6;
-    let mut inv = !bits[w] & !((1u64 << (i & 63)).wrapping_sub(1));
-    while inv == 0 {
-        w += 1;
-        if (w << 6) >= n {
-            return n;
-        }
-        inv = !bits[w];
-    }
-    ((w << 6) + inv.trailing_zeros() as usize).min(n)
-}
-
 /// The last set bit before `p`, or `None`.
 #[inline(always)]
 pub(crate) fn prev1(bits: &[u64], p: usize) -> Option<usize> {

@@ -55,7 +55,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
             )
             && !is_simple_module_import(self.arguments(), f.comments())
-            && !is_test_call_expression(self)
+            && !is_test_call_expression(self, f.comments())
         {
             MemberChain::from_call_expression(self, f).fmt(f);
         } else {

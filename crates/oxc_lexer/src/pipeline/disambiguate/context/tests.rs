@@ -27,11 +27,13 @@ fn yield_keyword_stays_regex() {
 }
 
 #[test]
-fn strict_yield_stays_regex() {
-    regex("\"use strict\"; var r = yield /2/g;", ScriptJS);
-    regex("'use strict'\nvar r = yield /2/g;", ScriptJS);
-    regex("function f() { \"use strict\"; return yield /2/g; }", ScriptJS);
-    regex("class C { m() { return yield /2/g; } }", ScriptJS);
+fn strict_yield_outside_a_generator_divides() {
+    // Strict mode makes yield a reserved word, an early error; the grammar still reads a name.
+    division("\"use strict\"; var r = yield /2/g;", ScriptJS);
+    division("'use strict'\nvar r = yield /2/g;", ScriptJS);
+    division("function f() { \"use strict\"; return yield /2/g; }", ScriptJS);
+    division("class C { m() { return yield /2/g; } }", ScriptJS);
+    division("class C { static { yield /2/g; } }", ScriptJS);
     division("var s = \"use strict\"; var yield = 1; var r = yield /2/g;", ScriptJS);
 }
 
@@ -85,17 +87,6 @@ fn module_goal_keeps_yield_and_await_reserved() {
 fn property_spellings_unaffected() {
     division("x.yield / 2;", ScriptJS);
     division("x.await / 2;", ScriptJS);
-}
-
-#[test]
-fn fake_directive_expression_continuation() {
-    division("\"use strict\"\n+ 1; var yield = 1; var r = yield /2/g;", ScriptJS);
-    division("\"use strict\"\n.length; var yield = 1; var r = yield /2/g;", ScriptJS);
-}
-
-#[test]
-fn leading_semicolon_ends_prologue() {
-    division("; \"use strict\"; var yield = 1; var r = yield /2/g;", ScriptJS);
 }
 
 #[test]
@@ -249,6 +240,19 @@ fn jsx_after_yield_and_await() {
     assert!(ks.contains(&TokenKind::JsxLt), "awaited JSX element must frame: {ks:?}");
     let ks = jsx("var await = 1, g = 2;\nvar el = <a b={async () => await 1} c={await /2/g}/>;");
     assert!(!ks.contains(&TokenKind::RegExp), "container leak, expected division: {ks:?}");
+}
+
+#[test]
+fn continued_walk_leaves_the_group_it_stopped_in() {
+    // The second slash continues the walk of the first, which stopped inside a group now closed.
+    for code in [
+        "o = { a: f({} / 2), b: {} / 3 };",
+        "o = { a: function() {} / 2, b: {} / 3 };",
+        "o = { a: class { m() { x = {} / 2 } }, b: {} / 3 };",
+    ] {
+        division(code, ScriptJS);
+    }
+    regex("async function f() { if (a) {} /x/ }\ng();\nx = await\n{} /re/g", ScriptJS);
 }
 
 #[test]

@@ -232,7 +232,7 @@ impl Default for Lexer {
 ///
 /// # SAFETY
 ///
-/// - `src` must be valid for `n + PAD` bytes, `st`, `opch` and `word` for `n / 64 + 1` words and
+/// - src must be valid for n + PAD bytes, st and opch for n / 64 + 1 words and
 ///   `kind` for `(n / 64 + 1) * 64` bytes.
 /// - Nothing may write to them while the view is alive: a question reads, answers and returns
 ///   before the stage writes again.
@@ -243,7 +243,6 @@ unsafe fn token_view<'a>(
     src: *const u8,
     st: *const u64,
     opch: *const u64,
-    word: *const u64,
     kind: *const u8,
     n: usize,
     ts: bool,
@@ -258,7 +257,6 @@ unsafe fn token_view<'a>(
         src: std::slice::from_raw_parts(src, n + PAD),
         st: std::slice::from_raw_parts(st, nb),
         opch: std::slice::from_raw_parts(opch, nb),
-        word: std::slice::from_raw_parts(word, nb),
         kind: std::slice::from_raw_parts(kind, nb * 64),
         n,
         ts,
