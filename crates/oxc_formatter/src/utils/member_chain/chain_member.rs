@@ -4,6 +4,10 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{JsFormatter, prelude::*, trivia::FormatLeadingComments},
+    utils::{
+        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        statement_body::{FormatBeforeOpener, callee_opener, write_comments_before_opener},
+    },
     write,
 };
 use oxc_ast::ast::*;
@@ -84,9 +88,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ChainMember<'a, '_> {
                     ]
                 );
 
-                // `A.b /* comment */ (c)` -> `A.b(/* comment */ c)`
-                if !matches!(member.parent(), AstNodes::CallExpression(call) if call.type_arguments.is_none() && !call.optional)
-                {
+                if !write_comments_before_call_opener(member.parent(), member.span().end, f) {
                     member.format_trailing_comments(f);
                 }
             }
@@ -96,39 +98,67 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ChainMember<'a, '_> {
                 e.format_trailing_comments(f);
             }
             Self::CallExpression { expression, position } => match *position {
-                CallExpressionPosition::Start => write!(f, expression),
+                CallExpressionPosition::Start => {
+                    FormatNodeWithoutTrailingComments(expression).fmt(f);
+                    if !write_comments_before_call_opener(
+                        expression.parent(),
+                        expression.span().end,
+                        f,
+                    ) {
+                        expression.format_trailing_comments(f);
+                    }
+                }
                 CallExpressionPosition::Middle => {
                     expression.format_leading_comments(f);
-                    write!(
+                    write_call_without_callee(expression, f);
+                    if !write_comments_before_call_opener(
+                        expression.parent(),
+                        expression.span().end,
                         f,
-                        [
-                            expression.optional().then_some("?."),
-                            expression.type_arguments(),
-                            expression.arguments()
-                        ]
-                    );
-                    expression.format_trailing_comments(f);
+                    ) {
+                        expression.format_trailing_comments(f);
+                    }
                 }
-                CallExpressionPosition::End => {
-                    write!(
-                        f,
-                        [
-                            expression.optional().then_some("?."),
-                            expression.type_arguments(),
-                            expression.arguments(),
-                        ]
-                    );
-                }
+                CallExpressionPosition::End => write_call_without_callee(expression, f),
             },
             Self::ComputedMember(member) => {
                 write!(f, line_suffix_boundary());
                 member.format_leading_comments(f);
                 FormatComputedMemberExpressionWithoutObject(member).fmt(f);
-                member.format_trailing_comments(f);
+                if !write_comments_before_call_opener(member.parent(), member.span().end, f) {
+                    member.format_trailing_comments(f);
+                }
             }
             Self::Node(node) => write!(f, node),
         }
     }
+}
+
+/// As a call's callee, a chain member's trailing comments
+/// keep their side of the call's opener (`FormatBeforeOpener`).
+/// Returns `false` for any other member, which prints them itself.
+fn write_comments_before_call_opener(
+    parent: &AstNodes<'_>,
+    end: u32,
+    f: &mut JsFormatter<'_, '_>,
+) -> bool {
+    let AstNodes::CallExpression(call) = parent else { return false };
+    write_comments_before_opener(end, callee_opener(call), f);
+    true
+}
+
+fn write_call_without_callee<'a>(
+    expression: &AstNode<'a, CallExpression<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    write!(
+        f,
+        [
+            expression.optional().then_some("?."),
+            expression.type_arguments().map(|t| FormatBeforeOpener(t, b'(')),
+            expression.arguments()
+        ]
+    );
 }
 
 pub struct FormatComputedMemberExpressionWithoutObject<'a, 'b>(

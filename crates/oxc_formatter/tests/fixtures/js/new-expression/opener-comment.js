@@ -1,0 +1,52 @@
+new Foo(// c
+a);
+
+new Foo(// c
+a, b);
+
+new a.b(// c
+a);
+
+new (foo())(// c
+a);
+
+new Foo(// c
+);
+
+new Foo // c
+;
+
+new Foo(/* c */
+a);
+
+// Before `(`: stays on the callee side
+foo // c
+(a);
+foo /* c */ (a);
+foo /* c */
+(a);
+foo
+// c
+(a);
+foo
+/* c */
+(a);
+foo
+/* c */ (a);
+foo // c
+();
+new Foo // c
+(a);
+a.b // c
+(x);
+a.b /* c */ (x);
+a[b] /* c */ (a);
+a[b] // c
+(a);
+a.b.c() /* c */ (a).d().e();
+a.b.c()
+// c
+(a).d().e();
+foo(x) /* c */ (y).a().b().c();
+foo(x) // c
+(y).a().b().c();

@@ -1,4 +1,7 @@
-use oxc_ast::{Comment, ast::Statement};
+use oxc_ast::{
+    Comment,
+    ast::{CallExpression, Statement},
+};
 use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
@@ -84,6 +87,50 @@ pub fn write_node_with_terminator<'a, T>(
     let needs_flush = write_node_with_trailing_comments_before(node, terminator.as_bytes()[0], f);
     write!(f, terminator);
     if needs_flush {
+        write!(f, hard_line_break());
+    }
+}
+
+/// The first byte of the token right after a call's callee: `?.`, `<` or `(`.
+pub fn callee_opener(call: &CallExpression<'_>) -> u8 {
+    if call.optional {
+        b'?'
+    } else if call.type_arguments.is_some() {
+        b'<'
+    } else {
+        b'('
+    }
+}
+
+/// Formats the node right before a call's opener
+/// (the callee before `?.`, `<` or `(`, the type arguments before `(`),
+/// then [`write_comments_before_opener`].
+pub struct FormatBeforeOpener<'b, T>(pub &'b T, pub u8);
+
+impl<'a, T> Format<'a, JsFormatContext<'a>> for FormatBeforeOpener<'_, T>
+where
+    T: Format<'a, JsFormatContext<'a>> + GetSpan,
+{
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        FormatNodeWithoutTrailingComments(self.0).fmt(f);
+        write_comments_before_opener(self.0.span().end, self.1, f);
+    }
+}
+
+/// Prints the pending comments before a call's `opener` (`?.`, `<` or `(`) on the callee side,
+/// like the head-body gap:
+/// - a same-line block comment stays inline (`foo /* c */(a)`)
+/// - a line comment, or a comment alone on its line, keeps its line; the opener moves to the next one
+///
+/// Unlike before a terminator, an own-line comment does not glue to the opener.
+/// Comments after the opener lead what it opens.
+pub fn write_comments_before_opener(start: u32, opener: u8, f: &mut JsFormatter<'_, '_>) {
+    let ends_own_line = f
+        .comments()
+        .comments_before_character(start, opener)
+        .last()
+        .is_some_and(|comment| comment.preceded_by_newline() && comment.followed_by_newline());
+    if write_trailing_comments_before(start, opener, f) || ends_own_line {
         write!(f, hard_line_break());
     }
 }

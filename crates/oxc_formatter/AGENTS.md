@@ -109,7 +109,7 @@ Three token classes decide a comment's freedom of movement:
   Formatter-owned, so the same-line trailing run moves behind it, block and line comments alike ("Moving behind a terminator (class 1)")
 - (2) Separator and in-head terminator: list separators (`,`, interface / type literal members' `;` ⇄ `,`), the for-head's `;`s, a label's or a single-block case test's `:`.
   The comment stays before the token; only a same-line line comment rides its `line_suffix` past it (`for (a // c\n; b;)` -> `a; // c`, `foo // c\n: b();` -> `foo: // c` + break)
-- (3) Delimiter: a body's `{` `}`, a head's `(` `)`, the `}`-to-keyword gap.
+- (3) Delimiter: a body's `{` `}`, a head's `(` `)`, a call's argument `(` `)` and type argument `<` `>`, the `}`-to-keyword gap.
   User content: comments never cross it in either direction ("Head-body and operator gaps (class 3)")
 
 Redundant expression parens are formatter-owned, not delimiters (FORMATTER_POLICY):
@@ -138,6 +138,8 @@ so a comment between a head and its body keeps its side of each, uniformly acros
 - same-line line comment keeps its line, forcing the `{` onto the next line (`while (x) // c` + break)
 - own-line comment keeps its own line
 - comments before a `}`-to-keyword gap (`else`/`catch`/`finally`/`while`) split at the keyword and keep their side
+
+A call's or `new`'s callee-opener gaps (callee to `?.`, `<` or `(`, type arguments to `(`) follow the same policy (`FormatBeforeOpener` in `utils/statement_body.rs`, DIVERGENCES.md#callee-arguments-gap-comment).
 
 The `as`/`satisfies` operator gap follows the same policy (`as_or_satisfies_expression.rs`, DIVERGENCES.md#binary-cast-own-line-comment), with two additions:
 
