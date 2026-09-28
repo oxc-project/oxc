@@ -269,6 +269,33 @@ fn test() {
             "test('foo[bar', () => {});",
             Some(serde_json::json!([{ "disallowedWords": ["foo[bar"] }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/27137
+        (
+            "it('should do the thing', () => {});",
+            Some(
+                serde_json::json!([{ "disallowedWords": ["should"], "mustMatch": { "it": "^Then " } }]),
+            ),
+        ),
+        (
+            "it('does the thing', () => {});",
+            Some(
+                serde_json::json!([{ "disallowedWords": ["should"], "mustMatch": { "it": "^Then " } }]),
+            ),
+        ),
+        (
+            "it('never matches', () => {});",
+            Some(
+                serde_json::json!([{ "disallowedWords": ["should"], "mustNotMatch": { "it": "^never" } }]),
+            ),
+        ),
+        (
+            "it(' leading space', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it('it duplicates the prefix', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
         // TODO: The regex `(?:#(?!unit|e2e))\w+` in those test cases is not valid in Rust
         // (
         //     "

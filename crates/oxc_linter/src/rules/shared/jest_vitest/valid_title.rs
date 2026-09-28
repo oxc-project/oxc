@@ -417,8 +417,8 @@ fn validate_title(
     if let Some(disallowed_words_reg) = &config.disallowed_words_reg {
         if let Some(matched) = disallowed_words_reg.find(title) {
             ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
+            return;
         }
-        return;
     }
 
     let trimmed_title = title.trim();

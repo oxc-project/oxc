@@ -72,6 +72,41 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: It is included in the `disallowedWords` of your config file, try to remove it from your title
 
+  ⚠ vitest(valid-title): should is not allowed in test title
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it('should do the thing', () => {});
+   ·    ─────────────────────
+   ╰────
+  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+
+  ⚠ vitest(valid-title): it should match (?u)^Then
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it('does the thing', () => {});
+   ·    ────────────────
+   ╰────
+  help: Make sure the title matches the `mustMatch` of your config file
+
+  ⚠ vitest(valid-title): it should not match (?u)^never
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it('never matches', () => {});
+   ·    ───────────────
+   ╰────
+  help: Make sure the title does not match the `mustNotMatch` of your config file
+
+  ⚠ vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it(' leading space', () => {});
+   ·    ────────────────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ vitest(valid-title): Should not have duplicate prefix
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it('it duplicates the prefix', () => {});
+   ·    ──────────────────────────
+   ╰────
+  help: The function name already has the prefix, try to remove the duplicate prefix
+
   ⚠ vitest(valid-title): test should match (?u)#(?:unit|integration|e2e)
    ╭─[valid_title.tsx:1:6]
  1 │ test('the correct way to properly handle all things', () => {});
