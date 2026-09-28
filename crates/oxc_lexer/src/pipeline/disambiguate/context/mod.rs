@@ -78,6 +78,9 @@ pub(crate) struct Walks {
     /// Tests: every question goes to the full walk, with no anchors or shortcuts.
     #[cfg(test)]
     pub(crate) full_walk_only: bool,
+    /// Tests: a > run goes to the walk without the rules that settle it from nearby tokens.
+    #[cfg(test)]
+    pub(crate) no_run_rules: bool,
 }
 
 impl Walks {
@@ -87,6 +90,8 @@ impl Walks {
             local: Walk::new(),
             #[cfg(test)]
             full_walk_only: false,
+            #[cfg(test)]
+            no_run_rules: false,
         }
     }
 
@@ -97,6 +102,16 @@ impl Walks {
 
     #[cfg(not(test))]
     pub(crate) fn shortcuts(&self) -> bool {
+        true
+    }
+
+    #[cfg(test)]
+    pub(crate) fn run_rules(&self) -> bool {
+        !self.full_walk_only && !self.no_run_rules
+    }
+
+    #[cfg(not(test))]
+    pub(crate) fn run_rules(&self) -> bool {
         true
     }
 

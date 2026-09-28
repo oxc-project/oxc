@@ -1207,3 +1207,8 @@ fn yield_and_await_are_type_names_in_a_type_list() {
 fn implements_after_a_run_starts_an_expression() {
     gt_run_fused("x = a<b<c>> implements;");
 }
+
+#[test]
+fn return_type_run_after_a_walk_that_stopped_in_a_method_body() {
+    gt_run_split("class A { m() { x as P<Q<T>>; } n() {} o(): P<Q<T>> {} }");
+}
