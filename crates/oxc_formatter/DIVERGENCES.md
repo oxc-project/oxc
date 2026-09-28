@@ -705,3 +705,37 @@ Prettier keeps the Markdown hard break in `/**` only, following jsdoc3.
 Tools disagree on `/***`: TypeScript (`isJSDocLikeText`, so editor hovers) treats it as JSDoc, jsdoc3 ignores it.
 Formatting it as JSDoc does not break jsdoc3, which ignores it either way.
 Type cast comments already follow the rule, in Prettier too.
+
+## test-call-comment-order
+
+- Why: invariant (prettier/prettier#20029, prettier/prettier#20043)
+- Pin: `tests/fixtures/js/calls/test-call-comment-order.js`
+
+```js
+// input
+test("x", () => {
+  run();
+}, // first
+// second
+60000);
+
+// ours
+test(
+  "x",
+  () => {
+    run();
+  }, // first
+  // second
+  60000,
+);
+
+// prettier
+test("x", () => {
+  run();
+}, // second // first
+60000);
+```
+
+Prettier's compact test call layout merges and reverses the comments, and is not a fixpoint.
+We fall back to the regular argument layout when comments sit around the arguments, following prettier/prettier#20043.
+A same-line block comment also falls back, the same output as the other special call layouts (React hook, `require`).

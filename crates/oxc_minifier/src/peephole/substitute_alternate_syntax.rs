@@ -844,8 +844,12 @@ impl<'a> PeepholeOptimizations {
 
         let Some(init) = &mut for_stmt.init else { return };
         let ForStatementInit::VariableDeclaration(var_init) = init else { return };
-        // Need at least two declarators: r, a (optional `e` may precede them)
-        if var_init.declarations.len() < init_decl_len {
+        let Some(siblings) = var_init.declarations.get(init_decl_len..) else { return };
+        // Sibling declarators may be in the source loop or folded into it by `sequences`.
+        // Keep uninitialized `var` siblings, but don't move an initializer across the spread.
+        if !siblings.is_empty()
+            && (!var_init.kind.is_var() || siblings.iter().any(|decl| decl.init.is_some()))
+        {
             return;
         }
 
@@ -951,7 +955,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        // Build `var r = [...arguments]` (with optional `.slice(offset)`) as the only declarator and drop test/update/body.
+        // Build `var r = [...arguments]` (with optional `.slice(offset)`) and drop test/update/body.
 
         let r_id_pat = {
             let (r_id, de_id_symbol_id) = r_id_pat_with_info;
@@ -995,23 +999,21 @@ impl<'a> PeepholeOptimizations {
             };
 
             let new_decl = VariableDeclarator::new(SPAN, r_id_pat, None, Some(arr), false, ctx);
-            // The old declarators (`e`, `a`, and `r`'s original init) are
-            // replaced wholesale — walk them so refs inside (e.g. `e` in
-            // `Array(e > 1 ? e - 1 : 0)`) reach `PassChanges`. The moved-out
-            // `r` binding and `arguments` ident left id-less dummies behind.
-            for decl in &var_init.declarations {
-                ctx.drop_variable_declarator(decl);
+            // Drop only the copy-loop declarators. Siblings remain in the `var` statement.
+            // Walk removed declarators so refs inside them reach `PassChanges`.
+            for decl in var_init.declarations.drain(..init_decl_len) {
+                ctx.drop_variable_declarator(&decl);
             }
-            var_init.declarations = ArenaVec::from_value_in(new_decl, ctx);
+            var_init.declarations.insert(0, new_decl);
         } else {
-            // `for (var; 0;)` with an empty `VariableDeclaration` is invalid JS when printed and
-            // makes `try_fold_for` hoist a bogus `var;`. Use `for (; 0;)` instead so dead-code
-            // folding becomes an empty statement. Walk the dropped
-            // declarators so their refs reach `PassChanges`.
-            for decl in &var_init.declarations {
-                ctx.drop_variable_declarator(decl);
+            // The copied array is unused, but sibling declarations still need to survive.
+            for decl in var_init.declarations.drain(..init_decl_len) {
+                ctx.drop_variable_declarator(&decl);
             }
-            for_stmt.init = None;
+            // Avoid invalid `for (var; 0;)` when no siblings remain.
+            if var_init.declarations.is_empty() {
+                for_stmt.init = None;
+            }
         }
         if let Some(old) = for_stmt.test.take() {
             ctx.drop_expression(&old);
@@ -1919,7 +1921,7 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
             let Some(body) = f.get_function_body_mut() else { return };
-            if body.statements.len() != 1 {
+            if body.statements.len() != 1 || !body.directives.is_empty() {
                 return;
             }
             match &mut body.statements[0] {

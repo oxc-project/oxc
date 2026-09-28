@@ -147,7 +147,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSTypeParameters<'a, '_> {
             write!(
                 f,
                 [group(&format_args!("<", format_with(|f| {
-                    if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call))
+                    if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call, f.comments()))
                     {
                         f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit);
                     } else {

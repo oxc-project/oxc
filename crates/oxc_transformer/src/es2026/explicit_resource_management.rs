@@ -310,7 +310,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         }
     }
 
-    /// Transform try statement.
+    /// Transform `using` declarations in each of the try, catch, and finally blocks.
     ///
     /// ```js
     /// try {
@@ -331,38 +331,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
     /// } catch (err) { }
     /// ```
     fn enter_try_statement(&mut self, node: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let scope_id = node.block.scope_id();
-
-        if let Some((new_stmts, needs_await, using_ctx)) =
-            self.transform_statements(&mut node.block.body, scope_id, ctx)
-        {
-            let block_stmt_scope_id = ctx.insert_scope_between(
-                ctx.scoping().scope_parent_id(scope_id).unwrap(),
-                scope_id,
-                ScopeFlags::empty(),
-            );
-
-            node.block.body = ArenaVec::from_value_in(
-                Self::create_try_stmt(
-                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, scope_id, ctx),
-                    &using_ctx,
-                    block_stmt_scope_id,
-                    needs_await,
-                    SPAN,
-                    ctx,
-                ),
-                ctx,
-            );
-
-            let current_hoist_scope_id = ctx.current_hoist_scope_id();
-            node.block.set_scope_id(block_stmt_scope_id);
-            ctx.scoping_mut().move_binding_by_symbol_id(
-                scope_id,
-                current_hoist_scope_id,
-                using_ctx.symbol_id,
-            );
-
-            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
+        self.transform_try_block(&mut node.block, ctx);
+        if let Some(handler) = &mut node.handler {
+            let original_scope_id = handler.body.scope_id();
+            self.transform_try_block(&mut handler.body, ctx);
+            let new_scope_id = handler.body.scope_id();
+            if new_scope_id != original_scope_id
+                && let Some(param) = &handler.param
+            {
+                param.pattern.bound_names(&mut |ident| {
+                    ctx.scoping_mut().move_binding_by_symbol_id(
+                        original_scope_id,
+                        new_scope_id,
+                        ident.symbol_id(),
+                    );
+                });
+            }
+        }
+        if let Some(finalizer) = &mut node.finalizer {
+            self.transform_try_block(finalizer, ctx);
         }
     }
 
@@ -598,6 +585,47 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 }
 
 impl<'a> ExplicitResourceManagement<'a> {
+    /// Wrap a try, catch, or finally block containing `using` declarations in a disposal try.
+    fn transform_try_block(
+        &mut self,
+        block: &mut ArenaBox<'a, BlockStatement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let scope_id = block.scope_id();
+
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut block.body, scope_id, ctx)
+        {
+            let block_stmt_scope_id = ctx.insert_scope_between(
+                ctx.scoping().scope_parent_id(scope_id).unwrap(),
+                scope_id,
+                ScopeFlags::empty(),
+            );
+
+            block.body = ArenaVec::from_value_in(
+                Self::create_try_stmt(
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, scope_id, ctx),
+                    &using_ctx,
+                    block_stmt_scope_id,
+                    needs_await,
+                    SPAN,
+                    ctx,
+                ),
+                ctx,
+            );
+
+            let current_hoist_scope_id = ctx.current_hoist_scope_id();
+            block.set_scope_id(block_stmt_scope_id);
+            ctx.scoping_mut().move_binding_by_symbol_id(
+                scope_id,
+                current_hoist_scope_id,
+                using_ctx.symbol_id,
+            );
+
+            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
+        }
+    }
+
     /// Transform block statement.
     ///
     /// Input:

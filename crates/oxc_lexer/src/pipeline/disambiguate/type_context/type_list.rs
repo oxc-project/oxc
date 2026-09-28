@@ -63,6 +63,8 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
     let mut paren_ok = false;
     let mut cond_ok = false;
     let mut parens: i32 = 0;
+    // Open brackets, innermost last; { is : inside a member's type, a computed key's [ is k.
+    let mut open: Vec<u8> = Vec::new();
     // Conditional types whose : is still to come, outside braces, brackets and parens.
     let mut colons: u32 = 0;
     let mut this_head = false;
@@ -82,6 +84,18 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
         if w == skip || is_trivia_byte(k) {
             w = bits::next1(st, w + 1, hi);
             continue;
+        }
+        // A line break after a member's type starts the next member unless the token continues it.
+        if !start
+            && open.last() == Some(&b':')
+            && line_break_in(src, prev, w)
+            && (k < OP_KIND_BASE
+                || matches!(src[w], b'[' | b'(' | b'<' | b'+' | b'-' | b'"' | b'\''))
+        {
+            if let Some(b) = open.last_mut() {
+                *b = b'{';
+            }
+            start = true;
         }
         // Text carve has not reached yet: a raw comment is trivia, a raw string or template is a
         // literal type.
@@ -184,18 +198,22 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                         return false;
                     }
                     parens += 1;
+                    open.push(c);
                     start = true;
                 }
                 b')' => {
                     parens -= 1;
+                    open.pop();
                     start = false;
                 }
                 b']' => {
                     brackets -= 1;
+                    open.pop();
                     start = false;
                 }
                 b'[' => {
                     brackets += 1;
+                    open.push(if open.last() == Some(&b'{') { b'k' } else { c });
                     start = true;
                 }
                 b'{' => {
@@ -203,10 +221,12 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                         return false;
                     }
                     braces += 1;
+                    open.push(c);
                     start = true;
                 }
                 b'}' => {
                     braces -= 1;
+                    open.pop();
                     start = false;
                 }
                 b'<' => {
@@ -253,6 +273,9 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                         }
                         colons -= 1;
                     }
+                    if let Some(b @ b'{') = open.last_mut() {
+                        *b = b':';
+                    }
                     start = true;
                 }
                 b'.' => {
@@ -268,6 +291,9 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                     if braces == 0 && brackets == 0 && parens == 0 {
                         elem_start = true;
                     }
+                    if let Some(b @ b':') = open.last_mut() {
+                        *b = b'{';
+                    }
                     start = true;
                 }
                 b'|' | b'&' => {
@@ -281,16 +307,20 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                     if nx == b'.' || nx == b'?' {
                         return false;
                     }
-                    if braces == 0 && brackets == 0 {
-                        let optional = parens > 0
-                            && matches!(src[skip_trivia_fwd(src, hi, w + 1)], b':' | b',' | b')');
-                        if !optional {
-                            if !cond_ok {
-                                return false;
-                            }
-                            cond_ok = false;
-                            colons += u32::from(parens == 0);
+                    // An optional member, parameter or tuple element; else the ? of a conditional.
+                    let after = src[skip_trivia_fwd(src, hi, w + 1)];
+                    let optional = match open.last() {
+                        Some(b'{') => true,
+                        Some(b'(') => matches!(after, b':' | b',' | b')'),
+                        Some(b'[') => matches!(after, b':' | b',' | b']'),
+                        _ => false,
+                    } || open.contains(&b'k');
+                    if !optional {
+                        if !cond_ok {
+                            return false;
                         }
+                        cond_ok = false;
+                        colons += u32::from(open.is_empty());
                     }
                     start = true;
                 }
@@ -298,16 +328,18 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
                     if braces == 0 {
                         return false;
                     }
-                    start = true;
-                }
-                b'-' => {
-                    if !start && braces == 0 {
-                        return false;
+                    if let Some(b @ b':') = open.last_mut() {
+                        *b = b'{';
                     }
                     start = true;
                 }
-                b'+' => {
-                    if braces == 0 {
+                b'-' | b'+' => {
+                    // A sign before a numeric literal, or a mapped type's readonly or ? modifier.
+                    let a = skip_trivia_fwd(src, hi, w + 1);
+                    let number = c == b'-' && start && (is_digit(src[a]) || src[a] == b'.');
+                    let modifier = open.last() == Some(&b'{')
+                        && (src[a] == b'?' || (start && tokens.ident_is(a, b"readonly")));
+                    if !number && !modifier && !open.contains(&b'k') {
                         return false;
                     }
                     start = true;
