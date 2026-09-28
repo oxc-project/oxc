@@ -125,7 +125,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
         &text[(colon_pos + 1) as usize..text.len()]
     );
 
-    if suggestion.ends_with(';') {
+    // The signature span includes its member separator, which may be `;` or `,`.
+    if suggestion.ends_with([';', ',']) {
         suggestion.pop();
     }
 
@@ -684,6 +685,14 @@ type X = {} & (() => void);
             "export type AnyFn = (...args: any[]) => any;",
         ),
         ("type K = { new(): T };", "type K = new() => T;"),
+        // Members separated by a comma
+        ("interface Foo { (): string, }", "type Foo = () => string;"),
+        ("interface Foo<T> { (): T, }", "type Foo<T> = () => T;"),
+        ("type Foo = { (): void, }", "type Foo = () => void"),
+        ("type K = { new(): T, };", "type K = new() => T;"),
+        ("let x: { (): void, };", "let x: () => void;"),
+        ("type X = {} | { (): void, }", "type X = {} | (() => void)"),
+        ("type X = {} & { (): void, };", "type X = {} & (() => void);"),
     ];
 
     Tester::new(PreferFunctionType::NAME, PreferFunctionType::PLUGIN, pass, fail)
