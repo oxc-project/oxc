@@ -52,11 +52,22 @@ impl Walk {
     }
 }
 
+/// Index of the bracket frame opened at open, if closing it keeps the walk's floor frames.
+pub(super) fn group_frame(frames: &[Frame], open: usize, floor: usize) -> Option<usize> {
+    frames
+        .iter()
+        .rposition(|f| f.at as usize == open && f.kind.closer() != 0)
+        .filter(|&i| i >= floor)
+}
+
 #[derive(Default)]
 pub(super) struct Walk {
     /// Frame count right after a bounded walk started at its anchor (0: the full walk); the walk
     /// stays valid while that frame is on the stack.
+    /// An operand anchor counts one more: the construct it opens, past which the walk would guess.
     pub(super) seed_depth: usize,
+    /// The anchor of a bounded walk.
+    pub(super) seed_at: usize,
     /// A bounded walk popped its anchor frame (or met an unbalanced closer): its state is a guess
     /// from here on.
     pub(super) seed_lost: bool,
@@ -132,8 +143,23 @@ impl Walk {
     }
 
     pub(super) fn push(&mut self, kind: FrameKind) -> &mut Frame {
-        self.frames.push(Frame { kind, ..Frame::default() });
+        self.frames.push(Frame { kind, at: self.last_start as u32, ..Frame::default() });
         self.frames.last_mut().unwrap()
+    }
+
+    /// Leave the group the walk stopped in: drop the frames opened inside it and step its closer.
+    pub(super) fn leave_group(&mut self, tokens: &Tokens, open: usize, close: usize) {
+        let Some(i) = group_frame(&self.frames, open, self.seed_depth) else {
+            self.seed_lost = true;
+            return;
+        };
+        self.frames.truncate(i + 1);
+        self.clear_prev();
+        self.decorator = 0;
+        self.export_default = false;
+        self.jsx_closing = false;
+        self.prev_end = close;
+        self.walked_to = self.step(tokens, close);
     }
 
     pub(super) fn pop(&mut self) -> Frame {
@@ -301,6 +327,10 @@ impl Walk {
                 break;
             }
             let end = self.step(tokens, pos);
+            // An async anchor has not opened its function yet.
+            if self.frames.len() < self.seed_depth && pos != self.seed_at {
+                self.seed_lost = true;
+            }
             pos = self.jump(pos, end, limit);
         }
         self.walked_to = pos.max(self.walked_to);

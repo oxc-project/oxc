@@ -243,6 +243,19 @@ fn jsx_after_yield_and_await() {
 }
 
 #[test]
+fn continued_walk_leaves_the_group_it_stopped_in() {
+    // The second slash continues the walk of the first, which stopped inside a group now closed.
+    for code in [
+        "o = { a: f({} / 2), b: {} / 3 };",
+        "o = { a: function() {} / 2, b: {} / 3 };",
+        "o = { a: class { m() { x = {} / 2 } }, b: {} / 3 };",
+    ] {
+        division(code, ScriptJS);
+    }
+    regex("async function f() { if (a) {} /x/ }\ng();\nx = await\n{} /re/g", ScriptJS);
+}
+
+#[test]
 fn walk_crosses_return_types_and_type_parameters() {
     regex("x = async (): T => { await /re/; };", ScriptTS);
     regex("x = async (): typeof cb => { await /re/; };", ScriptTS);
