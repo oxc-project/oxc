@@ -18,7 +18,7 @@ mod avx2;
     target_feature = "bmi2",
     target_feature = "popcnt"
 ))]
-pub(super) use avx2::PairLuts;
+pub(super) use avx2::init_pair_luts;
 #[cfg(all(
     target_arch = "x86_64",
     target_feature = "avx2",
@@ -40,7 +40,7 @@ mod generic;
     target_feature = "bmi2",
     target_feature = "popcnt"
 )))]
-pub(super) use generic::PairLuts;
+pub(super) use generic::init_pair_luts;
 #[cfg(not(all(
     target_arch = "x86_64",
     target_feature = "avx2",
@@ -56,7 +56,6 @@ pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 
 #[inline(never)]
 pub unsafe fn compress(
-    pair_luts: Option<&PairLuts>,
     src: &[u8],
     n: usize,
     nb: usize,
@@ -73,7 +72,7 @@ pub unsafe fn compress(
     let mut b = 0usize;
     while b < nb {
         let b1 = (b + STAGE_BLOCKS).min(nb);
-        c += compress_blocks(pair_luts, st, kind, b, b1, stage_pos.add(c), stage_kind.add(c));
+        c += compress_blocks(st, kind, b, b1, stage_pos.add(c), stage_kind.add(c));
         b = b1;
         if c > 1 {
             w += build_spans(stage_kind, stage_pos, c - 1, out_spans.add(w), out_kinds.add(w));

@@ -11,7 +11,7 @@ use crate::{
     PAD,
     lanes::Lanes,
     options::LexOptions,
-    pipeline::compress::PairLuts,
+    pipeline::compress::init_pair_luts,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };
 
@@ -55,11 +55,12 @@ pub struct Lexer {
     pub sig_len: usize,
     out_cap: usize,
     pub lanes: Lanes,
-    pair_luts: Option<&'static PairLuts>,
 }
 
 impl Lexer {
     pub fn new() -> Lexer {
+        init_pair_luts();
+
         Lexer {
             word: Vec::new(),
             st: Vec::new(),
@@ -78,7 +79,6 @@ impl Lexer {
             sig_len: 0,
             out_cap: 0,
             lanes: Lanes::default(),
-            pair_luts: PairLuts::get(),
         }
     }
 
@@ -169,7 +169,6 @@ impl Lexer {
         coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
         misc_post(sp, n, st, word, misc, kind, nesc);
         let w = compress(
-            self.pair_luts,
             src,
             n,
             nb,

@@ -37,14 +37,6 @@ pub struct PairLuts {
 const _: () = assert!(size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
 
 impl PairLuts {
-    /// Get reference to [`PairLuts`].
-    ///
-    /// `PairLuts` is created on the first call, and shared by all threads after that.
-    pub fn get() -> Option<&'static PairLuts> {
-        let pair_luts = PAIR_LUTS.get_or_init(|| Box::new(PairLuts::new()));
-        Some(pair_luts)
-    }
-
     /// Create [`PairLuts`] lookup tables.
     fn new() -> Self {
         let mut lut0z = [[0; 8]; 256];
@@ -67,4 +59,20 @@ impl PairLuts {
 
         Self { lut0z, lutpad }
     }
+}
+
+/// Initialize the global [`PairLuts`] instance.
+///
+/// This method must be called before calling [`get_pair_luts`].
+pub fn init_pair_luts() {
+    PAIR_LUTS.get_or_init(|| Box::new(PairLuts::new()));
+}
+
+/// Get reference to [`PairLuts`].
+///
+/// # SAFETY
+///
+/// [`init_pair_luts`] must have been called before calling this.
+pub(super) unsafe fn get_pair_luts() -> &'static PairLuts {
+    unsafe { PAIR_LUTS.get().unwrap_unchecked() }
 }

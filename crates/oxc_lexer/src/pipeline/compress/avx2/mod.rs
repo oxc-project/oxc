@@ -10,7 +10,8 @@ use crate::{
 use super::common::{emit_value, invalid_diags};
 
 mod pair_luts;
-pub use pair_luts::PairLuts;
+use pair_luts::get_pair_luts;
+pub use pair_luts::init_pair_luts;
 
 #[cfg(test)]
 mod tests;
@@ -55,7 +56,6 @@ const fn bcompact() -> [[u8; 16]; 256] {
 
 #[inline(never)]
 pub(super) unsafe fn compress_blocks(
-    pair_luts: Option<&PairLuts>,
     st: *const u64,
     kind: *const u8,
     b0: usize,
@@ -63,8 +63,8 @@ pub(super) unsafe fn compress_blocks(
     starts: *mut u32,
     kinds: *mut u8,
 ) -> usize {
-    // SAFETY: `PairLuts` is always present in AVX2 build
-    let pair_luts = unsafe { pair_luts.unwrap_unchecked() };
+    // SAFETY: `init_pair_luts` has always been called in `Lexer::new` on AVX2 builds
+    let pair_luts = unsafe { get_pair_luts() };
     let lut0z = pair_luts.lut0z.as_ptr().cast::<u8>();
     let lutpad = pair_luts.lutpad.as_ptr().cast::<u8>();
 

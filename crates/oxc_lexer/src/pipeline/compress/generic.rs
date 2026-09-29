@@ -9,23 +9,12 @@ use crate::pipeline::chunk::{eqm, load64};
 
 use super::common::{emit_value, invalid_diags};
 
-/// Dummy `PairLuts`.
-///
-/// Only AVX2 implementation requires the real `PairLuts`.
-/// This dummy exists just so `Lexer::new` can unconditionally call `PairLuts::get` on any platform.
-pub struct PairLuts;
-
-impl PairLuts {
-    /// Get reference to [`PairLuts`].
-    ///
-    /// [`PairLuts`] is not used in generic build, so returns `None`.
-    pub fn get() -> Option<&'static PairLuts> {
-        None
-    }
-}
+/// Dummy no-op `init_pair_luts` function.
+/// Generic build does not use `PairLuts`, so it's not necessary to construct it.
+#[inline(always)]
+pub fn init_pair_luts() {}
 
 pub(super) unsafe fn compress_blocks(
-    _pair_luts: Option<&PairLuts>,
     st: *const u64,
     kind: *const u8,
     b0: usize,

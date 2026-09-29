@@ -1,13 +1,11 @@
 use std::iter;
 
-use super::{PairLuts, compress_blocks};
+use super::{compress_blocks, init_pair_luts};
 
 #[test]
 fn compress_blocks_matches_scalar_reference() {
-    let pair_luts = PairLuts::get();
-    // Need this check, because `compress_blocks` uses `pair_luts.unwrap_unchecked()`
-    // which would be UB if it's `None`
-    assert!(pair_luts.is_some(), "`PairLuts` not present");
+    // Required before calling `compress_blocks`
+    init_pair_luts();
 
     let mut cases: Vec<Vec<u64>> = Vec::new();
     let all_pairs: Vec<u64> = (0..65536u64)
@@ -36,6 +34,7 @@ fn compress_blocks_matches_scalar_reference() {
         v[63] = 1u64 << 63;
         v
     });
+
     for st in &cases {
         let nb = st.len();
         let n = nb * 64;
@@ -48,7 +47,6 @@ fn compress_blocks_matches_scalar_reference() {
         let mut kinds = vec![0u8; n + 64];
         let m = unsafe {
             compress_blocks(
-                pair_luts,
                 st.as_ptr(),
                 kind.as_ptr(),
                 0,
