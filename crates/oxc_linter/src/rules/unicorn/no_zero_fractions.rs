@@ -76,7 +76,9 @@ impl Rule for NoZeroFractions {
             },
             |fixer| {
                 let mut fixed = fmt.clone();
-                let is_decimal_integer = fmt.parse::<i64>().is_ok();
+                // Any literal made only of digits and separators (e.g. `1_000`, or one too
+                // large for `i64`) needs parentheses before a member access: `1_000.x` is invalid.
+                let is_decimal_integer = fmt.bytes().all(|b| b.is_ascii_digit() || b == b'_');
                 let is_member_expression =
                     ctx.nodes().parent_kind(node.id()).is_member_expression_kind();
 
@@ -203,6 +205,8 @@ fn test() {
         (r"1.00 .toFixed(2)", r"(1) .toFixed(2)"),
         (r"(1.00).toFixed(2)", r"(1).toFixed(2)"),
         (r"1.00?.toFixed(2)", r"(1)?.toFixed(2)"),
+        (r"1_000.0.toFixed(2)", r"(1_000).toFixed(2)"),
+        (r"10000000000000000000.0.toFixed(2)", r"(10000000000000000000).toFixed(2)"),
         (r"a = .0;", r"a = 0;"),
         (r"a = .0.toString()", r"a = (0).toString()"),
         (r"function foo(){return.0}", r"function foo(){return 0}"),
