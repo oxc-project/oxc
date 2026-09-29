@@ -112,6 +112,9 @@ pub struct SemanticBuilder<'a> {
     /// See: [`crate::checker::check`]
     check_syntax_error: bool,
 
+    /// Controls nullable JSDoc type diagnostic suggestions.
+    pub(crate) strict_null_checks: bool,
+
     #[cfg(feature = "cfg")]
     pub(crate) cfg: Option<ControlFlowGraphBuilder<'a>>,
     #[cfg(not(feature = "cfg"))]
@@ -163,6 +166,7 @@ impl<'a> SemanticBuilder<'a> {
             excess_capacity: 0.0,
             enum_eval: false,
             check_syntax_error: false,
+            strict_null_checks: false,
             #[cfg(feature = "cfg")]
             cfg: None,
             #[cfg(not(feature = "cfg"))]
@@ -218,6 +222,15 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    /// Set whether nullable JSDoc type suggestions include `null` and `undefined`.
+    ///
+    /// This corresponds to TypeScript's `strictNullChecks` option. Defaults to `false`.
+    #[must_use]
+    pub fn with_strict_null_checks(mut self, yes: bool) -> Self {
+        self.strict_null_checks = yes;
         self
     }
 

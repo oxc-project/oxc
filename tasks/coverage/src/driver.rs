@@ -33,6 +33,7 @@ pub struct Driver {
     pub remove_whitespace: bool,
     pub codegen: bool,
     pub check_semantic: bool,
+    pub strict_null_checks: Option<bool>,
     pub allow_return_outside_function: bool,
     // results
     pub fatal_error: bool,
@@ -57,6 +58,10 @@ impl CompilerInterface for Driver {
     fn build_semantic_nodes(&self) -> bool {
         // The coverage checks read `Semantic::nodes()` (e.g. `nodes().program()`).
         true
+    }
+
+    fn strict_null_checks(&self) -> bool {
+        self.strict_null_checks.unwrap_or(false)
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {

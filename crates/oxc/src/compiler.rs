@@ -94,6 +94,11 @@ pub trait CompilerInterface {
         true
     }
 
+    /// Whether TypeScript nullable type suggestions use strict null checking.
+    fn strict_null_checks(&self) -> bool {
+        false
+    }
+
     /// Whether to build the full `AstNodes` store during semantic analysis.
     ///
     /// Off by default (the compiler pipeline only needs scoping). Override to
@@ -262,6 +267,7 @@ pub trait CompilerInterface {
 
         builder
             .with_check_syntax_error(self.check_semantic_error())
+            .with_strict_null_checks(self.strict_null_checks())
             .with_build_nodes(self.build_semantic_nodes())
             .build(program)
     }

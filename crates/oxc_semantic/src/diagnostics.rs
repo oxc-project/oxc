@@ -326,7 +326,7 @@ pub fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
 
 // TypeScript diagnostics
 
-/// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
+/// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | undefined'? (17019)
 #[cold]
 pub fn jsdoc_type_in_annotation(
     modifier: char,

@@ -1048,8 +1048,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let type_start = self.cur_start();
             let rest_after_tuple_member_name = self.eat(Kind::Dot3);
             let ty = self.parse_ts_type();
-            let optional_after_tuple_member_name = matches!(ty, TSType::JSDocNullableType(_));
-            let tuple_element = self.convert_type_to_tuple_element(ty);
+            let optional_after_tuple_member_name = !rest_after_tuple_member_name
+                && matches!(&ty, TSType::JSDocNullableType(nullable) if nullable.postfix);
+            // A `?` after an invalid rest type is a JSDoc modifier, not an optional
+            // tuple element. Keep the node for semantic TS17019 checking.
+            let tuple_element = if rest_after_tuple_member_name {
+                TSTupleElement::from(ty)
+            } else {
+                self.convert_type_to_tuple_element(ty)
+            };
             let member_span = self.end_span(member_start);
             let named_tuple_member = TSType::new_ts_named_tuple_member(
                 member_span,

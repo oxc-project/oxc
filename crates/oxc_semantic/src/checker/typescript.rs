@@ -11,19 +11,21 @@ use oxc_str::Str;
 use crate::{builder::SemanticBuilder, diagnostics};
 
 pub fn check_jsdoc_non_nullable_type(ty: &JSDocNonNullableType<'_>, ctx: &SemanticBuilder<'_>) {
-    report_jsdoc_type_modifier('!', !ty.postfix, ty.span, ctx);
+    report_jsdoc_type_modifier('!', ty.postfix, ty.span, &ty.type_annotation, ctx);
 }
 
 pub fn check_jsdoc_nullable_type(ty: &JSDocNullableType<'_>, ctx: &SemanticBuilder<'_>) {
-    report_jsdoc_type_modifier('?', !ty.postfix, ty.span, ctx);
+    report_jsdoc_type_modifier('?', ty.postfix, ty.span, &ty.type_annotation, ctx);
 }
 
 fn report_jsdoc_type_modifier(
     modifier: char,
-    is_start: bool,
+    postfix: bool,
     span_with_illegal_modifier: Span,
+    type_annotation: &TSType<'_>,
     ctx: &SemanticBuilder<'_>,
 ) {
+    let is_start = !postfix;
     let valid_type_span = if is_start {
         span_with_illegal_modifier.shrink_left(1)
     } else {
@@ -31,10 +33,23 @@ fn report_jsdoc_type_modifier(
     };
 
     let suggestion = &ctx.source_text[valid_type_span];
-    let suggestion = if modifier == '?' {
-        Cow::Owned(format!("{suggestion} | null | undefined"))
-    } else {
-        Cow::Borrowed(suggestion)
+    let suggestion = match (modifier, type_annotation) {
+        ('?', _) if !ctx.strict_null_checks => Cow::Borrowed(suggestion),
+        // TypeScript's union builder leaves these types unchanged.
+        (
+            '?',
+            TSType::TSAnyKeyword(_)
+            | TSType::TSUnknownKeyword(_)
+            | TSType::TSNeverKeyword(_)
+            | TSType::TSVoidKeyword(_),
+        ) => Cow::Borrowed(suggestion),
+        ('?', TSType::TSUndefinedKeyword(_)) if postfix => Cow::Borrowed(suggestion),
+        ('?', TSType::TSNullKeyword(_) | TSType::TSUndefinedKeyword(_)) => {
+            Cow::Borrowed("null | undefined")
+        }
+        ('?', _) if postfix => Cow::Owned(format!("{suggestion} | undefined")),
+        ('?', _) => Cow::Owned(format!("{suggestion} | null | undefined")),
+        _ => Cow::Borrowed(suggestion),
     };
 
     ctx.error(diagnostics::jsdoc_type_in_annotation(
