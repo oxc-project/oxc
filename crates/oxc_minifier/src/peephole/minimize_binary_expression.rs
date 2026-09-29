@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_ecmascript::constant_evaluation::IsInt32OrUint32;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::TraverseCtx;
@@ -44,42 +45,20 @@ impl<'a> PeepholeOptimizations {
             _ => {}
         }
 
-        // `(0 | a) OP b` or `(a | 0) OP b` -> `a OP b`
-        Self::try_replace_or_number_0(&mut bin_expr.left, ctx);
-        // `a OP (0 | b)` or `a OP (b | 0)` -> `a OP b`
-        Self::try_replace_or_number_0(&mut bin_expr.right, ctx);
-
         if bin_expr.operator == BinaryOperator::BitwiseOR {
-            if bin_expr.right.is_number_0()
-                && matches!(&bin_expr.left, Expression::BinaryExpression(e) if Self::is_bitwise_without_shift_zero(e.operator))
-            {
+            if bin_expr.right.is_number_0() && Self::is_bitwise_int(&bin_expr.left, ctx) {
                 // `(a OP b) | 0` -> `a OP b`
                 ctx.replace_expression_with(expr, Self::unwrap_left_from_binary_expr);
-            } else if bin_expr.left.is_number_0()
-                && matches!(&bin_expr.right, Expression::BinaryExpression(e) if Self::is_bitwise_without_shift_zero(e.operator))
-            {
+            } else if bin_expr.left.is_number_0() && Self::is_bitwise_int(&bin_expr.right, ctx) {
                 // `0 | (a OP b)` -> `a OP b`
                 ctx.replace_expression_with(expr, Self::unwrap_right_from_binary_expr);
             }
         }
     }
 
-    fn is_bitwise_without_shift_zero(operator: BinaryOperator) -> bool {
-        operator.is_bitwise() && operator != BinaryOperator::ShiftRightZeroFill
-    }
-
-    fn try_replace_or_number_0(bin_expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Expression::BinaryExpression(e) = &bin_expr
-            && e.operator == BinaryOperator::BitwiseOR
-        {
-            if e.left.is_number_0() {
-                // `(0 | a)` -> `a`
-                ctx.replace_expression_with(bin_expr, Self::unwrap_right_from_binary_expr);
-            } else if e.right.is_number_0() {
-                // `(a | 0)` -> `a`
-                ctx.replace_expression_with(bin_expr, Self::unwrap_left_from_binary_expr);
-            }
-        }
+    fn is_bitwise_int(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        let Expression::BinaryExpression(e) = expr else { return false };
+        e.operator != BinaryOperator::ShiftRightZeroFill && e.is_int32_or_uint32(ctx)
     }
 
     fn unwrap_left_from_binary_expr(
