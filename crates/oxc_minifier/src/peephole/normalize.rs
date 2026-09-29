@@ -359,8 +359,7 @@ impl<'a> Normalize {
         // `replace_expression` walks the dropped ident into `PassChanges`, so
         // its resolved reference is pruned by `finish_normalize_pass`,
         // before pass 1 — otherwise the symbol would look referenced forever.
-        let new_arg =
-            Expression::new_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal, ctx);
+        let new_arg = Expression::new_number_0(ident.span, ctx);
         ctx.replace_expression(&mut e.argument, new_arg);
     }
 

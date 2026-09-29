@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+
+### 📚 Documentation
+
+- cd80e3f ast: Correct `JSXExpressionContainer` example (#26975) (camc314)
+- 8cb05e3 ast: Simplify `JSXAttribute` value description (#26974) (camc314)
+- fda7fbb ast: Correct `TSNumberKeyword` example (#26973) (camc314)
+- e63c439 ast: Clarify `RegExpFlags::V` flag features (#26972) (camc314)
+- 278288e ast: Correct `JSXText` example (#26970) (camc314)
+- e9ff529 ast: Correct `TSIntrinsicKeyword` example (#26967) (camc314)
+- c643ce4 ast: Fix `TSTupleType` example syntax (#26966) (camc314)
+- 895b1a7 ast: Correct `TSPropertySignature` usage example (#26964) (camc314)
+- 8d8cc7c ast: Correct `Class` abstract example values (#26963) (camc314)
+- f7ef2e2 ast: Use valid variance example for `TSTypeParameter` (#26962) (camc314)
+- 145fcdb ast: Attach `pure` comment to `NewExpression` field (#26961) (camc314)
+- 06dfd9f ast: Clarify `TSNonNullExpression` docs (#26960) (camc314)
+- d5f92b5 ast: Add docs for TSNonNullExpression (#26910) (camchenry)
+- 4a76723 ast: Add docs for TSNamespaceExportDeclaration (#26909) (camchenry)
+- de41927 ast: Add docs for `TSInstantiationExpression` (#26908) (camchenry)
+
 ## [0.150.0] - 2026-09-14
 
 ### 📚 Documentation

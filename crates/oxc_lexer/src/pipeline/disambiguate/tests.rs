@@ -43,12 +43,42 @@ impl FileType {
 // Can reference `ScriptJS` directly, instead of `FileType::ScriptJS`.
 use FileType::*;
 
-pub(super) fn kinds_of(code: &str, file_type: FileType) -> Vec<TokenKind> {
+fn lex(
+    code: &str,
+    file_type: FileType,
+    full_walk_only: bool,
+    no_run_rules: bool,
+) -> (Lexer, usize) {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
     let mut lx = Lexer::new();
+    lx.lanes.disambiguate.walks.full_walk_only = full_walk_only;
+    lx.lanes.disambiguate.walks.no_run_rules = no_run_rules;
     let count = lx.lex(&buf, n, file_type.options());
+    (lx, count)
+}
+
+/// Lex with the bounded walks and shortcuts, then with the full walk alone: both must agree.
+#[track_caller]
+fn lex_checked(code: &str, file_type: FileType) -> (Lexer, usize) {
+    let (lx, count) = lex(code, file_type, false, false);
+    let (walk, walk_count) = lex(code, file_type, false, true);
+    let (full, full_count) = lex(code, file_type, true, false);
+    let tokens = |lx: &Lexer, count: usize| {
+        let kinds = lx.kinds()[..count].iter().zip(&lx.spans).map(|(k, s)| (*k, s.start, s.end));
+        let diags = lx.lanes.diags.iter().map(|d| (d.code, d.off, d.len));
+        (kinds.collect::<Vec<_>>(), diags.collect::<Vec<_>>())
+    };
+    assert_eq!(tokens(&lx, count), tokens(&full, full_count), "full walk disagrees on {code:?}");
+    // The run rules must not hide a walk that answers differently.
+    assert_eq!(tokens(&walk, walk_count), tokens(&full, full_count), "walk disagrees on {code:?}");
+    (lx, count)
+}
+
+#[track_caller]
+pub(super) fn kinds_of(code: &str, file_type: FileType) -> Vec<TokenKind> {
+    let (lx, count) = lex_checked(code, file_type);
     lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
 
@@ -164,12 +194,9 @@ fn jsx_self_close_allows_whitespace() {
     assert!(!ks.contains(&TokenKind::JsxTagEnd), "lone slash: kinds {ks:?}");
 }
 
+#[track_caller]
 pub(super) fn diag_codes_of(code: &str, file_type: FileType) -> Vec<DiagCode> {
-    let mut buf = code.as_bytes().to_vec();
-    let n = buf.len();
-    buf.resize(n + PAD, 0);
-    let mut lx = Lexer::new();
-    lx.lex(&buf, n, file_type.options());
+    let (lx, _) = lex_checked(code, file_type);
     lx.lanes.diags.iter().map(|d| d.code).collect()
 }
 
@@ -242,11 +269,7 @@ fn names_of(code: &str, file_type: FileType) -> String {
 }
 
 fn spans_of(code: &str, file_type: FileType) -> Vec<(u32, u32)> {
-    let mut buf = code.as_bytes().to_vec();
-    let n = buf.len();
-    buf.resize(n + PAD, 0);
-    let mut lx = Lexer::new();
-    let count = lx.lex(&buf, n, file_type.options());
+    let (lx, count) = lex_checked(code, file_type);
     let kinds = &lx.kinds()[..count];
     assert!(lx.spans.len() >= count);
 

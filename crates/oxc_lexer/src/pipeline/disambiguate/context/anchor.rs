@@ -20,7 +20,8 @@ pub(super) enum Anchor {
     /// `(` whose group holds the query.
     Expr(usize),
     /// The bounded walk already covers this point and continues from where it stopped.
-    Continue { semi: u32, brace: u32 },
+    /// It first leaves the group from open to close that it stopped in, when close is not 0.
+    Continue { semi: u32, brace: u32, open: u32, close: u32 },
 }
 
 /// Is the word at `p` an attribute inside a JSX opening tag? Scans back over attribute names,
@@ -42,13 +43,7 @@ fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
             match tokens.src[w] {
                 b'=' => {}
                 b'}' | b')' | b']' => {
-                    let c = tokens.src[w];
-                    let open = match c {
-                        b')' => b'(',
-                        b']' => b'[',
-                        _ => b'{',
-                    };
-                    let Some(o) = tokens.match_delim_back(w, open, c) else {
+                    let Some(o) = tokens.match_delim_back(w) else {
                         return false;
                     };
                     q = tokens.prev_sig(o);
@@ -152,9 +147,15 @@ fn fn_class_anchor(
                     expr
                 }
             }
+            // A generator method named function, as in { *function() {} }.
+            b'*' if !named => None,
+            // A TypeScript postfix non-null ends a value at a line break too.
+            b'!' if tokens.ts && named && broken(q) => None,
             _ => expr,
         },
         Prev::Word(_, tk!(KwElse | KwDo | KwExport | KwDefault | KwDeclare | KwAbstract)) => stmt,
+        // A name or type these spell ends a value at a line break: the walk decides.
+        Prev::Word(q, tk!(KwAwait | KwOf | KwVoid)) if named && broken(q) => None,
         // Restricted productions: a line break ends the statement.
         Prev::Word(q, tk!(KwReturn | KwYield)) => {
             if named && broken(q) {
@@ -210,7 +211,7 @@ fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
     }
     let prev = tokens.prev_token(p);
     // A property name.
-    if prev.is_member_dot(tokens.src) {
+    if prev.is_member_dot(tokens) {
         return None;
     }
     let f = tokens.peek(e);

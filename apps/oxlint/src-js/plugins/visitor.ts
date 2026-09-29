@@ -349,10 +349,8 @@ export function addVisitorToCompiled(visitor: VisitorObject, timing?: RuleTiming
       visitProp.specificity |= selector.specificity;
 
       if (selector.isComplex) {
-        const timedVisitFn = visitProp.fn;
-        debugAssertIsNonNull(timedVisitFn);
-        typeAssertIs<VisitFn>(timedVisitFn);
-        visitProp.fn = wrapVisitFnWithSelectorMatch(timedVisitFn, selector.esquerySelector);
+        visitProp.fn = wrapVisitFnWithSelectorMatch(visitFn, selector.esquerySelector);
+        if (timing !== undefined) visitProp.fn = wrapTimedFunction(visitProp.fn, timing);
       }
 
       const { typeIds } = selector;

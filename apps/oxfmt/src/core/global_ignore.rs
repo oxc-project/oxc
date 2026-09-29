@@ -4,13 +4,11 @@ use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
 use crate::core::utils;
 
-/// Resolve ignore file paths from CLI args or defaults.
+/// Resolve ignore file paths from `--ignore-path` or defaults.
 ///
 /// Called early (before walk) to validate that specified ignore files exist.
-pub(super) fn resolve_ignore_paths(
-    cwd: &Path,
-    ignore_paths: &[PathBuf],
-) -> Result<Vec<PathBuf>, String> {
+/// Empty `ignore_paths` falls back to `<cwd>/.prettierignore`.
+pub fn resolve_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
     if !ignore_paths.is_empty() {
         let mut result = Vec::with_capacity(ignore_paths.len());
         for path in ignore_paths {
@@ -40,7 +38,7 @@ pub(super) fn resolve_ignore_paths(
 /// - excludes use `cwd`
 ///
 /// Git ignore files are handled by `WalkBuilder` itself.
-pub(super) fn build_global_ignore_matchers(
+pub fn build_global_ignore_matchers(
     cwd: &Path,
     exclude_patterns: &[String],
     ignore_paths: &[PathBuf],
@@ -81,7 +79,7 @@ pub(super) fn build_global_ignore_matchers(
 /// When `check_ancestors: true`, also checks if any parent directory is ignored.
 /// This is more expensive, but necessary when paths (to be ignored) are passed directly via CLI arguments.
 /// For normal walking, walk is done in a top-down manner, so only the current path needs to be checked.
-pub(super) fn is_ignored(
+pub fn is_ignored(
     matchers: &[Gitignore],
     path: &Path,
     is_dir: bool,

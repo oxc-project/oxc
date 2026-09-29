@@ -105,7 +105,6 @@ pub(super) unsafe fn lex_slash(
             src,
             st,
             opch,
-            word,
             kind,
             n,
             ts,
