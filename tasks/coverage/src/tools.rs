@@ -181,7 +181,6 @@ fn run_parser_typescript_unit(
     code: &str,
     source_type: SourceType,
     always_strict: bool,
-    strict_null_checks: bool,
     ts_ignore_spans: &[Span],
 ) -> TestResult {
     let source_text: Cow<str> = if always_strict {
@@ -190,11 +189,7 @@ fn run_parser_typescript_unit(
         Cow::Borrowed(code)
     };
 
-    let mut driver = Driver {
-        allow_return_outside_function: false,
-        strict_null_checks: Some(strict_null_checks),
-        ..Driver::default()
-    };
+    let mut driver = Driver { allow_return_outside_function: false, ..Driver::default() };
     driver.run(&source_text, source_type);
 
     let errors = driver.errors();
@@ -241,7 +236,6 @@ pub fn run_parser_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
                         &unit.content,
                         unit.source_type,
                         always_strict,
-                        f.settings.strict_null_checks.unwrap_or(f.settings.strict[0]),
                         &unit.ts_ignore_spans,
                     );
                     if !matches!(result, TestResult::Passed) {

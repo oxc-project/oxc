@@ -34,7 +34,6 @@ fn report_jsdoc_type_modifier(
 
     let suggestion = &ctx.source_text[valid_type_span];
     let suggestion = match (modifier, type_annotation) {
-        ('?', _) if !ctx.strict_null_checks => Cow::Borrowed(suggestion),
         // TypeScript's union builder leaves these types unchanged.
         (
             '?',

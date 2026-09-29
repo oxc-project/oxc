@@ -32,7 +32,6 @@ pub struct CompilerSettings {
     pub modules: Vec<String>,
     pub targets: Vec<String>,
     pub strict: Vec<bool>,
-    pub strict_null_checks: Option<bool>,
     pub check_js: Vec<bool>,
     pub jsx: Vec<String>, // 'react', 'preserve'
     pub declaration: bool,
@@ -53,9 +52,6 @@ impl CompilerSettings {
             modules: Self::split_value_options(options.get("module")),
             targets: Self::split_value_options(options.get("target")),
             strict: Self::split_boolean_options(options.get("strict"), false),
-            strict_null_checks: options
-                .get("strictnullchecks")
-                .map(|value| Self::value_to_boolean(Some(value), false)),
             check_js: Self::split_boolean_options(options.get("checkjs"), false),
             jsx: Self::split_value_options(options.get("jsx")),
             declaration: Self::value_to_boolean(options.get("declaration"), false),

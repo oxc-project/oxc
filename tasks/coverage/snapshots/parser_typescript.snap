@@ -32194,7 +32194,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                                                    ─────────
  15 │ 
     ╰────
-  help: Did you mean to write 'string[]'?
+  help: Did you mean to write 'string[] | undefined'?
 
   × TS(5085): A tuple member cannot be both optional and rest.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts:16:39]
