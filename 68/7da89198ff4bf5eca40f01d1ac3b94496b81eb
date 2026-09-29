@@ -1,0 +1,29 @@
+crates/oxc_linter/src/rules/jest/expect_expect.rs
+  s_0034098a40b3a0::t_c9999d6cf2fc8c 48-56
+crates/oxc_linter/src/rules/shared/jest_vitest/expect_expect.rs
+  s_2ab07a30199d42::t_ee120cd315de8d 370-376
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "687da89198ff4bf5eca40f01d1ac3b94496b81eb",
+  "prompts": {},
+  "sessions": {
+    "s_0034098a40b3a0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-06cb-7200-9efa-bb18745ac27b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_2ab07a30199d42": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-06d6-7703-9f34-db4bedf3c830",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

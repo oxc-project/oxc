@@ -1,0 +1,23 @@
+crates/oxc_semantic/tests/fixtures/typescript-eslint/import/equals-type.snap
+  s_dc2b3bbd61da68::t_3a3974c5e6a5d8 1-89
+crates/oxc_semantic/src/builder.rs
+  s_dc2b3bbd61da68::t_22f6c9f05e103f 2554-2558,2560-2561,2571
+crates/oxc_semantic/tests/fixtures/typescript-eslint/import/equals-type.ts
+  s_dc2b3bbd61da68::t_48d9e9ed76aa11 1-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d41a9ff4c48f3bde5d86c2347ebed0fb1cbbf5e5",
+  "prompts": {},
+  "sessions": {
+    "s_dc2b3bbd61da68": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f7f36-59c1-7070-a2b8-30537a225a85",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+crates/oxc_ast_visit/src/comment_attachment.rs
+  s_43cff1d112befe::t_4d507e97175da5 156,160-161,175,182,187,191,194-195,199-201,211-213,217-218,222-225,235
+crates/oxc_semantic/src/builder.rs
+  s_43cff1d112befe::t_23fc4f9c8c4c28 13,109,172,330-333,399-406,478-480,906-908,935-937
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6a962adfb8301276d1ec3a28e5eeb609cccd0f72",
+  "prompts": {},
+  "sessions": {
+    "s_43cff1d112befe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06825-a359-7b41-b9dd-90b0622613e7",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_8a0b3fc1091d46": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06836-2779-76f1-94ac-cd83fa13bcdc",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_98d85a95571ac7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06689-4a42-71b3-8cc3-d0c682ebbbd9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

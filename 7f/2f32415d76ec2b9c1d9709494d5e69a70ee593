@@ -1,0 +1,31 @@
+crates/oxc_isolated_declarations/src/lib.rs
+  s_b38ece9ad5d8c2::t_108d2e87e8efb6 163,191,578-582,587,597,628,634,637,645,666-668
+crates/oxc_isolated_declarations/tests/fixtures/expando-function-ambient-variable.ts
+  s_b38ece9ad5d8c2::t_b564a3ef13627c 1-7
+crates/oxc_isolated_declarations/tests/snapshots/expando-function-ambient-variable.snap
+  s_693b6214ced0d1::t_3685f1e6caf36f 1-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7f2f32415d76ec2b9c1d9709494d5e69a70ee593",
+  "prompts": {},
+  "sessions": {
+    "s_693b6214ced0d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffc1-edd6-7d80-b5ba-634466fd223b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_b38ece9ad5d8c2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-86e201b55e14",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

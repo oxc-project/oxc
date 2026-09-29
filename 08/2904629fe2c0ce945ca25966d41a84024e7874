@@ -1,0 +1,48 @@
+crates/oxc_transformer/src/es2017/async_to_generator.rs
+  s_d93658c461c0bd::t_4f8fd96da64bcc 56
+  s_0eae81ddfc1ea3::t_9e2ce9c4d14757 72,530
+crates/oxc_transformer/src/jsx/refresh.rs
+  s_d93658c461c0bd::t_b08303f149dce2 31,411-416
+crates/oxc_ast/src/serialize/js.rs
+  s_d93658c461c0bd::t_e2c76001cefa54 814,816-817,819,821
+crates/oxc_linter/src/snapshots/jest_prefer_expect_assertions.snap
+  s_0eae81ddfc1ea3::t_331ee3e2c04048 484-490
+crates/oxc_linter/src/utils/react.rs
+  s_d93658c461c0bd::t_85a9122e100e4d 8-9,13,1009-1016,1019-1022,1084-1090,1096
+napi/parser/src-js/generated/lazy/constructors.js
+  s_0eae81ddfc1ea3::t_0e6592b1d35aa6 4733-4829,4857,4877
+crates/oxc_linter/src/rules/oxc/missing_throw.rs
+  s_0eae81ddfc1ea3::t_a29eec72089d1f 62-65
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_expect_assertions.rs
+  s_0eae81ddfc1ea3::t_29194a6563f2a8 13,31-57,262,332-361,366-367,399,421,435,506-516,542-551
+crates/oxc_transformer/src/es2018/object_rest_spread.rs
+  s_d93658c461c0bd::t_a434c1817b7d70 46,588,592
+crates/oxc_minifier/src/peephole/substitute_alternate_syntax.rs
+  s_d93658c461c0bd::t_fb6928e876702a 206-211,213,1960-1964
+crates/oxc_linter/src/rules/jest/prefer_expect_assertions.rs
+  s_0eae81ddfc1ea3::t_717c394aeb7228 1047-1050
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "082904629fe2c0ce945ca25966d41a84024e7874",
+  "prompts": {},
+  "sessions": {
+    "s_0eae81ddfc1ea3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8041-2626-73d2-9ae3-45377bc4dff3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_d93658c461c0bd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa3d7-a1e5-73a0-a4c0-3bf9084729da",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

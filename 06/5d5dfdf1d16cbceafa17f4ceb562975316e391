@@ -1,0 +1,19 @@
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_0ae79872ce2f83::t_a393fecb668485 3,5,8,10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "065d5dfdf1d16cbceafa17f4ceb562975316e391",
+  "prompts": {},
+  "sessions": {
+    "s_0ae79872ce2f83": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fad21-0506-7393-8e0d-bfdf2116144d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

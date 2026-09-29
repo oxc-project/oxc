@@ -1,0 +1,35 @@
+packages/codegen/sourcemap-baseline.json
+  s_6a85dfe90dd69f::t_67018d16fac098 13,15-24,26-32,38,40-49,51-57,68,70-79,81-87,93,95-104,106-112,122-123,125-134,136-142,147-148,150-159,161-167,177-178,180-189,191-197,202-203,205-214,216-222,232-233,235-244,246-252,257-258,260-269,271-277,288,290-299,301-307,313,315-324,326-332,342-343,345-362,367-368,370-387,397-398,400-408,411-415,417,422-423,425-433,436-440,442
+packages/codegen/sourcemap.bench.ts
+  s_31d85f49abbbeb::t_882f3527d65356 5-6,32,84
+packages/codegen/src-js/print/source_map.ts
+  s_6a85dfe90dd69f::t_96444cd601a323 14-15,18-19,22,25,38-40,50-58,65-66,69,76,79-88,96-103,106-122,179-181,190-191,264-273,284-285,298-308,315
+packages/codegen/src-js/print/write.ts
+  s_6a85dfe90dd69f::t_2f8df7d7e87cd7 375-376,379-380,382,408-409,420,424,454-458
+packages/codegen/src-js/state.ts
+  s_6a85dfe90dd69f::t_92fb592836c663 86-89,145,148-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c150478cb38134591d77527027a26e865d4f7d65",
+  "prompts": {},
+  "sessions": {
+    "s_31d85f49abbbeb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-518f-76e0-b05f-d7c0d5ef8546",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

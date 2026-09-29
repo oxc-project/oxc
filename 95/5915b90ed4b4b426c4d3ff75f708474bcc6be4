@@ -1,0 +1,27 @@
+crates/oxc_formatter/src/print/arrow_function_expression.rs
+  s_9ad3a354ba6ff2::t_6e787f85e57bfd 122,632-636
+crates/oxc_formatter/src/print/function.rs
+  s_9ad3a354ba6ff2::t_c72f8bcfd54a64 14,126-129
+crates/oxc_formatter/src/print/semicolon.rs
+  s_9ad3a354ba6ff2::t_926097048344aa 74
+crates/oxc_formatter/tests/fixtures/js/comments/arrow-body-comment-inside-parens.js.snap
+  s_9ad3a354ba6ff2::t_ee5c2491d14f06 1-149
+crates/oxc_formatter/tests/fixtures/js/comments/arrow-body-comment-inside-parens.js
+  s_9ad3a354ba6ff2::t_0601f46cfe15e6 1-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "955915b90ed4b4b426c4d3ff75f708474bcc6be4",
+  "prompts": {},
+  "sessions": {
+    "s_9ad3a354ba6ff2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e43b13d9-c746-4c1f-89f7-67ce558cb98c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Yuji Sugiura <ysugiura@cloudflare.com>"
+    }
+  }
+}

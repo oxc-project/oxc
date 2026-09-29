@@ -1,0 +1,19 @@
+crates/oxc_codegen/tests/integration/comments.rs
+  s_43cff1d112befe::t_b43e4f6746346d 125-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ecb1e59ae6fbb6b5b350586c4eab828afdbdadc7",
+  "prompts": {},
+  "sessions": {
+    "s_43cff1d112befe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06825-a359-7b41-b9dd-90b0622613e7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

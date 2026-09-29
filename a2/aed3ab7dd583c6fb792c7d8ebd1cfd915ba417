@@ -1,0 +1,29 @@
+crates/oxc_linter/src/rules/eslint/prefer_const.rs
+  s_45a737181142de::t_de048664cde85a 139-146,163-164,172-180,182,200-206,208,464-465,468,472,498,505,510,538,544,552,558,562,570,573-574,601,606,688,702,712,737,746,749,911-924,961-983
+crates/oxc_linter/src/snapshots/eslint_prefer_const.snap
+  s_1d0327f1c27e67::t_6b264dbf114a37 111,114-115,120,123-124,129,131,136-163,165,170,172,205,207,240,242,247,249,289,291,345,347,352,354,359,361,587,589,594,596,615,617,622,624,629,631,636,638,643,645
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a2aed3ab7dd583c6fb792c7d8ebd1cfd915ba417",
+  "prompts": {},
+  "sessions": {
+    "s_1d0327f1c27e67": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f3-7011-82ef-39902f8a6886",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_45a737181142de": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-4096-7091-b8b1-cd0f718025fc",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

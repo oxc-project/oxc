@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/oxc/bad_object_literal_comparison.rs
+  s_1574c7e0f1f72c::t_ecfce1585b4b7f 59-60,62-72,74-84,90,94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "70009f41c9e8414eb02c58550cad441dec0ce818",
+  "prompts": {},
+  "sessions": {
+    "s_1574c7e0f1f72c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f9463-1bcd-7441-8529-f4759bc6838f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

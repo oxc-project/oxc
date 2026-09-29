@@ -1,0 +1,53 @@
+tasks/ast_generator_fuzz/src/lib.rs
+  s_3c7a5db6237378::t_06a0c2537891b8 382-384
+  s_3c7a5db6237378::t_11878761b7f41b 448-450
+  s_3c7a5db6237378::t_6487b6fa2f88d3 135-138
+  s_3c7a5db6237378::t_e3f57780b12d10 35-36
+  s_3c7a5db6237378::t_518af99f68d194 321-340
+  s_3c7a5db6237378::t_ba5a1b99b47cac 37-38,57,66-74,76,163,341,350,381
+  s_38ae44d6719eec::t_9f775e60fbbf51 42,210,217-218,412
+  s_3c7a5db6237378::t_120f6ad612225a 342-349
+  s_3c7a5db6237378::t_7b7c497d18d540 124,134,222,227,442,447
+  s_3c7a5db6237378::t_9554b3af1e2f57 39
+  s_3c7a5db6237378::t_3fce6cb503263f 228-295
+  s_3c7a5db6237378::t_8e9348288111e6 116,139,296-297
+  s_3c7a5db6237378::t_94e09119f20fe0 351-380
+  s_3c7a5db6237378::t_06347c27eceab3 97,106,108-115
+  s_3c7a5db6237378::t_df6c6a34aa1dc1 164,298-317,432,440,459
+  s_3c7a5db6237378::t_065c618a7c6e4b 223-226
+  s_3c7a5db6237378::t_1668644e807a92 140-142
+  s_3c7a5db6237378::t_ceedd82f1251bb 213-214,318-320,443
+  s_38ae44d6719eec::t_a08468e4547941 411
+  s_3c7a5db6237378::t_e81e3c5fcae7a9 143-145
+  s_3c7a5db6237378::t_05ea7a44ac8674 160-162
+  s_3c7a5db6237378::t_09b6a772ee3893 165-166
+  s_3c7a5db6237378::t_b4e9bc21751d00 385-387
+  s_3c7a5db6237378::t_861b6f4c35fe3f 433-435,437-439
+  s_3c7a5db6237378::t_5dde1b614d4f62 441
+  s_3c7a5db6237378::t_b44908fa3d33f4 451-453,456-458
+  s_3c7a5db6237378::t_52f755693f17b3 460
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9c72c527ed7bb077d33911097674d34b5b7a571a",
+  "prompts": {},
+  "sessions": {
+    "s_38ae44d6719eec": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb016-5d89-7991-a4b7-84561c085015",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

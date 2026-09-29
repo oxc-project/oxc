@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/no_unmodified_loop_condition.rs
+  s_f9b80309e34272::t_2c9de2ccc4292e 440-461
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "58c331421f26c019b3d5eadf92b7585975428c06",
+  "prompts": {},
+  "sessions": {
+    "s_f9b80309e34272": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05468-7b25-7a52-8e9c-eec9a8057c08",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

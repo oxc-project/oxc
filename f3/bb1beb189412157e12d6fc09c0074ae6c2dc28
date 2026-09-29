@@ -1,0 +1,25 @@
+packages/codegen/DESIGN.md
+  s_6b5aa3ca33a1b5::t_19b31ce35c0ac0 508-509,576-577
+packages/codegen/README.md
+  s_6b5aa3ca33a1b5::t_4b9fca8804b1c1 101-103
+packages/codegen/src-js/print/write.ts
+  s_6b5aa3ca33a1b5::t_f33ee5644e8426 237,358,360-361,388,390-391,455
+packages/codegen/test/source-maps.test.ts
+  s_6b5aa3ca33a1b5::t_078a232abec641 8,113,115,121,126,132,134,140,146,154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f3bb1beb189412157e12d6fc09c0074ae6c2dc28",
+  "prompts": {},
+  "sessions": {
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

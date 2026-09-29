@@ -1,0 +1,23 @@
+crates/oxc_ecmascript/src/string_index_of.rs
+  s_7b49357c247aa1::t_26751e0afef7fb 13,46
+crates/oxc_ecmascript/src/string_last_index_of.rs
+  s_7b49357c247aa1::t_46ec294e16dda2 12,37-38
+crates/oxc_minifier/tests/peephole/replace_known_methods.rs
+  s_7b49357c247aa1::t_51df2c5cac22d0 21-22,31-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a6867a0ab124c5f336bdcc624ad640d0a0ddf248",
+  "prompts": {},
+  "sessions": {
+    "s_7b49357c247aa1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a048b2-04a9-71c1-a3e6-f6bf934333a3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

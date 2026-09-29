@@ -1,0 +1,47 @@
+crates/oxc_ast/src/ast/comment.rs
+  s_01b0963c7995ba::t_05f7ee6cd6d890 230-236
+crates/oxc_parser/src/ast_builder.rs
+  s_01b0963c7995ba::t_bd276d8e43c752 9-11,30-40,47-53,75,78-82
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_55a207f02dbe8c::t_145d2448bfef2e 109-111
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_01b0963c7995ba::t_9d8b1d8d5ab97d 3,5-7,14,16-18,36,38-40,47,49-51,58,60-62,69,71-73
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_01b0963c7995ba::t_f07493d501ec82 74
+tasks/track_memory_allocations/allocs_semantic.yaml
+  s_01b0963c7995ba::t_49f55ed2dd071e 3,5,14,16,36,38,47,49-51,58,60,69,71
+crates/oxc_parser/src/cursor.rs
+  s_01b0963c7995ba::t_ac80a7ca729061 21,315,326,331-347
+crates/oxc_parser/src/js/statement.rs
+  s_01b0963c7995ba::t_3160ddc2059927 57-59,62,65,68,74-75,77,81,100,217-225
+crates/oxc_parser/src/lib.rs
+  s_01b0963c7995ba::t_47527f734e1e55 94,104,332,606-607,668,671-672,695-703,787-807,840,1146-1193
+crates/oxc_parser/src/state.rs
+  s_01b0963c7995ba::t_49a7b78a029963 18-19,33
+crates/oxc_semantic/src/comment_attacher.rs
+  s_01b0963c7995ba::t_c4e7064dfe69cd 17,63-64,70,103-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "687c06e219463a6d86ff9383527a942108ea24d4",
+  "prompts": {},
+  "sessions": {
+    "s_01b0963c7995ba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f47-33d2-79c2-ba3f-0c7a8fdc46bf",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_55a207f02dbe8c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a019ab-7d9d-7711-b78e-28a8c089f066",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_8f0d61316a881f::t_3594a8cda99319 7,32,40,62,73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "327820736de12ce4d3ac173846e47d0e8a23d198",
+  "prompts": {},
+  "sessions": {
+    "s_8f0d61316a881f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6af0-50ab-7272-ad21-e840f52a58af",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

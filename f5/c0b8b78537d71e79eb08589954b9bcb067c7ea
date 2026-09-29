@@ -1,0 +1,21 @@
+npm/oxlint/configuration_schema.json
+  s_8e88d9100fcafe::t_8329c421df9932 15766,15773,15776,15779
+crates/oxc_linter/src/rules/typescript/no_unnecessary_condition.rs
+  s_8e88d9100fcafe::t_192a9c99974d9d 38-44,46-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f5c0b8b78537d71e79eb08589954b9bcb067c7ea",
+  "prompts": {},
+  "sessions": {
+    "s_8e88d9100fcafe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb276-8c56-7623-a5ad-d09ab9b3f40d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+crates/oxc_parser/src/js/class.rs
+  s_91772ea8e8adc7::t_698677ef96168c 796-799
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0ae130fb32370dab06a743d46ffaabb83a0a46d0",
+  "prompts": {},
+  "sessions": {
+    "s_91772ea8e8adc7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6b4a-d720-7080-9eac-540c38dd4563",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

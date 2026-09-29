@@ -1,0 +1,165 @@
+apps/oxlint/src-js/generated/deserialize.js
+  s_cc5727fb941684::t_dd3cc3514cc228 2109-2110,2124-2138
+crates/oxc_ast/src/ast/js.rs
+  s_cc5727fb941684::t_f099f5a590417d 1491-1495,1501-1517
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_cc5727fb941684::t_6369b78b5bf41b 565,570-573,2382,2387-2390
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_cc5727fb941684::t_e3c07074274a49 9035,9037,9040,9046,13308,13310,13313,13324,13336,13338,13341,13348-13452
+crates/oxc_ast/src/generated/derive_clone_in.rs
+  s_cc5727fb941684::t_1bd146e4282627 1977-2002
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_cc5727fb941684::t_d4f7645489a9de 979-993
+crates/oxc_ast/src/generated/derive_dummy.rs
+  s_cc5727fb941684::t_acabc6a04383e2 1025,1031,1036-1044
+crates/oxc_ast/src/generated/derive_estree.rs
+  s_cc5727fb941684::t_0ce8b959b75941 1177
+crates/oxc_ast/src/generated/derive_get_span.rs
+  s_cc5727fb941684::t_79fc95fd7acccd 874-883
+crates/oxc_ast/src/generated/derive_get_span_mut.rs
+  s_cc5727fb941684::t_d111aa3795eb3d 874-883
+crates/oxc_ast/src/generated/derive_replace_with.rs
+  s_cc5727fb941684::t_8f1a1483d4c526 167-168
+crates/oxc_ast/src/generated/derive_take_in.rs
+  s_cc5727fb941684::t_c0d3d9db6094ff 169-170
+crates/oxc_ast_macros/src/generated/enums.rs
+  s_cc5727fb941684::t_53bf8d4628be0a 11-12,14-15,17,20-25,27,29-31,33-39,42-49,51-53,56,59,61-76,79-81,83-85,87-103,105,107-109,111-112,114-118,120-127
+crates/oxc_ast_macros/src/generated/structs.rs
+  s_cc5727fb941684::t_3b3e56b7d36808 1407
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_cc5727fb941684::t_c670d3dfc3fa42 434-438,2341,2345-2360
+crates/oxc_ast_visit/src/generated/visit_js.rs
+  s_cc5727fb941684::t_64c2cf56dceab6 461-465,2006,2010-2025
+crates/oxc_ast_visit/src/generated/visit_js_mut.rs
+  s_cc5727fb941684::t_fce343c038be91 453-457,2082,2086-2101
+crates/oxc_ast_visit/src/generated/visit_mut.rs
+  s_cc5727fb941684::t_2de09aa3f2ccc0 426-430,2405,2409-2424
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_cc5727fb941684::t_adf35369dac478 4070,4080,4082-4087
+crates/oxc_linter/src/rules/eslint/no_useless_return.rs
+  s_cc5727fb941684::t_f4e8496cae6561 162,190-191,321
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_cc5727fb941684::t_9405e273b7c157 115-322,509-510,1213,2070-2074,2338,6709,6732,6734-6735,6749,6754,6776
+crates/oxc_minifier/src/generated/traverse.rs
+  s_cc5727fb941684::t_8d953e355b0642 822-836
+crates/oxc_minifier/src/generated/walk.rs
+  s_cc5727fb941684::t_3df5c378473e24 2038-2043,2048-2068
+crates/oxc_minifier/src/is_terminated.rs
+  s_cc5727fb941684::t_6004ec1fb6ef0c 2,33-44
+crates/oxc_minifier/src/peephole/remove_dead_code.rs
+  s_cc5727fb941684::t_5a32bc66e93f9d 292-297,315-322,325-338
+crates/oxc_parser/src/js/statement.rs
+  s_cc5727fb941684::t_f6139f8e2aaf07 812-827,829
+crates/oxc_react_compiler/src/react_compiler_reactive_scopes/codegen_reactive_function.rs
+  s_cc5727fb941684::t_684bf49e5bbd22 1047-1049,3077
+crates/oxc_semantic/src/builder.rs
+  s_cc5727fb941684::t_6f670f7879a047 1798-1800,1811-1812,1832,1854,1859,1881
+crates/oxc_transformer/src/es2018/async_generator_functions/for_await.rs
+  s_cc5727fb941684::t_7b413ac15834ba 3,378,386,422,425,516-521,524,527-535
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_cc5727fb941684::t_8df511e797297a 115-322,509-510,1213,2070-2074,2338,6709,6732,6734-6735,6749,6754,6776
+crates/oxc_traverse/src/generated/scopes_collector.rs
+  s_cc5727fb941684::t_a0a9e238b2d758 879
+crates/oxc_traverse/src/generated/traverse.rs
+  s_cc5727fb941684::t_e0113e4a242d95 1028-1042
+crates/oxc_traverse/src/generated/walk.rs
+  s_cc5727fb941684::t_a68548354fd192 2038-2043,2048-2068
+napi/parser/src-js/generated/deserialize/js.js
+  s_cc5727fb941684::t_586b7e5797e76a 1636-1650
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_cc5727fb941684::t_ce252adfaae5df 1809-1823
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_cc5727fb941684::t_60444cbdd5f4ca 1815-1829
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_cc5727fb941684::t_f87211378d8b9f 1973-1974,1987-2001
+napi/parser/src-js/generated/deserialize/ts.js
+  s_cc5727fb941684::t_3271b21708d5fa 1718-1732
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_cc5727fb941684::t_998d7f8cf26c33 1894-1908
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_cc5727fb941684::t_b4cc88e11904e8 1897-1911
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_cc5727fb941684::t_e06b0bac300240 2058-2059,2072-2086
+napi/parser/src-js/generated/lazy/constructors.js
+  s_cc5727fb941684::t_aacec22c831d1d 4003-4009,4013-4019
+napi/parser/src-js/generated/lazy/type_ids.js
+  s_cc5727fb941684::t_d455602e052980 95-187,190
+napi/parser/src-js/generated/lazy/walk.js
+  s_cc5727fb941684::t_8882684cc66e1e 2086-2096,2127,2144,2160,2177,2193,2213,2236,2252,2271,2287,2309,2347,2365,2389,2405,2424,2441,2475,2492,2508,2528,2558,2577,2593,2611,2794,2841,2859,2877,2893,2943,2960,2993,3169,3186,3261,3282,3299,3315,3351,3367,3526,3545,3561,3577,3593,3609,3625,3642,3658,3675,3691,3901,3934,3951,3967,3985,4001,4019,4036,4055,4071,4110,4127,4145,4164,4182,4198,4215,4245,4288,4304,4320,4336,4352,4388,4420,4437,4455,4473,4492,4509,4526,4543,4560,4593,4609,4625,4641,4657,4673,4690,4706
+tasks/ast_tools/src/derives/clone_in.rs
+  s_cc5727fb941684::t_09cec9aada1ff5 182-190,192-199
+tasks/ast_tools/src/derives/content_eq.rs
+  s_cc5727fb941684::t_9a6a71ecbf620f 123-146,148-158
+tasks/ast_tools/src/derives/get_span.rs
+  s_cc5727fb941684::t_6ff091a70a4575 194-207,209,211
+tasks/ast_tools/src/generators/assert_layouts.rs
+  s_cc5727fb941684::t_193b5b4fc58e71 413-441,443-451
+tasks/ast_tools/src/generators/raw_transfer_lazy.rs
+  s_cc5727fb941684::t_facbbe54331228 318-319,469-478,572-574,710-779
+tasks/ast_tools/src/generators/scopes_collector.rs
+  s_cc5727fb941684::t_d1adb323ee16fe 179,181-185,189,462-495,497-506,508-536,542-552
+crates/oxc_ast/src/ast_impl/js.rs
+  s_cc5727fb941684::t_889e926341d586 24-43
+crates/oxc_ast/src/serialize/js.rs
+  s_cc5727fb941684::t_b25dd1f11354d8 16-94
+crates/oxc_formatter/src/ast_nodes/node.rs
+  s_cc5727fb941684::t_d874dc3fa14815 13-20,29-60
+crates/oxc_linter/src/rules/eslint/constructor_super.rs
+  s_cc5727fb941684::t_f94335c0dd71e5 775,778
+crates/oxc_linter/src/rules/eslint/no_empty.rs
+  s_cc5727fb941684::t_4c2e8bd7db6ed8 79
+crates/oxc_linter/src/rules/eslint/no_unsafe_finally.rs
+  s_cc5727fb941684::t_db0b3c5042f19d 99
+crates/oxc_linter/src/rules/eslint/no_useless_catch.rs
+  s_cc5727fb941684::t_0b190dbcc33a58 65,80
+crates/oxc_linter/src/rules/eslint/preserve_caught_error.rs
+  s_cc5727fb941684::t_f3ed5fe8bcd18b 291
+crates/oxc_linter/src/rules/promise/no_multiple_resolved.rs
+  s_cc5727fb941684::t_f04bf2ce576e04 564
+crates/oxc_minifier/src/traverse_context/scopes_collector.rs
+  s_cc5727fb941684::t_f41a18e31cb287 869-875
+crates/oxc_react_compiler/src/react_compiler_lowering/build_hir.rs
+  s_cc5727fb941684::t_27f59e3e0226c8 6081-6091
+crates/oxc_transformer/src/es2018/object_rest_spread.rs
+  s_cc5727fb941684::t_8e67c0cdbefc3e 804
+crates/oxc_transformer/src/es2026/explicit_resource_management.rs
+  s_cc5727fb941684::t_b6582333cda0f4 783-788,920-925
+tasks/ast_tools/src/derives/dummy.rs
+  s_cc5727fb941684::t_a39c05622b4af7 166-171,176-190,239-247
+tasks/ast_tools/src/generators/ast_builder.rs
+  s_cc5727fb941684::t_4d716b6eaa0638 509-550
+tasks/ast_tools/src/generators/formatter/ast_nodes.rs
+  s_cc5727fb941684::t_60e80821b19276 539-542
+tasks/ast_tools/src/generators/formatter/format.rs
+  s_cc5727fb941684::t_ff80e884146f14 320-323
+tasks/ast_tools/src/generators/raw_transfer.rs
+  s_cc5727fb941684::t_bde0f323350ade 1285,1319-1336
+tasks/ast_tools/src/generators/traverse/walk.rs
+  s_cc5727fb941684::t_f6a6af57646a01 540-562,567-600,602,606
+tasks/ast_tools/src/generators/visit.rs
+  s_cc5727fb941684::t_1f435cccbb3df7 548-597,602-608
+tasks/ast_tools/src/generators/visit_js.rs
+  s_cc5727fb941684::t_46b0ca7ae8f6a1 593-648,655-663
+tasks/ast_tools/src/parse/parse.rs
+  s_cc5727fb941684::t_89fd21facc6081 546-547,562
+tasks/ast_tools/src/schema/defs/enum.rs
+  s_cc5727fb941684::t_acb799415b7ca6 4,12,118-128,222-223,231-236,239-240,273-289,297
+tasks/coverage/misc/fail/try-without-clauses.js
+  s_cc5727fb941684::t_c462380cda35b1 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6272042db8384796bb6c5378b76cf2fcdb78073e",
+  "prompts": {},
+  "sessions": {
+    "s_cc5727fb941684": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa901-6a01-7483-8667-5c80757815e2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/unicorn/prefer_default_parameters.rs
+  s_758468b996ade0::t_1529ae4aa27f68 64,239-248
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "424e94e44b183d543cfff25e9d222f497e60ec32",
+  "prompts": {},
+  "sessions": {
+    "s_758468b996ade0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00fd3-9b97-7a43-9cb7-3f290ffc7c03",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

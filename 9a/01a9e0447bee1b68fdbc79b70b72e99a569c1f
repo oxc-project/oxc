@@ -1,0 +1,21 @@
+crates/oxc_transformer/src/jsx/jsx_impl.rs
+  s_18dbd8d6e6fe7e::t_a4e0f544892ac6 105,918,1118
+crates/oxc_syntax/src/xml_entities.rs
+  s_18dbd8d6e6fe7e::t_02c3e827be2fdc 2,5-6,266-354
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9a01a9e0447bee1b68fdbc79b70b72e99a569c1f",
+  "prompts": {},
+  "sessions": {
+    "s_18dbd8d6e6fe7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6f60-68fc-7413-add2-399df60f46b4",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

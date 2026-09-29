@@ -1,0 +1,19 @@
+crates/oxc_mangler/src/lib.rs
+  s_1c79dcac364914::t_d95dabf3729508 101,105,112-117,120-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e3530a7168136c855a7565fca9c4454f219b84e8",
+  "prompts": {},
+  "sessions": {
+    "s_1c79dcac364914": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb4f-7134-7d30-9c9a-d47a2b9d8e50",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

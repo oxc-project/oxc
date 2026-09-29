@@ -1,0 +1,19 @@
+.gitignore
+  s_f81ebcef49580d::t_c1d1c52d4ab0bd 24-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cb8dd00eb01927189ccc72fb527dcb3625ea239f",
+  "prompts": {},
+  "sessions": {
+    "s_f81ebcef49580d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6f5-e572-7ae3-9103-6eac78e63baf",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

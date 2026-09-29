@@ -1,0 +1,49 @@
+crates/oxc_ast/src/ast/comment.rs
+  s_1c9d8ad6de124d::t_b49c19f77848dd 314-317
+crates/oxc_parser/src/ast_builder.rs
+  s_01b0963c7995ba::t_cd62a9cb5d3f99 26,54-58
+crates/oxc_parser/src/comment_attacher.rs
+  s_01b0963c7995ba::t_b1ed0c735d01c9 83,174-177,179-180,198-199,203-204,219,224-225,236
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_55a207f02dbe8c::t_c504a013f3cdef 10,21,43,54,65,76
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_55a207f02dbe8c::t_503bec3c2cfdb0 10,21,43,54,65,76
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_55a207f02dbe8c::t_76e01e205d6a84 8-10,19-21,41-43,52-54,63-65,74-76
+tasks/track_memory_allocations/allocs_semantic.yaml
+  s_55a207f02dbe8c::t_7f9293bf91d474 10,21,43,54,65,76
+tasks/track_memory_allocations/allocs_transformer.yaml
+  s_55a207f02dbe8c::t_85dd6a0fd649c3 10,21,43,54,65,76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "70ab2951db2a0b738fad780fdf68d0ea04094aed",
+  "prompts": {},
+  "sessions": {
+    "s_01b0963c7995ba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f47-33d2-79c2-ba3f-0c7a8fdc46bf",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_1c9d8ad6de124d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01a2a-9b92-70e2-95f2-f948693562c6",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_55a207f02dbe8c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a019ab-7d9d-7711-b78e-28a8c089f066",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

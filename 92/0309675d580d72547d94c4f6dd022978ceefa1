@@ -1,0 +1,30 @@
+crates/oxc_codegen/src/gen.rs
+  s_6d5e6260ed517e::t_a4ce9ba4ba8220 1647-1653,1669-1675,2295-2302,2308,2318-2326,2357-2361,2370-2374
+  s_6d5e6260ed517e::t_1149790da620a8 2303-2307,2309-2310
+  s_6d5e6260ed517e::t_9f5a5dbb45c524 17
+crates/oxc_codegen/src/typescript.rs
+  s_6d5e6260ed517e::t_bee86e306bbc62 18-59
+crates/oxc_codegen/src/lib.rs
+  s_6d5e6260ed517e::t_2f84a24dcf28be 771-781,789-791,807-829
+  s_6d5e6260ed517e::t_39a66e11e5b015 830
+crates/oxc_codegen/tests/integration/js.rs
+  s_6d5e6260ed517e::t_ff66e7275c441a 47-71
+crates/oxc_codegen/tests/integration/ts.rs
+  s_6d5e6260ed517e::t_54b39f9f5c7e53 133-188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "920309675d580d72547d94c4f6dd022978ceefa1",
+  "prompts": {},
+  "sessions": {
+    "s_6d5e6260ed517e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fec04-f78b-7602-a406-2a9695980983",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

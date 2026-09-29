@@ -1,0 +1,21 @@
+packages/codegen/src-js/print/source_map.ts
+  s_6a85dfe90dd69f::t_a904054763a890 6-7,38-41,77-80,180-192,194-196,207,221,269-270,277,279,286,288-297,327,334-336
+packages/codegen/test/source-maps.test.ts
+  s_6a85dfe90dd69f::t_7b70da198d20bf 94-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8ef83c2bd841f74ba712083475065f259259826e",
+  "prompts": {},
+  "sessions": {
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

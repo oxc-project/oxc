@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/unicorn/prefer_math_min_max.rs
+  s_49f816dece41b1::t_71535b88596970 57,79-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "302a014ef80aa299d2bab8116eac7de499612eca",
+  "prompts": {},
+  "sessions": {
+    "s_49f816dece41b1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a033e4-0248-7c40-b6dc-44396850b736",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

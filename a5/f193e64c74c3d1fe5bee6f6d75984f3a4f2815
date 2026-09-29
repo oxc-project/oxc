@@ -1,0 +1,19 @@
+.github/workflows/reusable_release_napi.yml
+  s_22934ff2bbec66::t_1f378e7faf5910 81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a5f193e64c74c3d1fe5bee6f6d75984f3a4f2815",
+  "prompts": {},
+  "sessions": {
+    "s_22934ff2bbec66": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc75b-94a9-7b43-a314-8fc80679555d",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

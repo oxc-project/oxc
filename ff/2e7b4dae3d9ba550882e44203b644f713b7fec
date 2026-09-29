@@ -1,0 +1,23 @@
+crates/oxc_ast/src/ast_impl/literal.rs
+  s_939f9cd6ece2da::t_6083439f4e27a0 84,86
+crates/oxc_parser/src/js/module.rs
+  s_939f9cd6ece2da::t_3d7c530e4fdf97 974
+tasks/coverage/misc/pass/string-named-export-literal-backslash-u.js
+  s_939f9cd6ece2da::t_e99feb2acd2d7e 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ff2e7b4dae3d9ba550882e44203b644f713b7fec",
+  "prompts": {},
+  "sessions": {
+    "s_939f9cd6ece2da": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0487d-17d3-76f1-ab6b-82beba894b2e",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

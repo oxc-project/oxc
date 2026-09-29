@@ -1,0 +1,35 @@
+apps/oxlint/src-js/generated/deserialize.js
+  s_46ac6bd0eeaafd::t_77b2d1d465e91b 2391
+apps/oxlint/src-js/generated/types.d.ts
+  s_46ac6bd0eeaafd::t_ccaaf48ad7c71f 676
+napi/parser/src-js/generated/deserialize/ts.js
+  s_46ac6bd0eeaafd::t_44479122f83edb 1920
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_46ac6bd0eeaafd::t_973f2ea678853a 2124
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_46ac6bd0eeaafd::t_dc65bd74a46ac0 2127
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_46ac6bd0eeaafd::t_b49e683b68c0c5 2330
+npm/oxc-types/types.d.ts
+  s_46ac6bd0eeaafd::t_8177c5789b2e20 669
+crates/oxc_ast/src/ast/js.rs
+  s_46ac6bd0eeaafd::t_67d7291381b4be 1872
+crates/oxc_ast/src/serialize/js.rs
+  s_46ac6bd0eeaafd::t_614a84f4cdc50a 382,422
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "16016b97fa5ead28579e36b49b0e04aaf352f47d",
+  "prompts": {},
+  "sessions": {
+    "s_46ac6bd0eeaafd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffa5d-8d4b-7a40-94d0-da2f7f243cf5",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

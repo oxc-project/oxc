@@ -1,0 +1,29 @@
+crates/oxc_linter/src/generated/rules_enum.rs
+  s_4b3c6ff8f0097f::t_afc0fcfcfbb941 2688
+tasks/linter_codegen/src/rules_enum.rs
+  s_3c7a5db6237378::t_09cef7b207bccc 301
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6fb6968bed193846e747bc1698890bfca4b137be",
+  "prompts": {},
+  "sessions": {
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_4b3c6ff8f0097f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019feb31-6426-7c70-a2fa-b6570ed10dd2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

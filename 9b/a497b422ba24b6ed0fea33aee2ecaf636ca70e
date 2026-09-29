@@ -1,0 +1,23 @@
+tasks/coverage/snapshots/parser_misc.snap
+  s_a9da32aa565194::t_e519745b99013a 4,202-212
+crates/oxc_semantic/src/checker/javascript.rs
+  s_a9da32aa565194::t_cc2860fd7f5602 851-855
+tasks/coverage/misc/fail/continue-label-chain-non-iteration.js
+  s_a9da32aa565194::t_89f53dbdcc7705 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9ba497b422ba24b6ed0fea33aee2ecaf636ca70e",
+  "prompts": {},
+  "sessions": {
+    "s_a9da32aa565194": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a04968-1cb2-79f0-8ab3-ab351dd93a55",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

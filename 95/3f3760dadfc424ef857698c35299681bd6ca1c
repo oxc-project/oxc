@@ -1,0 +1,25 @@
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_58493bfa5324ac::t_dff2d058bcb297 10,21,43,54,76
+crates/oxc_parser/src/comment_attachment.rs
+  s_58493bfa5324ac::t_c606e4b1c512b5 3,10-12,17-23,26-31,34-85,96-179,181-185,189,201-203,208,212-213,230,232,237,242-244,246,249-252,255-262,265-272,275-291
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_58493bfa5324ac::t_9f02d8049c906b 3-7,14-18,25-29,36-40,47-51,58-62,69-73
+crates/oxc_codegen/tests/integration/snapshots/pure_comments.snap
+  s_58493bfa5324ac::t_11e5856fe3bca1 286
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "953f3760dadfc424ef857698c35299681bd6ca1c",
+  "prompts": {},
+  "sessions": {
+    "s_58493bfa5324ac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01ac4-4d1b-7642-b86d-6773cf13abfd",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

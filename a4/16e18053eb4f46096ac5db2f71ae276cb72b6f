@@ -1,0 +1,23 @@
+tasks/coverage/snapshots/parser_typescript.snap
+  s_91772ea8e8adc7::t_46c21f31013c55 14578-14579,14582,14586-14587,14590
+crates/oxc_parser/src/diagnostics.rs
+  s_91772ea8e8adc7::t_4ad6c98c612b50 64-73
+crates/oxc_parser/src/js/class.rs
+  s_91772ea8e8adc7::t_698677ef96168c 796-799
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a416e18053eb4f46096ac5db2f71ae276cb72b6f",
+  "prompts": {},
+  "sessions": {
+    "s_91772ea8e8adc7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6b4a-d720-7080-9eac-540c38dd4563",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

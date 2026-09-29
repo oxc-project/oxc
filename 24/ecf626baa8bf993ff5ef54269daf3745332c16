@@ -1,0 +1,19 @@
+package.json
+  s_edcebb8a986c2d::t_61c6ba9cc9a258 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "24ecf626baa8bf993ff5ef54269daf3745332c16",
+  "prompts": {},
+  "sessions": {
+    "s_edcebb8a986c2d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a067ba-1c1b-7c81-be25-64df96e10f76",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,141 @@
+apps/oxlint/src-js/generated/deserialize.js
+  s_450b991f490d47::t_244ca631caf88f 2677,2683-2696
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_450b991f490d47::t_e7e0fa06706146 722-723,727-730,2541,2546-2549
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_450b991f490d47::t_eb72a3d5686048 1057,1061,1064,2665,2669,2672,4165,4169,4172,6196,6200,6203,11586,11590,11593,14790,14794,14797,15276,15280,15284,15294,15298,15302,18294,18298,18301,20606,20610,20613
+crates/oxc_ast/src/generated/derive_clone_in.rs
+  s_450b991f490d47::t_8b80993c3724e4 2411-2432
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_450b991f490d47::t_1cfe888f00ba8d 1190-1200
+crates/oxc_ast/src/generated/derive_dummy.rs
+  s_450b991f490d47::t_5bf16a9914cf9e 1301,1306-1314
+crates/oxc_ast/src/generated/derive_estree.rs
+  s_450b991f490d47::t_691e6ee978f24b 1449-1450
+crates/oxc_ast/src/generated/derive_replace_with.rs
+  s_450b991f490d47::t_ba3e4b6b7fd763 201-202
+crates/oxc_ast/src/generated/derive_take_in.rs
+  s_450b991f490d47::t_0f88b23c02d4d9 203-204
+crates/oxc_ast_macros/src/generated/enums.rs
+  s_450b991f490d47::t_154541e7d47611 11-12,14-15,18-25,27,29-31,33-38,43,48-54,56-62,64-65,67-69,71-81,83,85,87-99,101-110,112-128
+crates/oxc_ast_macros/src/generated/structs.rs
+  s_450b991f490d47::t_a0f1aeef8b9b9c 107
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_450b991f490d47::t_64569bc2135652 519-523,2590,2594-2609
+crates/oxc_ast_visit/src/generated/visit_js.rs
+  s_450b991f490d47::t_809e3a9bd993ed 546-550,2242,2246-2261
+crates/oxc_ast_visit/src/generated/visit_js_mut.rs
+  s_450b991f490d47::t_27e891bbd86abc 538-542,2341,2345-2360
+crates/oxc_ast_visit/src/generated/visit_mut.rs
+  s_450b991f490d47::t_90eb4335d8b79c 511-515,2681,2685-2700
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_450b991f490d47::t_e491a5f45e9e4e 4970,4972-4977
+crates/oxc_formatter/src/ast_nodes/generated/format.rs
+  s_450b991f490d47::t_b7b2290843430c 2570-2600
+crates/oxc_formatter/src/ast_nodes/node.rs
+  s_450b991f490d47::t_48f6c9f4b28a66 58-80
+crates/oxc_linter/src/rules/unicorn/no_immediate_mutation.rs
+  s_450b991f490d47::t_db37d998d0b4d3 626-628
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_450b991f490d47::t_ac95bedaceae90 151,572-573,1316,2082-2086,2386,9011,9015,9020,9034
+crates/oxc_minifier/src/generated/traverse.rs
+  s_450b991f490d47::t_4654d3daff8f25 991-1005
+crates/oxc_minifier/src/generated/walk.rs
+  s_450b991f490d47::t_9c9b0d6b18852b 2560-2561,2563-2567,2572-2585
+crates/oxc_minifier/src/traverse_context/scopes_collector.rs
+  s_450b991f490d47::t_b892fc5414aca2 1069
+crates/oxc_transformer/src/es2018/async_generator_functions/mod.rs
+  s_450b991f490d47::t_17f1c988ed3e78 170,174-180,212-216
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_450b991f490d47::t_8e527b1d564516 151,572-573,1316,2082-2086,2386,9011,9015,9020,9034
+crates/oxc_traverse/src/generated/scopes_collector.rs
+  s_450b991f490d47::t_d42f4f7d5368f8 1069
+crates/oxc_traverse/src/generated/traverse.rs
+  s_450b991f490d47::t_058c657042b17e 1264-1278
+crates/oxc_traverse/src/generated/walk.rs
+  s_450b991f490d47::t_5a3d894bac5488 2560-2561,2563-2567,2570-2583
+napi/parser/src-js/generated/deserialize/js.js
+  s_450b991f490d47::t_242b0491f4f75b 1947-1965
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_450b991f490d47::t_ed08d61c7b2bec 2157,2162-2175
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_450b991f490d47::t_dc0f924a20e1da 2163,2168-2181
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_450b991f490d47::t_096daf9fe47ea9 2371,2377-2390
+napi/parser/src-js/generated/deserialize/ts.js
+  s_450b991f490d47::t_79d7e8a780fa98 2146-2164
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_450b991f490d47::t_937f8d75fad8dc 2375,2380-2393
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_450b991f490d47::t_30b5078bc4c0a3 2383,2388-2401
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_450b991f490d47::t_be7d91b2529a6a 2610,2616-2629
+napi/parser/src-js/generated/lazy/type_ids.js
+  s_450b991f490d47::t_8c9cd5903b737a 20-47,49-104,192
+napi/parser/src-js/generated/lazy/walk.js
+  s_450b991f490d47::t_ccde3300bb16b7 191,372,538,567,729,746,769,786,803,820,838,866,1024,1040,1056,1073,1090,1107,1125,1210,1226,1284,1314,1331,1348,1369,1385,1423,1550,1600,1616,1638,1654,1672,1689,1706,1867,1925,1943,1959,1975,1991,2008,2025,2042,2059,2075,2093,2138,2155,2171,2188,2204,2224,2247,2405,2424-2425,2526,2953,2958,2963,2968,2973,2978,3053,3058,3293,3376,3419,3973,3978,3983,3988,3993,3998,4003,4008,4013,4018,4023,4028,4033,4038,4864
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_450b991f490d47::t_d3f11d7d1940fc 76
+crates/oxc_ast/src/ast/js.rs
+  s_450b991f490d47::t_a549a1b74c5368 2048-2051,2055-2069
+crates/oxc_ast/src/ast_impl/js.rs
+  s_450b991f490d47::t_0adaaa69bc382f 1656-1675
+crates/oxc_ast/src/serialize/js.rs
+  s_450b991f490d47::t_f8a5d3b674965b 814-852
+crates/oxc_codegen/src/gen.rs
+  s_450b991f490d47::t_be76fb880985a0 1878-1889
+crates/oxc_formatter/src/print/mod.rs
+  s_450b991f490d47::t_796f4f16fcbbbd 1218
+crates/oxc_formatter/src/utils/conditional.rs
+  s_450b991f490d47::t_194baec20940e8 346
+crates/oxc_linter/src/rules/jsdoc/require_yields.rs
+  s_450b991f490d47::t_47c838196221ff 201
+crates/oxc_linter/src/rules/unicorn/no_useless_iterator_to_array.rs
+  s_450b991f490d47::t_7f90b4e3cea65c 5,405
+crates/oxc_linter/src/rules/unicorn/no_useless_promise_resolve_reject.rs
+  s_450b991f490d47::t_fc602bea66f79e 3,123
+crates/oxc_linter/src/rules/unicorn/no_useless_spread/mod.rs
+  s_450b991f490d47::t_775430f8cec86f 6,334-335
+crates/oxc_linter/src/rules/unicorn/no_useless_undefined.rs
+  s_450b991f490d47::t_7e6d14c42ca758 3,203
+crates/oxc_linter/src/rules/unicorn/prefer_ternary.rs
+  s_450b991f490d47::t_b03d68593a22ce 207-209,212-213
+crates/oxc_minifier/src/peephole/minimize_statements.rs
+  s_450b991f490d47::t_103e8da0703825 1525
+crates/oxc_minifier/src/peephole/substitute_alternate_syntax.rs
+  s_450b991f490d47::t_82b20610ccabf7 1832-1834
+crates/oxc_parser/src/js/function.rs
+  s_450b991f490d47::t_8a28f058b58dde 505-512,523-525,527,529-532,534
+crates/oxc_react_compiler/src/react_compiler/entrypoint/program.rs
+  s_450b991f490d47::t_a182ef3642685e 596,1717
+crates/oxc_semantic/src/builder.rs
+  s_450b991f490d47::t_9b3c016c4e0a49 2809
+crates/oxc_transformer/src/es2017/async_to_generator.rs
+  s_450b991f490d47::t_f7543188359992 185
+crates/oxc_traverse/src/ast_operations/gather_node_parts.rs
+  s_450b991f490d47::t_3a25ec57f64721 397
+tasks/ast_tools/src/generators/formatter/ast_nodes.rs
+  s_450b991f490d47::t_bc982c712951cb 54-56
+tasks/ast_tools/src/generators/formatter/format.rs
+  s_450b991f490d47::t_66a3b59ab5a7b4 329-352
+tasks/ast_tools/src/generators/raw_transfer.rs
+  s_450b991f490d47::t_408ca169498ad4 1285,1319-1345
+tasks/ast_tools/src/generators/traverse/walk.rs
+  s_450b991f490d47::t_bd98b4b73aa0fe 557-563,565-569,571-574
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8d0295fe1b8ba4712c8e8d471c7d4444dea7c6b7",
+  "prompts": {},
+  "sessions": {
+    "s_450b991f490d47": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb398-2d5d-7160-a815-eea74e06c5d0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+tasks/coverage/src/typescript/mod.rs
+  s_ff31726993a587::t_11649f66d13ec9 15-16,18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "276eef1f711bc004f11161bb1718fc9c55f57ac1",
+  "prompts": {},
+  "sessions": {
+    "s_ff31726993a587": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c16-6434-74c3-b140-a59f82feba34",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

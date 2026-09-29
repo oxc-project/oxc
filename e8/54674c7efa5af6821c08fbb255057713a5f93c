@@ -1,0 +1,19 @@
+napi/playground/package.json
+  s_24889c5f9e1698::t_3a0f83c225bc72 6-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e854674c7efa5af6821c08fbb255057713a5f93c",
+  "prompts": {},
+  "sessions": {
+    "s_24889c5f9e1698": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc714-fe16-7e03-a857-5d65fc905627",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

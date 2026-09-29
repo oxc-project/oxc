@@ -1,0 +1,42 @@
+Cargo.lock
+  s_3c7a5db6237378::t_abeb6465194d69 138-143,283,705,1197-1209,1254-1263,1821,1832,3119-3123,3367,3494,3789,4097-4102,4219-4273
+  s_5da6562f606377::t_22eca8b9887867 1827
+  s_94b6e2b4cf7b72::t_ccccdbaba20e3a 1817-1820,1822-1826,1828-1831
+  s_3c7a5db6237378::t_fb2c428c6d3c30 1264
+  s_3c7a5db6237378::t_314e252ee27eda 1833
+  s_3c7a5db6237378::t_bcae36865ef076 3118
+Cargo.toml
+  s_5da6562f606377::t_24084354525b67 227
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "917139f0ab2d8afa838437a59ade3e87e9d78331",
+  "prompts": {},
+  "sessions": {
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_5da6562f606377": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb028-4c3a-7d30-b26f-5154cdc35e58",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_94b6e2b4cf7b72": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb007-9d82-7220-9b0e-b78e29a5f9bf",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

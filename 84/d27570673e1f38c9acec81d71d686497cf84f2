@@ -1,0 +1,92 @@
+tasks/ast_generator_fuzz/src/lib.rs
+  s_3c7a5db6237378::t_ba5a1b99b47cac 3-8,16,35-36,38-39,67-69,71-75,78-105,184,188-223,367,376,407,437,479,499-531
+  s_3c7a5db6237378::t_94e09119f20fe0 377-406
+  s_38ae44d6719eec::t_a08468e4547941 438
+  s_3c7a5db6237378::t_861b6f4c35fe3f 460-466
+  s_3c7a5db6237378::t_9554b3af1e2f57 37
+  s_3c7a5db6237378::t_e81e3c5fcae7a9 164-166,169
+  s_3c7a5db6237378::t_518af99f68d194 345-363,365
+  s_3c7a5db6237378::t_06347c27eceab3 112,115-130,133-135,150,170
+  s_3c7a5db6237378::t_5dde1b614d4f62 468
+  s_3c7a5db6237378::t_1668644e807a92 161-163
+  s_3c7a5db6237378::t_09b6a772ee3893 186-187
+  s_3c7a5db6237378::t_8e9348288111e6 28,47-55,57-64,66,70,76-77,114,131-132,136-142,146,159-160,265,267,317-318,320-321,364,366,416-417,471-478,488-489
+  s_3c7a5db6237378::t_120f6ad612225a 368-375
+  s_3c7a5db6237378::t_52f755693f17b3 495
+  s_3c7a5db6237378::t_06a0c2537891b8 408-410
+  s_3c7a5db6237378::t_065c618a7c6e4b 244-247
+  s_3c7a5db6237378::t_b44908fa3d33f4 485-487,491-493
+  s_3c7a5db6237378::t_df6c6a34aa1dc1 185,322-341,459,467,494
+  s_3c7a5db6237378::t_11878761b7f41b 482-484
+  s_3c7a5db6237378::t_7b7c497d18d540 9,106-111,113,143-145,147-149,151-155,171-178,224-226,243,248,481,496-498
+  s_3c7a5db6237378::t_b4e9bc21751d00 411-413
+  s_3c7a5db6237378::t_ceedd82f1251bb 234-235,342-344,469-470
+  s_3c7a5db6237378::t_e3f57780b12d10 33-34
+  s_3c7a5db6237378::t_05ea7a44ac8674 181-183
+  s_3c7a5db6237378::t_3fce6cb503263f 249-264,266,268-316,319
+  s_3c7a5db6237378::t_6487b6fa2f88d3 156-158
+  s_38ae44d6719eec::t_9f775e60fbbf51 1-2,11-15,17-19,29-32,40-46,56,65,227-231,236-239,439,532
+  s_3c7a5db6237378::t_7bbe87e1aa5aa0 167-168
+  s_3c7a5db6237378::t_2489d5ee7f3e34 179-180
+  s_3c7a5db6237378::t_3930f47b69c248 414-415
+  s_3c7a5db6237378::t_2d54a30142c2c3 418-420,434-436
+  s_3c7a5db6237378::t_4de66815b582b1 480
+  s_3c7a5db6237378::t_b7beac5c44c5fe 490
+Cargo.toml
+  s_5da6562f606377::t_24084354525b67 230
+Cargo.lock
+  s_3c7a5db6237378::t_bcae36865ef076 3169
+  s_3c7a5db6237378::t_fb2c428c6d3c30 1264
+  s_5da6562f606377::t_22eca8b9887867 1829
+  s_3c7a5db6237378::t_314e252ee27eda 1835
+  s_3c7a5db6237378::t_abeb6465194d69 138-143,283,705,1197-1209,1254-1263,1557,1823,1834,3170-3174,3418,3545,3841,4149-4154,4271-4325,4389
+  s_94b6e2b4cf7b72::t_ccccdbaba20e3a 1819-1822,1824-1828,1830-1833
+tasks/ast_generator_fuzz/src/main.rs
+  s_3c7a5db6237378::t_815af666ca6ffd 7
+  s_3c7a5db6237378::t_7dc3bdc2846791 1,9
+  s_94b6e2b4cf7b72::t_e51883aac88d71 2-6,8,10-12
+tasks/ast_generator_fuzz/Cargo.toml
+  s_5da6562f606377::t_3fc1a2771e070a 29
+  s_5da6562f606377::t_42738c2a7995df 25
+  s_94b6e2b4cf7b72::t_ba15e38c28a43b 1-24,26-28,30-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "84d27570673e1f38c9acec81d71d686497cf84f2",
+  "prompts": {},
+  "sessions": {
+    "s_38ae44d6719eec": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb016-5d89-7991-a4b7-84561c085015",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_5da6562f606377": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb028-4c3a-7d30-b26f-5154cdc35e58",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_94b6e2b4cf7b72": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb007-9d82-7220-9b0e-b78e29a5f9bf",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

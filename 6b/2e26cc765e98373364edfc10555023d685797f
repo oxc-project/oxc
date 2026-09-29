@@ -1,0 +1,89 @@
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_a523c5eac1fce0::t_f40693e4fcc284 3387,3392
+  s_a523c5eac1fce0::t_4ee65e97ad513f 1507,1513-1514,3338,3344-3345
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_a523c5eac1fce0::t_54ce2b54695857 26240
+  s_a523c5eac1fce0::t_561e84e9c4b769 15830,15835,15837,15842,15845,25475,25480,25482,25487,25490,25740,25745,25747,25752,25757,25771,25776,25778,25783,25786
+crates/oxc_ast/src/generated/derive_estree.rs
+  s_a523c5eac1fce0::t_d82bf98062c36b 2962
+  s_a523c5eac1fce0::t_5ff4eceb32e0ed 2890-2891
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_a523c5eac1fce0::t_10f0c93730fab0 9372
+  s_a523c5eac1fce0::t_c0f2aa7226d9e6 9076,9079
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_a523c5eac1fce0::t_2682f72c822b54 16062,16064
+  s_a523c5eac1fce0::t_6a19036a62ece5 261,779-780,1693,2501,15040-15041,15049,15054,15086,15114,15116-15117
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_a523c5eac1fce0::t_bf1c856782340c 16062,16064
+  s_a523c5eac1fce0::t_87ae85ea2cefcc 261,779-780,1693,2501,15040-15041,15049,15054,15086,15114,15116-15117
+apps/oxlint/src-js/generated/deserialize.js
+  s_a523c5eac1fce0::t_199fa28c4d6de8 5015,5025
+crates/oxc_ast/src/generated/derive_clone_in.rs
+  s_a523c5eac1fce0::t_f29200282dd5cb 4881
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_a523c5eac1fce0::t_f01df202a7e2d6 2266
+crates/oxc_ast/src/generated/derive_dummy.rs
+  s_a523c5eac1fce0::t_c321b6b3d29d09 2709,2714
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_a523c5eac1fce0::t_7bfb3e9cb04bd1 3783
+crates/oxc_ast_visit/src/generated/visit_mut.rs
+  s_a523c5eac1fce0::t_f5206503341896 3994
+crates/oxc_linter/src/rules/typescript/consistent_indexed_object_style.rs
+  s_a523c5eac1fce0::t_3b34fd22ecc6a6 181-182,296-297
+crates/oxc_minifier/src/generated/walk.rs
+  s_a523c5eac1fce0::t_5df7327b0a4951 4856-4857,4859-4864
+crates/oxc_minifier/src/traverse_context/scopes_collector.rs
+  s_a523c5eac1fce0::t_3ea5c41797e217 1903
+crates/oxc_traverse/src/generated/scopes_collector.rs
+  s_a523c5eac1fce0::t_f20d05d0ef19d0 1903
+crates/oxc_traverse/src/generated/walk.rs
+  s_a523c5eac1fce0::t_c1d9fe92a71975 4856-4857,4859-4864
+napi/parser/src-js/generated/deserialize/js.js
+  s_a523c5eac1fce0::t_8d81796fe2d64e 3676,3684
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_a523c5eac1fce0::t_cca1d87cb535df 4091,4100
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_a523c5eac1fce0::t_2ad0c5a1e7109d 4109,4118
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_a523c5eac1fce0::t_285e66ee89d23d 4522,4532
+napi/parser/src-js/generated/deserialize/ts.js
+  s_a523c5eac1fce0::t_e7417785c2b4ec 3970,3978
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_a523c5eac1fce0::t_5a08b1c62a432f 4415,4424
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_a523c5eac1fce0::t_d572f8b6016cdb 4431,4440
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_a523c5eac1fce0::t_b59e15edc4cc6a 4874,4884
+napi/parser/src-js/generated/lazy/walk.js
+  s_a523c5eac1fce0::t_004935dfda09f4 4312-4313
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_a523c5eac1fce0::t_639d68b42145d7 19,74
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_a523c5eac1fce0::t_7af6d56d6d730d 19,74
+crates/oxc_ast/src/ast/ts.rs
+  s_a523c5eac1fce0::t_fcb9968264fd20 1045,1058-1059
+crates/oxc_codegen/src/gen.rs
+  s_a523c5eac1fce0::t_fc92bf9c801913 3928-3931
+crates/oxc_formatter/src/print/class.rs
+  s_a523c5eac1fce0::t_785e89acede2c9 207
+crates/oxc_parser/src/ts/types.rs
+  s_a523c5eac1fce0::t_0f84d45b8d2505 1,1539-1566,1574-1575,1584,1587-1589,1598
+crates/oxc_semantic/src/checker/javascript.rs
+  s_a523c5eac1fce0::t_e0c3dd5088e4fe 1071,1079
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6b2e26cc765e98373364edfc10555023d685797f",
+  "prompts": {},
+  "sessions": {
+    "s_a523c5eac1fce0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb7bf-4124-7a00-992c-215cbfffdd60",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

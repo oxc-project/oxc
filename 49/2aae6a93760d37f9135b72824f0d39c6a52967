@@ -1,0 +1,19 @@
+crates/oxc_ast/src/serialize/mod.rs
+  s_e0ae719ccad812::t_3e42dd381360a7 89,92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "492aae6a93760d37f9135b72824f0d39c6a52967",
+  "prompts": {},
+  "sessions": {
+    "s_e0ae719ccad812": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae8d-8a2b-7ea2-b984-d15fbe800cee",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

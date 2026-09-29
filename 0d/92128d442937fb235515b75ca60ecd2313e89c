@@ -1,0 +1,31 @@
+crates/oxc_parser/src/ts/types.rs
+  s_8f0d61316a881f::t_02522d3828a206 12-15,1645,1655-1657,1678
+crates/oxc_parser/src/js/mod.rs
+  s_5da6562f606377::t_97f64301c682ff 13
+tasks/coverage/misc/pass/contextual-keyword-after-relational-type-arguments.ts
+  s_5da6562f606377::t_8c0b80e6096e48 4-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0d92128d442937fb235515b75ca60ecd2313e89c",
+  "prompts": {},
+  "sessions": {
+    "s_5da6562f606377": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb028-4c3a-7d30-b26f-5154cdc35e58",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_8f0d61316a881f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6af0-50ab-7272-ad21-e840f52a58af",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

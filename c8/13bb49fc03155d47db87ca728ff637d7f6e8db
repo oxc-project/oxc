@@ -1,0 +1,21 @@
+.github/workflows/release_apps.yml
+  s_cd55adf77eceb2::t_19cc080ae156a4 232,538
+.github/workflows/reusable_release_napi.yml
+  s_cd55adf77eceb2::t_e3a6eaadf17b35 184
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c813bb49fc03155d47db87ca728ff637d7f6e8db",
+  "prompts": {},
+  "sessions": {
+    "s_cd55adf77eceb2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05d3e-f900-7d62-888f-f1f68e23e677",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

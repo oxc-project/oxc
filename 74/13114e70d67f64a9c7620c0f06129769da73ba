@@ -1,0 +1,19 @@
+crates/oxc_allocator/src/vec2/mod.rs
+  s_7ae0754ee527ba::t_5b3be423a7313d 2753,2755-2757
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7413114e70d67f64a9c7620c0f06129769da73ba",
+  "prompts": {},
+  "sessions": {
+    "s_7ae0754ee527ba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a023a9-309a-7aa0-8554-d23c20daa3d1",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

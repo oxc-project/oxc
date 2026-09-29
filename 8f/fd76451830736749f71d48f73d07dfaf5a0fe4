@@ -1,0 +1,39 @@
+crates/oxc_isolated_declarations/src/lib.rs
+  s_2a81ccd359eebb::t_3a071edac575eb 521-523,526-527,535-541,545,551,554,559,562,567,569,579-580,582,591,601,608,645,655-664
+crates/oxc_isolated_declarations/tests/fixtures/issue-24975.ts
+  s_9809fcdb215774::t_20b3f518581fe5 1-37
+crates/oxc_isolated_declarations/tests/snapshots/issue-24975.snap
+  s_693b6214ced0d1::t_e25e37f7060777 1-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8ffd76451830736749f71d48f73d07dfaf5a0fe4",
+  "prompts": {},
+  "sessions": {
+    "s_2a81ccd359eebb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f7-79a0-b54f-af7ad1555116",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_693b6214ced0d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffc1-edd6-7d80-b5ba-634466fd223b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_9809fcdb215774": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59af-7823-bd68-8dc01cf2e5c9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

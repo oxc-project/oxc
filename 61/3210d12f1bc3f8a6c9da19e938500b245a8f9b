@@ -1,0 +1,25 @@
+tasks/codegen_conformance/index.d.ts
+  s_6b5aa3ca33a1b5::t_8a87b1a4c221fa 23-24
+tasks/codegen_conformance/src/lib.rs
+  s_6b5aa3ca33a1b5::t_6047749b1d6c1d 51-52,144-145,157
+packages/codegen/test/source-maps.test.ts
+  s_6b5aa3ca33a1b5::t_538c005bf2d75b 283
+packages/codegen/test/utils/common.ts
+  s_6b5aa3ca33a1b5::t_62195ea37d0a30 64-65,72-77,210-218
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "613210d12f1bc3f8a6c9da19e938500b245a8f9b",
+  "prompts": {},
+  "sessions": {
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+crates/oxc_parser/src/js/arrow.rs
+  s_01b0963c7995ba::t_da9bcf586740cb 1,237-242
+crates/oxc_parser/src/js/class.rs
+  s_55a207f02dbe8c::t_ee410ff65e1fd8 118-132,245,495-507,535-547,667-679
+crates/oxc_parser/src/js/expression.rs
+  s_1a3c47d53bfe91::t_93b0d249847a74 369,375,413-418,438-443,478-482
+crates/oxc_parser/src/js/grammar.rs
+  s_55a207f02dbe8c::t_dfdcc910a87197 127-128,205-206
+crates/oxc_parser/src/js/module.rs
+  s_55a207f02dbe8c::t_b99432da69293f 57-62,250-257,399-405,434,448,473-476,497-500,621-627,633-637,659-662,681-682,820-826
+crates/oxc_parser/src/js/statement.rs
+  s_1a3c47d53bfe91::t_5453c8b8c15570 271,875-880
+crates/oxc_parser/src/ts/types.rs
+  s_55a207f02dbe8c::t_26ba2d0c2ce8c7 57-60,190-193,329-337,486,744-745,758,826-831,902-904,927-929,976,1185-1191,1229-1230,1258-1261,1345,1356-1361,1375-1376,1620-1626
+crates/oxc_parser/src/js/binding.rs
+  s_55a207f02dbe8c::t_12661b157e21cb 119
+crates/oxc_parser/src/js/object.rs
+  s_55a207f02dbe8c::t_38954a124f0ebf 40-43,87-95,128-136,151,164-172,236-244
+crates/oxc_parser/src/jsx/mod.rs
+  s_55a207f02dbe8c::t_068919818e6dd0 68-73,114-119,142-147,250-254,367-372,415,423,460,471,546
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "80e7f8ff7594990d3051395a49dff34cd6c08be8",
+  "prompts": {},
+  "sessions": {
+    "s_01b0963c7995ba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f47-33d2-79c2-ba3f-0c7a8fdc46bf",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_1a3c47d53bfe91": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01951-d5f6-7c51-b441-1ba6a0694e08",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_55a207f02dbe8c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a019ab-7d9d-7711-b78e-28a8c089f066",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

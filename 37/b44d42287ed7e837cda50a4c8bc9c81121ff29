@@ -1,0 +1,19 @@
+crates/oxc_ast_visit/src/node_id.rs
+  s_43cff1d112befe::t_76b370ef1f6361 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "37b44d42287ed7e837cda50a4c8bc9c81121ff29",
+  "prompts": {},
+  "sessions": {
+    "s_43cff1d112befe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06825-a359-7b41-b9dd-90b0622613e7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+tasks/coverage/snapshots/parser_babel.snap
+  s_1308e557a11ddc::t_8e17354d8393f6 5,251-267
+crates/oxc_parser/src/diagnostics.rs
+  s_1308e557a11ddc::t_fae7e6ddd4b9c1 331-334
+crates/oxc_parser/src/ts/statement.rs
+  s_1308e557a11ddc::t_0e0e8d48a8c6ff 412-414
+tasks/transform_conformance/snapshots/babel.snap.md
+  s_1308e557a11ddc::t_78b3985753a1a9 3,1058
+tasks/coverage/snapshots/parser_typescript.snap
+  s_1308e557a11ddc::t_f7453e60cd45f9 6,11294-11300,26820-26826
+tasks/coverage/snapshots/semantic_babel.snap
+  s_1308e557a11ddc::t_90f69d9c649065 289-290
+tasks/prettier_conformance/snapshots/prettier.ts.snap.md
+  s_1308e557a11ddc::t_99e545a1c22ef6 1,58
+crates/oxc_codegen/tests/integration/snapshots/minify.snap
+  s_1308e557a11ddc::t_e6bd9de42b241f 115,117
+crates/oxc_codegen/tests/integration/snapshots/ts.snap
+  s_1308e557a11ddc::t_09858631476666 176,178
+crates/oxc_codegen/tests/integration/ts.rs
+  s_1308e557a11ddc::t_9ce5724d6a64af 104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e57ca5617a67cf8391fecaa95b1532a8771d0349",
+  "prompts": {},
+  "sessions": {
+    "s_1308e557a11ddc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd159-1738-77b2-9481-11e47d2f0b76",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

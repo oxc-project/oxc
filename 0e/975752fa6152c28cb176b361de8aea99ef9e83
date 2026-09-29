@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/jsx_a11y/anchor_has_content.rs
+  s_de1a11f9ca757c::t_c400e7e721a79b 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0e975752fa6152c28cb176b361de8aea99ef9e83",
+  "prompts": {},
+  "sessions": {
+    "s_de1a11f9ca757c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd18a-cc3e-7582-adac-364ce4ffa84c",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

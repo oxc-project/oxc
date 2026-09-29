@@ -1,0 +1,21 @@
+apps/oxlint/src/lsp/options.rs
+  s_d6b486dc86f567::t_51caa67f48e8a2 276,305-319
+apps/oxlint/src/lsp/server_linter.rs
+  s_d6b486dc86f567::t_aeea42725d32e8 1521-1538,1557-1571
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9d623493146c8ecf29590892ff61434fe0bf016b",
+  "prompts": {},
+  "sessions": {
+    "s_d6b486dc86f567": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd23a-8817-71a2-bb69-a7ebf8d0fa77",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

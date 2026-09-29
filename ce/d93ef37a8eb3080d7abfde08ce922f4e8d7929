@@ -1,0 +1,35 @@
+apps/oxlint/src-js/package/rule_tester.ts
+  s_8a124bdd2164cc::t_34529db3e0e8cf 16,1311
+apps/oxlint/src-js/plugins/load.ts
+  s_8a124bdd2164cc::t_8f95cbc912eddd 87-90,99-106,155,174-179,326-327
+apps/oxlint/src-js/plugins/workspace.ts
+  s_8a124bdd2164cc::t_61eec338a544ce 2,29
+apps/oxlint/src-js/workspace/index.ts
+  s_8a124bdd2164cc::t_cfd65ef3650fe6 20,52,57
+apps/oxlint/test/fixtures/plugin_name_duplicate/.oxlintrc.json
+  s_8a124bdd2164cc::t_424562c331b0bb 1-6
+apps/oxlint/test/fixtures/plugin_name_duplicate/files/test.js
+  s_8a124bdd2164cc::t_ae68fd7f9f6a7d 1
+apps/oxlint/test/fixtures/plugin_name_duplicate/output.snap.md
+  s_8a124bdd2164cc::t_d9303b64271709 1-14
+apps/oxlint/test/fixtures/plugin_name_duplicate/plugin1.ts
+  s_8a124bdd2164cc::t_a1cd6e4121fd25 1-18
+apps/oxlint/test/fixtures/plugin_name_duplicate/plugin2.ts
+  s_8a124bdd2164cc::t_1d8275f9c188e2 1-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ced93ef37a8eb3080d7abfde08ce922f4e8d7929",
+  "prompts": {},
+  "sessions": {
+    "s_8a124bdd2164cc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc1fa-1b9e-7243-9fcb-c8e78bc251d4",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

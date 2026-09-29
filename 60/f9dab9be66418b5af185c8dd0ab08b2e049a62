@@ -1,0 +1,21 @@
+tasks/ast_generator_fuzz/src/lib.rs
+  s_3c7a5db6237378::t_7b7c497d18d540 3-4,30,33-63,72-77
+tasks/ast_generator_fuzz/src/main.rs
+  s_3c7a5db6237378::t_815af666ca6ffd 1,7,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "60f9dab9be66418b5af185c8dd0ab08b2e049a62",
+  "prompts": {},
+  "sessions": {
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

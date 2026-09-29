@@ -1,0 +1,29 @@
+tasks/ast_transfer_conformance/src-js/generated/raw_transfer_back.js
+  s_0468d6c34590c4::t_216851ad83bbd0 34-40,99,103,120-126,129,231-245,358-361,372,379-436,443,447-465
+tasks/ast_transfer_conformance/src/generated/raw_transfer_back_constants.rs
+  s_0468d6c34590c4::t_2d389e6cac86df 33-38
+tasks/ast_transfer_conformance/test/conformance.test.ts
+  s_0468d6c34590c4::t_b98f29967d877d 115,126-127,130-132,169-184
+tasks/ast_tools/src/generators/raw_transfer_back.rs
+  s_0468d6c34590c4::t_cafc42d5f6edfe 33,120-131,286-293,404-410,519-525,584,588,605-611,614,713-737,810-813,824,831-888,895,899-917
+tasks/ast_transfer_conformance/src/lib.rs
+  s_0468d6c34590c4::t_c42fdca7f2048a 24,310-311,316,358-368,400-401,407-425,480-485,510-557,716,748-774,795-796,800,809,815-846,936-946
+tasks/ast_transfer_conformance/test/snapshots/identity.snap.md
+  s_0468d6c34590c4::t_8e7d2c1f440868 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "43a10a9cd4571e7964bc991045fb5f65aec61060",
+  "prompts": {},
+  "sessions": {
+    "s_0468d6c34590c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc85d-f98e-7651-a22e-427584ce496d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

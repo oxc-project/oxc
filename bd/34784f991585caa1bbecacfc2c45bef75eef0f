@@ -1,0 +1,25 @@
+crates/oxc_semantic/tests/integration/node_ids.rs
+  s_43cff1d112befe::t_b103970e1942ab 71,92
+crates/oxc_codegen/tests/integration/comments.rs
+  s_43cff1d112befe::t_cd658b0752936e 268-298
+crates/oxc_ast_visit/src/comment_attachment.rs
+  s_43cff1d112befe::t_d66c65fb689ff4 77,83,151,181,184,383,646,669
+crates/oxc_semantic/src/builder.rs
+  s_43cff1d112befe::t_f2d81868ccf40a 367-368
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bd34784f991585caa1bbecacfc2c45bef75eef0f",
+  "prompts": {},
+  "sessions": {
+    "s_43cff1d112befe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06825-a359-7b41-b9dd-90b0622613e7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

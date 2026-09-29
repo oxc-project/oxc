@@ -1,0 +1,33 @@
+crates/oxc_codegen/src/comment.rs
+  s_7ae0754ee527ba::t_7fb822599a457a 89-95
+crates/oxc_isolated_declarations/tests/snapshots/enum-runtime-initializer.snap
+  s_9ed927f35cc001::t_1f69c72f484287 16-19,40-47
+crates/oxc_isolated_declarations/src/enum.rs
+  s_9ed927f35cc001::t_211be2caf1fb9d 167
+crates/oxc_isolated_declarations/tests/fixtures/enum-runtime-initializer.ts
+  s_9ed927f35cc001::t_9f45a1050e9b5c 10-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "16fd282a527f9f78ee292cc8c8ee7363bce1a83d",
+  "prompts": {},
+  "sessions": {
+    "s_7ae0754ee527ba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a023a9-309a-7aa0-8554-d23c20daa3d1",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_9ed927f35cc001": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a023c7-c715-7293-9a16-e49d77dac0a8",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

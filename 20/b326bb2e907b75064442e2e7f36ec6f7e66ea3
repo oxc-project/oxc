@@ -1,0 +1,19 @@
+crates/oxc_ast/src/ast_impl/js.rs
+  s_cc5727fb941684::t_625442cd39e38e 45-54,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "20b326bb2e907b75064442e2e7f36ec6f7e66ea3",
+  "prompts": {},
+  "sessions": {
+    "s_cc5727fb941684": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa901-6a01-7483-8667-5c80757815e2",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

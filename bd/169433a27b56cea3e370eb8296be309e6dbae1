@@ -1,0 +1,19 @@
+npm/oxlint/configuration_schema.json
+  s_9695f3b2c013ee::t_bd69ec662b0098 14220
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bd169433a27b56cea3e370eb8296be309e6dbae1",
+  "prompts": {},
+  "sessions": {
+    "s_9695f3b2c013ee": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-8704ee7ed7b2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

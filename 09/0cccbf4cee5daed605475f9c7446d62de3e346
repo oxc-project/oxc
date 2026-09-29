@@ -1,0 +1,33 @@
+apps/oxlint/fixtures/cli/report_unused_directives/.oxlintrc-with-rudd.json
+  s_e22c19c35d77d6::t_93cacffc4f3729 7-8
+apps/oxlint/fixtures/cli/report_unused_directives/.oxlintrc.json
+  s_e22c19c35d77d6::t_e25512b1082315 4-5,7
+apps/oxlint/fixtures/cli/report_unused_directives/test.js
+  s_2a81ccd359eebb::t_35b0dce1046c6b 16-17
+crates/oxc_linter/src/rules/eslint/no_irregular_whitespace.rs
+  s_2a81ccd359eebb::t_6ac8da45d9f13e 45,224-267,465-466,474-481
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "090cccbf4cee5daed605475f9c7446d62de3e346",
+  "prompts": {},
+  "sessions": {
+    "s_2a81ccd359eebb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f7-79a0-b54f-af7ad1555116",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_e22c19c35d77d6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f4d-7a32-b351-33a7666a78f3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

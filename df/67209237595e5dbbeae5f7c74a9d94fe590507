@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/oxc/number_arg_out_of_range.rs
+  s_1574c7e0f1f72c::t_91b39dd1318950 60-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "df67209237595e5dbbeae5f7c74a9d94fe590507",
+  "prompts": {},
+  "sessions": {
+    "s_1574c7e0f1f72c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f9463-1bcd-7441-8529-f4759bc6838f",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/no_irregular_whitespace.rs
+  s_9695f3b2c013ee::t_0c889ad1946efe 142-144,271,483-486
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "70541a6dba4d6ac67c4422481d8b652f74cf86a6",
+  "prompts": {},
+  "sessions": {
+    "s_9695f3b2c013ee": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-8704ee7ed7b2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

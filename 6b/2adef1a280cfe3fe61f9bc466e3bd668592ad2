@@ -1,0 +1,143 @@
+apps/oxlint/src-js/generated/deserialize.js
+  s_cc5727fb941684::t_8e7d87fd6a0bd8 2137-2139,2148-2154,6597-6600
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_cc5727fb941684::t_d64a6bec162d50 565,572,575-580,2404,2411,2414-2419
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_cc5727fb941684::t_63754679860ace 12530-12536,12538-12580
+crates/oxc_ast/src/generated/derive_clone_in.rs
+  s_cc5727fb941684::t_2b6b2f7c9a9ee4 2001-2020
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_cc5727fb941684::t_2662441f3a253b 990,996-1002
+crates/oxc_ast/src/generated/derive_dummy.rs
+  s_cc5727fb941684::t_b0f27b48f6c064 1045-1053
+crates/oxc_ast/src/generated/derive_estree.rs
+  s_cc5727fb941684::t_8309055ec2997e 1183-1191
+crates/oxc_ast/src/generated/derive_get_span.rs
+  s_cc5727fb941684::t_665cb097dfa3bd 882
+crates/oxc_ast/src/generated/derive_get_span_mut.rs
+  s_cc5727fb941684::t_023f10a11af1b5 881
+crates/oxc_ast/src/generated/derive_replace_with.rs
+  s_cc5727fb941684::t_a362640fd25654 169-170
+crates/oxc_ast/src/generated/derive_take_in.rs
+  s_cc5727fb941684::t_399abb5855b50c 171-172
+crates/oxc_ast/src/serialize/js.rs
+  s_cc5727fb941684::t_509e904d01b7bd 19,33,64,67,70-72
+crates/oxc_ast_macros/src/generated/structs.rs
+  s_cc5727fb941684::t_b5be5785c8d1d4 12-14,16-17,19-23,25,27,29,33-39,41-44,48-53,55-59,62-63,65-90,94,96,102,110,112,118,122,124,130-131,133,135,137,143-148,151,153,159,163,165,171,179,181-182,187-191,199-207,209,215-219,221,227-228,230,232,234,240-245,248-249,252,255,257,259,265,267,273,275,281,283,289-294,297,301,305-310,313-318,320,322,324,330,338-343,346-347,350,358,366,368,374-378,380-381,386,390-394,402-406,408,414-418,426,428,433,435,439,446,448,452,454,460,462,468-472,474,480,488,492,494,500,502,508,510,516,518,524,526-527,531,533,535,541-545,549-550,553-557,561-562,565,567,573,577-578,581-582,585,587,593-594,597,599,604,606,614,616,622-623,626-627,630,632,638,640,646,648,654-658,660,666,670-674,676,682,686-690,692,698,706,708,714,716-717,722,724,730,732,738-739,742,750-751,754,756,762,764-765,770,772,778,780,786,788,794,802,804,810,826-827,830-838,840,846-851,854-855,858-859,862,870,874,878,880,886-890,894-895,898,900-901,906-907,910-911,914-915,918-922,924,930-934,936,942,944-945,950,958-974,976,982-986,994-998,1000-1001,1006-1007,1010,1014,1016,1022,1026-1027,1030,1032,1038,1042,1044,1050-1054,1056,1061,1063,1065,1071,1075-1083,1087-1095,1102,1104,1106,1111,1113-1114,1117,1119,1125-1133,1135,1141,1149,1157,1161-1162,1165,1167,1173,1175,1181,1189,1193-1194,1197,1199,1205-1209,1211,1217,1219,1225,1233,1237-1238,1240,1242,1246-1247,1250,1254,1256,1262,1264,1269-1270,1272-1288,1290-1291,1296,1298,1303,1305,1309-1310,1313,1315,1321,1323,1329-1330,1333,1337,1345,1347,1353-1358,1360,1362,1364,1370,1372,1378,1380,1386,1388,1393,1395,1397,1403,1405,1419,1427,1429,1435-1436,1439,1443,1445,1451,1459,1461,1467-1471,1473,1479-1488,1490
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_cc5727fb941684::t_12168aef4318bc 439-443,2369,2373-2379
+crates/oxc_ast_visit/src/generated/visit_js.rs
+  s_cc5727fb941684::t_6cb124a72ccc7b 466-470,2039,2043-2049
+crates/oxc_ast_visit/src/generated/visit_js_mut.rs
+  s_cc5727fb941684::t_3bd95cea763b90 458-462,2115,2119-2125
+crates/oxc_ast_visit/src/generated/visit_mut.rs
+  s_cc5727fb941684::t_9b6006c0994d59 431-435,2433,2437-2443
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_cc5727fb941684::t_f351963c9b34df 4103-4164
+crates/oxc_formatter/src/ast_nodes/generated/format.rs
+  s_cc5727fb941684::t_e95d6567e7f57f 2228-2280
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_cc5727fb941684::t_45eff173593f20 116-325,514-517,1225-1229,2364-2365,6811-6860
+crates/oxc_minifier/src/generated/traverse.rs
+  s_cc5727fb941684::t_b4bb0672d8ee13 837-841
+crates/oxc_minifier/src/generated/walk.rs
+  s_cc5727fb941684::t_3b5425b5e641f7 2063-2064,2070-2093
+crates/oxc_minifier/src/peephole/remove_dead_code.rs
+  s_cc5727fb941684::t_326eb7191cf70e 2,289-290,312,314,317-318,323-324,331-334
+crates/oxc_transformer/src/es2018/async_generator_functions/for_await.rs
+  s_cc5727fb941684::t_66d69382830b0d 3,530
+crates/oxc_transformer/src/es2026/explicit_resource_management.rs
+  s_cc5727fb941684::t_a2a4ed6bece338 782,919
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_cc5727fb941684::t_7ee9a24a568110 116-325,514-517,1225-1229,2364-2365,6811-6860
+crates/oxc_traverse/src/generated/traverse.rs
+  s_cc5727fb941684::t_cc96d6f1a0024e 1043-1057
+crates/oxc_traverse/src/generated/walk.rs
+  s_cc5727fb941684::t_1296173a0129fc 2063-2064,2070-2093
+napi/parser/src-js/generated/deserialize/js.js
+  s_cc5727fb941684::t_76f835e4b1af8f 1649-1651,1659-1665,5291-5294
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_cc5727fb941684::t_c730829f864612 1822-1824,1833-1839,5814-5817
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_cc5727fb941684::t_c6d2d3faf1558c 1828-1830,1838-1844,5849-5852
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_cc5727fb941684::t_940f9c8ab5b8df 2000-2002,2011-2017,6371-6374
+napi/parser/src-js/generated/deserialize/ts.js
+  s_cc5727fb941684::t_fbf35f1e4bca25 1731-1733,1741-1747,5588-5591
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_cc5727fb941684::t_4874d2194e3f34 1907-1909,1918-1924,6141-6144
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_cc5727fb941684::t_6055951dd55ddf 1910-1912,1920-1926,6174-6177
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_cc5727fb941684::t_0a53007a597d7e 2085-2087,2096-2102,6726-6729
+napi/parser/src-js/generated/lazy/constructors.js
+  s_cc5727fb941684::t_aee746c22c9651 4010-4011,4018-4019,4040-4078,13426-13429
+napi/parser/src-js/generated/lazy/walk.js
+  s_cc5727fb941684::t_094651151b54fa 2102
+tasks/ast_tools/src/generators/ast_builder.rs
+  s_cc5727fb941684::t_bada513d4fdb3a 256-260,267-268
+tasks/ast_tools/src/generators/raw_transfer_lazy.rs
+  s_cc5727fb941684::t_b7862649a8469b 318-319,469-474,568-569,705-706,711-722,725-728,736-737,744-745,751-754,759-761
+crates/oxc_ast/src/ast/js.rs
+  s_cc5727fb941684::t_0a2962fd1a4e82 1517-1530
+crates/oxc_ast/src/ast_impl/js.rs
+  s_cc5727fb941684::t_9505bb09a10d16 7,29-30,38-39,45-56
+crates/oxc_ecmascript/src/side_effects/statements.rs
+  s_cc5727fb941684::t_2824523160980c 73-75
+crates/oxc_formatter/src/ast_nodes/node.rs
+  s_cc5727fb941684::t_a89e1831cb9a3e 32,34-35,39,47,49-50,53
+crates/oxc_formatter/src/print/try_statement.rs
+  s_cc5727fb941684::t_6a8c5ec107f069 45-50
+crates/oxc_minifier/src/is_terminated.rs
+  s_cc5727fb941684::t_0b3ec97dccf7f8 40-42
+crates/oxc_parser/src/js/statement.rs
+  s_cc5727fb941684::t_5312e8236279e6 813-815
+crates/oxc_react_compiler/src/react_compiler/entrypoint/program.rs
+  s_cc5727fb941684::t_708d646c09865b 1455-1457
+crates/oxc_react_compiler/src/react_compiler_lowering/build_hir.rs
+  s_cc5727fb941684::t_4082d08003044e 6076,6082
+crates/oxc_transformer/src/es2018/object_rest_spread.rs
+  s_cc5727fb941684::t_1ae10c5cbc56b8 788-791
+tasks/ast_tools/src/derives/clone_in.rs
+  s_cc5727fb941684::t_97ce73d5604be3 183
+tasks/ast_tools/src/derives/content_eq.rs
+  s_cc5727fb941684::t_6a82613e0b8701 124
+tasks/ast_tools/src/derives/dummy.rs
+  s_cc5727fb941684::t_97a39062463aaf 166-173,226-227
+tasks/ast_tools/src/derives/get_span.rs
+  s_cc5727fb941684::t_ad93752c4c96ee 194,196,198
+tasks/ast_tools/src/generators/assert_layouts.rs
+  s_cc5727fb941684::t_7baae8590c2559 410,414-420
+tasks/ast_tools/src/generators/formatter/ast_nodes.rs
+  s_cc5727fb941684::t_21118f369e4dc9 553-554,569-570
+tasks/ast_tools/src/generators/raw_transfer.rs
+  s_cc5727fb941684::t_b0b6401173170c 1285,1319-1323
+tasks/ast_tools/src/generators/scopes_collector.rs
+  s_cc5727fb941684::t_e979f1f4679b89 186,188-189,193,466-486,488-492,494
+tasks/ast_tools/src/generators/traverse/walk.rs
+  s_cc5727fb941684::t_f84d9858b82d7d 540-549,553-554,556-558,560,564
+tasks/ast_tools/src/generators/visit.rs
+  s_cc5727fb941684::t_5309bbfed1a0ad 548-557,562-564
+tasks/ast_tools/src/generators/visit_js.rs
+  s_cc5727fb941684::t_099612088ce747 593-594,597-605,610-611
+tasks/ast_tools/src/parse/parse.rs
+  s_cc5727fb941684::t_ace6f27b2220c8 546-559,574
+tasks/ast_tools/src/schema/defs/enum.rs
+  s_cc5727fb941684::t_354eb90c2c9734 11,210,218,221,254,262
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6b2adef1a280cfe3fe61f9bc466e3bd668592ad2",
+  "prompts": {},
+  "sessions": {
+    "s_cc5727fb941684": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa901-6a01-7483-8667-5c80757815e2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

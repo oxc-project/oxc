@@ -1,0 +1,19 @@
+crates/oxc_semantic/src/jsdoc.rs
+  s_76b6cd588074be::t_1336dd2d88d433 203
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "729f5801dc5edd017c1c2a87df440a56f27d719f",
+  "prompts": {},
+  "sessions": {
+    "s_76b6cd588074be": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae6b-a7fa-7c12-811c-0e3d7f9f6763",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

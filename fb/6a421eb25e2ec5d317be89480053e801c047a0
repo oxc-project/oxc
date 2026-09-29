@@ -1,0 +1,25 @@
+apps/oxlint/test/fixtures/bom/files/bom_unicode.js
+  s_1ea5a11e3787c4::t_eb701481bcd7d1 1
+apps/oxlint/test/fixtures/bom/output.snap.md
+  s_1ea5a11e3787c4::t_29bb3eab58a002 40-44,50-57,65,115
+apps/oxlint/test/fixtures/bom/plugin.ts
+  s_1ea5a11e3787c4::t_8da9f4bd8976dd 19-23,29-30
+crates/oxc_ast_visit/src/utf8_to_utf16/translation.rs
+  s_1ea5a11e3787c4::t_0c54975703b440 93-95,99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fb6a421eb25e2ec5d317be89480053e801c047a0",
+  "prompts": {},
+  "sessions": {
+    "s_1ea5a11e3787c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05d33-5f73-72c1-aa25-c8c3042c16f8",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

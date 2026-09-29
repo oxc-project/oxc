@@ -1,0 +1,29 @@
+crates/oxc_codegen/src/lib.rs
+  s_7b9dd056b673a0::t_8564622b92eb9a 369
+crates/oxc_parser/src/lexer/numeric.rs
+  s_0134e749ece873::t_74a4285c5ce610 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7b37a12b85151d4369176aa9cbaba64e6bce8d4f",
+  "prompts": {},
+  "sessions": {
+    "s_0134e749ece873": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01f72-83db-7ed2-a2f5-b49a3dfd48a7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_7b9dd056b673a0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02048-f89e-71d1-8c48-d46a5cf4cefc",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

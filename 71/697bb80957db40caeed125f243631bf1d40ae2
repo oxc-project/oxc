@@ -1,0 +1,29 @@
+apps/oxlint/test/lsp/single_mode/__snapshots__/single_mode.test.ts.snap
+  s_8a0b3fc1091d46::t_29adce2ba73398 3,14
+apps/oxlint/test/lsp/workspaces/__snapshots__/workspace.test.ts.snap
+  s_8a0b3fc1091d46::t_8f2d71f34eafe4 3,21,39,57
+tasks/transform_conformance/reporter.mjs
+  s_8a0b3fc1091d46::t_3fae3e11a6589c 7,9-14,23-34,43-47
+tasks/transform_conformance/snapshots/babel_exec.snap.md
+  s_8a0b3fc1091d46::t_74e3d750e8d47a 10,31,126
+apps/oxlint/test/lsp/single_mode/single_mode.test.ts
+  s_8a0b3fc1091d46::t_e3b6a5000e8078 12
+apps/oxlint/test/lsp/workspaces/workspace.test.ts
+  s_8a0b3fc1091d46::t_209de6dd8dad65 10-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "71697bb80957db40caeed125f243631bf1d40ae2",
+  "prompts": {},
+  "sessions": {
+    "s_8a0b3fc1091d46": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06836-2779-76f1-94ac-cd83fa13bcdc",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

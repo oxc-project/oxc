@@ -1,0 +1,19 @@
+apps/oxlint/test/fixtures/getDisableDirectives/output.snap.md
+  s_3c6867790db3e8::t_31c4231a21f63d 6-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3456b93aaa2d00ad7b728005bd3aed0cf47e8c0c",
+  "prompts": {},
+  "sessions": {
+    "s_3c6867790db3e8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6b7-8fbe-7091-b5f5-e47bcd0fb165",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+napi/parser/napi.wasm.json
+  s_24889c5f9e1698::t_15a138240f451f 1-3
+napi/parser/package.json
+  s_24889c5f9e1698::t_dd39ab7fbdea58 68,71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a0e566c52045620383e75eb44738f38ec34f86c1",
+  "prompts": {},
+  "sessions": {
+    "s_24889c5f9e1698": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc714-fe16-7e03-a857-5d65fc905627",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/typescript/no_explicit_any.rs
+  s_555bdd00191282::t_4165b056b50d60 95-96,98,111-118,639-653
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7f119d92a7381bdb54c8552af5854e13ac82ddc1",
+  "prompts": {},
+  "sessions": {
+    "s_555bdd00191282": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c10-95a3-78e3-bfeb-a54856c3231d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

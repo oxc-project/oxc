@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/unicorn/prefer_set_size.rs
+  s_f5822f1e6772c5::t_c4267b274176b6 7,135-136,139-146,148,151-155,198
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "91044a67f4e2db42f36a34368a75af8145cca638",
+  "prompts": {},
+  "sessions": {
+    "s_f5822f1e6772c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a019a9-1e84-7d01-a632-f62b3d8320db",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+packages/codegen/test/print.test.ts
+  s_ac27d3f1fbc4c4::t_194d40c63bdd86 217-246
+packages/codegen/src-js/print/string.ts
+  s_6a062c77c6e9d8::t_591fc578b78f78 10,17,23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "949f18067fa2797f82a287d9477e95923c974536",
+  "prompts": {},
+  "sessions": {
+    "s_6a062c77c6e9d8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6fe-efbc-79e0-9af6-06357085b638",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_ac27d3f1fbc4c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6f8-1f8c-7b20-8e6d-1537aece7cc9",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

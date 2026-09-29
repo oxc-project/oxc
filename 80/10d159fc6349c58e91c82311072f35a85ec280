@@ -1,0 +1,19 @@
+crates/oxc_ast/src/serialize/ts.rs
+  s_78f0111ec83a40::t_646ed7ae6e666e 389-393
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8010d159fc6349c58e91c82311072f35a85ec280",
+  "prompts": {},
+  "sessions": {
+    "s_78f0111ec83a40": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f2438-e6d8-7702-aeee-a9ba6fe387d9",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

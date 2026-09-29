@@ -1,0 +1,69 @@
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_324e5848846a3b::t_10ecd8c6f92cab 730,739-743,2572,2581-2585
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_324e5848846a3b::t_63e1113b18e7cc 553,598,2081,2126,3516,3561,5458,5503,8602,8647,9491,9536,10794,10839,13856,13901,14837,14884,14934,14983,16738,16783,17325,17370,19516,19561
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_324e5848846a3b::t_8ec320631f46c0 5032,5051,5070,5096
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_324e5848846a3b::t_e152670582ee57 9099,9101,9182,9184,9267,9269,9446,9448,9528,9530
+crates/oxc_minifier/src/generated/walk.rs
+  s_324e5848846a3b::t_f596b0e146f7d3 2609-2610,2613
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_324e5848846a3b::t_888dd48a4c304c 9099,9101,9182,9184,9267,9269,9446,9448,9528,9530
+crates/oxc_traverse/src/generated/walk.rs
+  s_324e5848846a3b::t_57781c85d92ace 2609-2610,2613
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_324e5848846a3b::t_78f154bcea369f 76
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_324e5848846a3b::t_cd7a004dec6369 76
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_324e5848846a3b::t_d83b8d90fb7847 19,41,74,76
+tasks/track_memory_allocations/allocs_semantic.yaml
+  s_324e5848846a3b::t_4dc0f30b857b5f 76
+tasks/track_memory_allocations/allocs_transformer.yaml
+  s_324e5848846a3b::t_e115f7951acec9 76
+apps/oxlint/src-js/generated/deserialize.js
+  s_324e5848846a3b::t_73ef61b3fcae83 2703,2711-2712,2740-2741
+crates/oxc_ast/src/ast/js.rs
+  s_324e5848846a3b::t_68d8dc6827c5ad 2104
+crates/oxc_minifier/src/peephole/remove_unused_expression.rs
+  s_324e5848846a3b::t_7df8becf00e3ff 1039
+crates/oxc_parser/src/js/class.rs
+  s_324e5848846a3b::t_2454deba6861d2 100
+napi/parser/src-js/generated/deserialize/js.js
+  s_324e5848846a3b::t_2bad400d3def94 1967,1986
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_324e5848846a3b::t_99c4d8c32856af 2179,2199
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_324e5848846a3b::t_0b346858783016 2185,2205
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_324e5848846a3b::t_a45c6e1d4911ab 2396,2417
+napi/parser/src-js/generated/deserialize/ts.js
+  s_324e5848846a3b::t_1f417746638327 2166,2174-2175,2201-2202
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_324e5848846a3b::t_ab115ff48413ce 2397,2405-2406,2433-2434
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_324e5848846a3b::t_e2a81ae2cc69c8 2405,2413-2414,2441-2442
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_324e5848846a3b::t_3098a25e010df8 2635,2643-2644,2672-2673
+napi/parser/src-js/generated/lazy/constructors.js
+  s_324e5848846a3b::t_96690dd06ab8b8 4986,5010,5015,5020,5025
+napi/parser/src-js/generated/lazy/walk.js
+  s_324e5848846a3b::t_ba50a3fef908f5 2468-2469
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "dd13f5d529c183f7f3817ab1259fee32a996a6e4",
+  "prompts": {},
+  "sessions": {
+    "s_324e5848846a3b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fdbdd-faaf-7451-8525-5678c3e27f9d",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

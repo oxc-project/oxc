@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/one_var.rs
+  s_ff6963ce079f14::t_a29db9fd85db52 26,28,31,33,37-40,44,46,48,50,52,54,56,58,62,66,68,79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "90d898275c06e2fe79d5a4cef313d80906ece164",
+  "prompts": {},
+  "sessions": {
+    "s_ff6963ce079f14": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd193-58ed-76a0-becd-48395498c606",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

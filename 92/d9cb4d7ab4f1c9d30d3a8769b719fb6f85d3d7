@@ -1,0 +1,27 @@
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_49cd06206d8aa9::t_847bb4cc933409 10,21,43,54,65,76
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_49cd06206d8aa9::t_ba21f38e97fb9d 3-7,10,14-18,21,36-40,43,47-51,54,58-62,65,69-73,76
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_49cd06206d8aa9::t_5aaed032ab2794 8,10,19,21,41,43,52,54,63,65,74,76
+tasks/track_memory_allocations/allocs_semantic.yaml
+  s_49cd06206d8aa9::t_c84a8c40e90233 3-7,10,14-18,21,36-40,43,47-51,54,58-62,65,69-73,76
+tasks/track_memory_allocations/allocs_transformer.yaml
+  s_49cd06206d8aa9::t_48417f28c54e02 10,21,43,54,65,76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "92d9cb4d7ab4f1c9d30d3a8769b719fb6f85d3d7",
+  "prompts": {},
+  "sessions": {
+    "s_49cd06206d8aa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0385e-8599-7e72-9aa4-71c6549842c1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

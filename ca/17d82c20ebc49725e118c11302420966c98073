@@ -1,0 +1,21 @@
+crates/oxc_ecmascript/src/constant_evaluation/call_expr.rs
+  s_7b49357c247aa1::t_edfa67593aee6b 475
+crates/oxc_minifier/tests/peephole/replace_known_methods.rs
+  s_7b49357c247aa1::t_b2fba72a147f52 522-524
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ca17d82c20ebc49725e118c11302420966c98073",
+  "prompts": {},
+  "sessions": {
+    "s_7b49357c247aa1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a048b2-04a9-71c1-a3e6-f6bf934333a3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

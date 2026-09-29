@@ -1,0 +1,21 @@
+packages/codegen/DESIGN.md
+  s_f81ebcef49580d::t_0e909d2c26b6dc 526,531-532
+packages/codegen/src-js/print/binary.ts
+  s_f81ebcef49580d::t_ae59f3d1d134ef 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "60db73317833b130cab6734b21dd8e620a600080",
+  "prompts": {},
+  "sessions": {
+    "s_f81ebcef49580d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6f5-e572-7ae3-9103-6eac78e63baf",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

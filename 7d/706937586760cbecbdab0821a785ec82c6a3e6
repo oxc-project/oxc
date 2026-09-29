@@ -1,0 +1,27 @@
+apps/oxfmt/AGENTS.md
+  s_8cc64442779796::t_9432fd46f27cc8 20,26-35,47-70,81,108
+apps/oxfmt/src/api/format_api.rs
+  s_8cc64442779796::t_8325b0eb29ea6e 18-21
+apps/oxfmt/src/core/config/mod.rs
+  s_8cc64442779796::t_817692e5d516e4 131-133
+apps/oxfmt/src/lsp/server_formatter.rs
+  s_8cc64442779796::t_9b9136ec894d7b 527
+crates/oxc_config/src/walk.rs
+  s_8cc64442779796::t_2470293c23f6dd 37,46-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7d706937586760cbecbdab0821a785ec82c6a3e6",
+  "prompts": {},
+  "sessions": {
+    "s_8cc64442779796": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fff79-ae34-7952-9627-1ca264da70c5",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

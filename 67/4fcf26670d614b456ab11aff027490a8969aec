@@ -1,0 +1,19 @@
+tasks/ast_tools/src/generators/ast_builder.rs
+  s_55a207f02dbe8c::t_8c7526103c32a0 786,791,797,1406,1491
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "674fcf26670d614b456ab11aff027490a8969aec",
+  "prompts": {},
+  "sessions": {
+    "s_55a207f02dbe8c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a019ab-7d9d-7711-b78e-28a8c089f066",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

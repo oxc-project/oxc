@@ -1,0 +1,95 @@
+apps/oxfmt/src-js/bindings.js
+  s_a46ca49c10010f::t_60b97ba2aabd9e 530-545,549-550,554-572,574-580,584-622,624,626-628,630-636,638-657,659-661,663-669,672-686,700
+apps/oxlint/src-js/bindings.js
+  s_a46ca49c10010f::t_dd1cbed8e55716 530-545,549-550,554-572,574-580,584-622,624,626-628,630-636,638-657,659-661,663-669,672-686,700
+napi/minify/index.js
+  s_a46ca49c10010f::t_4174b6b2a1974c 530-545,549-550,554-572,574-580,584-607,609-624,626-628,630-636,638-657,659-661,663-669,672-686,708
+napi/minify/minify.wasi-browser.js
+  s_a46ca49c10010f::t_0d8435115b8411 2-3,8,17-28,36-96,99-343
+napi/minify/minify.wasi.cjs
+  s_a46ca49c10010f::t_4f680a835deac2 1,13-14,18-107,131-185,187-221,223-227,230-282,284,286-293,295-297,299-357,359-437,439-494,496-511,513-538,540-555,557-654
+napi/minify/minify.wasi.d.cts
+  s_a46ca49c10010f::t_78197e31ae1197 1-286
+napi/minify/wasi-worker-browser.mjs
+  s_a46ca49c10010f::t_be5d7048ee9db8 1-7,25-29
+napi/minify/wasi-worker.mjs
+  s_a46ca49c10010f::t_5eb80b5a1b0540 9-15,55-59
+napi/parser/src-js/bindings.js
+  s_a46ca49c10010f::t_4a270ef3a73def 530-545,549-550,554-572,574-580,584-607,609-624,626-628,630-636,638-657,659-661,663-669,672-686,708
+napi/parser/src-js/parser.wasi-browser.js
+  s_a46ca49c10010f::t_4a324641d43934 2-3,8,17-28,36-96,99-343
+napi/parser/src-js/parser.wasi.cjs
+  s_a46ca49c10010f::t_5e940b94e264db 1,13-14,18-107,131-185,187-221,223-227,230-282,284,286-293,295-297,299-357,359-437,439-494,496-511,513-538,540-555,557-654
+napi/parser/src-js/parser.wasi.d.cts
+  s_a46ca49c10010f::t_99da3ee1f5a950 1-312
+napi/parser/src-js/wasi-worker-browser.mjs
+  s_a46ca49c10010f::t_799e70cf99fc3b 1-7,25-29
+napi/parser/src-js/wasi-worker.mjs
+  s_a46ca49c10010f::t_a000bbc2487e4c 9-15,55-59
+napi/playground/index.js
+  s_a46ca49c10010f::t_1ee56ceb571ef9 530-545,549-550,554-572,574-580,584-622,624,626-628,630-636,638-657,659-661,663-669,672-686,700
+napi/playground/playground.wasi-browser.js
+  s_a46ca49c10010f::t_3821ab6b9e787a 2-3,8,17-28,36-96,99-343
+napi/playground/playground.wasi.cjs
+  s_a46ca49c10010f::t_028119935f1a72 1,13-14,18-107,131-185,187-221,223-227,230-282,284,286-293,295-297,299-357,359-437,439-494,496-511,513-538,540-555,557-654
+napi/playground/playground.wasi.d.cts
+  s_a46ca49c10010f::t_1120d2b69899ba 1-205
+napi/playground/wasi-worker-browser.mjs
+  s_a46ca49c10010f::t_1173d9dd6c186f 1-7,25-29
+napi/playground/wasi-worker.mjs
+  s_a46ca49c10010f::t_19b2fbecc4d962 9-15,55-59
+napi/transform-react/index.js
+  s_a46ca49c10010f::t_4ec737e6fe112d 530-545,549-550,554-572,574-580,584-607,609-624,626-628,630-636,638-657,659-661,663-669,672-686,708
+napi/transform-react/transform-react.wasi-browser.js
+  s_a46ca49c10010f::t_0d488f55e3d59d 2-3,8,17-28,36-96,99-343
+napi/transform-react/transform-react.wasi.cjs
+  s_a46ca49c10010f::t_455b9b2942526e 1,13-14,18-107,131-185,187-221,223-227,230-282,284,286-293,295-297,299-357,359-437,439-494,496-511,513-538,540-555,557-654
+napi/transform-react/transform-react.wasi.d.cts
+  s_a46ca49c10010f::t_ca95a1c68d6012 1-210
+napi/transform-react/wasi-worker-browser.mjs
+  s_a46ca49c10010f::t_f659e68780ab39 1-7,25-29
+napi/transform-react/wasi-worker.mjs
+  s_a46ca49c10010f::t_2ac372c730e8e1 9-15,55-59
+napi/transform/index.js
+  s_a46ca49c10010f::t_07a62f50b7800a 530-545,549-550,554-572,574-580,584-607,609-624,626-628,630-636,638-657,659-661,663-669,672-686,708
+napi/transform/transform.wasi-browser.js
+  s_a46ca49c10010f::t_02b5693c29e1e6 2-3,8,17-28,36-96,99-343
+napi/transform/transform.wasi.cjs
+  s_a46ca49c10010f::t_e76b35b455b8e1 1,13-14,18-107,131-185,187-221,223-227,230-282,284,286-293,295-297,299-357,359-437,439-494,496-511,513-538,540-555,557-654
+napi/transform/transform.wasi.d.cts
+  s_a46ca49c10010f::t_45125505d9a97a 1-689
+napi/transform/wasi-worker-browser.mjs
+  s_a46ca49c10010f::t_53e8b86fe440e0 1-7,25-29
+napi/transform/wasi-worker.mjs
+  s_a46ca49c10010f::t_c4fe4b61b1e050 9-15,55-59
+pnpm-lock.yaml
+  s_a46ca49c10010f::t_96b2166b2f8328 13-14,16-17,54,62,93,249,252,255,277,280,283,286,319,323,326,329,338,341,344,359,362,365,4162-4163,6631,6656,6659-6660,6664,8912
+napi/minify/package.json
+  s_a46ca49c10010f::t_fc56cf1676f639 46
+napi/parser/package.json
+  s_a46ca49c10010f::t_ad6048901557dc 70
+napi/playground/package.json
+  s_a46ca49c10010f::t_c12bf49695a8a1 19
+napi/transform-react/package.json
+  s_a46ca49c10010f::t_bb7bd1ac8cfc65 48
+napi/transform/package.json
+  s_a46ca49c10010f::t_780f0a0831c5ad 47
+pnpm-workspace.yaml
+  s_a46ca49c10010f::t_43bd90cd6fc782 11-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4622df5da7b41c5e1b211c6dca62533742fcba09",
+  "prompts": {},
+  "sessions": {
+    "s_a46ca49c10010f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc6ea-d07b-7571-aa02-e39e16c99fd3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+crates/oxc_linter/src/rules/jest/prefer_mock_return_shorthand.rs
+  s_ba7902d33e91f2::t_a600e78129b9f7 61-66
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_mock_return_shorthand.rs
+  s_ba7902d33e91f2::t_4c39edc493bdc9 5,114-117,256,261,269-272
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6eb264b2c9bc2bb00f748597f54406fa3aecf35e",
+  "prompts": {},
+  "sessions": {
+    "s_ba7902d33e91f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00fce-b4ea-7942-abc9-0dbe425b0cd5",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

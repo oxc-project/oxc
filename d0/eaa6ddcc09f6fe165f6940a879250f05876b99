@@ -1,0 +1,21 @@
+crates/oxc_minifier/src/traverse_context/scopes_collector.rs
+  s_c9cbabec783f9a::t_97f13ee40cfbfb 91-92,202-203,277-278,336-345,401-402,792-793,992-1061,1310-1311,1471-1472
+tasks/ast_tools/src/generators/scopes_collector.rs
+  s_c9cbabec783f9a::t_ec2f518cd94765 1,11,32-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d0eaa6ddcc09f6fe165f6940a879250f05876b99",
+  "prompts": {},
+  "sessions": {
+    "s_c9cbabec783f9a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019faea2-8ecb-7ee1-baae-fbe3e066fb42",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

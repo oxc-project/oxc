@@ -1,0 +1,43 @@
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_dc6c2dc5c7b9f4::t_eeb22de1b73af5 926-927
+  s_896e7ea80c20ab::t_de7c6fece0f963 936-942
+  s_896e7ea80c20ab::t_d49447a9d93244 943,953-955,957,959
+  s_896e7ea80c20ab::t_c40f75b97a19bc 967
+  s_896e7ea80c20ab::t_826a0434c13f94 527
+  s_896e7ea80c20ab::t_7a123f18f54d90 70,77,80,154-156,158
+  s_896e7ea80c20ab::t_d77c4144a36327 968
+  s_896e7ea80c20ab::t_b43de607f334ee 969-971
+crates/oxc_parser/src/js/expression.rs
+  s_dc6c2dc5c7b9f4::t_1d1f562ead5f01 1298,1313
+  s_896e7ea80c20ab::t_2832497da5702e 765,791,793-795,1085,1148-1149,1185
+  s_896e7ea80c20ab::t_3ccbaa1c29abd6 783-784,786
+  s_896e7ea80c20ab::t_c5fa3db90decb8 1461
+  s_896e7ea80c20ab::t_747236714e4a1b 1564-1594
+  s_896e7ea80c20ab::t_1ee9bce2d8f165 747-750,782,785,787-790,792,796,1256,1278
+crates/oxc_parser/src/lexer/mod.rs
+  s_896e7ea80c20ab::t_cd647ca151230f 56,201,219,234,479,547
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "229d6535ac93c0b73c5de9517471fce10ad63820",
+  "prompts": {},
+  "sessions": {
+    "s_896e7ea80c20ab": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03933-885b-7c81-ba60-4999905a5515",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_dc6c2dc5c7b9f4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03906-292c-7a22-bd55-f559c5827ef9",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

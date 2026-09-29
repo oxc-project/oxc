@@ -1,0 +1,19 @@
+packages/codegen/test/utils/common.ts
+  s_6b5aa3ca33a1b5::t_6e8b1bc9ffb31e 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "75e22f11f9c338a0ebc8a3536fd0267e0d291b5f",
+  "prompts": {},
+  "sessions": {
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

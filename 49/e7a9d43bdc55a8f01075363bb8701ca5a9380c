@@ -1,0 +1,21 @@
+packages/codegen/bench.string.bench.ts
+  s_ac27d3f1fbc4c4::t_2ee58aca98ccc6 1-59
+packages/codegen/test/print.test.ts
+  s_ac27d3f1fbc4c4::t_194d40c63bdd86 217-246
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "49e7a9d43bdc55a8f01075363bb8701ca5a9380c",
+  "prompts": {},
+  "sessions": {
+    "s_ac27d3f1fbc4c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6f8-1f8c-7b20-8e6d-1537aece7cc9",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

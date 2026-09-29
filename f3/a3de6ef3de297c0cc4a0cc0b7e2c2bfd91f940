@@ -1,0 +1,19 @@
+crates/oxc_formatter/src/print/variable_declaration.rs
+  s_255411dcc7e3f7::t_71108d5002ab7c 28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f3a3de6ef3de297c0cc4a0cc0b7e2c2bfd91f940",
+  "prompts": {},
+  "sessions": {
+    "s_255411dcc7e3f7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae8e-6676-70e2-add2-8034c2438de0",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

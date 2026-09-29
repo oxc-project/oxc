@@ -1,0 +1,39 @@
+packages/codegen/src-js/print/options.ts
+  s_22d0a4f8830497::t_73e76a6e936a75 52
+packages/codegen/test/source-maps.test.ts
+  s_8ba636e0db65f9::t_dc22ca5f1f0b3a 204-244
+packages/codegen/src-js/index.ts
+  s_adf10c465e942e::t_c11442400a03be 73-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5ae4bf464edda52183ea9855da22a55af50e5840",
+  "prompts": {},
+  "sessions": {
+    "s_22d0a4f8830497": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01514-38c7-7d10-bbb3-9c9ea9be5e3f",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_8ba636e0db65f9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0151e-bbc9-77b0-a8a7-eede3fd8edd5",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_adf10c465e942e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0151f-41ae-7bb1-a920-1a6f84d24a68",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

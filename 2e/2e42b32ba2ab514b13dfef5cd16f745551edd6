@@ -1,0 +1,23 @@
+crates/oxc_linter/src/snapshots/vitest_prefer_expect_assertions.snap
+  s_a455a92896c113::t_27ed7023e9ecd0 164-180
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_expect_assertions.rs
+  s_a455a92896c113::t_685552e4e0ba0d 334-340,426-434
+crates/oxc_linter/src/rules/vitest/prefer_expect_assertions.rs
+  s_a455a92896c113::t_8917434bdfd451 8,23,90-92,108,129-172,477-489,772-785
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2e2e42b32ba2ab514b13dfef5cd16f745551edd6",
+  "prompts": {},
+  "sessions": {
+    "s_a455a92896c113": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019feaef-0046-7aa2-9b5c-7842f933bf31",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

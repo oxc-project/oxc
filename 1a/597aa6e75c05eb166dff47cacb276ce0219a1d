@@ -1,0 +1,23 @@
+crates/oxc_isolated_declarations/tests/snapshots/enum-runtime-initializer.snap
+  s_9ed927f35cc001::t_1f69c72f484287 16-19,40-47
+crates/oxc_isolated_declarations/src/enum.rs
+  s_9ed927f35cc001::t_211be2caf1fb9d 167
+crates/oxc_isolated_declarations/tests/fixtures/enum-runtime-initializer.ts
+  s_9ed927f35cc001::t_9f45a1050e9b5c 10-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1a597aa6e75c05eb166dff47cacb276ce0219a1d",
+  "prompts": {},
+  "sessions": {
+    "s_9ed927f35cc001": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a023c7-c715-7293-9a16-e49d77dac0a8",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

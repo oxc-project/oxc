@@ -1,0 +1,163 @@
+apps/oxlint/src/snapshots/fixtures__cli__ignore_patterns_ancestor_config__packages__foo_.@oxlint.snap
+  s_1574c7e0f1f72c::t_3e9c379fce3993 17
+"apps/oxlint/src/snapshots/fixtures__cli__ignore_patterns_ancestor_config_-c .__packages__..__.oxlintrc.json .@oxlint.snap"
+  s_1574c7e0f1f72c::t_f9ff57e1b7c117 17
+apps/oxlint/src/snapshots/_fixtures__cli__astro__debugger.astro@oxlint.snap
+  s_1574c7e0f1f72c::t_49ed3768ae4c9f 46
+tasks/track_linter_timings/linter_timings.snap
+  s_1574c7e0f1f72c::t_25613d5c37ff09 372
+crates/oxc_linter/src/snapshots/oxc_bad_match_all_arg.snap
+  s_1574c7e0f1f72c::t_b210a3d3ed2c70 1-103
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_-c config-type-aware-false-with-overrides.json no-floating-promises.ts@oxlint.snap"
+  s_1574c7e0f1f72c::t_81dc1a83039a8c 19
+"apps/oxlint/src/snapshots/fixtures__cli__linter_--deny-warnings -c config-deny-warnings-false.json debugger.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_5c37eaf83051cc 17
+"apps/oxlint/src/snapshots/fixtures__cli__report_unused_directives_-c .oxlintrc-with-rudd.json --report-unused-disable-directives-severity=off@oxlint.snap"
+  s_1574c7e0f1f72c::t_ce8d4d2b9ba073 109
+apps/oxlint/src/snapshots/_fixtures__cli__vue__empty.vue@oxlint.snap
+  s_1574c7e0f1f72c::t_8cc03d1db285cb 9
+"apps/oxlint/src/snapshots/_-c fixtures__cli__linter__eslintrc.json fixtures__cli__linter__debugger.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_aa841f6c9e421b 17
+"apps/oxlint/src/snapshots/fixtures__cli__overrides_-c .oxlintrc.json test.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_93dfa26b7c6668 18
+"apps/oxlint/src/snapshots/_-c fixtures__cli__no_console_off__eslintrc.json fixtures__cli__no_console_off__test.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_aa8ad9a212d569 9
+"apps/oxlint/src/snapshots/fixtures__cli__report_unused_directives_-c .oxlintrc-with-rudd.json@oxlint.snap"
+  s_1574c7e0f1f72c::t_8ea52167280f0d 324
+apps/oxlint/src/snapshots/fixtures__cli__linter_debugger.js@oxlint.snap
+  s_1574c7e0f1f72c::t_3a0dd28dd568db 17
+"apps/oxlint/src/snapshots/fixtures__cli__overrides_with_plugin_-c .oxlintrc.json@oxlint.snap"
+  s_1574c7e0f1f72c::t_1e21e595e2a2a6 71
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_type_error_-c config-type-check.json@oxlint.snap"
+  s_1574c7e0f1f72c::t_65a738fbd1a1e1 33
+"apps/oxlint/src/snapshots/fixtures__cli__extends_config_--config extends_rules_config.json console.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_447370628c9665 17
+apps/oxlint/src/snapshots/fixtures__cli__tsgolint_config_error_--type-aware@oxlint.snap
+  s_1574c7e0f1f72c::t_e1677201470985 20
+"apps/oxlint/src/snapshots/fixtures__cli__config_ignore_patterns__ignore_directory_-c eslintrc.json@oxlint.snap"
+  s_1574c7e0f1f72c::t_0e953a89a933b4 17
+apps/oxlint/src-js/package/config.generated.ts
+  s_1574c7e0f1f72c::t_631640a7eca837 1250
+crates/oxc_linter/src/rules.rs
+  s_1574c7e0f1f72c::t_3a355c8dcbd98f 675
+crates/oxc_linter/src/generated/rule_runner_impls.rs
+  s_1574c7e0f1f72c::t_a3b2c91e4a2e4d 4166-4171
+"apps/oxlint/src/snapshots/_--import-plugin -A all -D no-cycle fixtures__cli__flow__@oxlint.snap"
+  s_1574c7e0f1f72c::t_a54f4b8b066d40 9
+apps/oxlint/src/snapshots/fixtures__cli__extends_config_--disable-nested-config@oxlint.snap
+  s_1574c7e0f1f72c::t_0b31c97a32ffaf 34
+"apps/oxlint/src/snapshots/_-D correctness fixtures__cli__linter__debugger.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_e1f04aa4a7a0d5 17
+"apps/oxlint/src/snapshots/fixtures__cli__linter_--max-warnings 1 -c config-max-warnings.json debugger.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_ef8ae9d26bfe39 17
+"apps/oxlint/src/snapshots/_-W no-undef -c fixtures__cli__eslintrc_env__eslintrc_no_env.json fixtures__cli__eslintrc_env__test.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_be3de413f47f3a 17
+"apps/oxlint/src/snapshots/_--ignore-path fixtures__cli__linter__.customignore --no-ignore fixtures__cli__linter__nan.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_ac52941919e377 24
+apps/oxlint/src/snapshots/fixtures__cli__tsgolint_disable_directives_--type-aware@oxlint.snap
+  s_1574c7e0f1f72c::t_8e37d16df219ef 148
+apps/oxlint/src/snapshots/_fixtures__cli__linter__js_as_jsx.js@oxlint.snap
+  s_1574c7e0f1f72c::t_8fe0d14c331f85 18
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_--type-aware -c config-type-aware-false.json no-floating-promises.ts@oxlint.snap"
+  s_1574c7e0f1f72c::t_b79b5cffafef86 29
+apps/oxlint/src/snapshots/_fixtures__cli__linter__debugger.js@oxlint.snap
+  s_1574c7e0f1f72c::t_634810e0810072 17
+apps/oxlint/src/snapshots/_fixtures__cli__vue__invalid.vue@oxlint.snap
+  s_1574c7e0f1f72c::t_aab2f9eb93e2d9 19
+crates/oxc_linter/src/rules/oxc/bad_replace_all_arg.rs
+  s_1574c7e0f1f72c::t_cc209728017e2b 1,8,68
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_-c config-type-aware-with-overrides.json no-floating-promises.ts@oxlint.snap"
+  s_1574c7e0f1f72c::t_2ec7d836f77e37 29
+"apps/oxlint/src/snapshots/fixtures__cli__overrides_-c .oxlintrc.json test.ts@oxlint.snap"
+  s_1574c7e0f1f72c::t_6bd2a664d4d311 26
+apps/oxlint/src/snapshots/_fixtures__cli__svelte__debugger.svelte@oxlint.snap
+  s_1574c7e0f1f72c::t_843707e5ac2f5f 37
+apps/oxlint/src/snapshots/_fixtures__cli__linter@oxlint.snap
+  s_1574c7e0f1f72c::t_64d2e87958539c 39
+npm/oxlint/configuration_schema.json
+  s_1574c7e0f1f72c::t_81f10c371b9a7e 5853-5855
+apps/oxlint/src/snapshots/fixtures__cli__dot_folder_@oxlint.snap
+  s_1574c7e0f1f72c::t_b490488cb651ff 17
+"apps/oxlint/src/snapshots/fixtures__cli__import-cycle_--import-plugin -D import__no-cycle@oxlint.snap"
+  s_1574c7e0f1f72c::t_692993e2fed382 36
+"apps/oxlint/src/snapshots/_-c fixtures__cli__overrides__directories-config.json fixtures__cli__overrides@oxlint.snap"
+  s_1574c7e0f1f72c::t_2d262d3d08c91b 38
+"apps/oxlint/src/snapshots/fixtures__cli__report_unused_directives_-c .oxlintrc.json --report-unused-disable-directives@oxlint.snap"
+  s_1574c7e0f1f72c::t_6cf251dfd77c00 324
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_disable_directives_--type-aware --report-unused-disable-directives unused.ts@oxlint.snap"
+  s_1574c7e0f1f72c::t_48a0e844223c33 81
+apps/oxlint/src/snapshots/fixtures__cli__root_config_ancestor__cwd_@oxlint.snap
+  s_1574c7e0f1f72c::t_e3eb08c27843ca 9
+"apps/oxlint/src/snapshots/fixtures__cli__extends_config_--config relative_paths__extends_extends_config.json console.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_18c92b2231784f 17
+"apps/oxlint/src/snapshots/_--no-error-on-unmatched-pattern foo.asdf@oxlint.snap"
+  s_1574c7e0f1f72c::t_44077e6dd72d40 8
+crates/oxc_linter/src/rules/oxc/bad_match_all_arg.rs
+  s_276d096dd43021::t_3f7c1ed77f123b 1-113
+apps/oxlint/src/snapshots/_fixtures__cli__vue__debugger.vue@oxlint.snap
+  s_1574c7e0f1f72c::t_ac5b6965210cdc 28
+apps/oxlint/src/snapshots/_foo.asdf@oxlint.snap
+  s_1574c7e0f1f72c::t_b9872459497b86 9
+"apps/oxlint/src/snapshots/_-c fixtures__cli__eslintrc_env__eslintrc_env_browser.json fixtures__cli__eslintrc_env__test.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_3fea43e9cf0002 9
+crates/oxc_linter/src/generated/rules_enum.rs
+  s_1574c7e0f1f72c::t_c6b42a30093c96 387,1512,2453-2454,3437,4406,5415,6395,7569,9707-9708,10929,13213-13215,14516,15370,16234,17205,18080,19243,20314,21370,22359,23225,24076,25053
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_type_error_--type-check -c config-type-check-false.json@oxlint.snap"
+  s_1574c7e0f1f72c::t_ca592a9bc0cfaa 33
+"apps/oxlint/src/snapshots/fixtures__cli__linter_-c config-deny-warnings.json debugger.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_bfd5f3af1482e3 17
+"apps/oxlint/src/snapshots/fixtures__cli__issue_10394_-c .oxlintrc.json@oxlint.snap"
+  s_1574c7e0f1f72c::t_0a2645af01621a 26
+"apps/oxlint/src/snapshots/fixtures__cli__config_ignore_patterns__with_oxlintrc_-c .__test__eslintrc.json --ignore-pattern _.ts .@oxlint.snap"
+  s_1574c7e0f1f72c::t_ca4cb74a76ffb0 15
+"apps/oxlint/src/snapshots/fixtures__cli__linter_-c config-max-warnings.json debugger.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_00cae11f3981d4 18
+"apps/oxlint/src/snapshots/_fixtures__cli__linter__debugger.js fixtures__cli__linter__nan.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_a82d9828995e0a 31
+"apps/oxlint/src/snapshots/_-c fixtures__cli__eslintrc_off__eslintrc.json fixtures__cli__eslintrc_off__test.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_21b3bc98bde174 15
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_-c config-type-aware-false.json no-floating-promises.ts@oxlint.snap"
+  s_1574c7e0f1f72c::t_3246615d015d1c 19
+"apps/oxlint/src/snapshots/_-W correctness -A no-debugger fixtures__cli__linter__debugger.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_ee20e512355faa 9
+apps/oxlint/src/snapshots/fixtures__cli__nested_config__package4-as-cwd_@oxlint.snap
+  s_1574c7e0f1f72c::t_1aa16c29f96231 9
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_tsconfig_extends_config_err_--type-aware -D no-floating-promises@oxlint.snap"
+  s_1574c7e0f1f72c::t_2c53ca1bd4b75d 14
+crates/oxc_linter/src/ast_util.rs
+  s_276d096dd43021::t_d3766d80163e9a 4,20-23,320-370
+"apps/oxlint/src/snapshots/_-W no-undef -c fixtures__cli__no_undef__eslintrc.json fixtures__cli__no_undef__test.js@oxlint.snap"
+  s_1574c7e0f1f72c::t_075abcb147b65b 17
+"apps/oxlint/src/snapshots/_--ignore-pattern _____.js --ignore-pattern _____.vue fixtures__cli__linter@oxlint.snap"
+  s_1574c7e0f1f72c::t_bbe095408dffc1 9
+"apps/oxlint/src/snapshots/_--import-plugin fixtures__cli__flow__index.mjs@oxlint.snap"
+  s_1574c7e0f1f72c::t_4e3e9db4d9982a 9
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_type_error_-c config-type-check-false.json@oxlint.snap"
+  s_1574c7e0f1f72c::t_2029f40bd87f9a 27
+"apps/oxlint/src/snapshots/fixtures__cli__overrides_-c .oxlintrc.json other.jsx@oxlint.snap"
+  s_1574c7e0f1f72c::t_24fb75ef06d5fd 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3b9432846fc266d78a416167ca2d3d9605a1a4c6",
+  "prompts": {},
+  "sessions": {
+    "s_1574c7e0f1f72c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f9463-1bcd-7441-8529-f4759bc6838f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_276d096dd43021": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f946f-66c7-76f1-8c35-f5770b313354",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

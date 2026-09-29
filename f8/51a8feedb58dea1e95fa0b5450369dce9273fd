@@ -1,0 +1,19 @@
+crates/oxc_allocator/src/from_raw_parts.rs
+  s_a581be8a0193c0::t_fd281b0844cb9b 106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f851a8feedb58dea1e95fa0b5450369dce9273fd",
+  "prompts": {},
+  "sessions": {
+    "s_a581be8a0193c0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06175-0c17-76f0-b45f-39e31eabe49b",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

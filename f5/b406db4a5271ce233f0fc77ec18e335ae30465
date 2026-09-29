@@ -1,0 +1,21 @@
+napi/parser/test/parse-raw.test.ts
+  s_18dbd8d6e6fe7e::t_80be92032a2c9c 14,163-164,180-182
+napi/parser/test/parse-raw-common.ts
+  s_18dbd8d6e6fe7e::t_8e8aa3d928fc31 43-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f5b406db4a5271ce233f0fc77ec18e335ae30465",
+  "prompts": {},
+  "sessions": {
+    "s_18dbd8d6e6fe7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6f60-68fc-7413-add2-399df60f46b4",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

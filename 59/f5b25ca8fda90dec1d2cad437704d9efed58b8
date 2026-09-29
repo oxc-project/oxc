@@ -1,0 +1,27 @@
+crates/oxc_parser/src/js/function.rs
+  s_91772ea8e8adc7::t_3be5349b9a4ba7 76,147-156
+tasks/coverage/snapshots/parser_babel.snap
+  s_91772ea8e8adc7::t_12fea69b1411cd 175-182,13335-13342,13876-13883
+crates/oxc_parser/src/diagnostics.rs
+  s_91772ea8e8adc7::t_4e30002bd25938 1259-1263
+tasks/coverage/snapshots/parser_typescript.snap
+  s_91772ea8e8adc7::t_8658d6d806b7db 2827,7358-7364,23302-23317
+tasks/coverage/snapshots/semantic_babel.snap
+  s_91772ea8e8adc7::t_d994b345285949 130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "59f5b25ca8fda90dec1d2cad437704d9efed58b8",
+  "prompts": {},
+  "sessions": {
+    "s_91772ea8e8adc7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6b4a-d720-7080-9eac-540c38dd4563",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

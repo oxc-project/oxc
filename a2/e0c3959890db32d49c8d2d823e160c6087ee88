@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/import/newline_after_import.rs
+  s_0eae81ddfc1ea3::t_0352bd16e30e93 215-219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a2e0c3959890db32d49c8d2d823e160c6087ee88",
+  "prompts": {},
+  "sessions": {
+    "s_0eae81ddfc1ea3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8041-2626-73d2-9ae3-45377bc4dff3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

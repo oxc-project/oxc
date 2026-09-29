@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/oxc/only_used_in_recursion.rs
+  s_1574c7e0f1f72c::t_4592c1724f0f5e 102,106,108-114,116,120-121,127-136,146,150-151,154-156,158-160,163-166,168-169,171-175,177-187,190-197,200,204-205,207-208,210-211,215-219,221-223,226-238,240,242-243,246,256-260,262,277,282,295,312-313,323,361-362,365,370-378,382-383,391,394,403,430-440
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "04cf04250cae9385e77131d731a1bb57eb5d02d3",
+  "prompts": {},
+  "sessions": {
+    "s_1574c7e0f1f72c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f9463-1bcd-7441-8529-f4759bc6838f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

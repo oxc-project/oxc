@@ -1,0 +1,51 @@
+crates/oxc_linter/src/rules/eslint/no_unsafe_optional_chaining.rs
+  s_324e5848846a3b::t_1dcafb94166586 215-217
+crates/oxc_ast/src/ast_impl/js.rs
+  s_324e5848846a3b::t_f218133679b974 1654,1656,1660,1662
+crates/oxc_ast/src/serialize/js.rs
+  s_324e5848846a3b::t_fb85a2b65fc697 33,56
+crates/oxc_ecmascript/src/side_effects/expressions.rs
+  s_324e5848846a3b::t_64416c05f717bd 360
+crates/oxc_isolated_declarations/src/class.rs
+  s_324e5848846a3b::t_3ececcdaeed351 467
+crates/oxc_linter/src/rules/eslint/constructor_super.rs
+  s_324e5848846a3b::t_de83fb978df3b8 223-225
+crates/oxc_linter/src/rules/eslint/no_this_before_super.rs
+  s_324e5848846a3b::t_11d9999bb52875 163
+crates/oxc_linter/src/rules/react/display_name.rs
+  s_324e5848846a3b::t_dc236812346d1d 332
+crates/oxc_linter/src/rules/react/no_multi_comp.rs
+  s_324e5848846a3b::t_f76d907a09ba42 411
+crates/oxc_linter/src/rules/react/no_redundant_should_component_update.rs
+  s_324e5848846a3b::t_c1ec1bf93d4554 143
+crates/oxc_linter/src/rules/react/only_export_components.rs
+  s_324e5848846a3b::t_142d70ee4de81a 628
+crates/oxc_linter/src/rules/typescript/no_invalid_void_type.rs
+  s_324e5848846a3b::t_43f7f516ffeece 286,289
+crates/oxc_linter/src/rules/unicorn/custom_error_definition.rs
+  s_324e5848846a3b::t_b8f155473c85cf 340
+crates/oxc_linter/src/rules/unicorn/no_useless_error_capture_stack_trace.rs
+  s_324e5848846a3b::t_68698682e43728 157
+crates/oxc_linter/src/rules/unicorn/prefer_event_target.rs
+  s_324e5848846a3b::t_5805414d632bec 61
+crates/oxc_linter/src/utils/react.rs
+  s_324e5848846a3b::t_a2d62bcc787c8a 581
+crates/oxc_react_compiler/src/react_compiler_lowering/identifier_loc_index.rs
+  s_324e5848846a3b::t_859d1fc6f26d29 168
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b0f50dc279ee8b25b70567a60fc8894ef05ca3cc",
+  "prompts": {},
+  "sessions": {
+    "s_324e5848846a3b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fdbdd-faaf-7451-8525-5678c3e27f9d",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

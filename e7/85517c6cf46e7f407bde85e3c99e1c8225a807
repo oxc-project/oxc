@@ -1,0 +1,31 @@
+crates/oxc_isolated_declarations/src/lib.rs
+  s_0b8b11c893033b::t_3e895f469e85eb 621
+crates/oxc_isolated_declarations/tests/fixtures/issue-24975.ts
+  s_0b8b11c893033b::t_465405a98df6b1 38-45
+crates/oxc_isolated_declarations/tests/snapshots/issue-24975.snap
+  s_693b6214ced0d1::t_55fb759b032556 20,42-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e785517c6cf46e7f407bde85e3c99e1c8225a807",
+  "prompts": {},
+  "sessions": {
+    "s_0b8b11c893033b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59ea-78b1-a856-63728bc50bc5",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_693b6214ced0d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffc1-edd6-7d80-b5ba-634466fd223b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

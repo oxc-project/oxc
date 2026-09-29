@@ -1,0 +1,29 @@
+crates/oxc_linter/src/rules/eslint/max_classes_per_file.rs
+  s_9809fcdb215774::t_7176a4374e686b 3,119-124
+crates/oxc_linter/src/snapshots/eslint_max_classes_per_file.snap
+  s_e01355fba8b00f::t_417769efb4b41e 6,8,14,16,22,24,30,32,38,40,45,47,52-53,55,61-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "01c68b08968768435f192adea2ed643bedc3b4bc",
+  "prompts": {},
+  "sessions": {
+    "s_9809fcdb215774": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59af-7823-bd68-8dc01cf2e5c9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_e01355fba8b00f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-06d9-71e0-b420-042c76e481ed",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

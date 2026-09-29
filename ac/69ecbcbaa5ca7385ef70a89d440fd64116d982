@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/unicorn/prefer_export_from.rs
+  s_31d85f49abbbeb::t_82487f96615831 1988-1993,2111-2124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ac69ecbcbaa5ca7385ef70a89d440fd64116d982",
+  "prompts": {},
+  "sessions": {
+    "s_31d85f49abbbeb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-518f-76e0-b05f-d7c0d5ef8546",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

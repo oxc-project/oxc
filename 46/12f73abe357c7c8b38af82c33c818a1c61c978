@@ -1,0 +1,27 @@
+PLAN.md
+  s_43cff1d112befe::t_ed7a073264043d 1-344
+crates/oxc_ast_visit/src/lib.rs
+  s_43cff1d112befe::t_96c976d1216bf4 10-11,13
+crates/oxc_ast_visit/src/node_id.rs
+  s_43cff1d112befe::t_40f7bc69af27a2 1-35
+crates/oxc_semantic/tests/integration/main.rs
+  s_43cff1d112befe::t_b0993eab482424 7
+crates/oxc_semantic/tests/integration/node_ids.rs
+  s_43cff1d112befe::t_1fb5385914b05c 1-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4612f73abe357c7c8b38af82c33c818a1c61c978",
+  "prompts": {},
+  "sessions": {
+    "s_43cff1d112befe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06825-a359-7b41-b9dd-90b0622613e7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

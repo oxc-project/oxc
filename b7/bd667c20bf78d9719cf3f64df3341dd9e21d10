@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/no_useless_assignment.rs
+  s_f5822f1e6772c5::t_fce5408756ef45 186-187,189,191-192,194,204-205,210,215,217,219-260,265,270,275-286,289-291,295,300,590,598-599,606,618-622,629,631-639,643-657,659-665,668-674,676-683,685,1387-1426
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b7bd667c20bf78d9719cf3f64df3341dd9e21d10",
+  "prompts": {},
+  "sessions": {
+    "s_f5822f1e6772c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a019a9-1e84-7d01-a632-f62b3d8320db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

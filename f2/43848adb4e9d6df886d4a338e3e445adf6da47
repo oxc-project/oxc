@@ -1,0 +1,37 @@
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_49cd06206d8aa9::t_17d9b998c86ef7 4573-4955
+crates/oxc_react_compiler/tests/snapshots/destructuring-default-at-array-hole.snap
+  s_49cd06206d8aa9::t_57ae1db8724731 12
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_49cd06206d8aa9::t_59f05b9a951de6 3-7,14-18,36-40,47-51,58-62,69-73
+tasks/track_memory_allocations/allocs_semantic.yaml
+  s_49cd06206d8aa9::t_26f86e22290967 3-7,14-18,36-40,47-51,58-62,69-73
+crates/oxc_ast_visit/src/comments.rs
+  s_36c5d9799aac7a::t_4e66fa6db1d664 10-12,31-46,67-72,74,92,95
+tasks/ast_tools/src/generators/visit.rs
+  s_36c5d9799aac7a::t_6fbbc8a79b8d34 210-214,229-267
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f243848adb4e9d6df886d4a338e3e445adf6da47",
+  "prompts": {},
+  "sessions": {
+    "s_36c5d9799aac7a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03e7d-8e73-77b0-b68b-a4c684646ee3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_49cd06206d8aa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0385e-8599-7e72-9aa4-71c6549842c1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

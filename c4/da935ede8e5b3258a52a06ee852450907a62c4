@@ -1,0 +1,21 @@
+packages/codegen/README.md
+  s_20d353b31cdc5d::t_005b9df3bbe140 82-85
+packages/codegen/src-js/index.ts
+  s_20d353b31cdc5d::t_2f607ce42b7d5d 64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c4da935ede8e5b3258a52a06ee852450907a62c4",
+  "prompts": {},
+  "sessions": {
+    "s_20d353b31cdc5d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0155a-51a7-7bb0-8d01-62a6df6fe4b7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+tasks/website_linter/src/rules/snapshots/docs_rule_pages.snap
+  s_8e88d9100fcafe::t_9059efc93fd495 2204-2333
+tasks/website_linter/src/rules/mod.rs
+  s_8e88d9100fcafe::t_9ccf9afe239837 156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fd6382363b89fbd6d3179db4a90e44a65ae5b104",
+  "prompts": {},
+  "sessions": {
+    "s_8e88d9100fcafe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb276-8c56-7623-a5ad-d09ab9b3f40d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+crates/oxc_parser/src/ts/types.rs
+  s_555bdd00191282::t_9a0a7998dc7093 697
+tasks/coverage/snapshots/codegen_misc.snap
+  s_a581be8a0193c0::t_6f8fc1fc1d8dfe 2-3
+tasks/coverage/snapshots/parser_misc.snap
+  s_a581be8a0193c0::t_4e024ad3d039fd 2-3
+tasks/coverage/snapshots/formatter_misc.snap
+  s_a581be8a0193c0::t_3f39e172e94af3 2-3
+tasks/coverage/snapshots/semantic_misc.snap
+  s_a581be8a0193c0::t_e33cd1480aba1b 2-3
+tasks/coverage/snapshots/transformer_misc.snap
+  s_a581be8a0193c0::t_25ee32817f68db 2-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a7af2423e756d9fa4ca832bd8f2251d36046c045",
+  "prompts": {},
+  "sessions": {
+    "s_555bdd00191282": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c10-95a3-78e3-bfeb-a54856c3231d",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_a581be8a0193c0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06175-0c17-76f0-b45f-39e31eabe49b",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

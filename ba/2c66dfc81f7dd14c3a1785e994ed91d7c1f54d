@@ -1,0 +1,23 @@
+crates/oxc_linter/src/lib.rs
+  s_9f4d126b44c73b::t_2a9d22a6e89135 851-852,855-856
+apps/oxlint/test/fixtures/diagnostic_loc/output.snap.md
+  s_9f4d126b44c73b::t_8652483fdbf6d2 20-26,42
+apps/oxlint/test/fixtures/diagnostic_loc/plugin.ts
+  s_9f4d126b44c73b::t_6bddf7efb52ddf 13-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ba2c66dfc81f7dd14c3a1785e994ed91d7c1f54d",
+  "prompts": {},
+  "sessions": {
+    "s_9f4d126b44c73b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a042d4-e945-7da2-8afd-b45407804c88",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

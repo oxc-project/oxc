@@ -1,0 +1,29 @@
+crates/oxc_react_compiler/src/react_compiler_optimization/constant_propagation.rs
+  s_bb1e541d1b5038::t_2109cc1d36ff24 31,510-527,529,544-561,563-564,568-570,572-582,591
+crates/oxc_react_compiler/src/react_compiler/entrypoint/program.rs
+  s_49f816dece41b1::t_0d18f384c19151 1164,3177
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "173c73444afec7a797d8dd123810cf62be514dd2",
+  "prompts": {},
+  "sessions": {
+    "s_49f816dece41b1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a033e4-0248-7c40-b6dc-44396850b736",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_bb1e541d1b5038": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a033e6-3765-7950-a3c5-6be44f4a1580",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

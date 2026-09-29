@@ -1,0 +1,29 @@
+crates/oxc_ast/src/ast/comment.rs
+  s_9ed927f35cc001::t_fc5a5f6dc9f8a1 159-171
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_9ed927f35cc001::t_837e0df5850cd1 29-30,40-41,48,108-118,129-130,133,135,139-164,170-198,232-233,280,283-284,287,292-293,299-305,558,566,606,632-676
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "af0d2ad9244b013e15f2de9fddc08852d9328d73",
+  "prompts": {},
+  "sessions": {
+    "s_0dda7a6334330d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a020f8-ac02-7600-bebe-a9c8fe8ac35e",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_9ed927f35cc001": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a023c7-c715-7293-9a16-e49d77dac0a8",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+tasks/coverage/snapshots/parser_misc.snap
+  s_78f0111ec83a40::t_3c340cdae262c0 2-3
+crates/oxc_parser/src/ts/statement.rs
+  s_78f0111ec83a40::t_adb3e9833fd69e 291
+tasks/coverage/misc/pass/ts-interface-heritage-line-break-type-arguments.ts
+  s_78f0111ec83a40::t_fb5c5783b84b0a 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "92a380effdce20d8f40e8d2b4ed2c88362fac814",
+  "prompts": {},
+  "sessions": {
+    "s_78f0111ec83a40": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f2438-e6d8-7702-aeee-a9ba6fe387d9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

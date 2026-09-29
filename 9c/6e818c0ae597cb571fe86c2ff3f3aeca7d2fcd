@@ -1,0 +1,33 @@
+crates/oxc_minifier/tests/mangler/mod.rs
+  s_061691b6efb6b5::t_53d164f5d3bcaf 202-203
+  s_061691b6efb6b5::t_9602890b24f5b5 204-206
+crates/oxc_codegen/src/gen.rs
+  s_061691b6efb6b5::t_0e33abe4b9eac3 2578
+crates/oxc_minifier/tests/mangler/snapshots/private_member_mangling.snap
+  s_f64128c8687912::t_3e297ffdfcedda 89-100,103,106-107
+  s_f64128c8687912::t_bb756034f1deaf 101-102,104-105,108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9c6e818c0ae597cb571fe86c2ff3f3aeca7d2fcd",
+  "prompts": {},
+  "sessions": {
+    "s_061691b6efb6b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffad6-9120-7051-ae03-ebfcfa07cd42",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_f64128c8687912": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffad9-5418-7ca1-a013-31ddcd85b396",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+crates/oxc_syntax/src/node.rs
+  s_81190e2271f081::t_b808beb4488d48 56-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e597d4b55502c4cf25b0a24bf3b7d266e8fa0bd9",
+  "prompts": {},
+  "sessions": {
+    "s_81190e2271f081": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0480b-61e5-7803-ab17-ce40dde44b63",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/prefer_promise_reject_errors.rs
+  s_e28c7cb914391d::t_41b321556c6ab4 38-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b1f5e425685890db75469a7292855f0e330c1c98",
+  "prompts": {},
+  "sessions": {
+    "s_e28c7cb914391d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc6a6-cafe-76b3-9cd8-c6ff2590a714",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

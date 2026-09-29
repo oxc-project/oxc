@@ -1,0 +1,29 @@
+packages/codegen/src-js/print/source_map.ts
+  s_6a85dfe90dd69f::t_f0598896ddab32 59-61,64-66,68-69,111,114-118,170-175
+packages/codegen/test/source-maps.test.ts
+  s_e1c6fb4f73c11b::t_f37bfec7804092 99-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c5eb817b69951ed8b6594e77c8d25c64c572ab3f",
+  "prompts": {},
+  "sessions": {
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_e1c6fb4f73c11b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f51-6a3c-7ac3-aa0f-7208f196bf60",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

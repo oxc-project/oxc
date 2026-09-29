@@ -1,0 +1,29 @@
+packages/codegen/src-js/print/source_map.ts
+  s_e1c6fb4f73c11b::t_b64fdc9bc86caa 66,340-351
+packages/codegen/test/source-maps.test.ts
+  s_e1c6fb4f73c11b::t_6643a0ffa2cfe0 104-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a293de436a7bacf9301380f4c6ed296a9c192a69",
+  "prompts": {},
+  "sessions": {
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_e1c6fb4f73c11b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f51-6a3c-7ac3-aa0f-7208f196bf60",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

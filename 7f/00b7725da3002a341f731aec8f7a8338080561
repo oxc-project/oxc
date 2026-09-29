@@ -1,0 +1,27 @@
+packages/codegen/test/fixtures/README.md
+  s_22d0a4f8830497::t_1be6435467170b 1-8
+packages/codegen/test/fixtures/coverage.js
+  s_22d0a4f8830497::t_4ca8af031b3f26 1-103
+packages/codegen/test/fixtures/coverage.jsx
+  s_22d0a4f8830497::t_9c9ee84062a54f 1-22
+packages/codegen/test/fixtures/coverage.ts
+  s_22d0a4f8830497::t_e58de673dccede 1-83
+packages/codegen/test/fixtures/coverage.tsx
+  s_22d0a4f8830497::t_b5f290df35899c 1-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7f00b7725da3002a341f731aec8f7a8338080561",
+  "prompts": {},
+  "sessions": {
+    "s_22d0a4f8830497": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01514-38c7-7d10-bbb3-9c9ea9be5e3f",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

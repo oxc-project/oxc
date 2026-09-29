@@ -1,0 +1,19 @@
+crates/oxc_codegen/tests/integration/sourcemap.rs
+  s_327a21337a819c::t_00ad70274589ec 447,456
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b0ec4707dc178b398a712fbae583212966e22df1",
+  "prompts": {},
+  "sessions": {
+    "s_327a21337a819c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03355-f78d-7be3-b1de-0b0bff6fe5d9",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

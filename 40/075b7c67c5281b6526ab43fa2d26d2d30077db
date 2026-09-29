@@ -1,0 +1,19 @@
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_0134e749ece873::t_32a92e051ed520 29-30,40-41,48,116,135,140-141,143,145,232-233,302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "40075b7c67c5281b6526ab43fa2d26d2d30077db",
+  "prompts": {},
+  "sessions": {
+    "s_0134e749ece873": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01f72-83db-7ed2-a2f5-b49a3dfd48a7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

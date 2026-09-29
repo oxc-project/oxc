@@ -1,0 +1,29 @@
+crates/oxc_linter/src/rules/react/no_this_in_sfc.rs
+  s_e01355fba8b00f::t_adddb3fc633c75 80,102,106-120,361-391,489-509
+crates/oxc_linter/src/snapshots/react_no_this_in_sfc.snap
+  s_b38ece9ad5d8c2::t_ba5034c922f284 99-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "eec73704622dea88b48a1e131e4cb6e26910c799",
+  "prompts": {},
+  "sessions": {
+    "s_b38ece9ad5d8c2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-86e201b55e14",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_e01355fba8b00f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-06d9-71e0-b420-042c76e481ed",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+apps/oxlint/src-js/generated/deserialize.js
+  s_707a887e7aa0d2::t_b1c8ae6ad4fc47 5206,5211,5221
+napi/parser/src-js/generated/deserialize/js.js
+  s_707a887e7aa0d2::t_6aa3ba37213a5c 3820-3821,3825,3827
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_707a887e7aa0d2::t_9369062bcdbbad 4257,4261,4270
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_707a887e7aa0d2::t_d942dc4f0e07cb 4272-4273,4277,4279
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_707a887e7aa0d2::t_4b39c78fc1e3ad 4707,4711,4721
+napi/parser/src-js/generated/deserialize/ts.js
+  s_707a887e7aa0d2::t_6ba4e6a0714194 4114-4115,4119,4121
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_707a887e7aa0d2::t_3788cad3caef72 4581,4585,4594
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_707a887e7aa0d2::t_3f3f26667afe75 4594-4595,4599,4601
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_707a887e7aa0d2::t_08be799422b491 5059,5063,5073
+crates/oxc_ast/src/serialize/ts.rs
+  s_707a887e7aa0d2::t_964ac88c2e8244 57,61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "210791cef249049938ba59e874e4213bf28e1df6",
+  "prompts": {},
+  "sessions": {
+    "s_707a887e7aa0d2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fcc4c-24a8-7663-9277-ea1a47d38b68",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

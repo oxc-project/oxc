@@ -1,0 +1,19 @@
+crates/oxc_codegen/src/comment.rs
+  s_49cd06206d8aa9::t_acde60fecd5740 3,20-21,32-34,39-43,46-48,62-75,78-85,90-101,237-246,249-250,252-260,477,479,482-487,505,507,510-515,668,677,741
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "af7b0a499f8b6979bd045cd204ad3e53331be859",
+  "prompts": {},
+  "sessions": {
+    "s_49cd06206d8aa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0385e-8599-7e72-9aa4-71c6549842c1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

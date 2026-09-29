@@ -1,0 +1,83 @@
+apps/oxlint/fixtures/cli/additional_test_file_patterns/.oxlintrc-jest.json
+  s_2a81ccd359eebb::t_bc8aab0871a2ef 1-12
+apps/oxlint/fixtures/cli/additional_test_file_patterns/.oxlintrc-vitest.json
+  s_2a81ccd359eebb::t_b07c01604747fe 1-12
+apps/oxlint/fixtures/cli/additional_test_file_patterns/jest-disabled.steps.ts
+  s_1d0327f1c27e67::t_bddd9adc8cd054 1-2
+apps/oxlint/fixtures/cli/additional_test_file_patterns/jest.steps.ts
+  s_1d0327f1c27e67::t_0a95f38b499a02 1
+apps/oxlint/fixtures/cli/additional_test_file_patterns/not-matched.ts
+  s_1d0327f1c27e67::t_38fe0edf7a5171 1
+apps/oxlint/fixtures/cli/additional_test_file_patterns/vitest.helper.ts
+  s_1d0327f1c27e67::t_c4431f57b5416f 1
+apps/oxlint/src-js/package/config.generated.ts
+  s_9695f3b2c013ee::t_957816a69c1726 7191-7195,7430-7434
+apps/oxlint/src/lint.rs
+  s_c6371b487f182d::t_c71eafb52e5d7f 760,1410-1433
+crates/oxc_linter/src/config/settings/jest.rs
+  s_2a81ccd359eebb::t_978466c7de0c97 7-8,23-27
+crates/oxc_linter/src/config/settings/mod.rs
+  s_2a81ccd359eebb::t_76be2077a36f9b 245-262
+crates/oxc_linter/src/config/settings/vitest.rs
+  s_2a81ccd359eebb::t_36962260ab7d4a 4-5,17-21
+crates/oxc_linter/src/context/host.rs
+  s_bd80b42b55ed57::t_38322d107b5550 528-563
+npm/oxlint/configuration_schema.json
+  s_be50fa1e85b57f::t_dc657a103ad082 141-142,145-146,12181-12190,17174-17175,17237-17238,19644-19653
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6c98b05ee4affadd97e1872de6608407df74288b",
+  "prompts": {},
+  "sessions": {
+    "s_1d0327f1c27e67": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f3-7011-82ef-39902f8a6886",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_2a81ccd359eebb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f7-79a0-b54f-af7ad1555116",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_9695f3b2c013ee": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-8704ee7ed7b2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_bd80b42b55ed57": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-06d7-7b13-aaef-25f2accc7703",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_be50fa1e85b57f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-0718-74e0-98e3-9eef81aef982",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_c6371b487f182d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffc5-463c-74a0-a4da-013a725503d9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

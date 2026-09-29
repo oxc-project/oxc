@@ -1,0 +1,37 @@
+apps/oxlint/src-js/generated/deserialize.js
+  s_aa3067c8f5ecd1::t_b22bb8b2f4b607 2718,2722,2724,2726
+napi/parser/src-js/generated/deserialize/js.js
+  s_aa3067c8f5ecd1::t_4a85f1cc2e128a 1975,1978
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_aa3067c8f5ecd1::t_41874afbd3daef 2188,2191
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_aa3067c8f5ecd1::t_d3174b771f4127 2194,2197
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_aa3067c8f5ecd1::t_fa0a38260d9882 2406,2409
+napi/parser/src-js/generated/deserialize/ts.js
+  s_aa3067c8f5ecd1::t_f7968150224a27 2179,2183,2185,2187
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_aa3067c8f5ecd1::t_ae581af8c2192a 2411,2415,2417,2419
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_aa3067c8f5ecd1::t_54d97997c856cd 2419,2423,2425,2427
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_aa3067c8f5ecd1::t_e657f3449749ec 2650,2654,2656,2658
+crates/oxc_ast/src/serialize/js.rs
+  s_aa3067c8f5ecd1::t_0951e1e08bebf7 20,35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "139ba4fc155f0cd779bacd947c974c94e62339c6",
+  "prompts": {},
+  "sessions": {
+    "s_aa3067c8f5ecd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fdba8-20bb-79c3-bc32-395e28a32e34",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

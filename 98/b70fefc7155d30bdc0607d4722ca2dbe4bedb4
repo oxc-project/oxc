@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/no_useless_constructor.rs
+  s_7f3548074eebcc::t_c8ea33891a9541 57-59,158-159,181,191-192,303-307
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "98b70fefc7155d30bdc0607d4722ca2dbe4bedb4",
+  "prompts": {},
+  "sessions": {
+    "s_7f3548074eebcc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01043-5a5d-76a0-8700-15e5733c1fe7",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

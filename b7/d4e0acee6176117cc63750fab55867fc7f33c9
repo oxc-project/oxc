@@ -1,0 +1,19 @@
+crates/oxc_mangler/src/base54.rs
+  s_e5bd83064381a4::t_7c7d5a9e177979 36-39,52,62-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b7d4e0acee6176117cc63750fab55867fc7f33c9",
+  "prompts": {},
+  "sessions": {
+    "s_e5bd83064381a4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb8a-68bc-7952-985d-51d04a752765",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

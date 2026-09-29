@@ -1,0 +1,21 @@
+apps/oxlint/test/fixtures/plugin_name_duplicate/output.snap.md
+  s_8a124bdd2164cc::t_e448688093d606 8
+crates/oxc_linter/src/config/config_builder.rs
+  s_8a124bdd2164cc::t_cdc88d23f4fb34 246-253,272
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2e847cf1361dd78ccffcc7aad7447bea8103c19d",
+  "prompts": {},
+  "sessions": {
+    "s_8a124bdd2164cc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc1fa-1b9e-7243-9fcb-c8e78bc251d4",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

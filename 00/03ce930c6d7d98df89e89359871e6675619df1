@@ -1,0 +1,29 @@
+crates/oxc_linter/src/rules/react/rules_of_hooks.rs
+  s_2a81ccd359eebb::t_47a85fcd243495 415-421,423,2183-2202
+crates/oxc_linter/src/snapshots/react_rules_of_hooks.snap
+  s_c6371b487f182d::t_57d1c4eabc683c 702-721
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0003ce930c6d7d98df89e89359871e6675619df1",
+  "prompts": {},
+  "sessions": {
+    "s_2a81ccd359eebb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f7-79a0-b54f-af7ad1555116",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_c6371b487f182d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffc5-463c-74a0-a4da-013a725503d9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

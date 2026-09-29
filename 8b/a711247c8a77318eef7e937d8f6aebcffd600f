@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/import/no_empty_named_blocks.rs
+  s_49254080648e4d::t_4353e4dd26efa2 41,58-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8ba711247c8a77318eef7e937d8f6aebcffd600f",
+  "prompts": {},
+  "sessions": {
+    "s_49254080648e4d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a048f3-88ba-79c0-8f0e-92976a2f5521",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

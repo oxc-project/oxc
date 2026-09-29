@@ -1,0 +1,31 @@
+crates/oxc_codegen/tests/integration/ts.rs
+  s_b019a5413f8066::t_0e8e1ed57efd2a 58-76
+crates/oxc_isolated_declarations/tests/fixtures/ambient-module-import-attributes.ts
+  s_b019a5413f8066::t_84c2a6f86c6f1c 1-5
+crates/oxc_isolated_declarations/tests/snapshots/ambient-module-import-attributes.snap
+  s_555bdd00191282::t_63386316863008 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a28808aad0a61569d934401c5877e57312547ac3",
+  "prompts": {},
+  "sessions": {
+    "s_555bdd00191282": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c10-95a3-78e3-bfeb-a54856c3231d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_b019a5413f8066": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a047f3-0bd8-71b0-8993-ba1f1f935280",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

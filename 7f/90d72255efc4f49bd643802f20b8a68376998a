@@ -1,0 +1,19 @@
+crates/oxc_react_compiler/tests/snapshot.rs
+  s_36c5d9799aac7a::t_4d11e6faa6e50c 80-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7f90d72255efc4f49bd643802f20b8a68376998a",
+  "prompts": {},
+  "sessions": {
+    "s_36c5d9799aac7a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03e7d-8e73-77b0-b68b-a4c684646ee3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

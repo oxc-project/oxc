@@ -1,0 +1,23 @@
+apps/oxlint/src-js/package/config.generated.ts
+  s_a1fe585b00ec06::t_c337cfa898dc5a 6215-6219
+npm/oxlint/configuration_schema.json
+  s_a1fe585b00ec06::t_ccc151aa5a511d 19250,19252
+crates/oxc_linter/src/rules/typescript/switch_exhaustiveness_check.rs
+  s_a1fe585b00ec06::t_c2c476812bf3cb 20-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "92a93a945cf830580b2deb6fa61120bb40375af8",
+  "prompts": {},
+  "sessions": {
+    "s_a1fe585b00ec06": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03d18-e76f-7770-b1f2-b515de2fc8ee",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

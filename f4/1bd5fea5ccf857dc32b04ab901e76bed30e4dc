@@ -1,0 +1,19 @@
+crates/oxc_semantic/Cargo.toml
+  s_2143c2b9f5f263::t_1dfaee12b3c0d6 22-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f41bd5fea5ccf857dc32b04ab901e76bed30e4dc",
+  "prompts": {},
+  "sessions": {
+    "s_2143c2b9f5f263": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffbdf-274a-7b90-9dfe-182ce949ec49",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

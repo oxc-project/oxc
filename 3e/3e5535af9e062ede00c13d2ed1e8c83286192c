@@ -1,0 +1,45 @@
+napi/minify/index.js
+  s_a46ca49c10010f::t_4174b6b2a1974c 551
+napi/minify/minify.wasi-browser.js
+  s_a46ca49c10010f::t_0d8435115b8411 48,55
+napi/minify/minify.wasi.cjs
+  s_a46ca49c10010f::t_4f680a835deac2 41,45,46-47,88,106
+napi/parser/src-js/bindings.js
+  s_a46ca49c10010f::t_4a270ef3a73def 551
+napi/parser/src-js/parser.wasi-browser.js
+  s_a46ca49c10010f::t_4a324641d43934 48,55
+napi/parser/src-js/parser.wasi.cjs
+  s_a46ca49c10010f::t_5e940b94e264db 41,45,46-47,88,106
+napi/playground/playground.wasi-browser.js
+  s_a46ca49c10010f::t_3821ab6b9e787a 48,55
+napi/playground/playground.wasi.cjs
+  s_a46ca49c10010f::t_028119935f1a72 41,45,46-47,88,106
+napi/transform-react/index.js
+  s_a46ca49c10010f::t_4ec737e6fe112d 551
+napi/transform-react/transform-react.wasi-browser.js
+  s_a46ca49c10010f::t_0d488f55e3d59d 48,55
+napi/transform-react/transform-react.wasi.cjs
+  s_a46ca49c10010f::t_455b9b2942526e 41,45,46-47,88,106
+napi/transform/index.js
+  s_a46ca49c10010f::t_07a62f50b7800a 551
+napi/transform/transform.wasi-browser.js
+  s_a46ca49c10010f::t_02b5693c29e1e6 48,55
+napi/transform/transform.wasi.cjs
+  s_a46ca49c10010f::t_e76b35b455b8e1 41,45,46-47,88,106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3e3e5535af9e062ede00c13d2ed1e8c83286192c",
+  "prompts": {},
+  "sessions": {
+    "s_a46ca49c10010f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc6ea-d07b-7571-aa02-e39e16c99fd3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

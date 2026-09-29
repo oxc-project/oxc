@@ -1,0 +1,33 @@
+apps/oxlint/test/fixtures/getDisableDirectives/files/test.js
+  s_fc6fbb8b9444ab::t_d932ed75b5d877 27-35
+apps/oxlint/test/fixtures/getDisableDirectives/output.snap.md
+  s_3c6867790db3e8::t_caef6c928cecca 6
+apps/oxlint/test/fixtures/getDisableDirectives/plugin.ts
+  s_fc6fbb8b9444ab::t_afe948a36f76b0 37-51,70
+apps/oxlint/src-js/plugins/directives.ts
+  s_3c6867790db3e8::t_384f4792565f8a 50-55,71-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0971e837dd154913d7a535ac9b7bfb64adb65892",
+  "prompts": {},
+  "sessions": {
+    "s_3c6867790db3e8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6b7-8fbe-7091-b5f5-e47bcd0fb165",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_fc6fbb8b9444ab": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6b6-fd57-7601-8711-b74245ccfb17",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

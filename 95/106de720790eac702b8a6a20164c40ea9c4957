@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/oxc/bad_replace_all_arg.rs
+  s_d694f3a1ea2300::t_ce9f37a0971478 56-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "95106de720790eac702b8a6a20164c40ea9c4957",
+  "prompts": {},
+  "sessions": {
+    "s_d694f3a1ea2300": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f9485-792f-7ab2-92b7-b4953b7f23ba",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

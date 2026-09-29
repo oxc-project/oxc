@@ -1,0 +1,23 @@
+apps/oxlint/test/fixtures/js_config_dynamic_type_check/output.snap.md
+  s_06aa70235fee10::t_8028042f40b284 10-11
+apps/oxlint/test/fixtures/js_config_type_aware/output.snap.md
+  s_06aa70235fee10::t_a25603270c25bc 10-11
+apps/oxlint/test/lsp/lint/__snapshots__/lint.test.ts.snap
+  s_06aa70235fee10::t_4cf042a6d4b1b3 103,135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d510560e2ce7f693d4f895c6b8c27f2619f63b86",
+  "prompts": {},
+  "sessions": {
+    "s_06aa70235fee10": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8403-aeac-7413-b017-ac82a405e2d0",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

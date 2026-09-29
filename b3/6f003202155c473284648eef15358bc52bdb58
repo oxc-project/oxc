@@ -1,0 +1,36 @@
+crates/oxc_codegen/tests/integration/ts.rs
+  s_167e4aaf3623fe::t_6f54a10c16c792 406,408-410
+  s_167e4aaf3623fe::t_64fc6b7e98e8bb 386-398,412
+  s_167e4aaf3623fe::t_987ddb52393615 400,402-403
+  s_167e4aaf3623fe::t_1b8ec01f37e2e0 369-385,399,401,405,407,411
+  s_167e4aaf3623fe::t_1c84dc3906ce2b 404
+crates/oxc_codegen/src/gen.rs
+  s_167e4aaf3623fe::t_4fdb33d8fd6877 2276-2297
+  s_167e4aaf3623fe::t_48da03c603c3a3 14-16,1589-1594,1604-1634,1636,1644-1645
+crates/oxc_codegen/src/lib.rs
+  s_167e4aaf3623fe::t_b2a47a040313eb 748-759
+crates/oxc_codegen/tests/integration/js.rs
+  s_167e4aaf3623fe::t_a288ae5adb8e01 471
+  s_167e4aaf3623fe::t_85a46e8b9e37dd 468-469
+  s_167e4aaf3623fe::t_ef301de3ecc301 470
+crates/oxc_codegen/src/binary_expr_visitor.rs
+  s_167e4aaf3623fe::t_3a20a15be8c5fb 272-280
+  s_167e4aaf3623fe::t_26214971963247 265-266
+  s_167e4aaf3623fe::t_1a17eef3c93115 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b36f003202155c473284648eef15358bc52bdb58",
+  "prompts": {},
+  "sessions": {
+    "s_167e4aaf3623fe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb2a6-6088-7ba0-bdd4-d3d9f14dea02",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

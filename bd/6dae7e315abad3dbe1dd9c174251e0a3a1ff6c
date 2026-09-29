@@ -1,0 +1,21 @@
+crates/oxc_parser/src/js/expression.rs
+  s_896e7ea80c20ab::t_c5fa3db90decb8 1500
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_896e7ea80c20ab::t_7a123f18f54d90 70,77,80,154-156,158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bd6dae7e315abad3dbe1dd9c174251e0a3a1ff6c",
+  "prompts": {},
+  "sessions": {
+    "s_896e7ea80c20ab": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03933-885b-7c81-ba60-4999905a5515",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/no_eval.rs
+  s_9695f3b2c013ee::t_c80936c3055c17 194-197,239-253,359-364,544
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9b5ed7cb3c5eb9bb56f6655af2f5287560140d1f",
+  "prompts": {},
+  "sessions": {
+    "s_9695f3b2c013ee": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-8704ee7ed7b2",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

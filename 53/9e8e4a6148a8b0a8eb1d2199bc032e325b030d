@@ -1,0 +1,23 @@
+crates/oxc_formatter/src/print/call_like_expression/arguments.rs
+  s_0eae81ddfc1ea3::t_350befd8ba6431 1056-1060
+crates/oxc_formatter/src/print/mod.rs
+  s_0eae81ddfc1ea3::t_9e6fd19aaa3f76 446-447
+crates/oxc_formatter/src/utils/assignment_like.rs
+  s_0eae81ddfc1ea3::t_59e6f69853fdae 555-556,558-561
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "539e8e4a6148a8b0a8eb1d2199bc032e325b030d",
+  "prompts": {},
+  "sessions": {
+    "s_0eae81ddfc1ea3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8041-2626-73d2-9ae3-45377bc4dff3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

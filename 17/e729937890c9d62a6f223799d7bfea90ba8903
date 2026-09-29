@@ -1,0 +1,37 @@
+apps/oxlint/test/fixtures/diagnostic_loc/files/negative-node.js
+  s_49cd06206d8aa9::t_37189d2c9239ff 1
+apps/oxlint/test/fixtures/diagnostic_loc/files/out-of-range-node.js
+  s_49cd06206d8aa9::t_155da5967dc464 1-2
+apps/oxlint/test/fixtures/diagnostic_loc/output.snap.md
+  s_36c5d9799aac7a::t_113cf333c3348e 6-15,52-58
+apps/oxlint/test/fixtures/diagnostic_loc/plugin.ts
+  s_49cd06206d8aa9::t_92dfb185e20b0c 13-36,53-54
+crates/oxc_linter/src/lib.rs
+  s_36c5d9799aac7a::t_1b7f72690115af 744-747,759-764,861-864,867-869
+apps/oxlint/test/fixtures/diagnostic_loc/files/negative-loc.js
+  s_36c5d9799aac7a::t_abc2ab57a82075 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "17e729937890c9d62a6f223799d7bfea90ba8903",
+  "prompts": {},
+  "sessions": {
+    "s_36c5d9799aac7a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03e7d-8e73-77b0-b68b-a4c684646ee3",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_49cd06206d8aa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0385e-8599-7e72-9aa4-71c6549842c1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

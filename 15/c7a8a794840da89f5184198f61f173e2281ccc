@@ -1,0 +1,21 @@
+tasks/transform_conformance/snapshots/babel.snap.md
+  s_cb6e5f07b09f0b::t_e18a5258796eab 3,13,119-124,187,320-322,335-349,413,474-494,1066,1076-1083,1100,1104-1109,1117,1174-1180,1284-1287,1307-1310,1325-1330,1441,1451-1471,1505-1510,1514-1516,1550-1564
+tasks/transform_conformance/src/test_case.rs
+  s_cb6e5f07b09f0b::t_a6fc2bee9909ea 411-412,480-490,498-515
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "15c7a8a794840da89f5184198f61f173e2281ccc",
+  "prompts": {},
+  "sessions": {
+    "s_cb6e5f07b09f0b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd161-fa59-7ea1-a880-80706d688b13",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

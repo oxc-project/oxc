@@ -1,0 +1,29 @@
+crates/oxc_linter/src/rules/node/no_top_level_await.rs
+  s_ae7b7c3170fe8a::t_37e50661520724 15,17
+crates/oxc_linter/src/snapshots/node_no_top_level_await.snap
+  s_e139fb14c69afc::t_f986227e4148dd 5,11,13,19,21,27,29,35,37,43,45,51,53,59,61,67,69,75,77,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ebf1636a7d4530a0b04107af572e2519c15d60de",
+  "prompts": {},
+  "sessions": {
+    "s_ae7b7c3170fe8a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8907-f214-7493-9962-f94e6f8dd613",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_e139fb14c69afc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8908-897e-75d0-b679-23a573bca8e2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

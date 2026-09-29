@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/shared/jest_vitest/no_test_return_statement.rs
+  s_1574c7e0f1f72c::t_f6b65eb518f881 49-56,63-69,72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0f33e8043e093d57400aece181a515bb632689ef",
+  "prompts": {},
+  "sessions": {
+    "s_1574c7e0f1f72c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f9463-1bcd-7441-8529-f4759bc6838f",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

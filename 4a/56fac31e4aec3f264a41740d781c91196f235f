@@ -1,0 +1,21 @@
+crates/oxc_ast_generator/src/custom.rs
+  s_3c7a5db6237378::t_a9fd222a78b50a 1019
+tasks/ast_generator_fuzz/src/lib.rs
+  s_3c7a5db6237378::t_5156082c374e75 233-237,500-533
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4a56fac31e4aec3f264a41740d781c91196f235f",
+  "prompts": {},
+  "sessions": {
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

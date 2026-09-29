@@ -1,0 +1,21 @@
+Cargo.toml
+  s_2a9b849c5046f2::t_410744b99768ef 339-344
+tasks/codegen_conformance/package.json
+  s_2a9b849c5046f2::t_304bf7b95398fd 17-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8dfda7bbc74f4863f8d8e1de6b39b7667fbd0e5d",
+  "prompts": {},
+  "sessions": {
+    "s_2a9b849c5046f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6e7-fd35-7ad1-849d-34a76c583b4a",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

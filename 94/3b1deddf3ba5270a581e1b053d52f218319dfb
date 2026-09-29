@@ -1,0 +1,21 @@
+crates/oxc_formatter/tests/fixtures/ts/comments/export-declarations.ts.snap
+  s_7b752eb5bf3d58::t_e4dc822b8d6a06 1-87
+crates/oxc_formatter/tests/fixtures/ts/comments/export-declarations.ts
+  s_7b752eb5bf3d58::t_af3558a40a364a 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "943b1deddf3ba5270a581e1b053d52f218319dfb",
+  "prompts": {},
+  "sessions": {
+    "s_7b752eb5bf3d58": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019faff1-b5c1-7a61-a10c-6704be318fdf",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

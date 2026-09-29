@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/import/no_named_as_default.rs
+  s_2a81ccd359eebb::t_19de2e0d7eb855 80-83,233-234
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fb67f9474f64bed2c6d406eff68a4dac8d720081",
+  "prompts": {},
+  "sessions": {
+    "s_2a81ccd359eebb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f7-79a0-b54f-af7ad1555116",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

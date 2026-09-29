@@ -1,0 +1,19 @@
+crates/oxc_linter/src/ast_util.rs
+  s_e55d9836dacea7::t_667c0589724632 633-637
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4816e4e13ad7bc74987fee949ea9ef99e6abcc5a",
+  "prompts": {},
+  "sessions": {
+    "s_e55d9836dacea7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc6a9-2065-7631-ba77-77ac77530cb0",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

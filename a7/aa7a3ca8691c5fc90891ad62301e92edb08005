@@ -1,0 +1,19 @@
+packages/codegen/src-js/print/write.ts
+  s_37044da4f2f7a1::t_d9190d9ec151b2 722-727,767-768,774
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a7aa7a3ca8691c5fc90891ad62301e92edb08005",
+  "prompts": {},
+  "sessions": {
+    "s_37044da4f2f7a1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03355-7663-70c2-b97e-35b9a4ab7418",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

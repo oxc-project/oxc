@@ -1,0 +1,25 @@
+crates/oxc_ast_visit/src/comment_attachment.rs
+  s_43cff1d112befe::t_0d906cf17fb9a1 156,160-161,174,176,183-189,194-199,205-208,212,222-224,228-229,233-237,247-248
+crates/oxc_ast_visit/src/node_id.rs
+  s_43cff1d112befe::t_f5ec60d4299768 10
+crates/oxc_semantic/src/builder.rs
+  s_43cff1d112befe::t_e100a1b0ece5da 13,345-359,362-364,366
+crates/oxc_semantic/src/stats.rs
+  s_43cff1d112befe::t_b3987f105fa9ac 4,7-13,102-110,185-247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "76dee9564af3b5e799e99e367c916281cdacb551",
+  "prompts": {},
+  "sessions": {
+    "s_43cff1d112befe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06825-a359-7b41-b9dd-90b0622613e7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

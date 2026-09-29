@@ -1,0 +1,19 @@
+tasks/transform_conformance/src/exec.rs
+  s_caa871d0bfb6c5::t_8e9cb9b2fed951 28-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "13cc9fd3e633d548dd8844849dbddd8605d22f50",
+  "prompts": {},
+  "sessions": {
+    "s_caa871d0bfb6c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a032c1-2ee9-7c83-8028-2fd9c3eea610",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

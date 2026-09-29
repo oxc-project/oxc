@@ -1,0 +1,21 @@
+apps/oxlint/test/fixtures/diagnostic_loc/output.snap.md
+  s_36c5d9799aac7a::t_4eba4b6def4045 11-15
+crates/oxc_diagnostics/src/reporter.rs
+  s_36c5d9799aac7a::t_89ff6866a5ef39 176,181-198,204-219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a1e9b5266e753d30661e300a142afeb3b402d6ee",
+  "prompts": {},
+  "sessions": {
+    "s_36c5d9799aac7a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03e7d-8e73-77b0-b68b-a4c684646ee3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+crates/oxc_parser/src/lexer/numeric.rs
+  s_0134e749ece873::t_74a4285c5ce610 39
+crates/oxc_transformer/src/es2018/object_rest_spread.rs
+  s_0134e749ece873::t_22799821ca92e6 1196,1198,1202-1205,1207
+apps/oxlint/src/command/lint.rs
+  s_edf6df8d7770f1::t_01e9400de2b3a4 376
+crates/oxc_linter/src/rules/promise/no_multiple_resolved.rs
+  s_edf6df8d7770f1::t_e22bee3a75ec63 699
+crates/oxc_linter/src/rules/react/jsx_curly_brace_presence.rs
+  s_edf6df8d7770f1::t_c4340ce5c48dc0 742
+crates/oxc_react_compiler/src/react_compiler_ssa/enter_ssa.rs
+  s_edf6df8d7770f1::t_1423a3733d2876 219-220
+crates/oxc_transformer/src/lib.rs
+  s_edf6df8d7770f1::t_cb09b7efcb2800 192
+crates/oxc_transformer/src/typescript/namespace.rs
+  s_edf6df8d7770f1::t_6c404482932e3a 185,188,198,200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0ec41ed46d4dd2cc6fe998472e8e828c4a575500",
+  "prompts": {},
+  "sessions": {
+    "s_0134e749ece873": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01f72-83db-7ed2-a2f5-b49a3dfd48a7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_7b9dd056b673a0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02048-f89e-71d1-8c48-d46a5cf4cefc",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_edf6df8d7770f1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0204e-c0fb-7cc3-94ee-f7a89d7054b2",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

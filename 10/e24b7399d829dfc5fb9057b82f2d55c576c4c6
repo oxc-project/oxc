@@ -1,0 +1,31 @@
+crates/oxc_isolated_declarations/src/lib.rs
+  s_0df3b0eff4d69f::t_184c35a34734d9 298-300
+  s_0df3b0eff4d69f::t_fe748b73edb36c 288-295,314
+crates/oxc_isolated_declarations/src/module.rs
+  s_0df3b0eff4d69f::t_b93791c47b0812 16,18,27-30,34-37
+  s_0df3b0eff4d69f::t_b50507a8a79d2d 13-15
+  s_0df3b0eff4d69f::t_8c4e41dfcb2681 17
+  s_0df3b0eff4d69f::t_fed1dd18c420b7 19-21
+  s_0df3b0eff4d69f::t_ca1906b63a06af 9-12,22
+crates/oxc_isolated_declarations/tests/snapshots/re-exports.snap
+  s_0df3b0eff4d69f::t_ebe6bcd1896491 12
+  s_0df3b0eff4d69f::t_a9be7091b36a74 13-14
+crates/oxc_isolated_declarations/tests/fixtures/re-exports.ts
+  s_0df3b0eff4d69f::t_d955309edaca9a 13-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "10e24b7399d829dfc5fb9057b82f2d55c576c4c6",
+  "prompts": {},
+  "sessions": {
+    "s_0df3b0eff4d69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019faec2-4b38-7680-9883-460be7cd59ab",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

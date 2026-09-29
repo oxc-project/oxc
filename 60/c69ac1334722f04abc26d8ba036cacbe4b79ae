@@ -1,0 +1,65 @@
+crates/oxc_linter/src/rules/eslint/no_unassigned_vars.rs
+  s_8eed05f40e9529::t_4d8d1700724c21 6,62
+crates/oxc_linter/src/rules/unicorn/consistent_existence_index_check.rs
+  s_ebddea38a953bc::t_ac931ea04308a5 10
+crates/oxc_linter/src/rules/unicorn/no_array_fill_with_reference_type.rs
+  s_ebddea38a953bc::t_b3b8bfd3d0a86c 11
+crates/oxc_linter/src/rules/unicorn/no_useless_undefined.rs
+  s_ebddea38a953bc::t_a289eb73186e87 13
+crates/oxc_linter/src/rules/eslint/init_declarations.rs
+  s_8eed05f40e9529::t_915b7ad84441d7 16
+crates/oxc_linter/src/rules/eslint/no_const_assign.rs
+  s_8eed05f40e9529::t_07c0bdb541128c 8
+crates/oxc_linter/src/rules/eslint/no_magic_numbers.rs
+  s_5b9ffd8d3b2336::t_b9c8c3acac758a 13,526
+crates/oxc_linter/src/rules/eslint/no_unused_vars/allowed.rs
+  s_ebddea38a953bc::t_c672764d09f760 9,171,181
+crates/oxc_linter/src/rules/eslint/prefer_destructuring.rs
+  s_ebddea38a953bc::t_57a66d47e8e4f4 15
+crates/oxc_linter/src/rules/eslint/require_unicode_regexp.rs
+  s_ebddea38a953bc::t_73d9b9bb5f4a92 17,330
+crates/oxc_linter/src/rules/unicorn/prefer_array_flat.rs
+  s_ebddea38a953bc::t_d9b8710712c881 14
+crates/oxc_linter/src/rules/unicorn/prefer_at.rs
+  s_8eed05f40e9529::t_d734e9ae8b6e69 20,587
+crates/oxc_linter/src/rules/unicorn/prefer_set_has.rs
+  s_ebddea38a953bc::t_a00f5fc63f025f 11-14,139
+crates/oxc_linter/src/rules/unicorn/prefer_top_level_await.rs
+  s_8eed05f40e9529::t_e1ae9587b6e97e 9-12,165
+crates/oxc_linter/src/rules/vue/no_multiple_slot_args.rs
+  s_8eed05f40e9529::t_25748760d1174f 12-15,171
+crates/oxc_linter/src/rules/vue/valid_define_options.rs
+  s_8eed05f40e9529::t_aaa840795dd777 10-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "60c69ac1334722f04abc26d8ba036cacbe4b79ae",
+  "prompts": {},
+  "sessions": {
+    "s_5b9ffd8d3b2336": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd272-2e55-7ba0-b887-5f7ac7a7d10d",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_8eed05f40e9529": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd260-f14f-7212-a31d-9f7b0153f714",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_ebddea38a953bc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd26b-fa7f-7842-8c50-8fa63e648517",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

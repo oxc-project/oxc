@@ -1,0 +1,23 @@
+packages/codegen/src-js/print/write.ts
+  s_6b5aa3ca33a1b5::t_5363962bb889ef 311-312,360-363,367-372,377,388-391,396,398-400,403,406,409,414-418,447-466,470-479
+packages/codegen/src-js/state.ts
+  s_6b5aa3ca33a1b5::t_220da0b80fdb78 84,88,152,157
+packages/codegen/test/source-maps.test.ts
+  s_6b5aa3ca33a1b5::t_351f81db0b6af5 91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fc5cb889a149430411b7094356662ff1655b7388",
+  "prompts": {},
+  "sessions": {
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

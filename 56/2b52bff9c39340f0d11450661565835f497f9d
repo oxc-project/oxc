@@ -1,0 +1,19 @@
+crates/oxc_linter/src/disable_directives.rs
+  s_b38ece9ad5d8c2::t_a557a3ecf68b7d 4,673,678-681,1759-1777
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "562b52bff9c39340f0d11450661565835f497f9d",
+  "prompts": {},
+  "sessions": {
+    "s_b38ece9ad5d8c2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-86e201b55e14",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

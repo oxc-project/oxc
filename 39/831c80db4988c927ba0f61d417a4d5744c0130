@@ -1,0 +1,31 @@
+crates/oxc_codegen/tests/integration/snapshots/coverage.snap.new
+  s_49cd06206d8aa9::t_d43ca5a5932476 1-207
+crates/oxc_codegen/tests/integration/snapshots/pure_comments.snap.new
+  s_49cd06206d8aa9::t_ce991205878e76 1-533
+crates/oxc_codegen/tests/integration/snapshots/ts.snap.new
+  s_49cd06206d8aa9::t_7ecca4c2e4dfef 1-381
+crates/oxc_codegen/src/binary_expr_visitor.rs
+  s_49cd06206d8aa9::t_bc134a3d217dd3 242,248-251,253-259
+crates/oxc_codegen/src/comment.rs
+  s_49cd06206d8aa9::t_a1ca54ba176ec7 3,17-245,252-259,262,266,272,315,319,331,334,338,365-369,371,389,398-401,417,419-420,423-424,432-441,451,454-455,463-466,469-471,477-478,480-482,488-499,508-511,531,547,591-611,622,631-633,648-651,659-687,694
+crates/oxc_codegen/src/gen.rs
+  s_49cd06206d8aa9::t_4cfb52ba9ae493 16,41,43,791-799,801-802,1321-1326,1344,1362-1366,1409-1415,1434-1438,2110-2112,2117-2121
+crates/oxc_codegen/src/lib.rs
+  s_49cd06206d8aa9::t_c26bf5022ad72b 37,129,132-134,187,189,255,570-577,681-684,745-749
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "39831c80db4988c927ba0f61d417a4d5744c0130",
+  "prompts": {},
+  "sessions": {
+    "s_49cd06206d8aa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0385e-8599-7e72-9aa4-71c6549842c1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

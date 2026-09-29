@@ -1,0 +1,19 @@
+packages/codegen/src-js/print/expression.ts
+  s_6a85dfe90dd69f::t_ae455b6ef312c8 356-359
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d4dee05f7fe4ac1a397e658136142d00aef68d6c",
+  "prompts": {},
+  "sessions": {
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+crates/oxc_transformer/src/es2018/async_generator_functions/mod.rs
+  s_a3c62699fdbbe1::t_caa26eebf4bcf5 170-171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "582e5dc4ba84322c6136a0196135adecab55dfbc",
+  "prompts": {},
+  "sessions": {
+    "s_a3c62699fdbbe1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb3d8-5cf5-7800-9703-30aa8ee89de5",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

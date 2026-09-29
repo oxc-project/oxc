@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/typescript/no_var_requires.rs
+  s_1d0327f1c27e67::t_a50234758d1091 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "370435f0ec80fd17e74c94376a432b0c724bd8fd",
+  "prompts": {},
+  "sessions": {
+    "s_1d0327f1c27e67": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f3-7011-82ef-39902f8a6886",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

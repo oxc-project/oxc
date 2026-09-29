@@ -1,0 +1,19 @@
+crates/oxc_semantic/tests/integration/enum_values.rs
+  s_9fffd301ae31f9::t_0894564934ffe9 72-78,96-97,103-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "00415e7cead68a2c1f32df5c55198fbdbbd65d24",
+  "prompts": {},
+  "sessions": {
+    "s_9fffd301ae31f9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb8e-c227-7ac3-9ef9-109daed45d80",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

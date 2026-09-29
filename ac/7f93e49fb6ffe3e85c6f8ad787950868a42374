@@ -1,0 +1,21 @@
+.github/scripts/clone-parallel.mjs
+  s_98d85a95571ac7::t_260ee9eb9afc0f 15
+tasks/transform_conformance/tests/legacy-decorators/test/fixtures/update-fixtures.js
+  s_98d85a95571ac7::t_eb6b5ca15af26a 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ac7f93e49fb6ffe3e85c6f8ad787950868a42374",
+  "prompts": {},
+  "sessions": {
+    "s_98d85a95571ac7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06689-4a42-71b3-8cc3-d0c682ebbbd9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

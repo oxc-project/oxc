@@ -1,0 +1,33 @@
+crates/oxc_codegen/src/comment.rs
+  s_49cd06206d8aa9::t_e61c95548c3c3a 304-309,615-618
+crates/oxc_codegen/src/gen.rs
+  s_49cd06206d8aa9::t_f1f56509549298 752-753,823-825,1728-1730,1742-1744,1781-1783
+crates/oxc_codegen/src/lib.rs
+  s_49cd06206d8aa9::t_f9dfdf88e7e807 255
+crates/oxc_codegen/tests/integration/comments.rs
+  s_49cd06206d8aa9::t_5189d342b6b5e4 135,343,347-350,353,552,555-556,832,841
+crates/oxc_codegen/tests/integration/esbuild.rs
+  s_49cd06206d8aa9::t_f8d23cea55542c 207-208,275-276,707-708
+crates/oxc_codegen/tests/integration/js.rs
+  s_49cd06206d8aa9::t_2aa901a98d3dbd 948,958,963
+crates/oxc_isolated_declarations/src/lib.rs
+  s_49cd06206d8aa9::t_e96afca0728781 105
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_49cd06206d8aa9::t_136a02b01139db 143-144,146,151-153,943-946
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "07d90b582d5fb284619fa0586d1fa807a97a6304",
+  "prompts": {},
+  "sessions": {
+    "s_49cd06206d8aa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0385e-8599-7e72-9aa4-71c6549842c1",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
