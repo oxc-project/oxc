@@ -2,7 +2,7 @@ commit: fd665901
 
 parser_babel Summary:
 AST Parsed     : 2239/2239 (100.00%)
-Positive Passed: 2223/2239 (99.29%)
+Positive Passed: 2222/2239 (99.24%)
 Negative Passed: 1732/1746 (99.20%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -132,6 +132,24 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │     n()
    ·     ─
  5 │ }
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts
+
+  × TS(1243): 'async' modifier cannot be used with 'abstract' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts:3:14]
+ 2 │ abstract class C {
+ 3 │     abstract async a();
+   ·              ─────
+ 4 │     static async s() {}
+   ╰────
+
+  × TS(1243): 'async' modifier cannot be used with 'abstract' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts:5:21]
+ 4 │     static async s() {}
+ 5 │     public abstract async pua();
+   ·                     ─────
+ 6 │     public static async pus() {}
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts

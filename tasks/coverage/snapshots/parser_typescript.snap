@@ -15926,6 +15926,22 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  14 │ 
     ╰────
 
+  × TS(1243): 'async' modifier cannot be used with 'abstract' modifier.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:15:14]
+ 14 │ 
+ 15 │     abstract async foo_f();
+    ·              ─────
+ 16 │     async abstract foo_g();
+    ╰────
+
+  × TS(1243): 'async' modifier cannot be used with 'abstract' modifier.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:16:11]
+ 15 │     abstract async foo_f();
+ 16 │     async abstract foo_g();
+    ·           ────────
+ 17 │ }
+    ╰────
+
   × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts:15:5]
  14 │     
