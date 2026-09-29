@@ -476,3 +476,369 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ╰── this parameter can be unified
  4 │             function f(this: string | number, a: boolean): void {}
    ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `string | number | boolean`.
+   ╭─[unified_signatures.tsx:2:12]
+ 1 │ function f(x: string | number): void;
+   ·            ─────────┬────────
+   ·                     ╰── with this overload parameter
+ 2 │ function f(x: number | boolean): void;
+   ·            ─────────┬─────────
+   ·                     ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `string`.
+   ╭─[unified_signatures.tsx:2:12]
+ 1 │ function f(value): void;
+   ·            ──┬──
+   ·              ╰── with this overload parameter
+ 2 │ function f(value: string): void;
+   ·            ──────┬──────
+   ·                  ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `string`.
+   ╭─[unified_signatures.tsx:2:12]
+ 1 │ function f(value: string): void;
+   ·            ──────┬──────
+   ·                  ╰── with this overload parameter
+ 2 │ function f(value): void;
+   ·            ──┬──
+   ·              ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `Alias | number`.
+   ╭─[unified_signatures.tsx:3:12]
+ 1 │ type Alias = string;
+ 2 │ function f(x: Alias): void;
+   ·            ────┬───
+   ·                ╰── with this overload parameter
+ 3 │ function f(x: Alias | number): void;
+   ·            ────────┬────────
+   ·                    ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `Name | string`.
+   ╭─[unified_signatures.tsx:3:12]
+ 1 │ type Name = string;
+ 2 │ function f(x: Name): void;
+   ·            ───┬───
+   ·               ╰── with this overload parameter
+ 3 │ function f(x: string | Name): void;
+   ·            ────────┬───────
+   ·                    ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `T | string`.
+   ╭─[unified_signatures.tsx:2:15]
+ 1 │ function f<T>(x: T): void;
+   ·               ──┬─
+   ·                 ╰── with this overload parameter
+ 2 │ function f<T>(x: T | string): void;
+   ·               ──────┬──────
+   ·                     ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `'a|b' | string`.
+   ╭─[unified_signatures.tsx:2:12]
+ 1 │ function f(x: 'a|b'): void;
+   ·            ────┬───
+   ·                ╰── with this overload parameter
+ 2 │ function f(x: 'a|b' | string): void;
+   ·            ────────┬────────
+   ·                    ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `string | number`.
+   ╭─[unified_signatures.tsx:2:12]
+ 1 │ function f(x: string /* first */ | number): void;
+   ·            ───────────────┬──────────────
+   ·                           ╰── with this overload parameter
+ 2 │ function f(x: number | /* second */ string): void;
+   ·            ───────────────┬───────────────
+   ·                           ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `number | string`.
+   ╭─[unified_signatures.tsx:2:21]
+ 1 │ declare function fn(a: number): void;
+   ·                     ────┬────
+   ·                         ╰── with this overload parameter
+ 2 │ declare function fn(a: (/* before */ string /* after */)): void;
+   ·                     ──────────────────┬─────────────────
+   ·                                       ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `string & { brand: true } | number | string & /* brand */ { brand: true }`.
+   ╭─[unified_signatures.tsx:2:12]
+ 1 │ function f(x: string & { brand: true }): void;
+   ·            ─────────────┬─────────────
+   ·                         ╰── with this overload parameter
+ 2 │ function f(x: number | string & /* brand */ { brand: true }): void;
+   ·            ────────────────────────┬───────────────────────
+   ·                                    ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `string & { brand: true } | number`.
+   ╭─[unified_signatures.tsx:2:12]
+ 1 │ function f(x: string & { brand: true }): void;
+   ·            ─────────────┬─────────────
+   ·                         ╰── with this overload parameter
+ 2 │ function f(x: number | string & { brand: true }): void;
+   ·            ──────────────────┬─────────────────
+   ·                              ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `(() => void) | (T extends U ? string : number)`.
+   ╭─[unified_signatures.tsx:2:18]
+ 1 │ function f<T, U>(x: () => void): void;
+   ·                  ──────┬──────
+   ·                        ╰── with this overload parameter
+ 2 │ function f<T, U>(x: T extends U ? string : number): void;
+   ·                  ────────────────┬───────────────
+   ·                                  ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `(new () => Value) | string`.
+   ╭─[unified_signatures.tsx:3:12]
+ 1 │ interface Value {}
+ 2 │ function f(x: new () => Value): void;
+   ·            ─────────┬────────
+   ·                     ╰── with this overload parameter
+ 3 │ function f(x: string): void;
+   ·            ────┬────
+   ·                ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): This overload can be combined with another overload into one signature taking `string | number | boolean`.
+   ╭─[unified_signatures.tsx:3:5]
+ 1 │ interface I {
+ 2 │   f(x: string | number): void;
+   ·     ─────────┬────────
+   ·              ╰── with this overload parameter
+ 3 │   f(x: number | boolean): void;
+   ·     ─────────┬─────────
+   ·              ╰── this parameter can be unified
+ 4 │   f(x: symbol): string;
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `'a' | 'b' | 'c'`.
+   ╭─[unified_signatures.tsx:2:12]
+ 1 │ function f(x: 'a' | 'b'): void;
+   ·            ──────┬─────
+   ·                  ╰── with this overload parameter
+ 2 │ function f(x: 'b' | 'c'): void;
+   ·            ──────┬─────
+   ·                  ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `Array<string> | boolean | Array<number>`.
+   ╭─[unified_signatures.tsx:2:12]
+ 1 │ function f(x: Array<string> | boolean): void;
+   ·            ─────────────┬────────────
+   ·                         ╰── with this overload parameter
+ 2 │ function f(x: Array<number> | boolean): void;
+   ·            ─────────────┬────────────
+   ·                         ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `Promise | boolean | Promise<string>`.
+   ╭─[unified_signatures.tsx:2:12]
+ 1 │ function f(x: Promise | boolean): void;
+   ·            ──────────┬─────────
+   ·                      ╰── with this overload parameter
+ 2 │ function f(x: Promise<string> | boolean): void;
+   ·            ──────────────┬─────────────
+   ·                          ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `Namespace.Value | string`.
+   ╭─[unified_signatures.tsx:5:12]
+ 3 │ }
+ 4 │ function f(x: Namespace.Value): void;
+   ·            ─────────┬────────
+   ·                     ╰── with this overload parameter
+ 5 │ function f(x: Namespace.Value | string): void;
+   ·            ─────────────┬─────────────
+   ·                         ╰── this parameter can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:2:1]
+ 1 │ declare function f(a: number): void;
+   · ──────────────────┬─────────────────
+   ·                   ╰── with this overload signature
+ 2 │ declare function f(a: number): void;
+   · ──────────────────┬─────────────────
+   ·                   ╰── this signature can be unified
+   ╰────
+
+  ⚠ typescript(unified-signatures): This overload can be combined with another overload into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:2:1]
+ 1 │ declare function f(a: number): void;
+   · ──────────────────┬─────────────────
+   ·                   ╰── with this overload signature
+ 2 │ declare function f(a: number): void;
+   · ──────────────────┬─────────────────
+   ·                   ╰── this signature can be unified
+ 3 │ declare function f(a: string): string;
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:2:1]
+ 1 │ function f(a: number): void;
+   · ──────────────┬─────────────
+   ·               ╰── with this overload signature
+ 2 │ function f(a: number): void;
+   · ──────────────┬─────────────
+   ·               ╰── this signature can be unified
+ 3 │ function f(a: number): void {}
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:3:4]
+ 1 │ class A {
+ 2 │   f(a: number): void;
+   ·    ─────────┬────────
+   ·             ╰── with this overload signature
+ 3 │   f(a: number): void;
+   ·    ─────────┬────────
+   ·             ╰── this signature can be unified
+ 4 │   f(a: number): void {}
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:21]
+ 1 │ function f(): void; function f(): void;
+   · ─────────┬───────── ─────────┬─────────
+   ·          │                   ╰── this signature can be unified
+   ·          ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:26]
+ 1 │ function f(value): void; function f(value): void;
+   · ────────────┬─────────── ────────────┬───────────
+   ·             │                        ╰── this signature can be unified
+   ·             ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:40]
+ 1 │ function f(...values: string[]): void; function f(...values: string[]): void;
+   · ───────────────────┬────────────────── ───────────────────┬──────────────────
+   ·                    │                                      ╰── this signature can be unified
+   ·                    ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:31]
+ 1 │ function f(x?: string): void; function f(x?: string): void;
+   · ──────────────┬────────────── ──────────────┬──────────────
+   ·               │                             ╰── this signature can be unified
+   ·               ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:33]
+ 1 │ function f(this: string): void; function f(this: string): void;
+   · ───────────────┬─────────────── ───────────────┬───────────────
+   ·                │                               ╰── this signature can be unified
+   ·                ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:25]
+ 1 │ interface I { (): void; (): void; }
+   ·               ────┬──── ────┬────
+   ·                   │         ╰── this signature can be unified
+   ·                   ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:26]
+ 1 │ interface I { new (): I; new (): I; }
+   ·               ─────┬──── ─────┬────
+   ·                    │          ╰── this signature can be unified
+   ·                    ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:26]
+ 1 │ interface I { f(): void; f(): void; }
+   ·               ─────┬──── ─────┬────
+   ·                    │          ╰── this signature can be unified
+   ·                    ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:46]
+ 1 │ class C { constructor(x: number); constructor(x: number); constructor(x: number) {} }
+   ·                      ──────┬─────            ──────┬─────
+   ·                            │                       ╰── this signature can be unified
+   ·                            ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `string | number | boolean`.
+   ╭─[unified_signatures.tsx:1:62]
+ 1 │ function f(x: string | (number | boolean)): void; function f(x: (boolean | string)): void;
+   ·            ───────────────┬──────────────                    ──────────┬──────────
+   ·                           │                                            ╰── this parameter can be unified
+   ·                           ╰── with this overload parameter
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `(() => void) | string`.
+   ╭─[unified_signatures.tsx:1:56]
+ 1 │ function f(x: (() => void) | string): void; function f(x: () => void): void;
+   ·            ────────────┬───────────                    ──────┬──────
+   ·                        │                                     ╰── this parameter can be unified
+   ·                        ╰── with this overload parameter
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `T | T[]`.
+   ╭─[unified_signatures.tsx:1:62]
+ 1 │ function f<T extends A>(x: T): void; function f<T extends A>(x: T[]): void;
+   ·                         ──┬─                                 ───┬──
+   ·                           │                                     ╰── this parameter can be unified
+   ·                           ╰── with this overload parameter
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with an optional parameter.
+   ╭─[unified_signatures.tsx:1:76]
+ 1 │ function f<T extends 1 | 2>(x: T): void; function f<T extends 1 | 2>(x: T, y: string): void;
+   ·                             ──┬─                                           ────┬────
+   ·                               │                                                ╰── this parameter only appears in one overload
+   ·                               ╰── matching overload ends here
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `T | T[]`.
+   ╭─[unified_signatures.tsx:1:64]
+ 1 │ function f<T extends (A)>(x: T): void; function f<T extends A>(x: T[]): void;
+   ·                           ──┬─                                 ───┬──
+   ·                             │                                     ╰── this parameter can be unified
+   ·                             ╰── with this overload parameter
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:30]
+ 1 │ function f(a: number): void; function f(b: number): void;
+   · ──────────────┬───────────── ──────────────┬─────────────
+   ·               │                            ╰── this signature can be unified
+   ·               ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature with identical parameters.
+   ╭─[unified_signatures.tsx:1:54]
+ 1 │ /** same */ function f(x: number): void; /** same */ function f(x: number): void;
+   ·             ──────────────┬─────────────             ──────────────┬─────────────
+   ·                           │                                        ╰── this signature can be unified
+   ·                           ╰── with this overload signature
+   ╰────
+
+  ⚠ typescript(unified-signatures): These overloads can be combined into one signature taking `(() => void)`.
+   ╭─[unified_signatures.tsx:1:33]
+ 1 │ function f(x): void; function f(x: () => void): void;
+   ·            ┬                    ──────┬──────
+   ·            │                          ╰── this parameter can be unified
+   ·            ╰── with this overload parameter
+   ╰────

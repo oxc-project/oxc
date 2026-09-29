@@ -10,3 +10,4 @@ And, Stage 4 proposals
 
 - https://github.com/tc39/proposal-duplicate-named-capturing-groups
 - https://github.com/tc39/proposal-regexp-modifiers
+- https://github.com/tc39/proposal-regexp-buffer-boundaries

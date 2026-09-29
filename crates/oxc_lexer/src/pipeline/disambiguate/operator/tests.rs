@@ -218,6 +218,8 @@ fn prefix_incdec_then_slash_is_regex() {
     regex("return++/re/.lastIndex;", ScriptJS);
     regex("a + ++/re/.lastIndex;", ScriptJS);
     regex("a ** ++/re/.lastIndex;", ScriptJS);
+    regex("if (a) ++/re/.lastIndex;", ScriptJS);
+    regex("while (a) --/re/.lastIndex;", ScriptJS);
 }
 
 #[test]
@@ -933,4 +935,150 @@ fn adjacent_type_atoms_end_an_annotation() {
     assert!(ks.contains(&TokenKind::Lt) && !ks.contains(&TokenKind::JsxLt), "{ks:?}");
     let codes = diag_codes_of("let P: Array<bigint, this>\n_(x)\n<(P().foo);", ScriptTSX);
     assert!(codes.is_empty(), "{codes:?}");
+}
+
+#[test]
+fn decorated_export_class_declaration() {
+    // A decorator between `export` (or `export default`) and `class` decorates a declaration.
+    regex("export @dec class C {} /re/.test(x);", ModuleJS);
+    regex("export @dec() class C {} /re/.test(x);", ModuleJS);
+    regex("export @a @b class C {} /re/.test(x);", ModuleJS);
+    regex("export default @dec class {} /re/.test(x);", ModuleJS);
+    regex("export default @dec class C {} /re/.test(x);", ModuleJS);
+    division("export @dec class C {} x = {} / 2;", ModuleJS);
+    division("export default (@dec class {}) / 2;", ModuleJS);
+}
+
+#[test]
+fn ts_satisfies_after_a_type_operator() {
+    // `satisfies` ends the type of a preceding `as` / `satisfies` and opens its own.
+    division("let v = x as T satisfies {} / y;", ScriptTS);
+    division("let v = x as {} satisfies {} / y;", ScriptTS);
+    division("let v = x satisfies {} satisfies {} / y;", ScriptTS);
+    division("let v = {a: 1} as const satisfies {a: 1} / y;", ScriptTS);
+    division("let v = x as A<B> satisfies {} / y;", ScriptTS);
+    regex("x = y as T satisfies {}\n{} /re/.test(s);", ScriptTS);
+}
+
+#[test]
+fn function_name_after_a_line_break() {
+    // Nothing restricts a line break between `function` and its name: the head goes on.
+    division("x = function\nf() {} / 2;", ScriptJS);
+    regex("function\nf(): T {} /re/.test(x);", ScriptTS);
+    regex("function /* c */\nf() {} /re/.test(x);", ScriptJS);
+    regex("async function\nf() {} /re/.test(x);", ScriptJS);
+    regex("function\n*g() {} /re/.test(x);", ScriptJS);
+}
+
+#[test]
+fn class_field_initializer_is_outside_yield_and_await_contexts() {
+    // A field initializer is parsed outside the enclosing function's `yield` / `await` context,
+    // so both are identifiers in it; computed keys and static blocks still see the function.
+    division("async function f() { class A { x = await / 2 / 1 } }", ScriptJS);
+    division("async function f() { class A { static x = await / 2 / 1 } }", ScriptJS);
+    division("async function f() { class A { x = (a = await / 2 / 1) => a } }", ScriptJS);
+    division("async function f() { class A { x = await / 2 / 1; y = 3 } }", ScriptJS);
+    regex("async function f() { class A { [await /re/.test(x)] = 1 } }", ScriptJS);
+    regex("async function f() { class A { x = 1; [await /re/.test(x)] = 1 } }", ScriptJS);
+    regex("class A { static { await /re/.test(x) } }", ScriptJS);
+    regex("async function f() { class A { async m() { await /re/.test(x) } } }", ScriptJS);
+}
+
+#[test]
+fn of_ending_a_declaration_before_a_line_break() {
+    // ASI ends the declaration or the break, so a regex starts the next statement.
+    regex("let of\n/re/g.test(s)", ScriptJS);
+    regex("var of\n/re/g.test(s)", ScriptJS);
+    regex("of: for (;;) { break of\n/re/g.test(s) }", ScriptJS);
+}
+
+#[test]
+fn async_call_arguments_keep_the_enclosing_await_context() {
+    // A call to a function named async: its class argument is outside any await context.
+    division("async (class { [await / 2 / 1]() {} });", ScriptJS);
+}
+
+#[test]
+fn spread_class_expression_with_a_heritage_list() {
+    // A spread is not member access, so the heritage comma belongs to the class head.
+    division("x = [...class implements A, B {} / 2];", ScriptTS);
+}
+
+#[test]
+fn declaration_after_a_name_or_type_ended_by_a_line_break() {
+    // The word or postfix operator before the line break ends a value, so ASI starts a declaration.
+    regex("let of\nfunction f() {}\n/re/g", ScriptJS);
+    regex("var await\nfunction f() {}\n/re/g", ScriptJS);
+    regex("declare function f(): void\nfunction f() {}\n/re/g", ScriptTS);
+    regex("let x: void\nclass K {}\n/re/g", ScriptTS);
+    regex("let x = y!\nfunction f() {}\n/re/g", ScriptTS);
+}
+
+#[test]
+fn only_an_export_clause_opens_module_braces() {
+    // Braces after export are an export clause only when they follow it directly.
+    division("export = { a: 1 }\n/re/g", ScriptTS);
+    division("export const x = { a: 1 } / 2;", ModuleJS);
+    regex("export declare global {}\nfunction f() {}\n/re/g", ScriptTS);
+}
+
+#[test]
+fn export_async_function_is_a_declaration() {
+    // The full walk sees async between export and function: still a declaration.
+    regex("export async function f() {}\n/re/g", ModuleJS);
+}
+
+#[test]
+fn interface_members_on_separate_lines() {
+    // The full walk steps through the body: a line between members does not end the interface.
+    regex("interface I {\n  x: A<B<C>>\n  y: D\n}\n/re/g", ScriptTS);
+}
+
+#[test]
+fn yield_and_await_inside_the_function_a_bounded_walk_starts_in() {
+    division("function* g() { const a = 1; yield {} / 2; }", ScriptJS);
+    division("function* g() { const a = 1; yield {} / 2; }", ModuleJS);
+    division("async function f() { const a = 1; await {} / 2; }", ScriptJS);
+    division("({ *function() { yield {} / 2 } });", ScriptJS);
+    division("class C { *function() { yield {} / 2 } }", ScriptJS);
+}
+
+#[test]
+fn expression_after_an_as_type() {
+    regex("y = x as T || (() => { if (a) {} /re/ });", ScriptTS);
+    regex("y = x as T ? a : function () { if (c) {} /re/ };", ScriptTS);
+}
+
+#[test]
+fn from_as_a_name_before_a_string() {
+    division("let from = 1;\nfrom\n\"y\"\n/2/1;", ScriptJS);
+    division("let from = 1;\nfrom\n\"y\"\n/2/1;", ScriptTS);
+}
+
+#[test]
+fn keyword_after_a_number_with_a_trailing_dot() {
+    regex("x = 1. in /re/;", ScriptJS);
+    regex("x = 1. instanceof /re/.constructor;", ScriptJS);
+}
+
+#[test]
+fn statement_after_import_attributes() {
+    division("import a from \"b\" with { type: \"json\" }\nlet x = a\n/re/g;", ModuleJS);
+    regex("import a from \"b\" with { type: \"json\" }\nlet x\n/re/g;", ModuleJS);
+    regex("export { a } from \"b\" with { type: \"json\" }\nfunction f() {}\n/re/g;", ModuleJS);
+}
+
+#[test]
+fn of_after_any_value_in_a_for_head() {
+    regex("for (x! of /re/g.exec(s)) {}", ScriptTS);
+    regex("for (var x: T of /re/g.exec(s)) {}", ScriptTS);
+    regex("for (let x = 1 of /re/g.exec(s)) {}", ScriptTS);
+    division("for (x = of / 2;;) {}", ScriptJS);
+}
+
+#[test]
+fn walk_past_a_function_expression() {
+    division("x = { f: function() {}, g: {} / 2 };", ScriptJS);
+    division("x = { f: class {}, g: {} / 2 };", ScriptJS);
+    division("x = { f: function() {}, g: [{} / 2] };", ScriptJS);
 }

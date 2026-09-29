@@ -151,11 +151,11 @@ ast:
 
 # `oxc_lexer` compiles to one of two implementations, chosen at build time:
 #
-# * SIMD core, on x86_64 with `avx2` + `bmi2` enabled
+# * SIMD core, on x86_64 with `avx2` + `bmi2` + `popcnt` enabled
 # * Scalar fallback, everywhere else
 #
-# Both need testing, and they should produce identical results. Neither `avx2` nor `bmi2` is in the x86_64 baseline
-# on any platform, so reaching the SIMD core always means asking for them explicitly - even on an x86_64 host.
+# Both need testing, and they should produce identical results. None of `avx2`, `bmi2` and `popcnt` is in the x86_64
+# baseline on any platform, so reaching the SIMD core always means asking for them explicitly - even on an x86_64 host.
 # The flags live in `.cargo/lexer-simd.toml`, passed with `cargo --config`, which avoids shell quoting entirely
 # (this justfile runs PowerShell on Windows).
 #
@@ -199,6 +199,37 @@ lint-lexer *args='':
 lint-lexer-simd *args='':
   just lint-lexer {{_lexer-simd}} {{args}}
 
+# The lexer benchmarks measure wallclock time. Unlike the other benchmarks, they don't run on CodSpeed.
+#
+# `oxc_parser`'s lexer is always built without the SIMD flags, so it's benchmarked in a separate build
+# from `oxc_lexer`. Its results are saved as criterion baseline `lexer_old`, and then `oxc_lexer`
+# is compared against that baseline.
+# The "change" which criterion reports for `oxc_lexer` is its time relative to `oxc_parser`'s.
+# The "change" reported for `oxc_parser` (if any) is relative to its previous run.
+#
+# Both benchmarks are built before either is run, so the 2 runs happen back-to-back,
+# without a build between them.
+#
+# `args` are passed to criterion, e.g. `just bench-lexer App.tsx` to run only that file.
+# The recipes set the baseline options themselves, so don't pass those.
+#
+# On an ARM host, `bench-lexer-simd` compares `oxc_parser` running natively against `oxc_lexer`
+# running under emulation, so the comparison is meaningless.
+_bench-lexer := "cargo bench -p oxc_benchmark --no-default-features --features lexer_wallclock --bench"
+
+# Benchmark `oxc_lexer`'s scalar fallback against `oxc_parser`'s lexer
+bench-lexer *args='':
+  {{_bench-lexer}} lexer_wallclock_old --bench lexer_wallclock_new --no-run
+  {{_bench-lexer}} lexer_wallclock_old -- --save-baseline lexer_old {{args}}
+  {{_bench-lexer}} lexer_wallclock_new -- --baseline lexer_old {{args}}
+
+# Benchmark `oxc_lexer`'s SIMD core against `oxc_parser`'s lexer
+bench-lexer-simd *args='':
+  {{_bench-lexer}} lexer_wallclock_old --no-run
+  {{_bench-lexer}} lexer_wallclock_new {{_lexer-simd}} --no-run
+  {{_bench-lexer}} lexer_wallclock_old -- --save-baseline lexer_old {{args}}
+  {{_bench-lexer}} lexer_wallclock_new {{_lexer-simd}} -- --baseline lexer_old {{args}}
+
 # `ready-lexer` fails if any step fails, or if conformance changes the lexer snapshots.
 # Only the lexer snapshots are checked for changes, so it can be run with other uncommitted changes.
 # Snapshots are checked after each conformance run, because the SIMD run overwrites the snapshots from the scalar run.
@@ -214,6 +245,7 @@ ready-lexer:
   git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
   just conformance-lexer-simd
   git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
+  just doc -p oxc_lexer
 
 # ==================== LINTER ====================
 

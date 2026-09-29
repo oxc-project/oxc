@@ -23,9 +23,13 @@ mod coalesce;
 mod compress;
 mod disambiguate;
 mod find;
+mod keywords;
 mod misc;
+mod operators;
 mod scan;
 mod tables;
+
+pub(crate) use disambiguate::State as DisambiguateState;
 
 use carve::carve;
 use classify::classify;
@@ -52,7 +56,7 @@ pub struct Lexer {
     pub sig_len: usize,
     out_cap: usize,
     pub lanes: Lanes,
-    tables: Box<Tables>,
+    tables: &'static Tables,
 }
 
 impl Lexer {
@@ -75,7 +79,7 @@ impl Lexer {
             sig_len: 0,
             out_cap: 0,
             lanes: Lanes::default(),
-            tables: Box::new(Tables::new()),
+            tables: Tables::get(),
         }
     }
 
@@ -139,7 +143,7 @@ impl Lexer {
         self.ensure(n);
         self.lanes.clear();
         self.lanes.module = module;
-        disambiguate::memo_new_lex();
+        self.lanes.disambiguate.begin(n, module);
         if n == 0 {
             write_sentinels(0, out_spans, out_kinds);
             self.sig_len = 0;
@@ -156,15 +160,15 @@ impl Lexer {
         let misc = self.misc.as_mut_ptr();
         let kind = self.kind.as_mut_ptr();
         let kwpos = self.kwpos.as_mut_ptr();
-        let t: &Tables = &self.tables;
+        let t = self.tables;
 
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
-        classify(t, ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind);
+        classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind);
         let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes);
-        carve(t, src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
-        coalesce(t, sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
+        carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
+        coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
         misc_post(sp, n, st, word, misc, kind, nesc);
         let w = compress(
             t,
@@ -222,5 +226,42 @@ impl Lexer {
 impl Default for Lexer {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// The lex in progress as `disambiguate` reads it, over the buffers [`Lexer::ensure`] sized.
+///
+/// # SAFETY
+///
+/// - src must be valid for n + PAD bytes, st and opch for n / 64 + 1 words and
+///   `kind` for `(n / 64 + 1) * 64` bytes.
+/// - Nothing may write to them while the view is alive: a question reads, answers and returns
+///   before the stage writes again.
+///
+/// `brackets` is the lex's bracket cache, `lanes.disambiguate.brackets`.
+unsafe fn token_view<'a>(
+    src: *const u8,
+    st: *const u64,
+    opch: *const u64,
+    kind: *const u8,
+    n: usize,
+    ts: bool,
+    kw_final: usize,
+    module: bool,
+    brackets: &'a disambiguate::Brackets,
+    closers: &'a disambiguate::Closers,
+) -> disambiguate::Tokens<'a> {
+    let nb = n.div_ceil(64) + 1;
+    disambiguate::Tokens {
+        src: std::slice::from_raw_parts(src, n + PAD),
+        st: std::slice::from_raw_parts(st, nb),
+        opch: std::slice::from_raw_parts(opch, nb),
+        kind: std::slice::from_raw_parts(kind, nb * 64),
+        n,
+        ts,
+        module,
+        kw_final,
+        brackets,
+        closers,
     }
 }

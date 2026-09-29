@@ -8,249 +8,249 @@
 //!   `a<b + 1, c>` doesn't, because `+` can't appear in a type.
 //! - [`gt_follower`]: Can the token after the `>` follow type arguments?
 //!   A `(` can, as in `f<T>(x)`. An identifier can't, as in `a < b > c`.
-//!   When the token alone doesn't settle it, the answer is [`Follow::Ctx`], and the caller decides.
 
-use crate::token::{OP_KIND_BASE, tk};
+use crate::{
+    pipeline::bytes::{is_digit, is_id_start, line_break_in},
+    token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
+};
 
 use crate::pipeline::{
-    bitmap::{bm_get, bm_next1},
-    bytes::{is_digit, is_id_start},
-    find::{find_line_terminator, unicode_ws_len},
-    scan::scan_block_comment,
-    tables::Tables,
+    disambiguate::common::{Tokens, bits, word_len},
+    keywords::kw_match_at,
 };
 
-use crate::pipeline::disambiguate::common::{
-    kind_at, lt_in_range, type_prefix_kind, word_is_any, word_len,
+use super::bytes::{
+    list_closer, raw_template_end, skip_raw_literal, skip_trivia_fwd, skip_trivia_nl,
 };
 
-use super::bytes::skip_ws_fwd;
-
-const FOLLOW_SPLIT_WORDS: &[&[u8]] =
-    &[b"in", b"instanceof", b"as", b"satisfies", b"extends", b"implements"];
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(super) enum Follow {
-    Split,
-    Fuse,
-    Ctx,
-}
-
-pub(super) unsafe fn gt_follower(src: *const u8, n: usize, mut i: usize) -> Follow {
-    let mut broke = false;
-    loop {
-        if i >= n {
-            return Follow::Split;
+fn gt_follower(tokens: &Tokens, i: usize) -> bool {
+    let (src, n) = (tokens.src, tokens.n);
+    let (i, broke) = skip_trivia_nl(src, n, i);
+    if i >= n {
+        return true;
+    }
+    let c = src[i];
+    let nx = src[i + 1];
+    if broke {
+        // After a line break only a <, a > or a unary sign rules the list out.
+        return !(c == b'>'
+            || (c == b'<' && nx != b'<' && nx != b'=')
+            || (matches!(c, b'+' | b'-') && nx != b'=' && nx != c));
+    }
+    match c {
+        b'(' | b'`' | b'=' | b')' | b']' | b'}' | b',' | b';' | b':' | b'?' | b'|' | b'&'
+        | b'*' | b'%' | b'^' => true,
+        b'!' | b'+' | b'-' => nx == b'=',
+        b'.' => !is_digit(nx),
+        b'<' => nx == b'<' || nx == b'=',
+        // An identifier with a leading Unicode escape starts an expression like any other name.
+        b'\\' => nx != b'u',
+        _ if is_digit(c) => false,
+        _ if is_id_start(c) => {
+            let kw = kw_match_at(true, src, i, word_len(src, i)) as u8;
+            matches_tk!(kw, KwIn | KwInstanceof | KwAs | KwSatisfies | KwExtends)
         }
-        let c = *src.add(i);
-        match c {
-            b' ' | b'\t' | 0x0b | 0x0c => {
-                i += 1;
-                continue;
-            }
-            b'\n' | b'\r' => {
-                broke = true;
-                i += 1;
-                continue;
-            }
-            b'/' => {
-                let d = *src.add(i + 1);
-                if d == b'/' {
-                    broke = true;
-                    i = find_line_terminator(src, n, i + 2);
-                    continue;
-                }
-                if d != b'*' {
-                    return Follow::Split;
-                }
-                let e = scan_block_comment(src, n, i + 2).0;
-                if e >= n {
-                    return Follow::Split;
-                }
-                if lt_in_range(src, i + 2, e) {
-                    broke = true;
-                }
-                i = e + 1;
-                continue;
-            }
-            _ => {}
-        }
-        if c >= 0x80 {
-            if c == 0xe2
-                && *src.add(i + 1) == 0x80
-                && (*src.add(i + 2) == 0xa8 || *src.add(i + 2) == 0xa9)
-            {
-                broke = true;
-                i += 3;
-                continue;
-            }
-            let wl = unicode_ws_len(src, i);
-            if wl != 0 {
-                i += wl;
-                continue;
-            }
-            return if broke { Follow::Split } else { Follow::Fuse };
-        }
-        let nx = *src.add(i + 1);
-        if broke {
-            return match c {
-                b'<' if nx != b'<' && nx != b'=' => Follow::Ctx,
-                b'+' | b'-' if nx != b'=' && nx != c => Follow::Ctx,
-                b'>' => Follow::Ctx,
-                _ => Follow::Split,
-            };
-        }
-        return match c {
-            b'(' | b'`' | b'=' | b')' | b']' | b'}' | b',' | b';' | b':' | b'?' | b'|' | b'&'
-            | b'*' | b'%' | b'^' => Follow::Split,
-            b'!' => {
-                if nx == b'=' {
-                    Follow::Split
-                } else {
-                    Follow::Fuse
-                }
-            }
-            b'.' => {
-                if is_digit(nx) {
-                    Follow::Fuse
-                } else {
-                    Follow::Split
-                }
-            }
-            b'{' | b'[' | b'>' => Follow::Ctx,
-            b'+' | b'-' => {
-                if nx == b'=' {
-                    Follow::Split
-                } else {
-                    Follow::Fuse
-                }
-            }
-            b'<' => {
-                if nx == b'<' || nx == b'=' {
-                    Follow::Split
-                } else {
-                    Follow::Fuse
-                }
-            }
-            b'~' | b'@' | b'#' | b'"' | b'\'' => Follow::Fuse,
-            _ => {
-                if is_digit(c) {
-                    Follow::Fuse
-                } else if is_id_start(c) {
-                    if word_is_any(src, i, FOLLOW_SPLIT_WORDS) {
-                        Follow::Split
-                    } else {
-                        Follow::Fuse
-                    }
-                } else {
-                    Follow::Split
-                }
-            }
-        };
+        b'{' | b'[' | b'>' | b'~' | b'@' | b'#' | b'"' | b'\'' => false,
+        _ => true,
     }
 }
 
-pub(super) unsafe fn type_list_legal(
-    t: &Tables,
-    src: *const u8,
-    st: *const u64,
-    kind: *const u8,
-    lo: usize,
-    hi: usize,
-) -> bool {
+#[rustfmt::skip::macros(matches_tk)]
+fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
+    let Tokens { src, st, kind, .. } = *tokens;
     let mut start = true;
-    let mut brc: i32 = 0;
-    let mut brk: i32 = 0;
+    let mut braces: i32 = 0;
+    let mut brackets: i32 = 0;
     let mut angle_bits: u64 = 0;
     let mut angle_depth: u32 = 0;
     let mut paren_ok = false;
     let mut cond_ok = false;
-    let mut par: i32 = 0;
+    let mut parens: i32 = 0;
+    // Open brackets, innermost last; { is : inside a member's type, a computed key's [ is k.
+    let mut open: Vec<u8> = Vec::new();
+    // Conditional types whose : is still to come, outside braces, brackets and parens.
+    let mut colons: u32 = 0;
     let mut this_head = false;
+    // Keyword kind of the previous token (0 when it was not a keyword) and whether that keyword
+    // is a whole type that no `.` may follow.
+    let mut prev_kw: u8 = 0;
+    let mut no_dot = false;
+    // A list element starts here: after the `<` or a `,` of a type-argument list.
+    let mut elem_start = true;
     let mut skip = usize::MAX;
-    let mut w = bm_next1(st, lo, hi);
+    // Start of the previous significant token: a type reference takes no arguments across a
+    // line break, so a `<` after one is checked against it.
+    let mut prev = usize::MAX;
+    let mut w = bits::next1(st, lo, hi);
     while w < hi {
-        let k = kind_at(kind, w);
-        if w == skip || k == tk!(Whitespace) || k == tk!(LineComment) || k == tk!(BlockComment) {
-            w = bm_next1(st, w + 1, hi);
+        let mut k = tokens.base_kind(w);
+        if w == skip || is_trivia_byte(k) {
+            w = bits::next1(st, w + 1, hi);
             continue;
         }
-        let c = *src.add(w);
+        // A line break after a member's type starts the next member unless the token continues it.
+        if !start
+            && open.last() == Some(&b':')
+            && line_break_in(src, prev, w)
+            && (k < OP_KIND_BASE
+                || matches!(src[w], b'[' | b'(' | b'<' | b'+' | b'-' | b'"' | b'\''))
+        {
+            if let Some(b) = open.last_mut() {
+                *b = b'{';
+            }
+            start = true;
+        }
+        // Text carve has not reached yet: a raw comment is trivia, a raw string or template is a
+        // literal type.
+        let j = skip_raw_literal(src, kind, hi, w);
+        if j != w {
+            let c0 = src[w];
+            if c0 == b'/' {
+                w = bits::next1(st, j, hi);
+                continue;
+            }
+            k = if c0 == b'`' { tk!(TemplateNoSub) } else { tk!(String) };
+            if !start && braces == 0 {
+                return false;
+            }
+            start = false;
+            paren_ok = false;
+            prev = w;
+            prev_kw = 0;
+            no_dot = false;
+            w = bits::next1(st, j, hi);
+            continue;
+        }
+        let c = src[w];
         let mut ok_paren = false;
         let was_this = this_head;
         this_head = false;
-        if k == tk!(Ident) || k == tk!(IdentEscaped) {
-            let kk = t.keywords.kwts.lookup(src.add(w), word_len(src, w)) as u8;
-            this_head = kk == tk!(KwThis);
-            if !start && brc == 0 && !matches!(kk, tk!(KwExtends) | tk!(KwIs) | tk!(KwIn)) {
+        let was_no_dot = no_dot;
+        no_dot = false;
+        let last_kw = prev_kw;
+        prev_kw = 0;
+        let was_elem_start = elem_start;
+        elem_start = false;
+        if matches_tk!(k, Ident | IdentEscaped) {
+            // A qualified name's part is a name (z.infer, a.typeof).
+            let dotted = prev != usize::MAX && tokens.member_dot(prev);
+            let kk = if dotted { 0 } else { kw_match_at(true, src, w, word_len(src, w)) as u8 };
+            // A keyword type (`this`, `any`, `null`, ...) takes no type arguments; in a type
+            // query it names a value, which may (`typeof this<A>`).
+            this_head = keyword_type(kk) && last_kw != tk!(KwTypeof);
+            if !start && braces == 0 && !matches_tk!(kk, KwExtends | KwIs | KwIn) {
                 return false;
             }
-            if type_illegal_kind(kk) {
+            // tsc checks `isStartOfType` only where a list element starts (after `<` or a
+            // `,` of the list): a reserved word there is no type. Elsewhere a keyword is read
+            // as a name: a property (`{ return: T }`), a reference after `=>`, `:`, `|`. `super`
+            // names a value only in a type query (`typeof super.x`).
+            if was_elem_start
+                && type_illegal_kind(kk)
+                && !(kk == tk!(KwSuper) && last_kw == tk!(KwTypeof))
+            {
                 return false;
             }
             if kk == tk!(KwExtends) {
                 cond_ok = true;
             }
-            start = type_prefix_kind(kk);
-        } else if k == tk!(Number)
-            || k == tk!(BigInt)
-            || k == tk!(String)
-            || k == tk!(TemplateNoSub)
-            || k == tk!(TemplateTail)
-        {
-            if !start && brc == 0 && k != tk!(TemplateTail) {
+            // `this`, `null`, `true`, `false` and `void` are whole types: a `.` after one is
+            // a member access, not a qualified name (`any.x` and `string.x` are references).
+            no_dot = last_kw != tk!(KwTypeof)
+                && matches_tk!(kk, KwThis | KwNull | KwTrue | KwFalse | KwVoid);
+            prev_kw = kk;
+            // At the start of a type only an operator takes an operand; any other word is a name.
+            start = if start {
+                type_prefix_kind(kk)
+                    || (kk == tk!(KwAbstract)
+                        && tokens.ident_is(skip_trivia_fwd(src, hi, w + 8), b"new"))
+            } else {
+                matches_tk!(kk, KwExtends | KwIs | KwIn | KwAs)
+            };
+        } else if matches_tk!(k, Number | BigInt | String | TemplateNoSub | TemplateTail) {
+            if !start && braces == 0 && k != tk!(TemplateTail) {
                 return false;
             }
             start = false;
-        } else if k == tk!(TemplateHead) || k == tk!(TemplateMiddle) {
-            if k == tk!(TemplateHead) && !start && brc == 0 {
+        } else if matches_tk!(k, TemplateHead | TemplateMiddle) {
+            if k == tk!(TemplateHead) && !start && braces == 0 {
                 return false;
+            }
+            // Asked from the JSX carve, the head is carved but the rest of the template is raw
+            // text; its substitution `}` is still a punctuator. Read the literal as a whole then
+            // (a template type), instead of its tail as tokens.
+            if k == tk!(TemplateHead) {
+                let (close, end) = raw_template_end(src, hi, w);
+                if close < hi && tokens.base_kind(close) >= OP_KIND_BASE {
+                    if end > hi {
+                        return false;
+                    }
+                    start = false;
+                    paren_ok = false;
+                    prev = w;
+                    w = bits::next1(st, end, hi);
+                    continue;
+                }
             }
             start = true;
         } else if k >= OP_KIND_BASE {
             match c {
                 b'(' => {
-                    if !start && brc == 0 && !paren_ok {
+                    if !start && braces == 0 && !paren_ok {
                         return false;
                     }
-                    par += 1;
+                    parens += 1;
+                    open.push(c);
                     start = true;
                 }
                 b')' => {
-                    par -= 1;
+                    parens -= 1;
+                    open.pop();
                     start = false;
                 }
                 b']' => {
-                    brk -= 1;
+                    brackets -= 1;
+                    open.pop();
                     start = false;
                 }
                 b'[' => {
-                    brk += 1;
+                    brackets += 1;
+                    open.push(if open.last() == Some(&b'{') { b'k' } else { c });
                     start = true;
                 }
                 b'{' => {
-                    if !start && brc == 0 {
+                    if !start && braces == 0 {
                         return false;
                     }
-                    brc += 1;
+                    braces += 1;
+                    open.push(c);
                     start = true;
                 }
                 b'}' => {
-                    brc -= 1;
+                    braces -= 1;
+                    open.pop();
                     start = false;
                 }
                 b'<' => {
-                    let nx = *src.add(w + 1);
-                    if was_this || nx == b'=' || (nx == b'<' && !bm_get(st, w + 1)) {
+                    let nx = src[w + 1];
+                    if was_this || nx == b'=' || (nx == b'<' && !bits::get(st, w + 1)) {
+                        return false;
+                    }
+                    // No function type follows an operator that takes an operand.
+                    if braces == 0 && type_prefix_kind(last_kw) && last_kw != tk!(KwNew) {
+                        return false;
+                    }
+                    if !start && prev != usize::MAX && line_break_in(src, prev, w) {
                         return false;
                     }
                     angle_bits = (angle_bits << 1) | u64::from(start);
                     angle_depth += 1;
                     start = true;
+                    elem_start = true;
                 }
                 b'>' => {
-                    let nx = *src.add(w + 1);
-                    if (nx == b'=' || nx == b'>') && !bm_get(st, w + 1) {
+                    let nx = src[w + 1];
+                    if (nx == b'=' || nx == b'>') && !bits::get(st, w + 1) {
                         return false;
                     }
                     if angle_depth > 0 {
@@ -261,58 +261,87 @@ pub(super) unsafe fn type_list_legal(
                     start = false;
                 }
                 b'=' => {
-                    if *src.add(w + 1) != b'>' {
-                        return false;
-                    }
-                    if bm_get(st, w + 1) {
+                    // `=>` of a function type, or a type-parameter default (the walk also reads
+                    // member type-parameter lists here).
+                    if src[w + 1] == b'>' && bits::get(st, w + 1) {
                         skip = w + 1;
                     }
                     start = true;
                 }
-                b':' | b'.' => start = true,
+                b':' => {
+                    if braces == 0 && brackets == 0 && parens == 0 {
+                        if colons == 0 {
+                            return false;
+                        }
+                        colons -= 1;
+                    }
+                    if let Some(b @ b'{') = open.last_mut() {
+                        *b = b':';
+                    }
+                    start = true;
+                }
+                b'.' => {
+                    if was_no_dot {
+                        return false;
+                    }
+                    start = true;
+                }
                 b',' => {
-                    if angle_depth == 0 && brc == 0 && brk == 0 && par == 0 {
+                    if angle_depth == 0 && braces == 0 && brackets == 0 && parens == 0 {
                         cond_ok = false;
+                    }
+                    if braces == 0 && brackets == 0 && parens == 0 {
+                        elem_start = true;
+                    }
+                    if let Some(b @ b':') = open.last_mut() {
+                        *b = b'{';
                     }
                     start = true;
                 }
                 b'|' | b'&' => {
-                    if *src.add(w + 1) == c {
+                    if src[w + 1] == c {
                         return false;
                     }
                     start = true;
                 }
                 b'?' => {
-                    let nx = *src.add(w + 1);
+                    let nx = src[w + 1];
                     if nx == b'.' || nx == b'?' {
                         return false;
                     }
-                    if brc == 0 && brk == 0 {
-                        let optional = par > 0
-                            && matches!(*src.add(skip_ws_fwd(src, w + 1, hi)), b':' | b',' | b')');
-                        if !optional {
-                            if !cond_ok {
-                                return false;
-                            }
-                            cond_ok = false;
+                    // An optional member, parameter or tuple element; else the ? of a conditional.
+                    let after = src[skip_trivia_fwd(src, hi, w + 1)];
+                    let optional = match open.last() {
+                        Some(b'{') => true,
+                        Some(b'(') => matches!(after, b':' | b',' | b')'),
+                        Some(b'[') => matches!(after, b':' | b',' | b']'),
+                        _ => false,
+                    } || open.contains(&b'k');
+                    if !optional {
+                        if !cond_ok {
+                            return false;
                         }
+                        cond_ok = false;
+                        colons += u32::from(open.is_empty());
                     }
                     start = true;
                 }
                 b';' => {
-                    if brc == 0 {
+                    if braces == 0 {
                         return false;
+                    }
+                    if let Some(b @ b':') = open.last_mut() {
+                        *b = b'{';
                     }
                     start = true;
                 }
-                b'-' => {
-                    if !start && brc == 0 {
-                        return false;
-                    }
-                    start = true;
-                }
-                b'+' => {
-                    if brc == 0 {
+                b'-' | b'+' => {
+                    // A sign before a numeric literal, or a mapped type's readonly or ? modifier.
+                    let a = skip_trivia_fwd(src, hi, w + 1);
+                    let number = c == b'-' && start && (is_digit(src[a]) || src[a] == b'.');
+                    let modifier = open.last() == Some(&b'{')
+                        && (src[a] == b'?' || (start && tokens.ident_is(a, b"readonly")));
+                    if !number && !modifier && !open.contains(&b'k') {
                         return false;
                     }
                     start = true;
@@ -323,43 +352,59 @@ pub(super) unsafe fn type_list_legal(
             return false;
         }
         paren_ok = ok_paren;
-        w = bm_next1(st, w + 1, hi);
+        prev = w;
+        w = bits::next1(st, w + 1, hi);
     }
     true
 }
 
+/// A keyword that is a whole type by itself, as any, null or this, and takes no type arguments.
+#[rustfmt::skip::macros(matches_tk)]
+pub(crate) fn keyword_type(kw: u8) -> bool {
+    matches_tk!(
+        kw,
+        KwAny | KwBigInt | KwBoolean | KwNever | KwNumber | KwObject | KwString | KwSymbol
+        | KwUndefined | KwUnknown | KwVoid | KwNull | KwThis | KwTrue | KwFalse
+    )
+}
+
 #[inline(always)]
+#[rustfmt::skip::macros(matches_tk)]
 fn type_illegal_kind(k: u8) -> bool {
-    matches!(
+    matches_tk!(
         k,
-        tk!(KwAwait)
-            | tk!(KwYield)
-            | tk!(KwDelete)
-            | tk!(KwFunction)
-            | tk!(KwClass)
-            | tk!(KwInstanceof)
-            | tk!(KwSuper)
-            | tk!(KwSwitch)
-            | tk!(KwCase)
-            | tk!(KwReturn)
-            | tk!(KwThrow)
-            | tk!(KwVar)
-            | tk!(KwLet)
-            | tk!(KwConst)
-            | tk!(KwIf)
-            | tk!(KwElse)
-            | tk!(KwFor)
-            | tk!(KwWhile)
-            | tk!(KwDo)
-            | tk!(KwBreak)
-            | tk!(KwContinue)
-            | tk!(KwWith)
-            | tk!(KwTry)
-            | tk!(KwCatch)
-            | tk!(KwFinally)
-            | tk!(KwDebugger)
-            | tk!(KwDefault)
-            | tk!(KwExport)
-            | tk!(KwEnum)
+        KwDelete | KwFunction | KwClass | KwInstanceof | KwSuper | KwSwitch
+        | KwCase | KwReturn | KwThrow | KwVar | KwConst | KwIf | KwElse | KwFor | KwWhile | KwDo
+        | KwBreak | KwContinue | KwWith | KwTry | KwCatch | KwFinally | KwDebugger | KwDefault
+        | KwExport | KwEnum
+    )
+}
+
+/// TypeScript's speculative parse of a type-argument list at the `<` at `lt` in expression
+/// position: a balanced list whose contents are types and whose closer is followed by a token that
+/// cannot start an expression. In a type, every `<` after a name opens a list, so a `<` this
+/// accepts opens one in any context.
+pub(crate) fn type_args_at(tokens: &Tokens, lt: usize) -> bool {
+    let closers = tokens.closers;
+    if let Some(yes) = closers.get(lt).and_then(|r| r.args) {
+        return yes;
+    }
+    let yes = list_closer(tokens, lt).is_some_and(|gt| list_is_type_args(tokens, lt, gt));
+    closers.set_args(lt, yes);
+    yes
+}
+
+fn list_is_type_args(tokens: &Tokens, lt: usize, gt: usize) -> bool {
+    !matches!(tokens.src[gt + 1], b'=' | b'>')
+        && gt_follower(tokens, gt + 1)
+        && type_list_legal(tokens, lt + 1, gt)
+}
+
+#[inline(always)]
+#[rustfmt::skip::macros(matches_tk)]
+fn type_prefix_kind(k: u8) -> bool {
+    matches_tk!(
+        k,
+        KwKeyof | KwTypeof | KwReadonly | KwUnique | KwInfer | KwNew | KwImport
     )
 }
