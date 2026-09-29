@@ -10,7 +10,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use oxc_syntax::operator::UnaryOperator;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -304,8 +303,7 @@ impl ExplicitFunctionReturnType {
             return false;
         }
         let Some(expr) = func.get_expression() else { return false };
-        let Expression::UnaryExpression(unary_expr) = expr else { return false };
-        matches!(unary_expr.operator, UnaryOperator::Void)
+        expr.is_void()
     }
 
     fn is_allowed_function<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
