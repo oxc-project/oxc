@@ -3,6 +3,14 @@ mod keywords;
 mod pair_luts;
 mod punct1;
 
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
+pub(super) use classify_luts::{MERGED_LUTS, WORD_LUTS};
+
 pub(super) use keywords::KwSet;
 #[cfg(not(all(
     target_arch = "x86_64",
@@ -27,33 +35,26 @@ pub(super) use punct1::PUNCT1;
 ))]
 pub(super) use punct1::punct1_luts;
 
-use classify_luts::{MergedLuts, WordLuts};
 use keywords::Keywords;
 use pair_luts::PairLuts;
 
-#[cfg_attr(
-    not(all(
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-        target_feature = "popcnt"
-    )),
-    expect(dead_code, reason = "`merged_luts` and `word_luts` only used in SIMD implementation")
-)]
 pub(super) struct Tables {
     pub keywords: Keywords,
-    pub merged_luts: MergedLuts,
-    pub word_luts: WordLuts,
+
+    #[cfg_attr(
+        not(all(
+            target_arch = "x86_64",
+            target_feature = "avx2",
+            target_feature = "bmi2",
+            target_feature = "popcnt"
+        )),
+        expect(dead_code, reason = "only used in SIMD implementation")
+    )]
     pub pair_luts: PairLuts,
 }
 
 impl Tables {
     pub fn new() -> Tables {
-        Self {
-            keywords: Keywords::new(),
-            merged_luts: MergedLuts::new(),
-            word_luts: WordLuts::new(),
-            pair_luts: PairLuts::new(),
-        }
+        Self { keywords: Keywords::new(), pair_luts: PairLuts::new() }
     }
 }

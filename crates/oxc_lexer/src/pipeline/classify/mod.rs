@@ -1,5 +1,3 @@
-use crate::pipeline::tables::Tables;
-
 #[cfg(all(
     target_arch = "x86_64",
     target_feature = "avx2",
@@ -32,7 +30,6 @@ use generic::classify_impl;
 
 #[inline(never)]
 pub(super) unsafe fn classify(
-    t: &Tables,
     ts: bool,
     src: *const u8,
     n: usize,
@@ -46,7 +43,7 @@ pub(super) unsafe fn classify(
     misc: *mut u64,
     kind: *mut u8,
 ) {
-    classify_impl(t, ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind);
+    classify_impl(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind);
 
     *word.add(nb) = 0;
     *st.add(nb) = 0;
