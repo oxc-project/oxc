@@ -414,6 +414,23 @@ impl<'a> Printer<'a> {
         result
     }
 
+    /// [Self::fits] for a [crate::BestFittingVariant] whose entry is on top of the `stack`.
+    fn fits_variant(
+        &mut self,
+        queue: &PrintQueue<'a>,
+        stack: &PrintCallStack,
+        indent_stack: &PrintIndentStack,
+        measure: MeasureMode,
+    ) -> PrintResult<bool> {
+        let mut measurer = FitsMeasurer::new(queue, stack, indent_stack, self);
+        if measure == MeasureMode::AllLines {
+            measurer.all_lines_entry_depth = Some(0);
+        }
+        let result = measurer.fits(&mut AllPredicate);
+        measurer.finish();
+        result
+    }
+
     fn flush_line_suffixes(
         &mut self,
         queue: &mut PrintQueue<'a>,
@@ -467,8 +484,6 @@ impl<'a> Printer<'a> {
                 // Test if this variant fits and if so, use it. Otherwise try the next
                 // variant.
 
-                // Only the measurement sees the measure mode,
-                // printing the variant (and the fits checks it runs) must not
                 let measure = variant.measure();
                 let variant = variant.content();
 
@@ -478,15 +493,14 @@ impl<'a> Printer<'a> {
                 }
 
                 let entry_args = args.with_print_mode(PrintMode::Flat);
-                let measure_args = entry_args.with_measure(measure);
 
                 // Skip the first element because we want to override the args for the entry and the
                 // args must be popped from the stack as soon as it sees the matching end entry.
                 let content = &variant[1..];
 
                 queue.extend_back(content);
-                stack.push(TagKind::Entry, measure_args);
-                let variant_fits = self.fits(queue, stack, indent_stack)?;
+                stack.push(TagKind::Entry, entry_args);
+                let variant_fits = self.fits_variant(queue, stack, indent_stack, measure)?;
                 stack.pop(TagKind::Entry)?;
 
                 // Remove the content slice because printing needs the variant WITH the start entry
@@ -1097,6 +1111,10 @@ struct FitsMeasurer<'a, 'print> {
     /// The separator mode above only applies to entries of the fill the printer is currently printing (depth 0),
     /// not to entries of nested fills the walk enters on its own.
     fill_depth: u32,
+    /// Set while measuring inside a [MeasureMode::AllLines] variant:
+    /// the number of entries entered within it, the variant's own `EndEntry` ends the mode.
+    /// Kept here, not in the per-element args, so that the printer hot path stays as small as before.
+    all_lines_entry_depth: Option<u32>,
     /// Prefix nodes the measurement creates are dropped again in [Self::finish] (nothing printed refers to them).
     prefix_nodes_len: usize,
 }
@@ -1162,6 +1180,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             must_be_flat: false,
             fill_separator_mode,
             fill_depth: 0,
+            all_lines_entry_depth: None,
             prefix_nodes_len,
             printer,
         }
@@ -1256,7 +1275,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                         }
                         LineMode::Soft => {}
                         LineMode::Hard | LineMode::HardWithoutExpand | LineMode::Empty
-                            if args.measure() == MeasureMode::AllLines && !self.must_be_flat =>
+                            if self.all_lines_entry_depth.is_some() && !self.must_be_flat =>
                         {
                             // The next line must fit too
                             self.state.line_width = 0;
@@ -1480,11 +1499,18 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 } else {
                     args
                 };
+                if let Some(depth) = &mut self.all_lines_entry_depth {
+                    *depth += 1;
+                }
                 self.stack.push(tag.kind(), args);
             }
-            FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent),
-            ) => {
+            FormatElement::Tag(tag @ EndEntry) => {
+                if let Some(depth) = self.all_lines_entry_depth {
+                    self.all_lines_entry_depth = depth.checked_sub(1);
+                }
+                self.stack.pop(tag.kind())?;
+            }
+            FormatElement::Tag(tag @ (EndLabelled | EndGroup | EndConditionalContent)) => {
                 self.stack.pop(tag.kind())?;
             }
             FormatElement::Tag(tag @ EndIndentIfGroupBreaks(group_id)) => {
