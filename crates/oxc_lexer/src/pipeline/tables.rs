@@ -1,9 +1,9 @@
 //! Data which is static, but too large to store as `static`s in the binary.
 //!
-//! Instead, it's generated and heap-allocated at runtime, one copy per [`Lexer`]
-//! i.e. one copy per thread.
-//!
-//! [`Lexer`]: super::Lexer
+//! Instead, it's generated at runtime on first use, heap-allocated, and stored in a `static` `OnceLock`.
+//! So there's one copy per process, shared by all threads.
+
+use std::sync::OnceLock;
 
 use crate::pipeline::keywords::Keywords;
 
@@ -14,6 +14,12 @@ use crate::pipeline::keywords::Keywords;
     target_feature = "popcnt"
 ))]
 use crate::pipeline::compress::PairLuts;
+
+/// Single copy of [`Tables`], shared across all threads.
+///
+/// `Box<Tables>` not `Tables`, to avoid uninitialized `Tables` being stored
+/// in the binary's data section, which would bloat binary by ~22 KB.
+static TABLES: OnceLock<Box<Tables>> = OnceLock::new();
 
 /// Static data that's too large to store as `static`s in the binary.
 pub(super) struct Tables {
@@ -29,8 +35,15 @@ pub(super) struct Tables {
 }
 
 impl Tables {
+    /// Get reference to [`Tables`].
+    ///
+    /// `Tables` is created on the first call, and shared by all threads after that.
+    pub fn get() -> &'static Tables {
+        TABLES.get_or_init(|| Box::new(Tables::new()))
+    }
+
     /// Create [`Tables`].
-    pub fn new() -> Tables {
+    fn new() -> Tables {
         Self {
             keywords: Keywords::new(),
             #[cfg(all(

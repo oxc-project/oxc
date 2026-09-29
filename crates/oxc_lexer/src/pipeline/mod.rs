@@ -56,7 +56,7 @@ pub struct Lexer {
     pub sig_len: usize,
     out_cap: usize,
     pub lanes: Lanes,
-    tables: Box<Tables>,
+    tables: &'static Tables,
 }
 
 impl Lexer {
@@ -79,7 +79,7 @@ impl Lexer {
             sig_len: 0,
             out_cap: 0,
             lanes: Lanes::default(),
-            tables: Box::new(Tables::new()),
+            tables: Tables::get(),
         }
     }
 
@@ -160,7 +160,7 @@ impl Lexer {
         let misc = self.misc.as_mut_ptr();
         let kind = self.kind.as_mut_ptr();
         let kwpos = self.kwpos.as_mut_ptr();
-        let t: &Tables = &self.tables;
+        let t = self.tables;
 
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
