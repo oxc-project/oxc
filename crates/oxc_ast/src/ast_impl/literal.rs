@@ -87,13 +87,6 @@ impl StringLiteral<'_> {
     }
 }
 
-impl AsRef<str> for StringLiteral<'_> {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        self.value.as_ref()
-    }
-}
-
 impl Display for StringLiteral<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

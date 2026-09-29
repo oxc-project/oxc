@@ -63,6 +63,14 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // ---- ImpureFunctionCallsRule-test.ts ----
+        // Date constructed from a timestamp is not flagged
+        "
+function Component({ timestamp }) {
+  const date = new Date(timestamp);
+  return <Foo date={date} />;
+}
+",
         // ---- RustBackend-test.ts ----
         // Basic component compiles without errors
         "
@@ -81,6 +89,15 @@ function Component() {
   const now = performance.now();
   const rand = Math.random();
   return <Foo date={date} now={now} rand={rand} />;
+}
+",
+        // Zero-argument Date constructor is impure
+        "
+function Component() {
+  const date = new Date();
+  const time = new Date().getTime();
+  const year = new Date().getFullYear();
+  return <Foo date={date} time={time} year={year} />;
 }
 ",
     ];

@@ -113,10 +113,12 @@ fn double_gap(
         return !after_definition && !multi_line;
     }
 
-    // A nested list after a paragraph / code keeps its blank line (prettier#17746)
+    // A nested list after a paragraph / code keeps its blank line, and after a type 6 / 7 HTML block,
+    // which only a blank line ends (DIVERGENCES.md#list-after-html-block)
     if matches!(node, Block::List(_))
         && matches!(parent, Parent::ListItem { .. })
-        && matches!(previous, Block::CodeBlock(_) | Block::Paragraph(_))
+        && (matches!(previous, Block::CodeBlock(_) | Block::Paragraph(_))
+            || matches!(previous, Block::HtmlBlock(h) if h.kind >= 6))
         && !adjacent
     {
         return true;

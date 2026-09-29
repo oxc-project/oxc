@@ -93,7 +93,7 @@ impl<'a> SourcemapBuilder<'a> {
             source_contents: vec![Some(Cow::Borrowed(self.original_source))],
             tokens: self.tokens.into_boxed_slice(),
             token_chunks: None,
-            x_google_ignore_list: None,
+            ignore_list: None,
             debug_id: None,
         })
     }

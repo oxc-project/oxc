@@ -1,0 +1,60 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/named-function-expression-self-reference.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+// A private function name can escape through callbacks or JSX without a local declaration.
+export const ExportedName = function Node() {
+	const $ = _c(1);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = <Tree renderItem={() => <Node />} />;
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	return t0;
+};
+export const Nested = function Node(t0) {
+	const $ = _c(2);
+	const { value } = t0;
+	let t1;
+	if ($[0] !== value) {
+		t1 = <Tree renderItem={() => () => <Node value={value} />} />;
+		$[0] = value;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+};
+export const Direct = function Node(t0) {
+	const $ = _c(2);
+	const { depth } = t0;
+	let t1;
+	if ($[0] !== depth) {
+		t1 = depth > 0 ? <Node depth={depth - 1} /> : null;
+		$[0] = depth;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+};
+export const Shadowed = function Node(t0) {
+	const $ = _c(2);
+	const { Node } = t0;
+	let t1;
+	if ($[0] !== Node) {
+		t1 = <Tree renderItem={() => <Node />} />;
+		$[0] = Node;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+};
+export const useExported = function useRecursive() {
+	"use memo";
+	return useRecursive;
+};
