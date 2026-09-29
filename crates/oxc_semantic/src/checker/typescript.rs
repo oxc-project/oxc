@@ -23,24 +23,35 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
 }
 
 pub fn check_jsdoc_non_nullable_type(ty: &JSDocNonNullableType<'_>, ctx: &SemanticBuilder<'_>) {
-    if is_in_assertion_type(ctx) {
+    if is_in_assertion_type(ctx, ty.span) {
         report_jsdoc_type_modifier('!', !ty.postfix, ty.span, ctx);
     }
 }
 
 pub fn check_jsdoc_nullable_type(ty: &JSDocNullableType<'_>, ctx: &SemanticBuilder<'_>) {
-    if is_in_assertion_type(ctx) {
+    if is_in_assertion_type(ctx, ty.span) {
         report_jsdoc_type_modifier('?', !ty.postfix, ty.span, ctx);
     }
 }
 
-fn is_in_assertion_type(ctx: &SemanticBuilder<'_>) -> bool {
+fn is_in_assertion_type(ctx: &SemanticBuilder<'_>, modifier_span: Span) -> bool {
     for ancestor in ctx.ancestry().ancestor_kinds() {
         match ancestor {
-            AstKind::TSAsExpression(_)
-            | AstKind::TSSatisfiesExpression(_)
-            | AstKind::TSTypeAssertion(_) => return true,
-            AstKind::TSTypeAnnotation(_) => return false,
+            AstKind::TSTypeAnnotation(annotation)
+                if annotation.type_annotation.span() == modifier_span =>
+            {
+                // The annotation checker reports direct modifiers.
+                return false;
+            }
+            AstKind::TSAsExpression(expr) => {
+                return expr.type_annotation.span().contains_inclusive(modifier_span);
+            }
+            AstKind::TSSatisfiesExpression(expr) => {
+                return expr.type_annotation.span().contains_inclusive(modifier_span);
+            }
+            AstKind::TSTypeAssertion(expr) => {
+                return expr.type_annotation.span().contains_inclusive(modifier_span);
+            }
             _ => {}
         }
     }
