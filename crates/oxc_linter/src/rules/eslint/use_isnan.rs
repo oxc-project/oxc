@@ -162,7 +162,7 @@ impl Rule for UseIsnan {
 
 fn is_nan_identifier<'a>(expr: &'a Expression<'a>) -> bool {
     let expr = expr.get_inner_expression();
-    expr.is_specific_id("NaN") || expr.is_specific_member_access("Number", "NaN")
+    expr.is_nan() || expr.is_specific_member_access("Number", "NaN")
 }
 
 /// Check if an expression evaluates to NaN, handling sequence expressions.

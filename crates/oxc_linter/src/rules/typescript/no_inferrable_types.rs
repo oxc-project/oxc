@@ -311,7 +311,7 @@ fn is_init_number(init: &Expression) -> bool {
         return true;
     }
     match init {
-        Expression::Identifier(id) => id.name == "Infinity" || id.name == "NaN",
+        Expression::Identifier(id) => id.name == "Infinity" || init.is_nan(),
         Expression::CallExpression(call_expr) => {
             call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "Number")
         }
