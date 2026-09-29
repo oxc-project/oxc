@@ -11157,6 +11157,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Did you mean to write 'string'?
 
   × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:18:16]
+ 17 │ 
+ 18 │ const a = 1 as any!;
+    ·                ────
+ 19 │ const b: number! = 1;
+    ╰────
+  help: Did you mean to write 'any'?
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:19:10]
  18 │ const a = 1 as any!;
  19 │ const b: number! = 1;
@@ -11234,6 +11243,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  12 │     return true;
     ╰────
   help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:15:16]
+ 14 │ 
+ 15 │ const a = 1 as any?;
+    ·                ────
+ 16 │ const b: number? = 1;
+    ╰────
+  help: Did you mean to write 'any | null | undefined'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:16:10]

@@ -104,15 +104,8 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             js::check_variable_declarator_redeclaration(decl, ctx);
         }
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
-        AstKind::TSAsExpression(expr) => {
-            ts::check_ts_as_or_satisfies_type(&expr.type_annotation, ctx);
-        }
-        AstKind::TSSatisfiesExpression(expr) => {
-            ts::check_ts_as_or_satisfies_type(&expr.type_annotation, ctx);
-        }
-        AstKind::TSTypeAssertion(expr) => {
-            ts::check_ts_angle_bracket_assertion_type(&expr.type_annotation, ctx);
-        }
+        AstKind::JSDocNonNullableType(ty) => ts::check_jsdoc_non_nullable_type(ty, ctx),
+        AstKind::JSDocNullableType(ty) => ts::check_jsdoc_nullable_type(ty, ctx),
         AstKind::TSTypePredicate(predicate) => ts::check_ts_type_predicate(predicate, ctx),
         AstKind::TSExternalModuleDeclaration(decl) => {
             ts::check_ts_external_module_declaration(decl, ctx);

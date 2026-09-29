@@ -11,31 +11,48 @@ use oxc_str::Str;
 use crate::{builder::SemanticBuilder, diagnostics};
 
 pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
-    check_jsdoc_type_in_annotation(&annotation.type_annotation, true, ctx);
-}
-
-pub fn check_ts_as_or_satisfies_type(ty: &TSType<'_>, ctx: &SemanticBuilder<'_>) {
-    // A trailing `!` after `as T` is a non-null assertion on the expression.
-    check_jsdoc_type_in_annotation(ty, false, ctx);
-}
-
-pub fn check_ts_angle_bracket_assertion_type(ty: &TSType<'_>, ctx: &SemanticBuilder<'_>) {
-    check_jsdoc_type_in_annotation(ty, true, ctx);
-}
-
-fn check_jsdoc_type_in_annotation(ty: &TSType<'_>, allow_postfix: bool, ctx: &SemanticBuilder<'_>) {
-    let (modifier, is_start, span_with_illegal_modifier) = match ty {
-        TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
-        TSType::JSDocNullableType(ty) => ('?', !ty.postfix, ty.span()),
-        _ => {
-            return;
+    match &annotation.type_annotation {
+        TSType::JSDocNonNullableType(ty) => {
+            report_jsdoc_type_modifier('!', !ty.postfix, ty.span(), ctx);
         }
-    };
-
-    if !is_start && !allow_postfix {
-        return;
+        TSType::JSDocNullableType(ty) => {
+            report_jsdoc_type_modifier('?', !ty.postfix, ty.span(), ctx);
+        }
+        _ => {}
     }
+}
 
+pub fn check_jsdoc_non_nullable_type(ty: &JSDocNonNullableType<'_>, ctx: &SemanticBuilder<'_>) {
+    if is_in_assertion_type(ctx) {
+        report_jsdoc_type_modifier('!', !ty.postfix, ty.span, ctx);
+    }
+}
+
+pub fn check_jsdoc_nullable_type(ty: &JSDocNullableType<'_>, ctx: &SemanticBuilder<'_>) {
+    if is_in_assertion_type(ctx) {
+        report_jsdoc_type_modifier('?', !ty.postfix, ty.span, ctx);
+    }
+}
+
+fn is_in_assertion_type(ctx: &SemanticBuilder<'_>) -> bool {
+    for ancestor in ctx.ancestry().ancestor_kinds() {
+        match ancestor {
+            AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSTypeAssertion(_) => return true,
+            AstKind::TSTypeAnnotation(_) => return false,
+            _ => {}
+        }
+    }
+    false
+}
+
+fn report_jsdoc_type_modifier(
+    modifier: char,
+    is_start: bool,
+    span_with_illegal_modifier: Span,
+    ctx: &SemanticBuilder<'_>,
+) {
     let valid_type_span = if is_start {
         span_with_illegal_modifier.shrink_left(1)
     } else {
