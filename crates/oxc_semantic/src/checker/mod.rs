@@ -103,7 +103,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::VariableDeclarator(decl) if !ctx.source_type.is_typescript() => {
             js::check_variable_declarator_redeclaration(decl, ctx);
         }
-        AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
         AstKind::JSDocNonNullableType(ty) => ts::check_jsdoc_non_nullable_type(ty, ctx),
         AstKind::JSDocNullableType(ty) => ts::check_jsdoc_nullable_type(ty, ctx),
         AstKind::TSTypePredicate(predicate) => ts::check_ts_type_predicate(predicate, ctx),
