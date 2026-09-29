@@ -20,6 +20,13 @@ mod avx2;
     target_feature = "bmi2",
     target_feature = "popcnt"
 ))]
+pub(super) use avx2::PairLuts;
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 use avx2::{build_spans, compress_blocks, lanes_post};
 
 #[cfg(not(all(
