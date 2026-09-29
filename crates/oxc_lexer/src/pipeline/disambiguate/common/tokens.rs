@@ -1,11 +1,11 @@
 //! The token stream as the disambiguation questions read it.
 
-use crate::token::{KW_KIND_BASE, OP_KIND_BASE, is_trivia_byte, tk};
+use crate::token::{KW_KIND_BASE, OP_KIND_BASE, TokenKind, is_trivia_byte, tk};
 
 use crate::pipeline::{
     bytes::{is_digit, line_break_in},
+    keywords::kw_match_at,
     operators::opmap_longest,
-    tables::Tables,
 };
 
 use super::{Brackets, Closers, bits, walk};
@@ -16,7 +16,6 @@ use super::{Brackets, Closers, bits, walk};
 /// drops it when the question is answered. The bitmaps have one bit per source byte.
 #[derive(Clone, Copy)]
 pub(crate) struct Tokens<'a> {
-    pub(crate) tables: &'a Tables,
     /// The source, followed by at least `PAD` zero bytes.
     pub(crate) src: &'a [u8],
     /// Token starts.
@@ -95,9 +94,8 @@ impl Tokens<'_> {
         if !self.src[pos].is_ascii_lowercase() {
             return 0;
         }
-        let set = if self.ts { &self.tables.keywords.kwts } else { &self.tables.keywords.kwjs };
-        let k = set.lookup_at(self.src, pos, len) as u8;
-        if k >= KW_KIND_BASE { k } else { 0 }
+        let k = kw_match_at(self.ts, self.src, pos, len);
+        if k != TokenKind::Ident { k as u8 } else { 0 }
     }
 
     /// Keyword code of the word at `w` (0 for a plain name).

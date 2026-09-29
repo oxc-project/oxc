@@ -6,7 +6,7 @@ use super::compress_blocks;
 
 #[test]
 fn compress_blocks_matches_scalar_reference() {
-    let t = Tables::new();
+    let t = Tables::get();
     let mut cases: Vec<Vec<u64>> = Vec::new();
     let all_pairs: Vec<u64> = (0..65536u64)
         .collect::<Vec<_>>()
@@ -46,7 +46,7 @@ fn compress_blocks_matches_scalar_reference() {
         let mut kinds = vec![0u8; n + 64];
         let m = unsafe {
             compress_blocks(
-                &t,
+                t,
                 st.as_ptr(),
                 kind.as_ptr(),
                 0,
