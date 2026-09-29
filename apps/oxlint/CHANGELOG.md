@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.86.0] - 2026-09-28
+
+### 🚀 Features
+
+- 9d80eed linter/react/only-export-components: Support `allowCompoundComponents` (#27117) (Kuroda Kayn)
+- e05b155 linter: Add typescript/no-generated-empty-object-type (#26958) (camc314)
+
+### 🐛 Bug Fixes
+
+- 611e4ed linter/plugins: Include executing selectors in JS plugin rule timings (#27111) (overlookmotel)
+- 571cfa3 oxlint: Skip type-aware lint rules in type-check-only mode (#27076) (camc314)
+- d0b2462 oxlint: Skip undefined children in CFG walker (#27075) (camc314)
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+
 ## [1.85.0] - 2026-09-21
 
 ### 🚀 Features

@@ -133,7 +133,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
+      - uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -151,7 +151,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
+      - uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -577,7 +577,7 @@ jobs:
             rust
             pnpm
 
-      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
+      - uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just
@@ -636,7 +636,7 @@ jobs:
           path: /home/runner/.rustup
           cache: rust
 
-      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
+      - uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just
@@ -666,6 +666,55 @@ jobs:
           grep -qxF "Lexer implementation: ${{ matrix.variant }}" "$RUNNER_TEMP/lexer.log" ||
             { echo "::error::Expected ${{ matrix.variant }}, but the harness reported otherwise"; exit 1; }
           git diff --exit-code
+
+  lexer-benchmark:
+    # Benchmark `oxc_lexer`'s SIMD core against the lexer in `oxc_parser`, built without the SIMD flags
+    # (see `lexer` job above).
+    #
+    # Measures wallclock time, so doesn't use CodSpeed. `oxc_lexer` is designed to exploit out-of-order execution
+    # and branch prediction, which CodSpeed's CPU simulation does not model.
+    # Results are only printed in the log. The "change" reported for `oxc_lexer` is relative to `oxc_parser`.
+    #
+    # Only runs when `oxc_lexer` or the benchmark itself changes.
+    # See the LEXER section of `justfile` for the recipe.
+    name: Lexer Benchmark
+    runs-on: namespace-profile-linux-x64-default
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+
+      - name: Check if lexer benchmark should run
+        id: filter
+        uses: ./.github/actions/check-changes
+        with:
+          paths: crates/oxc_lexer/,tasks/benchmark/benches/lexer_wallclock_old.rs,tasks/benchmark/benches/lexer_wallclock_new.rs,tasks/benchmark/benches/lexer_common.rs,.cargo/lexer-simd.toml,justfile,.github/workflows/ci.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          path: /home/runner/.rustup
+          cache: rust
+
+      - uses: taiki-e/install-action@9983c65e42da123ff25d1f78505eb6de315aa172 # v2.87.20
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          tool: just
+
+      - name: Benchmark
+        # The `oxc_lexer` benchmark prints which implementation it was built with (`oxc_lexer::IS_SIMD`).
+        # Checking it here is what guarantees this job benchmarked the SIMD core.
+        # The `oxc_parser` benchmark checks for itself that it was built without the SIMD flags.
+        if: steps.filter.outputs.changed == 'true'
+        env:
+          # Keep criterion's saved results out of `target`, which may be cached.
+          # Otherwise criterion would also compare `oxc_parser` against an earlier CI run.
+          CRITERION_HOME: ${{ runner.temp }}/criterion
+        run: |
+          set -o pipefail
+          just bench-lexer-simd | tee "$RUNNER_TEMP/bench.log"
+          grep -qxF "Lexer implementation: SIMD" "$RUNNER_TEMP/bench.log" ||
+            { echo "::error::Expected SIMD, but the benchmark reported otherwise"; exit 1; }
 
   test-codegen:
     name: Test Codegen

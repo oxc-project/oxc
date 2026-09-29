@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.86.0] - 2026-09-28
+
+### 🚀 Features
+
+- 9d80eed linter/react/only-export-components: Support `allowCompoundComponents` (#27117) (Kuroda Kayn)
+- e05b155 linter: Add typescript/no-generated-empty-object-type (#26958) (camc314)
+
+### 🐛 Bug Fixes
+
+- 42dfbb5 linter/eslint/one-var: Keep `declare` when splitting declarations (#27081) (Cheolhee Lee)
+- 2ba7e33 linter/eslint/require-await: Count `await using` as an await (#27080) (Cheolhee Lee)
+- 2cac66f react-compiler: Handle recursive function expressions (#26796) (Brennan Butler)
+- e996e6c react-compiler: Treat zero-argument new Date as impure (#26894) (Boshen)
+- 571cfa3 oxlint: Skip type-aware lint rules in type-check-only mode (#27076) (camc314)
+- 0b630e8 linter/typescript/unified-signatures: Align rule with upstream (#26956) (camc314)
+- ebb22f1 linter/node/no-exports-assign: Change category from style to suspicious (#26555) (Bartok)
+- cce28a0 linter/import/no-duplicates: Distinguish import attributes (#26936) (camc314)
+- feb733b linter/unicorn/prefer-spread: Stop checking string split calls (#26935) (camc314)
+- 929e154 linter/eslint/no-unused-vars: Honor ignore patterns inside array rest bindings (#26923) (camc314)
+- 5bdb9b8 linter/eslint/no-unused-vars: Recognize consumed update expressions (#26782) (camc314)
+- 5c05bef linter/eslint/prefer-const: Ignore embedded assignments (#26920) (camc314)
+
+### ⚡ Performance
+
+- ded4c29 linter/eslint/no-unused-vars: Skip sequence checks when absent (#26921) (camc314)
+
 ## [1.84.0] - 2026-09-21
 
 ### 🚀 Features

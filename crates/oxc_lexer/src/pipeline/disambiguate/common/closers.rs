@@ -14,9 +14,21 @@ impl Resolved {
     }
 }
 
+pub(crate) struct Open {
+    pub(crate) pos: u32,
+    pub(crate) parens: i32,
+    pub(crate) brackets: i32,
+    pub(crate) braces: i32,
+    /// A run of ruled-out <s, kept for the depth of the lists around them.
+    pub(crate) dead: u32,
+}
+
 #[derive(Default)]
 pub(crate) struct Closers {
     memo: RefCell<FxHashMap<u32, Resolved>>,
+    /// Scratch stacks of the forward passes, kept across queries.
+    pub(crate) lists: RefCell<Vec<Open>>,
+    pub(crate) groups: RefCell<Vec<u32>>,
 }
 
 impl Closers {
