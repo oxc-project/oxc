@@ -31,6 +31,26 @@ The only differences between Oxc's AST and ESTree / TS-ESTree are:
 That aside, the AST should completely align with Acorn's ESTree AST or TS-ESLint's TS-ESTree.
 Any deviation would be considered a bug.
 
+#### Property order
+
+ESTree and TS-ESTree do not define an order for node properties. `oxc-parser` emits them in this
+order:
+
+1. `type`.
+2. Node-specific fields in Oxc's defined serialization order. Properties containing child nodes
+   have the same relative order as the entries in `visitorKeys[node.type]`.
+3. `start`, then `end`.
+4. `range`, when the `range` option is enabled.
+
+`visitorKeys` is an exported map from a node type to the properties containing that node's children,
+in traversal order. For example, `visitorKeys.ConditionalExpression` is
+`['test', 'consequent', 'alternate']`. This is not alphabetical order: walking `alternate` before
+`test` would not match the syntax or evaluation order of a conditional expression.
+
+Fields omitted by the selected `astType` do not change the relative order of the remaining fields.
+A generic walker which recursively inspects `Object.keys(node)` therefore visits standard ESTree
+children in the same relative order as Oxc's `Visitor` and the exported `visitorKeys`.
+
 ### AST Types
 
 [@oxc-project/types](https://npmx.dev/package/@oxc-project/types) can be used. For example:

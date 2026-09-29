@@ -1,0 +1,41 @@
+test("comments after callback", () => {
+  run();
+}, // first
+// second
+// third
+60000);
+
+it("comments before timeout", function (done) {
+  done();
+},
+// first
+// second
+60000);
+
+test("comments before callback", // first
+// second
+() => {
+  run();
+});
+
+describe.only(
+// description
+"suite", () => {
+  run();
+});
+
+test("trailing", () => {
+  run();
+}, 15000 // first
+// second
+);
+
+test("own-line block", () => {
+  run();
+},
+/* c */
+15000);
+
+it("params", /* c */ function (aaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbbbbbb, ccccccccccccccc) {
+  run();
+});

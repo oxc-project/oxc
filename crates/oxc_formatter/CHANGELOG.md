@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.71.0] - 2026-09-28
+
+### 🚀 Features
+
+- 342527d oxfmt: Bump bundled Prettier version to 3.9.8 (#26999) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- eeba1db formatter: Skip test-call layout when arguments have comments (#27119) (leaysgur)
+- 10b10c5 formatter: Keep comments around `=` on their side and line (#27041) (leaysgur)
+- 9aad365 formatter: Keep comments deferred before an assignment operator (#26997) (waltu)
+- 8fbddb1 formatter/jsdoc: More alignment with original plugin (#27039) (leaysgur)
+- 50be18e formatter: Keep trailing spaces on normal block comments (#27037) (leaysgur)
+- 56d1880 formatter: Nestle adjacent block comments (#27036) (leaysgur)
+- 3be5d94 formatter: Treat `/***` comments as JSDoc (#27035) (leaysgur)
+- cd45f71 formatter: Keep trailing double spaces on JSDoc lines (#26861) (John Costa)
+
 ## [0.69.0] - 2026-09-21
 
 ### 🚀 Features

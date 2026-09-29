@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 111/111 (100.00%)
 Positive Passed: 111/111 (100.00%)
-Negative Passed: 234/234 (100.00%)
+Negative Passed: 238/238 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -719,6 +719,25 @@ Negative Passed: 234/234 (100.00%)
    ·                ──
    ╰────
 
+  × An export name cannot include a unicode lone surrogate
+   ╭─[misc/fail/export-name-lone-surrogate-from.js:1:10]
+ 1 │ export { "\uDC00" as y } from "m";
+   ·          ────────
+   ╰────
+
+  × An export name cannot include a unicode lone surrogate
+   ╭─[misc/fail/export-name-lone-surrogate-star.js:1:13]
+ 1 │ export * as "\uD800" from "m";
+   ·             ────────
+   ╰────
+
+  × An export name cannot include a unicode lone surrogate
+   ╭─[misc/fail/export-name-lone-surrogate.js:2:15]
+ 1 │ const x = 1;
+ 2 │ export { x as "\uD800" };
+   ·               ────────
+   ╰────
+
   × The left-hand side of a for...in statement cannot be an await using declaration.
    ╭─[misc/fail/for-await-using-in-initializer.js:2:8]
  1 │ async function f() {
@@ -1004,6 +1023,12 @@ Negative Passed: 234/234 (100.00%)
  1 │ import from 'module';
    ·             ────┬───
    ·                 ╰── `from` expected
+   ╰────
+
+  × An export name cannot include a unicode lone surrogate
+   ╭─[misc/fail/import-name-lone-surrogate.js:1:10]
+ 1 │ import { "\uD800" as y } from "m";
+   ·          ────────
    ╰────
 
   × Expected `from` but found `Identifier`

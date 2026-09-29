@@ -28,6 +28,6 @@ pub unsafe fn carve(
     if jsx {
         carve_jsx(t, srcs, n, st, kind, opch, word, digit, dot, kwinit, ts, lanes);
     } else {
-        carve_js(t, srcs, n, st, kind, opch, word, digit, ts, lanes);
+        carve_js(t, srcs, n, st, kind, opch, word, ts, lanes);
     }
 }

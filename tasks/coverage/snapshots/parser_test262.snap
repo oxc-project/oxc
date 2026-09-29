@@ -1,8 +1,8 @@
-commit: 35d56660
+commit: 0a888ef3
 
 parser_test262 Summary:
-AST Parsed     : 47445/47445 (100.00%)
-Positive Passed: 47445/47445 (100.00%)
+AST Parsed     : 47452/47452 (100.00%)
+Positive Passed: 47452/47452 (100.00%)
 Negative Passed: 4653/4653 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -25601,34 +25601,6 @@ Negative Passed: 4653/4653 (100.00%)
  21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
     ·                 ────────
  22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
-    ╰────
-
-  × An export name cannot include a unicode lone surrogate
-    ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:22:9]
- 21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
-    ·         ────────
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
-    ╰────
-
-  × An export name cannot include a unicode lone surrogate
-    ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:23:9]
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
-    ·         ────────
- 24 │ 
-    ╰────
-
-  × Duplicated export '�d83c'
-    ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:21:17]
- 20 │ // 🌙 is '\uD83C\uDF19'
- 21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
-    ·                 ────┬───
-    ·                     ╰── Export has already been declared here
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
-    ·         ────┬───
-    ·             ╰── It cannot be redeclared here
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
     ╰────
 
   × Export 'unresolvable' is not defined

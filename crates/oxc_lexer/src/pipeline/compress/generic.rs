@@ -1,6 +1,9 @@
 use oxc_span::Span;
 
-use crate::{lanes::Lanes, token::is_trivia_byte, token::tk};
+use crate::{
+    lanes::Lanes,
+    token::{is_trivia_byte, matches_tk, tk},
+};
 
 use crate::pipeline::{
     chunk::{eqm, load64},
@@ -85,11 +88,7 @@ pub(super) unsafe fn lanes_post(
     let mut inv_dirty = inv != 0;
     while i < m {
         let k = *out_kinds.add(i);
-        if k == tk!(Number)
-            || k == tk!(BigInt)
-            || k == tk!(IdentEscaped)
-            || k == tk!(PrivateIdentEscaped)
-        {
+        if matches_tk!(k, Number | BigInt | IdentEscaped | PrivateIdentEscaped) {
             emit_value(src, out_kinds, out_spans, i, lanes);
         }
         inv_dirty |= k == tk!(Invalid);

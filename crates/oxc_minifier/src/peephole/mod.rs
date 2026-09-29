@@ -631,7 +631,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }
                 Expression::SequenceExpression(_) => Self::remove_sequence_expression(expr, ctx),
-                Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e, ctx),
+                Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e),
                 Expression::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
                 Expression::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
                 Expression::NewExpression(e) => {

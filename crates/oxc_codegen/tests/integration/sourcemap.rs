@@ -530,3 +530,28 @@ fn execute_with_node(code: &str, sourcemap_url: &str) -> String {
         .collect::<Vec<_>>()
         .join("\n")
 }
+
+#[test]
+fn minified_template_dollar_escapes() {
+    let source = r"`\$${first}\$${second}\$`;after();";
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let result = Codegen::new()
+        .with_options(CodegenOptions { minify: true, ..default_options() })
+        .build(&ret.program);
+    assert_eq!(result.code, r"`$${first}$${second}$`;after();");
+    let map = result.map.unwrap();
+    for name in ["first", "second", "after"] {
+        assert!(
+            map.get_tokens().any(|token| {
+                token.get_src_line() == 0
+                    && token.get_dst_line() == 0
+                    && token.get_src_col() == u32::try_from(source.find(name).unwrap()).unwrap()
+                    && token.get_dst_col()
+                        == u32::try_from(result.code.find(name).unwrap()).unwrap()
+            }),
+            "missing mapping for {name}"
+        );
+    }
+}

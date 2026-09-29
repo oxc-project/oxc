@@ -26,6 +26,7 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 constcat = { workspace = true }
 memchr = { workspace = true }
+rustc-hash = { workspace = true }
 
 oxc_diagnostics = { workspace = true, optional = true }
 
