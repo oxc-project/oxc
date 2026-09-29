@@ -30,6 +30,7 @@ mod generic;
 )))]
 use generic::classify_impl;
 
+#[inline(never)]
 pub(super) unsafe fn classify(
     t: &Tables,
     ts: bool,
