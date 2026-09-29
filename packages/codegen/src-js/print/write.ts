@@ -30,6 +30,12 @@ import type {
 import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
+/** Open an expression grouping, which already supplies a leading function's PIFE hint. */
+export function writeGroupOpen(state: State): void {
+  write(state, "(", CAT_OTHER);
+  state.groupStart = state.output.length;
+}
+
 /**
  * Append `code` to the output, and record what it ends with.
  *

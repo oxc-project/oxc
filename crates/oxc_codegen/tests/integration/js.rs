@@ -672,6 +672,62 @@ fn pife() {
     test_minify_same("(function(){return0})();");
 }
 
+#[test]
+fn pife_roundtrip() {
+    use oxc_parser::{ParseOptions, Parser};
+    use oxc_span::{ContentEq, SourceType};
+
+    for source in [
+        "(function () {}());",
+        "(async function () {}());",
+        "(function* () {}());",
+        "(async function* () {}());",
+        "((function () {}()));",
+        "(function () {}.call(null));",
+        "(function () {}?.());",
+        "(function () {}, function () {});",
+        "(function () {}(function () {}));",
+        "(function () { return (function () {}()); }());",
+        "(() => function () {})();",
+    ] {
+        for minify in [false, true] {
+            let allocator = Allocator::default();
+            let parse = |source| {
+                Parser::new(&allocator, source, SourceType::mjs())
+                    .with_options(ParseOptions {
+                        preserve_parens: false,
+                        ..ParseOptions::default()
+                    })
+                    .parse()
+            };
+            let original = parse(source);
+            assert!(original.diagnostics.is_empty());
+            let code = Codegen::new()
+                .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+                .build(&original.program)
+                .code;
+            let reparsed = parse(&code);
+            assert!(reparsed.diagnostics.is_empty());
+            assert!(original.program.content_eq(&reparsed.program), "{source} -> {code}");
+        }
+    }
+}
+
+#[test]
+fn pife_grouping_idempotency() {
+    for source in [
+        "new (function () { return C; }())();",
+        "new ((function () { return C; })())();",
+        "(/* @__PURE__ */ (function () { return C; })()).constructor;",
+        "(/* @__PURE__ */ function () { return C; }()).constructor;",
+        "const x = (function () {} + 1) * 2;",
+        "foo((function () {}));",
+    ] {
+        crate::test_idempotency(source);
+        crate::test_idempotency_options(source, &CodegenOptions::minify());
+    }
+}
+
 // followup from https://github.com/oxc-project/oxc/pull/6422
 #[test]
 fn in_expr_in_sequence_in_for_loop_init() {

@@ -1,0 +1,13 @@
+const called = (function () {}());
+const asyncCalled = (async function () {}());
+const sequence = (function () {}, other);
+const negative = (other, function () {});
+const member = (function () {}.constructor);
+const binary = (function () {} + other) * 2;
+const nestedBinary = x + (function () {} + other);
+const conditional = (function () {} ? x : y) + z;
+const constructed = new (function () { return C; }())();
+foo((function () {}));
+(function () {}(function () {}));
+const groupedFunction = ((function () {}) + other) * 2;
+const groupedCall = new ((function () { return C; })())();

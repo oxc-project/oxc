@@ -27,14 +27,17 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * Print a function declaration or expression, from `async` through to the closing brace of its body.
  *
  * A function expression is parenthesized where the statement or an `export default` starts with it,
- * since it would otherwise be read as a declaration.
+ * since it would otherwise be read as a declaration. Also preserve a PIFE hint from a
+ * parenthesized source expression, unless an enclosing output grouping already supplies it.
  */
 export function printFunction(node: ESTree.Function, state: State): void {
   let wrap = false;
   if (node.type === "FunctionExpression") {
     debugAssertLastFresh(state);
     // `CAT_START_OF_STMT` or `CAT_START_OF_DEFAULT_EXPORT`, which are adjacent - see `categories.ts`
-    wrap = (state.last | 1) === CAT_START_OF_STMT;
+    wrap =
+      (state.last | 1) === CAT_START_OF_STMT
+      || (state.pifeStart === node.start && state.groupStart !== state.output.length);
   }
 
   if (wrap) write(state, "(", CAT_OTHER);

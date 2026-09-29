@@ -120,6 +120,8 @@ pub struct Codegen<'a> {
     start_of_stmt: usize,
     start_of_arrow_expr: usize,
     start_of_default_export: usize,
+    /// Output position immediately inside an expression grouping parenthesis.
+    start_of_group: usize,
 
     /// Track the current indentation level
     indent: u32,
@@ -210,6 +212,7 @@ impl<'a> Codegen<'a> {
             start_of_stmt: 0,
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
+            start_of_group: usize::MAX,
             is_jsx: false,
             indent: 0,
             quote: Quote::Double,
@@ -743,6 +746,7 @@ impl<'a> Codegen<'a> {
     fn wrap<F: FnOnce(&mut Self)>(&mut self, wrap: bool, f: F) {
         if wrap {
             self.print_ascii_byte(b'(');
+            self.start_of_group = self.code_len();
         }
         f(self);
         if wrap {

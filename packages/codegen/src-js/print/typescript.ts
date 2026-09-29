@@ -13,6 +13,7 @@ import {
   debugAssertLastFresh,
   markMapAtStartOffset,
   write,
+  writeGroupOpen,
   writeIdent,
   writeNoLast,
   writeWithMap,
@@ -57,7 +58,7 @@ export function printTSAsOrSatisfiesExpression(
   ctx: number,
 ): void {
   const wrap = precedence >= PREC_COMPARE;
-  if (wrap) write(state, "(", CAT_OTHER);
+  if (wrap) writeGroupOpen(state);
 
   printExpression(node.expression, state, PREC_EXPONENTIATION, ctx);
   write(state, node.type === "TSAsExpression" ? " as " : " satisfies ", CAT_OTHER);

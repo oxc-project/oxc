@@ -757,11 +757,12 @@ impl Gen for Function<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let n = p.code_len();
         let wrap = self.is_expression()
-            && ((p.start_of_stmt == n || p.start_of_default_export == n) || self.pife);
+            && ((p.start_of_stmt == n || p.start_of_default_export == n)
+                || (self.pife && p.start_of_group != n));
         let ctx = ctx.and_forbid_call(false);
         p.wrap(wrap, |p| {
-            // `pife` wrap: emit leading comments inside the `(`, so the
-            // source position `(/* c */ function …)` is preserved.
+            // Emit PIFE leading comments after the opening `(` (our own or an enclosing
+            // expression's), preserving the source position `(/* c */ function …)`.
             if self.pife {
                 p.print_leading_comments_anchored_to_self(self.span.start);
             }
@@ -1597,8 +1598,13 @@ impl GenExpr for CallExpression<'_> {
 
         p.wrap(wrap, |p| {
             if pure {
+                // An annotation does not interrupt the `(function` PIFE prefix.
+                let at_group_start = p.start_of_group == p.code_len();
                 p.add_source_mapping(self.span);
                 p.print_annotation_comment(self.span.start, AnnotationKind::Pure, false);
+                if at_group_start {
+                    p.start_of_group = p.code_len();
+                }
             }
             if is_export_default {
                 p.start_of_default_export = p.code_len();

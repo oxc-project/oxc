@@ -169,6 +169,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
         if self.wrap {
             p.print_ascii_byte(b'(');
+            p.start_of_group = p.code_len();
             // `for (1 * (x == a in b);;);`
             //           ^^^^^^^^^^^^ has been wrapped in parens, so it doesn't need to
             //                        print parens for `a in b` again.

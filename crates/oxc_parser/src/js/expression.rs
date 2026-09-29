@@ -276,6 +276,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         self.bump_any(); // `bump` `(`
         let expr_start = self.cur_start();
+        let previous_expr_start = self.state.parenthesized_expression_start;
+        self.state.parenthesized_expression_start = expr_start;
         let (mut expressions, comma_start) = self.context(Context::In, Context::Decorator, |p| {
             p.parse_delimited_list(
                 Kind::RParen,
@@ -284,6 +286,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Self::parse_assignment_expression_or_higher,
             )
         });
+        self.state.parenthesized_expression_start = previous_expr_start;
 
         if let Some(comma_start) = comma_start {
             let error = diagnostics::unexpected_trailing_comma(
@@ -318,7 +321,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             Expression::FunctionExpression(func_expr) => {
-                func_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     func_expr.pure = true;
                     self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);

@@ -452,12 +452,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         r#async: bool,
     ) -> Expression<'a> {
+        // V8 recognizes `(function` and `(async function` regardless of where `)` occurs.
+        // Match the exact start so the hint cannot leak to functions in parameters or the body.
+        let pife = start == self.state.parenthesized_expression_start;
         let func_kind = FunctionKind::Expression;
         self.expect(Kind::Function);
 
         let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
         let id = self.parse_function_id(func_kind, r#async, generator.is_some());
-        let function = self.parse_function(
+        let mut function = self.parse_function(
             start,
             id,
             r#async,
@@ -466,6 +469,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             FormalParameterKind::FormalParameter,
             &Modifiers::empty(),
         );
+        function.pife = pife;
         Expression::FunctionExpression(function)
     }
 

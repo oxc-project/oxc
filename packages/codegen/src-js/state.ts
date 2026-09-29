@@ -61,6 +61,11 @@ export class State {
   // A string which is appended to as the printing process proceeds.
   declare output: string;
 
+  // Source start whose leading function carries a parenthesis PIFE hint.
+  declare pifeStart: number;
+  // Output offset immediately after an expression grouping parenthesis.
+  declare groupStart: number;
+
   // Flattened chunks of `output`, in order, once it has grown past `OUTPUT_CHUNK_LENGTH` (see `print/flatten.ts`),
   // or `null` while it has not - a small print never allocates the array. Sourcemap builds also keep the total
   // length spilled so far - the true output offset the recorders need is `spilledOutputLength + output.length`.
@@ -117,6 +122,8 @@ export class State {
 
   constructor(options: Options) {
     this.output = "";
+    this.pifeStart = -1;
+    this.groupStart = -1;
     this.outputChunks = null;
     this.spilledOutputLength = 0;
 

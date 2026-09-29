@@ -8,6 +8,9 @@ use crate::cursor::ParserCheckpoint;
 pub struct ParserState<'a> {
     pub not_parenthesized_arrow: FxHashSet<u32>,
 
+    /// Start of the expression immediately after `(`, for function PIFE detection.
+    pub parenthesized_expression_start: u32,
+
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
     /// Keyed by `ObjectProperty`'s span.start.
     pub cover_initialized_name: FxHashMap<u32, AssignmentExpression<'a>>,
@@ -36,6 +39,7 @@ impl ParserState<'_> {
     pub fn new() -> Self {
         Self {
             not_parenthesized_arrow: FxHashSet::default(),
+            parenthesized_expression_start: u32::MAX,
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
             potential_await_reparse: Vec::new(),
