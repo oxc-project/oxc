@@ -12,6 +12,7 @@ on:
       - "crates/oxc_ast/src/generated/utf8_to_utf16_converter.rs"
       - "crates/oxc_data_structures/**"
       - "crates/oxc_parser/**"
+      - "crates/oxc_str/**"
       - "crates/oxc_traverse/**"
       - ".github/workflows/miri.yml"
   push:
@@ -23,6 +24,7 @@ on:
       - "crates/oxc_ast/src/generated/utf8_to_utf16_converter.rs"
       - "crates/oxc_data_structures/**"
       - "crates/oxc_parser/**"
+      - "crates/oxc_str/**"
       - "crates/oxc_traverse/**"
       - ".github/workflows/miri.yml"
 
@@ -44,7 +46,7 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          packages: oxc_allocator,oxc_ast,oxc_data_structures,oxc_parser,oxc_transformer
+          packages: oxc_allocator,oxc_ast,oxc_data_structures,oxc_parser,oxc_str,oxc_transformer
           paths: .github/workflows/miri.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
@@ -67,5 +69,5 @@ jobs:
         env:
           MIRIFLAGS: -Zmiri-strict-provenance -Zmiri-disable-isolation
         run: |
-          cargo +"${MIRI_TOOLCHAIN}" miri test --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
+          cargo +"${MIRI_TOOLCHAIN}" miri test --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures -p oxc_str
           cargo +"${MIRI_TOOLCHAIN}" miri test -p oxc_parser -p oxc_transformer

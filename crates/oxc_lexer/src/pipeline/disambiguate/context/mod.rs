@@ -25,7 +25,7 @@
 //! - [`scan`]: the scan back to an anchor, and the entry points every question goes through.
 
 use super::common::Tokens;
-use super::type_context::{lt_run_opens_type_args, type_args_at};
+use super::type_context::{keyword_type, lt_run_split, type_args_at};
 
 mod anchor;
 mod frame;
@@ -38,9 +38,9 @@ mod walker;
 mod words;
 
 use frame::*;
-use walker::{Expect, Jump, Walk};
+use walker::{Expect, Jump, Walk, group_frame};
 
-pub(super) use scan::{after, after_from, angles_before, before};
+pub(super) use scan::{after, angles_before, before};
 
 #[cfg(test)]
 mod tests;
@@ -75,11 +75,44 @@ pub(super) struct Site {
 pub(crate) struct Walks {
     full: Walk,
     local: Walk,
+    /// Tests: every question goes to the full walk, with no anchors or shortcuts.
+    #[cfg(test)]
+    pub(crate) full_walk_only: bool,
+    /// Tests: a > run goes to the walk without the rules that settle it from nearby tokens.
+    #[cfg(test)]
+    pub(crate) no_run_rules: bool,
 }
 
 impl Walks {
     pub(crate) fn new() -> Walks {
-        Walks { full: Walk::new(), local: Walk::new() }
+        Walks {
+            full: Walk::new(),
+            local: Walk::new(),
+            #[cfg(test)]
+            full_walk_only: false,
+            #[cfg(test)]
+            no_run_rules: false,
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn shortcuts(&self) -> bool {
+        !self.full_walk_only
+    }
+
+    #[cfg(not(test))]
+    pub(crate) fn shortcuts(&self) -> bool {
+        true
+    }
+
+    #[cfg(test)]
+    pub(crate) fn run_rules(&self) -> bool {
+        !self.full_walk_only && !self.no_run_rules
+    }
+
+    #[cfg(not(test))]
+    pub(crate) fn run_rules(&self) -> bool {
+        true
     }
 
     /// A new lex, or a new pass over it by a stage that sees other token kinds: the full walk
@@ -88,23 +121,24 @@ impl Walks {
         self.full.reset(module);
         self.local.seed_lost = true;
     }
+
+    /// The full walk advanced to pos, restarted if it has passed the token there.
+    fn full_to(&mut self, tokens: &Tokens, pos: usize) -> &mut Walk {
+        let w = &mut self.full;
+        let inside_last = pos < w.walked_to && pos >= w.last_start;
+        if w.walked_to > pos && !inside_last {
+            w.reset(tokens.module);
+        }
+        w.advance(tokens, pos);
+        w
+    }
 }
 
 /// [`after`] on the full walk from the start of the source: needed when the answer depends on the
 /// enclosing functions (`yield` / `await`).
 pub(super) fn after_scoped(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
-    let w = &mut walks.full;
-    if w.last_query.0 == pos {
-        return w.last_query.1;
-    }
-    let inside_last = pos < w.walked_to && pos >= w.last_start;
-    if w.walked_to > pos && !inside_last {
-        w.reset(tokens.module);
-    }
-    w.advance(tokens, pos);
+    let w = walks.full_to(tokens, pos);
     // A query inside the token just processed (the tail of a fused operator run such as `>>>`)
     // is answered by the state after it.
-    let a = if w.walked_to > pos { w.classify_after() } else { w.after_token(tokens, pos) };
-    w.last_query = (pos, a);
-    a
+    if w.walked_to > pos { w.classify_after() } else { w.after_token(tokens, pos) }
 }

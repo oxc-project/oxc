@@ -14,12 +14,9 @@ use oxc_config::{
 };
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 
-use super::resolve::{build_global_ignore_matchers, is_ignored};
-#[cfg(feature = "napi")]
-use crate::core::JsConfigLoaderCb;
 use crate::core::{
-    ConfigResolver, FormatStrategy, NestedConfigCtx, ResolveOutcome, classify_file_kind,
-    resolve_file_scope_config,
+    ConfigResolver, ConfigScopes, FormatStrategy, ResolveOutcome, build_global_ignore_matchers,
+    classify_file_kind, is_ignored,
 };
 
 /// Orchestrates file discovery with nested config and ignore handling.
@@ -104,22 +101,15 @@ impl ScopedWalker {
 
     /// Run the walk across all scopes.
     /// And stream file to be formatted with its resolved config via the shared channel.
-    ///
-    /// Returns `Ok(true)` if any valid config was used.
     #[instrument(level = "debug", name = "oxfmt::walk::run", skip_all)]
     pub fn run(
         &self,
-        root_config_resolver: ConfigResolver,
+        config_scopes: &ConfigScopes,
         ignore_paths: &[PathBuf],
         with_node_modules: bool,
-        detect_nested: bool,
-        editorconfig_path: Option<&Path>,
-        #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
         tx_entry: &mpsc::Sender<FormatStrategy>,
         tx_error: &DiagnosticSender,
-    ) -> Result<bool, String> {
-        let root_config_resolver = Arc::new(root_config_resolver);
-
+    ) -> Result<(), String> {
         // Global ignores: .prettierignore, --ignore-path, CLI `!` patterns
         let ignore_file_matchers: Arc<[Gitignore]> = Arc::from(build_global_ignore_matchers(
             &self.cwd,
@@ -170,15 +160,6 @@ impl ScopedWalker {
             (dirs, files)
         };
 
-        // Walk-wide shared nested-config state used in both
-        // - Phase 2 (direct file targets)
-        // - and Phase 3 (parallel visitors)
-        // Each directory's config load runs at most once walk-wide.
-        let nested_config_ctx = NestedConfigCtx::new(
-            editorconfig_path.map(Arc::from),
-            #[cfg(feature = "napi")]
-            js_config_loader.cloned(),
-        );
         let mut directly_processed: FxHashSet<PathBuf> = FxHashSet::default();
 
         // Phase 2: Process file targets directly (no walk needed).
@@ -193,12 +174,7 @@ impl ScopedWalker {
 
                 let parent = file.parent().unwrap();
                 if !scope_cache.contains_key(parent) {
-                    let resolved = resolve_file_scope_config(
-                        file,
-                        &root_config_resolver,
-                        detect_nested.then_some(&nested_config_ctx),
-                    )?;
-                    scope_cache.insert(parent, resolved);
+                    scope_cache.insert(parent, config_scopes.resolve(file)?);
                 }
                 let config_resolver = Arc::clone(&scope_cache[parent]);
 
@@ -233,7 +209,7 @@ impl ScopedWalker {
         let directly_processed: Arc<FxHashSet<PathBuf>> = Arc::new(directly_processed);
         // Only consulted by `ensure_scope_cached` when `detect_nested` is true,
         // so skip the allocation otherwise.
-        let walk_target_roots: Arc<[PathBuf]> = if detect_nested {
+        let walk_target_roots: Arc<[PathBuf]> = if config_scopes.use_nested() {
             Arc::from(walk_targets.clone())
         } else {
             Arc::from(Vec::<PathBuf>::new())
@@ -250,12 +226,9 @@ impl ScopedWalker {
                 glob_matcher,
                 directly_processed,
             },
-            WalkConfigState {
-                root_config_resolver: Arc::clone(&root_config_resolver),
-                nested_config_ctx: nested_config_ctx.clone(),
-                detect_nested,
-                walk_target_roots,
-            },
+            // Shares the caches with Phase 2 above,
+            // so each directory's config load runs at most once walk-wide.
+            WalkConfigState { scopes: config_scopes.clone(), walk_target_roots },
             WalkSinks {
                 tx_entry: tx_entry.clone(),
                 tx_error: tx_error.clone(),
@@ -268,7 +241,7 @@ impl ScopedWalker {
             return Err(err.clone());
         }
 
-        Ok(root_config_resolver.config_dir().is_some() || nested_config_ctx.config_found())
+        Ok(())
     }
 }
 
@@ -353,9 +326,7 @@ struct WalkSinks {
 /// Walk-wide config-resolution state shared across all visitors.
 #[derive(Clone)]
 struct WalkConfigState {
-    root_config_resolver: Arc<ConfigResolver>,
-    nested_config_ctx: NestedConfigCtx,
-    detect_nested: bool,
+    scopes: ConfigScopes,
     walk_target_roots: Arc<[PathBuf]>,
 }
 
@@ -387,7 +358,7 @@ fn walk_and_stream(
     }
 
     let filter_global = Arc::clone(&filters.ignore_file_matchers);
-    let nested_config_ctx = config_state.nested_config_ctx.clone();
+    let nested_config_ctx = config_state.scopes.nested_ctx().clone();
     inner.filter_entry(move |entry| {
         let Some(file_type) = entry.file_type() else {
             return false;
@@ -480,10 +451,10 @@ impl WalkVisitor {
             return Ok(());
         }
 
-        let root_config_resolver = &self.config_state.root_config_resolver;
+        let root_config_resolver = self.config_state.scopes.root();
 
         // Case 2: Nested config disabled, shares the root scope, no probe needed
-        if !self.config_state.detect_nested {
+        if !self.config_state.scopes.use_nested() {
             let parent_ignored = root_config_resolver.is_path_ignored(parent, true);
             self.scope_cache
                 .insert(parent.to_path_buf(), (Arc::clone(root_config_resolver), parent_ignored));
@@ -498,7 +469,6 @@ impl WalkVisitor {
             .map(PathBuf::as_path)
             .filter(|t| parent.starts_with(t))
             .max_by_key(|t| t.components().count());
-        let root_config_dir = root_config_resolver.config_dir();
 
         // Pass 1: cheap ancestor lookup (no probe).
         let mut visited: Vec<PathBuf> = vec![];
@@ -510,13 +480,8 @@ impl WalkVisitor {
                 hit_via_lookup = Some(Arc::clone(r));
                 break;
             }
-            // (2) root config
-            if Some(dir) == root_config_dir {
-                hit_via_lookup = Some(Arc::clone(root_config_resolver));
-                break;
-            }
-            // (3) shared cache, covered by other visitors' probes
-            if let Some(r) = self.config_state.nested_config_ctx.lookup_scope(dir) {
+            // (2) shared cache, covered by other visitors' probes (and the root config)
+            if let Some(r) = self.config_state.scopes.nested_ctx().lookup_scope(dir) {
                 hit_via_lookup = Some(r);
                 break;
             }
@@ -539,7 +504,7 @@ impl WalkVisitor {
         // finding a closer config, every entry in `visited` is probed-and-None.
         let mut probed_none_count = visited.len();
         for (i, dir) in visited.iter().enumerate() {
-            if let Some(loaded) = self.config_state.nested_config_ctx.probe_dir(dir)? {
+            if let Some(loaded) = self.config_state.scopes.nested_ctx().probe_dir(dir)? {
                 found_closer = Some((dir.clone(), loaded));
                 probed_none_count = i;
                 break;
@@ -649,11 +614,11 @@ impl ignore::ParallelVisitor for WalkVisitor {
         // so discovery can see them.
         // Here we (1) register the parent dir's scope when nested detection is on,
         // and (2) re-apply the global ignore for format eligibility.
-        let is_config_file = self.config_state.nested_config_ctx.is_config_file(&path);
+        let is_config_file = self.config_state.scopes.nested_ctx().is_config_file(&path);
 
         if is_config_file
-            && self.config_state.detect_nested
-            && let Err(err) = self.config_state.nested_config_ctx.probe_dir(parent)
+            && self.config_state.scopes.use_nested()
+            && let Err(err) = self.config_state.scopes.nested_ctx().probe_dir(parent)
         {
             self.record_fatal(err);
             return ignore::WalkState::Quit;
@@ -730,25 +695,24 @@ mod tests_scope_resolution {
     use tempfile::TempDir;
 
     use super::*;
+    #[cfg(feature = "napi")]
+    use crate::core::JsConfigLoaderCb;
 
     fn write_config(dir: &Path, contents: &str) {
         fs::write(dir.join(".oxfmtrc.json"), contents).expect("write config");
     }
 
-    fn make_ctx() -> NestedConfigCtx {
-        NestedConfigCtx::new(
+    /// Minimal `WalkVisitor` for exercising `ensure_scope_cached`.
+    /// Channels / filters are dummies; the test never sends or applies them.
+    fn make_visitor(walk_root: &Path) -> WalkVisitor {
+        let scopes = ConfigScopes::load(
+            walk_root,
             None,
+            true,
             #[cfg(feature = "napi")]
             None,
         )
-    }
-
-    /// Minimal `WalkVisitor` for exercising `ensure_scope_cached`.
-    /// Channels / filters are dummies — the test never sends or applies them.
-    fn make_visitor(walk_root: &Path, ctx: NestedConfigCtx) -> WalkVisitor {
-        let mut root_resolver =
-            ConfigResolver::from_json_config(None, None).expect("default resolver");
-        root_resolver.build_and_validate().expect("validate default");
+        .expect("default scopes");
 
         let (tx_entry, _rx_entry) = mpsc::channel();
         let (tx_error, _rx_error) = mpsc::channel();
@@ -761,9 +725,7 @@ mod tests_scope_resolution {
                 directly_processed: Arc::new(FxHashSet::default()),
             },
             config_state: WalkConfigState {
-                root_config_resolver: Arc::new(root_resolver),
-                nested_config_ctx: ctx,
-                detect_nested: true,
+                scopes,
                 walk_target_roots: Arc::from(vec![walk_root.to_path_buf()]),
             },
             sinks: WalkSinks { tx_entry, tx_error, fatal_error: Arc::new(OnceLock::new()) },
@@ -787,11 +749,11 @@ mod tests_scope_resolution {
         write_config(&outer, r#"{ "printWidth": 100 }"#);
         write_config(&closer, r#"{ "printWidth": 60 }"#);
 
-        let ctx = make_ctx();
-        // Pre-register outer as if another visitor got there first.
+        let mut visitor = make_visitor(tmp.path());
+        // Pre-register outer as if another visitor got there first
+        let ctx = visitor.config_state.scopes.nested_ctx();
         ctx.probe_dir(&outer).expect("probe outer").expect("outer config");
 
-        let mut visitor = make_visitor(tmp.path(), ctx);
         visitor.ensure_scope_cached(&leaf_parent).expect("resolve");
 
         let (resolver, _) = &visitor.scope_cache[&leaf_parent];
@@ -816,10 +778,10 @@ mod tests_scope_resolution {
 
         write_config(&outer, r#"{ "printWidth": 100 }"#);
 
-        let ctx = make_ctx();
+        let mut visitor = make_visitor(tmp.path());
+        let ctx = visitor.config_state.scopes.nested_ctx();
         ctx.probe_dir(&outer).expect("probe outer").expect("outer config");
 
-        let mut visitor = make_visitor(tmp.path(), ctx);
         visitor.ensure_scope_cached(&leaf_parent).expect("resolve");
 
         let (resolver, _) = &visitor.scope_cache[&leaf_parent];
@@ -850,8 +812,7 @@ mod tests_scope_resolution {
 
         write_config(&closer, r#"{ "printWidth": 60 }"#);
 
-        let ctx = make_ctx();
-        let mut visitor = make_visitor(tmp.path(), ctx);
+        let mut visitor = make_visitor(tmp.path());
         visitor.ensure_scope_cached(&closer).expect("resolve");
 
         if let Some((resolver, _)) = visitor.scope_cache.get(outer.as_path()) {
@@ -875,8 +836,7 @@ mod tests_scope_resolution {
 
         write_config(&parent_dir, r#"{ "printWidth": 60 }"#);
 
-        let ctx = make_ctx();
-        let mut visitor = make_visitor(tmp.path(), ctx);
+        let mut visitor = make_visitor(tmp.path());
         visitor.ensure_scope_cached(&parent_dir).expect("resolve");
 
         let (resolver, _) = &visitor.scope_cache[&parent_dir];
@@ -899,20 +859,50 @@ mod tests_scope_resolution {
         let target_file = src.join("file.ts");
         fs::write(&target_file, "").expect("write target");
 
-        let mut root_resolver =
-            ConfigResolver::from_json_config(Some(&repo.join(".oxfmtrc.json")), None)
-                .expect("load root config");
-        root_resolver.build_and_validate().expect("validate root config");
-        let root_resolver = Arc::new(root_resolver);
-
-        let ctx = make_ctx();
-        let resolved = resolve_file_scope_config(&target_file, &root_resolver, Some(&ctx))
-            .expect("resolve file scope");
+        let scopes = ConfigScopes::load(
+            &repo,
+            None,
+            true,
+            #[cfg(feature = "napi")]
+            None,
+        )
+        .expect("load root config");
+        let resolved = scopes.resolve(&target_file).expect("resolve file scope");
 
         assert!(
-            Arc::ptr_eq(&resolved, &root_resolver),
+            Arc::ptr_eq(&resolved, scopes.root()),
             "Phase 2 must return the pre-built root Arc directly (no config_load_cache round-trip)"
         );
+    }
+
+    /// Direct file targets and directory walks must share the preloaded root config.
+    #[cfg(feature = "napi")]
+    #[test]
+    fn walk_reuses_loaded_root_config() {
+        let tmp = TempDir::new().expect("tempdir");
+        let repo = tmp.path();
+        fs::write(repo.join("oxfmt.config.ts"), "export default {};\n").expect("write config");
+        fs::write(repo.join("file.ts"), "const x = 1;\n").expect("write source");
+
+        let counter = Arc::new(AtomicUsize::new(0));
+        let counter_in_cb = Arc::clone(&counter);
+        let cb: JsConfigLoaderCb = Arc::new(move |_path: String| {
+            counter_in_cb.fetch_add(1, Ordering::Relaxed);
+            Ok(serde_json::json!({}))
+        });
+        let scopes = ConfigScopes::load(repo, None, true, Some(&cb)).expect("load scopes");
+        let walker =
+            ScopedWalker::new(repo.to_path_buf(), &[PathBuf::from("file.ts"), PathBuf::from(".")])
+                .expect("create walker");
+        let (tx_entry, rx_entry) = mpsc::channel();
+        let (tx_error, rx_error) = mpsc::channel();
+        walker.run(&scopes, &[], false, &tx_entry, &tx_error).expect("walk");
+
+        assert_eq!(rx_entry.try_iter().count(), 2, "both config and source must be visited");
+        assert_eq!(rx_error.try_iter().count(), 0);
+        assert_eq!(counter.load(Ordering::Relaxed), 1, "walk must not reload the root config");
+        let probed = scopes.nested_ctx().probe_dir(repo).expect("probe root").expect("root config");
+        assert!(Arc::ptr_eq(&probed, scopes.root()), "root probes must reuse the loaded resolver");
     }
 
     /// `config_load_cache` + `OnceLock` must dedupe NAPI loader invocations
@@ -937,7 +927,8 @@ mod tests_scope_resolution {
             Ok(serde_json::json!({}))
         });
 
-        let ctx = NestedConfigCtx::new(None, Some(cb));
+        let scopes = ConfigScopes::load(tmp.path(), None, true, Some(&cb)).expect("load scopes");
+        let ctx = scopes.nested_ctx();
 
         std::thread::scope(|s| {
             for _ in 0..8 {
@@ -975,7 +966,8 @@ mod tests_scope_resolution {
             Err("simulated load failure".to_string())
         });
 
-        let ctx = NestedConfigCtx::new(None, Some(cb));
+        let scopes = ConfigScopes::load(tmp.path(), None, true, Some(&cb)).expect("load scopes");
+        let ctx = scopes.nested_ctx();
 
         let err1 = ctx.probe_dir(&dir).expect_err("first probe should error");
         let err2 = ctx.probe_dir(&dir).expect_err("second probe should hit cached Err");

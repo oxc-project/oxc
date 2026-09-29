@@ -488,6 +488,218 @@ function __scheduleTimer(__callback, __delay) {
   }
 }
 
+// A real, referenced timer rather than a zero-delay macrotask, for the same
+// reason the async-work wait uses one: this polls the addon instead of
+// interleaving with the @emnapi/core dispatch, so a zero-delay turn would spin
+// the loop instead of yielding it.
+const __WASM_RUNTIME_WORK_POLL_INTERVAL_MS = 1
+// Arrivals it takes before the poll paces on the host's timers alone. One
+// proves nothing: a timer armed before the host's timers stopped still fires.
+const __WASM_RUNTIME_WORK_POLL_TRUSTED_ARRIVALS = 2
+// How long a parked turn's own timer must already have been due before a
+// backup that runs calls it dropped. Slack, not a deadline: a timer is due
+// against the event loop's clock, which is read once per iteration, while
+// these are `Date.now()` readings taken part-way through one, so the two
+// drift apart by however long the loop has been inside the current iteration.
+const __WASM_RUNTIME_WORK_POLL_STALL_MS = 50
+// How long a backup itself waits. What is left of it after the slack and one
+// interval — 149 ms — has to cover the *two* poll turns that can separate a
+// parked turn from the last backup armed while the host's timers still
+// worked, so the ceiling on a single turn is half of it. See the invariant on
+// `__armWasmRuntimePollStallBackup`.
+const __WASM_RUNTIME_WORK_POLL_BACKUP_MS = 200
+
+/**
+ * Pacing state for one runtime-work poll.
+ *
+ * Per poll, never per module: whether the host's timers arrive is not a
+ * property of the module. A host can lose its timers between two disposals,
+ * and in the deferred shape every instance shares this module — one healthy
+ * instance must not disarm the fallback for the next one.
+ */
+function __createWasmRuntimePollPace() {
+  return {
+    // Timers armed by *this* poll that have actually arrived.
+    arrivals: 0,
+    // The turn waiting on a timer alone *right now* — undefined whenever no
+    // turn is parked — and when that turn's own timer came due.
+    settleTurn: undefined,
+    turnTimerDueAt: 0,
+  }
+}
+
+/**
+ * The backup that ends a turn whose timer is never going to arrive.
+ *
+ * Once the poll paces on the timer alone it has nothing left to fall back on
+ * if the host's timers stop mid-poll: the turn that armed the dead timer is
+ * the turn that parks, and a parked poll schedules nothing that could notice.
+ * So every turn arms one of these before it yields, and each one compares due
+ * times instead of measuring how long the parked turn has been waiting.
+ *
+ * Invariant: a parked turn is ended by the newest backup that was armed while
+ * the host's timers still worked, and a backup ends a turn only when that
+ * turn's own timer was already due a whole window before the backup itself.
+ * Neither half turns on how far apart the arms happen to fall — what bounds
+ * the rescue is how far back that newest live backup is:
+ *
+ * - *Ends it.* Hosts run timers in due order, so a backup that runs while a
+ *   turn due a whole window earlier is still parked proves that turn's timer
+ *   was dropped rather than merely late. That same comparison is what leaves a
+ *   healthy host alone: there the turn's timer has already run and cleared
+ *   `settleTurn` before any backup due after it can look.
+ * - *Two turns back, not one.* A turn that ended does not prove its own timer
+ *   arrived: until `…_TRUSTED_ARRIVALS` is reached every turn arms both
+ *   primitives and the macrotask wins, so such a turn can end with its own
+ *   timer — and the backup armed one line before it — already dead. The
+ *   arrival that then flips the poll onto the timer alone can itself be a
+ *   timer armed before the host's timers died. So the turn that parks can sit
+ *   two turns past the last live arm, and the newest live backup is due
+ *   `…_BACKUP_MS` less *two* turn lengths after that turn's own timer.
+ *   Arming on every turn is what holds it to two, rather than however far back
+ *   a throttle last let one through.
+ * - *Ceiling.* Coverage therefore holds while two consecutive poll turns fit
+ *   inside `…_BACKUP_MS` less the slack and one interval: 149 ms, so 74 ms
+ *   per turn (measured: a 74 ms turn is still rescued, a 75 ms one parks).
+ *   Past that the turn stays parked and the disposal promise never settles.
+ *   The bound is deliberate: reaching it takes a host that drops timers
+ *   mid-poll *and* keeps every poll turn busy for more than 74 ms, and neither
+ *   Node nor WebContainer — the hosts that run the threaded artifact — does
+ *   the second.
+ *
+ * The poll then goes back to arming both primitives until two fresh arrivals
+ * prove the timers again. A host that stops running the timers it has
+ * *already* accepted leaves nothing to fire, and the disposal promise stays
+ * pending rather than wedging the thread — the same outcome as a blocking
+ * closure that never returns. Unreferenced wherever the host allows it: the
+ * poll's own turn timers are what keep the loop alive, never these.
+ */
+function __armWasmRuntimePollStallBackup(__pace) {
+  const __setTimer = globalThis.setTimeout
+  if (typeof __setTimer !== 'function') {
+    // Nothing to back up: `__scheduleTimer` is on the macrotask channel
+    // already, and that one cannot park.
+    return
+  }
+  // Read before arming, so this never claims to be due earlier than the timer
+  // actually is: a backup ends a turn only when it is provably due after it.
+  const __dueAt = Date.now() + __WASM_RUNTIME_WORK_POLL_BACKUP_MS
+  let __handle
+  try {
+    __handle = __setTimer(() => {
+      const __settleTurn = __pace.settleTurn
+      if (
+        !__settleTurn ||
+        __pace.turnTimerDueAt > __dueAt - __WASM_RUNTIME_WORK_POLL_STALL_MS
+      ) {
+        // No turn is parked, or the parked one's timer came due too close to
+        // this backup to call it dropped — it may still arrive, and the turn
+        // that armed it armed a backup due a whole window after *that*.
+        return
+      }
+      __pace.arrivals = 0
+      __pace.settleTurn = undefined
+      __settleTurn()
+    }, __WASM_RUNTIME_WORK_POLL_BACKUP_MS)
+  } catch {
+    return
+  }
+  if (__handle && typeof __handle.unref === 'function') {
+    try {
+      __handle.unref()
+    } catch {}
+  }
+}
+
+/**
+ * One turn of the runtime-work poll.
+ *
+ * `__scheduleTimer` falls back to the macrotask scheduler when `setTimeout` is
+ * missing or throws, but not when it is present, returns a handle and never
+ * fires — fake timers in a test suite that disposes from an `afterEach`, or a
+ * host whose timers belong to an IO context that is already gone. That host
+ * would park this poll forever, and the poll is unbounded, so nothing would
+ * ever call `…_finish`.
+ *
+ * Arm both primitives until timers armed by this poll have arrived twice, and
+ * let whichever lands first end the turn; the loser resolves nothing. A host
+ * with working timers therefore pays the double arming for the first turn or
+ * two — the macrotask wins the race, but the timers behind it still arrive and
+ * are counted — and paces on the timer alone from then on, instead of spinning
+ * the loop on a zero-delay queue. A host whose timers never arrive keeps both,
+ * and the macrotask is what keeps the poll moving. A host whose timers stop
+ * after proving themselves is caught by `__armWasmRuntimePollStallBackup`,
+ * which ends the parked turn and puts this poll back on both.
+ */
+function __yieldWasmRuntimePollTurn(__pace) {
+  // Armed before the turn yields, and by every turn: what rescues a parked
+  // turn has to have been armed while the host's timers still worked, and the
+  // turn that parks is the one whose own timer is already dead.
+  __armWasmRuntimePollStallBackup(__pace)
+  return new Promise((resolve) => {
+    let __settled = false
+    const __settle = () => {
+      if (__settled) {
+        return
+      }
+      __settled = true
+      if (__pace.settleTurn === __settle) {
+        // Nothing is parked any more: a backup running later must not read a
+        // due time this turn has already answered.
+        __pace.settleTurn = undefined
+      }
+      resolve()
+    }
+    __scheduleTimer(() => {
+      __pace.arrivals++
+      __settle()
+    }, __WASM_RUNTIME_WORK_POLL_INTERVAL_MS)
+    // Read next to the arming it describes; see
+    // `__armWasmRuntimePollStallBackup` for what the two due times mean.
+    const __turnTimerDueAt = Date.now() + __WASM_RUNTIME_WORK_POLL_INTERVAL_MS
+    if (__pace.arrivals < __WASM_RUNTIME_WORK_POLL_TRUSTED_ARRIVALS) {
+      __scheduleMacrotask(__settle)
+      return
+    }
+    // Paced by the timer alone from here; the backup is what ends this turn if
+    // the timer never arrives.
+    __pace.settleTurn = __settle
+    __pace.turnTimerDueAt = __turnTimerDueAt
+  })
+}
+
+/**
+ * Yield event-loop turns until the addon reports its runtime work finished.
+ *
+ * The window between `napi_prepare_wasm_env_cleanup_begin` and
+ * `…_finish` — the turns are the entire point of splitting the barrier, because
+ * on a threaded artifact the work `…_finish` joins can itself be waiting for a
+ * JavaScript turn from this very thread.
+ *
+ * Unbounded, for the same reason the async-work wait above is: giving up means
+ * calling `…_finish`, which joins on this thread, and the work it would join is
+ * the work waiting for a turn from this thread — so a bound does not end the
+ * wait, it only moves it somewhere the JavaScript thread can no longer be
+ * reached. A blocking closure that never returns keeps the disposal promise
+ * pending instead. The host contract is in `crates/async-runtime/README.md`: a
+ * blocking closure must never wait on a JavaScript turn.
+ */
+async function __pollWasmRuntimeWork(__workPending) {
+  const __pace = __createWasmRuntimePollPace()
+  for (;;) {
+    await __yieldWasmRuntimePollTurn(__pace)
+    try {
+      if (!__workPending()) {
+        return
+      }
+    } catch {
+      // A trap is the only way this fails, and a trapped instance has no
+      // reachable work left. Stop polling and finish.
+      return
+    }
+  }
+}
+
 // How often to re-read `napi_wasm_async_work_pending` while waiting. The wait
 // ends when the addon reports zero, so this only decides how promptly disposal
 // notices — not how long it waits.
@@ -859,7 +1071,9 @@ async function __createManagedEmnapiContext(
         // hooks unrun. Refuse instead: nothing is flagged, the context stays
         // registered for managed beforeExit cleanup, and a later destroy still
         // works. dispose() coalesces reentrancy before it can get here, so this
-        // is the backstop for any other caller that manages to.
+        // is the backstop for any other caller that manages to. A handshake
+        // parked between the two halves of the barrier does not reach here —
+        // `__prepareEnvCleanup` closes one rather than skipping it.
         throw __createLifecycleReentryError('dispose')
       }
       __result = __emnapiContext.destroy()
@@ -990,11 +1204,82 @@ async function __createInstance(
   let __wasmEnvCleanupRan = false
   let __wasmEnvCleanupPrepared = false
   let __wasmEnvCleanupPreparing = false
+  // The closer for a barrier parked between `…_begin` and `…_finish`, set only
+  // while that window is open. `__wasmEnvCleanupPreparing` cannot tell that
+  // apart from a purely synchronous frame, which must not be re-entered and
+  // which nothing outside it can finish; this window spans real event-loop
+  // turns, so a caller that cannot yield — the managed beforeExit teardown —
+  // can land inside it, and can close it. See `__prepareEnvCleanup`.
+  let __finishParkedEnvCleanup
+  // Raised while a caller that can still yield is driving the barrier, so the
+  // queue it leaves behind is expected rather than lost.
+  let __wasmEnvCleanupYielding = false
+  let __wasmEnvSettlementLossReported = false
   let __wasmEnvCleanupDrained = false
   let __wasmEnvCleanupDrainPromise
   const __isPreparingEnvCleanup = () => __wasmEnvCleanupPreparing
+  /**
+   * Say so when the barrier leaves settlements queued and nothing is left that
+   * could deliver them.
+   *
+   * Only `dispose()` and the initialization rollback yield the event-loop turns
+   * @emnapi/core needs to dispatch its queue. Every other caller of the barrier
+   * destroys in the same turn — a raw `Context.destroy()`, the managed
+   * beforeExit teardown — and `Context.destroy()` runs the threadsafe
+   * function's cleanup hook, which drains that queue with a null env and
+   * discards it. The promises those settlements were for then hang forever,
+   * silently.
+   *
+   * Loud, once, and never throwing: this runs from inside `Context.destroy()`,
+   * where throwing would take the whole teardown down with it. Destroying
+   * anyway is still the right trade — the queue is already unreachable by then.
+   */
+  const __reportUnreachedSettlements = () => {
+    if (__wasmEnvCleanupYielding || __wasmEnvSettlementLossReported) {
+      return
+    }
+    const __pending = __napiInstance?.exports.napi_wasm_env_cleanup_pending
+    if (typeof __pending !== 'function') {
+      return
+    }
+    let __queued
+    try {
+      __queued = __pending()
+    } catch {
+      return
+    }
+    if (!__queued) {
+      return
+    }
+    __wasmEnvSettlementLossReported = true
+    try {
+      const __consoleHost = globalThis.console
+      if (__consoleHost && typeof __consoleHost.error === 'function') {
+        __consoleHost.error(
+          'napi-rs: the wasm environment is being destroyed with ' +
+            __queued +
+            ' queued promise settlement(s). Context.destroy() discards them, so those promises never settle. Dispose the instance instead: only dispose() yields the event-loop turns the settlements need.',
+        )
+      }
+    } catch {}
+  }
   const __prepareEnvCleanup = () => {
-    if (__wasmEnvCleanupPrepared || __wasmEnvCleanupPreparing) {
+    if (__wasmEnvCleanupPrepared) {
+      return
+    }
+    // A handshake parked between its two halves is one this frame can close,
+    // and must: every caller of this is about to destroy the context, and the
+    // turns the poll is waiting for will not come. Closing it runs `…_finish`,
+    // which is the call that joins, so this degrades to exactly the single
+    // call below. Leaving it open destroys the context with the barrier still
+    // raised and the runtime never joined.
+    const __finishParked = __finishParkedEnvCleanup
+    if (__finishParked !== undefined) {
+      __finishParked()
+      __reportUnreachedSettlements()
+      return
+    }
+    if (__wasmEnvCleanupPreparing) {
       return
     }
     const __prepareWasmEnvCleanup =
@@ -1010,8 +1295,85 @@ async function __createInstance(
         __wasmEnvCleanupPreparing = false
       }
       __wasmEnvCleanupRan = true
+      __reportUnreachedSettlements()
     }
     __wasmEnvCleanupPrepared = true
+  }
+  /**
+   * The barrier for the callers that can yield: `__prepareEnvCleanup` with real
+   * event-loop turns in the middle.
+   *
+   * `napi_prepare_wasm_env_cleanup` waits — it returns only once the addon's
+   * async runtime has quiesced, and the work it waits for can itself be waiting
+   * for a JavaScript turn from this thread. The addon's two-phase form splits
+   * that: `…_begin` stops the runtime without joining and reports whether
+   * anything is still live, `napi_wasm_runtime_work_pending` answers that again
+   * without blocking, and `…_finish` joins.
+   *
+   * The poll is unbounded — see `__pollWasmRuntimeWork` — but a caller that
+   * cannot yield closes the handshake itself rather than waiting for it, so
+   * `…_finish` still runs on every teardown path. Feature-detected like every
+   * other export here, and returns nothing whenever the handshake finished
+   * without yielding.
+   */
+  const __prepareEnvCleanupWithTurns = () => {
+    if (__wasmEnvCleanupPrepared || __wasmEnvCleanupPreparing) {
+      return
+    }
+    const __exports = __napiInstance?.exports
+    const __begin = __exports?.napi_prepare_wasm_env_cleanup_begin
+    const __finish = __exports?.napi_prepare_wasm_env_cleanup_finish
+    if (typeof __begin !== 'function' || typeof __finish !== 'function') {
+      // No split to use. The settlement drain still follows this, so the queue
+      // the single call leaves behind is expected rather than lost.
+      __wasmEnvCleanupYielding = true
+      try {
+        __prepareEnvCleanup()
+      } finally {
+        __wasmEnvCleanupYielding = false
+      }
+      return
+    }
+    const __workPending = __exports?.napi_wasm_runtime_work_pending
+    // The in-flight flag stays raised across the turns below, so a `destroy()`
+    // from one of the JavaScript handlers they run is the same no-op it is
+    // inside the single call: the barrier is up and the runtime is
+    // mid-teardown, and destroying between the halves would strand exactly what
+    // this delivers.
+    __wasmEnvCleanupPreparing = true
+    let __live
+    try {
+      __live = __begin()
+    } catch (__error) {
+      __wasmEnvCleanupPreparing = false
+      throw __error
+    }
+    __wasmEnvCleanupRan = true
+    const __finishEnvCleanup = () => {
+      if (__wasmEnvCleanupPrepared) {
+        // Already closed by a caller that could not yield. `…_finish` is
+        // idempotent, but the flags it lowers are not.
+        return
+      }
+      __finishParkedEnvCleanup = undefined
+      try {
+        __finish()
+      } finally {
+        __wasmEnvCleanupPreparing = false
+      }
+      __wasmEnvCleanupPrepared = true
+    }
+    if (!__live || typeof __workPending !== 'function') {
+      __finishEnvCleanup()
+      return
+    }
+    // Publish the closer before yielding: from here until `__finishEnvCleanup`
+    // runs, a caller that cannot yield is entitled to end this handshake.
+    __finishParkedEnvCleanup = __finishEnvCleanup
+    return __pollWasmRuntimeWork(__workPending).then(
+      __finishEnvCleanup,
+      __finishEnvCleanup,
+    )
   }
   // The barrier + settlement drain, hoisted out of the context destroyer so the
   // drain can yield without widening the destroyer's reentry window. Both
@@ -1025,14 +1387,7 @@ async function __createInstance(
   // is enough — and dispose() stays retryable after it rejects, so marking the
   // drain complete up front would make the retry skip it and destroy the context
   // with the barrier's settlements still queued.
-  const __prepareForDisposal = () => {
-    if (__wasmEnvCleanupDrained) {
-      return
-    }
-    if (__wasmEnvCleanupDrainPromise) {
-      return __wasmEnvCleanupDrainPromise
-    }
-    __prepareEnvCleanup()
+  const __drainAfterEnvCleanup = () => {
     if (!__wasmEnvCleanupRan) {
       return
     }
@@ -1041,9 +1396,31 @@ async function __createInstance(
       __wasmEnvCleanupDrained = true
       return
     }
-    const __tracked = __drained.then(
+    return __drained.then((__value) => {
+      __wasmEnvCleanupDrained = true
+      return __value
+    })
+  }
+  const __prepareForDisposal = () => {
+    if (__wasmEnvCleanupDrained) {
+      return
+    }
+    if (__wasmEnvCleanupDrainPromise) {
+      return __wasmEnvCleanupDrainPromise
+    }
+    // The barrier itself can yield now, so the memo below has to cover it too:
+    // a reentrant caller must join this handshake rather than start a second
+    // one while the first is parked between the two halves.
+    const __prepared = __prepareEnvCleanupWithTurns()
+    const __settled =
+      __prepared && typeof __prepared.then === 'function'
+        ? __prepared.then(__drainAfterEnvCleanup)
+        : __drainAfterEnvCleanup()
+    if (!__settled || typeof __settled.then !== 'function') {
+      return
+    }
+    const __tracked = __settled.then(
       (__value) => {
-        __wasmEnvCleanupDrained = true
         __wasmEnvCleanupDrainPromise = undefined
         return __value
       },

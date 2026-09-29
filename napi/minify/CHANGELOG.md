@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🚀 Features
+
+- f585cb4 napi: Add threadless WASI builds (#26898) (Boshen)
+
 ## [0.150.0] - 2026-09-14
 
 ### 🚀 Features

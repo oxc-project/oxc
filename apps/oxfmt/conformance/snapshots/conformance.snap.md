@@ -26,27 +26,21 @@
 
 ## gql-in-js
 
-### Option 1: 11/12 (91.67%)
+### Option 1: 12/12 (100.00%)
 
 ```json
 {"printWidth":80}
 ```
 
-- [edge-cases/gql-in-js/template-expression-indent.js](diffs/gql-in-js/edge-cases__gql-in-js__template-expression-indent.js.md)
-  - apps/oxfmt/DIVERGENCES.md#template-expression-indent
-
-### Option 2: 11/12 (91.67%)
+### Option 2: 12/12 (100.00%)
 
 ```json
 {"printWidth":100}
 ```
-
-- [edge-cases/gql-in-js/template-expression-indent.js](diffs/gql-in-js/edge-cases__gql-in-js__template-expression-indent.js.md)
-  - apps/oxfmt/DIVERGENCES.md#template-expression-indent
 
 ## css-in-js
 
-### Option 1: 18/21 (85.71%)
+### Option 1: 19/21 (90.48%)
 
 ```json
 {"printWidth":80}
@@ -54,12 +48,10 @@
 
 - [edge-cases/css-in-js/styled-extend-tag.js](diffs/css-in-js/edge-cases__css-in-js__styled-extend-tag.js.md)
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
-- [edge-cases/css-in-js/template-expression-indent.js](diffs/css-in-js/edge-cases__css-in-js__template-expression-indent.js.md)
-  - apps/oxfmt/DIVERGENCES.md#template-expression-indent
 - [externals/prettier/js/multiparser-css/styled-components.js](diffs/css-in-js/externals__prettier__js__multiparser-css__styled-components.js.md)
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 
-### Option 2: 18/21 (85.71%)
+### Option 2: 19/21 (90.48%)
 
 ```json
 {"printWidth":100}
@@ -67,33 +59,27 @@
 
 - [edge-cases/css-in-js/styled-extend-tag.js](diffs/css-in-js/edge-cases__css-in-js__styled-extend-tag.js.md)
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
-- [edge-cases/css-in-js/template-expression-indent.js](diffs/css-in-js/edge-cases__css-in-js__template-expression-indent.js.md)
-  - apps/oxfmt/DIVERGENCES.md#template-expression-indent
 - [externals/prettier/js/multiparser-css/styled-components.js](diffs/css-in-js/externals__prettier__js__multiparser-css__styled-components.js.md)
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 
 ## html-in-js
 
-### Option 1: 168/194 (86.60%)
+### Option 1: 173/197 (87.82%)
 
 ```json
 {"printWidth":80}
 ```
 
-- [edge-cases/html-in-js/template-expression-indent.js](diffs/html-in-js/edge-cases__html-in-js__template-expression-indent.js.md)
-  - apps/oxfmt/DIVERGENCES.md#template-expression-indent
 - [externals/webawesome/badge/badge.ts](diffs/html-in-js/externals__webawesome__badge__badge.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
-- [externals/webawesome/carousel/carousel.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.ts.md)
-  - apps/oxfmt/DIVERGENCES.md#template-expression-indent
 - [externals/webawesome/checkbox/checkbox.ts](diffs/html-in-js/externals__webawesome__checkbox__checkbox.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/color-picker/color-picker.ts](diffs/html-in-js/externals__webawesome__color-picker__color-picker.ts.md)
-  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#template-expression-indent
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/copy-button/copy-button.ts](diffs/html-in-js/externals__webawesome__copy-button__copy-button.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/details/details.ts](diffs/html-in-js/externals__webawesome__details__details.ts.md)
@@ -105,7 +91,7 @@
 - [externals/webawesome/format-number/format-number.ts](diffs/html-in-js/externals__webawesome__format-number__format-number.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/input/input.ts](diffs/html-in-js/externals__webawesome__input__input.ts.md)
-  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#template-expression-indent
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/number-input/number-input.styles.ts](diffs/html-in-js/externals__webawesome__number-input__number-input.styles.ts.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/webawesome/number-input/number-input.ts](diffs/html-in-js/externals__webawesome__number-input__number-input.ts.md)
@@ -133,22 +119,16 @@
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
-### Option 2: 181/194 (93.30%)
+### Option 2: 187/197 (94.92%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
 ```
 
-- [edge-cases/html-in-js/template-expression-indent.js](diffs/html-in-js/edge-cases__html-in-js__template-expression-indent.js.md)
-  - apps/oxfmt/DIVERGENCES.md#template-expression-indent
 - [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
-- [externals/webawesome/carousel/carousel.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.ts.md)
-  - apps/oxfmt/DIVERGENCES.md#template-expression-indent
-- [externals/webawesome/color-picker/color-picker.ts](diffs/html-in-js/externals__webawesome__color-picker__color-picker.ts.md)
-  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#template-expression-indent
 - [externals/webawesome/copy-button/copy-button.ts](diffs/html-in-js/externals__webawesome__copy-button__copy-button.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/format-number/format-number.ts](diffs/html-in-js/externals__webawesome__format-number__format-number.ts.md)
@@ -156,7 +136,7 @@
 - [externals/webawesome/icon/icon.ts](diffs/html-in-js/externals__webawesome__icon__icon.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/input/input.ts](diffs/html-in-js/externals__webawesome__input__input.ts.md)
-  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#template-expression-indent
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/page/page.ts](diffs/html-in-js/externals__webawesome__page__page.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/popup/popup.ts](diffs/html-in-js/externals__webawesome__popup__popup.ts.md)
@@ -196,27 +176,17 @@
 
 ## xxx-in-js-comment
 
-### Option 1: 4/6 (66.67%)
+### Option 1: 6/6 (100.00%)
 
 ```json
 {"printWidth":80}
 ```
 
-- [edge-cases/xxx-in-js-comment/broken-template-comment-indent.js](diffs/xxx-in-js-comment/edge-cases__xxx-in-js-comment__broken-template-comment-indent.js.md)
-  - apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
-- [externals/prettier/js/multiparser-comments/comment-inside.js](diffs/xxx-in-js-comment/externals__prettier__js__multiparser-comments__comment-inside.js.md)
-  - apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
-
-### Option 2: 4/6 (66.67%)
+### Option 2: 6/6 (100.00%)
 
 ```json
 {"printWidth":100}
 ```
-
-- [edge-cases/xxx-in-js-comment/broken-template-comment-indent.js](diffs/xxx-in-js-comment/edge-cases__xxx-in-js-comment__broken-template-comment-indent.js.md)
-  - apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
-- [externals/prettier/js/multiparser-comments/comment-inside.js](diffs/xxx-in-js-comment/externals__prettier__js__multiparser-comments__comment-inside.js.md)
-  - apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
 
 ## svelte
 

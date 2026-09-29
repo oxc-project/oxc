@@ -6,8 +6,9 @@ use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::{is_digit, is_word, is_ws},
     disambiguate::{gt_run_split, lt_run_split},
+    operators::{is_op_char, opmap_longest, opmap_pack},
     scan::scan_number,
-    tables::{KwSet, Tables, is_op_char},
+    tables::{KwSet, Tables},
     token_view,
 };
 
@@ -142,7 +143,6 @@ pub unsafe fn coalesce(
                         src,
                         st,
                         opch,
-                        word,
                         kind,
                         n,
                         ts,
@@ -154,7 +154,7 @@ pub unsafe fn coalesce(
                     let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run);
                     if g != 0 {
                         // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
-                        cursor = munch_walk(t, src, n, st, opch, kind, p + g);
+                        cursor = munch_walk(src, n, st, opch, kind, p + g);
                         continue;
                     }
                 }
@@ -165,7 +165,6 @@ pub unsafe fn coalesce(
                         src,
                         st,
                         opch,
-                        word,
                         kind,
                         n,
                         ts,
@@ -175,15 +174,14 @@ pub unsafe fn coalesce(
                         &lanes.disambiguate.closers,
                     );
                     if lt_run_split(&tokens, p) {
-                        cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
+                        cursor = munch_walk(src, n, st, opch, kind, p + 2);
                         continue;
                     }
                 }
                 if run == 2 {
                     let key = (q & 0xFFFF) | (2u32 << 24);
-                    let pack = t.op.op2_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                    let want = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
-                    let mut ok = ((pack ^ want) & 0x00FF_FFFF) == 0;
+                    let pack = opmap_pack(key);
+                    let mut ok = ((pack ^ key) & 0xFF_FFFF) == 0;
                     let kk = (pack >> 24) as u8;
                     ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8));
                     let hm: u8 = 0u8.wrapping_sub(ok as u8);
@@ -194,31 +192,28 @@ pub unsafe fn coalesce(
                     continue;
                 }
                 if run > 3 {
-                    cursor = munch_walk(t, src, n, st, opch, kind, p);
+                    cursor = munch_walk(src, n, st, opch, kind, p);
                     continue;
                 }
                 let b2 = (q >> 16) as u8;
                 let key3 = (q & 0xFF_FFFF) | (3u32 << 24);
-                let p3 = t.op.op3_pack[(key3.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                let want3 = 3u64 | ((b0 as u64) << 8) | ((b1 as u64) << 16) | ((b2 as u64) << 24);
-                let ok3 = ((p3 ^ want3) & 0xFFFF_FFFF) == 0;
+                let p3 = opmap_pack(key3);
+                let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
                 let key2a = (q & 0xFFFF) | (2u32 << 24);
-                let pa = t.op.op2_pack[(key2a.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                let wanta = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
+                let pa = opmap_pack(key2a);
                 let ka = (pa >> 24) as u8;
-                let mut ok2a = ((pa ^ wanta) & 0x00FF_FFFF) == 0;
+                let mut ok2a = ((pa ^ key2a) & 0xFF_FFFF) == 0;
                 ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
                 let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
-                let pb = t.op.op2_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                let wantb = 2u32 | ((b1 as u32) << 8) | ((b2 as u32) << 16);
+                let pb = opmap_pack(key2b);
                 let kb = (pb >> 24) as u8;
-                let mut ok2b = ((pb ^ wantb) & 0x00FF_FFFF) == 0;
+                let mut ok2b = ((pb ^ key2b) & 0xFF_FFFF) == 0;
                 ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8));
                 let sel3 = ok3;
                 let sel2a = !ok3 && ok2a;
                 let sel2b = !ok3 && !ok2a && ok2b;
                 let m0: u8 = 0u8.wrapping_sub((sel3 || sel2a) as u8);
-                let k0v: u8 = if sel3 { (p3 >> 32) as u8 } else { ka };
+                let k0v: u8 = if sel3 { (p3 >> 24) as u8 } else { ka };
                 *kind.add(p) = (*kind.add(p) & !m0) | (k0v & m0);
                 let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
                 *kind.add(p + 1) = (*kind.add(p + 1) & !m1) | (kb & m1);
@@ -315,7 +310,6 @@ unsafe fn glue_number(
                     src,
                     st,
                     opch,
-                    word,
                     kind,
                     n,
                     kw.ts_key,
@@ -328,10 +322,10 @@ unsafe fn glue_number(
                 if g != 0 {
                     // The split `>`s stay single tokens, but whatever borders on them is still an operator run and has to be
                     // munched, or a following `&&` / `??` / `**` is emitted a byte at a time.
-                    return munch_walk(t, src, n, st, opch, kind, e2 + g);
+                    return munch_walk(src, n, st, opch, kind, e2 + g);
                 }
             }
-            let q = munch_walk(t, src, n, st, opch, kind, e2);
+            let q = munch_walk(src, n, st, opch, kind, e2);
             if q < n && *src.add(q) == b'.' && is_digit(*src.add(q + 1)) && bm_get(st, q) {
                 p = q;
                 continue;
@@ -342,8 +336,9 @@ unsafe fn glue_number(
     }
 }
 
+// Cold path; kept out of line so it does not slow the coalesce loop.
+#[inline(never)]
 unsafe fn munch_walk(
-    t: &Tables,
     src: *const u8,
     n: usize,
     st: *mut u64,
@@ -356,24 +351,8 @@ unsafe fn munch_walk(
         bm_set(st, pos);
         let rem = end - pos;
         let lmax: u32 = if rem < 4 { rem as u32 } else { 4 };
-        let b0 = *src.add(pos);
-        let b1 = *src.add(pos + 1);
-        let b2 = *src.add(pos + 2);
-        let b3 = *src.add(pos + 3);
-        let mut opk: u32 = 0;
-        let mut opl: u32 = 0;
-        let mut l = lmax;
-        while l >= 2 {
-            let k = t.op.opmap_lookup(b0, b1, b2, b3, l);
-            if k != 0
-                && !(k == tk!(OptionalChain) as u32 && pos + 2 < n && is_digit(*src.add(pos + 2)))
-            {
-                opk = k;
-                opl = l;
-                break;
-            }
-            l -= 1;
-        }
+        let bytes = *src.add(pos).cast::<[u8; 4]>();
+        let (opk, opl) = opmap_longest(bytes, lmax);
         if opk != 0 {
             *kind.add(pos) = opk as u8;
             let mut j = 1usize;

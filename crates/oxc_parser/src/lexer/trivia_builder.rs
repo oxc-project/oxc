@@ -114,8 +114,8 @@ impl<'a> TriviaBuilder<'a> {
         self.irregular_whitespaces.push(Span::new(start, end));
     }
 
-    pub fn add_line_comment(&mut self, start: u32, end: u32, source_text: &str) {
-        self.add_comment(Comment::new(start, end, CommentKind::Line), source_text);
+    pub fn add_line_comment(&mut self, start: u32, end: u32, kind: CommentKind, source_text: &str) {
+        self.add_comment(Comment::new(start, end, kind), source_text);
     }
 
     pub fn add_block_comment(
@@ -664,6 +664,21 @@ token /* Trailing 1 */
             },
         ];
         assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn html_comment_content() {
+        let allocator = Allocator::default();
+        let source = "<!--a\n-->\n<!--";
+        let ret = Parser::new(&allocator, source, SourceType::script()).parse();
+        assert!(ret.diagnostics.is_empty());
+        assert_eq!(ret.program.comments.len(), 3);
+        let expected = [(Span::new(0, 5), "a"), (Span::new(6, 9), ""), (Span::new(10, 14), "")];
+        for (comment, (span, content)) in ret.program.comments.iter().zip(expected) {
+            assert!(comment.is_line());
+            assert_eq!(comment.span, span);
+            assert_eq!(comment.content_span().source_text(source), content);
+        }
     }
 
     #[test]

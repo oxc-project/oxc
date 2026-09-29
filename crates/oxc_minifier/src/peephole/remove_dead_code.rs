@@ -413,10 +413,8 @@ impl<'a> PeepholeOptimizations {
         if s.block.body.is_empty()
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
-            let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = BlockStatement::boxed(finalizer.span, [], ctx);
-                std::mem::swap(finalizer, &mut block);
-                Statement::BlockStatement(block)
+            let new_stmt = if let Some(finalizer) = s.finalizer.take() {
+                Statement::BlockStatement(finalizer)
             } else {
                 Statement::new_empty_statement(s.span, ctx)
             };
@@ -476,13 +474,7 @@ impl<'a> PeepholeOptimizations {
                 // so `remove_unused_expression` would return `true` and produce a
                 // structurally-identical fresh `0`.
                 if !e.is_number_0() && Self::remove_unused_expression(e, ctx) {
-                    let new_expr = Expression::new_numeric_literal(
-                        e.span(),
-                        0.0,
-                        None,
-                        NumberBase::Decimal,
-                        ctx,
-                    );
+                    let new_expr = Expression::new_number_0(e.span(), ctx);
                     ctx.replace_expression(e, new_expr);
                 }
                 return true;
@@ -675,10 +667,10 @@ impl<'a> PeepholeOptimizations {
                         Expression::Identifier(_)
                         // Example case: `delete (0, foo.#a)` (no error) -> `delete foo.#a` (error)
                         | Expression::PrivateFieldExpression(_)
-                        // Example case: `typeof (0, foo.bar)` (noop) -> `typeof foo.bar` (deletes bar)
+                        // Example case: `delete (0, foo.bar)` (noop) -> `delete foo.bar` (deletes bar)
                         | Expression::ComputedMemberExpression(_)
                         | Expression::StaticMemberExpression(_) => true,
-                        // Example case: `typeof (0, foo?.bar)` (noop) -> `typeof foo?.bar` (deletes bar)
+                        // Example case: `delete (0, foo?.bar)` (noop) -> `delete foo?.bar` (deletes bar)
                         Expression::ChainExpression(chain) => {
                             matches!(&chain.expression, match_member_expression!(ChainElement))
                         }
@@ -705,7 +697,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Expression<'a> {
         Expression::new_sequence_expression(
             span.merge(expr.span()),
-            [Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx), expr],
+            [Expression::new_number_0(span, ctx), expr],
             ctx,
         )
     }
