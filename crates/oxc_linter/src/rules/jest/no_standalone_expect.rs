@@ -185,6 +185,17 @@ fn test() {
             r"setup.beforeEach(() => { expect(1).toBe(1); });",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["setup.beforeEach"] }])),
         ),
+        // Vitest-only modifiers. `*.test.ts` files without a `vitest` import are
+        // sniffed as Jest, so these chains must also be valid Jest call chains.
+        // Regression for https://github.com/oxc-project/oxc/issues/27158
+        (r#"test.runIf(true)("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (r#"test.skipIf(false)("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (r#"test.for([])("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (r#"it.runIf(true)("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (r#"it.skipIf(false)("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (r#"it.for([])("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (r#"test.concurrent.for([[1]])("foobar", ([value]) => { expect(value).toBe(1); });"#, None),
+        (r#"test.only.runIf(true)("foobar", () => { expect(true).toEqual(false); });"#, None),
     ];
 
     let fail = vec![
