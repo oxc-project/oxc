@@ -24,6 +24,11 @@ long enough to wrap when the width is small and prose wrap is always on.
 Pandoc fenced div.
 :::
 
+A paragraph right before an opener:
+:::note
+The opener interrupts it, so a blank line separates them.
+:::
+
 ==================== Output ====================
 ---------------------------------------
 { printWidth: 80, proseWrap: "always" }
@@ -50,6 +55,12 @@ is always on.
 Pandoc fenced div.
 :::
 
+A paragraph right before an opener:
+
+:::note
+The opener interrupts it, so a blank line separates them.
+:::
+
 ----------------------------------------
 { printWidth: 100, proseWrap: "always" }
 ----------------------------------------
@@ -71,6 +82,12 @@ Some **text** that is long enough to wrap when the width is small and prose wrap
 
 ::: {.class}
 Pandoc fenced div.
+:::
+
+A paragraph right before an opener:
+
+:::note
+The opener interrupts it, so a blank line separates them.
 :::
 
 --------------------------------------
@@ -96,6 +113,12 @@ Some **text** that is long enough to wrap when the width is small and prose wrap
 Pandoc fenced div.
 :::
 
+A paragraph right before an opener:
+
+:::note
+The opener interrupts it, so a blank line separates them.
+:::
+
 ---------------------------------------
 { printWidth: 100, proseWrap: "never" }
 ---------------------------------------
@@ -117,6 +140,12 @@ Some **text** that is long enough to wrap when the width is small and prose wrap
 
 ::: {.class}
 Pandoc fenced div.
+:::
+
+A paragraph right before an opener:
+
+:::note
+The opener interrupts it, so a blank line separates them.
 :::
 
 -----------------------------------------
@@ -144,6 +173,12 @@ long enough to wrap when the width is small and prose wrap is always on.
 Pandoc fenced div.
 :::
 
+A paragraph right before an opener:
+
+:::note
+The opener interrupts it, so a blank line separates them.
+:::
+
 ------------------------------------------
 { printWidth: 100, proseWrap: "preserve" }
 ------------------------------------------
@@ -167,6 +202,12 @@ long enough to wrap when the width is small and prose wrap is always on.
 
 ::: {.class}
 Pandoc fenced div.
+:::
+
+A paragraph right before an opener:
+
+:::note
+The opener interrupts it, so a blank line separates them.
 :::
 
 ===================== End =====================

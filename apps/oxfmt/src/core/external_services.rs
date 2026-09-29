@@ -102,12 +102,10 @@ pub type JsSortTailwindClassesCb = ThreadsafeFunction<
     false,
 >;
 
-/// Holds raw ThreadsafeFunctions wrapped in Option for cleanup.
-/// The TSFNs can be explicitly dropped via `cleanup()` to prevent
-/// use-after-free during V8 cleanup on Node.js exit.
+/// Holds raw ThreadsafeFunctions wrapped in Option, so [`CleanupGuard`] can explicitly drop them.
 ///
-/// Uses `RwLock` instead of `Mutex` for better performance: the wrapper functions
-/// only read from the Option (common path), while only `cleanup()` needs write access.
+/// Uses `RwLock` instead of `Mutex` for better performance:
+/// the wrapper functions only read from the Option (common path).
 #[derive(Clone)]
 struct TsfnHandles {
     init: Arc<RwLock<Option<JsInitExternalServicesCb>>>,
@@ -117,14 +115,20 @@ struct TsfnHandles {
     sort_tailwind: Arc<RwLock<Option<JsSortTailwindClassesCb>>>,
 }
 
-impl TsfnHandles {
-    /// Drop all ThreadsafeFunctions to prevent use-after-free during V8 cleanup.
-    fn cleanup(&self) {
-        let _ = self.init.write().unwrap().take();
-        let _ = self.format_file.write().unwrap().take();
-        let _ = self.format_embedded.write().unwrap().take();
-        let _ = self.format_embedded_doc.write().unwrap().take();
-        let _ = self.sort_tailwind.write().unwrap().take();
+/// Drops all ThreadsafeFunctions on drop, created by [`ExternalServices::cleanup_guard`].
+///
+/// `ExternalServices` itself does not do this on drop, since it is cloned and shared.
+#[must_use]
+pub struct CleanupGuard(TsfnHandles);
+
+impl Drop for CleanupGuard {
+    fn drop(&mut self) {
+        let handles = &self.0;
+        let _ = handles.init.write().unwrap().take();
+        let _ = handles.format_file.write().unwrap().take();
+        let _ = handles.format_embedded.write().unwrap().take();
+        let _ = handles.format_embedded_doc.write().unwrap().take();
+        let _ = handles.sort_tailwind.write().unwrap().take();
     }
 }
 
@@ -160,8 +164,8 @@ impl std::fmt::Debug for ExternalServices {
 impl ExternalServices {
     /// Create an [`ExternalServices`] from JS callbacks.
     ///
-    /// The ThreadsafeFunctions are wrapped in `Arc<Mutex<Option<...>>>` to allow
-    /// explicit cleanup via the `cleanup()` method. This prevents use-after-free
+    /// The ThreadsafeFunctions are wrapped to allow
+    /// explicit cleanup via [`Self::cleanup_guard`]. This prevents use-after-free
     /// crashes on Node.js exit when V8 cleans up global handles.
     pub fn new(
         format_file_cb: JsFormatFileCb,
@@ -207,13 +211,13 @@ impl ExternalServices {
         self
     }
 
-    /// Explicitly drop all ThreadsafeFunctions to prevent use-after-free
-    /// during V8 cleanup on Node.js exit.
+    /// Explicitly drop all ThreadsafeFunctions when the returned guard is dropped,
+    /// to prevent use-after-free during V8 cleanup on Node.js exit.
     ///
-    /// This should be called before the function returns to ensure the TSFNs
-    /// are released while V8 handles are still valid.
-    pub fn cleanup(&self) {
-        self.handles.cleanup();
+    /// Bind it to a named variable (not `_`) at the top of a NAPI entry function,
+    /// so the TSFNs are released on every return path while V8 handles are still valid.
+    pub fn cleanup_guard(&self) -> CleanupGuard {
+        CleanupGuard(self.handles.clone())
     }
 
     /// Initialize the JS-side services (worker pool) using the JS callback.

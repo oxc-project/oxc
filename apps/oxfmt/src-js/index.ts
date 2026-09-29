@@ -81,6 +81,9 @@ let BINDINGS_CACHE = null as typeof import("./bindings") | null;
 
 /**
  * Format the given source text according to the specified options.
+ *
+ * Config files are not discovered, `options` are used as is.
+ * Relative paths in `options` (e.g. `sortTailwindcss.config`) are resolved against `process.cwd()`.
  */
 export async function format(fileName: string, sourceText: string, options?: FormatConfig) {
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");

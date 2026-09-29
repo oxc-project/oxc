@@ -18,3 +18,15 @@ Click <Badge type="tip" text="new" /> to see it, a sentence long enough to wrap 
 <span>plain html</span> keeps wrapping with the prose around it as usual.
 :::)
 plain text after an emoticon line that is long enough to wrap when prose wrap is always on.
+
+A line starting inside a multi-line tag is a shape line, <span
+:::> at the top level
+next line
+
+_A line starting inside a multi-line tag is a shape line, <span
+:::> inside emphasis
+next line_
+
+A line starting inside a multi-line link title is a shape line, [text](url "title
+:::") too
+next line

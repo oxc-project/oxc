@@ -1,9 +1,9 @@
-use crate::pipeline::bytes::{is_digit, is_ws};
-
-use super::{
-    keywords::{is_kw_init, is_kw_init_ts},
+use crate::pipeline::{
+    bytes::{is_digit, is_ws},
     operators::is_op_char,
 };
+
+use super::keywords::{is_kw_init, is_kw_init_ts};
 
 #[cfg_attr(
     all(

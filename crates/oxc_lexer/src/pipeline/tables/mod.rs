@@ -1,6 +1,5 @@
 mod classify_luts;
 mod keywords;
-mod operators;
 mod pair_luts;
 mod punct1;
 
@@ -12,8 +11,6 @@ pub(super) use keywords::KwSet;
     target_feature = "popcnt"
 )))]
 pub(super) use keywords::{is_kw_init, is_kw_init_ts};
-
-pub(super) use operators::is_op_char;
 
 #[cfg(not(all(
     target_arch = "x86_64",
@@ -32,7 +29,6 @@ pub(super) use punct1::punct1_luts;
 
 use classify_luts::{MergedLuts, WordLuts};
 use keywords::Keywords;
-use operators::OpMap;
 use pair_luts::PairLuts;
 
 #[cfg_attr(
@@ -45,7 +41,6 @@ use pair_luts::PairLuts;
     expect(dead_code, reason = "`merged_luts` and `word_luts` only used in SIMD implementation")
 )]
 pub(super) struct Tables {
-    pub op: OpMap,
     pub keywords: Keywords,
     pub merged_luts: MergedLuts,
     pub word_luts: WordLuts,
@@ -55,7 +50,6 @@ pub(super) struct Tables {
 impl Tables {
     pub fn new() -> Tables {
         Self {
-            op: OpMap::new(),
             keywords: Keywords::new(),
             merged_luts: MergedLuts::new(),
             word_luts: WordLuts::new(),

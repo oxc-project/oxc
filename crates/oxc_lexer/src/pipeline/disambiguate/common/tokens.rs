@@ -1,8 +1,11 @@
 //! The token stream as the disambiguation questions read it.
 
-use crate::{
-    pipeline::{bytes::is_digit, tables::Tables},
-    token::{KW_KIND_BASE, OP_KIND_BASE, matches_tk, tk},
+use crate::token::{KW_KIND_BASE, OP_KIND_BASE, is_trivia_byte, tk};
+
+use crate::pipeline::{
+    bytes::{is_digit, line_break_in},
+    operators::opmap_longest,
+    tables::Tables,
 };
 
 use super::{Brackets, Closers, bits, walk};
@@ -20,8 +23,6 @@ pub(crate) struct Tokens<'a> {
     pub(crate) st: &'a [u64],
     /// Operator characters.
     pub(crate) opch: &'a [u64],
-    /// Identifier characters.
-    pub(crate) word: &'a [u64],
     /// The kind at each token start.
     pub(crate) kind: &'a [u8],
     /// Source length.
@@ -48,6 +49,19 @@ pub(crate) enum Prev {
     Word(usize, u8),
     /// A literal, template part or JSX token.
     Other(usize),
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct Peek {
+    pub(crate) pos: usize,
+    pub(crate) kind: u8,
+    pub(crate) byte: u8,
+}
+
+impl Prev {
+    pub(crate) fn is_member_dot(self, tokens: &Tokens) -> bool {
+        matches!(self, Prev::Op(q, _) if tokens.member_dot(q))
+    }
 }
 
 impl Tokens<'_> {
@@ -77,6 +91,10 @@ impl Tokens<'_> {
         if raw != tk!(Ident) || pos < self.kw_final {
             return 0;
         }
+        // Keywords are lowercase words of up to ten letters: skip the hash for the rest.
+        if !self.src[pos].is_ascii_lowercase() {
+            return 0;
+        }
         let set = if self.ts { &self.tables.keywords.kwts } else { &self.tables.keywords.kwjs };
         let k = set.lookup_at(self.src, pos, len) as u8;
         if k >= KW_KIND_BASE { k } else { 0 }
@@ -103,13 +121,19 @@ impl Tokens<'_> {
             if i >= self.n {
                 return self.n;
             }
-            let k = self.kind[i];
-            if matches_tk!(k, Whitespace | LineComment | BlockComment | Hashbang) {
+            if is_trivia_byte(self.kind[i]) {
                 i += 1;
                 continue;
             }
             return i;
         }
+    }
+
+    #[inline]
+    pub(crate) fn peek(&self, i: usize) -> Peek {
+        let pos = self.next_sig(i);
+        let kind = if pos < self.n { self.base_kind(pos) } else { tk!(Eof) };
+        Peek { pos, kind, byte: self.src[pos] }
     }
 
     /// The significant token start before `pos` (skipping trivia), or `None` at the start.
@@ -134,8 +158,38 @@ impl Tokens<'_> {
     }
 
     /// Is the word at `w` a property name (`x.if`, `x?.if`)?
+    #[inline]
     pub(crate) fn property_name(&self, w: usize) -> bool {
-        matches!(self.prev_token(w), Prev::Op(q, c) if c == b'.' || (c == b'?' && self.src[q + 1] == b'.'))
+        self.prev_sig(w).is_some_and(|q| self.kind[q] >= OP_KIND_BASE && self.member_dot(q))
+    }
+
+    /// Is the operator at q a member access dot, not a spread dot or the start of ?.5?
+    #[inline]
+    pub(crate) fn member_dot(&self, q: usize) -> bool {
+        let src = self.src;
+        match src[q] {
+            b'?' => src[q + 1] == b'.' && !is_digit(src[q + 2]),
+            // A spread is three token starts before coalesce, ending here, or one after it.
+            b'.' => {
+                !(src[q + 1] == b'.' && src[q + 2] == b'.')
+                    && !(q >= 2 && src[q - 1] == b'.' && src[q - 2] == b'.')
+                    && !self.numeric_dot(q)
+            }
+            _ => false,
+        }
+    }
+
+    /// Does the . at q end a decimal integer literal (1.) rather than access a member?
+    pub(crate) fn numeric_dot(&self, q: usize) -> bool {
+        let Some(p) = bits::prev1(self.st, q) else {
+            return false;
+        };
+        let digits = &self.src[p..q];
+        // A fraction, a prefixed or exponent literal, or a legacy octal takes no dot.
+        self.kind[p] == tk!(Number)
+            && (p == 0 || self.src[p - 1] != b'.')
+            && digits.iter().all(|&c| is_digit(c) || c == b'_')
+            && !(digits.len() > 1 && digits[0] == b'0' && digits.iter().all(|&c| c < b'8'))
     }
 
     /// Number of `c` bytes the token at `p` starts with (a fused `>>>` counts three, a lone `>`
@@ -149,31 +203,42 @@ impl Tokens<'_> {
         (i - p) as i32
     }
 
-    /// Fused operator at `pos`: `(len, kind)`; `kind` is the punct kind for a single byte (0 for
-    /// unknown).
+    /// Length of the fused operator at pos, 1 when no multi-byte operator starts there.
     #[inline]
-    pub(crate) fn munch(&self, pos: usize) -> (usize, u32) {
-        let b0 = self.src[pos];
-        let b1 = self.src[pos + 1];
-        let b2 = self.src[pos + 2];
-        let b3 = self.src[pos + 3];
-        let mut l = 4u32;
-        while l >= 2 {
-            if pos + l as usize <= self.n {
-                let k = self.tables.op.opmap_lookup(b0, b1, b2, b3, l);
-                if k != 0 && !(k == tk!(OptionalChain) as u32 && is_digit(b2)) {
-                    return (l as usize, k);
-                }
+    pub(crate) fn op_len(&self, pos: usize) -> usize {
+        let lmax = (self.n - pos).min(4) as u32;
+        let bytes = <[u8; 4]>::try_from(&self.src[pos..pos + 4]).unwrap();
+        opmap_longest(bytes, lmax).1 as usize
+    }
+
+    /// The TemplateHead of the template whose tail or middle is at tail; None past cap steps.
+    pub(crate) fn template_head(&self, tail: usize, steps: &mut u32, cap: u32) -> Option<usize> {
+        let mut depth = 1i32;
+        let mut t = self.prev_sig(tail);
+        while let Some(tp) = t {
+            *steps += 1;
+            if *steps > cap {
+                return None;
             }
-            l -= 1;
+            match self.base_kind(tp) {
+                tk!(TemplateTail) => depth += 1,
+                tk!(TemplateHead) => {
+                    depth -= 1;
+                    if depth == 0 {
+                        return Some(tp);
+                    }
+                }
+                _ => {}
+            }
+            t = self.prev_sig(tp);
         }
-        (1, 0)
+        None
     }
 
     /// Does a line terminator lie in `a..b`?
     #[inline]
     pub(crate) fn line_break_between(&self, a: usize, b: usize) -> bool {
-        walk::lt_in_range(self.src, a, b)
+        line_break_in(self.src, a, b)
     }
 
     /// Does the identifier at `pos` equal exactly `kw`?
@@ -185,7 +250,12 @@ impl Tokens<'_> {
     /// The opener of the `)`, `]` or `}` at `from`, or `None` if unbalanced
     /// (see [`walk::match_delim_back`]).
     #[inline]
-    pub(crate) fn match_delim_back(&self, from: usize, open: u8, close: u8) -> Option<usize> {
+    pub(crate) fn match_delim_back(&self, from: usize) -> Option<usize> {
+        let (open, close) = match self.src[from] {
+            b')' => (b'(', b')'),
+            b']' => (b'[', b']'),
+            _ => (b'{', b'}'),
+        };
         walk::match_delim_back(self, from, open, close)
     }
 }

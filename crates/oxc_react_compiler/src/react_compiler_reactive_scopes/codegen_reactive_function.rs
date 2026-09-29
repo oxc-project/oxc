@@ -3589,7 +3589,14 @@ fn ox_codegen_primitive_value<'a>(
         PrimitiveValue::Number(n) => {
             let f = n.value();
             if f.is_nan() {
-                oxc_ast::ast::Expression::new_identifier(span, "NaN", ast)
+                // `NaN` can be shadowed by a local binding.
+                oxc_ast::ast::Expression::new_binary_expression(
+                    span,
+                    ox_number(ast, 0.0, span),
+                    oxc::BinaryOperator::Division,
+                    ox_number(ast, 0.0, span),
+                    ast,
+                )
             } else if f.is_infinite() {
                 if f > 0.0 {
                     oxc_ast::ast::Expression::new_identifier(span, "Infinity", ast)
