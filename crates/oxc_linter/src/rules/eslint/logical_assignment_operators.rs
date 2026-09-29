@@ -303,7 +303,7 @@ fn get_leftmost_operand<'a>(logical: &'a LogicalExpression<'a>) -> &'a Expressio
 
 fn is_reference(expression: &Expression) -> bool {
     match expression.get_inner_expression() {
-        Expression::Identifier(identifier) => identifier.name != "undefined",
+        expression @ Expression::Identifier(_) => !expression.is_undefined(),
         expression => expression.as_member_expression().is_some(),
     }
 }
