@@ -582,9 +582,13 @@ impl<'a> PeepholeOptimizations {
                 ctx.drop_statement(&previous.consequent);
             }
 
-            if if_stmt.consequent.is_jump_statement()
-                && Self::can_remove_termination_statement(&if_stmt.consequent, ctx)
-            {
+            let can_merge_with_alternate = match &if_stmt.consequent {
+                Statement::BlockStatement(block) => block.body.last().is_some_and(|last_stmt| {
+                    Self::can_remove_termination_statement(last_stmt, ctx)
+                }),
+                stmt => Self::can_remove_termination_statement(stmt, ctx),
+            };
+            if can_merge_with_alternate {
                 // Don't do this transformation if the branch condition could
                 // potentially access symbols declared later on on this scope below.
                 // If so, inverting the branch condition and nesting statements after
@@ -609,20 +613,34 @@ impl<'a> PeepholeOptimizations {
                     } else {
                         ArenaVec::from_iter_in(drained_stmts, ctx)
                     };
-
+                    let span = if body.is_empty() { SPAN } else { body[0].span() };
                     Self::minimize_statements(&mut body, ctx);
-                    let span =
-                        if body.is_empty() { if_stmt.consequent.span() } else { body[0].span() };
-                    ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
-                        Self::minimize_not(test.span(), test, ctx, true)
-                    });
-                    let consequent = if body.len() == 1 {
+                    let alternate = if body.len() == 1 {
                         body.remove(0)
                     } else {
                         let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
                         Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
                     };
-                    ctx.replace_statement(&mut if_stmt.consequent, consequent);
+
+                    if let Statement::BlockStatement(block) = &mut if_stmt.consequent {
+                        ctx.drop_statement(&block.body.pop().unwrap());
+                        // after removal check if there is one remaining stmt and if it requires block
+                        // IfStatement is excluded as we would add it afterward in `try_minimize_if`
+                        if block.body.len() == 1
+                            && !matches!(&block.body[0], Statement::IfStatement(_))
+                            && !Self::statement_cares_about_scope(&block.body[0])
+                        {
+                            let new_stmt = block.body.remove(0);
+                            ctx.replace_statement(&mut if_stmt.consequent, new_stmt);
+                        }
+                        if_stmt.alternate = Some(alternate);
+                    } else {
+                        ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
+                            Self::minimize_not(test.span(), test, ctx, true)
+                        });
+                        ctx.replace_statement(&mut if_stmt.consequent, alternate);
+                    }
+
                     let mut if_stmt = Statement::IfStatement(if_stmt);
                     Self::try_minimize_if(&mut if_stmt, ctx);
                     ctx.notice_change();
