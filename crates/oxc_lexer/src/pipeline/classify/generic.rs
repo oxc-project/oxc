@@ -5,8 +5,10 @@ use crate::token::tk;
 use crate::pipeline::{
     bytes::{is_digit, is_word, is_ws},
     operators::is_op_char,
-    tables::{PUNCT1, is_kw_init, is_kw_init_ts},
+    tables::{is_kw_init, is_kw_init_ts},
 };
+
+use super::punct1::PUNCT1;
 
 const FL_WORD: u32 = 0;
 const FL_WS: u32 = 1;

@@ -2,13 +2,12 @@ use std::arch::x86_64::*;
 
 use crate::token::tk;
 
-use crate::pipeline::{
-    chunk::{load256, mm, veq},
-    tables::punct1_luts::{PH_A, PH_B, PH_T0, PH_T1},
-};
+use crate::pipeline::chunk::{load256, mm, veq};
 
 mod luts;
+mod punct1_luts;
 use luts::{MERGED_LUTS, WORD_LUTS};
+use punct1_luts::{PH_A, PH_B, PH_T0, PH_T1};
 
 pub(super) unsafe fn classify_impl(
     ts: bool,

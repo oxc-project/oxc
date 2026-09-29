@@ -28,6 +28,17 @@ mod generic;
 )))]
 use generic::classify_impl;
 
+#[cfg(any(
+    test,
+    not(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ))
+))]
+mod punct1;
+
 #[inline(never)]
 pub(super) unsafe fn classify(
     ts: bool,

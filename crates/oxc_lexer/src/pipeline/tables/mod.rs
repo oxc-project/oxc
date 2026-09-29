@@ -1,23 +1,7 @@
 mod keywords;
 mod pair_luts;
-mod punct1;
 
 pub(super) use keywords::{KwSet, is_kw_init, is_kw_init_ts};
-
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
-pub(super) use punct1::PUNCT1;
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-pub(super) use punct1::punct1_luts;
 
 use keywords::Keywords;
 use pair_luts::PairLuts;
