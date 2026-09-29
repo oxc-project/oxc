@@ -260,7 +260,8 @@ impl<'a> Printer<'a> {
                             // Measure to see if the group fits up on a single line. If that's the case,
                             // print the group in "flat" mode, otherwise continue in expanded mode
                             stack.push(TagKind::Group, args.with_print_mode(PrintMode::Flat));
-                            let fits = self.fits(queue, stack, indent_stack)?;
+                            let fits =
+                                self.fits(queue, stack, indent_stack, MeasureMode::FirstLine)?;
                             stack.pop(TagKind::Group)?;
 
                             if fits { PrintMode::Flat } else { PrintMode::Expanded }
@@ -402,15 +403,20 @@ impl<'a> Printer<'a> {
         Ok(())
     }
 
+    /// `measure` is for the [crate::BestFittingVariant] whose entry is on top of the `stack`.
     fn fits(
         &mut self,
         queue: &PrintQueue<'a>,
         stack: &PrintCallStack,
         indent_stack: &PrintIndentStack,
+        measure: MeasureMode,
     ) -> PrintResult<bool> {
-        let mut measure = FitsMeasurer::new(queue, stack, indent_stack, self);
-        let result = measure.fits(&mut AllPredicate);
-        measure.finish();
+        let mut measurer = FitsMeasurer::new(queue, stack, indent_stack, self);
+        if measure == MeasureMode::AllLines {
+            measurer.all_lines_print_stack_len = Some(measurer.stack.print_stack_len());
+        }
+        let result = measurer.fits(&mut AllPredicate);
+        measurer.finish();
         result
     }
 
@@ -467,8 +473,6 @@ impl<'a> Printer<'a> {
                 // Test if this variant fits and if so, use it. Otherwise try the next
                 // variant.
 
-                // Only the measurement sees the measure mode,
-                // printing the variant (and the fits checks it runs) must not
                 let measure = variant.measure();
                 let variant = variant.content();
 
@@ -478,15 +482,14 @@ impl<'a> Printer<'a> {
                 }
 
                 let entry_args = args.with_print_mode(PrintMode::Flat);
-                let measure_args = entry_args.with_measure(measure);
 
                 // Skip the first element because we want to override the args for the entry and the
                 // args must be popped from the stack as soon as it sees the matching end entry.
                 let content = &variant[1..];
 
                 queue.extend_back(content);
-                stack.push(TagKind::Entry, measure_args);
-                let variant_fits = self.fits(queue, stack, indent_stack)?;
+                stack.push(TagKind::Entry, entry_args);
+                let variant_fits = self.fits(queue, stack, indent_stack, measure)?;
                 stack.pop(TagKind::Entry)?;
 
                 // Remove the content slice because printing needs the variant WITH the start entry
@@ -1097,6 +1100,10 @@ struct FitsMeasurer<'a, 'print> {
     /// The separator mode above only applies to entries of the fill the printer is currently printing (depth 0),
     /// not to entries of nested fills the walk enters on its own.
     fill_depth: u32,
+    /// Set when measuring a [MeasureMode::AllLines] variant:
+    /// the printer's call stack length, with the variant's entry on top.
+    /// The walk is inside the variant until it pops that frame (the variant's `EndEntry`).
+    all_lines_print_stack_len: Option<usize>,
     /// Prefix nodes the measurement creates are dropped again in [Self::finish] (nothing printed refers to them).
     prefix_nodes_len: usize,
 }
@@ -1162,6 +1169,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             must_be_flat: false,
             fill_separator_mode,
             fill_depth: 0,
+            all_lines_print_stack_len: None,
             prefix_nodes_len,
             printer,
         }
@@ -1256,7 +1264,8 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                         }
                         LineMode::Soft => {}
                         LineMode::Hard | LineMode::HardWithoutExpand | LineMode::Empty
-                            if args.measure() == MeasureMode::AllLines && !self.must_be_flat =>
+                            if self.all_lines_print_stack_len
+                                == Some(self.stack.print_stack_len()) =>
                         {
                             // The next line must fit too
                             self.state.line_width = 0;

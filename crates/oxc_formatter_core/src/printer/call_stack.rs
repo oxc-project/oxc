@@ -1,8 +1,6 @@
 use std::{fmt::Debug, num::NonZeroU8};
 
-use crate::{
-    IndentStyle, InvalidDocumentError, MeasureMode, PrintError, PrintMode, PrintResult, TagKind,
-};
+use crate::{IndentStyle, InvalidDocumentError, PrintError, PrintMode, PrintResult, TagKind};
 
 use super::{
     Indention, PrefixNode,
@@ -30,8 +28,6 @@ pub(super) struct StackFrame {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub(super) struct PrintElementArgs {
     mode: PrintMode,
-    /// How the `BestFitting` variant being measured is measured, see [MeasureMode].
-    measure: MeasureMode,
 }
 
 impl PrintElementArgs {
@@ -47,20 +43,11 @@ impl PrintElementArgs {
         self.mode = mode;
         self
     }
-
-    pub(super) fn measure(self) -> MeasureMode {
-        self.measure
-    }
-
-    pub(super) fn with_measure(mut self, measure: MeasureMode) -> Self {
-        self.measure = measure;
-        self
-    }
 }
 
 impl Default for PrintElementArgs {
     fn default() -> Self {
-        Self { mode: PrintMode::Expanded, measure: MeasureMode::FirstLine }
+        Self { mode: PrintMode::Expanded }
     }
 }
 
@@ -176,6 +163,11 @@ impl<'print> FitsCallStack<'print> {
 
     pub(super) fn finish(self) -> Vec<StackFrame> {
         self.stack.into_vec()
+    }
+
+    /// Length of the printer's call stack not popped by the measurement yet.
+    pub(super) fn print_stack_len(&self) -> usize {
+        self.stack.original_len()
     }
 }
 

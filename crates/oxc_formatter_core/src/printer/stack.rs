@@ -49,6 +49,11 @@ impl<'a, T> StackedStack<'a, T> {
     pub(super) fn into_vec(self) -> Vec<T> {
         self.stack
     }
+
+    /// Length of the part of the `original` stack not popped yet (it never grows back).
+    pub(super) fn original_len(&self) -> usize {
+        self.original.len()
+    }
 }
 
 impl<T> Stack<T> for StackedStack<'_, T>
