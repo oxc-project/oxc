@@ -93,6 +93,3 @@ pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8) {
         *sig_kinds.add(s) = tk!(Eof);
     }
 }
-
-#[cfg(test)]
-mod tests;

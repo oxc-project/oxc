@@ -14,6 +14,9 @@ use super::common::{emit_value, invalid_diags};
 mod pair_luts;
 pub use pair_luts::PairLuts;
 
+#[cfg(test)]
+mod tests;
+
 static QCOMPACT: [[u32; 8]; 16] = qcompact();
 static BCOMPACT: [[u8; 16]; 256] = bcompact();
 
