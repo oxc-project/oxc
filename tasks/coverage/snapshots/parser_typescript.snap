@@ -12388,60 +12388,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Valid group names are: foo
 
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:2:17]
- 1 │ // U+13A0 CHEROKEE LETTER A: character inside BMP with both the Unicode properties ID_Start and ID_Continue
- 2 │ /(?<Ꭰ>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
-   ·             ──────────
- 3 │ /(?<\u13A0>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
-   ╰────
-  help: Valid group names are: Ꭰ
-
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:3:13]
- 2 │ /(?<Ꭰ>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
- 3 │ /(?<\u13A0>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
-   ·             ─────
- 4 │ /(?<\u{13A0}>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
-   ╰────
-  help: Valid group names are: \u13A0
-
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:4:15]
- 3 │ /(?<\u13A0>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
- 4 │ /(?<\u{13A0}>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
-   ·               ─────
- 5 │ 
-   ╰────
-  help: Valid group names are: \u{13A0}
-
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:6:19]
- 5 │ 
- 6 │ /(?<_Ꭰ>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
-   ·               ───────────
- 7 │ /(?<_\u13A0>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
-   ╰────
-  help: Valid group names are: _Ꭰ
-
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:7:14]
- 6 │ /(?<_Ꭰ>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
- 7 │ /(?<_\u13A0>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
-   ·              ──────
- 8 │ /(?<_\u{13A0}>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
-   ╰────
-  help: Valid group names are: _\u13A0
-
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:8:16]
- 7 │ /(?<_\u13A0>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
- 8 │ /(?<_\u{13A0}>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
-   ·                ──────
- 9 │ 
-   ╰────
-  help: Valid group names are: _\u{13A0}
-
   × Invalid regular expression: Unterminated capturing group name
     ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:11:4]
  10 │ // U+19D4 NEW TAI LUE DIGIT FOUR: character inside BMP with only ID_Continue
@@ -12469,87 +12415,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ╰────
   help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:15:19]
- 14 │ 
- 15 │ /(?<_᧔>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
-    ·               ───────────
- 16 │ /(?<_\u19D4>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
-    ╰────
-  help: Valid group names are: _᧔
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:16:14]
- 15 │ /(?<_᧔>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
- 16 │ /(?<_\u19D4>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
-    ·              ──────
- 17 │ /(?<_\u{19D4}>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
-    ╰────
-  help: Valid group names are: _\u19D4
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:17:16]
- 16 │ /(?<_\u19D4>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
- 17 │ /(?<_\u{19D4}>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
-    ·                ──────
- 18 │ 
-    ╰────
-  help: Valid group names are: _\u{19D4}
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:20:19]
- 19 │ // U+102A7 CARIAN LETTER A2: character outside BMP with both ID_Start and ID_Continue
- 20 │ /(?<𐊧>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
-    ·             ─────────────
- 21 │ /(?<\u{102A7}>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
-    ╰────
-  help: Valid group names are: 𐊧
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:21:16]
- 20 │ /(?<𐊧>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
- 21 │ /(?<\u{102A7}>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
-    ·                ─────
- 22 │ /(?<\uD800\uDEA7>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
-    ╰────
-  help: Valid group names are: \u{102A7}
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:22:19]
- 21 │ /(?<\u{102A7}>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
- 22 │ /(?<\uD800\uDEA7>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
-    ·                   ─────
- 23 │ 
-    ╰────
-  help: Valid group names are: \uD800\uDEA7
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:24:21]
- 23 │ 
- 24 │ /(?<_𐊧>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
-    ·               ──────────────
- 25 │ /(?<_\u{102A7}>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
-    ╰────
-  help: Valid group names are: _𐊧
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:25:17]
- 24 │ /(?<_𐊧>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
- 25 │ /(?<_\u{102A7}>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
-    ·                 ──────
- 26 │ /(?<_\uD800\uDEA7>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
-    ╰────
-  help: Valid group names are: _\u{102A7}
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:26:20]
- 25 │ /(?<_\u{102A7}>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
- 26 │ /(?<_\uD800\uDEA7>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
-    ·                    ──────
- 27 │ 
-    ╰────
-  help: Valid group names are: _\uD800\uDEA7
-
   × Invalid regular expression: Invalid surrogate pair
     ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:29:5]
  28 │ // U+1113D CHAKMA DIGIT SEVEN: character outside BMP with only ID_Continue
@@ -12576,33 +12441,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  32 │ 
     ╰────
   help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:33:21]
- 32 │ 
- 33 │ /(?<_𑄽>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
-    ·               ──────────────
- 34 │ /(?<_\u{1113D}>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
-    ╰────
-  help: Valid group names are: _𑄽
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:34:17]
- 33 │ /(?<_𑄽>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
- 34 │ /(?<_\u{1113D}>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
-    ·                 ──────
- 35 │ /(?<_\uD804\uDD3D>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
-    ╰────
-  help: Valid group names are: _\u{1113D}
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:35:20]
- 34 │ /(?<_\u{1113D}>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
- 35 │ /(?<_\uD804\uDD3D>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
-    ·                    ──────
- 36 │ 
-    ╰────
-  help: Valid group names are: _\uD804\uDD3D
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:40:4]
@@ -12693,23 +12531,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  58 │ 
     ╰────
   help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:60:23]
- 59 │ // Cases with Unicode escapes and extended Unicode escapes mixed
- 60 │ /(?<RegExp>)\k<RegExp>\k<\u{52}\u0065gE\u{78}p>\k<\u0052e\u0067\u{45}x\u{70}>/;
-    ·                       ─────────────────────────
- 61 │ /(?<_RegExp>)\k<_RegExp>\k<_\u{52}\u0065gE\u{78}p>\k<_\u0052e\u0067\u{45}x\u{70}>/;
-    ╰────
-  help: Valid group names are: RegExp
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:61:25]
- 60 │ /(?<RegExp>)\k<RegExp>\k<\u{52}\u0065gE\u{78}p>\k<\u0052e\u0067\u{45}x\u{70}>/;
- 61 │ /(?<_RegExp>)\k<_RegExp>\k<_\u{52}\u0065gE\u{78}p>\k<_\u0052e\u0067\u{45}x\u{70}>/;
-    ·                         ──────────────────────────
-    ╰────
-  help: Valid group names are: _RegExp
 
   × Invalid regular expression: Number is too large in braced quantifier
    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionQuantifierBounds1.ts:3:4]

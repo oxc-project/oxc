@@ -1,6 +1,14 @@
 //! Lookup tables which `compress_blocks` uses to turn the token-start bitmap into a list of token positions,
 //! 16 bits at a time.
 
+use std::sync::OnceLock;
+
+/// Single copy of [`PairLuts`], shared across all threads.
+///
+/// `Box<PairLuts>` not `PairLuts`, to avoid uninitialized `PairLuts` being stored
+/// in the binary's data section, which would bloat binary by ~10 KB.
+static PAIR_LUTS: OnceLock<Box<PairLuts>> = OnceLock::new();
+
 /// Lookup tables for converting a 16-bit mask into a list of the offsets of its set bits.
 ///
 /// `compress_blocks` splits each 16 bits of the token-start bitmap into 2 bytes,
@@ -30,7 +38,7 @@ const _: () = assert!(size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
 
 impl PairLuts {
     /// Create [`PairLuts`] lookup tables.
-    pub fn new() -> Self {
+    fn new() -> Self {
         let mut lut0z = [[0; 8]; 256];
         let mut lutpad = [[0; 32]; 256];
 
@@ -51,4 +59,20 @@ impl PairLuts {
 
         Self { lut0z, lutpad }
     }
+}
+
+/// Initialize the global [`PairLuts`] instance.
+///
+/// This method must be called before calling [`get_pair_luts`].
+pub fn init_pair_luts() {
+    PAIR_LUTS.get_or_init(|| Box::new(PairLuts::new()));
+}
+
+/// Get reference to [`PairLuts`].
+///
+/// # SAFETY
+///
+/// [`init_pair_luts`] must have been called before calling this.
+pub(super) unsafe fn get_pair_luts() -> &'static PairLuts {
+    unsafe { PAIR_LUTS.get().unwrap_unchecked() }
 }

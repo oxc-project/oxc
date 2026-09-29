@@ -7,12 +7,14 @@ use crate::{
     token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
 };
 
-use crate::pipeline::tables::Tables;
-
 use super::common::{emit_value, invalid_diags};
 
 mod pair_luts;
-pub use pair_luts::PairLuts;
+use pair_luts::get_pair_luts;
+pub use pair_luts::init_pair_luts;
+
+#[cfg(test)]
+mod tests;
 
 static QCOMPACT: [[u32; 8]; 16] = qcompact();
 static BCOMPACT: [[u8; 16]; 256] = bcompact();
@@ -54,7 +56,6 @@ const fn bcompact() -> [[u8; 16]; 256] {
 
 #[inline(never)]
 pub(super) unsafe fn compress_blocks(
-    t: &Tables,
     st: *const u64,
     kind: *const u8,
     b0: usize,
@@ -62,8 +63,11 @@ pub(super) unsafe fn compress_blocks(
     starts: *mut u32,
     kinds: *mut u8,
 ) -> usize {
-    let lut0z = t.pair_luts.lut0z.as_ptr().cast::<u8>();
-    let lutpad = t.pair_luts.lutpad.as_ptr().cast::<u8>();
+    // SAFETY: `init_pair_luts` has always been called in `Lexer::new` on AVX2 builds
+    let pair_luts = unsafe { get_pair_luts() };
+    let lut0z = pair_luts.lut0z.as_ptr().cast::<u8>();
+    let lutpad = pair_luts.lutpad.as_ptr().cast::<u8>();
+
     let step16 = _mm256_set1_epi32(16);
     let mut m = 0usize;
     for b in b0..b1 {
