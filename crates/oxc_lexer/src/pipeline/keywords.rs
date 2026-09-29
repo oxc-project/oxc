@@ -175,24 +175,22 @@ const REGEX_KW_MASK: u64 = {
     mask
 };
 
+#[inline(always)]
+pub fn is_regex_keyword(kind: u8) -> bool {
+    let i = kind.wrapping_sub(KW_KIND_BASE);
+    i < 64 && (REGEX_KW_MASK >> i) & 1 != 0
+}
+
 pub(super) struct Keywords {
     pub kwjs: KwSet,
     pub kwts: KwSet,
-    pub regex_kw_mask: u64,
 }
 
 impl Keywords {
     pub fn new() -> Self {
         let kwjs = KwSet::build(&KEYWORDS_JS, false, &[25, 24], KW_HASH_HINT_JS);
         let kwts = KwSet::build(&KEYWORDS_TS, true, &[23], KW_HASH_HINT_TS);
-
-        Self { kwjs, kwts, regex_kw_mask: REGEX_KW_MASK }
-    }
-
-    #[inline(always)]
-    pub fn is_regex_keyword(&self, kind: u8) -> bool {
-        let i = kind.wrapping_sub(KW_KIND_BASE);
-        i < 64 && (self.regex_kw_mask >> i) & 1 != 0
+        Self { kwjs, kwts }
     }
 }
 
