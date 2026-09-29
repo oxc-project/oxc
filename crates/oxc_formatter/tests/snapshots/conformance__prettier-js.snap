@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-js compatibility: 765/811 (94.33%), 23 files skipped
+js compatibility: 760/811 (93.71%), 23 files skipped
 
 # Failed
 
@@ -37,6 +37,7 @@ js compatibility: 765/811 (94.33%), 23 files skipped
 | js/for-of/comments.js | 💥 | 44.83% |
 | js/function/iife.js | 💥 | 14.43% |
 | js/function/issue-12967.js | 💥 | 0.00% |
+| js/function-first-param/function_expression.js | 💥 | 64.52% |
 | js/if/expr_and_same_line_comments.js | 💥 | 81.93% |
 | js/if/issue-15168.js | 💥 | 91.43% |
 | js/if/non-block.js | 💥 | 82.35% |
@@ -46,6 +47,10 @@ js compatibility: 765/811 (94.33%), 23 files skipped
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
 | js/last-argument-expansion/edge_case.js | 💥 | 74.07% |
 | js/logical-expressions/in-unary-expression.js | 💥 | 79.49% |
+| js/method-chain/first_long.js | 💥 | 55.88% |
+| js/method-chain/multiple-members.js | 💥 | 82.35% |
+| js/method-chain/pr-7889.js | 💥 | 7.69% |
+| js/performance/nested.js | 💥 | 16.28% |
 | js/sequence-expression/parenthesized-trailing-comment-unstable.js | 💥 | 66.67% |
 | js/sequence-expression/parenthesized.js | 💥 | 85.71% |
 | js/switch/comments.js | 💥 | 94.74% |

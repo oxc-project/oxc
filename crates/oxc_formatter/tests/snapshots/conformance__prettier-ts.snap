@@ -2,13 +2,14 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-ts compatibility: 621/660 (94.09%), 16 files skipped
+ts compatibility: 620/660 (93.94%), 16 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | typescript/as/as.ts | 💥 | 97.74% |
+| typescript/as/assignment2.ts | 💥 | 74.29% |
 | typescript/as/as-const/as-const.ts | 💥 | 66.67% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 93.33% |
 | typescript/as/comments/17407.ts | 💥 | 47.06% |
@@ -72,4 +73,3 @@ ts compatibility: 621/660 (94.09%), 16 files skipped
 - jsx/comments/in-attributes.js
 - jsx/spread/child.js
 - typescript/as/comments/17407.ts
-- typescript/method-chain/object/issue-17239.ts

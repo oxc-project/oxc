@@ -778,3 +778,41 @@ Prettier keeps an end-of-line comment there (`foo // c` + `(a)`, the same as our
 Its function declarations keep the same-line block comment outside (`function foo /* c */(a) {}`).
 Before `<`, Prettier glues an own-line comment back onto the callee's line (`foo// c` + `<T>(a)`); we keep it own-line.
 Before an optional call's `?.`, Prettier moves an own-line comment into the arguments as well; we keep it own-line.
+
+## member-chain-breaking-last-group
+
+- Why: invariant
+- Pin: `tests/fixtures/js/member-chains/breaking-last-group/`
+- Conformance: `js/function-first-param/function_expression.js`, `js/method-chain/first_long.js`, `js/method-chain/multiple-members.js`, `js/method-chain/pr-7889.js`, `js/performance/nested.js`, `typescript/as/assignment2.ts`
+
+A member chain's last group follows the same rule as its preceding groups: an unconditional break splits the chain.
+This makes chains with width-broken objects idempotent (oxc#27053, oxc#23852).
+With `objectWrap: preserve`, Prettier can split the chain and break its object on the first pass, then rejoin the chain on the second pass because the object's break is now unconditional.
+We keep the split layout on both passes, including for objects nested inside other arguments.
+
+```js
+// input
+const saved = client.from("table").insert({
+  id: sid,
+});
+
+// ours
+const saved = client
+  .from("table")
+  .insert({
+    id: sid,
+  });
+
+// prettier
+const saved = client.from("table").insert({
+  id: sid,
+});
+```
+
+The rule also applies to other unconditional group breaks in the last group, such as multiline callbacks, JSX, type literals, and comments.
+Keeping it uniform with the preceding groups avoids a special object-detection pass or speculative printing in the shared printer.
+In particular, already-stable joined chains with those arguments may now split; this is a deliberate layout difference, not an attempt to reproduce Prettier's eventual fixpoint.
+
+Flat chains still use the existing width-based choice, and the existing short-chain/head-merging exceptions are unchanged.
+Literal newlines inside template strings do not themselves force an enclosing group to expand.
+`objectWrap: collapse` still lets objects collapse: an object without an unconditional break does not itself force the chain to split.

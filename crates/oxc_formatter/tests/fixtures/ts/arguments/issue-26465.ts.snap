@@ -19,11 +19,11 @@ const mockFn2 = vi.fn().mockImplementation(function (this, aaaaaaaaaaaaaaaaaaaaa
 { printWidth: 80 }
 ------------------
 // A typed `this` parameter is not "simple", so the only function argument does not expand its params
-const mockFn = vi.fn().mockImplementation(function (
-  this: MockWithPrettyLongName,
-) {
-  return this;
-});
+const mockFn = vi
+  .fn()
+  .mockImplementation(function (this: MockWithPrettyLongName) {
+    return this;
+  });
 
 // Untyped `this` stays simple
 const mockFn2 = vi
@@ -36,13 +36,17 @@ const mockFn2 = vi
 { printWidth: 100 }
 -------------------
 // A typed `this` parameter is not "simple", so the only function argument does not expand its params
-const mockFn = vi.fn().mockImplementation(function (this: MockWithPrettyLongName) {
-  return this;
-});
+const mockFn = vi
+  .fn()
+  .mockImplementation(function (this: MockWithPrettyLongName) {
+    return this;
+  });
 
 // Untyped `this` stays simple
-const mockFn2 = vi.fn().mockImplementation(function (this, aaaaaaaaaaaaaaaaaaaaa) {
-  return this;
-});
+const mockFn2 = vi
+  .fn()
+  .mockImplementation(function (this, aaaaaaaaaaaaaaaaaaaaa) {
+    return this;
+  });
 
 ===================== End =====================

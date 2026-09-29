@@ -1,0 +1,23 @@
+// DIVERGENCES.md#member-chain-breaking-last-group
+const typed = client.from("table").insert<Record<string, unknown>>({ id: sid, account_id: accountId, subject: "x", body: "x", message_id: id });
+const optional = client?.from("table")?.insert({ id: sid, account_id: accountId, subject: "x", body: "x", message_id: id });
+const computed = client.from("table")[method]({ id: sid, account_id: accountId, subject: "x", body: "x", message_id: id });
+const nonNull = client.from("table").insert({ id: sid, account_id: accountId, subject: "x", body: "x", message_id: id })!;
+const conditional = condition ? client.from("table").insert({ id: sid, account_id: accountId, subject: "x", body: "x", message_id: id }) : null;
+
+// A chain followed by another call keeps its intermediate breaks.
+client.from("table").insert({ id: sid, account_id: accountId, subject: "x", body: "x", message_id: id }).done();
+
+// Function signatures and JSX bodies remain valid when their chain splits.
+const mock = vi.fn().mockImplementation(function (this: MockWithPrettyLongName) {
+  return this;
+});
+const view = component.with({ name }).render((props) => (
+  <div>
+    <h1>Hello, {props.name}</h1>
+  </div>
+));
+const typeLiteral = client.from("table").insert(value as {
+  name: string;
+  count: number;
+});

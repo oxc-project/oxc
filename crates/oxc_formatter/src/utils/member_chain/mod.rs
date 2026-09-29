@@ -119,26 +119,14 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
     /// It tells if the groups should break on multiple lines
     fn groups_should_break(&self, f: &JsFormatter<'_, 'a>) -> bool {
-        let mut call_expressions = self
-            .members()
-            .filter_map(|member| match member {
-                ChainMember::CallExpression { expression, .. } => Some(expression),
-                _ => None,
-            })
-            .peekable();
-
         let mut calls_count = 0;
-        let mut has_function_like_argument = false;
         let mut has_complex_args = false;
 
-        while let Some(call) = call_expressions.next() {
+        for call in self.members().filter_map(|member| match member {
+            ChainMember::CallExpression { expression, .. } => Some(expression),
+            _ => None,
+        }) {
             calls_count += 1;
-
-            if call_expressions.peek().is_some() {
-                has_function_like_argument =
-                    has_function_like_argument || has_arrow_or_function_expression_arg(call);
-            }
-
             has_complex_args = has_complex_args || !has_simple_arguments(call);
 
             if calls_count > 2 && has_complex_args {
@@ -150,23 +138,15 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             return true;
         }
 
-        if self.last_call_breaks(f) && has_function_like_argument {
+        // Treat the last group like the preceding groups. Otherwise, an object that breaks
+        // due to width on the first pass can make the chain rejoin on the second pass,
+        // when `objectWrap: preserve` makes that break unconditional.
+        // DIVERGENCES.md#member-chain-breaking-last-group
+        if self.last_group().will_break(f) {
             return true;
         }
 
         self.tail.any_except_last_will_break(f)
-    }
-
-    /// We retrieve all the call expressions inside the group and we check if
-    /// their arguments are not simple.
-    fn last_call_breaks(&self, f: &JsFormatter<'_, 'a>) -> bool {
-        let last_group = self.last_group();
-
-        if matches!(last_group.members().last(), Some(ChainMember::CallExpression { .. })) {
-            last_group.will_break(f)
-        } else {
-            false
-        }
     }
 
     fn last_group(&self) -> &MemberChainGroup<'a, 'b> {
@@ -239,13 +219,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
             if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {
                 write!(f, [group(&format_expanded)]);
             } else {
-                let has_empty_line_before_tail =
-                    self.tail.first().is_some_and(MemberChainGroup::needs_empty_line);
-
-                if has_empty_line_before_tail || self.last_group().will_break(f) {
-                    write!(f, [expand_parent()]);
-                }
-
                 write!(f, [best_fitting!(format_one_line, format_expanded)]);
             }
         });
@@ -361,12 +334,6 @@ fn is_computed_array_member_access(member: &ChainMember<'_, '_>) -> bool {
     matches!(member, ChainMember::ComputedMember(expression)
         if matches!(&expression.expression, Expression::NumericLiteral(_))
     )
-}
-
-fn has_arrow_or_function_expression_arg(call: &AstNode<'_, CallExpression<'_>>) -> bool {
-    call.as_ref().arguments.iter().any(|argument| {
-        matches!(&argument, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_))
-    })
 }
 
 fn has_simple_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> bool {
