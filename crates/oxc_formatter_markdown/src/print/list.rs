@@ -137,7 +137,7 @@ fn write_list_item<'a>(
         let body = format_with(|f| block::write_block(child, &item.children, i, child_parent, f));
         // An indented code block's content is whatever follows the item's content column + 4:
         // any extra alignment lands inside the code on the next parse.
-        // See DIVERGENCES.md#list-indented-code-alignment and DIVERGENCES.md#list-html-block-alignment.
+        // See DIVERGENCES.md#list-html-block-alignment.
         // (Prettier's checkbox align before #19647, the same for prettier/prettier#19986)
         if is_indented_code(child) || matches!(child, Block::HtmlBlock(_)) {
             write!(f, body);

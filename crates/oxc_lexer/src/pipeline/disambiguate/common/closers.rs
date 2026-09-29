@@ -2,34 +2,33 @@ use std::cell::RefCell;
 
 use rustc_hash::FxHashMap;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Args {
-    Unknown,
-    No,
-    Yes,
-}
-
 #[derive(Clone, Copy)]
 pub(crate) struct Resolved {
-    closer: u32,
-    args: Args,
+    closer: Option<u32>,
+    pub(crate) args: Option<bool>,
 }
-
-const NO_CLOSER: u32 = u32::MAX;
 
 impl Resolved {
     pub(crate) fn closer(self) -> Option<usize> {
-        (self.closer != NO_CLOSER).then_some(self.closer as usize)
+        self.closer.map(|c| c as usize)
     }
+}
 
-    pub(crate) fn args(self) -> Args {
-        self.args
-    }
+pub(crate) struct Open {
+    pub(crate) pos: u32,
+    pub(crate) parens: i32,
+    pub(crate) brackets: i32,
+    pub(crate) braces: i32,
+    /// A run of ruled-out <s, kept for the depth of the lists around them.
+    pub(crate) dead: u32,
 }
 
 #[derive(Default)]
 pub(crate) struct Closers {
     memo: RefCell<FxHashMap<u32, Resolved>>,
+    /// Scratch stacks of the forward passes, kept across queries.
+    pub(crate) lists: RefCell<Vec<Open>>,
+    pub(crate) groups: RefCell<Vec<u32>>,
 }
 
 impl Closers {
@@ -47,8 +46,8 @@ impl Closers {
     }
 
     pub(crate) fn set(&self, pos: usize, closer: Option<usize>) {
-        let closer = closer.map_or(NO_CLOSER, |c| c as u32);
-        self.memo.borrow_mut().insert(pos as u32, Resolved { closer, args: Args::Unknown });
+        let closer = closer.map(|c| c as u32);
+        self.memo.borrow_mut().insert(pos as u32, Resolved { closer, args: None });
     }
 
     pub(crate) fn set_args(&self, lt: usize, yes: bool) {
@@ -57,7 +56,7 @@ impl Closers {
             return;
         }
         if let Some(r) = memo.get_mut(&(lt as u32)) {
-            r.args = if yes { Args::Yes } else { Args::No };
+            r.args = Some(yes);
         }
     }
 }

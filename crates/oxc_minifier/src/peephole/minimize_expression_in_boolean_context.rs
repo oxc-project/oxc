@@ -118,8 +118,7 @@ impl<'a> PeepholeOptimizations {
                 if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
                     && ctx.state.symbols.value(symbol_id).is_some_and(|sv| sv.boolean_falsy)
                 {
-                    let new_expr =
-                        Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx);
+                    let new_expr = Expression::new_number_0(span, ctx);
                     ctx.replace_expression(expr, new_expr);
                 }
             }

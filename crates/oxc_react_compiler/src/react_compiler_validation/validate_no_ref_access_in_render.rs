@@ -2,8 +2,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_index::IndexSlice;
+use smallvec::SmallVec;
 
 use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
@@ -150,12 +151,8 @@ fn join_ref_access_ref_types(a: &RefAccessRefType, b: &RefAccessRefType) -> RefA
                 RefAccessRefType::RefValue { span: None, ref_span: None, ref_id: None }
             }
         }
-        (RefAccessRefType::RefValue { .. }, _) => {
-            RefAccessRefType::RefValue { span: None, ref_span: None, ref_id: None }
-        }
-        (_, RefAccessRefType::RefValue { .. }) => {
-            RefAccessRefType::RefValue { span: None, ref_span: None, ref_id: None }
-        }
+        (RefAccessRefType::RefValue { .. }, _) => a.clone(),
+        (_, RefAccessRefType::RefValue { .. }) => b.clone(),
         (RefAccessRefType::Ref { ref_id: a_id }, RefAccessRefType::Ref { ref_id: b_id }) => {
             if a_id == b_id { a.clone() } else { RefAccessRefType::Ref { ref_id: next_ref_id() } }
         }
@@ -387,6 +384,52 @@ fn guard_check(errors: &mut Vec<OxcDiagnostic>, operand: &Place, env: &Env) {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct DiagnosticLabelKey<'a> {
+    label: Option<&'a str>,
+    span: Span,
+    primary: bool,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct DiagnosticKey<'a> {
+    message: &'a str,
+    labels: SmallVec<[DiagnosticLabelKey<'a>; 2]>,
+    help: Option<&'a str>,
+    note: Option<&'a str>,
+    severity: u8,
+    code_scope: Option<&'a str>,
+    code_number: Option<&'a str>,
+    url: Option<&'a str>,
+}
+
+impl<'a> From<&'a OxcDiagnostic> for DiagnosticKey<'a> {
+    fn from(diagnostic: &'a OxcDiagnostic) -> Self {
+        Self {
+            message: &diagnostic.message,
+            labels: diagnostic
+                .labels
+                .iter()
+                .map(|label| DiagnosticLabelKey {
+                    label: label.label(),
+                    span: label.span(),
+                    primary: label.primary(),
+                })
+                .collect(),
+            help: diagnostic.help.as_deref(),
+            note: diagnostic.note.as_deref(),
+            severity: match diagnostic.severity {
+                Severity::Advice => 0,
+                Severity::Warning => 1,
+                Severity::Error => 2,
+            },
+            code_scope: diagnostic.code.scope.as_deref(),
+            code_number: diagnostic.code.number.as_deref(),
+            url: diagnostic.url.as_deref(),
+        }
+    }
+}
+
 // --- Main entry point ---
 
 pub fn validate_no_ref_access_in_render(func: &HirFunction, env: &mut Environment) {
@@ -402,8 +445,16 @@ pub fn validate_no_ref_access_in_render(func: &HirFunction, env: &mut Environmen
         &mut ref_env,
         &mut errors,
     );
-    for diagnostic in errors {
-        env.record_diagnostic(diagnostic);
+    let mut seen = FxHashSet::default();
+    let retain = errors
+        .iter()
+        .map(|diagnostic| seen.insert(DiagnosticKey::from(diagnostic)))
+        .collect::<Vec<_>>();
+    drop(seen);
+    for (diagnostic, retain) in errors.into_iter().zip(retain) {
+        if retain {
+            env.record_diagnostic(diagnostic);
+        }
     }
 }
 

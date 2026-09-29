@@ -113,10 +113,12 @@ fn double_gap(
         return !after_definition && !multi_line;
     }
 
-    // A nested list after a paragraph / code keeps its blank line (prettier#17746)
+    // A nested list after a paragraph / code keeps its blank line, and after a type 6 / 7 HTML block,
+    // which only a blank line ends (DIVERGENCES.md#list-after-html-block)
     if matches!(node, Block::List(_))
         && matches!(parent, Parent::ListItem { .. })
-        && matches!(previous, Block::CodeBlock(_) | Block::Paragraph(_))
+        && (matches!(previous, Block::CodeBlock(_) | Block::Paragraph(_))
+            || matches!(previous, Block::HtmlBlock(h) if h.kind >= 6))
         && !adjacent
     {
         return true;
@@ -132,7 +134,7 @@ fn double_gap(
     // A type 7 HTML block can only follow a paragraph without a blank line as a lazy line of a container
     // (a micromark quirk, oxc-markdown-parser DIVERGENCES.md);
     // printed with the container's prefix it needs the blank line to stay a block.
-    // Prettier prints it adjacent, where it becomes paragraph text.
+    // Prettier prints it adjacent, where it becomes paragraph text (DIVERGENCES.md#lazy-html-block).
     let html_after_paragraph =
         matches!((previous, node), (Block::Paragraph(_), Block::HtmlBlock(h)) if h.kind != 7);
     let liquid = matches!(previous, Block::Liquid(_)) || matches!(node, Block::Liquid(_));

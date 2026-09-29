@@ -256,29 +256,6 @@ impl TSModuleReference<'_> {
     }
 }
 
-impl<'a> Decorator<'a> {
-    /// Get the name of the decorator
-    /// ```ts
-    /// // The name of the decorator is `decorator`
-    /// @decorator
-    /// @decorator.a.b
-    /// @decorator(xx)
-    /// @decorator.a.b(xx)
-    /// ```
-    pub fn name(&self) -> Option<&'a str> {
-        match &self.expression {
-            Expression::Identifier(ident) => Some(ident.name.as_str()),
-            expr @ match_member_expression!(Expression) => {
-                expr.to_member_expression().static_property_name()
-            }
-            Expression::CallExpression(call) => {
-                call.callee.get_member_expr().and_then(MemberExpression::static_property_name)
-            }
-            _ => None,
-        }
-    }
-}
-
 impl ImportOrExportKind {
     /// Returns `true` for "regular" imports and exports.
     pub fn is_value(self) -> bool {

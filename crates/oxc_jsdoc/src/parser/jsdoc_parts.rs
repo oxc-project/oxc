@@ -105,20 +105,23 @@ impl<'a> JSDocCommentPart<'a> {
                 result.push('\n');
             }
             let trimmed = line.trim();
-            if let Some(rest) = trimmed.strip_prefix('*') {
-                // Strip `*` as a comment continuation prefix UNLESS it looks like
-                // markdown emphasis (`*word*`). Emphasis has `*` followed by an
-                // alphanumeric char; continuation prefixes have `*` followed by
-                // space, backtick, punctuation, or nothing.
-                let is_emphasis = rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
-                if !is_emphasis {
-                    // Strip at most one leading space after `*` (the conventional ` * ` prefix)
-                    // to preserve any additional indentation (e.g. for indented code blocks)
-                    result.push_str(rest.strip_prefix(' ').unwrap_or(rest));
-                    continue;
+            let content = match trimmed.strip_prefix('*') {
+                // Strip `*` as a comment continuation prefix
+                // UNLESS it looks like markdown emphasis (`*word*`).
+                // Emphasis has `*` followed by an alphanumeric char;
+                // continuation prefixes have `*` followed by space, backtick, punctuation, or nothing.
+                // Strip at most one leading space after `*` (the conventional ` * ` prefix)
+                // to preserve any additional indentation (e.g. for indented code blocks)
+                Some(rest) if !rest.starts_with(|c: char| c.is_alphanumeric() || c == '_') => {
+                    rest.strip_prefix(' ').unwrap_or(rest)
                 }
+                _ => trimmed,
+            };
+            result.push_str(content);
+            // Keep a Markdown hard line break, as 2 trailing spaces
+            if line.ends_with("  ") && !content.is_empty() {
+                result.push_str("  ");
             }
-            result.push_str(trimmed);
         }
         result
     }
