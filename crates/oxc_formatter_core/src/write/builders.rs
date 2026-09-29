@@ -1052,9 +1052,10 @@ impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
         let mut formatted_variants = Vec::with_capacity(variants.len());
 
         for variant in variants {
-            formatted_variants.push(best_fitting_variant(f.state_mut(), |buffer| {
+            let content = best_fitting_variant(f.state_mut(), |buffer| {
                 buffer.write_fmt(Arguments::from(variant));
-            }));
+            });
+            formatted_variants.push(format_element::BestFittingVariant::new(content));
         }
 
         let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f);

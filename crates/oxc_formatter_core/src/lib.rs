@@ -39,8 +39,8 @@ pub use format_element::tag::{
     self, Align, Condition, DedentMode, Group, GroupMode, Label, LabelId, Prefix, Tag, TagKind,
 };
 pub use format_element::{
-    BestFittingElement, FormatElement, FormatElements, Interned, LINE_TERMINATORS, LineMode,
-    PrintMode, TextWidth, normalize_newlines,
+    BestFittingElement, BestFittingVariant, FormatElement, FormatElements, Interned,
+    LINE_TERMINATORS, LineMode, MeasureMode, PrintMode, TextWidth, normalize_newlines,
 };
 pub use printer::error::{ActualStart, InvalidDocumentError, PrintError};
 pub use printer::{PrintResult, PrintWidth, Printed, PrinterOptions};

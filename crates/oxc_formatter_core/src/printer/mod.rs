@@ -13,7 +13,8 @@ use unicode_width::UnicodeWidthChar;
 
 use crate::{
     ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
-    IndentWidth, InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextWidth,
+    IndentWidth, InvalidDocumentError, LineMode, MeasureMode, PrintError, PrintMode, Tag, TagKind,
+    TextWidth,
 };
 
 use self::call_stack::{
@@ -466,19 +467,25 @@ impl<'a> Printer<'a> {
                 // Test if this variant fits and if so, use it. Otherwise try the next
                 // variant.
 
+                // Only the measurement sees the measure mode,
+                // printing the variant (and the fits checks it runs) must not
+                let measure = variant.measure();
+                let variant = variant.content();
+
                 // Try to fit only the first variant on a single line
                 if !matches!(variant.first(), Some(&FormatElement::Tag(Tag::StartEntry))) {
                     return invalid_start_tag(TagKind::Entry, variant.first());
                 }
 
                 let entry_args = args.with_print_mode(PrintMode::Flat);
+                let measure_args = entry_args.with_measure(measure);
 
                 // Skip the first element because we want to override the args for the entry and the
                 // args must be popped from the stack as soon as it sees the matching end entry.
                 let content = &variant[1..];
 
                 queue.extend_back(content);
-                stack.push(TagKind::Entry, entry_args);
+                stack.push(TagKind::Entry, measure_args);
                 let variant_fits = self.fits(queue, stack, indent_stack)?;
                 stack.pop(TagKind::Entry)?;
 
@@ -493,7 +500,7 @@ impl<'a> Printer<'a> {
             }
 
             // No variant fits, take the last (most expanded) as fallback
-            queue.extend_back(most_expanded);
+            queue.extend_back(most_expanded.content());
             self.print_entry(queue, stack, indent_stack, args.with_print_mode(PrintMode::Expanded))
         }
     }
@@ -1248,6 +1255,15 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                             self.state.pending_space = true;
                         }
                         LineMode::Soft => {}
+                        LineMode::Hard | LineMode::HardWithoutExpand | LineMode::Empty
+                            if args.measure() == MeasureMode::AllLines && !self.must_be_flat =>
+                        {
+                            // The next line must fit too
+                            self.state.line_width = 0;
+                            self.state.pending_space = false;
+                            self.state.has_line_suffix = false;
+                            self.state.pending_indent = self.indent_stack.indention();
+                        }
                         LineMode::Hard
                         | LineMode::HardWithoutExpand
                         | LineMode::Empty
@@ -1647,16 +1663,17 @@ enum Text<'a> {
 
 #[cfg(test)]
 mod tests {
-    use oxc_allocator::Allocator;
+    use oxc_allocator::{Allocator, ArenaVec};
 
     use crate::{
-        Argument, Arguments, Buffer, Document, Format, FormatState, IndentStyle, LineEnding,
-        Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer, best_fitting,
+        Argument, Arguments, BestFittingElement, BestFittingVariant, Buffer, Document, Format,
+        FormatElement, FormatState, IndentStyle, LineEnding, MeasureMode, Printed, Printer,
+        PrinterOptions, SimpleFormatContext, VecBuffer, best_fitting,
         builders::{
-            align, block_indent, dedent_to_root, empty_line, exact_line_breaks, group,
-            hard_line_break, if_group_breaks, if_group_fits_on_line, indent, line_suffix,
-            literal_line_break, mark_as_root, prefix_align, soft_block_indent, soft_line_break,
-            soft_line_break_or_space, space, text, token,
+            align, best_fitting_variant, block_indent, dedent_to_root, empty_line,
+            exact_line_breaks, group, hard_line_break, if_group_breaks, if_group_fits_on_line,
+            indent, line_suffix, literal_line_break, mark_as_root, prefix_align, soft_block_indent,
+            soft_line_break, soft_line_break_or_space, space, text, token,
         },
         format_args,
         printer::PrintWidth,
@@ -2627,6 +2644,40 @@ two lines`,
         let printed = format_simple(&allocator, &content);
 
         assert_eq!(printed.as_code(), "first line broken\ntail");
+    }
+
+    #[test]
+    fn best_fitting_all_lines_measures_past_hard_line_breaks() {
+        // Same variants, the first one is chosen only when measured up to its first line:
+        // its second line exceeds the print width.
+        let long = "a".repeat(400);
+        for (measure, expected) in [
+            (MeasureMode::FirstLine, format!("first\n{long}")),
+            (MeasureMode::AllLines, "second".to_string()),
+        ] {
+            let allocator = Allocator::default();
+            let content = test_format_with(|f| {
+                let first = best_fitting_variant(f.state_mut(), |f| {
+                    write!(f, [token("first"), hard_line_break(), text(&long)]);
+                });
+                let second = best_fitting_variant(f.state_mut(), |f| write!(f, [token("second")]));
+                let variants = ArenaVec::from_array_in(
+                    [
+                        BestFittingVariant::new(first).with_measure(measure),
+                        BestFittingVariant::new(second),
+                    ],
+                    &f.allocator(),
+                );
+                // SAFETY: Two variants
+                f.write_element(FormatElement::BestFitting(unsafe {
+                    BestFittingElement::from_vec_unchecked(variants)
+                }));
+            });
+
+            let printed = format_simple(&allocator, &content);
+
+            assert_eq!(printed.as_code(), expected);
+        }
     }
 
     #[test]

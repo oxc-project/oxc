@@ -285,12 +285,12 @@ fn placeholders_are_sequential(ir: &[FormatElement<'_>], next: &mut usize) -> bo
                 let start = *next;
                 let mut variants = best_fitting.variants().iter();
                 let Some(first) = variants.next() else { return false };
-                if !placeholders_are_sequential(first, next) {
+                if !placeholders_are_sequential(first.content(), next) {
                     return false;
                 }
                 for variant in variants {
                     let mut variant_next = start;
-                    if !placeholders_are_sequential(variant, &mut variant_next)
+                    if !placeholders_are_sequential(variant.content(), &mut variant_next)
                         || variant_next != *next
                     {
                         return false;
@@ -336,7 +336,8 @@ fn push_text_with_line_breaks<'a>(
 mod tests {
     use oxc_allocator::{Allocator, ArenaVec};
     use oxc_formatter_core::{
-        BestFittingElement, FormatElement, IndentWidth, format_element::TextWidth,
+        BestFittingElement, BestFittingVariant, FormatElement, IndentWidth,
+        format_element::TextWidth,
     };
 
     use super::placeholders_are_sequential;
@@ -352,7 +353,8 @@ mod tests {
     ) -> FormatElement<'a> {
         let first = ArenaVec::from_array_in([first], &allocator).into_arena_slice();
         let second = ArenaVec::from_array_in([second], &allocator).into_arena_slice();
-        let variants = ArenaVec::from_array_in([first as &[_], second as &[_]], &allocator);
+        let variants =
+            ArenaVec::from_array_in([first, second].map(BestFittingVariant::new), &allocator);
         // SAFETY: The helper always constructs exactly two variants
         FormatElement::BestFitting(unsafe { BestFittingElement::from_vec_unchecked(variants) })
     }

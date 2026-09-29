@@ -23,7 +23,7 @@ use crate::{
     VecBuffer,
     builders::{hard_line_break, soft_line_break_or_space, space, text, token},
     format_element::{
-        LineMode, TextWidth,
+        LineMode, MeasureMode, TextWidth,
         tag::{self, DedentMode, GroupMode, Tag},
     },
     write, write as w,
@@ -202,7 +202,10 @@ where
                     ]);
 
                     for variant in best_fitting.variants() {
-                        w!(f, [FormatElementSlice(variant), hard_line_break()]);
+                        if variant.measure() == MeasureMode::AllLines {
+                            w!(f, [token("all_lines: ")]);
+                        }
+                        w!(f, [FormatElementSlice(variant.content()), hard_line_break()]);
                     }
 
                     f.write_elements([

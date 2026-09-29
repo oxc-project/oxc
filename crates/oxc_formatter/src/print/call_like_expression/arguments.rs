@@ -1,6 +1,8 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, RemoveSoftLinesBuffer, SourceText, format_element};
+use oxc_formatter_core::{
+    BestFittingVariant, FormatElement, RemoveSoftLinesBuffer, SourceText, format_element,
+};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -794,7 +796,7 @@ fn write_grouped_arguments<'a>(
     // since we already know that it won't be fitting on a single line.
     let variants = if grouped_breaks {
         write!(f, [expand_parent()]);
-        ArenaVec::from_array_in([middle_variant, most_expanded], f)
+        ArenaVec::from_array_in([middle_variant, most_expanded].map(BestFittingVariant::new), f)
     } else {
         // Write the most flat variant with the first or last argument grouped.
         let most_flat = best_fitting_variant(f.state_mut(), |buffer| {
@@ -818,7 +820,10 @@ fn write_grouped_arguments<'a>(
             );
         });
 
-        ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f)
+        ArenaVec::from_array_in(
+            [most_flat, middle_variant, most_expanded].map(BestFittingVariant::new),
+            f,
+        )
     };
 
     // SAFETY: Safe because variants is guaranteed to contain exactly 3 entries:

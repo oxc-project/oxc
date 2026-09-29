@@ -14,7 +14,8 @@ use serde_json::Value;
 use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_formatter_core::{
     Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
-    Prefix, PrintMode, Tag, TextWidth, UniqueGroupIdBuilder, format_element::BestFittingElement,
+    Prefix, PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
+    format_element::{BestFittingElement, BestFittingVariant},
 };
 
 /// Marker string used to represent `-Infinity` in JSON.
@@ -241,7 +242,7 @@ fn convert_group<'a>(
         // The trailing `EndEntry` tag keeps postprocess's trailing-hardline strip from firing:
         // a variant retains its trailing hardline (content may follow the `BestFitting`).
         postprocess(&mut variant, ctx.allocator);
-        variants.push(variant.into_arena_slice());
+        variants.push(BestFittingVariant::new(variant.into_arena_slice()));
     }
 
     // SAFETY: `expanded_states.len() > 1`, and the loop emits exactly that many variants.
