@@ -11,13 +11,30 @@ use oxc_str::Str;
 use crate::{builder::SemanticBuilder, diagnostics};
 
 pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
-    let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
+    check_jsdoc_type_in_annotation(&annotation.type_annotation, true, ctx);
+}
+
+pub fn check_ts_as_or_satisfies_type(ty: &TSType<'_>, ctx: &SemanticBuilder<'_>) {
+    // A trailing `!` after `as T` is a non-null assertion on the expression.
+    check_jsdoc_type_in_annotation(ty, false, ctx);
+}
+
+pub fn check_ts_angle_bracket_assertion_type(ty: &TSType<'_>, ctx: &SemanticBuilder<'_>) {
+    check_jsdoc_type_in_annotation(ty, true, ctx);
+}
+
+fn check_jsdoc_type_in_annotation(ty: &TSType<'_>, allow_postfix: bool, ctx: &SemanticBuilder<'_>) {
+    let (modifier, is_start, span_with_illegal_modifier) = match ty {
         TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
         TSType::JSDocNullableType(ty) => ('?', !ty.postfix, ty.span()),
         _ => {
             return;
         }
     };
+
+    if !is_start && !allow_postfix {
+        return;
+    }
 
     let valid_type_span = if is_start {
         span_with_illegal_modifier.shrink_left(1)

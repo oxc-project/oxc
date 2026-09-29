@@ -11166,6 +11166,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Did you mean to write 'number'?
 
   × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:21:16]
+ 20 │ 
+ 21 │ const c = 1 as !any;
+    ·                ────
+ 22 │ const d: !number = 1;
+    ╰────
+  help: Did you mean to write 'any'?
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:22:10]
  21 │ const c = 1 as !any;
  22 │ const d: !number = 1;
@@ -11234,6 +11243,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  17 │ 
     ╰────
   help: Did you mean to write 'number | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:18:16]
+ 17 │ 
+ 18 │ const c = 1 as ?any;
+    ·                ────
+ 19 │ const d: ?number = 1;
+    ╰────
+  help: Did you mean to write 'any | null | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:19:10]
