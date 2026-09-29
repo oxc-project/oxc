@@ -1,16 +1,16 @@
 mod arguments;
 
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{TailwindContextEntry, prelude::*, trivia::FormatTrailingComments},
+    formatter::{TailwindContextEntry, prelude::*},
     print::arrow_function_expression::is_multiline_template_starting_on_same_line,
     utils::{
-        call_expression::is_test_call_expression,
-        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        member_chain::MemberChain, tailwindcss::is_tailwind_function_call,
+        call_expression::{callee_opener, is_test_call_expression},
+        member_chain::MemberChain,
+        statement_body::FormatBeforeOpener,
+        tailwindcss::is_tailwind_function_call,
     },
     write,
 };
@@ -23,7 +23,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
         let callee = self.callee();
         let type_arguments = self.type_arguments();
         let arguments = self.arguments();
-        let optional = self.optional();
 
         // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
         let is_tailwind_call = f
@@ -60,36 +59,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
             MemberChain::from_call_expression(self, f).fmt(f);
         } else {
             let format_inner = format_with(|f| {
-                // Preserve trailing comments of the callee in the following cases:
-                // `call /**/()`
-                // `call /**/<T>()`
-                if self.type_arguments.is_some() {
-                    write!(f, [callee]);
-                } else {
-                    write!(f, [FormatNodeWithoutTrailingComments(callee)]);
-
-                    let character = if self.optional {
-                        // For optional calls with arguments, preserve trailing comments
-                        // between the `callee` and `?.` operator.
-                        // `alert/* comment */?.('value')` → `alert /* comment */?.("value");`
-                        Some(b'?')
-                    } else if self.arguments.is_empty() {
-                        // For empty argument calls, preserve trailing comments between
-                        // the `callee` and `()`.
-                        // `call/**/()` → `call /**/();`
-                        Some(b'(')
-                    } else {
-                        None
-                    };
-                    if let Some(character) = character {
-                        let callee_trailing_comments = f
-                            .context()
-                            .comments()
-                            .comments_before_character(self.callee.span().end, character);
-                        write!(f, FormatTrailingComments::Comments(callee_trailing_comments));
-                    }
-                }
-                write!(f, [optional.then_some("?."), type_arguments]);
+                write!(
+                    f,
+                    [
+                        FormatBeforeOpener(callee, callee_opener(self)),
+                        self.optional.then_some("?."),
+                        type_arguments
+                    ]
+                );
 
                 // If this IS a Tailwind function call, push the Tailwind context
                 let tailwind_ctx_to_push = if is_tailwind_call {
@@ -131,7 +108,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, NewExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, ["new", space(), self.callee(), self.type_arguments(), self.arguments()]);
+        write!(f, ["new", space()]);
+        if let Some(type_arguments) = self.type_arguments() {
+            write!(f, [FormatBeforeOpener(self.callee(), b'<'), type_arguments]);
+        } else {
+            write!(f, [self.callee()]);
+        }
+        write!(f, self.arguments());
     }
 }
 

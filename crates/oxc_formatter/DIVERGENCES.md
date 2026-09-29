@@ -739,3 +739,42 @@ test("x", () => {
 Prettier's compact test call layout merges and reverses the comments, and is not a fixpoint.
 We fall back to the regular argument layout when comments sit around the arguments, following prettier/prettier#20043.
 A same-line block comment also falls back, the same output as the other special call layouts (React hook, `require`).
+
+## callee-arguments-gap-comment
+
+- Why: invariant
+- Pin: `tests/fixtures/js/calls/callee-opener-comment.js`, `tests/fixtures/ts/calls/callee-opener-comment.ts`
+- Conformance: `js/last-argument-expansion/edge_case.js`, `typescript/call/callee-comments.ts`
+
+A call's `(` and `<` are delimiters (see AGENTS.md "Head-body and operator gaps (class 3)"), so a comment between the callee and the opener stays on the callee side (except AGENTS.md "Open debts").
+
+```js
+// input
+foo /* c */ (a);
+foo
+// c
+(a);
+foo
+/* c */ (a);
+
+// ours
+foo /* c */(a);
+foo
+// c
+(a);
+foo
+/* c */ (a);
+
+// prettier
+foo(/* c */ a);
+foo(
+  // c
+  a,
+);
+foo(/* c */ a);
+```
+
+Prettier keeps an end-of-line comment there (`foo // c` + `(a)`, the same as ours) but moves a same-line block comment and an own-line comment into the arguments.
+Its function declarations keep the same-line block comment outside (`function foo /* c */(a) {}`).
+Before `<`, Prettier glues an own-line comment back onto the callee's line (`foo// c` + `<T>(a)`); we keep it own-line.
+Before an optional call's `?.`, Prettier moves an own-line comment into the arguments as well; we keep it own-line.
