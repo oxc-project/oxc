@@ -1,9 +1,11 @@
 use std::{fmt::Write, path::PathBuf};
 
-use oxc_language_server::{DiagnosticResult, TextDocument, Tool, ToolRestartChanges};
-use tower_lsp_server::ls_types::{
-    CodeAction, CodeActionContext, CodeActionKind, CodeActionOrCommand, CodeDescription,
-    Diagnostic, NumberOrString, Position, Range, Uri,
+use oxc_language_server::{
+    DiagnosticResult, TextDocument, Tool, ToolRestartChanges, uri_utils::file_path_to_uri,
+};
+use tower_lsp_server::gen_lsp_types::{
+    Code, CodeAction, CodeActionContext, CodeActionKind, CodeActionResponse, CodeDescription,
+    Diagnostic, Position, Range, Uri,
 };
 
 use crate::lsp::server_linter::{ServerLinter, ServerLinterBuilder};
@@ -15,8 +17,7 @@ pub fn get_file_path(relative_file_path: &str) -> PathBuf {
 
 /// Given a file path relative to the crate root directory, return the URI of the file.
 pub fn get_file_uri(relative_file_path: &str) -> Uri {
-    Uri::from_file_path(get_file_path(relative_file_path))
-        .expect("failed to convert file path to URL")
+    file_path_to_uri(get_file_path(relative_file_path)).expect("failed to convert file path to URL")
 }
 
 fn get_snapshot_from_diagnostic_result(diagnostic_result: &[(Uri, Vec<Diagnostic>)]) -> String {
@@ -48,8 +49,8 @@ fn get_snapshot_safe_uri(uri: &Uri) -> String {
 
 fn get_snapshot_from_diagnostic(diagnostic: &Diagnostic) -> String {
     let code = match &diagnostic.code {
-        Some(NumberOrString::Number(code)) => code.to_string(),
-        Some(NumberOrString::String(code)) => code.clone(),
+        Some(Code::Int(code)) => code.to_string(),
+        Some(Code::String(code)) => code.clone(),
         None => "None".to_string(),
     };
     let code_description_href = match &diagnostic.code_description {
@@ -134,10 +135,10 @@ fn get_snapshot_for_code_action(code_action: &CodeAction) -> String {
     result
 }
 
-fn get_snapshot_from_code_action_or_command(action_or_command: &CodeActionOrCommand) -> String {
+fn get_snapshot_from_code_action_or_command(action_or_command: &CodeActionResponse) -> String {
     match action_or_command {
-        CodeActionOrCommand::Command(command) => format!("Command: {command:#?}"),
-        CodeActionOrCommand::CodeAction(code_action) => {
+        CodeActionResponse::Command(command) => format!("Command: {command:#?}"),
+        CodeActionResponse::CodeAction(code_action) => {
             format!("CodeAction: \n{}", get_snapshot_for_code_action(code_action))
         }
     }
@@ -182,8 +183,8 @@ pub struct Tester<'t> {
 
 struct FileResult {
     diagnostic: DiagnosticResult,
-    actions: Vec<CodeActionOrCommand>,
-    fix_all_action: Option<CodeActionOrCommand>,
+    actions: Vec<CodeActionResponse>,
+    fix_all_action: Option<CodeActionResponse>,
 }
 
 impl Tester<'_> {
@@ -201,7 +202,7 @@ impl Tester<'_> {
         let absolute_path =
             std::env::current_dir().expect("could not get current dir").join(relative_root_dir);
 
-        Uri::from_file_path(absolute_path).expect("could not convert current dir to uri")
+        file_path_to_uri(absolute_path).expect("could not convert current dir to uri")
     }
 
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter
@@ -218,7 +219,7 @@ impl Tester<'_> {
         let mut snapshot_result = String::new();
         let context = CodeActionContext::default();
         let fix_all_context = CodeActionContext {
-            only: Some(vec![CodeActionKind::SOURCE_FIX_ALL]),
+            only: Some(vec![CodeActionKind::SourceFixAll]),
             ..Default::default()
         };
         for relative_file_path in relative_file_paths {

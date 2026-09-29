@@ -644,7 +644,7 @@ enum LineCommentAs {
 /// A `//` on the line of the comma just written (`a, // c`, `a, /* b */ // c`) stays on that line,
 /// the line-boundary invariant; the block comments glued before it on that line come along.
 /// Prettier's CSS moves them below as the next element's leading comments instead
-/// (its other printers keep them, and so do the other formatter crates), see DIVERGENCES.md "line-comment-after-comma".
+/// (its other printers keep them, and so do the other formatter crates), see DIVERGENCES.md#line-comment-after-comma.
 pub(super) fn flush_line_comment_after_comma(comma_start: u32, f: &mut CssFormatter<'_, '_>) {
     let comma_end = comma_start + 1;
     let source = f.context().source_text();
@@ -917,7 +917,7 @@ pub(super) fn flush_paren_tail_comments(
 }
 
 /// `[a, b]` is a Sass list like `(a, b)`: same construct, same output
-/// (Prettier prints the brackets as words of the OUTER comma list, see DIVERGENCES.md "bracket-list-layout").
+/// (Prettier prints the brackets as words of the OUTER comma list, see DIVERGENCES.md#bracket-list-layout).
 fn write_bracket_block<'a>(
     bracket: &BracketBlock<'a>,
     ctx: ValueContext<'a>,
@@ -1027,7 +1027,7 @@ pub(super) fn flush_trailing_value_comments(upper_bound: u32, f: &mut CssFormatt
 }
 
 /// `!important`, normalized (`!  IMPORTANT` too), with a comment between `!` and the identifier kept there:
-/// `! /* c */ important` (DIVERGENCES.md "important-comment-run").
+/// `! /* c */ important` (DIVERGENCES.md#important-comment-run).
 /// Comments BEFORE the `!` are the caller's (a trailing flush, or the value list's separator).
 pub(super) fn write_important_annotation(
     important: &ImportantAnnotation<'_>,

@@ -4,6 +4,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ==================== Input ====================
 // Same as css/custom-property-raw-verbatim.css: an unreadable custom property
 // value is text in every variant.
+// DIVERGES from Prettier (DIVERGENCES.md#custom-property-raw-verbatim).
 :root {
   --z: */;
   --x:   1px   !foo;
@@ -16,6 +17,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 // Same as css/custom-property-raw-verbatim.css: an unreadable custom property
 // value is text in every variant.
+// DIVERGES from Prettier (DIVERGENCES.md#custom-property-raw-verbatim).
 :root {
   --z: */;
   --x: 1px   !foo;
@@ -27,6 +29,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 -------------------
 // Same as css/custom-property-raw-verbatim.css: an unreadable custom property
 // value is text in every variant.
+// DIVERGES from Prettier (DIVERGENCES.md#custom-property-raw-verbatim).
 :root {
   --z: */;
   --x: 1px   !foo;

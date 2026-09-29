@@ -1,7 +1,5 @@
 # edge-cases/js-in-vue/generic-trailing-comma.vue
 
-> `<T = any,>` comma removed like plain `.ts`. See apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
-
 ## Option 1
 
 `````json
@@ -16,7 +14,7 @@
 +++ oxfmt
 @@ -1,5 +1,5 @@
  <!-- DIVERGES: the `<T = any,>` disambiguating comma is removed like plain `.ts`;
-   see apps/oxfmt/DIVERGENCES.md "ts-in-vue-generic-trailing-comma" -->
+   see apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma -->
  <script setup lang="ts">
 -const getComponentRef = <T = any,>() => componentRef.value as T;
 +const getComponentRef = <T = any>() => componentRef.value as T;
@@ -28,7 +26,7 @@
 
 `````vue
 <!-- DIVERGES: the `<T = any,>` disambiguating comma is removed like plain `.ts`;
-  see apps/oxfmt/DIVERGENCES.md "ts-in-vue-generic-trailing-comma" -->
+  see apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma -->
 <script setup lang="ts">
 const getComponentRef = <T = any>() => componentRef.value as T;
 </script>
@@ -39,7 +37,7 @@ const getComponentRef = <T = any>() => componentRef.value as T;
 
 `````vue
 <!-- DIVERGES: the `<T = any,>` disambiguating comma is removed like plain `.ts`;
-  see apps/oxfmt/DIVERGENCES.md "ts-in-vue-generic-trailing-comma" -->
+  see apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma -->
 <script setup lang="ts">
 const getComponentRef = <T = any,>() => componentRef.value as T;
 </script>
@@ -60,7 +58,7 @@ const getComponentRef = <T = any,>() => componentRef.value as T;
 +++ oxfmt
 @@ -1,5 +1,5 @@
  <!-- DIVERGES: the `<T = any,>` disambiguating comma is removed like plain `.ts`;
-   see apps/oxfmt/DIVERGENCES.md "ts-in-vue-generic-trailing-comma" -->
+   see apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma -->
  <script setup lang="ts">
 -  const getComponentRef = <T = any,>() => componentRef.value as T;
 +  const getComponentRef = <T = any>() => componentRef.value as T;
@@ -72,7 +70,7 @@ const getComponentRef = <T = any,>() => componentRef.value as T;
 
 `````vue
 <!-- DIVERGES: the `<T = any,>` disambiguating comma is removed like plain `.ts`;
-  see apps/oxfmt/DIVERGENCES.md "ts-in-vue-generic-trailing-comma" -->
+  see apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma -->
 <script setup lang="ts">
   const getComponentRef = <T = any>() => componentRef.value as T;
 </script>
@@ -83,7 +81,7 @@ const getComponentRef = <T = any,>() => componentRef.value as T;
 
 `````vue
 <!-- DIVERGES: the `<T = any,>` disambiguating comma is removed like plain `.ts`;
-  see apps/oxfmt/DIVERGENCES.md "ts-in-vue-generic-trailing-comma" -->
+  see apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma -->
 <script setup lang="ts">
   const getComponentRef = <T = any,>() => componentRef.value as T;
 </script>

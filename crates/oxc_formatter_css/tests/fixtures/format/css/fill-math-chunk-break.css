@@ -1,7 +1,7 @@
 /*
  * Break-point in an over-wide math-y value run: our core fill (biome semantics)
  * breaks at the last fitting SEPARATOR (before `/ 2`).
- * DIVERGES from Prettier (DIVERGENCES.md "fill-break-position"),
+ * DIVERGES from Prettier (DIVERGENCES.md#fill-break-position),
  * whose fill fit-check breaks INSIDE the wide chunk (after `+`).
  */
 .SearchBox {

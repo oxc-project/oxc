@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.71.0] - 2026-09-28
+
+### 🚀 Features
+
+- e0b1f9f oxfmt: Bump bundled Prettier version to 3.9.9 (#27002) (leaysgur)
+- 342527d oxfmt: Bump bundled Prettier version to 3.9.8 (#26999) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 1f7b8ad oxfmt: Allow repeated CLI calls in the same process (#27051) (Liang)
+
+## [0.70.0] - 2026-09-21
+
+### 🚀 Features
+
+- 415b742 oxlint,oxfmt: Do not discover nested config in Vite+ mode (#26763) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 809090c oxlint,oxfmt: Find all `vite.config.*` variants (#26755) (leaysgur)
+
+### 📚 Documentation
+
+- 8fa3617 oxfmt: Unify DIVERGENCES reference and drop notes (#26750) (leaysgur)
+
 ## [0.68.0] - 2026-09-14
 
 ### 🚀 Features

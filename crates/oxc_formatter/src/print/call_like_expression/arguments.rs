@@ -73,7 +73,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
                                     | Argument::TaggedTemplateExpression(_)
                             )
                         ))
-                        && is_test_call_expression(call))
+                        && is_test_call_expression(call, f.comments()))
             })
             || is_multiline_template_only_args(self, f.source_text())
             || is_graphql_call_with_single_template_arg(self, call_expression)

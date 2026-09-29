@@ -1,7 +1,12 @@
-use super::super::super::bitmap::{bm_clear, bm_get};
+use crate::pipeline::bitmap::{bm_clear, bm_get};
 
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
-use super::super::super::chunk::{load256, mm, veq};
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
+use crate::pipeline::chunk::{load256, mm, veq};
 
 /// JSXIdentifier admits `-`, so `data-x` and `aria-label` are one name token
 /// where JS would read three. Fuse every hyphen in `[a, b)` into the run
@@ -11,7 +16,12 @@ use super::super::super::chunk::{load256, mm, veq};
 /// The caller only ever passes name/attribute regions: strings and `{}`
 /// containers are consumed whole before the next region begins, so a hyphen
 /// reached here is never a minus.
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 #[inline(always)]
 pub(super) unsafe fn jsx_glue_hyphens(
     src: *const u8,
@@ -39,7 +49,12 @@ pub(super) unsafe fn jsx_glue_hyphens(
     }
 }
 
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 #[inline(always)]
 pub(super) unsafe fn jsx_glue_hyphens(
     src: *const u8,

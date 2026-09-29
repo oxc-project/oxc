@@ -1,0 +1,59 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!-- A `[[` ... `]]` paragraph is printed as written; a code span inside keeps its line break too -->
+
+See [[the `first
+second` note]] for details.
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+<!-- A `[[` ... `]]` paragraph is printed as written; a code span inside keeps its line break too -->
+
+See [[the `first
+second` note]] for details.
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+<!-- A `[[` ... `]]` paragraph is printed as written; a code span inside keeps its line break too -->
+
+See [[the `first
+second` note]] for details.
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+<!-- A `[[` ... `]]` paragraph is printed as written; a code span inside keeps its line break too -->
+
+See [[the `first
+second` note]] for details.
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+<!-- A `[[` ... `]]` paragraph is printed as written; a code span inside keeps its line break too -->
+
+See [[the `first
+second` note]] for details.
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+<!-- A `[[` ... `]]` paragraph is printed as written; a code span inside keeps its line break too -->
+
+See [[the `first
+second` note]] for details.
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+<!-- A `[[` ... `]]` paragraph is printed as written; a code span inside keeps its line break too -->
+
+See [[the `first
+second` note]] for details.
+
+===================== End =====================

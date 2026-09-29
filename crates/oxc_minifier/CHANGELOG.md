@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- c380c85 minifier: Preserve iife with directives (#27060) (Armano)
+- d79ad19 codegen: Remove redundant dollar escapes in minified templates (#26924) (camc314)
+
+### ⚡ Performance
+
+- 0afbf85 minifier: Fold logical expressions in place (#26768) (Armano)
+- 3471f29 minifier: Avoid creation of empty block when folding try finally (#26971) (Armano)
+- 3893d64 minifier: Update boolean context expressions in place (#26823) (Armano)
+- de8af47 minifier: Take return argument directly when converting arrow fn (#26830) (Armano)
+- fc37ba0 minifier: Reduce allocations when minimizing assignments (#26609) (Armano)
+- dce64f6 minifier: Use ident hashes for catch var and arguments (#26907) (Armano)
+- 57610b3 minifier: Use ident hashes in label comparison (#26887) (Armano)
+
+## [0.151.0] - 2026-09-21
+
+### 🐛 Bug Fixes
+
+- cd7228f minifier: Add missing negation for boolean literal (#26847) (Armano)
+
+### ⚡ Performance
+
+- 3f1e3aa minifier: Preallocate stmts vec size to avoid excesive reallocs (#26856) (Armano)
+- 5f72954 minifier: Reduce allocations when processing if statements (#26666) (Armano)
+
 ## [0.150.0] - 2026-09-14
 
 ### 🚀 Features

@@ -79,7 +79,12 @@ pub struct LintCommandInfo {
     /// At least in default mode we want to notify if oxlint-suppressions.json was created or updated.
     pub oxlint_suppression_file_action: OxlintSuppressionFileAction,
     /// Optional per-rule timing records for debug timing output.
-    pub rule_timings: Option<Vec<RuleTimingRecord>>,
+    pub rule_timings: Option<RuleTimings>,
+}
+
+pub struct RuleTimings {
+    pub records: Vec<RuleTimingRecord>,
+    pub js_plugin_runtime: Duration,
 }
 
 impl LintCommandInfo {

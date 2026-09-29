@@ -1,7 +1,5 @@
 # externals/ng-zorro-antd/components/style/mixins/customize.less
 
-> an over-width `when` guard breaks before `when` and after `,` as one unit (Prettier puts `when`, `and` and each condition on its own line). See crates/oxc_formatter_css/DIVERGENCES.md#less-guard-list-inline
-
 ## Option 1
 
 `````json

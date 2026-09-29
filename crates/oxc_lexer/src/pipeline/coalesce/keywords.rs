@@ -1,6 +1,8 @@
 use std::ptr;
 
-use crate::{opmap::KwSet, token::tk};
+use crate::token::tk;
+
+use crate::pipeline::tables::KwSet;
 
 pub const KWB: usize = 64;
 
@@ -26,8 +28,8 @@ pub(super) unsafe fn kw_flush(
 /// Resolve a batch of keyword candidates (positions collected by
 /// `coalesce`): exact match against the perfect-hash tables, patching
 /// `kind` from IDENT to the keyword kind on hit. `TS_KEY` selects the
-/// active set's hash key — `(c0, c1, len)` for JS, `(c0, c1, last, len)`
-/// for TS — monomorphized so the JS copy carries none of the wider key.
+/// active set's hash key - `(c0, c1, len)` for JS, `(c0, c1, last, len)`
+/// for TS - monomorphized so the JS copy carries none of the wider key.
 /// Kept out of line: inlining would double both variants into each of
 /// coalesce's flush sites, and one call per KWB words is free.
 #[inline(never)]
@@ -71,12 +73,22 @@ unsafe fn kw_verify_batch<const TS_KEY: bool>(
 
 #[inline(always)]
 fn bzhi(x: u64, n: u32) -> u64 {
-    #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+    #[cfg(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ))]
     unsafe {
         std::arch::x86_64::_bzhi_u64(x, n)
     }
 
-    #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    )))]
     {
         x & (u64::MAX >> (64 - n))
     }

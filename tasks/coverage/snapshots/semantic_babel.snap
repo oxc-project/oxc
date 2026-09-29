@@ -1,8 +1,8 @@
-commit: 1eac4481
+commit: fd665901
 
 semantic_babel Summary:
-AST Parsed     : 2234/2234 (100.00%)
-Positive Passed: 2144/2234 (95.97%)
+AST Parsed     : 2239/2239 (100.00%)
+Positive Passed: 2149/2239 (95.98%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)

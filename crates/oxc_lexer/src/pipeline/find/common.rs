@@ -1,5 +1,7 @@
 use super::{define_find_function, find3};
 
+use crate::pipeline::bytes;
+
 define_find_function!(
     /// JS-mode top-level scan: string/template/regex-or-comment openers plus
     /// the Annex B `<!--` / `-->` trigger bytes.
@@ -7,7 +9,7 @@ define_find_function!(
 );
 
 define_find_function!(
-    /// [`find_opener`] widened with `{` / `}` — used inside template
+    /// [`find_opener`] widened with `{` / `}` - used inside template
     /// substitutions, where braces drive the nesting depth.
     find_opener6: b'"', b'\'', b'`', b'/', b'{', b'}', b'<', b'>'
 );
@@ -75,19 +77,5 @@ pub unsafe fn find_line_terminator(src: *const u8, n: usize, mut i: usize) -> us
 /// U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
 #[inline]
 pub unsafe fn unicode_ws_len(src: *const u8, p: usize) -> usize {
-    let c1 = *src.add(p + 1);
-    match *src.add(p) {
-        0xC2 => usize::from(c1 == 0xA0 || c1 == 0x85) * 2,
-        0xE1 => usize::from(c1 == 0x9A && *src.add(p + 2) == 0x80) * 3,
-        0xE2 => {
-            let c2 = *src.add(p + 2);
-            let is_ws = (c1 == 0x80
-                && ((0x80..=0x8B).contains(&c2) || c2 == 0xA8 || c2 == 0xA9 || c2 == 0xAF))
-                || (c1 == 0x81 && c2 == 0x9F);
-            usize::from(is_ws) * 3
-        }
-        0xE3 => usize::from(c1 == 0x80 && *src.add(p + 2) == 0x80) * 3,
-        0xEF => usize::from(c1 == 0xBB && *src.add(p + 2) == 0xBF) * 3,
-        _ => 0,
-    }
+    bytes::unicode_ws_len(*src.add(p), *src.add(p + 1), *src.add(p + 2))
 }

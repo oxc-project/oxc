@@ -1,6 +1,6 @@
 use std::iter;
 
-use crate::tables::Tables;
+use crate::pipeline::tables::Tables;
 
 use super::compress_blocks;
 
