@@ -658,6 +658,10 @@ impl SourceFormatter {
             // - Parsing Prettier's error messages
             // - Converting span information from UTF-16 to UTF-8
             // This is a non-trivial amount of work, so for now, just leave this as a best effort.
+            //
+            // This is the only place in the formatting pipeline that depends on `cwd`.
+            // It goes away together with this Prettier path, as `oxc_formatter_*` cover more languages.
+            // (Their errors carry labels, and entry points render paths with their own `cwd`.)
             let relative = std::env::current_dir()
                 .ok()
                 .and_then(|cwd| path.strip_prefix(cwd).ok().map(Path::to_path_buf));

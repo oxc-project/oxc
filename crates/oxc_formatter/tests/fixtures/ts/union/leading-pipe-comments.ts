@@ -18,7 +18,7 @@ type CommentGroup =
 // parens; multiline block comment starting its line), Prettier keeps the
 // comment before the `|`, yet reformats the first shape's own output into the
 // canonical form (not idempotent); we normalize directly
-// (see DIVERGENCES.md "union-leading-pipe-comment-normalization").
+// (see DIVERGENCES.md#union-leading-pipe-comment-normalization).
 type NestedParens = | (
   /* c */ | (
     | (
@@ -33,6 +33,14 @@ type MultilineBlock =
   comment
   */ A
   | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+// A `*`-aligned one re-aligns under its `/*` behind the `|` (printed by the member, inside its alignment)
+type MultilineAlignable =
+  /**
+   * comment
+   */ A
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+type MultilineAlignableMid = /* multi
+ * line */ A | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
 
 // A comment that ENDS its source line stays before the `|`:
 // moving it behind would force a break between the `|` and its member.

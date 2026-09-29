@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.151.0] - 2026-09-21
+
+### 🚀 Features
+
+- 1fac655 coverage: Support new TypeScript fixture layout (#26226) (camc314)
+
+## [0.150.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- 32d00c5 codegen: Preserve instantiation expression precedence (#26424) (camc314)
+- 5986187 packages/codegen: Preserve private-in right operand precedence (#26420) (camc314)
+- f8e6c6c packages/codegen: Preserve in restriction through yield arguments (#26421) (camc314)
+- 6e15ad5 packages/codegen: Print matching quoted import names as identifiers (#26404) (camc314)
+- bbbb4bc packages/codegen: Preserve private-in left operand precedence (#26403) (camc314)
+- a111b5b packages/codegen: Print accessibility modifiers before abstract (#26402) (camc314)
+
 ## [0.148.0] - 2026-08-31
 
 ### ⚡ Performance

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- dc45cc3 formatter_test: Test Prettier dynamic snippet tests (#26469) (leaysgur)
+
 ## [0.63.0] - 2026-08-10
 
 ### 🐛 Bug Fixes

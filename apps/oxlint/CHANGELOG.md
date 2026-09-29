@@ -4,6 +4,48 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.86.0] - 2026-09-28
+
+### 🚀 Features
+
+- 9d80eed linter/react/only-export-components: Support `allowCompoundComponents` (#27117) (Kuroda Kayn)
+- e05b155 linter: Add typescript/no-generated-empty-object-type (#26958) (camc314)
+
+### 🐛 Bug Fixes
+
+- 611e4ed linter/plugins: Include executing selectors in JS plugin rule timings (#27111) (overlookmotel)
+- 571cfa3 oxlint: Skip type-aware lint rules in type-check-only mode (#27076) (camc314)
+- d0b2462 oxlint: Skip undefined children in CFG walker (#27075) (camc314)
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+
+## [1.85.0] - 2026-09-21
+
+### 🚀 Features
+
+- 415b742 oxlint,oxfmt: Do not discover nested config in Vite+ mode (#26763) (leaysgur)
+
+## [1.84.0] - 2026-09-21
+
+### 🚀 Features
+
+- 809090c oxlint,oxfmt: Find all `vite.config.*` variants (#26755) (leaysgur)
+- a047b67 linter: Report JavaScript plugin rule timings (#26415) (Alexander Lichter)
+
+### 🐛 Bug Fixes
+
+- 927bfa4 oxlint/lsp: Align nested config handling with `configPath` semantics (#26762) (leaysgur)
+- 7811f0a parser: Preserve reparsed `await` tokens (#26619) (camc314)
+
+### 📚 Documentation
+
+- aa7de00 lsp: Document that the `run` option only applies to push mode clients (#26670) (im10furry)
+
+## [1.83.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- 72bc7f2 oxlint: Replace backlashes path for "no js runtime" diagnostic (#26599) (Sysix)
+
 ## [1.82.0] - 2026-09-07
 
 ### 🚀 Features

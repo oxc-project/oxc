@@ -1,6 +1,6 @@
 // Comments between a head and its body `{` stay outside the braces for
 // function/arrow/method/class/labeled heads too (head-body comment policy).
-// Known divergences (js/comments/function*, js/class-comment/*, js/label/comment.js):
+// Known divergences (DIVERGENCES.md#head-body-comment-relocation; js/comments/function*, js/class-comment/*, js/label/comment.js):
 // Prettier pulls line and own-line comments inside the braces, hoists a labeled
 // statement's comment above the label, and breaks an `if` consequent whose
 // trailing line comment its attachment marks as multiline -- artifacts of the

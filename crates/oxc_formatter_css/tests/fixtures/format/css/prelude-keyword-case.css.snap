@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-/* prelude keywords lowercase (see DIVERGENCES.md "prelude-keyword-case"); values and case-sensitive names keep theirs */
+/* prelude keywords lowercase (see DIVERGENCES.md#prelude-keyword-case); values and case-sensitive names keep theirs */
 @MEDIA ONLY SCREEN AND (MAX-WIDTH: 1PX), PRINT {
   a {
     b: c;
@@ -24,7 +24,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 { printWidth: 80 }
 ------------------
-/* prelude keywords lowercase (see DIVERGENCES.md "prelude-keyword-case"); values and case-sensitive names keep theirs */
+/* prelude keywords lowercase (see DIVERGENCES.md#prelude-keyword-case); values and case-sensitive names keep theirs */
 @media only screen and (max-width: 1px), print {
   a {
     b: c;
@@ -47,7 +47,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 -------------------
 { printWidth: 100 }
 -------------------
-/* prelude keywords lowercase (see DIVERGENCES.md "prelude-keyword-case"); values and case-sensitive names keep theirs */
+/* prelude keywords lowercase (see DIVERGENCES.md#prelude-keyword-case); values and case-sensitive names keep theirs */
 @media only screen and (max-width: 1px), print {
   a {
     b: c;

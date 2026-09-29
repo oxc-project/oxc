@@ -436,11 +436,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::IfStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                     Self::try_fold_if(stmt, ctx);
-                    if let Statement::IfStatement(if_stmt) = stmt
-                        && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
-                    {
-                        ctx.replace_statement(stmt, folded_stmt);
-                    }
+                    Self::try_minimize_if(stmt, ctx);
                 }
                 Statement::WhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
@@ -635,7 +631,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }
                 Expression::SequenceExpression(_) => Self::remove_sequence_expression(expr, ctx),
-                Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e, ctx),
+                Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e),
                 Expression::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
                 Expression::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
                 Expression::NewExpression(e) => {

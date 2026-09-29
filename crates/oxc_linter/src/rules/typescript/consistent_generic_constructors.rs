@@ -228,20 +228,13 @@ impl ConsistentGenericConstructors {
         let type_name_start = type_ref.type_name.span().start;
         let type_name_end = type_ref.type_name.span().end;
 
-        // Comments before type name (between colon and type name)
-        let comments_before: String = ctx
+        // Preserve comment order while building the replacement directly.
+        let new_type_args: String = ctx
             .comments_range((colon_pos + 1)..type_name_start)
+            .chain(ctx.comments_range(type_name_end..type_params.span.start))
             .map(|c| c.span.source_text(source_text))
+            .chain(std::iter::once(type_params_text))
             .collect();
-
-        // Comments between type name and type arguments
-        let comments_between: String = ctx
-            .comments_range(type_name_end..type_params.span.start)
-            .map(|c| c.span.source_text(source_text))
-            .collect();
-
-        // Build the new type arguments string to insert after constructor callee
-        let new_type_args = format!("{comments_before}{comments_between}{type_params_text}");
 
         // Delete from before any whitespace preceding the colon to the end of the type annotation
         // This ensures we don't leave extra whitespace when removing ` : Type`

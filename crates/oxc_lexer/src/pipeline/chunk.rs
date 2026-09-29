@@ -1,6 +1,11 @@
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 mod primitives {
-    use core::arch::x86_64::*;
+    use std::arch::x86_64::*;
 
     /// Load 256 bits starting at byte `i` as an `__m256i`.
     ///
@@ -36,9 +41,14 @@ mod primitives {
     }
 }
 
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 mod primitives {
-    use core::ptr;
+    use std::ptr;
 
     /// Load 64 bits starting at byte `i` as a `u64`.
     ///

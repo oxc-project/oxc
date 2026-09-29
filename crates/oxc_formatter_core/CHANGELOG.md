@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 7717813 formatter_markdown: Implement markdown formatter (#26434) (leaysgur)
+
+### 📚 Documentation
+
+- e012542 formatter_core: Add note for blanked front matter (#26786) (leaysgur)
+- 11ff089 formatter_markdown: Follow updated DIVERGENCES policy (#26776) (leaysgur)
+- 0c16983 formatter_core: Clean up FORMATTER_POLICY (#26745) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- 586f27a formatter_core: Add `prefix_align` builder and `Tag::(Start|End)Prefix` (#26520) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- dea2ba0 formatter_core: Do not panic with align(0) (#26468) (leaysgur)
+
+### 📚 Documentation
+
+- 66fda4f formatter: Update AGENTS.md comment handling (#26551) (leaysgur)
+
 ## [0.67.0] - 2026-09-07
 
 ### 💥 BREAKING CHANGES

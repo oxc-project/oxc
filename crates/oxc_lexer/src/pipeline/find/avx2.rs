@@ -1,6 +1,6 @@
-use core::arch::x86_64::*;
+use std::arch::x86_64::*;
 
-use super::super::chunk::{load256, mm, veq};
+use crate::pipeline::chunk::{load256, mm, veq};
 
 #[inline]
 pub unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
@@ -88,9 +88,8 @@ macro_rules! define_find_function {
         $(#[$attr])*
         #[inline]
         pub unsafe fn $name(src: *const u8, n: usize, mut i: usize) -> usize {
-            use core::arch::x86_64::_mm256_or_si256;
-            use super::super::chunk::{load256, veq, mm};
-            use super::avx2::vor;
+            use std::arch::x86_64::_mm256_or_si256;
+            use crate::pipeline::{find::avx2::vor, chunk::{load256, veq, mm}};
 
             while i + 32 <= n {
                 let v = load256(src, i);
@@ -122,3 +121,21 @@ macro_rules! vor {
     };
 }
 pub(super) use vor;
+
+/// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
+#[inline]
+pub fn bracket_bits(src: &[u8], base: usize) -> u64 {
+    let block = &src[base..base + 64];
+    let mut out = 0u64;
+    for half in 0..2 {
+        // SAFETY: `block` holds 64 bytes, so a 32-byte load at offset 0 or 32 stays inside it;
+        // the OR-fold touches no memory and needs only `avx2`, which this module's `#[cfg]`
+        // guarantees.
+        let v = unsafe { load256(block.as_ptr(), half * 32) };
+        let m = unsafe {
+            vor!(veq(v, b'('), veq(v, b')'), veq(v, b'['), veq(v, b']'), veq(v, b'{'), veq(v, b'}'))
+        };
+        out |= u64::from(mm(m)) << (half * 32);
+    }
+    out
+}

@@ -231,6 +231,9 @@ impl<'a> PatternParser<'a> {
     // Assertion[UnicodeMode, UnicodeSetsMode, NamedCaptureGroups] ::
     //   ^
     //   $
+    //   [+UnicodeMode] \A
+    //   [+UnicodeMode] \z
+    //   [+UnicodeMode] \Z
     //   \b
     //   \B
     //   [+UnicodeMode] (?= Disjunction[+UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
@@ -255,6 +258,12 @@ impl<'a> PatternParser<'a> {
             Some(ast::BoundaryAssertionKind::Boundary)
         } else if self.reader.eat2('\\', 'B') {
             Some(ast::BoundaryAssertionKind::NegativeBoundary)
+        } else if self.state.unicode_mode && self.reader.eat2('\\', 'A') {
+            Some(ast::BoundaryAssertionKind::StartBuffer)
+        } else if self.state.unicode_mode && self.reader.eat2('\\', 'z') {
+            Some(ast::BoundaryAssertionKind::EndBuffer)
+        } else if self.state.unicode_mode && self.reader.eat2('\\', 'Z') {
+            Some(ast::BoundaryAssertionKind::EndBufferOptionalNewline)
         } else {
             None
         };

@@ -1,10 +1,12 @@
-use crate::tables::Tables;
+use std::iter;
+
+use crate::pipeline::tables::Tables;
 
 use super::compress_blocks;
 
 #[test]
 fn compress_blocks_matches_scalar_reference() {
-    let t = Tables::new();
+    let t = Tables::get();
     let mut cases: Vec<Vec<u64>> = Vec::new();
     let all_pairs: Vec<u64> = (0..65536u64)
         .collect::<Vec<_>>()
@@ -14,15 +16,15 @@ fn compress_blocks_matches_scalar_reference() {
     cases.push(all_pairs);
     let mut s = 0x9e37_79b9_7f4a_7c15u64;
     for _ in 0..3 {
-        cases.push(core::iter::repeat_with(|| xorshift(&mut s)).take(512).collect());
+        cases.push(iter::repeat_with(|| xorshift(&mut s)).take(512).collect());
     }
     cases.push(
-        core::iter::repeat_with(|| xorshift(&mut s) & xorshift(&mut s) & xorshift(&mut s))
+        iter::repeat_with(|| xorshift(&mut s) & xorshift(&mut s) & xorshift(&mut s))
             .take(512)
             .collect(),
     );
     cases.push(
-        core::iter::repeat_with(|| xorshift(&mut s) | xorshift(&mut s) | xorshift(&mut s))
+        iter::repeat_with(|| xorshift(&mut s) | xorshift(&mut s) | xorshift(&mut s))
             .take(512)
             .collect(),
     );
@@ -44,7 +46,7 @@ fn compress_blocks_matches_scalar_reference() {
         let mut kinds = vec![0u8; n + 64];
         let m = unsafe {
             compress_blocks(
-                &t,
+                t,
                 st.as_ptr(),
                 kind.as_ptr(),
                 0,

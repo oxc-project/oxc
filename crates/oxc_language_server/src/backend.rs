@@ -1,22 +1,22 @@
 use std::{borrow::Cow, sync::Arc};
 
-use futures::future::join_all;
+use futures_util::future::join_all;
 use rustc_hash::FxBuildHasher;
 use serde_json::Value;
 use tokio::sync::{OnceCell, SetError};
 use tower_lsp_server::{
     Client, LanguageServer,
-    jsonrpc::{Error, ErrorCode, Result},
-    ls_types::{
+    gen_lsp_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
         DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
-        DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
-        ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
-        TextDocumentContentChangeEvent, TextEdit, Uri, WorkspaceEdit,
+        DocumentFormattingParams, ExecuteCommandParams, FullDocumentDiagnosticReport,
+        InitializeParams, InitializeResult, InitializedParams, MessageType, RelatedDocument,
+        RelatedFullDocumentDiagnosticReport, ServerInfo, TextDocumentContentChangeEvent, TextEdit,
+        Uri, WorkspaceEdit, WorkspaceFolders,
     },
+    jsonrpc::{Error, ErrorCode, Result},
 };
 use tracing::{debug, error, info, warn};
 
@@ -122,7 +122,9 @@ impl LanguageServer for Backend {
         debug!("diagnostic model: {:?}", capabilities.diagnostic_mode);
 
         // client sent workspace folders
-        let workers = if let Some(workspace_folders) = params.workspace_folders {
+        let workers = if let Some(WorkspaceFolders::WorkspaceFolderList(workspace_folders)) =
+            params.workspace_folders_initialize_params.workspace_folders
+        {
             let uris: Vec<&Uri> = workspace_folders.iter().map(|folder| &folder.uri).collect();
             WorkerManager::assert_workspaces_are_valid_paths(uris)?;
 
@@ -189,7 +191,6 @@ impl LanguageServer for Backend {
 
         Ok(InitializeResult {
             server_info: Some(self.server_info.clone()),
-            offset_encoding: None,
             capabilities: server_capabilities,
         })
     }
@@ -232,19 +233,17 @@ impl LanguageServer for Backend {
             // will only be filled when using push diagnostic model
             let mut new_diagnostics = Vec::new();
 
-            for (index, worker) in needed_configurations.values().copied().enumerate() {
+            for (index, worker) in needed_configurations.values().enumerate() {
                 // get the configuration from the response and start the worker
                 let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 debug!("starting worker in initialize with options: {configuration:?}");
                 client_messages.extend(worker.start_worker(configuration.clone()).await);
+            }
 
-                // run diagnostics for all known files in the workspace of the worker.
-                // This is necessary because the worker was not started before.
-                // On Pull diagnostic model, we will ask the client to refresh diagnostics instead of sending them all.
-                if capabilities.diagnostic_mode != DiagnosticMode::Push {
-                    continue;
-                }
-
+            // run diagnostics for all known files in the workspace of the worker.
+            // This is necessary because the worker was not started before.
+            // On Pull diagnostic model, we will ask the client to refresh diagnostics instead of sending them all.
+            if capabilities.diagnostic_mode == DiagnosticMode::Push {
                 for uri in &known_uris {
                     // Check if this worker is the most specific one for this URI
                     let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
@@ -254,9 +253,9 @@ impl LanguageServer for Backend {
                     let diagnostics = worker.run_diagnostic(document).await;
                     match diagnostics {
                         Err(err) => {
-                            error!("running diagnostics for {} failed: {err}", uri.as_str());
+                            error!("running diagnostics for {uri} failed: {err}");
                             client_messages
-                                .push(ClientMessage { r#type: MessageType::ERROR, message: err });
+                                .push(ClientMessage { r#type: MessageType::Error, message: err });
                         }
                         Ok(diagnostics) => new_diagnostics.extend(diagnostics),
                     }
@@ -606,8 +605,8 @@ impl LanguageServer for Backend {
             let document = self.file_system.get_document(&uri);
             match worker.run_diagnostic_on_save(document).await {
                 Err(err) => {
-                    error!("running diagnostics for {} failed: {err}", uri.as_str());
-                    self.client.show_message(MessageType::ERROR, err).await;
+                    error!("running diagnostics for {uri} failed: {err}");
+                    self.client.show_message(MessageType::Error, err).await;
                 }
                 Ok(diagnostics) => {
                     if !diagnostics.is_empty() {
@@ -623,12 +622,18 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didChange>
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let uri = params.text_document.uri;
-        if let Some(content) = params
-            .content_changes
-            .into_iter()
-            .next()
-            .map(|c: TextDocumentContentChangeEvent| c.text)
+        let uri = params.text_document.text_document_identifier.uri;
+        if let Some(content) =
+            params.content_changes.into_iter().next().map(|c: TextDocumentContentChangeEvent| {
+                match c {
+                    TextDocumentContentChangeEvent::TextDocumentContentChangeWholeDocument(doc) => {
+                        doc.text
+                    }
+                    TextDocumentContentChangeEvent::TextDocumentContentChangePartial(partial) => {
+                        partial.text
+                    }
+                }
+            })
         {
             self.file_system.set(uri.clone(), content);
         }
@@ -648,8 +653,8 @@ impl LanguageServer for Backend {
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic_on_change(document).await {
                 Err(err) => {
-                    error!("running diagnostics for {} failed: {err}", uri.as_str());
-                    self.client.show_message(MessageType::ERROR, err).await;
+                    error!("running diagnostics for {uri} failed: {err}");
+                    self.client.show_message(MessageType::Error, err).await;
                 }
                 Ok(diagnostics) => {
                     if !diagnostics.is_empty() {
@@ -697,7 +702,7 @@ impl LanguageServer for Backend {
 
         self.file_system.set_with_language(
             uri.clone(),
-            LanguageId::new(params.text_document.language_id),
+            LanguageId::new(params.text_document.language_id.to_string()),
             content,
         );
 
@@ -710,8 +715,8 @@ impl LanguageServer for Backend {
 
             match worker.run_diagnostic(document).await {
                 Err(err) => {
-                    error!("running diagnostics for {} failed: {err}", uri.as_str());
-                    self.client.show_message(MessageType::ERROR, err).await;
+                    error!("running diagnostics for {uri} failed: {err}");
+                    self.client.show_message(MessageType::Error, err).await;
                 }
                 Ok(diagnostics) => {
                     if !diagnostics.is_empty() {
@@ -782,7 +787,10 @@ impl LanguageServer for Backend {
     /// The client can send `context.only` to `source.fixAll.oxc` to fix all diagnostics of the file.
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction>
-    async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
+    async fn code_action(
+        &self,
+        params: CodeActionParams,
+    ) -> Result<Option<Vec<CodeActionResponse>>> {
         let uri = params.text_document.uri;
         let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
             return Ok(None);
@@ -828,7 +836,13 @@ impl LanguageServer for Backend {
             {
                 let workers = self.worker_manager.read_workspace_workers().await;
                 for worker in workers.iter() {
-                    match worker.execute_command(&params.command, params.arguments.clone()).await {
+                    match worker
+                        .execute_command(
+                            &params.command,
+                            params.arguments.clone().unwrap_or_default(),
+                        )
+                        .await
+                    {
                         Ok(Some(edit)) => edits.push(edit),
                         Ok(None) => {}
                         Err(err) => return Err(Error::new(err)),
@@ -838,7 +852,13 @@ impl LanguageServer for Backend {
 
             {
                 if let Some(worker) = self.worker_manager.read_dynamic_worker() {
-                    match worker.execute_command(&params.command, params.arguments.clone()).await {
+                    match worker
+                        .execute_command(
+                            &params.command,
+                            params.arguments.clone().unwrap_or_default(),
+                        )
+                        .await
+                    {
                         Ok(Some(edit)) => edits.push(edit),
                         Ok(None) => {}
                         Err(err) => return Err(Error::new(err)),
@@ -861,12 +881,12 @@ impl LanguageServer for Backend {
     async fn diagnostic(
         &self,
         params: DocumentDiagnosticParams,
-    ) -> Result<DocumentDiagnosticReportResult> {
+    ) -> Result<DocumentDiagnosticReport> {
         let uri = &params.text_document.uri;
         let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
-            return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+            return Ok(DocumentDiagnosticReport::RelatedFullDocumentDiagnosticReport(
                 RelatedFullDocumentDiagnosticReport::default(),
-            )));
+            ));
         };
 
         let document = self.file_system.get_document(uri);
@@ -874,7 +894,7 @@ impl LanguageServer for Backend {
 
         let diagnostics = match diagnostics {
             Err(err) => {
-                error!("running diagnostics for {} failed: {err}", uri.as_str());
+                error!("running diagnostics for {uri} failed: {err}");
                 return Err(Error {
                     code: ErrorCode::ServerError(1),
                     message: Cow::Owned(err),
@@ -893,7 +913,7 @@ impl LanguageServer for Backend {
         let related_diagnostics =
             diagnostics.into_iter().filter(|(diag_uri, _)| diag_uri != uri).collect::<Vec<_>>();
 
-        Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+        Ok(DocumentDiagnosticReport::RelatedFullDocumentDiagnosticReport(
             RelatedFullDocumentDiagnosticReport {
                 full_document_diagnostic_report: FullDocumentDiagnosticReport {
                     items: uri_diagnostics,
@@ -908,7 +928,7 @@ impl LanguageServer for Backend {
                             .map(|(diag_uri, diags)| {
                                 (
                                     diag_uri,
-                                    DocumentDiagnosticReportKind::Full(
+                                    RelatedDocument::FullDocumentDiagnosticReport(
                                         FullDocumentDiagnosticReport {
                                             items: diags,
                                             ..Default::default()
@@ -920,7 +940,7 @@ impl LanguageServer for Backend {
                     )
                 },
             },
-        )))
+        ))
     }
 
     /// It will return text edits to format the document if formatting is enabled for the workspace.
@@ -1039,7 +1059,7 @@ impl Backend {
         let max_messages = 5;
         let messages_to_send = if messages.len() > max_messages {
             let extra_message = ClientMessage {
-                r#type: MessageType::WARNING,
+                r#type: MessageType::Warning,
                 message: format!(
                     "{} more messages not shown. See LSP logs for details.",
                     messages.len() - max_messages + 1

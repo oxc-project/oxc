@@ -22,7 +22,7 @@ events:
 
 Oops! Something went wrong! :(
 
-ESLint: 10.9.1
+ESLint: 10.11.0
 
 Error: `Identifier` visit function threw
 Occurred while linting <fixture>/files/1.js:1

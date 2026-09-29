@@ -98,6 +98,8 @@ each node's generated `fmt` prints its leading and trailing runs (`formatter/tri
   - the cursor-based ones (`comments_before` and friends, the unprinted view) are for PRINTING
   - the position-based ones (`all_comments_*`) are for LAYOUT DECISIONS
 - A decision evaluated more than once for a node (cached bodies, a re-entered `fmt`) must not depend on the cursor
+- A parent hands a decision to a node by a position-keyed mark when the cursor cannot carry it (`mark_as_type_cast_node`, `mark_suppressed_after_operator`);
+  marks are never cleared, node starts are unique
 
 ### Token classes
 
@@ -107,7 +109,7 @@ Three token classes decide a comment's freedom of movement:
   Formatter-owned, so the same-line trailing run moves behind it, block and line comments alike ("Moving behind a terminator (class 1)")
 - (2) Separator and in-head terminator: list separators (`,`, interface / type literal members' `;` ⇄ `,`), the for-head's `;`s, a label's or a single-block case test's `:`.
   The comment stays before the token; only a same-line line comment rides its `line_suffix` past it (`for (a // c\n; b;)` -> `a; // c`, `foo // c\n: b();` -> `foo: // c` + break)
-- (3) Delimiter: a body's `{` `}`, a head's `(` `)`, the `}`-to-keyword gap.
+- (3) Delimiter: a body's `{` `}`, a head's `(` `)`, a call's argument `(` `)` and type argument `<` `>`, the `}`-to-keyword gap.
   User content: comments never cross it in either direction ("Head-body and operator gaps (class 3)")
 
 Redundant expression parens are formatter-owned, not delimiters (FORMATTER_POLICY):
@@ -137,14 +139,24 @@ so a comment between a head and its body keeps its side of each, uniformly acros
 - own-line comment keeps its own line
 - comments before a `}`-to-keyword gap (`else`/`catch`/`finally`/`while`) split at the keyword and keep their side
 
+A call's callee-opener gap (callee to `?.`, `<` or `(`; `new`'s callee to `<`) follows the same policy (`FormatBeforeOpener` in `utils/statement_body.rs`, DIVERGENCES.md#callee-arguments-gap-comment), except the cases in "Open debts".
+
 The `as`/`satisfies` operator gap follows the same policy (`as_or_satisfies_expression.rs`, DIVERGENCES.md#binary-cast-own-line-comment), with two additions:
 
 - the pre-operator slot is grammar-bounded (no line terminator may precede the operator, a multiline comment's interior counts),
   so once the expression's source parens are dropped, only same-line single-line block comments stay on the expression side;
   everything else normalizes to the type side so the output re-parses
 - paragraph-like promotion: a line-ending multiline block goes own-line above the type.
-  `=`/`:` reach the same outputs through `AssignmentLike` (DIVERGENCES.md#eol-comment-after-assign-colon);
+  Declarators, assignments and type aliases reach the same outputs at `=` through `AssignmentLike` (DIVERGENCES.md#eol-comment-after-assign-colon);
+  property keys and class fields keep it on the left;
   the head-body `write_*` helpers split on `preceded_by_newline` alone and do not promote
+- a union type claims the after-operator comments itself, the same placement as after a type alias's `=` (`union_type.rs`);
+  the operator side breaks only for a riding line comment before the operator.
+  A suppressed union never runs that printer, so the cast site and `AssignmentLike` lay it out like any other type
+- an assignment-like's `=` / `:` (`AssignmentLike`): the left side's trailing run stops at the operator (comments past it are hidden while it prints);
+  a glued run ending in a line comment prints right after the operator (`operator_line_run`), a block-ending one leads the right-hand side;
+  a line-ending single-line block before the operator trails the left side;
+  with comments the left side deferred still pending, nothing glues (same as the cast site)
 
 Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`);
 their rustdocs cover how the head's generic trailing pass is kept from claiming the gap.
@@ -153,8 +165,8 @@ their rustdocs cover how the head's generic trailing pass is kept from claiming 
 
 A suppression comment protects content; the token classes above still apply to what the node prints around it.
 
-- Target: a trailing suppression comment counts like a leading one for every node (`is_span_suppressed` in the generated `fmt`),
-  and the outermost node ending there claims it; a union leaves it to its member instead (Prettier's `handleUnionTypeComments`)
+- Target: a trailing suppression comment counts like a leading one for every node (`is_span_suppressed` in the generated `fmt`), and the outermost node ending there claims it.
+- Placement and target are separate questions: a suppression line comment ending the `=` line (or a property's `:` line) keeps its line (printed right after the operator) and targets the right-hand side
 - Statements and class members: content verbatim, terminator per `semi` (`write_suppressed_statement`, `FormatClassElementWithSemicolon`);
   a node without a terminator of its own prints its whole span.
   Prettier re-adds a statement's `;` only when the source had one and prints class members whole (DIVERGENCES.md#suppressed-terminator-per-semi)
@@ -171,26 +183,46 @@ except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e.
 
 ### Couplings to keep in step
 
-Each row pairs a decision with the site that acts on it, on purpose. No assert catches drift, so change both and pin the change in a fixture.
+Each item pairs a decision with the site that acts on it, on purpose.
+No assert catches drift, so change both and pin the change in a fixture.
+The second line of each item is the drift symptom.
 
-| Coupling                                                                                                                                                                                                      | Drift symptom                                                        |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| keeps table: `keeps_trailing_comment_inside_parens` (statement side) ⇄ `write_trailing_comments_inside_parens` (expression side), plus its arrow-body slice `arrow_body_keeps_trailing_comment_inside_parens` | a comment silently lands elsewhere                                   |
-| terminator set: `Comments::has_semicolon_or_closing_paren_in_range` (does the run move) ⇄ `lines_after_skipping_terminators` (deferred break measurement)                                                     | a deferred comment's blank lines miscounted                          |
-| suppressed content end: `suppressed_statement_content_end` ⇄ the reprint's `;` sites (`FormatContentWithSemicolon` / `OptionalSemicolon`); same terminator, NOT the same content end (see its rustdoc)        | a suppressed statement's `;` differs from the reprint's              |
-| `is_node_suppressed`: the import sorter's partition test ⇄ the printer                                                                                                                                        | a suppressed import is a boundary to one and not the other           |
-| `limit_comments_up_to` after `has_trailing_suppression_comment`                                                                                                                                               | the node loses its suppression                                       |
-| any site printing a statement outside the generated `Statement` fmt (an `if` consequent before `else`) asks `write_suppressed_statement` first                                                                | the generic verbatim path prints the source `;` regardless of `semi` |
+- keeps table: `keeps_trailing_comment_inside_parens` (statement side) ⇄ `write_trailing_comments_inside_parens` (expression side),
+  plus its arrow-body slice `arrow_body_keeps_trailing_comment_inside_parens`
+  - a comment silently lands elsewhere
+- terminator set: `Comments::has_semicolon_or_closing_paren_in_range` (does the run move) ⇄ `lines_after_skipping_terminators` (deferred break measurement)
+  - a deferred comment's blank lines miscounted
+- suppressed content end: `suppressed_statement_content_end` ⇄ the reprint's `;` sites (`FormatContentWithSemicolon` / `OptionalSemicolon`);
+  same terminator, NOT the same content end (see its rustdoc)
+  - a suppressed statement's `;` differs from the reprint's
+- `is_node_suppressed`: the import sorter's partition test ⇄ the printer
+  - a suppressed import is a boundary to one and not the other
+- `limit_comments_up_to` after `has_trailing_suppression_comment`
+  - the node loses its suppression
+- any site printing a statement outside the generated `Statement` fmt (an `if` consequent before `else`) asks `write_suppressed_statement` first
+  - the generic verbatim path prints the source `;` regardless of `semi`
+- `AssignmentLike::right_start` (the node `mark_suppressed_after_operator` keys on) ⇄ the `span().start` that node's generated `fmt` asks `is_suppressed` with
+  - the right-hand side after `= // prettier-ignore` is reformatted
+- `union_prints_itself` (the layout arms of `AssignmentLike` and the cast site) ⇄ the union's generated `fmt` suppression check
+  - a suppressed union prints from column 0, its leading comment hoisted onto the operator's line
 
 ### Open debts
 
-Behavior that follows Prettier where our own rules want one answer. Not accepted, only not fixed yet; each fix is a uniform-rule DIVERGENCES entry plus a fixture pin.
+Behavior our own rules want otherwise, mostly where it follows Prettier. Not accepted, only not fixed yet; each fix is a DIVERGENCES entry plus a fixture pin.
 
 - TS-only statements (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`)
   and class index signatures keep a same-line comment before their `;` (`import A = B /* c */;`), instead of the glued `;` above.
   The fix is a `FormatContentWithSemicolon` adoption each
 - An own-line comment claimed mid-line inlines onto that line (`const // c` + break), violating "own-line comments stay own-line".
   See the NOTE in `FormatLeadingComments` (`formatter/trivia.rs`)
+- A type annotation's `:` has no operator-line rule of its own: after `let a: // c` the type prints from column 0 (Prettier too),
+  while `type A = // c` breaks + indents (`AssignmentLike`) and only a union indents itself there (`union_type.rs`).
+  The fix is the `=` rule at the `TSTypeAnnotation` site (break + indent after a line comment), which also aligns a suppressed union with `type =`
+- The callee-opener gap is not bounded at the `(` for the type arguments and `new`'s callee, nor for a chain's computed-member, call, or optional-call callee:
+  they still claim comments across the `(` (`foo<T> // c` + break + `(a)` -> `foo<T>(a); // c`).
+  Bounding them also moves a same-line comment right after the `(` own-line (`f<T>( // eslint-disable-line`), so it waits for the opener exception (FORMATTER_POLICY) to be revisited
+- A line comment right after the `<` of a hugged single type argument keeps the unbreakable hug: `f<// c` + break + `T>()` prints `T` at column 0.
+  Breaking the hug also decides whether the comment goes own-line or stays on the `<` line, so it waits for the same revisit
 
 The flat JSX arrow body is a limitation, not a debt: the paren decision is a group fit, unknowable at comment time (DIVERGENCES.md#paren-comment-fixpoint).
 

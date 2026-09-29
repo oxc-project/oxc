@@ -1,7 +1,5 @@
 # externals/prettier/js/multiparser-css/styled-components.js
 
-> `Xxx.extend` not recognized as tag. See apps/oxfmt/DIVERGENCES.md#styled-extend-tag
-
 ## Option 1
 
 `````json

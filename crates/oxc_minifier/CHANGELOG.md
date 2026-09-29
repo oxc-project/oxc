@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- c380c85 minifier: Preserve iife with directives (#27060) (Armano)
+- d79ad19 codegen: Remove redundant dollar escapes in minified templates (#26924) (camc314)
+
+### ⚡ Performance
+
+- 0afbf85 minifier: Fold logical expressions in place (#26768) (Armano)
+- 3471f29 minifier: Avoid creation of empty block when folding try finally (#26971) (Armano)
+- 3893d64 minifier: Update boolean context expressions in place (#26823) (Armano)
+- de8af47 minifier: Take return argument directly when converting arrow fn (#26830) (Armano)
+- fc37ba0 minifier: Reduce allocations when minimizing assignments (#26609) (Armano)
+- dce64f6 minifier: Use ident hashes for catch var and arguments (#26907) (Armano)
+- 57610b3 minifier: Use ident hashes in label comparison (#26887) (Armano)
+
+## [0.151.0] - 2026-09-21
+
+### 🐛 Bug Fixes
+
+- cd7228f minifier: Add missing negation for boolean literal (#26847) (Armano)
+
+### ⚡ Performance
+
+- 3f1e3aa minifier: Preallocate stmts vec size to avoid excesive reallocs (#26856) (Armano)
+- 5f72954 minifier: Reduce allocations when processing if statements (#26666) (Armano)
+
+## [0.150.0] - 2026-09-14
+
+### 🚀 Features
+
+- ca649e0 ecma: Define math constants as known globals and resolve their types (#26585) (Armano)
+- 80a76a0 minifier: Negate binary comparison for `typeof x < 'u'` (#26367) (Armano)
+
+### ⚡ Performance
+
+- a242469 minfiier: Reduce allocs when creating indirect access (#26601) (Armano)
+- 5b4787f minifier: Update chain expressions in place (#26544) (Armano)
+- 0bc1661 minifier: Try merging before creating new expression statements (#26556) (Armano)
+- c78d707 minifier: Process newly created stmt in handle_if_statement (#26541) (Armano)
+- 029c84b minfier: Update expressions in place when substituting alternate syntax (#26460) (Armano)
+
 ## [0.149.0] - 2026-09-07
 
 ### 💥 BREAKING CHANGES

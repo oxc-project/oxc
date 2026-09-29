@@ -689,6 +689,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Declaration::ClassDeclaration(decl)
             }
             Kind::Import => {
+                self.verify_modifiers(
+                    modifiers,
+                    ModifierKinds::new([ModifierKind::Export]),
+                    true,
+                    |modifier, allowed| match modifier.kind {
+                        ModifierKind::Declare => {
+                            diagnostics::declare_modifier_on_import(modifier.span())
+                        }
+                        ModifierKind::Abstract => {
+                            diagnostics::illegal_abstract_modifier(modifier.span())
+                        }
+                        _ => diagnostics::modifier_cannot_be_used_here(modifier, allowed),
+                    },
+                );
                 self.bump_any();
                 let token = self.cur_token();
                 let mut import_kind = ImportOrExportKind::Value;

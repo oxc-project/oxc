@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-// Two space-separated strings keep their gap (see DIVERGENCES.md "less-escaped-string-gap")
+// Two space-separated strings keep their gap (see DIVERGENCES.md#less-escaped-string-gap)
 @quotes: "~" "~";
 .a {
   v: "~" "~";
@@ -13,7 +13,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 { printWidth: 80 }
 ------------------
-// Two space-separated strings keep their gap (see DIVERGENCES.md "less-escaped-string-gap")
+// Two space-separated strings keep their gap (see DIVERGENCES.md#less-escaped-string-gap)
 @quotes: "~" "~";
 .a {
   v: "~" "~";
@@ -23,7 +23,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 -------------------
 { printWidth: 100 }
 -------------------
-// Two space-separated strings keep their gap (see DIVERGENCES.md "less-escaped-string-gap")
+// Two space-separated strings keep their gap (see DIVERGENCES.md#less-escaped-string-gap)
 @quotes: "~" "~";
 .a {
   v: "~" "~";

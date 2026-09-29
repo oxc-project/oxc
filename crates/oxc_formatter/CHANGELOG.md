@@ -4,6 +4,55 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.71.0] - 2026-09-28
+
+### 🚀 Features
+
+- 342527d oxfmt: Bump bundled Prettier version to 3.9.8 (#26999) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- eeba1db formatter: Skip test-call layout when arguments have comments (#27119) (leaysgur)
+- 10b10c5 formatter: Keep comments around `=` on their side and line (#27041) (leaysgur)
+- 9aad365 formatter: Keep comments deferred before an assignment operator (#26997) (waltu)
+- 8fbddb1 formatter/jsdoc: More alignment with original plugin (#27039) (leaysgur)
+- 50be18e formatter: Keep trailing spaces on normal block comments (#27037) (leaysgur)
+- 56d1880 formatter: Nestle adjacent block comments (#27036) (leaysgur)
+- 3be5d94 formatter: Treat `/***` comments as JSDoc (#27035) (leaysgur)
+- cd45f71 formatter: Keep trailing double spaces on JSDoc lines (#26861) (John Costa)
+
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 6c8a862 formatter: Glue `fbt` component and text (#26616) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 68ce610 formatter: Keep after-operator comments in place (#26725) (leaysgur)
+- f91ad92 formatter: Let union place leading comments at `as|satisfies` (#26674) (leaysgur)
+- ea164c0 formatter: Fix block comment with RHS assignment and typecast-ed arrow body (#26672) (leaysgur)
+- 406ff1f formatter: Preserve redundant parens for `TSTypeAliasDeclaration` with suppress comment (#26671) (leaysgur)
+
+### 📚 Documentation
+
+- 095a97c formatter: Unify DIVERGENCES reference (#26748) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- d7e0c82 formatter: Keep an enum member's trailing suppress comment (#26549) (leaysgur)
+- d2fe01e formatter: Unify suppress comment behavior (#26547) (leaysgur)
+- 9dbddca formatter: Keep group flat for own-line comment in JSX (#26475) (leaysgur)
+- bf1d3f6 formatter: Check `this_param` for simple parameters test (#26474) (leaysgur)
+- 33cdc84 formatter: Keep cast-target assignment and commented parameter patterns (#26429) (leaysgur)
+
+### 📚 Documentation
+
+- 66fda4f formatter: Update AGENTS.md comment handling (#26551) (leaysgur)
+- 41abcba formatter: Note why jsx-test-suite snippets stay off (#26515) (leaysgur)
+
 ## [0.67.0] - 2026-09-07
 
 ### 🐛 Bug Fixes

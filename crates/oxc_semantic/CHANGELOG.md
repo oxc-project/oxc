@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.151.0] - 2026-09-21
+
+### ⚡ Performance
+
+- bd3f69e semantic: Reuse identifier hashes in enum member lookups (#26773) (camc314)
+
+## [0.150.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- a091fc4 parser: Validate await context for await using declarations (#26495) (camc314)
+
 ## [0.149.0] - 2026-09-07
 
 ### 🐛 Bug Fixes

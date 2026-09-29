@@ -1,4 +1,4 @@
-use crate::{lanes::Lanes, tables::Tables};
+use crate::lanes::Lanes;
 
 mod common;
 mod js;
@@ -7,9 +7,8 @@ mod jsx;
 use js::carve_js;
 use jsx::carve_jsx;
 
-#[inline]
+#[inline(never)]
 pub unsafe fn carve(
-    t: &Tables,
     srcs: &[u8],
     n: usize,
     st: *mut u64,
@@ -24,8 +23,8 @@ pub unsafe fn carve(
     lanes: &mut Lanes,
 ) {
     if jsx {
-        carve_jsx(t, srcs, n, st, kind, opch, word, digit, dot, kwinit, ts, lanes);
+        carve_jsx(srcs, n, st, kind, opch, word, digit, dot, kwinit, ts, lanes);
     } else {
-        carve_js(t, srcs, n, st, kind, opch, word, digit, ts, lanes);
+        carve_js(srcs, n, st, kind, opch, word, ts, lanes);
     }
 }
