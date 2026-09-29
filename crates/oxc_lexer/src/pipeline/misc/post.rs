@@ -17,6 +17,7 @@ pub unsafe fn misc_post(
     }
 }
 
+#[inline(never)]
 unsafe fn misc_post_impl(
     src: *const u8,
     n: usize,

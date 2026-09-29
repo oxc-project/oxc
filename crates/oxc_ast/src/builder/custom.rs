@@ -23,9 +23,9 @@ use super::GetAstBuilder;
 impl<'a> Expression<'a> {
     /// Build an [`Expression`] representing the number `0`.
     #[inline]
-    pub fn new_number_0(builder: &impl GetAstBuilder<'a>) -> Self {
+    pub fn new_number_0(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        Expression::new_numeric_literal(SPAN, 0.0, None, NumberBase::Decimal, builder)
+        Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, builder)
     }
 
     /// Build an [`Expression`] representing `void 0`.
@@ -35,7 +35,7 @@ impl<'a> Expression<'a> {
     #[inline]
     pub fn new_void_0(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        let argument = Expression::new_number_0(builder);
+        let argument = Expression::new_number_0(SPAN, builder);
         Expression::new_unary_expression(span, UnaryOperator::Void, argument, builder)
     }
 

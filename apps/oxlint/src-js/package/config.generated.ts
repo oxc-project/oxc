@@ -5436,6 +5436,20 @@ export interface NoUnstableNestedComponentsConfig {
 }
 export interface OnlyExportComponentsConfig {
   /**
+   * Allow an exported object when every property is a React component.
+   * This matches Vite's compound component support. The object must be non-empty,
+   * contain no nested objects, spreads, or accessors, and anonymous functions
+   * must use a component name as a static property key.
+   *
+   * ```jsx
+   * // Allowed when allowCompoundComponents: true
+   * const Root = () => <div />;
+   * const Label = () => <span />;
+   * export const Tag = { Root, Label };
+   * ```
+   */
+  allowCompoundComponents?: boolean;
+  /**
    * Allow exporting primitive constants (string/number/boolean/template literal)
    * alongside component exports without triggering a violation. Recommended when your
    * bundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`

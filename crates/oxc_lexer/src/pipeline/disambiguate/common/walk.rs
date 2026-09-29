@@ -5,10 +5,6 @@
 //!
 //! Stepping and inspecting:
 //! - [`prev_sig`] steps to the previous token, skipping whitespace and comments.
-//! - [`kind_at`] reads a token's kind, treating keywords as plain identifiers,
-//!   and escaped identifiers as unescaped ones.
-//! - [`ident_is`] and [`word_is_any`] check whether an identifier is a particular word,
-//!   like `let`, or any word in a list.
 //!
 //! Jumping over bracketed groups:
 //! - [`match_delim_back`] goes from a `)`, `]` or `}` back to its opener over a bitmap of
@@ -25,7 +21,7 @@ use crate::{
         disambiguate::BRACKET_STEP_CAP,
         find::bracket_bits,
     },
-    token::{KW_KIND_BASE, KW_KIND_MAX, OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
+    token::{OP_KIND_BASE, is_trivia_byte},
 };
 
 /// The source's bracket bytes (`(){}[]`) as a bitmap, built per lex a 64-byte word at a time
@@ -182,12 +178,6 @@ fn delim_slot(c: u8) -> usize {
     }
 }
 
-pub(crate) fn word_is_any(src: &[u8], w: usize, words: &[&[u8]]) -> bool {
-    let len = word_len(src, w);
-    let first = src[w];
-    words.iter().any(|kw| kw.len() == len && kw[0] == first && ident_is(src, w, kw))
-}
-
 #[inline(always)]
 pub(crate) fn word_len(src: &[u8], w: usize) -> usize {
     let mut e = w + 1;
@@ -218,16 +208,4 @@ pub(crate) fn prev_sig(st: &[u64], kind: &[u8], pos: usize) -> Option<usize> {
         q = bits::prev1(st, p);
     }
     q
-}
-
-#[inline(always)]
-pub(crate) fn kind_at(kind: &[u8], w: usize) -> u8 {
-    let k = kind[w];
-    if k >= KW_KIND_BASE && k <= KW_KIND_MAX {
-        return tk!(Ident);
-    }
-    if matches_tk!(k, IdentEscaped | PrivateIdentEscaped) {
-        return k & !(tk!(IdentEscaped) ^ tk!(Ident));
-    }
-    k
 }

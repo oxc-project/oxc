@@ -144,41 +144,62 @@ impl<'a> PeepholeOptimizations {
         }
 
         // `a ? c : (b, c)` => `(a || b), c`
+        // `a ? d : (b, c, d)` => `(a || (b, c)), d`
         if let Expression::SequenceExpression(alternate) = &mut expr.alternate
-            && alternate.expressions.len() == 2
-            && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
+            && alternate.expressions.len() > 1
+            && let Some(last) = alternate.expressions.last()
+            && ctx.expr_eq(last, &expr.consequent)
         {
-            let mut new_seq = alternate.take_in_box(ctx);
-            new_seq.span = expr.span();
-            ctx.replace_expression_with(&mut new_seq.expressions[0], |seq_0, ctx| {
-                Self::join_with_left_associative_op(
-                    expr.test.span(),
-                    LogicalOperator::Or,
-                    expr.test.take_in(ctx),
-                    seq_0,
-                    ctx,
-                )
-            });
-            return Some(Expression::SequenceExpression(new_seq));
+            let last_expr = alternate.expressions.pop().unwrap();
+            let seq_prefix = if alternate.expressions.len() == 1 {
+                alternate.expressions.pop().unwrap()
+            } else {
+                expr.alternate.take_in(ctx)
+            };
+            return Some(Expression::new_sequence_expression(
+                expr.span,
+                [
+                    Self::join_with_left_associative_op(
+                        expr.test.span(),
+                        LogicalOperator::Or,
+                        expr.test.take_in(ctx),
+                        seq_prefix,
+                        ctx,
+                    ),
+                    last_expr,
+                ],
+                ctx,
+            ));
         }
 
         // `a ? (b, c) : c` => `(a && b), c`
+        // `a ? (b, c, d) : d` => `(a && (b, c)), d`
         if let Expression::SequenceExpression(consequent) = &mut expr.consequent
-            && consequent.expressions.len() == 2
-            && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
+            && consequent.expressions.len() > 1
+            && let Some(last) = consequent.expressions.last()
+            && ctx.expr_eq(last, &expr.alternate)
         {
-            let mut new_seq = consequent.take_in_box(ctx);
-            new_seq.span = expr.span();
-            ctx.replace_expression_with(&mut new_seq.expressions[0], |seq_0, ctx| {
-                Self::join_with_left_associative_op(
-                    expr.test.span(),
-                    LogicalOperator::And,
-                    expr.test.take_in(ctx),
-                    seq_0,
-                    ctx,
-                )
-            });
-            return Some(Expression::SequenceExpression(new_seq));
+            let last_expr = consequent.expressions.pop().unwrap();
+            let seq_prefix = if consequent.expressions.len() == 1 {
+                consequent.expressions.pop().unwrap()
+            } else {
+                expr.consequent.take_in(ctx)
+            };
+
+            return Some(Expression::new_sequence_expression(
+                expr.span,
+                [
+                    Self::join_with_left_associative_op(
+                        expr.test.span(),
+                        LogicalOperator::And,
+                        expr.test.take_in(ctx),
+                        seq_prefix,
+                        ctx,
+                    ),
+                    last_expr,
+                ],
+                ctx,
+            ));
         }
 
         // `a ? b || c : c` => `(a && b) || c`

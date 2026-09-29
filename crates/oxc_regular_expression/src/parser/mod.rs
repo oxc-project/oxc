@@ -10,7 +10,93 @@ pub use parser_impl::{ConstructorParser, LiteralParser};
 mod test {
     use oxc_allocator::Allocator;
 
-    use crate::{ConstructorParser, LiteralParser, Options};
+    use crate::{ConstructorParser, LiteralParser, Options, ast::Term};
+
+    #[test]
+    fn escaped_group_names() {
+        let allocator = Allocator::default();
+
+        for (pattern, flags, expected_name) in [
+            (r"(?<Ꭰ>)\k<\u13A0>", "", "Ꭰ"),
+            (r"(?<\u13A0>)\k<Ꭰ>", "", "Ꭰ"),
+            (r"(?<\u{13A0}>)\k<\u13A0>", "u", "Ꭰ"),
+            (r"(?<𝒜>)\k<\uD835\uDC9C>", "u", "𝒜"),
+        ] {
+            let parsed = LiteralParser::new(&allocator, pattern, Some(flags), Options::default())
+                .parse()
+                .unwrap_or_else(|error| panic!("/{pattern}/{flags}: {error}"));
+            let terms = &parsed.body.body[0].body;
+            let Term::CapturingGroup(group) = &terms[0] else {
+                panic!("expected capturing group in /{pattern}/{flags}");
+            };
+            let Term::NamedReference(reference) = &terms[1] else {
+                panic!("expected named reference in /{pattern}/{flags}");
+            };
+            assert_eq!(group.name.as_ref().unwrap().as_str(), expected_name);
+            assert_eq!(reference.name.as_str(), expected_name);
+        }
+
+        for pattern in [r"(?<Ꭰ>)(?<\u13A0>)", r"(?<\u13A0>)(?<Ꭰ>)"] {
+            assert!(
+                LiteralParser::new(&allocator, pattern, Some(""), Options::default())
+                    .parse()
+                    .is_err(),
+                "/{pattern}/ should reject duplicate capture names"
+            );
+        }
+
+        let alternative_names = r"(?<Ꭰ>)|(?<\u13A0>)";
+        assert!(
+            LiteralParser::new(&allocator, alternative_names, Some(""), Options::default())
+                .parse()
+                .is_ok(),
+            "duplicate capture names in separate alternatives are valid"
+        );
+
+        for (pattern, expected) in [
+            (r"(?<⽇>)(?<\u2F47>)", "Unterminated capturing group name"),
+            (r"(?<_⽇>)(?<_\u2F47>)", "Unterminated capturing group name"),
+            (r"(?<🌚>)(?<\u{1F31A}>)", "Invalid surrogate pair"),
+            (r"(?<_🌚>)(?<_\u{1F31A}>)", "Invalid surrogate pair"),
+        ] {
+            let error = LiteralParser::new(&allocator, pattern, Some(""), Options::default())
+                .parse()
+                .unwrap_err();
+            assert!(error.to_string().contains(expected), "/{pattern}/: {error}");
+        }
+    }
+
+    #[test]
+    fn escaped_group_names_in_constructor() {
+        let allocator = Allocator::default();
+
+        for (source, expected_name) in [
+            (r#""(?<\\u13A0>)\\k<\\u13A0>""#, "Ꭰ"),
+            (r#""(?<\\u13A0>)\\k<Ꭰ>""#, "Ꭰ"),
+            (r#""(?<\x61>)\\k<a>""#, "a"),
+        ] {
+            let parsed = ConstructorParser::new(&allocator, source, None, Options::default())
+                .parse()
+                .unwrap_or_else(|error| panic!("{source}: {error}"));
+            let terms = &parsed.body.body[0].body;
+            let Term::CapturingGroup(group) = &terms[0] else {
+                panic!("expected capturing group in {source}");
+            };
+            let Term::NamedReference(reference) = &terms[1] else {
+                panic!("expected named reference in {source}");
+            };
+            assert_eq!(group.name.as_ref().unwrap().as_str(), expected_name);
+            assert_eq!(reference.name.as_str(), expected_name);
+        }
+
+        let duplicate = r#""(?<\\u13A0>)(?<Ꭰ>)""#;
+        assert!(
+            ConstructorParser::new(&allocator, duplicate, None, Options::default())
+                .parse()
+                .is_err(),
+            "{duplicate} should reject duplicate capture names"
+        );
+    }
 
     #[test]
     fn should_pass() {

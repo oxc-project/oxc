@@ -1,6 +1,10 @@
 use std::{ptr, slice};
 
-use crate::{error::DiagCode, lanes::Lanes, token::tk};
+use crate::{
+    error::DiagCode,
+    lanes::Lanes,
+    token::{TokenKind, tk},
+};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
@@ -8,19 +12,18 @@ use crate::pipeline::{
     disambiguate::{gt_run_split, lt_run_split},
     operators::{is_op_char, opmap_longest, opmap_pack},
     scan::scan_number,
-    tables::{KwSet, Tables},
     token_view,
 };
 
 mod keywords;
 pub use keywords::KWB;
-use keywords::kw_flush;
+use keywords::{kw_flush, kw_match_word};
 
 /// [`glue_number`] computes the kind as `NUM + is_bigint` - keep them adjacent.
 const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
 
+#[inline(never)]
 pub unsafe fn coalesce(
-    t: &Tables,
     src: *const u8,
     n: usize,
     st: *mut u64,
@@ -34,7 +37,6 @@ pub unsafe fn coalesce(
     ts: bool,
     lanes: &mut Lanes,
 ) {
-    let kw = if ts { &t.keywords.kwts } else { &t.keywords.kwjs };
     lanes.disambiguate.restart(lanes.module);
     let nw = (n + 63) >> 6;
     let mut opprev: u64 = 0;
@@ -124,7 +126,7 @@ pub unsafe fn coalesce(
                         continue;
                     }
                 }
-                cursor = glue_number(t, kw, src, n, st, opch, word, kind, p, lanes);
+                cursor = glue_number(ts, src, n, st, opch, word, kind, p, lanes);
             } else {
                 let y2 = (op >> bit) | ((opnext << (63 - bit)) << 1);
                 let run = (!y2).trailing_zeros() as usize;
@@ -134,19 +136,17 @@ pub unsafe fn coalesce(
                 // In TS, `>` may close nested type args including `Foo<T>= 1`, so fusing can diverge.
                 // Cheap inline byte checks handle this
                 if b0 == b'>'
-                    && kw.ts_key
+                    && ts
                     && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1))))
                 {
                     let kw_final = (w & !(KWB - 1)) << 6;
                     let tokens = token_view(
-                        t,
                         src,
                         st,
                         opch,
-                        word,
                         kind,
                         n,
-                        ts,
+                        true,
                         kw_final,
                         lanes.module,
                         &lanes.disambiguate.brackets,
@@ -160,16 +160,14 @@ pub unsafe fn coalesce(
                     }
                 }
                 // Mirror case: `Array<<T>(x: T) => T>` opens two lists, not `<<` shift-left.
-                if b0 == b'<' && b1 == b'<' && kw.ts_key {
+                if b0 == b'<' && b1 == b'<' && ts {
                     let tokens = token_view(
-                        t,
                         src,
                         st,
                         opch,
-                        word,
                         kind,
                         n,
-                        ts,
+                        true,
                         0,
                         lanes.module,
                         &lanes.disambiguate.brackets,
@@ -230,16 +228,15 @@ pub unsafe fn coalesce(
             }
         }
         if w & (KWB - 1) == KWB - 1 {
-            kw_flush(kw, src, word, kind, kwpos, k);
+            kw_flush(ts, src, word, kind, kwpos, k);
             k = 0;
         }
     }
-    kw_flush(kw, src, word, kind, kwpos, k);
+    kw_flush(ts, src, word, kind, kwpos, k);
 }
 
 unsafe fn glue_number(
-    t: &Tables,
-    kw: &KwSet,
+    ts: bool,
     src: *const u8,
     n: usize,
     st: *mut u64,
@@ -287,10 +284,8 @@ unsafe fn glue_number(
                 // word bitmap, no match right after a member `.` (a number
                 // ending in `.` is that dot-run's first dot).
                 if *src.add(e2 - 1) != b'.' {
-                    let wb = word as *const u8;
-                    let x = ptr::read_unaligned(wb.add(e2 >> 3) as *const u64) >> (e2 & 7);
-                    let kk = kw.lookup(src.add(e2), (!x).trailing_zeros() as usize);
-                    if kk != 0 {
+                    let kk = kw_match_word(ts, src, word, e2);
+                    if kk != TokenKind::Ident {
                         *kind.add(e2) = kk as u8;
                     }
                 }
@@ -303,19 +298,17 @@ unsafe fn glue_number(
         if e2 + 1 < n && is_op_char(c) && bm_get(opch, e2 + 1) {
             // A numeric literal type ends its type argument list here (`Map<A, 1.5>>`); without this the number's own munch
             // reaches the `>` run before `coalesce` ever raises it as an event.
-            if c == b'>' && kw.ts_key && matches!(*src.add(e2 + 1), b'>' | b'=') {
+            if c == b'>' && ts && matches!(*src.add(e2 + 1), b'>' | b'=') {
                 let end = bm_next0(opch, e2, n);
                 // Keyword kinds are final only below this window's batch.
                 let kw_final = ((e2 >> 6) & !(KWB - 1)) << 6;
                 let tokens = token_view(
-                    t,
                     src,
                     st,
                     opch,
-                    word,
                     kind,
                     n,
-                    kw.ts_key,
+                    true,
                     kw_final,
                     lanes.module,
                     &lanes.disambiguate.brackets,
