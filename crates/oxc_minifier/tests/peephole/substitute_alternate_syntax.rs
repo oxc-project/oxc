@@ -1054,6 +1054,24 @@ fn test_rewrite_arguments_copy_loop() {
     test_same(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r, a) }",
     );
+
+    // A previous pass may fold sibling `var` declarations into the loop initializer.
+    // Those bindings must survive even when the copy loop looks otherwise rewritable.
+    test(
+        "function _() { for (var r = [], a = 0, keep; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+        "function _() { var r = [...arguments], keep; use(r, keep) }",
+    );
+    test(
+        "function _() { var items = [], t = 0, i, u, r; for (; t < arguments.length; t++) items[t] = arguments[t]; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
+        "function _() { var items = [...arguments], i, u, r; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
+    );
+    test(
+        "function _() { for (var r = [], a = 0, keep; a < arguments.length; a++) r[a] = arguments[a]; use(keep) }",
+        "function _() { var keep; use(keep) }",
+    );
+    test_same(
+        "function _() { for (var r = [], a = 0, keep = side(); a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
 }
 
 #[test]

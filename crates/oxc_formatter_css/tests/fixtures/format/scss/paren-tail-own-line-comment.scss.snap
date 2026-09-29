@@ -3,7 +3,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 // An own-line `//` before a closing `)` keeps its own line, in lists and argument parens
-// as in maps (DIVERGENCES.md "own-line-trailing-comment-keeps-line": Prettier pulls it
+// as in maps (DIVERGENCES.md#own-line-trailing-comment-keeps-line: Prettier pulls it
 // up onto the last item's line, unless the body is hard-broken like `$map-item`).
 // Same-line comments still glue to the last item.
 $list: ("a", "b",
@@ -59,7 +59,7 @@ $list-after-inline: ("a", "b",
 { printWidth: 80 }
 ------------------
 // An own-line `//` before a closing `)` keeps its own line, in lists and argument parens
-// as in maps (DIVERGENCES.md "own-line-trailing-comment-keeps-line": Prettier pulls it
+// as in maps (DIVERGENCES.md#own-line-trailing-comment-keeps-line: Prettier pulls it
 // up onto the last item's line, unless the body is hard-broken like `$map-item`).
 // Same-line comments still glue to the last item.
 $list: (
@@ -129,7 +129,7 @@ $list-after-inline: (
 { printWidth: 100 }
 -------------------
 // An own-line `//` before a closing `)` keeps its own line, in lists and argument parens
-// as in maps (DIVERGENCES.md "own-line-trailing-comment-keeps-line": Prettier pulls it
+// as in maps (DIVERGENCES.md#own-line-trailing-comment-keeps-line: Prettier pulls it
 // up onto the last item's line, unless the body is hard-broken like `$map-item`).
 // Same-line comments still glue to the last item.
 $list: (

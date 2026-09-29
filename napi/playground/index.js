@@ -7,6 +7,10 @@ const require = createRequire(import.meta.url)
 
 const { readFileSync } = require('fs')
 let nativeBinding = null
+// Which artifact actually loaded. The WASI fallback chain overwrites it with
+// the flavor it resolved; the late native retry below leaves it alone because
+// it only runs while no WASI candidate has been loaded.
+let __napiLoadedBindingTarget = 'native'
 const loadErrors = []
 
 const isMusl = () => {
@@ -65,7 +69,16 @@ const isMuslFromChildProcess = () => {
 function requireNative() {
   if (process.env.NAPI_RS_NATIVE_LIBRARY_PATH) {
     try {
-      return require(process.env.NAPI_RS_NATIVE_LIBRARY_PATH)
+      const overrideBinding = require(process.env.NAPI_RS_NATIVE_LIBRARY_PATH)
+      // The override may be a generated WASI loader, which already reports its
+      // own flavor. Adopt it: `module.exports` aliases this object, so claiming
+      // 'native' would both misreport the artifact and overwrite the loader's
+      // marker through the alias.
+      __napiLoadedBindingTarget =
+        overrideBinding && typeof overrideBinding.__napiBindingTarget === 'string'
+          ? overrideBinding.__napiBindingTarget
+          : 'native'
+      return overrideBinding
     } catch (err) {
       loadErrors.push(err)
     }
@@ -630,6 +643,7 @@ if (!nativeBinding || forceWasi) {
       if (!candidateFailed) {
         wasiBinding = require('./playground.wasi.cjs')
         nativeBinding = wasiBinding
+        __napiLoadedBindingTarget = 'wasm32-wasi'
         wasiBindingLoaded = true
       }
     } catch (err) {
@@ -656,6 +670,7 @@ if (!nativeBinding || forceWasi) {
         }
         wasiBinding = require('@oxc-playground/binding-wasm32-wasi')
         nativeBinding = wasiBinding
+        __napiLoadedBindingTarget = 'wasm32-wasi'
         wasiBindingLoaded = true
       }
     } catch (err) {
@@ -704,3 +719,4 @@ if (!nativeBinding) {
 const { Severity, Oxc } = nativeBinding
 export { Severity }
 export { Oxc }
+export const __napiBindingTarget = __napiLoadedBindingTarget

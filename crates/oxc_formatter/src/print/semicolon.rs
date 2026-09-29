@@ -204,11 +204,14 @@ pub fn write_trailing_comments_inside_parens<'a>(
 }
 
 /// Prints the comments sitting right before the closing source paren after `end`,
-/// inside the parentheses, for a node that re-prints them.
-pub fn write_comments_before_closing_paren(f: &mut JsFormatter<'_, '_>, end: u32) {
-    if let Some(comments) = f.context().comments().comments_before_closing_paren(end) {
-        write!(f, FormatTrailingComments::Comments(comments));
-    }
+/// inside the parentheses, for a node that re-prints them; returns the printed run.
+pub fn write_comments_before_closing_paren<'a>(
+    f: &mut JsFormatter<'_, 'a>,
+    end: u32,
+) -> Option<&'a [Comment]> {
+    let comments = f.context().comments().comments_before_closing_paren(end)?;
+    write!(f, FormatTrailingComments::Comments(comments));
+    Some(comments)
 }
 
 /// Formats `content` followed by an `OptionalSemicolon`,

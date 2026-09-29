@@ -3,7 +3,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 // Prettier reads the prelude as a selector list: whitespace runs become one space, parens keep their
-// layout, a comment keeps it verbatim; guard alternatives stay inline (DIVERGENCES.md "less-guard-list-inline")
+// layout, a comment keeps it verbatim; guard alternatives stay inline (DIVERGENCES.md#less-guard-list-inline)
 .mixiny
 (@a: 0, @b: 0) {
   a: @a;
@@ -53,7 +53,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 { printWidth: 80 }
 ------------------
 // Prettier reads the prelude as a selector list: whitespace runs become one space, parens keep their
-// layout, a comment keeps it verbatim; guard alternatives stay inline (DIVERGENCES.md "less-guard-list-inline")
+// layout, a comment keeps it verbatim; guard alternatives stay inline (DIVERGENCES.md#less-guard-list-inline)
 .mixiny (@a: 0, @b: 0) {
   a: @a;
 }
@@ -105,7 +105,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 { printWidth: 100 }
 -------------------
 // Prettier reads the prelude as a selector list: whitespace runs become one space, parens keep their
-// layout, a comment keeps it verbatim; guard alternatives stay inline (DIVERGENCES.md "less-guard-list-inline")
+// layout, a comment keeps it verbatim; guard alternatives stay inline (DIVERGENCES.md#less-guard-list-inline)
 .mixiny (@a: 0, @b: 0) {
   a: @a;
 }

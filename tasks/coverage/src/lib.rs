@@ -308,7 +308,7 @@ pub struct AppArgs {
 
 const TEST262_PATH: &str = "test262/test";
 const BABEL_PATH: &str = "babel/packages/babel-parser/test/fixtures";
-const TYPESCRIPT_PATH: &str = "typescript/tests/cases";
+const TYPESCRIPT_PATH: &str = typescript::CASES_PATH;
 const MISC_PATH: &str = "misc";
 const ESTREE_ACORN_JSX_PATH: &str = "estree-conformance/tests/acorn-jsx";
 
@@ -372,7 +372,7 @@ impl AppArgs {
     /// Compare `oxc_lexer`'s token spans against the parser's token stream over the corpora.
     /// Opt-in (kept out of `run_all`) — requires `lexer` Cargo feature.
     /// Runs against whichever of the lexer's two implementations the build selects -
-    /// the SIMD core on a static AVX2/BMI2 x86_64 build, the scalar fallback otherwise.
+    /// the SIMD core on a static AVX2/BMI2/POPCNT x86_64 build, the scalar fallback otherwise.
     /// `oxc_lexer` only supports little endian at present.
     ///
     /// # Panics

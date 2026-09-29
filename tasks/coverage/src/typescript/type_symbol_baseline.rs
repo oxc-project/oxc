@@ -26,10 +26,13 @@ use oxc::{
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
 
-use super::scanner::{
-    self, BRACKET_LINE, LINE_DELIMITER, full_start, line_and_character, line_of_position,
+use super::{
+    baseline_root,
+    scanner::{
+        self, BRACKET_LINE, LINE_DELIMITER, full_start, line_and_character, line_of_position,
+    },
 };
-use crate::{CoverageResult, TestResult, TypeScriptFile, workspace_root};
+use crate::{CoverageResult, TestResult, TypeScriptFile};
 
 /// Emitted for nodes oxc cannot resolve (members, `this`/`super`, lib globals) and for every
 /// node in the `.types` scaffold. Must never equal a real `Symbol(...)` or type string.
@@ -197,10 +200,10 @@ fn iterate_unit(unit_name: &str, content: &str, results: &[TypeWriterResult]) ->
     out
 }
 
-/// The `tests/cases/...` header path (strips the leading `typescript/` component).
+/// The `tests/cases/...` header path (strips the repository and testdata components).
 fn header_path(path: &Path) -> String {
     let s = path.to_string_lossy();
-    s.strip_prefix("typescript/").unwrap_or(&s).to_string()
+    s.strip_prefix("typescript/tsc/testdata/").unwrap_or(&s).to_string()
 }
 
 /// Port of `generateBaseline`: walk every unit, emit the `//// [path] ////` header + sections.
@@ -305,9 +308,7 @@ fn run_baseline(files: &[TypeScriptFile], kind: BaselineKind) -> Vec<CoverageRes
                 return None;
             }
             let stem = Path::new(&f.path).file_stem()?.to_string_lossy().into_owned();
-            let baseline_path = workspace_root()
-                .join("typescript/tests/baselines/reference")
-                .join(format!("{stem}.{ext}"));
+            let baseline_path = baseline_root(&f.path).join(format!("{stem}.{ext}"));
             // Only score files that ship a baseline of this kind.
             let baseline = std::fs::read_to_string(&baseline_path).ok()?;
 

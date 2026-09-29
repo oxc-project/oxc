@@ -2,7 +2,7 @@
 // `{` (head-body comment policy), for case and default alike:
 // a block comment inline, a line comment keeping its position with the `{`
 // forced onto the next line, an own-line comment keeping its own line.
-// Known divergence (js/switch/comments.js): Prettier treats the same shape
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation; js/switch/comments.js): Prettier treats the same shape
 // unevenly -- `case b: { // c` (past the `{`) but `default: {` + own-lined
 // `// d` inside the block, and an own-line comment inlined to `case c: // own`
 // -- attachment artifacts of the kind prettier is currently fixing elsewhere

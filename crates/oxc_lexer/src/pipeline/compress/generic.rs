@@ -1,10 +1,13 @@
 use oxc_span::Span;
 
-use crate::{lanes::Lanes, tables::Tables, token::is_trivia_byte};
+use crate::{
+    lanes::Lanes,
+    token::{is_trivia_byte, matches_tk, tk},
+};
 
-use super::super::{
-    BIGINT, HASHBANG, IDENT_ESC, NUM, PRIV_IDENT_ESC,
+use crate::pipeline::{
     chunk::{eqm, load64},
+    tables::Tables,
 };
 
 use super::common::{emit_value, invalid_diags};
@@ -52,7 +55,7 @@ pub(super) unsafe fn build_spans(
         let k = *stage_kind.add(j);
         *sp.add(w) = stage_pos.add(j).cast::<u64>().read_unaligned();
         *sig_kinds.add(w) = k;
-        w += usize::from(!is_trivia_byte(k) || k == HASHBANG);
+        w += usize::from(!is_trivia_byte(k) || k == tk!(Hashbang));
         j += 1;
     }
 
@@ -71,8 +74,11 @@ pub(super) unsafe fn lanes_post(
     let mut i = 0usize;
     while i + 8 <= m {
         let x = load64(out_kinds, i);
-        let mut hits = eqm(x, NUM) | eqm(x, BIGINT) | eqm(x, IDENT_ESC) | eqm(x, PRIV_IDENT_ESC);
-        inv |= eqm(x, 255);
+        let mut hits = eqm(x, tk!(Number))
+            | eqm(x, tk!(BigInt))
+            | eqm(x, tk!(IdentEscaped))
+            | eqm(x, tk!(PrivateIdentEscaped));
+        inv |= eqm(x, tk!(Invalid));
         while hits != 0 {
             emit_value(src, out_kinds, out_spans, i + (hits.trailing_zeros() >> 3) as usize, lanes);
             hits &= hits - 1;
@@ -82,10 +88,10 @@ pub(super) unsafe fn lanes_post(
     let mut inv_dirty = inv != 0;
     while i < m {
         let k = *out_kinds.add(i);
-        if k == NUM || k == BIGINT || k == IDENT_ESC || k == PRIV_IDENT_ESC {
+        if matches_tk!(k, Number | BigInt | IdentEscaped | PrivateIdentEscaped) {
             emit_value(src, out_kinds, out_spans, i, lanes);
         }
-        inv_dirty |= k == 255;
+        inv_dirty |= k == tk!(Invalid);
         i += 1;
     }
     if inv_dirty {

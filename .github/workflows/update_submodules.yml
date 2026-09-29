@@ -260,7 +260,9 @@ jobs:
         if: steps.check-updates.outputs.updates_needed == 'true'
         env:
           UPDATE_SNAPSHOT: 1
-        run: just coverage
+        run: |
+          just coverage
+          just conformance-lexer
 
       # `just coverage` runs the default task, which skips the runtime suite
       # (it needs Node). Run it explicitly so `runtime.snap` is regenerated

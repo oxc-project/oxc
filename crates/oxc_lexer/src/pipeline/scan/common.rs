@@ -1,8 +1,9 @@
-use core::slice;
+use std::slice;
 
-use crate::tables::{hex_val, is_digit, is_word};
-
-use super::super::find::{find_regex, find_tmpl, find4};
+use crate::pipeline::{
+    bytes::{hex_val, is_digit, is_word},
+    find::{find_regex, find_tmpl, find4},
+};
 
 #[inline]
 pub unsafe fn scan_quoted(

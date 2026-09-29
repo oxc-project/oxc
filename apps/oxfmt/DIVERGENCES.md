@@ -2,89 +2,11 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
-## template-expression-indent
-
-- Why: invariant (prettier/prettier#19725)
-- Pin: `conformance/fixtures/edge-cases/css-in-js/template-expression-indent.js` (also `gql-in-js` / `html-in-js` siblings)
-
-```js
-/* input */
-_ = css`
-  a{
-    color:
-                  ${
-                    a
-                    // comment
-                    + b}
-    ;
-  }
-`;
-
-/* ours */
-_ = css`
-  a {
-    color: ${
-      a +
-      // comment
-      b
-    };
-  }
-`;
-
-/* prettier */
-_ = css`
-  a {
-    color: ${
-                    a +
-                    // comment
-                    b
-                  };
-  }
-`;
-```
-
-A broken `${expr}` inside an embedded template re-indents to the placeholder's position;
-Prettier 3.9.6 preserves the source indentation, not a fixpoint: its second pass yields ours.
-
-## broken-template-comment-indent
-
-- Why: invariant
-- Pin: `conformance/fixtures/edge-cases/xxx-in-js-comment/broken-template-comment-indent.js` (also tracked by conformance `externals/prettier/js/multiparser-comments/comment-inside.js`)
-
-```js
-/* input */
-html`
-${
-      foo
-  /* comment */
-}
-`;
-
-/* ours */
-html`
-${
-  foo
-  /* comment */
-}
-`;
-
-/* prettier */
-html`
-  ${
-  foo
-  /* comment */
-}
-`;
-```
-
-A `${}` whose embed formatting bails (comments force the broken form) still indents its expression to the placeholder, same as `template-expression-indent`;
-Prettier prints it at ROOT indent, dropping the embed indent entirely (an artifact of its embed bail-out path), not a fixpoint:
-its second pass indents the expression to the placeholder too (at the template body's indent, `  ${` / `    foo`).
-
 ## ts-in-vue-generic-trailing-comma
 
 - Why: uniform-rule (embedded script formats like its standalone file)
-- Pin: `conformance/fixtures/edge-cases/js-in-vue/generic-trailing-comma.vue` (also tracked by conformance `externals/vue-vben-admin/.../api-component/api-component.vue`)
+- Pin: `conformance/fixtures/edge-cases/js-in-vue/generic-trailing-comma.vue`
+- Conformance: `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
 
 ```vue
 <!-- input -->
@@ -110,7 +32,8 @@ in ts-in-md and plain `.ts` — one rule over that internal inconsistency, the s
 ## styled-extend-tag
 
 - Why: cost
-- Pin: `conformance/fixtures/edge-cases/css-in-js/styled-extend-tag.js` (also tracked by conformance `externals/prettier/js/multiparser-css/styled-components.js`)
+- Pin: `conformance/fixtures/edge-cases/css-in-js/styled-extend-tag.js`
+- Conformance: `externals/prettier/js/multiparser-css/styled-components.js`
 
 ```js
 /* input */

@@ -605,10 +605,10 @@ pub struct NewExpression<'a> {
     pub callee: Expression<'a>,
     #[ts]
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
     pub arguments: Vec<'a, Argument<'a>>,
     #[builder(default)]
     #[estree(skip)]
+    /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
     pub pure: bool,
 }
 
@@ -2119,8 +2119,8 @@ pub struct Class<'a> {
     ///
     /// ## Example
     /// ```ts
-    /// class Foo {}          // true
-    /// abstract class Bar {} // false
+    /// class Foo {}          // false
+    /// abstract class Bar {} // true
     /// ```
     #[ts]
     pub r#abstract: bool,

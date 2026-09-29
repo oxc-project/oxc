@@ -1,12 +1,15 @@
-use crate::{comment_meta, error::diag_code, lanes::Lanes, tables::Tables};
+use crate::{lanes::Lanes, token::tk};
 
-use super::super::{
-    HASHBANG, LCOM, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL,
+use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
     find::{find_line_terminator, find_opener, find_opener6},
+    tables::Tables,
 };
 
-use super::common::{lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape};
+use super::common::{
+    html_close_comment_at, html_open_comment_at, lex_html_close_comment, lex_html_open_comment,
+    lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape,
+};
 
 pub(super) unsafe fn carve_js(
     t: &Tables,
@@ -16,7 +19,6 @@ pub(super) unsafe fn carve_js(
     kind: *mut u8,
     opch: *mut u64,
     word: *const u64,
-    digit: *const u64,
     ts: bool,
     lanes: &mut Lanes,
 ) {
@@ -25,7 +27,7 @@ pub(super) unsafe fn carve_js(
     let mut i = 0usize;
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
         let end = find_line_terminator(src, n, 2);
-        *kind = HASHBANG;
+        *kind = tk!(Hashbang);
         bm_clear_range(st, 1, end - 1);
         if end < n {
             bm_set(st, end);
@@ -44,8 +46,17 @@ pub(super) unsafe fn carve_js(
                 i = lex_string(src, srcs, n, st, kind, s, c, lanes);
             }
             b'`' => {
-                let (end, opened_sub) =
-                    lex_template_segment(src, srcs, n, st, kind, s, TMPL_HEAD, TMPL_NOSUB, lanes);
+                let (end, opened_sub) = lex_template_segment(
+                    src,
+                    srcs,
+                    n,
+                    st,
+                    kind,
+                    s,
+                    tk!(TemplateHead),
+                    tk!(TemplateNoSub),
+                    lanes,
+                );
                 if opened_sub {
                     depth.push(0);
                 }
@@ -74,8 +85,8 @@ pub(super) unsafe fn carve_js(
                         st,
                         kind,
                         s,
-                        TMPL_MIDDLE,
-                        TMPL_TAIL,
+                        tk!(TemplateMiddle),
+                        tk!(TemplateTail),
                         lanes,
                     );
                     if opened_sub {
@@ -85,127 +96,27 @@ pub(super) unsafe fn carve_js(
                 }
             }
             b'/' => {
-                i = lex_slash(t, src, srcs, n, st, kind, opch, word, digit, ts, s, lanes);
+                i = lex_slash(t, src, srcs, n, st, kind, opch, word, ts, s, lanes);
             }
             b'<' => {
-                let html = s + 3 < n
-                    && *src.add(s + 1) == b'!'
-                    && *src.add(s + 2) == b'-'
-                    && *src.add(s + 3) == b'-';
-                if html && (!lanes.module || html_close_at_line_start(srcs, s)) {
-                    if lanes.module {
-                        lanes.push_diag(s as u32, 4, diag_code::HTML_COMMENT_IN_MODULE);
-                    }
-                    let end = find_line_terminator(src, n, s + 4);
-                    *kind.add(s) = LCOM;
-                    if end > s + 1 {
-                        bm_clear_range(st, s + 1, end - 1);
-                    }
-                    if end < n {
-                        bm_set(st, end);
-                    }
-                    // `<`, `!`, `-` are opchars: clear the span from `opch`
-                    // or `coalesce` would re-tokenize `<!--` as operators.
-                    bm_clear_range(opch, s, end - 1);
-                    // meta_byte_exact skips a 2-byte delimiter; pass s + 2 so
-                    // the 4-byte `<!--` is skipped. The record keeps (s, end).
-                    let m = comment_meta::meta_byte_exact(
-                        &srcs[..n],
-                        (s + 2) as u32,
-                        end as u32,
-                        false,
-                    );
-                    lanes.comment_meta.push(m);
-                    lanes.push_comment_record(srcs, n, s as u32, end as u32, false, m);
-                    i = end;
+                // Annex B B.1.1: `<!--` begins a line comment.
+                i = if html_open_comment_at(srcs, n, s, lanes.module) {
+                    lex_html_open_comment(src, srcs, n, st, kind, opch, s, lanes)
                 } else {
-                    i = s + 1;
-                }
+                    s + 1
+                };
             }
             b'>' => {
-                // Annex B B.1.3: `-->` begins a line comment, but only at
-                if s >= 2
-                    && *src.add(s - 1) == b'-'
-                    && *src.add(s - 2) == b'-'
-                    && !lanes.module
-                    && html_close_at_line_start(srcs, s - 2)
-                {
-                    let start = s - 2;
-                    let end = find_line_terminator(src, n, s + 1);
-                    *kind.add(start) = LCOM;
-                    bm_set(st, start);
-                    if end > start + 1 {
-                        bm_clear_range(st, start + 1, end - 1);
-                    }
-                    if end < n {
-                        bm_set(st, end);
-                    }
-                    // Clear the span from `opch` (see `<!--` above).
-                    bm_clear_range(opch, start, end - 1);
-                    // `-->` is a 3-byte delimiter; pass start + 1 so the
-                    // 2-byte-delimiter body resolves to [s + 1, end).
-                    let m = comment_meta::meta_byte_exact(
-                        &srcs[..n],
-                        (start + 1) as u32,
-                        end as u32,
-                        false,
-                    );
-                    lanes.comment_meta.push(m);
-                    lanes.push_comment_record(srcs, n, start as u32, end as u32, false, m);
-                    i = end;
+                // Annex B B.1.3: `-->` begins a line comment, but only at line start.
+                i = if html_close_comment_at(srcs, s, lanes.module) {
+                    lex_html_close_comment(src, srcs, n, st, kind, opch, s, lanes)
                 } else {
-                    i = s + 1;
-                }
+                    s + 1
+                };
             }
             _ => {
                 i = s + 1;
             }
-        }
-    }
-}
-
-/// Annex B B.1.3: a `-->` close-comment counts only at line start — scanning
-/// back must reach a LineTerminator (or start of input) crossing nothing but
-/// whitespace and block comments; a newline inside a crossed block comment
-/// also qualifies. Cold: called only on a literal `-->`.
-fn html_close_at_line_start(src: &[u8], mut q: usize) -> bool {
-    loop {
-        if q == 0 {
-            return true; // start of input
-        }
-        let c = src[q - 1];
-        match c {
-            b' ' | b'\t' | 0x0b | 0x0c => q -= 1,
-            b'\n' | b'\r' => return true,
-            // LS/PS ending at q-1.
-            0xA8 | 0xA9 => {
-                return q >= 3 && src[q - 2] == 0x80 && src[q - 3] == 0xE2;
-            }
-            // `*/` at (q-2, q-1): skip back to its `/*`; a newline inside the
-            // comment body satisfies the rule.
-            b'/' if q >= 2 && src[q - 2] == b'*' => {
-                let mut m = q - 2;
-                let mut saw_nl = false;
-                loop {
-                    if m < 2 {
-                        return saw_nl; // unbalanced `*/`
-                    }
-                    if src[m - 2] == b'/' && src[m - 1] == b'*' {
-                        q = m - 2;
-                        break;
-                    }
-                    let b = src[m - 1];
-                    if b == b'\n' || b == b'\r' {
-                        saw_nl = true;
-                    }
-                    m -= 1;
-                }
-                if saw_nl {
-                    return true;
-                }
-                // single-line block comment skipped; keep scanning
-            }
-            _ => return false,
         }
     }
 }

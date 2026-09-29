@@ -1,9 +1,6 @@
-use crate::opmap::{KW_KIND_BASE, PUNCT1_KIND_UNKNOWN};
+use crate::token::{KW_KIND_BASE, tk};
 
-use super::super::{
-    IDENT, IDENT_ESC,
-    bitmap::{bm_clear, bm_get, bm_prev1},
-};
+use crate::pipeline::bitmap::{bm_clear, bm_get, bm_prev1};
 
 #[inline]
 pub unsafe fn misc_post(
@@ -46,8 +43,8 @@ unsafe fn misc_post_impl(
             }
             let tt = bm_prev1(st, p);
             let k = *kind.add(tt as usize);
-            if k == IDENT || (k >= KW_KIND_BASE && k != PUNCT1_KIND_UNKNOWN) {
-                *kind.add(tt as usize) = IDENT_ESC;
+            if k == tk!(Ident) || (k >= KW_KIND_BASE && k != tk!(Invalid)) {
+                *kind.add(tt as usize) = tk!(IdentEscaped);
                 bm_clear(st, p);
             }
         }

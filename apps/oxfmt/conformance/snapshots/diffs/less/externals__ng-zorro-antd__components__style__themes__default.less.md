@@ -1,8 +1,5 @@
 # externals/ng-zorro-antd/components/style/themes/default.less
 
-> fill break position (Prettier breaks inside the wide chunk, ours at the separator). See crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
-> trailing `//` comment never counts toward print width. See crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
-
 ## Option 1
 
 `````json

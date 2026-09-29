@@ -199,16 +199,12 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `() => { return foo })` -> `() => foo`
-    pub fn substitute_arrow_expression(
-        arrow_expr: &mut ArrowFunctionExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
+    pub fn substitute_arrow_expression(arrow_expr: &mut ArrowFunctionExpression<'a>) {
         if let Some(body) = arrow_expr.get_function_body_mut()
             && body.directives.is_empty()
             && body.statements.len() == 1
             && let Statement::ReturnStatement(return_statement) = &mut body.statements[0]
-            && let Some(expr) =
-                return_statement.argument.as_mut().map(|argument| argument.take_in(ctx))
+            && let Some(expr) = return_statement.argument.take()
         {
             arrow_expr.body = ArrowFunctionBody::from(expr);
         }
@@ -675,9 +671,9 @@ impl<'a> PeepholeOptimizations {
         }
 
         /// Verify whether `arg_expr` is `e > offset ? e - offset : 0` or `e`
-        fn verify_array_arg(
-            arg_expr: &Expression,
-            name_e: &str,
+        fn verify_array_arg<'a>(
+            arg_expr: &Expression<'a>,
+            name_e: Ident<'a>,
             offset: f64,
         ) -> VerifyArrayArgResult {
             match arg_expr {
@@ -696,7 +692,7 @@ impl<'a> PeepholeOptimizations {
                         return VerifyArrayArgResult::Invalid;
                     };
                     if test_expr.operator == BinaryOperator::GreaterThan
-                        && test_expr.left.is_specific_id(name_e)
+                        && test_expr.left.is_specific_id(&name_e)
                         && matches!(&test_expr.right, Expression::NumericLiteral(n) if n.value == offset)
                         && cons_expr.operator == BinaryOperator::Subtraction
                         && matches!(&cons_expr.left, Expression::Identifier(id) if id.name == name_e)
@@ -821,7 +817,7 @@ impl<'a> PeepholeOptimizations {
             }
             match &b.right {
                 Expression::Identifier(right) => Some((
-                    &right.name,
+                    right.name,
                     ctx.scoping().get_reference(right.reference_id()).symbol_id(),
                 )),
                 Expression::StaticMemberExpression(sm) => {
@@ -848,8 +844,12 @@ impl<'a> PeepholeOptimizations {
 
         let Some(init) = &mut for_stmt.init else { return };
         let ForStatementInit::VariableDeclaration(var_init) = init else { return };
-        // Need at least two declarators: r, a (optional `e` may precede them)
-        if var_init.declarations.len() < init_decl_len {
+        let Some(siblings) = var_init.declarations.get(init_decl_len..) else { return };
+        // Sibling declarators may be in the source loop or folded into it by `sequences`.
+        // Keep uninitialized `var` siblings, but don't move an initializer across the spread.
+        if !siblings.is_empty()
+            && (!var_init.kind.is_var() || siblings.iter().any(|decl| decl.init.is_some()))
+        {
             return;
         }
 
@@ -955,7 +955,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        // Build `var r = [...arguments]` (with optional `.slice(offset)`) as the only declarator and drop test/update/body.
+        // Build `var r = [...arguments]` (with optional `.slice(offset)`) and drop test/update/body.
 
         let r_id_pat = {
             let (r_id, de_id_symbol_id) = r_id_pat_with_info;
@@ -999,34 +999,26 @@ impl<'a> PeepholeOptimizations {
             };
 
             let new_decl = VariableDeclarator::new(SPAN, r_id_pat, None, Some(arr), false, ctx);
-            // The old declarators (`e`, `a`, and `r`'s original init) are
-            // replaced wholesale — walk them so refs inside (e.g. `e` in
-            // `Array(e > 1 ? e - 1 : 0)`) reach `PassChanges`. The moved-out
-            // `r` binding and `arguments` ident left id-less dummies behind.
-            for decl in &var_init.declarations {
-                ctx.drop_variable_declarator(decl);
+            // Drop only the copy-loop declarators. Siblings remain in the `var` statement.
+            // Walk removed declarators so refs inside them reach `PassChanges`.
+            for decl in var_init.declarations.drain(..init_decl_len) {
+                ctx.drop_variable_declarator(&decl);
             }
-            var_init.declarations = ArenaVec::from_value_in(new_decl, ctx);
+            var_init.declarations.insert(0, new_decl);
         } else {
-            // `for (var; 0;)` with an empty `VariableDeclaration` is invalid JS when printed and
-            // makes `try_fold_for` hoist a bogus `var;`. Use `for (; 0;)` instead so dead-code
-            // folding becomes an empty statement. Walk the dropped
-            // declarators so their refs reach `PassChanges`.
-            for decl in &var_init.declarations {
-                ctx.drop_variable_declarator(decl);
+            // The copied array is unused, but sibling declarations still need to survive.
+            for decl in var_init.declarations.drain(..init_decl_len) {
+                ctx.drop_variable_declarator(&decl);
             }
-            for_stmt.init = None;
+            // Avoid invalid `for (var; 0;)` when no siblings remain.
+            if var_init.declarations.is_empty() {
+                for_stmt.init = None;
+            }
         }
         if let Some(old) = for_stmt.test.take() {
             ctx.drop_expression(&old);
         }
-        for_stmt.test = Some(Expression::new_numeric_literal(
-            for_stmt.span,
-            0.0,
-            None,
-            NumberBase::Decimal,
-            ctx,
-        ));
+        for_stmt.test = Some(Expression::new_number_0(for_stmt.span, ctx));
         if let Some(old) = for_stmt.update.take() {
             ctx.drop_expression(&old);
         }
@@ -1766,7 +1758,7 @@ impl<'a> PeepholeOptimizations {
             // In `catch (e) { var e = x }`, `var e` hoists to function scope but the assignment
             // targets the catch parameter. Removing the catch param changes semantics.
             && ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
-            && !Self::catch_body_has_same_name_var(&catch.body, ident.name.as_str())
+            && !Self::catch_body_has_same_name_var(&catch.body, ident.name)
         {
             catch.param = None;
         }
@@ -1812,7 +1804,7 @@ impl<'a> PeepholeOptimizations {
         ctx.replace_expression(expr, new_value);
     }
 
-    fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: &str) -> bool {
+    fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: Ident<'a>) -> bool {
         body.body.iter().any(|stmt| {
             let Statement::VariableDeclaration(decl) = stmt else { return false };
             if !decl.kind.is_var() {
@@ -1923,7 +1915,7 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
             let Some(body) = f.get_function_body_mut() else { return };
-            if body.statements.len() != 1 {
+            if body.statements.len() != 1 || !body.directives.is_empty() {
                 return;
             }
             match &mut body.statements[0] {
