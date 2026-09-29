@@ -27400,14 +27400,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Allowed modifiers are: static, readonly
 
-  × TS(1031): 'export' modifier cannot appear on class elements of this kind.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:4]
- 1 │ class C {
- 2 │    export [x: string]: string;
-   ·    ──────
- 3 │ }
-   ╰────
-
   × TS(1071): 'export' modifier cannot appear on an index signature.
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:4]
  1 │ class C {
