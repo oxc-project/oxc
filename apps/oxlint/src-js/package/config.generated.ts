@@ -1457,6 +1457,7 @@ export interface DummyRuleMap {
   "typescript/no-extraneous-class"?: RuleNoConfig | [AllowWarnDeny, NoExtraneousClass];
   "typescript/no-floating-promises"?: RuleNoConfig | [AllowWarnDeny, NoFloatingPromisesConfig];
   "typescript/no-for-in-array"?: RuleNoConfig;
+  "typescript/no-generated-empty-object-type"?: RuleNoConfig;
   "typescript/no-implied-eval"?: RuleNoConfig;
   "typescript/no-import-type-side-effects"?: RuleNoConfig;
   "typescript/no-inferrable-types"?: RuleNoConfig | [AllowWarnDeny, NoInferrableTypes];
@@ -5434,6 +5435,20 @@ export interface NoUnstableNestedComponentsConfig {
   propNamePattern?: string;
 }
 export interface OnlyExportComponentsConfig {
+  /**
+   * Allow an exported object when every property is a React component.
+   * This matches Vite's compound component support. The object must be non-empty,
+   * contain no nested objects, spreads, or accessors, and anonymous functions
+   * must use a component name as a static property key.
+   *
+   * ```jsx
+   * // Allowed when allowCompoundComponents: true
+   * const Root = () => <div />;
+   * const Label = () => <span />;
+   * export const Tag = { Root, Label };
+   * ```
+   */
+  allowCompoundComponents?: boolean;
   /**
    * Allow exporting primitive constants (string/number/boolean/template literal)
    * alongside component exports without triggering a violation. Recommended when your

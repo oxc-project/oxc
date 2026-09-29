@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🚀 Features
+
+- 02331c8 str: Add `JSStr`, `JSChar` and `JSStrBuilder` types (#26435) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- c55b35d str: Correct clippy reason (#27013) (overlookmotel)
+
+### 📚 Documentation
+
+- dfa6cf9 str: Reformat and simplify comments (#27011) (overlookmotel)
+
 ## [0.149.0] - 2026-09-07
 
 ### 🚀 Features

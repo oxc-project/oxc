@@ -217,6 +217,21 @@ pub fn printed_line_opens_block<'a>(
             _ => None,
         })
         .unwrap_or_else(|| children[children.len() - 1].span().end);
+    // A verbatim node keeps its line breaks: the line ends at its first one
+    let end = children[i..]
+        .iter()
+        .filter(|c| {
+            matches!(
+                c,
+                Inline::HtmlInline(_) | Inline::Liquid(_) | Inline::MathSpan(_) | Inline::Image(_)
+            )
+        })
+        .take_while(|c| c.span().start < end)
+        .find_map(|c| {
+            let newline = f.context().slice(c.span()).find('\n')?;
+            Some(c.span().start + u32::try_from(newline).unwrap_or(0))
+        })
+        .map_or(end, |newline| newline.min(end));
     // A leading code span prints joined too (`print_code_span`);
     // the rest is the source, lines joined.
     let (head, rest_start) = match &children[i] {

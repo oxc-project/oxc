@@ -1,13 +1,13 @@
 //! Stepping one token: the line-break rules (ASI, restricted productions, the end of a
 //! type), literals, and the dispatch to words, punctuation, types and JSX.
 
-use crate::token::{OP_KIND_BASE, matches_tk, tk};
+use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 
 use super::*;
 
 /// Can `tok` (the token starting at `pos`) continue an expression that a value token ended on the
 /// previous line? Used for ASI.
-pub(super) fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
+fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
     let k = tokens.base_kind(pos);
     if k >= OP_KIND_BASE {
         let c = tokens.src[pos];
@@ -39,8 +39,7 @@ pub(super) fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
         );
     }
     if k == tk!(Ident) {
-        let e = tokens.next_start(pos + 1);
-        let kw = tokens.word_kw(pos, e - pos);
+        let kw = tokens.ident_kw(pos);
         return matches_tk!(kw, KwIn | KwInstanceof)
             || (tokens.ts && matches_tk!(kw, KwAs | KwSatisfies));
     }
@@ -49,7 +48,7 @@ pub(super) fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
 
 /// Can `pos` continue a type after a completed type atom on the previous line? `.`, `|`, `&` may
 /// follow a line break; `[`, `<`, `extends` may not.
-pub(super) fn continues_type_after_break(tokens: &Tokens, pos: usize) -> bool {
+fn continues_type_after_break(tokens: &Tokens, pos: usize) -> bool {
     let k = tokens.base_kind(pos);
     if k >= OP_KIND_BASE {
         let c = tokens.src[pos];
@@ -73,7 +72,7 @@ impl Walk {
     pub(super) fn step(&mut self, tokens: &Tokens, pos: usize) -> usize {
         self.last_start = pos;
         let k = tokens.base_kind(pos);
-        if matches_tk!(k, Whitespace | LineComment | BlockComment | Hashbang) {
+        if is_trivia_byte(k) {
             return pos + 1;
         }
         let newline = tokens.line_break_between(self.prev_end, pos);
@@ -98,14 +97,8 @@ impl Walk {
         }
         // `let x` then a line break: only `=`, `,`, `;`, `:` and `!` can continue the declarator,
         // anything else starts a new statement.
-        if newline
-            && !self.operand_allowed()
-            && let Some(di) = self.decl_frame()
-            && self.frames[di].state == D_BOUND
-            && di == self.frames.len() - 1
-        {
+        if newline && !self.operand_allowed() && self.top_declarator() == D_BOUND {
             let c = tokens.src[pos];
-            let k = tokens.base_kind(pos);
             if !(k >= OP_KIND_BASE && matches!(c, b'=' | b',' | b';' | b':' | b'!')) {
                 self.end_statement();
             }
@@ -117,7 +110,7 @@ impl Walk {
             && self.top().atom
             && !continues_type_after_break(tokens, pos)
         {
-            self.end_region_by_break(tokens, pos);
+            self.end_region_by_break();
         }
         // Restricted productions: `return` / `throw` / `yield` / `break` / `continue` followed by a
         // line break end their statement.
@@ -130,32 +123,16 @@ impl Walk {
         {
             self.end_statement();
         }
-        // The directive prologue ends at the first statement that is not a string literal.
-        if self.at_stmt_start() {
-            let si = self.stmt_frame();
-            if self.frames[si].prologue == 1 && k != tk!(String) {
-                self.frames[si].prologue = 0;
-            }
-        }
-
         let end = match k {
-            tk!(Ident) => self.step_word(tokens, pos, newline),
+            tk!(Ident) => self.step_word(tokens, pos),
             tk!(Number | BigInt | String | RegExp | TemplateNoSub | PrivateIdent) => {
                 let e = tokens.next_start(pos + 1);
-                self.literal(tokens, pos, k, e);
+                self.literal(tokens, k, e);
                 e
             }
-            tk!(TemplateHead) => {
+            tk!(TemplateHead | TemplateMiddle) => {
                 let e = tokens.next_start(pos + 1);
-                let in_type = self.in_type();
-                let f = self.push(FrameKind::Sub);
-                f.decl = in_type;
-                self.set_operand();
-                e
-            }
-            tk!(TemplateMiddle) => {
-                let e = tokens.next_start(pos + 1);
-                if self.pop_to(&[FrameKind::Sub]).is_none() {
+                if k == tk!(TemplateMiddle) && self.pop_to(|k| k == FrameKind::Sub).is_none() {
                     self.unbalanced();
                 }
                 let in_type = self.in_type();
@@ -166,29 +143,17 @@ impl Walk {
             }
             tk!(TemplateTail) => {
                 let e = tokens.next_start(pos + 1);
-                if self.pop_to(&[FrameKind::Sub]).is_none() {
+                if self.pop_to(|k| k == FrameKind::Sub).is_none() {
                     self.unbalanced();
                 }
                 if self.in_type() {
-                    self.type_atom();
+                    self.type_atom(false);
                 } else {
                     self.value_done();
                 }
                 e
             }
-            tk!(JsxLt) => {
-                let tpos = tokens.next_sig(pos + 1);
-                if tokens.src[tpos] == b'/' {
-                    // Closing tag: the element it closes is the nearest JsxElem frame.
-                    if self.pop_to(&[FrameKind::JsxElem]).is_none() {
-                        self.unbalanced();
-                    }
-                    self.jsx_closing = true;
-                } else {
-                    self.push(FrameKind::JsxTag);
-                }
-                pos + 1
-            }
+            tk!(JsxLt) => self.jsx_lt(tokens, pos),
             tk!(JsxTagEnd | JsxText) => pos + 1,
             _ => self.step_op(tokens, pos, newline),
         };
@@ -196,7 +161,7 @@ impl Walk {
         end
     }
 
-    pub(super) fn asi(&mut self, tokens: &Tokens, pos: usize) {
+    fn asi(&mut self, tokens: &Tokens, pos: usize) {
         // Concise arrow bodies end with the statement.
         self.pop_concise();
         // An expression-embedded type region ends too.
@@ -221,11 +186,8 @@ impl Walk {
             if unnamed && (k == tk!(Ident) || (k >= OP_KIND_BASE && c == b'*')) {
                 return;
             }
-            if k == tk!(Ident) {
-                let e = tokens.next_start(pos + 1);
-                if matches_tk!(tokens.word_kw(pos, e - pos), KwExtends | KwImplements) {
-                    return;
-                }
+            if k == tk!(Ident) && matches_tk!(tokens.ident_kw(pos), KwExtends | KwImplements) {
+                return;
             }
             self.end_statement();
             return;
@@ -233,41 +195,24 @@ impl Walk {
         match self.top_kind() {
             FrameKind::ClassBody => {
                 // Member initializer ended; a new member starts.
-                let f = self.top_mut();
-                f.state = M_KEY_POS;
-                f.mods = 0;
+                self.top_mut().next_member();
                 self.set_operand();
             }
-            FrameKind::Object
-            | FrameKind::Call
-            | FrameKind::Group
-            | FrameKind::Array
-            | FrameKind::Index
-            | FrameKind::Params
-            | FrameKind::Sub
-            | FrameKind::Container
-            | FrameKind::Head
-            | FrameKind::ComputedKey => {
-                // No statements here; nothing to end.
-            }
-            FrameKind::Angle => {
-                // Inside a `<...>` list a line break is trivia: `<T\nextends U>` is one list.
-            }
-            _ => self.end_statement(),
+            k if k.is_stmt_holder() => self.end_statement(),
+            // Lists, calls, literals and types hold no statements: nothing ends.
+            _ => {}
         }
     }
 
-    pub(super) fn end_region_by_break(&mut self, tokens: &Tokens, pos: usize) {
+    fn end_region_by_break(&mut self) {
         let r = self.pop();
         match r.state {
-            R_STMT | R_INTERFACE => self.end_statement(),
+            R_STMT => self.end_statement(),
             R_INLINE => {
                 // A declarator / member annotation ended by a line break.
                 match self.top_kind() {
                     FrameKind::ClassBody => {
-                        let f = self.top_mut();
-                        f.state = M_KEY_POS;
-                        f.mods = 0;
+                        self.top_mut().next_member();
                         self.set_operand();
                     }
                     FrameKind::FnHead => {
@@ -282,53 +227,29 @@ impl Walk {
                 // `x as T` then a new line: the value is complete.
                 self.set_value();
                 self.no_type_args = true;
-                if !continues_expression(tokens, pos) {
-                    self.asi(tokens, pos);
-                }
             }
             _ => self.set_value(),
         }
     }
 
-    pub(super) fn literal(&mut self, tokens: &Tokens, pos: usize, k: u8, end: usize) {
-        if self.top_kind() == FrameKind::TypeRegion || self.in_type() {
-            self.type_atom();
+    fn literal(&mut self, tokens: &Tokens, k: u8, end: usize) {
+        if self.in_type() {
+            self.type_atom(false);
             return;
         }
-        // Directive prologue.
         if k == tk!(String) {
-            let si = self.stmt_frame();
-            if self.frames[si].prologue != 0 && self.at_stmt_start() {
-                let j = tokens.next_sig(end);
-                let confirmed = j >= tokens.n
-                    || (tokens.base_kind(j) >= OP_KIND_BASE
-                        && (tokens.src[j] == b';' || tokens.src[j] == b'}'))
-                    || (tokens.line_break_between(end, j) && !continues_expression(tokens, j));
-                if confirmed {
-                    if end - pos == 12
-                        && tokens.ident_is(pos + 1, b"use strict")
-                        && tokens.src[end - 1] == tokens.src[pos]
-                    {
-                        self.frames[si].strict = true;
-                    }
-                } else {
-                    self.frames[si].prologue = 0;
-                }
-            }
             // Module specifier: `import "x"`, `... from "x"`.
             let reg = self.stmt_reg();
-            if (matches!(reg, S_IMPORT | S_IMPORT_NAME)
-                && matches_tk!(self.prev_kw, KwImport | KwFrom))
+            if (reg == S_IMPORT && matches_tk!(self.prev_kw, KwImport | KwFrom))
                 || (reg == S_EXPORT && self.prev_kw == tk!(KwFrom))
             {
                 self.value_done();
-                let nx = tokens.next_sig(end);
-                let attrs = nx < tokens.n
-                    && tokens.base_kind(nx) == tk!(Ident)
-                    && !tokens.line_break_between(end, nx)
-                    && (tokens.ident_is(nx, b"with") || tokens.ident_is(nx, b"assert"));
+                let nx = tokens.peek(end);
+                let attrs = nx.kind == tk!(Ident)
+                    && !tokens.line_break_between(end, nx.pos)
+                    && (tokens.ident_is(nx.pos, b"with") || tokens.ident_is(nx.pos, b"assert"));
                 if attrs {
-                    self.set_stmt_reg(S_IMPORT);
+                    self.set_stmt_reg(S_ATTRS);
                     return;
                 }
                 self.stmt_done = true;
@@ -349,12 +270,8 @@ impl Walk {
                 self.value_done();
                 return;
             }
-            FrameKind::Head if self.top().state == F_START => {
-                self.top_mut().state = F_EXPR;
-            }
             _ => {}
         }
         self.value_done();
-        self.prev_num = matches_tk!(k, Number | BigInt);
     }
 }

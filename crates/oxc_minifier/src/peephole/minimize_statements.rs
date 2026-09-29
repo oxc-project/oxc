@@ -228,13 +228,6 @@ impl<'a> PeepholeOptimizations {
         Expression::new_sequence_expression(span, exprs, ctx)
     }
 
-    fn jump_stmts_look_the_same(left: &Statement<'a>, right: &Statement<'a>) -> bool {
-        if left.is_jump_statement() && right.is_jump_statement() {
-            return left.content_eq(right);
-        }
-        false
-    }
-
     /// For variable declarations:
     /// * merge with the previous variable declarator if their kinds are the same
     /// * remove the variable declarator if it is unused
@@ -564,33 +557,29 @@ impl<'a> PeepholeOptimizations {
         // `a; if (b) c;` => `if (a, b) c;`
         Self::merge_last_expression_into_sequence(&mut if_stmt.test, result, ctx);
 
-        // Absorb a previous expression statement
         if ctx.options().sequences {
-            if if_stmt.consequent.is_jump_statement() {
-                // Absorb a previous if statement
-                if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
-                    && prev_if_stmt.alternate.is_none()
-                    && Self::jump_stmts_look_the_same(&prev_if_stmt.consequent, &if_stmt.consequent)
-                {
-                    // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
-                    // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
-                    // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
-                    // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
-                    let previous = result.pop().unwrap();
-                    let Statement::IfStatement(previous) = previous else { unreachable!() };
-                    let previous = previous.unbox();
-                    let span = if_stmt.test.span();
-                    ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
-                        Self::join_with_left_associative_op(
-                            span,
-                            LogicalOperator::Or,
-                            previous.test,
-                            test,
-                            ctx,
-                        )
-                    });
-                    ctx.drop_statement(&previous.consequent);
-                }
+            if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
+                && prev_if_stmt.alternate.is_none()
+                && if_stmt.consequent.is_terminated()
+                && prev_if_stmt.consequent.content_eq(&if_stmt.consequent)
+            {
+                // Merge previous stmt if its terminated and both have same content
+                // `if (a) JUMP; if (b) JUMP;` => `if (a || b) JUMP;`
+                // `if (a) { b; JUMP }; if (b) { b; JUMP };` => `if (a || b) { b; JUMP };`
+                let previous = result.pop().unwrap();
+                let Statement::IfStatement(previous) = previous else { unreachable!() };
+                let previous = previous.unbox();
+                let span = if_stmt.test.span();
+                ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
+                    Self::join_with_left_associative_op(
+                        span,
+                        LogicalOperator::Or,
+                        previous.test,
+                        test,
+                        ctx,
+                    )
+                });
+                ctx.drop_statement(&previous.consequent);
             }
 
             let can_merge_with_alternate = match &if_stmt.consequent {

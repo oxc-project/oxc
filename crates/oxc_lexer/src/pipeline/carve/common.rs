@@ -1,3 +1,5 @@
+use oxc_ast::CommentKind;
+
 use crate::{comment_meta, error::DiagCode, lanes::Lanes, token::tk};
 
 use crate::pipeline::{
@@ -6,7 +8,6 @@ use crate::pipeline::{
     disambiguate::not_operator_position,
     find::find_line_terminator,
     scan::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
-    tables::Tables,
     token_view,
 };
 
@@ -80,7 +81,6 @@ pub(super) unsafe fn lex_template_segment(
 /// block comment, regex, `/=`, or a bare slash left for `coalesce`.
 #[inline(always)]
 pub(super) unsafe fn lex_slash(
-    t: &Tables,
     src: *const u8,
     srcs: &[u8],
     n: usize,
@@ -99,11 +99,9 @@ pub(super) unsafe fn lex_slash(
         lex_block_comment(src, srcs, n, st, kind, s, lanes)
     } else if not_operator_position(
         &token_view(
-            t,
             src,
             st,
             opch,
-            word,
             kind,
             n,
             ts,
@@ -290,6 +288,7 @@ pub(super) unsafe fn lex_html_open_comment(
     let m = comment_meta::meta_byte_exact(&srcs[..n], (s + 2) as u32, end as u32, false);
     lanes.comment_meta.push(m);
     lanes.push_comment_record(srcs, n, s as u32, end as u32, false, m);
+    lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlOpen;
     end
 }
 
@@ -334,6 +333,7 @@ pub(super) unsafe fn lex_html_close_comment(
     let m = comment_meta::meta_byte_exact(&srcs[..n], (start + 1) as u32, end as u32, false);
     lanes.comment_meta.push(m);
     lanes.push_comment_record(srcs, n, start as u32, end as u32, false, m);
+    lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlClose;
     end
 }
 

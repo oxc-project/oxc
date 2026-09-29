@@ -24,11 +24,9 @@ mod runs;
 mod tsx;
 mod type_list;
 
-pub use bytes::arrow_after_params;
-pub(super) use bytes::lt_run_opens_type_args;
-pub use runs::{gt_run_split, lt_run_split};
-pub use tsx::{jsx_site_is_expression, ts_type_region_open, type_parameter_list_head};
-pub(super) use type_list::type_args_at;
+pub(crate) use runs::{gt_run_split, lt_run_split};
+pub(crate) use tsx::jsx_over_generic;
+pub(super) use type_list::{keyword_type, type_args_at};
 
 #[cfg(test)]
 mod tests;

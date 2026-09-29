@@ -14,24 +14,27 @@ impl Walk {
         }
     }
 
+    pub(super) fn jsx_lt(&mut self, tokens: &Tokens, pos: usize) -> usize {
+        let tpos = tokens.next_sig(pos + 1);
+        if tokens.src[tpos] == b'/' {
+            // Closing tag: the element it closes is the nearest JsxElem frame.
+            if self.pop_to(|k| k == FrameKind::JsxElem).is_none() {
+                self.unbalanced();
+            }
+            self.jsx_closing = true;
+        } else {
+            self.push(FrameKind::JsxTag);
+        }
+        pos + 1
+    }
+
     pub(super) fn step_jsx(&mut self, tokens: &Tokens, pos: usize, k: u8) -> usize {
         let c = tokens.src[pos];
         match k {
-            tk!(JsxLt) => {
-                let tpos = tokens.next_sig(pos + 1);
-                if tokens.src[tpos] == b'/' {
-                    if self.pop_to(&[FrameKind::JsxElem]).is_none() {
-                        self.unbalanced();
-                    }
-                    self.jsx_closing = true;
-                } else {
-                    self.push(FrameKind::JsxTag);
-                }
-                pos + 1
-            }
+            tk!(JsxLt) => self.jsx_lt(tokens, pos),
             tk!(JsxTagEnd) => {
                 // Self-closing tag or closing tag end.
-                self.pop_to(&[FrameKind::JsxTag, FrameKind::JsxElem]);
+                self.pop_to(|k| matches!(k, FrameKind::JsxTag | FrameKind::JsxElem));
                 self.jsx_element_done();
                 pos + 1
             }

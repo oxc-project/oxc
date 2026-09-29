@@ -21,3 +21,12 @@ Englishの前でも消えます。
 
 括弧の前 (paren) と後ろ、ASCII 記号の
 :: 前後は空白になります。
+
+<!-- The rules stop at another node's edge, as Prettier's sentence does:
+     the whitespace there may break and a line break stays a space
+     (joined, `：www.` would no longer be an autolink literal) -->
+
+使用方法请参考文档中的说明，如果需要了解更多信息，请参考 [应用部署](./deployment.md)。
+
+更多细节，请参考文档：
+www.example.com 和 `code`。

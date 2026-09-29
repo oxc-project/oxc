@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+- 01ff33e parser: Reject module export names containing a lone surrogate (#26953) (Dunqing)
+
 ## [0.151.0] - 2026-09-21
 
 ### 🐛 Bug Fixes

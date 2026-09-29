@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🚀 Features
+
+- 52ae63f regular_expression: Support buffer boundary assertions (#27048) (Boshen)
+
 ## [0.148.0] - 2026-08-31
 
 ### 🐛 Bug Fixes

@@ -130,6 +130,7 @@ fn run_full(
         format_embedded_doc_cb,
         sort_tailwind_classes_cb,
     );
+    let _cleanup = external_services.cleanup_guard();
 
     let EmbeddedCallbackResolved { format_options, config, core, parent_filepath } =
         resolve_for_embedded_js(config, parent_filepath)
@@ -155,7 +156,6 @@ fn run_full(
         Ok(formatted) => formatted,
         Err(err) => {
             debug!("`oxc_formatter::format()` failed for {source_type:?}: {err:?}");
-            external_services.cleanup();
             return None;
         }
     };
@@ -163,7 +163,6 @@ fn run_full(
     let (elements, sorted_tailwind_classes) =
         formatted.into_final_document().into_elements_and_tailwind_classes();
 
-    external_services.cleanup();
     Some(
         to_prettier_doc::format_elements_to_prettier_doc(elements, &sorted_tailwind_classes)
             .expect("Formatter IR to Prettier Doc conversion should not fail"),

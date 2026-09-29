@@ -334,7 +334,8 @@ fn can_add_undefined(ts_type: &TSType<'_>) -> bool {
         | TSType::TSTupleType(_)
         | TSType::TSTypeLiteral(_)
         | TSType::TSTemplateLiteralType(_)
-        | TSType::TSThisType(_) => true,
+        | TSType::TSThisType(_)
+        | TSType::TSTypeOperatorType(_) => true,
         TSType::TSParenthesizedType(parenthesized) => {
             can_add_undefined(&parenthesized.type_annotation)
         }
