@@ -4,7 +4,6 @@ use crate::pipeline::{
     bitmap::bm_get,
     bytes::{is_id_start, is_word, line_break_in},
     disambiguate::jsx_over_generic,
-    tables::Tables,
     token_view,
 };
 
@@ -19,7 +18,6 @@ enum AngleVerdict {
 
 #[inline]
 pub(super) unsafe fn jsx_over_type_params(
-    t: &Tables,
     src: *const u8,
     srcs: &[u8],
     st: *const u64,
@@ -40,7 +38,6 @@ pub(super) unsafe fn jsx_over_type_params(
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {
             let tokens = token_view(
-                t,
                 src,
                 st,
                 opch,

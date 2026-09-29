@@ -167,8 +167,8 @@ impl Lexer {
         // byte-identical to a build without it.
         classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind);
         let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes);
-        carve(t, src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
-        coalesce(t, sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
+        carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
+        coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
         misc_post(sp, n, st, word, misc, kind, nesc);
         let w = compress(
             t,
@@ -240,7 +240,6 @@ impl Default for Lexer {
 ///
 /// `brackets` is the lex's bracket cache, `lanes.disambiguate.brackets`.
 unsafe fn token_view<'a>(
-    t: &'a Tables,
     src: *const u8,
     st: *const u64,
     opch: *const u64,
@@ -254,7 +253,6 @@ unsafe fn token_view<'a>(
 ) -> disambiguate::Tokens<'a> {
     let nb = n.div_ceil(64) + 1;
     disambiguate::Tokens {
-        tables: t,
         src: std::slice::from_raw_parts(src, n + PAD),
         st: std::slice::from_raw_parts(st, nb),
         opch: std::slice::from_raw_parts(opch, nb),

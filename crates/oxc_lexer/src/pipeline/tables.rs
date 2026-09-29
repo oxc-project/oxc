@@ -5,8 +5,6 @@
 
 use std::sync::OnceLock;
 
-use crate::pipeline::keywords::Keywords;
-
 #[cfg(all(
     target_arch = "x86_64",
     target_feature = "avx2",
@@ -23,8 +21,6 @@ static TABLES: OnceLock<Box<Tables>> = OnceLock::new();
 
 /// Static data that's too large to store as `static`s in the binary.
 pub(super) struct Tables {
-    pub keywords: Keywords,
-
     #[cfg(all(
         target_arch = "x86_64",
         target_feature = "avx2",
@@ -45,7 +41,6 @@ impl Tables {
     /// Create [`Tables`].
     fn new() -> Tables {
         Self {
-            keywords: Keywords::new(),
             #[cfg(all(
                 target_arch = "x86_64",
                 target_feature = "avx2",

@@ -8,7 +8,6 @@ use crate::pipeline::{
     disambiguate::not_operator_position,
     find::find_line_terminator,
     scan::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
-    tables::Tables,
     token_view,
 };
 
@@ -82,7 +81,6 @@ pub(super) unsafe fn lex_template_segment(
 /// block comment, regex, `/=`, or a bare slash left for `coalesce`.
 #[inline(always)]
 pub(super) unsafe fn lex_slash(
-    t: &Tables,
     src: *const u8,
     srcs: &[u8],
     n: usize,
@@ -101,7 +99,6 @@ pub(super) unsafe fn lex_slash(
         lex_block_comment(src, srcs, n, st, kind, s, lanes)
     } else if not_operator_position(
         &token_view(
-            t,
             src,
             st,
             opch,
