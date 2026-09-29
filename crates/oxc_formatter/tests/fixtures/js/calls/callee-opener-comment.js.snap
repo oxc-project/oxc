@@ -1,0 +1,100 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// DIVERGENCES.md#callee-arguments-gap-comment
+foo // c
+(a);
+foo /* c */ (a);
+foo /* c */
+(a);
+foo
+// c
+(a);
+foo
+/* c */
+(a);
+foo
+/* c */ (a);
+foo // c
+();
+foo // c
+?.(a);
+foo
+/* c */
+?.(a);
+foo /* c */ ?.(a);
+a.b // c
+(x);
+a.b /* c */ (x);
+a.b // c
+(x).c(y);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// DIVERGENCES.md#callee-arguments-gap-comment
+foo // c
+(a);
+foo /* c */(a);
+foo /* c */(a);
+foo
+// c
+(a);
+foo
+/* c */
+(a);
+foo
+/* c */ (a);
+foo // c
+();
+foo // c
+?.(a);
+foo
+/* c */
+?.(a);
+foo /* c */?.(a);
+a
+  .b // c
+  (x);
+a.b /* c */(x);
+a
+  .b // c
+  (x)
+  .c(y);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// DIVERGENCES.md#callee-arguments-gap-comment
+foo // c
+(a);
+foo /* c */(a);
+foo /* c */(a);
+foo
+// c
+(a);
+foo
+/* c */
+(a);
+foo
+/* c */ (a);
+foo // c
+();
+foo // c
+?.(a);
+foo
+/* c */
+?.(a);
+foo /* c */?.(a);
+a
+  .b // c
+  (x);
+a.b /* c */(x);
+a
+  .b // c
+  (x)
+  .c(y);
+
+===================== End =====================

@@ -1,6 +1,6 @@
 commit: fd665901
 
-Passed: 281/409
+Passed: 282/410
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -21,7 +21,7 @@ Passed: 281/409
 * plugin-tagged-template-transform
 
 
-# babel-plugin-transform-explicit-resource-management (4/5)
+# babel-plugin-transform-explicit-resource-management (5/6)
 * export-class-name/input.js
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(7)]

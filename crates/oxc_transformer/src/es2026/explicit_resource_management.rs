@@ -41,7 +41,7 @@ use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, ReplaceWith, TakeIn
 use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
-use oxc_span::{SPAN, Span};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::static_ident;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -306,6 +306,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         match stmt {
             Statement::BlockStatement(_) => self.transform_block_statement(stmt, ctx),
             Statement::SwitchStatement(_) => self.transform_switch_statement(stmt, ctx),
+            Statement::ForStatement(_) | Statement::LabeledStatement(_) => {
+                Self::transform_for_statement(stmt, ctx);
+            }
             _ => {}
         }
     }
@@ -624,6 +627,87 @@ impl<'a> ExplicitResourceManagement<'a> {
 
             ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
         }
+    }
+
+    /// Dispose a classic `for` loop's initializers after the entire loop completes.
+    /// Keep any labels inside the `try` so labeled `continue` statements still target the loop.
+    fn transform_for_statement(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let mut loop_stmt = &mut *stmt;
+        while let Statement::LabeledStatement(labeled) = loop_stmt {
+            loop_stmt = &mut labeled.body;
+        }
+        let Statement::ForStatement(for_stmt) = loop_stmt else { return };
+        let Some(ForStatementInit::VariableDeclaration(decl)) = &mut for_stmt.init else {
+            return;
+        };
+        let is_await_using = match decl.kind {
+            VariableDeclarationKind::Using => false,
+            VariableDeclarationKind::AwaitUsing => true,
+            _ => return,
+        };
+
+        let using_ctx = ctx.generate_uid(
+            "usingCtx",
+            ctx.current_hoist_scope_id(),
+            SymbolFlags::FunctionScopedVariable,
+        );
+        decl.kind = VariableDeclarationKind::Const;
+        for declarator in &mut decl.declarations {
+            if let Some(init) = declarator.init.take() {
+                declarator.init = Some(Expression::new_call_expression(
+                    SPAN,
+                    Expression::new_static_member_expression(
+                        SPAN,
+                        using_ctx.create_read_expression(ctx),
+                        IdentifierName::new(
+                            SPAN,
+                            if is_await_using { static_ident!("a") } else { static_ident!("u") },
+                            ctx,
+                        ),
+                        false,
+                        ctx,
+                    ),
+                    None,
+                    [Argument::from(init)],
+                    false,
+                    ctx,
+                ));
+            }
+        }
+
+        let span = stmt.span();
+        let parent_scope_id = ctx.current_scope_id();
+        let body_scope_id = ctx.insert_scope_below_statement(stmt, ScopeFlags::empty());
+        let callee = helper_load(Helper::UsingCtx, ctx);
+        let context_stmt = Statement::new_variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Var,
+            [VariableDeclarator::new(
+                SPAN,
+                using_ctx.create_binding_pattern(ctx),
+                None,
+                Some(Expression::new_call_expression(SPAN, callee, None, [], false, ctx)),
+                false,
+                ctx,
+            )],
+            false,
+            ctx,
+        );
+        stmt.replace_with(|loop_stmt| {
+            Self::create_try_stmt(
+                BlockStatement::boxed_with_scope_id(
+                    SPAN,
+                    [context_stmt, loop_stmt],
+                    body_scope_id,
+                    ctx,
+                ),
+                &using_ctx,
+                parent_scope_id,
+                is_await_using,
+                span,
+                ctx,
+            )
+        });
     }
 
     /// Transform block statement.

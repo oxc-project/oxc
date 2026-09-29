@@ -2,16 +2,14 @@ use std::arch::x86_64::*;
 
 use crate::token::tk;
 
-use crate::pipeline::{
-    chunk::{load256, mm, veq},
-    tables::{
-        Tables,
-        punct1_luts::{PH_A, PH_B, PH_T0, PH_T1},
-    },
-};
+use crate::pipeline::chunk::{load256, mm, veq};
+
+mod luts;
+mod punct1_luts;
+use luts::{MERGED_LUTS, WORD_LUTS};
+use punct1_luts::{PH_A, PH_B, PH_T0, PH_T1};
 
 pub(super) unsafe fn classify_impl(
-    t: &Tables,
     ts: bool,
     src: *const u8,
     n: usize,
@@ -26,7 +24,7 @@ pub(super) unsafe fn classify_impl(
 ) {
     // The merged LUT variants differ only in the keyword-initial bits; the
     // selection happens once, outside the loop.
-    let mrg_lo = if ts { &t.merged_luts.lo_ts } else { &t.merged_luts.lo };
+    let mrg_lo = if ts { MERGED_LUTS.lo_ts } else { MERGED_LUTS.lo };
     let mut cw: u64 = 0;
     let mut cs: u64 = 0;
     let mut i = 0usize;
@@ -47,11 +45,11 @@ pub(super) unsafe fn classify_impl(
     let v_num = _mm256_set1_epi8(tk!(Number) as i8);
     let v_mlo = _mm256_broadcastsi128_si256(_mm_loadu_si128(mrg_lo.as_ptr() as *const __m128i));
     let v_mhi =
-        _mm256_broadcastsi128_si256(_mm_loadu_si128(t.merged_luts.hi.as_ptr() as *const __m128i));
+        _mm256_broadcastsi128_si256(_mm_loadu_si128(MERGED_LUTS.hi.as_ptr() as *const __m128i));
     let v_wblo =
-        _mm256_broadcastsi128_si256(_mm_loadu_si128(t.word_luts.lo.as_ptr() as *const __m128i));
+        _mm256_broadcastsi128_si256(_mm_loadu_si128(WORD_LUTS.lo.as_ptr() as *const __m128i));
     let v_wbhi =
-        _mm256_broadcastsi128_si256(_mm_loadu_si128(t.word_luts.hi.as_ptr() as *const __m128i));
+        _mm256_broadcastsi128_si256(_mm_loadu_si128(WORD_LUTS.hi.as_ptr() as *const __m128i));
     let v_kwpl = _mm256_set1_epi8(0x03);
     let v_oppl = _mm256_set1_epi8(0x3c);
     let v_wdpl = _mm256_set1_epi8(0x3f);

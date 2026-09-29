@@ -1,0 +1,49 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/readonly-parameters.ts
+---
+```
+==================== .D.TS ====================
+
+export declare class ReadonlyArrayProperty {
+	readonly value?: readonly string[] | undefined;
+	constructor(value?: readonly string[] | undefined);
+}
+export declare class ReadonlyTupleProperty {
+	value?: readonly [string, number?] | undefined;
+	constructor(value?: readonly [string, number?] | undefined);
+}
+export declare class GenericReadonlyProperty<T> {
+	readonly value?: readonly (T | undefined)[] | undefined;
+	constructor(value?: readonly (T | undefined)[] | undefined);
+}
+export declare class ParenthesizedReadonlyProperty {
+	readonly value?: (readonly string[]) | undefined;
+	constructor(value?: (readonly string[]) | undefined);
+}
+export declare class ReadonlyUnionProperty {
+	readonly value?: string | readonly string[] | undefined;
+	constructor(value?: string | readonly string[] | undefined);
+}
+export declare class ReadonlyIntersectionProperty {
+	readonly value?: (readonly string[]) & {
+		length: number;
+	} | undefined;
+	constructor(value?: (readonly string[]) & {
+		length: number;
+	} | undefined);
+}
+export declare class ExplicitUndefinedReadonlyProperty {
+	readonly value?: readonly string[] | undefined;
+	constructor(value?: readonly string[] | undefined);
+}
+export declare class DefaultReadonlyProperty {
+	readonly value: readonly string[];
+	constructor(value: readonly string[] | undefined, required: string);
+}
+export declare function defaultReadonlyArray(value: readonly string[] | undefined, required: string): void;
+export declare function defaultReadonlyTuple(value: readonly [string] | undefined, required: string): void;
+export declare function defaultGenericReadonlyArray<T>(value: readonly T[] | undefined, required: string): void;
+export declare function trailingReadonlyDefault(value?: readonly string[]): void;
+export declare function optionalReadonlyArray(value?: readonly string[]): void;
+export declare function readonlyRest(...values: readonly string[]): void;

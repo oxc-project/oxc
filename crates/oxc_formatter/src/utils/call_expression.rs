@@ -280,3 +280,14 @@ pub fn is_test_each_pattern(expr: &Expression<'_>) -> bool {
         _ => false,
     }
 }
+
+/// The first byte of the token right after a call's callee: `?.`, `<` or `(`.
+pub fn callee_opener(call: &CallExpression<'_>) -> u8 {
+    if call.optional {
+        b'?'
+    } else if call.type_arguments.is_some() {
+        b'<'
+    } else {
+        b'('
+    }
+}
