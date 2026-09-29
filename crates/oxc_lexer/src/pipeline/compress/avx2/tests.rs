@@ -1,12 +1,14 @@
 use std::iter;
 
-use crate::pipeline::tables::Tables;
-
-use super::compress_blocks;
+use super::{PairLuts, compress_blocks};
 
 #[test]
 fn compress_blocks_matches_scalar_reference() {
-    let t = Tables::get();
+    let pair_luts = PairLuts::get();
+    // Need this check, because `compress_blocks` uses `pair_luts.unwrap_unchecked()`
+    // which would be UB if it's `None`
+    assert!(pair_luts.is_some(), "`PairLuts` not present");
+
     let mut cases: Vec<Vec<u64>> = Vec::new();
     let all_pairs: Vec<u64> = (0..65536u64)
         .collect::<Vec<_>>()
@@ -46,7 +48,7 @@ fn compress_blocks_matches_scalar_reference() {
         let mut kinds = vec![0u8; n + 64];
         let m = unsafe {
             compress_blocks(
-                t,
+                pair_luts,
                 st.as_ptr(),
                 kind.as_ptr(),
                 0,

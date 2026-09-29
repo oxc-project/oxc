@@ -1,6 +1,14 @@
 //! Lookup tables which `compress_blocks` uses to turn the token-start bitmap into a list of token positions,
 //! 16 bits at a time.
 
+use std::sync::OnceLock;
+
+/// Single copy of [`PairLuts`], shared across all threads.
+///
+/// `Box<PairLuts>` not `PairLuts`, to avoid uninitialized `PairLuts` being stored
+/// in the binary's data section, which would bloat binary by ~10 KB.
+static PAIR_LUTS: OnceLock<Box<PairLuts>> = OnceLock::new();
+
 /// Lookup tables for converting a 16-bit mask into a list of the offsets of its set bits.
 ///
 /// `compress_blocks` splits each 16 bits of the token-start bitmap into 2 bytes,
@@ -29,8 +37,16 @@ pub struct PairLuts {
 const _: () = assert!(size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
 
 impl PairLuts {
+    /// Get reference to [`PairLuts`].
+    ///
+    /// `PairLuts` is created on the first call, and shared by all threads after that.
+    pub fn get() -> Option<&'static PairLuts> {
+        let pair_luts = PAIR_LUTS.get_or_init(|| Box::new(PairLuts::new()));
+        Some(pair_luts)
+    }
+
     /// Create [`PairLuts`] lookup tables.
-    pub fn new() -> Self {
+    fn new() -> Self {
         let mut lut0z = [[0; 8]; 256];
         let mut lutpad = [[0; 32]; 256];
 

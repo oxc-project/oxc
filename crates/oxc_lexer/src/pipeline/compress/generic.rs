@@ -5,15 +5,27 @@ use crate::{
     token::{is_trivia_byte, matches_tk, tk},
 };
 
-use crate::pipeline::{
-    chunk::{eqm, load64},
-    tables::Tables,
-};
+use crate::pipeline::chunk::{eqm, load64};
 
 use super::common::{emit_value, invalid_diags};
 
+/// Dummy `PairLuts`.
+///
+/// Only AVX2 implementation requires the real `PairLuts`.
+/// This dummy exists just so `Lexer::new` can unconditionally call `PairLuts::get` on any platform.
+pub struct PairLuts;
+
+impl PairLuts {
+    /// Get reference to [`PairLuts`].
+    ///
+    /// [`PairLuts`] is not used in generic build, so returns `None`.
+    pub fn get() -> Option<&'static PairLuts> {
+        None
+    }
+}
+
 pub(super) unsafe fn compress_blocks(
-    _t: &Tables,
+    _pair_luts: Option<&PairLuts>,
     st: *const u64,
     kind: *const u8,
     b0: usize,
