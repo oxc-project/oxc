@@ -4,8 +4,8 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bytes::{is_digit, is_word, is_ws},
+    keywords::{is_kw_init, is_kw_init_ts},
     operators::is_op_char,
-    tables::{is_kw_init, is_kw_init_ts},
 };
 
 use super::punct1::PUNCT1;

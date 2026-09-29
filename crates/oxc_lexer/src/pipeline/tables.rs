@@ -1,3 +1,12 @@
+//! Data which is static, but too large to store as `static`s in the binary.
+//!
+//! Instead, it's generated and heap-allocated at runtime, one copy per [`Lexer`]
+//! i.e. one copy per thread.
+//!
+//! [`Lexer`]: super::Lexer
+
+use crate::pipeline::keywords::Keywords;
+
 #[cfg(all(
     target_arch = "x86_64",
     target_feature = "avx2",
@@ -6,11 +15,7 @@
 ))]
 use crate::pipeline::compress::PairLuts;
 
-pub(super) use keywords::{KwSet, is_kw_init, is_kw_init_ts};
-
-mod keywords;
-use keywords::Keywords;
-
+/// Static data that's too large to store as `static`s in the binary.
 pub(super) struct Tables {
     pub keywords: Keywords,
 
@@ -24,6 +29,7 @@ pub(super) struct Tables {
 }
 
 impl Tables {
+    /// Create [`Tables`].
     pub fn new() -> Tables {
         Self {
             keywords: Keywords::new(),

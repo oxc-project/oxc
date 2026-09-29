@@ -23,6 +23,7 @@ mod coalesce;
 mod compress;
 mod disambiguate;
 mod find;
+mod keywords;
 mod misc;
 mod operators;
 mod scan;

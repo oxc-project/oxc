@@ -2,7 +2,7 @@ use std::ptr;
 
 use crate::token::tk;
 
-use crate::pipeline::tables::KwSet;
+use crate::pipeline::keywords::KwSet;
 
 pub const KWB: usize = 64;
 

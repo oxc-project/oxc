@@ -6,9 +6,10 @@ use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::{is_digit, is_word, is_ws},
     disambiguate::{gt_run_split, lt_run_split},
+    keywords::KwSet,
     operators::{is_op_char, opmap_longest, opmap_pack},
     scan::scan_number,
-    tables::{KwSet, Tables},
+    tables::Tables,
     token_view,
 };
 

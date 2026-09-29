@@ -1,7 +1,7 @@
 use crate::pipeline::{
     bytes::{is_digit, is_ws},
+    keywords::{is_kw_init, is_kw_init_ts},
     operators::is_op_char,
-    tables::{is_kw_init, is_kw_init_ts},
 };
 
 /// Nibble lookup tables which classify bytes as keyword-initial letters, operator chars, or `.`.

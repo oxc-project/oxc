@@ -14,12 +14,12 @@ const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
 const KWINIT_TS_LO: [u8; 16] = [2, 1, 3, 3, 3, 3, 3, 3, 0, 3, 0, 1, 1, 1, 1, 1];
 
 #[inline(always)]
-pub const fn is_kw_init(c: u8) -> bool {
+pub(super) const fn is_kw_init(c: u8) -> bool {
     (KWINIT_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
 
 #[inline(always)]
-pub const fn is_kw_init_ts(c: u8) -> bool {
+pub(super) const fn is_kw_init_ts(c: u8) -> bool {
     (KWINIT_TS_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
 
@@ -175,14 +175,14 @@ const REGEX_KW_MASK: u64 = {
     mask
 };
 
-pub struct Keywords {
+pub(super) struct Keywords {
     pub kwjs: KwSet,
     pub kwts: KwSet,
     pub regex_kw_mask: u64,
 }
 
 impl Keywords {
-    pub(super) fn new() -> Self {
+    pub fn new() -> Self {
         let kwjs = KwSet::build(&KEYWORDS_JS, false, &[25, 24], KW_HASH_HINT_JS);
         let kwts = KwSet::build(&KEYWORDS_TS, true, &[23], KW_HASH_HINT_TS);
 
@@ -214,7 +214,7 @@ const KW_HASH_HINT_TS: (u32, u32) = (0x000B_385B, 23);
 /// keys on `(c0, c1, last, len)` because the wider list has pairs the
 /// narrow key cannot separate (static/string, declare/default,
 /// interface/intrinsic).
-pub struct KwSet {
+pub(super) struct KwSet {
     pub ts_key: bool,
     pub kw_len: [u8; KW_COUNT_TS],
     pub kw_first8: [u64; KW_COUNT_TS],
