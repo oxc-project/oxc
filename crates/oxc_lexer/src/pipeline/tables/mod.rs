@@ -1,24 +1,8 @@
-mod classify_luts;
 mod keywords;
 mod pair_luts;
 mod punct1;
 
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-pub(super) use classify_luts::{MERGED_LUTS, WORD_LUTS};
-
-pub(super) use keywords::KwSet;
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
-pub(super) use keywords::{is_kw_init, is_kw_init_ts};
+pub(super) use keywords::{KwSet, is_kw_init, is_kw_init_ts};
 
 #[cfg(not(all(
     target_arch = "x86_64",

@@ -1,41 +1,35 @@
 use crate::pipeline::{
     bytes::{is_digit, is_ws},
     operators::is_op_char,
+    tables::{is_kw_init, is_kw_init_ts},
 };
 
-use super::keywords::{is_kw_init, is_kw_init_ts};
-
-#[cfg_attr(
-    all(
-        not(test),
-        not(all(
-            target_arch = "x86_64",
-            target_feature = "avx2",
-            target_feature = "bmi2",
-            target_feature = "popcnt"
-        ))
-    ),
-    expect(dead_code, reason = "only used in SIMD implementation and tests")
-)]
-pub struct MergedLuts {
+/// Nibble lookup tables which classify bytes as keyword-initial letters, operator chars, or `.`.
+///
+/// "Merged" because one lookup answers all three questions.
+/// `classify_impl` looks up each byte's low nibble in `lo` and its high nibble in `hi` with `vpshufb`,
+/// and ANDs the results. For an ASCII byte `c`, `lo[c & 15] & hi[c >> 4]` has these bits set:
+///
+/// * Bits 0-1: `c` can start a keyword.
+/// * Bits 2-5: `c` is an operator char.
+/// * Bit 7: `c` is `.`. It's the top bit, so a movemask extracts it without a compare.
+///
+/// Each bit covers only one row of 16 bytes which share a high nibble.
+/// `hi[h]` sets the bits whose row is `h`, and `lo[l]` sets a bit if byte `(h << 4) | l` is in its class,
+/// so the AND is exact. A class spanning several rows needs a bit per row
+/// (e.g. keyword-initial letters take 2 bits, one for `a`-`o` and one for `p`-`z`).
+///
+/// Bytes >= 0x80 get no bits, because `vpshufb` outputs 0 for an index with its top bit set.
+///
+/// `lo_ts` is the TypeScript version of `lo`, which has more keyword-initial letters.
+/// The other bits, and `hi`, are the same for both.
+pub(super) struct MergedLuts {
     pub lo: [u8; 16],
     pub hi: [u8; 16],
     pub lo_ts: [u8; 16],
 }
 
-#[cfg_attr(
-    all(
-        not(test),
-        not(all(
-            target_arch = "x86_64",
-            target_feature = "avx2",
-            target_feature = "bmi2",
-            target_feature = "popcnt"
-        ))
-    ),
-    expect(dead_code, reason = "only used in SIMD implementation and tests")
-)]
-pub const MERGED_LUTS: MergedLuts = {
+pub(super) const MERGED_LUTS: MergedLuts = {
     let mut mrg_lo = [0; 16];
     let mut mrg_hi = [0; 16];
     let mut mrg_lo_ts = [0; 16];
@@ -74,36 +68,23 @@ pub const MERGED_LUTS: MergedLuts = {
     MergedLuts { lo: mrg_lo, hi: mrg_hi, lo_ts: mrg_lo_ts }
 };
 
-#[cfg_attr(
-    all(
-        not(test),
-        not(all(
-            target_arch = "x86_64",
-            target_feature = "avx2",
-            target_feature = "bmi2",
-            target_feature = "popcnt"
-        ))
-    ),
-    expect(dead_code, reason = "only used in SIMD implementation and tests")
-)]
-pub struct WordLuts {
+/// Nibble lookup tables which classify bytes as identifier chars or whitespace.
+///
+/// Works the same way as [`MergedLuts`].
+/// For an ASCII byte `c`, `lo[c & 15] & hi[c >> 4]` has these bits set:
+///
+/// * Bits 0-5: `c` is an identifier char. One bit per row: `$`, digits, `A`-`O`, `P`-`Z` and `_`,
+///   `a`-`o`, `p`-`z`. Bit 1 (digits) also serves as the digit class.
+/// * Bit 6: `c` is whitespace other than space (tab, line feed etc).
+/// * Bit 7: `c` is space.
+///
+/// Bytes >= 0x80 get no bits. `classify_impl` counts them as identifier chars separately.
+pub(super) struct WordLuts {
     pub lo: [u8; 16],
     pub hi: [u8; 16],
 }
 
-#[cfg_attr(
-    all(
-        not(test),
-        not(all(
-            target_arch = "x86_64",
-            target_feature = "avx2",
-            target_feature = "bmi2",
-            target_feature = "popcnt"
-        ))
-    ),
-    expect(dead_code, reason = "only used in SIMD implementation and tests")
-)]
-pub const WORD_LUTS: WordLuts = {
+pub(super) const WORD_LUTS: WordLuts = {
     let mut wb_lo = [0; 16];
     let mut wb_hi = [0; 16];
 
