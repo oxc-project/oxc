@@ -14312,13 +14312,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ──────────────────
    ╰────
 
-  × 'abstract' modifier cannot be used here.
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/abstract/input.ts:1:1]
  1 │ abstract interface Foo {
    · ────────
  2 │   foo: string;
    ╰────
-  help: Only 'declare' modifier is allowed here.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/declare-new-line/input.ts:1:8]
@@ -14328,13 +14327,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × 'abstract' modifier cannot be used here.
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/export-abstract-interface/input.ts:1:8]
  1 │ export abstract interface I {
    ·        ────────
  2 │ 
    ╰────
-  help: Only 'declare' modifier is allowed here.
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/export-default/input.ts:1:26]

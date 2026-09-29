@@ -15958,12 +15958,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  3 │ }
    ╰────
 
-  × 'abstract' modifier cannot be used here.
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts:1:1]
  1 │ abstract interface I {}
    · ────────
    ╰────
-  help: Only 'declare' modifier is allowed here.
 
   × Identifier `C` has already been declared
    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAndVariableWithSameName.ts:1:7]
