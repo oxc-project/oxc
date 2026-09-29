@@ -684,7 +684,8 @@ fn convert_best_fitting(
     }
 
     if variants.len() == 1 {
-        let first_contents = normalize_array(convert_shared_elements(variants[0], state)?);
+        let first_contents =
+            normalize_array(convert_shared_elements(variants[0].content(), state)?);
         return Ok(json!({"type": "group", "contents": first_contents}));
     }
 
@@ -700,14 +701,16 @@ fn convert_best_fitting(
     // get later ids; `state.refs[id]` is filled in after.
     let first_id = state.refs.len();
     state.refs.push(Value::Null);
-    let first_content = normalize_array(convert_shared_elements(variants[0], state)?);
+    let first_content = normalize_array(convert_shared_elements(variants[0].content(), state)?);
     state.refs[first_id] = first_content;
     let first_ref = json!({ "_REF": first_id });
 
     let mut expanded_states: Vec<Value> = Vec::with_capacity(variants.len());
     expanded_states.push(first_ref.clone());
+    // `VariantMode` is dropped, Prettier's `conditionalGroup` has no counterpart
+    // (DIVERGENCES.md#member-chain-last-call-object-fixpoint is not reached through this bridge)
     for v in &variants[1..] {
-        expanded_states.push(normalize_array(convert_shared_elements(v, state)?));
+        expanded_states.push(normalize_array(convert_shared_elements(v.content(), state)?));
     }
 
     Ok(json!({

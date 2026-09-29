@@ -4,8 +4,9 @@ pub mod simple_argument;
 
 use std::iter;
 
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format};
+use oxc_formatter_core::{Buffer, Format, GroupMode};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -109,12 +110,17 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 
     /// To keep the formatting order consistent, we need to inspect all member chain groups in order.
-    fn inspect_member_chain_groups(&self, f: &mut JsFormatter<'_, 'a>) {
+    /// Returns whether the last group has a sticky group (an object under `objectWrap: preserve`).
+    fn inspect_member_chain_groups(&self, f: &mut JsFormatter<'_, 'a>) -> bool {
+        let mut sticky_groups = f.state().sticky_groups();
         self.head.inspect(false, f);
 
         for member in self.tail.iter() {
+            sticky_groups = f.state().sticky_groups();
             member.inspect(true, f);
         }
+
+        f.state().sticky_groups() != sticky_groups
     }
 
     /// It tells if the groups should break on multiple lines
@@ -169,6 +175,60 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         }
     }
 
+    /// Returns the last group formatted as if its trailing call arguments contained a hard break:
+    /// the grouped argument variants without the most flat one, or the arguments group expanded
+    /// (the shapes the arguments formatting produces for that case).
+    ///
+    fn last_group_with_broken_arguments(
+        &self,
+        f: &mut JsFormatter<'_, 'a>,
+    ) -> Option<FormatElement<'a>> {
+        let last_group = self.last_group();
+        let Some(ChainMember::CallExpression { .. }) = last_group.members().last() else {
+            return None;
+        };
+        // The group starts with the callee member, so it is always interned
+        let Some(FormatElement::Interned(elements)) = last_group.formatted() else {
+            return None;
+        };
+
+        let (index, replacement) = match elements.last()? {
+            FormatElement::BestFitting(best_fitting) if best_fitting.variants().len() > 2 => {
+                let variants =
+                    ArenaVec::from_iter_in(best_fitting.variants()[1..].iter().copied(), &*f);
+                // SAFETY: At least two variants are left
+                let best_fitting = unsafe { BestFittingElement::from_vec_unchecked(variants) };
+                (elements.len() - 1, FormatElement::BestFitting(best_fitting))
+            }
+            FormatElement::Tag(Tag::EndGroup) => {
+                let mut depth = 0;
+                let (index, group) =
+                    elements.iter().enumerate().rev().find_map(|(index, element)| {
+                        match element {
+                            FormatElement::Tag(Tag::EndGroup) => depth += 1,
+                            FormatElement::Tag(Tag::StartGroup(group)) => {
+                                depth -= 1;
+                                if depth == 0 {
+                                    return Some((index, group));
+                                }
+                            }
+                            _ => {}
+                        }
+                        None
+                    })?;
+                let group = group.clone().with_mode(GroupMode::Expand);
+                (index, FormatElement::Tag(Tag::StartGroup(group)))
+            }
+            _ => return None,
+        };
+
+        f.intern(&format_with(|f| {
+            f.write_elements(elements[..index].iter().cloned());
+            f.write_element(replacement.clone());
+            f.write_elements(elements[index + 1..].iter().cloned());
+        }))
+    }
+
     fn last_group(&self) -> &MemberChainGroup<'a, 'b> {
         self.tail.last().unwrap_or(&self.head)
     }
@@ -207,7 +267,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
             f.join().entries(iter::once(&self.head).chain(self.tail.iter()));
         });
 
-        self.inspect_member_chain_groups(f);
+        let last_group_has_sticky_group = self.inspect_member_chain_groups(f);
 
         let has_new_line_or_comment_between =
             self.tail.iter().any(MemberChainGroup::needs_empty_line);
@@ -244,6 +304,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
 
                 if has_empty_line_before_tail || self.last_group().will_break(f) {
                     write!(f, [expand_parent()]);
+                } else if last_group_has_sticky_group
+                    && let Some(last_group) = self.last_group_with_broken_arguments(f)
+                {
+                    // Once printed broken, an object stays broken (`objectWrap: preserve`),
+                    // and the next pass takes the `will_break` path above. Pick what it picks:
+                    // - Split only if printing it breaks no object (`VariantMode::NoStickyBreak`)
+                    // - Otherwise, one line with the last call arguments broken, if its first line fits
+                    // - Otherwise, split
+                    //
+                    // Always splitting would also be a fixpoint, with a simpler rule,
+                    // but it rewrites chains authored joined (`.insert({` on the chain line), which Prettier keeps.
+                    let one_line = best_fitting_variant(f.state_mut(), |f| {
+                        write!(f, [format_one_line]);
+                    });
+                    let expanded = best_fitting_variant(f.state_mut(), |f| {
+                        write!(f, [format_expanded]);
+                    });
+                    let format_one_line_last_group_broken = format_with(|f| {
+                        f.join().entries(
+                            iter::once(&self.head)
+                                .chain(self.tail.iter().take(self.tail.len() - 1)),
+                        );
+                        f.write_element(last_group.clone());
+                    });
+                    let one_line_last_group_broken = best_fitting_variant(f.state_mut(), |f| {
+                        write!(f, [format_one_line_last_group_broken]);
+                    });
+                    let variants = ArenaVec::from_array_in(
+                        [
+                            BestFittingVariant::new(one_line),
+                            BestFittingVariant::new(expanded).with_mode(VariantMode::NoStickyBreak),
+                            BestFittingVariant::new(one_line_last_group_broken),
+                            BestFittingVariant::new(expanded),
+                        ],
+                        f,
+                    );
+                    // SAFETY: Four variants
+                    let best_fitting = unsafe { BestFittingElement::from_vec_unchecked(variants) };
+                    return f.write_element(FormatElement::BestFitting(best_fitting));
                 }
 
                 write!(f, [best_fitting!(format_one_line, format_expanded)]);

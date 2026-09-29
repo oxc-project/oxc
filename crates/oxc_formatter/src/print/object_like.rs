@@ -114,7 +114,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
             if should_hug {
                 write!(f, inner);
             } else {
-                write!(f, [group(&inner).should_expand(should_expand)]);
+                // Once printed broken, the object stays broken (`should_expand` above)
+                write!(
+                    f,
+                    [group(&inner)
+                        .should_expand(should_expand)
+                        .sticky(f.options().expand == Expand::Auto)]
+                );
             }
         }
 

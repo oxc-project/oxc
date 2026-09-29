@@ -778,3 +778,55 @@ Prettier keeps an end-of-line comment there (`foo // c` + `(a)`, the same as our
 Its function declarations keep the same-line block comment outside (`function foo /* c */(a) {}`).
 Before `<`, Prettier glues an own-line comment back onto the callee's line (`foo// c` + `<T>(a)`); we keep it own-line.
 Before an optional call's `?.`, Prettier moves an own-line comment into the arguments as well; we keep it own-line.
+
+## member-chain-last-call-object-fixpoint
+
+- Why: invariant
+- Pin: `tests/fixtures/js/member-chains/last-call-object-fixpoint/last-call-object-fixpoint.js`
+- Conformance: `typescript/method-chain/object/issue-17239.ts`
+
+A member chain whose last call arguments hold an object prints Prettier's second-pass fixpoint directly (`objectWrap: preserve` only):
+
+```js
+// input
+const { error } = await client.from("sent_messages").insert({ id: sid, account_id: accountId, subject: "x", body: "x", message_id: id });
+
+// ours
+const { error } = await client.from("sent_messages").insert({
+  id: sid,
+  account_id: accountId,
+  subject: "x",
+  body: "x",
+  message_id: id,
+});
+
+// prettier (first pass; its second pass produces ours)
+const { error } = await client
+  .from("sent_messages")
+  .insert({
+    id: sid,
+    account_id: accountId,
+    subject: "x",
+    body: "x",
+    message_id: id,
+  });
+```
+
+- Prettier's first pass splits the chain and breaks the object; the next pass keeps that object broken, which keeps the chain on one line
+- We split only if printing the split layout breaks no object in the last group
+  - Otherwise the chain stays on one line with the last call arguments broken, when that first line fits
+- An object that broke only in the split layout but fits in the one line layout stays flat: Prettier's fixpoint keeps the break its first pass made
+
+```js
+// ours (in a deeper indentation, where the split layout would break the object)
+    const fetchImpl = vi.fn().mockResolvedValue(
+      Response.json({ endpoints: { api: "https://copilot-api.acme.ghe.com" } }),
+    );
+
+// prettier (third pass, the fixpoint)
+    const fetchImpl = vi.fn().mockResolvedValue(
+      Response.json({
+        endpoints: { api: "https://copilot-api.acme.ghe.com" },
+      }),
+    );
+```

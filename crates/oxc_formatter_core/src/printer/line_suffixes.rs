@@ -3,7 +3,7 @@ use crate::FormatElement;
 use super::call_stack::PrintElementArgs;
 
 /// Stores the queued line suffixes.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub(super) struct LineSuffixes<'a> {
     suffixes: Vec<LineSuffixEntry<'a>>,
 }

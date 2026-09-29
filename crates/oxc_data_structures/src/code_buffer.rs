@@ -172,6 +172,16 @@ impl CodeBuffer {
         self.buf.is_empty()
     }
 
+    /// Shortens the buffer to `len` bytes, dropping what was printed after.
+    ///
+    /// # Panics
+    /// Panics if `len` is not on a UTF-8 character boundary.
+    #[inline]
+    pub fn truncate(&mut self, len: usize) {
+        assert!(self.as_str().is_char_boundary(len));
+        self.buf.truncate(len);
+    }
+
     /// Reserves capacity for at least `additional` more bytes in the buffer.
     ///
     /// The buffer may reserve more space to speculatively avoid frequent reallocations.

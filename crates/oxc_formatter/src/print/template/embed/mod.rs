@@ -9,7 +9,7 @@ use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
     FormatElement,
-    format_element::{BestFittingElement, Interned, TextWidth},
+    format_element::{BestFittingElement, BestFittingVariant, Interned, TextWidth},
 };
 
 use crate::{
@@ -345,8 +345,12 @@ where
                 let mut variants =
                     ArenaVec::with_capacity_in(best_fitting.variants().len(), &allocator);
                 for variant in best_fitting.variants() {
-                    let mapped = map_text_in_ir_impl(variant, f, map_text, interned_cache);
-                    variants.push(mapped.into_arena_slice());
+                    let mapped =
+                        map_text_in_ir_impl(variant.content(), f, map_text, interned_cache);
+                    variants.push(
+                        BestFittingVariant::new(mapped.into_arena_slice())
+                            .with_mode(variant.mode()),
+                    );
                 }
                 // SAFETY: This rebuild preserves the original BestFitting's variant count.
                 out.push(FormatElement::BestFitting(unsafe {

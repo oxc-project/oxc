@@ -315,7 +315,7 @@ pub struct BestFittingElement<'a> {
     /// The different variants for this element.
     /// The first element is the one that takes up the most space horizontally (the most flat),
     /// The last element takes up the least space horizontally (but most horizontal space).
-    variants: &'a [&'a [FormatElement<'a>]],
+    variants: &'a [BestFittingVariant<'a>],
 }
 
 impl<'a> BestFittingElement<'a> {
@@ -328,7 +328,7 @@ impl<'a> BestFittingElement<'a> {
     /// ## Safety
     /// The slice must contain at least two variants.
     #[doc(hidden)]
-    pub unsafe fn from_vec_unchecked(variants: ArenaVec<'a, &'a [FormatElement<'a>]>) -> Self {
+    pub unsafe fn from_vec_unchecked(variants: ArenaVec<'a, BestFittingVariant<'a>>) -> Self {
         debug_assert!(
             variants.len() >= 2,
             "Requires at least the least expanded and most expanded variants"
@@ -343,20 +343,24 @@ impl<'a> BestFittingElement<'a> {
     ///
     /// Panics if there are no variants. The constructor guarantees at least two variants.
     pub fn most_expanded(&self) -> &[FormatElement<'a>] {
-        self.variants.last().expect(
-            "Most contain at least two elements, as guaranteed by the best fitting builder.",
-        )
+        self.variants
+            .last()
+            .expect(
+                "Most contain at least two elements, as guaranteed by the best fitting builder.",
+            )
+            .content()
     }
 
-    /// Splits the variants into the most expanded and the remaining flat variants
+    /// Splits the variants into the most expanded (its mode is never used) and the remaining flat variants
     pub fn split_to_most_expanded_and_flat_variants(
         &self,
-    ) -> (&&[FormatElement<'a>], &[&[FormatElement<'a>]]) {
+    ) -> (&'a [FormatElement<'a>], &[BestFittingVariant<'a>]) {
         // SAFETY: We have already asserted that there are at least two variants for creating this struct.
-        unsafe { self.variants.split_last().unwrap_unchecked() }
+        let (most_expanded, rest) = unsafe { self.variants.split_last().unwrap_unchecked() };
+        (most_expanded.content(), rest)
     }
 
-    pub fn variants(&self) -> &[&'a [FormatElement<'a>]] {
+    pub fn variants(&self) -> &[BestFittingVariant<'a>] {
         self.variants
     }
 
@@ -366,9 +370,12 @@ impl<'a> BestFittingElement<'a> {
     ///
     /// Panics if there are no variants. The constructor guarantees at least two variants.
     pub fn most_flat(&self) -> &[FormatElement<'a>] {
-        self.variants.first().expect(
-            "Most contain at least two elements, as guaranteed by the best fitting builder.",
-        )
+        self.variants
+            .first()
+            .expect(
+                "Most contain at least two elements, as guaranteed by the best fitting builder.",
+            )
+            .content()
     }
 }
 
@@ -376,6 +383,57 @@ impl std::fmt::Debug for BestFittingElement<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_list().entries(self.variants).finish()
     }
+}
+
+/// One variant of a [BestFittingElement]: its content (starting with [Tag::StartEntry]), and how to take it.
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub struct BestFittingVariant<'a> {
+    content: &'a [FormatElement<'a>],
+    mode: VariantMode,
+}
+
+impl<'a> BestFittingVariant<'a> {
+    pub fn new(content: &'a [FormatElement<'a>]) -> Self {
+        Self { content, mode: VariantMode::FirstLine }
+    }
+
+    #[must_use]
+    pub fn with_mode(mut self, mode: VariantMode) -> Self {
+        self.mode = mode;
+        self
+    }
+
+    pub fn content(&self) -> &'a [FormatElement<'a>] {
+        self.content
+    }
+
+    pub fn mode(&self) -> VariantMode {
+        self.mode
+    }
+}
+
+impl std::fmt::Debug for BestFittingVariant<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.content.fmt(f)
+    }
+}
+
+/// How the printer decides whether to take a [BestFittingVariant].
+/// The most expanded variant is taken when no other is.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VariantMode {
+    /// Taken if its content fits up to the first line break, measured flat.
+    ///
+    /// Prettier's `conditionalGroup` semantics:
+    /// the following lines are left to their own groups, which decide once printed.
+    /// The mode of [BestFittingVariant::new], to keep ported layouts on that premise.
+    FirstLine,
+    /// Taken if printing it breaks no sticky group ([crate::tag::Group::is_sticky]), no measurement.
+    /// Otherwise the printed output is rolled back and the next variant is tried.
+    ///
+    /// For a layout that is a fixpoint only while such groups stay flat, no counterpart in Prettier.
+    /// e.g. a member chain splits only if no object in it breaks (`objectWrap: preserve` keeps that break).
+    NoStickyBreak,
 }
 
 pub trait FormatElements {

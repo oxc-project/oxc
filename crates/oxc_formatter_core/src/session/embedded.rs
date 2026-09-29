@@ -160,7 +160,7 @@ fn has_nested_tailwind_class(elements: &[FormatElement<'_>]) -> bool {
         match element {
             FormatElement::Interned(interned) => interned.iter().any(contains),
             FormatElement::BestFitting(best_fitting) => {
-                best_fitting.variants().iter().any(|variant| variant.iter().any(contains))
+                best_fitting.variants().iter().any(|variant| variant.content().iter().any(contains))
             }
             _ => false,
         }

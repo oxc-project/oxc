@@ -23,7 +23,7 @@ use crate::{
     VecBuffer,
     builders::{hard_line_break, soft_line_break_or_space, space, text, token},
     format_element::{
-        LineMode, TextWidth,
+        LineMode, TextWidth, VariantMode,
         tag::{self, DedentMode, GroupMode, Tag},
     },
     write, write as w,
@@ -202,7 +202,10 @@ where
                     ]);
 
                     for variant in best_fitting.variants() {
-                        w!(f, [FormatElementSlice(variant), hard_line_break()]);
+                        if variant.mode() == VariantMode::NoStickyBreak {
+                            w!(f, [token("no_sticky_break: ")]);
+                        }
+                        w!(f, [FormatElementSlice(variant.content()), hard_line_break()]);
                     }
 
                     f.write_elements([
@@ -364,6 +367,10 @@ where
                                 GroupMode::Propagated => {
                                     w!(f, [token("expand: propagated,"), space()]);
                                 }
+                            }
+
+                            if group.is_sticky() {
+                                w!(f, [token("sticky: true,"), space()]);
                             }
                         }
 

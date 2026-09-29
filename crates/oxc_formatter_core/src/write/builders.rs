@@ -817,7 +817,7 @@ impl<C> std::fmt::Debug for BlockIndent<'_, '_, C> {
 /// Creates a logical `Group` around the content.
 #[inline]
 pub fn group<'ast, C>(content: &impl Format<'ast, C>) -> Group<'_, 'ast, C> {
-    Group { content: Argument::new(content), group_id: None, should_expand: false }
+    Group { content: Argument::new(content), group_id: None, should_expand: false, sticky: false }
 }
 
 #[derive(Copy, Clone)]
@@ -826,6 +826,7 @@ pub struct Group<'fmt, 'ast, C> {
     #[expect(clippy::struct_field_names)] // Keep the name the same as it is in the original source
     group_id: Option<GroupId>,
     should_expand: bool,
+    sticky: bool,
 }
 
 impl<C> Group<'_, '_, C> {
@@ -841,14 +842,25 @@ impl<C> Group<'_, '_, C> {
         self.should_expand = should_expand;
         self
     }
+
+    /// Marks that breaking the group persists to the next formatting pass,
+    /// see [crate::VariantMode::NoStickyBreak].
+    #[must_use]
+    pub fn sticky(mut self, sticky: bool) -> Self {
+        self.sticky = sticky;
+        self
+    }
 }
 
 impl<'ast, C> Format<'ast, C> for Group<'_, 'ast, C> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         let mode = if self.should_expand { GroupMode::Expand } else { GroupMode::Flat };
+        if self.sticky {
+            f.state_mut().count_sticky_group();
+        }
 
         f.write_element(FormatElement::Tag(StartGroup(
-            tag::Group::new().with_id(self.group_id).with_mode(mode),
+            tag::Group::new().with_id(self.group_id).with_mode(mode).with_sticky(self.sticky),
         )));
 
         Arguments::from(&self.content).fmt(f);
@@ -862,6 +874,7 @@ impl<C> std::fmt::Debug for Group<'_, '_, C> {
         f.debug_struct("GroupElements")
             .field("group_id", &self.group_id)
             .field("should_expand", &self.should_expand)
+            .field("sticky", &self.sticky)
             .field("content", &"{{content}}")
             .finish()
     }
@@ -1052,9 +1065,10 @@ impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
         let mut formatted_variants = Vec::with_capacity(variants.len());
 
         for variant in variants {
-            formatted_variants.push(best_fitting_variant(f.state_mut(), |buffer| {
+            let content = best_fitting_variant(f.state_mut(), |buffer| {
                 buffer.write_fmt(Arguments::from(variant));
-            }));
+            });
+            formatted_variants.push(format_element::BestFittingVariant::new(content));
         }
 
         let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f);

@@ -171,11 +171,14 @@ impl GroupMode {
 pub struct Group {
     id: Option<GroupId>,
     mode: Cell<GroupMode>,
+    /// Whether breaking this group persists to the next formatting pass
+    /// (e.g. a JS object under `objectWrap: preserve` keeps the line break after `{`).
+    sticky: bool,
 }
 
 impl Group {
     pub fn new() -> Self {
-        Self { id: None, mode: Cell::new(GroupMode::Flat) }
+        Self { id: None, mode: Cell::new(GroupMode::Flat), sticky: false }
     }
 
     #[must_use]
@@ -202,6 +205,16 @@ impl Group {
 
     pub fn id(&self) -> Option<GroupId> {
         self.id
+    }
+
+    #[must_use]
+    pub fn with_sticky(mut self, sticky: bool) -> Self {
+        self.sticky = sticky;
+        self
+    }
+
+    pub fn is_sticky(&self) -> bool {
+        self.sticky
     }
 }
 

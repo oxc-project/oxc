@@ -417,6 +417,10 @@ fn clean_interned<'ast>(
                 let cleaned = ArenaVec::from_iter_in(interned[..index].iter().cloned(), &allocator);
                 Some((cleaned, &interned[index..]))
             }
+            FormatElement::Tag(Tag::StartGroup(group)) if group.is_sticky() => {
+                let cleaned = ArenaVec::from_iter_in(interned[..index].iter().cloned(), &allocator);
+                Some((cleaned, &interned[index..]))
+            }
             FormatElement::Interned(inner) => {
                 let cleaned_inner = clean_interned(
                     inner.clone(),
@@ -489,6 +493,10 @@ fn push_cleaned_element<'ast>(
         FormatElement::Line(LineMode::SoftOrSpace) => {
             cleaned.push(FormatElement::Space);
         }
+        // Without its soft line breaks, the group can not break
+        FormatElement::Tag(Tag::StartGroup(group)) if group.is_sticky() => {
+            cleaned.push(FormatElement::Tag(Tag::StartGroup(group.clone().with_sticky(false))));
+        }
 
         FormatElement::Interned(interned) => {
             cleaned.push(FormatElement::Interned(clean_interned(
@@ -532,6 +540,11 @@ impl<'ast, C> Buffer<'ast, C> for RemoveSoftLinesBuffer<'_, 'ast, C> {
             FormatElement::Line(LineMode::Soft) => {}
             FormatElement::Line(LineMode::SoftOrSpace) => {
                 self.inner.write_element(FormatElement::Space);
+            }
+            // Without its soft line breaks, the group can not break
+            FormatElement::Tag(Tag::StartGroup(group)) if group.is_sticky() => {
+                self.inner
+                    .write_element(FormatElement::Tag(Tag::StartGroup(group.with_sticky(false))));
             }
             FormatElement::Interned(interned) => {
                 let cleaned = self.clean_interned(interned);

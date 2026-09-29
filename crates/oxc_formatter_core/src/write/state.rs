@@ -19,6 +19,8 @@ pub struct FormatState<'ast, C> {
     /// Heap staging vector shared by all [`crate::HeapVecBuffer`]s of this format run;
     /// see [`crate::HeapVecBuffer`] for the watermark scheme keeping their views disjoint.
     scratch: Vec<FormatElement<'ast>>,
+    /// Number of sticky groups ([crate::tag::Group::is_sticky]) formatted so far.
+    sticky_groups: u32,
 }
 
 impl<C: std::fmt::Debug> std::fmt::Debug for FormatState<'_, C> {
@@ -50,6 +52,7 @@ impl<'ast, C> FormatState<'ast, C> {
             session,
             printed_interned_elements: FxHashMap::default(),
             scratch: Vec::new(),
+            sticky_groups: 0,
         }
     }
 
@@ -66,6 +69,16 @@ impl<'ast, C> FormatState<'ast, C> {
     /// Mutable access to the heap staging vector; see [`FormatState::scratch`].
     pub(crate) fn scratch_mut(&mut self) -> &mut Vec<FormatElement<'ast>> {
         &mut self.scratch
+    }
+
+    /// Number of sticky groups formatted so far:
+    /// comparing it before and after formatting some content tells whether the content has any.
+    pub fn sticky_groups(&self) -> u32 {
+        self.sticky_groups
+    }
+
+    pub(crate) fn count_sticky_group(&mut self) {
+        self.sticky_groups += 1;
     }
 
     /// Returns the allocator used for arena-allocating format elements.

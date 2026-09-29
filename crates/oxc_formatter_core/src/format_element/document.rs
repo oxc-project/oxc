@@ -130,7 +130,7 @@ impl Document<'_> {
                         enclosing.push(Enclosing::BestFitting);
 
                         for variant in best_fitting.variants() {
-                            propagate_expands(variant, enclosing, checked_interned);
+                            propagate_expands(variant.content(), enclosing, checked_interned);
                         }
 
                         enclosing.pop();

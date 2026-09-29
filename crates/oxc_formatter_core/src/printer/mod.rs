@@ -14,6 +14,7 @@ use unicode_width::UnicodeWidthChar;
 use crate::{
     ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
     IndentWidth, InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextWidth,
+    VariantMode,
 };
 
 use self::call_stack::{
@@ -262,7 +263,12 @@ impl<'a> Printer<'a> {
                             let fits = self.fits(queue, stack, indent_stack)?;
                             stack.pop(TagKind::Group)?;
 
-                            if fits { PrintMode::Flat } else { PrintMode::Expanded }
+                            if fits {
+                                PrintMode::Flat
+                            } else {
+                                self.state.sticky_group_broke |= group.is_sticky();
+                                PrintMode::Expanded
+                            }
                         }
                     }
                 } else {
@@ -466,9 +472,24 @@ impl<'a> Printer<'a> {
                 // Test if this variant fits and if so, use it. Otherwise try the next
                 // variant.
 
+                let mode = variant.mode();
+                let variant = variant.content();
+
                 // Try to fit only the first variant on a single line
                 if !matches!(variant.first(), Some(&FormatElement::Tag(Tag::StartEntry))) {
                     return invalid_start_tag(TagKind::Entry, variant.first());
+                }
+
+                if mode == VariantMode::NoStickyBreak {
+                    if self.print_variant_without_sticky_break(
+                        variant,
+                        queue,
+                        stack,
+                        indent_stack,
+                    )? {
+                        return Ok(());
+                    }
+                    continue;
                 }
 
                 let entry_args = args.with_print_mode(PrintMode::Flat);
@@ -496,6 +517,33 @@ impl<'a> Printer<'a> {
             queue.extend_back(most_expanded);
             self.print_entry(queue, stack, indent_stack, args.with_print_mode(PrintMode::Expanded))
         }
+    }
+
+    /// Prints a [VariantMode::NoStickyBreak] `variant` as the most expanded one would be,
+    /// and keeps it only if no sticky group broke meanwhile:
+    /// otherwise, rolls the output and the printer state back, and returns `false`.
+    fn print_variant_without_sticky_break(
+        &mut self,
+        variant: &'a [FormatElement<'a>],
+        queue: &mut PrintQueue<'a>,
+        stack: &mut PrintCallStack,
+        indent_stack: &mut PrintIndentStack,
+    ) -> PrintResult<bool> {
+        // Printed through its `EndEntry`: the call stack and the queue come back as they were
+        let snapshot = self.state.snapshot();
+        let indent_stack_snapshot = indent_stack.clone();
+        let outer_sticky_group_broke = std::mem::take(&mut self.state.sticky_group_broke);
+
+        queue.extend_back(variant);
+        let args = stack.top().with_print_mode(PrintMode::Expanded);
+        self.print_entry(queue, stack, indent_stack, args)?;
+
+        let broke = std::mem::replace(&mut self.state.sticky_group_broke, outer_sticky_group_broke);
+        if broke {
+            self.state.restore(snapshot);
+            *indent_stack = indent_stack_snapshot;
+        }
+        Ok(!broke)
     }
 
     /// Tries to fit as much content as possible on a single line.
@@ -924,9 +972,75 @@ struct PrinterState<'a> {
     prefix_nodes: Vec<PrefixNode>,
     /// Sorted Tailwind CSS classes for lookup during printing
     sorted_tailwind_classes: &'a [String],
+    /// Whether a sticky group broke (see [VariantMode::NoStickyBreak]),
+    /// since the start of the [VariantMode::NoStickyBreak] variant being printed.
+    sticky_group_broke: bool,
+}
+
+/// What printing changes in [PrinterState], to roll it back, see [PrinterState::snapshot].
+struct PrinterSnapshot<'a> {
+    buffer_len: usize,
+    pending_indent: Indention,
+    pending_space: bool,
+    measured_group_fits: bool,
+    fill_separator_mode: Option<PrintMode>,
+    line_width: usize,
+    has_empty_line: bool,
+    line_suffixes: LineSuffixes<'a>,
+    prefix_nodes_len: usize,
 }
 
 impl<'a> PrinterState<'a> {
+    /// Destructures every field, so that a new one has to be classified here.
+    fn snapshot(&self) -> PrinterSnapshot<'a> {
+        let Self {
+            buffer,
+            pending_indent,
+            pending_space,
+            measured_group_fits,
+            fill_separator_mode,
+            line_width,
+            has_empty_line,
+            line_suffixes,
+            prefix_nodes,
+            // Left as is: a rolled back group id is set again when printed next,
+            // the same as a group id [FitsMeasurer] measured
+            group_modes: _,
+            // Scratch space of [FitsMeasurer], empty in between
+            fits_stack: _,
+            fits_indent_stack: _,
+            fits_stack_tem_indent: _,
+            fits_root_indent_stack: _,
+            fits_queue: _,
+            sorted_tailwind_classes: _,
+            // Saved by the caller, see [Printer::print_variant_without_sticky_break]
+            sticky_group_broke: _,
+        } = self;
+        PrinterSnapshot {
+            buffer_len: buffer.len(),
+            pending_indent: *pending_indent,
+            pending_space: *pending_space,
+            measured_group_fits: *measured_group_fits,
+            fill_separator_mode: *fill_separator_mode,
+            line_width: *line_width,
+            has_empty_line: *has_empty_line,
+            line_suffixes: line_suffixes.clone(),
+            prefix_nodes_len: prefix_nodes.len(),
+        }
+    }
+
+    fn restore(&mut self, snapshot: PrinterSnapshot<'a>) {
+        self.buffer.truncate(snapshot.buffer_len);
+        self.pending_indent = snapshot.pending_indent;
+        self.pending_space = snapshot.pending_space;
+        self.measured_group_fits = snapshot.measured_group_fits;
+        self.fill_separator_mode = snapshot.fill_separator_mode;
+        self.line_width = snapshot.line_width;
+        self.has_empty_line = snapshot.has_empty_line;
+        self.line_suffixes = snapshot.line_suffixes;
+        self.prefix_nodes.truncate(snapshot.prefix_nodes_len);
+    }
+
     pub fn new(buffer: CodeBuffer, sorted_tailwind_classes: &'a [String]) -> Self {
         Self {
             buffer,
@@ -1647,16 +1761,17 @@ enum Text<'a> {
 
 #[cfg(test)]
 mod tests {
-    use oxc_allocator::Allocator;
+    use oxc_allocator::{Allocator, ArenaVec};
 
     use crate::{
-        Argument, Arguments, Buffer, Document, Format, FormatState, IndentStyle, LineEnding,
-        Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer, best_fitting,
+        Argument, Arguments, BestFittingElement, BestFittingVariant, Buffer, Document, Format,
+        FormatElement, FormatState, IndentStyle, LineEnding, Printed, Printer, PrinterOptions,
+        SimpleFormatContext, VariantMode, VecBuffer, best_fitting,
         builders::{
-            align, block_indent, dedent_to_root, empty_line, exact_line_breaks, group,
-            hard_line_break, if_group_breaks, if_group_fits_on_line, indent, line_suffix,
-            literal_line_break, mark_as_root, prefix_align, soft_block_indent, soft_line_break,
-            soft_line_break_or_space, space, text, token,
+            align, best_fitting_variant, block_indent, dedent_to_root, empty_line,
+            exact_line_breaks, group, hard_line_break, if_group_breaks, if_group_fits_on_line,
+            indent, line_suffix, literal_line_break, mark_as_root, prefix_align, soft_block_indent,
+            soft_line_break, soft_line_break_or_space, space, text, token,
         },
         format_args,
         printer::PrintWidth,
@@ -2627,6 +2742,50 @@ two lines`,
         let printed = format_simple(&allocator, &content);
 
         assert_eq!(printed.as_code(), "first line broken\ntail");
+    }
+
+    #[test]
+    fn best_fitting_no_sticky_break_rolls_back_a_sticky_break() {
+        // The same group breaks when printing the first variant, which is taken only if it is not sticky
+        let long = "a".repeat(400);
+        for (sticky, expected) in
+            [(false, format!("first[\n{long}]")), (true, "second".to_string())]
+        {
+            let allocator = Allocator::default();
+            let content = test_format_with(|f| {
+                let first = best_fitting_variant(f.state_mut(), |f| {
+                    write!(
+                        f,
+                        [
+                            token("first"),
+                            group(&format_args!(
+                                token("["),
+                                soft_line_break(),
+                                text(&long),
+                                token("]")
+                            ))
+                            .sticky(sticky)
+                        ]
+                    );
+                });
+                let second = best_fitting_variant(f.state_mut(), |f| write!(f, [token("second")]));
+                let variants = ArenaVec::from_array_in(
+                    [
+                        BestFittingVariant::new(first).with_mode(VariantMode::NoStickyBreak),
+                        BestFittingVariant::new(second),
+                    ],
+                    &f.allocator(),
+                );
+                // SAFETY: Two variants
+                f.write_element(FormatElement::BestFitting(unsafe {
+                    BestFittingElement::from_vec_unchecked(variants)
+                }));
+            });
+
+            let printed = format_simple(&allocator, &content);
+
+            assert_eq!(printed.as_code(), expected);
+        }
     }
 
     #[test]
