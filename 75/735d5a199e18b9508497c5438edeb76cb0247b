@@ -1,0 +1,19 @@
+.cargo/config.toml
+  s_f213f0a4b74140::t_0a54ee94a6e89b 24-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "75735d5a199e18b9508497c5438edeb76cb0247b",
+  "prompts": {},
+  "sessions": {
+    "s_f213f0a4b74140": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ebf0-9a16-7790-9a36-f62a24daeaee",
+        "model": "unknown"
+      },
+      "human_author": "sapphi-red <green@sapphi.red>"
+    }
+  }
+}
