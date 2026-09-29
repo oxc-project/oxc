@@ -270,13 +270,25 @@ impl Rule for NoRestrictedGlobals {
             };
             for &ref_id in ref_ids {
                 let reference = ctx.scoping().get_reference(ref_id);
-                if reference.symbol_id().is_some() || reference.is_type() {
+                if reference.symbol_id().is_some() {
                     continue;
                 }
                 let node = ctx.nodes().get_node(reference.node_id());
+                // Value references and TypeScript type-position references
+                // (`type A = JSX.Element`, `keyof JSX.IntrinsicElements`) are both
+                // recorded as identifier references. ESLint reports both.
+                // A local type/namespace binding is not stored on the reference when
+                // the flags cannot resolve (e.g. `type JSX = ...; JSX.Element`), so
+                // walk the scope chain before treating the name as the global.
                 let AstKind::IdentifierReference(ident) = node.kind() else {
                     continue;
                 };
+                if reference.is_type()
+                    && !reference.is_value()
+                    && ctx.scoping().find_binding(reference.scope_id(), ident.name).is_some()
+                {
+                    continue;
+                }
                 if self.check_global_object
                     && is_ident_property(ident, &ctx.nodes().parent_kind(node.id()))
                 {
@@ -527,25 +539,15 @@ fn test() {
             None,
         ),
         ("type Handler = (event: string) => any", Some(serde_json::json!(["event"])), None),
-        ("let b: { c: Test }", Some(serde_json::json!(["Test"])), None),
-        ("function foo(param: Test) {}", Some(serde_json::json!(["Test"])), None),
-        ("1 as Test", Some(serde_json::json!(["Test"])), None),
-        ("class Derived implements Test {}", Some(serde_json::json!(["Test"])), None),
-        (
-            "class Derived implements Test1, Test2 {}",
-            Some(serde_json::json!(["Test1", "Test2"])),
-            None,
-        ),
-        ("interface Derived extends Test {}", Some(serde_json::json!(["Test"])), None),
-        ("type Intersection = Test & {}", Some(serde_json::json!(["Test"])), None),
-        ("type Union = Test | {}", Some(serde_json::json!(["Test"])), None),
-        ("let value: NS.Test", Some(serde_json::json!(["NS"])), None),
+        // A property name is not a type reference to the restricted global.
         ("let value: NS.Test", Some(serde_json::json!(["Test"])), None),
         ("let value: NS.Test", Some(serde_json::json!(["NS.Test"])), None),
-        // ("let value: typeof Test", Some(serde_json::json!(["Test"])), None), TODO: @Sysix
-        ("let value: Type<Test>", Some(serde_json::json!(["Type", "Test"])), None),
-        ("type Intersection = Test<any>", Some(serde_json::json!(["Test", "any"])), None),
-        ("type Intersection = Test<A, B>", Some(serde_json::json!(["Test", "A", "B"])), None),
+        // A local type alias is not the restricted global.
+        (
+            "type JSX = { Element: unknown }; export type A = JSX.Element;",
+            Some(serde_json::json!(["JSX"])),
+            None,
+        ),
         ("foo.bar", Some(serde_json::json!(["bar"])), None),
         ("foo.globalThis.bar", Some(serde_json::json!(["bar"])), None),
         ("foo.globalThis.bar()", Some(serde_json::json!(["bar"])), None),
@@ -938,6 +940,27 @@ fn test() {
             None,
         ),
         ("const x: Promise<any> = Promise.resolve();", Some(serde_json::json!(["Promise"])), None),
+        // Type-position references to a restricted global (issue #27052).
+        ("export type A = () => JSX.Element;", Some(serde_json::json!(["JSX"])), None),
+        ("export type B = keyof JSX.IntrinsicElements;", Some(serde_json::json!(["JSX"])), None),
+        ("type T = event;", Some(serde_json::json!(["event"])), None),
+        ("interface I extends event {}", Some(serde_json::json!(["event"])), None),
+        ("let b: { c: Test }", Some(serde_json::json!(["Test"])), None),
+        ("function foo(param: Test) {}", Some(serde_json::json!(["Test"])), None),
+        ("1 as Test", Some(serde_json::json!(["Test"])), None),
+        ("class Derived implements Test {}", Some(serde_json::json!(["Test"])), None),
+        (
+            "class Derived implements Test1, Test2 {}",
+            Some(serde_json::json!(["Test1", "Test2"])),
+            None,
+        ),
+        ("interface Derived extends Test {}", Some(serde_json::json!(["Test"])), None),
+        ("type Intersection = Test & {}", Some(serde_json::json!(["Test"])), None),
+        ("type Union = Test | {}", Some(serde_json::json!(["Test"])), None),
+        ("let value: NS.Test", Some(serde_json::json!(["NS"])), None),
+        ("let value: Type<Test>", Some(serde_json::json!(["Type", "Test"])), None),
+        ("type Intersection = Test<any>", Some(serde_json::json!(["Test", "any"])), None),
+        ("type Intersection = Test<A, B>", Some(serde_json::json!(["Test", "A", "B"])), None),
     ];
 
     Tester::new(NoRestrictedGlobals::NAME, NoRestrictedGlobals::PLUGIN, pass, fail)
