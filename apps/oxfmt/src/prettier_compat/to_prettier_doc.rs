@@ -708,6 +708,7 @@ fn convert_best_fitting(
     let mut expanded_states: Vec<Value> = Vec::with_capacity(variants.len());
     expanded_states.push(first_ref.clone());
     // Prettier's `conditionalGroup` measures the first line only, `MeasureMode` has no counterpart
+    // (e.g. DIVERGENCES.md#member-chain-last-call-object-fixpoint is not reached through this bridge)
     for v in &variants[1..] {
         expanded_states.push(normalize_array(convert_shared_elements(v.content(), state)?));
     }

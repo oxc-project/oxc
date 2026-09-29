@@ -4,12 +4,13 @@ pub mod simple_argument;
 
 use std::iter;
 
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format};
+use oxc_formatter_core::{Buffer, Format, GroupMode};
 use oxc_span::GetSpan;
 
 use crate::{
-    JsLabels,
+    Expand, JsLabels,
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
     formatter::{Comments, JsFormatter, prelude::*},
@@ -169,6 +170,69 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         }
     }
 
+    /// Returns the last group formatted as if its trailing call arguments contained a hard break:
+    /// the grouped argument variants without the most flat one, or the arguments group expanded
+    /// (the shapes the arguments formatting produces for that case).
+    ///
+    /// Only for call arguments holding an object,
+    /// whose break is kept by `objectWrap: preserve` once printed.
+    fn last_group_with_broken_arguments(
+        &self,
+        f: &mut JsFormatter<'_, 'a>,
+    ) -> Option<FormatElement<'a>> {
+        let last_group = self.last_group();
+        let Some(ChainMember::CallExpression { expression, .. }) = last_group.members().last()
+        else {
+            return None;
+        };
+        if f.options().expand != Expand::Auto
+            || !arguments_contain_object_to_break(&expression.arguments)
+        {
+            return None;
+        }
+
+        // The group starts with the callee member, so it is always interned
+        let Some(FormatElement::Interned(elements)) = last_group.formatted() else {
+            return None;
+        };
+
+        let (index, replacement) = match elements.last()? {
+            FormatElement::BestFitting(best_fitting) if best_fitting.variants().len() > 2 => {
+                let variants =
+                    ArenaVec::from_iter_in(best_fitting.variants()[1..].iter().copied(), &*f);
+                // SAFETY: At least two variants are left
+                let best_fitting = unsafe { BestFittingElement::from_vec_unchecked(variants) };
+                (elements.len() - 1, FormatElement::BestFitting(best_fitting))
+            }
+            FormatElement::Tag(Tag::EndGroup) => {
+                let mut depth = 0;
+                let (index, group) =
+                    elements.iter().enumerate().rev().find_map(|(index, element)| {
+                        match element {
+                            FormatElement::Tag(Tag::EndGroup) => depth += 1,
+                            FormatElement::Tag(Tag::StartGroup(group)) => {
+                                depth -= 1;
+                                if depth == 0 {
+                                    return Some((index, group));
+                                }
+                            }
+                            _ => {}
+                        }
+                        None
+                    })?;
+                let group = group.clone().with_mode(GroupMode::Expand);
+                (index, FormatElement::Tag(Tag::StartGroup(group)))
+            }
+            _ => return None,
+        };
+
+        f.intern(&format_with(|f| {
+            f.write_elements(elements[..index].iter().cloned());
+            f.write_element(replacement.clone());
+            f.write_elements(elements[index + 1..].iter().cloned());
+        }))
+    }
+
     fn last_group(&self) -> &MemberChainGroup<'a, 'b> {
         self.tail.last().unwrap_or(&self.head)
     }
@@ -244,6 +308,43 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
 
                 if has_empty_line_before_tail || self.last_group().will_break(f) {
                     write!(f, [expand_parent()]);
+                } else if let Some(last_group) = self.last_group_with_broken_arguments(f) {
+                    // Pick what the `will_break` path above picks on the next pass,
+                    // once the object is printed broken (see `last_group_with_broken_arguments`):
+                    // - Split only if every line fits as is (`MeasureMode::AllLines`)
+                    // - Otherwise, one line with the last call arguments broken, if its first line fits
+                    // - Otherwise, split
+                    //
+                    // Always splitting would also be a fixpoint, with a simpler rule,
+                    // but it rewrites chains authored joined (`.insert({` on the chain line), which Prettier keeps.
+                    let one_line = best_fitting_variant(f.state_mut(), |f| {
+                        write!(f, [format_one_line]);
+                    });
+                    let expanded = best_fitting_variant(f.state_mut(), |f| {
+                        write!(f, [format_expanded]);
+                    });
+                    let format_one_line_last_group_broken = format_with(|f| {
+                        f.join().entries(
+                            iter::once(&self.head)
+                                .chain(self.tail.iter().take(self.tail.len() - 1)),
+                        );
+                        f.write_element(last_group.clone());
+                    });
+                    let one_line_last_group_broken = best_fitting_variant(f.state_mut(), |f| {
+                        write!(f, [format_one_line_last_group_broken]);
+                    });
+                    let variants = ArenaVec::from_array_in(
+                        [
+                            BestFittingVariant::new(one_line),
+                            BestFittingVariant::new(expanded).with_measure(MeasureMode::AllLines),
+                            BestFittingVariant::new(one_line_last_group_broken),
+                            BestFittingVariant::new(expanded),
+                        ],
+                        f,
+                    );
+                    // SAFETY: Four variants
+                    let best_fitting = unsafe { BestFittingElement::from_vec_unchecked(variants) };
+                    return f.write_element(FormatElement::BestFitting(best_fitting));
                 }
 
                 write!(f, [best_fitting!(format_one_line, format_expanded)]);
@@ -367,6 +468,28 @@ fn has_arrow_or_function_expression_arg(call: &AstNode<'_, CallExpression<'_>>) 
     call.as_ref().arguments.iter().any(|argument| {
         matches!(&argument, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_))
     })
+}
+
+fn arguments_contain_object_to_break(arguments: &[Argument<'_>]) -> bool {
+    arguments.iter().any(|argument| argument.as_expression().is_some_and(contains_object_to_break))
+}
+
+/// Whether the expression holds a non-empty object,
+/// directly or through call arguments, `await`, and an arrow function body.
+///
+/// Not through arrays: an object in a split array often stays flat,
+/// where the split layout is already a fixpoint.
+fn contains_object_to_break(expression: &Expression<'_>) -> bool {
+    match expression.get_inner_expression() {
+        Expression::ObjectExpression(object) => !object.properties.is_empty(),
+        Expression::CallExpression(call) => arguments_contain_object_to_break(&call.arguments),
+        Expression::NewExpression(new) => arguments_contain_object_to_break(&new.arguments),
+        Expression::AwaitExpression(expression) => contains_object_to_break(&expression.argument),
+        Expression::ArrowFunctionExpression(arrow) => {
+            arrow.get_expression().is_some_and(contains_object_to_break)
+        }
+        _ => false,
+    }
 }
 
 fn has_simple_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> bool {

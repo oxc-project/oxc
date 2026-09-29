@@ -11,12 +11,12 @@ checker.ts:
 
 App.tsx:
   file size: 415342 # 415.34 kB
-  sys allocs: 5192
+  sys allocs: 5191
   sys reallocs: 524
-  sys deallocs: 5191
+  sys deallocs: 5190
   sys alloc bytes: 1564670 # 1.56 MB
   sys peak growth: 435358 # 435.36 kB
-  arena allocs: 210972
+  arena allocs: 210974
   arena reallocs: 364
   arena size: 16935536 # 16.94 MB
 
@@ -66,11 +66,11 @@ binder.ts:
 
 kitchen-sink.tsx:
   file size: 732898 # 732.90 kB
-  sys allocs: 17088
+  sys allocs: 17084
   sys reallocs: 4956
-  sys deallocs: 17087
+  sys deallocs: 17083
   sys alloc bytes: 4436340 # 4.44 MB
   sys peak growth: 1491796 # 1.49 MB
-  arena allocs: 560506
+  arena allocs: 560518
   arena reallocs: 1041
-  arena size: 38545968 # 38.55 MB
+  arena size: 38547144 # 38.55 MB

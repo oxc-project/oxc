@@ -170,6 +170,11 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         }
     }
 
+    /// Returns the formatted result of this group, see [Self::inspect].
+    pub(super) fn formatted(&self) -> Option<FormatElement<'a>> {
+        self.formatted.borrow().clone()
+    }
+
     /// Tests if the formatted result of this group results in a [break](FormatElements::will_break).
     pub(super) fn will_break(&self, _f: &JsFormatter<'_, 'a>) -> bool {
         let cell = self.formatted.borrow_mut();
