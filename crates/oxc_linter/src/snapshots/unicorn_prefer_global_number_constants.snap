@@ -1,0 +1,73 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-global-number-constants): Prefer `NaN` over `Number.NaN`.
+   ╭─[prefer_global_number_constants.tsx:1:13]
+ 1 │ const foo = Number.NaN;
+   ·             ──────────
+   ╰────
+  help: Replace `Number.NaN` with `NaN`.
+
+  ⚠ unicorn(prefer-global-number-constants): Prefer `NaN` over `Number.NaN`.
+   ╭─[prefer_global_number_constants.tsx:1:13]
+ 1 │ const foo = window.Number.NaN;
+   ·             ─────────────────
+   ╰────
+  help: Replace `Number.NaN` with `NaN`.
+
+  ⚠ unicorn(prefer-global-number-constants): Prefer `NaN` over `Number.NaN`.
+   ╭─[prefer_global_number_constants.tsx:1:13]
+ 1 │ const foo = Number["NaN"];
+   ·             ─────────────
+   ╰────
+  help: Replace `Number.NaN` with `NaN`.
+
+  ⚠ unicorn(prefer-global-number-constants): Prefer `Infinity` over `Number.POSITIVE_INFINITY`.
+   ╭─[prefer_global_number_constants.tsx:1:13]
+ 1 │ const foo = Number.POSITIVE_INFINITY;
+   ·             ────────────────────────
+   ╰────
+  help: Replace `Number.POSITIVE_INFINITY` with `Infinity`.
+
+  ⚠ unicorn(prefer-global-number-constants): Prefer `-Infinity` over `Number.NEGATIVE_INFINITY`.
+   ╭─[prefer_global_number_constants.tsx:1:13]
+ 1 │ const foo = Number.NEGATIVE_INFINITY;
+   ·             ────────────────────────
+   ╰────
+  help: Replace `Number.NEGATIVE_INFINITY` with `-Infinity`.
+
+  ⚠ unicorn(prefer-global-number-constants): Prefer `-Infinity` over `Number.NEGATIVE_INFINITY`.
+   ╭─[prefer_global_number_constants.tsx:1:13]
+ 1 │ const foo = Number.NEGATIVE_INFINITY.toString();
+   ·             ────────────────────────
+   ╰────
+  help: Replace `Number.NEGATIVE_INFINITY` with `-Infinity`.
+
+  ⚠ unicorn(prefer-global-number-constants): Prefer `NaN` over `Number.NaN`.
+   ╭─[prefer_global_number_constants.tsx:1:21]
+ 1 │ const foo = {value: Number.NaN};
+   ·                     ──────────
+   ╰────
+  help: Replace `Number.NaN` with `NaN`.
+
+  ⚠ unicorn(prefer-global-number-constants): Prefer `Infinity` over `Number.POSITIVE_INFINITY`.
+   ╭─[prefer_global_number_constants.tsx:1:15]
+ 1 │ const foo = {[Number.POSITIVE_INFINITY]: Number.NEGATIVE_INFINITY};
+   ·               ────────────────────────
+   ╰────
+  help: Replace `Number.POSITIVE_INFINITY` with `Infinity`.
+
+  ⚠ unicorn(prefer-global-number-constants): Prefer `-Infinity` over `Number.NEGATIVE_INFINITY`.
+   ╭─[prefer_global_number_constants.tsx:1:42]
+ 1 │ const foo = {[Number.POSITIVE_INFINITY]: Number.NEGATIVE_INFINITY};
+   ·                                          ────────────────────────
+   ╰────
+  help: Replace `Number.NEGATIVE_INFINITY` with `-Infinity`.
+
+  ⚠ unicorn(prefer-global-number-constants): Prefer `NaN` over `Number.NaN`.
+   ╭─[prefer_global_number_constants.tsx:1:13]
+ 1 │ const foo = Number /* comment */ .NaN;
+   ·             ─────────────────────────
+   ╰────
+  help: Replace `Number.NaN` with `NaN`.
