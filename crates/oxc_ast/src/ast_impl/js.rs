@@ -176,7 +176,16 @@ impl<'a> Expression<'a> {
     }
 
     /// Returns `true` if this [`Expression`] is an [`IdentifierReference`] with specified `name`.
+    /// use [`Self::is_specific_ident`] when you have [`Ident`]
     pub fn is_specific_id(&self, name: &str) -> bool {
+        match self.get_inner_expression() {
+            Expression::Identifier(ident) => ident.name == name,
+            _ => false,
+        }
+    }
+
+    /// Returns `true` if this [`Expression`] is an [`IdentifierReference`] with specified `name`.
+    pub fn is_specific_ident(&self, name: Ident<'a>) -> bool {
         match self.get_inner_expression() {
             Expression::Identifier(ident) => ident.name == name,
             _ => false,

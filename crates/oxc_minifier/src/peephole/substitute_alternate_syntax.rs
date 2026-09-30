@@ -692,7 +692,7 @@ impl<'a> PeepholeOptimizations {
                         return VerifyArrayArgResult::Invalid;
                     };
                     if test_expr.operator == BinaryOperator::GreaterThan
-                        && test_expr.left.is_specific_id(&name_e)
+                        && test_expr.left.is_specific_ident(name_e)
                         && matches!(&test_expr.right, Expression::NumericLiteral(n) if n.value == offset)
                         && cons_expr.operator == BinaryOperator::Subtraction
                         && matches!(&cons_expr.left, Expression::Identifier(id) if id.name == name_e)
