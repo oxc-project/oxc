@@ -11160,6 +11160,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Did you mean to write 'string'?
 
   × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:18:16]
+ 17 │ 
+ 18 │ const a = 1 as any!;
+    ·                ────
+ 19 │ const b: number! = 1;
+    ╰────
+  help: Did you mean to write 'any'?
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:19:10]
  18 │ const a = 1 as any!;
  19 │ const b: number! = 1;
@@ -11167,6 +11176,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  20 │ 
     ╰────
   help: Did you mean to write 'number'?
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:21:16]
+ 20 │ 
+ 21 │ const c = 1 as !any;
+    ·                ────
+ 22 │ const d: !number = 1;
+    ╰────
+  help: Did you mean to write 'any'?
 
   × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNonNullableTypes.ts:22:10]
@@ -11191,7 +11209,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ───────
  6 │ function f3(a: number?) {}
    ╰────
-  help: Did you mean to write 'string | null | undefined'?
+  help: Did you mean to write 'string | undefined'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:6:16]
@@ -11200,7 +11218,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ───────
  7 │ 
    ╰────
-  help: Did you mean to write 'number | null | undefined'?
+  help: Did you mean to write 'number | undefined'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:8:16]
@@ -11230,13 +11248,31 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Did you mean to write 'string | null | undefined'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:15:16]
+ 14 │ 
+ 15 │ const a = 1 as any?;
+    ·                ────
+ 16 │ const b: number? = 1;
+    ╰────
+  help: Did you mean to write 'any'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:16:10]
  15 │ const a = 1 as any?;
  16 │ const b: number? = 1;
     ·          ───────
  17 │ 
     ╰────
-  help: Did you mean to write 'number | null | undefined'?
+  help: Did you mean to write 'number | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:18:16]
+ 17 │ 
+ 18 │ const c = 1 as ?any;
+    ·                ────
+ 19 │ const d: ?number = 1;
+    ╰────
+  help: Did you mean to write 'any'?
 
   × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:19:10]
@@ -11254,7 +11290,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ────────
  22 │ let f: never?;
     ╰────
-  help: Did you mean to write 'unknown | null | undefined'?
+  help: Did you mean to write 'unknown'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:22:8]
@@ -11263,7 +11299,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ──────
  23 │ let g: void?;
     ╰────
-  help: Did you mean to write 'never | null | undefined'?
+  help: Did you mean to write 'never'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:23:8]
@@ -11272,7 +11308,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·        ─────
  24 │ let h: undefined?;
     ╰────
-  help: Did you mean to write 'void | null | undefined'?
+  help: Did you mean to write 'void'?
 
   × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/parseInvalidNullableTypes.ts:24:8]
@@ -11280,7 +11316,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  24 │ let h: undefined?;
     ·        ──────────
     ╰────
-  help: Did you mean to write 'undefined | null | undefined'?
+  help: Did you mean to write 'undefined'?
 
   × Unexpected JSX expression
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:2]
@@ -31996,13 +32032,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  15 │ 
     ╰────
 
-  × TS(5086): A labeled tuple element is declared as optional with a question mark after the name and before the colon, rather than after the type.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts:14:49]
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts:14:52]
  13 │ 
  14 │ export type OptTrailing = [first: string, rest: ...string[]?]; // dots+question on element disallowed
-    ·                                                 ────────────
+    ·                                                    ─────────
  15 │ 
     ╰────
+  help: Did you mean to write 'string[] | undefined'?
 
   × TS(5085): A tuple member cannot be both optional and rest.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts:16:39]
@@ -32063,6 +32100,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                ╰── Optional element seen here
  4 │ type T03 = [...string[]];
    ╰────
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/restTupleElements1.ts:10:16]
+  9 │ type T08 = [...string];  // Error
+ 10 │ type T09 = [...string?];  // Error
+    ·                ───────
+ 11 │ type T10 = [string, ...[...string[]]];
+    ╰────
+  help: Did you mean to write 'string | undefined'?
 
   × TS(1265): A rest element cannot follow another rest element.
    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:7:21]
