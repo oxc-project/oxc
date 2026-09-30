@@ -1,8 +1,11 @@
-//! Perfect hash table mapping multi-byte operators (e.g. `===`, `>>>=`) to their [`TokenKind`].
+//! Perfect hash table mapping multi-byte operators (e.g. `==`, `>>>`) to their [`TokenKind`].
 //!
 //! A candidate is the next 4 bytes of source plus a length to try (2, 3 or 4).
 //!
-//! [`op_key`] packs it into a `u32` key:
+//! There is only one 4-byte operator (`>>>=`), so it's not included in the hash table.
+//! [`opmap_longest`] checks it separately. [`opmap_pack`] only checks 2-byte and 3-byte operators.
+//!
+//! [`op_key`] packs bytes + length into a `u32` key:
 //! - Bottom 3 bytes: The candidate's first 3 bytes, with the 3rd zeroed if the length is 2.
 //! - Top byte: The length.
 //!
@@ -19,13 +22,11 @@
 //! If they match, the top byte of the slot value is the [`TokenKind`].
 //! [`opmap_lookup`] does the whole lookup.
 //! [`opmap_pack`] returns the slot value, for callers which do the comparison themselves.
+//! [`opmap_longest`] checks for 4-byte, then 3-byte, then 2-byte operators in turn.
 //!
 //! Lengths are never compared. Instead, the table is built so that no candidate lands on the slot
-//! of an operator of a different length whose bottom 3 bytes match (e.g. `====` vs `===`).
-//! See the comments in [`opmap_lookup`] and `is_collision_free` in tests for how each case is ruled out.
-//!
-//! The key has no room for a 4th byte. `>>>=` is the only 4-byte operator,
-//! so `opmap_lookup` compares its last byte separately, against [`FOUR_BYTE_OP_LAST_BYTE`].
+//! of an operator of a different length whose bottom 3 bytes match (e.g. `==` vs `==\0`).
+//! See the comments in [`opmap_lookup`] and `is_collision_free` in tests for how this is ruled out.
 //!
 //! [`OPMAP_MUL`] is hard-coded. `test_perfect_hash` test checks that it produces no collisions.
 //! If a change to the operator list breaks that, the test's failure message gives a replacement.
@@ -52,7 +53,7 @@ struct OpDef {
 impl OpDef {
     /// Create new [`OpDef`].
     const fn new(txt: &'static str, kind: TokenKind) -> Self {
-        assert!(txt.len() >= 2 && txt.len() <= 4, "`txt` must be between 2 and 4 bytes long");
+        assert!(txt.len() == 2 || txt.len() == 3, "`txt` must be 2 or 3 bytes long");
         Self { txt: txt.as_bytes(), kind }
     }
 
@@ -80,10 +81,10 @@ impl OpDef {
     }
 }
 
-/// All multi-byte operators.
+/// All 2-byte and 3-byte operators.
 ///
 /// Only exists at build time and in tests, not referenced from any runtime code.
-static OPMAP_OPS: [OpDef; 33] = [
+static OPMAP_OPS: [OpDef; 32] = [
     OpDef::new("<=", TokenKind::Le),
     OpDef::new(">=", TokenKind::Ge),
     OpDef::new("==", TokenKind::EqEq),
@@ -107,7 +108,6 @@ static OPMAP_OPS: [OpDef; 33] = [
     OpDef::new("%=", TokenKind::PercentEq),
     OpDef::new("<<=", TokenKind::LShiftEq),
     OpDef::new(">>=", TokenKind::RShiftEq),
-    OpDef::new(">>>=", TokenKind::URShiftEq),
     OpDef::new("&=", TokenKind::AmpEq),
     OpDef::new("|=", TokenKind::PipeEq),
     OpDef::new("^=", TokenKind::CaretEq),
@@ -118,6 +118,10 @@ static OPMAP_OPS: [OpDef; 33] = [
     OpDef::new("...", TokenKind::Ellipsis),
     OpDef::new("/=", TokenKind::SlashEq),
 ];
+
+/// Details of the single 4-byte operator (`>>>=`).
+const FOUR_BYTE_OP_BYTES: [u8; 4] = *b">>>=";
+const FOUR_BYTE_OP_KIND: TokenKind = TokenKind::URShiftEq;
 
 /// Returns `true` if a byte is one of the operator characters `=!<>+-*&|^%?.`.
 ///
@@ -132,8 +136,12 @@ pub(super) const fn is_op_char(c: u8) -> bool {
 
 /// Operator bytes and [`TokenKind`], indexed by perfect hash slot.
 ///
-/// Only the first 3 bytes of the operator are stored, as the 4th byte contains the `TokenKind`.
-/// `opmap_lookup` compares the last byte of a 4-byte candidate separately.
+/// Each entry contains:
+/// - First 3 bytes of the operator in bottom 3 bytes (0 for 3rd byte for 2-byte operators).
+/// - [`TokenKind`] in top byte.
+///
+/// The single 4-byte operator (`>>>=`) is not included in the table.
+/// [`opmap_longest`] checks for it without consulting the table.
 static OP_PACK: [u32; HASH_TABLE_SIZE] = {
     let mut op_pack = [0; HASH_TABLE_SIZE];
 
@@ -154,24 +162,6 @@ static OP_PACK: [u32; HASH_TABLE_SIZE] = {
     }
 
     op_pack
-};
-
-/// Last byte of the single 4-byte operator (`>>>=`).
-///
-/// `OP_PACK` stores only an operator's first 3 bytes, so this is the only byte of a 4-byte
-/// candidate that `opmap_lookup` cannot compare via `OP_PACK`.
-const FOUR_BYTE_OP_LAST_BYTE: u8 = {
-    let mut last_byte = None;
-    let mut i = 0_usize;
-    while i < OPMAP_OPS.len() {
-        let op_def = &OPMAP_OPS[i];
-        if op_def.len() == 4 {
-            assert!(last_byte.is_none(), "more than one 4-byte operator");
-            last_byte = Some(op_def.txt[3]);
-        }
-        i += 1;
-    }
-    last_byte.expect("no 4-byte operator found")
 };
 
 /// Hash `key` and get the packed value for the slot in the hash table.
@@ -209,23 +199,31 @@ pub(super) fn opmap_pack(key: u32) -> u32 {
 /// `?.` followed by a digit is rejected as a match.
 #[inline(always)]
 pub(super) fn opmap_longest(bytes: [u8; 4], max_len: u32) -> (/* kind*/ u32, /* len */ u32) {
-    let mut len = max_len;
-    while len >= 2 {
-        let kind = opmap_lookup(bytes, len);
-        if kind != 0 && !(kind == tk!(OptionalChain) as u32 && is_digit(bytes[2])) {
-            return (kind, len);
-        }
-        len -= 1;
+    if max_len == 4 && bytes == FOUR_BYTE_OP_BYTES {
+        return (FOUR_BYTE_OP_KIND as u32, 4);
     }
+
+    if max_len >= 3 {
+        let kind = opmap_lookup(bytes, 3);
+        if kind != 0 {
+            return (kind, 3);
+        }
+    }
+
+    let kind = opmap_lookup(bytes, 2);
+    if kind != 0 && !(kind == tk!(OptionalChain) as u32 && is_digit(bytes[2])) {
+        return (kind, 2);
+    }
+
     (0, 1)
 }
 
-/// Check if 4 bytes of source contain a multi-byte operator in their first `len` bytes.
+/// Check if 2 or 3 bytes of source contain a multi-byte operator in their first `len` bytes.
 ///
 /// * If an operator is found, returns the [`TokenKind`] of the operator as a `u32`.
 /// * Otherwise, returns 0.
 ///
-/// `len` must be between 2 and 4 (inclusive).
+/// `len` must be 2 or 3.
 #[inline(always)]
 fn opmap_lookup(bytes: [u8; 4], len: u32) -> u32 {
     let key = op_key(bytes, len);
@@ -238,8 +236,7 @@ fn opmap_lookup(bytes: [u8; 4], len: u32) -> u32 {
     // - `pack` has operator's first 3 bytes in bottom 3 bytes.
     //   For 2-byte operators, the 3rd byte of `pack` is 0.
     //
-    // So when bottom 3 bytes of `key` and `pack` are the same, it's a match
-    // (except for the extra check for `len == 4` below).
+    // So when bottom 3 bytes of `key` and `pack` are the same, it's a match.
     //
     // If bottom 3 bytes of `key` are all 0, it's possible that `key` hashes to an empty slot,
     // so `pack == 0`. In that case `((pack ^ key) & 0xFF_FFFF) == 0` and the branch returning 0
@@ -248,30 +245,14 @@ fn opmap_lookup(bytes: [u8; 4], len: u32) -> u32 {
     // Lengths need no comparison, due to the construction of the hash table:
     //
     // - Every operator has a different `slot`.
-    //
-    // - A 3-byte or 4-byte candidate with 3rd byte == 0 has `key` with 3rd byte == 0.
+    // - A 3-byte candidate with 3rd byte == 0 has `key` with 3rd byte == 0.
     //   Bottom 3 bytes of `key` could be same as bottom 3 bytes of `OP_PACK` entry
     //   for the 2-byte operator with same first 2 bytes
     //   e.g. `==\0` candidate vs `==` operator.
-    //   Hash table ensures these produce different `slot` values, so the check below fails.
-    //
-    // - A 4-byte candidate has `key` with bottom 3 bytes being the first 3 bytes of candidate.
-    //   Bottom 3 bytes of `key` could be same as bottom 3 bytes of `OP_PACK` entry
-    //   for the 3-byte operator with same first 3 bytes
-    //   e.g. `====` candidate vs `===` operator.
-    //   Hash table ensures these produce different `slot` values, so the check below fails.
-    //
-    // See `is_collision_free` in tests below.
+    //   Hash table ensures these produce different `slot` values, so the check below fails
+    //   (see `is_collision_free` in tests below).
     let pack = OP_PACK[slot];
     if ((pack ^ key) & 0xFF_FFFF) != 0 {
-        return 0;
-    }
-
-    // `pack` holds only the first 3 bytes of an operator, so the check above misses the last byte
-    // of a 4-byte operator. Compare that 4th byte here. After the check above, if `len == 4`,
-    // the first 3 bytes of source are `>>>`. `>>>` and `>>>=` are rarely used, so this branch
-    // is almost never taken - very predictable.
-    if len == 4 && bytes[3] != FOUR_BYTE_OP_LAST_BYTE {
         return 0;
     }
 
@@ -281,11 +262,11 @@ fn opmap_lookup(bytes: [u8; 4], len: u32) -> u32 {
 
 /// Get hash key from `bytes` and `len`.
 ///
-/// `len` must be between 2 and 4 (inclusive).
+/// `len` must be 2 or 3.
 #[inline(always)]
 const fn op_key(bytes: [u8; 4], len: u32) -> u32 {
     let mut key = u32::from_le_bytes(bytes);
-    key &= if len >= 3 { 0xFF_FFFF } else { 0xFFFF };
+    key &= if len == 3 { 0xFF_FFFF } else { 0xFFFF };
     key |= len << 24;
     key
 }
@@ -357,19 +338,6 @@ mod tests {
         }
     }
 
-    // `is_collision_free` has no check for 4-byte operators, because the only 3-byte candidate
-    // which could collide with `>>>=` is `>>>`, which is an operator itself, so it hashes to
-    // `>>>`'s own slot. If the 4-byte operator's first 3 bytes were not also an operator,
-    // such a candidate could hash to the 4-byte operator's slot instead. `opmap_lookup` compares
-    // only the bottom 3 bytes, so it would match, and the `len == 4` check does not run for
-    // a 3-byte candidate - so `>>>` would be lexed as `>>>=`.
-    #[test]
-    fn test_op_defs_4_byte_operator_has_corresponding_3_byte_op() {
-        let op4 = OPMAP_OPS.iter().find(|op_def| op_def.len() == 4).unwrap();
-        let first_3_bytes = &op4.txt[..3];
-        assert!(OPMAP_OPS.iter().any(|op_def| op_def.txt == first_3_bytes));
-    }
-
     #[test]
     fn test_opmap_lookup_correct_kinds() {
         for (i, op_def) in OPMAP_OPS.iter().enumerate() {
@@ -382,18 +350,15 @@ mod tests {
     fn test_opmap_lookup_returns_zero_on_no_match() {
         let cases = [
             // Not operators
-            "..", "=/", "<<<", "&&&", "?..", ">>>>", "<<<=", "++++",
-            // 3-byte or 4-byte candidate whose 1st 2 bytes are a 2-byte operator, and 3rd byte is `\0`.
+            "..", "=/", "<<<", "&&&", "?..",
+            // 3-byte candidate whose 1st 2 bytes are a 2-byte operator, and 3rd byte is `\0`.
             // Bottom 3 bytes of `key` are the same as bottom 3 bytes of that operator's entry in `OP_PACK`,
             // so only hashing to a different slot prevents a false match.
-            "==\0", "<<\0", "||\0", "==\0=", "<<\0=", "||\0=",
-            // 4-byte candidate whose 1st 3 bytes are a 3-byte operator, and last is `=`.
-            // Again bottom 3 bytes of `key` are the same as that operator's entry in `OP_PACK`.
-            "====", "<<==", "...=",
+            "==\0", "<<\0", "||\0",
             // 1st 3 bytes are 0, so bottom 3 bytes of `key` are 0, same as an empty slot.
             // The check against `pack` passes if `key` hashes to an empty slot,
             // and 0 is returned by `pack >> 24` instead.
-            "\0\0", "\0\0\0", "\0\0\0=",
+            "\0\0", "\0\0\0",
         ];
         for txt in cases {
             let kind = opmap_lookup(first_4_bytes(txt.as_bytes()), txt.len() as u32);
@@ -436,31 +401,12 @@ mod tests {
 
             // `opmap_lookup` does not compare lengths, and relies on lack of collisions
             // between similar candidates to avoid false positives.
-            //
-            // 4-byte operators need no check here - the only candidate which could collide with
-            // `>>>=` is `>>>`, and `>>>` is an operator itself, so it lands on `>>>`'s own slot,
-            // which the check above keeps different from `>>>=`'s slot.
+            // A 3-byte candidate whose first 2 bytes are same as this operator,
+            // and 3rd byte is `\0`, must not land on this operator's slot.
+            // `==\0` must not hash the same as `==`.
             let bytes = op_def.bytes();
-            if op_def.len() == 3 {
-                // A 4-byte candidate with first 3 bytes same as this 3-byte operator
-                // must not land on this operator's slot.
-                // `====` must not hash the same as `===`.
-                if op_slot(op_key(bytes, 4), mul) == slot {
-                    return false;
-                }
-            } else if op_def.len() == 2 {
-                // A 3-byte or 4-byte candidate whose first 2 bytes are same as this operator,
-                // and 3rd byte is `\0`, must not land on this operator's slot
-
-                // `==\0` must not hash the same as `==`
-                if op_slot(op_key([bytes[0], bytes[1], 0, 0], 3), mul) == slot {
-                    return false;
-                }
-
-                // `==\0=` must not hash the same as `==`
-                if op_slot(op_key([bytes[0], bytes[1], 0, 0], 4), mul) == slot {
-                    return false;
-                }
+            if op_def.len() == 2 && op_slot(op_key([bytes[0], bytes[1], 0, 0], 3), mul) == slot {
+                return false;
             }
         }
         true
