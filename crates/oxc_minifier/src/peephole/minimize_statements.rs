@@ -1273,7 +1273,7 @@ impl<'a> PeepholeOptimizations {
             }
             let replaced = Self::substitute_single_use_symbol_in_expression(
                 target_expr,
-                &prev_decl_id.name,
+                prev_decl_id.name,
                 prev_decl_init,
                 prev_decl_init.may_have_side_effects(ctx),
                 ctx,
@@ -1296,7 +1296,7 @@ impl<'a> PeepholeOptimizations {
     /// `substituteSingleUseSymbolInExpr`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9642>
     fn substitute_single_use_symbol_in_expression(
         target_expr: &mut Expression<'a>,
-        search_for: &str,
+        search_for: Ident<'a>,
         replacement: &mut Expression<'a>,
         replacement_has_side_effect: bool,
         ctx: &mut TraverseCtx<'a>,
