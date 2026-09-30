@@ -23,6 +23,8 @@
 
 use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 
+use crate::pipeline::keywords::is_regex_keyword;
+
 use super::{
     common::{Tokens, bits},
     context::{self, After, Walks},
@@ -81,7 +83,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
                 return ts && newline && context::after(tokens, walks, qi) == After::EndsDecl;
             }
             let kw = tokens.word_kw(qi, e - qi);
-            if tokens.tables.keywords.is_regex_keyword(kw) {
+            if is_regex_keyword(kw) {
                 if ts && kw == tk!(KwVoid) {
                     // `x as void / 2` is division; `void /re/` is not.
                     return context::after(tokens, walks, qi) != After::Value;

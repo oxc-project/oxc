@@ -14,7 +14,10 @@ use crate::{
     token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk},
 };
 
-use crate::pipeline::disambiguate::common::{Tokens, bits, word_len};
+use crate::pipeline::{
+    disambiguate::common::{Tokens, bits, word_len},
+    keywords::kw_match_at,
+};
 
 use super::bytes::{
     list_closer, raw_template_end, skip_raw_literal, skip_trivia_fwd, skip_trivia_nl,
@@ -44,7 +47,7 @@ fn gt_follower(tokens: &Tokens, i: usize) -> bool {
         b'\\' => nx != b'u',
         _ if is_digit(c) => false,
         _ if is_id_start(c) => {
-            let kw = tokens.tables.keywords.kwts.lookup_at(src, i, word_len(src, i)) as u8;
+            let kw = kw_match_at(true, src, i, word_len(src, i)) as u8;
             matches_tk!(kw, KwIn | KwInstanceof | KwAs | KwSatisfies | KwExtends)
         }
         b'{' | b'[' | b'>' | b'~' | b'@' | b'#' | b'"' | b'\'' => false,
@@ -54,7 +57,7 @@ fn gt_follower(tokens: &Tokens, i: usize) -> bool {
 
 #[rustfmt::skip::macros(matches_tk)]
 fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
-    let Tokens { tables: t, src, st, kind, .. } = *tokens;
+    let Tokens { src, st, kind, .. } = *tokens;
     let mut start = true;
     let mut braces: i32 = 0;
     let mut brackets: i32 = 0;
@@ -131,8 +134,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
         if matches_tk!(k, Ident | IdentEscaped) {
             // A qualified name's part is a name (z.infer, a.typeof).
             let dotted = prev != usize::MAX && tokens.member_dot(prev);
-            let kk =
-                if dotted { 0 } else { t.keywords.kwts.lookup_at(src, w, word_len(src, w)) as u8 };
+            let kk = if dotted { 0 } else { kw_match_at(true, src, w, word_len(src, w)) as u8 };
             // A keyword type (`this`, `any`, `null`, ...) takes no type arguments; in a type
             // query it names a value, which may (`typeof this<A>`).
             this_head = keyword_type(kk) && last_kw != tk!(KwTypeof);

@@ -1,12 +1,12 @@
 use std::iter;
 
-use crate::pipeline::tables::Tables;
-
-use super::compress_blocks;
+use super::{compress_blocks, init_pair_luts};
 
 #[test]
 fn compress_blocks_matches_scalar_reference() {
-    let t = Tables::new();
+    // Required before calling `compress_blocks`
+    init_pair_luts();
+
     let mut cases: Vec<Vec<u64>> = Vec::new();
     let all_pairs: Vec<u64> = (0..65536u64)
         .collect::<Vec<_>>()
@@ -34,6 +34,7 @@ fn compress_blocks_matches_scalar_reference() {
         v[63] = 1u64 << 63;
         v
     });
+
     for st in &cases {
         let nb = st.len();
         let n = nb * 64;
@@ -46,7 +47,6 @@ fn compress_blocks_matches_scalar_reference() {
         let mut kinds = vec![0u8; n + 64];
         let m = unsafe {
             compress_blocks(
-                &t,
                 st.as_ptr(),
                 kind.as_ptr(),
                 0,
