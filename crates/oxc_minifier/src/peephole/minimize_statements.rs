@@ -313,8 +313,7 @@ impl<'a> PeepholeOptimizations {
                 [ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)]
             );
             if is_namespace_import {
-                let exported =
-                    export_decl.specifiers.first().unwrap().exported.clone_in(ctx.allocator());
+                let exported = export_decl.specifiers.pop().unwrap().exported;
                 ctx.replace_statement(
                     stmts.get_mut(import_index).unwrap(),
                     Statement::new_export_all_declaration(
