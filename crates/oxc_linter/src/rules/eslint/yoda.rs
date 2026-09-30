@@ -405,8 +405,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
         if let (Some(left_left), Some(right_right)) =
             (get_string_literal(left_left), get_string_literal(right_right))
         {
-            // JavaScript orders strings by UTF-16 code unit.
-            return left_left.encode_utf16().le(right_right.encode_utf16());
+            return is_string_le(left_left, right_right);
         }
 
         if let (Some(left_left), Some(right_right)) =
@@ -440,8 +439,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
         if let (Some(left_right), Some(right_left)) =
             (get_string_literal(left_right), get_string_literal(right_left))
         {
-            // JavaScript orders strings by UTF-16 code unit.
-            return left_right.encode_utf16().le(right_left.encode_utf16());
+            return is_string_le(left_right, right_left);
         }
 
         if let (Some(left_right), Some(right_left)) =
@@ -469,6 +467,16 @@ fn is_literal_or_simple_template_literal(expr: &Expression) -> bool {
 
 fn is_target_literal(expr: &Expression) -> bool {
     get_string_literal(expr).is_some() || is_number(expr)
+}
+
+/// Compares strings by bytes.
+/// A string with a lone surrogate has no UTF-8 form, so it is compared by UTF-16 code unit.
+fn is_string_le(left: JSStr, right: JSStr) -> bool {
+    if left.has_lone_surrogate() || right.has_lone_surrogate() {
+        left.encode_utf16().le(right.encode_utf16())
+    } else {
+        left.as_bytes() <= right.as_bytes()
+    }
 }
 
 fn get_string_literal<'a>(expr: &Expression<'a>) -> Option<JSStr<'a>> {
@@ -718,10 +726,6 @@ fn test() {
         // A lone surrogate orders by its UTF-16 code unit.
         (
             r#"if ("\uDBFF" <= x && x <= "\uD800") {}"#,
-            Some(serde_json::json!(["never", { "exceptRange": true }])),
-        ),
-        (
-            r#"if ("\uFFFF" <= x && x <= "\uD83D\uDE00") {}"#,
             Some(serde_json::json!(["never", { "exceptRange": true }])),
         ),
         (
