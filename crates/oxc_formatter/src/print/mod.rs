@@ -140,7 +140,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
                 | AstNodes::PropertyDefinition(_)
                 | AstNodes::AccessorProperty(_)
                 | AstNodes::ImportAttribute(_)
-                | AstNodes::TSModuleDeclarationAttribute(_)
                 | AstNodes::TSEnumMember(_)
         );
         if is_property_key_parent && f.context().is_quote_needed() {
@@ -1882,7 +1881,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleDeclaration<'a>> {
 
 fn write_ts_external_module_name_and_with<'a>(
     name: &AstNode<'a, StringLiteral<'a>>,
-    attributes: &AstNode<'a, TSModuleDeclarationAttributeClause<'a>>,
+    attributes: &AstNode<'a, WithClause<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) {
     write!(f, FormatNodeWithoutTrailingComments(name));
@@ -1897,30 +1896,33 @@ fn write_ts_external_module_name_and_with<'a>(
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclarationAttributeClause<'a>> {
-    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.options().quote_properties.is_consistent() {
-            let quote_needed = self.entries.iter().any(|attribute| {
-                matches!(&attribute.key, ImportAttributeKey::StringLiteral(string)
+fn format_ts_module_attributes<'a>(
+    attributes: &AstNode<'a, WithClause<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    if f.options().quote_properties.is_consistent() {
+        let quote_needed = attributes.with_entries.iter().any(|attribute| {
+            matches!(&attribute.key, ImportAttributeKey::StringLiteral(string)
                     if should_preserve_string_quote(string, f))
-            });
-            f.context_mut().push_quote_needed(quote_needed);
-        }
+        });
+        f.context_mut().push_quote_needed(quote_needed);
+    }
 
-        ObjectLike::TSModuleDeclarationAttributeClause(self).fmt(f);
+    ObjectLike::WithClause(attributes).fmt(f);
 
-        if f.options().quote_properties.is_consistent() {
-            f.context_mut().pop_quote_needed();
-        }
+    if f.options().quote_properties.is_consistent() {
+        f.context_mut().pop_quote_needed();
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>>
-    for AstNode<'a, ArenaVec<'a, TSModuleDeclarationAttribute<'a>>>
-{
+struct FormatTSModuleDeclarationAttributes<'a, 'b>(
+    &'b AstNode<'a, ArenaVec<'a, ImportAttribute<'a>>>,
+);
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSModuleDeclarationAttributes<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let mut joiner = f.join_nodes_with_soft_line();
-        let mut iter = self.iter().peekable();
+        let mut iter = self.0.iter().peekable();
         while let Some(attribute) = iter.next() {
             joiner.entry(
                 attribute.span(),
@@ -1931,7 +1933,7 @@ impl<'a> Format<'a, JsFormatContext<'a>>
 }
 
 struct FormatTSModuleDeclarationAttribute<'a, 'b> {
-    attribute: &'b AstNode<'a, TSModuleDeclarationAttribute<'a>>,
+    attribute: &'b AstNode<'a, ImportAttribute<'a>>,
     has_next: bool,
 }
 
@@ -1951,37 +1953,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSModuleDeclarationAttribute<
                 write!(f, if_group_fits_on_line(&token(";")));
             }
             Semicolons::AsNeeded => {}
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclarationAttribute<'a>> {
-    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        if self.readonly() {
-            write!(f, ["readonly", space()]);
-        }
-        if let AstNodes::StringLiteral(string) = self.key().as_ast_nodes() {
-            let format = FormatLiteralStringToken::new(
-                f.source_text().text_for(string),
-                false,
-                StringLiteralParentKind::ImportAttribute,
-            )
-            .clean_text(f);
-
-            string.format_leading_comments(f);
-            write!(f, format);
-            string.format_trailing_comments(f);
-        } else {
-            write!(f, self.key());
-        }
-        write!(f, [":", space()]);
-
-        let has_leading_own_line_comment =
-            f.comments().has_leading_own_line_comment(self.value().span().start);
-        if has_leading_own_line_comment {
-            write!(f, [group(&indent(&format_args!(soft_line_break(), self.value())))]);
-        } else {
-            write!(f, self.value());
         }
     }
 }

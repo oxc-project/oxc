@@ -1957,19 +1957,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.add_scope(&it.scope_id);
     }
 
-    #[inline(always)]
-    fn visit_ts_module_declaration_attribute_clause(
-        &mut self,
-        it: &TSModuleDeclarationAttributeClause<'a>,
-    ) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
-    #[inline(always)]
-    fn visit_ts_module_declaration_attribute(&mut self, it: &TSModuleDeclarationAttribute<'a>) {
-        // Struct does not contain a scope. Halt traversal.
-    }
-
     #[inline]
     fn visit_ts_namespace_declaration(&mut self, it: &TSNamespaceDeclaration<'a>) {
         self.add_scope(&it.scope_id);

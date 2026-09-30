@@ -950,6 +950,11 @@ export function printTSModuleDeclaration(
     }
   }
 
+  if (kind === "module" && node.attributes !== undefined) {
+    write(state, " with ", CAT_OTHER);
+    printTSModuleAttributes(node.attributes, state);
+  }
+
   const { body } = node;
   if (body == null) {
     write(state, ";", CAT_OTHER);
@@ -959,6 +964,34 @@ export function printTSModuleDeclaration(
   write(state, " ", CAT_OTHER);
 
   printModuleBlock(body, state);
+}
+
+function printTSModuleAttributes(attributes: ESTree.ImportAttribute[], state: State): void {
+  const { length } = attributes;
+  if (length === 0) {
+    write(state, "{}", CAT_OTHER);
+    return;
+  }
+
+  const first = attributes[0];
+  const last = attributes[length - 1];
+  writeWithMap(state, "{\n", CAT_OTHER, first.start, first.end, first);
+  state.indentLevel++;
+  for (const attribute of attributes) {
+    printIndent(state);
+    const { key, value } = attribute;
+    if (key.type === "Identifier") {
+      writeIdent(state, key.name);
+    } else {
+      printString(state, key.value, key.start, key.end, key);
+    }
+    write(state, ": ", CAT_OTHER);
+    printString(state, value.value, value.start, value.end, value);
+    write(state, ";\n", CAT_OTHER);
+  }
+  state.indentLevel--;
+  printIndent(state);
+  writeWithMapEnd(state, "}", CAT_OTHER, last.start, last.end, last);
 }
 
 /**

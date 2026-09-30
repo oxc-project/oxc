@@ -169,7 +169,6 @@ impl_ast_node_vec!(TSTupleElement<'a>);
 impl_ast_node_vec!(TSTypeParameter<'a>);
 impl_ast_node_vec!(TSClassImplements<'a>);
 impl_ast_node_vec!(TSSignature<'a>);
-impl_ast_node_vec!(TSModuleDeclarationAttribute<'a>);
 impl_ast_node_vec!(TSIndexSignatureName<'a>);
 impl_ast_node_vec!(TSInterfaceHeritage<'a>);
 impl_ast_node_vec!(Decorator<'a>);

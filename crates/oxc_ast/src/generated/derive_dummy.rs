@@ -2859,34 +2859,6 @@ impl<'a> Dummy<'a> for TSExternalModuleDeclaration<'a> {
     }
 }
 
-impl<'a> Dummy<'a> for TSModuleDeclarationAttributeClause<'a> {
-    /// Create a dummy [`TSModuleDeclarationAttributeClause`].
-    ///
-    /// Does not allocate any data into arena.
-    fn dummy(allocator: &'a Allocator) -> Self {
-        Self {
-            node_id: Dummy::dummy(allocator),
-            span: Dummy::dummy(allocator),
-            entries: Dummy::dummy(allocator),
-        }
-    }
-}
-
-impl<'a> Dummy<'a> for TSModuleDeclarationAttribute<'a> {
-    /// Create a dummy [`TSModuleDeclarationAttribute`].
-    ///
-    /// Does not allocate any data into arena.
-    fn dummy(allocator: &'a Allocator) -> Self {
-        Self {
-            node_id: Dummy::dummy(allocator),
-            span: Dummy::dummy(allocator),
-            readonly: Dummy::dummy(allocator),
-            key: Dummy::dummy(allocator),
-            value: Dummy::dummy(allocator),
-        }
-    }
-}
-
 impl<'a> Dummy<'a> for TSNamespaceDeclaration<'a> {
     /// Create a dummy [`TSNamespaceDeclaration`].
     ///

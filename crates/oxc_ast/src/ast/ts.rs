@@ -1243,6 +1243,7 @@ pub enum TSTypePredicateName<'a> {
             type: 'TSModuleDeclaration';
             id: BindingIdentifier | StringLiteral | TSQualifiedName;
             body: TSModuleBlock | null;
+            attributes?: Array<ImportAttribute>;
             kind: TSModuleDeclarationKind;
             declare: boolean;
             global: false;
@@ -1254,36 +1255,11 @@ pub struct TSExternalModuleDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: StringLiteral<'a>,
-    #[estree(skip)]
-    pub attributes: Option<Box<'a, TSModuleDeclarationAttributeClause<'a>>>,
+    pub attributes: Option<Box<'a, WithClause<'a>>>,
     #[scope(enter_before)]
     pub body: Option<Box<'a, TSModuleBlock<'a>>>,
     pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
-}
-
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
-#[estree(skip, no_type, no_ts_def)]
-pub struct TSModuleDeclarationAttributeClause<'a> {
-    pub node_id: Cell<NodeId>,
-    pub span: Span,
-    pub entries: Vec<'a, TSModuleDeclarationAttribute<'a>>,
-}
-
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
-#[estree(skip, no_type, no_ts_def)]
-pub struct TSModuleDeclarationAttribute<'a> {
-    pub node_id: Cell<NodeId>,
-    pub span: Span,
-    pub readonly: bool,
-    pub key: ImportAttributeKey<'a>,
-    pub value: StringLiteral<'a>,
 }
 
 /// TypeScript namespace or identifier-based module declaration.

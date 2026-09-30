@@ -488,23 +488,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    fn parse_ts_module_declaration_attributes(
-        &mut self,
-    ) -> ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>> {
+    fn parse_ts_module_declaration_attributes(&mut self) -> ArenaBox<'a, WithClause<'a>> {
         let start = self.cur_start();
         let attributes = self.parse_normal_list(
             Kind::LCurly,
             Kind::RCurly,
             Self::parse_ts_module_declaration_attribute,
         );
-        TSModuleDeclarationAttributeClause::boxed(self.end_span(start), attributes, self)
+        WithClause::boxed(self.end_span(start), WithClauseKeyword::With, attributes, self)
     }
 
-    fn parse_ts_module_declaration_attribute(&mut self) -> TSModuleDeclarationAttribute<'a> {
+    fn parse_ts_module_declaration_attribute(&mut self) -> ImportAttribute<'a> {
         let start = self.cur_start();
         let modifier_span = self.cur_token().span();
-        let readonly = self.parse_contextual_modifier(Kind::Readonly);
-        if readonly {
+        if self.parse_contextual_modifier(Kind::Readonly) {
             self.error(diagnostics::import_attribute_cannot_be_readonly(modifier_span));
         }
         let key = match self.cur_kind() {
@@ -532,7 +529,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.parse_type_member_semicolon();
-        TSModuleDeclarationAttribute::new(self.end_span(start), readonly, key, value, self)
+        ImportAttribute::new(self.end_span(start), key, value, self)
     }
 
     /// Validate a statement that appears directly in an *internal* namespace body

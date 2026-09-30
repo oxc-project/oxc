@@ -194,8 +194,6 @@ pub enum AstNodes<'a> {
     TSInterfaceHeritage(&'a AstNode<'a, TSInterfaceHeritage<'a>>),
     TSTypePredicate(&'a AstNode<'a, TSTypePredicate<'a>>),
     TSExternalModuleDeclaration(&'a AstNode<'a, TSExternalModuleDeclaration<'a>>),
-    TSModuleDeclarationAttributeClause(&'a AstNode<'a, TSModuleDeclarationAttributeClause<'a>>),
-    TSModuleDeclarationAttribute(&'a AstNode<'a, TSModuleDeclarationAttribute<'a>>),
     TSNamespaceDeclaration(&'a AstNode<'a, TSNamespaceDeclaration<'a>>),
     TSGlobalDeclaration(&'a AstNode<'a, TSGlobalDeclaration<'a>>),
     TSModuleBlock(&'a AstNode<'a, TSModuleBlock<'a>>),
@@ -399,8 +397,6 @@ impl AstNodes<'_> {
             Self::TSInterfaceHeritage(n) => n.span(),
             Self::TSTypePredicate(n) => n.span(),
             Self::TSExternalModuleDeclaration(n) => n.span(),
-            Self::TSModuleDeclarationAttributeClause(n) => n.span(),
-            Self::TSModuleDeclarationAttribute(n) => n.span(),
             Self::TSNamespaceDeclaration(n) => n.span(),
             Self::TSGlobalDeclaration(n) => n.span(),
             Self::TSModuleBlock(n) => n.span(),
@@ -604,8 +600,6 @@ impl AstNodes<'_> {
             Self::TSInterfaceHeritage(n) => n.parent(),
             Self::TSTypePredicate(n) => n.parent(),
             Self::TSExternalModuleDeclaration(n) => n.parent(),
-            Self::TSModuleDeclarationAttributeClause(n) => n.parent(),
-            Self::TSModuleDeclarationAttribute(n) => n.parent(),
             Self::TSNamespaceDeclaration(n) => n.parent(),
             Self::TSGlobalDeclaration(n) => n.parent(),
             Self::TSModuleBlock(n) => n.parent(),
@@ -804,8 +798,6 @@ impl AstNodes<'_> {
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage",
             Self::TSTypePredicate(_) => "TSTypePredicate",
             Self::TSExternalModuleDeclaration(_) => "TSExternalModuleDeclaration",
-            Self::TSModuleDeclarationAttributeClause(_) => "TSModuleDeclarationAttributeClause",
-            Self::TSModuleDeclarationAttribute(_) => "TSModuleDeclarationAttribute",
             Self::TSNamespaceDeclaration(_) => "TSNamespaceDeclaration",
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration",
             Self::TSModuleBlock(_) => "TSModuleBlock",
@@ -9572,7 +9564,7 @@ impl<'a> AstNode<'a, TSExternalModuleDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn attributes(&self) -> Option<&AstNode<'a, TSModuleDeclarationAttributeClause<'a>>> {
+    pub fn attributes(&self) -> Option<&AstNode<'a, WithClause<'a>>> {
         let following_span_start = self.inner.body.as_deref().map_or(0, |n| n.span().start);
         self.allocator
             .alloc(self.inner.attributes.as_ref().map(|inner| AstNode {
@@ -9600,76 +9592,6 @@ impl<'a> AstNode<'a, TSExternalModuleDeclaration<'a>> {
     #[inline]
     pub fn declare(&self) -> bool {
         self.inner.declare
-    }
-
-    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_leading_comments(self.span()).fmt(f);
-    }
-
-    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
-            .fmt(f);
-    }
-}
-
-impl<'a> AstNode<'a, TSModuleDeclarationAttributeClause<'a>> {
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.inner.node_id()
-    }
-
-    #[inline]
-    pub fn entries(&self) -> &AstNode<'a, ArenaVec<'a, TSModuleDeclarationAttribute<'a>>> {
-        let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.entries,
-            allocator: self.allocator,
-            parent: AstNodes::TSModuleDeclarationAttributeClause(transmute_self(self)),
-            following_span_start,
-        })
-    }
-
-    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_leading_comments(self.span()).fmt(f);
-    }
-
-    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
-            .fmt(f);
-    }
-}
-
-impl<'a> AstNode<'a, TSModuleDeclarationAttribute<'a>> {
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.inner.node_id()
-    }
-
-    #[inline]
-    pub fn readonly(&self) -> bool {
-        self.inner.readonly
-    }
-
-    #[inline]
-    pub fn key(&self) -> &AstNode<'a, ImportAttributeKey<'a>> {
-        let following_span_start = self.inner.value.span().start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.key,
-            allocator: self.allocator,
-            parent: AstNodes::TSModuleDeclarationAttribute(transmute_self(self)),
-            following_span_start,
-        })
-    }
-
-    #[inline]
-    pub fn value(&self) -> &AstNode<'a, StringLiteral<'a>> {
-        let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.value,
-            allocator: self.allocator,
-            parent: AstNodes::TSModuleDeclarationAttribute(transmute_self(self)),
-            following_span_start,
-        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {

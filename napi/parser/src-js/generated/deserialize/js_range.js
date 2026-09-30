@@ -4317,6 +4317,8 @@ function deserializeTSExternalModuleDeclaration(pos) {
       range: [start, end],
     };
   node.id = deserializeStringLiteral(pos + 16);
+  let attributes = deserializeOptionBoxWithClause(pos + 64);
+  attributes !== null && (node.attributes = attributes.attributes);
   return node;
 }
 

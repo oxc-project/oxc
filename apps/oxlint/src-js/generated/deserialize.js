@@ -5266,6 +5266,8 @@ function deserializeTSExternalModuleDeclaration(pos) {
       parent,
     });
   node.id = deserializeStringLiteral(pos + 16);
+  let attributes = deserializeOptionBoxWithClause(pos + 64);
+  attributes !== null && (node.attributes = attributes.attributes);
   body !== null && (body.parent = node);
   parent = previousParent;
   return node;
