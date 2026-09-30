@@ -303,7 +303,7 @@ fn get_leftmost_operand<'a>(logical: &'a LogicalExpression<'a>) -> &'a Expressio
 
 fn is_reference(expression: &Expression) -> bool {
     match expression.get_inner_expression() {
-        expression @ Expression::Identifier(_) => !expression.is_undefined(),
+        Expression::Identifier(identifier) => !identifier.is_undefined(),
         expression => expression.as_member_expression().is_some(),
     }
 }
@@ -1072,7 +1072,7 @@ fn test() {
         ),
         (
             "if (a) {
-             a = b; 
+             a = b;
             }",
             Some(serde_json::json!(["always", { "enforceForIfStatements": true }])),
         ),
@@ -1483,7 +1483,7 @@ fn test() {
         ),
         (
             "if (a) {
-             a = b; 
+             a = b;
             }",
             "a &&= b;",
             Some(serde_json::json!(["always", { "enforceForIfStatements": true }])),
