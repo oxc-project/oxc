@@ -1242,9 +1242,9 @@ fn jsx_attribute_with_lone_surrogate_value() {
     use oxc_span::SourceType;
     use oxc_str::JSStrBuilder;
 
-    // JSX attribute strings have no escape syntax, so a decoded value holding a lone surrogate can
-    // only be printed as a string expression.
-    // Values that are valid UTF-8, including surrogate pairs, keep the quoted form.
+    // JSX attribute strings have no backslash escapes, so a lone surrogate is printed as a character
+    // reference, which JSX decodes back to the same code unit.
+    // Values that are valid UTF-8, including surrogate pairs, are printed as they are.
     let allocator = Allocator::new();
     let source_type = SourceType::jsx();
     let mut parsed = Parser::new(&allocator, "<div a=\"x\" b=\"y\" />;", source_type).parse();
@@ -1270,12 +1270,12 @@ fn jsx_attribute_with_lone_surrogate_value() {
     }
 
     let output = Codegen::new().build(&parsed.program).code;
-    assert_eq!(output, "<div a={\"a\\ud800b\"} b='a😀\"' />;\n");
+    assert_eq!(output, "<div a=\"a&#xD800;b\" b='a😀\"' />;\n");
     let minified = Codegen::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .build(&parsed.program)
         .code;
-    assert_eq!(minified, "<div a={\"a\\ud800b\"} b='a😀\"'/>;");
+    assert_eq!(minified, "<div a=\"a&#xD800;b\" b='a😀\"'/>;");
 
     let reparsed = Parser::new(&allocator, &output, source_type).parse();
     assert!(reparsed.diagnostics.is_empty(), "{output}");
