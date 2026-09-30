@@ -59,7 +59,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                     // Transform `export * as ns from "mod"` to:
                     // `import * as _ns from "mod"; export { _ns as ns };`
 
-                    let ExportAllDeclaration { span, exported, source, export_kind, .. } =
+                    let ExportAllDeclaration { span, exported, source, phase, export_kind, .. } =
                         export_all.unbox();
                     let exported_name = exported.unwrap();
 
@@ -70,7 +70,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                         SymbolFlags::Import,
                     );
 
-                    // Create `import * as _ns from "mod"`
+                    // Create `import * as _ns from "mod"`, or `import defer * as _ns from "mod"`
+                    // for `export defer * as ns from "mod"`
                     let import_specifier =
                         ImportDeclarationSpecifier::new_import_namespace_specifier(
                             SPAN,
@@ -82,7 +83,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                         SPAN,
                         Some(ArenaVec::from_value_in(import_specifier, ctx)),
                         source,
-                        None,
+                        phase,
                         None,
                         export_kind,
                         ctx,

@@ -530,9 +530,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.parse_export_default_declaration(start, decorators),
             ),
             Kind::Star => ModuleDeclaration::ExportAllDeclaration(
-                self.parse_export_all_declaration(start, ImportOrExportKind::Value),
+                self.parse_export_all_declaration(start, ImportOrExportKind::Value, None),
             ),
-            Kind::LCurly => self.parse_export_named_specifiers(start, ImportOrExportKind::Value),
+            Kind::LCurly => {
+                self.parse_export_named_specifiers(start, ImportOrExportKind::Value, None)
+            }
+            // `export defer { ... } from '...'`
+            // `export defer * as ns from '...'`
+            // <https://github.com/tc39/proposal-deferred-reexports>
+            Kind::Defer => {
+                // Reports an escaped `defer` keyword.
+                self.bump_any();
+                let phase = Some(ImportPhase::Defer);
+                match self.cur_kind() {
+                    Kind::Star => ModuleDeclaration::ExportAllDeclaration(
+                        self.parse_export_all_declaration(start, ImportOrExportKind::Value, phase),
+                    ),
+                    _ => self.parse_export_named_specifiers(start, ImportOrExportKind::Value, phase),
+                }
+            }
             Kind::Type if self.is_ts => {
                 let next_kind = self.lexer.peek_token().kind();
 
@@ -540,13 +556,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     // `export type { ...`
                     Kind::LCurly => {
                         self.bump_any(); // bump `type`
-                        self.parse_export_named_specifiers(start, ImportOrExportKind::Type)
+                        self.parse_export_named_specifiers(start, ImportOrExportKind::Type, None)
                     }
                     // `export type * as ...`
                     Kind::Star => {
                         self.bump_any(); // bump `type`
                         ModuleDeclaration::ExportAllDeclaration(
-                            self.parse_export_all_declaration(start, ImportOrExportKind::Type),
+                            self.parse_export_all_declaration(start, ImportOrExportKind::Type, None),
                         )
                     }
                     _ => ModuleDeclaration::ExportDeclaration(
@@ -585,10 +601,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // ExportSpecifier :
     //   ModuleExportName
     //   ModuleExportName as ModuleExportName
+    //
+    // export defer NamedExports FromClause ;
     fn parse_export_named_specifiers(
         &mut self,
         start: u32,
         export_kind: ImportOrExportKind,
+        phase: Option<ImportPhase>,
     ) -> ModuleDeclaration<'a> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
@@ -598,6 +617,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             })
         });
         self.expect(Kind::RCurly);
+        // `export defer { ... }` requires a `from` clause.
+        if phase.is_some() {
+            self.expect_without_advance(Kind::From);
+        }
         let (source, with_clause) = if self.eat(Kind::From) {
             let source = self.parse_literal_string();
             (Some(source), self.parse_import_attributes())
@@ -649,6 +672,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 span,
                 specifiers,
                 source,
+                phase,
                 export_kind,
                 with_clause,
                 self,
@@ -828,20 +852,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     //   *
     //   * as ModuleExportName
     //   NamedExports
+    //
+    // export defer * as ModuleExportName FromClause ;
     fn parse_export_all_declaration(
         &mut self,
         start: u32,
         export_kind: ImportOrExportKind,
+        phase: Option<ImportPhase>,
     ) -> ArenaBox<'a, ExportAllDeclaration<'a>> {
+        let star_span = self.cur_token().span();
         self.bump_any(); // bump `star`
         let exported = self.eat(Kind::As).then(|| self.parse_module_export_name());
+        if phase.is_some() && exported.is_none() {
+            // `export defer * from '...'`
+            self.error(diagnostics::export_defer_star_without_as(star_span));
+        }
         self.expect(Kind::From);
         let source = self.parse_literal_string();
         let with_clause = self.parse_import_attributes();
         self.asi();
         let span = self.end_span(start);
-        let export_all_decl =
-            ExportAllDeclaration::boxed(span, exported, source, with_clause, export_kind, self);
+        let export_all_decl = ExportAllDeclaration::boxed(
+            span,
+            exported,
+            source,
+            phase,
+            with_clause,
+            export_kind,
+            self,
+        );
         if self.ctx.has_top_level() {
             self.module_record_builder.visit_export_all_declaration(&export_all_decl);
         }

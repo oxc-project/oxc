@@ -6149,9 +6149,14 @@ export class ExportFromDeclaration {
     return new StringLiteral(internal.pos + 40, internal.ast);
   }
 
+  get phase() {
+    const internal = this.#internal;
+    return constructOptionImportPhase(internal.pos + 12, internal.ast);
+  }
+
   get exportKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 12, internal.ast);
+    return constructImportOrExportKind(internal.pos + 13, internal.ast);
   }
 
   get attributes() {
@@ -6166,6 +6171,7 @@ export class ExportFromDeclaration {
       end: this.end,
       specifiers: this.specifiers,
       source: this.source,
+      phase: this.phase,
       exportKind: this.exportKind,
       attributes: this.attributes,
     };
@@ -6259,6 +6265,11 @@ export class ExportAllDeclaration {
     return new StringLiteral(internal.pos + 72, internal.ast);
   }
 
+  get phase() {
+    const internal = this.#internal;
+    return constructOptionImportPhase(internal.pos + 12, internal.ast);
+  }
+
   get attributes() {
     const internal = this.#internal;
     return constructOptionBoxWithClause(internal.pos + 120, internal.ast);
@@ -6266,7 +6277,7 @@ export class ExportAllDeclaration {
 
   get exportKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 12, internal.ast);
+    return constructImportOrExportKind(internal.pos + 13, internal.ast);
   }
 
   toJSON() {
@@ -6276,6 +6287,7 @@ export class ExportAllDeclaration {
       end: this.end,
       exported: this.exported,
       source: this.source,
+      phase: this.phase,
       attributes: this.attributes,
       exportKind: this.exportKind,
     };
