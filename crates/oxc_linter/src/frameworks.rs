@@ -4,8 +4,7 @@ use std::path::Path;
 
 use bitflags::bitflags;
 
-#[cfg(not(test))]
-use crate::ModuleRecord;
+use crate::{ModuleRecord, OxlintSettings};
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -92,12 +91,11 @@ pub fn is_jestlike_file(path: &Path) -> bool {
         .is_some_and(|name_or_first_ext| name_or_first_ext == "test" || name_or_first_ext == "spec")
 }
 
-#[cfg(not(test))]
-pub fn has_vitest_imports(module_record: &ModuleRecord) -> bool {
-    module_record.import_entries.iter().any(|entry| {
-        let name = entry.module_request.name();
-        name == "vitest" || name == "vite-plus/test" || name == "@effect/vitest"
-    })
+pub fn has_vitest_imports(module_record: &ModuleRecord, settings: &OxlintSettings) -> bool {
+    module_record
+        .import_entries
+        .iter()
+        .any(|entry| settings.vitest.is_vitest_import_source(entry.module_request.name()))
 }
 
 #[cfg(not(test))]
@@ -110,4 +108,55 @@ pub fn has_jest_imports(module_record: &ModuleRecord) -> bool {
 pub enum FrameworkOptions {
     Default,  // default
     VueSetup, // context is inside `<script setup>`
+}
+
+#[cfg(test)]
+mod test {
+    use serde::Deserialize;
+    use serde_json::json;
+
+    use oxc_span::Span;
+
+    use super::has_vitest_imports;
+    use crate::{
+        OxlintSettings,
+        module_record::{ImportEntry, ImportImportName, ModuleRecord, NameSpan},
+    };
+
+    fn import_entry(module_request: &str) -> ImportEntry {
+        let span = Span::new(0, 0);
+        ImportEntry {
+            statement_span: span,
+            module_request: NameSpan::new(module_request.into(), span),
+            import_name: ImportImportName::Name(NameSpan::new("test".into(), span)),
+            local_name: NameSpan::new("test".into(), span),
+            is_type: false,
+        }
+    }
+
+    fn settings_with_vitest_imports(module: &str) -> OxlintSettings {
+        OxlintSettings::deserialize(json!({
+            "vitest": { "vitestImports": [module] }
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn test_has_vitest_imports() {
+        let default_settings = OxlintSettings::default();
+
+        // Built-in sources are recognized with default settings.
+        for source in ["vitest", "vite-plus/test", "@effect/vitest"] {
+            let mut module_record = ModuleRecord::default();
+            module_record.import_entries.push(import_entry(source));
+            assert!(has_vitest_imports(&module_record, &default_settings));
+        }
+
+        // A custom fixture source is only recognized when configured via `vitestImports`.
+        let mut custom_module = ModuleRecord::default();
+        custom_module.import_entries.push(import_entry("$test/setup/fixtures"));
+        assert!(!has_vitest_imports(&custom_module, &default_settings));
+        let custom_settings = settings_with_vitest_imports("$test/setup/fixtures");
+        assert!(has_vitest_imports(&custom_module, &custom_settings));
+    }
 }

@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(consistent-test-it): Enforce `test` and `it` usage conventions
+   ╭─[consistent_test_it.tsx:4:13]
+ 3 │             test('a', () => {});
+ 4 │             it('b', () => {});
+   ·             ──
+ 5 │             
+   ╰────
+  help: Prefer using "test" instead of "it"
