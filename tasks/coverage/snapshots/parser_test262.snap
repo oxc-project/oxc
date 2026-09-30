@@ -22379,6 +22379,13 @@ Negative Passed: 4653/4653 (100.00%)
     ·           ─────────
     ╰────
 
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:1]
+ 33 │ 
+ 34 │ import defer x, * as ns from "./dep_FIXTURE.js";
+    · ──────
+    ╰────
+
   × TS(18058): Default imports are not allowed in a deferred import.
     ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:8]
  33 │ 
@@ -22387,9 +22394,9 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
 
   × Cannot use import statement outside a module
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:1]
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-as-with-no-asterisk.js:34:1]
  33 │ 
- 34 │ import defer x, * as ns from "./dep_FIXTURE.js";
+ 34 │ import defer as ns from "./dep_FIXTURE.js";
     · ──────
     ╰────
 
@@ -22401,11 +22408,25 @@ Negative Passed: 4653/4653 (100.00%)
     ·               ╰── `from` expected
     ╰────
 
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default-and-namespace.js:34:1]
+ 33 │ 
+ 34 │ import x, defer * as ns from "./dep_FIXTURE.js";
+    · ──────
+    ╰────
+
   × Unexpected token
     ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default-and-namespace.js:34:11]
  33 │ 
  34 │ import x, defer * as ns from "./dep_FIXTURE.js";
     ·           ─────
+    ╰────
+
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default.js:34:1]
+ 33 │ 
+ 34 │ import defer x from "./dep_FIXTURE.js";
+    · ──────
     ╰────
 
   × TS(18058): Default imports are not allowed in a deferred import.
@@ -22416,9 +22437,9 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
 
   × Cannot use import statement outside a module
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default.js:34:1]
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-named.js:34:1]
  33 │ 
- 34 │ import defer x from "./dep_FIXTURE.js";
+ 34 │ import defer { default as x } from "./dep_FIXTURE.js";
     · ──────
     ╰────
 
@@ -22429,10 +22450,10 @@ Negative Passed: 4653/4653 (100.00%)
     ·        ─────
     ╰────
 
-  × Cannot use import statement outside a module
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-named.js:34:1]
- 33 │ 
- 34 │ import defer { default as x } from "./dep_FIXTURE.js";
+  × Cannot use export statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-export-defer-namespace.js:33:1]
+ 32 │ 
+ 33 │ export defer * as ns from "./dep_FIXTURE.js";
     · ──────
     ╰────
 
