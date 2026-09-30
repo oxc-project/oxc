@@ -1,7 +1,7 @@
 use super::PeepholeOptimizations;
 use crate::keep_var::KeepVar;
 use crate::{TraverseCtx, is_terminated::IsTerminated};
-use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::{Expression, Statement, SwitchCase};
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
@@ -32,8 +32,7 @@ impl<'a> PeepholeOptimizations {
                 )
             };
 
-            ctx.notice_change();
-            stmt.replace_with(|stmt| {
+            ctx.replace_statement_with(stmt, |stmt, ctx| {
                 let Statement::SwitchStatement(switch_stmt) = stmt else {
                     unreachable!();
                 };
