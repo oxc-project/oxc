@@ -2065,15 +2065,6 @@ impl GetSpan for TSModuleDeclarationAttribute<'_> {
     }
 }
 
-impl GetSpan for TSModuleDeclarationAttributeValue<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::StringLiteral(it) => GetSpan::span(&**it),
-            Self::TemplateLiteral(it) => GetSpan::span(&**it),
-        }
-    }
-}
-
 impl GetSpan for TSNamespaceDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {

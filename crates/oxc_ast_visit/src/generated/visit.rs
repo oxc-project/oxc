@@ -1093,14 +1093,6 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_module_declaration_attribute_value(
-        &mut self,
-        it: &TSModuleDeclarationAttributeValue<'a>,
-    ) {
-        walk_ts_module_declaration_attribute_value(self, it);
-    }
-
-    #[inline]
     fn visit_ts_namespace_declaration(&mut self, it: &TSNamespaceDeclaration<'a>) {
         walk_ts_namespace_declaration(self, it);
     }
@@ -3992,24 +3984,8 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_import_attribute_key(&it.key);
-        visitor.visit_ts_module_declaration_attribute_value(&it.value);
+        visitor.visit_string_literal(&it.value);
         visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_ts_module_declaration_attribute_value<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &TSModuleDeclarationAttributeValue<'a>,
-    ) {
-        // No `AstKind` for this type
-        match it {
-            TSModuleDeclarationAttributeValue::StringLiteral(it) => {
-                visitor.visit_string_literal(it)
-            }
-            TSModuleDeclarationAttributeValue::TemplateLiteral(it) => {
-                visitor.visit_template_literal(it)
-            }
-        }
     }
 
     #[inline]

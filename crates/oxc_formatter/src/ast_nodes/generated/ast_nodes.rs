@@ -9662,7 +9662,7 @@ impl<'a> AstNode<'a, TSModuleDeclarationAttribute<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> &AstNode<'a, TSModuleDeclarationAttributeValue<'a>> {
+    pub fn value(&self) -> &AstNode<'a, StringLiteral<'a>> {
         let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
@@ -9679,32 +9679,6 @@ impl<'a> AstNode<'a, TSModuleDeclarationAttribute<'a>> {
     pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
-    }
-}
-
-impl<'a> AstNode<'a, TSModuleDeclarationAttributeValue<'a>> {
-    #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.parent;
-        let node = match self.inner {
-            TSModuleDeclarationAttributeValue::StringLiteral(s) => {
-                AstNodes::StringLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSModuleDeclarationAttributeValue::TemplateLiteral(s) => {
-                AstNodes::TemplateLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
     }
 }
 

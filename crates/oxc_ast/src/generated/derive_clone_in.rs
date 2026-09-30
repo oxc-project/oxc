@@ -5150,25 +5150,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationAttribute<'_> {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationAttributeValue<'_> {
-    type Cloned = TSModuleDeclarationAttributeValue<'new_alloc>;
-
-    fn clone_in_impl(
-        &self,
-        with_semantic_ids: CloneInSemanticIds,
-        allocator: &'new_alloc Allocator,
-    ) -> Self::Cloned {
-        match self {
-            Self::StringLiteral(it) => TSModuleDeclarationAttributeValue::StringLiteral(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::TemplateLiteral(it) => TSModuleDeclarationAttributeValue::TemplateLiteral(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-        }
-    }
-}
-
 impl<'new_alloc> CloneIn<'new_alloc> for TSNamespaceDeclaration<'_> {
     type Cloned = TSNamespaceDeclaration<'new_alloc>;
 

@@ -4555,18 +4555,6 @@ impl TSTypePredicateName<'_> {
     }
 }
 
-impl TSModuleDeclarationAttributeValue<'_> {
-    /// Get [`NodeId`] of [`TSModuleDeclarationAttributeValue`].
-    // `#[inline(always)]` because this should boil down to a single instruction.
-    #[inline(always)]
-    pub fn node_id(&self) -> NodeId {
-        match self {
-            Self::StringLiteral(it) => it.node_id(),
-            Self::TemplateLiteral(it) => it.node_id(),
-        }
-    }
-}
-
 impl TSNamespaceDeclarationBody<'_> {
     /// Get [`NodeId`] of [`TSNamespaceDeclarationBody`].
     // `#[inline(always)]` because this should boil down to a single instruction.

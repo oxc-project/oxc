@@ -2372,16 +2372,6 @@ impl ContentEq for TSModuleDeclarationAttribute<'_> {
     }
 }
 
-impl ContentEq for TSModuleDeclarationAttributeValue<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
-            (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
-            _ => false,
-        }
-    }
-}
-
 impl ContentEq for TSNamespaceDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)

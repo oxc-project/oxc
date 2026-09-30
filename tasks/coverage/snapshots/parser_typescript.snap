@@ -8244,14 +8244,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  7 │     const data: any;
    ╰────
 
-  × Only string literals are allowed as module attribute values.
+  × TS(1555): An import attributes property must have a string literal type annotation.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeScope.ts:3:39]
  2 │ 
  3 │ declare module "*.asset" with { type: AttributeValue } {
    ·                                       ──────────────
  4 │     export type AttributeValue = "text";
    ╰────
-  help: Wrap this with quotes
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/importDeclWithClassModifiers.ts:5:8]

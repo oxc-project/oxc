@@ -5557,36 +5557,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationAttr
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationAttributeValue<'a>> {
-    #[inline]
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
-        let parent = self.parent;
-        match self.inner {
-            TSModuleDeclarationAttributeValue::StringLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<StringLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
-            }
-            TSModuleDeclarationAttributeValue::TemplateLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<TemplateLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
-            }
-        }
-    }
-}
-
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_span_suppressed(self.span());

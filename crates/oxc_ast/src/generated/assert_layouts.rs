@@ -1603,16 +1603,13 @@ const _: () = {
     assert!(offset_of!(TSModuleDeclarationAttributeClause, entries) == 16);
 
     // Padding: 3 bytes
-    assert!(size_of::<TSModuleDeclarationAttribute>() == 88);
+    assert!(size_of::<TSModuleDeclarationAttribute>() == 120);
     assert!(align_of::<TSModuleDeclarationAttribute>() == 8);
     assert!(offset_of!(TSModuleDeclarationAttribute, span) == 0);
     assert!(offset_of!(TSModuleDeclarationAttribute, node_id) == 8);
     assert!(offset_of!(TSModuleDeclarationAttribute, readonly) == 12);
     assert!(offset_of!(TSModuleDeclarationAttribute, key) == 16);
     assert!(offset_of!(TSModuleDeclarationAttribute, value) == 72);
-
-    assert!(size_of::<TSModuleDeclarationAttributeValue>() == 16);
-    assert!(align_of::<TSModuleDeclarationAttributeValue>() == 8);
 
     // Padding: 6 bytes
     assert!(size_of::<TSNamespaceDeclaration>() == 72);
@@ -3465,16 +3462,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TSModuleDeclarationAttributeClause, entries) == 12);
 
     // Padding: 3 bytes
-    assert!(size_of::<TSModuleDeclarationAttribute>() == 60);
+    assert!(size_of::<TSModuleDeclarationAttribute>() == 84);
     assert!(align_of::<TSModuleDeclarationAttribute>() == 4);
     assert!(offset_of!(TSModuleDeclarationAttribute, span) == 0);
     assert!(offset_of!(TSModuleDeclarationAttribute, node_id) == 8);
     assert!(offset_of!(TSModuleDeclarationAttribute, readonly) == 12);
     assert!(offset_of!(TSModuleDeclarationAttribute, key) == 16);
     assert!(offset_of!(TSModuleDeclarationAttribute, value) == 52);
-
-    assert!(size_of::<TSModuleDeclarationAttributeValue>() == 8);
-    assert!(align_of::<TSModuleDeclarationAttributeValue>() == 4);
 
     // Padding: 2 bytes
     assert!(size_of::<TSNamespaceDeclaration>() == 56);

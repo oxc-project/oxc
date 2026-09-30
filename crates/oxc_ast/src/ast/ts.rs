@@ -1283,17 +1283,7 @@ pub struct TSModuleDeclarationAttribute<'a> {
     pub span: Span,
     pub readonly: bool,
     pub key: ImportAttributeKey<'a>,
-    pub value: TSModuleDeclarationAttributeValue<'a>,
-}
-
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
-#[estree(skip, no_ts_def)]
-pub enum TSModuleDeclarationAttributeValue<'a> {
-    StringLiteral(Box<'a, StringLiteral<'a>>) = 0,
-    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 1,
+    pub value: StringLiteral<'a>,
 }
 
 /// TypeScript namespace or identifier-based module declaration.

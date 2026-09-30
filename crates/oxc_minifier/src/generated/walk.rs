@@ -5207,31 +5207,14 @@ unsafe fn walk_ts_module_declaration_attribute<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.retag_stack(AncestorType::TSModuleDeclarationAttributeValue);
-    walk_ts_module_declaration_attribute_value(
+    walk_string_literal(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_VALUE)
-            as *mut TSModuleDeclarationAttributeValue,
+            as *mut StringLiteral,
         ctx,
     );
     ctx.pop_stack(pop_token);
     traverser.exit_ts_module_declaration_attribute(&mut *node, ctx);
-}
-
-unsafe fn walk_ts_module_declaration_attribute_value<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut TSModuleDeclarationAttributeValue<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_ts_module_declaration_attribute_value(&mut *node, ctx);
-    match &mut *node {
-        TSModuleDeclarationAttributeValue::StringLiteral(node) => {
-            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
-        }
-        TSModuleDeclarationAttributeValue::TemplateLiteral(node) => {
-            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
-        }
-    }
-    traverser.exit_ts_module_declaration_attribute_value(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_namespace_declaration<'a, Tr: Traverse<'a>>(

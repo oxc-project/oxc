@@ -25611,7 +25611,7 @@ impl<'a> TSModuleDeclarationAttribute<'a> {
         span: Span,
         readonly: bool,
         key: ImportAttributeKey<'a>,
-        value: TSModuleDeclarationAttributeValue<'a>,
+        value: StringLiteral<'a>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
@@ -25622,70 +25622,6 @@ impl<'a> TSModuleDeclarationAttribute<'a> {
             key,
             value,
         }
-    }
-}
-
-impl<'a> TSModuleDeclarationAttributeValue<'a> {
-    /// Build a [`TSModuleDeclarationAttributeValue::StringLiteral`].
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    #[inline]
-    pub fn new_string_literal(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build a [`TSModuleDeclarationAttributeValue::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
-    }
-
-    /// Build a [`TSModuleDeclarationAttributeValue::TemplateLiteral`].
-    ///
-    /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `quasis`
-    /// * `expressions`
-    #[inline]
-    pub fn new_template_literal(
-        span: Span,
-        quasis: impl IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
-        expressions: impl IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
     }
 }
 

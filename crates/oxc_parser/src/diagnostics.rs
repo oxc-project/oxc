@@ -1367,6 +1367,11 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    ts_import_attribute_value_must_be_string_literal(span: Span) => {
+        ts_error("1555", "An import attributes property must have a string literal type annotation.")
+            .with_label(span)
+    };
+
     import_attribute_value_must_be_string_literal(span: Span) => {
         OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
             .with_label(span)

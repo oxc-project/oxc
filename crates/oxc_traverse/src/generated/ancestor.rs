@@ -2279,11 +2279,6 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_parent_of_ts_module_declaration_attribute_value(self) -> bool {
-        matches!(self, Self::TSModuleDeclarationAttributeValue(_))
-    }
-
-    #[inline]
     pub fn is_parent_of_ts_namespace_declaration_body(self) -> bool {
         matches!(self, Self::TSNamespaceDeclarationBody(_))
     }
@@ -16460,10 +16455,10 @@ impl<'a, 't> TSModuleDeclarationAttributeWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn value(self) -> &'t TSModuleDeclarationAttributeValue<'a> {
+    pub fn value(self) -> &'t StringLiteral<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_VALUE)
-                as *const TSModuleDeclarationAttributeValue<'a>)
+                as *const StringLiteral<'a>)
         }
     }
 }

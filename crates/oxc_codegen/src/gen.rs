@@ -4060,16 +4060,7 @@ impl Gen for TSModuleDeclarationAttribute<'_> {
         }
         p.print_colon();
         p.print_soft_space();
-        self.value.print(p, ctx);
-    }
-}
-
-impl Gen for TSModuleDeclarationAttributeValue<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        match self {
-            Self::StringLiteral(literal) => p.print_string_literal(literal, false),
-            Self::TemplateLiteral(literal) => literal.print(p, ctx),
-        }
+        p.print_string_literal(&self.value, false);
     }
 }
 
