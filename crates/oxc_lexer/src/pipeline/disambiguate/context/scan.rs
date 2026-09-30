@@ -29,8 +29,6 @@ struct Level<'a> {
     semi: Option<usize>,
     comma: Option<usize>,
     brace: Option<usize>,
-    /// A braced group was skipped: an expression anchor on the level ended before the query.
-    braces: bool,
     closers: &'a mut Vec<u32>,
 }
 
@@ -38,7 +36,6 @@ impl Level<'_> {
     /// Nothing seen yet on a level the scan enters through its opener.
     fn enter(&mut self) {
         self.inside_list();
-        self.braces = false;
         self.closers.clear();
     }
 
@@ -92,7 +89,7 @@ fn scan(
     let mut steps = 0u32;
     // Brackets opened (going back) between the query and the position scanned.
     let mut level = 0u32;
-    let mut lv = Level { semi: None, comma: None, brace: None, braces: false, closers: gts };
+    let mut lv = Level { semi: None, comma: None, brace: None, closers: gts };
     // Unmatched `<` found on the query's own level.
     let mut unmatched_lt = 0u32;
     let mut q = tokens.prev_sig(from);
@@ -125,7 +122,6 @@ fn scan(
                     if c == b'}' && lv.brace.is_none() && lv.closers.is_empty() {
                         lv.brace = brace_boundary(tokens, p);
                     }
-                    lv.braces |= c == b'}';
                     jumps.push(Jump::Skip { at: o as u32, to: p as u32 });
                     q = tokens.prev_sig(o);
                     continue;
@@ -187,8 +183,6 @@ fn scan(
             }
         } else if k == tk!(Ident) {
             let (kw, anchor) = anchor_at(tokens, p);
-            // A function or class expression is certain only for a query inside it.
-            let anchor = anchor.filter(|a| !(lv.braces && matches!(a, Anchor::Expr(_))));
             if let Some(anchor) = anchor {
                 let at = match anchor {
                     Anchor::Stmt(a) | Anchor::Expr(a) => a,
