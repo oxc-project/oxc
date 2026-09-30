@@ -58,7 +58,7 @@ fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
             (op == LogicalOperator::Or && boolean_value == Some(true))
                 || (op == LogicalOperator::And && boolean_value == Some(false))
         }
-        Expression::UnaryExpression(_) => op == LogicalOperator::And && expr.is_void(),
+        Expression::UnaryExpression(unary_expr) => op.is_and() && unary_expr.operator.is_void(),
         Expression::LogicalExpression(logical_expr) => {
             op == logical_expr.operator
                 && (is_logical_identity(logical_expr.operator, &logical_expr.left)
