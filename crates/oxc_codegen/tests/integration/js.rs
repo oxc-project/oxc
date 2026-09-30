@@ -614,6 +614,18 @@ fn import_phase() {
     test("import.source('foo')", "import.source(\"foo\");\n");
 }
 
+#[test]
+fn export_defer() {
+    test("export defer { a, b as c } from 'foo'", "export defer { a, b as c } from \"foo\";\n");
+    test("export defer * as ns from 'foo'", "export defer * as ns from \"foo\";\n");
+    test(
+        "export defer { a } from 'foo' with { type: 'json' }",
+        "export defer { a } from \"foo\" with { type: \"json\" };\n",
+    );
+    test_minify("export defer { a, b as c } from 'foo'", "export defer{a,b as c}from\"foo\";");
+    test_minify("export defer * as ns from 'foo'", "export defer*as ns from\"foo\";");
+}
+
 // <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/pure-notation-spec.md#semantics>
 #[test]
 fn pure_comment() {

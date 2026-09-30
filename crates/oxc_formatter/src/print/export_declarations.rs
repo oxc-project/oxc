@@ -149,7 +149,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let prefix = format_with(|f| {
-            write!(f, ["export", space(), self.export_kind(), "*", space()]);
+            write!(f, ["export", space()]);
+            if let Some(phase) = self.phase() {
+                write!(f, phase);
+            }
+            write!(f, [self.export_kind(), "*", space()]);
             if let Some(name) = &self.exported() {
                 write!(f, ["as", space(), name, space()]);
             }
@@ -195,6 +199,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportFromDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         self.format_leading_comments(f);
         write!(f, ["export", space()]);
+        if let Some(phase) = self.phase() {
+            write!(f, phase);
+        }
         format_export_specifiers_block(self.span, self.export_kind(), self.specifiers(), f);
 
         format_source_with_clause_and_semicolon(

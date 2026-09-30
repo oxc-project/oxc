@@ -3,7 +3,7 @@ commit: f29aeb9f
 parser_typescript Summary:
 AST Parsed     : 9658/9666 (99.92%)
 Positive Passed: 9651/9666 (99.84%)
-Negative Passed: 1689/2759 (61.22%)
+Negative Passed: 1688/2759 (61.18%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1539,6 +1539,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importAttributes/importAttributes12.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importDefer/dynamicImportDefer.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importDefer/exportDeferInvalid.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importDefer/importDeferNamespace.ts
 
@@ -24761,12 +24763,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·             ┬
    ·             ╰── `(` expected
  2 │ 
-   ╰────
-
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/importDefer/exportDeferInvalid.ts:1:8]
- 1 │ export defer * as ns from "a";
-   ·        ─────
    ╰────
 
   × Unexpected token

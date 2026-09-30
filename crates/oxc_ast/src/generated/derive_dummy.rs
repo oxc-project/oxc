@@ -1687,6 +1687,7 @@ impl<'a> Dummy<'a> for ExportFromDeclaration<'a> {
             span: Dummy::dummy(allocator),
             specifiers: Dummy::dummy(allocator),
             source: Dummy::dummy(allocator),
+            phase: Dummy::dummy(allocator),
             export_kind: Dummy::dummy(allocator),
             with_clause: Dummy::dummy(allocator),
         }
@@ -1716,6 +1717,7 @@ impl<'a> Dummy<'a> for ExportAllDeclaration<'a> {
             span: Dummy::dummy(allocator),
             exported: Dummy::dummy(allocator),
             source: Dummy::dummy(allocator),
+            phase: Dummy::dummy(allocator),
             with_clause: Dummy::dummy(allocator),
             export_kind: Dummy::dummy(allocator),
         }

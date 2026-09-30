@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 112/112 (100.00%)
-Positive Passed: 112/112 (100.00%)
-Negative Passed: 243/243 (100.00%)
+AST Parsed     : 113/113 (100.00%)
+Positive Passed: 113/113 (100.00%)
+Negative Passed: 247/247 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -673,6 +673,42 @@ Negative Passed: 243/243 (100.00%)
    · ─────────────
    ╰────
   help: Wrap the type assertion in parentheses to make the precedence explicit
+
+  × Expected `{` but found `Identifier`
+   ╭─[misc/fail/export-defer-default.js:1:14]
+ 1 │ export defer a from "x";
+   ·              ┬
+   ·              ╰── `{` expected
+   ╰────
+
+  × Expected `{` but found `type`
+   ╭─[misc/fail/export-defer-type.ts:1:14]
+ 1 │ export defer type { a } from "x";
+   ·              ──┬─
+   ·                ╰── `{` expected
+   ╰────
+
+  × Expected `from` but found `;`
+   ╭─[misc/fail/export-defer-without-from.js:1:19]
+ 1 │ export defer { a };
+   ·                   ┬
+   ·                   ╰── `from` expected
+   ╰────
+
+  × `export defer *` is not allowed. Explicitly list the re-exported names.
+   ╭─[misc/fail/export-defer.js:1:14]
+ 1 │ export defer * from "x";
+   ·              ─
+ 2 │ export d\u0065fer { a } from "x";
+   ╰────
+  help: Use `export defer { ... } from` or `export defer * as ns from`
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/export-defer.js:2:8]
+ 1 │ export defer * from "x";
+ 2 │ export d\u0065fer { a } from "x";
+   ·        ──────────
+   ╰────
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
    ╭─[misc/fail/export-equal-with-normal-export.ts:4:1]

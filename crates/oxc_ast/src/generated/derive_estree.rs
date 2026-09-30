@@ -1775,6 +1775,7 @@ impl ESTree for ExportDeclaration<'_> {
         state.serialize_field("declaration", &self.declaration);
         state.serialize_field("specifiers", &crate::serialize::basic::EmptyArray(self));
         state.serialize_field("source", &crate::serialize::basic::Null(self));
+        state.serialize_field("phase", &crate::serialize::basic::Null(self));
         state.serialize_ts_field(
             "exportKind",
             &crate::serialize::js::ExportDeclarationExportKind(self),
@@ -1792,6 +1793,7 @@ impl ESTree for ExportNamedDeclaration<'_> {
         state.serialize_field("declaration", &crate::serialize::basic::Null(self));
         state.serialize_field("specifiers", &self.specifiers);
         state.serialize_field("source", &crate::serialize::basic::Null(self));
+        state.serialize_field("phase", &crate::serialize::basic::Null(self));
         state.serialize_ts_field("exportKind", &self.export_kind);
         state.serialize_field("attributes", &crate::serialize::basic::EmptyArray(self));
         state.serialize_span(self.span);
@@ -1806,6 +1808,7 @@ impl ESTree for ExportFromDeclaration<'_> {
         state.serialize_field("declaration", &crate::serialize::basic::Null(self));
         state.serialize_field("specifiers", &self.specifiers);
         state.serialize_field("source", &self.source);
+        state.serialize_field("phase", &self.phase);
         state.serialize_ts_field("exportKind", &self.export_kind);
         state.serialize_field(
             "attributes",
@@ -1833,6 +1836,7 @@ impl ESTree for ExportAllDeclaration<'_> {
         state.serialize_field("type", &JsonSafeString("ExportAllDeclaration"));
         state.serialize_field("exported", &self.exported);
         state.serialize_field("source", &self.source);
+        state.serialize_field("phase", &self.phase);
         state.serialize_field(
             "attributes",
             &crate::serialize::js::ExportAllDeclarationWithClause(self),

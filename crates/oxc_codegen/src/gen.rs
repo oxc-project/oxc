@@ -1106,14 +1106,14 @@ impl Gen for ExportDeclaration<'_> {
 
 impl Gen for ExportNamedDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        gen_export_specifiers(p, ctx, self.span, self.export_kind, &self.specifiers);
+        gen_export_specifiers(p, ctx, self.span, None, self.export_kind, &self.specifiers);
         p.print_semicolon_after_statement();
     }
 }
 
 impl Gen for ExportFromDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        gen_export_specifiers(p, ctx, self.span, self.export_kind, &self.specifiers);
+        gen_export_specifiers(p, ctx, self.span, self.phase, self.export_kind, &self.specifiers);
         p.print_soft_space();
         p.print_str("from");
         p.print_soft_space();
@@ -1130,6 +1130,7 @@ fn gen_export_specifiers(
     p: &mut Codegen,
     ctx: Context,
     span: Span,
+    phase: Option<ImportPhase>,
     export_kind: ImportOrExportKind,
     specifiers: &[ExportSpecifier<'_>],
 ) {
@@ -1137,6 +1138,10 @@ fn gen_export_specifiers(
     p.print_indent();
     p.add_source_mapping(span);
     p.print_str("export");
+    if let Some(phase) = phase {
+        p.print_hard_space();
+        p.print_str(phase.as_str());
+    }
     if export_kind.is_type() {
         p.print_hard_space();
         p.print_str("type");
@@ -1226,6 +1231,10 @@ impl Gen for ExportAllDeclaration<'_> {
         p.print_indent();
         p.add_source_mapping(self.span);
         p.print_str("export");
+        if let Some(phase) = self.phase {
+            p.print_hard_space();
+            p.print_str(phase.as_str());
+        }
         if self.export_kind.is_type() {
             p.print_str(" type");
         }
