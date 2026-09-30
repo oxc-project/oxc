@@ -511,6 +511,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => return self.unexpected(),
         };
+        if key.as_arena_str() == "resolution-mode" {
+            self.error(diagnostics::invalid_ts_import_attribute_key(key.span()));
+        }
         self.expect(Kind::Colon);
         let value = match self.cur_kind() {
             Kind::Str => self.parse_literal_string(),

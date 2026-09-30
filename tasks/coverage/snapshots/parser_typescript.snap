@@ -1,9 +1,9 @@
 commit: f29aeb9f
 
 parser_typescript Summary:
-AST Parsed     : 9664/9666 (99.98%)
-Positive Passed: 9657/9666 (99.91%)
-Negative Passed: 1683/2759 (61.00%)
+AST Parsed     : 9665/9667 (99.98%)
+Positive Passed: 9658/9667 (99.91%)
+Negative Passed: 1684/2755 (61.13%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -479,16 +479,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAssertionsDeprecated.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAssertionsDeprecatedIgnored.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeArbitraryExtension.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeModuleAugmentations.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributePlainStringAmbientModule.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeOnlyImports.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypesJsImports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importDeferCallCommonJS.ts
 
@@ -8220,6 +8210,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  12 │   const data: { version: number };
     ╰────
   help: Try inserting a semicolon here
+
+  × TS(1557): 'resolution-mode' is not a valid key for an import attributes type.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeOnlyImports.ts:7:54]
+ 6 │ 
+ 7 │ declare module "require/*.style" with { type: "css", "resolution-mode": "require" } {
+   ·                                                      ─────────────────
+ 8 │     export interface RequireStyle {
+   ╰────
 
   × TS(1558): An import attributes property cannot have a 'readonly' modifier.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeReadonly.ts:1:31]
