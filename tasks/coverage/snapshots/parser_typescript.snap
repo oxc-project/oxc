@@ -8410,7 +8410,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  3 │ }
    ╰────
 
-  × Cannot use import statement outside a module
+  × 'import statement' declaration can only be used at the top level of a module
    ╭─[typescript/tsc/testdata/tests/cases/compiler/importDeclarationInModuleDeclaration2.ts:2:5]
  1 │ function container() {
  2 │     import "fs";

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 111/111 (100.00%)
 Positive Passed: 111/111 (100.00%)
-Negative Passed: 238/238 (100.00%)
+Negative Passed: 239/239 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -467,6 +467,14 @@ Negative Passed: 238/238 (100.00%)
  2 │     continue a;
    ·              ┬
    ·              ╰── for this label
+ 3 │ }
+   ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+   ╭─[misc/fail/decorated-export-in-block.mjs:2:8]
+ 1 │ {
+ 2 │   @dec export class C {}
+   ·        ──────
  3 │ }
    ╰────
 

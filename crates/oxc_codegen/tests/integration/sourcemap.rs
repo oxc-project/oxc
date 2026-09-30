@@ -185,17 +185,17 @@ fn indented_statement_mappings_start_after_generated_indent() {
 // gen col 0 (whitespace) instead of the start of the keyword.
 #[test]
 fn top_level_decl_mappings_start_after_generated_indent() {
-    // Wrap the imports/exports in `if (true) { ... }` so the body is
+    // Wrap the imports/exports in an ambient module so the body is
     // indented, exposing the order of `add_source_mapping` vs `print_indent`.
     let tokens = sourcemap_tokens(
-        r#"if (true) {
+        r#"declare module "m" {
 "use strict";
 import { x } from "x";
 export { x } from "x";
 export * from "x";
 export default 1;
 }"#,
-        SourceType::mjs(),
+        SourceType::ts(),
     );
 
     // Directive `"use strict"` source col 0 of line 1 → gen col 1 (after tab),

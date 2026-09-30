@@ -885,6 +885,17 @@ parser_diagnostics! {
         OxcDiagnostic::error("A rest parameter cannot have an initializer.").with_label(span)
     };
 
+    top_level(statement: &'static str, span: Span) => {
+        OxcDiagnostic::error(format!(
+            "'{statement}' declaration can only be used at the top level of a module"
+        ))
+        .with_label(span)
+    };
+
+    module_code(statement: &'static str, span: Span) => {
+        OxcDiagnostic::error(format!("Cannot use {statement} outside a module")).with_label(span)
+    };
+
     import_requires_a_specifier(span: Span) => {
         OxcDiagnostic::error("import() requires a specifier.").with_label(span)
     };
