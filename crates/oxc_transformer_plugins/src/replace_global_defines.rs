@@ -1095,7 +1095,7 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
     expr: &'b ComputedMemberExpression<'a>,
 ) -> Option<Str<'a>> {
     match &expr.expression {
-        Expression::StringLiteral(lit) => lit.value.as_str().map(Str::from),
+        Expression::StringLiteral(lit) => lit.value.as_arena_str(),
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
             Some(lit.quasis[0].value.raw)
         }

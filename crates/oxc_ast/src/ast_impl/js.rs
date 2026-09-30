@@ -675,9 +675,9 @@ impl<'a> ComputedMemberExpression<'a> {
     /// Names containing lone surrogates cannot be represented as UTF-8 and return `None`.
     pub fn static_property_name(&self) -> Option<Str<'a>> {
         match &self.expression {
-            Expression::StringLiteral(lit) => lit.value.as_str().map(Str::from),
+            Expression::StringLiteral(lit) => lit.value.as_arena_str(),
             Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
-                lit.quasis[0].value.cooked.and_then(JSStr::as_str).map(Str::from)
+                lit.quasis[0].value.cooked.and_then(JSStr::as_arena_str)
             }
             Expression::RegExpLiteral(lit) => lit.raw,
             _ => None,

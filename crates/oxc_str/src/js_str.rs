@@ -167,6 +167,16 @@ impl<'a> JSStr<'a> {
         builder.into_js_str()
     }
 
+    /// Borrow the value as an arena [`Str`], or return `None` if it contains a lone surrogate.
+    ///
+    /// This is [`as_str`] for consumers that store the value in the AST.
+    ///
+    /// [`as_str`]: Self::as_str
+    #[inline]
+    pub fn as_arena_str(self) -> Option<Str<'a>> {
+        self.as_str().map(Str::from)
+    }
+
     /// Borrow the value as UTF-8, or return `None` if it contains a lone surrogate.
     ///
     /// This checks the cached flag in O(1). It does not scan the bytes.
