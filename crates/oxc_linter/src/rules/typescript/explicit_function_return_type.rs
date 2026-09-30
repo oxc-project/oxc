@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind,
-        ReturnStatement, TSType, TSTypeName,
+        ReturnStatement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -418,24 +418,10 @@ impl ExplicitFunctionReturnType {
 
         match expr {
             Expression::TSAsExpression(ts_expr) => {
-                let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
-                    return false;
-                };
-                let TSTypeName::IdentifierReference(id_ref) = &ts_type.type_name else {
-                    return false;
-                };
-
-                id_ref.name == "const"
+                ts_expr.type_annotation.is_const_type_reference()
             }
             Expression::TSTypeAssertion(ts_expr) => {
-                let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
-                    return false;
-                };
-                let TSTypeName::IdentifierReference(id_ref) = &ts_type.type_name else {
-                    return false;
-                };
-
-                id_ref.name == "const"
+                ts_expr.type_annotation.is_const_type_reference()
             }
             _ => false,
         }
