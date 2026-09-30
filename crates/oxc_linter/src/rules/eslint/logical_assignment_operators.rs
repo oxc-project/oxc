@@ -1072,7 +1072,7 @@ fn test() {
         ),
         (
             "if (a) {
-             a = b;
+             a = b; 
             }",
             Some(serde_json::json!(["always", { "enforceForIfStatements": true }])),
         ),
@@ -1483,7 +1483,7 @@ fn test() {
         ),
         (
             "if (a) {
-             a = b;
+             a = b; 
             }",
             "a &&= b;",
             Some(serde_json::json!(["always", { "enforceForIfStatements": true }])),
