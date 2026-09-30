@@ -96,88 +96,45 @@ fn fn_class_anchor(
     class: bool,
     named: bool,
 ) -> Option<Anchor> {
-    let broken = |q: usize| {
-        let e = tokens.next_start(q + 1);
-        tokens.line_break_between(e, at)
-    };
-    let stmt = Some(Anchor::Stmt(at));
-    let expr = Some(Anchor::Expr(at));
+    // A name after a token that ends a value at a line break starts a declaration there.
+    let asi = |q: usize| named && tokens.line_break_between(tokens.next_start(q + 1), at);
+    let (stmt, expr) = (Anchor::Stmt(at), Anchor::Expr(at));
     match prev {
-        Prev::None => stmt,
+        Prev::None => Some(stmt),
         Prev::Op(q, c) => match c {
-            b';' | b'{' => stmt,
-            b'}' => {
-                if in_jsx_tag(tokens, at) {
-                    None
-                } else {
-                    stmt
-                }
-            }
+            b';' | b'{' => Some(stmt),
+            b'}' => (!in_jsx_tag(tokens, at)).then_some(stmt),
             // `if (x) function f() {}`; a decorator's `)` before a class expression.
-            b')' => {
-                if !class || (named && broken(q)) {
-                    stmt
-                } else {
-                    None
-                }
-            }
-            b']' => {
-                if named && broken(q) {
-                    stmt
-                } else {
-                    None
-                }
-            }
-            b'>' if q > 0 && tokens.src[q - 1] == b'=' => expr,
+            b')' => (!class || asi(q)).then_some(stmt),
+            b']' => asi(q).then_some(stmt),
+            b'>' if q > 0 && tokens.src[q - 1] == b'=' => Some(expr),
             // A value or type ended on the previous line.
-            b'>' => {
-                if named && broken(q) {
-                    stmt
-                } else {
-                    expr
-                }
-            }
+            b'>' => Some(if asi(q) { stmt } else { expr }),
             b'+' | b'-' if tokens.src[q + 1] == c || (q > 0 && tokens.src[q - 1] == c) => {
-                if named && broken(q) { stmt } else { None }
+                asi(q).then_some(stmt)
             }
-            b':' => {
-                if named {
-                    None
-                } else {
-                    expr
-                }
-            }
+            b':' => (!named).then_some(expr),
             // A generator method named function, as in { *function() {} }.
             b'*' if !named => None,
             // A TypeScript postfix non-null ends a value at a line break too.
-            b'!' if tokens.ts && named && broken(q) => None,
-            _ => expr,
+            b'!' if tokens.ts && asi(q) => None,
+            _ => Some(expr),
         },
-        Prev::Word(_, tk!(KwElse | KwDo | KwExport | KwDefault | KwDeclare | KwAbstract)) => stmt,
-        // A name or type these spell ends a value at a line break: the walk decides.
-        Prev::Word(q, tk!(KwAwait | KwOf | KwVoid)) if named && broken(q) => None,
-        // Restricted productions: a line break ends the statement.
-        Prev::Word(q, tk!(KwReturn | KwYield)) => {
-            if named && broken(q) {
-                stmt
-            } else {
-                expr
-            }
+        Prev::Word(_, tk!(KwElse | KwDo | KwExport | KwDefault | KwDeclare | KwAbstract)) => {
+            Some(stmt)
         }
+        // A name or type these spell ends a value at a line break: the walk decides.
+        Prev::Word(q, tk!(KwAwait | KwOf | KwVoid)) if asi(q) => None,
+        // Restricted productions: a line break ends the statement.
+        Prev::Word(q, tk!(KwReturn | KwYield)) => Some(if asi(q) { stmt } else { expr }),
         #[rustfmt::skip]
         Prev::Word(
             _,
             tk!(KwTypeof | KwThrow | KwAwait | KwVoid | KwDelete | KwNew | KwIn | KwOf | KwInstanceof | KwCase)
-        ) => expr,
+        ) => Some(expr),
         // A heritage expression: what follows it is the enclosing class's body.
         Prev::Word(_, tk!(KwExtends)) => None,
-        Prev::Word(q, _) | Prev::Other(q) => {
-            if named && broken(q) {
-                stmt
-            } else {
-                None
-            }
-        }
+        Prev::Word(q, _) | Prev::Other(q) => asi(q).then_some(stmt),
     }
 }
 
@@ -188,10 +145,7 @@ fn function_anchor(tokens: &Tokens, at: usize, prev: Prev, f: Peek) -> Option<An
     if f.kind == tk!(Ident) || (f.kind >= OP_KIND_BASE && f.byte == b'*') {
         fn_class_anchor(tokens, at, prev, false, true)
     } else if f.kind >= OP_KIND_BASE && f.byte == b'(' {
-        match fn_class_anchor(tokens, at, prev, false, false) {
-            Some(Anchor::Expr(a)) => Some(Anchor::Expr(a)),
-            _ => None,
-        }
+        fn_class_anchor(tokens, at, prev, false, false).filter(|a| matches!(a, Anchor::Expr(_)))
     } else {
         None
     }

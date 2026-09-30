@@ -17,9 +17,9 @@ use super::*;
 use crate::pipeline::disambiguate::WALK_SCAN_CAP;
 
 struct Scan {
-    pub(super) anchor: Anchor,
+    anchor: Anchor,
     /// Unmatched `<` on the query's own level: the type lists a `>` run there could close.
-    pub(super) angles: u32,
+    angles: u32,
 }
 
 /// What the scan has seen on the level it is in, nearest to the query first: the last `;`, `,`
@@ -287,9 +287,7 @@ pub(crate) fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
         None
     };
     let from = from.unwrap_or(pos);
-    if let Some(a) = local_walk(tokens, walks, pos, from, |w, tokens| {
-        if w.walked_to > pos { w.classify_after() } else { w.after_token(tokens, pos) }
-    }) {
+    if let Some(a) = local_walk(tokens, walks, pos, from, |w, tokens| w.after_token(tokens, pos)) {
         return a;
     }
     after_scoped(tokens, walks, pos)

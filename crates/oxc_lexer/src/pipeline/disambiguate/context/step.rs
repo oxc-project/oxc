@@ -15,28 +15,7 @@ fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
         if (c == b'+' || c == b'-') && c1 == c {
             return false;
         }
-        return matches!(
-            c,
-            b'+' | b'-'
-                | b'*'
-                | b'/'
-                | b'%'
-                | b'&'
-                | b'|'
-                | b'^'
-                | b'<'
-                | b'>'
-                | b'='
-                | b'?'
-                | b'.'
-                | b','
-                | b'('
-                | b'['
-                | b':'
-                | b')'
-                | b']'
-                | b'}'
-        ) || (c == b'!' && c1 == b'=');
+        return b"+-*/%&|^<>=?.,([:)]}".contains(&c) || (c == b'!' && c1 == b'=');
     }
     // tsc ends the expression before an as or satisfies on a new line.
     if k == tk!(Ident) {
@@ -72,11 +51,10 @@ impl Walk {
         if newline && !self.operand_allowed() && !continues_expression(tokens, pos) {
             self.asi(tokens, pos);
         }
-        // `let x` then a line break: only `=`, `,`, `;`, `:` and `!` can continue the declarator,
-        // anything else starts a new statement.
+        // A binding that ended the line goes on with =, a comma or a type annotation only.
         if newline && !self.operand_allowed() && self.top_declarator() == D_BOUND {
             let c = tokens.src[pos];
-            if !(k >= OP_KIND_BASE && matches!(c, b'=' | b',' | b';' | b':' | b'!')) {
+            if !(k >= OP_KIND_BASE && matches!(c, b'=' | b',' | b':')) {
                 self.end_statement();
             }
         }
@@ -159,21 +137,18 @@ impl Walk {
         // A head continues onto the next line when its body (or more head) follows; otherwise the
         // break ends a bodiless signature.
         if matches!(self.top_kind(), FrameKind::FnHead | FrameKind::ClassHead) {
-            let c = tokens.src[pos];
             let k = tokens.base_kind(pos);
-            if k >= OP_KIND_BASE && (c == b'{' || c == b'<' || c == b'(') {
-                return;
-            }
             // Right after `function` / `class`, the name (or a generator's `*`) may follow a
             // line break: nothing has been declared yet, so there is no signature to end.
             let unnamed = matches_tk!(self.prev_kw, KwFunction | KwClass);
-            if unnamed && (k == tk!(Ident) || (k >= OP_KIND_BASE && c == b'*')) {
-                return;
+            let goes_on = if k == tk!(Ident) {
+                unnamed || matches_tk!(tokens.ident_kw(pos), KwExtends | KwImplements)
+            } else {
+                k >= OP_KIND_BASE && tokens.src[pos] == b'{'
+            };
+            if !goes_on {
+                self.end_statement();
             }
-            if k == tk!(Ident) && matches_tk!(tokens.ident_kw(pos), KwExtends | KwImplements) {
-                return;
-            }
-            self.end_statement();
             return;
         }
         match self.top_kind() {
