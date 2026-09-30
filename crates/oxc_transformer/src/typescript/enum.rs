@@ -6,7 +6,7 @@ use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolId};
 use oxc_span::{SPAN, Span};
-use oxc_str::{Ident, static_ident};
+use oxc_str::{Ident, JSStr, static_ident};
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::NumberBase,
@@ -22,14 +22,14 @@ use crate::{context::TraverseCtx, state::TransformState};
 pub struct TypeScriptEnum {
     optimize_const_enums: bool,
     optimize_enums: bool,
-    /// Members whose value is a string but could not be evaluated,
-    /// so a later reference to one is also a string.
-    string_members: FxHashSet<SymbolId>,
+    /// Members whose value is a string containing a lone surrogate.
+    /// The constant evaluator declines these, so a later reference to one is also a string.
+    lone_surrogate_members: FxHashSet<SymbolId>,
 }
 
 impl TypeScriptEnum {
     pub fn new(optimize_const_enums: bool, optimize_enums: bool) -> Self {
-        Self { optimize_const_enums, optimize_enums, string_members: FxHashSet::default() }
+        Self { optimize_const_enums, optimize_enums, lone_surrogate_members: FxHashSet::default() }
     }
 }
 
@@ -399,13 +399,15 @@ impl<'a> TypeScriptEnum {
                 Self::get_number_literal_expression(0.0, ctx)
             };
 
-            let is_str = self.is_string_initializer(&init, enum_symbol_id, param_binding, ctx);
-            if is_str
+            let is_lone_surrogate_string =
+                self.is_lone_surrogate_string(&init, enum_symbol_id, param_binding, ctx);
+            if is_lone_surrogate_string
                 && let Some(member_symbol_id) = member_symbol_id
                 && ctx.scoping().get_enum_member_value(member_symbol_id).is_none()
             {
-                self.string_members.insert(member_symbol_id);
+                self.lone_surrogate_members.insert(member_symbol_id);
             }
+            let is_str = is_lone_surrogate_string || Self::is_syntactically_string(&init);
 
             // Foo["x"] = init
             let member_expr = {
@@ -505,11 +507,38 @@ impl<'a> TypeScriptEnum {
         })
     }
 
-    /// Whether TypeScript treats this initializer as a string and omits its reverse mapping.
+    /// Whether an enum member initializer is a string by syntax alone.
     ///
-    /// Unwrap parentheses, but not assertions. A member reference can be string-valued
-    /// even when its value is not a compile-time constant.
-    fn is_string_initializer(
+    /// A string member gets no reverse mapping. tsc decides this without type
+    /// information: string literals, template literals, and `+` with a string on
+    /// either side are strings, looking through parentheses and type wrappers.
+    /// Anything else, including `typeof x`, keeps the reverse mapping.
+    ///
+    /// This also covers initializers the constant evaluator declined. Emitting a
+    /// reverse mapping for those wrote a bogus key that could overwrite another
+    /// member.
+    ///
+    /// See `isSyntacticallyString` in TypeScript's checker. TypeScript looks
+    /// through parentheses only, so an `as`, `satisfies`, non-null, or angle
+    /// bracket assertion around a string still gets a reverse mapping.
+    fn is_syntactically_string(expr: &Expression<'a>) -> bool {
+        match expr.without_parentheses() {
+            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
+            Expression::BinaryExpression(binary) => {
+                binary.operator == BinaryOperator::Addition
+                    && (Self::is_syntactically_string(&binary.left)
+                        || Self::is_syntactically_string(&binary.right))
+            }
+            _ => false,
+        }
+    }
+
+    /// Whether an enum member initializer is a string containing a lone surrogate.
+    ///
+    /// The constant evaluator declines such strings, so a member referring to one stays a
+    /// reference and is not a string by syntax alone.
+    /// It is still a string, so it gets no reverse mapping.
+    fn is_lone_surrogate_string(
         &self,
         expr: &Expression<'a>,
         enum_symbol_id: SymbolId,
@@ -517,22 +546,31 @@ impl<'a> TypeScriptEnum {
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         match expr.without_parentheses() {
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
+            Expression::StringLiteral(lit) => lit.value.has_lone_surrogate(),
+            Expression::TemplateLiteral(template) => {
+                template
+                    .quasis
+                    .iter()
+                    .any(|quasi| quasi.value.cooked.is_some_and(JSStr::has_lone_surrogate))
+                    || template.expressions.iter().any(|expr| {
+                        self.is_lone_surrogate_string(expr, enum_symbol_id, param_binding, ctx)
+                    })
+            }
             Expression::BinaryExpression(binary) => {
                 binary.operator == BinaryOperator::Addition
-                    && (self.is_string_initializer(
+                    && (self.is_lone_surrogate_string(
                         &binary.left,
                         enum_symbol_id,
                         param_binding,
                         ctx,
-                    ) || self.is_string_initializer(
+                    ) || self.is_lone_surrogate_string(
                         &binary.right,
                         enum_symbol_id,
                         param_binding,
                         ctx,
                     ))
             }
-            Expression::StaticMemberExpression(member) => self.is_string_member(
+            Expression::StaticMemberExpression(member) => self.is_lone_surrogate_member(
                 &member.object,
                 member.property.name.as_str(),
                 enum_symbol_id,
@@ -541,7 +579,13 @@ impl<'a> TypeScriptEnum {
             ),
             Expression::ComputedMemberExpression(member) => match &member.expression {
                 Expression::StringLiteral(name) => name.value.as_str().is_some_and(|name| {
-                    self.is_string_member(&member.object, name, enum_symbol_id, param_binding, ctx)
+                    self.is_lone_surrogate_member(
+                        &member.object,
+                        name,
+                        enum_symbol_id,
+                        param_binding,
+                        ctx,
+                    )
                 }),
                 _ => false,
             },
@@ -549,12 +593,13 @@ impl<'a> TypeScriptEnum {
         }
     }
 
-    /// Whether `object.name` refers to a string member of an enum.
+    /// Whether `object.name` refers to an enum member whose value is a string containing a lone
+    /// surrogate.
     ///
     /// A reference to a member of the enum being transformed was rewritten to `Enum.name` with an
     /// unresolved `Enum` identifier.
     /// Any other object must resolve to an enum declaration.
-    fn is_string_member(
+    fn is_lone_surrogate_member(
         &self,
         object: &Expression<'a>,
         name: &str,
@@ -577,11 +622,7 @@ impl<'a> TypeScriptEnum {
         };
         body_scopes.iter().any(|&scope_id| {
             ctx.scoping().get_binding(scope_id, name.into()).is_some_and(|member_symbol_id| {
-                self.string_members.contains(&member_symbol_id)
-                    || matches!(
-                        ctx.scoping().get_enum_member_value(member_symbol_id),
-                        Some(ConstantValue::String(_))
-                    )
+                self.lone_surrogate_members.contains(&member_symbol_id)
             })
         })
     }
