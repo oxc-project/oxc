@@ -1598,7 +1598,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return;
         }
         // Didn't have a comma.  We must have a (possible ASI) semicolon.
-        self.bump(Kind::Semicolon);
+        self.asi();
     }
 
     fn parse_ts_index_signature_name(&mut self) -> TSIndexSignatureName<'a> {

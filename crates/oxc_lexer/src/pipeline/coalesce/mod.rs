@@ -10,7 +10,7 @@ use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::{is_digit, is_word, is_ws},
     disambiguate::{gt_run_split, lt_run_split},
-    operators::{is_op_char, opmap_longest, opmap_pack},
+    operators::{is_op_char, opmap_longest, opmap_pack2, opmap_pack3},
     scan::scan_number,
     token_view,
 };
@@ -179,9 +179,9 @@ pub unsafe fn coalesce(
                     }
                 }
                 if run == 2 {
-                    let key = (q & 0xFFFF) | (2u32 << 24);
-                    let pack = opmap_pack(key);
-                    let mut ok = ((pack ^ key) & 0xFF_FFFF) == 0;
+                    let key = q & 0xFFFF;
+                    let pack = opmap_pack2(key);
+                    let mut ok = pack as u16 == q as u16;
                     let kk = (pack >> 24) as u8;
                     ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8));
                     let hm: u8 = 0u8.wrapping_sub(ok as u8);
@@ -196,18 +196,18 @@ pub unsafe fn coalesce(
                     continue;
                 }
                 let b2 = (q >> 16) as u8;
-                let key3 = (q & 0xFF_FFFF) | (3u32 << 24);
-                let p3 = opmap_pack(key3);
+                let key3 = q & 0xFF_FFFF;
+                let p3 = opmap_pack3(key3);
                 let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
-                let key2a = (q & 0xFFFF) | (2u32 << 24);
-                let pa = opmap_pack(key2a);
+                let key2a = q & 0xFFFF;
+                let pa = opmap_pack2(key2a);
                 let ka = (pa >> 24) as u8;
-                let mut ok2a = ((pa ^ key2a) & 0xFF_FFFF) == 0;
+                let mut ok2a = pa as u16 == q as u16;
                 ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
-                let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
-                let pb = opmap_pack(key2b);
+                let key2b = key3 >> 8;
+                let pb = opmap_pack2(key2b);
                 let kb = (pb >> 24) as u8;
-                let mut ok2b = ((pb ^ key2b) & 0xFF_FFFF) == 0;
+                let mut ok2b = pb as u16 == key2b as u16;
                 ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8));
                 let c1 = ok3 | ok2a; // token at `p` is 2+ bytes
                 let sel2b = !c1 & ok2b; // 2-byte token starts at `p + 1`
@@ -344,10 +344,9 @@ unsafe fn munch_walk(
     while end - pos >= 2 {
         bm_set(st, pos);
         let rem = end - pos;
-        let lmax: u32 = if rem < 4 { rem as u32 } else { 4 };
         let bytes = *src.add(pos).cast::<[u8; 4]>();
-        let (opk, opl) = opmap_longest(bytes, lmax);
-        if opk != 0 {
+        let (opk, opl) = opmap_longest(bytes, rem as u32);
+        if let Some(opk) = opk {
             *kind.add(pos) = opk as u8;
             let mut j = 1usize;
             while j < opl as usize {

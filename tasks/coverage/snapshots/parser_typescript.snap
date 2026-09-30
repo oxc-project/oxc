@@ -3,7 +3,7 @@ commit: f29aeb9f
 parser_typescript Summary:
 AST Parsed     : 9658/9666 (99.92%)
 Positive Passed: 9651/9666 (99.84%)
-Negative Passed: 1687/2759 (61.15%)
+Negative Passed: 1689/2759 (61.22%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1838,8 +1838,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration7.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration5.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration1.ts
@@ -2071,8 +2069,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/indexSignatures/multipleStringIndexers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/methodSignatures/methodSignaturesWithOverloads.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/objectTypeLiteralSyntax2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/specifyingTypes/typeQueries/typeofANonExportedType.ts
 
@@ -2582,13 +2578,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  17 │ }
     ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/accessorBodyInTypeContext.ts:2:15]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/accessorBodyInTypeContext.ts:2:14]
  1 │ type A = {
  2 │     get foo() { return 0 }
-   ·               ─
+   ·              ▲
  3 │ };
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/accessorParameterAccessibilityModifier.ts:2:11]
@@ -6177,12 +6174,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Only 'readonly' modifier is allowed here.
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateMethodSignatures.ts:1:39]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateMethodSignatures.ts:1:38]
  1 │ interface A<T> { private a(): boolean {} }
-   ·                                       ─
+   ·                                      ▲
  2 │ 
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitSetAccessorNoParameter.ts:2:10]
@@ -7083,21 +7081,23 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  8 │ };
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInInterfaceProperty.ts:2:17]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInInterfaceProperty.ts:2:16]
  1 │ interface Foo {
  2 │     bar: number = 5;
-   ·                 ─
+   ·                ▲
  3 │ }
    ╰────
+  help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInObjectTypeLiteralProperty.ts:2:17]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInObjectTypeLiteralProperty.ts:2:16]
  1 │ var Foo: {
  2 │     bar: number = 5;
-   ·                 ─
+   ·                ▲
  3 │ };
    ╰────
+  help: Try inserting a semicolon here
 
   × Expected `,` or `)` but found `Identifier`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/errorRecoveryInClassDeclaration.ts:4:20]
@@ -8632,13 +8632,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × TS(1099): Type argument list cannot be empty.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/instantiateTypeParameter.ts:2:13]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/instantiateTypeParameter.ts:2:8]
  1 │ interface Foo<T> {
  2 │     var x: T<>;
-   ·             ──
+   ·        ▲
  3 │ }
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1021): An index signature must have a type annotation.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/intTypeCheck.ts:37:5]
@@ -10815,13 +10816,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  35 │ }
     ╰────
 
-  × Unexpected token
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tsc/testdata/tests/cases/compiler/optionalPropertiesSyntax.ts:11:7]
  10 │     (): any;
  11 │     ()?: any; //err
-    ·       ─
+    ·       ▲
  12 │     ?(): any; //err
     ╰────
+  help: Try inserting a semicolon here
 
   × TS(1051): A 'set' accessor cannot have an optional parameter.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/optionalSetterParam.ts:3:20]
@@ -11061,13 +11063,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/parseErrorIncorrectReturnToken.ts:2:17]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/parseErrorIncorrectReturnToken.ts:2:16]
  1 │ type F1 = {
  2 │     (n: number) => string; // should be : not =>
-   ·                 ──
+   ·                ▲
  3 │ }
    ╰────
+  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseImportAttributesError.ts:2:30]
@@ -24919,18 +24922,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected `}` but found `EOF`
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClass2.ts:15:6]
-  9 │ 
- 10 │ interface I2 extends Foo { // error
-    ·                          ┬
-    ·                          ╰── Opened here
- 11 │     a: {
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClass2.ts:13:19]
  12 │         toString: () => {
  13 │             return 1;
+    ·                   ▲
  14 │         };
- 15 │     }
     ╰────
+  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts:3:8]
@@ -27396,6 +27395,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                  ╰── `;` expected
  3 │ }
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration5.ts:2:23]
+ 1 │ class C {
+ 2 │    [a: string]: number public v: number
+   ·                       ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
 
   × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration7.ts:2:4]
@@ -31791,13 +31799,22 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  25 │ }
     ╰────
 
-  × Unexpected token
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/methodSignatures/objectTypesWithOptionalProperties2.ts:4:8]
  3 │ var a: {
  4 │     x()?: number; // error
-   ·        ─
+   ·        ▲
  5 │ }
    ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/objectTypeLiteralSyntax2.ts:12:21]
+ 11 │ 
+ 12 │ var z: { foo: string bar: string }
+    ·                     ▲
+    ╰────
+  help: Try inserting a semicolon here
 
   × Expected `,` or `}` but found `decimal`
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/numericNamedPropertyDuplicates.ts:20:5]
