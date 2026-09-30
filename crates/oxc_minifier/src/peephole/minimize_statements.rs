@@ -284,10 +284,7 @@ impl<'a> PeepholeOptimizations {
             // The old export contains references to the local import binding.
             // Mark those references before replacing them with the imported
             // module name.
-            let old_export = std::mem::replace(
-                stmts.get_mut(export_index).unwrap(),
-                Statement::new_empty_statement(SPAN, ctx),
-            );
+            let old_export = stmts.remove(export_index);
             ctx.drop_statement(&old_export);
             let Statement::ExportNamedDeclaration(mut export_decl) = old_export else {
                 unreachable!();
@@ -329,7 +326,6 @@ impl<'a> PeepholeOptimizations {
                         ctx,
                     ),
                 );
-                stmts.remove(export_index);
                 continue;
             }
 
@@ -368,7 +364,6 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 ),
             );
-            stmts.remove(export_index);
         }
     }
 
