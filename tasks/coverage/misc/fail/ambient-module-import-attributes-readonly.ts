@@ -5,4 +5,4 @@ declare module "*.css" with { readonly type: "css" } {
 
 declare module "*.json" with { readonly type: "json", readonly kind: "data" } {}
 
-declare module "*.config" with { readonly "mode": `strict` };
+declare module "*.config" with { readonly "mode": "strict" };

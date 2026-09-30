@@ -9256,7 +9256,7 @@ impl<'parent, 'a> AstNode<'parent, 'a, TSModuleDeclarationAttribute<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> AstNode<'_, 'a, TSModuleDeclarationAttributeValue<'a>> {
+    pub fn value(&self) -> AstNode<'_, 'a, StringLiteral<'a>> {
         let following_span_start = self.following_span_start;
         AstNode {
             inner: &self.inner.value,
@@ -9272,31 +9272,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, TSModuleDeclarationAttribute<'a>> {
     pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
             .fmt(f);
-    }
-}
-
-impl<'parent, 'a> AstNode<'parent, 'a, TSModuleDeclarationAttributeValue<'a>> {
-    /// Resolves this node to its variant, which has the same parent.
-    #[inline]
-    pub fn as_kind(&self) -> AstNodeKind<'parent, 'a> {
-        let parent = self.parent;
-        let following_span_start = self.following_span_start;
-        match self.inner {
-            TSModuleDeclarationAttributeValue::StringLiteral(s) => {
-                AstNodeKind::StringLiteral(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    following_span_start,
-                })
-            }
-            TSModuleDeclarationAttributeValue::TemplateLiteral(s) => {
-                AstNodeKind::TemplateLiteral(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    following_span_start,
-                })
-            }
-        }
     }
 }
 

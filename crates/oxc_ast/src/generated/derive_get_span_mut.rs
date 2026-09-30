@@ -2064,15 +2064,6 @@ impl GetSpanMut for TSModuleDeclarationAttribute<'_> {
     }
 }
 
-impl GetSpanMut for TSModuleDeclarationAttributeValue<'_> {
-    fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-        }
-    }
-}
-
 impl GetSpanMut for TSNamespaceDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {

@@ -1975,7 +1975,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSModuleDeclarationAttribute<
             Semicolons::Always if self.has_next => write!(f, ";"),
             Semicolons::Always => write!(f, if_group_breaks(&token(";"))),
             Semicolons::AsNeeded if self.has_next => {
-                write!(f, if_group_fits_on_line(&token(";")))
+                write!(f, if_group_fits_on_line(&token(";")));
             }
             Semicolons::AsNeeded => {}
         }

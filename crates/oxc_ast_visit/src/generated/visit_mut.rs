@@ -1085,14 +1085,6 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_module_declaration_attribute_value(
-        &mut self,
-        it: &mut TSModuleDeclarationAttributeValue<'a>,
-    ) {
-        walk_ts_module_declaration_attribute_value(self, it);
-    }
-
-    #[inline]
     fn visit_ts_namespace_declaration(&mut self, it: &mut TSNamespaceDeclaration<'a>) {
         walk_ts_namespace_declaration(self, it);
     }
@@ -4209,24 +4201,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_import_attribute_key(&mut it.key);
-        visitor.visit_ts_module_declaration_attribute_value(&mut it.value);
+        visitor.visit_string_literal(&mut it.value);
         visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_ts_module_declaration_attribute_value<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut TSModuleDeclarationAttributeValue<'a>,
-    ) {
-        // No `AstType` for this type
-        match it {
-            TSModuleDeclarationAttributeValue::StringLiteral(it) => {
-                visitor.visit_string_literal(it)
-            }
-            TSModuleDeclarationAttributeValue::TemplateLiteral(it) => {
-                visitor.visit_template_literal(it)
-            }
-        }
     }
 
     #[inline]

@@ -7173,33 +7173,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSModuleDeclaration
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>>
-    for AstNode<'_, 'a, TSModuleDeclarationAttributeValue<'a>>
-{
-    #[inline]
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let parent = self.parent;
-        match self.inner {
-            TSModuleDeclarationAttributeValue::StringLiteral(inner) => {
-                AstNode::<StringLiteral> {
-                    inner,
-                    parent,
-                    following_span_start: self.following_span_start,
-                }
-                .fmt(f);
-            }
-            TSModuleDeclarationAttributeValue::TemplateLiteral(inner) => {
-                AstNode::<TemplateLiteral> {
-                    inner,
-                    parent,
-                    following_span_start: self.following_span_start,
-                }
-                .fmt(f);
-            }
-        }
-    }
-}
-
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNamespaceDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.comments().is_quiet(

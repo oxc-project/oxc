@@ -516,17 +516,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.expect(Kind::Colon);
         let value = match self.cur_kind() {
-            Kind::Str => {
-                let literal = self.parse_literal_string();
-                TSModuleDeclarationAttributeValue::StringLiteral(self.alloc(literal))
-            }
-            Kind::NoSubstitutionTemplate => {
-                let literal = self.parse_template_literal(false);
-                TSModuleDeclarationAttributeValue::TemplateLiteral(self.alloc(literal))
+            Kind::Str => self.parse_literal_string(),
+            Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
+                let span = self.parse_template_literal(false).span;
+                self.error(diagnostics::ts_import_attribute_value_must_be_string_literal(span));
+                // Recover with a placeholder since attribute values can only be string literals.
+                StringLiteral::new(span, "", None, self)
             }
             _ => {
                 return self.fatal_error(
-                    diagnostics::import_attribute_value_must_be_string_literal(
+                    diagnostics::ts_import_attribute_value_must_be_string_literal(
                         self.cur_token().span(),
                     ),
                 );
