@@ -430,80 +430,73 @@ impl<'a> PeepholeOptimizations {
             let Statement::ExportNamedDeclaration(mut export_decl) = old_export else {
                 unreachable!();
             };
+            ctx.replace_statement_with(stmts.get_mut(import_index).unwrap(), |old_import, ctx| {
+                ctx.drop_statement(&old_import);
 
-            let old_import = std::mem::replace(
-                stmts.get_mut(import_index).unwrap(),
-                Statement::new_empty_statement(SPAN, ctx),
-            );
-            ctx.drop_statement(&old_import);
-            let Statement::ImportDeclaration(import_decl) = old_import else {
-                unreachable!();
-            };
-            let ImportDeclaration {
-                specifiers: Some(mut import_specifiers),
-                source,
-                with_clause,
-                ..
-            } = import_decl.unbox()
-            else {
-                unreachable!();
-            };
+                let Statement::ImportDeclaration(import_decl) = old_import else {
+                    unreachable!();
+                };
+                let ImportDeclaration {
+                    specifiers: Some(mut import_specifiers),
+                    source,
+                    with_clause,
+                    ..
+                } = import_decl.unbox()
+                else {
+                    unreachable!();
+                };
 
-            let is_namespace_import = matches!(
-                import_specifiers.as_slice(),
-                [ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)]
-            );
-            if is_namespace_import {
-                let exported = export_decl.specifiers.pop().unwrap().exported;
-                ctx.replace_statement(
-                    stmts.get_mut(import_index).unwrap(),
-                    Statement::new_export_all_declaration(
+                let is_namespace_import = matches!(
+                    import_specifiers.as_slice(),
+                    [ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)]
+                );
+                if is_namespace_import {
+                    let exported = export_decl.specifiers.pop().unwrap().exported;
+                    return Statement::new_export_all_declaration(
                         export_decl.span,
                         Some(exported),
                         source,
                         with_clause,
                         export_decl.export_kind,
                         ctx,
-                    ),
-                );
-                continue;
-            }
+                    );
+                }
 
-            for export_specifier in &mut export_decl.specifiers {
-                let ModuleExportName::IdentifierReference(id) = &export_specifier.local else {
-                    unreachable!();
-                };
-                let symbol_id = ctx.scoping().get_reference(id.reference_id()).symbol_id().unwrap();
-                let import_specifier = import_specifiers
-                    .iter_mut()
-                    .find(|import_specifier| import_specifier.symbol_id() == symbol_id)
-                    .unwrap();
-                export_specifier.local = match import_specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
-                        import_specifier.imported.clone_in(ctx.allocator())
-                    }
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(import_default) => {
-                        ModuleExportName::IdentifierName(IdentifierName::new(
-                            import_default.span,
-                            "default",
-                            ctx,
-                        ))
-                    }
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => unreachable!(),
-                };
-            }
+                for export_specifier in &mut export_decl.specifiers {
+                    let ModuleExportName::IdentifierReference(id) = &export_specifier.local else {
+                        unreachable!();
+                    };
+                    let symbol_id =
+                        ctx.scoping().get_reference(id.reference_id()).symbol_id().unwrap();
+                    let import_specifier = import_specifiers
+                        .iter_mut()
+                        .find(|import_specifier| import_specifier.symbol_id() == symbol_id)
+                        .unwrap();
+                    export_specifier.local = match import_specifier {
+                        ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
+                            import_specifier.imported.clone_in(ctx.allocator())
+                        }
+                        ImportDeclarationSpecifier::ImportDefaultSpecifier(import_default) => {
+                            ModuleExportName::IdentifierName(IdentifierName::new(
+                                import_default.span,
+                                "default",
+                                ctx,
+                            ))
+                        }
+                        ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => unreachable!(),
+                    };
+                }
 
-            ctx.replace_statement(
-                stmts.get_mut(import_index).unwrap(),
+                let export_decl = export_decl.unbox();
                 Statement::new_export_from_declaration(
                     export_decl.span,
-                    export_decl.specifiers.take_in(ctx),
+                    export_decl.specifiers,
                     source,
                     export_decl.export_kind,
                     with_clause,
                     ctx,
-                ),
-            );
+                )
+            });
         }
     }
 
