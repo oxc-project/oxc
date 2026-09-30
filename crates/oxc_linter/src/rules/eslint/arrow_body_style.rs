@@ -345,6 +345,10 @@ impl ArrowBodyStyle {
         fixer: RuleFixer<'_, 'a>,
         ctx: &LintContext<'a>,
     ) -> RuleFix {
+        if Self::has_asi_hazard_after(arrow_func_expr.span.end, ctx) {
+            return fixer.noop();
+        }
+
         // Get the inner expression to handle cases like `return ({ ... })`
         // where the return value is already parenthesized
         let inner_expr = return_arg.get_inner_expression();
@@ -385,6 +389,29 @@ impl ArrowBodyStyle {
         ));
 
         fix
+    }
+
+    /// Check if the first token after `end` would continue the concise body once the
+    /// block's closing `}` is removed.
+    ///
+    /// A block-bodied arrow function can't be the callee or left operand of anything,
+    /// so in `() => { return a }\n(b)` ASI ends the statement after `}`. Removing the braces
+    /// gives `() => a\n(b)`, which parses as `() => a(b)`.
+    fn has_asi_hazard_after(end: u32, ctx: &LintContext) -> bool {
+        let source_text = ctx.source_text();
+        let mut comments = ctx.comments_range(end..);
+        let mut pos = end as usize;
+        loop {
+            let rest = &source_text[pos..];
+            pos += rest.len() - rest.trim_start().len();
+            match comments.next() {
+                Some(comment) if comment.span.start as usize == pos => {
+                    pos = comment.span.end as usize;
+                }
+                _ => break,
+            }
+        }
+        matches!(source_text.as_bytes().get(pos), Some(b'(' | b'[' | b'`' | b'/' | b'+' | b'-'))
     }
 
     /// Check if an expression starts with an object literal.
@@ -719,6 +746,10 @@ fn test() {
         ("var foo = () => { return {a: 1}.b() + c };", Some(serde_json::json!(["as-needed"]))),
         (r#"var foo = () => { "use strict"; return 0; };"#, Some(serde_json::json!(["never"]))),
         (r#"var foo = () => { "use strict"; };"#, Some(serde_json::json!(["never"]))),
+        // Not fixed; fixing would cause ASI issues.
+        ("var foo = () => { return bar }\n[1, 2, 3].map(foo)", Some(serde_json::json!(["never"]))),
+        ("var foo = () => { return bar }\n(1).toString();", Some(serde_json::json!(["never"]))),
+        ("var foo = () => { return bar };\n[1, 2, 3].map(foo)", Some(serde_json::json!(["never"]))),
     ];
 
     let fix = vec![
@@ -1103,6 +1134,47 @@ var foo = () =>
             r#"var foo = () => { "use strict"; };"#,
             Some(serde_json::json!(["never"])),
         ),
+        // Not fixed; removing the braces would let the next line continue the arrow body.
+        (
+            "var foo = () => { return bar }\n[1, 2, 3].map(foo)",
+            "var foo = () => { return bar }\n[1, 2, 3].map(foo)",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "var foo = () => { return bar }\n(1).toString();",
+            "var foo = () => { return bar }\n(1).toString();",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("var foo = () => { return bar }\n`x`", "var foo = () => { return bar }\n`x`", None),
+        (
+            "var foo = () => { return bar }\n/re/.test(x)",
+            "var foo = () => { return bar }\n/re/.test(x)",
+            None,
+        ),
+        ("var foo = () => { return bar }\n+x", "var foo = () => { return bar }\n+x", None),
+        ("var foo = () => { return bar }\n-x", "var foo = () => { return bar }\n-x", None),
+        (
+            "var foo = () => { return bar } /* comment */\n(x)",
+            "var foo = () => { return bar } /* comment */\n(x)",
+            None,
+        ),
+        (
+            "var foo = () => { return {a: 1}.b }\n(x)",
+            "var foo = () => { return {a: 1}.b }\n(x)",
+            None,
+        ),
+        // Fixing is fine when the arrow function is followed by a semicolon or a safe token.
+        (
+            "var foo = () => { return bar };\n[1, 2, 3].map(foo)",
+            "var foo = () =>  bar ;\n[1, 2, 3].map(foo)",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "var foo = () => { return bar } // comment\nbaz()",
+            "var foo = () =>  bar  // comment\nbaz()",
+            None,
+        ),
+        ("var foo = () => { return bar }\nbaz()", "var foo = () =>  bar \nbaz()", None),
     ];
 
     Tester::new(ArrowBodyStyle::NAME, ArrowBodyStyle::PLUGIN, pass, fail)
