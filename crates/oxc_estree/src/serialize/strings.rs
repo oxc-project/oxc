@@ -33,6 +33,53 @@ impl ESTree for String {
     }
 }
 
+/// A string given as code points, which may include lone surrogates.
+///
+/// JSON text is UTF-8, so each lone surrogate is written as a `\uXXXX` escape.
+/// A string without lone surrogates should be serialized as a `str` instead, which is faster.
+pub struct LoneSurrogatesString<I>(pub I);
+
+impl<I: Iterator<Item = u32> + Clone> ESTree for LoneSurrogatesString<I> {
+    #[cold]
+    #[inline(never)]
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        let buffer = serializer.buffer_mut();
+        buffer.print_ascii_byte(b'"');
+        for value in self.0.clone() {
+            match value {
+                0x08 => buffer.print_str("\\b"),
+                0x09 => buffer.print_str("\\t"),
+                0x0A => buffer.print_str("\\n"),
+                0x0C => buffer.print_str("\\f"),
+                0x0D => buffer.print_str("\\r"),
+                0x22 => buffer.print_str("\\\""),
+                0x5C => buffer.print_str("\\\\"),
+                0x00..=0x1F => write_code_point_escape(value, buffer),
+                // A lone surrogate is not a `char`.
+                _ => match char::from_u32(value) {
+                    Some(ch) => buffer.print_char(ch),
+                    None => write_code_point_escape(value, buffer),
+                },
+            }
+        }
+        buffer.print_ascii_byte(b'"');
+    }
+}
+
+/// Write `value` as a `\uXXXX` escape.
+fn write_code_point_escape(value: u32, buffer: &mut CodeBuffer) {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+
+    buffer.print_ascii_bytes([
+        b'\\',
+        b'u',
+        HEX[((value >> 12) & 15) as usize],
+        HEX[((value >> 8) & 15) as usize],
+        HEX[((value >> 4) & 15) as usize],
+        HEX[(value & 15) as usize],
+    ]);
+}
+
 /// Escapes
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -346,6 +393,23 @@ mod tests {
         for (input, output) in cases {
             let mut serializer = CompactSerializer::default();
             JsonSafeString(input).serialize(&mut serializer);
+            let s = serializer.into_string();
+            assert_eq!(&s, output);
+        }
+    }
+
+    #[test]
+    fn serialize_lone_surrogates_string() {
+        let cases: [(&[u32], &str); 4] = [
+            (&[0xD800], r#""\ud800""#),
+            (&[0x61, 0xDC00, 0x62], r#""a\udc00b""#),
+            (&[0xD800, 0x1F600, 0xDFFF], r#""\ud800😀\udfff""#),
+            (&[0xD800, 0x08, 0x0A, 0x22, 0x5C, 0x1F], r#""\ud800\b\n\"\\\u001f""#),
+        ];
+
+        for (input, output) in cases {
+            let mut serializer = CompactSerializer::default();
+            LoneSurrogatesString(input.iter().copied()).serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
         }
