@@ -203,6 +203,105 @@ impl<'a> Glob<'a> {
     }
 }
 
+fn matches_path(pattern: &str, path: &str, remaining_steps: &mut usize) -> bool {
+    if *remaining_steps == 0 {
+        return false;
+    }
+    *remaining_steps -= 1;
+    let (segment, rest) =
+        pattern.split_once('/').map_or((pattern, None), |(head, tail)| (head, Some(tail)));
+    if segment == "**" {
+        let Some(rest) = rest else {
+            return !path.split('/').any(|part| part.starts_with('.'));
+        };
+        if matches_path(rest, path, remaining_steps) {
+            return true;
+        }
+        let mut remaining_path = path;
+        while let Some((head, tail)) = remaining_path.split_once('/') {
+            if head.starts_with('.') {
+                break;
+            }
+            if matches_path(rest, tail, remaining_steps) {
+                return true;
+            }
+            remaining_path = tail;
+        }
+        return false;
+    }
+    let (part, tail) = path.split_once('/').map_or((path, None), |(head, tail)| (head, Some(tail)));
+    if (part.starts_with('.') && !segment.starts_with('.') && !segment.starts_with(r"\."))
+        || !Glob::parse(segment).matches(part, false, remaining_steps)
+    {
+        return false;
+    }
+    match (rest, tail) {
+        (Some(rest), Some(tail)) => matches_path(rest, tail, remaining_steps),
+        (None, None) => true,
+        _ => false,
+    }
+}
+
+fn matches_brace_range(
+    body: &str,
+    prefix: &str,
+    suffix: &str,
+    path: &str,
+    remaining_steps: &mut usize,
+) -> Option<bool> {
+    let mut parts = body.split("..");
+    let first = parts.next()?;
+    let last = parts.next()?;
+    let number = |part: &str| {
+        let digits = part.strip_prefix('-').unwrap_or(part);
+        if digits.is_empty() || !digits.bytes().all(|byte| byte.is_ascii_digit()) {
+            return None;
+        }
+        part.parse::<i64>().ok()
+    };
+    let step = parts.next().map_or(Some(1), |part| number(part)?.checked_abs())?.max(1);
+    if parts.next().is_some() {
+        return None;
+    }
+    let alphabetic = first.len() == 1
+        && last.len() == 1
+        && first.as_bytes()[0].is_ascii_alphabetic()
+        && last.as_bytes()[0].is_ascii_alphabetic();
+    let (start, end) = if alphabetic {
+        (i64::from(first.as_bytes()[0]), i64::from(last.as_bytes()[0]))
+    } else {
+        (number(first)?, number(last)?)
+    };
+    let padded = |part: &str| {
+        let digits = part.strip_prefix('-').unwrap_or(part);
+        digits.starts_with('0') && digits.len() > 1
+    };
+    let width = if !alphabetic && (padded(first) || padded(last)) {
+        first.len().max(last.len())
+    } else {
+        0
+    };
+    let step = if start <= end { step } else { -step };
+    let mut value = start;
+    while if step > 0 { value <= end } else { value >= end } {
+        if *remaining_steps == 0 {
+            return Some(false);
+        }
+        let value_string = if alphabetic {
+            char::from(u8::try_from(value).ok()?).to_string()
+        } else {
+            format!("{value:0width$}")
+        };
+        let expanded = format!("{prefix}{value_string}{suffix}");
+        if matches_brace_expansions(&expanded, path, remaining_steps) {
+            return Some(true);
+        }
+        let Some(next) = value.checked_add(step) else { break };
+        value = next;
+    }
+    Some(false)
+}
+
 fn matches_brace_expansions(pattern: &str, path: &str, remaining_steps: &mut usize) -> bool {
     if *remaining_steps == 0 {
         return false;
@@ -245,6 +344,15 @@ fn matches_brace_expansions(pattern: &str, path: &str, remaining_steps: &mut usi
                                 matches_brace_expansions(&expanded, path, remaining_steps)
                             });
                         }
+                        if let Some(matched) = matches_brace_range(
+                            &pattern[start..index],
+                            &pattern[..opening],
+                            &pattern[index + 1..],
+                            path,
+                            remaining_steps,
+                        ) {
+                            return matched;
+                        }
                         break;
                     }
                 }
@@ -258,25 +366,27 @@ fn matches_brace_expansions(pattern: &str, path: &str, remaining_steps: &mut usi
         }
         index += 1;
     }
-    Glob::parse(pattern).matches(path, false, remaining_steps)
+    matches_path(pattern, path, remaining_steps)
 }
 
 /// Match filename globs including the extended groups used by ESLint rule options.
-/// Ordinary patterns retain the allocation-free `fast_glob` path.
+/// Ordinary patterns without hidden path segments retain the allocation-free `fast_glob` path.
 /// Excessively complex patterns fail to match instead of exhausting the stack or match budget.
 pub fn glob_match_with_extglobs(pattern: &str, path: &str) -> bool {
-    if !pattern
-        .as_bytes()
-        .windows(2)
-        .any(|pair| matches!(pair[0], b'@' | b'?' | b'*' | b'+' | b'!') && pair[1] == b'(')
+    let positive = pattern.trim_start_matches('!');
+    let negated = !(pattern.len() - positive.len()).is_multiple_of(2);
+    if !positive.contains('{')
+        && !path.split('/').any(|part| part.starts_with('.'))
+        && !positive
+            .as_bytes()
+            .windows(2)
+            .any(|pair| matches!(pair[0], b'@' | b'?' | b'*' | b'+' | b'!') && pair[1] == b'(')
     {
-        return fast_glob::glob_match(pattern, path);
+        return fast_glob::glob_match(positive, path) != negated;
     }
     if pattern.bytes().filter(|byte| matches!(byte, b'(' | b'{')).count() > MAX_GLOB_GROUPS {
         return false;
     }
-    let positive = pattern.trim_start_matches('!');
-    let negated = !(pattern.len() - positive.len()).is_multiple_of(2);
     let mut remaining_steps = MAX_GLOB_MATCH_STEPS;
     let matched = matches_brace_expansions(positive, path, &mut remaining_steps);
     remaining_steps > 0 && matched != negated
@@ -287,10 +397,49 @@ mod tests {
     use super::glob_match_with_extglobs;
 
     #[test]
+    fn hidden_paths() {
+        for (pattern, path, expected) in [
+            ("**/*.ts", "src/.hidden/input.ts", false),
+            ("**/*.ts", "src/.input.ts", false),
+            ("**/*.@(test|spec).ts", "src/.hidden/input.test.ts", false),
+            ("**/.hidden/*.ts", "src/.hidden/input.ts", true),
+            ("**/.input.ts", "src/.input.ts", true),
+            (r"**/\.input.ts", "src/.input.ts", true),
+            ("**/{.hidden,visible}/*.ts", "src/.hidden/input.ts", true),
+            ("!**/*.ts", "src/.hidden/input.ts", true),
+        ] {
+            assert_eq!(glob_match_with_extglobs(pattern, path), expected, "{pattern}: {path}");
+        }
+    }
+
+    #[test]
+    fn brace_ranges() {
+        for (pattern, path, expected) in [
+            ("**/test{1..3}.@(js|ts)", "src/test2.ts", true),
+            ("**/test{1..3}.@(js|ts)", "src/test4.ts", false),
+            ("**/test{3..1}.ts", "src/test2.ts", true),
+            ("**/test{1..5..2}.ts", "src/test3.ts", true),
+            ("**/test{1..5..2}.ts", "src/test2.ts", false),
+            ("**/test{01..03}.ts", "src/test02.ts", true),
+            ("**/test{-2..0}.ts", "src/test-1.ts", true),
+            ("**/test{-02..01}.ts", "src/test-01.ts", true),
+            ("**/test{5..1..-2}.ts", "src/test3.ts", true),
+            ("**/test{a..c}.ts", "src/testb.ts", true),
+            ("**/test{9223372036854775806..9223372036854775807}.ts", "src/test0.ts", false),
+            ("**/test{1..3}.{js,ts}", "src/test2.ts", true),
+            (r"**/test\{1..3\}.ts", "src/test{1..3}.ts", true),
+        ] {
+            assert_eq!(glob_match_with_extglobs(pattern, path), expected, "{pattern}: {path}");
+        }
+    }
+
+    #[test]
     fn excessive_nesting() {
         let pattern = format!("{}a{}", "@(".repeat(256), ")".repeat(256));
         assert!(!glob_match_with_extglobs(&pattern, "a"));
         assert!(!glob_match_with_extglobs(&format!("!{pattern}"), "b"));
+        assert!(!glob_match_with_extglobs("{1..1000000000}.ts", "missing.ts"));
+        assert!(!glob_match_with_extglobs("!{1..1000000000}.ts", "missing.ts"));
     }
 
     #[test]
@@ -319,7 +468,8 @@ mod tests {
             ("**/!({a,b}|c).ts", "a.ts", true),
             ("**/@(!(a)|b).ts", "abc.ts", false),
             ("**/@(!(a)|b).ts", "bc.ts", true),
-            ("**/+().ts", ".ts", true),
+            ("**/+().ts", ".ts", false),
+            ("**/.+()ts", ".ts", true),
             ("**/*().ts", "test.ts", false),
             (r"**/\+(test|spec).ts", "+(test|spec).ts", true),
             ("!**/*.@(test|spec).ts", "foo.test.ts", false),

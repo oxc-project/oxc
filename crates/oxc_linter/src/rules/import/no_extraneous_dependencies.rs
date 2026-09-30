@@ -1,4 +1,5 @@
 use std::{
+    cell::OnceCell,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -39,20 +40,24 @@ impl Default for DependencyAllowance {
 }
 
 impl DependencyAllowance {
-    fn allows(&self, filename: &str, cwd: &Path) -> bool {
+    fn allows(&self, file: &Path, cwd: &Path) -> bool {
         match self {
             Self::Boolean(allow) => *allow,
-            Self::Globs(globs) => globs.iter().any(|glob| {
-                glob_match_with_extglobs(glob, filename)
-                    || glob_match_with_extglobs(
-                        cwd.join(glob)
-                            .normalize()
-                            .to_string_lossy()
-                            .cow_replace('\\', "/")
-                            .as_ref(),
-                        filename,
-                    )
-            }),
+            Self::Globs(globs) => {
+                let filename = file.to_string_lossy();
+                let filename = filename.cow_replace('\\', "/");
+                globs.iter().any(|glob| {
+                    glob_match_with_extglobs(glob, &filename)
+                        || glob_match_with_extglobs(
+                            cwd.join(glob)
+                                .normalize()
+                                .to_string_lossy()
+                                .cow_replace('\\', "/")
+                                .as_ref(),
+                            &filename,
+                        )
+                })
+            }
         }
     }
 }
@@ -152,39 +157,69 @@ declare_oxc_lint!(
     short_description = "Forbid importing undeclared dependencies.",
 );
 
-const DEPENDENCY_FIELDS: [&str; 5] = [
-    "dependencies",
-    "devDependencies",
-    "optionalDependencies",
-    "peerDependencies",
-    "bundledDependencies",
-];
+#[derive(Default)]
+struct DependencyCategories<T> {
+    production: T,
+    development: T,
+    optional: T,
+    peer: T,
+    bundled: T,
+}
+
+impl DependencyCategories<bool> {
+    fn is_allowed(
+        &self,
+        rule: &NoExtraneousDependencies,
+        file: &Path,
+        cwd: &Path,
+        allowances: &DependencyCategories<OnceCell<bool>>,
+    ) -> bool {
+        self.production
+            || (self.development
+                && *allowances.development.get_or_init(|| rule.dev_dependencies.allows(file, cwd)))
+            || (self.optional
+                && *allowances
+                    .optional
+                    .get_or_init(|| rule.optional_dependencies.allows(file, cwd)))
+            || (self.peer
+                && *allowances.peer.get_or_init(|| rule.peer_dependencies.allows(file, cwd)))
+            || (self.bundled
+                && *allowances.bundled.get_or_init(|| rule.bundled_dependencies.allows(file, cwd)))
+    }
+}
 
 #[derive(Default)]
 struct Dependencies(Vec<Arc<Value>>);
 
 impl Dependencies {
-    fn declaration(&self, name: &str, declared: &mut [bool; 5]) {
+    fn declaration(&self, name: &str, declared: &mut DependencyCategories<bool>) {
         for end in name.match_indices('/').map(|(i, _)| i).chain(std::iter::once(name.len())) {
             let ancestor = &name[..end];
             if ancestor.starts_with('@') && !ancestor.contains('/') {
                 continue;
             }
             for package in &self.0 {
-                for (i, field) in DEPENDENCY_FIELDS.iter().enumerate() {
-                    let value = if i == 4 {
-                        package.get("bundleDependencies").or_else(|| package.get(*field))
-                    } else {
-                        package.get(*field)
-                    };
-                    declared[i] |= match value {
-                        Some(Value::Object(map)) => map.contains_key(ancestor),
-                        Some(Value::Array(names)) if i == 4 => {
-                            names.iter().any(|name| name.as_str() == Some(ancestor))
-                        }
-                        _ => false,
-                    };
+                for (field, declaration) in [
+                    ("dependencies", &mut declared.production),
+                    ("devDependencies", &mut declared.development),
+                    ("optionalDependencies", &mut declared.optional),
+                    ("peerDependencies", &mut declared.peer),
+                ] {
+                    *declaration |= package
+                        .get(field)
+                        .and_then(Value::as_object)
+                        .is_some_and(|dependencies| dependencies.contains_key(ancestor));
                 }
+                declared.bundled |= match package
+                    .get("bundleDependencies")
+                    .or_else(|| package.get("bundledDependencies"))
+                {
+                    Some(Value::Object(map)) => map.contains_key(ancestor),
+                    Some(Value::Array(names)) => {
+                        names.iter().any(|name| name.as_str() == Some(ancestor))
+                    }
+                    _ => false,
+                };
             }
         }
     }
@@ -204,29 +239,35 @@ fn package_name(specifier: &str) -> &str {
     }
 }
 
-fn import_source(kind: AstKind<'_>, include_types: bool) -> Option<(&str, Span, ImportKind)> {
-    let (source, type_only) = match kind {
+fn import_source(
+    kind: AstKind<'_>,
+    include_types: bool,
+    mut include_name: impl FnMut(&str) -> bool,
+) -> Option<(&str, Span, ImportKind)> {
+    let (name, span, import_kind) = match kind {
         AstKind::ImportDeclaration(import) => {
-            let only_type_specifiers = import.specifiers.as_ref().is_some_and(|specifiers| {
-                !specifiers.is_empty()
-                    && specifiers.iter().all(|specifier| {
-                        matches!(specifier, ImportDeclarationSpecifier::ImportSpecifier(specifier)
-                            if specifier.import_kind.is_type())
-                    })
-            });
-            (&import.source, import.import_kind.is_type() || only_type_specifiers)
+            if import.import_kind.is_type() && !include_types {
+                return None;
+            }
+            (import.source.value.as_str(), import.source.span, ImportKind::Import)
         }
         AstKind::ExportFromDeclaration(export) => {
-            let only_type_specifiers = !export.specifiers.is_empty()
-                && export.specifiers.iter().all(|specifier| specifier.export_kind.is_type());
-            (&export.source, export.export_kind.is_type() || only_type_specifiers)
+            if export.export_kind.is_type() && !include_types {
+                return None;
+            }
+            (export.source.value.as_str(), export.source.span, ImportKind::Import)
         }
-        AstKind::ExportAllDeclaration(export) => (&export.source, export.export_kind.is_type()),
+        AstKind::ExportAllDeclaration(export) => {
+            if export.export_kind.is_type() && !include_types {
+                return None;
+            }
+            (export.source.value.as_str(), export.source.span, ImportKind::Import)
+        }
         AstKind::ImportExpression(import) => {
             let Expression::StringLiteral(source) = &import.source else {
                 return None;
             };
-            (source.as_ref(), false)
+            (source.value.as_str(), source.span, ImportKind::Import)
         }
         AstKind::CallExpression(call)
             if call.arguments.len() == 1
@@ -240,25 +281,52 @@ fn import_source(kind: AstKind<'_>, include_types: bool) -> Option<(&str, Span, 
                 }
                 _ => return None,
             };
-            return Some((name, argument.span(), ImportKind::Require));
+            (name, argument.span(), ImportKind::Require)
         }
         _ => return None,
+    };
+    if !include_name(name) {
+        return None;
+    }
+    let type_only = match kind {
+        AstKind::ImportDeclaration(import) => {
+            import.import_kind.is_type()
+                || import.specifiers.as_ref().is_some_and(|specifiers| {
+                    !specifiers.is_empty() && specifiers.iter().all(|specifier| {
+                        matches!(specifier, ImportDeclarationSpecifier::ImportSpecifier(specifier)
+                            if specifier.import_kind.is_type())
+                    })
+                })
+        }
+        AstKind::ExportFromDeclaration(export) => {
+            export.export_kind.is_type()
+                || (!export.specifiers.is_empty()
+                    && export.specifiers.iter().all(|specifier| specifier.export_kind.is_type()))
+        }
+        AstKind::ExportAllDeclaration(export) => export.export_kind.is_type(),
+        _ => false,
     };
     if type_only && !include_types {
         return None;
     }
-    let import_kind = if type_only { ImportKind::Type } else { ImportKind::Import };
-    Some((source.value.as_str(), source.span, import_kind))
+    let import_kind = if type_only { ImportKind::Type } else { import_kind };
+    Some((name, span, import_kind))
 }
 
-fn is_external(path: &Path, package_root: &Path, name: &str, folders: &[&Path]) -> bool {
-    folders.iter().any(|folder| {
+fn is_external(path: &Path, package_root: &Path, name: &str, folders: Option<&[Value]>) -> bool {
+    let matches_folder = |folder: &Path| {
         path.starts_with(package_root.join(folder))
             || (!path.starts_with(package_root)
                 && !folder.is_absolute()
                 && path.ancestors().any(|ancestor| ancestor.ends_with(folder)))
             || package_root.ancestors().any(|ancestor| ancestor.join(folder).join(name).exists())
-    })
+    };
+    match folders {
+        Some(folders) => {
+            folders.iter().filter_map(Value::as_str).map(Path::new).any(matches_folder)
+        }
+        None => matches_folder(Path::new("node_modules")),
+    }
 }
 
 impl Rule for NoExtraneousDependencies {
@@ -271,35 +339,35 @@ impl Rule for NoExtraneousDependencies {
             return;
         };
         let settings = ctx.settings().json.as_ref();
-        let internal_regex = settings
-            .and_then(|s| s.get("import/internal-regex"))
-            .and_then(Value::as_str)
-            .and_then(|pattern| lazy_regex::Regex::new(pattern).ok());
+        let internal_pattern =
+            settings.and_then(|s| s.get("import/internal-regex")).and_then(Value::as_str);
+        let internal_regex = OnceCell::new();
         let core_modules =
             settings.and_then(|s| s.get("import/core-modules")).and_then(Value::as_array);
         let mut imports = ctx
             .nodes()
             .iter()
             .filter_map(|node| {
-                let (name, span, import_kind) = import_source(node.kind(), self.include_types)?;
-                let marked_internal =
-                    internal_regex.as_ref().is_some_and(|regex| regex.is_match(name));
-                if marked_internal {
-                    if !self.include_internal {
-                        return None;
+                import_source(node.kind(), self.include_types, |name| {
+                    let marked_internal = internal_regex
+                        .get_or_init(|| {
+                            internal_pattern
+                                .and_then(|pattern| lazy_regex::Regex::new(pattern).ok())
+                        })
+                        .as_ref()
+                        .is_some_and(|regex| regex.is_match(name));
+                    if marked_internal {
+                        return self.include_internal;
                     }
-                } else if name.is_empty()
-                    || name.starts_with('.')
-                    || Path::new(name).is_absolute()
-                    || name.starts_with("node:")
-                    || is_nodejs_builtin_module(name)
-                    || core_modules.is_some_and(|modules| {
-                        modules.iter().any(|module| module.as_str() == Some(package_name(name)))
-                    })
-                {
-                    return None;
-                }
-                Some((name, span, import_kind))
+                    !(name.is_empty()
+                        || name.starts_with('.')
+                        || Path::new(name).is_absolute()
+                        || name.starts_with("node:")
+                        || is_nodejs_builtin_module(name)
+                        || core_modules.is_some_and(|modules| {
+                            modules.iter().any(|module| module.as_str() == Some(package_name(name)))
+                        }))
+                })
             })
             .peekable();
         let directories = self.package_dir.as_slice();
@@ -314,9 +382,9 @@ impl Rule for NoExtraneousDependencies {
         } else {
             cwd.join(ctx.file_path())
         };
-        let nearest = nearest_manifest(&file);
+        let nearest = OnceCell::new();
         let manifests = if directories.is_empty() {
-            nearest.iter().cloned().collect::<Vec<_>>()
+            nearest.get_or_init(|| nearest_manifest(&file)).iter().cloned().collect::<Vec<_>>()
         } else {
             directories.iter().map(|dir| cwd.join(dir).join("package.json")).collect()
         };
@@ -349,48 +417,41 @@ impl Rule for NoExtraneousDependencies {
         if imports.peek().is_none() {
             return;
         }
-        let filename = file.to_string_lossy();
-        let filename = filename.cow_replace('\\', "/");
-        let allowed = [
-            true,
-            self.dev_dependencies.allows(&filename, &cwd),
-            self.optional_dependencies.allows(&filename, &cwd),
-            self.peer_dependencies.allows(&filename, &cwd),
-            self.bundled_dependencies.allows(&filename, &cwd),
-        ];
+        let allowances = DependencyCategories::default();
         let external_folders = settings
             .and_then(|s| s.get("import/external-module-folders"))
-            .and_then(Value::as_array);
-        let package_root = nearest.as_deref().and_then(Path::parent).unwrap_or(&cwd);
-        let external_folders = external_folders.map_or_else(
-            || vec![Path::new("node_modules")],
-            |folders| folders.iter().filter_map(Value::as_str).map(Path::new).collect(),
-        );
+            .and_then(Value::as_array)
+            .map(Vec::as_slice);
         for (name, span, import_kind) in imports {
             let original_name = package_name(name);
-            let mut declared = [false; 5];
+            let mut declared = DependencyCategories::default();
             dependencies.declaration(original_name, &mut declared);
-            if declared.iter().zip(allowed).any(|(declared, allowed)| *declared && allowed) {
+            if declared.is_allowed(self, &file, &cwd, &allowances) {
                 continue;
             }
             let Ok(resolved) = import_context.resolver(import_kind).resolve_file(&file, name)
             else {
                 continue;
             };
-            if !self.include_internal
-                && !is_external(resolved.path(), package_root, original_name, &external_folders)
-            {
-                continue;
+            if !self.include_internal {
+                let package_root = nearest
+                    .get_or_init(|| nearest_manifest(&file))
+                    .as_deref()
+                    .and_then(Path::parent)
+                    .unwrap_or(&cwd);
+                if !is_external(resolved.path(), package_root, original_name, external_folders) {
+                    continue;
+                }
             }
             let real_name =
                 resolved.package_json().and_then(|package| package.name()).unwrap_or(original_name);
             dependencies.declaration(real_name, &mut declared);
-            if declared.iter().zip(allowed).any(|(declared, allowed)| *declared && allowed) {
+            if declared.is_allowed(self, &file, &cwd, &allowances) {
                 continue;
             }
-            let category = if declared[1] {
+            let category = if declared.development {
                 Some("devDependencies")
-            } else if declared[2] {
+            } else if declared.optional {
                 Some("optionalDependencies")
             } else {
                 None
@@ -653,6 +714,50 @@ mod tests {
     }
 
     #[test]
+    fn dependency_globs_hidden_paths() {
+        for (file, glob) in
+            [(".hidden/input.test.ts", "**/.hidden/*.ts"), (".input.test.ts", "**/.input.test.ts")]
+        {
+            Tester::new(
+                NoExtraneousDependencies::NAME,
+                NoExtraneousDependencies::PLUGIN,
+                vec![("import 'chai';", Some(json!([{ "devDependencies": [glob] }])))],
+                vec![
+                    ("import 'chai';", Some(json!([{ "devDependencies": ["**/*.ts"] }]))),
+                    (
+                        "import 'chai';",
+                        Some(json!([{ "devDependencies": ["**/*.@(test|spec).ts"] }])),
+                    ),
+                ],
+            )
+            .with_import_plugin(true)
+            .change_rule_path(&format!("no-extraneous-dependencies/{file}"))
+            .test();
+        }
+    }
+
+    #[test]
+    fn dependency_globs_brace_ranges() {
+        for file in ["test1.ts", "test2.ts", "test3.ts"] {
+            Tester::new(
+                NoExtraneousDependencies::NAME,
+                NoExtraneousDependencies::PLUGIN,
+                vec![(
+                    "import 'chai';",
+                    Some(json!([{ "devDependencies": ["**/test{1..3}.@(js|ts)"] }])),
+                )],
+                vec![(
+                    "import 'chai';",
+                    Some(json!([{ "devDependencies": ["**/test{4..6}.@(js|ts)"] }])),
+                )],
+            )
+            .with_import_plugin(true)
+            .change_rule_path(&format!("no-extraneous-dependencies/{file}"))
+            .test();
+        }
+    }
+
+    #[test]
     fn negated_dependency_globs() {
         for file in ["prod.ts", "product.ts"] {
             Tester::new(
@@ -738,6 +843,11 @@ mod tests {
     fn import_settings() {
         let pass = vec![
             (
+                "import { value } from './local';",
+                None,
+                Some(json!({ "settings": { "import/internal-regex": "^\\./" } })),
+            ),
+            (
                 "import 'not-a-dependency';",
                 None,
                 Some(json!({ "settings": { "import/core-modules": ["not-a-dependency"] } })),
@@ -759,6 +869,11 @@ mod tests {
             ),
         ];
         let fail = vec![
+            (
+                "import { value } from './local';",
+                Some(json!([{ "includeInternal": true }])),
+                Some(json!({ "settings": { "import/internal-regex": "^\\./" } })),
+            ),
             (
                 "import 'not-a-dependency';",
                 Some(json!([{ "includeInternal": true }])),
