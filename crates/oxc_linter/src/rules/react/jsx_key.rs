@@ -17,7 +17,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
-use oxc_syntax::number::ToJsString;
 
 use crate::{
     AstNode,
@@ -415,10 +414,8 @@ fn get_jsx_element_key_value<'a>(
                                 return Some((lit.value, attr.span));
                             }
                             JSXExpression::NumericLiteral(lit) => {
-                                // ECMAScript Number::toString,
-                                // matching the runtime key attribute value.
                                 let value =
-                                    JSStr::from_str_in(&lit.value.to_js_string(), &ctx.allocator());
+                                    JSStr::from_str_in(&lit.value.to_string(), &ctx.allocator());
                                 return Some((value, attr.span));
                             }
                             JSXExpression::TemplateLiteral(lit)
