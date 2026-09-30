@@ -226,10 +226,7 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
 
             false
         }
-        TSType::TSUndefinedKeyword(_) => {
-            let init = init.get_inner_expression();
-            init.is_undefined() || init.is_void()
-        }
+        TSType::TSUndefinedKeyword(_) => init.get_inner_expression().evaluate_to_undefined(),
         _ => false,
     }
 }
