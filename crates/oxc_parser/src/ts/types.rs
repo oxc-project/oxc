@@ -969,39 +969,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
 
-        let mut seen_rest_span: Option<Span> = None;
         let mut seen_optional_span: Option<Span> = None;
         let (elements, _) =
             self.parse_delimited_list(Kind::RBrack, Kind::Comma, opening_span, |me| {
                 let tuple = me.parse_tuple_element();
-                // check for array type, because unknown types can be destructed, example of valid code:
-                // type C<T extends unknown[]> = [...string[], ...T];
-                // example of invalid code:
-                // type C<T extends unknown[]> = [...string[], ...T[]];
-                if let TSTupleElement::TSRestType(rest) = &tuple
-                    && let Some(rest_type) = (match &rest.type_annotation {
-                        TSType::TSNamedTupleMember(named) => named.element_type.as_ts_type(),
-                        ty => Some(ty),
-                    })
-                    && match rest_type {
-                        TSType::TSArrayType(_) => true,
-                        // Check for `Array<...>` type
-                        TSType::TSTypeReference(ts_ref) => match &ts_ref.type_name {
-                            TSTypeName::IdentifierReference(id_ref) => id_ref.name == "Array",
-                            _ => false,
-                        },
-                        _ => false,
-                    }
-                {
-                    if let Some(seen_span) = seen_rest_span {
-                        me.error(diagnostics::rest_element_cannot_follow_another_rest_element(
-                            seen_span,
-                            tuple.span(),
-                        ));
-                    }
-                    seen_rest_span = Some(tuple.span());
-                }
-
                 if !match &tuple {
                     TSTupleElement::TSOptionalType(_) | TSTupleElement::TSRestType(_) => true,
                     TSTupleElement::TSNamedTupleMember(named) => named.optional,
@@ -1019,12 +990,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     TSTupleElement::TSNamedTupleMember(named) => named.optional,
                     _ => false,
                 } {
-                    if let Some(seen_rest_span) = seen_rest_span {
-                        me.error(diagnostics::optional_element_cannot_follow_rest_element(
-                            tuple.span(),
-                            seen_rest_span,
-                        ));
-                    }
                     seen_optional_span = Some(tuple.span());
                 }
 

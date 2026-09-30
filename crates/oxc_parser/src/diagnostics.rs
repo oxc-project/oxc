@@ -428,20 +428,6 @@ parser_diagnostics! {
         ])
     };
 
-    // A rest element cannot follow another rest element. ts(1265)
-    rest_element_cannot_follow_another_rest_element(seen_span: Span, span: Span) => {
-        ts_error("1265", "A rest element cannot follow another rest element.")
-            .with_labels([span.label("Second rest element here"), seen_span.label("First seen here")])
-    };
-
-    // An optional element cannot follow a rest element. ts(1266)
-    optional_element_cannot_follow_rest_element(span: Span, rest_span: Span) => {
-        ts_error("1266", "An optional element cannot follow a rest element.").with_labels([
-            span.label("Optional element here"),
-            rest_span.label("Rest element seen here"),
-        ])
-    };
-
     // A type-only import can specify a default import or named bindings, but not both. ts(1363)
     type_only_import_default_and_named(specifier_span: Span) => {
         ts_error(

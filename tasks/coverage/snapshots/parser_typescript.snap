@@ -32064,26 +32064,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  4 │ type T03 = [...string[]];
    ╰────
 
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:7:21]
- 6 │ 
- 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
-   ·                     ─────┬─────  ──────┬─────
-   ·                          │             ╰── Second rest element here
-   ·                          ╰── First seen here
- 8 │ type V11 = [number, ...string[], boolean?];  // Error
-   ╰────
-
-  × TS(1266): An optional element cannot follow a rest element.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:8:21]
- 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
- 8 │ type V11 = [number, ...string[], boolean?];  // Error
-   ·                     ─────┬─────  ────┬───
-   ·                          │           ╰── Optional element here
-   ·                          ╰── Rest element seen here
- 9 │ type V12 = [number, string?, boolean];  // Error
-   ╰────
-
   × TS(1257): A required element cannot follow an optional element.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:9:21]
   8 │ type V11 = [number, ...string[], boolean?];  // Error
@@ -32092,46 +32072,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                        │        ╰── Required element here
     ·                        ╰── Optional element seen here
  10 │ 
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:11:13]
- 10 │ 
- 11 │ type V15 = [...string[], ...number[]];  // Error
-    ·             ─────┬─────  ─────┬─────
-    ·                  │            ╰── Second rest element here
-    ·                  ╰── First seen here
- 12 │ type V16 = [...string[], ...Array<number>];  // Error
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:12:13]
- 11 │ type V15 = [...string[], ...number[]];  // Error
- 12 │ type V16 = [...string[], ...Array<number>];  // Error
-    ·             ─────┬─────  ────────┬───────
-    ·                  │               ╰── Second rest element here
-    ·                  ╰── First seen here
- 13 │ type V17 = [...Array<string>, ...number[]];  // Error
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:13:13]
- 12 │ type V16 = [...string[], ...Array<number>];  // Error
- 13 │ type V17 = [...Array<string>, ...number[]];  // Error
-    ·             ────────┬───────  ─────┬─────
-    ·                     │              ╰── Second rest element here
-    ·                     ╰── First seen here
- 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:14:13]
- 13 │ type V17 = [...Array<string>, ...number[]];  // Error
- 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
-    ·             ────────┬───────  ────────┬───────
-    ·                     │                 ╰── Second rest element here
-    ·                     ╰── First seen here
- 15 │ 
     ╰────
 
   × TS(2457): Type alias name cannot be 'any'
