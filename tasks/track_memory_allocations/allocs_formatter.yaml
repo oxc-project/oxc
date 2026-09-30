@@ -5,7 +5,7 @@ checker.ts:
   sys deallocs: 19383
   sys alloc bytes: 6767781 # 6.77 MB
   sys peak growth: 2973674 # 2.97 MB
-  arena allocs: 1070124
+  arena allocs: 1070126
   arena reallocs: 927
   arena size: 90258720 # 90.26 MB
 
@@ -38,7 +38,7 @@ pdf.mjs:
   sys deallocs: 9775
   sys alloc bytes: 3141552 # 3.14 MB
   sys peak growth: 1156432 # 1.16 MB
-  arena allocs: 432125
+  arena allocs: 432133
   arena reallocs: 428
   arena size: 29560832 # 29.56 MB
 
