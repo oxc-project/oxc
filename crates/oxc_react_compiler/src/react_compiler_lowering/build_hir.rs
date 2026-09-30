@@ -5387,7 +5387,7 @@ fn source_offset_for_decoded_jsx_text(source: &str, target_offset: usize) -> usi
         {
             let word = &entity[..end];
             if !word.contains('&')
-                && let Some(decoded) = decode_entity(word)
+                && let Some(decoded) = decode_entity(word, true)
             {
                 let point = decoded.to_u32();
                 let is_trail = (0xDC00..=0xDFFF).contains(&point);
@@ -5416,11 +5416,12 @@ fn source_offset_for_decoded_jsx_text(source: &str, target_offset: usize) -> usi
 /// → `{`, `&#x1F600;` → emoji, …) so the lowered JSX text/attribute value matches
 /// Babel's decoded text. oxc keeps JSX text raw in the AST.
 /// Unrecognized `&…;` sequences are kept verbatim.
+/// Hexadecimal references accept both `&#x` and `&#X`.
 /// Numeric references can name lone surrogates, so the result is a [`JSStr`].
 /// Text without entities is borrowed without copying.
 fn decode_jsx_entities<'a>(s: &'a str, allocator: &'a Allocator) -> JSStr<'a> {
     let mut decoded = None;
-    decode_entities(s, &mut decoded, s.len(), allocator);
+    decode_entities(s, &mut decoded, s.len(), allocator, true);
     decoded.map_or_else(|| JSStr::from(s), JSStrBuilder::into_js_str)
 }
 

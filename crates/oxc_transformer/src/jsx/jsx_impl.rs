@@ -913,7 +913,7 @@ impl<'a> JsxImpl<'a> {
             Some(JSXAttributeValue::StringLiteral(s)) => {
                 let mut decoded = None;
                 if let Some(value) = s.value.as_str() {
-                    decode_entities(value, &mut decoded, value.len(), ctx.allocator());
+                    decode_entities(value, &mut decoded, value.len(), ctx.allocator(), false);
                 }
                 let jsx_text = if let Some(decoded) = decoded {
                     // Text contains HTML entities which were decoded.
@@ -1117,7 +1117,7 @@ impl<'a> JsxImpl<'a> {
         }
 
         // Decode any HTML entities in this line
-        decode_entities(trimmed_line.as_str(), acc, text_len, ctx.allocator());
+        decode_entities(trimmed_line.as_str(), acc, text_len, ctx.allocator(), false);
 
         if acc.is_none() {
             // This is the first line containing text, and there are no HTML entities in this line.

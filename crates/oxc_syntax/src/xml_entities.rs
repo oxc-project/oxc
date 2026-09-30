@@ -269,11 +269,16 @@ pub const XML_ENTITIES: Map<&'static str, char> = phf_map! {
 ///
 /// Numeric references may name a lone surrogate, as in `&#xD800;`,
 /// because JSX text and attribute values are JavaScript strings.
-/// Only lowercase `x` selects hexadecimal, matching Babel.
+/// Only lowercase `x` selects hexadecimal, matching Babel, unless `allow_uppercase_hex` is set.
 /// Unknown names and out-of-range values return `None`.
-pub fn decode_entity(word: &str) -> Option<JSChar> {
+pub fn decode_entity(word: &str, allow_uppercase_hex: bool) -> Option<JSChar> {
     if let Some(number) = word.strip_prefix('#') {
-        if let Some(hex) = number.strip_prefix('x') {
+        let hex = if allow_uppercase_hex {
+            number.strip_prefix(['x', 'X'])
+        } else {
+            number.strip_prefix('x')
+        };
+        if let Some(hex) = hex {
             // `&#x0123;`
             u32::from_str_radix(hex, 16).ok().and_then(JSChar::from_u32)
         } else {
@@ -296,6 +301,8 @@ pub fn decode_entity(word: &str) -> Option<JSChar> {
 /// The accumulator is a [`JSStrBuilder`] because a numeric reference can name a lone surrogate,
 /// and two references such as `&#xD83D;&#xDE00;` form one surrogate pair.
 ///
+/// `allow_uppercase_hex` is passed to [`decode_entity`].
+///
 /// See <https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references>.
 /// Adapted from TypeScript's JSX transformer:
 /// <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617-L635>.
@@ -304,6 +311,7 @@ pub fn decode_entities<'a>(
     acc: &mut Option<JSStrBuilder<'a>>,
     text_len: usize,
     allocator: &'a Allocator,
+    allow_uppercase_hex: bool,
 ) {
     let mut chars = s.char_indices();
     let mut prev = 0;
@@ -326,7 +334,7 @@ pub fn decode_entities<'a>(
                 buffer.push_str(&s[prev..start]);
                 prev = end + 1;
                 let word = &s[start + 1..end];
-                if let Some(c) = decode_entity(word) {
+                if let Some(c) = decode_entity(word, allow_uppercase_hex) {
                     buffer.push_js_char(c);
                 } else {
                     // Fallback
@@ -356,7 +364,7 @@ mod tests {
 
     fn decode<'a>(input: &str, allocator: &'a Allocator) -> Option<JSStr<'a>> {
         let mut acc = None;
-        decode_entities(input, &mut acc, input.len(), allocator);
+        decode_entities(input, &mut acc, input.len(), allocator, false);
         acc.map(JSStrBuilder::into_js_str)
     }
 
@@ -434,10 +442,11 @@ mod tests {
 
     #[test]
     fn single_entity() {
-        assert_eq!(decode_entity("amp"), Some(JSChar::from('&')));
-        assert_eq!(decode_entity("#xD800"), JSChar::from_u32(0xD800));
-        assert_eq!(decode_entity("#XD800"), None);
-        assert_eq!(decode_entity("#x110000"), None);
-        assert_eq!(decode_entity("nope"), None);
+        assert_eq!(decode_entity("amp", false), Some(JSChar::from('&')));
+        assert_eq!(decode_entity("#xD800", false), JSChar::from_u32(0xD800));
+        assert_eq!(decode_entity("#XD800", false), None);
+        assert_eq!(decode_entity("#XD800", true), JSChar::from_u32(0xD800));
+        assert_eq!(decode_entity("#x110000", false), None);
+        assert_eq!(decode_entity("nope", false), None);
     }
 }
