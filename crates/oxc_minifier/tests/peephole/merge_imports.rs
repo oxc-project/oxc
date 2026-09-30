@@ -1,6 +1,11 @@
 use crate::{test, test_same};
 
 #[test]
+fn preserve_source_imports() {
+    test_same("import source foo from 'foo'; import source bar from 'foo'; console.log(foo, bar);");
+}
+
+#[test]
 fn merge_imports() {
     test(
         "import { foo } from 'foo'; import { bar } from 'foo';",

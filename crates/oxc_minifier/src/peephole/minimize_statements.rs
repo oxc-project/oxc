@@ -137,6 +137,7 @@ impl<'a> PeepholeOptimizations {
     fn can_merge_imports(first: &ImportDeclaration<'a>, second: &ImportDeclaration<'a>) -> bool {
         if first.source.value != second.source.value
             || first.phase != second.phase
+            || first.phase == Some(ImportPhase::Source)
             || first.import_kind != second.import_kind
             || first.import_kind.is_type()
             || first.with_clause.content_ne(&second.with_clause)
