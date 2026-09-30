@@ -607,10 +607,6 @@ impl<'a> AstKind<'a> {
             Self::TSExternalModuleDeclaration(m) => {
                 debug_string("TSExternalModuleDeclaration", m.id.value).into()
             }
-            Self::TSModuleDeclarationAttributeClause(_) => {
-                "TSModuleDeclarationAttributeClause".into()
-            }
-            Self::TSModuleDeclarationAttribute(_) => "TSModuleDeclarationAttribute".into(),
             Self::TSNamespaceDeclaration(m) => format!("TSNamespaceDeclaration({})", m.id).into(),
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration".into(),
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),

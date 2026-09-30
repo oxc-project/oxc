@@ -2051,20 +2051,6 @@ impl GetSpan for TSExternalModuleDeclaration<'_> {
     }
 }
 
-impl GetSpan for TSModuleDeclarationAttributeClause<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for TSModuleDeclarationAttribute<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
 impl GetSpan for TSNamespaceDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {

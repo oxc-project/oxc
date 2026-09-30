@@ -1080,19 +1080,6 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_module_declaration_attribute_clause(
-        &mut self,
-        it: &TSModuleDeclarationAttributeClause<'a>,
-    ) {
-        walk_ts_module_declaration_attribute_clause(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_module_declaration_attribute(&mut self, it: &TSModuleDeclarationAttribute<'a>) {
-        walk_ts_module_declaration_attribute(self, it);
-    }
-
-    #[inline]
     fn visit_ts_namespace_declaration(&mut self, it: &TSNamespaceDeclaration<'a>) {
         walk_ts_namespace_declaration(self, it);
     }
@@ -1376,14 +1363,6 @@ pub trait Visit<'a>: Sized {
     #[inline]
     fn visit_ts_signatures(&mut self, it: &ArenaVec<'a, TSSignature<'a>>) {
         walk_ts_signatures(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_module_declaration_attributes(
-        &mut self,
-        it: &ArenaVec<'a, TSModuleDeclarationAttribute<'a>>,
-    ) {
-        walk_ts_module_declaration_attributes(self, it);
     }
 
     #[inline]
@@ -3944,7 +3923,7 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_string_literal(&it.id);
         if let Some(attributes) = &it.attributes {
-            visitor.visit_ts_module_declaration_attribute_clause(attributes);
+            visitor.visit_with_clause(attributes);
         }
         visitor.enter_scope(
             {
@@ -3960,31 +3939,6 @@ pub mod walk {
             visitor.visit_ts_module_block(body);
         }
         visitor.leave_scope();
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_ts_module_declaration_attribute_clause<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &TSModuleDeclarationAttributeClause<'a>,
-    ) {
-        let kind = AstKind::TSModuleDeclarationAttributeClause(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_span(&it.span);
-        visitor.visit_ts_module_declaration_attributes(&it.entries);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_ts_module_declaration_attribute<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &TSModuleDeclarationAttribute<'a>,
-    ) {
-        let kind = AstKind::TSModuleDeclarationAttribute(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_span(&it.span);
-        visitor.visit_import_attribute_key(&it.key);
-        visitor.visit_string_literal(&it.value);
         visitor.leave_node(kind);
     }
 
@@ -4609,16 +4563,6 @@ pub mod walk {
     ) {
         for el in it {
             visitor.visit_ts_signature(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_ts_module_declaration_attributes<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &ArenaVec<'a, TSModuleDeclarationAttribute<'a>>,
-    ) {
-        for el in it {
-            visitor.visit_ts_module_declaration_attribute(el);
         }
     }
 

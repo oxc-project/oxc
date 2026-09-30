@@ -426,10 +426,6 @@ impl<'a> ReplaceWith<'a> for TSTypePredicateName<'a> {}
 
 impl<'a> ReplaceWith<'a> for TSExternalModuleDeclaration<'a> {}
 
-impl<'a> ReplaceWith<'a> for TSModuleDeclarationAttributeClause<'a> {}
-
-impl<'a> ReplaceWith<'a> for TSModuleDeclarationAttribute<'a> {}
-
 impl<'a> ReplaceWith<'a> for TSNamespaceDeclaration<'a> {}
 
 impl<'a> ReplaceWith<'a> for TSNamespaceDeclarationBody<'a> {}
