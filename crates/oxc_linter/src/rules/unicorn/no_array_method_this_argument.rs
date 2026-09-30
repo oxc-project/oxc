@@ -145,7 +145,7 @@ fn is_node_not_function(expr: &Expression) -> bool {
         | Expression::NewExpression(_)
         | Expression::TaggedTemplateExpression(_)
         | Expression::ThisExpression(_) => true,
-        Expression::Identifier(ident) if ident.name == "undefined" => true,
+        Expression::Identifier(_) => expr.is_undefined(),
         Expression::CallExpression(call_expr) => {
             !is_method_call(call_expr, None, Some(&["bind"]), None, None)
         }
