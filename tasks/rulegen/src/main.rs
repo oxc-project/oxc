@@ -996,8 +996,8 @@ impl<'a> RuleConfig<'a> {
             "number" => Some(RuleConfigElement::Number),
             "integer" => Some(RuleConfigElement::Integer),
             "array" | "object" => None,
-            _ => {
-                self.log_error(&format!("Unhandled `type` value: {:?}", lit.value));
+            value => {
+                self.log_error(&format!("Unhandled `type` value: {value}"));
                 None
             }
         }
