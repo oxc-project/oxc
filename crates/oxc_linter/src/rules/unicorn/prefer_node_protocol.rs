@@ -73,12 +73,7 @@ impl Rule for PreferNodeProtocol {
         let Some((string_lit_value, span)) = string_lit_value_with_span else {
             return;
         };
-        let module_name = if let Some((prefix, postfix)) = string_lit_value.split_once('/') {
-            // `e.g. ignore "assert/"`
-            if postfix.is_empty() { string_lit_value.as_str() } else { prefix }
-        } else {
-            string_lit_value.as_str()
-        };
+        let module_name = string_lit_value.as_str();
         if module_name.starts_with("node:") || !is_nodejs_builtin_module(module_name) {
             return;
         }
@@ -107,6 +102,7 @@ fn test() {
         r#"import unicorn from "unicorn";"#,
         r#"import fs from "./fs";"#,
         r#"import fs from "unknown-builtin-module";"#,
+        r#"import { ADMIN_PATH } from "constants/url";"#,
         r#"import fs from "node:fs";"#,
         r#"import * as fs from "node:fs";"#,
         r#"import "punycode / ";"#,

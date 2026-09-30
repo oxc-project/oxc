@@ -13,6 +13,7 @@
 
 use std::borrow::Cow;
 
+use crate::diagnostics;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::OrderedMap;
 use rustc_hash::FxHashMap;
@@ -23,7 +24,6 @@ use oxc_allocator::CloneIn;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::AliasingEffect;
 use crate::react_compiler_hir::AliasingSignature;
 use crate::react_compiler_hir::ArrayElement;
@@ -184,7 +184,6 @@ pub fn infer_mutation_aliasing_effects<'a>(
 
     let mut context = Context {
         alloc: env.allocator,
-        interned_effects: FxHashMap::default(),
         instruction_signature_cache: FxHashMap::default(),
         catch_handlers: FxHashMap::default(),
         is_function_expression,
@@ -218,10 +217,7 @@ pub fn infer_mutation_aliasing_effects<'a>(
     while !queued_states.is_empty() {
         iteration_count += 1;
         if iteration_count > 100 {
-            return Err(ErrorCategory::Invariant.diagnostic(
-                "[InferMutationAliasingEffects] Potential infinite loop: \
-                 A value, temporary place, or effect was not cached properly",
-            ));
+            return Err(diagnostics::invariant_infer_mutation_aliasing_effects_potential_infinite_loop_value_temporary_place_or_effect_no());
         }
 
         // Collect block IDs to process in order
@@ -258,12 +254,7 @@ pub fn infer_mutation_aliasing_effects<'a>(
                     .unwrap_or_default();
                 let description =
                     format!("<unknown> {}${}{}", name, uninitialized_id.index(), type_str);
-                let diag = ErrorCategory::Invariant
-                    .diagnostic(
-                        "[InferMutationAliasingEffects] Expected value kind to be initialized",
-                    )
-                    .with_help(description)
-                    .with_labels(error_span.map(|s| s.label("this is uninitialized")));
+                let diag = diagnostics::uninitialized_value(description, error_span);
                 return Err(diag);
             }
 
@@ -367,23 +358,107 @@ impl ReasonSet {
 // InferenceState
 // =============================================================================
 
+/// Number of `ValueId`s a [`ValueIdSet`] holds before spilling to the heap.
+const VALUE_ID_INLINE_CAPACITY: usize = 5;
+
+/// An insertion-ordered set of `ValueId`s. The overwhelming majority of these
+/// sets contain at most five values, so keep those values inline.
+#[derive(Debug, Clone)]
+enum ValueIdSet {
+    Inline { items: [ValueId; VALUE_ID_INLINE_CAPACITY], len: u8 },
+    Spilled(Rc<SpilledValueIdSet>),
+}
+
+#[derive(Debug)]
+struct SpilledValueIdSet {
+    values: Vec<ValueId>,
+    members: FxHashSet<ValueId>,
+}
+
+impl Clone for SpilledValueIdSet {
+    fn clone(&self) -> Self {
+        let mut values = Vec::with_capacity(self.values.capacity());
+        values.extend_from_slice(&self.values);
+        Self { values, members: self.members.clone() }
+    }
+}
+
+impl Default for ValueIdSet {
+    fn default() -> Self {
+        Self::Inline { items: [ValueId(0); VALUE_ID_INLINE_CAPACITY], len: 0 }
+    }
+}
+
+impl ValueIdSet {
+    fn single(value: ValueId) -> Self {
+        let mut set = Self::default();
+        set.insert(value);
+        set
+    }
+
+    fn as_slice(&self) -> &[ValueId] {
+        match self {
+            Self::Inline { items, len } => &items[..usize::from(*len)],
+            Self::Spilled(set) => &set.values,
+        }
+    }
+
+    fn iter(&self) -> impl Iterator<Item = ValueId> + '_ {
+        self.as_slice().iter().copied()
+    }
+
+    fn contains(&self, value: ValueId) -> bool {
+        match self {
+            Self::Inline { .. } => self.as_slice().contains(&value),
+            Self::Spilled(set) => set.members.contains(&value),
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.as_slice().is_empty()
+    }
+
+    fn insert(&mut self, value: ValueId) {
+        if self.contains(value) {
+            return;
+        }
+        match self {
+            Self::Inline { items, len } if usize::from(*len) < VALUE_ID_INLINE_CAPACITY => {
+                items[usize::from(*len)] = value;
+                *len += 1;
+            }
+            Self::Inline { items, len } => {
+                let mut values = Vec::with_capacity(VALUE_ID_INLINE_CAPACITY * 2);
+                values.extend_from_slice(&items[..usize::from(*len)]);
+                values.push(value);
+                let members = values.iter().copied().collect();
+                *self = Self::Spilled(Rc::new(SpilledValueIdSet { values, members }));
+            }
+            Self::Spilled(set) => {
+                let set = Rc::make_mut(set);
+                set.members.insert(value);
+                set.values.push(value);
+            }
+        }
+    }
+
+    fn union_with(&mut self, other: &Self) {
+        for value in other.iter() {
+            self.insert(value);
+        }
+    }
+}
+
 /// The abstract state tracked during inference.
 /// The pass has exclusive access to each state (interior mutability only via
-/// the `uninitialized_access` Cell); the one shared piece is the immutable
-/// per-variable value sets (see `variables`).
+/// the `uninitialized_access` Cell).
 #[derive(Debug, Clone)]
 struct InferenceState {
     is_function_expression: bool,
     /// The kind of each value, based on its allocation site
     values: FxHashMap<ValueId, AbstractValue>,
-    /// The set of values pointed to by each identifier. The sets are shared via
-    /// `Rc`: every write to the map replaces the whole entry (sets are never
-    /// mutated in place), so state clones and assignments bump a refcount
-    /// instead of deep-copying each set. Shared sets iterate the very table a
-    /// deep clone would have copied; freshly built union/phi/singleton sets are
-    /// constructed by the same insert sequence as before. Either way iteration
-    /// order is unchanged.
-    variables: FxHashMap<IdentifierId, Rc<FxHashSet<ValueId>>>,
+    /// The set of values pointed to by each identifier.
+    variables: FxHashMap<IdentifierId, ValueIdSet>,
     /// Tracks uninitialized identifier access errors (matches TS invariant).
     /// Uses Cell so it can be set from `&self` methods like `kind()`.
     /// Stores (IdentifierId, usage_span) where usage_span is the source location
@@ -417,7 +492,7 @@ impl InferenceState {
         };
         let mut merged_kind: Option<AbstractValue> = None;
         for value_id in values.iter() {
-            let kind = match self.values.get(value_id) {
+            let kind = match self.values.get(&value_id) {
                 Some(k) => k,
                 None => continue,
             };
@@ -437,25 +512,22 @@ impl InferenceState {
     }
 
     fn define(&mut self, place_id: IdentifierId, value_id: ValueId) {
-        let mut set = FxHashSet::default();
-        set.insert(value_id);
-        self.variables.insert(place_id, Rc::new(set));
+        self.variables.insert(place_id, ValueIdSet::single(value_id));
     }
 
     fn assign(&mut self, into: IdentifierId, from: IdentifierId) {
         let values = match self.variables.get(&from) {
-            Some(v) => Rc::clone(v),
+            Some(v) => v.clone(),
             None => {
                 // Create a stable value for uninitialized identifiers
                 // Use a deterministic ID based on the from identifier
                 let vid = ValueId::from_identifier(from);
-                let mut set = FxHashSet::default();
-                set.insert(vid);
+                let set = ValueIdSet::single(vid);
                 self.values.entry(vid).or_insert_with(|| AbstractValue {
                     kind: ValueKind::Mutable,
                     reason: ReasonSet::single(ValueReason::Other),
                 });
-                Rc::new(set)
+                set
             }
         };
         self.variables.insert(into, values);
@@ -463,15 +535,14 @@ impl InferenceState {
 
     fn append_alias(&mut self, place: IdentifierId, value: IdentifierId) {
         let new_values = match self.variables.get(&value) {
-            Some(v) => Rc::clone(v),
+            Some(v) => v.clone(),
             None => return,
         };
-        let prev_values = match self.variables.get(&place) {
-            Some(v) => Rc::clone(v),
+        let prev_values = match self.variables.get_mut(&place) {
+            Some(v) => v,
             None => return,
         };
-        let merged: FxHashSet<ValueId> = prev_values.union(&new_values).copied().collect();
-        self.variables.insert(place, Rc::new(merged));
+        prev_values.union_with(&new_values);
     }
 
     fn is_defined(&self, place_id: IdentifierId) -> bool {
@@ -480,7 +551,7 @@ impl InferenceState {
 
     fn values_for(&self, place_id: IdentifierId) -> Vec<ValueId> {
         match self.variables.get(&place_id) {
-            Some(values) => values.iter().copied().collect(),
+            Some(values) => values.iter().collect(),
             None => Vec::new(),
         }
     }
@@ -550,7 +621,7 @@ impl InferenceState {
 
     fn merge(&self, other: &InferenceState) -> Option<InferenceState> {
         let mut next_values: Option<FxHashMap<ValueId, AbstractValue>> = None;
-        let mut next_variables: Option<FxHashMap<IdentifierId, Rc<FxHashSet<ValueId>>>> = None;
+        let mut next_variables: Option<FxHashMap<IdentifierId, ValueIdSet>> = None;
 
         // Merge values present in both
         for (id, this_value) in &self.values {
@@ -578,15 +649,16 @@ impl InferenceState {
                 && contributes_new_value(this_values, other_values)
             {
                 let nvars = next_variables.get_or_insert_with(|| self.variables.clone());
-                let merged: FxHashSet<ValueId> = this_values.union(other_values).copied().collect();
-                nvars.insert(*id, Rc::new(merged));
+                let mut merged = this_values.clone();
+                merged.union_with(other_values);
+                nvars.insert(*id, merged);
             }
         }
         // Add variables only in other
         for (id, other_values) in &other.variables {
             if !self.variables.contains_key(id) {
                 let nvars = next_variables.get_or_insert_with(|| self.variables.clone());
-                nvars.insert(*id, Rc::clone(other_values));
+                nvars.insert(*id, other_values.clone());
             }
         }
 
@@ -627,18 +699,14 @@ impl InferenceState {
         }
 
         for (id, other_values) in &other.variables {
-            match self.variables.get(id) {
-                Some(this_values) => {
-                    if contributes_new_value(this_values, other_values) {
-                        // Build the union as a fresh set exactly like `merge`, so
-                        // the resulting iteration order matches.
-                        let merged: FxHashSet<ValueId> =
-                            this_values.union(other_values).copied().collect();
-                        self.variables.insert(*id, Rc::new(merged));
+            match self.variables.entry(*id) {
+                std::collections::hash_map::Entry::Occupied(mut entry) => {
+                    if contributes_new_value(entry.get(), other_values) {
+                        entry.get_mut().union_with(other_values);
                     }
                 }
-                None => {
-                    self.variables.insert(*id, Rc::clone(other_values));
+                std::collections::hash_map::Entry::Vacant(entry) => {
+                    entry.insert(other_values.clone());
                 }
             }
         }
@@ -649,17 +717,17 @@ impl InferenceState {
     }
 
     fn infer_phi(&mut self, phi_place_id: IdentifierId, phi_operands: &OrderedMap<BlockId, Place>) {
-        let mut values: FxHashSet<ValueId> = FxHashSet::default();
+        let mut values = ValueIdSet::default();
         for (_, operand) in phi_operands {
             if let Some(operand_values) = self.variables.get(&operand.identifier) {
                 for v in operand_values.iter() {
-                    values.insert(*v);
+                    values.insert(v);
                 }
             }
             // If not found, it's a backedge that will be handled later by merge
         }
         if !values.is_empty() {
-            self.variables.insert(phi_place_id, Rc::new(values));
+            self.variables.insert(phi_place_id, values);
         }
     }
 }
@@ -668,10 +736,14 @@ fn is_superset(a: &ReasonSet, b: &ReasonSet) -> bool {
     a.0 & b.0 == b.0
 }
 
-/// Whether `other` holds a value that `this` lacks. The sets are immutable and
-/// shared, so an identical allocation can contribute nothing new.
-fn contributes_new_value(this: &Rc<FxHashSet<ValueId>>, other: &Rc<FxHashSet<ValueId>>) -> bool {
-    !Rc::ptr_eq(this, other) && other.iter().any(|value| !this.contains(value))
+/// Whether `other` holds a value that `this` lacks.
+fn contributes_new_value(this: &ValueIdSet, other: &ValueIdSet) -> bool {
+    if let (ValueIdSet::Spilled(this), ValueIdSet::Spilled(other)) = (this, other)
+        && Rc::ptr_eq(this, other)
+    {
+        return false;
+    }
+    other.iter().any(|value| !this.contains(value))
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -697,7 +769,6 @@ enum MutationResult {
 
 struct Context<'a> {
     alloc: &'a Allocator,
-    interned_effects: FxHashMap<EffectKey, AliasingEffect<'a>>,
     /// `Rc` so `apply_signature` can hold the signature while passing the
     /// context on mutably, without deep-cloning the effect list every time.
     instruction_signature_cache: FxHashMap<u32, Rc<InstructionSignature<'a>>>,
@@ -720,31 +791,6 @@ struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
-    fn intern_effect(&mut self, effect: AliasingEffect<'a>) -> AliasingEffect<'a> {
-        let incoming_diagnostic = match &effect {
-            AliasingEffect::MutateFrozen { error, .. }
-            | AliasingEffect::MutateGlobal { error, .. }
-            | AliasingEffect::Impure { error, .. } => Some(*error),
-            _ => None,
-        };
-        let key = effect_key(&effect);
-        let mut interned = self.interned_effects.entry(key).or_insert(effect).clone_in(self.alloc);
-
-        // Diagnostics carry source-specific instances that are not part of effect
-        // identity. Keep the canonical analysis effect, but preserve the instance
-        // from this occurrence for later emission.
-        if let Some(incoming_diagnostic) = incoming_diagnostic {
-            match &mut interned {
-                AliasingEffect::MutateFrozen { error, .. }
-                | AliasingEffect::MutateGlobal { error, .. }
-                | AliasingEffect::Impure { error, .. } => *error = incoming_diagnostic,
-                _ => unreachable!(),
-            }
-        }
-
-        interned
-    }
-
     /// Get or create a stable ValueId for a given effect, ensuring fixpoint convergence.
     fn get_or_create_value_id(&mut self, effect: &AliasingEffect) -> ValueId {
         let key = effect_key(effect);
@@ -760,12 +806,11 @@ struct InstructionSignature<'a> {
 // Helper: effect_key
 // =============================================================================
 
-/// Interning key for an `AliasingEffect`. Exactly the same fields participate in
-/// identity as in the string key this replaces — everything else (`Apply`'s
+/// Stable identity key for an `AliasingEffect`. Exactly the same fields participate
+/// as in the string key this replaces — everything else (`Apply`'s
 /// `signature`/`span`, `Mutate`'s `reason`, `Impure`'s `error`) is ignored — but
-/// building and hashing the key no longer allocates or runs the formatting
-/// machinery on the hot path (except for the rare error-carrying arms, which
-/// clone their message strings).
+/// building and hashing the key no longer runs the formatting machinery and keeps
+/// the variable-length fields inline for typical effects.
 #[derive(PartialEq, Eq, Hash)]
 enum EffectKey {
     Apply {
@@ -1249,12 +1294,10 @@ fn infer_block<'a>(
                             state.append_alias(handler_param.identifier, instr.lvalue.identifier);
                             let kind = state.kind(instr.lvalue.identifier).kind;
                             if kind == ValueKind::Mutable || kind == ValueKind::Context {
-                                terminal_effects.push(context.intern_effect(
-                                    AliasingEffect::Alias {
-                                        from: instr.lvalue,
-                                        into: handler_param,
-                                    },
-                                ));
+                                terminal_effects.push(AliasingEffect::Alias {
+                                    from: instr.lvalue,
+                                    into: handler_param,
+                                });
                             }
                         }
                         _ => {}
@@ -1279,10 +1322,10 @@ fn infer_block<'a>(
                     block_mut.terminal
                 {
                     *term_effects = Some(ArenaVec::from_array_in(
-                        [context.intern_effect(AliasingEffect::Freeze {
+                        [AliasingEffect::Freeze {
                             value: *value,
                             reason: ValueReason::JsxCaptured,
-                        })],
+                        }],
                         &alloc,
                     ));
                 }
@@ -1304,7 +1347,6 @@ fn apply_signature<'a>(
     instr: &Instruction<'a>,
     env: &mut Environment<'a>,
 ) -> Result<Option<Vec<AliasingEffect<'a>>>, OxcDiagnostic> {
-    let alloc = context.alloc;
     let mut effects: Vec<AliasingEffect<'a>> = Vec::new();
 
     // For function instructions, validate frozen mutation
@@ -1337,14 +1379,12 @@ fn apply_signature<'a>(
                             }
                             _ => "value".to_string(),
                         };
-                        let diagnostic = ErrorCategory::Immutability
-                            .diagnostic("This value cannot be modified")
-                            .with_help(reason_str)
-                            .with_labels(
-                                mutate_value
-                                    .span
-                                    .map(|s| s.label(format!("{} cannot be modified", variable))),
-                            );
+                        let diagnostic = diagnostics::immutable_value(
+                            reason_str,
+                            &variable,
+                            mutate_value.span,
+                            ident.span,
+                        );
                         let error =
                             env.intern_aliasing_diagnostic(mutate_value.identifier, diagnostic);
                         effects.push(AliasingEffect::MutateFrozen { place: *mutate_value, error });
@@ -1362,7 +1402,7 @@ fn apply_signature<'a>(
     let sig = Rc::clone(context.instruction_signature_cache.get(&instr_idx).unwrap());
 
     for effect in &sig.effects {
-        apply_effect(context, state, effect.clone_in(alloc), &mut initialized, &mut effects, env)?;
+        apply_effect_ref(context, state, effect, &mut initialized, &mut effects, env)?;
     }
 
     // If lvalue is not yet defined, initialize it with a default value.
@@ -1437,10 +1477,20 @@ fn apply_effect<'a>(
     effects: &mut Vec<AliasingEffect<'a>>,
     env: &mut Environment<'a>,
 ) -> Result<(), OxcDiagnostic> {
-    let effect = context.intern_effect(effect);
+    apply_effect_ref(context, state, &effect, initialized, effects, env)
+}
+
+fn apply_effect_ref<'a>(
+    context: &mut Context<'a>,
+    state: &mut InferenceState,
+    effect: &AliasingEffect<'a>,
+    initialized: &mut FxHashSet<IdentifierId>,
+    effects: &mut Vec<AliasingEffect<'a>>,
+    env: &mut Environment<'a>,
+) -> Result<(), OxcDiagnostic> {
     match effect {
-        AliasingEffect::Freeze { ref value, reason } => {
-            let did_freeze = state.freeze(value.identifier, reason);
+        AliasingEffect::Freeze { value, reason } => {
+            let did_freeze = state.freeze(value.identifier, *reason);
             if did_freeze {
                 effects.push(effect.clone_in(context.alloc));
                 // Transitively freeze FunctionExpression captures if enabled
@@ -1454,23 +1504,26 @@ fn apply_effect<'a>(
                     // closure through arbitrarily nested function captures.
                     let value_ids: Vec<ValueId> = state.values_for(value.identifier);
                     for vid in &value_ids {
-                        freeze_function_captures_transitive(state, context, env, *vid, reason);
+                        freeze_function_captures_transitive(state, context, env, *vid, *reason);
                     }
                 }
             }
         }
-        AliasingEffect::Create { ref into, value: kind, reason } => {
+        AliasingEffect::Create { into, value: kind, reason } => {
             assert!(
                 !initialized.contains(&into.identifier),
                 "[InferMutationAliasingEffects] Cannot re-initialize variable within an instruction"
             );
             initialized.insert(into.identifier);
-            let value_id = context.get_or_create_value_id(&effect);
-            state.initialize(value_id, AbstractValue { kind, reason: ReasonSet::single(reason) });
+            let value_id = context.get_or_create_value_id(effect);
+            state.initialize(
+                value_id,
+                AbstractValue { kind: *kind, reason: ReasonSet::single(*reason) },
+            );
             state.define(into.identifier, value_id);
             effects.push(effect.clone_in(context.alloc));
         }
-        AliasingEffect::ImmutableCapture { ref from, .. } => {
+        AliasingEffect::ImmutableCapture { from, .. } => {
             let kind = state.kind(from.identifier).kind;
             match kind {
                 ValueKind::Global | ValueKind::Primitive => {
@@ -1481,14 +1534,14 @@ fn apply_effect<'a>(
                 }
             }
         }
-        AliasingEffect::CreateFrom { ref from, ref into } => {
+        AliasingEffect::CreateFrom { from, into } => {
             assert!(
                 !initialized.contains(&into.identifier),
                 "[InferMutationAliasingEffects] Cannot re-initialize variable within an instruction"
             );
             initialized.insert(into.identifier);
             let from_value = state.kind(from.identifier);
-            let value_id = context.get_or_create_value_id(&effect);
+            let value_id = context.get_or_create_value_id(effect);
             state.initialize(
                 value_id,
                 AbstractValue { kind: from_value.kind, reason: from_value.reason },
@@ -1524,7 +1577,7 @@ fn apply_effect<'a>(
                 }
             }
         }
-        AliasingEffect::CreateFunction { ref captures, function_id, ref into } => {
+        AliasingEffect::CreateFunction { captures, function_id, into } => {
             assert!(
                 !initialized.contains(&into.identifier),
                 "[InferMutationAliasingEffects] Cannot re-initialize variable within an instruction"
@@ -1541,7 +1594,7 @@ fn apply_effect<'a>(
                 k == ValueKind::Context || k == ValueKind::Mutable
             });
 
-            let inner_func = &env.functions[function_id];
+            let inner_func = &env.functions[*function_id];
             let has_tracked_side_effects = inner_func
                 .aliasing_effects
                 .as_ref()
@@ -1579,7 +1632,7 @@ fn apply_effect<'a>(
                     || kind == ValueKind::Global
                 {
                     // Downgrade to Read - we need to mutate the inner function
-                    let inner_func_mut = &mut env.functions[function_id];
+                    let inner_func_mut = &mut env.functions[*function_id];
                     for ctx in &mut inner_func_mut.context {
                         if ctx.identifier == operand.identifier && ctx.effect == Effect::Capture {
                             ctx.effect = Effect::Read;
@@ -1588,9 +1641,9 @@ fn apply_effect<'a>(
                 }
             }
 
-            let value_id = context.get_or_create_value_id(&effect);
+            let value_id = context.get_or_create_value_id(effect);
             // Track this value as a function expression so Apply can look it up
-            context.function_values.insert(value_id, function_id);
+            context.function_values.insert(value_id, *function_id);
             state.initialize(
                 value_id,
                 AbstractValue {
@@ -1611,9 +1664,9 @@ fn apply_effect<'a>(
                 )?;
             }
         }
-        AliasingEffect::MaybeAlias { ref from, ref into }
-        | AliasingEffect::Alias { ref from, ref into }
-        | AliasingEffect::Capture { ref from, ref into } => {
+        AliasingEffect::MaybeAlias { from, into }
+        | AliasingEffect::Alias { from, into }
+        | AliasingEffect::Capture { from, into } => {
             let is_capture = matches!(effect, AliasingEffect::Capture { .. });
             let is_maybe_alias = matches!(effect, AliasingEffect::MaybeAlias { .. });
             // For Alias, destination must already be initialized (Capture/MaybeAlias are exempt)
@@ -1664,7 +1717,7 @@ fn apply_effect<'a>(
                 )?;
             }
         }
-        AliasingEffect::Assign { ref from, ref into } => {
+        AliasingEffect::Assign { from, into } => {
             assert!(
                 !initialized.contains(&into.identifier),
                 "[InferMutationAliasingEffects] Cannot re-initialize variable within an instruction"
@@ -1713,13 +1766,13 @@ fn apply_effect<'a>(
             }
         }
         AliasingEffect::Apply {
-            ref receiver,
-            ref function,
+            receiver,
+            function,
             mutates_function,
-            ref args,
-            ref into,
+            args,
+            into,
             signature,
-            ref span,
+            span,
         } => {
             // First, check if the callee is a locally-declared function expression
             // whose aliasing effects we already know (TS lines 1016-1068)
@@ -1785,17 +1838,8 @@ fn apply_effect<'a>(
                 if let Some(ref incompatible_msg) = sig.known_incompatible
                     && env.enable_validations()
                 {
-                    let diagnostic = ErrorCategory::IncompatibleLibrary
-                            .diagnostic("Use of incompatible library")
-                            .with_help(
-                                "This API returns functions which cannot be memoized without leading to stale UI. \
-                                 To prevent this, by default React Compiler will skip memoizing this component/hook. \
-                                 However, you may see issues if values from this API are passed to other components/hooks that are \
-                                 memoized",
-                            )
-                            .with_labels(
-                                receiver.span.map(|s| s.label(incompatible_msg.clone())),
-                            );
+                    let diagnostic =
+                        diagnostics::incompatible_library(incompatible_msg.clone(), receiver.span);
                     // TS throws here, aborting compilation for this function
                     return Err(diagnostic);
                 }
@@ -1911,7 +1955,7 @@ fn apply_effect<'a>(
                 }
             }
         }
-        ref eff @ (AliasingEffect::Mutate { .. }
+        eff @ (AliasingEffect::Mutate { .. }
         | AliasingEffect::MutateConditionally { .. }
         | AliasingEffect::MutateTransitive { .. }
         | AliasingEffect::MutateTransitiveConditionally { .. }) => {
@@ -1951,28 +1995,15 @@ fn apply_effect<'a>(
                     };
                     let hoisted_access =
                         context.hoisted_context_declarations.get(&decl_id).cloned().flatten();
-                    let mut diagnostic = ErrorCategory::Immutability
-                        .diagnostic("Cannot access variable before it is declared")
-                        .with_help(format!(
-                            "{} is accessed before it is declared, which prevents the earlier access from updating when this value changes over time",
-                            variable.as_deref().unwrap_or("This variable")
-                        ));
-                    if let Some(ref access) = hoisted_access
-                        && access.span != value.span
-                    {
-                        diagnostic.labels.extend(access.span.map(|s| {
-                            s.label(format!(
-                                "{} accessed before it is declared",
-                                variable.as_deref().unwrap_or("variable")
-                            ))
-                        }));
-                    }
-                    diagnostic.labels.extend(value.span.map(|s| {
-                        s.label(format!(
-                            "{} is declared here",
-                            variable.as_deref().unwrap_or("variable")
-                        ))
-                    }));
+                    let access_span = hoisted_access
+                        .as_ref()
+                        .filter(|access| access.span != value.span)
+                        .and_then(|access| access.span);
+                    let diagnostic = diagnostics::variable_accessed_before_declaration(
+                        variable.as_deref(),
+                        access_span,
+                        None,
+                    );
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     apply_effect(
                         context,
@@ -1990,12 +2021,8 @@ fn apply_effect<'a>(
                         }
                         _ => "value".to_string(),
                     };
-                    let diagnostic = ErrorCategory::Immutability
-                        .diagnostic("This value cannot be modified")
-                        .with_help(reason_str)
-                        .with_labels(
-                            value.span.map(|s| s.label(format!("{} cannot be modified", variable))),
-                        );
+                    let diagnostic =
+                        diagnostics::immutable_value(reason_str, &variable, value.span, ident.span);
 
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
@@ -2081,10 +2108,10 @@ fn compute_signature_for_instruction<'a>(
             effects.push(AliasingEffect::Capture { from: *await_value, into: *lvalue });
         }
         InstructionValue::TaggedTemplateExpression { tag, subexprs, span, .. } => {
-            // A tagged template is a function call whose first argument is the
-            // call-site's frozen template object, followed by the interpolated
-            // expressions. There is no HIR place for the implicit template object,
-            // so preserve its parameter position with a hole.
+            // A primitive return type does not imply that invoking the tag is pure. Always retain
+            // call/aliasing effects so mutations of captured values remain in the same scope. A
+            // later pass flattens the containing scope unless the configured function signature
+            // independently proves the call safe to memoize.
             let mut args = ArenaVec::new_in(&alloc);
             args.push(PlaceOrSpreadOrHole::Hole);
             args.extend(subexprs.iter().copied().map(PlaceOrSpreadOrHole::Place));
@@ -2382,15 +2409,7 @@ fn compute_signature_for_instruction<'a>(
         }
         InstructionValue::StoreGlobal { name, value: sg_value, .. } => {
             let variable = format!("`{}`", name);
-            let diagnostic = ErrorCategory::Globals
-                .diagnostic("Cannot reassign variables declared outside of the component/hook")
-                .with_help(format!(
-                    "Variable {} is declared outside of the component/hook. Reassigning this value during render is a form of side effect, which can cause unpredictable behavior depending on when the component happens to re-render. If this variable is used in rendering, use useState instead. Otherwise, consider updating it in an effect. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#side-effects-must-run-outside-of-render)",
-                    variable
-                ))
-                .with_labels(
-                    instr.span.map(|s| s.label(format!("{} cannot be reassigned", variable))),
-                );
+            let diagnostic = diagnostics::global_reassignment(&variable, instr.span);
             let error = env.intern_aliasing_diagnostic(sg_value.identifier, diagnostic);
             effects.push(AliasingEffect::MutateGlobal { place: *sg_value, error });
             effects.push(AliasingEffect::Assign { from: *sg_value, into: *lvalue });
@@ -2423,6 +2442,7 @@ fn compute_signature_for_instruction<'a>(
         // All primitive-creating instructions
         InstructionValue::BinaryExpression { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::JSXText { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::Primitive { .. }
@@ -2465,24 +2485,15 @@ fn compute_effects_for_legacy_signature<'a>(
         reason: return_value_reason,
     });
 
-    if signature.impure && env.config.validate_no_impure_functions_in_render {
-        let diagnostic = ErrorCategory::Purity
-            .diagnostic("Cannot call impure function during render")
-            .with_help(format!(
-                "{}Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent)",
-                if let Some(ref name) = signature.canonical_name {
-                    format!("`{}` is an impure function. ", name)
-                } else {
-                    String::new()
-                }
-            ))
-            .with_labels(span.copied().map(|s| s.label("Cannot call impure function")));
+    if signature.impure
+        && env.config.validate_no_impure_functions_in_render
+        && (!signature.impure_if_no_args || args.is_empty())
+    {
+        let diagnostic =
+            diagnostics::impure_function(signature.canonical_name.as_deref(), span.copied());
         let error = env.intern_aliasing_diagnostic(receiver.identifier, diagnostic);
         effects.push(AliasingEffect::Impure { place: *receiver, error });
     }
-
-    // TODO: check signature.known_incompatible and throw (TS line 2351-2370)
-    // This requires threading Result through apply_effect/apply_signature.
 
     // If the function is mutable only if operands are mutable, and all
     // arguments are immutable/non-mutating, short-circuit with simple aliasing.
@@ -2589,11 +2600,7 @@ fn get_argument_effect(
         // Spread with Freeze effect is unsupported for hook arguments
         // (matches TS CompilerError.throwTodo)
         let detail = if sig_effect == Effect::Freeze {
-            Some(
-                ErrorCategory::Todo
-                    .diagnostic("Support spread syntax for hook arguments")
-                    .with_labels(spread_span),
-            )
+            Some(diagnostics::todo_support_spread_syntax_hook_arguments(spread_span))
         } else {
             None
         };
@@ -2749,9 +2756,9 @@ fn compute_effects_for_aliasing_signature_config<'a>(
                 let values = substitutions.get(*value).cloned().unwrap_or_default();
                 for v in values {
                     if mutable_spreads.contains(&v.identifier) {
-                        return Err(ErrorCategory::Todo
-                            .diagnostic("Support spread syntax for hook arguments")
-                            .with_labels(v.span));
+                        return Err(diagnostics::todo_support_spread_syntax_hook_arguments_2(
+                            v.span,
+                        ));
                     }
                     effects.push(AliasingEffect::Freeze { value: v, reason: *reason });
                 }
@@ -2816,7 +2823,7 @@ fn compute_effects_for_aliasing_signature_config<'a>(
                 for v in values {
                     let error = env.intern_aliasing_diagnostic(
                         v.identifier,
-                        ErrorCategory::Purity.diagnostic("Impure function call"),
+                        diagnostics::purity_impure_function_call(),
                     );
                     effects.push(AliasingEffect::Impure { place: v, error });
                 }
@@ -3070,9 +3077,9 @@ fn compute_effects_for_aliasing_signature<'a>(
                 let values = substitutions.get(&value.identifier).cloned().unwrap_or_default();
                 for v in values {
                     if mutable_spreads.contains(&v.identifier) {
-                        return Err(ErrorCategory::Todo
-                            .diagnostic("Support spread syntax for hook arguments")
-                            .with_labels(v.span));
+                        return Err(diagnostics::todo_support_spread_syntax_hook_arguments_3(
+                            v.span,
+                        ));
                     }
                     effects.push(AliasingEffect::Freeze { value: v, reason: *reason });
                 }
@@ -3175,7 +3182,7 @@ fn get_write_error_reason(abstract_value: &AbstractValue) -> String {
         "Modifying a value returned from a function whose return value should not be mutated"
             .to_string()
     } else if abstract_value.reason.contains(&ValueReason::ReactiveFunctionArgument) {
-        "Modifying component props or hook arguments is not allowed. Consider using a local variable instead".to_string()
+        "Do not mutate component props or hook arguments. If the value should change, update it where it is owned and pass an update callback, or use local state".to_string()
     } else if abstract_value.reason.contains(&ValueReason::State) {
         "Modifying a value returned from 'useState()', which should not be modified directly. Use the setter function to update instead".to_string()
     } else if abstract_value.reason.contains(&ValueReason::ReducerState) {

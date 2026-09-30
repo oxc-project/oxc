@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGES: an explicit `...` after an empty document stays as-is (Prettier prints the empty body as a blank line); see DIVERGENCES.md#empty-document-end-marker
+...
+...
+---
+...
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGES: an explicit `...` after an empty document stays as-is (Prettier prints the empty body as a blank line); see DIVERGENCES.md#empty-document-end-marker
+...
+...
+---
+...
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGES: an explicit `...` after an empty document stays as-is (Prettier prints the empty body as a blank line); see DIVERGENCES.md#empty-document-end-marker
+...
+...
+---
+...
+
+===================== End =====================

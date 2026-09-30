@@ -78,9 +78,9 @@ function deserializeProgram(pos) {
       if (first.type === "ExportNamedDeclaration" || first.type === "ExportDefaultDeclaration") {
         let { declaration } = first;
         if (
-          declaration !== null &&
-          declaration.type === "ClassDeclaration" &&
-          declaration.decorators.length > 0
+          declaration !== null
+          && declaration.type === "ClassDeclaration"
+          && declaration.decorators.length > 0
         ) {
           let decoratorStart = declaration.decorators[0].start;
           decoratorStart < start && (start = decoratorStart);
@@ -588,9 +588,9 @@ function deserializeTemplateElement(pos) {
     start = deserializeI32(pos) - 1,
     end = deserializeI32(pos + 4) + 2 - tail,
     value = deserializeTemplateElementValue(pos + 16);
-  value.cooked !== null &&
-    deserializeBool(pos + 13) &&
-    (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
+  value.cooked !== null
+    && deserializeBool(pos + 13)
+    && (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
       String.fromCodePoint(parseInt(hex, 16)),
     ));
   return {
@@ -2327,12 +2327,13 @@ function deserializeFormalParameters(pos) {
         parent: previousParent,
       });
     rest.argument = deserializeBindingPattern(pos + 56);
+    rest.decorators = deserializeVecDecorator(pos + 16);
+    rest.decorators.length !== 0 && (start = rest.decorators[0].start);
     rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 72);
-    if (rest.typeAnnotation !== null) {
-      end = rest.typeAnnotation.end;
-      rest.end = end;
-      rest.range[1] = end;
-    }
+    rest.typeAnnotation !== null && (end = rest.typeAnnotation.end);
+    rest.start = start;
+    rest.end = end;
+    rest.range = [start, end];
     params.push(rest);
     parent = previousParent;
   }
@@ -3050,9 +3051,9 @@ function deserializeExportDeclaration(pos) {
     declaration = deserializeDeclaration(pos + 16);
   node.declaration = declaration;
   node.exportKind =
-    declaration.declare === true ||
-    declaration.type === "TSTypeAliasDeclaration" ||
-    declaration.type === "TSInterfaceDeclaration"
+    declaration.declare === true
+    || declaration.type === "TSTypeAliasDeclaration"
+    || declaration.type === "TSInterfaceDeclaration"
       ? "type"
       : "value";
   parent = previousParent;
@@ -3365,8 +3366,10 @@ function deserializeStringLiteral(pos) {
       parent,
     }),
     value = deserializeStr(pos + 16);
-  deserializeBool(pos + 12) &&
-    (value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16))));
+  deserializeBool(pos + 12)
+    && (value = value.replace(/\uFFFD(.{4})/g, (_, hex) =>
+      String.fromCodePoint(parseInt(hex, 16)),
+    ));
   node.value = value;
   parent = previousParent;
   return node;
@@ -5755,6 +5758,10 @@ function deserializeCommentKind(pos) {
       return "Block";
     case 2:
       return "Block";
+    case 3:
+      return "Line";
+    case 4:
+      return "Line";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for CommentKind`);
   }
@@ -5763,10 +5770,11 @@ function deserializeCommentKind(pos) {
 function deserializeComment(pos) {
   let type = deserializeCommentKind(pos + 12),
     start = deserializeI32(pos),
-    end = deserializeI32(pos + 4);
+    end = deserializeI32(pos + 4),
+    kind = deserializeU8(pos + 12);
   return {
     type,
-    value: sourceText.slice(start + 2, end - (type === "Line" ? 0 : 2)),
+    value: sourceText.slice(start + (kind < 3 ? 2 : kind), end - (type === "Line" ? 0 : 2)),
     start,
     end,
     range: [start, end],

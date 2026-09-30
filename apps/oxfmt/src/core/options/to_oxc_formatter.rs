@@ -3,8 +3,8 @@ use oxc_formatter::SortTailwindcssOptions;
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CommentLineStrategy,
     CustomGroupDefinition, Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
-    JsdocOptions, LineWrappingStyle, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions,
-    SortOrder, TrailingCommas,
+    JsdocOptions, LineWrappingStyle, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
+    SortImportsOptions, SortOrder, TrailingCommas,
 };
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
@@ -13,8 +13,8 @@ use super::super::oxfmtrc::SortTailwindcssUserConfig;
 use super::super::oxfmtrc::{
     ArrowParensConfig, CommentLineStrategyConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
     ImportModifierConfig, ImportSelectorConfig, JsdocUserConfig, LineWrappingStyleConfig,
-    ObjectWrapConfig, QuotePropsConfig, SortGroupItemConfig, SortImportsUserConfig,
-    SortOrderConfig, TrailingCommaConfig,
+    ObjectWrapConfig, OperatorPositionConfig, QuotePropsConfig, SortGroupItemConfig,
+    SortImportsUserConfig, SortOrderConfig, TrailingCommaConfig,
 };
 
 /// Convert `FormatConfig` into `JsFormatOptions` for `oxc_formatter`.
@@ -29,10 +29,8 @@ pub fn to_oxc_formatter(
     let mut format_options = JsFormatOptions::default();
     format_options.apply_core(core_options);
 
-    // NOTE: Not yet supported options:
-    // [Prettier] experimentalOperatorPosition: "start" | "end"
-    // [Prettier] experimentalTernaries: boolean
-    // These are rejected at deserialize time so they never reach here.
+    // NOTE: [Prettier] experimentalTernaries is not yet supported;
+    // rejected at deserialize time (`oxfmtrc::reject_experimental_ternaries`) so it never reaches here.
 
     // [Prettier] singleQuote: boolean
     if let Some(single_quote) = config.single_quote {
@@ -101,6 +99,14 @@ pub fn to_oxc_formatter(
         format_options.expand = match object_wrap {
             ObjectWrapConfig::Preserve => Expand::Auto,
             ObjectWrapConfig::Collapse => Expand::Never,
+        };
+    }
+
+    // [Prettier] experimentalOperatorPosition: "start" | "end"
+    if let Some(position) = config.experimental_operator_position {
+        format_options.operator_position = match position {
+            OperatorPositionConfig::Start => OperatorPosition::Start,
+            OperatorPositionConfig::End => OperatorPosition::End,
         };
     }
 

@@ -15,13 +15,14 @@ mod test262_status;
 use std::{
     io::{self, BufRead, BufReader},
     process::{Child, Command, Stdio},
+    sync::LazyLock,
     thread,
 };
 
 use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions},
-    minifier::{Minifier, MinifierOptions},
+    minifier::{ManglePropertiesOptions, Minifier, MinifierOptions},
     parser::Parser,
     semantic::SemanticBuilder,
     span::SourceType,
@@ -104,6 +105,22 @@ static SKIP_MINIFIER_TEST_CASES: &[&str] = &[
     "language/statements/class/definition/prototype-setter.js",
     "language/statements/class/subclass/superclass-arrow-function.js",
 ];
+
+// Property mangling cannot see keys inside dynamic code or link globals to properties.
+static SKIP_PROPERTY_MANGLE_TEST_CASES: &[&str] = &[
+    "language/expressions/class/private-static-setter-multiple-evaluations-of-class-function-ctor.js",
+    "language/statements/variable/S12.2_A11.js",
+];
+
+static PROPERTY_MANGLE_OPTIONS: LazyLock<ManglePropertiesOptions> = LazyLock::new(|| {
+    let mut options = ManglePropertiesOptions::from_pattern("^_").expect("valid property regex");
+    options.mangle_quoted = true;
+    // These methods come from the host, so their names cannot change.
+    for name in ["__defineGetter__", "__defineSetter__", "__lookupGetter__", "__lookupSetter__"] {
+        options.reserved.insert(name.into());
+    }
+    options
+});
 
 static SKIP_ESID: &[&str] = &["sec-privatefieldget", "sec-privatefieldset"];
 
@@ -329,7 +346,7 @@ fn run_test_code(
 /// Produce the executable code for a single variant.
 ///
 /// * `transform` runs the full transformer pipeline (down-levelling syntax).
-/// * `minify` runs the compressor (without mangling) and prints minified output.
+/// * `minify` runs the compressor and property mangler, then prints minified output.
 fn get_code(file: &Test262File, transform: bool, minify: bool) -> String {
     let source_text = file.code.as_str();
     let flags = &file.meta.flags;
@@ -350,9 +367,13 @@ fn get_code(file: &Test262File, transform: bool, minify: bool) -> String {
     }
 
     let scoping = if minify {
-        Minifier::new(MinifierOptions { mangle: None, ..MinifierOptions::default() })
-            .minify(&allocator, &mut program)
-            .scoping
+        Minifier::new(MinifierOptions {
+            mangle: None,
+            mangle_properties: property_mangle_options(file),
+            ..MinifierOptions::default()
+        })
+        .minify(&allocator, &mut program)
+        .scoping
     } else {
         None
     };
@@ -369,6 +390,16 @@ fn get_code(file: &Test262File, transform: bool, minify: bool) -> String {
         text = format!("{text}\n export {{}}");
     }
     text
+}
+
+fn property_mangle_options(file: &Test262File) -> Option<ManglePropertiesOptions> {
+    let path = file.path.to_string_lossy();
+    let path = path.trim_start_matches("test262/test/");
+    if SKIP_PROPERTY_MANGLE_TEST_CASES.contains(&path) {
+        return None;
+    }
+
+    Some(PROPERTY_MANGLE_OPTIONS.clone())
 }
 
 /// Decide whether a case is ineligible for runtime execution.

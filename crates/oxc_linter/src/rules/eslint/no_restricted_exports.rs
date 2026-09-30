@@ -18,7 +18,7 @@ use oxc_span::Span;
 
 use crate::{
     AstNode,
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::deserialize_regex_option,
 };
@@ -199,14 +199,25 @@ enum LocalFromSpecifier {
 
 impl Rule for NoRestrictedExports {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .map(DefaultRuleConfig::into_inner)
-            .map(|mut c| {
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner).map(
+            |mut c| {
                 // Cache if "default" is in restricted_named_exports
                 c.has_default_restricted_named_export =
                     c.restricted_named_exports.contains("default");
                 c
-            })
+            },
+        )
+    }
+
+    fn should_run(&self, _ctx: &ContextHost) -> bool {
+        let defaults = &self.restrict_default_exports;
+        !self.restricted_named_exports.is_empty()
+            || self.restricted_named_exports_pattern.is_some()
+            || defaults.default_from
+            || defaults.direct
+            || defaults.named
+            || defaults.named_from
+            || defaults.namespace_from
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -148,7 +148,7 @@ impl DiagnosticService {
         let supports_minified_file_fallback = self.reporter.supports_minified_file_fallback();
 
         while let Ok(diagnostics) = self.receiver.recv() {
-            let mut is_minified = false;
+            let mut diagnostics_to_render = Vec::with_capacity(diagnostics.len());
             for diagnostic in diagnostics {
                 match diagnostic.severity() {
                     Some(Severity::Warning) => {
@@ -164,40 +164,51 @@ impl DiagnosticService {
                     Some(Severity::Advice) => {}
                 }
 
-                if self.silent || is_minified {
-                    continue;
+                if !self.silent {
+                    diagnostics_to_render.push(diagnostic);
                 }
+            }
 
-                let path = diagnostic
-                    .source_code()
-                    .and_then(|source| source.name())
-                    .map(ToString::to_string);
+            if diagnostics_to_render.is_empty() {
+                continue;
+            }
 
-                if let Some(err_str) = self.reporter.render_error(diagnostic) {
-                    // Skip large output and print only once.
-                    // Setting to 1200 because graphical output may contain ansi escape codes and other decorations.
-                    if supports_minified_file_fallback
-                        && err_str.lines().any(|line| line.len() >= 1200)
-                    {
-                        let mut diagnostic =
-                            OxcDiagnostic::warn("File is too long to fit on the screen");
-                        if let Some(path) = path {
-                            diagnostic =
-                                diagnostic.with_help(format!("{path} seems like a minified file"));
-                        }
-
-                        let minified_diagnostic = diagnostic.into();
-
-                        if let Some(err_str) = self.reporter.render_error(minified_diagnostic) {
+            let mut is_minified = false;
+            let mut path = None;
+            if supports_minified_file_fallback {
+                self.reporter.render_errors_until(
+                    diagnostics_to_render,
+                    &mut |source_name, rendered| {
+                        // Setting to 1200 because graphical output may contain ansi escape codes
+                        // and other decorations.
+                        if rendered.lines().any(|line| line.len() >= 1200) {
+                            is_minified = true;
+                            path = source_name.map(ToString::to_string);
+                            false
+                        } else {
                             writer
-                                .write_all(err_str.as_bytes())
+                                .write_all(rendered.as_bytes())
                                 .or_else(Self::check_for_writer_error)
                                 .unwrap();
+                            true
                         }
-                        is_minified = true;
-                        continue;
-                    }
+                    },
+                );
+            } else {
+                self.reporter.render_errors(diagnostics_to_render, &mut |rendered| {
+                    writer
+                        .write_all(rendered.as_bytes())
+                        .or_else(Self::check_for_writer_error)
+                        .unwrap();
+                });
+            }
 
+            if is_minified {
+                let mut diagnostic = OxcDiagnostic::warn("File is too long to fit on the screen");
+                if let Some(path) = path {
+                    diagnostic = diagnostic.with_help(format!("{path} seems like a minified file"));
+                }
+                if let Some(err_str) = self.reporter.render_error(diagnostic.into()) {
                     writer
                         .write_all(err_str.as_bytes())
                         .or_else(Self::check_for_writer_error)
@@ -330,10 +341,16 @@ fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{
+        path::PathBuf,
+        sync::{
+            Arc, Mutex,
+            atomic::{AtomicUsize, Ordering},
+        },
+    };
 
     use crate::{
-        Error, OxcDiagnostic,
+        Error, NamedSource, OxcDiagnostic,
         reporter::{DiagnosticReporter, DiagnosticResult},
         service::from_file_path,
     };
@@ -441,5 +458,100 @@ mod tests {
         let output = String::from_utf8(output).unwrap();
 
         assert_eq!(output, format!("{}\n", "x".repeat(1200)));
+    }
+
+    struct BatchReporter(Arc<Mutex<Vec<usize>>>);
+
+    impl DiagnosticReporter for BatchReporter {
+        fn finish(&mut self, _result: &DiagnosticResult) -> Option<String> {
+            None
+        }
+
+        fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+            self.0.lock().unwrap().push(errors.len());
+            let output =
+                errors.into_iter().map(|error| error.to_string()).collect::<Vec<_>>().join(",");
+            emit(&output);
+        }
+
+        fn supports_minified_file_fallback(&self) -> bool {
+            false
+        }
+
+        fn render_error(&mut self, _error: Error) -> Option<String> {
+            None
+        }
+    }
+
+    #[test]
+    fn renders_a_filtered_batch() {
+        let batch_sizes = Arc::new(Mutex::new(Vec::new()));
+        let (service, sender) =
+            DiagnosticService::new(Box::new(BatchReporter(Arc::clone(&batch_sizes))));
+        let mut service = service.with_quiet(true);
+        sender
+            .send(vec![
+                OxcDiagnostic::warn("hidden warning").into(),
+                OxcDiagnostic::error("visible error").into(),
+            ])
+            .unwrap();
+        drop(sender);
+
+        let mut output = Vec::new();
+        let result = service.run(&mut output);
+
+        assert_eq!(String::from_utf8(output).unwrap(), "visible error");
+        assert_eq!(*batch_sizes.lock().unwrap(), [1]);
+        assert_eq!(result.warnings_count(), 1);
+        assert_eq!(result.errors_count(), 1);
+    }
+
+    struct MinifiedBatchReporter(Arc<AtomicUsize>);
+
+    impl DiagnosticReporter for MinifiedBatchReporter {
+        fn finish(&mut self, _result: &DiagnosticResult) -> Option<String> {
+            None
+        }
+
+        fn render_error(&mut self, error: Error) -> Option<String> {
+            let message = error.to_string();
+            if message == "File is too long to fit on the screen" {
+                Some(format!("{message}: {}\n", error.help().unwrap_or_default()))
+            } else {
+                self.0.fetch_add(1, Ordering::Relaxed);
+                Some(if message == "second" {
+                    format!("{}\n", "x".repeat(1200))
+                } else {
+                    format!("{message}\n")
+                })
+            }
+        }
+    }
+
+    #[test]
+    fn stops_an_oversized_batch_at_the_minified_file_diagnostic() {
+        let rendered = Arc::new(AtomicUsize::new(0));
+        let (mut service, sender) =
+            DiagnosticService::new(Box::new(MinifiedBatchReporter(Arc::clone(&rendered))));
+        sender
+            .send(vec![
+                OxcDiagnostic::warn("first")
+                    .with_source_code(NamedSource::new("normal.js", "source")),
+                OxcDiagnostic::warn("second")
+                    .with_source_code(NamedSource::new("minified.js", "source")),
+                OxcDiagnostic::warn("third").into(),
+            ])
+            .unwrap();
+        drop(sender);
+
+        let mut output = Vec::new();
+        let result = service.run(&mut output);
+
+        assert_eq!(
+            String::from_utf8(output).unwrap(),
+            "first\nFile is too long to fit on the screen: minified.js seems like a minified file\n"
+        );
+        assert_eq!(rendered.load(Ordering::Relaxed), 2);
+        assert_eq!(result.warnings_count(), 3);
     }
 }

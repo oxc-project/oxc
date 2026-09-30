@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- 8fbddb1 formatter/jsdoc: More alignment with original plugin (#27039) (leaysgur)
+
 ## [0.143.0] - 2026-08-03
 
 ### 💥 BREAKING CHANGES

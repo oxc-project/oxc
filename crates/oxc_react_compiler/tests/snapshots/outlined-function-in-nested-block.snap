@@ -1,0 +1,35 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/outlined-function-in-nested-block.js
+---
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode:"infer"
+import { useEffect } from "react";
+// Like outlined-function-in-nested-declaration, but the compiled component sits
+// in a block statement: the outlined callback is inserted into that block,
+// mirroring Babel `insertAfter` on the enclosing statement list.
+export function makeProbe(flag) {
+	let mounts = 0;
+	if (flag) {
+		function MountCounter() {
+			const $ = _c(1);
+			let t0;
+			if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+				t0 = [];
+				$[0] = t0;
+			} else {
+				t0 = $[0];
+			}
+			useEffect(_temp, t0);
+			return null;
+		}
+		function _temp() {
+			mounts = mounts + 1;
+		}
+		return {
+			MountCounter,
+			read: () => mounts
+		};
+	}
+	return null;
+}

@@ -19,9 +19,9 @@ import { rawTransferSupported } from "./supported.js";
 // `experimentalRawTransfer` or `experimentalLazy` options, or calls `experimentalGetLazyVisitor`.
 if (!rawTransferSupported()) {
   throw new Error(
-    "`experimentalRawTransfer` and `experimentalLazy` options are not supported " +
-      "on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, " +
-      "versions of Deno prior to v2.0.0, or other runtimes",
+    "`experimentalRawTransfer` and `experimentalLazy` options are not supported "
+      + "on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, "
+      + "versions of Deno prior to v2.0.0, or other runtimes",
   );
 }
 
@@ -110,7 +110,7 @@ export async function parseAsyncRawImpl(filename, sourceText, options, convert) 
   // happen repeatedly, with the number of tasks running simultaneously ever-increasing.
   if (availableCores === 0) {
     // All CPU cores are busy. Put this task in queue and wait for capacity to become available.
-    await new Promise((resolve, _) => {
+    await new Promise((resolve, _reject) => {
       queue.push(resolve);
     });
   } else {

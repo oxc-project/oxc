@@ -53,6 +53,14 @@ impl<'alloc> CloneIn<'alloc> for NodeId {
 
 impl SemanticId for NodeId {}
 
+/// Get the [`NodeId`] of given AST node.
+///
+/// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+pub trait GetNodeId {
+    /// Get the [`NodeId`] for an AST node.
+    fn node_id(&self) -> NodeId;
+}
+
 bitflags! {
     /// Contains additional information about an AST node.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

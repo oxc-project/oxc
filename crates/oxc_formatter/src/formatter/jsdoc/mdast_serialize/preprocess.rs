@@ -58,10 +58,10 @@ pub(super) fn normalize_legacy_ordered_list_markers(text: &str) -> Cow<'_, str> 
     if changed { Cow::Owned(result) } else { Cow::Borrowed(text) }
 }
 
-/// Convert `* ` list markers at the start of lines to `- ` to prevent the markdown
-/// parser from treating them as emphasis markers. In CommonMark, `* text` after a
-/// paragraph is emphasis (italic), not a list item. Converting to `- ` makes the
-/// markdown parser correctly recognize these as unordered list items.
+/// Convert `* ` list markers at the start of lines to `- `.
+/// `*` is ambiguous (bullet vs emphasis delimiter);
+/// rewriting to the unambiguous `- ` before parsing keeps the marker a list item in every position
+/// and matches the serializer's bullet style, so the output is stable across passes.
 pub(super) fn convert_star_list_markers(text: &str) -> Cow<'_, str> {
     if !text.contains("* ") {
         return Cow::Borrowed(text);
@@ -80,56 +80,6 @@ pub(super) fn convert_star_list_markers(text: &str) -> Cow<'_, str> {
             result.push_str(&line[..leading]);
             result.push_str("- ");
             result.push_str(after_star);
-            changed = true;
-        } else {
-            result.push_str(line);
-        }
-    }
-
-    if changed { Cow::Owned(result) } else { Cow::Borrowed(text) }
-}
-
-/// Escape `+ ` at the start of continuation lines (lines preceded by a non-empty line)
-/// to prevent the markdown parser from treating them as unordered list markers.
-/// This handles cases like `min\n+ spacing` in JSDoc where `+` is an arithmetic operator.
-pub(super) fn escape_false_list_markers(text: &str) -> Cow<'_, str> {
-    // Fast path: no `+ ` in text
-    if !text.contains("+ ") {
-        return Cow::Borrowed(text);
-    }
-
-    let lines: Vec<&str> = text.lines().collect();
-    let mut result = String::with_capacity(text.len());
-    let mut changed = false;
-
-    for (i, line) in lines.iter().enumerate() {
-        if i > 0 {
-            result.push('\n');
-        }
-
-        let trimmed = line.trim_start();
-        // Only escape `+ ` when:
-        // 1. Line starts with `+ ` (after indent)
-        // 2. Previous line is non-empty (it's a continuation, not a new block)
-        // 3. Previous line is NOT a list item (so we don't escape real list sequences)
-        let prev_is_list_item = i > 0 && {
-            let prev = lines[i - 1].trim_start();
-            prev.starts_with("+ ")
-                || prev.starts_with("- ")
-                || prev.starts_with("* ")
-                || prev.strip_prefix(|c: char| c.is_ascii_digit()).is_some_and(|r| {
-                    r.trim_start_matches(|c: char| c.is_ascii_digit()).starts_with(". ")
-                })
-        };
-        if trimmed.starts_with("+ ")
-            && i > 0
-            && !lines[i - 1].trim().is_empty()
-            && !prev_is_list_item
-        {
-            let leading = line.len() - trimmed.len();
-            result.push_str(&line[..leading]);
-            result.push_str("\\+ ");
-            result.push_str(&trimmed[2..]);
             changed = true;
         } else {
             result.push_str(line);

@@ -17,10 +17,19 @@ The `oxfmt` implemented under this directory serves several purposes.
   - Entry point: `main()` in `src/main.rs`
   - Build with `cargo build --no-default-features`
 - Node.js API using napi-rs
+  - Caller-supplied options, no config discovery
   - Entry point: `src-js/index.ts` which uses `format()` from `src/main_napi.rs`
   - Build with `pnpm build`
 
-When making changes, consider the impact on all paths.
+Cross-cutting behavior is applied through several entry points:
+
+- CLI: `src/cli/walk_runner.rs` and `src/cli/walk.rs`
+- Stdin: `src/cli/stdin_runner.rs`
+- LSP: `src/lsp/server_formatter.rs`
+- NAPI direct-document API: `src/api/format_api.rs`
+- NAPI `textToDoc()` API for `prettier-plugin-oxfmt`: `src/api/text_to_doc_api.rs`
+
+Check the relevant path before assuming that behavior is shared across entry points.
 
 ### Platform considerations
 
@@ -33,7 +42,28 @@ When working with file paths in CLI code, be aware of Windows path differences:
   - Avoid hardcoding `/` as a path separator; prefer `Path::join()`
   - Windows uses `\` as a path separator and has drive letter prefixes (e.g., `C:\`)
 
-### Formatter implementations
+## CLI implementations
+
+Oxfmt shares code with Oxlint (`apps/oxlint`) regarding its CLI implementation.
+
+- Rust implementation: `crates/oxc_config`
+- JS implementation: `apps/shared`
+
+### Ignore architecture
+
+Ignore handling is intentionally split across entry points.
+Use the entry-point map above; keep detailed behavior and rationale next to the relevant implementation and tests.
+
+The stable distinction is:
+
+- Formatter-owned ignores control formatting eligibility where the entry point supports them
+  - These include `.prettierignore`, CLI `--ignore-path`, `!` patterns and config `ignorePatterns`
+  - They exclude an explicitly requested document
+- Git-derived ignores scope filesystem discovery
+  - `.gitignore` and `.git/info/exclude`
+  - They do not exclude an explicitly requested document
+
+## Formatter implementations
 
 Oxfmt utilizes different implementations depending on the file extension and filename:
 
@@ -44,7 +74,22 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
-#### Embedded language formatting
+### Divergence vs Prettier
+
+Known divergences live in DIVERGENCES.md (embedding / dispatch layer only); single-language ones live in the owning crate's.
+
+- The pin is a minimal repro in `conformance/fixtures/edge-cases/`
+- `conformance/run.ts` derives the file-to-entry map from every `DIVERGENCES.md` (this one's `Pin:` / `Conformance:`, the crates' `Oxfmt:`), prints the ref next to each failure,
+  and warns on a failure no entry lists (unclassified) and on a listed file that passes (stale)
+- All current entries are embedding-layer decisions that outlive the Prettier delegation;
+  if an entry about the Prettier-fallback boundary itself is ever added, group it under a separate heading in DIVERGENCES.md so the removal scope stays obvious when the fallback goes away
+
+Conformance failures (`conformance/snapshots/`) no entry accounts for, to fix rather than admit:
+
+- `jsdoc`: `externals/svelte/compiler/print/index.js`
+  - `if (!(a && b))` hugs `!(` to the head paren since prettier/prettier#18401, not ported yet (Prettier conformance `js/if/condition-break/unary-expression.js`; unrelated to JSDoc)
+
+### Embedded language formatting
 
 Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`.
 Routing is ONE table (`dispatcher::route`): `Native` languages (css/graphql/yaml/json/...) get a Rust branch, the `Prettier` set (html/angular/markdown) goes to the Prettier Doc→IR channel (`embed/prettier_doc.rs`, napi only), everything else is deliberately preserved.
@@ -71,7 +116,7 @@ A separate string-out channel (the session's `string_embedder` service, NOT the 
 NOTE: The string-out channel outlives the md/html/angular rewrites; its full exit criterion is owned by `oxc_formatter_core`'s AGENTS.md (domain (4)).
 The half owned here: JSDoc's string-out is NOT structural, fences can move to IR-out (session dispatch inside the comment IR) once the printer grows a per-line prefix mechanism for the `*` continuation, deferred for verification time, not by design.
 
-#### Tailwind CSS class sorting
+### Tailwind CSS class sorting
 
 Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
 
@@ -85,17 +130,6 @@ each embed site consumes the doc via `DispatchPayload::into_doc(collector)`, whi
 
 The four data paths (JS/TS top-level / standalone CSS / embedded CSS / JSDoc fenced CSS) are documented at `embed::services::for_root` (napi definition).
 No CSS goes to Prettier for this; the pure Rust build never collects at all (both mappers gate collection behind napi, since no sorter exists there).
-
-Consequently, managing these various formatter implementations and handling their respective options are also part of Oxfmt's responsibilities.
-
-### CLI implementations
-
-Oxfmt shares code with Oxlint regarding its CLI implementation.
-
-- Rust implementation: `crates/oxc_config`
-- JS implementation: `apps/shared`
-
-Please exercise extra caution when making changes to these files.
 
 ## Verification
 
@@ -146,8 +180,6 @@ node ./node_modules/prettier/bin/prettier.cjs --config=fmt.json <file>
 ```
 
 ## Test organization (`test/` directory)
-
-Tests are organized into specific domains, each with its own structure.
 
 ### `test/api/`: Formatting result tests
 

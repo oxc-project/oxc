@@ -49,7 +49,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferExpectAssertions {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<PreferExpectAssertionsConfig>>(value)
+        DefaultRuleConfig::<PreferExpectAssertionsConfig>::from_value(value)
             .map(|c| Self(Box::new(c.into_inner())))
     }
 

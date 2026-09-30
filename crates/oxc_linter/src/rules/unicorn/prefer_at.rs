@@ -31,6 +31,14 @@ fn prefer_at_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
+fn prefer_at_over_substring_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Prefer `String#at()` over `String#substring()` when getting one character.",
+    )
+    .with_help("Use `.at()` for index access.")
+    .with_label(span)
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct PreferAt(Box<PreferAtConfig>);
 
@@ -61,6 +69,7 @@ declare_oxc_lint!(
     /// methods for index access.
     ///
     /// This rule also discourages using [`String#charAt()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt).
+    /// It also checks `String#substring()` calls that extract a single character.
     ///
     /// ### Why is this bad?
     ///
@@ -85,7 +94,7 @@ declare_oxc_lint!(
     PreferAt,
     unicorn,
     pedantic,
-    dangerous_fix,
+    dangerous_fix_suggestion,
     config = PreferAtConfig,
     version = "1.20.0",
     short_description = "Prefer the `Array#at()` and `String#at()` methods for index access.",
@@ -245,6 +254,7 @@ impl PreferAt {
             "charAt" => {
                 Self::check_char_at(call_expr, static_member, ctx, self.check_all_index_access);
             }
+            "substring" => Self::check_substring(call_expr, static_member, ctx),
             "pop" | "shift" => Self::check_slice_pop_shift(call_expr, static_member, ctx),
             "last" => {
                 check_lodash_last(&self.get_last_element_functions, call_expr, static_member, ctx);
@@ -260,6 +270,36 @@ impl PreferAt {
             let parent_id = ctx.nodes().parent_id(node.id());
             Self::check_slice_index_access(call_expr, computed, parent_id, ctx);
         }
+    }
+
+    fn check_substring<'a>(
+        call_expr: &CallExpression<'a>,
+        static_member: &StaticMemberExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let [first, second] = call_expr.arguments.as_slice() else { return };
+        let (Some(first), Some(second)) = (first.as_expression(), second.as_expression()) else {
+            return;
+        };
+        let Some(index) = substring_single_character_index(first, second, ctx) else { return };
+
+        let diagnostic = prefer_at_over_substring_diagnostic(call_expr.span);
+        let arguments_span = Span::new(first.span().start, second.span().end);
+        if ctx.has_comments_between(arguments_span) {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
+
+        // `substring` clamps negative indices and returns an empty string out of bounds,
+        // whereas `at` accepts negative indices and can return `undefined`.
+        ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+            let between = fixer
+                .source_range(Span::new(static_member.property.span.end, arguments_span.start));
+            fixer.replace(
+                Span::new(static_member.property.span.start, arguments_span.end),
+                format!("at{between}{}", fixer.source_range(index.span())),
+            )
+        });
     }
 
     fn check_char_at<'a>(
@@ -517,7 +557,7 @@ fn is_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
             | AstKind::AssignmentTargetWithDefault(_)
             | AstKind::ArrayAssignmentTarget(_)
     ) || matches!(parent_kind, AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::Delete)
-        || matches!(parent_kind, AstKind::AssignmentExpression(assign_expr) if matches!(&assign_expr.left, AssignmentTarget::ComputedMemberExpression(_)))
+        || matches!(parent_kind, AstKind::AssignmentExpression(assign_expr) if matches!(&assign_expr.left, AssignmentTarget::ComputedMemberExpression(target) if target.span == node.span()))
 }
 
 fn is_positive_number(expr: &Expression) -> bool {
@@ -591,6 +631,60 @@ fn is_obviously_non_array_receiver(expr: &Expression, ctx: &LintContext) -> bool
         .init
         .as_ref()
         .is_some_and(|init| is_unsupported_at_receiver(init.get_inner_expression()))
+}
+
+#[expect(clippy::float_cmp, reason = "Both endpoints are validated as non-negative safe integers")]
+fn substring_single_character_index<'a, 'b>(
+    first: &'b Expression<'a>,
+    second: &'b Expression<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<&'b Expression<'a>> {
+    if let (Expression::NumericLiteral(start), Expression::NumericLiteral(end)) =
+        (first.get_inner_expression(), second.get_inner_expression())
+        && [start.value, end.value]
+            .iter()
+            .all(|value| *value >= 0.0 && *value <= 9_007_199_254_740_991.0 && value.fract() == 0.0)
+        && (start.value - end.value).abs() == 1.0
+    {
+        return Some(if start.value < end.value { first } else { second });
+    }
+
+    let is_plus_one = |expression: &Expression, index: &Expression| {
+        let Expression::BinaryExpression(binary) = expression.get_inner_expression() else {
+            return false;
+        };
+        binary.operator == BinaryOperator::Addition
+            && ((binary.right.get_inner_expression().is_number_value(1.0)
+                && is_same_expression(
+                    binary.left.get_inner_expression(),
+                    index.get_inner_expression(),
+                    ctx,
+                ))
+                || (binary.left.get_inner_expression().is_number_value(1.0)
+                    && is_same_expression(
+                        binary.right.get_inner_expression(),
+                        index.get_inner_expression(),
+                        ctx,
+                    )))
+    };
+    if is_plus_one(second, first) {
+        return Some(first);
+    }
+    if is_plus_one(first, second) {
+        return Some(second);
+    }
+    if let Expression::BinaryExpression(binary) = first.get_inner_expression()
+        && binary.operator == BinaryOperator::Subtraction
+        && binary.right.get_inner_expression().is_number_value(1.0)
+        && is_same_expression(
+            binary.left.get_inner_expression(),
+            second.get_inner_expression(),
+            ctx,
+        )
+    {
+        return Some(first);
+    }
+    None
 }
 
 fn is_addition_index_expression(expr: &Expression) -> bool {
@@ -836,6 +930,25 @@ fn test() {
         ("(5)[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("(() => {})[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         ("(class {})[0]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("string.substring()", None),
+        ("string.substring(0)", None),
+        ("string.substring(index)", None),
+        ("string.substring(0, 2)", None),
+        ("string.substring(-1, 0)", None),
+        ("string.substring(1.5, 2.5)", None),
+        ("string.substring(index, index + 2)", None),
+        ("string.substring(index, other + 1)", None),
+        ("string.substring(other, index + 1)", None),
+        ("string.substring(index, index + length)", None),
+        ("string.substring(index, length + index)", None),
+        ("string.substring(...arguments)", None),
+        ("string.substring(index, index + 1, extraArgument)", None),
+        ("string.substring(index, ...[index + 1])", None),
+        ("string.substring(getIndex(), getIndex() + 1)", None),
+        ("string.substring(index++, index++ + 1)", None),
+        ("string['substring'](index, index + 1)", None),
+        ("new string.substring(index, index + 1)", None),
+        ("string.substring(9007199254740991, 9007199254740992)", None),
     ];
 
     let fail = vec![
@@ -955,6 +1068,26 @@ fn test() {
         ("foo.charAt(bar.length - 1)", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
         // Strings have `.at()`, so a string-literal receiver is still reported (#23870).
         ("\"abc\"[1]", Some(serde_json::json!([{ "checkAllIndexAccess": true }]))),
+        ("value.substring(index, index + 1);", None),
+        ("string.substring(0, 1)", None),
+        ("string.substring(1, 2)", None),
+        ("string.substring(2, 1)", None),
+        ("string.substring(index, 1 + index)", None),
+        ("string.substring(index - 1, index)", None),
+        ("string.substring(index + 1, index)", None),
+        ("string.substring(1 + index, index)", None),
+        ("string.substring(index, /* comment */ index + 1)", None),
+        ("string.substring(index, index + /* comment */ 1)", None),
+        ("string.substring(0, /* between */ 1)", None),
+        ("string.substring((( index )), (( index )) + 1)", None),
+        ("string.substring((( index )) - 1, (( index )))", None),
+        ("(( string )).substring(index, index + 1)", None),
+        ("string?.substring(index, index + 1)", None),
+        ("string.substring?.(index, index + 1)", None),
+        ("string?.substring?.(index, index + 1)", None),
+        ("string.substring(object.index, object.index + 1)", None),
+        ("result[0] = value.substring(index, index + 1);", None),
+        ("result[0] = array[array.length - 1];", None),
     ];
 
     let fix = vec![
@@ -1011,6 +1144,37 @@ fn test() {
         ("arguments.slice(-1)[0]", "arguments.slice(-1)[0]", None),
         ("arguments.slice(-1).pop()", "arguments.slice(-1).pop()", None),
         ("arguments.slice(-1).shift()", "arguments.slice(-1).shift()", None),
+        ("value.substring(index, index + 1);", "value.at(index);", None),
+        ("string.substring(0, 1)", "string.at(0)", None),
+        ("string.substring(2, 1)", "string.at(1)", None),
+        ("string.substring(index, 1 + index)", "string.at(index)", None),
+        ("string.substring(index + 1, index)", "string.at(index)", None),
+        ("string.substring(1 + index, index)", "string.at(index)", None),
+        ("string.substring(index - 1, index)", "string.at(index - 1)", None),
+        ("string.substring((( index )), (( index )) + 1)", "string.at((( index )))", None),
+        ("string.substring((( index )) - 1, (( index )))", "string.at((( index )) - 1)", None),
+        ("(( string )).substring(index, index + 1)", "(( string )).at(index)", None),
+        ("string?.substring(index, index + 1)", "string?.at(index)", None),
+        ("string.substring?.(index, index + 1)", "string.at?.(index)", None),
+        ("string?.substring?.(index, index + 1)", "string?.at?.(index)", None),
+        ("(string.substring)(index, index + 1,)", "(string.at)(index,)", None),
+        (
+            "string.substring(/* before */ index, index + 1 /* after */)",
+            "string.at(/* before */ index /* after */)",
+            None,
+        ),
+        (
+            "string.substring(index, /* comment */ index + 1)",
+            "string.substring(index, /* comment */ index + 1)",
+            None,
+        ),
+        (
+            "string.substring((/* comment */ index), index + 1)",
+            "string.substring((/* comment */ index), index + 1)",
+            None,
+        ),
+        ("result[0] = value.substring(index, index + 1);", "result[0] = value.at(index);", None),
+        ("result[0] = array[array.length - 1];", "result[0] = array.at(-1);", None),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

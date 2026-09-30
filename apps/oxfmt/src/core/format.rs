@@ -111,7 +111,7 @@ pub enum FormatStrategy {
     Prettier {
         path: Arc<Path>,
         parser_name: &'static str,
-        config: Box<FormatConfig>,
+        config: Arc<FormatConfig>,
         supports_tailwind: bool,
         supports_oxfmt: bool,
         supports_svelte: bool,
@@ -143,9 +143,9 @@ impl FormatStrategy {
     ///
     /// The Prettier `Value` for the `Prettier` kind is deferred to the format step:
     /// `FormatConfig` is the single SoT, no validation needed,
-    /// and `Box<FormatConfig>` is materially smaller per file than a fully-built `Value`.
+    /// and `Arc<FormatConfig>` is materially smaller per file than a fully-built `Value`.
     pub(crate) fn from_format_config(
-        config: FormatConfig,
+        config: Arc<FormatConfig>,
         validated: &ValidatedOptions,
         kind: FileKind,
     ) -> Self {
@@ -163,7 +163,7 @@ impl FormatStrategy {
                     core,
                     validated.sort_imports.clone(),
                 )),
-                config: Arc::new(config),
+                config,
                 core,
                 insert_final_newline,
             },
@@ -190,7 +190,7 @@ impl FormatStrategy {
             FileKind::OxcFormatterCss { path, variant } => Self::OxcFormatterCss {
                 path,
                 format_options: Box::new(to_oxc_formatter_css(&config, core, variant)),
-                config: Arc::new(config),
+                config,
                 core,
                 insert_final_newline,
             },
@@ -224,7 +224,7 @@ impl FormatStrategy {
             } => Self::Prettier {
                 path,
                 parser_name,
-                config: Box::new(config),
+                config,
                 supports_tailwind,
                 supports_oxfmt,
                 supports_svelte,
@@ -658,6 +658,10 @@ impl SourceFormatter {
             // - Parsing Prettier's error messages
             // - Converting span information from UTF-16 to UTF-8
             // This is a non-trivial amount of work, so for now, just leave this as a best effort.
+            //
+            // This is the only place in the formatting pipeline that depends on `cwd`.
+            // It goes away together with this Prettier path, as `oxc_formatter_*` cover more languages.
+            // (Their errors carry labels, and entry points render paths with their own `cwd`.)
             let relative = std::env::current_dir()
                 .ok()
                 .and_then(|cwd| path.strip_prefix(cwd).ok().map(Path::to_path_buf));
@@ -689,7 +693,7 @@ mod tests {
             path: Arc::from(Path::new("test.ts")),
             source_type: SourceType::ts(),
         };
-        let strategy = FormatStrategy::from_format_config(config, &validated, kind);
+        let strategy = FormatStrategy::from_format_config(Arc::new(config), &validated, kind);
         let formatter = SourceFormatter::new(1);
         #[cfg(feature = "napi")]
         let formatter =

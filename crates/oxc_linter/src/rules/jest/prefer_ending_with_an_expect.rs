@@ -175,7 +175,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferEndingWithAnExpect {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<PreferEndingWithAnExpectConfig>>(value)
+        DefaultRuleConfig::<PreferEndingWithAnExpectConfig>::from_value(value)
             .map(|config| Self(Box::new(config.into_inner())))
     }
 

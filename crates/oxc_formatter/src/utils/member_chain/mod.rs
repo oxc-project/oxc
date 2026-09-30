@@ -4,6 +4,10 @@ pub mod simple_argument;
 
 use std::iter;
 
+use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format};
+use oxc_span::GetSpan;
+
 use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
@@ -20,11 +24,8 @@ use crate::{
     },
     write,
 };
-use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format};
-use oxc_span::GetSpan;
 
-use super::typecast::classify_type_cast;
+use super::typecast::is_cast_target;
 
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
@@ -156,8 +157,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         self.tail.any_except_last_will_break(f)
     }
 
-    /// We retrieve all the call expressions inside the group and we check if
-    /// their arguments are not simple.
+    /// Whether the chain ends with a call and the last group will break.
     fn last_call_breaks(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let last_group = self.last_group();
 
@@ -238,10 +238,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
             if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {
                 write!(f, [group(&format_expanded)]);
             } else {
-                let has_empty_line_before_tail =
-                    self.tail.first().is_some_and(MemberChainGroup::needs_empty_line);
-
-                if has_empty_line_before_tail || self.last_group().will_break(f) {
+                if self.last_group().will_break(f) {
                     write!(f, [expand_parent()]);
                 }
 
@@ -436,7 +433,7 @@ fn chain_members_iter<'a, 'b>(
 
         let expression = next.take()?;
 
-        if classify_type_cast(expression.span(), f).is_target() {
+        if is_cast_target(expression.span(), f) {
             return ChainMember::Node(expression).into();
         }
 

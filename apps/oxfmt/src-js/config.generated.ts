@@ -6,6 +6,7 @@
 export type ArrowParensConfig = "always" | "avoid";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
+export type OperatorPositionConfig = "start" | "end";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
 export type JsdocUserConfig = boolean | JsdocConfig;
 export type CommentLineStrategyConfig = "singleLine" | "multiline" | "keep";
@@ -92,6 +93,14 @@ export interface Oxfmtrc {
    * - Overrides `.editorconfig.end_of_line`
    */
   endOfLine?: EndOfLineConfig;
+  /**
+   * When expressions wrap lines, print operators at the start of new lines (`"start"`)
+   * or at the end of previous lines (`"end"`).
+   *
+   * - Languages: JS, JSX, TS, TSX
+   * - Default: `"end"`
+   */
+  experimentalOperatorPosition?: OperatorPositionConfig;
   /**
    * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
    *
@@ -376,6 +385,7 @@ export interface OxfmtOverrideConfig {
   files: GlobSet;
   /**
    * Format options to apply for matched files.
+   * Accepts the same options as the top-level format options.
    */
   options?: FormatConfig;
   [k: string]: unknown;
@@ -420,6 +430,14 @@ export interface FormatConfig {
    * - Overrides `.editorconfig.end_of_line`
    */
   endOfLine?: EndOfLineConfig;
+  /**
+   * When expressions wrap lines, print operators at the start of new lines (`"start"`)
+   * or at the end of previous lines (`"end"`).
+   *
+   * - Languages: JS, JSX, TS, TSX
+   * - Default: `"end"`
+   */
+  experimentalOperatorPosition?: OperatorPositionConfig;
   /**
    * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
    *
@@ -614,6 +632,8 @@ export interface SortImportsConfig {
    *
    * If you specify multiple conditions like `elementNamePattern`, `selector`, and `modifiers`,
    * all conditions must be met for an import to match the custom group (AND logic).
+   *
+   * NOTE: Predefined group names (e.g. `side_effect`, `external`) and `unknown` are reserved and cannot be used as `groupName`.
    *
    * - Default: `[]`
    */

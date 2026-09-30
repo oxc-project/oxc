@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
-assertion_line: 142
 ---
 ==================== Input ====================
 new (this.b().#c)()
@@ -18,6 +17,13 @@ new (import("foo")`bar`)()
 new (foo()`bar`)()
 
 new (foo`bar`)()
+
+// computed-member callees
+new (get(win))[ty](xxx);
+new (get(win))[ty][ty](xxx);
+new (A?.[ty])(xxx);
+new (A?.B[ty])(xxx);
+new window['TouchEvent'](xxx);
 
 
 ==================== Output ====================
@@ -40,6 +46,13 @@ new (foo()`bar`)();
 
 new foo`bar`();
 
+// computed-member callees
+new (get(win)[ty])(xxx);
+new (get(win)[ty][ty])(xxx);
+new (A?.[ty])(xxx);
+new (A?.B[ty])(xxx);
+new window["TouchEvent"](xxx);
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -58,5 +71,12 @@ new (import("foo")`bar`)();
 new (foo()`bar`)();
 
 new foo`bar`();
+
+// computed-member callees
+new (get(win)[ty])(xxx);
+new (get(win)[ty][ty])(xxx);
+new (A?.[ty])(xxx);
+new (A?.B[ty])(xxx);
+new window["TouchEvent"](xxx);
 
 ===================== End =====================

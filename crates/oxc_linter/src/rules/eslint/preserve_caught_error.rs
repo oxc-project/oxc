@@ -65,11 +65,11 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
             _ => return,
         };
 
-        if !is_builtin_error_constructor(callee, self.ctx) {
+        let Some(options_argument_index) = error_options_argument_index(callee, self.ctx) else {
             return;
-        }
+        };
 
-        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(1)
+        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(options_argument_index)
             && has_cause_property(obj_expr, self.catch_param, self.ctx)
         {
             return;
@@ -84,6 +84,9 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
             let Some(ident) = self.catch_param.get_identifier_name() else {
                 return fixer.noop();
             };
+            // Keep the catch binding unchanged as part of each fix, so removing or renaming it
+            // conflicts with inserting a reference to it (e.g. `prefer-optional-catch-binding`).
+            let preserve_catch_param = || fixer.replace_with(self.catch_param, self.catch_param);
             let cause_prop_text = format!("cause: {}", ident.as_str());
 
             match args.len() {
@@ -98,7 +101,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                         throw_stmt.argument.span().end,
                         "(",
                     ) {
-                        let mut fix = fixer.new_fix_with_capacity(3);
+                        let mut fix = fixer.new_fix_with_capacity(4);
                         let span = Span::sized(args_start + offset, 1);
                         if let Expression::Identifier(ident) = callee
                             && is_aggregate_error(ident, self.ctx)
@@ -110,13 +113,13 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                         fix.push(
                             fixer.insert_text_after_range(span, format!("{{ {cause_prop_text} }}")),
                         );
-                        return fix.with_message(ADD_CAUSE_PROPERTY);
+                        return fix.extend(preserve_catch_param()).with_message(ADD_CAUSE_PROPERTY);
                     }
                 }
                 1 => {
                     let span = args[0].span();
                     // insert comma
-                    let mut fix = fixer.new_fix_with_capacity(3);
+                    let mut fix = fixer.new_fix_with_capacity(4);
                     if let Expression::Identifier(ident) = callee
                         && is_aggregate_error(ident, self.ctx)
                     {
@@ -127,7 +130,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                     fix.push(
                         fixer.insert_text_after_range(span, format!("{{ {cause_prop_text} }}")),
                     );
-                    return fix.with_message(ADD_CAUSE_PROPERTY);
+                    return fix.extend(preserve_catch_param()).with_message(ADD_CAUSE_PROPERTY);
                 }
                 2 => {
                     if let Expression::Identifier(ident) = callee
@@ -135,12 +138,12 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                     {
                         // AggregateError takes options as its third argument
                         let span = args[1].span();
-                        let mut fix = fixer.new_fix_with_capacity(2);
+                        let mut fix = fixer.new_fix_with_capacity(3);
                         fix.push(fixer.insert_text_after_range(span, ", "));
                         fix.push(
                             fixer.insert_text_after_range(span, format!("{{ {cause_prop_text} }}")),
                         );
-                        return fix.with_message(ADD_CAUSE_PROPERTY);
+                        return fix.extend(preserve_catch_param()).with_message(ADD_CAUSE_PROPERTY);
                     }
 
                     // if the second argument is an existing object, merge into it
@@ -163,10 +166,12 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                                 if prop.shorthand || prop.method || prop.kind.is_accessor() {
                                     return fixer
                                         .replace(prop.span(), cause_prop_text)
+                                        .extend(preserve_catch_param())
                                         .with_message(REPLACE_CAUSE_PROPERTY);
                                 }
                                 return fixer
                                     .replace(prop.value.span(), ident.as_str().to_string())
+                                    .extend(preserve_catch_param())
                                     .with_message(REPLACE_CAUSE_PROPERTY);
                             }
                         } else if obj_expr.properties.is_empty() {
@@ -175,14 +180,17 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                                     obj_expr.span().shrink_right(1),
                                     format!(" {cause_prop_text} "),
                                 )
+                                .extend(preserve_catch_param())
                                 .with_message(ADD_CAUSE_PROPERTY);
                         } else if let Some(last_prop) = obj_expr.properties.last() {
-                            let mut fix = fixer.new_fix_with_capacity(2);
+                            let mut fix = fixer.new_fix_with_capacity(3);
                             fix.push(fixer.insert_text_after_range(last_prop.span(), ", "));
                             fix.push(
                                 fixer.insert_text_after_range(last_prop.span(), cause_prop_text),
                             );
-                            return fix.with_message(ADD_CAUSE_PROPERTY);
+                            return fix
+                                .extend(preserve_catch_param())
+                                .with_message(ADD_CAUSE_PROPERTY);
                         }
                     }
                 }
@@ -201,14 +209,20 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
     fn visit_catch_clause(&mut self, _catch_clause: &CatchClause<'a>) {}
 }
 
-fn is_builtin_error_constructor(expr: &Expression, ctx: &LintContext) -> bool {
+fn error_options_argument_index(expr: &Expression, ctx: &LintContext) -> Option<usize> {
     let Expression::Identifier(ident) = expr else {
-        return false;
+        return None;
     };
 
-    ident.is_global_reference_name(static_ident!("Error"), ctx.scoping())
+    if ident.is_global_reference_name(static_ident!("Error"), ctx.scoping())
         || ident.is_global_reference_name(static_ident!("TypeError"), ctx.scoping())
-        || is_aggregate_error(ident, ctx)
+    {
+        Some(1)
+    } else if is_aggregate_error(ident, ctx) {
+        Some(2)
+    } else {
+        None
+    }
 }
 
 fn is_aggregate_error(ident: &IdentifierReference, ctx: &LintContext) -> bool {
@@ -313,7 +327,7 @@ impl PreserveCaughtError {
 
 impl Rule for PreserveCaughtError {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -417,6 +431,10 @@ fn test() {
         ),
         (
             r#"try { doSomething(); } catch (errorA) { try { doSomethingElse(); } catch (errorB) { throw new Error( `The certificate key "${chalk.yellow(keyFile)}" is invalid.\n${errorA.message}`, { cause: errorB }); } }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: error }); }"#,
             None,
         ),
     ];
@@ -673,6 +691,10 @@ fn test() {
 			}"#,
             None,
         ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: unrelated }); }"#,
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -883,7 +905,7 @@ fn test() {
             }"#,
             None,
         ),
-        // Multiple throw statements within a catch block
+        // Fixes sharing a catch binding overlap, so only the first throw is fixed per pass
         (
             r#"try {
                 doSomething();
@@ -899,7 +921,7 @@ fn test() {
                 if (err.code === "A") {
                     throw new Error("Type A", { cause: err });
                 }
-                throw new TypeError("Fallback error", { cause: err });
+                throw new TypeError("Fallback error");
             }"#,
             None,
         ),
@@ -1091,6 +1113,12 @@ fn test() {
             } catch (error) {
                 throw new Error("Something failed", { cause: error });
             }"#,
+            None,
+        ),
+        // A later pass fixes the remaining throw while preserving the same catch binding.
+        (
+            r#"try {} catch (err) { if (err.code === "A") { throw new Error("Type A", { cause: err }); } throw new TypeError("Fallback error"); }"#,
+            r#"try {} catch (err) { if (err.code === "A") { throw new Error("Type A", { cause: err }); } throw new TypeError("Fallback error", { cause: err }); }"#,
             None,
         ),
     ];

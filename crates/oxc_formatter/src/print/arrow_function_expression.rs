@@ -7,29 +7,30 @@ use crate::{
     format_args,
     formatter::{JsFormatContext, JsFormatter, prelude::*, trivia::FormatTrailingComments},
     options::FormatTrailingCommas,
-    print::function::FormatContentWithCacheMode,
+    print::{embed_hug, function::FormatContentWithCacheMode},
     utils::{
-        assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
+        assignment_like::AssignmentLikeLayout,
+        expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        suppressed::FormatSuppressedNode, typecast::format_leading_comments_and_open_paren,
+        suppressed::write_suppressed_expression,
+        typecast::{format_leading_comments_and_open_paren, is_cast_target},
     },
     write,
 };
 
-use super::{FormatWrite, parameters::has_only_simple_parameters};
+use super::{
+    FormatWrite, parameters::has_only_simple_parameters,
+    sequence_expression::sequence_leading_comments_start,
+};
 
-impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
-    for AstNode<'a, ArrowFunctionExpression<'a>>
-{
+impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        FormatJsArrowFunctionExpression::new(self).fmt(f);
-    }
-
-    fn write_with_options(
-        &self,
-        options: FormatJsArrowFunctionExpressionOptions,
-        f: &mut JsFormatter<'_, 'a>,
-    ) {
+        let options = FormatJsArrowFunctionExpressionOptions {
+            // Handed over by `WithAssignmentLayout` when this arrow is the RHS of an assignment-like;
+            // the span key ensures only this arrow can consume it.
+            assignment_layout: f.context_mut().take_arrow_assignment_layout(self.span()),
+            ..FormatJsArrowFunctionExpressionOptions::default()
+        };
         FormatJsArrowFunctionExpression::new_with_options(self, options).fmt(f);
     }
 }
@@ -78,10 +79,6 @@ pub enum FunctionCacheMode {
 }
 
 impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
-    pub fn new(arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>) -> Self {
-        Self { arrow, options: FormatJsArrowFunctionExpressionOptions::default() }
-    }
-
     pub fn new_with_options(
         arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
@@ -140,7 +137,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                 if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
                     return if let Some(format_sequence) =
-                        format_sequence_with_leading_comment(sequence.span(), &format_body, f)
+                        format_sequence_with_leading_comment(sequence, &format_body, f)
                     {
                         write!(f, [group(&format_args!(formatted_signature, format_sequence))]);
                     } else {
@@ -159,22 +156,38 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                 write!(f, formatted_signature);
 
-                let body_has_soft_line_break =
-                    arrow_expression.is_none_or(|expression| match expression {
+                let body_has_soft_line_break = arrow_expression.is_none_or(|expression| {
+                    let body_kind_hugs = match expression {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_) => {
                             !has_own_line_comment_before_body(arrow, f)
                         }
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
-                        _ => {
+                        _ => embed_hug(expression, None, f).unwrap_or_else(|| {
                             is_multiline_template_starting_on_same_line(expression, f.source_text())
-                                || is_huggable_html_embed(expression, f)
-                        }
-                    });
+                        }),
+                    };
+                    // A cast-wrapped body has no kind (see `is_cast_target`)
+                    body_kind_hugs && !is_cast_target(expression.span(), f)
+                });
 
                 if body_has_soft_line_break {
-                    write!(f, [space(), format_body]);
+                    // A block body pushed down by its head-side comments is indented under the arrow:
+                    // ```js
+                    // g = () =>
+                    //   // c
+                    //   {};
+                    // ```
+                    // Without comments no break exists and the indent would be inert,
+                    // but it must not wrap the block's own inner breaks.
+                    if arrow.get_expression().is_none()
+                        && f.comments().has_comment_before(body.span().start)
+                    {
+                        write!(f, [space(), indent(&format_body)]);
+                    } else {
+                        write!(f, [space(), format_body]);
+                    }
                 } else {
                     let should_add_parens = body.as_expression().is_some_and(should_add_parens);
 
@@ -316,7 +329,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         // This matches Prettier, which allows type annotations when
         // grouping arrow expressions, but disallows them when grouping
         // normal function expressions.
-        if !has_only_simple_parameters(parameters, true) {
+        if !has_only_simple_parameters(parameters, None, true) {
             return true;
         }
 
@@ -364,71 +377,6 @@ pub fn is_multiline_template_starting_on_same_line(
 
     template.quasis.iter().any(|quasi| source_text.contains_newline(quasi.span))
         && !source_text.has_line_terminator_before(start)
-}
-
-/// Returns `true` if the expression is an HTML embed template that should be hugged.
-///
-/// This covers both ``html`...` `` tagged templates and ``/* HTML */ `...` `` comment-annotated templates.
-/// It is needed when the source is single-line but HTML formatting introduces line breaks.
-/// Without this, `ExpandParent` emitted by the HTML formatter causes `will_break()` to return `true`,
-/// expanding the surrounding construct instead of hugging.
-///
-/// Prettier hugs HTML embed templates when the content has leading AND trailing whitespace,
-/// or when `htmlWhitespaceSensitivity` is `"ignore"`.
-/// In these cases, the template stays on the same line as the parent construct:
-/// - Call arguments: ``foo(html`<div>...</div>`)``
-/// - Arrow function body: ``const a = (b) => html`<div>...</div>` ``
-///
-/// When there is no leading+trailing whitespace,
-/// `hug: false` is set and the template is expanded (not hugged).
-///
-/// Prettier achieves this via `label({ embed: true, hug })` + `shouldExpandLastArg`.
-/// We replicate it by detecting the same conditions on the expression.
-pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    let template = match expression {
-        Expression::TaggedTemplateExpression(tagged) => {
-            if !matches!(&tagged.tag, Expression::Identifier(id) if id.name.as_str() == "html") {
-                return false;
-            }
-            // Exclude cases where a line comment between tag and quasi forces a line break
-            // e.g., ``html // oops \n`...` ``
-            if f.source_text()
-                .contains_newline_between(tagged.tag.span().end, tagged.quasi.span.start)
-            {
-                return false;
-            }
-            &tagged.quasi
-        }
-        Expression::TemplateLiteral(template) => {
-            // Check for `/* HTML */` leading comment
-            let comments = f.comments().comments_before(template.span.start);
-            if !comments.last().is_some_and(|comment| {
-                comment.is_block() && f.source_text().text_for(&comment.content_span()) == " HTML "
-            }) {
-                return false;
-            }
-            template.as_ref()
-        }
-        _ => return false,
-    };
-
-    // Always hug when htmlWhitespaceSensitivity is "ignore"
-    if f.options().html_whitespace_sensitivity_ignore {
-        return true;
-    }
-
-    // Hug when the cooked content has both leading and trailing whitespace
-    let has_leading_ws = template
-        .quasis
-        .first()
-        .and_then(|q| q.value.cooked.as_ref())
-        .is_some_and(|s| s.starts_with(|c: char| c.is_ascii_whitespace()));
-    let has_trailing_ws = template
-        .quasis
-        .last()
-        .and_then(|q| q.value.cooked.as_ref())
-        .is_some_and(|s| s.ends_with(|c: char| c.is_ascii_whitespace()));
-    has_leading_ws && has_trailing_ws
 }
 
 struct ArrowChain<'a, 'b> {
@@ -490,6 +438,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         // If the body is _not_ one of those kinds, then we'll want to insert a
         // soft line break before the body so that it prints on a separate line
         // in its entirety.
+        // A cast-wrapped body has no kind (see `is_cast_target`).
         let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
             matches!(
                 expression,
@@ -498,7 +447,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
                     | Expression::SequenceExpression(_)
                     | Expression::JSXElement(_)
                     | Expression::JSXFragment(_)
-            )
+            ) && !is_cast_target(expression.span(), f)
         });
 
         // An own-line comment before the tail body forces the body onto its own line even for the kinds above,
@@ -637,7 +586,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
             // body breaks
             if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
                 if let Some(format_sequence) =
-                    format_sequence_with_leading_comment(sequence.span(), &format_tail_body, f)
+                    format_sequence_with_leading_comment(sequence, &format_tail_body, f)
                 {
                     write!(f, format_sequence);
                 } else {
@@ -842,24 +791,30 @@ fn format_signature<'a, 'b>(
 ///
 /// Handles `oxfmt-ignore` by preserving original source text when suppressed.
 fn format_sequence_with_leading_comment<'a, 'b>(
-    sequence_span: Span,
+    sequence: &SequenceExpression<'a>,
     format_body: &'b impl Format<'a, JsFormatContext<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> Option<impl Format<'a, JsFormatContext<'a>> + 'b> {
-    if !f.comments().has_comment_before(sequence_span.start) {
+    let sequence_span = sequence.span;
+    // Comments inside the first element's dropped source parentheses lead the sequence
+    // (see `sequence_leading_comments_start`), so they take this path too.
+    let leading_comments_start = sequence_leading_comments_start(sequence);
+    if !f.comments().has_comment_before(leading_comments_start) {
         return None;
     }
 
     let is_suppressed = f.comments().is_suppressed(sequence_span.start);
 
     let format_sequence = format_with(move |f| {
-        format_leading_comments_and_open_paren(sequence_span, true, f);
         if is_suppressed {
-            write!(f, FormatSuppressedNode(sequence_span));
+            // The single owner keeps a cast target's source parens (`() => /** @type {A} */ (a, b)`),
+            // which double as the sequence-body parens this site otherwise forces.
+            write_suppressed_expression(sequence_span, leading_comments_start, true, f);
         } else {
+            format_leading_comments_and_open_paren(sequence_span, leading_comments_start, true, f);
             write!(f, format_body);
+            write!(f, [")"]);
         }
-        write!(f, [")"]);
     });
 
     Some(format_with(move |f| {

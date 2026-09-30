@@ -1,0 +1,81 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!-- The blank `> ` line after the ignored list is dropped under every proseWrap;
+     Prettier prints it as `>` under `always` only -->
+
+> <!-- prettier-ignore -->
+> - a   long   item
+> 
+
+> next
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+<!-- The blank `> ` line after the ignored list is dropped under every proseWrap;
+     Prettier prints it as `>` under `always` only -->
+
+> <!-- prettier-ignore -->
+> - a   long   item
+
+> next
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+<!-- The blank `> ` line after the ignored list is dropped under every proseWrap;
+     Prettier prints it as `>` under `always` only -->
+
+> <!-- prettier-ignore -->
+> - a   long   item
+
+> next
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+<!-- The blank `> ` line after the ignored list is dropped under every proseWrap;
+     Prettier prints it as `>` under `always` only -->
+
+> <!-- prettier-ignore -->
+> - a   long   item
+
+> next
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+<!-- The blank `> ` line after the ignored list is dropped under every proseWrap;
+     Prettier prints it as `>` under `always` only -->
+
+> <!-- prettier-ignore -->
+> - a   long   item
+
+> next
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+<!-- The blank `> ` line after the ignored list is dropped under every proseWrap;
+     Prettier prints it as `>` under `always` only -->
+
+> <!-- prettier-ignore -->
+> - a   long   item
+
+> next
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+<!-- The blank `> ` line after the ignored list is dropped under every proseWrap;
+     Prettier prints it as `>` under `always` only -->
+
+> <!-- prettier-ignore -->
+> - a   long   item
+
+> next
+
+===================== End =====================

@@ -10,24 +10,25 @@ impl<C: Config> Lexer<'_, C> {
     /// The lexer eagerly produces the compound token, but the parser needs a single `<`
     /// to speculatively try parsing type arguments.
     ///
-    /// The compound token was pushed to the collected token stream *before* `try_parse`
-    /// created its checkpoint (since it was the "current" token at that point).
-    /// This means checkpoint's `tokens_len` includes it, and `truncate` on rewind
-    /// won't remove it. So we must pop it here. If the speculative parse succeeds,
-    /// the individual `<` and subsequent tokens replace it naturally. If it fails
-    /// and `try_parse` rewinds, the caller (`expression.rs`) restores the original
-    /// compound token via `rewrite_last_collected_token`.
+    /// Only `<<` reaches here in code which parses. `<=` and `<<=` arrive only from the type-context
+    /// callers in `ts/types.rs` and always go on to fail, for the reason documented on
+    /// `parse_type_arguments_in_expression`, which rejects them before reaching here.
     ///
-    /// The remaining characters after the first `<` (e.g. the second `<` in `<<`)
-    /// will be lexed as separate tokens on subsequent `next_token` calls.
+    /// The compound token was pushed to the collected token stream *before* `try_parse`
+    /// created its checkpoint (since it was the "current" token at that point), so it is
+    /// the last token in the stream. Overwrite it there with the single `<`. The remaining
+    /// characters after the first `<` (e.g. the second `<` in `<<`) are lexed as separate
+    /// tokens on subsequent `next_token` calls, so the stream ends up with all of them.
+    ///
+    /// If the speculative parse fails and `try_parse` rewinds, `truncate` leaves this `<`
+    /// as the last collected token, and the caller (`expression.rs`) restores the original
+    /// compound token over it via `rewrite_last_collected_token`.
     pub(crate) fn re_lex_as_typescript_l_angle(&mut self, offset: u32) -> Token {
         self.token.set_start(self.offset() - offset);
         self.source.back(offset as usize - 1);
-        if self.config.tokens() {
-            let popped = self.tokens.pop();
-            debug_assert!(popped.is_some());
-        }
-        self.finish_re_lex(Kind::LAngle)
+        let token = self.finish_re_lex(Kind::LAngle);
+        self.rewrite_last_collected_token(token);
+        token
     }
 
     /// Re-tokenize `>>` or `>>>` to `>`.

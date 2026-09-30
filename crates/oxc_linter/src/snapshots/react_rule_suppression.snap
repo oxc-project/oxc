@@ -1,0 +1,15 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(rule-suppression): React rule suppression prevents optimization
+   ╭─[rule_suppression.tsx:3:3]
+ 2 │ function Component({value}) {
+ 3 │   // eslint-disable-next-line react-hooks/exhaustive-deps
+   ·   ───────────────────────────┬───────────────────────────
+   ·                              ╰── Found React rule suppression
+ 4 │   const doubled = value * 2;
+   ╰────
+  help: Remove the suppression and address the reported React rule violation
+  note: React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled. React Compiler only works when your components follow all the rules of React, disabling them may result in unexpected or incorrect behavior. Found suppression `eslint-disable-next-line react-hooks/exhaustive-deps`. Additional guidance: https://react.dev/reference/eslint-plugin-
+           react-hooks

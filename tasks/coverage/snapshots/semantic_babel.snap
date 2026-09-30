@@ -1,8 +1,8 @@
-commit: 1eac4481
+commit: fd665901
 
 semantic_babel Summary:
-AST Parsed     : 2234/2234 (100.00%)
-Positive Passed: 2144/2234 (95.97%)
+AST Parsed     : 2239/2239 (100.00%)
+Positive Passed: 2148/2239 (95.94%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
@@ -120,6 +120,10 @@ Function implementation is missing or not immediately following the declaration.
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts
 Function implementation is missing or not immediately following the declaration.
 Function implementation is missing or not immediately following the declaration.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts
+'async' modifier cannot be used with 'abstract' modifier.
+'async' modifier cannot be used with 'abstract' modifier.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
 Identifier `show` has already been declared

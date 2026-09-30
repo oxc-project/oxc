@@ -67,6 +67,47 @@ console.log(result.code);
 console.log(result.map);
 ```
 
+### Property-name mangling
+
+Property mangling is opt-in and independent from identifier mangling. `include` is a JavaScript
+`RegExp` and is required when `mangleProps` is present. Its source and flags are compiled with
+[Rust's regex engine](https://docs.rs/regex/latest/regex/#syntax). Flags `i`, `m`, `s`, and `u` are
+supported. Other JavaScript flags and unsupported syntax are reported in `errors`.
+
+```javascript
+const result = minifySync("component.js", source, {
+  mangle: false,
+  mangleProps: {
+    include: /^_/,
+    exclude: /^__public/,
+    reserved: ["_externalApi"],
+    quoted: false,
+    cache: previousResult?.mangleCache,
+  },
+});
+
+saveCache(result.mangleCache);
+```
+
+The returned `mangleCache` contains the input cache plus newly assigned names when parsing
+finishes without errors, sorted by original name. A `false` cache value keeps that property
+unchanged. Feeding the cache back keeps recorded mappings stable for later unminified input, but
+the cache does not discover unchanged names that exist only in another input. Callers coordinating
+separate files must pin or reserve those names explicitly. Property mappings are
+single-application: do not minify already-mangled output with the same cache. Custom target names
+may be shared deliberately, but must be valid JavaScript `IdentifierName` values and cannot be
+`__proto__`, `constructor`, or `prototype`. The original name `__proto__` is always reserved and
+cannot be used as a cache key.
+
+With `quoted: false`, quoting is handled per occurrence: `obj._field` is eligible while
+`obj["_field"]` is not. Property mangling assumes matching properties are never accessed through
+arbitrary dynamic strings. Use `/* @__KEY__ */ "_field"` for a string that semantically names a
+property, such as a reflective API argument. Names reached through direct `eval`, the `Function`
+constructor, or `with` must be reserved or excluded explicitly.
+
+Properties owned by unminified code, imported module namespaces, globals, DOM objects, or other
+host APIs must also be excluded or reserved.
+
 ## Assumptions
 
 `oxc-minify` makes some assumptions about the source code.

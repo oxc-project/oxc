@@ -1,0 +1,14 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(use-memo): useMemo() callbacks may not be async or generator functions
+   ╭─[use_memo.tsx:4:21]
+ 3 │ function Component({a}) {
+ 4 │   const x = useMemo(async () => {
+   ·                     ──────┬──────
+   ·                           ╰── Async and generator functions are not supported
+ 5 │     await a;
+   ╰────
+  help: useMemo() callbacks are called once and must synchronously return a value
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/use-memo

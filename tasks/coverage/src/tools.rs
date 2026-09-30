@@ -66,13 +66,13 @@ fn run_parser(
                 .with_source_code(NamedSource::new(path_str.clone(), Arc::clone(&source_arc)));
             handler.render_report(&mut output, error.as_ref()).unwrap();
         }
-        TestResult::ParseError(output, driver.panicked)
+        TestResult::ParseError(output, driver.fatal_error)
     }
 }
 
 fn evaluate_result(result: TestResult, should_fail: bool) -> TestResult {
     match (result, should_fail) {
-        (TestResult::ParseError(err, panicked), true) => TestResult::CorrectError(err, panicked),
+        (TestResult::ParseError(err, is_fatal), true) => TestResult::CorrectError(err, is_fatal),
         (TestResult::Passed, true) => TestResult::IncorrectlyPassed,
         (result, _) => result,
     }
@@ -219,7 +219,7 @@ fn run_parser_typescript_unit(
             .with_source_code(NamedSource::new(path_str.clone(), Arc::clone(&source_arc)));
         handler.render_report(&mut output, error.as_ref()).unwrap();
     }
-    TestResult::ParseError(output, driver.panicked)
+    TestResult::ParseError(output, driver.fatal_error)
 }
 
 pub fn run_parser_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
@@ -771,7 +771,7 @@ fn run_estree_test262_impl(
                 .with_config(parser_config)
                 .parse();
 
-            if ret.panicked || !ret.diagnostics.is_empty() {
+            if ret.fatal_error || !ret.diagnostics.is_empty() {
                 let error = ret
                     .diagnostics
                     .first()
@@ -779,7 +779,7 @@ fn run_estree_test262_impl(
                 return CoverageResult {
                     path: test_file.path.clone(),
                     should_fail: false,
-                    result: TestResult::ParseError(error, ret.panicked),
+                    result: TestResult::ParseError(error, ret.fatal_error),
                 };
             }
 
@@ -845,15 +845,15 @@ fn run_estree_acorn_jsx_impl(
                 .with_config(parser_config)
                 .parse();
 
-            if ret.panicked || !ret.diagnostics.is_empty() {
+            if ret.fatal_error || !ret.diagnostics.is_empty() {
                 let error = ret
                     .diagnostics
                     .first()
                     .map_or_else(|| "Panicked".to_string(), ToString::to_string);
                 let result = if test_file.should_fail {
-                    TestResult::CorrectError(error, ret.panicked)
+                    TestResult::CorrectError(error, ret.fatal_error)
                 } else {
-                    TestResult::ParseError(error, ret.panicked)
+                    TestResult::ParseError(error, ret.fatal_error)
                 };
                 return CoverageResult {
                     path: test_file.path.clone(),
@@ -899,13 +899,13 @@ fn run_estree_acorn_jsx_impl(
 // Skip paths for TypeScript ESTree tests
 static TS_SKIP_PATHS: &[&str] = &[
     // Skip cases which are failing in parser conformance tests
-    "typescript/tests/cases/compiler/arrayFromAsync.ts",
-    "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
-    "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
-    "typescript/tests/cases/compiler/sourceMapValidationDecorators.ts",
-    "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
+    "typescript/tsc/testdata/tests/cases/compiler/arrayFromAsync.ts",
+    "typescript/tsc/testdata/tests/cases/compiler/regexInvalidUtf8WithUnicodeFlag.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/es2019/importMeta/importMeta.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
     // Skip tests where TS-ESLint is incorrect
-    "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
 ];
 
 pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
@@ -934,7 +934,7 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
 
 fn run_estree_typescript_impl(
     files: &[TypeScriptFile],
-    section_key: &'static str,
+    section_key: &str,
     parser_config: RuntimeParserConfig,
     get_json: impl for<'a> Fn(ParserReturn<'a>) -> String + Sync,
 ) -> Vec<CoverageResult> {
@@ -985,7 +985,7 @@ fn run_estree_typescript_impl(
                     .with_config(parser_config)
                     .parse();
 
-                if ret.panicked || !ret.diagnostics.is_empty() {
+                if ret.fatal_error || !ret.diagnostics.is_empty() {
                     let error = ret
                         .diagnostics
                         .first()
@@ -993,7 +993,7 @@ fn run_estree_typescript_impl(
                     return CoverageResult {
                         path: test_file.path.clone(),
                         should_fail: false,
-                        result: TestResult::ParseError(error, ret.panicked),
+                        result: TestResult::ParseError(error, ret.fatal_error),
                     };
                 }
 

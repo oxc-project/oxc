@@ -168,10 +168,10 @@ const beforeAndAfterLateRule: Rule = {
 
         context.report({
           message:
-            "after hook:\n" +
-            `id: ${context.id}\n` +
-            `filename: ${context.filename}\n` +
-            `events: ${getEvents(context.filename)}`,
+            "after hook:\n"
+            + `id: ${context.id}\n`
+            + `filename: ${context.filename}\n`
+            + `events: ${getEvents(context.filename)}`,
           node: SPAN,
         });
       },

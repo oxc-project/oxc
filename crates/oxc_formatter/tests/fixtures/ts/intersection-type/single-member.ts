@@ -1,3 +1,8 @@
+// NOTE: line-ending BLOCK comments (cType, jType) inline with the member
+// (`= /* Comment */ "VALUE"`): with no `&`/`|` printed for a single member, the
+// multi-member "line-ending comments stay before the operator" guard does not
+// apply (matches Prettier; the guard's rationale lives in `union_type.rs`).
+
 export type aType = & // Comment
 "VALUE";
 

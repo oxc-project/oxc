@@ -4,9 +4,10 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_str::Ident;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, PropertyLiteral};
+use oxc_span::Span;
 
 /// Validates that capitalized functions are not called directly (they should be rendered as JSX).
 ///
@@ -24,9 +25,8 @@ pub fn validate_no_capitalized_calls(
     }
 
     let mut capital_load_globals: FxHashMap<IdentifierId, Ident> = FxHashMap::default();
-    let mut capitalized_properties: FxHashMap<IdentifierId, Ident> = FxHashMap::default();
-
-    let reason = "Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config";
+    let mut capitalized_properties: FxHashMap<IdentifierId, (Ident, Option<Span>)> =
+        FxHashMap::default();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
@@ -46,35 +46,31 @@ pub fn validate_no_capitalized_calls(
                         capital_load_globals.insert(lvalue_id, name);
                     }
                 }
-                InstructionValue::CallExpression { callee, span, .. } => {
+                InstructionValue::CallExpression { callee, .. } => {
                     let callee_id = callee.identifier;
                     if let Some(callee_name) = capital_load_globals.get(&callee_id) {
-                        env.record_error(
-                            ErrorCategory::CapitalizedCalls
-                                .diagnostic(reason)
-                                .with_help(format!("{callee_name} may be a component"))
-                                .with_labels(*span),
-                        )?;
+                        env.record_error(diagnostics::capitalized_call(callee_name, callee.span))?;
                         continue;
                     }
                 }
                 InstructionValue::PropertyLoad {
                     property: PropertyLiteral::String(prop_name),
+                    property_span,
                     ..
                 } => {
                     if prop_name.starts_with(|c: char| c.is_ascii_uppercase()) {
-                        capitalized_properties.insert(lvalue_id, *prop_name);
+                        capitalized_properties.insert(lvalue_id, (*prop_name, *property_span));
                     }
                 }
-                InstructionValue::MethodCall { property, span, .. } => {
+                InstructionValue::MethodCall { property, .. } => {
                     let property_id = property.identifier;
-                    if let Some(prop_name) = capitalized_properties.get(&property_id) {
-                        env.record_error(
-                            ErrorCategory::CapitalizedCalls
-                                .diagnostic(reason)
-                                .with_help(format!("{prop_name} may be a component"))
-                                .with_labels(*span),
-                        )?;
+                    if let Some((prop_name, property_span)) =
+                        capitalized_properties.get(&property_id)
+                    {
+                        env.record_error(diagnostics::capitalized_call(
+                            prop_name,
+                            property_span.or(property.span),
+                        ))?;
                     }
                 }
                 _ => {}

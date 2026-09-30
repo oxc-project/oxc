@@ -649,3 +649,28 @@ import "node:os";
 "#,
     );
 }
+
+#[test]
+fn accepts_side_effect_group_united_with_other_groups() {
+    // perfectionist rejects this config (its mixed group would sort side-effects together).
+    // We accept it: `sort_within_group` preserves side-effect relative order in EVERY group,
+    // so side-effect imports hold their in-group slots while the others sort around them,
+    // the same guarantee (and the same crossing) as the default no-side-effect-group setup.
+    assert_format(
+        r#"
+import { b } from "b";
+import "./polyfill";
+import { a } from "a";
+"#,
+        r#"{
+  "sortImports": {
+    "groups": [["side_effect", "external"]]
+  }
+}"#,
+        r#"
+import { a } from "a";
+import "./polyfill";
+import { b } from "b";
+"#,
+    );
+}

@@ -308,7 +308,7 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyFunction {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = serde_json::from_value::<DefaultRuleConfig<NoEmptyFunctionConfig>>(value)
+        let config = DefaultRuleConfig::<NoEmptyFunctionConfig>::from_value(value)
             .map(DefaultRuleConfig::into_inner)?;
         Ok(NoEmptyFunction::from(config))
     }

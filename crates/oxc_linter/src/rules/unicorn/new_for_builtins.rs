@@ -117,12 +117,11 @@ fn is_expr_global_builtin<'a, 'b>(
 ) -> Option<&'b str> {
     let expr = expr.without_parentheses();
     if let Expression::Identifier(ident) = expr {
-        let name = ident.name.as_str();
-        if !ctx.scoping().root_unresolved_references().contains_key(name) {
+        if !ctx.is_reference_to_global_variable(ident) {
             return None;
         }
 
-        Some(name)
+        Some(ident.name.as_str())
     } else {
         let member_expr = expr.as_member_expression()?;
 
@@ -234,6 +233,7 @@ fn test() {
         "(x) !== Object(x)",
         // r#"new Symbol("")"#, // {"globals": {"Symbol": "off"}},
         "const foo = new Date();",
+        "function f(MyString) { const String = MyString; return new String('x') }; String(1)",
     ];
 
     let fail = vec![

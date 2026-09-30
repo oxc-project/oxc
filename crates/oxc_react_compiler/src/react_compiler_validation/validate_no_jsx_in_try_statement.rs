@@ -17,7 +17,7 @@
 
 use oxc_diagnostics::Diagnostics;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::{BlockId, HirFunction, InstructionValue, Terminal};
 
 pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> Diagnostics {
@@ -32,18 +32,11 @@ pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> Diagnostics {
             for &instr_id in &block.instructions {
                 let instr = &func.instructions[instr_id.index()];
                 match &instr.value {
-                    InstructionValue::JsxExpression { span, .. }
-                    | InstructionValue::JsxFragment { span, .. } => {
-                        error.push(
-                            ErrorCategory::ErrorBoundaries
-                                .diagnostic("Avoid constructing JSX within try/catch")
-                                .with_help(
-                                    "React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)",
-                                )
-                                .with_labels(
-                                    span.map(|s| s.label("Avoid constructing JSX within try/catch")),
-                                ),
-                        );
+                    InstructionValue::JsxExpression { opening_name_span, span, .. } => {
+                        error.push(diagnostics::jsx_in_try(opening_name_span.or(*span)));
+                    }
+                    InstructionValue::JsxFragment { opening_span, span, .. } => {
+                        error.push(diagnostics::jsx_in_try(opening_span.or(*span)));
                     }
                     _ => {}
                 }

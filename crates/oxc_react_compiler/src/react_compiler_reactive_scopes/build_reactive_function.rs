@@ -12,7 +12,7 @@ use std::mem::discriminant;
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashSet;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BasicBlock, BlockId, EvaluationOrder, GotoVariant, HirFunction, InstructionId,
@@ -147,8 +147,7 @@ impl<'a, 'h> Context<'a, 'h> {
         let id = self.next_schedule_id;
         self.next_schedule_id += 1;
         if self.scheduled.contains(&block) {
-            return Err(ErrorCategory::Invariant
-                .diagnostic(format!("Break block is already scheduled: bb{}", block.index())));
+            return Err(diagnostics::break_block_already_scheduled(block.index()));
         }
         self.scheduled.insert(block);
         let target = match target_type {
@@ -156,8 +155,7 @@ impl<'a, 'h> Context<'a, 'h> {
             "switch" => ControlFlowTarget::Switch { block, id },
             "case" => ControlFlowTarget::Case { block, id },
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic(format!("Unknown target type: {}", target_type)));
+                return Err(diagnostics::unknown_target_type(target_type));
             }
         };
         self.control_flow_stack.push(target);
@@ -174,10 +172,7 @@ impl<'a, 'h> Context<'a, 'h> {
         self.next_schedule_id += 1;
         self.scheduled.insert(fallthrough_block);
         if self.scheduled.contains(&continue_block) {
-            return Err(ErrorCategory::Invariant.diagnostic(format!(
-                "Continue block is already scheduled: bb{}",
-                continue_block.index()
-            )));
+            return Err(diagnostics::continue_block_already_scheduled(continue_block.index()));
         }
         self.scheduled.insert(continue_block);
         let mut owns_loop = false;
@@ -199,7 +194,7 @@ impl<'a, 'h> Context<'a, 'h> {
     fn unschedule(&mut self, schedule_id: u32) -> Result<(), OxcDiagnostic> {
         let last = self.control_flow_stack.pop().expect("Can only unschedule the last target");
         if last.id() != schedule_id {
-            return Err(ErrorCategory::Invariant.diagnostic("Can only unschedule the last target"));
+            return Err(diagnostics::invariant_can_only_unschedule_last_target());
         }
         match &last {
             ControlFlowTarget::Loop { block, continue_block, loop_block, owns_loop, .. } => {
@@ -252,8 +247,7 @@ impl<'a, 'h> Context<'a, 'h> {
             }
             has_preceding_loop = has_preceding_loop || target.is_loop();
         }
-        Err(ErrorCategory::Invariant
-            .diagnostic(format!("Expected a break target for bb{}", block.index())))
+        Err(diagnostics::expected_break_target(block.index()))
     }
 
     fn get_continue_target(&self, block: BlockId) -> Option<(BlockId, ReactiveTerminalTargetKind)> {
@@ -318,8 +312,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             let terminal_source_span = terminal.span().copied().unwrap_or_default();
 
             if !self.cx.emitted.insert(block_id_val) {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic(format!("Block bb{} was already emitted", block_id_val.index())));
+                return Err(diagnostics::block_already_emitted(block_id_val.index()));
             }
 
             // Emit instructions
@@ -364,20 +357,16 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     let consequent_block = if self.cx.is_scheduled(*consequent) {
-                        return Err(ErrorCategory::Invariant.diagnostic(format!(
-                            "Unexpected 'if' where consequent is already scheduled (bb{})",
-                            consequent.index()
-                        )));
+                        return Err(diagnostics::if_consequent_already_scheduled(
+                            consequent.index(),
+                        ));
                     } else {
                         self.traverse_block(*consequent)?
                     };
 
                     let alternate_block = if let Some(alt) = alternate_id {
                         if self.cx.is_scheduled(alt) {
-                            return Err(ErrorCategory::Invariant.diagnostic(format!(
-                                "Unexpected 'if' where the alternate is already scheduled (bb{})",
-                                alt.index()
-                            )));
+                            return Err(diagnostics::if_alternate_already_scheduled(alt.index()));
                         } else {
                             Some(self.traverse_block(alt)?)
                         }
@@ -427,7 +416,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         if self.cx.is_scheduled(case_block_id) {
                             // TS: asserts case.block === fallthrough, then skips (return)
                             if case_block_id != *fallthrough {
-                                return Err(ErrorCategory::Invariant.diagnostic("Unexpected 'switch' where a case is already scheduled and block is not the fallthrough"));
+                                return Err(diagnostics::invariant_unexpected_switch_where_case_already_scheduled_and_block_not_fallthrough());
                             }
                             continue;
                         }
@@ -480,9 +469,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'do-while' where the loop is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_do_while_where_loop_already_scheduled(
+                            ),
+                        );
                     };
                     let test_result = self.visit_value_block(*test, *span, None)?;
 
@@ -530,8 +520,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(ErrorCategory::Invariant
-                            .diagnostic("Unexpected 'while' where the loop is already scheduled"));
+                        return Err(
+                            diagnostics::invariant_unexpected_while_where_loop_already_scheduled(),
+                        );
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
@@ -593,8 +584,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(ErrorCategory::Invariant
-                            .diagnostic("Unexpected 'for' where the loop is already scheduled"));
+                        return Err(
+                            diagnostics::invariant_unexpected_where_loop_already_scheduled(),
+                        );
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
@@ -653,9 +645,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'for-of' where the loop is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_where_loop_already_scheduled_2(),
+                        );
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
@@ -710,9 +702,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'for-in' where the loop is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_where_loop_already_scheduled_3(),
+                        );
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
@@ -748,9 +740,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     if self.cx.is_scheduled(*label_block) {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'label' where the block is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_label_where_block_already_scheduled(),
+                        );
                     }
                     let label_body = self.traverse_block(*label_block)?;
 
@@ -879,9 +871,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     if self.cx.is_scheduled(*scope_block) {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'scope' where the block is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_scope_where_block_already_scheduled(),
+                        );
                     }
                     let scope_body = self.traverse_block(*scope_block)?;
 
@@ -903,9 +895,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     if self.cx.is_scheduled(*scope_block) {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'scope' where the block is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_scope_where_block_already_scheduled_2(
+                            ),
+                        );
                     }
                     let scope_body = self.traverse_block(*scope_block)?;
 
@@ -957,9 +950,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     if self.cx.is_scheduled(*alternate) {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'branch' where the alternate is already scheduled",
-                        ));
+                        return Err(diagnostics::invariant_unexpected_branch_where_alternate_already_scheduled());
                     }
                     let alternate_block = self.traverse_block(*alternate)?;
 
@@ -1005,10 +996,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         if let Some(ft) = fallthrough
             && block_id == ft
         {
-            return Err(ErrorCategory::Invariant.diagnostic(format!(
-                "Did not expect to reach the fallthrough of a value block (bb{})",
-                block_id.index()
-            )));
+            return Err(diagnostics::unexpected_value_block_fallthrough(block_id.index()));
         }
 
         match &terminal {
@@ -1029,12 +1017,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             }
             Terminal::Goto { .. } => {
                 if instructions.is_empty() {
-                    return Err(ErrorCategory::Invariant
-                        .diagnostic("Unexpected empty block with `goto` terminal")
-                        .with_help(format!("Block bb{} is empty", block_id.index()))
-                        .with_labels(
-                            span.map(|s| s.label("Unexpected empty block with `goto` terminal")),
-                        ));
+                    // There is no source instruction to point at. Let the
+                    // program-level compact function fallback supply the label
+                    // instead of highlighting the enclosing loop/body span.
+                    return Err(diagnostics::empty_goto(block_id.index(), None));
                 }
                 Ok(self.extract_value_block_result(&instructions, block_id_val))
             }
@@ -1118,11 +1104,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     branch_span: *branch_span,
                 })
             }
-            other => Err(ErrorCategory::Invariant.diagnostic(format!(
-                "Expected a branch terminal for {} test block, got {:?}",
-                terminal_kind,
-                discriminant(other)
-            ))),
+            other => Err(diagnostics::expected_branch_terminal(terminal_kind, discriminant(other))),
         }
     }
 
@@ -1214,13 +1196,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     id: *id,
                 })
             }
-            Terminal::MaybeThrow { .. } => Err(ErrorCategory::Invariant
-                .diagnostic("Unexpected maybe-throw in visit_value_block_terminal")),
-            Terminal::Label { .. } => Err(ErrorCategory::Todo.diagnostic(
-                "Support labeled statements combined with value blocks is not yet implemented",
-            )),
+            Terminal::MaybeThrow { .. } => Err(diagnostics::invariant_unexpected_maybe_throw_visit_value_block_terminal()),
+            Terminal::Label { .. } => Err(diagnostics::todo_support_labeled_statements_combined_value_blocks_not_yet_implemented()),
             _ => {
-                Err(ErrorCategory::Invariant.diagnostic("Unsupported terminal kind in value block"))
+                Err(diagnostics::invariant_unsupported_terminal_kind_value_block())
             }
         }
     }
@@ -1388,8 +1367,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         let (target_block, target_kind) = self.cx.get_break_target(block)?;
         if self.cx.scope_fallthroughs.contains(&target_block) {
             if target_kind != ReactiveTerminalTargetKind::Implicit {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Expected reactive scope to implicitly break to fallthrough"));
+                return Err(
+                    diagnostics::invariant_expected_reactive_scope_implicitly_break_fallthrough(),
+                );
             }
             return Ok(None);
         }
@@ -1409,10 +1389,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         let (target_block, target_kind) = match self.cx.get_continue_target(block) {
             Some(result) => result,
             None => {
-                return Err(ErrorCategory::Invariant.diagnostic(format!(
-                    "Expected continue target to be scheduled for bb{}",
-                    block.index()
-                )));
+                return Err(diagnostics::expected_continue_target(block.index()));
             }
         };
 

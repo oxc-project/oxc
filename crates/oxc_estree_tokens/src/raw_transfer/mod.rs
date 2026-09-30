@@ -11,7 +11,11 @@ use oxc_ast_visit::{
 };
 use oxc_parser::{Kind, Token};
 
-use crate::{context::Context, options::ESTreeTokenConfig, visitor::Visitor};
+use crate::{
+    context::Context,
+    options::{ESTreeTokenConfig, ESTreeTokenOptionsJS},
+    visitor::Visitor,
+};
 
 mod estree_kind;
 use estree_kind::ESTreeKind;
@@ -37,6 +41,22 @@ pub fn update_tokens<O: ESTreeTokenConfig>(
     });
     visitor.visit_program(program);
     visitor.into_ctx().finish();
+}
+
+/// [`update_tokens`] for JS-style tokens ([`ESTreeTokenOptionsJS`]).
+///
+/// Prefer this over `update_tokens(.., ESTreeTokenOptionsJS)` when JS-style tokens are all that is
+/// needed. `update_tokens` is generic, so every crate that calls it compiles its own copy of the
+/// whole token visitor; this non-generic entry point is compiled once and shared. It is
+/// `#[inline(never)]` so that it is not inlined across crates, which would re-instantiate the
+/// visitor in the caller.
+#[inline(never)]
+pub fn update_tokens_as_js(
+    tokens: &mut [Token],
+    program: &Program<'_>,
+    span_converter: &Utf8ToUtf16,
+) {
+    update_tokens(tokens, program, span_converter, ESTreeTokenOptionsJS);
 }
 
 /// Raw transfer context.

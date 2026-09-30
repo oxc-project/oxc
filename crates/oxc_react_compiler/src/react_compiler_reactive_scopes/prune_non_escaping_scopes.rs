@@ -13,7 +13,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::Effect;
@@ -64,6 +64,11 @@ pub fn prune_non_escaping_scopes<'a>(
     // First build up a map of which instructions are involved in creating which values,
     // and which values are returned.
     let mut state = CollectState::new();
+    // A named function expression's private name is available on entry, even
+    // when it is only captured by a nested function.
+    if let Some(self_binding) = &func.self_binding {
+        state.declare(env.identifiers[self_binding.identifier].declaration_id);
+    }
     for param in &func.params {
         let place = match param {
             ParamPattern::Place(p) => p,
@@ -448,6 +453,12 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                     vec![]
                 };
                 (lvalues, rvalues)
+            }
+            InstructionValue::TSEnumDeclaration { .. } => {
+                let lvalues = lvalue.map_or_else(Vec::new, |place_identifier| {
+                    vec![LValueMemoization { place_identifier, level: MemoizationLevel::Never }]
+                });
+                (lvalues, vec![])
             }
             InstructionValue::NextPropertyOf { .. }
             | InstructionValue::StartMemoize { .. }
@@ -989,9 +1000,7 @@ fn compute_memoized_identifiers(
         memoized: &mut FxHashSet<DeclarationId>,
     ) -> Result<bool, OxcDiagnostic> {
         let Some(&(level, _, _, _, seen)) = identifier_nodes.get(&id) else {
-            // Upstream raises an "Expected a node for all identifiers" invariant
-            // here; this port has always been lenient instead.
-            return Ok(false);
+            return Err(diagnostics::invariant_expected_node_all_identifiers(id.index()));
         };
         if seen {
             return Ok(identifier_nodes.get(&id).unwrap().1);
@@ -1045,7 +1054,7 @@ fn compute_memoized_identifiers(
         // ternary `test` inside `try`/`catch`); it must bail out the function,
         // not abort the process.
         let Some(&(_, seen)) = scope_nodes.get(&id) else {
-            return Err(ErrorCategory::Invariant.diagnostic("Expected a node for all scopes"));
+            return Err(diagnostics::invariant_expected_node_all_scopes());
         };
         if seen {
             return Ok(());

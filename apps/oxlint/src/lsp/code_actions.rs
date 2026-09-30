@@ -1,6 +1,6 @@
 use oxc_diagnostics::OxcCode;
 use oxc_linter::FixKind;
-use tower_lsp_server::ls_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
+use tower_lsp_server::gen_lsp_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
 use tracing::debug;
 
 use crate::lsp::{
@@ -24,21 +24,21 @@ fn fix_content_to_code_action(
     is_preferred: bool,
 ) -> CodeAction {
     CodeAction {
-        title: fixed_content.message,
-        kind: Some(CodeActionKind::QUICKFIX),
+        title: fixed_content.message.into_owned(),
+        kind: Some(CodeActionKind::QuickFix),
         is_preferred: Some(is_preferred),
         edit: Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
             changes: Some(std::collections::HashMap::from([(
                 uri,
-                vec![TextEdit { range: fixed_content.range, new_text: fixed_content.code }],
+                vec![TextEdit {
+                    range: fixed_content.range,
+                    new_text: fixed_content.code.into_owned(),
+                }],
             )])),
             ..WorkspaceEdit::default()
         }),
-        disabled: None,
-        data: None,
-        diagnostics: None,
-        command: None,
+        ..CodeAction::default()
     }
 }
 
@@ -114,10 +114,7 @@ pub fn apply_all_fix_code_action(
             changes: Some(std::collections::HashMap::from([(uri, quick_fixes)])),
             ..WorkspaceEdit::default()
         }),
-        disabled: None,
-        data: None,
-        diagnostics: None,
-        command: None,
+        ..CodeAction::default()
     })
 }
 
@@ -142,10 +139,7 @@ pub fn apply_dangerous_fix_code_action(
             changes: Some(std::collections::HashMap::from([(uri, quick_fixes)])),
             ..WorkspaceEdit::default()
         }),
-        disabled: None,
-        data: None,
-        diagnostics: None,
-        command: None,
+        ..CodeAction::default()
     })
 }
 
@@ -167,7 +161,10 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
             continue;
         }
 
-        text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
+        text_edits.push(TextEdit {
+            range: fixed_content.range,
+            new_text: fixed_content.code.into_owned(),
+        });
     }
 
     remove_overlapping_edits(text_edits)
@@ -187,7 +184,10 @@ fn dangerous_fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) 
             continue;
         }
 
-        text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
+        text_edits.push(TextEdit {
+            range: fixed_content.range,
+            new_text: fixed_content.code.into_owned(),
+        });
     }
 
     remove_overlapping_edits(text_edits)
@@ -223,7 +223,7 @@ mod tests {
     use std::str::FromStr;
 
     use oxc_diagnostics::OxcCode;
-    use tower_lsp_server::ls_types::{Position, Range};
+    use tower_lsp_server::gen_lsp_types::{Position, Range};
 
     use oxc_linter::FixKind;
 
@@ -241,8 +241,8 @@ mod tests {
         LinterCodeAction {
             range,
             fixed_content: vec![FixedContent {
-                message: "fix".to_string(),
-                code: String::new(),
+                message: "fix".into(),
+                code: "".into(),
                 range,
                 kind: FixKind::SafeFix,
                 lsp_kind: FixedContentKind::LintRule(OxcCode { scope: None, number: None }),
@@ -284,8 +284,8 @@ mod tests {
         LinterCodeAction {
             range: Range::default(),
             fixed_content: vec![FixedContent {
-                message: "remove unused import".to_string(),
-                code: String::new(),
+                message: "remove unused import".into(),
+                code: "".into(),
                 range: Range::new(Position::new(0, 0), Position::new(0, 10)),
                 kind,
                 lsp_kind: FixedContentKind::LintRule(OxcCode { scope: None, number: None }),

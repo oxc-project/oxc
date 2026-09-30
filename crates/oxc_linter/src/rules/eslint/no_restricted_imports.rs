@@ -13,8 +13,7 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, ImportExpression, ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration,
-        TSModuleReference,
+        Expression, ImportExpression, StringLiteral, TSImportEqualsDeclaration, TSModuleReference,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -24,7 +23,7 @@ use oxc_str::CompactStr;
 
 use crate::{
     ModuleRecord,
-    context::LintContext,
+    context::{ContextHost, LintContext},
     module_record::{ExportEntry, ExportImportName, ImportEntry, ImportImportName, NameSpan},
     rule::Rule,
     utils::deserialize_required_regex_option,
@@ -1018,6 +1017,10 @@ impl Rule for NoRestrictedImports {
         Ok(Self(Box::new(NoRestrictedImportsConfig { paths, patterns })))
     }
 
+    fn should_run(&self, _ctx: &ContextHost) -> bool {
+        !self.paths.is_empty() || !self.patterns.is_empty()
+    }
+
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSImportEqualsDeclaration(declaration) => {
@@ -1081,17 +1084,17 @@ impl Rule for NoRestrictedImports {
 
 impl NoRestrictedImports {
     fn report_side_effects(&self, ctx: &LintContext<'_>, module_record: &ModuleRecord) {
+        if module_record.requested_modules.is_empty() {
+            return;
+        }
+
+        let import_statement_spans: FxHashSet<Span> =
+            module_record.import_entries.iter().map(|entry| entry.statement_span).collect();
         let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<Span>> = FxHashMap::default();
 
         for (source, requests) in &module_record.requested_modules {
             for request in requests {
-                if request.is_import
-                    && (module_record.import_entries.is_empty()
-                        || module_record
-                            .import_entries
-                            .iter()
-                            .all(|entry| entry.statement_span != request.statement_span))
-                {
+                if request.is_import && !import_statement_spans.contains(&request.statement_span) {
                     side_effect_import_map.entry(source).or_default().push(request.statement_span);
                 }
             }
@@ -1255,7 +1258,7 @@ impl NoRestrictedImports {
             ctx,
             entry.span,
             &reference.expression,
-            entry.import_kind == ImportOrExportKind::Type,
+            entry.import_kind.is_type(),
             false,
         );
     }
@@ -3600,6 +3603,33 @@ fn test() {
 
     pass.extend(pass_typescript);
     fail.extend(fail_typescript);
+
+    pass.extend([
+        (
+            r"import 'foo'; import { bar } from 'foo'; export { baz } from 'foo'; import('foo');",
+            None,
+        ),
+        (r"import 'foo'; import foo = require('foo');", Some(serde_json::json!([]))),
+        (
+            r"import 'foo'; import { bar } from 'foo'; export * from 'foo'; import('foo');",
+            Some(serde_json::json!([{ "paths": [], "patterns": [] }])),
+        ),
+    ]);
+
+    fail.extend([
+        (
+            r"import { allowed } from 'foo'; import 'foo'; import {} from 'foo';",
+            Some(
+                serde_json::json!([{ "paths": [{ "name": "foo", "allowImportNames": ["allowed"] }] }]),
+            ),
+        ),
+        (
+            r"import 'foo'; import { allowed } from 'foo'; import {} from 'foo';",
+            Some(
+                serde_json::json!([{ "patterns": [{ "regex": "^foo$", "allowImportNames": ["allowed"] }] }]),
+            ),
+        ),
+    ]);
 
     Tester::new(NoRestrictedImports::NAME, NoRestrictedImports::PLUGIN, pass, fail)
         .test_and_snapshot();

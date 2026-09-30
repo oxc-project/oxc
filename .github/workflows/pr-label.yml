@@ -2,27 +2,47 @@ name: Label PR
 
 permissions: {}
 
-on:
-  pull_request:
-    types:
-      - opened
-      - edited
-      - synchronize
-      - reopened
+# Runs after `Check PR` (`pr.yml`) completes for a pull request.
+#
+# `workflow_run` is used instead of `pull_request` so that PRs from forks get labeled too.
+# In `pull_request` events, `GITHUB_TOKEN` is read-only for PRs from forks, so adding labels fails.
+# `pull_request_target` would give a writable token but runs in a privileged context and was
+# removed from this repo in PR #21566.
+#
+# `workflow_run` is safe here because this workflow never checks out or executes PR code.
+# The workflow file is taken from the default branch, `actions/labeler` reads `.github/labeler.yml`
+# from the default branch and the changed files from the pull request API, and the PR number is
+# looked up from the head branch that GitHub reports on the event.
+on: # zizmor: ignore[dangerous-triggers]
+  workflow_run:
+    workflows: [Check PR]
+    types: [completed]
 
 jobs:
   label:
     name: Label PR
-    # Skip on PRs from forks.
-    # In `pull_request` events, `GITHUB_TOKEN` is read-only for PRs from forks, so adding labels would fail.
-    # This means labeling only runs on internal PRs (i.e. from core contributors who have write access to the repo).
-    # The simplest way to extend it to external contributors making PRs from forks would be to switch to
-    # `pull_request_target` event, but we don't want to do that due to the security risks of `pull_request_target`
-    # (see PR #21566).
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.workflow_run.event == 'pull_request'
     permissions:
       contents: read # `actions/labeler` reads `.github/labeler.yml` via the GitHub API
       pull-requests: write # `actions/labeler` adds labels to the PR, requires write permission
     runs-on: ubuntu-slim
     steps:
+      # `workflow_run.pull_requests` is empty for PRs from forks, so look the PRs up by head branch.
+      # The same head branch can have open PRs against different base branches, so label all of them.
+      - name: Find PRs
+        id: prs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          HEAD: ${{ github.event.workflow_run.head_repository.owner.login }}:${{ github.event.workflow_run.head_branch }}
+        run: |
+          {
+            echo 'numbers<<EOF'
+            gh api --method GET "repos/$GH_REPO/pulls" -f state=open -f head="$HEAD" --jq '.[].number'
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
+        if: steps.prs.outputs.numbers != ''
+        with:
+          pr-number: ${{ steps.prs.outputs.numbers }}

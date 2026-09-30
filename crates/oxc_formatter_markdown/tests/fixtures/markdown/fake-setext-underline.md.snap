@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+A lone `==` / `--` line that stayed text by its indentation
+    ==
+is escaped, one with more after it on the line
+    == `code` or -- **strong**
+is text as it stands.
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+A lone `==` / `--` line that stayed text by its indentation
+\==
+is escaped, one with more after it on the line
+== `code` or -- **strong**
+is text as it stands.
+
+-------------------
+{ printWidth: 100 }
+-------------------
+A lone `==` / `--` line that stayed text by its indentation
+\==
+is escaped, one with more after it on the line
+== `code` or -- **strong**
+is text as it stands.
+
+===================== End =====================

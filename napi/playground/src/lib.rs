@@ -30,9 +30,9 @@ use oxc::{
 };
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties,
-    QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
-    default_internal_patterns,
+    Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, OperatorPosition,
+    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas,
+    default_groups, default_internal_patterns,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_linter::{
@@ -319,7 +319,10 @@ impl Oxc {
         program: &mut Program<'a>,
         options: &OxcOptions,
     ) -> Option<MinifierReturn> {
-        if !options.run.compress && !options.run.mangle {
+        if !options.run.compress
+            && !options.run.mangle
+            && !options.run.mangle_props.unwrap_or_default()
+        {
             return None;
         }
         let compress = if options.run.compress {
@@ -348,7 +351,25 @@ impl Oxc {
         } else {
             None
         };
-        Some(Minifier::new(MinifierOptions { mangle, compress }).minify(allocator, program))
+        let mangle_properties = if options.run.mangle_props.unwrap_or_default() {
+            options
+                .mangle_props
+                .as_ref()
+                .ok_or_else(|| {
+                    "mangleProps options are required when run.mangleProps is enabled".to_string()
+                })
+                .and_then(TryInto::try_into)
+                .map_err(|error| {
+                    self.diagnostics.push(OxcDiagnostic::error(error));
+                })
+                .ok()
+        } else {
+            None
+        };
+        Some(
+            Minifier::new(MinifierOptions { mangle, mangle_properties, compress })
+                .minify(allocator, program),
+        )
     }
 
     fn finalize_output<'a>(
@@ -515,6 +536,12 @@ impl Oxc {
             if let Ok(expand) = normalized.parse::<Expand>() {
                 format_options.expand = expand;
             }
+        }
+
+        if let Some(ref operator_position) = options.experimental_operator_position
+            && let Ok(position) = operator_position.parse::<OperatorPosition>()
+        {
+            format_options.operator_position = position;
         }
 
         if let Some(ref sort_imports_config) = options.sort_imports {

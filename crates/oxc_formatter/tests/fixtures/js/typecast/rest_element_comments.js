@@ -14,3 +14,6 @@ const { a: x, /** @type {object} */ ...rest2 } = obj;
 
 // Nested patterns
 const [{ a, /** @type {number} */ ...inner }, /** @type {any[]} */ ...outer] = nested;
+
+// FormalParameters (issue #18589)
+(/** @type {string} */ param, /** @type {string[]} */ ...rest) => {};

@@ -4,7 +4,7 @@ static NEG_MAX_SAFE_FLOAT: f64 = -9_007_199_254_740_991_f64;
 static MAX_SAFE_INT: i64 = 9_007_199_254_740_991_i64;
 static NEG_MAX_SAFE_INT: i64 = -9_007_199_254_740_991_i64;
 
-use crate::test;
+use crate::{test, test_same};
 
 // wrap with a function call so it doesn't get removed.
 fn fold(source_text: &str, expected: &str) {
@@ -15,10 +15,6 @@ fn fold(source_text: &str, expected: &str) {
 
 fn fold_same(source_text: &str) {
     fold(source_text, source_text);
-}
-
-fn test_same(source_text: &str) {
-    test(source_text, source_text);
 }
 
 #[test]
@@ -448,6 +444,28 @@ fn js_typeof() {
     fold_same("x = typeof[1,[foo()]]");
     fold_same("x = typeof{bathwater:baby()}");
     fold_same("x = typeof class { static { foo() } }");
+
+    fold("typeof NaN", "'number'");
+    fold("typeof Infinity", "'number'");
+    fold("typeof Math.E", "'number'");
+    fold("typeof Math.LN10", "'number'");
+    fold("typeof Math.LN2", "'number'");
+    fold("typeof Math.LOG10E", "'number'");
+    fold("typeof Math.LOG2E", "'number'");
+    fold("typeof Math.PI", "'number'");
+    fold("typeof Math.SQRT1_2", "'number'");
+    fold("typeof Math.SQRT2", "'number'");
+    fold_same("typeof Math.missing");
+
+    fold("typeof Number.POSITIVE_INFINITY", "'number'");
+    fold("typeof Number.NEGATIVE_INFINITY", "'number'");
+    fold("typeof Number.EPSILON", "'number'");
+    fold("typeof Number.NaN", "'number'");
+    fold("typeof Number.MAX_VALUE", "'number'");
+    fold("typeof Number.MIN_VALUE", "'number'");
+    fold("typeof Number.MAX_SAFE_INTEGER", "'number'");
+    fold("typeof Number.MIN_SAFE_INTEGER", "'number'");
+    fold_same("typeof Number.UNKNOWN");
 }
 
 #[test]
@@ -671,7 +689,7 @@ fn test_fold_nullish_coalesce() {
     fold("a() ?? (1 ?? b())", "a() ?? 1");
     fold("(a() ?? 1) ?? b()", "a() ?? 1 ?? b()");
 
-    test_same("var y; x = (y ?? 1)()"); // can compress to "var y; x = y()" if y is not null or undefined
+    test_same("v = function(y) { x = (y ?? 1)() }");
     test_same("var y; x = (y.z ?? 1)()"); // "var y; x = (0, y.z)()" if y is not null or undefined
     test("var y; x = (null ?? y)()", "var y; x = y()");
     test("var y; x = (null ?? y.z)()", "var y; x = (0, y.z)()");
@@ -833,12 +851,12 @@ fn test_fold_bitwise_op2() {
     fold("x = y | 3 | 3", "x = y | 3");
     fold("x = 3 | y | 3", "x = y | 3");
 
-    fold("x = y ^ 1 ^ 1", "x = y ^ 0");
+    fold("x = y ^ 1 ^ 1", "x = y | 0");
     fold("x = y ^ 1 ^ 2", "x = y ^ 3");
     fold("x = y ^ 3 ^ 1", "x = y ^ 2");
     fold("x = 3 ^ y ^ 1", "x = y ^ 2");
-    fold("x = y ^ 3 ^ 3", "x = y ^ 0");
-    fold("x = 3 ^ y ^ 3", "x = y ^ 0");
+    fold("x = y ^ 3 ^ 3", "x = y | 0");
+    fold("x = 3 ^ y ^ 3", "x = y | 0");
 
     fold("x = Infinity | NaN", "x=0");
     fold("x = 12 | NaN", "x=12");
@@ -1039,11 +1057,13 @@ fn test_fold_numeric_expression_only_if_shorter() {
 #[test]
 fn test_fold_sub() {
     fold("x = 10 - 20", "x = -10");
+    fold("x = '0x10 ' - 0", "x = 16");
 }
 
 #[test]
 fn test_fold_multiply() {
     fold("x = 2.25 * 3", "x = 6.75");
+    fold("x = '1 ' * 2", "x = 2");
     fold_same("z = x * y");
     fold_same("x = f() * 2");
     fold_same("x = y * 5");
@@ -1137,6 +1157,28 @@ fn test_fold_exponential() {
     fold_same("x = (-1) ** 0.5");
     fold("x = (-0) ** 3", "x = -0");
     fold("x = null ** 0", "x = 1");
+}
+
+/// `Number::exponentiate` is not IEEE 754 `pow`. It returns `NaN` whenever the
+/// exponent is `NaN`, and whenever the base has magnitude `1` and the exponent
+/// is infinite — both cases where `pow` is specified to return `1`.
+///
+/// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation>
+#[test]
+fn test_fold_exponential_disagrees_with_ieee_pow() {
+    fold("x = 1 ** Infinity", "x = NaN");
+    fold("x = 1 ** -Infinity", "x = NaN");
+    fold("x = (-1) ** Infinity", "x = NaN");
+    fold("x = (-1) ** -Infinity", "x = NaN");
+    fold("x = true ** Infinity", "x = NaN");
+    fold("x = 1 ** NaN", "x = NaN");
+    fold("x = (-1) ** NaN", "x = NaN");
+
+    // The cases `pow` and `Number::exponentiate` agree on.
+    fold("x = 2 ** Infinity", "x = Infinity");
+    fold("x = 2 ** NaN", "x = NaN");
+    fold("x = NaN ** 0", "x = 1");
+    fold("x = Infinity ** 0", "x = 1");
 }
 
 #[test]
@@ -1257,7 +1299,7 @@ fn test_fold_instance_of() {
 
     // An unknown value should never be folded.
     fold_same("x instanceof Foo");
-    test_same("var x; foo(x instanceof Object)");
+    test_same("v = function(x) { foo(x instanceof Object) }");
     fold_same("x instanceof Object");
     fold_same("0 instanceof Foo");
 }
@@ -1313,6 +1355,29 @@ fn test_associative_fold_constants_with_variables() {
     fold("alert(12 & x & 20)", "alert(x & 4)");
 }
 
+// https://github.com/rolldown/rolldown/issues/10656
+#[test]
+fn test_does_not_duplicate_large_tracked_strings_when_folding_addition() {
+    test_same(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'y' + p;",
+    );
+    test_same(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'x' + ('y' + p);",
+    );
+
+    // A large string with one read is still inlineable and foldable.
+    test(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const b = 'y' + p;",
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const b = 'yPAYLOADpayload0123456789PAYLOADpayload0123456789';",
+    );
+
+    // Small tracked strings remain cheap enough to inline and fold.
+    test(
+        "const p = 'abc'; export const a = atob(p); export const b = 'y' + p;",
+        "const p = 'abc'; export const a = atob('abc'); export const b = 'yabc';",
+    );
+}
+
 #[test]
 fn test_to_number() {
     fold("x = +''", "x = 0");
@@ -1356,6 +1421,8 @@ fn test_fold_useless_string_addition() {
 fn test_fold_same_typeof() {
     fold("typeof foo === typeof bar", "typeof foo == typeof bar");
     fold("typeof foo !== typeof bar", "typeof foo != typeof bar");
+    fold("typeof foo === typeof foo", "!0");
+    fold("typeof foo !== typeof foo", "!1");
     fold("typeof foo.bar === typeof foo.bar", "typeof foo.bar == typeof foo.bar");
     fold("typeof foo.bar !== typeof foo.bar", "typeof foo.bar != typeof foo.bar");
 }
@@ -1611,4 +1678,20 @@ mod bigint {
         fold("({ ...{ __proto__() {} } })", "({ __proto__() {} })");
         fold("({ ...{ ['__proto__']: null } })", "({ ['__proto__']: null })");
     }
+}
+
+/// Rotating `(k1 op x) op right` into `x op (k1 op right)` drops `k1` and
+/// `right`, so it is only sound when neither has side effects. `[expr].length`
+/// evaluates to a constant while still running `expr`.
+#[test]
+fn test_fold_left_child_op_keeps_side_effects() {
+    fold_same("(3 ^ x) ^ [(y = 9), 1].length");
+    fold_same("(x ^ 3) ^ [(y = 9), 1].length");
+    fold_same("(3 | x) | [(y = 9), 1].length");
+    fold_same("(3 & x) & [(y = 9), 1].length");
+    fold_same("(3 ^ [(y = 9), 1].length) ^ x");
+    fold_same("([(y = 9), 1].length ^ x) ^ 3");
+    fold_same("(x ^ [(y = 9), 1].length) ^ 3");
+    // Still folds when nothing has side effects.
+    fold("(3 ^ x) ^ [1, 1].length", "x ^ 1");
 }

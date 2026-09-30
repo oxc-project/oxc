@@ -65,6 +65,11 @@ impl<T: GetSpan + Copy> SpanCursor<'_, T> {
         self.inner[start..].iter().copied().take_while(move |item| item.span().end <= upper_bound)
     }
 
+    /// Iterator over every unprinted item ([`Self::take_remaining`] without advancing the cursor).
+    pub fn iter_remaining(&self) -> impl Iterator<Item = T> {
+        self.inner[self.cursor.get()..].iter().copied()
+    }
+
     /// Returns the most recently consumed item, if any.
     /// ([`Self::peek`]'s mirror on the consumed side)
     /// Lets consumers re-anchor position measurements after a drain consumed items past their own anchor.

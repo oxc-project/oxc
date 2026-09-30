@@ -28,7 +28,8 @@ use crate::{
         CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
     },
     config_loader::{
-        CliConfigLoadError, ConfigLoadError, ConfigLoader, materialize_default_plugins,
+        CliConfigLoadError, ConfigLoadError, ConfigLoader, config_discovery,
+        materialize_default_plugins,
     },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -194,7 +195,7 @@ impl CliRunner {
         // Currently it only disables Oxlint's own ignore sources (`.eslintignore`, `--ignore-path`, `--ignore-pattern`),
         // not git's. (Aligns with during walk filtering behavior)
         let mut gitignore_checker = GitignoreChecker::new();
-        paths.retain(|p| !gitignore_checker.is_gitignored(p, &self.cwd));
+        paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
 
         // If explicit paths were provided but all have been filtered,
         // or the default cwd target is gitignored, return early.
@@ -247,7 +248,8 @@ impl CliRunner {
             // as the passed config file takes absolute precedence.
             basic_options.config.is_none() &&
             !misc_options.print_config &&
-            !self.options.list_rules;
+            !self.options.list_rules &&
+            config_discovery().nested_configs();
 
         let config_result = {
             let mut config_loader =
@@ -587,7 +589,12 @@ impl CliRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
             oxlint_suppression_file_action,
-            rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
+            rule_timings: rule_timing_store.as_ref().map(|store| {
+                crate::output_formatter::RuleTimings {
+                    records: store.collect(),
+                    js_plugin_runtime: store.js_plugin_runtime(),
+                }
+            }),
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -760,6 +767,16 @@ mod test {
     use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
     use oxc_linter::rules::RULES;
 
+    fn markdown_rule_row<'a>(output: &'a str, plugin: &str, name: &str) -> Vec<&'a str> {
+        output
+            .lines()
+            .find_map(|line| {
+                let cells = line.split('|').skip(1).take(5).map(str::trim).collect::<Vec<_>>();
+                (cells.len() == 5 && cells[0] == name && cells[1] == plugin).then_some(cells)
+            })
+            .unwrap_or_else(|| panic!("Missing rule row for {plugin}/{name}"))
+    }
+
     // lints the full directory of fixtures,
     // so do not snapshot it, test only
     #[test]
@@ -860,13 +877,16 @@ mod test {
         let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&[]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
 
-        // Explicitly passed gitignored targets are skipped too;
-        // `--no-ignore` only disables Oxlint's own ignore sources, not git's.
-        let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&["index.ts"]);
+        // Explicitly passed gitignored directories are skipped too.
+        let (_, result) = Tester::new().with_cwd(repo_path).test_output(&["sub/generated/pkg"]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
-        let (_, result) =
-            Tester::new().with_cwd(pkg_path).test_output(&["--no-ignore", "index.ts"]);
-        assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+
+        // But an explicitly named file is linted even when gitignored;
+        // `.gitignore` only scopes discovery.
+        let (stdout, result) =
+            Tester::new().with_cwd(pkg_path).test_output(&["-D", "no-debugger", "index.ts"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        assert!(stdout.contains("on 1 file"), "{stdout}");
     }
 
     #[cfg(unix)]
@@ -1653,6 +1673,39 @@ mod test {
             })
             .collect();
         assert!(rule_names.is_sorted(), "The rules list should be sorted by scope and value");
+
+        for (scope, value, expected) in [
+            ("eslint", "no-implied-eval", false),
+            ("typescript", "no-implied-eval", true),
+            ("typescript", "prefer-string-starts-ends-with", false),
+            ("unicorn", "prefer-string-starts-ends-with", true),
+            ("vue", "no-dupe-keys", false),
+            ("eslint", "no-dupe-keys", true),
+        ] {
+            let rule = rules
+                .iter()
+                .find(|rule| rule["scope"] == scope && rule["value"] == value)
+                .unwrap_or_else(|| panic!("Missing rule {scope}/{value}"));
+            assert_eq!(rule["default"], expected, "Incorrect default for {scope}/{value}");
+        }
+    }
+
+    #[test]
+    fn test_rules_markdown_output_uses_qualified_rule_names() {
+        let (stdout, _) = Tester::new().with_cwd("fixtures".into()).test_output(&["--rules"]);
+
+        for (plugin, name, expected) in [
+            ("eslint", "no-implied-eval", ""),
+            ("typescript", "no-implied-eval", "✅"),
+            ("typescript", "prefer-string-starts-ends-with", ""),
+            ("unicorn", "prefer-string-starts-ends-with", "✅"),
+            ("vue", "no-dupe-keys", ""),
+            ("eslint", "no-dupe-keys", "✅"),
+        ] {
+            let row = markdown_rule_row(&stdout, plugin, name);
+            assert_eq!(row[2], expected, "Incorrect default for {plugin}/{name}");
+            assert_eq!(row[3], expected, "Incorrect enabled state for {plugin}/{name}");
+        }
     }
 
     #[test]
@@ -1738,6 +1791,17 @@ mod test {
     fn test_tsgolint_type_check_only() {
         let args = &["--type-check-only"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_skips_rules() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_rules".into())
+            .test_and_snapshot_multiple(&[
+                &["--type-check-only", "index.ts"],
+                &["--type-check-only", "type-error.ts"],
+            ]);
     }
 
     #[test]
@@ -2015,6 +2079,12 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_tuple_rules".into())
             .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_no_js_runtime() {
+        let args = &[];
+        Tester::new().with_cwd("fixtures/cli/no_js_runtime".into()).test_and_snapshot(args);
     }
 }
 

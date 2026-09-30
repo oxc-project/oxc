@@ -2845,8 +2845,15 @@
    :  ^
    `----
 
-Found 0 warnings and 251 errors.
-Finished in Xms on 8 files with 1 rules using X threads.
+  x Unterminated string
+   ,-[files/unterminated_string.js:4:1]
+ 3 | foo();
+ 4 | 'unterminated
+   : ^^^^^^^^^^^^^^
+   `----
+
+Found 0 warnings and 252 errors.
+Finished in Xms on 9 files with 1 rules using X threads.
 ```
 
 # stderr

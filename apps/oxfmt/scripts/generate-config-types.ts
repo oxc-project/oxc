@@ -19,10 +19,10 @@ if (!existsSync(schemaPath)) {
 const schema = JSON.parse(readFileSync(schemaPath, "utf8"));
 
 const bannerComment =
-  "/*\n" +
-  " * This file is generated from npm/oxfmt/configuration_schema.json.\n" +
-  " * Run `just formatter-config-ts` to regenerate.\n" +
-  " */";
+  "/*\n"
+  + " * This file is generated from npm/oxfmt/configuration_schema.json.\n"
+  + " * Run `just formatter-config-ts` to regenerate.\n"
+  + " */";
 
 const ts = await compile(schema, "OxfmtConfig", { bannerComment });
 

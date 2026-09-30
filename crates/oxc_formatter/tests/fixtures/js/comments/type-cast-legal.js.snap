@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A legal JSDoc is a type cast too
+const x = /** @license @type {A} */ (y);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A legal JSDoc is a type cast too
+const x = /** @license @type {A} */ (y);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A legal JSDoc is a type cast too
+const x = /** @license @type {A} */ (y);
+
+===================== End =====================

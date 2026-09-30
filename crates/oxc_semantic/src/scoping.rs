@@ -374,6 +374,22 @@ impl Scoping {
         });
     }
 
+    /// Rename multiple symbols to the same name.
+    ///
+    /// The name is allocated once in the semantic arena and shared between all symbols.
+    #[inline]
+    pub fn set_symbol_names(&mut self, symbol_ids: &[SymbolId], name: Ident<'_>) {
+        if symbol_ids.is_empty() {
+            return;
+        }
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let name = name.clone_in(allocator);
+            for &symbol_id in symbol_ids {
+                cell.symbol_names[symbol_id.index()] = name;
+            }
+        });
+    }
+
     /// Get the [`SymbolFlags`] for a symbol, which describe how the symbol is declared.
     ///
     /// To find how a symbol is used, use [`Scoping::get_resolved_references`].

@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.67.0] - 2026-09-07
+
+### 🛡️ Security
+
+- 9a612d5 deps: Update npm packages (#26178) (renovate[bot])
+
+## [0.64.0] - 2026-08-18
+
+### 🚀 Features
+
+- c07fe7c oxfmt: Support `experimentalOperatorPosition` (#25643) (leaysgur)
+
+### 📚 Documentation
+
+- fed6681 oxfmt: Skip expanding overrides options (#25572) (leaysgur)
+
 ## [0.62.0] - 2026-08-03
 
 ### 🐛 Bug Fixes

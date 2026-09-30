@@ -23,8 +23,8 @@ use oxc_formatter::{
     format_program, parse_for_format,
 };
 use oxc_formatter_core::LineWidth;
-use oxc_formatter_tests::conformance::print_text_diff;
 use oxc_span::SourceType;
+use oxc_tasks_common::print_text_diff;
 
 fn fixtures_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests").join("jsdoc").join("fixtures")
@@ -41,8 +41,7 @@ fn jsdoc() {
     let mut failures = Vec::new();
 
     for (input_path, expected_path) in collect_fixture_pairs() {
-        let rel_path =
-            input_path.strip_prefix(fixtures_root()).unwrap().to_string_lossy().into_owned();
+        let rel_path = normalized_rel_path(&input_path);
 
         let source_text = fs::read_to_string(&input_path).unwrap();
         let expected = fs::read_to_string(&expected_path).unwrap();
@@ -107,7 +106,7 @@ fn collect_fixture_pairs() -> Vec<(PathBuf, PathBuf)> {
             continue;
         }
 
-        let rel_path = path.strip_prefix(fixtures_root()).unwrap().to_string_lossy();
+        let rel_path = normalized_rel_path(path);
         if IGNORED_FIXTURES.iter().any(|ignored| rel_path == *ignored) {
             continue;
         }
@@ -117,6 +116,12 @@ fn collect_fixture_pairs() -> Vec<(PathBuf, PathBuf)> {
 
     pairs.sort_unstable();
     pairs
+}
+
+/// `/`-separated path relative to the fixtures root, so `IGNORED_FIXTURES`
+/// matching and failure listings behave the same on Windows.
+fn normalized_rel_path(path: &Path) -> String {
+    oxc_tasks_common::normalize_path(path.strip_prefix(fixtures_root()).unwrap())
 }
 
 /// Load per-fixture JsdocOptions and format overrides.
@@ -220,7 +225,7 @@ fn run_formatter(
     // This deliberately DIVERGES from production oxfmt,
     // whose fail-loud `format()` would report a diagnostic for these fixtures instead of formatting.
     let ret = parse_for_format(&allocator, source_text, source_type);
-    if ret.panicked {
+    if ret.fatal_error {
         return None;
     }
 

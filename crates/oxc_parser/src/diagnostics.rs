@@ -759,6 +759,11 @@ parser_diagnostics! {
         .with_label(span)
     };
 
+    initializer_in_for_in_lexical_declaration(span: Span) => {
+        OxcDiagnostic::error("for-in loop variable declaration may not have an initializer")
+            .with_label(span)
+    };
+
     using_declarations_must_be_initialized(span: Span) => {
         OxcDiagnostic::error("Using declarations must have an initializer.")
             .with_label(span)
@@ -880,12 +885,34 @@ parser_diagnostics! {
         OxcDiagnostic::error("A rest parameter cannot have an initializer.").with_label(span)
     };
 
+    top_level(statement: &'static str, span: Span) => {
+        OxcDiagnostic::error(format!(
+            "'{statement}' declaration can only be used at the top level of a module"
+        ))
+        .with_label(span)
+    };
+
+    module_code(statement: &'static str, span: Span) => {
+        OxcDiagnostic::error(format!("Cannot use {statement} outside a module")).with_label(span)
+    };
+
     import_requires_a_specifier(span: Span) => {
         OxcDiagnostic::error("import() requires a specifier.").with_label(span)
     };
 
+    declare_modifier_on_import(span: Span) => {
+        ts_error("1079", "A 'declare' modifier cannot be used with an import declaration.")
+            .with_label(span)
+    };
+
     modifier_cannot_be_used_here(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
+            .with_label(modifier.span())
+            .with_allowed_modifier_help(allowed)
+    };
+
+    accessor_only_on_property_declaration(modifier: Modifier, allowed: Option<ModifierKinds>) => {
+        ts_error("1275", "'accessor' modifier can only appear on a property declaration.")
             .with_label(modifier.span())
             .with_allowed_modifier_help(allowed)
     };

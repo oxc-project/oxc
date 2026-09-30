@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare..ts:1:16]
+ 1 │ export {}; var a = 3; var a = 10;
+   ·                ┬          ┬
+   ·                │          ╰── It can not be redeclared here.
+   ·                ╰── 'a' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare..ts:1:31]
+ 1 │ export {}; function f() { var a; var a; }
+   ·                               ┬      ┬
+   ·                               │      ╰── It can not be redeclared here.
+   ·                               ╰── 'a' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'foo' is already defined.
+   ╭─[no_redeclare..ts:1:6]
+ 1 │ type foo = 1; export function foo(): void; export function foo() { }
+   ·      ─┬─                                                   ─┬─
+   ·       │                                                     ╰── It can not be redeclared here.
+   ·       ╰── 'foo' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined.
+   ╭─[no_redeclare..ts:1:16]
+ 1 │ export {}; var Object = 0; var Object = 0;
+   ·                ───┬──          ───┬──
+   ·                   │               ╰── It can not be redeclared here.
+   ·                   ╰── 'Object' is already defined.
+   ╰────
+  help: Use a different variable name or remove the duplicate declaration.

@@ -1,8 +1,6 @@
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::class::ClassId;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -96,8 +94,7 @@ impl Rule for MaxClassesPerFile {
         {
             Ok(Self(Box::new(MaxClassesPerFileConfig { max, ignore_expressions: false })))
         } else {
-            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .map(DefaultRuleConfig::into_inner)
+            DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
         }
     }
 
@@ -118,12 +115,12 @@ impl Rule for MaxClassesPerFile {
             return;
         }
 
-        let node_id = ctx.classes().get_node_id(ClassId::new(self.max as usize));
-        let span = if let AstKind::Class(class) = ctx.nodes().kind(node_id) {
-            class.span
-        } else {
-            Span::new(0, 0)
-        };
+        let program = ctx.nodes().program();
+        let start = program.directives.first().map_or_else(
+            || program.body.first().map_or(program.span.start, |statement| statement.span().start),
+            |directive| directive.span.start,
+        );
+        let span = Span::sized(start, 1);
 
         ctx.diagnostic(max_classes_per_file_diagnostic(class_count, self.max, span));
     }
