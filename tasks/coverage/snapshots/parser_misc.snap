@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 111/111 (100.00%)
-Positive Passed: 111/111 (100.00%)
-Negative Passed: 239/239 (100.00%)
+AST Parsed     : 112/112 (100.00%)
+Positive Passed: 112/112 (100.00%)
+Negative Passed: 244/244 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -4818,13 +4818,14 @@ Negative Passed: 239/239 (100.00%)
    ╰────
   help: Remove the `?`
 
-  × Unexpected token
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/oxc-5955-2.ts:3:8]
  2 │ interface B {
  3 │     e()?: number;
-   ·        ─
+   ·        ▲
  4 │ }
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1021): An index signature must have a type annotation.
    ╭─[misc/fail/oxc-5955-3.ts:2:5]
@@ -5081,6 +5082,41 @@ Negative Passed: 239/239 (100.00%)
  3 │ interface C extends this.D {}
    ·                     ──────
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-call-missing-separator.ts:1:20]
+ 1 │ type T = { (): void next: string };
+   ·                    ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-construct-missing-separator.ts:1:29]
+ 1 │ interface T { new (): object next: string }
+   ·                             ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-getter-missing-separator.ts:1:31]
+ 1 │ type T = { get value(): string next: string };
+   ·                               ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-method-missing-separator.ts:1:29]
+ 1 │ interface T { method(): void next: string }
+   ·                             ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-setter-missing-separator.ts:1:36]
+ 1 │ type T = { set value(value: string) next: string };
+   ·                                    ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]
