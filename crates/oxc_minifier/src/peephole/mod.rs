@@ -1,6 +1,7 @@
 mod convert_to_dotted_properties;
 mod fold_constants;
 mod inline;
+mod minimize_binary_expression;
 mod minimize_conditional_expression;
 mod minimize_conditions;
 mod minimize_expression_in_boolean_context;
@@ -575,6 +576,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::fold_sequence_expression(expr, ctx);
                     Self::minimize_loose_boolean(expr, ctx);
                     Self::minimize_binary(expr, ctx);
+                    Self::minimize_bitwise_binary_expr(expr, ctx);
                     Self::substitute_loose_equals_undefined(expr, ctx);
                     Self::substitute_typeof_undefined(expr, ctx);
                     Self::substitute_rotate_binary_expression(expr, ctx);
