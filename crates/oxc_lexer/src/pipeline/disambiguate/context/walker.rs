@@ -558,6 +558,7 @@ impl Walk {
             r.inner = inner;
         }
         self.value_done();
+        self.no_type_args = true;
     }
 
     pub(super) fn type_operator(&mut self) {

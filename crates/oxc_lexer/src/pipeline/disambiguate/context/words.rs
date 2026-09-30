@@ -55,10 +55,10 @@ impl Walk {
             _ => {
                 // A statement keyword right after a completed type is an error on the same line
                 // and was handled by the break rule on a new one; read it as an atom.
+                let query = self.prev_kw == tk!(KwTypeof);
                 self.type_atom(false);
-                if keyword_type(kw) {
-                    self.prev_kw = kw;
-                }
+                // A name takes type arguments, a keyword type only in a type query.
+                self.no_type_args = keyword_type(kw) && !query;
             }
         }
     }

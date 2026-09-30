@@ -22,10 +22,7 @@ impl Walk {
             if c == b'<' && c1 == b'<' {
                 len = 1;
             }
-            if c == b'=' && c1 == b'>' {
-                len = 2;
-            }
-            return self.type_op(tokens, pos, c, len);
+            return self.type_op(pos, c, len);
         }
 
         match c {
