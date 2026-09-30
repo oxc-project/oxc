@@ -4016,6 +4016,13 @@ impl Gen for TSExternalModuleDeclaration<'_> {
         p.print_space_before_identifier();
         p.print_string_literal(&self.id, false);
 
+        if let Some(attributes) = &self.attributes {
+            p.print_soft_space();
+            p.print_str("with");
+            p.print_soft_space();
+            print_ts_module_attributes(attributes, p, ctx);
+        }
+
         if let Some(body) = &self.body {
             p.print_soft_space();
             body.print(p, ctx);
@@ -4024,6 +4031,25 @@ impl Gen for TSExternalModuleDeclaration<'_> {
         }
         p.needs_semicolon = false;
     }
+}
+
+fn print_ts_module_attributes(attributes: &WithClause<'_>, p: &mut Codegen, ctx: Context) {
+    let Some(first) = attributes.with_entries.first() else {
+        p.print_str("{}");
+        return;
+    };
+    // ESTree exposes only the entries. Anchor braces to the first and last entries
+    // so native and ESTree codegen produce the same source maps.
+    let span = Span::new(first.span.start, attributes.with_entries.last().unwrap().span.end);
+    p.print_curly_braces(span, false, |p| {
+        for attribute in &attributes.with_entries {
+            p.print_leading_comments(attribute.span.start);
+            p.print_indent();
+            attribute.print(p, ctx);
+            p.print_semicolon();
+            p.print_soft_newline();
+        }
+    });
 }
 
 impl Gen for TSNamespaceDeclaration<'_> {

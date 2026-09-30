@@ -2851,6 +2851,7 @@ impl<'a> Dummy<'a> for TSExternalModuleDeclaration<'a> {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
+            attributes: Dummy::dummy(allocator),
             body: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),

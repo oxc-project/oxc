@@ -10579,14 +10579,19 @@ export class TSExternalModuleDeclaration {
     return new StringLiteral(internal.pos + 16, internal.ast);
   }
 
+  get attributes() {
+    const internal = this.#internal;
+    return constructOptionBoxWithClause(internal.pos + 64, internal.ast);
+  }
+
   get body() {
     const internal = this.#internal;
-    return constructOptionBoxTSModuleBlock(internal.pos + 64, internal.ast);
+    return constructOptionBoxTSModuleBlock(internal.pos + 72, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 72, internal.ast);
+    return constructBool(internal.pos + 80, internal.ast);
   }
 
   toJSON() {
@@ -10595,6 +10600,7 @@ export class TSExternalModuleDeclaration {
       start: this.start,
       end: this.end,
       id: this.id,
+      attributes: this.attributes,
       body: this.body,
       declare: this.declare,
     };

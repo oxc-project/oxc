@@ -463,6 +463,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.ctx.has_ambient() {
             self.error(diagnostics::quoted_module_name_only_allowed_in_ambient_module(id.span()));
         }
+        let attributes =
+            self.eat(Kind::With).then(|| self.parse_ts_module_declaration_attributes());
         let body = if self.at(Kind::LCurly) {
             // External module body (`declare module "x" {}`); `import`/`export` are allowed here.
             Some(self.parse_ts_module_block(/* in_ts_namespace_body */ false))
@@ -479,10 +481,58 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         TSExternalModuleDeclaration::boxed(
             self.end_span(start),
             id,
+            attributes,
             body,
             modifiers.contains_declare(),
             self,
         )
+    }
+
+    fn parse_ts_module_declaration_attributes(&mut self) -> ArenaBox<'a, WithClause<'a>> {
+        let start = self.cur_start();
+        let attributes = self.parse_normal_list(
+            Kind::LCurly,
+            Kind::RCurly,
+            Self::parse_ts_module_declaration_attribute,
+        );
+        WithClause::boxed(self.end_span(start), WithClauseKeyword::With, attributes, self)
+    }
+
+    fn parse_ts_module_declaration_attribute(&mut self) -> ImportAttribute<'a> {
+        let start = self.cur_start();
+        let modifier_span = self.cur_token().span();
+        if self.parse_contextual_modifier(Kind::Readonly) {
+            self.error(diagnostics::import_attribute_cannot_be_readonly(modifier_span));
+        }
+        let key = match self.cur_kind() {
+            Kind::Str => ImportAttributeKey::StringLiteral(self.parse_literal_string()),
+            kind if kind.is_identifier_name() => {
+                ImportAttributeKey::Identifier(self.parse_identifier_name())
+            }
+            _ => return self.unexpected(),
+        };
+        if key.as_arena_str() == "resolution-mode" {
+            self.error(diagnostics::invalid_ts_import_attribute_key(key.span()));
+        }
+        self.expect(Kind::Colon);
+        let value = match self.cur_kind() {
+            Kind::Str => self.parse_literal_string(),
+            Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
+                let span = self.parse_template_literal(false).span;
+                self.error(diagnostics::ts_import_attribute_value_must_be_string_literal(span));
+                // Recover with a placeholder since attribute values can only be string literals.
+                StringLiteral::new(span, "", None, self)
+            }
+            _ => {
+                return self.fatal_error(
+                    diagnostics::ts_import_attribute_value_must_be_string_literal(
+                        self.cur_token().span(),
+                    ),
+                );
+            }
+        };
+        self.parse_type_member_semicolon();
+        ImportAttribute::new(self.end_span(start), key, value, self)
     }
 
     /// Validate a statement that appears directly in an *internal* namespace body

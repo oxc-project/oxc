@@ -80,7 +80,7 @@ use crate::{
         is_keyword_property_key,
         object::{
             format_property_key, is_quoted_new_method_signature, should_preserve_quote,
-            should_preserve_quote_for_enum_member,
+            should_preserve_quote_for_enum_member, should_preserve_string_quote,
         },
         statement_body::{
             FormatStatementBody, write_comments_between_blocks, write_head_body_separator,
@@ -1858,12 +1858,101 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleDeclaration<'a>> {
         }
 
         write!(f, ["module", space()]);
-        if let Some(body) = self.body() {
-            write!(f, FormatNodeWithoutTrailingComments(self.id()));
-            write_head_body_separator(body.span().start, f);
-            write!(f, body);
-        } else {
-            write!(f, [self.id(), OptionalSemicolon]);
+        match (self.attributes(), self.body()) {
+            (Some(attributes), Some(body)) => {
+                write_ts_external_module_name_and_with(self.id(), attributes, f);
+                write!(f, FormatNodeWithoutTrailingComments(attributes));
+                write_head_body_separator(body.span().start, f);
+                write!(f, body);
+            }
+            (None, Some(body)) => {
+                write!(f, FormatNodeWithoutTrailingComments(self.id()));
+                write_head_body_separator(body.span().start, f);
+                write!(f, body);
+            }
+            (Some(attributes), None) => {
+                write_ts_external_module_name_and_with(self.id(), attributes, f);
+                write!(f, [attributes, OptionalSemicolon]);
+            }
+            (None, None) => write!(f, [self.id(), OptionalSemicolon]),
+        }
+    }
+}
+
+fn write_ts_external_module_name_and_with<'a>(
+    name: &AstNode<'a, StringLiteral<'a>>,
+    attributes: &AstNode<'a, WithClause<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    write!(f, FormatNodeWithoutTrailingComments(name));
+    let comments = f.context().comments().comments_before_character(name.span.end, b'w');
+    if write_comments_between_blocks(comments, f) {
+        write!(f, space());
+    }
+    write!(f, "with");
+    let comments = f.context().comments().comments_before(attributes.span().start);
+    if write_comments_between_blocks(comments, f) {
+        write!(f, space());
+    }
+}
+
+fn format_ts_module_attributes<'a>(
+    attributes: &AstNode<'a, WithClause<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    if f.options().quote_properties.is_consistent() {
+        let quote_needed = attributes.with_entries.iter().any(|attribute| {
+            matches!(&attribute.key, ImportAttributeKey::StringLiteral(string)
+                    if should_preserve_string_quote(string, f))
+        });
+        f.context_mut().push_quote_needed(quote_needed);
+    }
+
+    ObjectLike::WithClause(attributes).fmt(f);
+
+    if f.options().quote_properties.is_consistent() {
+        f.context_mut().pop_quote_needed();
+    }
+}
+
+struct FormatTSModuleDeclarationAttributes<'a, 'b>(
+    &'b AstNode<'a, ArenaVec<'a, ImportAttribute<'a>>>,
+);
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSModuleDeclarationAttributes<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let mut joiner = f.join_nodes_with_soft_line();
+        let mut iter = self.0.iter().peekable();
+        while let Some(attribute) = iter.next() {
+            joiner.entry(
+                attribute.span(),
+                &FormatTSModuleDeclarationAttribute { attribute, has_next: iter.peek().is_some() },
+            );
+        }
+    }
+}
+
+struct FormatTSModuleDeclarationAttribute<'a, 'b> {
+    attribute: &'b AstNode<'a, ImportAttribute<'a>>,
+    has_next: bool,
+}
+
+impl GetSpan for FormatTSModuleDeclarationAttribute<'_, '_> {
+    fn span(&self) -> Span {
+        self.attribute.span()
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSModuleDeclarationAttribute<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, self.attribute);
+        match f.options().semicolons {
+            Semicolons::Always if self.has_next => write!(f, ";"),
+            Semicolons::Always => write!(f, if_group_breaks(&token(";"))),
+            Semicolons::AsNeeded if self.has_next => {
+                write!(f, if_group_fits_on_line(&token(";")));
+            }
+            Semicolons::AsNeeded => {}
         }
     }
 }

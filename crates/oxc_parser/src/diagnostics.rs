@@ -1362,6 +1362,21 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    import_attribute_cannot_be_readonly(span: Span) => {
+        ts_error("1558", "An import attributes property cannot have a 'readonly' modifier.")
+            .with_label(span)
+    };
+
+    invalid_ts_import_attribute_key(span: Span) => {
+        ts_error("1557", "'resolution-mode' is not a valid key for an import attributes type.")
+            .with_label(span)
+    };
+
+    ts_import_attribute_value_must_be_string_literal(span: Span) => {
+        ts_error("1555", "An import attributes property must have a string literal type annotation.")
+            .with_label(span)
+    };
+
     import_attribute_value_must_be_string_literal(span: Span) => {
         OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
             .with_label(span)

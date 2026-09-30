@@ -2147,6 +2147,7 @@ function walkTSModuleDeclaration(node, visitors) {
     enter !== null && enter(node);
   }
   walkNode(node.id, visitors);
+  walkNode(node.attributes, visitors);
   walkNode(node.body, visitors);
   exit !== null && exit(node);
 }

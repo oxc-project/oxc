@@ -69,6 +69,8 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
     };
 
     node.id = DESER[StringLiteral](POS_OFFSET.id);
+    const attributes = DESER[Option<Box<WithClause>>](POS_OFFSET.attributes);
+    if (attributes !== null) node.attributes = attributes.attributes;
     if (body !== null) {
         if (PARENT) body.parent = node;
     }
@@ -86,6 +88,9 @@ impl ESTree for TSExternalModuleDeclarationConverter<'_, '_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
         state.serialize_field("id", &module.id);
+        if let Some(attributes) = &module.attributes {
+            state.serialize_field("attributes", &attributes.with_entries);
+        }
         if let Some(body) = &module.body {
             state.serialize_field("body", body);
         }

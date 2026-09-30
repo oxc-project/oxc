@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 112/112 (100.00%)
-Positive Passed: 112/112 (100.00%)
-Negative Passed: 244/244 (100.00%)
+AST Parsed     : 113/113 (100.00%)
+Positive Passed: 113/113 (100.00%)
+Negative Passed: 246/246 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -34,6 +34,51 @@ Negative Passed: 244/244 (100.00%)
    ╭─[misc/fail/accessor-modifier-static-setter.ts:1:18]
  1 │ class C { static accessor set x(value: number) {} }
    ·                  ────────
+   ╰────
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[misc/fail/ambient-module-import-attributes-readonly.ts:1:31]
+ 1 │ declare module "*.css" with { readonly type: "css" } {
+   ·                               ────────
+ 2 │   const stylesheet: CSSStyleSheet;
+   ╰────
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[misc/fail/ambient-module-import-attributes-readonly.ts:6:32]
+ 5 │ 
+ 6 │ declare module "*.json" with { readonly type: "json", readonly kind: "data" } {}
+   ·                                ────────
+ 7 │ 
+   ╰────
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[misc/fail/ambient-module-import-attributes-readonly.ts:6:55]
+ 5 │ 
+ 6 │ declare module "*.json" with { readonly type: "json", readonly kind: "data" } {}
+   ·                                                       ────────
+ 7 │ 
+   ╰────
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[misc/fail/ambient-module-import-attributes-readonly.ts:8:34]
+ 7 │ 
+ 8 │ declare module "*.config" with { readonly "mode": "strict" };
+   ·                                  ────────
+   ╰────
+
+  × TS(1555): An import attributes property must have a string literal type annotation.
+   ╭─[misc/fail/ambient-module-import-attributes-template.ts:1:40]
+ 1 │ declare module "*.config" with { mode: `strict`, type: "config" } {}
+   ·                                        ────────
+ 2 │ declare module "*.css" with { type: `${kind}` } {}
+   ╰────
+
+  × TS(1555): An import attributes property must have a string literal type annotation.
+   ╭─[misc/fail/ambient-module-import-attributes-template.ts:2:37]
+ 1 │ declare module "*.config" with { mode: `strict`, type: "config" } {}
+ 2 │ declare module "*.css" with { type: `${kind}` } {}
+   ·                                     ─────────
+ 3 │ declare module "*.text" with { type: "text" };
    ╰────
 
   × Cannot assign to 'arguments' in strict mode

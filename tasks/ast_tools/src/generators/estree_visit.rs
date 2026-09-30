@@ -169,6 +169,12 @@ fn generate(codegen: &Codegen) -> Codes {
         keys: keys.iter().map(|&key| key.to_string()).collect(),
     }));
 
+    // Ambient module attributes are not yet present in the upstream visitor keys.
+    let keys = &mut nodes.iter_mut().find(|node| node.name == "TSModuleDeclaration").unwrap().keys;
+    if !keys.iter().any(|key| key == "attributes") {
+        keys.insert(1, "attributes".to_string());
+    }
+
     // Sort by:
     // * Leaf nodes before non-leaf nodes.
     // * JS first, then JSX, then TS.

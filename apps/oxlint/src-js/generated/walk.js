@@ -2615,6 +2615,7 @@ function walkTSModuleDeclaration(node, visitors) {
   ancestors.unshift(node);
   let ancestorsLen = DEBUG ? ancestors.length : 0;
   walkNode(node.id, visitors);
+  walkNode(node.attributes, visitors);
   walkNode(node.body, visitors);
   debugCheckAncestorsOnExit(ancestorsLen, node);
   ancestors.shift();

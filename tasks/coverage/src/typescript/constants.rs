@@ -89,6 +89,11 @@ pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
     // TSC: Does not report errors since `.js` file with `checkJs: false`
     // OXC: Reports errors
     "plainJSRedeclare3.ts",
+    // TS2339 checks which exports are available after resolving attributed ambient modules.
+    // Do not exclude TS2339 globally: Oxc supports some syntax-level instances of this code.
+    "importAttributeArbitraryExtension.ts",
+    "importAttributeModuleAugmentations.ts",
+    "importAttributeTypesJsImports.ts",
     // TSC: Allows import+const redeclaration in `.js` file with `allowJs: true`
     // OXC: Reports redeclaration error per ES spec
     "usedImportNotElidedInJs.ts",
@@ -192,6 +197,8 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "1542", // Type import of an ECMAScript module from a CommonJS module must have a 'resolution-mode' attribute.
     "1543", // Importing a JSON file into an ECMAScript module requires a 'type: "json"' import attribute when 'module' is set to 'Node18'.
     "1544", // Named imports from a JSON file into an ECMAScript module are not allowed when 'module' is set to 'Node16'.
+    "1550", // An ambient module declaration with import attributes must use a pattern name with an '*' character.
+    "1551", // Import attributes are not allowed on a module augmentation.
     "2011", // Cannot convert 'string' to 'number'.
     "2209", // The project root is ambiguous, but is required to resolve export map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
     "2210", // The project root is ambiguous, but is required to resolve import map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
