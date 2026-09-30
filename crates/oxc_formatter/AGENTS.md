@@ -68,6 +68,8 @@ As the JS host, this crate also owns the parent-side concerns in `print/template
 - `.raw` vs `.cooked` selection
 
 Language formatter crates stay free of these rules.
+Without a dispatcher (`embeddedLanguageFormatting: off`), templates print verbatim.
+With one, the layout around an embedded template (a sole argument, an arrow body) is decided from the AST (`embed_hug`), not from the source shape or whether its content formats.
 See `embed/mod.rs` for the shared helpers and `embed/{css,html,graphql,markdown}.rs` for each site's wiring.
 
 js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`. See `apps/oxfmt` in details.

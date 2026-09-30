@@ -10,7 +10,7 @@ use crate::{
         trivia::{FormatTrailingComments, is_alignable_block_comment},
     },
     print::{
-        BinaryLikeExpression, alias_union_breaks_after_operator,
+        BinaryLikeExpression, alias_union_breaks_after_operator, embed_hug,
         is_line_ending_trailing_jsdoc_comment, type_alias_left_end, union_prints_itself,
     },
     utils::{
@@ -1121,9 +1121,11 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
         let is_breakable_call = match args.len() {
             0 => false,
             1 => match args.iter().next() {
-                Some(first_argument) => first_argument
-                    .as_expression()
-                    .is_none_or(|e| !is_short_argument(e, threshold, f)),
+                // An embedded template is formatted, so its source length says nothing
+                Some(first_argument) => first_argument.as_expression().is_none_or(|e| {
+                    embed_hug(e, Some(call_expression), f).is_some()
+                        || !is_short_argument(e, threshold, f)
+                }),
                 None => false,
             },
             _ => true,
