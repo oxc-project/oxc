@@ -69,14 +69,6 @@ impl Codegen<'_> {
     /// `quote` is `None` where it has yet to be chosen - it is then calculated from the contents,
     /// and the opening quote printed, when the first character needing an escape is found.
     fn print_string_body(&mut self, s: JSStr<'_>, quote: Option<Quote>, allow_backtick: bool) {
-        if let Some(s) = s.as_str() {
-            self.print_utf8_string_body(s, quote, allow_backtick);
-        } else {
-            self.print_wtf8_string_body(s, quote, allow_backtick);
-        }
-    }
-
-    fn print_utf8_string_body(&mut self, s: &str, quote: Option<Quote>, allow_backtick: bool) {
         // Loop through bytes, looking for any which need to be escaped.
         // String is written to buffer in chunks.
         let bytes = s.as_bytes().iter();
@@ -116,88 +108,6 @@ impl Codegen<'_> {
         // Print closing quote.
         // SAFETY: `flush` calls `calculate_quote` which ensures `state.quote` is `Some`.
         let quote = unsafe { state.quote.unwrap_unchecked() };
-        quote.print(self);
-    }
-}
-
-impl Codegen<'_> {
-    /// Print the string body, escaping lone surrogates as `\uXXXX`.
-    #[cold]
-    #[inline(never)]
-    fn print_wtf8_string_body(
-        &mut self,
-        value: JSStr<'_>,
-        quote: Option<Quote>,
-        allow_backtick: bool,
-    ) {
-        let quote = quote.unwrap_or_else(|| {
-            let quote = quote_for_bytes(value.as_bytes().iter(), allow_backtick);
-            quote.print(self);
-            quote
-        });
-        let mut chars = value.chars().peekable();
-        while let Some(ch) = chars.next() {
-            let Some(ch) = ch.to_char() else {
-                const HEX: &[u8; 16] = b"0123456789abcdef";
-                let point = ch.to_u32() as usize;
-                self.code.print_ascii_bytes([
-                    b'\\',
-                    b'u',
-                    HEX[point >> 12],
-                    HEX[(point >> 8) & 15],
-                    HEX[(point >> 4) & 15],
-                    HEX[point & 15],
-                ]);
-                continue;
-            };
-            match ch {
-                '\0' => self.print_str(
-                    if chars
-                        .peek()
-                        .is_some_and(|ch| ch.to_char().is_some_and(|ch| ch.is_ascii_digit()))
-                    {
-                        "\\x00"
-                    } else {
-                        "\\0"
-                    },
-                ),
-                '\x07' => self.print_str("\\x07"),
-                '\x08' => self.print_str("\\b"),
-                '\x0B' => self.print_str("\\v"),
-                '\x0C' => self.print_str("\\f"),
-                '\n' if quote != Quote::Backtick => self.print_str("\\n"),
-                '\r' => self.print_str("\\r"),
-                '\x1B' => self.print_str("\\x1B"),
-                '\\' => self.print_str("\\\\"),
-                '\u{A0}' if !self.options.ascii_only => self.print_str("\\xA0"),
-                '\u{2028}' => self.print_str("\\u2028"),
-                '\u{2029}' => self.print_str("\\u2029"),
-                ch if ch == char::from(quote as u8) => {
-                    self.code.print_ascii_byte(b'\\');
-                    self.code.print_char(ch);
-                }
-                '$' if quote == Quote::Backtick
-                    && chars.peek().is_some_and(|ch| ch.to_char() == Some('{')) =>
-                {
-                    self.print_str("\\$");
-                }
-                '<' => {
-                    self.code.print_char('<');
-                    let mut following = chars.clone().take(7);
-                    if b"/script".iter().all(|expected| {
-                        following
-                            .next()
-                            .and_then(oxc_str::JSChar::to_char)
-                            .is_some_and(|ch| ch.eq_ignore_ascii_case(&char::from(*expected)))
-                    }) {
-                        self.print_str("\\/");
-                        chars.next();
-                    }
-                }
-                ch if self.options.ascii_only && !ch.is_ascii() => self.print_unicode_escape(ch),
-                ch => self.code.print_char(ch),
-            }
-        }
         quote.print(self);
     }
 }
@@ -300,10 +210,11 @@ impl PrintStringState<'_> {
             bytes_ptr.offset_from_unsigned(self.chunk_start)
         };
 
-        // SAFETY: `chunk_start` is within bounds of original `&str`.
-        // `bytes` iter cannot go past end of `&str` either.
-        // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the `&str`.
+        // SAFETY: `chunk_start` is within bounds of original string.
+        // `bytes` iter cannot go past end of the string either.
+        // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the string.
         // `bytes` iterator is always positioned on a UTF-8 character boundary, as is `chunk_start`.
+        // `print_surrogate` never leaves a lone surrogate in a chunk.
         // Therefore the slice between these two must be a valid UTF-8 string.
         unsafe {
             let slice = slice::from_raw_parts(self.chunk_start, len);
@@ -321,7 +232,11 @@ impl PrintStringState<'_> {
     }
 
     fn calculate_quote_impl(&mut self, codegen: &mut Codegen) -> Quote {
-        let quote = quote_for_bytes(self.bytes.clone(), self.allow_backtick);
+        let quote = if self.allow_backtick {
+            self.calculate_quote_maybe_backtick()
+        } else {
+            self.calculate_quote_no_backtick()
+        };
 
         quote.print(codegen);
 
@@ -329,77 +244,69 @@ impl PrintStringState<'_> {
 
         quote
     }
-}
 
-// Quote costs depend only on ASCII bytes, so this also works for WTF-8.
-fn quote_for_bytes(bytes: slice::Iter<'_, u8>, allow_backtick: bool) -> Quote {
-    if allow_backtick {
-        calculate_quote_maybe_backtick(bytes)
-    } else {
-        calculate_quote_no_backtick(bytes)
-    }
-}
-
-/// Calculate optimum quote character to use, when backtick (`) is an option.
-fn calculate_quote_maybe_backtick(mut bytes: slice::Iter<'_, u8>) -> Quote {
-    // Strings are assumed to be no longer than `MAX_LEN` (defined in `oxc_parser`),
-    // which holds for all strings produced by the parser:
-    // * 64-bit platforms: `u32::MAX - 256`.
-    // * 32-bit platforms: `i32::MAX`.
-    // Each byte changes a cost by at most 1, so in either case `isize` cannot overflow.
-    let mut single_cost: isize = 0;
-    let mut double_cost: isize = 0;
-    let mut backtick_cost: isize = 0;
-    while let Some(b) = bytes.next() {
-        match b {
-            b'\n' => backtick_cost -= 1,
-            b'\'' => single_cost += 1,
-            b'"' => double_cost += 1,
-            b'`' => backtick_cost += 1,
-            b'$' if bytes.peek() == Some(&b'{') => {
-                backtick_cost += 1;
+    /// Calculate optimum quote character to use, when backtick (`) is an option.
+    fn calculate_quote_maybe_backtick(&self) -> Quote {
+        // Strings are assumed to be no longer than `MAX_LEN` (defined in `oxc_parser`),
+        // which holds for all strings produced by the parser:
+        // * 64-bit platforms: `u32::MAX - 256`.
+        // * 32-bit platforms: `i32::MAX`.
+        // Each byte changes a cost by at most 1, so in either case `isize` cannot overflow.
+        let mut single_cost: isize = 0;
+        let mut double_cost: isize = 0;
+        let mut backtick_cost: isize = 0;
+        let mut bytes = self.bytes.clone();
+        while let Some(b) = bytes.next() {
+            match b {
+                b'\n' => backtick_cost -= 1,
+                b'\'' => single_cost += 1,
+                b'"' => double_cost += 1,
+                b'`' => backtick_cost += 1,
+                b'$' if bytes.peek() == Some(&b'{') => {
+                    backtick_cost += 1;
+                }
+                _ => {}
             }
-            _ => {}
         }
-    }
 
-    // If equal cost for different quotes prefer, in order:
-    // 1. Backtick
-    // 2. Double quote
-    // 3. Single quote
-    #[rustfmt::skip]
-    let quote = if backtick_cost <= double_cost {
-        if backtick_cost <= single_cost {
-            Quote::Backtick
+        // If equal cost for different quotes prefer, in order:
+        // 1. Backtick
+        // 2. Double quote
+        // 3. Single quote
+        #[rustfmt::skip]
+        let quote = if backtick_cost <= double_cost {
+            if backtick_cost <= single_cost {
+                Quote::Backtick
+            } else {
+                Quote::Single
+            }
+        } else if double_cost <= single_cost {
+            Quote::Double
         } else {
             Quote::Single
-        }
-    } else if double_cost <= single_cost {
-        Quote::Double
-    } else {
-        Quote::Single
-    };
-    quote
-}
-
-/// Calculate optimum quote character to use, when backtick (`) is not an option.
-fn calculate_quote_no_backtick(bytes: slice::Iter<'_, u8>) -> Quote {
-    // Strings are assumed to be no longer than `MAX_LEN` (defined in `oxc_parser`),
-    // which holds for all strings produced by the parser:
-    // * 64-bit platforms: `u32::MAX - 256`.
-    // * 32-bit platforms: `i32::MAX`.
-    // Each byte changes a cost by at most 1, so in either case `isize` cannot overflow.
-    let mut single_cost: isize = 0;
-    for &b in bytes {
-        match b {
-            b'\'' => single_cost += 1,
-            b'"' => single_cost -= 1,
-            _ => {}
-        }
+        };
+        quote
     }
 
-    // Prefer double quote over single quote if cost is the same
-    if single_cost < 0 { Quote::Single } else { Quote::Double }
+    /// Calculate optimum quote character to use, when backtick (`) is not an option.
+    fn calculate_quote_no_backtick(&self) -> Quote {
+        // Strings are assumed to be no longer than `MAX_LEN` (defined in `oxc_parser`),
+        // which holds for all strings produced by the parser:
+        // * 64-bit platforms: `u32::MAX - 256`.
+        // * 32-bit platforms: `i32::MAX`.
+        // Each byte changes a cost by at most 1, so in either case `isize` cannot overflow.
+        let mut single_cost: isize = 0;
+        for &b in self.bytes.clone() {
+            match b {
+                b'\'' => single_cost += 1,
+                b'"' => single_cost -= 1,
+                _ => {}
+            }
+        }
+
+        // Prefer double quote over single quote if cost is the same
+        if single_cost < 0 { Quote::Single } else { Quote::Double }
+    }
 }
 
 /// Convert `char` to UTF-8 bytes array.
@@ -438,7 +345,8 @@ enum Escape {
     LT = 14, // <     - Less-than sign
     LS = 15, // LS/PS - U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR (first byte)
     NB = 16, // NBSP  - Non-breaking space (first byte)
-    UC = 17, // any non-ASCII character (UTF-8 lead byte) - `ascii_only` mode
+    SU = 17, // 0xED  - Lone surrogate or U+D000..U+D7FF (first byte)
+    UC = 18, // any non-ASCII character (UTF-8 lead byte) - `ascii_only` mode
 }
 
 /// Struct which ensures content is aligned on 128.
@@ -469,12 +377,13 @@ static ESCAPES: Aligned128<[Escape; 256]> = {
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // B
         __, __, NB, __, __, __, __, __, __, __, __, __, __, __, __, __, // C
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // D
-        __, __, LS, __, __, __, __, __, __, __, __, __, __, __, __, __, // E
+        __, __, LS, __, __, __, __, __, __, __, __, __, __, SU, __, __, // E
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // F
     ])
 };
 
 /// As [`ESCAPES`], but all non-ASCII UTF-8 lead bytes trigger Unicode escaping.
+/// Keep `Escape::SU` for 0xED so lone surrogates are printed by the same handler in both modes.
 static ESCAPES_ASCII_ONLY: Aligned128<[Escape; 256]> = {
     let mut table = ESCAPES.0;
     let mut i = 0xC0;
@@ -482,6 +391,7 @@ static ESCAPES_ASCII_ONLY: Aligned128<[Escape; 256]> = {
         table[i] = Escape::UC;
         i += 1;
     }
+    table[0xED] = Escape::SU;
     Aligned128(table)
 };
 
@@ -492,10 +402,10 @@ type ByteHandler = unsafe fn(&mut Codegen, &mut PrintStringState);
 /// Indexed by `escape as usize - 1` (where `escape` is not `Escape::__`).
 /// Must be in same order as discriminants in `Escape`.
 ///
-/// On 64-bit targets, the 17 function pointer entries occupy 136 bytes before alignment padding.
+/// On 64-bit targets, the 18 function pointer entries occupy 144 bytes before alignment padding.
 /// Aligned on 128, so the first 16 entries occupy a pair of 64-byte cache lines.
-/// The final handler processes Unicode escapes.
-static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
+/// The remaining two handlers process surrogates and Unicode escapes.
+static BYTE_HANDLERS: Aligned128<[ByteHandler; 18]> = Aligned128([
     print_null,
     print_bell,
     print_backspace,
@@ -512,6 +422,7 @@ static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
     print_less_than,
     print_ls_or_ps,
     print_non_breaking_space,
+    print_surrogate,
     print_unicode_escaped,
 ]);
 
@@ -757,18 +668,64 @@ unsafe fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStrin
     }
 }
 
+// 0xED - first byte of a lone surrogate, or of a character in U+D000..U+D7FF
+unsafe fn print_surrogate(codegen: &mut Codegen, state: &mut PrintStringState) {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+
+    debug_assert_eq!(state.peek(), Some(0xED));
+
+    let [second, third]: [u8; 2] = {
+        // SAFETY: 0xED is always the start of a 3-byte WTF-8 sequence,
+        // so there must be 2 more bytes available to consume
+        let next2 = unsafe { state.bytes.as_slice().get_unchecked(1..3) };
+        next2.try_into().unwrap()
+    };
+
+    // Second byte 0xA0..=0xBF encodes a surrogate, which must be a lone surrogate in WTF-8.
+    // Valid UTF-8 characters starting with 0xED have second byte 0x80..=0x9F.
+    if second < 0xA0 {
+        if codegen.options.ascii_only {
+            // SAFETY: 0xED is a UTF-8 lead byte, as required by the Unicode escape handler.
+            unsafe { print_unicode_escaped(codegen, state) };
+        } else {
+            // Advance past the character.
+            // SAFETY: 0xED is always the start of a 3-byte Unicode character
+            unsafe { state.consume_bytes_unchecked(3) };
+        }
+        return;
+    }
+
+    // SAFETY: 0xED is always the start of a 3-byte WTF-8 sequence
+    unsafe { state.flush_and_consume_bytes(codegen, 3) };
+
+    // Print the lone surrogate as `\uXXXX`, with lower case hex digits
+    let code_point = 0xD000 | (usize::from(second & 0x3F) << 6) | usize::from(third & 0x3F);
+    codegen.code.print_ascii_bytes([
+        b'\\',
+        b'u',
+        HEX[code_point >> 12],
+        HEX[(code_point >> 8) & 0xF],
+        HEX[(code_point >> 4) & 0xF],
+        HEX[code_point & 0xF],
+    ]);
+}
+
 // Non-ASCII UTF-8 lead byte, `ascii_only` mode: print the character as `\uXXXX`
 // (or a `\u{...}` code point escape above the BMP).
 unsafe fn print_unicode_escaped(codegen: &mut Codegen, state: &mut PrintStringState) {
     debug_assert!(state.peek().is_some_and(|b| b >= 0xC0));
 
     // Decode the character at the current position.
-    // SAFETY: `bytes` is always positioned on a UTF-8 character boundary within a valid `&str`,
-    // so the remaining slice is valid UTF-8 and non-empty.
-    let rest = unsafe { std::str::from_utf8_unchecked(state.bytes.as_slice()) };
-    let ch = rest.chars().next().unwrap();
+    // Only decode this character, because the rest of the string may contain lone surrogates.
+    let rest = state.bytes.as_slice();
+    let len = rest[0].leading_ones() as usize;
+    // SAFETY: `bytes` is always positioned on a character boundary.
+    // The number of leading 1 bits in a UTF-8 lead byte is the length of the character.
+    // `print_surrogate` handles lone surrogates, so this character is valid UTF-8.
+    let ch = unsafe { std::str::from_utf8_unchecked(rest.get_unchecked(..len)) };
+    let ch = ch.chars().next().unwrap();
     // SAFETY: consuming exactly one whole character keeps `bytes` on a char boundary.
-    unsafe { state.flush_and_consume_bytes(codegen, ch.len_utf8()) };
+    unsafe { state.flush_and_consume_bytes(codegen, len) };
     codegen.print_unicode_escape(ch);
 }
 
@@ -798,67 +755,4 @@ pub fn is_script_close_tag(slice: &[u8]) -> bool {
         *byte |= 32;
     }
     bytes == *b"</script"
-}
-
-#[cfg(test)]
-mod tests {
-    use oxc_str::JSStr;
-
-    use super::Quote;
-    use crate::{Codegen, CodegenOptions};
-
-    #[test]
-    fn utf8_and_wtf8_printers_agree() {
-        let mut inputs: Vec<String> = [
-            "",
-            "\0",
-            "\0\u{a0}",
-            "\x001",
-            "</script>",
-            "</ScRiPt",
-            "${}",
-            "é漢😀\u{2028}\u{2029}",
-        ]
-        .into_iter()
-        .map(str::to_owned)
-        .collect();
-        inputs.extend((0..=255).map(|value| char::from_u32(value).unwrap().to_string()));
-        // Cover quote costs, ties, and lookahead at each position.
-        for a in ['a', '\'', '"', '`', '\n', '$', '{'] {
-            for b in ['a', '\'', '"', '`', '\n', '$', '{'] {
-                for c in ['a', '\'', '"', '`', '\n', '$', '{'] {
-                    inputs.push(format!("{a}{b}{c}"));
-                }
-            }
-        }
-        for input in inputs {
-            for ascii_only in [false, true] {
-                for allow_backtick in [false, true] {
-                    for quote in
-                        [None, Some(Quote::Single), Some(Quote::Double), Some(Quote::Backtick)]
-                    {
-                        let options = CodegenOptions { ascii_only, ..CodegenOptions::default() };
-                        let mut fast = Codegen::new().with_options(options.clone());
-                        let mut slow = Codegen::new().with_options(options);
-                        if let Some(quote) = quote {
-                            quote.print(&mut fast);
-                            quote.print(&mut slow);
-                        }
-                        fast.print_utf8_string_body(&input, quote, allow_backtick);
-                        slow.print_wtf8_string_body(
-                            JSStr::from(input.as_str()),
-                            quote,
-                            allow_backtick,
-                        );
-                        assert_eq!(
-                            fast.into_source_text(),
-                            slow.into_source_text(),
-                            "{input:?}, ascii_only={ascii_only}, allow_backtick={allow_backtick}, quote={:?}",
-                            quote.map(|quote| quote as u8),
-                        );
-                    }
-                }
-            }
-        }
-    }
 }
