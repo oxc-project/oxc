@@ -112,7 +112,7 @@ fn js_str_from_cow<'a>(value: Cow<'a, str>, ctx: &impl ConstantEvaluationCtx<'a>
 
 /// `ToString` of an expression as a WTF-8 value, so string literals that contain lone surrogates
 /// evaluate instead of declining.
-fn evaluate_to_js_string<'a>(
+pub(crate) fn evaluate_to_js_string<'a>(
     expr: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<JSStr<'a>> {
