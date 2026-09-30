@@ -546,7 +546,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Kind::Star => ModuleDeclaration::ExportAllDeclaration(
                         self.parse_export_all_declaration(start, ImportOrExportKind::Value, phase),
                     ),
-                    _ => self.parse_export_named_specifiers(start, ImportOrExportKind::Value, phase),
+                    _ => {
+                        self.parse_export_named_specifiers(start, ImportOrExportKind::Value, phase)
+                    }
                 }
             }
             Kind::Type if self.is_ts => {
@@ -561,9 +563,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     // `export type * as ...`
                     Kind::Star => {
                         self.bump_any(); // bump `type`
-                        ModuleDeclaration::ExportAllDeclaration(
-                            self.parse_export_all_declaration(start, ImportOrExportKind::Type, None),
-                        )
+                        ModuleDeclaration::ExportAllDeclaration(self.parse_export_all_declaration(
+                            start,
+                            ImportOrExportKind::Type,
+                            None,
+                        ))
                     }
                     _ => ModuleDeclaration::ExportDeclaration(
                         self.parse_exported_declaration(start, decorators),
