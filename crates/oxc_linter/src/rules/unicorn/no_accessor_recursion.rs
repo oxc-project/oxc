@@ -262,8 +262,8 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 fn get_member_expr_key_name<'a>(expr: &MemberExpressionKind<'a>) -> Option<JSStr<'a>> {
     match expr {
         MemberExpressionKind::Computed(expr) => expr.static_property_name(),
-        MemberExpressionKind::Static(expr) => Some(JSStr::from(expr.property.name)),
-        MemberExpressionKind::PrivateField(priv_field) => Some(JSStr::from(priv_field.field.name)),
+        MemberExpressionKind::Static(expr) => Some(expr.property.name.as_js_str()),
+        MemberExpressionKind::PrivateField(priv_field) => Some(priv_field.field.name.as_js_str()),
     }
 }
 

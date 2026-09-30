@@ -665,7 +665,7 @@ impl<'a> MemberExpressionKind<'a> {
     pub fn static_property_name(&self) -> Option<JSStr<'a>> {
         match self {
             Self::Computed(member_expr) => member_expr.static_property_name(),
-            Self::Static(member_expr) => Some(member_expr.property.name.into()),
+            Self::Static(member_expr) => Some(member_expr.property.name.as_js_str()),
             Self::PrivateField(_) => None,
         }
     }

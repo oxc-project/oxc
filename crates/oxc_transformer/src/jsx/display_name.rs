@@ -83,7 +83,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                         break ident.name.into();
                     }
                     AssignmentTarget::StaticMemberExpression(expr) => {
-                        break expr.property.name.into();
+                        break expr.property.name.as_js_str();
                     }
                     // Babel does not handle computed member expressions e.g. `foo["bar"]`,
                     // so we diverge from Babel here, but that's probably an improvement

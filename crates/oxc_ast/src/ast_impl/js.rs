@@ -614,7 +614,7 @@ impl<'a> MemberExpression<'a> {
     pub fn static_property_name(&self) -> Option<JSStr<'a>> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => expr.static_property_name(),
-            MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.into()),
+            MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_js_str()),
             MemberExpression::PrivateFieldExpression(_) => None,
         }
     }
@@ -633,7 +633,7 @@ impl<'a> MemberExpression<'a> {
                 _ => None,
             },
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((expr.property.span, expr.property.name.into()))
+                Some((expr.property.span, expr.property.name.as_js_str()))
             }
             MemberExpression::PrivateFieldExpression(_) => None,
         }
@@ -716,7 +716,7 @@ impl<'a> StaticMemberExpression<'a> {
 
     /// Returns the property name of this static member expression and its source code [`Span`].
     pub fn static_property_info(&self) -> (Span, JSStr<'a>) {
-        (self.property.span, self.property.name.into())
+        (self.property.span, self.property.name.as_js_str())
     }
 }
 
