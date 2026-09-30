@@ -51,7 +51,7 @@ fn integration() {
          }
          console.log(c, d);
         ",
-        "if (console.log('effect'), !1) var c, c, d;
+        "if (console.log('effect'), 0) var c, c, d;
         console.log(c, d);
         ",
     );

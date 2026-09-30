@@ -517,3 +517,227 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     notifications.show({ message: 'x' });
    ╰────
   help: Move `usesImport` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:3:26]
+ 1 │ const shared = 1;
+ 2 │             function outer() {
+   ·                      ──┬──
+   ·                        ╰── Outer scope where this function is defined
+ 3 │                 function inner() {
+   ·                          ──┬──
+   ·                            ╰── This function does not use any variables from the parent function
+ 4 │                     return shared;
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:3:30]
+ 1 │ function top(shared) {
+ 2 │                 function outer() {
+   ·                          ──┬──
+   ·                            ╰── Outer scope where this function is defined
+ 3 │                     function inner() { return shared; }
+   ·                              ──┬──
+   ·                                ╰── This function does not use any variables from the parent function
+ 4 │                     return inner();
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:3:23]
+ 1 │ const shared = 1;
+ 2 │             function outer() {
+   ·                      ──┬──
+   ·                        ╰── Outer scope where this function is defined
+ 3 │                 const inner = () => shared;
+   ·                       ──┬──
+   ·                         ╰── This function does not use any variables from the parent function
+ 4 │                 return inner();
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:3:40]
+ 1 │ const shared = 1;
+ 2 │             function outer() {
+   ·                      ──┬──
+   ·                        ╰── Outer scope where this function is defined
+ 3 │                 const inner = function named() { return shared; };
+   ·                                        ──┬──
+   ·                                          ╰── This function does not use any variables from the parent function
+ 4 │                 return inner();
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:3:26]
+ 1 │ const shared = 1;
+ 2 │             function outer() {
+   ·                      ──┬──
+   ·                        ╰── Outer scope where this function is defined
+ 3 │                 function inner(value = shared) { return shared + value; }
+   ·                          ──┬──
+   ·                            ╰── This function does not use any variables from the parent function
+ 4 │                 return inner();
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:8:26]
+ 6 │             }
+ 7 │             function second() {
+   ·                      ───┬──
+   ·                         ╰── Outer scope where this function is defined
+ 8 │                 function inner() { return shared; }
+   ·                          ──┬──
+   ·                            ╰── This function does not use any variables from the parent function
+ 9 │                 return inner();
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+    ╭─[consistent_function_scoping.tsx:12:26]
+ 10 │             }
+ 11 │             function third() {
+    ·                      ──┬──
+    ·                        ╰── Outer scope where this function is defined
+ 12 │                 function inner() { return shared; }
+    ·                          ──┬──
+    ·                            ╰── This function does not use any variables from the parent function
+ 13 │                 return inner();
+    ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:4:34]
+ 2 │                 method() {
+ 3 │                     function outer() {
+   ·                              ──┬──
+   ·                                ╰── Outer scope where this function is defined
+ 4 │                         function inner() { return Internal; }
+   ·                                  ──┬──
+   ·                                    ╰── This function does not use any variables from the parent function
+ 5 │                         return inner;
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `read` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:6:34]
+ 4 │                 method() {
+ 5 │                     function outer() {
+   ·                              ──┬──
+   ·                                ╰── Outer scope where this function is defined
+ 6 │                         function read(box) { return shared + box.#value; }
+   ·                                  ──┬─
+   ·                                    ╰── This function does not use any variables from the parent function
+ 7 │                         return read;
+   ╰────
+  help: Move `read` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `create` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:5:30]
+ 4 │                 method() {
+ 5 │                     function create() {
+   ·                              ──────
+ 6 │                         class Local {
+   ╰────
+  help: Move `create` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:4:26]
+ 1 │ const shared = 1;
+ 2 │             function outer() {
+   ·                      ──┬──
+   ·                        ╰── Outer scope where this function is defined
+ 3 │                 { consume(shared); }
+ 4 │                 function inner() { return shared; }
+   ·                          ──┬──
+   ·                            ╰── This function does not use any variables from the parent function
+ 5 │             }
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:3:26]
+ 1 │ const shared = 1;
+ 2 │             function outer() {
+   ·                      ──┬──
+   ·                        ╰── Outer scope where this function is defined
+ 3 │                 function inner() { return shared + new.target; }
+   ·                          ──┬──
+   ·                            ╰── This function does not use any variables from the parent function
+ 4 │                 return inner;
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:3:23]
+ 1 │ const shared = 1;
+ 2 │             function outer() {
+   ·                      ──┬──
+   ·                        ╰── Outer scope where this function is defined
+ 3 │                 const inner = () => shared + (function () { return new.target; })();
+   ·                       ──┬──
+   ·                         ╰── This function does not use any variables from the parent function
+ 4 │                 return inner;
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:3:23]
+ 1 │ const shared = 1;
+ 2 │             function outer() {
+   ·                      ──┬──
+   ·                        ╰── Outer scope where this function is defined
+ 3 │                 const inner = () => shared + ({ method() { return super.value; } }).method();
+   ·                       ──┬──
+   ·                         ╰── This function does not use any variables from the parent function
+ 4 │                 return inner;
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:1:26]
+ 1 │ function outer() { const inner = () => class { field = super.toString; }; return inner; }
+   ·          ──┬──           ──┬──
+   ·            │               ╰── This function does not use any variables from the parent function
+   ·            ╰── Outer scope where this function is defined
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:1:26]
+ 1 │ function outer() { const inner = () => class { field = new.target; }; return inner; }
+   ·          ──┬──           ──┬──
+   ·            │               ╰── This function does not use any variables from the parent function
+   ·            ╰── Outer scope where this function is defined
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:1:26]
+ 1 │ function outer() { const inner = () => class { static { super.toString; new.target; } }; return inner; }
+   ·          ──┬──           ──┬──
+   ·            │               ╰── This function does not use any variables from the parent function
+   ·            ╰── Outer scope where this function is defined
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:1:26]
+ 1 │ function outer() { const inner = () => class { accessor field = super.toString; }; return inner; }
+   ·          ──┬──           ──┬──
+   ·            │               ╰── This function does not use any variables from the parent function
+   ·            ╰── Outer scope where this function is defined
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:1:57]
+ 1 │ class External { method() { function outer() { function inner() { return External; } return inner; } return outer; } }
+   ·                                      ──┬──              ──┬──
+   ·                                        │                  ╰── This function does not use any variables from the parent function
+   ·                                        ╰── Outer scope where this function is defined
+   ╰────
+  help: Move `inner` to the outer scope to avoid recreating it on every call.

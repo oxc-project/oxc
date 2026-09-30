@@ -16,6 +16,7 @@ use crate::react_compiler_utils::FxIndexMap;
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
 use rustc_hash::{FxHashMap, FxHashSet};
+use smallvec::SmallVec;
 use std::collections::BTreeSet;
 use std::ptr::eq;
 
@@ -28,7 +29,7 @@ use crate::react_compiler_hir::{
     PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
     ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
 };
-use crate::react_compiler_optimization::dead_code_elimination::is_catch_observable_property_load;
+use crate::react_compiler_optimization::dead_code_elimination::find_semantic_only_caught_instructions;
 use oxc_span::Span;
 
 // =============================================================================
@@ -279,16 +280,23 @@ fn collect_temporaries_sidemap_impl<'a>(
             let used_outside = used_outside_declaring_scope.contains(&lvalue_decl_id);
 
             match &instr.value {
-                InstructionValue::PropertyLoad { object, property, property_span, span }
-                    if !used_outside =>
-                {
+                InstructionValue::PropertyLoad {
+                    object,
+                    property,
+                    computed,
+                    property_span,
+                    span,
+                } if !used_outside => {
                     if inner_fn_context.is_none() || temporaries[object.identifier].is_some() {
                         let prop = get_property(
                             object,
-                            property,
-                            false,
-                            *span,
-                            *property_span,
+                            PropertyAccess {
+                                property: *property,
+                                computed: *computed,
+                                optional: false,
+                                span: *span,
+                                property_span: *property_span,
+                            },
                             temporaries,
                             env.allocator,
                         );
@@ -347,35 +355,51 @@ fn collect_temporaries_sidemap_impl<'a>(
 }
 
 /// Corresponds to TS `getProperty`.
-fn get_property<'a>(
-    object: &Place,
-    property_name: &PropertyLiteral<'a>,
+#[derive(Clone, Copy)]
+struct PropertyAccess<'a> {
+    property: PropertyLiteral<'a>,
+    computed: bool,
     optional: bool,
     span: Option<Span>,
     property_span: Option<Span>,
+}
+
+fn get_property<'a>(
+    object: &Place,
+    access: PropertyAccess<'a>,
     temporaries: &TemporariesMap<'a>,
     alloc: &'a Allocator,
 ) -> ReactiveScopeDependency<'a> {
-    let property_span = property_span.or(span);
+    let property_span = access.property_span.or(access.span);
     let resolved = temporaries[object.identifier].as_ref();
     if let Some(resolved) = resolved {
         let mut path = resolved.path.clone_in(alloc);
-        path.push(DependencyPathEntry { property: *property_name, optional, span: property_span });
+        path.push(DependencyPathEntry {
+            property: access.property,
+            computed: access.computed,
+            optional: access.optional,
+            span: property_span,
+        });
         ReactiveScopeDependency {
             identifier: resolved.identifier,
             reactive: resolved.reactive,
             path,
-            span,
+            span: access.span,
         }
     } else {
         ReactiveScopeDependency {
             identifier: object.identifier,
             reactive: object.reactive,
             path: ArenaVec::from_array_in(
-                [DependencyPathEntry { property: *property_name, optional, span: property_span }],
+                [DependencyPathEntry {
+                    property: access.property,
+                    computed: access.computed,
+                    optional: access.optional,
+                    span: property_span,
+                }],
                 &alloc,
             ),
-            span,
+            span: access.span,
         }
     }
 }
@@ -460,6 +484,7 @@ fn traverse_function_optional<'a>(
 struct MatchConsequentResult<'a> {
     consequent_id: IdentifierId,
     property: PropertyLiteral<'a>,
+    computed: bool,
     property_id: IdentifierId,
     store_local_lvalue_id: IdentifierId,
     consequent_goto: BlockId,
@@ -484,12 +509,13 @@ fn match_optional_test_block<'a>(
     let instr0 = &func.instructions[consequent_block.instructions[0].index()];
     let instr1 = &func.instructions[consequent_block.instructions[1].index()];
 
-    let (property_load_object, property, property_load_span, property_span) = match &instr0.value {
-        InstructionValue::PropertyLoad { object, property, property_span, span } => {
-            (object, property, span, property_span)
-        }
-        _ => return None,
-    };
+    let (property_load_object, property, computed, property_load_span, property_span) =
+        match &instr0.value {
+            InstructionValue::PropertyLoad { object, property, computed, property_span, span } => {
+                (object, property, computed, span, property_span)
+            }
+            _ => return None,
+        };
 
     let store_local_value = match &instr1.value {
         InstructionValue::StoreLocal { value, lvalue, .. } => {
@@ -525,6 +551,7 @@ fn match_optional_test_block<'a>(
             Some(MatchConsequentResult {
                 consequent_id: store_local_value.identifier,
                 property: *property,
+                computed: *computed,
                 property_id: instr0.lvalue.identifier,
                 store_local_lvalue_id: instr1.lvalue.identifier,
                 consequent_goto: *goto_block,
@@ -571,11 +598,16 @@ fn traverse_optional_block<'a>(
                 let curr_instr = &func.instructions[maybe_test_block.instructions[i].index()];
                 let prev_instr = &func.instructions[maybe_test_block.instructions[i - 1].index()];
                 match &curr_instr.value {
-                    InstructionValue::PropertyLoad { object, property, property_span, span }
-                        if object.identifier == prev_instr.lvalue.identifier =>
-                    {
+                    InstructionValue::PropertyLoad {
+                        object,
+                        property,
+                        computed,
+                        property_span,
+                        span,
+                    } if object.identifier == prev_instr.lvalue.identifier => {
                         path.push(DependencyPathEntry {
                             property: *property,
+                            computed: *computed,
                             optional: false,
                             span: property_span.or(*span),
                         });
@@ -678,6 +710,7 @@ fn traverse_optional_block<'a>(
             let mut p = base_object.path;
             p.push(DependencyPathEntry {
                 property: match_result.property,
+                computed: match_result.computed,
                 optional: is_optional,
                 span: match_result.property_span.or(match_result.property_load_span),
             });
@@ -754,6 +787,46 @@ struct PropertyPathRegistry<'a> {
     nodes: Vec<PropertyPathNode<'a>>,
     roots: FxHashMap<IdentifierId, usize>,
     alloc: &'a Allocator,
+}
+
+type PropertyPathSet = SmallVec<[usize; 8]>;
+
+#[inline]
+fn insert_property_path(paths: &mut PropertyPathSet, path: usize) {
+    if let Err(index) = paths.binary_search(&path) {
+        paths.insert(index, path);
+    }
+}
+
+#[inline]
+fn remove_property_path(paths: &mut PropertyPathSet, path: usize) {
+    if let Ok(index) = paths.binary_search(&path) {
+        paths.remove(index);
+    }
+}
+
+fn union_property_paths(
+    paths: &mut PropertyPathSet,
+    original_paths: &[usize],
+    propagated_paths: &[usize],
+) {
+    paths.clear();
+    paths.reserve(original_paths.len() + propagated_paths.len());
+
+    let mut original = original_paths.iter().copied().peekable();
+    let mut propagated = propagated_paths.iter().copied().peekable();
+    while let (Some(&original_path), Some(&propagated_path)) = (original.peek(), propagated.peek())
+    {
+        paths.push(original_path.min(propagated_path));
+        if original_path <= propagated_path {
+            original.next();
+        }
+        if propagated_path <= original_path {
+            propagated.next();
+        }
+    }
+    paths.extend(original);
+    paths.extend(propagated);
 }
 
 impl<'a> PropertyPathRegistry<'a> {
@@ -847,9 +920,9 @@ impl<'a> PropertyPathRegistry<'a> {
 /// `<base>.PROPERTY`.
 ///
 /// Port of `reduceMaybeOptionalChains` from CollectHoistablePropertyLoads.ts.
-fn reduce_maybe_optional_chains(nodes: &mut BTreeSet<usize>, registry: &mut PropertyPathRegistry) {
+fn reduce_maybe_optional_chains(nodes: &mut PropertyPathSet, registry: &mut PropertyPathRegistry) {
     // Collect indices of nodes that have optional in their path
-    let mut optional_chain_nodes: BTreeSet<usize> =
+    let mut optional_chain_nodes: PropertyPathSet =
         nodes.iter().copied().filter(|&idx| registry.nodes[idx].has_optional).collect();
 
     if optional_chain_nodes.is_empty() {
@@ -860,7 +933,7 @@ fn reduce_maybe_optional_chains(nodes: &mut BTreeSet<usize>, registry: &mut Prop
         let mut changed = false;
 
         // Collect the indices to process (snapshot to avoid borrow issues)
-        let to_process: Vec<usize> = optional_chain_nodes.iter().copied().collect();
+        let to_process = optional_chain_nodes.clone();
 
         for original_idx in to_process {
             let full_path = registry.nodes[original_idx].full_path.clone_in(registry.alloc);
@@ -873,9 +946,10 @@ fn reduce_maybe_optional_chains(nodes: &mut BTreeSet<usize>, registry: &mut Prop
 
             for entry in &full_path.path {
                 // If the base is known to be non-null (in the set), replace optional with non-optional
-                let next_entry = if entry.optional && nodes.contains(&curr_node) {
+                let next_entry = if entry.optional && nodes.binary_search(&curr_node).is_ok() {
                     DependencyPathEntry {
                         property: entry.property,
+                        computed: entry.computed,
                         optional: false,
                         span: entry.span,
                     }
@@ -887,10 +961,10 @@ fn reduce_maybe_optional_chains(nodes: &mut BTreeSet<usize>, registry: &mut Prop
 
             if curr_node != original_idx {
                 changed = true;
-                optional_chain_nodes.remove(&original_idx);
-                optional_chain_nodes.insert(curr_node);
-                nodes.remove(&original_idx);
-                nodes.insert(curr_node);
+                remove_property_path(&mut optional_chain_nodes, original_idx);
+                insert_property_path(&mut optional_chain_nodes, curr_node);
+                remove_property_path(nodes, original_idx);
+                insert_property_path(nodes, curr_node);
             }
         }
 
@@ -902,7 +976,7 @@ fn reduce_maybe_optional_chains(nodes: &mut BTreeSet<usize>, registry: &mut Prop
 
 #[derive(Debug, Clone)]
 struct BlockInfo {
-    assumed_non_null_objects: BTreeSet<usize>, // indices into PropertyPathRegistry
+    assumed_non_null_objects: PropertyPathSet, // indices into PropertyPathRegistry
 }
 
 struct CollectHoistableContext<'a, 'e> {
@@ -1106,13 +1180,13 @@ fn collect_non_nulls_in_blocks<'a>(
     registry: &mut PropertyPathRegistry<'a>,
 ) -> FxHashMap<BlockId, BlockInfo> {
     // Known non-null identifiers (e.g. component props)
-    let mut known_non_null: BTreeSet<usize> = BTreeSet::new();
+    let mut known_non_null = PropertyPathSet::default();
     if func.fn_type == ReactFunctionType::Component
         && !func.params.is_empty()
         && let ParamPattern::Place(place) = &func.params[0]
     {
         let node_idx = registry.get_or_create_identifier(place.identifier, true, place.span);
-        known_non_null.insert(node_idx);
+        insert_property_path(&mut known_non_null, node_idx);
     }
 
     let mut nodes: FxHashMap<BlockId, BlockInfo> = FxHashMap::default();
@@ -1123,7 +1197,7 @@ fn collect_non_nulls_in_blocks<'a>(
         // Check hoistable from optionals
         if let Some(optional_chain) = ctx.hoistable_from_optionals.get(block_id) {
             let node_idx = registry.get_or_create_property(optional_chain);
-            assumed.insert(node_idx);
+            insert_property_path(&mut assumed, node_idx);
         }
 
         for &instr_id in &block.instructions {
@@ -1134,7 +1208,7 @@ fn collect_non_nulls_in_blocks<'a>(
                 let path_ident = path.identifier;
                 if is_immutable_at_instr(path_ident, instr.id, env, ctx) {
                     let node_idx = registry.get_or_create_property(&path);
-                    assumed.insert(node_idx);
+                    insert_property_path(&mut assumed, node_idx);
                 }
             }
 
@@ -1161,7 +1235,7 @@ fn collect_non_nulls_in_blocks<'a>(
                                 span: dep.span,
                             };
                             let node_idx = registry.get_or_create_property(&sub_dep);
-                            assumed.insert(node_idx);
+                            insert_property_path(&mut assumed, node_idx);
                         }
                     }
                 }
@@ -1202,7 +1276,7 @@ fn collect_non_nulls_in_blocks<'a>(
                 let inner_entry = inner_func.body.entry;
                 if let Some(inner_set) = inner_working.get(&inner_entry) {
                     for &node_idx in inner_set {
-                        assumed.insert(node_idx);
+                        insert_property_path(&mut assumed, node_idx);
                     }
                 }
             }
@@ -1225,7 +1299,7 @@ fn propagate_non_null(
     func: &HirFunction,
     nodes: &FxHashMap<BlockId, BlockInfo>,
     registry: &mut PropertyPathRegistry,
-) -> FxHashMap<BlockId, BTreeSet<usize>> {
+) -> FxHashMap<BlockId, PropertyPathSet> {
     // Build successor map. Use BTreeSet to iterate successors in sorted BlockId
     // order, matching the TS Set<BlockId> insertion order (blocks are created in
     // ascending BlockId order).
@@ -1237,44 +1311,48 @@ fn propagate_non_null(
     }
 
     // Clone nodes into mutable working set
-    let mut working: FxHashMap<BlockId, BTreeSet<usize>> =
+    let mut working: FxHashMap<BlockId, PropertyPathSet> =
         nodes.iter().map(|(k, v)| (*k, v.assumed_non_null_objects.clone())).collect();
 
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
     let mut reversed_block_ids = block_ids.clone();
     reversed_block_ids.reverse();
 
+    let mut state = NonNullPropagationState {
+        traversal_state: FxHashMap::default(),
+        neighbor_intersection: PropertyPathSet::default(),
+        previous_objects: PropertyPathSet::default(),
+    };
+
     for _ in 0..100 {
         let mut changed = false;
 
         // Forward pass (using predecessors)
-        let mut traversal_state: FxHashMap<BlockId, TraversalState> = FxHashMap::default();
+        state.traversal_state.clear();
         for &block_id in &block_ids {
-            let block_changed = recursively_propagate_non_null(
+            changed |= recursively_propagate_non_null(
                 block_id,
                 PropagationDirection::Forward,
-                &mut traversal_state,
+                &mut state,
                 &mut working,
                 func,
                 &block_successors,
                 registry,
             );
-            changed |= block_changed;
         }
 
         // Backward pass (using successors)
-        traversal_state.clear();
+        state.traversal_state.clear();
         for &block_id in &reversed_block_ids {
-            let block_changed = recursively_propagate_non_null(
+            changed |= recursively_propagate_non_null(
                 block_id,
                 PropagationDirection::Backward,
-                &mut traversal_state,
+                &mut state,
                 &mut working,
                 func,
                 &block_successors,
                 registry,
             );
-            changed |= block_changed;
         }
 
         if !changed {
@@ -1297,20 +1375,26 @@ enum PropagationDirection {
     Backward,
 }
 
+struct NonNullPropagationState {
+    traversal_state: FxHashMap<BlockId, TraversalState>,
+    neighbor_intersection: PropertyPathSet,
+    previous_objects: PropertyPathSet,
+}
+
 fn recursively_propagate_non_null(
     node_id: BlockId,
     direction: PropagationDirection,
-    traversal_state: &mut FxHashMap<BlockId, TraversalState>,
-    working: &mut FxHashMap<BlockId, BTreeSet<usize>>,
+    state: &mut NonNullPropagationState,
+    working: &mut FxHashMap<BlockId, PropertyPathSet>,
     func: &HirFunction,
     block_successors: &FxHashMap<BlockId, BTreeSet<BlockId>>,
     registry: &mut PropertyPathRegistry,
 ) -> bool {
     // Avoid re-visiting computed or currently active nodes
-    if traversal_state.contains_key(&node_id) {
+    if state.traversal_state.contains_key(&node_id) {
         return false;
     }
-    traversal_state.insert(node_id, TraversalState::Active);
+    state.traversal_state.insert(node_id, TraversalState::Active);
 
     let neighbors: Vec<BlockId> = match direction {
         PropagationDirection::Backward => {
@@ -1326,44 +1410,48 @@ fn recursively_propagate_non_null(
 
     let mut changed = false;
     for &neighbor in &neighbors {
-        if !traversal_state.contains_key(&neighbor) {
-            let neighbor_changed = recursively_propagate_non_null(
+        if !state.traversal_state.contains_key(&neighbor) {
+            changed |= recursively_propagate_non_null(
                 neighbor,
                 direction,
-                traversal_state,
+                state,
                 working,
                 func,
                 block_successors,
                 registry,
             );
-            changed |= neighbor_changed;
         }
     }
 
-    // Compute intersection of 'done' neighbors only (filter out 'active' = cycle nodes)
-    let done_neighbor_sets: Vec<BTreeSet<usize>> = neighbors
-        .iter()
-        .filter(|n| traversal_state.get(n) == Some(&TraversalState::Done))
-        .filter_map(|n| working.get(n).cloned())
-        .collect();
+    // Compute the intersection of 'done' neighbors only (filter out 'active' cycle nodes),
+    // reusing one scratch set for every block in the traversal.
+    state.neighbor_intersection.clear();
+    let mut has_done_neighbor = false;
+    for neighbor in &neighbors {
+        if state.traversal_state.get(neighbor) != Some(&TraversalState::Done) {
+            continue;
+        }
+        let Some(neighbor_objects) = working.get(neighbor) else {
+            continue;
+        };
+        if has_done_neighbor {
+            state.neighbor_intersection.retain(|path| neighbor_objects.binary_search(path).is_ok());
+        } else {
+            state.neighbor_intersection.clone_from(neighbor_objects);
+            has_done_neighbor = true;
+        }
+    }
 
-    let neighbor_intersection = if done_neighbor_sets.is_empty() {
-        BTreeSet::new()
-    } else {
-        let mut iter = done_neighbor_sets.into_iter();
-        let first = iter.next().unwrap();
-        iter.fold(first, |acc, s| acc.intersection(&s).copied().collect())
-    };
+    let objects = working.get_mut(&node_id).expect("missing non-null propagation block");
+    state.previous_objects.clone_from(objects);
+    if has_done_neighbor {
+        union_property_paths(objects, &state.previous_objects, &state.neighbor_intersection);
+    }
+    reduce_maybe_optional_chains(objects, registry);
 
-    let prev_objects = working.get(&node_id).cloned().unwrap_or_default();
-    let mut merged: BTreeSet<usize> = prev_objects.union(&neighbor_intersection).copied().collect();
-    reduce_maybe_optional_chains(&mut merged, registry);
+    state.traversal_state.insert(node_id, TraversalState::Done);
 
-    working.insert(node_id, merged.clone());
-    traversal_state.insert(node_id, TraversalState::Done);
-
-    // Compare with previous value — can't just check size due to reduce_maybe_optional_chains
-    changed |= prev_objects != merged;
+    changed |= state.previous_objects != *objects;
     changed
 }
 
@@ -1372,7 +1460,7 @@ fn collect_hoistable_and_propagate<'a>(
     env: &Environment<'a>,
     temporaries: &TemporariesMap<'a>,
     hoistable_from_optionals: &FxHashMap<BlockId, ReactiveScopeDependency<'a>>,
-) -> (FxHashMap<BlockId, BTreeSet<usize>>, PropertyPathRegistry<'a>) {
+) -> (FxHashMap<BlockId, PropertyPathSet>, PropertyPathRegistry<'a>) {
     let mut registry = PropertyPathRegistry::new(env.allocator);
     let assumed_invoked_fns = get_assumed_invoked_functions(func, env);
     let known_immutable_identifiers: FxHashSet<IdentifierId> = if func.fn_type
@@ -1456,6 +1544,7 @@ struct HoistableNodeEntry<'a> {
 struct DependencyNode<'a> {
     properties: FxIndexMap<PropertyLiteral<'a>, Box<DependencyNodeEntry<'a>>>,
     access_type: PropertyAccessType,
+    computed: bool,
     span: Option<Span>,
 }
 
@@ -1523,6 +1612,7 @@ impl<'a> ReactiveScopeDependencyTreeHIR<'a> {
                 DependencyNode {
                     properties: FxIndexMap::default(),
                     access_type: PropertyAccessType::UnconditionalAccess,
+                    computed: false,
                     span: dep.span,
                 },
                 dep.reactive,
@@ -1551,11 +1641,13 @@ impl<'a> ReactiveScopeDependencyTreeHIR<'a> {
                     node: DependencyNode {
                         properties: FxIndexMap::default(),
                         access_type,
+                        computed: entry.computed,
                         span: entry.span,
                     },
                 })
             });
             child.node.access_type = merge_access(child.node.access_type, access_type);
+            child.node.computed |= entry.computed;
 
             dep_cursor = &mut child.node;
             hoistable_ptr = next_hoistable;
@@ -1605,6 +1697,7 @@ fn collect_minimal_deps_in_subtree<'a>(
             let mut new_path = path.to_vec();
             new_path.push(DependencyPathEntry {
                 property: *child_name,
+                computed: child_entry.node.computed,
                 optional: is_optional_access(child_entry.node.access_type),
                 span: child_entry.node.span,
             });
@@ -1747,24 +1840,31 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         self.visit_dependency(dep, env);
     }
 
+    fn visit_operand_root(&mut self, place: &Place, env: &mut Environment<'a>) {
+        let dep = self.temporaries[place.identifier]
+            .as_ref()
+            .map(|resolved| ReactiveScopeDependency {
+                identifier: resolved.identifier,
+                reactive: resolved.reactive,
+                path: ArenaVec::new_in(&env.allocator),
+                span: resolved.span,
+            })
+            .unwrap_or_else(|| ReactiveScopeDependency {
+                identifier: place.identifier,
+                reactive: place.reactive,
+                path: ArenaVec::new_in(&env.allocator),
+                span: place.span,
+            });
+        self.visit_dependency(dep, env);
+    }
+
     fn visit_property(
         &mut self,
         object: &Place,
-        property: &PropertyLiteral<'a>,
-        optional: bool,
-        span: Option<Span>,
-        property_span: Option<Span>,
+        access: PropertyAccess<'a>,
         env: &mut Environment<'a>,
     ) {
-        let dep = get_property(
-            object,
-            property,
-            optional,
-            span,
-            property_span,
-            self.temporaries,
-            env.allocator,
-        );
+        let dep = get_property(object, access, self.temporaries, env.allocator);
         self.visit_dependency(dep, env);
     }
 
@@ -1860,6 +1960,9 @@ fn visit_inner_function_blocks<'a>(
     ctx: &mut DependencyCollectionContext<'a, '_>,
     env: &mut Environment<'a>,
 ) {
+    let semantic_only_caught_instructions =
+        find_semantic_only_caught_instructions(&env.functions[func_id], env);
+
     // Clone inner function's instructions and block structure to avoid
     // borrow conflicts when mutating env through handle_instruction.
     let inner_instrs = env.functions[func_id].instructions.clone_in(env.allocator);
@@ -1907,7 +2010,12 @@ fn visit_inner_function_blocks<'a>(
                     visit_inner_function_blocks(lowered_func.func, ctx, env);
                 }
                 _ => {
-                    handle_instruction(inner_instr, ctx, env);
+                    handle_instruction(
+                        inner_instr,
+                        semantic_only_caught_instructions.as_ref().is_some_and(|loads| loads[iid]),
+                        ctx,
+                        env,
+                    );
                 }
             }
         }
@@ -1923,6 +2031,7 @@ fn visit_inner_function_blocks<'a>(
 
 fn handle_instruction<'a>(
     instr: &Instruction<'a>,
+    semantic_only_caught_instruction: bool,
     ctx: &mut DependencyCollectionContext<'a, '_>,
     env: &mut Environment<'a>,
 ) {
@@ -1930,13 +2039,32 @@ fn handle_instruction<'a>(
     let scope_stack_copy = ctx.scope_stack.clone();
     ctx.declare(instr.lvalue.identifier, Decl { id, scope_stack: scope_stack_copy }, env);
 
+    if semantic_only_caught_instruction {
+        // The operation must remain inside the try/catch, so use its root operands as
+        // dependencies instead of hoisting the potentially throwing operation into a cache guard.
+        for operand in visitors::each_instruction_value_operand(&instr.value, env) {
+            ctx.visit_operand_root(&operand, env);
+        }
+        return;
+    }
+
     if ctx.is_deferred_dependency_instr(instr) {
         return;
     }
 
     match &instr.value {
-        InstructionValue::PropertyLoad { object, property, property_span, span } => {
-            ctx.visit_property(object, property, false, *span, *property_span, env);
+        InstructionValue::PropertyLoad { object, property, computed, property_span, span } => {
+            ctx.visit_property(
+                object,
+                PropertyAccess {
+                    property: *property,
+                    computed: *computed,
+                    optional: false,
+                    span: *span,
+                    property_span: *property_span,
+                },
+                env,
+            );
         }
         InstructionValue::StoreLocal { value: val, lvalue, .. } => {
             ctx.visit_operand(val, env);
@@ -1999,6 +2127,7 @@ fn collect_dependencies<'a>(
     temporaries: &TemporariesMap<'a>,
     processed_instrs_in_optional: &FxHashSet<ProcessedInstr>,
 ) -> FxIndexMap<ScopeId, Vec<ReactiveScopeDependency<'a>>> {
+    let semantic_only_caught_instructions = find_semantic_only_caught_instructions(func, env);
     let mut ctx = DependencyCollectionContext::new(
         env.identifiers.len(),
         temporaries,
@@ -2027,7 +2156,13 @@ fn collect_dependencies<'a>(
 
     let mut traversal = ScopeBlockTraversal::new();
 
-    handle_function_deps(func, env, &mut ctx, &mut traversal);
+    handle_function_deps(
+        func,
+        env,
+        semantic_only_caught_instructions.as_ref(),
+        &mut ctx,
+        &mut traversal,
+    );
 
     ctx.deps
 }
@@ -2035,6 +2170,7 @@ fn collect_dependencies<'a>(
 fn handle_function_deps<'a>(
     func: &HirFunction<'a>,
     env: &mut Environment<'a>,
+    semantic_only_caught_instructions: Option<&IndexVec<InstructionId, bool>>,
     ctx: &mut DependencyCollectionContext<'a, '_>,
     traversal: &mut ScopeBlockTraversal,
 ) {
@@ -2087,22 +2223,13 @@ fn handle_function_deps<'a>(
                     ctx.inner_fn_context = prev_inner;
                 }
                 _ => {
-                    handle_instruction(instr, ctx, env);
-                }
-            }
-        }
-
-        // A caught throw is an observable result of a read even when its produced value is not
-        // used. Record the read's root operands as dependencies so a cached scope re-runs when
-        // the throw outcome can change. Using the roots also avoids hoisting the potentially
-        // throwing property access itself outside of the try/catch.
-        if matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }) {
-            for &instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.index()];
-                if is_catch_observable_property_load(&instr.value) {
-                    for operand in visitors::each_instruction_value_operand(&instr.value, env) {
-                        ctx.visit_operand(&operand, env);
-                    }
+                    handle_instruction(
+                        instr,
+                        semantic_only_caught_instructions
+                            .is_some_and(|instructions| instructions[instr_id]),
+                        ctx,
+                        env,
+                    );
                 }
             }
         }

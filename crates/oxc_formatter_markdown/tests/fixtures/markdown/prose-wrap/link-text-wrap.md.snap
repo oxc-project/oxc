@@ -1,0 +1,69 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+Text before it (See [Designing APIs for Asynchrony in JavaScript today][Zalgo].) and after it.
+
+Text before it [Designing APIs for Asynchrony in JavaScript today and](https://example.com/x) after.
+
+[Zalgo]: https://example.com/zalgo
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+Text before it (See [Designing APIs for Asynchrony in JavaScript today][Zalgo].)
+and after it.
+
+Text before it
+[Designing APIs for Asynchrony in JavaScript today and](https://example.com/x)
+after.
+
+[Zalgo]: https://example.com/zalgo
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+Text before it (See [Designing APIs for Asynchrony in JavaScript today][Zalgo].) and after it.
+
+Text before it [Designing APIs for Asynchrony in JavaScript today and](https://example.com/x) after.
+
+[Zalgo]: https://example.com/zalgo
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+Text before it (See [Designing APIs for Asynchrony in JavaScript today][Zalgo].) and after it.
+
+Text before it [Designing APIs for Asynchrony in JavaScript today and](https://example.com/x) after.
+
+[Zalgo]: https://example.com/zalgo
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+Text before it (See [Designing APIs for Asynchrony in JavaScript today][Zalgo].) and after it.
+
+Text before it [Designing APIs for Asynchrony in JavaScript today and](https://example.com/x) after.
+
+[Zalgo]: https://example.com/zalgo
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+Text before it (See [Designing APIs for Asynchrony in JavaScript today][Zalgo].) and after it.
+
+Text before it [Designing APIs for Asynchrony in JavaScript today and](https://example.com/x) after.
+
+[Zalgo]: https://example.com/zalgo
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+Text before it (See [Designing APIs for Asynchrony in JavaScript today][Zalgo].) and after it.
+
+Text before it [Designing APIs for Asynchrony in JavaScript today and](https://example.com/x) after.
+
+[Zalgo]: https://example.com/zalgo
+
+===================== End =====================

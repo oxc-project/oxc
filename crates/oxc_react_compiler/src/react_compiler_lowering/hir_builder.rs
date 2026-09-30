@@ -1,4 +1,4 @@
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::each_terminal_successor;
 use crate::react_compiler_hir::visitors::terminal_fallthrough;
@@ -75,13 +75,6 @@ pub(crate) fn is_always_reserved_word(s: &str) -> bool {
             | "false"
             | "delete"
     )
-}
-
-pub(crate) fn reserved_identifier_diagnostic(name: &str) -> OxcDiagnostic {
-    ErrorCategory::Syntax.diagnostic("Expected a non-reserved identifier name").with_help(format!(
-        "`{}` is a reserved word in JavaScript and cannot be used as an identifier name",
-        name
-    ))
 }
 
 // ---------------------------------------------------------------------------
@@ -461,8 +454,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 );
             }
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Mismatched loop scope: expected Loop, got other"));
+                return Err(diagnostics::invariant_mismatched_loop_scope_expected_loop_got_other());
             }
         }
         Ok(value)
@@ -483,8 +475,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 assert!(*l == label && *b == break_block, "Mismatched label scope");
             }
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Mismatched label scope: expected Label, got other"));
+                return Err(
+                    diagnostics::invariant_mismatched_label_scope_expected_label_got_other(),
+                );
             }
         }
         Ok(value)
@@ -505,8 +498,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 assert!(*l == label && *b == break_block, "Mismatched switch scope");
             }
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Mismatched switch scope: expected Switch, got other"));
+                return Err(
+                    diagnostics::invariant_mismatched_switch_scope_expected_switch_got_other(),
+                );
             }
         }
         Ok(value)
@@ -526,8 +520,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 _ => continue,
             }
         }
-        Err(ErrorCategory::Invariant
-            .diagnostic("Expected a loop or switch to be in scope for break"))
+        Err(diagnostics::invariant_expected_loop_or_switch_scope_break())
     }
 
     /// Look up the continue target for the given label (or the innermost
@@ -542,13 +535,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 }
                 _ => {
                     if label.is_some() && scope.label() == label {
-                        return Err(ErrorCategory::Invariant
-                            .diagnostic("Continue may only refer to a labeled loop"));
+                        return Err(diagnostics::invariant_continue_may_only_refer_labeled_loop());
                     }
                 }
             }
         }
-        Err(ErrorCategory::Invariant.diagnostic("Expected a loop to be in scope for continue"))
+        Err(diagnostics::invariant_expected_loop_scope_continue())
     }
 
     /// Create a temporary identifier with a fresh id, returning its IdentifierId.
@@ -570,15 +562,34 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         self.env.record_diagnostic(diagnostic);
     }
 
-    /// Check if a name has a local binding (non-module-level).
-    /// This is used for checking if fbt/fbs JSX tags are local bindings
-    /// (which is not supported).
-    pub fn has_local_binding(&self, name: &str) -> bool {
-        if let Some(symbol_id) = self.scope.find_binding_in_descendants(name, self.component_scope)
-        {
-            return self.scope.symbol_scope(symbol_id) != self.scope.program_scope();
+    /// Resolve a local binding when the AST reference has no scope mapping.
+    pub fn resolve_local_binding_by_name(
+        &mut self,
+        name: &str,
+        span: Option<Span>,
+    ) -> Result<Option<IdentifierId>, OxcDiagnostic> {
+        let symbol_id = span.map_or_else(
+            || self.scope.find_binding(self.function_scope, name),
+            |span| self.scope.find_binding_at_position(name, self.component_scope, span.start),
+        );
+        let Some(symbol_id) = symbol_id else {
+            return Ok(None);
+        };
+        if self.scope.symbol_scope(symbol_id) == self.scope.program_scope() {
+            return Ok(None);
         }
-        false
+        let name = self.scope.symbol_ident(symbol_id);
+
+        // JSX identifiers do not have semantic references. Resolve the binding
+        // explicitly so a local `fbt` reports the earlier Todo diagnostic instead
+        // of the later invariant from JSX tag validation.
+        if name == "fbt" {
+            // Cache the lookup as a real HIR binding so later forward tags and
+            // the eventual declaration reuse the first diagnostic.
+            self.resolve_binding_with_span(name, symbol_id, span)?;
+            return Ok(None);
+        }
+        self.resolve_binding_with_span(name, symbol_id, span).map(Some)
     }
 
     /// Return the kind of the current block.
@@ -616,13 +627,26 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 if has_function_expr {
                     let span = block
                         .instructions
-                        .first()
-                        .and_then(|&i| instructions[i.index()].span)
+                        .iter()
+                        .find_map(|&instruction_id| {
+                            let instruction = &instructions[instruction_id.index()];
+                            if let InstructionValue::FunctionExpression {
+                                name_span,
+                                lowered_func,
+                                span,
+                                ..
+                            } = &instruction.value
+                            {
+                                name_span
+                                    .or(self.env.functions[lowered_func.func].diagnostic_span())
+                                    .or(*span)
+                            } else {
+                                None
+                            }
+                        })
                         .or_else(|| block.terminal.span().copied());
                     self.env.record_error(
-                        ErrorCategory::Todo
-                            .diagnostic("Support functions with unreachable code that may contain hoisted declarations")
-                            .with_labels(span),
+                        diagnostics::todo_support_functions_unreachable_code_that_may_contain_hoisted_declarations(span),
                     )?;
                 }
             }
@@ -665,43 +689,18 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         symbol_id: SymbolId,
         span: Option<Span>,
     ) -> Result<IdentifierId, OxcDiagnostic> {
-        // Check for unsupported names BEFORE the cache check.
-        // In TS, resolveBinding records fbt errors when node.name === 'fbt'. After a name collision
-        // causes a rename (e.g., "fbt" -> "fbt_0"), TS's scope.rename changes the AST node's name,
-        // preventing subsequent fbt error recording. We simulate this by checking whether the
-        // resolved name for this binding is still "fbt" (not renamed to "fbt_0" etc.).
-        if name == "fbt" {
-            // Check if this binding was previously resolved to a renamed version
-            let should_record_fbt_error =
-                if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
-                    // Already resolved - check if the resolved name is still "fbt"
-                    match &self.env.identifiers[identifier_id].name {
-                        Some(IdentifierName::Named(resolved_name)) => resolved_name == "fbt",
-                        _ => false,
-                    }
-                } else {
-                    // First resolution - always record
-                    true
-                };
-            if should_record_fbt_error {
-                let error_span = self.declaration_span(symbol_id).or(span);
-                self.env.record_error(
-                    ErrorCategory::Todo
-                        .diagnostic("Support local variables named `fbt`")
-                        .with_help("Local variables named `fbt` may conflict with the fbt plugin and are not yet supported")
-                        .with_labels(error_span),
-                )?;
-            }
-        }
-
         // If we've already resolved this binding, return the cached IdentifierId
         if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
             return Ok(identifier_id);
         }
 
+        if let Some(error) = self.local_fbt_error(name, symbol_id, span) {
+            self.env.record_error(error)?;
+        }
+
         if is_always_reserved_word(name.as_str()) {
             // Match TS behavior: makeIdentifierName throws for reserved words.
-            return Err(reserved_identifier_diagnostic(name.as_str()));
+            return Err(diagnostics::reserved_identifier(name.as_str(), span));
         }
 
         // Find a unique name: start with the original name, then try name_0, name_1, ...
@@ -744,6 +743,29 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         Ok(id)
     }
 
+    /// Build the diagnostic for a local `fbt` binding that has not been renamed.
+    ///
+    /// Babel renames the AST binding after a collision. Once Oxc has recorded
+    /// the equivalent rename, do not report the diagnostic again.
+    fn local_fbt_error(
+        &self,
+        name: Ident<'a>,
+        symbol_id: SymbolId,
+        span: Option<Span>,
+    ) -> Option<OxcDiagnostic> {
+        if name != "fbt" {
+            return None;
+        }
+        let should_report = self.bindings.get(&symbol_id).is_none_or(|&identifier_id| {
+            matches!(
+                &self.env.identifiers[identifier_id].name,
+                Some(IdentifierName::Named(resolved_name)) if resolved_name == "fbt"
+            )
+        });
+        should_report
+            .then(|| diagnostics::local_fbt_variable(self.declaration_span(symbol_id).or(span)))
+    }
+
     /// Set the span on an identifier to the declaration-site span.
     /// This overrides any previously-set span (which may have come from a reference site).
     pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: Span) {
@@ -767,11 +789,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             // No binding found: this is a global
             return Ok(VariableBinding::Global { name });
         };
-        // Treat type-only declarations as globals so the compiler
-        // doesn't try to create/initialize HIR bindings for them.
-        // TSEnumDeclaration is included because a function with an inline
-        // enum is skipped (`skip_compilation`) and the enum binding is
-        // never initialized in HIR.
+        // Treat type-only declarations as globals so the compiler doesn't try to
+        // create or initialize HIR bindings for them. Inline enums are opaque
+        // pass-through instructions, matching upstream's `UnsupportedNode`, so
+        // their references also remain global from HIR's perspective.
         if matches!(
             self.scope.decl_kind(symbol_id),
             DeclKind::TSTypeAliasDeclaration

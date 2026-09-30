@@ -13,10 +13,12 @@ use crate::ExternalLinter;
 
 define_index_type! {
     pub struct ExternalPluginId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 define_index_type! {
     pub struct ExternalRuleId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 impl ExternalRuleId {
@@ -26,6 +28,7 @@ impl ExternalRuleId {
 
 define_index_type! {
     pub struct ExternalOptionsId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 impl ExternalOptionsId {

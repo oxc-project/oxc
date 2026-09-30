@@ -70,7 +70,7 @@ impl Rule for PreferGlobalThis {
 
         if !matches!(ident.name.as_str(), "window" | "self" | "global")
             || is_computed_member_expression_object(node, ctx)
-            || !ctx.scoping().root_unresolved_references().contains_key(&ident.name)
+            || !ctx.is_reference_to_global_variable(ident)
         {
             return;
         }
@@ -88,16 +88,18 @@ impl Rule for PreferGlobalThis {
                     e.property.name.as_str(),
                     "addEventListener" | "removeEventListener" | "dispatchEvent"
                 ) {
-                    if let Some(AstKind::CallExpression(call_expr)) =
+                    let Some(AstKind::CallExpression(call_expr)) =
                         ctx.nodes().ancestor_kinds(node.id()).nth(1)
+                    else {
+                        return;
+                    };
+                    if call_expr.callee.span() != e.span() {
+                        return;
+                    }
+                    if let Some(Expression::StringLiteral(lit)) =
+                        call_expr.arguments.first().and_then(|arg| arg.as_expression())
+                        && WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str())
                     {
-                        if let Some(Expression::StringLiteral(lit)) =
-                            call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                            && WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str())
-                        {
-                            return;
-                        }
-                    } else {
                         return;
                     }
                 } else {
@@ -303,6 +305,10 @@ fn test() {
         "window[foo]",
         "window[title]",
         r#"window["foo"]"#,
+        "function f(fake) { const window = fake; return window.foo }; window[key]",
+        "expect(window.addEventListener).toHaveBeenCalled();",
+        "expect(window.removeEventListener).toHaveBeenCalled();",
+        "expect(window.dispatchEvent).toHaveBeenCalled();",
     ];
 
     let fail = vec![

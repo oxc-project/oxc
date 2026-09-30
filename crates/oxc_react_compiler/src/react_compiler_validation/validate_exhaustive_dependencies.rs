@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
 use oxc_str::Ident;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics::{self, ErrorCategory};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment_config::ExhaustiveEffectDepsMode;
 use crate::react_compiler_hir::visitors::{
@@ -665,7 +665,13 @@ fn collect_dependencies<'a>(
                         }
                     }
                 }
-                InstructionValue::PropertyLoad { object, property, property_span, .. } => {
+                InstructionValue::PropertyLoad {
+                    object,
+                    property,
+                    computed,
+                    property_span,
+                    ..
+                } => {
                     // Number properties or ref.current: visit the object directly
                     let is_numeric = matches!(property, PropertyLiteral::Number(_));
                     let is_ref_current =
@@ -690,6 +696,7 @@ fn collect_dependencies<'a>(
                             new_path.push(DependencyPathEntry {
                                 optional,
                                 property: *property,
+                                computed: *computed,
                                 span: property_span.or_else(|| instr.value.span().copied()),
                             });
                             temporaries.insert(
@@ -1293,6 +1300,12 @@ fn validate_dependencies(
 
     let mut diagnostic = create_diagnostic(category, &filtered_missing, &filtered_extra)?;
 
+    if !filtered_missing.is_empty() && filtered_extra.is_empty() {
+        diagnostic.labels.extend(manual_memo_span.map(|span| {
+            span.primary_label("This dependency list is missing values used by the callback")
+        }));
+    }
+
     // Add detail items for missing deps
     for dep in &filtered_missing {
         if let InferredDependency::Local { identifier, path: _, span, .. } = dep {
@@ -1529,12 +1542,11 @@ fn create_diagnostic(
             (reason, description)
         }
         _ => {
-            return Err(ErrorCategory::Invariant
-                .diagnostic(format!("Unexpected error category: {:?}", category)));
+            return Err(diagnostics::unexpected_error_category(category));
         }
     };
 
-    Ok(category.diagnostic(reason).with_help(description))
+    Ok(diagnostics::exhaustive_dependencies(category, &reason, description))
 }
 
 /// Collect lvalue identifier ids from instruction value (for the default branch).

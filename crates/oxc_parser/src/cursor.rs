@@ -11,11 +11,10 @@ use crate::{
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
 
-#[derive(Clone)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
-    prev_span_end: u32,
+    prev_token_end: u32,
     errors_pos: usize,
     fatal_error: Option<FatalError<'a>>,
 }
@@ -241,6 +240,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Tell lexer to read a template substitution tail
     pub(crate) fn re_lex_template_substitution_tail(&mut self) {
+        if self.fatal_error.is_some() {
+            return;
+        }
         if self.at(Kind::RCurly) {
             self.token = self.lexer.next_template_substitution_tail();
         }
@@ -308,7 +310,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token,
-            prev_span_end: self.prev_token_end,
+            prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             fatal_error: self.fatal_error.take(),
         }
@@ -318,19 +320,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint_with_error_recovery(),
             cur_token: self.token,
-            prev_span_end: self.prev_token_end,
+            prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             fatal_error: self.fatal_error.take(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
+        let ParserCheckpoint { lexer, cur_token, prev_token_end, errors_pos, fatal_error } =
             checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
-        self.prev_token_end = prev_span_end;
+        self.prev_token_end = prev_token_end;
         self.errors.truncate(errors_pos);
         self.fatal_error = fatal_error;
     }
@@ -523,9 +525,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return None;
             }
             self.advance(separator);
-            if self.cur_kind() == close {
+            let kind = self.cur_kind();
+            if kind == close {
                 let trailing_separator = self.prev_token_end - 1;
                 return Some(trailing_separator);
+            }
+            if matches!(kind, Kind::Eof | Kind::Undetermined) {
+                return None;
             }
             let element = parse_element(self);
             list.push(element);
@@ -605,6 +611,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     if rest.is_some() && !self.ctx.has_ambient() {
                         self.error(diagnostics::rest_element_trailing_comma(comma_span));
                     }
+                    break;
+                }
+                if matches!(kind, Kind::Eof | Kind::Undetermined) {
                     break;
                 }
             }

@@ -45,9 +45,7 @@ impl ToInt32 for f64 {
 #[cfg(target_arch = "aarch64")]
 #[target_feature(enable = "jsconv")]
 unsafe fn f64_to_int32_arm64(number: f64) -> i32 {
-    // SAFETY: `jsconv` target feature was just verified to be available,
-    // so the `fjcvtzs` instruction used by `__jcvt` is available.
-    unsafe { std::arch::aarch64::__jcvt(number) }
+    std::arch::aarch64::__jcvt(number)
 }
 
 /// Generic implementation of ToInt32 for non-ARM64 architectures or ARM64 without JSCVT

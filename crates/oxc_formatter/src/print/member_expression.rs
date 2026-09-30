@@ -10,6 +10,7 @@ use crate::{
     utils::{
         expression::as_call_expression_without_chain_wrappers,
         member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,
+        typecast::is_cast_target,
     },
     write,
 };
@@ -25,13 +26,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Before the recording: printing the object consumes its cast comment
+        let object_is_cast_target = is_cast_target(self.object.span(), f);
         let is_member_chain = {
             let mut recording = f.start_recording();
             write!(recording, [self.object()]);
             recording.stop().has_label(LabelId::of(JsLabels::MemberChain))
         };
 
-        match layout(self, is_member_chain, f) {
+        match layout(self, is_member_chain, object_is_cast_target, f) {
             StaticMemberLayout::NoBreak => {
                 let format_no_break =
                     format_with(|f| write!(f, [operator_token(self.optional()), self.property()]));
@@ -81,9 +84,12 @@ fn operator_token(optional: bool) -> &'static str {
     if optional { "?." } else { "." }
 }
 
+/// `object_is_cast_target`:
+/// a cast-target object is neither a call nor an identifier to the rules below (see `is_cast_target`).
 fn layout<'a>(
     node: &AstNode<'a, StaticMemberExpression<'a>>,
     is_member_chain: bool,
+    object_is_cast_target: bool,
     f: &JsFormatter<'_, 'a>,
 ) -> StaticMemberLayout {
     if f.comments().has_leading_own_line_comment(node.property.span.start) {
@@ -101,8 +107,9 @@ fn layout<'a>(
 
     let is_nested = match parent {
         AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_) => {
-            let no_break = as_call_expression_without_chain_wrappers(object)
-                .is_some_and(|call| !call.arguments.is_empty());
+            let no_break = !object_is_cast_target
+                && as_call_expression_without_chain_wrappers(object)
+                    .is_some_and(|call| !call.arguments.is_empty());
 
             if no_break || is_member_chain {
                 return StaticMemberLayout::NoBreak;
@@ -114,7 +121,7 @@ fn layout<'a>(
         _ => false,
     };
 
-    if !is_nested && matches!(object, Expression::Identifier(_)) {
+    if !is_nested && !object_is_cast_target && matches!(object, Expression::Identifier(_)) {
         return StaticMemberLayout::NoBreak;
     }
 

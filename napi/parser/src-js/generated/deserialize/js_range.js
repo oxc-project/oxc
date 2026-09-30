@@ -531,9 +531,9 @@ function deserializeTemplateElement(pos) {
     start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
     value = deserializeTemplateElementValue(pos + 16);
-  value.cooked !== null &&
-    deserializeBool(pos + 13) &&
-    (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
+  value.cooked !== null
+    && deserializeBool(pos + 13)
+    && (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
       String.fromCodePoint(parseInt(hex, 16)),
     ));
   return {
@@ -1117,8 +1117,8 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       range: [keyStart, keyEnd],
     },
     init = deserializeOptionExpression(pos + 48);
-  init !== null &&
-    (value = {
+  init !== null
+    && (value = {
       type: "AssignmentPattern",
       left: value,
       right: init,
@@ -2806,8 +2806,10 @@ function deserializeStringLiteral(pos) {
       range: [start, end],
     },
     value = deserializeStr(pos + 16);
-  deserializeBool(pos + 12) &&
-    (value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16))));
+  deserializeBool(pos + 12)
+    && (value = value.replace(/\uFFFD(.{4})/g, (_, hex) =>
+      String.fromCodePoint(parseInt(hex, 16)),
+    ));
   node.value = value;
   return node;
 }
@@ -4864,6 +4866,10 @@ function deserializeCommentKind(pos) {
       return "Block";
     case 2:
       return "Block";
+    case 3:
+      return "Line";
+    case 4:
+      return "Line";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for CommentKind`);
   }
@@ -4872,10 +4878,11 @@ function deserializeCommentKind(pos) {
 function deserializeComment(pos) {
   let type = deserializeCommentKind(pos + 12),
     start = deserializeI32(pos),
-    end = deserializeI32(pos + 4);
+    end = deserializeI32(pos + 4),
+    kind = deserializeU8(pos + 12);
   return {
     type,
-    value: sourceText.slice(start + 2, end - (type === "Line" ? 0 : 2)),
+    value: sourceText.slice(start + (kind < 3 ? 2 : kind), end - (type === "Line" ? 0 : 2)),
     start,
     end,
     range: [start, end],

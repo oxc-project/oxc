@@ -1,8 +1,5 @@
 # externals/ng-zorro-antd/components/style/themes/variable.less
 
-> Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md
-> Allowed: trailing `// comment` rides a line_suffix, never counts toward print width; Prettier only treats CSS-family `//` inline and breaks the value. See crates/oxc_formatter_css/AGENTS.md
-
 ## Option 1
 
 `````json

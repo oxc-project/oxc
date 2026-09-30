@@ -128,6 +128,12 @@ impl<'a> FormatSession<'a> {
         }
     }
 
+    /// Whether a dispatcher is installed, i.e. embedded languages may be formatted.
+    /// `false` for a plain standalone run and under `embeddedLanguageFormatting: off`.
+    pub fn has_dispatcher(&self) -> bool {
+        self.services.dispatcher.is_some()
+    }
+
     /// Formats one embedded-language request on a child session derived from this one.
     ///
     /// See [`DispatchResponse`] for the `PreserveOriginal`-vs-`Err` contract; this method adds three rules:

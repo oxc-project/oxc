@@ -229,7 +229,7 @@ fn format_program_with_session<'a>(
 /// so a program fed to [`format_program`] matches the text-in path.
 /// Use this when you need to control parse-error handling
 /// or isolate parsing from formatting (perf/allocation measurement, error-tolerant harnesses).
-/// Inspect the returned `ParserReturn` (`errors` / `panicked`) and pass `&ret.program` to [`format_program`].
+/// Inspect the returned `ParserReturn` (`errors` / `fatal_error`) and pass `&ret.program` to [`format_program`].
 pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,
@@ -253,7 +253,7 @@ pub fn parse_for_format<'a>(
 
 /// Parse `source_text` and promote the `Program` to the arena lifetime.
 ///
-/// NOTE: Reject ANY parse diagnostic, not only `panicked`: we format valid code only, by design.
+/// NOTE: Reject ANY parse diagnostic, not only `fatal_error`: we format valid code only, by design.
 /// A recovered AST may be an unfaithful "fix" of the source
 /// (e.g. invalid modifiers are reported but not all of them are representable),
 /// so formatting it can silently rewrite what the user wrote.

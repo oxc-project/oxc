@@ -1,5 +1,5 @@
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
+use oxc_allocator::{ArenaVec, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantValue, DetermineValueType, ValueType},
@@ -132,8 +132,11 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Expression::ParenthesizedExpression(paren_expr) = expr {
-            *expr = paren_expr.expression.take_in(ctx);
+        if matches!(expr, Expression::ParenthesizedExpression(_)) {
+            expr.replace_with(|expr| {
+                let Expression::ParenthesizedExpression(paren_expr) = expr else { unreachable!() };
+                paren_expr.unbox().expression
+            });
         }
         // Handled outside the match below so the replacement can go through
         // `ctx.replace_expression`, which walks the dropped call (its
@@ -258,7 +261,7 @@ impl<'a> Normalize {
         stmt.replace_with(|stmt| {
             let Statement::WhileStatement(while_stmt) = stmt else { unreachable!() };
             let while_stmt = while_stmt.unbox();
-            let for_stmt = ForStatement::boxed_with_scope_id(
+            Statement::new_for_statement_with_scope_id(
                 while_stmt.span,
                 None,
                 Some(while_stmt.test),
@@ -266,8 +269,7 @@ impl<'a> Normalize {
                 while_stmt.body,
                 ctx.create_child_scope_of_current(ScopeFlags::empty()),
                 ctx,
-            );
-            Statement::ForStatement(for_stmt)
+            )
         });
     }
 
@@ -357,8 +359,7 @@ impl<'a> Normalize {
         // `replace_expression` walks the dropped ident into `PassChanges`, so
         // its resolved reference is pruned by `finish_normalize_pass`,
         // before pass 1 — otherwise the symbol would look referenced forever.
-        let new_arg =
-            Expression::new_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal, ctx);
+        let new_arg = Expression::new_number_0(ident.span, ctx);
         ctx.replace_expression(&mut e.argument, new_arg);
     }
 

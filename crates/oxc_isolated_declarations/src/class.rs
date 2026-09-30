@@ -316,6 +316,31 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
+    /// Infer reusable parameter-property types once so transforming the constructor and the
+    /// generated property cannot report the same inference diagnostic twice.
+    fn infer_constructor_parameter_property_types(
+        &self,
+        params: &ArenaBox<'a, FormalParameters<'a>>,
+    ) -> Option<ArenaBox<'a, FormalParameters<'a>>> {
+        let mut inferred_params = None;
+
+        for (index, param) in params.items.iter().enumerate() {
+            if param.has_modifier()
+                && !param.accessibility.is_some_and(TSAccessibility::is_private)
+                && param.initializer.is_some()
+                && param.type_annotation.is_none()
+                && let Some(ts_type) = self.infer_type_from_formal_parameter(param)
+            {
+                let inferred_params =
+                    inferred_params.get_or_insert_with(|| params.clone_in(self.allocator()));
+                inferred_params.items[index].type_annotation =
+                    Some(TSTypeAnnotation::boxed(SPAN, ts_type, self));
+            }
+        }
+
+        inferred_params
+    }
+
     /// Transform constructor parameters to class properties.
     ///
     /// For example:
@@ -327,17 +352,16 @@ impl<'a> IsolatedDeclarations<'a> {
     /// `class C { public x: string; constructor(x: string) {} }`
     fn transform_constructor_parameter_properties(
         &self,
-        function: &Function<'a>,
+        params: &FormalParameters<'a>,
         typed_params: &FormalParameters<'a>,
     ) -> ArenaVec<'a, ClassElement<'a>> {
         ArenaVec::from_iter_in(
-            function
-                .params
+            params
                 .items
                 .iter()
                 .filter(|param| {
                     // To follow up `transform_formal_parameters`'s behavior
-                    typed_params.items.len() == function.params.items.len() || param.has_modifier()
+                    typed_params.items.len() == params.items.len() || param.has_modifier()
                 })
                 .enumerate()
                 .filter_map(|(index, param)| {
@@ -347,6 +371,8 @@ impl<'a> IsolatedDeclarations<'a> {
                     let type_annotation =
                         if param.accessibility.is_some_and(TSAccessibility::is_private) {
                             None
+                        } else if param.initializer.is_some() {
+                            param.type_annotation.clone_in(self.allocator())
                         } else {
                             // transformed params will definitely have type annotation
                             typed_params.items[index].type_annotation.clone_in(self.allocator())
@@ -552,11 +578,18 @@ impl<'a> IsolatedDeclarations<'a> {
                             let is_private =
                                 method.accessibility.is_some_and(TSAccessibility::is_private);
 
+                            let inferred_params =
+                                self.infer_constructor_parameter_property_types(&function.params);
+                            let function_params =
+                                inferred_params.as_ref().unwrap_or(&function.params);
                             let params =
-                                self.transform_formal_parameters(&function.params, is_private);
+                                self.transform_formal_parameters(function_params, is_private);
                             elements.splice(
                                 0..0,
-                                self.transform_constructor_parameter_properties(function, &params),
+                                self.transform_constructor_parameter_properties(
+                                    function_params,
+                                    &params,
+                                ),
                             );
 
                             if is_function_overloads && function.body.is_some() {

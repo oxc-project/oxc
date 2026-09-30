@@ -2,7 +2,7 @@
 
 The Oxc minifier makes certain assumptions about JavaScript code to achieve optimal compression. These assumptions are standard for typical JavaScript but may not hold for unusual code patterns.
 
-These assumptions are validated using ECMAScript operations from [`oxc_ecmascript`](../oxc_ecmascript), which implements spec-compliant behavior for type conversions, side effect analysis, and constant evaluation.
+These assumptions are validated using ECMAScript operations from [`oxc_ecmascript`](../../oxc_ecmascript), which implements spec-compliant behavior for type conversions, side effect analysis, and constant evaluation.
 
 ## Core Assumptions
 
@@ -186,6 +186,35 @@ serialize((x) => {
 ```
 
 ## Optional Assumptions
+
+### Property names selected for mangling are not accessed dynamically
+
+When property-name mangling is enabled, code does not access selected properties through an
+arbitrary runtime string. Quoted syntax is handled per occurrence: it remains unchanged unless
+`mangle_quoted` is enabled, while an unquoted occurrence of the same spelling may be renamed.
+No-substitution template keys follow the same quoted rule; interpolated templates are not
+rewritten.
+
+```javascript
+obj._field; // eligible when `include` matches
+obj["_field"]; // kept unless quoted mangling is enabled
+obj[`_field`]; // also kept unless quoted mangling is enabled
+obj[keyFromNetwork]; // cannot be updated safely
+```
+
+Use `exclude`, `reserved`, or a `false` cache entry for public/reflected names. Properties owned by
+unminified code, imported module namespaces, globals, DOM objects, or other host APIs must also be
+excluded or reserved. A leading `/* @__KEY__ */` or `/* #__KEY__ */` annotation marks a string or
+no-substitution template as a property name. Numeric spellings, `__proto__`, `constructor`, and
+`prototype` are never mangled.
+
+Property mangling does not inspect source strings evaluated by direct `eval` or the `Function`
+constructor, and it does not bail out inside a `with` statement. Matching names reached through
+these dynamic mechanisms must be excluded or reserved explicitly.
+
+Property rewriting runs before compression. Computed keys that compression later materializes,
+such as `['f' + 'oo_']`, are not revisited and can diverge from an eligible `obj.foo_` occurrence.
+Exclude or reserve property names that are constructed this way.
 
 ### No Reliance on Function.prototype.name
 

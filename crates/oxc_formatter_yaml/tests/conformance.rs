@@ -32,6 +32,9 @@ const CONFIG: ConformanceConfig = ConformanceConfig {
         // Pragma support (`@format` insertion / require)
         "yaml/insert-pragma/",
         "yaml/require-pragma/",
+        // UTF-16 input (NUL bytes); nothing to format.
+        "yaml/json-test-suite/snippet: i_string_UTF-16LE_with_BOM.json",
+        "yaml/json-test-suite/snippet: i_string_utf16BE_no_BOM.json",
     ],
     skip_spec: None,
 };

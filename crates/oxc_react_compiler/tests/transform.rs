@@ -4,12 +4,14 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{ModuleExportName, Program, Statement};
 use oxc_codegen::Codegen;
-use oxc_diagnostics::Diagnostics;
+use oxc_diagnostics::{Diagnostics, Severity};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use oxc_react_compiler::{CompileResult, PanicThreshold, PluginOptions, compile};
+use oxc_react_compiler::{
+    CompilationMode, CompileResult, ErrorCategory, PanicThreshold, PluginOptions, compile,
+};
 
 fn options() -> PluginOptions {
     PluginOptions::default()
@@ -163,7 +165,7 @@ fn default_lint_suppressions_bail_out() {
             assert!(!result.changed, "{prefix} {kind} must prevent compilation");
             assert!(!result.fatal, "{prefix} {kind} must not produce a fatal result");
             assert_eq!(result.diagnostics.len(), 1);
-            assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+            assert!(ErrorCategory::Suppression.matches(&result.diagnostics[0]));
         }
     }
 }
@@ -178,7 +180,7 @@ fn flow_suppressions_still_bail_out_by_default() {
     assert!(!result.changed, "Flow suppression must prevent compilation");
     assert!(!result.fatal, "Flow suppression must be a nonfatal bail-out by default");
     assert_eq!(result.diagnostics.len(), 1);
-    assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+    assert!(ErrorCategory::Suppression.matches(&result.diagnostics[0]));
 }
 
 #[test]
@@ -232,7 +234,7 @@ function Component({ condition }) {
         assert!(!result.changed, "{kind} suppression must prevent compilation");
         assert_eq!(result.diagnostics.len(), 1);
         assert!(
-            result.diagnostics[0].message.contains("[ReactCompiler] Suppression"),
+            ErrorCategory::Suppression.matches(&result.diagnostics[0]),
             "expected a suppression diagnostic, got {:?}",
             result.diagnostics
         );
@@ -257,7 +259,7 @@ function Component({ value }) {
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
     assert!(!result.changed, "custom suppression must bail out by default");
     assert_eq!(result.diagnostics.len(), 1);
-    assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+    assert!(ErrorCategory::Suppression.matches(&result.diagnostics[0]));
 
     let allocator = Allocator::default();
     let mut options = PluginOptions {
@@ -268,7 +270,7 @@ function Component({ value }) {
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
     assert!(!result.changed, "custom suppression must bail out with both validations enabled");
     assert_eq!(result.diagnostics.len(), 1);
-    assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+    assert!(ErrorCategory::Suppression.matches(&result.diagnostics[0]));
 }
 
 #[test]
@@ -338,6 +340,25 @@ fn ts_wrapped_assignment_targets_do_not_panic() {
         let allocator = Allocator::default();
         let _ = transform_source(source, SourceType::tsx(), &allocator, opts.clone());
     }
+}
+
+#[test]
+fn ts_type_assertion_assignment_target_compiles() {
+    let source = "function Component(props: {x: number}) {\n  let x = 0;\n  const obj = {x: 1};\n  (<number>x) = props.x;\n  (<number>x) += 1;\n  (<number>obj.x) *= x;\n  return x + obj.x;\n}\n";
+    let allocator = Allocator::default();
+    let mut opts = options();
+    opts.compilation_mode = CompilationMode::All;
+    let (program, result) = transform_source(source, SourceType::ts(), &allocator, opts);
+
+    assert!(result.changed, "component should compile; diagnostics: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    assert!(output.contains("x = props.x"), "type assertion assignment was lost:\n{output}");
+    assert!(output.contains("x = x + 1"), "type assertion compound assignment was lost:\n{output}");
+    assert!(
+        output.contains("obj.x = obj.x * x"),
+        "type assertion member compound assignment was lost:\n{output}"
+    );
 }
 
 /// Class bodies are stubbed by the converter and re-parsed from source on the
@@ -611,20 +632,12 @@ fn diagnostics_preserve_compiler_severity() {
         result.diagnostics
     );
 
-    // A local named `fbt` is an unsupported-syntax bail-out — a warning, not an error.
+    // A Todo bail-out is advice.
     let source = "function Component() {\n  const fbt = \"span\";\n  return <fbt desc=\"label\">Hello</fbt>;\n}\n";
     let allocator = Allocator::default();
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
-    assert!(
-        result.diagnostics.has_warnings(),
-        "fbt bail-out should be reported as a warning: {:?}",
-        result.diagnostics
-    );
-    assert!(
-        !result.diagnostics.has_errors(),
-        "fbt warning must not be reported as an error: {:?}",
-        result.diagnostics
-    );
+    assert_eq!(result.diagnostics.len(), 1);
+    assert_eq!(result.diagnostics[0].severity, Severity::Advice);
 }
 
 /// A warning-level function bail-out must not be promoted to a fatal error:
@@ -657,7 +670,7 @@ export function Component(props: { text: string }) {\n\
     );
     assert_eq!(result.diagnostics.len(), 1);
     assert!(
-        result.diagnostics[0].message.contains("[ReactCompiler] IncompatibleLibrary"),
+        ErrorCategory::IncompatibleLibrary.matches(&result.diagnostics[0]),
         "expected the original compiler diagnostic: {:?}",
         result.diagnostics
     );

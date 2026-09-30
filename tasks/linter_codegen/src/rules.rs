@@ -11,6 +11,8 @@ pub struct RuleEntry<'e> {
     pub rule_module_name: &'e str,
     /// Whether the rule overrides `Rule::from_configuration`.
     pub has_custom_from_configuration: bool,
+    /// Whether the rule overrides `Rule::to_configuration`.
+    pub has_custom_to_configuration: bool,
 }
 
 impl RuleEntry<'_> {
@@ -56,6 +58,7 @@ pub fn get_all_rules(contents: &str) -> Vec<RuleEntry<'_>> {
                 // Preserve the existing generated behavior unless codegen confirms that the rule
                 // uses the default implementation.
                 has_custom_from_configuration: true,
+                has_custom_to_configuration: true,
             });
         }
     }

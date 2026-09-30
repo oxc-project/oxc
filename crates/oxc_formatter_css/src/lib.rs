@@ -36,7 +36,8 @@ pub const TEMPLATE_PLACEHOLDER_PREFIX: &str = "`PLACEHOLDER-";
 pub const TEMPLATE_PLACEHOLDER_SUFFIX: &str = "`";
 
 pub use crate::{
+    comments::CssComment,
     context::CssFormatContext,
-    format::{format, format_to_ir, format_with_session},
+    format::{ParsedCss, format, format_to_ir, format_with_session, parse_for_format},
     options::{CssFormatOptions, CssVariant, SingleQuote, TrailingCommas},
 };

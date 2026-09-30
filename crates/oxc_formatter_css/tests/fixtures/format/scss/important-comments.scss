@@ -1,0 +1,9 @@
+// A comment between `!` and `important` stays there, printed once,
+// in the value positions Sass adds to the declaration form.
+a {
+  mid: red ! /* mid-value */ important blue;
+  fn: call(red ! /* function argument */ important);
+}
+
+$var: red ! /* Sass variable */ important;
+$flags: red ! /* c */ important !default;

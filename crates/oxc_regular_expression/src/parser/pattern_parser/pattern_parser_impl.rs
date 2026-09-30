@@ -1,11 +1,16 @@
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator};
+use oxc_allocator::{Allocator, ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator};
 use oxc_diagnostics::Result;
 use oxc_str::Str;
 
 use crate::{
     ast, diagnostics,
     parser::{
-        pattern_parser::{character, state::State, unicode_property},
+        pattern_parser::{
+            character,
+            state::State,
+            unicode_escape::{UnicodeEscape, decode},
+            unicode_property,
+        },
         reader::{EscapeKind, Reader},
         span_factory::SpanFactory,
     },
@@ -58,11 +63,16 @@ impl<'a> PatternParser<'a> {
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
-        self.state.initialize_with_parsing(&mut self.reader).map_err(|offsets| {
-            diagnostics::duplicated_capturing_group_names(
-                offsets.iter().map(|&(start, end)| self.span_factory.create(start, end)).collect(),
-            )
-        })?;
+        self.state.initialize_with_parsing(&mut self.reader, self.allocator).map_err(
+            |offsets| {
+                diagnostics::duplicated_capturing_group_names(
+                    offsets
+                        .iter()
+                        .map(|&(start, end)| self.span_factory.create(start, end))
+                        .collect(),
+                )
+            },
+        )?;
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if CountLeftCapturingParensWithin(Pattern) ≥ 2**32 - 1.
@@ -231,6 +241,9 @@ impl<'a> PatternParser<'a> {
     // Assertion[UnicodeMode, UnicodeSetsMode, NamedCaptureGroups] ::
     //   ^
     //   $
+    //   [+UnicodeMode] \A
+    //   [+UnicodeMode] \z
+    //   [+UnicodeMode] \Z
     //   \b
     //   \B
     //   [+UnicodeMode] (?= Disjunction[+UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
@@ -255,6 +268,12 @@ impl<'a> PatternParser<'a> {
             Some(ast::BoundaryAssertionKind::Boundary)
         } else if self.reader.eat2('\\', 'B') {
             Some(ast::BoundaryAssertionKind::NegativeBoundary)
+        } else if self.state.unicode_mode && self.reader.eat2('\\', 'A') {
+            Some(ast::BoundaryAssertionKind::StartBuffer)
+        } else if self.state.unicode_mode && self.reader.eat2('\\', 'z') {
+            Some(ast::BoundaryAssertionKind::EndBuffer)
+        } else if self.state.unicode_mode && self.reader.eat2('\\', 'Z') {
+            Some(ast::BoundaryAssertionKind::EndBufferOptionalNewline)
         } else {
             None
         };
@@ -470,17 +489,18 @@ impl<'a> PatternParser<'a> {
         let checkpoint = self.reader.checkpoint();
 
         // DecimalEscape: \1 means indexed reference
-        if let Some(index) = self.consume_decimal_escape()? {
+        if let Some(index) = self.consume_decimal_escape() {
             if self.state.unicode_mode {
                 // [SS:EE] AtomEscape :: DecimalEscape
                 // It is a Syntax Error if the CapturingGroupNumber of DecimalEscape is strictly greater than CountLeftCapturingParensWithin(the Pattern containing AtomEscape).
-                if self.state.num_of_capturing_groups < index {
+                if u64::from(self.state.num_of_capturing_groups) < index {
                     return Err(diagnostics::invalid_indexed_reference(
                         self.span_factory.create(span_start, self.reader.offset()),
                         self.state.num_of_capturing_groups as usize,
                     ));
                 }
 
+                let index = u32::try_from(index).expect("validated capture index must fit in u32");
                 return Ok(Some(ast::Term::IndexedReference(ArenaBox::new_in(
                     ast::IndexedReference {
                         span: self.span_factory.create(span_start, self.reader.offset()),
@@ -490,7 +510,8 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            if index <= self.state.num_of_capturing_groups {
+            if index <= u64::from(self.state.num_of_capturing_groups) {
+                let index = u32::try_from(index).expect("validated capture index must fit in u32");
                 return Ok(Some(ast::Term::IndexedReference(ArenaBox::new_in(
                     ast::IndexedReference {
                         span: self.span_factory.create(span_start, self.reader.offset()),
@@ -529,6 +550,7 @@ impl<'a> PatternParser<'a> {
             if let Some(name) = self.consume_group_name()? {
                 // [SS:EE] AtomEscape :: k GroupName
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
+                // https://tc39.es/ecma262/multipage/text-processing.html#sec-static-semantics-groupspecifiersthatmatch
                 if !self.state.capturing_group_names.contains(name.as_str()) {
                     let names: Vec<&str> =
                         self.state.capturing_group_names.iter().map(Str::as_str).collect();
@@ -1776,20 +1798,28 @@ impl<'a> PatternParser<'a> {
     // DecimalEscape ::
     //   NonZeroDigit DecimalDigits[~Sep][opt] [lookahead ∉ DecimalDigit]
     // ```
-    fn consume_decimal_escape(&mut self) -> Result<Option<u32>> {
+    fn consume_decimal_escape(&mut self) -> Option<u64> {
         let checkpoint = self.reader.checkpoint();
 
-        if let Some(index) = self.consume_decimal_digits()? {
-            // \0 is CharacterEscape, not DecimalEscape
-            if index != 0 {
-                #[expect(clippy::cast_possible_truncation)]
-                return Ok(Some(index as u32));
-            }
+        let mut index = 0_u64;
+        while let Some(cp) = self.reader.peek().filter(|&cp| character::is_decimal_digit(cp)) {
+            // `- '0' as u32`: convert code point to digit
+            #[expect(clippy::cast_lossless)]
+            let digit = (cp - '0' as u32) as u64;
 
-            self.reader.rewind(checkpoint);
+            // The exact value is irrelevant once it exceeds the capture count.
+            // Saturate instead of erroring so Annex B can rewind and reinterpret the entire escape.
+            index = index.saturating_mul(10).saturating_add(digit);
+            self.reader.advance();
         }
 
-        Ok(None)
+        // \0 is CharacterEscape, not DecimalEscape
+        if index != 0 {
+            return Some(index);
+        }
+
+        self.reader.rewind(checkpoint);
+        None
     }
 
     // ```
@@ -1956,12 +1986,36 @@ impl<'a> PatternParser<'a> {
     fn consume_reg_exp_idenfigier_name(&mut self) -> Result<Option<Str<'a>>> {
         let span_start = self.reader.offset();
 
-        if self.consume_reg_exp_idenfigier_start()?.is_some() {
-            while self.consume_reg_exp_idenfigier_part()?.is_some() {}
-            return Ok(Some(self.reader.str(span_start, self.reader.offset())));
+        let Some(mut cp) = self.consume_reg_exp_idenfigier_start()? else {
+            return Ok(None);
+        };
+
+        let mut decoded = None;
+        let mut copied_until = span_start;
+        let mut part_start = span_start;
+        loop {
+            let part_end = self.reader.offset();
+            if self.reader.str(part_start, part_end).as_str().starts_with('\\') {
+                let name =
+                    decoded.get_or_insert_with(|| ArenaStringBuilder::new_in(self.allocator));
+                name.push_str(self.reader.str(copied_until, part_start).as_str());
+                name.push(char::from_u32(cp).expect("validated group-name code point"));
+                copied_until = part_end;
+            }
+
+            part_start = part_end;
+            let Some(next_cp) = self.consume_reg_exp_idenfigier_part()? else {
+                break;
+            };
+            cp = next_cp;
         }
 
-        Ok(None)
+        if let Some(mut name) = decoded {
+            name.push_str(self.reader.str(copied_until, self.reader.offset()).as_str());
+            Ok(Some(Str::from(name.into_str())))
+        } else {
+            Ok(Some(self.reader.str(span_start, self.reader.offset())))
+        }
     }
 
     // ```
@@ -2094,76 +2148,35 @@ impl<'a> PatternParser<'a> {
         unicode_mode: bool,
     ) -> Result<Option<u32>> {
         let span_start = self.reader.offset();
-        let checkpoint = self.reader.checkpoint();
-
-        if self.reader.eat('u') {
-            if unicode_mode {
-                let checkpoint = self.reader.checkpoint();
-
-                // HexLeadSurrogate + HexTrailSurrogate
-                if let Some(lead_surrogate) = self
-                    .consume_fixed_hex_digits(4)
-                    .filter(|&cp| surrogate_pair::is_lead_surrogate(cp))
-                    && self.reader.eat2('\\', 'u')
-                    && let Some(trail_surrogate) = self
-                        .consume_fixed_hex_digits(4)
-                        .filter(|&cp| surrogate_pair::is_trail_surrogate(cp))
-                {
-                    return Ok(Some(surrogate_pair::combine_surrogate_pair(
-                        lead_surrogate,
-                        trail_surrogate,
-                    )));
+        match decode(self.reader.remaining_code_points(), unicode_mode) {
+            UnicodeEscape::Value { code_point, length } => {
+                for _ in 0..length {
+                    self.reader.advance();
                 }
-                self.reader.rewind(checkpoint);
-
-                // HexLeadSurrogate
-                if let Some(lead_surrogate) = self
-                    .consume_fixed_hex_digits(4)
-                    .filter(|&cp| surrogate_pair::is_lead_surrogate(cp))
-                {
-                    return Ok(Some(lead_surrogate));
+                Ok(Some(code_point))
+            }
+            UnicodeEscape::Overflow { digits } => {
+                self.reader.advance(); // u
+                self.reader.advance(); // {
+                let digits_start = self.reader.offset();
+                for _ in 0..digits {
+                    self.reader.advance();
                 }
-                self.reader.rewind(checkpoint);
-
-                // HexTrailSurrogate
-                if let Some(trail_surrogate) = self
-                    .consume_fixed_hex_digits(4)
-                    .filter(|&cp| surrogate_pair::is_trail_surrogate(cp))
-                {
-                    return Ok(Some(trail_surrogate));
+                Err(diagnostics::too_large_number_digits(
+                    self.span_factory.create(digits_start, self.reader.offset()),
+                    "hex",
+                ))
+            }
+            UnicodeEscape::Invalid => {
+                if self.state.unicode_mode && self.reader.eat('u') {
+                    Err(diagnostics::invalid_unicode_escape_sequence(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                    ))
+                } else {
+                    Ok(None)
                 }
-                self.reader.rewind(checkpoint);
             }
-
-            // HexNonSurrogate and Hex4Digits are the same
-            if let Some(hex_digits) = self.consume_fixed_hex_digits(4) {
-                return Ok(Some(hex_digits));
-            }
-
-            // {CodePoint}
-            if unicode_mode {
-                let checkpoint = self.reader.checkpoint();
-
-                if self.reader.eat('{')
-                    && let Some(hex_digits) =
-                        self.consume_hex_digits()?.filter(|&cp| character::is_valid_unicode(cp))
-                    && self.reader.eat('}')
-                {
-                    return Ok(Some(hex_digits));
-                }
-                self.reader.rewind(checkpoint);
-            }
-
-            if self.state.unicode_mode {
-                return Err(diagnostics::invalid_unicode_escape_sequence(
-                    self.span_factory.create(span_start, self.reader.offset()),
-                ));
-            }
-
-            self.reader.rewind(checkpoint);
         }
-
-        Ok(None)
     }
 
     // ```
@@ -2281,31 +2294,6 @@ impl<'a> PatternParser<'a> {
 
         self.reader.advance();
         Some(cp)
-    }
-
-    fn consume_hex_digits(&mut self) -> Result<Option<u32>> {
-        let span_start = self.reader.offset();
-        let checkpoint = self.reader.checkpoint();
-
-        let mut value: u32 = 0;
-        while let Some(hex) = self.reader.peek().and_then(character::map_hex_digit) {
-            // To prevent panic on overflow cases like `\u{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}`
-            if let Some(v) = value.checked_mul(16).and_then(|v| v.checked_add(hex)) {
-                value = v;
-                self.reader.advance();
-            } else {
-                return Err(diagnostics::too_large_number_digits(
-                    self.span_factory.create(span_start, self.reader.offset()),
-                    "hex",
-                ));
-            }
-        }
-
-        if self.reader.checkpoint() != checkpoint {
-            return Ok(Some(value));
-        }
-
-        Ok(None)
     }
 
     fn consume_fixed_hex_digits(&mut self, len: usize) -> Option<u32> {

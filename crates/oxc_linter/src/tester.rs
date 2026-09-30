@@ -182,6 +182,21 @@ impl<S: Into<String>> From<(S, (S, S))> for ExpectFixTestCase {
     }
 }
 
+impl<S: Into<String>> From<(S, (S, S), Option<Value>)> for ExpectFixTestCase {
+    fn from(value: (S, (S, S), Option<Value>)) -> Self {
+        Self {
+            source: value.0.into(),
+            expected: vec![
+                ExpectFix { expected: value.1.0.into(), kind: ExpectFixKind::Any },
+                ExpectFix { expected: value.1.1.into(), kind: ExpectFixKind::Any },
+            ],
+            rule_config: value.2,
+            path: None,
+            eslint_config: None,
+        }
+    }
+}
+
 impl<S: Into<String>> From<(S, (S, S, S))> for ExpectFixTestCase {
     fn from(value: (S, (S, S, S))) -> Self {
         Self {

@@ -12,6 +12,8 @@ pub struct YamlFormatOptions {
     /// NOTE: Present to satisfy [`FormatOptions`], but a no-op for output: YAML forbids tab indentation.
     /// The printer's indent char is decided by this field but no indent is ever emitted.
     pub indent_style: IndentStyle,
+    /// NOTE: `0` is clamped to `1` when formatting, since indentation is the structure in YAML
+    /// (`DIVERGENCES.md` "tab-width-zero").
     pub indent_width: IndentWidth,
     pub line_width: LineWidth,
     pub line_ending: LineEnding,
@@ -91,6 +93,20 @@ impl YamlFormatOptions {
     /// Whether a trailing comma may follow the last entry of a broken flow collection.
     pub fn allow_trailing_comma(self) -> bool {
         matches!(self.trailing_commas, TrailingCommas::Always)
+    }
+}
+
+impl YamlFormatOptions {
+    /// The options as the printer consumes them.
+    ///
+    /// Indentation IS the structure in YAML:
+    /// `tabWidth: 0` would flatten every nesting and change the document,
+    /// so the width is clamped to `1` (`DIVERGENCES.md` "tab-width-zero").
+    pub(crate) fn normalized(mut self) -> Self {
+        if self.indent_width.value() == 0 {
+            self.indent_width = IndentWidth::try_from(1).expect("1 is within IndentWidth's range");
+        }
+        self
     }
 }
 

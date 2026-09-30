@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    cell::{Cell, RefCell},
+    cell::{Cell, OnceCell, RefCell},
     ffi::OsStr,
     path::Path,
     rc::Rc,
@@ -25,6 +25,7 @@ use crate::{
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
+    utils::ReactCompilerResults,
 };
 
 #[cfg(not(test))]
@@ -47,9 +48,6 @@ pub struct ContextSubHost<'a> {
     /// Parser tokens collected during parsing.
     /// Empty if parsing failed, or tokens are disabled (no JS plugins).
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
-    /// Stable source text for this script section
-    /// which remains available even after `semantic` is taken while running JS plugins.
-    pub(super) source_text: &'a str,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
 }
@@ -74,8 +72,6 @@ impl<'a> ContextSubHost<'a> {
             "`LintContext` depends on `Semantic::cfg`, Build your semantic with cfg enabled(`SemanticBuilder::with_cfg`)."
         );
 
-        let source_text = semantic.source_text();
-
         let disable_directives = DisableDirectivesBuilder::new()
             .with_respect_eslint_disable_directives(options.respect_eslint_disable_directives)
             .build(semantic.source_text(), semantic.comments());
@@ -83,7 +79,6 @@ impl<'a> ContextSubHost<'a> {
         Self {
             semantic,
             module_record,
-            source_text,
             source_text_offset,
             disable_directives,
             framework_options: options.framework_options,
@@ -113,9 +108,10 @@ impl<'a> ContextSubHost<'a> {
         self.framework_options
     }
 
+    /// Source text of this script block.
     #[inline]
     pub fn source_text(&self) -> &'a str {
-        self.source_text
+        self.semantic.source_text()
     }
 }
 
@@ -185,6 +181,10 @@ pub struct ContextHost<'a> {
     pub(super) frameworks: FrameworkFlags,
     /// If true, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
+    /// Lazily-computed shared result of the React Compiler lint run, reused by
+    /// every rule in the React Compiler family (`react/hooks`, `react/refs`, …).
+    /// Stays empty until the first such rule runs on this file.
+    pub(super) react_compiler_results: OnceCell<ReactCompilerResults>,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -224,6 +224,7 @@ impl<'a> ContextHost<'a> {
             config,
             frameworks: options.framework_hints,
             with_ignore_fixes: options.with_ignore_fixes,
+            react_compiler_results: OnceCell::new(),
         }
         .sniff_for_frameworks()
     }
@@ -358,6 +359,11 @@ impl<'a> ContextHost<'a> {
             }
         }
         self.diagnostics.borrow_mut().extend(diagnostics);
+    }
+
+    // move the context back to the first sub host, so they can be iterated over again
+    pub fn rewind_sub_hosts(&self) {
+        self.current_sub_host_index.set(0);
     }
 
     // move the context to the next sub host

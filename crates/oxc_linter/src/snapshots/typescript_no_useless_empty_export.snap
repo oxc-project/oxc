@@ -55,3 +55,43 @@ source: crates/oxc_linter/src/tester.rs
  5 │         
    ╰────
   help: Remove this empty export.
+
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
+   ╭─[no_useless_empty_export.tsx:3:13]
+ 2 │             import {} from '_';
+ 3 │             export {};
+   ·             ──────────
+   ╰────
+  help: Remove this empty export.
+
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
+   ╭─[no_useless_empty_export.tsx:3:13]
+ 2 │             import _ from '_';
+ 3 │             export {};
+   ·             ──────────
+   ╰────
+  help: Remove this empty export.
+
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
+   ╭─[no_useless_empty_export.tsx:3:13]
+ 2 │             import '_';
+ 3 │             export {};
+   ·             ──────────
+   ╰────
+  help: Remove this empty export.
+
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
+   ╭─[no_useless_empty_export.tsx:3:13]
+ 2 │             import * as all from '_';
+ 3 │             export {};
+   ·             ──────────
+   ╰────
+  help: Remove this empty export.
+
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
+   ╭─[no_useless_empty_export.tsx:3:13]
+ 2 │             import _ = require('_')
+ 3 │             export {};
+   ·             ──────────
+   ╰────
+  help: Remove this empty export.

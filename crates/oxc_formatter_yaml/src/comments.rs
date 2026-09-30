@@ -1,12 +1,17 @@
 use oxc_formatter_core::{
-    Buffer, SourceText, SpanCursor,
-    builders::{align, empty_line, expand_parent, hard_line_break, line_suffix, space, text},
+    Buffer, Format, SourceText, SpanCursor,
+    builders::{
+        align, empty_line, expand_parent, hard_line_break, line_suffix, maybe_space, space, text,
+    },
     spec::is_suppression_marker,
     write,
 };
 use oxc_span::{GetSpan, Span};
 
-use crate::print::{YamlFormatter, format_with};
+use crate::{
+    context::YamlFormatContext,
+    print::{YamlFormatter, format_with},
+};
 
 /// A comment bridged from the parser: its span in the arena source,
 /// plus the parser-recorded layout fact print sites branch on.
@@ -69,11 +74,92 @@ pub fn write_blank_preserving_break(
     }
 }
 
-/// Emit a single comment verbatim (trailing whitespace trimmed).
-/// The spacing after `#` is kept as authored, never normalized.
-pub fn write_single_comment(span: Span, f: &mut YamlFormatter<'_, '_>) {
+/// Emit raw comment text without its required following line boundary.
+fn write_comment_text(span: Span, f: &mut YamlFormatter<'_, '_>) {
     let content = f.context().source_text().text_for(&span);
     write!(f, text(content.trim_end()));
+}
+
+/// A `#` comment written in place: it ends its line.
+#[must_use = "formatted comments must be written to the formatter"]
+#[derive(Clone, Copy, Debug)]
+pub struct FormatCommentBeforeContent(Span);
+
+impl FormatCommentBeforeContent {
+    pub const fn new(span: Span) -> Self {
+        Self(span)
+    }
+}
+
+impl<'a> Format<'a, YamlFormatContext<'a>> for FormatCommentBeforeContent {
+    fn fmt(&self, f: &mut YamlFormatter<'_, 'a>) {
+        write_comment_text(self.0, f);
+        write!(f, hard_line_break());
+    }
+}
+
+/// A `#` comment deferred through `line_suffix`, excluding its width from `fits`.
+#[must_use = "formatted comments must be written to the formatter"]
+#[derive(Clone, Copy, Debug)]
+pub struct FormatLineCommentSuffix {
+    span: Span,
+    leading_space: bool,
+    expand_parent: bool,
+}
+
+impl FormatLineCommentSuffix {
+    pub const fn new(span: Span) -> Self {
+        Self { span, leading_space: false, expand_parent: false }
+    }
+
+    pub const fn with_leading_space(mut self) -> Self {
+        self.leading_space = true;
+        self
+    }
+
+    /// A `line_suffix` alone never breaks the enclosing group.
+    pub const fn with_expand_parent(mut self) -> Self {
+        self.expand_parent = true;
+        self
+    }
+}
+
+impl<'a> Format<'a, YamlFormatContext<'a>> for FormatLineCommentSuffix {
+    fn fmt(&self, f: &mut YamlFormatter<'_, 'a>) {
+        let span = self.span;
+        let leading_space = self.leading_space;
+        let content = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
+            write!(f, maybe_space(leading_space));
+            write_comment_text(span, f);
+        });
+        write!(f, [line_suffix(&content), self.expand_parent.then_some(expand_parent())]);
+    }
+}
+
+/// Writes a document body's end comments, one per line, preserving the source's blank lines (normalized to one).
+/// In front of the first comment (measured from `anchor`) and between consecutive comments alike.
+/// The boundary AFTER the last comment is the document sequence's or the finalizer's
+/// (see `write_document_separator` in `print/document.rs` for the deliberate non-follow).
+pub fn write_end_comments(
+    anchor: Option<u32>,
+    comments: &[SourceComment],
+    f: &mut YamlFormatter<'_, '_>,
+) {
+    let source = f.context().source_text();
+    for (i, comment) in comments.iter().enumerate() {
+        let span = comment.span;
+        let prev_end = if i == 0 { anchor } else { Some(comments[i - 1].span.end) };
+        let blank = prev_end.is_some_and(|prev_end| {
+            prev_end < span.start
+                && classify_gap(source.bytes_range(prev_end, span.start)) == Gap::Blank
+        });
+        if blank {
+            write!(f, empty_line());
+        } else {
+            write!(f, hard_line_break());
+        }
+        write_comment_text(span, f);
+    }
 }
 
 /// Emits the formatter element that reproduces the vertical spacing implied by `gap`:
@@ -95,7 +181,7 @@ fn write_leading_comments(
 ) {
     let source = f.context().source_text();
     for (i, comment) in comments.iter().enumerate() {
-        write_single_comment(comment.span, f);
+        write_comment_text(comment.span, f);
         let next_pos = comments.get(i + 1).map_or(value_start, |c| c.span.start);
         write_gap(source.bytes_range(comment.span.end, next_pos), f);
     }
@@ -146,19 +232,7 @@ pub fn write_trailing_same_line_comment(
         return;
     };
     f.context().comments().take_before(comment.span.end);
-    write_comment_line_suffix(comment.span, f);
-    write!(f, expand_parent());
-}
-
-/// The ` # ...` emission of a same-line trailing comment: a `line_suffix`,
-/// so it never counts toward the `fits` measurement (see the "trailing comment width" divergence).
-/// Gating and consuming are the caller's.
-pub fn write_comment_line_suffix<'a>(span: Span, f: &mut YamlFormatter<'_, 'a>) {
-    let content = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
-        write!(f, space());
-        write_single_comment(span, f);
-    });
-    write!(f, line_suffix(&content));
+    write!(f, FormatLineCommentSuffix::new(comment.span).with_leading_space().with_expand_parent());
 }
 
 /// Returns `true` if `span` is an ignore marker (`# oxfmt-ignore` / `# prettier-ignore`).
@@ -262,7 +336,7 @@ pub fn flush_container_end_comments(
             } else {
                 write!(f, hard_line_break());
             }
-            write_single_comment(span, f);
+            write_comment_text(span, f);
         });
         write!(f, align(align_width, &inner));
         prev_end = span.end;

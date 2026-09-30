@@ -10,7 +10,7 @@
 
 use std::{borrow::Cow, cmp::max, fmt};
 
-use owo_colors::OwoColorize;
+use smallvec::SmallVec;
 
 use super::{
     handler::GraphicalReportHandler,
@@ -18,7 +18,8 @@ use super::{
     span::{FancySpan, LabelRenderMode},
 };
 use crate::{
-    Diagnostic, LabeledSpan, SourceCode,
+    Diagnostic, LabeledSpan,
+    handlers::theme::DiagnosticColorize,
     source_impls::{SpanContents, SpanScanner},
 };
 
@@ -27,18 +28,15 @@ impl GraphicalReportHandler {
         &self,
         f: &mut impl fmt::Write,
         diagnostic: &dyn Diagnostic,
-        opt_source: Option<&dyn SourceCode>,
+        scanner: Option<&mut SpanScanner<'_>>,
+        source_name: Option<&str>,
     ) -> fmt::Result {
-        let Some(source) = opt_source else { return Ok(()) };
+        let Some(scanner) = scanner else { return Ok(()) };
         let labels = diagnostic.labels();
         if labels.is_empty() {
             return Ok(());
         }
 
-        // Share one forward scan across every span lookup below (one per label
-        // plus one per merge attempt).
-        let mut scanner = SpanScanner::new(source.data(), 1, 1);
-        let source_name = source.name();
         let mut read = |span| scanner.read_span(span);
 
         if let [label] = labels {
@@ -115,7 +113,7 @@ impl GraphicalReportHandler {
             .copied()
             .zip(self.theme.styles.highlights.iter().copied().cycle())
             .map(|(label, style)| FancySpan::new(label.label(), label.span(), style))
-            .collect::<Vec<_>>();
+            .collect::<SmallVec<[_; 2]>>();
 
         // Find the maximum number of active gutter lines to determine indentation.
         let mut max_gutter = 0usize;
@@ -151,15 +149,25 @@ impl GraphicalReportHandler {
 
         match source_name {
             Some(source_name) => {
-                let source_name = source_name.style(self.theme.styles.link);
-                writeln!(f, "[{}:{}:{}]", source_name, primary_line + 1, primary_column + 1)?;
+                let style = self.theme.styles.link;
+                if style.is_plain() {
+                    Self::write_location(
+                        f,
+                        Some(source_name),
+                        primary_line + 1,
+                        primary_column + 1,
+                    )?;
+                } else {
+                    let source_name = source_name.style(style);
+                    writeln!(f, "[{}:{}:{}]", source_name, primary_line + 1, primary_column + 1)?;
+                }
             }
             _ => {
                 if lines.len() <= 1 {
                     write_repeated_char(f, self.theme.characters.hbar, 3)?;
                     f.write_char('\n')?;
                 } else {
-                    writeln!(f, "[{}:{}]", primary_line + 1, primary_column + 1)?;
+                    Self::write_location(f, None, primary_line + 1, primary_column + 1)?;
                 }
             }
         }
@@ -169,7 +177,7 @@ impl GraphicalReportHandler {
             self.render_line_gutter(f, max_gutter, line, &labels)?;
             Self::render_line_text(f, line.text)?;
 
-            let (single_line, multi_line): (Vec<_>, Vec<_>) = labels
+            let (single_line, multi_line): (SmallVec<[_; 2]>, SmallVec<[_; 2]>) = labels
                 .iter()
                 .filter(|hl| line.span_applies(hl))
                 .partition(|hl| line.span_line_only(hl));
@@ -204,6 +212,28 @@ impl GraphicalReportHandler {
         Ok(())
     }
 
+    fn write_location(
+        f: &mut impl fmt::Write,
+        source_name: Option<&str>,
+        line: usize,
+        column: usize,
+    ) -> fmt::Result {
+        let mut line_buffer = itoa::Buffer::new();
+        let mut column_buffer = itoa::Buffer::new();
+        let line = line_buffer.format(line);
+        let column = column_buffer.format(column);
+
+        f.write_char('[')?;
+        if let Some(source_name) = source_name {
+            f.write_str(source_name)?;
+            f.write_char(':')?;
+        }
+        f.write_str(line)?;
+        f.write_char(':')?;
+        f.write_str(column)?;
+        f.write_str("]\n")
+    }
+
     /// Renders a line to the output formatter, replacing tabs with spaces.
     pub(super) fn render_line_text(f: &mut impl fmt::Write, text: &str) -> fmt::Result {
         if !text.contains('\t') {
@@ -222,5 +252,25 @@ impl GraphicalReportHandler {
         }
         f.write_char('\n')?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::GraphicalReportHandler;
+
+    #[test]
+    fn direct_locations_match_standard_formatting() {
+        for (source_name, line, column) in
+            [(None, 1, 1), (Some("src/火.ts"), usize::MAX, usize::MAX)]
+        {
+            let expected = source_name.map_or_else(
+                || format!("[{line}:{column}]\n"),
+                |source_name| format!("[{source_name}:{line}:{column}]\n"),
+            );
+            let mut actual = String::new();
+            GraphicalReportHandler::write_location(&mut actual, source_name, line, column).unwrap();
+            assert_eq!(actual, expected);
+        }
     }
 }

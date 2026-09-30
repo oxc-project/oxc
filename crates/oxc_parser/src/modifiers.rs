@@ -514,9 +514,7 @@ impl<C: Config> ParserImpl<'_, C> {
         let is_modifier = match cur_kind {
             Kind::Const => next_kind == Kind::Enum,
             // These modifiers can cross line.
-            Kind::Accessor | Kind::Static | Kind::Get | Kind::Set => {
-                Self::can_follow_modifier(next_kind)
-            }
+            Kind::Accessor | Kind::Static => Self::can_follow_modifier(next_kind),
             // Rest modifiers cannot cross line
             _ => Self::can_follow_modifier(next_kind) && !next.is_on_new_line(),
         };
@@ -700,12 +698,14 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
             ModifierKind::Async,
             ModifierKind::Declare,
         ]),
+        ModifierKind::Async => ModifierKinds::new([ModifierKind::Async, ModifierKind::Abstract]),
         ModifierKind::Abstract => ModifierKinds::new([
             ModifierKind::Abstract,
             ModifierKind::Override,
             ModifierKind::Accessor,
             ModifierKind::Static,
             ModifierKind::Private,
+            ModifierKind::Async,
         ]),
         ModifierKind::Export => ModifierKinds::new([
             ModifierKind::Export,
@@ -748,7 +748,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ModifierKind::Private,
             ModifierKind::Protected,
         ]);
-        use ModifierKind::{Abstract, Declare, Override, Private, Static};
+        use ModifierKind::{Abstract, Async, Declare, Override, Private, Static};
 
         let this_kind = modifier.kind;
         let this_kinds = ModifierKinds::new([this_kind]);
@@ -786,6 +786,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             (Private, Abstract) | (Abstract, Private) => {
                 diagnostics::modifier_cannot_be_used_with_other_modifier(span, Private, Abstract)
+            }
+            (Async, Abstract) | (Abstract, Async) => {
+                diagnostics::modifier_cannot_be_used_with_other_modifier(span, Async, Abstract)
             }
             // `declare override`
             (Override, Declare) => {

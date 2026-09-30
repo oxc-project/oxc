@@ -7,7 +7,7 @@
 use oxc_ast::ast::Comment;
 use oxc_diagnostics::Diagnostics;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 
 #[derive(Debug, Clone, Copy)]
 pub enum SuppressionSource {
@@ -201,12 +201,7 @@ pub fn suppressions_to_diagnostics(
             comment_value(suppression.disable_comment, source_text)
         );
 
-        error.push(
-            ErrorCategory::Suppression
-                .diagnostic(reason)
-                .with_help(description)
-                .with_label(suppression.disable_comment.span.label("Found React rule suppression")),
-        );
+        error.push(diagnostics::suppression(reason, description, suppression.disable_comment.span));
     }
 
     error

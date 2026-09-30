@@ -61,6 +61,15 @@ pub struct ReactCompilerOptions {
     #[napi(ts_type = "'none' | 'critical_errors' | 'all_errors'")]
     pub panic_threshold: Option<String>,
 
+    /// Include recoverable React Compiler diagnostics in `errors`.
+    ///
+    /// Enable this to receive recoverable diagnostics (bail-outs, rule suppressions,
+    /// lint findings) while code is still produced. Fatal diagnostics are reported
+    /// regardless of this option.
+    ///
+    /// @default false
+    pub report_diagnostics: Option<bool>,
+
     /// React runtime target. React 17 and 18 use `react-compiler-runtime`;
     /// React 19 uses `react/compiler-runtime`.
     ///
@@ -74,13 +83,15 @@ pub struct ReactCompilerOptions {
     /// Enable `"use memo if(...)"` directive-driven gating.
     pub dynamic_gating: Option<ReactCompilerDynamicGating>,
 
-    /// Analyze and report diagnostics without applying compiler output.
+    /// Analyze without applying compiler output. Pair with `reportDiagnostics`
+    /// to receive the findings.
     ///
     /// @deprecated Prefer `outputMode: "lint"`.
     /// @default false
     pub no_emit: Option<bool>,
 
-    /// Select client, SSR, or lint output.
+    /// Select client, SSR, or lint output. Lint findings are recoverable
+    /// diagnostics, so pair lint output with `reportDiagnostics`.
     #[napi(ts_type = "'client' | 'ssr' | 'lint'")]
     pub output_mode: Option<String>,
 
@@ -103,6 +114,9 @@ pub struct ReactCompilerOptions {
     pub custom_opt_out_directives: Option<Vec<String>>,
 
     /// Only run the React Compiler when the filename contains one of these strings.
+    ///
+    /// By default, files whose filename contains `node_modules` are skipped.
+    /// Providing this option replaces that default filter.
     ///
     /// Function-valued `sources` filters from the Babel plugin are intentionally
     /// unsupported across the native boundary.
@@ -259,6 +273,9 @@ pub struct ReactCompilerEnvironmentOptions {
     pub enable_custom_type_definition_for_reanimated: Option<bool>,
     pub enable_treat_ref_like_identifiers_as_refs: Option<bool>,
     pub enable_treat_set_identifiers_as_state_setters: Option<bool>,
+    /// Validate that `useMemo` callbacks return a value.
+    ///
+    /// @default false
     pub validate_no_void_use_memo: Option<bool>,
     pub enable_allow_set_state_from_refs_in_effects: Option<bool>,
     pub enable_verbose_no_set_state_in_effect: Option<bool>,
@@ -266,12 +283,23 @@ pub struct ReactCompilerEnvironmentOptions {
 }
 
 impl TransformOptions {
+    /// Whether recoverable React Compiler diagnostics are forwarded to `errors`
+    /// (`reactCompiler.reportDiagnostics`).
+    pub(crate) fn report_react_compiler_diagnostics(&self) -> bool {
+        matches!(
+            &self.react_compiler,
+            Some(Either::B(options)) if options.report_diagnostics == Some(true)
+        )
+    }
+
     pub(crate) fn resolve(
         self,
         filename: &str,
     ) -> Result<(Option<PluginOptions>, oxc::transformer::TransformOptions), OxcDiagnostic> {
         let react_compiler = match self.react_compiler {
-            None | Some(Either::A(true)) => Some(PluginOptions::default()),
+            None | Some(Either::A(true)) => {
+                should_compile_react_source(filename, None).then(PluginOptions::default)
+            }
             Some(Either::A(false)) => None,
             Some(Either::B(options)) => options.resolve(filename)?,
         };
@@ -297,10 +325,7 @@ impl TransformOptions {
 
 impl ReactCompilerOptions {
     fn resolve(self, filename: &str) -> Result<Option<PluginOptions>, OxcDiagnostic> {
-        let enabled = self
-            .sources
-            .as_ref()
-            .is_none_or(|sources| sources.iter().any(|source| filename.contains(source.as_str())));
+        let enabled = should_compile_react_source(filename, self.sources.as_deref());
         enabled.then(|| self.into_plugin_options()).transpose()
     }
 
@@ -367,6 +392,13 @@ impl ReactCompilerOptions {
 
         Ok(options)
     }
+}
+
+fn should_compile_react_source(filename: &str, sources: Option<&[String]>) -> bool {
+    sources.map_or_else(
+        || !filename.contains("node_modules"),
+        |sources| sources.iter().any(|source| filename.contains(source)),
+    )
 }
 
 impl From<JsxOptions> for oxc::transformer::JsxOptions {

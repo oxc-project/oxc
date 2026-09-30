@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.default-param-accesses-loca
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::node.lowerReorderableExpression) Expression type `ArrowFunctionExpression` cannot be safely reordered", labels: [LabeledSpan { label: None, span: Span { start: 31, end: 56 }, primary: false }], help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::node.lowerReorderableExpression) Expression type `ArrowFunctionExpression` cannot be safely reordered", labels: [LabeledSpan { label: Some("`ArrowFunctionExpression` cannot be safely reordered"), span: Span { start: 31, end: 38 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
 
 No changes.

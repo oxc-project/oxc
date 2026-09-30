@@ -2,12 +2,12 @@ use memchr::memchr_iter;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_allocator::GetAddress;
-use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
+use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
-use oxc_span::{GetSpan, ModuleKind, Span, best_match};
+use oxc_span::{Span, best_match};
 use oxc_str::Ident;
 use oxc_syntax::{
-    class::ClassId,
+    class::{ClassId, ElementKind},
     number::NumberBase,
     operator::UnaryOperator,
     scope::{ScopeFlags, ScopeId},
@@ -88,7 +88,20 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
         let mut defined_elements =
             FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher);
         for (element_id, element) in elements.iter_enumerated() {
-            if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
+            // Public and private names belong to separate namespaces.
+            let previous =
+                defined_elements.entry((&element.name, element.is_private)).or_insert([None; 2]);
+            let prev_element_id = if element.is_private {
+                // Keep setters separate so a valid getter/setter pair cannot hide a
+                // repeated accessor.
+                let index = usize::from(element.kind.contains(ElementKind::Setter));
+                let prev_element_id = previous[index].or(previous[1 - index]);
+                previous[index] = Some(element_id);
+                prev_element_id
+            } else {
+                previous[0].replace(element_id)
+            };
+            if let Some(prev_element_id) = prev_element_id {
                 let prev_element = &elements[prev_element_id];
 
                 let mut is_duplicate = element.is_private == prev_element.is_private
@@ -420,7 +433,7 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     //   legacy_octalEscapeSequence
     //   non_octal_decimal_escape_sequence
     // It is a Syntax Error if the source text matched by this production is strict mode code.
-    if !ctx.strict_mode() {
+    if !ctx.strict_mode() || matches!(ctx.ancestry().parent_kind(), AstKind::JSXAttribute(_)) {
         return;
     }
     let raw = lit.span.source_text(ctx.source_text);
@@ -506,44 +519,6 @@ pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
         if !params.is_simple_parameter_list())
     {
         ctx.error(diagnostics::illegal_use_strict(directive.span));
-    }
-}
-
-pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuilder<'_>) {
-    // It is ambiguous between script and module for `TypeScript`, skipping this check for now.
-    // Basically we need to "upgrade" from script to module if we see any module syntax inside the
-    // semantic builder
-    if ctx.source_type.is_typescript() {
-        return;
-    }
-
-    let text = match decl {
-        ModuleDeclarationKind::Import(_) => "import statement",
-        ModuleDeclarationKind::ExportAll(_)
-        | ModuleDeclarationKind::Export(_)
-        | ModuleDeclarationKind::ExportDefault(_)
-        | ModuleDeclarationKind::ExportNamed(_)
-        | ModuleDeclarationKind::ExportFrom(_)
-        | ModuleDeclarationKind::TSExportAssignment(_)
-        | ModuleDeclarationKind::TSNamespaceExport(_) => "export statement",
-    };
-    let start = decl.span().start;
-    let span = Span::sized(start, 6);
-    match ctx.source_type.module_kind() {
-        ModuleKind::Unambiguous => {
-            #[cfg(debug_assertions)]
-            panic!("Technically unreachable, omit to avoid panic.");
-        }
-        // CommonJS uses require/module.exports, not import/export statements
-        ModuleKind::Script | ModuleKind::CommonJS => {
-            ctx.error(diagnostics::module_code(text, span));
-        }
-        ModuleKind::Module => {
-            if matches!(ctx.ancestry().parent_kind(), AstKind::Program(_)) {
-                return;
-            }
-            ctx.error(diagnostics::top_level(text, span));
-        }
     }
 }
 
@@ -797,7 +772,9 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                     },
                 );
             }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
@@ -840,7 +817,9 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                     },
                 );
             }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
@@ -848,15 +827,11 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
             }
             AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
                 Some(label) if label.name == labeled_statement.label.name => {
-                    if matches!(
-                        labeled_statement.body,
-                        Statement::LabeledStatement(_)
-                            | Statement::DoWhileStatement(_)
-                            | Statement::WhileStatement(_)
-                            | Statement::ForStatement(_)
-                            | Statement::ForInStatement(_)
-                            | Statement::ForOfStatement(_)
-                    ) {
+                    let mut target = &labeled_statement.body;
+                    while let Statement::LabeledStatement(nested) = target {
+                        target = &nested.body;
+                    }
+                    if target.is_iteration_statement() {
                         break;
                     }
                     return ctx.error(diagnostics::invalid_label_non_iteration(
@@ -912,7 +887,8 @@ pub fn check_for_statement_left(
 ) {
     let ForStatementLeft::VariableDeclaration(decl) = left else { return };
 
-    // initializer is not allowed for for-in / for-of
+    // The parser checks initialized lexical declarations and multiple declarations. The
+    // remaining cases depend on strict mode or the binding form.
     if decl.declarations.len() > 1 {
         return;
     }
@@ -920,9 +896,8 @@ pub fn check_for_statement_left(
     let strict_mode = ctx.strict_mode();
     for declarator in &decl.declarations {
         if declarator.init.is_some()
-            && (strict_mode
+            && ((strict_mode && decl.kind.is_var())
                 || !is_for_in
-                || decl.kind.is_lexical()
                 || !matches!(declarator.id, BindingPattern::BindingIdentifier(_)))
         {
             ctx.error(diagnostics::unexpected_initializer_in_for_loop_head(
@@ -1296,9 +1271,16 @@ pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilde
 }
 
 fn is_in_formal_parameters(ctx: &SemanticBuilder<'_>) -> bool {
-    for node_kind in ctx.ancestry().ancestor_kinds() {
+    let mut ancestors = ctx.ancestry().ancestor_kinds().peekable();
+    while let Some(node_kind) = ancestors.next() {
         match node_kind {
             AstKind::FormalParameter(_) => return true,
+            // Only the rest binding belongs to the parameter; decorators use the surrounding context.
+            AstKind::BindingRestElement(_)
+                if matches!(ancestors.peek(), Some(AstKind::FormalParameterRest(_))) =>
+            {
+                return true;
+            }
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 break;
             }

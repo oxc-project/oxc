@@ -6,6 +6,7 @@ Test infrastructure shared by the formatter crates (e.g. `oxc_formatter`, `oxc_f
   - Consumers call `generate_tests` from `build.rs` via `[build-dependencies]` to emit one `#[test]` per fixture file
 - `harness`: fixture runtime
   - Consumers implement `FixtureFormatter` in `tests/fixtures/mod.rs` via `[dev-dependencies]`
+  - Asserts `FixtureFormatter::fingerprint` is the same for input and output; consumers take it from the crate's own parse (`parse_for_format`), what it captures is consumer-owned
 - `suite`: Prettier test-suite provisioning
   - `ensure_prettier_suite()` maintains the pinned suite at `prettier/` (gitignored), no separate clone step anywhere
 - `conformance` (feature `conformance`): Prettier-conformance machinery

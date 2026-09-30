@@ -71,6 +71,53 @@ fn test_comments_before_expression_operands_idempotency() {
     test_idempotency("const value = { aFunction: /* istanbul ignore next */ () => {} };");
 }
 
+#[test]
+fn test_property_key_annotations_before_literals() {
+    use oxc_codegen::{CodegenOptions, CommentOptions};
+
+    let annotation_only = CodegenOptions {
+        comments: CommentOptions { normal: false, ..CommentOptions::default() },
+        ..CodegenOptions::default()
+    };
+    let source = r#"const key = /* @__KEY__ */ "_field";
+const lineKey = // #__KEY__
+"_field";
+object[/* #__KEY__ */ `_field`];"#;
+    crate::tester::test_options(
+        source,
+        r#"const key = /* @__KEY__ */ "_field";
+const lineKey = // #__KEY__
+"_field";
+object[/* #__KEY__ */ `_field`];
+"#,
+        annotation_only.clone(),
+    );
+    crate::tester::test_options(
+        "use(/* @__KEY__ */ \"_field\");",
+        "use(\n\t/* @__KEY__ */\n\t\"_field\"\n);\n",
+        annotation_only.clone(),
+    );
+
+    let minify_with_annotations = CodegenOptions { minify: true, ..annotation_only.clone() };
+    crate::tester::test_options(
+        "(/* @__KEY__ */ \"_field\");",
+        "/* @__KEY__ */`_field`;",
+        minify_with_annotations.clone(),
+    );
+
+    test_idempotency_options(source, &annotation_only);
+    test_idempotency_options("(/* @__KEY__ */ \"_field\");", &minify_with_annotations);
+
+    crate::tester::test_options(
+        "const key = /* @__KEY__ */ \"_field\";",
+        "const key = \"_field\";\n",
+        CodegenOptions {
+            comments: CommentOptions { annotation: false, ..CommentOptions::default() },
+            ..CodegenOptions::default()
+        },
+    );
+}
+
 // A mid-line comment group must not receive a full indent: `print_comments`
 // used to inject `indent` tabs before any group whose first comment was not
 // preceded by a newline, so indented emission sites (`key: /** c */ value`)
@@ -192,6 +239,38 @@ fn test_comment_at_top_of_file() {
     ret.program.comments[0].position = CommentPosition::Leading;
     let code = Codegen::new().build(&ret.program).code;
     assert_eq!(code, "/** comment */ export {};\n");
+}
+
+#[test]
+fn test_html_closing_annotation_after_code() {
+    use oxc_allocator::Allocator;
+    use oxc_codegen::{Codegen, CodegenOptions};
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source_type = SourceType::script();
+    for (source, pretty_delimiter, minified_delimiter) in [
+        ("foo();\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "//"),
+        ("if (true)\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "//", "//"),
+        ("label:\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "//", "//"),
+        ("--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "-->"),
+        ("{\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}\n}", "-->", "//"),
+    ] {
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(ret.diagnostics.is_empty(), "Invalid source: {source}");
+
+        for minify in [false, true] {
+            let options = CodegenOptions { minify, ..CodegenOptions::default() };
+            let code = Codegen::new().with_options(options.clone()).build(&ret.program).code;
+            let reparsed = Parser::new(&allocator, &code, source_type).parse();
+            assert!(reparsed.diagnostics.is_empty(), "Invalid output: {code}");
+            let expected_comment = if minify { minified_delimiter } else { pretty_delimiter };
+            assert!(code.contains(&format!("{expected_comment} @__NO_SIDE_EFFECTS__\n")));
+            let second = Codegen::new().with_options(options).build(&reparsed.program).code;
+            assert_eq!(code, second);
+        }
+    }
 }
 
 #[test]
@@ -963,4 +1042,21 @@ fn test_comment_inside_double_parenthesized_pife_arrow() {
 fn test_comment_on_paren_protected_prologue_boundary() {
     test_same("// leading comment\n(\"use strict\");\nfoo();\n");
     test_same("\"use asm\";\n// leading comment\n(\"use strict\");\nfoo();\n");
+}
+
+#[test]
+fn test_block_comment_line_terminators() {
+    for separator in ["\u{2028}", "\u{2029}", "\n", "\r", "\r\n"] {
+        let source = format!("function f(){{return (/* first{separator}second */ {{}});}}");
+        test(&source, "function f() {\n\treturn (/* first\n\tsecond */ {});\n}\n");
+        test_idempotency(&source);
+    }
+    for separator in ["", "\u{2027}", "\u{202a}", "\u{00a0}"] {
+        let source = format!("function f(){{return (/* first{separator}second */ {{}});}}");
+        test(
+            &source,
+            &format!("function f() {{\n\treturn (/* first{separator}second */ {{}});\n}}\n"),
+        );
+        test_idempotency(&source);
+    }
 }

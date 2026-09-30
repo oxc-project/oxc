@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- f07dca5 ast_visit: Add the trimmed prefix length to translation table offsets (#26173) (Bharadwaj Pendyala)
+
+### 📚 Documentation
+
+- 67dd054 ast_visit: Correct out-of-date comments on `Utf8ToUtf16` converter (#26285) (overlookmotel)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 8a9bdbd estree: Include decorators in `FormalParameterRest ` spans (#26021) (camc314)
+
 ## [0.144.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

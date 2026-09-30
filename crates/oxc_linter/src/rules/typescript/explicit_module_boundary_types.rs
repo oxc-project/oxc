@@ -174,7 +174,7 @@ declare_oxc_lint!(
 
 impl Rule for ExplicitModuleBoundaryTypes {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -310,12 +310,19 @@ impl Fn<'_> {
 /// Name and span of the symbol an anonymous function or arrow is assigned to - a variable binding,
 /// class property, or object property key.
 ///
-/// Used so that diagnostics point at, and refer to, that name rather than the anonymous function
-/// expression itself, and so the name can be checked against the `allowedNames` option.
+/// Used so that diagnostics can point at, and refer to, that name rather than the anonymous
+/// function expression itself, and so the name can be checked against the `allowedNames` option.
 #[derive(Clone, Copy)]
 struct TargetSymbol<'a> {
     span: Span,
     name: &'a str,
+    kind: TargetSymbolKind,
+}
+
+#[derive(Clone, Copy)]
+enum TargetSymbolKind {
+    Binding,
+    Property,
 }
 
 struct ExplicitTypesChecker<'a, 'c> {
@@ -355,7 +362,11 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
 
     fn with_target_binding(&mut self, binding: Option<&BindingIdentifier<'a>>) -> bool {
         if let Some(id) = binding {
-            self.target_symbol = Some(TargetSymbol { span: id.span, name: id.name.as_str() });
+            self.target_symbol = Some(TargetSymbol {
+                span: id.span,
+                name: id.name.as_str(),
+                kind: TargetSymbolKind::Binding,
+            });
             true
         } else {
             false
@@ -367,7 +378,8 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return false;
         };
         if let Some(Cow::Borrowed(name)) = id.static_name() {
-            self.target_symbol = Some(TargetSymbol { span: id.span(), name });
+            self.target_symbol =
+                Some(TargetSymbol { span: id.span(), name, kind: TargetSymbolKind::Property });
             true
         } else {
             false
@@ -494,7 +506,23 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         debug_assert!(arrow.return_type.is_none());
         let target = self.target_symbol.as_ref();
         let target_name = target.map(|t| t.name);
-        let span = target.map_or(arrow.params.span, |t| t.span);
+        let span = match target {
+            Some(TargetSymbol { span, kind: TargetSymbolKind::Property, .. }) => *span,
+            // Match typescript-eslint's function-head location for the exported arrow itself.
+            _ if self.fns.len() == 1 => {
+                let arrow_token_start = self
+                    .ctx
+                    .find_prev_token_within(arrow.params.span.end, arrow.body.span().start, "=>")
+                    .map(|offset| arrow.params.span.end + offset);
+                debug_assert!(
+                    arrow_token_start.is_some(),
+                    "arrow function is missing an arrow token"
+                );
+                arrow_token_start.map_or(arrow.params.span, |start| Span::sized(start, 2))
+            }
+            Some(target) => target.span,
+            None => arrow.params.span,
+        };
         let is_allowed = || self.rule.is_some_allowed_name(target_name);
 
         if !self.rule.allow_higher_order_functions {
@@ -877,6 +905,18 @@ mod test {
             ("export function test(): void { return; }", None),
             ("export var fn = function (): number { return 1; };", None),
             ("export var arrowFn = (): string => 'test';", None),
+            (
+                "
+            export const showLastActiveUsersWarningDialog = async (
+              users: string[],
+              organization: { id: string }
+              // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+            ) => {
+              return { users, organization };
+            };
+            ",
+                None,
+            ),
             (
                 "
             class Test {
@@ -1696,6 +1736,17 @@ mod test {
             ("export function test() { return; }", None),
             ("export var fn = function () { return 1; };", None),
             ("export var arrowFn = () => 'test';", None),
+            (
+                "
+            export const showLastActiveUsersWarningDialog = async (
+              users: string[],
+              organization: { id: string }
+            ) => {
+              return { users, organization };
+            };
+            ",
+                None,
+            ),
             (
                 "
             export class Test {

@@ -33,8 +33,6 @@ const IGNORE: &[&str] = &[
     "js/async-do-expressions/",
     "js/do",
     "jsx/do/",
-    // Facebook Translation (fbt) is not supported
-    "jsx/fbt/",
     // Experimental syntax: `export X from "mod"`
     "js/export-default/export-default-from",
     "js/export-default/escaped",
@@ -74,6 +72,7 @@ const IGNORE: &[&str] = &[
     "js/babel-plugins",
     // Embedded languages in template literals
     "js/comments-closure-typecast/styled-components.js",
+    "js/embeded",
     "js/multiparser",
     "typescript/multiparser",
     "typescript/angular-component-examples",
@@ -119,13 +118,13 @@ const IGNORE: &[&str] = &[
 
 /// Option combinations not supported yet; dropped from the test population entirely.
 fn skip_unsupported_options(spec: &OptionSet) -> bool {
-    spec.get("experimentalOperatorPosition").and_then(serde_json::Value::as_str) == Some("start")
-        || spec.get("experimentalTernaries").and_then(serde_json::Value::as_bool) == Some(true)
+    spec.get("experimentalTernaries").and_then(serde_json::Value::as_bool) == Some(true)
 }
 
 const JS: ConformanceConfig = ConformanceConfig {
     language: "js",
     fixture_roots: &["js", "jsx"],
+    // `None` also leaves `jsx/jsx-test-suite` snippets unexercised, on purpose for now
     exact_parser: None,
     ignore: IGNORE,
     skip_spec: Some(skip_unsupported_options),

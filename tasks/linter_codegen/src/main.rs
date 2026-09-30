@@ -139,6 +139,8 @@ pub fn generate_rules_enum_file() -> io::Result<()> {
         };
         rule.has_custom_from_configuration =
             find_impl_function(rule_impl, "from_configuration").is_some();
+        rule.has_custom_to_configuration =
+            find_impl_function(rule_impl, "to_configuration").is_some();
     }
 
     let out = rules_enum::generate_rules_enum(&rule_entries);

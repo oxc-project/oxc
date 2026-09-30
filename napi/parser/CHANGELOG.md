@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🚀 Features
+
+- f585cb4 napi: Add threadless WASI builds (#26898) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+
+### 📚 Documentation
+
+- d775315 parser: Document AST property order (#27038) (Boshen)
+
+## [0.151.0] - 2026-09-21
+
+### 🚀 Features
+
+- 1fac655 coverage: Support new TypeScript fixture layout (#26226) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- c966aca parser: Do not omit `<` token opening type argument list (#26328) (overlookmotel)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 8a9bdbd estree: Include decorators in `FormalParameterRest ` spans (#26021) (camc314)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- db44651 napi: Disable reuseWorker in browser bindings (#25640) (leaysgur)
+- 0c68b7f estree: Emit `decorators` on `FormalParameterRest` (#25582) (camc314)
+
 ## [0.144.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

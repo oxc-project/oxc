@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.store-property-in-global.js
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: This value cannot be modified", labels: [LabeledSpan { label: Some("value cannot be modified"), span: Span { start: 34, end: 37 }, primary: false }], help: Some("Modifying a variable defined outside a component or hook is not allowed. Consider using an effect"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "This value cannot be modified", labels: [LabeledSpan { label: Some("value cannot be modified"), span: Span { start: 34, end: 37 }, primary: true }], help: Some("Modifying a variable defined outside a component or hook is not allowed. Consider using an effect"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
 
 No changes.

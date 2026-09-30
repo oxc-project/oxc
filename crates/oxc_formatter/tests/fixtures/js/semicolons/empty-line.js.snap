@@ -64,10 +64,10 @@ const a = 1
 })()
 
 foo()
-;[1,2,3]; // prettier-ignore
+;[1,2,3] // prettier-ignore
 
 bar()
-;[4,5,6]; // oxfmt-ignore
+;[4,5,6] // oxfmt-ignore
 
 baz()
 ;[7, 8, 9]
@@ -82,10 +82,10 @@ const a = 1
 })()
 
 foo()
-;[1,2,3]; // prettier-ignore
+;[1,2,3] // prettier-ignore
 
 bar()
-;[4,5,6]; // oxfmt-ignore
+;[4,5,6] // oxfmt-ignore
 
 baz()
 ;[7, 8, 9]

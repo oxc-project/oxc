@@ -9,8 +9,11 @@ use crate::{
     ast_nodes::AstNode,
     formatter::{prelude::*, trivia::FormatTrailingComments},
     ir_transform::sort_imports_chunk,
-    print::semicolon::OptionalSemicolon,
-    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
+    print::semicolon::{OptionalSemicolon, suppressed_statement_content_end},
+    utils::{
+        is_dropped_statement, statement_span,
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
+    },
     write,
 };
 
@@ -61,8 +64,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
 
         let mut join = f.join_nodes_with_hardline();
 
-        let mut stmts_iter =
-            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)));
+        let mut stmts_iter = self.iter().filter(|stmt| !is_dropped_statement(stmt.as_ref()));
         while let Some(mut stmt) = stmts_iter.next() {
             // Suppressed imports are emitted verbatim and act as partition boundaries,
             // so they are excluded from the sortable run.
@@ -77,36 +79,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
                 }
             }
 
-            let span = match stmt.as_ref() {
-                // `@decorator export class A {}`
-                // Get the span of the decorator.
-                Statement::ExportDeclaration(export) => {
-                    if let Declaration::ClassDeclaration(decl) = &export.declaration
-                        && let Some(decorator) = decl.decorators.first()
-                        && decorator.span().start < export.span.start
-                    {
-                        decorator.span()
-                    } else {
-                        export.span
-                    }
-                }
-                // `@decorator export default class A {}`
-                // Get the span of the decorator.
-                Statement::ExportDefaultDeclaration(export) => {
-                    if let ExportDefaultDeclarationKind::ClassDeclaration(decl) =
-                        &export.declaration
-                        && let Some(decorator) = decl.decorators.first()
-                        && decorator.span().start < export.span.start
-                    {
-                        decorator.span()
-                    } else {
-                        export.span
-                    }
-                }
-                _ => stmt.span(),
-            };
-
-            join.entry(span, stmt);
+            join.entry(statement_span(stmt.as_ref()), stmt);
         }
     }
 }
@@ -168,9 +141,8 @@ fn format_import_decls_with_sort<'a, 'iter>(
 /// An `ImportDeclaration` is suppressed if it has a leading or trailing suppression comment,
 /// which causes it to be emitted verbatim and act as a partition boundary, excluding it from the sortable run.
 fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &JsFormatter<'_, '_>) -> bool {
-    let span = stmt.span();
-    let comments = f.comments();
-    comments.is_suppressed(span.start) || comments.has_trailing_suppression_comment(span.end)
+    f.comments()
+        .is_node_suppressed(stmt.span(), || suppressed_statement_content_end(stmt.as_ref(), f))
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<'a>>> {
@@ -180,8 +152,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<
             return;
         };
 
-        // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
-        // the last directive, for example:
+        // if next_sibling's first leading_trivia has more than one new_line,
+        // we should add an extra empty line at the end of the last directive, for example:
         //```js
         // "use strict"; <- first leading new_line
         //  			 <- second leading new_line
@@ -193,6 +165,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<
 
         // If the last directive has a trailing comment, `lines_after` stops at the first
         // non-whitespace character (`/`) and returns 0 before counting any newlines.
+        // Only the LAST directive is checked here
+        // (between-directive blanks go through `get_lines_before`, which is not subject to this hazard);
+        // the per-comment-kind pins live in `tests/fixtures/js/directives/issue-21152*.js`, one file each.
         let check_pos = f
             .context()
             .comments()

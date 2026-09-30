@@ -1,4 +1,4 @@
-use tower_lsp_server::ls_types::{CodeActionContext, Range, Uri};
+use tower_lsp_server::gen_lsp_types::{CodeActionContext, Range, Uri};
 
 /// Code-action request data passed from the language-server backend to a tool.
 pub struct CodeActionParams {

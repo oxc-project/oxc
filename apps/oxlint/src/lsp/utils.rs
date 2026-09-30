@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_diagnostics::OxcCode;
-use tower_lsp_server::ls_types::Range;
+use tower_lsp_server::gen_lsp_types::Range;
 
 /// Returns `true` if LSP ranges `a` and `b` overlap or touch (share a boundary point).
 ///
@@ -31,7 +31,7 @@ pub fn get_full_rule_name(rule_code: &OxcCode) -> Option<Cow<'_, str>> {
 
 #[cfg(test)]
 mod test {
-    use tower_lsp_server::ls_types::{Position, Range};
+    use tower_lsp_server::gen_lsp_types::{Position, Range};
 
     use crate::lsp::utils::range_overlaps;
 

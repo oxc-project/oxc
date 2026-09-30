@@ -425,16 +425,24 @@ pub use crate::rules::promise::prefer_catch::PreferCatch as PromisePreferCatch;
 pub use crate::rules::promise::spec_only::SpecOnly as PromiseSpecOnly;
 pub use crate::rules::promise::valid_params::ValidParams as PromiseValidParams;
 pub use crate::rules::react::button_has_type::ButtonHasType as ReactButtonHasType;
+pub use crate::rules::react::capitalized_calls::CapitalizedCalls as ReactCapitalizedCalls;
 pub use crate::rules::react::checked_requires_onchange_or_readonly::CheckedRequiresOnchangeOrReadonly as ReactCheckedRequiresOnchangeOrReadonly;
 pub use crate::rules::react::display_name::DisplayName as ReactDisplayName;
+pub use crate::rules::react::error_boundaries::ErrorBoundaries as ReactErrorBoundaries;
 pub use crate::rules::react::exhaustive_deps::ExhaustiveDeps as ReactExhaustiveDeps;
+pub use crate::rules::react::exhaustive_effect_dependencies::ExhaustiveEffectDependencies as ReactExhaustiveEffectDependencies;
 pub use crate::rules::react::forbid_component_props::ForbidComponentProps as ReactForbidComponentProps;
 pub use crate::rules::react::forbid_dom_props::ForbidDomProps as ReactForbidDomProps;
 pub use crate::rules::react::forbid_elements::ForbidElements as ReactForbidElements;
 pub use crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef as ReactForwardRefUsesRef;
 pub use crate::rules::react::function_component_definition::FunctionComponentDefinition as ReactFunctionComponentDefinition;
+pub use crate::rules::react::globals::Globals as ReactGlobals;
 pub use crate::rules::react::hook_use_state::HookUseState as ReactHookUseState;
+pub use crate::rules::react::hooks::Hooks as ReactHooks;
 pub use crate::rules::react::iframe_missing_sandbox::IframeMissingSandbox as ReactIframeMissingSandbox;
+pub use crate::rules::react::immutability::Immutability as ReactImmutability;
+pub use crate::rules::react::incompatible_library::IncompatibleLibrary as ReactIncompatibleLibrary;
+pub use crate::rules::react::invariant::Invariant as ReactInvariant;
 pub use crate::rules::react::jsx_boolean_value::JsxBooleanValue as ReactJsxBooleanValue;
 pub use crate::rules::react::jsx_curly_brace_presence::JsxCurlyBracePresence as ReactJsxCurlyBracePresence;
 pub use crate::rules::react::jsx_filename_extension::JsxFilenameExtension as ReactJsxFilenameExtension;
@@ -453,11 +461,13 @@ pub use crate::rules::react::jsx_no_useless_fragment::JsxNoUselessFragment as Re
 pub use crate::rules::react::jsx_pascal_case::JsxPascalCase as ReactJsxPascalCase;
 pub use crate::rules::react::jsx_props_no_spread_multi::JsxPropsNoSpreadMulti as ReactJsxPropsNoSpreadMulti;
 pub use crate::rules::react::jsx_props_no_spreading::JsxPropsNoSpreading as ReactJsxPropsNoSpreading;
+pub use crate::rules::react::memo_dependencies::MemoDependencies as ReactMemoDependencies;
 pub use crate::rules::react::no_array_index_key::NoArrayIndexKey as ReactNoArrayIndexKey;
 pub use crate::rules::react::no_children_prop::NoChildrenProp as ReactNoChildrenProp;
 pub use crate::rules::react::no_clone_element::NoCloneElement as ReactNoCloneElement;
 pub use crate::rules::react::no_danger::NoDanger as ReactNoDanger;
 pub use crate::rules::react::no_danger_with_children::NoDangerWithChildren as ReactNoDangerWithChildren;
+pub use crate::rules::react::no_deriving_state_in_effects::NoDerivingStateInEffects as ReactNoDerivingStateInEffects;
 pub use crate::rules::react::no_did_mount_set_state::NoDidMountSetState as ReactNoDidMountSetState;
 pub use crate::rules::react::no_did_update_set_state::NoDidUpdateSetState as ReactNoDidUpdateSetState;
 pub use crate::rules::react::no_direct_mutation_state::NoDirectMutationState as ReactNoDirectMutationState;
@@ -480,14 +490,25 @@ pub use crate::rules::react::no_will_update_set_state::NoWillUpdateSetState as R
 pub use crate::rules::react::only_export_components::OnlyExportComponents as ReactOnlyExportComponents;
 pub use crate::rules::react::prefer_es6_class::PreferEs6Class as ReactPreferEs6Class;
 pub use crate::rules::react::prefer_function_component::PreferFunctionComponent as ReactPreferFunctionComponent;
-pub use crate::rules::react::react_compiler::ReactCompiler as ReactReactCompiler;
+pub use crate::rules::react::preserve_manual_memoization::PreserveManualMemoization as ReactPreserveManualMemoization;
+pub use crate::rules::react::purity::Purity as ReactPurity;
 pub use crate::rules::react::react_in_jsx_scope::ReactInJsxScope as ReactReactInJsxScope;
+pub use crate::rules::react::refs::Refs as ReactRefs;
 pub use crate::rules::react::require_render_return::RequireRenderReturn as ReactRequireRenderReturn;
+pub use crate::rules::react::rule_suppression::RuleSuppression as ReactRuleSuppression;
 pub use crate::rules::react::rules_of_hooks::RulesOfHooks as ReactRulesOfHooks;
 pub use crate::rules::react::self_closing_comp::SelfClosingComp as ReactSelfClosingComp;
+pub use crate::rules::react::set_state_in_effect::SetStateInEffect as ReactSetStateInEffect;
+pub use crate::rules::react::set_state_in_render::SetStateInRender as ReactSetStateInRender;
 pub use crate::rules::react::state_in_constructor::StateInConstructor as ReactStateInConstructor;
+pub use crate::rules::react::static_components::StaticComponents as ReactStaticComponents;
 pub use crate::rules::react::style_prop_object::StylePropObject as ReactStylePropObject;
+pub use crate::rules::react::syntax::Syntax as ReactSyntax;
+pub use crate::rules::react::todo::Todo as ReactTodo;
+pub use crate::rules::react::unsupported_syntax::UnsupportedSyntax as ReactUnsupportedSyntax;
+pub use crate::rules::react::use_memo::UseMemo as ReactUseMemo;
 pub use crate::rules::react::void_dom_elements_no_children::VoidDomElementsNoChildren as ReactVoidDomElementsNoChildren;
+pub use crate::rules::react::void_use_memo::VoidUseMemo as ReactVoidUseMemo;
 pub use crate::rules::react_perf::jsx_no_jsx_as_prop::JsxNoJsxAsProp as ReactPerfJsxNoJsxAsProp;
 pub use crate::rules::react_perf::jsx_no_new_array_as_prop::JsxNoNewArrayAsProp as ReactPerfJsxNoNewArrayAsProp;
 pub use crate::rules::react_perf::jsx_no_new_function_as_prop::JsxNoNewFunctionAsProp as ReactPerfJsxNoNewFunctionAsProp;
@@ -526,6 +547,7 @@ pub use crate::rules::typescript::no_extra_non_null_assertion::NoExtraNonNullAss
 pub use crate::rules::typescript::no_extraneous_class::NoExtraneousClass as TypescriptNoExtraneousClass;
 pub use crate::rules::typescript::no_floating_promises::NoFloatingPromises as TypescriptNoFloatingPromises;
 pub use crate::rules::typescript::no_for_in_array::NoForInArray as TypescriptNoForInArray;
+pub use crate::rules::typescript::no_generated_empty_object_type::NoGeneratedEmptyObjectType as TypescriptNoGeneratedEmptyObjectType;
 pub use crate::rules::typescript::no_implied_eval::NoImpliedEval as TypescriptNoImpliedEval;
 pub use crate::rules::typescript::no_import_type_side_effects::NoImportTypeSideEffects as TypescriptNoImportTypeSideEffects;
 pub use crate::rules::typescript::no_inferrable_types::NoInferrableTypes as TypescriptNoInferrableTypes;
@@ -1123,6 +1145,7 @@ pub enum RuleEnum {
     TypescriptNoExtraneousClass(TypescriptNoExtraneousClass),
     TypescriptNoFloatingPromises(TypescriptNoFloatingPromises),
     TypescriptNoForInArray(TypescriptNoForInArray),
+    TypescriptNoGeneratedEmptyObjectType(TypescriptNoGeneratedEmptyObjectType),
     TypescriptNoImpliedEval(TypescriptNoImpliedEval),
     TypescriptNoImportTypeSideEffects(TypescriptNoImportTypeSideEffects),
     TypescriptNoInferrableTypes(TypescriptNoInferrableTypes),
@@ -1262,16 +1285,24 @@ pub enum RuleEnum {
     JestValidExpectInPromise(JestValidExpectInPromise),
     JestValidTitle(JestValidTitle),
     ReactButtonHasType(ReactButtonHasType),
+    ReactCapitalizedCalls(ReactCapitalizedCalls),
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
     ReactDisplayName(ReactDisplayName),
+    ReactErrorBoundaries(ReactErrorBoundaries),
     ReactExhaustiveDeps(ReactExhaustiveDeps),
+    ReactExhaustiveEffectDependencies(ReactExhaustiveEffectDependencies),
     ReactForbidComponentProps(ReactForbidComponentProps),
     ReactForbidDomProps(ReactForbidDomProps),
     ReactForbidElements(ReactForbidElements),
     ReactForwardRefUsesRef(ReactForwardRefUsesRef),
     ReactFunctionComponentDefinition(ReactFunctionComponentDefinition),
+    ReactGlobals(ReactGlobals),
     ReactHookUseState(ReactHookUseState),
+    ReactHooks(ReactHooks),
     ReactIframeMissingSandbox(ReactIframeMissingSandbox),
+    ReactImmutability(ReactImmutability),
+    ReactIncompatibleLibrary(ReactIncompatibleLibrary),
+    ReactInvariant(ReactInvariant),
     ReactJsxBooleanValue(ReactJsxBooleanValue),
     ReactJsxCurlyBracePresence(ReactJsxCurlyBracePresence),
     ReactJsxFilenameExtension(ReactJsxFilenameExtension),
@@ -1290,11 +1321,13 @@ pub enum RuleEnum {
     ReactJsxPascalCase(ReactJsxPascalCase),
     ReactJsxPropsNoSpreadMulti(ReactJsxPropsNoSpreadMulti),
     ReactJsxPropsNoSpreading(ReactJsxPropsNoSpreading),
+    ReactMemoDependencies(ReactMemoDependencies),
     ReactNoArrayIndexKey(ReactNoArrayIndexKey),
     ReactNoChildrenProp(ReactNoChildrenProp),
     ReactNoCloneElement(ReactNoCloneElement),
     ReactNoDanger(ReactNoDanger),
     ReactNoDangerWithChildren(ReactNoDangerWithChildren),
+    ReactNoDerivingStateInEffects(ReactNoDerivingStateInEffects),
     ReactNoDidMountSetState(ReactNoDidMountSetState),
     ReactNoDidUpdateSetState(ReactNoDidUpdateSetState),
     ReactNoDirectMutationState(ReactNoDirectMutationState),
@@ -1317,14 +1350,25 @@ pub enum RuleEnum {
     ReactOnlyExportComponents(ReactOnlyExportComponents),
     ReactPreferEs6Class(ReactPreferEs6Class),
     ReactPreferFunctionComponent(ReactPreferFunctionComponent),
-    ReactReactCompiler(ReactReactCompiler),
+    ReactPreserveManualMemoization(ReactPreserveManualMemoization),
+    ReactPurity(ReactPurity),
     ReactReactInJsxScope(ReactReactInJsxScope),
+    ReactRefs(ReactRefs),
     ReactRequireRenderReturn(ReactRequireRenderReturn),
+    ReactRuleSuppression(ReactRuleSuppression),
     ReactRulesOfHooks(ReactRulesOfHooks),
     ReactSelfClosingComp(ReactSelfClosingComp),
+    ReactSetStateInEffect(ReactSetStateInEffect),
+    ReactSetStateInRender(ReactSetStateInRender),
     ReactStateInConstructor(ReactStateInConstructor),
+    ReactStaticComponents(ReactStaticComponents),
     ReactStylePropObject(ReactStylePropObject),
+    ReactSyntax(ReactSyntax),
+    ReactTodo(ReactTodo),
+    ReactUnsupportedSyntax(ReactUnsupportedSyntax),
+    ReactUseMemo(ReactUseMemo),
     ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren),
+    ReactVoidUseMemo(ReactVoidUseMemo),
     ReactPerfJsxNoJsxAsProp(ReactPerfJsxNoJsxAsProp),
     ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp),
     ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp),
@@ -1728,964 +1772,877 @@ pub enum RuleEnum {
     VueValidNextTick(VueValidNextTick),
 }
 const IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID: usize = 0usize;
-const IMPORT_DEFAULT_ID: usize = IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID + 1usize;
-const IMPORT_EXPORT_ID: usize = IMPORT_DEFAULT_ID + 1usize;
-const IMPORT_EXPORTS_LAST_ID: usize = IMPORT_EXPORT_ID + 1usize;
-const IMPORT_EXTENSIONS_ID: usize = IMPORT_EXPORTS_LAST_ID + 1usize;
-const IMPORT_FIRST_ID: usize = IMPORT_EXTENSIONS_ID + 1usize;
-const IMPORT_GROUP_EXPORTS_ID: usize = IMPORT_FIRST_ID + 1usize;
-const IMPORT_MAX_DEPENDENCIES_ID: usize = IMPORT_GROUP_EXPORTS_ID + 1usize;
-const IMPORT_NAMED_ID: usize = IMPORT_MAX_DEPENDENCIES_ID + 1usize;
-const IMPORT_NAMESPACE_ID: usize = IMPORT_NAMED_ID + 1usize;
-const IMPORT_NEWLINE_AFTER_IMPORT_ID: usize = IMPORT_NAMESPACE_ID + 1usize;
-const IMPORT_NO_ABSOLUTE_PATH_ID: usize = IMPORT_NEWLINE_AFTER_IMPORT_ID + 1usize;
-const IMPORT_NO_AMD_ID: usize = IMPORT_NO_ABSOLUTE_PATH_ID + 1usize;
-const IMPORT_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = IMPORT_NO_AMD_ID + 1usize;
-const IMPORT_NO_COMMONJS_ID: usize = IMPORT_NO_ANONYMOUS_DEFAULT_EXPORT_ID + 1usize;
-const IMPORT_NO_CYCLE_ID: usize = IMPORT_NO_COMMONJS_ID + 1usize;
-const IMPORT_NO_DEFAULT_EXPORT_ID: usize = IMPORT_NO_CYCLE_ID + 1usize;
-const IMPORT_NO_DUPLICATES_ID: usize = IMPORT_NO_DEFAULT_EXPORT_ID + 1usize;
-const IMPORT_NO_DYNAMIC_REQUIRE_ID: usize = IMPORT_NO_DUPLICATES_ID + 1usize;
-const IMPORT_NO_EMPTY_NAMED_BLOCKS_ID: usize = IMPORT_NO_DYNAMIC_REQUIRE_ID + 1usize;
-const IMPORT_NO_MUTABLE_EXPORTS_ID: usize = IMPORT_NO_EMPTY_NAMED_BLOCKS_ID + 1usize;
-const IMPORT_NO_NAMED_AS_DEFAULT_ID: usize = IMPORT_NO_MUTABLE_EXPORTS_ID + 1usize;
-const IMPORT_NO_NAMED_AS_DEFAULT_MEMBER_ID: usize = IMPORT_NO_NAMED_AS_DEFAULT_ID + 1usize;
-const IMPORT_NO_NAMED_DEFAULT_ID: usize = IMPORT_NO_NAMED_AS_DEFAULT_MEMBER_ID + 1usize;
-const IMPORT_NO_NAMED_EXPORT_ID: usize = IMPORT_NO_NAMED_DEFAULT_ID + 1usize;
-const IMPORT_NO_NAMESPACE_ID: usize = IMPORT_NO_NAMED_EXPORT_ID + 1usize;
-const IMPORT_NO_NODEJS_MODULES_ID: usize = IMPORT_NO_NAMESPACE_ID + 1usize;
-const IMPORT_NO_RELATIVE_PARENT_IMPORTS_ID: usize = IMPORT_NO_NODEJS_MODULES_ID + 1usize;
-const IMPORT_NO_SELF_IMPORT_ID: usize = IMPORT_NO_RELATIVE_PARENT_IMPORTS_ID + 1usize;
-const IMPORT_NO_UNASSIGNED_IMPORT_ID: usize = IMPORT_NO_SELF_IMPORT_ID + 1usize;
-const IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID: usize = IMPORT_NO_UNASSIGNED_IMPORT_ID + 1usize;
-const IMPORT_PREFER_DEFAULT_EXPORT_ID: usize = IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID + 1usize;
-const IMPORT_UNAMBIGUOUS_ID: usize = IMPORT_PREFER_DEFAULT_EXPORT_ID + 1usize;
-const ESLINT_ACCESSOR_PAIRS_ID: usize = IMPORT_UNAMBIGUOUS_ID + 1usize;
-const ESLINT_ARRAY_CALLBACK_RETURN_ID: usize = ESLINT_ACCESSOR_PAIRS_ID + 1usize;
-const ESLINT_ARROW_BODY_STYLE_ID: usize = ESLINT_ARRAY_CALLBACK_RETURN_ID + 1usize;
-const ESLINT_BLOCK_SCOPED_VAR_ID: usize = ESLINT_ARROW_BODY_STYLE_ID + 1usize;
-const ESLINT_CAPITALIZED_COMMENTS_ID: usize = ESLINT_BLOCK_SCOPED_VAR_ID + 1usize;
-const ESLINT_CLASS_METHODS_USE_THIS_ID: usize = ESLINT_CAPITALIZED_COMMENTS_ID + 1usize;
-const ESLINT_COMPLEXITY_ID: usize = ESLINT_CLASS_METHODS_USE_THIS_ID + 1usize;
-const ESLINT_CONSTRUCTOR_SUPER_ID: usize = ESLINT_COMPLEXITY_ID + 1usize;
-const ESLINT_CURLY_ID: usize = ESLINT_CONSTRUCTOR_SUPER_ID + 1usize;
-const ESLINT_DEFAULT_CASE_ID: usize = ESLINT_CURLY_ID + 1usize;
-const ESLINT_DEFAULT_CASE_LAST_ID: usize = ESLINT_DEFAULT_CASE_ID + 1usize;
-const ESLINT_DEFAULT_PARAM_LAST_ID: usize = ESLINT_DEFAULT_CASE_LAST_ID + 1usize;
-const ESLINT_EQEQEQ_ID: usize = ESLINT_DEFAULT_PARAM_LAST_ID + 1usize;
-const ESLINT_FOR_DIRECTION_ID: usize = ESLINT_EQEQEQ_ID + 1usize;
-const ESLINT_FUNC_NAME_MATCHING_ID: usize = ESLINT_FOR_DIRECTION_ID + 1usize;
-const ESLINT_FUNC_NAMES_ID: usize = ESLINT_FUNC_NAME_MATCHING_ID + 1usize;
-const ESLINT_FUNC_STYLE_ID: usize = ESLINT_FUNC_NAMES_ID + 1usize;
-const ESLINT_GETTER_RETURN_ID: usize = ESLINT_FUNC_STYLE_ID + 1usize;
-const ESLINT_GROUPED_ACCESSOR_PAIRS_ID: usize = ESLINT_GETTER_RETURN_ID + 1usize;
-const ESLINT_GUARD_FOR_IN_ID: usize = ESLINT_GROUPED_ACCESSOR_PAIRS_ID + 1usize;
-const ESLINT_ID_DENYLIST_ID: usize = ESLINT_GUARD_FOR_IN_ID + 1usize;
-const ESLINT_ID_LENGTH_ID: usize = ESLINT_ID_DENYLIST_ID + 1usize;
-const ESLINT_ID_MATCH_ID: usize = ESLINT_ID_LENGTH_ID + 1usize;
-const ESLINT_INIT_DECLARATIONS_ID: usize = ESLINT_ID_MATCH_ID + 1usize;
-const ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID: usize = ESLINT_INIT_DECLARATIONS_ID + 1usize;
-const ESLINT_MAX_CLASSES_PER_FILE_ID: usize = ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID + 1usize;
-const ESLINT_MAX_DEPTH_ID: usize = ESLINT_MAX_CLASSES_PER_FILE_ID + 1usize;
-const ESLINT_MAX_LINES_ID: usize = ESLINT_MAX_DEPTH_ID + 1usize;
-const ESLINT_MAX_LINES_PER_FUNCTION_ID: usize = ESLINT_MAX_LINES_ID + 1usize;
-const ESLINT_MAX_NESTED_CALLBACKS_ID: usize = ESLINT_MAX_LINES_PER_FUNCTION_ID + 1usize;
-const ESLINT_MAX_PARAMS_ID: usize = ESLINT_MAX_NESTED_CALLBACKS_ID + 1usize;
-const ESLINT_MAX_STATEMENTS_ID: usize = ESLINT_MAX_PARAMS_ID + 1usize;
-const ESLINT_NEW_CAP_ID: usize = ESLINT_MAX_STATEMENTS_ID + 1usize;
-const ESLINT_NO_ALERT_ID: usize = ESLINT_NEW_CAP_ID + 1usize;
-const ESLINT_NO_ARRAY_CONSTRUCTOR_ID: usize = ESLINT_NO_ALERT_ID + 1usize;
-const ESLINT_NO_ASYNC_PROMISE_EXECUTOR_ID: usize = ESLINT_NO_ARRAY_CONSTRUCTOR_ID + 1usize;
-const ESLINT_NO_AWAIT_IN_LOOP_ID: usize = ESLINT_NO_ASYNC_PROMISE_EXECUTOR_ID + 1usize;
-const ESLINT_NO_BITWISE_ID: usize = ESLINT_NO_AWAIT_IN_LOOP_ID + 1usize;
-const ESLINT_NO_CALLER_ID: usize = ESLINT_NO_BITWISE_ID + 1usize;
-const ESLINT_NO_CASE_DECLARATIONS_ID: usize = ESLINT_NO_CALLER_ID + 1usize;
-const ESLINT_NO_CLASS_ASSIGN_ID: usize = ESLINT_NO_CASE_DECLARATIONS_ID + 1usize;
-const ESLINT_NO_COMPARE_NEG_ZERO_ID: usize = ESLINT_NO_CLASS_ASSIGN_ID + 1usize;
-const ESLINT_NO_COND_ASSIGN_ID: usize = ESLINT_NO_COMPARE_NEG_ZERO_ID + 1usize;
-const ESLINT_NO_CONSOLE_ID: usize = ESLINT_NO_COND_ASSIGN_ID + 1usize;
-const ESLINT_NO_CONST_ASSIGN_ID: usize = ESLINT_NO_CONSOLE_ID + 1usize;
-const ESLINT_NO_CONSTANT_BINARY_EXPRESSION_ID: usize = ESLINT_NO_CONST_ASSIGN_ID + 1usize;
-const ESLINT_NO_CONSTANT_CONDITION_ID: usize = ESLINT_NO_CONSTANT_BINARY_EXPRESSION_ID + 1usize;
-const ESLINT_NO_CONSTRUCTOR_RETURN_ID: usize = ESLINT_NO_CONSTANT_CONDITION_ID + 1usize;
-const ESLINT_NO_CONTINUE_ID: usize = ESLINT_NO_CONSTRUCTOR_RETURN_ID + 1usize;
-const ESLINT_NO_CONTROL_REGEX_ID: usize = ESLINT_NO_CONTINUE_ID + 1usize;
-const ESLINT_NO_DEBUGGER_ID: usize = ESLINT_NO_CONTROL_REGEX_ID + 1usize;
-const ESLINT_NO_DELETE_VAR_ID: usize = ESLINT_NO_DEBUGGER_ID + 1usize;
-const ESLINT_NO_DIV_REGEX_ID: usize = ESLINT_NO_DELETE_VAR_ID + 1usize;
-const ESLINT_NO_DUPE_CLASS_MEMBERS_ID: usize = ESLINT_NO_DIV_REGEX_ID + 1usize;
-const ESLINT_NO_DUPE_ELSE_IF_ID: usize = ESLINT_NO_DUPE_CLASS_MEMBERS_ID + 1usize;
-const ESLINT_NO_DUPE_KEYS_ID: usize = ESLINT_NO_DUPE_ELSE_IF_ID + 1usize;
-const ESLINT_NO_DUPLICATE_CASE_ID: usize = ESLINT_NO_DUPE_KEYS_ID + 1usize;
-const ESLINT_NO_DUPLICATE_IMPORTS_ID: usize = ESLINT_NO_DUPLICATE_CASE_ID + 1usize;
-const ESLINT_NO_ELSE_RETURN_ID: usize = ESLINT_NO_DUPLICATE_IMPORTS_ID + 1usize;
-const ESLINT_NO_EMPTY_ID: usize = ESLINT_NO_ELSE_RETURN_ID + 1usize;
-const ESLINT_NO_EMPTY_CHARACTER_CLASS_ID: usize = ESLINT_NO_EMPTY_ID + 1usize;
-const ESLINT_NO_EMPTY_FUNCTION_ID: usize = ESLINT_NO_EMPTY_CHARACTER_CLASS_ID + 1usize;
-const ESLINT_NO_EMPTY_PATTERN_ID: usize = ESLINT_NO_EMPTY_FUNCTION_ID + 1usize;
-const ESLINT_NO_EMPTY_STATIC_BLOCK_ID: usize = ESLINT_NO_EMPTY_PATTERN_ID + 1usize;
-const ESLINT_NO_EQ_NULL_ID: usize = ESLINT_NO_EMPTY_STATIC_BLOCK_ID + 1usize;
-const ESLINT_NO_EVAL_ID: usize = ESLINT_NO_EQ_NULL_ID + 1usize;
-const ESLINT_NO_EX_ASSIGN_ID: usize = ESLINT_NO_EVAL_ID + 1usize;
-const ESLINT_NO_EXTEND_NATIVE_ID: usize = ESLINT_NO_EX_ASSIGN_ID + 1usize;
-const ESLINT_NO_EXTRA_BIND_ID: usize = ESLINT_NO_EXTEND_NATIVE_ID + 1usize;
-const ESLINT_NO_EXTRA_BOOLEAN_CAST_ID: usize = ESLINT_NO_EXTRA_BIND_ID + 1usize;
-const ESLINT_NO_EXTRA_LABEL_ID: usize = ESLINT_NO_EXTRA_BOOLEAN_CAST_ID + 1usize;
-const ESLINT_NO_FALLTHROUGH_ID: usize = ESLINT_NO_EXTRA_LABEL_ID + 1usize;
-const ESLINT_NO_FUNC_ASSIGN_ID: usize = ESLINT_NO_FALLTHROUGH_ID + 1usize;
-const ESLINT_NO_GLOBAL_ASSIGN_ID: usize = ESLINT_NO_FUNC_ASSIGN_ID + 1usize;
-const ESLINT_NO_IMPLICIT_COERCION_ID: usize = ESLINT_NO_GLOBAL_ASSIGN_ID + 1usize;
-const ESLINT_NO_IMPLICIT_GLOBALS_ID: usize = ESLINT_NO_IMPLICIT_COERCION_ID + 1usize;
-const ESLINT_NO_IMPLIED_EVAL_ID: usize = ESLINT_NO_IMPLICIT_GLOBALS_ID + 1usize;
-const ESLINT_NO_IMPORT_ASSIGN_ID: usize = ESLINT_NO_IMPLIED_EVAL_ID + 1usize;
-const ESLINT_NO_INLINE_COMMENTS_ID: usize = ESLINT_NO_IMPORT_ASSIGN_ID + 1usize;
-const ESLINT_NO_INNER_DECLARATIONS_ID: usize = ESLINT_NO_INLINE_COMMENTS_ID + 1usize;
-const ESLINT_NO_INVALID_REGEXP_ID: usize = ESLINT_NO_INNER_DECLARATIONS_ID + 1usize;
-const ESLINT_NO_IRREGULAR_WHITESPACE_ID: usize = ESLINT_NO_INVALID_REGEXP_ID + 1usize;
-const ESLINT_NO_ITERATOR_ID: usize = ESLINT_NO_IRREGULAR_WHITESPACE_ID + 1usize;
-const ESLINT_NO_LABEL_VAR_ID: usize = ESLINT_NO_ITERATOR_ID + 1usize;
-const ESLINT_NO_LABELS_ID: usize = ESLINT_NO_LABEL_VAR_ID + 1usize;
-const ESLINT_NO_LONE_BLOCKS_ID: usize = ESLINT_NO_LABELS_ID + 1usize;
-const ESLINT_NO_LONELY_IF_ID: usize = ESLINT_NO_LONE_BLOCKS_ID + 1usize;
-const ESLINT_NO_LOOP_FUNC_ID: usize = ESLINT_NO_LONELY_IF_ID + 1usize;
-const ESLINT_NO_LOSS_OF_PRECISION_ID: usize = ESLINT_NO_LOOP_FUNC_ID + 1usize;
-const ESLINT_NO_MAGIC_NUMBERS_ID: usize = ESLINT_NO_LOSS_OF_PRECISION_ID + 1usize;
-const ESLINT_NO_MISLEADING_CHARACTER_CLASS_ID: usize = ESLINT_NO_MAGIC_NUMBERS_ID + 1usize;
-const ESLINT_NO_MULTI_ASSIGN_ID: usize = ESLINT_NO_MISLEADING_CHARACTER_CLASS_ID + 1usize;
-const ESLINT_NO_MULTI_STR_ID: usize = ESLINT_NO_MULTI_ASSIGN_ID + 1usize;
-const ESLINT_NO_NEGATED_CONDITION_ID: usize = ESLINT_NO_MULTI_STR_ID + 1usize;
-const ESLINT_NO_NESTED_TERNARY_ID: usize = ESLINT_NO_NEGATED_CONDITION_ID + 1usize;
-const ESLINT_NO_NEW_ID: usize = ESLINT_NO_NESTED_TERNARY_ID + 1usize;
-const ESLINT_NO_NEW_FUNC_ID: usize = ESLINT_NO_NEW_ID + 1usize;
-const ESLINT_NO_NEW_NATIVE_NONCONSTRUCTOR_ID: usize = ESLINT_NO_NEW_FUNC_ID + 1usize;
-const ESLINT_NO_NEW_WRAPPERS_ID: usize = ESLINT_NO_NEW_NATIVE_NONCONSTRUCTOR_ID + 1usize;
-const ESLINT_NO_NONOCTAL_DECIMAL_ESCAPE_ID: usize = ESLINT_NO_NEW_WRAPPERS_ID + 1usize;
-const ESLINT_NO_OBJ_CALLS_ID: usize = ESLINT_NO_NONOCTAL_DECIMAL_ESCAPE_ID + 1usize;
-const ESLINT_NO_OBJECT_CONSTRUCTOR_ID: usize = ESLINT_NO_OBJ_CALLS_ID + 1usize;
-const ESLINT_NO_PARAM_REASSIGN_ID: usize = ESLINT_NO_OBJECT_CONSTRUCTOR_ID + 1usize;
-const ESLINT_NO_PLUSPLUS_ID: usize = ESLINT_NO_PARAM_REASSIGN_ID + 1usize;
-const ESLINT_NO_PROMISE_EXECUTOR_RETURN_ID: usize = ESLINT_NO_PLUSPLUS_ID + 1usize;
-const ESLINT_NO_PROTO_ID: usize = ESLINT_NO_PROMISE_EXECUTOR_RETURN_ID + 1usize;
-const ESLINT_NO_PROTOTYPE_BUILTINS_ID: usize = ESLINT_NO_PROTO_ID + 1usize;
-const ESLINT_NO_REDECLARE_ID: usize = ESLINT_NO_PROTOTYPE_BUILTINS_ID + 1usize;
-const ESLINT_NO_REGEX_SPACES_ID: usize = ESLINT_NO_REDECLARE_ID + 1usize;
-const ESLINT_NO_RESTRICTED_EXPORTS_ID: usize = ESLINT_NO_REGEX_SPACES_ID + 1usize;
-const ESLINT_NO_RESTRICTED_GLOBALS_ID: usize = ESLINT_NO_RESTRICTED_EXPORTS_ID + 1usize;
-const ESLINT_NO_RESTRICTED_IMPORTS_ID: usize = ESLINT_NO_RESTRICTED_GLOBALS_ID + 1usize;
-const ESLINT_NO_RESTRICTED_PROPERTIES_ID: usize = ESLINT_NO_RESTRICTED_IMPORTS_ID + 1usize;
-const ESLINT_NO_RETURN_ASSIGN_ID: usize = ESLINT_NO_RESTRICTED_PROPERTIES_ID + 1usize;
-const ESLINT_NO_SCRIPT_URL_ID: usize = ESLINT_NO_RETURN_ASSIGN_ID + 1usize;
-const ESLINT_NO_SELF_ASSIGN_ID: usize = ESLINT_NO_SCRIPT_URL_ID + 1usize;
-const ESLINT_NO_SELF_COMPARE_ID: usize = ESLINT_NO_SELF_ASSIGN_ID + 1usize;
-const ESLINT_NO_SEQUENCES_ID: usize = ESLINT_NO_SELF_COMPARE_ID + 1usize;
-const ESLINT_NO_SETTER_RETURN_ID: usize = ESLINT_NO_SEQUENCES_ID + 1usize;
-const ESLINT_NO_SHADOW_ID: usize = ESLINT_NO_SETTER_RETURN_ID + 1usize;
-const ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID: usize = ESLINT_NO_SHADOW_ID + 1usize;
-const ESLINT_NO_SPARSE_ARRAYS_ID: usize = ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID + 1usize;
-const ESLINT_NO_TEMPLATE_CURLY_IN_STRING_ID: usize = ESLINT_NO_SPARSE_ARRAYS_ID + 1usize;
-const ESLINT_NO_TERNARY_ID: usize = ESLINT_NO_TEMPLATE_CURLY_IN_STRING_ID + 1usize;
-const ESLINT_NO_THIS_BEFORE_SUPER_ID: usize = ESLINT_NO_TERNARY_ID + 1usize;
-const ESLINT_NO_THROW_LITERAL_ID: usize = ESLINT_NO_THIS_BEFORE_SUPER_ID + 1usize;
-const ESLINT_NO_UNASSIGNED_VARS_ID: usize = ESLINT_NO_THROW_LITERAL_ID + 1usize;
-const ESLINT_NO_UNDEF_ID: usize = ESLINT_NO_UNASSIGNED_VARS_ID + 1usize;
-const ESLINT_NO_UNDEFINED_ID: usize = ESLINT_NO_UNDEF_ID + 1usize;
-const ESLINT_NO_UNDERSCORE_DANGLE_ID: usize = ESLINT_NO_UNDEFINED_ID + 1usize;
-const ESLINT_NO_UNEXPECTED_MULTILINE_ID: usize = ESLINT_NO_UNDERSCORE_DANGLE_ID + 1usize;
-const ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID: usize = ESLINT_NO_UNEXPECTED_MULTILINE_ID + 1usize;
-const ESLINT_NO_UNNEEDED_TERNARY_ID: usize = ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID + 1usize;
-const ESLINT_NO_UNREACHABLE_ID: usize = ESLINT_NO_UNNEEDED_TERNARY_ID + 1usize;
-const ESLINT_NO_UNREACHABLE_LOOP_ID: usize = ESLINT_NO_UNREACHABLE_ID + 1usize;
-const ESLINT_NO_UNSAFE_FINALLY_ID: usize = ESLINT_NO_UNREACHABLE_LOOP_ID + 1usize;
-const ESLINT_NO_UNSAFE_NEGATION_ID: usize = ESLINT_NO_UNSAFE_FINALLY_ID + 1usize;
-const ESLINT_NO_UNSAFE_OPTIONAL_CHAINING_ID: usize = ESLINT_NO_UNSAFE_NEGATION_ID + 1usize;
-const ESLINT_NO_UNUSED_EXPRESSIONS_ID: usize = ESLINT_NO_UNSAFE_OPTIONAL_CHAINING_ID + 1usize;
-const ESLINT_NO_UNUSED_LABELS_ID: usize = ESLINT_NO_UNUSED_EXPRESSIONS_ID + 1usize;
-const ESLINT_NO_UNUSED_PRIVATE_CLASS_MEMBERS_ID: usize = ESLINT_NO_UNUSED_LABELS_ID + 1usize;
-const ESLINT_NO_UNUSED_VARS_ID: usize = ESLINT_NO_UNUSED_PRIVATE_CLASS_MEMBERS_ID + 1usize;
-const ESLINT_NO_USE_BEFORE_DEFINE_ID: usize = ESLINT_NO_UNUSED_VARS_ID + 1usize;
-const ESLINT_NO_USELESS_ASSIGNMENT_ID: usize = ESLINT_NO_USE_BEFORE_DEFINE_ID + 1usize;
-const ESLINT_NO_USELESS_BACKREFERENCE_ID: usize = ESLINT_NO_USELESS_ASSIGNMENT_ID + 1usize;
-const ESLINT_NO_USELESS_CALL_ID: usize = ESLINT_NO_USELESS_BACKREFERENCE_ID + 1usize;
-const ESLINT_NO_USELESS_CATCH_ID: usize = ESLINT_NO_USELESS_CALL_ID + 1usize;
-const ESLINT_NO_USELESS_COMPUTED_KEY_ID: usize = ESLINT_NO_USELESS_CATCH_ID + 1usize;
-const ESLINT_NO_USELESS_CONCAT_ID: usize = ESLINT_NO_USELESS_COMPUTED_KEY_ID + 1usize;
-const ESLINT_NO_USELESS_CONSTRUCTOR_ID: usize = ESLINT_NO_USELESS_CONCAT_ID + 1usize;
-const ESLINT_NO_USELESS_ESCAPE_ID: usize = ESLINT_NO_USELESS_CONSTRUCTOR_ID + 1usize;
-const ESLINT_NO_USELESS_RENAME_ID: usize = ESLINT_NO_USELESS_ESCAPE_ID + 1usize;
-const ESLINT_NO_USELESS_RETURN_ID: usize = ESLINT_NO_USELESS_RENAME_ID + 1usize;
-const ESLINT_NO_VAR_ID: usize = ESLINT_NO_USELESS_RETURN_ID + 1usize;
-const ESLINT_NO_VOID_ID: usize = ESLINT_NO_VAR_ID + 1usize;
-const ESLINT_NO_WARNING_COMMENTS_ID: usize = ESLINT_NO_VOID_ID + 1usize;
-const ESLINT_NO_WITH_ID: usize = ESLINT_NO_WARNING_COMMENTS_ID + 1usize;
-const ESLINT_OBJECT_SHORTHAND_ID: usize = ESLINT_NO_WITH_ID + 1usize;
-const ESLINT_ONE_VAR_ID: usize = ESLINT_OBJECT_SHORTHAND_ID + 1usize;
-const ESLINT_OPERATOR_ASSIGNMENT_ID: usize = ESLINT_ONE_VAR_ID + 1usize;
-const ESLINT_PREFER_ARROW_CALLBACK_ID: usize = ESLINT_OPERATOR_ASSIGNMENT_ID + 1usize;
-const ESLINT_PREFER_CONST_ID: usize = ESLINT_PREFER_ARROW_CALLBACK_ID + 1usize;
-const ESLINT_PREFER_DESTRUCTURING_ID: usize = ESLINT_PREFER_CONST_ID + 1usize;
-const ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID: usize = ESLINT_PREFER_DESTRUCTURING_ID + 1usize;
-const ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID: usize =
-    ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID + 1usize;
-const ESLINT_PREFER_NUMERIC_LITERALS_ID: usize = ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID + 1usize;
-const ESLINT_PREFER_OBJECT_HAS_OWN_ID: usize = ESLINT_PREFER_NUMERIC_LITERALS_ID + 1usize;
-const ESLINT_PREFER_OBJECT_SPREAD_ID: usize = ESLINT_PREFER_OBJECT_HAS_OWN_ID + 1usize;
-const ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID: usize = ESLINT_PREFER_OBJECT_SPREAD_ID + 1usize;
-const ESLINT_PREFER_REGEX_LITERALS_ID: usize = ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID + 1usize;
-const ESLINT_PREFER_REST_PARAMS_ID: usize = ESLINT_PREFER_REGEX_LITERALS_ID + 1usize;
-const ESLINT_PREFER_SPREAD_ID: usize = ESLINT_PREFER_REST_PARAMS_ID + 1usize;
-const ESLINT_PREFER_TEMPLATE_ID: usize = ESLINT_PREFER_SPREAD_ID + 1usize;
-const ESLINT_PRESERVE_CAUGHT_ERROR_ID: usize = ESLINT_PREFER_TEMPLATE_ID + 1usize;
-const ESLINT_RADIX_ID: usize = ESLINT_PRESERVE_CAUGHT_ERROR_ID + 1usize;
-const ESLINT_REQUIRE_AWAIT_ID: usize = ESLINT_RADIX_ID + 1usize;
-const ESLINT_REQUIRE_UNICODE_REGEXP_ID: usize = ESLINT_REQUIRE_AWAIT_ID + 1usize;
-const ESLINT_REQUIRE_YIELD_ID: usize = ESLINT_REQUIRE_UNICODE_REGEXP_ID + 1usize;
-const ESLINT_SORT_IMPORTS_ID: usize = ESLINT_REQUIRE_YIELD_ID + 1usize;
-const ESLINT_SORT_KEYS_ID: usize = ESLINT_SORT_IMPORTS_ID + 1usize;
-const ESLINT_SORT_VARS_ID: usize = ESLINT_SORT_KEYS_ID + 1usize;
-const ESLINT_SYMBOL_DESCRIPTION_ID: usize = ESLINT_SORT_VARS_ID + 1usize;
-const ESLINT_UNICODE_BOM_ID: usize = ESLINT_SYMBOL_DESCRIPTION_ID + 1usize;
-const ESLINT_USE_ISNAN_ID: usize = ESLINT_UNICODE_BOM_ID + 1usize;
-const ESLINT_VALID_TYPEOF_ID: usize = ESLINT_USE_ISNAN_ID + 1usize;
-const ESLINT_VARS_ON_TOP_ID: usize = ESLINT_VALID_TYPEOF_ID + 1usize;
-const ESLINT_YODA_ID: usize = ESLINT_VARS_ON_TOP_ID + 1usize;
-const TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID: usize = ESLINT_YODA_ID + 1usize;
-const TYPESCRIPT_ARRAY_TYPE_ID: usize = TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID + 1usize;
-const TYPESCRIPT_AWAIT_THENABLE_ID: usize = TYPESCRIPT_ARRAY_TYPE_ID + 1usize;
-const TYPESCRIPT_BAN_TS_COMMENT_ID: usize = TYPESCRIPT_AWAIT_THENABLE_ID + 1usize;
-const TYPESCRIPT_BAN_TSLINT_COMMENT_ID: usize = TYPESCRIPT_BAN_TS_COMMENT_ID + 1usize;
-const TYPESCRIPT_BAN_TYPES_ID: usize = TYPESCRIPT_BAN_TSLINT_COMMENT_ID + 1usize;
-const TYPESCRIPT_CLASS_LITERAL_PROPERTY_STYLE_ID: usize = TYPESCRIPT_BAN_TYPES_ID + 1usize;
-const TYPESCRIPT_CONSISTENT_GENERIC_CONSTRUCTORS_ID: usize =
-    TYPESCRIPT_CLASS_LITERAL_PROPERTY_STYLE_ID + 1usize;
-const TYPESCRIPT_CONSISTENT_INDEXED_OBJECT_STYLE_ID: usize =
-    TYPESCRIPT_CONSISTENT_GENERIC_CONSTRUCTORS_ID + 1usize;
-const TYPESCRIPT_CONSISTENT_RETURN_ID: usize =
-    TYPESCRIPT_CONSISTENT_INDEXED_OBJECT_STYLE_ID + 1usize;
-const TYPESCRIPT_CONSISTENT_TYPE_ASSERTIONS_ID: usize = TYPESCRIPT_CONSISTENT_RETURN_ID + 1usize;
-const TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID: usize =
-    TYPESCRIPT_CONSISTENT_TYPE_ASSERTIONS_ID + 1usize;
-const TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID: usize =
-    TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID + 1usize;
-const TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID + 1usize;
-const TYPESCRIPT_DOT_NOTATION_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID + 1usize;
-const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize = TYPESCRIPT_DOT_NOTATION_ID + 1usize;
-const TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID: usize =
-    TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID + 1usize;
-const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
-    TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID + 1usize;
-const TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID: usize =
-    TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
-const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID + 1usize;
-const TYPESCRIPT_NO_BASE_TO_STRING_ID: usize = TYPESCRIPT_NO_ARRAY_DELETE_ID + 1usize;
-const TYPESCRIPT_NO_CONFUSING_NON_NULL_ASSERTION_ID: usize =
-    TYPESCRIPT_NO_BASE_TO_STRING_ID + 1usize;
-const TYPESCRIPT_NO_CONFUSING_VOID_EXPRESSION_ID: usize =
-    TYPESCRIPT_NO_CONFUSING_NON_NULL_ASSERTION_ID + 1usize;
-const TYPESCRIPT_NO_DEPRECATED_ID: usize = TYPESCRIPT_NO_CONFUSING_VOID_EXPRESSION_ID + 1usize;
-const TYPESCRIPT_NO_DUPLICATE_ENUM_VALUES_ID: usize = TYPESCRIPT_NO_DEPRECATED_ID + 1usize;
-const TYPESCRIPT_NO_DUPLICATE_TYPE_CONSTITUENTS_ID: usize =
-    TYPESCRIPT_NO_DUPLICATE_ENUM_VALUES_ID + 1usize;
-const TYPESCRIPT_NO_DYNAMIC_DELETE_ID: usize =
-    TYPESCRIPT_NO_DUPLICATE_TYPE_CONSTITUENTS_ID + 1usize;
-const TYPESCRIPT_NO_EMPTY_INTERFACE_ID: usize = TYPESCRIPT_NO_DYNAMIC_DELETE_ID + 1usize;
-const TYPESCRIPT_NO_EMPTY_OBJECT_TYPE_ID: usize = TYPESCRIPT_NO_EMPTY_INTERFACE_ID + 1usize;
-const TYPESCRIPT_NO_EXPLICIT_ANY_ID: usize = TYPESCRIPT_NO_EMPTY_OBJECT_TYPE_ID + 1usize;
-const TYPESCRIPT_NO_EXTRA_NON_NULL_ASSERTION_ID: usize = TYPESCRIPT_NO_EXPLICIT_ANY_ID + 1usize;
-const TYPESCRIPT_NO_EXTRANEOUS_CLASS_ID: usize = TYPESCRIPT_NO_EXTRA_NON_NULL_ASSERTION_ID + 1usize;
-const TYPESCRIPT_NO_FLOATING_PROMISES_ID: usize = TYPESCRIPT_NO_EXTRANEOUS_CLASS_ID + 1usize;
-const TYPESCRIPT_NO_FOR_IN_ARRAY_ID: usize = TYPESCRIPT_NO_FLOATING_PROMISES_ID + 1usize;
-const TYPESCRIPT_NO_IMPLIED_EVAL_ID: usize = TYPESCRIPT_NO_FOR_IN_ARRAY_ID + 1usize;
-const TYPESCRIPT_NO_IMPORT_TYPE_SIDE_EFFECTS_ID: usize = TYPESCRIPT_NO_IMPLIED_EVAL_ID + 1usize;
-const TYPESCRIPT_NO_INFERRABLE_TYPES_ID: usize = TYPESCRIPT_NO_IMPORT_TYPE_SIDE_EFFECTS_ID + 1usize;
-const TYPESCRIPT_NO_INVALID_VOID_TYPE_ID: usize = TYPESCRIPT_NO_INFERRABLE_TYPES_ID + 1usize;
-const TYPESCRIPT_NO_MEANINGLESS_VOID_OPERATOR_ID: usize =
-    TYPESCRIPT_NO_INVALID_VOID_TYPE_ID + 1usize;
-const TYPESCRIPT_NO_MISUSED_NEW_ID: usize = TYPESCRIPT_NO_MEANINGLESS_VOID_OPERATOR_ID + 1usize;
-const TYPESCRIPT_NO_MISUSED_PROMISES_ID: usize = TYPESCRIPT_NO_MISUSED_NEW_ID + 1usize;
-const TYPESCRIPT_NO_MISUSED_SPREAD_ID: usize = TYPESCRIPT_NO_MISUSED_PROMISES_ID + 1usize;
-const TYPESCRIPT_NO_MIXED_ENUMS_ID: usize = TYPESCRIPT_NO_MISUSED_SPREAD_ID + 1usize;
-const TYPESCRIPT_NO_NAMESPACE_ID: usize = TYPESCRIPT_NO_MIXED_ENUMS_ID + 1usize;
-const TYPESCRIPT_NO_NON_NULL_ASSERTED_NULLISH_COALESCING_ID: usize =
-    TYPESCRIPT_NO_NAMESPACE_ID + 1usize;
-const TYPESCRIPT_NO_NON_NULL_ASSERTED_OPTIONAL_CHAIN_ID: usize =
-    TYPESCRIPT_NO_NON_NULL_ASSERTED_NULLISH_COALESCING_ID + 1usize;
-const TYPESCRIPT_NO_NON_NULL_ASSERTION_ID: usize =
-    TYPESCRIPT_NO_NON_NULL_ASSERTED_OPTIONAL_CHAIN_ID + 1usize;
-const TYPESCRIPT_NO_REDUNDANT_TYPE_CONSTITUENTS_ID: usize =
-    TYPESCRIPT_NO_NON_NULL_ASSERTION_ID + 1usize;
-const TYPESCRIPT_NO_REQUIRE_IMPORTS_ID: usize =
-    TYPESCRIPT_NO_REDUNDANT_TYPE_CONSTITUENTS_ID + 1usize;
-const TYPESCRIPT_NO_RESTRICTED_TYPES_ID: usize = TYPESCRIPT_NO_REQUIRE_IMPORTS_ID + 1usize;
-const TYPESCRIPT_NO_THIS_ALIAS_ID: usize = TYPESCRIPT_NO_RESTRICTED_TYPES_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_BOOLEAN_LITERAL_COMPARE_ID: usize =
-    TYPESCRIPT_NO_THIS_ALIAS_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_CONDITION_ID: usize =
-    TYPESCRIPT_NO_UNNECESSARY_BOOLEAN_LITERAL_COMPARE_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_PARAMETER_PROPERTY_ASSIGNMENT_ID: usize =
-    TYPESCRIPT_NO_UNNECESSARY_CONDITION_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_QUALIFIER_ID: usize =
-    TYPESCRIPT_NO_UNNECESSARY_PARAMETER_PROPERTY_ASSIGNMENT_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_TEMPLATE_EXPRESSION_ID: usize =
-    TYPESCRIPT_NO_UNNECESSARY_QUALIFIER_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_TYPE_ARGUMENTS_ID: usize =
-    TYPESCRIPT_NO_UNNECESSARY_TEMPLATE_EXPRESSION_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_TYPE_ASSERTION_ID: usize =
-    TYPESCRIPT_NO_UNNECESSARY_TYPE_ARGUMENTS_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_TYPE_CONSTRAINT_ID: usize =
-    TYPESCRIPT_NO_UNNECESSARY_TYPE_ASSERTION_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_TYPE_CONVERSION_ID: usize =
-    TYPESCRIPT_NO_UNNECESSARY_TYPE_CONSTRAINT_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_TYPE_PARAMETERS_ID: usize =
-    TYPESCRIPT_NO_UNNECESSARY_TYPE_CONVERSION_ID + 1usize;
-const TYPESCRIPT_NO_UNSAFE_ARGUMENT_ID: usize =
-    TYPESCRIPT_NO_UNNECESSARY_TYPE_PARAMETERS_ID + 1usize;
-const TYPESCRIPT_NO_UNSAFE_ASSIGNMENT_ID: usize = TYPESCRIPT_NO_UNSAFE_ARGUMENT_ID + 1usize;
-const TYPESCRIPT_NO_UNSAFE_CALL_ID: usize = TYPESCRIPT_NO_UNSAFE_ASSIGNMENT_ID + 1usize;
-const TYPESCRIPT_NO_UNSAFE_DECLARATION_MERGING_ID: usize = TYPESCRIPT_NO_UNSAFE_CALL_ID + 1usize;
-const TYPESCRIPT_NO_UNSAFE_ENUM_COMPARISON_ID: usize =
-    TYPESCRIPT_NO_UNSAFE_DECLARATION_MERGING_ID + 1usize;
-const TYPESCRIPT_NO_UNSAFE_FUNCTION_TYPE_ID: usize =
-    TYPESCRIPT_NO_UNSAFE_ENUM_COMPARISON_ID + 1usize;
-const TYPESCRIPT_NO_UNSAFE_MEMBER_ACCESS_ID: usize = TYPESCRIPT_NO_UNSAFE_FUNCTION_TYPE_ID + 1usize;
-const TYPESCRIPT_NO_UNSAFE_RETURN_ID: usize = TYPESCRIPT_NO_UNSAFE_MEMBER_ACCESS_ID + 1usize;
-const TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID: usize = TYPESCRIPT_NO_UNSAFE_RETURN_ID + 1usize;
-const TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID: usize = TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID + 1usize;
-const TYPESCRIPT_NO_USELESS_DEFAULT_ASSIGNMENT_ID: usize =
-    TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID + 1usize;
-const TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID: usize =
-    TYPESCRIPT_NO_USELESS_DEFAULT_ASSIGNMENT_ID + 1usize;
-const TYPESCRIPT_NO_VAR_REQUIRES_ID: usize = TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID + 1usize;
-const TYPESCRIPT_NO_WRAPPER_OBJECT_TYPES_ID: usize = TYPESCRIPT_NO_VAR_REQUIRES_ID + 1usize;
-const TYPESCRIPT_NON_NULLABLE_TYPE_ASSERTION_STYLE_ID: usize =
-    TYPESCRIPT_NO_WRAPPER_OBJECT_TYPES_ID + 1usize;
-const TYPESCRIPT_ONLY_THROW_ERROR_ID: usize =
-    TYPESCRIPT_NON_NULLABLE_TYPE_ASSERTION_STYLE_ID + 1usize;
-const TYPESCRIPT_PARAMETER_PROPERTIES_ID: usize = TYPESCRIPT_ONLY_THROW_ERROR_ID + 1usize;
-const TYPESCRIPT_PREFER_AS_CONST_ID: usize = TYPESCRIPT_PARAMETER_PROPERTIES_ID + 1usize;
-const TYPESCRIPT_PREFER_ENUM_INITIALIZERS_ID: usize = TYPESCRIPT_PREFER_AS_CONST_ID + 1usize;
-const TYPESCRIPT_PREFER_FIND_ID: usize = TYPESCRIPT_PREFER_ENUM_INITIALIZERS_ID + 1usize;
-const TYPESCRIPT_PREFER_FOR_OF_ID: usize = TYPESCRIPT_PREFER_FIND_ID + 1usize;
-const TYPESCRIPT_PREFER_FUNCTION_TYPE_ID: usize = TYPESCRIPT_PREFER_FOR_OF_ID + 1usize;
-const TYPESCRIPT_PREFER_INCLUDES_ID: usize = TYPESCRIPT_PREFER_FUNCTION_TYPE_ID + 1usize;
-const TYPESCRIPT_PREFER_LITERAL_ENUM_MEMBER_ID: usize = TYPESCRIPT_PREFER_INCLUDES_ID + 1usize;
-const TYPESCRIPT_PREFER_NAMESPACE_KEYWORD_ID: usize =
-    TYPESCRIPT_PREFER_LITERAL_ENUM_MEMBER_ID + 1usize;
-const TYPESCRIPT_PREFER_NULLISH_COALESCING_ID: usize =
-    TYPESCRIPT_PREFER_NAMESPACE_KEYWORD_ID + 1usize;
-const TYPESCRIPT_PREFER_OPTIONAL_CHAIN_ID: usize = TYPESCRIPT_PREFER_NULLISH_COALESCING_ID + 1usize;
-const TYPESCRIPT_PREFER_PROMISE_REJECT_ERRORS_ID: usize =
-    TYPESCRIPT_PREFER_OPTIONAL_CHAIN_ID + 1usize;
-const TYPESCRIPT_PREFER_READONLY_ID: usize = TYPESCRIPT_PREFER_PROMISE_REJECT_ERRORS_ID + 1usize;
-const TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID: usize = TYPESCRIPT_PREFER_READONLY_ID + 1usize;
-const TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID: usize =
-    TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID + 1usize;
-const TYPESCRIPT_PREFER_REGEXP_EXEC_ID: usize = TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID + 1usize;
-const TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID: usize = TYPESCRIPT_PREFER_REGEXP_EXEC_ID + 1usize;
-const TYPESCRIPT_PREFER_STRING_STARTS_ENDS_WITH_ID: usize =
-    TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID + 1usize;
-const TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID: usize =
-    TYPESCRIPT_PREFER_STRING_STARTS_ENDS_WITH_ID + 1usize;
-const TYPESCRIPT_PROMISE_FUNCTION_ASYNC_ID: usize = TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID + 1usize;
-const TYPESCRIPT_RELATED_GETTER_SETTER_PAIRS_ID: usize =
-    TYPESCRIPT_PROMISE_FUNCTION_ASYNC_ID + 1usize;
-const TYPESCRIPT_REQUIRE_ARRAY_SORT_COMPARE_ID: usize =
-    TYPESCRIPT_RELATED_GETTER_SETTER_PAIRS_ID + 1usize;
-const TYPESCRIPT_REQUIRE_AWAIT_ID: usize = TYPESCRIPT_REQUIRE_ARRAY_SORT_COMPARE_ID + 1usize;
-const TYPESCRIPT_RESTRICT_PLUS_OPERANDS_ID: usize = TYPESCRIPT_REQUIRE_AWAIT_ID + 1usize;
-const TYPESCRIPT_RESTRICT_TEMPLATE_EXPRESSIONS_ID: usize =
-    TYPESCRIPT_RESTRICT_PLUS_OPERANDS_ID + 1usize;
-const TYPESCRIPT_RETURN_AWAIT_ID: usize = TYPESCRIPT_RESTRICT_TEMPLATE_EXPRESSIONS_ID + 1usize;
-const TYPESCRIPT_STRICT_BOOLEAN_EXPRESSIONS_ID: usize = TYPESCRIPT_RETURN_AWAIT_ID + 1usize;
-const TYPESCRIPT_STRICT_VOID_RETURN_ID: usize = TYPESCRIPT_STRICT_BOOLEAN_EXPRESSIONS_ID + 1usize;
-const TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID: usize = TYPESCRIPT_STRICT_VOID_RETURN_ID + 1usize;
-const TYPESCRIPT_TRIPLE_SLASH_REFERENCE_ID: usize =
-    TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID + 1usize;
-const TYPESCRIPT_UNBOUND_METHOD_ID: usize = TYPESCRIPT_TRIPLE_SLASH_REFERENCE_ID + 1usize;
-const TYPESCRIPT_UNIFIED_SIGNATURES_ID: usize = TYPESCRIPT_UNBOUND_METHOD_ID + 1usize;
-const TYPESCRIPT_USE_UNKNOWN_IN_CATCH_CALLBACK_VARIABLE_ID: usize =
-    TYPESCRIPT_UNIFIED_SIGNATURES_ID + 1usize;
-const JEST_CONSISTENT_TEST_IT_ID: usize =
-    TYPESCRIPT_USE_UNKNOWN_IN_CATCH_CALLBACK_VARIABLE_ID + 1usize;
-const JEST_EXPECT_EXPECT_ID: usize = JEST_CONSISTENT_TEST_IT_ID + 1usize;
-const JEST_MAX_EXPECTS_ID: usize = JEST_EXPECT_EXPECT_ID + 1usize;
-const JEST_MAX_NESTED_DESCRIBE_ID: usize = JEST_MAX_EXPECTS_ID + 1usize;
-const JEST_NO_ALIAS_METHODS_ID: usize = JEST_MAX_NESTED_DESCRIBE_ID + 1usize;
-const JEST_NO_COMMENTED_OUT_TESTS_ID: usize = JEST_NO_ALIAS_METHODS_ID + 1usize;
-const JEST_NO_CONDITIONAL_EXPECT_ID: usize = JEST_NO_COMMENTED_OUT_TESTS_ID + 1usize;
-const JEST_NO_CONDITIONAL_IN_TEST_ID: usize = JEST_NO_CONDITIONAL_EXPECT_ID + 1usize;
-const JEST_NO_CONFUSING_SET_TIMEOUT_ID: usize = JEST_NO_CONDITIONAL_IN_TEST_ID + 1usize;
-const JEST_NO_DEPRECATED_FUNCTIONS_ID: usize = JEST_NO_CONFUSING_SET_TIMEOUT_ID + 1usize;
-const JEST_NO_DISABLED_TESTS_ID: usize = JEST_NO_DEPRECATED_FUNCTIONS_ID + 1usize;
-const JEST_NO_DONE_CALLBACK_ID: usize = JEST_NO_DISABLED_TESTS_ID + 1usize;
-const JEST_NO_DUPLICATE_HOOKS_ID: usize = JEST_NO_DONE_CALLBACK_ID + 1usize;
-const JEST_NO_EXPORT_ID: usize = JEST_NO_DUPLICATE_HOOKS_ID + 1usize;
-const JEST_NO_FOCUSED_TESTS_ID: usize = JEST_NO_EXPORT_ID + 1usize;
-const JEST_NO_HOOKS_ID: usize = JEST_NO_FOCUSED_TESTS_ID + 1usize;
-const JEST_NO_IDENTICAL_TITLE_ID: usize = JEST_NO_HOOKS_ID + 1usize;
-const JEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = JEST_NO_IDENTICAL_TITLE_ID + 1usize;
-const JEST_NO_JASMINE_GLOBALS_ID: usize = JEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID + 1usize;
-const JEST_NO_LARGE_SNAPSHOTS_ID: usize = JEST_NO_JASMINE_GLOBALS_ID + 1usize;
-const JEST_NO_MOCKS_IMPORT_ID: usize = JEST_NO_LARGE_SNAPSHOTS_ID + 1usize;
-const JEST_NO_RESTRICTED_JEST_METHODS_ID: usize = JEST_NO_MOCKS_IMPORT_ID + 1usize;
-const JEST_NO_RESTRICTED_MATCHERS_ID: usize = JEST_NO_RESTRICTED_JEST_METHODS_ID + 1usize;
-const JEST_NO_STANDALONE_EXPECT_ID: usize = JEST_NO_RESTRICTED_MATCHERS_ID + 1usize;
-const JEST_NO_TEST_PREFIXES_ID: usize = JEST_NO_STANDALONE_EXPECT_ID + 1usize;
-const JEST_NO_TEST_RETURN_STATEMENT_ID: usize = JEST_NO_TEST_PREFIXES_ID + 1usize;
-const JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = JEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
-const JEST_NO_UNTYPED_MOCK_FACTORY_ID: usize = JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
-const JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = JEST_NO_UNTYPED_MOCK_FACTORY_ID + 1usize;
-const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
-const JEST_PREFER_CALLED_WITH_ID: usize = JEST_PADDING_AROUND_TEST_BLOCKS_ID + 1usize;
-const JEST_PREFER_COMPARISON_MATCHER_ID: usize = JEST_PREFER_CALLED_WITH_ID + 1usize;
-const JEST_PREFER_EACH_ID: usize = JEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
-const JEST_PREFER_ENDING_WITH_AN_EXPECT_ID: usize = JEST_PREFER_EACH_ID + 1usize;
-const JEST_PREFER_EQUALITY_MATCHER_ID: usize = JEST_PREFER_ENDING_WITH_AN_EXPECT_ID + 1usize;
-const JEST_PREFER_EXPECT_ASSERTIONS_ID: usize = JEST_PREFER_EQUALITY_MATCHER_ID + 1usize;
-const JEST_PREFER_EXPECT_RESOLVES_ID: usize = JEST_PREFER_EXPECT_ASSERTIONS_ID + 1usize;
-const JEST_PREFER_HOOKS_IN_ORDER_ID: usize = JEST_PREFER_EXPECT_RESOLVES_ID + 1usize;
-const JEST_PREFER_HOOKS_ON_TOP_ID: usize = JEST_PREFER_HOOKS_IN_ORDER_ID + 1usize;
-const JEST_PREFER_IMPORTING_JEST_GLOBALS_ID: usize = JEST_PREFER_HOOKS_ON_TOP_ID + 1usize;
-const JEST_PREFER_JEST_MOCKED_ID: usize = JEST_PREFER_IMPORTING_JEST_GLOBALS_ID + 1usize;
-const JEST_PREFER_LOWERCASE_TITLE_ID: usize = JEST_PREFER_JEST_MOCKED_ID + 1usize;
-const JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = JEST_PREFER_LOWERCASE_TITLE_ID + 1usize;
-const JEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID + 1usize;
-const JEST_PREFER_SNAPSHOT_HINT_ID: usize = JEST_PREFER_MOCK_RETURN_SHORTHAND_ID + 1usize;
-const JEST_PREFER_SPY_ON_ID: usize = JEST_PREFER_SNAPSHOT_HINT_ID + 1usize;
-const JEST_PREFER_STRICT_EQUAL_ID: usize = JEST_PREFER_SPY_ON_ID + 1usize;
-const JEST_PREFER_TO_BE_ID: usize = JEST_PREFER_STRICT_EQUAL_ID + 1usize;
-const JEST_PREFER_TO_CONTAIN_ID: usize = JEST_PREFER_TO_BE_ID + 1usize;
-const JEST_PREFER_TO_HAVE_BEEN_CALLED_ID: usize = JEST_PREFER_TO_CONTAIN_ID + 1usize;
-const JEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = JEST_PREFER_TO_HAVE_BEEN_CALLED_ID + 1usize;
-const JEST_PREFER_TO_HAVE_LENGTH_ID: usize = JEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID + 1usize;
-const JEST_PREFER_TODO_ID: usize = JEST_PREFER_TO_HAVE_LENGTH_ID + 1usize;
-const JEST_REQUIRE_HOOK_ID: usize = JEST_PREFER_TODO_ID + 1usize;
-const JEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = JEST_REQUIRE_HOOK_ID + 1usize;
-const JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = JEST_REQUIRE_TO_THROW_MESSAGE_ID + 1usize;
-const JEST_VALID_DESCRIBE_CALLBACK_ID: usize = JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID + 1usize;
-const JEST_VALID_EXPECT_ID: usize = JEST_VALID_DESCRIBE_CALLBACK_ID + 1usize;
-const JEST_VALID_EXPECT_IN_PROMISE_ID: usize = JEST_VALID_EXPECT_ID + 1usize;
-const JEST_VALID_TITLE_ID: usize = JEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
-const REACT_BUTTON_HAS_TYPE_ID: usize = JEST_VALID_TITLE_ID + 1usize;
-const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
-const REACT_DISPLAY_NAME_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
-const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
-const REACT_FORBID_COMPONENT_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
-const REACT_FORBID_DOM_PROPS_ID: usize = REACT_FORBID_COMPONENT_PROPS_ID + 1usize;
-const REACT_FORBID_ELEMENTS_ID: usize = REACT_FORBID_DOM_PROPS_ID + 1usize;
-const REACT_FORWARD_REF_USES_REF_ID: usize = REACT_FORBID_ELEMENTS_ID + 1usize;
-const REACT_FUNCTION_COMPONENT_DEFINITION_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
-const REACT_HOOK_USE_STATE_ID: usize = REACT_FUNCTION_COMPONENT_DEFINITION_ID + 1usize;
-const REACT_IFRAME_MISSING_SANDBOX_ID: usize = REACT_HOOK_USE_STATE_ID + 1usize;
-const REACT_JSX_BOOLEAN_VALUE_ID: usize = REACT_IFRAME_MISSING_SANDBOX_ID + 1usize;
-const REACT_JSX_CURLY_BRACE_PRESENCE_ID: usize = REACT_JSX_BOOLEAN_VALUE_ID + 1usize;
-const REACT_JSX_FILENAME_EXTENSION_ID: usize = REACT_JSX_CURLY_BRACE_PRESENCE_ID + 1usize;
-const REACT_JSX_FRAGMENTS_ID: usize = REACT_JSX_FILENAME_EXTENSION_ID + 1usize;
-const REACT_JSX_HANDLER_NAMES_ID: usize = REACT_JSX_FRAGMENTS_ID + 1usize;
-const REACT_JSX_KEY_ID: usize = REACT_JSX_HANDLER_NAMES_ID + 1usize;
-const REACT_JSX_MAX_DEPTH_ID: usize = REACT_JSX_KEY_ID + 1usize;
-const REACT_JSX_NO_COMMENT_TEXTNODES_ID: usize = REACT_JSX_MAX_DEPTH_ID + 1usize;
-const REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID: usize =
-    REACT_JSX_NO_COMMENT_TEXTNODES_ID + 1usize;
-const REACT_JSX_NO_DUPLICATE_PROPS_ID: usize = REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID + 1usize;
-const REACT_JSX_NO_LITERALS_ID: usize = REACT_JSX_NO_DUPLICATE_PROPS_ID + 1usize;
-const REACT_JSX_NO_SCRIPT_URL_ID: usize = REACT_JSX_NO_LITERALS_ID + 1usize;
-const REACT_JSX_NO_TARGET_BLANK_ID: usize = REACT_JSX_NO_SCRIPT_URL_ID + 1usize;
-const REACT_JSX_NO_UNDEF_ID: usize = REACT_JSX_NO_TARGET_BLANK_ID + 1usize;
-const REACT_JSX_NO_USELESS_FRAGMENT_ID: usize = REACT_JSX_NO_UNDEF_ID + 1usize;
-const REACT_JSX_PASCAL_CASE_ID: usize = REACT_JSX_NO_USELESS_FRAGMENT_ID + 1usize;
-const REACT_JSX_PROPS_NO_SPREAD_MULTI_ID: usize = REACT_JSX_PASCAL_CASE_ID + 1usize;
-const REACT_JSX_PROPS_NO_SPREADING_ID: usize = REACT_JSX_PROPS_NO_SPREAD_MULTI_ID + 1usize;
-const REACT_NO_ARRAY_INDEX_KEY_ID: usize = REACT_JSX_PROPS_NO_SPREADING_ID + 1usize;
-const REACT_NO_CHILDREN_PROP_ID: usize = REACT_NO_ARRAY_INDEX_KEY_ID + 1usize;
-const REACT_NO_CLONE_ELEMENT_ID: usize = REACT_NO_CHILDREN_PROP_ID + 1usize;
-const REACT_NO_DANGER_ID: usize = REACT_NO_CLONE_ELEMENT_ID + 1usize;
-const REACT_NO_DANGER_WITH_CHILDREN_ID: usize = REACT_NO_DANGER_ID + 1usize;
-const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = REACT_NO_DANGER_WITH_CHILDREN_ID + 1usize;
-const REACT_NO_DID_UPDATE_SET_STATE_ID: usize = REACT_NO_DID_MOUNT_SET_STATE_ID + 1usize;
-const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = REACT_NO_DID_UPDATE_SET_STATE_ID + 1usize;
-const REACT_NO_FIND_DOM_NODE_ID: usize = REACT_NO_DIRECT_MUTATION_STATE_ID + 1usize;
-const REACT_NO_IS_MOUNTED_ID: usize = REACT_NO_FIND_DOM_NODE_ID + 1usize;
-const REACT_NO_MULTI_COMP_ID: usize = REACT_NO_IS_MOUNTED_ID + 1usize;
-const REACT_NO_NAMESPACE_ID: usize = REACT_NO_MULTI_COMP_ID + 1usize;
-const REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID: usize = REACT_NO_NAMESPACE_ID + 1usize;
-const REACT_NO_REACT_CHILDREN_ID: usize = REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID + 1usize;
-const REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID: usize = REACT_NO_REACT_CHILDREN_ID + 1usize;
-const REACT_NO_RENDER_RETURN_VALUE_ID: usize =
-    REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID + 1usize;
-const REACT_NO_SET_STATE_ID: usize = REACT_NO_RENDER_RETURN_VALUE_ID + 1usize;
-const REACT_NO_STRING_REFS_ID: usize = REACT_NO_SET_STATE_ID + 1usize;
-const REACT_NO_THIS_IN_SFC_ID: usize = REACT_NO_STRING_REFS_ID + 1usize;
-const REACT_NO_UNESCAPED_ENTITIES_ID: usize = REACT_NO_THIS_IN_SFC_ID + 1usize;
-const REACT_NO_UNKNOWN_PROPERTY_ID: usize = REACT_NO_UNESCAPED_ENTITIES_ID + 1usize;
-const REACT_NO_UNSAFE_ID: usize = REACT_NO_UNKNOWN_PROPERTY_ID + 1usize;
-const REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID: usize = REACT_NO_UNSAFE_ID + 1usize;
-const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID + 1usize;
-const REACT_ONLY_EXPORT_COMPONENTS_ID: usize = REACT_NO_WILL_UPDATE_SET_STATE_ID + 1usize;
-const REACT_PREFER_ES_6_CLASS_ID: usize = REACT_ONLY_EXPORT_COMPONENTS_ID + 1usize;
-const REACT_PREFER_FUNCTION_COMPONENT_ID: usize = REACT_PREFER_ES_6_CLASS_ID + 1usize;
-const REACT_REACT_COMPILER_ID: usize = REACT_PREFER_FUNCTION_COMPONENT_ID + 1usize;
-const REACT_REACT_IN_JSX_SCOPE_ID: usize = REACT_REACT_COMPILER_ID + 1usize;
-const REACT_REQUIRE_RENDER_RETURN_ID: usize = REACT_REACT_IN_JSX_SCOPE_ID + 1usize;
-const REACT_RULES_OF_HOOKS_ID: usize = REACT_REQUIRE_RENDER_RETURN_ID + 1usize;
-const REACT_SELF_CLOSING_COMP_ID: usize = REACT_RULES_OF_HOOKS_ID + 1usize;
-const REACT_STATE_IN_CONSTRUCTOR_ID: usize = REACT_SELF_CLOSING_COMP_ID + 1usize;
-const REACT_STYLE_PROP_OBJECT_ID: usize = REACT_STATE_IN_CONSTRUCTOR_ID + 1usize;
-const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = REACT_STYLE_PROP_OBJECT_ID + 1usize;
-const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID + 1usize;
-const REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID: usize = REACT_PERF_JSX_NO_JSX_AS_PROP_ID + 1usize;
-const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize =
-    REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID + 1usize;
-const REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID: usize =
-    REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID + 1usize;
-const UNICORN_CATCH_ERROR_NAME_ID: usize = REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID + 1usize;
-const UNICORN_CONSISTENT_ASSERT_ID: usize = UNICORN_CATCH_ERROR_NAME_ID + 1usize;
-const UNICORN_CONSISTENT_DATE_CLONE_ID: usize = UNICORN_CONSISTENT_ASSERT_ID + 1usize;
-const UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID: usize = UNICORN_CONSISTENT_DATE_CLONE_ID + 1usize;
-const UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID: usize =
-    UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID + 1usize;
-const UNICORN_CONSISTENT_FUNCTION_SCOPING_ID: usize =
-    UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID + 1usize;
-const UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID: usize =
-    UNICORN_CONSISTENT_FUNCTION_SCOPING_ID + 1usize;
-const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize =
-    UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID + 1usize;
-const UNICORN_EMPTY_BRACE_SPACES_ID: usize = UNICORN_CUSTOM_ERROR_DEFINITION_ID + 1usize;
-const UNICORN_ERROR_MESSAGE_ID: usize = UNICORN_EMPTY_BRACE_SPACES_ID + 1usize;
-const UNICORN_ESCAPE_CASE_ID: usize = UNICORN_ERROR_MESSAGE_ID + 1usize;
-const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = UNICORN_ESCAPE_CASE_ID + 1usize;
-const UNICORN_EXPLICIT_TIMER_DELAY_ID: usize = UNICORN_EXPLICIT_LENGTH_CHECK_ID + 1usize;
-const UNICORN_FILENAME_CASE_ID: usize = UNICORN_EXPLICIT_TIMER_DELAY_ID + 1usize;
-const UNICORN_IMPORT_STYLE_ID: usize = UNICORN_FILENAME_CASE_ID + 1usize;
-const UNICORN_MAX_NESTED_CALLS_ID: usize = UNICORN_IMPORT_STYLE_ID + 1usize;
-const UNICORN_NEW_FOR_BUILTINS_ID: usize = UNICORN_MAX_NESTED_CALLS_ID + 1usize;
-const UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID: usize = UNICORN_NEW_FOR_BUILTINS_ID + 1usize;
-const UNICORN_NO_ACCESSOR_RECURSION_ID: usize = UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID + 1usize;
-const UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = UNICORN_NO_ACCESSOR_RECURSION_ID + 1usize;
-const UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID: usize =
-    UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID + 1usize;
-const UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID: usize =
-    UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID + 1usize;
-const UNICORN_NO_ARRAY_FOR_EACH_ID: usize = UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID + 1usize;
-const UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID: usize = UNICORN_NO_ARRAY_FOR_EACH_ID + 1usize;
-const UNICORN_NO_ARRAY_REDUCE_ID: usize = UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID + 1usize;
-const UNICORN_NO_ARRAY_REVERSE_ID: usize = UNICORN_NO_ARRAY_REDUCE_ID + 1usize;
-const UNICORN_NO_ARRAY_SORT_ID: usize = UNICORN_NO_ARRAY_REVERSE_ID + 1usize;
-const UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID: usize = UNICORN_NO_ARRAY_SORT_ID + 1usize;
-const UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID: usize =
-    UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID + 1usize;
-const UNICORN_NO_CONFUSING_ARRAY_WITH_ID: usize = UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID + 1usize;
-const UNICORN_NO_CONSOLE_SPACES_ID: usize = UNICORN_NO_CONFUSING_ARRAY_WITH_ID + 1usize;
-const UNICORN_NO_DOCUMENT_COOKIE_ID: usize = UNICORN_NO_CONSOLE_SPACES_ID + 1usize;
-const UNICORN_NO_EMPTY_FILE_ID: usize = UNICORN_NO_DOCUMENT_COOKIE_ID + 1usize;
-const UNICORN_NO_HEX_ESCAPE_ID: usize = UNICORN_NO_EMPTY_FILE_ID + 1usize;
-const UNICORN_NO_IMMEDIATE_MUTATION_ID: usize = UNICORN_NO_HEX_ESCAPE_ID + 1usize;
-const UNICORN_NO_INSTANCEOF_ARRAY_ID: usize = UNICORN_NO_IMMEDIATE_MUTATION_ID + 1usize;
-const UNICORN_NO_INSTANCEOF_BUILTINS_ID: usize = UNICORN_NO_INSTANCEOF_ARRAY_ID + 1usize;
-const UNICORN_NO_INVALID_FETCH_OPTIONS_ID: usize = UNICORN_NO_INSTANCEOF_BUILTINS_ID + 1usize;
-const UNICORN_NO_INVALID_REMOVE_EVENT_LISTENER_ID: usize =
-    UNICORN_NO_INVALID_FETCH_OPTIONS_ID + 1usize;
-const UNICORN_NO_LENGTH_AS_SLICE_END_ID: usize =
-    UNICORN_NO_INVALID_REMOVE_EVENT_LISTENER_ID + 1usize;
-const UNICORN_NO_LONELY_IF_ID: usize = UNICORN_NO_LENGTH_AS_SLICE_END_ID + 1usize;
-const UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID: usize = UNICORN_NO_LONELY_IF_ID + 1usize;
-const UNICORN_NO_NEGATED_CONDITION_ID: usize = UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID + 1usize;
-const UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID: usize = UNICORN_NO_NEGATED_CONDITION_ID + 1usize;
-const UNICORN_NO_NESTED_TERNARY_ID: usize = UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID + 1usize;
-const UNICORN_NO_NEW_ARRAY_ID: usize = UNICORN_NO_NESTED_TERNARY_ID + 1usize;
-const UNICORN_NO_NEW_BUFFER_ID: usize = UNICORN_NO_NEW_ARRAY_ID + 1usize;
-const UNICORN_NO_NULL_ID: usize = UNICORN_NO_NEW_BUFFER_ID + 1usize;
-const UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID: usize = UNICORN_NO_NULL_ID + 1usize;
-const UNICORN_NO_PROCESS_EXIT_ID: usize = UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID + 1usize;
-const UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID: usize = UNICORN_NO_PROCESS_EXIT_ID + 1usize;
-const UNICORN_NO_STATIC_ONLY_CLASS_ID: usize =
-    UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID + 1usize;
-const UNICORN_NO_THENABLE_ID: usize = UNICORN_NO_STATIC_ONLY_CLASS_ID + 1usize;
-const UNICORN_NO_THIS_ASSIGNMENT_ID: usize = UNICORN_NO_THENABLE_ID + 1usize;
-const UNICORN_NO_TYPEOF_UNDEFINED_ID: usize = UNICORN_NO_THIS_ASSIGNMENT_ID + 1usize;
-const UNICORN_NO_UNNECESSARY_ARRAY_FLAT_DEPTH_ID: usize = UNICORN_NO_TYPEOF_UNDEFINED_ID + 1usize;
-const UNICORN_NO_UNNECESSARY_ARRAY_SPLICE_COUNT_ID: usize =
-    UNICORN_NO_UNNECESSARY_ARRAY_FLAT_DEPTH_ID + 1usize;
-const UNICORN_NO_UNNECESSARY_AWAIT_ID: usize =
-    UNICORN_NO_UNNECESSARY_ARRAY_SPLICE_COUNT_ID + 1usize;
-const UNICORN_NO_UNNECESSARY_SLICE_END_ID: usize = UNICORN_NO_UNNECESSARY_AWAIT_ID + 1usize;
-const UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID: usize =
-    UNICORN_NO_UNNECESSARY_SLICE_END_ID + 1usize;
-const UNICORN_NO_UNREADABLE_IIFE_ID: usize = UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID + 1usize;
-const UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID: usize = UNICORN_NO_UNREADABLE_IIFE_ID + 1usize;
-const UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID: usize =
-    UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID + 1usize;
-const UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID: usize =
-    UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID + 1usize;
-const UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID: usize =
-    UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID + 1usize;
-const UNICORN_NO_USELESS_LENGTH_CHECK_ID: usize = UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID + 1usize;
-const UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID: usize =
-    UNICORN_NO_USELESS_LENGTH_CHECK_ID + 1usize;
-const UNICORN_NO_USELESS_SPREAD_ID: usize = UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID + 1usize;
-const UNICORN_NO_USELESS_SWITCH_CASE_ID: usize = UNICORN_NO_USELESS_SPREAD_ID + 1usize;
-const UNICORN_NO_USELESS_UNDEFINED_ID: usize = UNICORN_NO_USELESS_SWITCH_CASE_ID + 1usize;
-const UNICORN_NO_ZERO_FRACTIONS_ID: usize = UNICORN_NO_USELESS_UNDEFINED_ID + 1usize;
-const UNICORN_NUMBER_LITERAL_CASE_ID: usize = UNICORN_NO_ZERO_FRACTIONS_ID + 1usize;
-const UNICORN_NUMERIC_SEPARATORS_STYLE_ID: usize = UNICORN_NUMBER_LITERAL_CASE_ID + 1usize;
-const UNICORN_PREFER_ADD_EVENT_LISTENER_ID: usize = UNICORN_NUMERIC_SEPARATORS_STYLE_ID + 1usize;
-const UNICORN_PREFER_ARRAY_FIND_ID: usize = UNICORN_PREFER_ADD_EVENT_LISTENER_ID + 1usize;
-const UNICORN_PREFER_ARRAY_FLAT_ID: usize = UNICORN_PREFER_ARRAY_FIND_ID + 1usize;
-const UNICORN_PREFER_ARRAY_FLAT_MAP_ID: usize = UNICORN_PREFER_ARRAY_FLAT_ID + 1usize;
-const UNICORN_PREFER_ARRAY_INDEX_OF_ID: usize = UNICORN_PREFER_ARRAY_FLAT_MAP_ID + 1usize;
-const UNICORN_PREFER_ARRAY_SOME_ID: usize = UNICORN_PREFER_ARRAY_INDEX_OF_ID + 1usize;
-const UNICORN_PREFER_AT_ID: usize = UNICORN_PREFER_ARRAY_SOME_ID + 1usize;
-const UNICORN_PREFER_BIGINT_LITERALS_ID: usize = UNICORN_PREFER_AT_ID + 1usize;
-const UNICORN_PREFER_BLOB_READING_METHODS_ID: usize = UNICORN_PREFER_BIGINT_LITERALS_ID + 1usize;
-const UNICORN_PREFER_CLASS_FIELDS_ID: usize = UNICORN_PREFER_BLOB_READING_METHODS_ID + 1usize;
-const UNICORN_PREFER_CLASSLIST_TOGGLE_ID: usize = UNICORN_PREFER_CLASS_FIELDS_ID + 1usize;
-const UNICORN_PREFER_CODE_POINT_ID: usize = UNICORN_PREFER_CLASSLIST_TOGGLE_ID + 1usize;
-const UNICORN_PREFER_DATE_NOW_ID: usize = UNICORN_PREFER_CODE_POINT_ID + 1usize;
-const UNICORN_PREFER_DEFAULT_PARAMETERS_ID: usize = UNICORN_PREFER_DATE_NOW_ID + 1usize;
-const UNICORN_PREFER_DOM_NODE_APPEND_ID: usize = UNICORN_PREFER_DEFAULT_PARAMETERS_ID + 1usize;
-const UNICORN_PREFER_DOM_NODE_DATASET_ID: usize = UNICORN_PREFER_DOM_NODE_APPEND_ID + 1usize;
-const UNICORN_PREFER_DOM_NODE_REMOVE_ID: usize = UNICORN_PREFER_DOM_NODE_DATASET_ID + 1usize;
-const UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID: usize = UNICORN_PREFER_DOM_NODE_REMOVE_ID + 1usize;
-const UNICORN_PREFER_EVENT_TARGET_ID: usize = UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID + 1usize;
-const UNICORN_PREFER_EXPORT_FROM_ID: usize = UNICORN_PREFER_EVENT_TARGET_ID + 1usize;
-const UNICORN_PREFER_GLOBAL_THIS_ID: usize = UNICORN_PREFER_EXPORT_FROM_ID + 1usize;
-const UNICORN_PREFER_IMPORT_META_PROPERTIES_ID: usize = UNICORN_PREFER_GLOBAL_THIS_ID + 1usize;
-const UNICORN_PREFER_INCLUDES_ID: usize = UNICORN_PREFER_IMPORT_META_PROPERTIES_ID + 1usize;
-const UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID: usize = UNICORN_PREFER_INCLUDES_ID + 1usize;
-const UNICORN_PREFER_LOGICAL_OPERATOR_OVER_TERNARY_ID: usize =
-    UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID + 1usize;
-const UNICORN_PREFER_MATH_MIN_MAX_ID: usize =
-    UNICORN_PREFER_LOGICAL_OPERATOR_OVER_TERNARY_ID + 1usize;
-const UNICORN_PREFER_MATH_TRUNC_ID: usize = UNICORN_PREFER_MATH_MIN_MAX_ID + 1usize;
-const UNICORN_PREFER_MODERN_DOM_APIS_ID: usize = UNICORN_PREFER_MATH_TRUNC_ID + 1usize;
-const UNICORN_PREFER_MODERN_MATH_APIS_ID: usize = UNICORN_PREFER_MODERN_DOM_APIS_ID + 1usize;
-const UNICORN_PREFER_MODULE_ID: usize = UNICORN_PREFER_MODERN_MATH_APIS_ID + 1usize;
-const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = UNICORN_PREFER_MODULE_ID + 1usize;
-const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize =
-    UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID + 1usize;
-const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = UNICORN_PREFER_NEGATIVE_INDEX_ID + 1usize;
-const UNICORN_PREFER_NUMBER_COERCION_ID: usize = UNICORN_PREFER_NODE_PROTOCOL_ID + 1usize;
-const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = UNICORN_PREFER_NUMBER_COERCION_ID + 1usize;
-const UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID: usize = UNICORN_PREFER_NUMBER_PROPERTIES_ID + 1usize;
-const UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID: usize =
-    UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID + 1usize;
-const UNICORN_PREFER_PROTOTYPE_METHODS_ID: usize =
-    UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID + 1usize;
-const UNICORN_PREFER_QUERY_SELECTOR_ID: usize = UNICORN_PREFER_PROTOTYPE_METHODS_ID + 1usize;
-const UNICORN_PREFER_REFLECT_APPLY_ID: usize = UNICORN_PREFER_QUERY_SELECTOR_ID + 1usize;
-const UNICORN_PREFER_REGEXP_TEST_ID: usize = UNICORN_PREFER_REFLECT_APPLY_ID + 1usize;
-const UNICORN_PREFER_RESPONSE_STATIC_JSON_ID: usize = UNICORN_PREFER_REGEXP_TEST_ID + 1usize;
-const UNICORN_PREFER_SET_HAS_ID: usize = UNICORN_PREFER_RESPONSE_STATIC_JSON_ID + 1usize;
-const UNICORN_PREFER_SET_SIZE_ID: usize = UNICORN_PREFER_SET_HAS_ID + 1usize;
-const UNICORN_PREFER_SINGLE_CALL_ID: usize = UNICORN_PREFER_SET_SIZE_ID + 1usize;
-const UNICORN_PREFER_SPREAD_ID: usize = UNICORN_PREFER_SINGLE_CALL_ID + 1usize;
-const UNICORN_PREFER_STRING_RAW_ID: usize = UNICORN_PREFER_SPREAD_ID + 1usize;
-const UNICORN_PREFER_STRING_REPLACE_ALL_ID: usize = UNICORN_PREFER_STRING_RAW_ID + 1usize;
-const UNICORN_PREFER_STRING_SLICE_ID: usize = UNICORN_PREFER_STRING_REPLACE_ALL_ID + 1usize;
-const UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = UNICORN_PREFER_STRING_SLICE_ID + 1usize;
-const UNICORN_PREFER_STRING_TRIM_START_END_ID: usize =
-    UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID + 1usize;
-const UNICORN_PREFER_STRUCTURED_CLONE_ID: usize = UNICORN_PREFER_STRING_TRIM_START_END_ID + 1usize;
-const UNICORN_PREFER_TERNARY_ID: usize = UNICORN_PREFER_STRUCTURED_CLONE_ID + 1usize;
-const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = UNICORN_PREFER_TERNARY_ID + 1usize;
-const UNICORN_PREFER_TYPE_ERROR_ID: usize = UNICORN_PREFER_TOP_LEVEL_AWAIT_ID + 1usize;
-const UNICORN_RELATIVE_URL_STYLE_ID: usize = UNICORN_PREFER_TYPE_ERROR_ID + 1usize;
-const UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID: usize = UNICORN_RELATIVE_URL_STYLE_ID + 1usize;
-const UNICORN_REQUIRE_MODULE_ATTRIBUTES_ID: usize =
-    UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID + 1usize;
-const UNICORN_REQUIRE_MODULE_SPECIFIERS_ID: usize = UNICORN_REQUIRE_MODULE_ATTRIBUTES_ID + 1usize;
-const UNICORN_REQUIRE_NUMBER_TO_FIXED_DIGITS_ARGUMENT_ID: usize =
-    UNICORN_REQUIRE_MODULE_SPECIFIERS_ID + 1usize;
-const UNICORN_REQUIRE_POST_MESSAGE_TARGET_ORIGIN_ID: usize =
-    UNICORN_REQUIRE_NUMBER_TO_FIXED_DIGITS_ARGUMENT_ID + 1usize;
-const UNICORN_SWITCH_CASE_BRACES_ID: usize = UNICORN_REQUIRE_POST_MESSAGE_TARGET_ORIGIN_ID + 1usize;
-const UNICORN_SWITCH_CASE_BREAK_POSITION_ID: usize = UNICORN_SWITCH_CASE_BRACES_ID + 1usize;
-const UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID: usize =
-    UNICORN_SWITCH_CASE_BREAK_POSITION_ID + 1usize;
-const UNICORN_THROW_NEW_ERROR_ID: usize = UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID + 1usize;
-const JSX_A_11_Y_ALT_TEXT_ID: usize = UNICORN_THROW_NEW_ERROR_ID + 1usize;
-const JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID: usize = JSX_A_11_Y_ALT_TEXT_ID + 1usize;
-const JSX_A_11_Y_ANCHOR_HAS_CONTENT_ID: usize = JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID + 1usize;
-const JSX_A_11_Y_ANCHOR_IS_VALID_ID: usize = JSX_A_11_Y_ANCHOR_HAS_CONTENT_ID + 1usize;
-const JSX_A_11_Y_ARIA_ACTIVEDESCENDANT_HAS_TABINDEX_ID: usize =
-    JSX_A_11_Y_ANCHOR_IS_VALID_ID + 1usize;
-const JSX_A_11_Y_ARIA_PROPS_ID: usize = JSX_A_11_Y_ARIA_ACTIVEDESCENDANT_HAS_TABINDEX_ID + 1usize;
-const JSX_A_11_Y_ARIA_PROPTYPES_ID: usize = JSX_A_11_Y_ARIA_PROPS_ID + 1usize;
-const JSX_A_11_Y_ARIA_ROLE_ID: usize = JSX_A_11_Y_ARIA_PROPTYPES_ID + 1usize;
-const JSX_A_11_Y_ARIA_UNSUPPORTED_ELEMENTS_ID: usize = JSX_A_11_Y_ARIA_ROLE_ID + 1usize;
-const JSX_A_11_Y_AUTOCOMPLETE_VALID_ID: usize = JSX_A_11_Y_ARIA_UNSUPPORTED_ELEMENTS_ID + 1usize;
-const JSX_A_11_Y_CLICK_EVENTS_HAVE_KEY_EVENTS_ID: usize = JSX_A_11_Y_AUTOCOMPLETE_VALID_ID + 1usize;
-const JSX_A_11_Y_CONTROL_HAS_ASSOCIATED_LABEL_ID: usize =
-    JSX_A_11_Y_CLICK_EVENTS_HAVE_KEY_EVENTS_ID + 1usize;
-const JSX_A_11_Y_HEADING_HAS_CONTENT_ID: usize =
-    JSX_A_11_Y_CONTROL_HAS_ASSOCIATED_LABEL_ID + 1usize;
-const JSX_A_11_Y_HTML_HAS_LANG_ID: usize = JSX_A_11_Y_HEADING_HAS_CONTENT_ID + 1usize;
-const JSX_A_11_Y_IFRAME_HAS_TITLE_ID: usize = JSX_A_11_Y_HTML_HAS_LANG_ID + 1usize;
-const JSX_A_11_Y_IMG_REDUNDANT_ALT_ID: usize = JSX_A_11_Y_IFRAME_HAS_TITLE_ID + 1usize;
-const JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID: usize = JSX_A_11_Y_IMG_REDUNDANT_ALT_ID + 1usize;
-const JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID: usize =
-    JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID + 1usize;
-const JSX_A_11_Y_LANG_ID: usize = JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID + 1usize;
-const JSX_A_11_Y_MEDIA_HAS_CAPTION_ID: usize = JSX_A_11_Y_LANG_ID + 1usize;
-const JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVENTS_ID: usize = JSX_A_11_Y_MEDIA_HAS_CAPTION_ID + 1usize;
-const JSX_A_11_Y_NO_ACCESS_KEY_ID: usize = JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVENTS_ID + 1usize;
-const JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID: usize = JSX_A_11_Y_NO_ACCESS_KEY_ID + 1usize;
-const JSX_A_11_Y_NO_AUTOFOCUS_ID: usize = JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID + 1usize;
-const JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID: usize = JSX_A_11_Y_NO_AUTOFOCUS_ID + 1usize;
-const JSX_A_11_Y_NO_INTERACTIVE_ELEMENT_TO_NONINTERACTIVE_ROLE_ID: usize =
-    JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID + 1usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_INTERACTIONS_ID: usize =
-    JSX_A_11_Y_NO_INTERACTIVE_ELEMENT_TO_NONINTERACTIVE_ROLE_ID + 1usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID: usize =
-    JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_INTERACTIONS_ID + 1usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID: usize =
-    JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID + 1usize;
-const JSX_A_11_Y_NO_REDUNDANT_ROLES_ID: usize = JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID + 1usize;
-const JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID: usize =
-    JSX_A_11_Y_NO_REDUNDANT_ROLES_ID + 1usize;
-const JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID: usize =
-    JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID + 1usize;
-const JSX_A_11_Y_ROLE_HAS_REQUIRED_ARIA_PROPS_ID: usize =
-    JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID + 1usize;
-const JSX_A_11_Y_ROLE_SUPPORTS_ARIA_PROPS_ID: usize =
-    JSX_A_11_Y_ROLE_HAS_REQUIRED_ARIA_PROPS_ID + 1usize;
-const JSX_A_11_Y_SCOPE_ID: usize = JSX_A_11_Y_ROLE_SUPPORTS_ARIA_PROPS_ID + 1usize;
-const JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID: usize = JSX_A_11_Y_SCOPE_ID + 1usize;
-const OXC_APPROX_CONSTANT_ID: usize = JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID + 1usize;
-const OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID: usize = OXC_APPROX_CONSTANT_ID + 1usize;
-const OXC_BAD_BITWISE_OPERATOR_ID: usize = OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID + 1usize;
-const OXC_BAD_CHAR_AT_COMPARISON_ID: usize = OXC_BAD_BITWISE_OPERATOR_ID + 1usize;
-const OXC_BAD_COMPARISON_SEQUENCE_ID: usize = OXC_BAD_CHAR_AT_COMPARISON_ID + 1usize;
-const OXC_BAD_MATCH_ALL_ARG_ID: usize = OXC_BAD_COMPARISON_SEQUENCE_ID + 1usize;
-const OXC_BAD_MIN_MAX_FUNC_ID: usize = OXC_BAD_MATCH_ALL_ARG_ID + 1usize;
-const OXC_BAD_OBJECT_LITERAL_COMPARISON_ID: usize = OXC_BAD_MIN_MAX_FUNC_ID + 1usize;
-const OXC_BAD_REPLACE_ALL_ARG_ID: usize = OXC_BAD_OBJECT_LITERAL_COMPARISON_ID + 1usize;
-const OXC_BRANCHES_SHARING_CODE_ID: usize = OXC_BAD_REPLACE_ALL_ARG_ID + 1usize;
-const OXC_CONST_COMPARISONS_ID: usize = OXC_BRANCHES_SHARING_CODE_ID + 1usize;
-const OXC_DOUBLE_COMPARISONS_ID: usize = OXC_CONST_COMPARISONS_ID + 1usize;
-const OXC_ERASING_OP_ID: usize = OXC_DOUBLE_COMPARISONS_ID + 1usize;
-const OXC_MISREFACTORED_ASSIGN_OP_ID: usize = OXC_ERASING_OP_ID + 1usize;
-const OXC_MISSING_THROW_ID: usize = OXC_MISREFACTORED_ASSIGN_OP_ID + 1usize;
-const OXC_NO_ACCUMULATING_SPREAD_ID: usize = OXC_MISSING_THROW_ID + 1usize;
-const OXC_NO_ASYNC_AWAIT_ID: usize = OXC_NO_ACCUMULATING_SPREAD_ID + 1usize;
-const OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID: usize = OXC_NO_ASYNC_AWAIT_ID + 1usize;
-const OXC_NO_BARREL_FILE_ID: usize = OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID + 1usize;
-const OXC_NO_CONST_ENUM_ID: usize = OXC_NO_BARREL_FILE_ID + 1usize;
-const OXC_NO_MAP_SPREAD_ID: usize = OXC_NO_CONST_ENUM_ID + 1usize;
-const OXC_NO_OPTIONAL_CHAINING_ID: usize = OXC_NO_MAP_SPREAD_ID + 1usize;
-const OXC_NO_REST_SPREAD_PROPERTIES_ID: usize = OXC_NO_OPTIONAL_CHAINING_ID + 1usize;
-const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = OXC_NO_REST_SPREAD_PROPERTIES_ID + 1usize;
-const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID + 1usize;
-const OXC_ONLY_USED_IN_RECURSION_ID: usize = OXC_NUMBER_ARG_OUT_OF_RANGE_ID + 1usize;
-const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = OXC_ONLY_USED_IN_RECURSION_ID + 1usize;
-const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = OXC_UNINVOKED_ARRAY_CALLBACK_ID + 1usize;
-const NEXTJS_GOOGLE_FONT_PRECONNECT_ID: usize = NEXTJS_GOOGLE_FONT_DISPLAY_ID + 1usize;
-const NEXTJS_INLINE_SCRIPT_ID_ID: usize = NEXTJS_GOOGLE_FONT_PRECONNECT_ID + 1usize;
-const NEXTJS_NEXT_SCRIPT_FOR_GA_ID: usize = NEXTJS_INLINE_SCRIPT_ID_ID + 1usize;
-const NEXTJS_NO_ASSIGN_MODULE_VARIABLE_ID: usize = NEXTJS_NEXT_SCRIPT_FOR_GA_ID + 1usize;
-const NEXTJS_NO_ASYNC_CLIENT_COMPONENT_ID: usize = NEXTJS_NO_ASSIGN_MODULE_VARIABLE_ID + 1usize;
-const NEXTJS_NO_BEFORE_INTERACTIVE_SCRIPT_OUTSIDE_DOCUMENT_ID: usize =
-    NEXTJS_NO_ASYNC_CLIENT_COMPONENT_ID + 1usize;
-const NEXTJS_NO_CSS_TAGS_ID: usize =
-    NEXTJS_NO_BEFORE_INTERACTIVE_SCRIPT_OUTSIDE_DOCUMENT_ID + 1usize;
-const NEXTJS_NO_DOCUMENT_IMPORT_IN_PAGE_ID: usize = NEXTJS_NO_CSS_TAGS_ID + 1usize;
-const NEXTJS_NO_DUPLICATE_HEAD_ID: usize = NEXTJS_NO_DOCUMENT_IMPORT_IN_PAGE_ID + 1usize;
-const NEXTJS_NO_HEAD_ELEMENT_ID: usize = NEXTJS_NO_DUPLICATE_HEAD_ID + 1usize;
-const NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID: usize = NEXTJS_NO_HEAD_ELEMENT_ID + 1usize;
-const NEXTJS_NO_HTML_LINK_FOR_PAGES_ID: usize = NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID + 1usize;
-const NEXTJS_NO_IMG_ELEMENT_ID: usize = NEXTJS_NO_HTML_LINK_FOR_PAGES_ID + 1usize;
-const NEXTJS_NO_PAGE_CUSTOM_FONT_ID: usize = NEXTJS_NO_IMG_ELEMENT_ID + 1usize;
-const NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID: usize = NEXTJS_NO_PAGE_CUSTOM_FONT_ID + 1usize;
-const NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID: usize = NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID + 1usize;
-const NEXTJS_NO_SYNC_SCRIPTS_ID: usize = NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID + 1usize;
-const NEXTJS_NO_TITLE_IN_DOCUMENT_HEAD_ID: usize = NEXTJS_NO_SYNC_SCRIPTS_ID + 1usize;
-const NEXTJS_NO_TYPOS_ID: usize = NEXTJS_NO_TITLE_IN_DOCUMENT_HEAD_ID + 1usize;
-const NEXTJS_NO_UNWANTED_POLYFILLIO_ID: usize = NEXTJS_NO_TYPOS_ID + 1usize;
-const JSDOC_CHECK_ACCESS_ID: usize = NEXTJS_NO_UNWANTED_POLYFILLIO_ID + 1usize;
-const JSDOC_CHECK_PROPERTY_NAMES_ID: usize = JSDOC_CHECK_ACCESS_ID + 1usize;
-const JSDOC_CHECK_TAG_NAMES_ID: usize = JSDOC_CHECK_PROPERTY_NAMES_ID + 1usize;
-const JSDOC_EMPTY_TAGS_ID: usize = JSDOC_CHECK_TAG_NAMES_ID + 1usize;
-const JSDOC_IMPLEMENTS_ON_CLASSES_ID: usize = JSDOC_EMPTY_TAGS_ID + 1usize;
-const JSDOC_NO_BLANK_BLOCKS_ID: usize = JSDOC_IMPLEMENTS_ON_CLASSES_ID + 1usize;
-const JSDOC_NO_DEFAULTS_ID: usize = JSDOC_NO_BLANK_BLOCKS_ID + 1usize;
-const JSDOC_REQUIRE_PARAM_ID: usize = JSDOC_NO_DEFAULTS_ID + 1usize;
-const JSDOC_REQUIRE_PARAM_DESCRIPTION_ID: usize = JSDOC_REQUIRE_PARAM_ID + 1usize;
-const JSDOC_REQUIRE_PARAM_NAME_ID: usize = JSDOC_REQUIRE_PARAM_DESCRIPTION_ID + 1usize;
-const JSDOC_REQUIRE_PARAM_TYPE_ID: usize = JSDOC_REQUIRE_PARAM_NAME_ID + 1usize;
-const JSDOC_REQUIRE_PROPERTY_ID: usize = JSDOC_REQUIRE_PARAM_TYPE_ID + 1usize;
-const JSDOC_REQUIRE_PROPERTY_DESCRIPTION_ID: usize = JSDOC_REQUIRE_PROPERTY_ID + 1usize;
-const JSDOC_REQUIRE_PROPERTY_NAME_ID: usize = JSDOC_REQUIRE_PROPERTY_DESCRIPTION_ID + 1usize;
-const JSDOC_REQUIRE_PROPERTY_TYPE_ID: usize = JSDOC_REQUIRE_PROPERTY_NAME_ID + 1usize;
-const JSDOC_REQUIRE_RETURNS_ID: usize = JSDOC_REQUIRE_PROPERTY_TYPE_ID + 1usize;
-const JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID: usize = JSDOC_REQUIRE_RETURNS_ID + 1usize;
-const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID + 1usize;
-const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = JSDOC_REQUIRE_RETURNS_TYPE_ID + 1usize;
-const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = JSDOC_REQUIRE_THROWS_DESCRIPTION_ID + 1usize;
-const JSDOC_REQUIRE_YIELDS_ID: usize = JSDOC_REQUIRE_THROWS_TYPE_ID + 1usize;
-const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = JSDOC_REQUIRE_YIELDS_ID + 1usize;
-const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID + 1usize;
-const PROMISE_ALWAYS_RETURN_ID: usize = JSDOC_REQUIRE_YIELDS_TYPE_ID + 1usize;
-const PROMISE_AVOID_NEW_ID: usize = PROMISE_ALWAYS_RETURN_ID + 1usize;
-const PROMISE_CATCH_OR_RETURN_ID: usize = PROMISE_AVOID_NEW_ID + 1usize;
-const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = PROMISE_CATCH_OR_RETURN_ID + 1usize;
-const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = PROMISE_NO_CALLBACK_IN_PROMISE_ID + 1usize;
-const PROMISE_NO_NESTING_ID: usize = PROMISE_NO_MULTIPLE_RESOLVED_ID + 1usize;
-const PROMISE_NO_NEW_STATICS_ID: usize = PROMISE_NO_NESTING_ID + 1usize;
-const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = PROMISE_NO_NEW_STATICS_ID + 1usize;
-const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = PROMISE_NO_PROMISE_IN_CALLBACK_ID + 1usize;
-const PROMISE_NO_RETURN_WRAP_ID: usize = PROMISE_NO_RETURN_IN_FINALLY_ID + 1usize;
-const PROMISE_PARAM_NAMES_ID: usize = PROMISE_NO_RETURN_WRAP_ID + 1usize;
-const PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID: usize = PROMISE_PARAM_NAMES_ID + 1usize;
-const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID + 1usize;
-const PROMISE_PREFER_CATCH_ID: usize = PROMISE_PREFER_AWAIT_TO_THEN_ID + 1usize;
-const PROMISE_SPEC_ONLY_ID: usize = PROMISE_PREFER_CATCH_ID + 1usize;
-const PROMISE_VALID_PARAMS_ID: usize = PROMISE_SPEC_ONLY_ID + 1usize;
-const VITEST_CONSISTENT_EACH_FOR_ID: usize = PROMISE_VALID_PARAMS_ID + 1usize;
-const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = VITEST_CONSISTENT_EACH_FOR_ID + 1usize;
-const VITEST_CONSISTENT_TEST_IT_ID: usize = VITEST_CONSISTENT_TEST_FILENAME_ID + 1usize;
-const VITEST_CONSISTENT_VITEST_VI_ID: usize = VITEST_CONSISTENT_TEST_IT_ID + 1usize;
-const VITEST_EXPECT_EXPECT_ID: usize = VITEST_CONSISTENT_VITEST_VI_ID + 1usize;
-const VITEST_HOISTED_APIS_ON_TOP_ID: usize = VITEST_EXPECT_EXPECT_ID + 1usize;
-const VITEST_MAX_EXPECTS_ID: usize = VITEST_HOISTED_APIS_ON_TOP_ID + 1usize;
-const VITEST_MAX_NESTED_DESCRIBE_ID: usize = VITEST_MAX_EXPECTS_ID + 1usize;
-const VITEST_NO_ALIAS_METHODS_ID: usize = VITEST_MAX_NESTED_DESCRIBE_ID + 1usize;
-const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = VITEST_NO_ALIAS_METHODS_ID + 1usize;
-const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = VITEST_NO_COMMENTED_OUT_TESTS_ID + 1usize;
-const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = VITEST_NO_CONDITIONAL_EXPECT_ID + 1usize;
-const VITEST_NO_CONDITIONAL_TESTS_ID: usize = VITEST_NO_CONDITIONAL_IN_TEST_ID + 1usize;
-const VITEST_NO_DISABLED_TESTS_ID: usize = VITEST_NO_CONDITIONAL_TESTS_ID + 1usize;
-const VITEST_NO_DUPLICATE_HOOKS_ID: usize = VITEST_NO_DISABLED_TESTS_ID + 1usize;
-const VITEST_NO_FOCUSED_TESTS_ID: usize = VITEST_NO_DUPLICATE_HOOKS_ID + 1usize;
-const VITEST_NO_HOOKS_ID: usize = VITEST_NO_FOCUSED_TESTS_ID + 1usize;
-const VITEST_NO_IDENTICAL_TITLE_ID: usize = VITEST_NO_HOOKS_ID + 1usize;
-const VITEST_NO_IMPORT_NODE_TEST_ID: usize = VITEST_NO_IDENTICAL_TITLE_ID + 1usize;
-const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = VITEST_NO_IMPORT_NODE_TEST_ID + 1usize;
-const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize =
-    VITEST_NO_IMPORTING_VITEST_GLOBALS_ID + 1usize;
-const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID + 1usize;
-const VITEST_NO_MOCKS_IMPORT_ID: usize = VITEST_NO_LARGE_SNAPSHOTS_ID + 1usize;
-const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = VITEST_NO_MOCKS_IMPORT_ID + 1usize;
-const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = VITEST_NO_RESTRICTED_MATCHERS_ID + 1usize;
-const VITEST_NO_STANDALONE_EXPECT_ID: usize = VITEST_NO_RESTRICTED_VI_METHODS_ID + 1usize;
-const VITEST_NO_TEST_PREFIXES_ID: usize = VITEST_NO_STANDALONE_EXPECT_ID + 1usize;
-const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = VITEST_NO_TEST_PREFIXES_ID + 1usize;
-const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize =
-    VITEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
-const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize =
-    VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
-const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize =
-    VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
-    VITEST_PADDING_AROUND_TEST_BLOCKS_ID + 1usize;
-const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
-const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
-const VITEST_PREFER_CALLED_WITH_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
-const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = VITEST_PREFER_CALLED_WITH_ID + 1usize;
-const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize =
-    VITEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
-const VITEST_PREFER_EACH_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
-const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = VITEST_PREFER_EACH_ID + 1usize;
-const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = VITEST_PREFER_EQUALITY_MATCHER_ID + 1usize;
-const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = VITEST_PREFER_EXPECT_ASSERTIONS_ID + 1usize;
-const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_EXPECT_RESOLVES_ID + 1usize;
-const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
-const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = VITEST_PREFER_HOOKS_IN_ORDER_ID + 1usize;
-const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = VITEST_PREFER_HOOKS_ON_TOP_ID + 1usize;
-const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = VITEST_PREFER_IMPORT_IN_MOCK_ID + 1usize;
-const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID + 1usize;
-const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = VITEST_PREFER_LOWERCASE_TITLE_ID + 1usize;
-const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize =
-    VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID + 1usize;
-const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID + 1usize;
-const VITEST_PREFER_SPY_ON_ID: usize = VITEST_PREFER_SNAPSHOT_HINT_ID + 1usize;
-const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = VITEST_PREFER_SPY_ON_ID + 1usize;
-const VITEST_PREFER_STRICT_EQUAL_ID: usize = VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID + 1usize;
-const VITEST_PREFER_TO_BE_ID: usize = VITEST_PREFER_STRICT_EQUAL_ID + 1usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_TO_BE_ID + 1usize;
-const VITEST_PREFER_TO_BE_OBJECT_ID: usize = VITEST_PREFER_TO_BE_FALSY_ID + 1usize;
-const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = VITEST_PREFER_TO_BE_OBJECT_ID + 1usize;
-const VITEST_PREFER_TO_CONTAIN_ID: usize = VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
-const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = VITEST_PREFER_TO_CONTAIN_ID + 1usize;
-const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID + 1usize;
-const VITEST_PREFER_TODO_ID: usize = VITEST_PREFER_TO_HAVE_LENGTH_ID + 1usize;
-const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = VITEST_PREFER_TODO_ID + 1usize;
-const VITEST_REQUIRE_HOOK_ID: usize = VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID + 1usize;
-const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize =
-    VITEST_REQUIRE_HOOK_ID + 1usize;
-const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize =
-    VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID + 1usize;
-const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID + 1usize;
-const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = VITEST_REQUIRE_TEST_TIMEOUT_ID + 1usize;
-const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = VITEST_REQUIRE_TO_THROW_MESSAGE_ID + 1usize;
-const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID + 1usize;
-const VITEST_VALID_EXPECT_ID: usize = VITEST_VALID_DESCRIBE_CALLBACK_ID + 1usize;
-const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = VITEST_VALID_EXPECT_ID + 1usize;
-const VITEST_VALID_TITLE_ID: usize = VITEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
-const VITEST_WARN_TODO_ID: usize = VITEST_VALID_TITLE_ID + 1usize;
-const NODE_CALLBACK_RETURN_ID: usize = VITEST_WARN_TODO_ID + 1usize;
-const NODE_EXPORTS_STYLE_ID: usize = NODE_CALLBACK_RETURN_ID + 1usize;
-const NODE_GLOBAL_REQUIRE_ID: usize = NODE_EXPORTS_STYLE_ID + 1usize;
-const NODE_HANDLE_CALLBACK_ERR_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
-const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_HANDLE_CALLBACK_ERR_ID + 1usize;
-const NODE_NO_MIXED_REQUIRES_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
-const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_MIXED_REQUIRES_ID + 1usize;
-const NODE_NO_PATH_CONCAT_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
-const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_PATH_CONCAT_ID + 1usize;
-const NODE_NO_SYNC_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
-const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = NODE_NO_SYNC_ID + 1usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_TOP_LEVEL_AWAIT_ID + 1usize;
-const VUE_DEFINE_EMITS_DECLARATION_ID: usize = VUE_COMPONENT_DEFINITION_NAME_CASING_ID + 1usize;
-const VUE_DEFINE_PROPS_DECLARATION_ID: usize = VUE_DEFINE_EMITS_DECLARATION_ID + 1usize;
-const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID + 1usize;
-const VUE_MAX_PROPS_ID: usize = VUE_DEFINE_PROPS_DESTRUCTURING_ID + 1usize;
-const VUE_NEXT_TICK_STYLE_ID: usize = VUE_MAX_PROPS_ID + 1usize;
-const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = VUE_NEXT_TICK_STYLE_ID + 1usize;
-const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID + 1usize;
-const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize =
-    VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID + 1usize;
-const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize =
-    VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID + 1usize;
-const VUE_NO_DEPRECATED_DELETE_SET_ID: usize =
-    VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID + 1usize;
-const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = VUE_NO_DEPRECATED_DELETE_SET_ID + 1usize;
-const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID + 1usize;
-const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = VUE_NO_DEPRECATED_EVENTS_API_ID + 1usize;
-const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize =
-    VUE_NO_DEPRECATED_MODEL_DEFINITION_ID + 1usize;
-const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize =
-    VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID + 1usize;
-const VUE_NO_DUPE_KEYS_ID: usize = VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID + 1usize;
-const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = VUE_NO_DUPE_KEYS_ID + 1usize;
-const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID + 1usize;
-const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = VUE_NO_EXPOSE_AFTER_AWAIT_ID + 1usize;
-const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = VUE_NO_IMPORT_COMPILER_MACROS_ID + 1usize;
-const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = VUE_NO_LIFECYCLE_AFTER_AWAIT_ID + 1usize;
-const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = VUE_NO_MULTIPLE_SLOT_ARGS_ID + 1usize;
-const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID + 1usize;
-const VUE_NO_RESERVED_KEYS_ID: usize = VUE_NO_RESERVED_COMPONENT_NAMES_ID + 1usize;
-const VUE_NO_RESERVED_PROPS_ID: usize = VUE_NO_RESERVED_KEYS_ID + 1usize;
-const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = VUE_NO_RESERVED_PROPS_ID + 1usize;
-const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize =
-    VUE_NO_SHARED_COMPONENT_DATA_ID + 1usize;
-const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize =
-    VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID + 1usize;
-const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID + 1usize;
-const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_NO_WATCH_AFTER_AWAIT_ID + 1usize;
-const VUE_PROP_NAME_CASING_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
-const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PROP_NAME_CASING_ID + 1usize;
-const VUE_REQUIRE_DEFAULT_PROP_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
-const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = VUE_REQUIRE_DEFAULT_PROP_ID + 1usize;
-const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = VUE_REQUIRE_DIRECT_EXPORT_ID + 1usize;
-const VUE_REQUIRE_PROP_TYPES_ID: usize = VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID + 1usize;
-const VUE_REQUIRE_RENDER_RETURN_ID: usize = VUE_REQUIRE_PROP_TYPES_ID + 1usize;
-const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = VUE_REQUIRE_RENDER_RETURN_ID + 1usize;
-const VUE_REQUIRE_TYPED_REF_ID: usize = VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID + 1usize;
-const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
-const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = VUE_RETURN_IN_COMPUTED_PROPERTY_ID + 1usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usize;
-const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
-const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
-const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 849usize] = [
+const IMPORT_DEFAULT_ID: usize = 1usize;
+const IMPORT_EXPORT_ID: usize = 2usize;
+const IMPORT_EXPORTS_LAST_ID: usize = 3usize;
+const IMPORT_EXTENSIONS_ID: usize = 4usize;
+const IMPORT_FIRST_ID: usize = 5usize;
+const IMPORT_GROUP_EXPORTS_ID: usize = 6usize;
+const IMPORT_MAX_DEPENDENCIES_ID: usize = 7usize;
+const IMPORT_NAMED_ID: usize = 8usize;
+const IMPORT_NAMESPACE_ID: usize = 9usize;
+const IMPORT_NEWLINE_AFTER_IMPORT_ID: usize = 10usize;
+const IMPORT_NO_ABSOLUTE_PATH_ID: usize = 11usize;
+const IMPORT_NO_AMD_ID: usize = 12usize;
+const IMPORT_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = 13usize;
+const IMPORT_NO_COMMONJS_ID: usize = 14usize;
+const IMPORT_NO_CYCLE_ID: usize = 15usize;
+const IMPORT_NO_DEFAULT_EXPORT_ID: usize = 16usize;
+const IMPORT_NO_DUPLICATES_ID: usize = 17usize;
+const IMPORT_NO_DYNAMIC_REQUIRE_ID: usize = 18usize;
+const IMPORT_NO_EMPTY_NAMED_BLOCKS_ID: usize = 19usize;
+const IMPORT_NO_MUTABLE_EXPORTS_ID: usize = 20usize;
+const IMPORT_NO_NAMED_AS_DEFAULT_ID: usize = 21usize;
+const IMPORT_NO_NAMED_AS_DEFAULT_MEMBER_ID: usize = 22usize;
+const IMPORT_NO_NAMED_DEFAULT_ID: usize = 23usize;
+const IMPORT_NO_NAMED_EXPORT_ID: usize = 24usize;
+const IMPORT_NO_NAMESPACE_ID: usize = 25usize;
+const IMPORT_NO_NODEJS_MODULES_ID: usize = 26usize;
+const IMPORT_NO_RELATIVE_PARENT_IMPORTS_ID: usize = 27usize;
+const IMPORT_NO_SELF_IMPORT_ID: usize = 28usize;
+const IMPORT_NO_UNASSIGNED_IMPORT_ID: usize = 29usize;
+const IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID: usize = 30usize;
+const IMPORT_PREFER_DEFAULT_EXPORT_ID: usize = 31usize;
+const IMPORT_UNAMBIGUOUS_ID: usize = 32usize;
+const ESLINT_ACCESSOR_PAIRS_ID: usize = 33usize;
+const ESLINT_ARRAY_CALLBACK_RETURN_ID: usize = 34usize;
+const ESLINT_ARROW_BODY_STYLE_ID: usize = 35usize;
+const ESLINT_BLOCK_SCOPED_VAR_ID: usize = 36usize;
+const ESLINT_CAPITALIZED_COMMENTS_ID: usize = 37usize;
+const ESLINT_CLASS_METHODS_USE_THIS_ID: usize = 38usize;
+const ESLINT_COMPLEXITY_ID: usize = 39usize;
+const ESLINT_CONSTRUCTOR_SUPER_ID: usize = 40usize;
+const ESLINT_CURLY_ID: usize = 41usize;
+const ESLINT_DEFAULT_CASE_ID: usize = 42usize;
+const ESLINT_DEFAULT_CASE_LAST_ID: usize = 43usize;
+const ESLINT_DEFAULT_PARAM_LAST_ID: usize = 44usize;
+const ESLINT_EQEQEQ_ID: usize = 45usize;
+const ESLINT_FOR_DIRECTION_ID: usize = 46usize;
+const ESLINT_FUNC_NAME_MATCHING_ID: usize = 47usize;
+const ESLINT_FUNC_NAMES_ID: usize = 48usize;
+const ESLINT_FUNC_STYLE_ID: usize = 49usize;
+const ESLINT_GETTER_RETURN_ID: usize = 50usize;
+const ESLINT_GROUPED_ACCESSOR_PAIRS_ID: usize = 51usize;
+const ESLINT_GUARD_FOR_IN_ID: usize = 52usize;
+const ESLINT_ID_DENYLIST_ID: usize = 53usize;
+const ESLINT_ID_LENGTH_ID: usize = 54usize;
+const ESLINT_ID_MATCH_ID: usize = 55usize;
+const ESLINT_INIT_DECLARATIONS_ID: usize = 56usize;
+const ESLINT_LOGICAL_ASSIGNMENT_OPERATORS_ID: usize = 57usize;
+const ESLINT_MAX_CLASSES_PER_FILE_ID: usize = 58usize;
+const ESLINT_MAX_DEPTH_ID: usize = 59usize;
+const ESLINT_MAX_LINES_ID: usize = 60usize;
+const ESLINT_MAX_LINES_PER_FUNCTION_ID: usize = 61usize;
+const ESLINT_MAX_NESTED_CALLBACKS_ID: usize = 62usize;
+const ESLINT_MAX_PARAMS_ID: usize = 63usize;
+const ESLINT_MAX_STATEMENTS_ID: usize = 64usize;
+const ESLINT_NEW_CAP_ID: usize = 65usize;
+const ESLINT_NO_ALERT_ID: usize = 66usize;
+const ESLINT_NO_ARRAY_CONSTRUCTOR_ID: usize = 67usize;
+const ESLINT_NO_ASYNC_PROMISE_EXECUTOR_ID: usize = 68usize;
+const ESLINT_NO_AWAIT_IN_LOOP_ID: usize = 69usize;
+const ESLINT_NO_BITWISE_ID: usize = 70usize;
+const ESLINT_NO_CALLER_ID: usize = 71usize;
+const ESLINT_NO_CASE_DECLARATIONS_ID: usize = 72usize;
+const ESLINT_NO_CLASS_ASSIGN_ID: usize = 73usize;
+const ESLINT_NO_COMPARE_NEG_ZERO_ID: usize = 74usize;
+const ESLINT_NO_COND_ASSIGN_ID: usize = 75usize;
+const ESLINT_NO_CONSOLE_ID: usize = 76usize;
+const ESLINT_NO_CONST_ASSIGN_ID: usize = 77usize;
+const ESLINT_NO_CONSTANT_BINARY_EXPRESSION_ID: usize = 78usize;
+const ESLINT_NO_CONSTANT_CONDITION_ID: usize = 79usize;
+const ESLINT_NO_CONSTRUCTOR_RETURN_ID: usize = 80usize;
+const ESLINT_NO_CONTINUE_ID: usize = 81usize;
+const ESLINT_NO_CONTROL_REGEX_ID: usize = 82usize;
+const ESLINT_NO_DEBUGGER_ID: usize = 83usize;
+const ESLINT_NO_DELETE_VAR_ID: usize = 84usize;
+const ESLINT_NO_DIV_REGEX_ID: usize = 85usize;
+const ESLINT_NO_DUPE_CLASS_MEMBERS_ID: usize = 86usize;
+const ESLINT_NO_DUPE_ELSE_IF_ID: usize = 87usize;
+const ESLINT_NO_DUPE_KEYS_ID: usize = 88usize;
+const ESLINT_NO_DUPLICATE_CASE_ID: usize = 89usize;
+const ESLINT_NO_DUPLICATE_IMPORTS_ID: usize = 90usize;
+const ESLINT_NO_ELSE_RETURN_ID: usize = 91usize;
+const ESLINT_NO_EMPTY_ID: usize = 92usize;
+const ESLINT_NO_EMPTY_CHARACTER_CLASS_ID: usize = 93usize;
+const ESLINT_NO_EMPTY_FUNCTION_ID: usize = 94usize;
+const ESLINT_NO_EMPTY_PATTERN_ID: usize = 95usize;
+const ESLINT_NO_EMPTY_STATIC_BLOCK_ID: usize = 96usize;
+const ESLINT_NO_EQ_NULL_ID: usize = 97usize;
+const ESLINT_NO_EVAL_ID: usize = 98usize;
+const ESLINT_NO_EX_ASSIGN_ID: usize = 99usize;
+const ESLINT_NO_EXTEND_NATIVE_ID: usize = 100usize;
+const ESLINT_NO_EXTRA_BIND_ID: usize = 101usize;
+const ESLINT_NO_EXTRA_BOOLEAN_CAST_ID: usize = 102usize;
+const ESLINT_NO_EXTRA_LABEL_ID: usize = 103usize;
+const ESLINT_NO_FALLTHROUGH_ID: usize = 104usize;
+const ESLINT_NO_FUNC_ASSIGN_ID: usize = 105usize;
+const ESLINT_NO_GLOBAL_ASSIGN_ID: usize = 106usize;
+const ESLINT_NO_IMPLICIT_COERCION_ID: usize = 107usize;
+const ESLINT_NO_IMPLICIT_GLOBALS_ID: usize = 108usize;
+const ESLINT_NO_IMPLIED_EVAL_ID: usize = 109usize;
+const ESLINT_NO_IMPORT_ASSIGN_ID: usize = 110usize;
+const ESLINT_NO_INLINE_COMMENTS_ID: usize = 111usize;
+const ESLINT_NO_INNER_DECLARATIONS_ID: usize = 112usize;
+const ESLINT_NO_INVALID_REGEXP_ID: usize = 113usize;
+const ESLINT_NO_IRREGULAR_WHITESPACE_ID: usize = 114usize;
+const ESLINT_NO_ITERATOR_ID: usize = 115usize;
+const ESLINT_NO_LABEL_VAR_ID: usize = 116usize;
+const ESLINT_NO_LABELS_ID: usize = 117usize;
+const ESLINT_NO_LONE_BLOCKS_ID: usize = 118usize;
+const ESLINT_NO_LONELY_IF_ID: usize = 119usize;
+const ESLINT_NO_LOOP_FUNC_ID: usize = 120usize;
+const ESLINT_NO_LOSS_OF_PRECISION_ID: usize = 121usize;
+const ESLINT_NO_MAGIC_NUMBERS_ID: usize = 122usize;
+const ESLINT_NO_MISLEADING_CHARACTER_CLASS_ID: usize = 123usize;
+const ESLINT_NO_MULTI_ASSIGN_ID: usize = 124usize;
+const ESLINT_NO_MULTI_STR_ID: usize = 125usize;
+const ESLINT_NO_NEGATED_CONDITION_ID: usize = 126usize;
+const ESLINT_NO_NESTED_TERNARY_ID: usize = 127usize;
+const ESLINT_NO_NEW_ID: usize = 128usize;
+const ESLINT_NO_NEW_FUNC_ID: usize = 129usize;
+const ESLINT_NO_NEW_NATIVE_NONCONSTRUCTOR_ID: usize = 130usize;
+const ESLINT_NO_NEW_WRAPPERS_ID: usize = 131usize;
+const ESLINT_NO_NONOCTAL_DECIMAL_ESCAPE_ID: usize = 132usize;
+const ESLINT_NO_OBJ_CALLS_ID: usize = 133usize;
+const ESLINT_NO_OBJECT_CONSTRUCTOR_ID: usize = 134usize;
+const ESLINT_NO_PARAM_REASSIGN_ID: usize = 135usize;
+const ESLINT_NO_PLUSPLUS_ID: usize = 136usize;
+const ESLINT_NO_PROMISE_EXECUTOR_RETURN_ID: usize = 137usize;
+const ESLINT_NO_PROTO_ID: usize = 138usize;
+const ESLINT_NO_PROTOTYPE_BUILTINS_ID: usize = 139usize;
+const ESLINT_NO_REDECLARE_ID: usize = 140usize;
+const ESLINT_NO_REGEX_SPACES_ID: usize = 141usize;
+const ESLINT_NO_RESTRICTED_EXPORTS_ID: usize = 142usize;
+const ESLINT_NO_RESTRICTED_GLOBALS_ID: usize = 143usize;
+const ESLINT_NO_RESTRICTED_IMPORTS_ID: usize = 144usize;
+const ESLINT_NO_RESTRICTED_PROPERTIES_ID: usize = 145usize;
+const ESLINT_NO_RETURN_ASSIGN_ID: usize = 146usize;
+const ESLINT_NO_SCRIPT_URL_ID: usize = 147usize;
+const ESLINT_NO_SELF_ASSIGN_ID: usize = 148usize;
+const ESLINT_NO_SELF_COMPARE_ID: usize = 149usize;
+const ESLINT_NO_SEQUENCES_ID: usize = 150usize;
+const ESLINT_NO_SETTER_RETURN_ID: usize = 151usize;
+const ESLINT_NO_SHADOW_ID: usize = 152usize;
+const ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID: usize = 153usize;
+const ESLINT_NO_SPARSE_ARRAYS_ID: usize = 154usize;
+const ESLINT_NO_TEMPLATE_CURLY_IN_STRING_ID: usize = 155usize;
+const ESLINT_NO_TERNARY_ID: usize = 156usize;
+const ESLINT_NO_THIS_BEFORE_SUPER_ID: usize = 157usize;
+const ESLINT_NO_THROW_LITERAL_ID: usize = 158usize;
+const ESLINT_NO_UNASSIGNED_VARS_ID: usize = 159usize;
+const ESLINT_NO_UNDEF_ID: usize = 160usize;
+const ESLINT_NO_UNDEFINED_ID: usize = 161usize;
+const ESLINT_NO_UNDERSCORE_DANGLE_ID: usize = 162usize;
+const ESLINT_NO_UNEXPECTED_MULTILINE_ID: usize = 163usize;
+const ESLINT_NO_UNMODIFIED_LOOP_CONDITION_ID: usize = 164usize;
+const ESLINT_NO_UNNEEDED_TERNARY_ID: usize = 165usize;
+const ESLINT_NO_UNREACHABLE_ID: usize = 166usize;
+const ESLINT_NO_UNREACHABLE_LOOP_ID: usize = 167usize;
+const ESLINT_NO_UNSAFE_FINALLY_ID: usize = 168usize;
+const ESLINT_NO_UNSAFE_NEGATION_ID: usize = 169usize;
+const ESLINT_NO_UNSAFE_OPTIONAL_CHAINING_ID: usize = 170usize;
+const ESLINT_NO_UNUSED_EXPRESSIONS_ID: usize = 171usize;
+const ESLINT_NO_UNUSED_LABELS_ID: usize = 172usize;
+const ESLINT_NO_UNUSED_PRIVATE_CLASS_MEMBERS_ID: usize = 173usize;
+const ESLINT_NO_UNUSED_VARS_ID: usize = 174usize;
+const ESLINT_NO_USE_BEFORE_DEFINE_ID: usize = 175usize;
+const ESLINT_NO_USELESS_ASSIGNMENT_ID: usize = 176usize;
+const ESLINT_NO_USELESS_BACKREFERENCE_ID: usize = 177usize;
+const ESLINT_NO_USELESS_CALL_ID: usize = 178usize;
+const ESLINT_NO_USELESS_CATCH_ID: usize = 179usize;
+const ESLINT_NO_USELESS_COMPUTED_KEY_ID: usize = 180usize;
+const ESLINT_NO_USELESS_CONCAT_ID: usize = 181usize;
+const ESLINT_NO_USELESS_CONSTRUCTOR_ID: usize = 182usize;
+const ESLINT_NO_USELESS_ESCAPE_ID: usize = 183usize;
+const ESLINT_NO_USELESS_RENAME_ID: usize = 184usize;
+const ESLINT_NO_USELESS_RETURN_ID: usize = 185usize;
+const ESLINT_NO_VAR_ID: usize = 186usize;
+const ESLINT_NO_VOID_ID: usize = 187usize;
+const ESLINT_NO_WARNING_COMMENTS_ID: usize = 188usize;
+const ESLINT_NO_WITH_ID: usize = 189usize;
+const ESLINT_OBJECT_SHORTHAND_ID: usize = 190usize;
+const ESLINT_ONE_VAR_ID: usize = 191usize;
+const ESLINT_OPERATOR_ASSIGNMENT_ID: usize = 192usize;
+const ESLINT_PREFER_ARROW_CALLBACK_ID: usize = 193usize;
+const ESLINT_PREFER_CONST_ID: usize = 194usize;
+const ESLINT_PREFER_DESTRUCTURING_ID: usize = 195usize;
+const ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID: usize = 196usize;
+const ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID: usize = 197usize;
+const ESLINT_PREFER_NUMERIC_LITERALS_ID: usize = 198usize;
+const ESLINT_PREFER_OBJECT_HAS_OWN_ID: usize = 199usize;
+const ESLINT_PREFER_OBJECT_SPREAD_ID: usize = 200usize;
+const ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID: usize = 201usize;
+const ESLINT_PREFER_REGEX_LITERALS_ID: usize = 202usize;
+const ESLINT_PREFER_REST_PARAMS_ID: usize = 203usize;
+const ESLINT_PREFER_SPREAD_ID: usize = 204usize;
+const ESLINT_PREFER_TEMPLATE_ID: usize = 205usize;
+const ESLINT_PRESERVE_CAUGHT_ERROR_ID: usize = 206usize;
+const ESLINT_RADIX_ID: usize = 207usize;
+const ESLINT_REQUIRE_AWAIT_ID: usize = 208usize;
+const ESLINT_REQUIRE_UNICODE_REGEXP_ID: usize = 209usize;
+const ESLINT_REQUIRE_YIELD_ID: usize = 210usize;
+const ESLINT_SORT_IMPORTS_ID: usize = 211usize;
+const ESLINT_SORT_KEYS_ID: usize = 212usize;
+const ESLINT_SORT_VARS_ID: usize = 213usize;
+const ESLINT_SYMBOL_DESCRIPTION_ID: usize = 214usize;
+const ESLINT_UNICODE_BOM_ID: usize = 215usize;
+const ESLINT_USE_ISNAN_ID: usize = 216usize;
+const ESLINT_VALID_TYPEOF_ID: usize = 217usize;
+const ESLINT_VARS_ON_TOP_ID: usize = 218usize;
+const ESLINT_YODA_ID: usize = 219usize;
+const TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID: usize = 220usize;
+const TYPESCRIPT_ARRAY_TYPE_ID: usize = 221usize;
+const TYPESCRIPT_AWAIT_THENABLE_ID: usize = 222usize;
+const TYPESCRIPT_BAN_TS_COMMENT_ID: usize = 223usize;
+const TYPESCRIPT_BAN_TSLINT_COMMENT_ID: usize = 224usize;
+const TYPESCRIPT_BAN_TYPES_ID: usize = 225usize;
+const TYPESCRIPT_CLASS_LITERAL_PROPERTY_STYLE_ID: usize = 226usize;
+const TYPESCRIPT_CONSISTENT_GENERIC_CONSTRUCTORS_ID: usize = 227usize;
+const TYPESCRIPT_CONSISTENT_INDEXED_OBJECT_STYLE_ID: usize = 228usize;
+const TYPESCRIPT_CONSISTENT_RETURN_ID: usize = 229usize;
+const TYPESCRIPT_CONSISTENT_TYPE_ASSERTIONS_ID: usize = 230usize;
+const TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID: usize = 231usize;
+const TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID: usize = 232usize;
+const TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID: usize = 233usize;
+const TYPESCRIPT_DOT_NOTATION_ID: usize = 234usize;
+const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize = 235usize;
+const TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID: usize = 236usize;
+const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize = 237usize;
+const TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID: usize = 238usize;
+const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = 239usize;
+const TYPESCRIPT_NO_BASE_TO_STRING_ID: usize = 240usize;
+const TYPESCRIPT_NO_CONFUSING_NON_NULL_ASSERTION_ID: usize = 241usize;
+const TYPESCRIPT_NO_CONFUSING_VOID_EXPRESSION_ID: usize = 242usize;
+const TYPESCRIPT_NO_DEPRECATED_ID: usize = 243usize;
+const TYPESCRIPT_NO_DUPLICATE_ENUM_VALUES_ID: usize = 244usize;
+const TYPESCRIPT_NO_DUPLICATE_TYPE_CONSTITUENTS_ID: usize = 245usize;
+const TYPESCRIPT_NO_DYNAMIC_DELETE_ID: usize = 246usize;
+const TYPESCRIPT_NO_EMPTY_INTERFACE_ID: usize = 247usize;
+const TYPESCRIPT_NO_EMPTY_OBJECT_TYPE_ID: usize = 248usize;
+const TYPESCRIPT_NO_EXPLICIT_ANY_ID: usize = 249usize;
+const TYPESCRIPT_NO_EXTRA_NON_NULL_ASSERTION_ID: usize = 250usize;
+const TYPESCRIPT_NO_EXTRANEOUS_CLASS_ID: usize = 251usize;
+const TYPESCRIPT_NO_FLOATING_PROMISES_ID: usize = 252usize;
+const TYPESCRIPT_NO_FOR_IN_ARRAY_ID: usize = 253usize;
+const TYPESCRIPT_NO_GENERATED_EMPTY_OBJECT_TYPE_ID: usize = 254usize;
+const TYPESCRIPT_NO_IMPLIED_EVAL_ID: usize = 255usize;
+const TYPESCRIPT_NO_IMPORT_TYPE_SIDE_EFFECTS_ID: usize = 256usize;
+const TYPESCRIPT_NO_INFERRABLE_TYPES_ID: usize = 257usize;
+const TYPESCRIPT_NO_INVALID_VOID_TYPE_ID: usize = 258usize;
+const TYPESCRIPT_NO_MEANINGLESS_VOID_OPERATOR_ID: usize = 259usize;
+const TYPESCRIPT_NO_MISUSED_NEW_ID: usize = 260usize;
+const TYPESCRIPT_NO_MISUSED_PROMISES_ID: usize = 261usize;
+const TYPESCRIPT_NO_MISUSED_SPREAD_ID: usize = 262usize;
+const TYPESCRIPT_NO_MIXED_ENUMS_ID: usize = 263usize;
+const TYPESCRIPT_NO_NAMESPACE_ID: usize = 264usize;
+const TYPESCRIPT_NO_NON_NULL_ASSERTED_NULLISH_COALESCING_ID: usize = 265usize;
+const TYPESCRIPT_NO_NON_NULL_ASSERTED_OPTIONAL_CHAIN_ID: usize = 266usize;
+const TYPESCRIPT_NO_NON_NULL_ASSERTION_ID: usize = 267usize;
+const TYPESCRIPT_NO_REDUNDANT_TYPE_CONSTITUENTS_ID: usize = 268usize;
+const TYPESCRIPT_NO_REQUIRE_IMPORTS_ID: usize = 269usize;
+const TYPESCRIPT_NO_RESTRICTED_TYPES_ID: usize = 270usize;
+const TYPESCRIPT_NO_THIS_ALIAS_ID: usize = 271usize;
+const TYPESCRIPT_NO_UNNECESSARY_BOOLEAN_LITERAL_COMPARE_ID: usize = 272usize;
+const TYPESCRIPT_NO_UNNECESSARY_CONDITION_ID: usize = 273usize;
+const TYPESCRIPT_NO_UNNECESSARY_PARAMETER_PROPERTY_ASSIGNMENT_ID: usize = 274usize;
+const TYPESCRIPT_NO_UNNECESSARY_QUALIFIER_ID: usize = 275usize;
+const TYPESCRIPT_NO_UNNECESSARY_TEMPLATE_EXPRESSION_ID: usize = 276usize;
+const TYPESCRIPT_NO_UNNECESSARY_TYPE_ARGUMENTS_ID: usize = 277usize;
+const TYPESCRIPT_NO_UNNECESSARY_TYPE_ASSERTION_ID: usize = 278usize;
+const TYPESCRIPT_NO_UNNECESSARY_TYPE_CONSTRAINT_ID: usize = 279usize;
+const TYPESCRIPT_NO_UNNECESSARY_TYPE_CONVERSION_ID: usize = 280usize;
+const TYPESCRIPT_NO_UNNECESSARY_TYPE_PARAMETERS_ID: usize = 281usize;
+const TYPESCRIPT_NO_UNSAFE_ARGUMENT_ID: usize = 282usize;
+const TYPESCRIPT_NO_UNSAFE_ASSIGNMENT_ID: usize = 283usize;
+const TYPESCRIPT_NO_UNSAFE_CALL_ID: usize = 284usize;
+const TYPESCRIPT_NO_UNSAFE_DECLARATION_MERGING_ID: usize = 285usize;
+const TYPESCRIPT_NO_UNSAFE_ENUM_COMPARISON_ID: usize = 286usize;
+const TYPESCRIPT_NO_UNSAFE_FUNCTION_TYPE_ID: usize = 287usize;
+const TYPESCRIPT_NO_UNSAFE_MEMBER_ACCESS_ID: usize = 288usize;
+const TYPESCRIPT_NO_UNSAFE_RETURN_ID: usize = 289usize;
+const TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID: usize = 290usize;
+const TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID: usize = 291usize;
+const TYPESCRIPT_NO_USELESS_DEFAULT_ASSIGNMENT_ID: usize = 292usize;
+const TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID: usize = 293usize;
+const TYPESCRIPT_NO_VAR_REQUIRES_ID: usize = 294usize;
+const TYPESCRIPT_NO_WRAPPER_OBJECT_TYPES_ID: usize = 295usize;
+const TYPESCRIPT_NON_NULLABLE_TYPE_ASSERTION_STYLE_ID: usize = 296usize;
+const TYPESCRIPT_ONLY_THROW_ERROR_ID: usize = 297usize;
+const TYPESCRIPT_PARAMETER_PROPERTIES_ID: usize = 298usize;
+const TYPESCRIPT_PREFER_AS_CONST_ID: usize = 299usize;
+const TYPESCRIPT_PREFER_ENUM_INITIALIZERS_ID: usize = 300usize;
+const TYPESCRIPT_PREFER_FIND_ID: usize = 301usize;
+const TYPESCRIPT_PREFER_FOR_OF_ID: usize = 302usize;
+const TYPESCRIPT_PREFER_FUNCTION_TYPE_ID: usize = 303usize;
+const TYPESCRIPT_PREFER_INCLUDES_ID: usize = 304usize;
+const TYPESCRIPT_PREFER_LITERAL_ENUM_MEMBER_ID: usize = 305usize;
+const TYPESCRIPT_PREFER_NAMESPACE_KEYWORD_ID: usize = 306usize;
+const TYPESCRIPT_PREFER_NULLISH_COALESCING_ID: usize = 307usize;
+const TYPESCRIPT_PREFER_OPTIONAL_CHAIN_ID: usize = 308usize;
+const TYPESCRIPT_PREFER_PROMISE_REJECT_ERRORS_ID: usize = 309usize;
+const TYPESCRIPT_PREFER_READONLY_ID: usize = 310usize;
+const TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID: usize = 311usize;
+const TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID: usize = 312usize;
+const TYPESCRIPT_PREFER_REGEXP_EXEC_ID: usize = 313usize;
+const TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID: usize = 314usize;
+const TYPESCRIPT_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = 315usize;
+const TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID: usize = 316usize;
+const TYPESCRIPT_PROMISE_FUNCTION_ASYNC_ID: usize = 317usize;
+const TYPESCRIPT_RELATED_GETTER_SETTER_PAIRS_ID: usize = 318usize;
+const TYPESCRIPT_REQUIRE_ARRAY_SORT_COMPARE_ID: usize = 319usize;
+const TYPESCRIPT_REQUIRE_AWAIT_ID: usize = 320usize;
+const TYPESCRIPT_RESTRICT_PLUS_OPERANDS_ID: usize = 321usize;
+const TYPESCRIPT_RESTRICT_TEMPLATE_EXPRESSIONS_ID: usize = 322usize;
+const TYPESCRIPT_RETURN_AWAIT_ID: usize = 323usize;
+const TYPESCRIPT_STRICT_BOOLEAN_EXPRESSIONS_ID: usize = 324usize;
+const TYPESCRIPT_STRICT_VOID_RETURN_ID: usize = 325usize;
+const TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID: usize = 326usize;
+const TYPESCRIPT_TRIPLE_SLASH_REFERENCE_ID: usize = 327usize;
+const TYPESCRIPT_UNBOUND_METHOD_ID: usize = 328usize;
+const TYPESCRIPT_UNIFIED_SIGNATURES_ID: usize = 329usize;
+const TYPESCRIPT_USE_UNKNOWN_IN_CATCH_CALLBACK_VARIABLE_ID: usize = 330usize;
+const JEST_CONSISTENT_TEST_IT_ID: usize = 331usize;
+const JEST_EXPECT_EXPECT_ID: usize = 332usize;
+const JEST_MAX_EXPECTS_ID: usize = 333usize;
+const JEST_MAX_NESTED_DESCRIBE_ID: usize = 334usize;
+const JEST_NO_ALIAS_METHODS_ID: usize = 335usize;
+const JEST_NO_COMMENTED_OUT_TESTS_ID: usize = 336usize;
+const JEST_NO_CONDITIONAL_EXPECT_ID: usize = 337usize;
+const JEST_NO_CONDITIONAL_IN_TEST_ID: usize = 338usize;
+const JEST_NO_CONFUSING_SET_TIMEOUT_ID: usize = 339usize;
+const JEST_NO_DEPRECATED_FUNCTIONS_ID: usize = 340usize;
+const JEST_NO_DISABLED_TESTS_ID: usize = 341usize;
+const JEST_NO_DONE_CALLBACK_ID: usize = 342usize;
+const JEST_NO_DUPLICATE_HOOKS_ID: usize = 343usize;
+const JEST_NO_EXPORT_ID: usize = 344usize;
+const JEST_NO_FOCUSED_TESTS_ID: usize = 345usize;
+const JEST_NO_HOOKS_ID: usize = 346usize;
+const JEST_NO_IDENTICAL_TITLE_ID: usize = 347usize;
+const JEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 348usize;
+const JEST_NO_JASMINE_GLOBALS_ID: usize = 349usize;
+const JEST_NO_LARGE_SNAPSHOTS_ID: usize = 350usize;
+const JEST_NO_MOCKS_IMPORT_ID: usize = 351usize;
+const JEST_NO_RESTRICTED_JEST_METHODS_ID: usize = 352usize;
+const JEST_NO_RESTRICTED_MATCHERS_ID: usize = 353usize;
+const JEST_NO_STANDALONE_EXPECT_ID: usize = 354usize;
+const JEST_NO_TEST_PREFIXES_ID: usize = 355usize;
+const JEST_NO_TEST_RETURN_STATEMENT_ID: usize = 356usize;
+const JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 357usize;
+const JEST_NO_UNTYPED_MOCK_FACTORY_ID: usize = 358usize;
+const JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 359usize;
+const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 360usize;
+const JEST_PREFER_CALLED_WITH_ID: usize = 361usize;
+const JEST_PREFER_COMPARISON_MATCHER_ID: usize = 362usize;
+const JEST_PREFER_EACH_ID: usize = 363usize;
+const JEST_PREFER_ENDING_WITH_AN_EXPECT_ID: usize = 364usize;
+const JEST_PREFER_EQUALITY_MATCHER_ID: usize = 365usize;
+const JEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 366usize;
+const JEST_PREFER_EXPECT_RESOLVES_ID: usize = 367usize;
+const JEST_PREFER_HOOKS_IN_ORDER_ID: usize = 368usize;
+const JEST_PREFER_HOOKS_ON_TOP_ID: usize = 369usize;
+const JEST_PREFER_IMPORTING_JEST_GLOBALS_ID: usize = 370usize;
+const JEST_PREFER_JEST_MOCKED_ID: usize = 371usize;
+const JEST_PREFER_LOWERCASE_TITLE_ID: usize = 372usize;
+const JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 373usize;
+const JEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 374usize;
+const JEST_PREFER_SNAPSHOT_HINT_ID: usize = 375usize;
+const JEST_PREFER_SPY_ON_ID: usize = 376usize;
+const JEST_PREFER_STRICT_EQUAL_ID: usize = 377usize;
+const JEST_PREFER_TO_BE_ID: usize = 378usize;
+const JEST_PREFER_TO_CONTAIN_ID: usize = 379usize;
+const JEST_PREFER_TO_HAVE_BEEN_CALLED_ID: usize = 380usize;
+const JEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 381usize;
+const JEST_PREFER_TO_HAVE_LENGTH_ID: usize = 382usize;
+const JEST_PREFER_TODO_ID: usize = 383usize;
+const JEST_REQUIRE_HOOK_ID: usize = 384usize;
+const JEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 385usize;
+const JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 386usize;
+const JEST_VALID_DESCRIBE_CALLBACK_ID: usize = 387usize;
+const JEST_VALID_EXPECT_ID: usize = 388usize;
+const JEST_VALID_EXPECT_IN_PROMISE_ID: usize = 389usize;
+const JEST_VALID_TITLE_ID: usize = 390usize;
+const REACT_BUTTON_HAS_TYPE_ID: usize = 391usize;
+const REACT_CAPITALIZED_CALLS_ID: usize = 392usize;
+const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = 393usize;
+const REACT_DISPLAY_NAME_ID: usize = 394usize;
+const REACT_ERROR_BOUNDARIES_ID: usize = 395usize;
+const REACT_EXHAUSTIVE_DEPS_ID: usize = 396usize;
+const REACT_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID: usize = 397usize;
+const REACT_FORBID_COMPONENT_PROPS_ID: usize = 398usize;
+const REACT_FORBID_DOM_PROPS_ID: usize = 399usize;
+const REACT_FORBID_ELEMENTS_ID: usize = 400usize;
+const REACT_FORWARD_REF_USES_REF_ID: usize = 401usize;
+const REACT_FUNCTION_COMPONENT_DEFINITION_ID: usize = 402usize;
+const REACT_GLOBALS_ID: usize = 403usize;
+const REACT_HOOK_USE_STATE_ID: usize = 404usize;
+const REACT_HOOKS_ID: usize = 405usize;
+const REACT_IFRAME_MISSING_SANDBOX_ID: usize = 406usize;
+const REACT_IMMUTABILITY_ID: usize = 407usize;
+const REACT_INCOMPATIBLE_LIBRARY_ID: usize = 408usize;
+const REACT_INVARIANT_ID: usize = 409usize;
+const REACT_JSX_BOOLEAN_VALUE_ID: usize = 410usize;
+const REACT_JSX_CURLY_BRACE_PRESENCE_ID: usize = 411usize;
+const REACT_JSX_FILENAME_EXTENSION_ID: usize = 412usize;
+const REACT_JSX_FRAGMENTS_ID: usize = 413usize;
+const REACT_JSX_HANDLER_NAMES_ID: usize = 414usize;
+const REACT_JSX_KEY_ID: usize = 415usize;
+const REACT_JSX_MAX_DEPTH_ID: usize = 416usize;
+const REACT_JSX_NO_COMMENT_TEXTNODES_ID: usize = 417usize;
+const REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID: usize = 418usize;
+const REACT_JSX_NO_DUPLICATE_PROPS_ID: usize = 419usize;
+const REACT_JSX_NO_LITERALS_ID: usize = 420usize;
+const REACT_JSX_NO_SCRIPT_URL_ID: usize = 421usize;
+const REACT_JSX_NO_TARGET_BLANK_ID: usize = 422usize;
+const REACT_JSX_NO_UNDEF_ID: usize = 423usize;
+const REACT_JSX_NO_USELESS_FRAGMENT_ID: usize = 424usize;
+const REACT_JSX_PASCAL_CASE_ID: usize = 425usize;
+const REACT_JSX_PROPS_NO_SPREAD_MULTI_ID: usize = 426usize;
+const REACT_JSX_PROPS_NO_SPREADING_ID: usize = 427usize;
+const REACT_MEMO_DEPENDENCIES_ID: usize = 428usize;
+const REACT_NO_ARRAY_INDEX_KEY_ID: usize = 429usize;
+const REACT_NO_CHILDREN_PROP_ID: usize = 430usize;
+const REACT_NO_CLONE_ELEMENT_ID: usize = 431usize;
+const REACT_NO_DANGER_ID: usize = 432usize;
+const REACT_NO_DANGER_WITH_CHILDREN_ID: usize = 433usize;
+const REACT_NO_DERIVING_STATE_IN_EFFECTS_ID: usize = 434usize;
+const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = 435usize;
+const REACT_NO_DID_UPDATE_SET_STATE_ID: usize = 436usize;
+const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = 437usize;
+const REACT_NO_FIND_DOM_NODE_ID: usize = 438usize;
+const REACT_NO_IS_MOUNTED_ID: usize = 439usize;
+const REACT_NO_MULTI_COMP_ID: usize = 440usize;
+const REACT_NO_NAMESPACE_ID: usize = 441usize;
+const REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID: usize = 442usize;
+const REACT_NO_REACT_CHILDREN_ID: usize = 443usize;
+const REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID: usize = 444usize;
+const REACT_NO_RENDER_RETURN_VALUE_ID: usize = 445usize;
+const REACT_NO_SET_STATE_ID: usize = 446usize;
+const REACT_NO_STRING_REFS_ID: usize = 447usize;
+const REACT_NO_THIS_IN_SFC_ID: usize = 448usize;
+const REACT_NO_UNESCAPED_ENTITIES_ID: usize = 449usize;
+const REACT_NO_UNKNOWN_PROPERTY_ID: usize = 450usize;
+const REACT_NO_UNSAFE_ID: usize = 451usize;
+const REACT_NO_UNSTABLE_NESTED_COMPONENTS_ID: usize = 452usize;
+const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = 453usize;
+const REACT_ONLY_EXPORT_COMPONENTS_ID: usize = 454usize;
+const REACT_PREFER_ES_6_CLASS_ID: usize = 455usize;
+const REACT_PREFER_FUNCTION_COMPONENT_ID: usize = 456usize;
+const REACT_PRESERVE_MANUAL_MEMOIZATION_ID: usize = 457usize;
+const REACT_PURITY_ID: usize = 458usize;
+const REACT_REACT_IN_JSX_SCOPE_ID: usize = 459usize;
+const REACT_REFS_ID: usize = 460usize;
+const REACT_REQUIRE_RENDER_RETURN_ID: usize = 461usize;
+const REACT_RULE_SUPPRESSION_ID: usize = 462usize;
+const REACT_RULES_OF_HOOKS_ID: usize = 463usize;
+const REACT_SELF_CLOSING_COMP_ID: usize = 464usize;
+const REACT_SET_STATE_IN_EFFECT_ID: usize = 465usize;
+const REACT_SET_STATE_IN_RENDER_ID: usize = 466usize;
+const REACT_STATE_IN_CONSTRUCTOR_ID: usize = 467usize;
+const REACT_STATIC_COMPONENTS_ID: usize = 468usize;
+const REACT_STYLE_PROP_OBJECT_ID: usize = 469usize;
+const REACT_SYNTAX_ID: usize = 470usize;
+const REACT_TODO_ID: usize = 471usize;
+const REACT_UNSUPPORTED_SYNTAX_ID: usize = 472usize;
+const REACT_USE_MEMO_ID: usize = 473usize;
+const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = 474usize;
+const REACT_VOID_USE_MEMO_ID: usize = 475usize;
+const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = 476usize;
+const REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID: usize = 477usize;
+const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize = 478usize;
+const REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID: usize = 479usize;
+const UNICORN_CATCH_ERROR_NAME_ID: usize = 480usize;
+const UNICORN_CONSISTENT_ASSERT_ID: usize = 481usize;
+const UNICORN_CONSISTENT_DATE_CLONE_ID: usize = 482usize;
+const UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID: usize = 483usize;
+const UNICORN_CONSISTENT_EXISTENCE_INDEX_CHECK_ID: usize = 484usize;
+const UNICORN_CONSISTENT_FUNCTION_SCOPING_ID: usize = 485usize;
+const UNICORN_CONSISTENT_TEMPLATE_LITERAL_ESCAPE_ID: usize = 486usize;
+const UNICORN_CUSTOM_ERROR_DEFINITION_ID: usize = 487usize;
+const UNICORN_EMPTY_BRACE_SPACES_ID: usize = 488usize;
+const UNICORN_ERROR_MESSAGE_ID: usize = 489usize;
+const UNICORN_ESCAPE_CASE_ID: usize = 490usize;
+const UNICORN_EXPLICIT_LENGTH_CHECK_ID: usize = 491usize;
+const UNICORN_EXPLICIT_TIMER_DELAY_ID: usize = 492usize;
+const UNICORN_FILENAME_CASE_ID: usize = 493usize;
+const UNICORN_IMPORT_STYLE_ID: usize = 494usize;
+const UNICORN_MAX_NESTED_CALLS_ID: usize = 495usize;
+const UNICORN_NEW_FOR_BUILTINS_ID: usize = 496usize;
+const UNICORN_NO_ABUSIVE_ESLINT_DISABLE_ID: usize = 497usize;
+const UNICORN_NO_ACCESSOR_RECURSION_ID: usize = 498usize;
+const UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = 499usize;
+const UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID: usize = 500usize;
+const UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID: usize = 501usize;
+const UNICORN_NO_ARRAY_FOR_EACH_ID: usize = 502usize;
+const UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID: usize = 503usize;
+const UNICORN_NO_ARRAY_REDUCE_ID: usize = 504usize;
+const UNICORN_NO_ARRAY_REVERSE_ID: usize = 505usize;
+const UNICORN_NO_ARRAY_SORT_ID: usize = 506usize;
+const UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID: usize = 507usize;
+const UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID: usize = 508usize;
+const UNICORN_NO_CONFUSING_ARRAY_WITH_ID: usize = 509usize;
+const UNICORN_NO_CONSOLE_SPACES_ID: usize = 510usize;
+const UNICORN_NO_DOCUMENT_COOKIE_ID: usize = 511usize;
+const UNICORN_NO_EMPTY_FILE_ID: usize = 512usize;
+const UNICORN_NO_HEX_ESCAPE_ID: usize = 513usize;
+const UNICORN_NO_IMMEDIATE_MUTATION_ID: usize = 514usize;
+const UNICORN_NO_INSTANCEOF_ARRAY_ID: usize = 515usize;
+const UNICORN_NO_INSTANCEOF_BUILTINS_ID: usize = 516usize;
+const UNICORN_NO_INVALID_FETCH_OPTIONS_ID: usize = 517usize;
+const UNICORN_NO_INVALID_REMOVE_EVENT_LISTENER_ID: usize = 518usize;
+const UNICORN_NO_LENGTH_AS_SLICE_END_ID: usize = 519usize;
+const UNICORN_NO_LONELY_IF_ID: usize = 520usize;
+const UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID: usize = 521usize;
+const UNICORN_NO_NEGATED_CONDITION_ID: usize = 522usize;
+const UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID: usize = 523usize;
+const UNICORN_NO_NESTED_TERNARY_ID: usize = 524usize;
+const UNICORN_NO_NEW_ARRAY_ID: usize = 525usize;
+const UNICORN_NO_NEW_BUFFER_ID: usize = 526usize;
+const UNICORN_NO_NULL_ID: usize = 527usize;
+const UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID: usize = 528usize;
+const UNICORN_NO_PROCESS_EXIT_ID: usize = 529usize;
+const UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID: usize = 530usize;
+const UNICORN_NO_STATIC_ONLY_CLASS_ID: usize = 531usize;
+const UNICORN_NO_THENABLE_ID: usize = 532usize;
+const UNICORN_NO_THIS_ASSIGNMENT_ID: usize = 533usize;
+const UNICORN_NO_TYPEOF_UNDEFINED_ID: usize = 534usize;
+const UNICORN_NO_UNNECESSARY_ARRAY_FLAT_DEPTH_ID: usize = 535usize;
+const UNICORN_NO_UNNECESSARY_ARRAY_SPLICE_COUNT_ID: usize = 536usize;
+const UNICORN_NO_UNNECESSARY_AWAIT_ID: usize = 537usize;
+const UNICORN_NO_UNNECESSARY_SLICE_END_ID: usize = 538usize;
+const UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID: usize = 539usize;
+const UNICORN_NO_UNREADABLE_IIFE_ID: usize = 540usize;
+const UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID: usize = 541usize;
+const UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID: usize = 542usize;
+const UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID: usize = 543usize;
+const UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID: usize = 544usize;
+const UNICORN_NO_USELESS_LENGTH_CHECK_ID: usize = 545usize;
+const UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID: usize = 546usize;
+const UNICORN_NO_USELESS_SPREAD_ID: usize = 547usize;
+const UNICORN_NO_USELESS_SWITCH_CASE_ID: usize = 548usize;
+const UNICORN_NO_USELESS_UNDEFINED_ID: usize = 549usize;
+const UNICORN_NO_ZERO_FRACTIONS_ID: usize = 550usize;
+const UNICORN_NUMBER_LITERAL_CASE_ID: usize = 551usize;
+const UNICORN_NUMERIC_SEPARATORS_STYLE_ID: usize = 552usize;
+const UNICORN_PREFER_ADD_EVENT_LISTENER_ID: usize = 553usize;
+const UNICORN_PREFER_ARRAY_FIND_ID: usize = 554usize;
+const UNICORN_PREFER_ARRAY_FLAT_ID: usize = 555usize;
+const UNICORN_PREFER_ARRAY_FLAT_MAP_ID: usize = 556usize;
+const UNICORN_PREFER_ARRAY_INDEX_OF_ID: usize = 557usize;
+const UNICORN_PREFER_ARRAY_SOME_ID: usize = 558usize;
+const UNICORN_PREFER_AT_ID: usize = 559usize;
+const UNICORN_PREFER_BIGINT_LITERALS_ID: usize = 560usize;
+const UNICORN_PREFER_BLOB_READING_METHODS_ID: usize = 561usize;
+const UNICORN_PREFER_CLASS_FIELDS_ID: usize = 562usize;
+const UNICORN_PREFER_CLASSLIST_TOGGLE_ID: usize = 563usize;
+const UNICORN_PREFER_CODE_POINT_ID: usize = 564usize;
+const UNICORN_PREFER_DATE_NOW_ID: usize = 565usize;
+const UNICORN_PREFER_DEFAULT_PARAMETERS_ID: usize = 566usize;
+const UNICORN_PREFER_DOM_NODE_APPEND_ID: usize = 567usize;
+const UNICORN_PREFER_DOM_NODE_DATASET_ID: usize = 568usize;
+const UNICORN_PREFER_DOM_NODE_REMOVE_ID: usize = 569usize;
+const UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID: usize = 570usize;
+const UNICORN_PREFER_EVENT_TARGET_ID: usize = 571usize;
+const UNICORN_PREFER_EXPORT_FROM_ID: usize = 572usize;
+const UNICORN_PREFER_GLOBAL_THIS_ID: usize = 573usize;
+const UNICORN_PREFER_IMPORT_META_PROPERTIES_ID: usize = 574usize;
+const UNICORN_PREFER_INCLUDES_ID: usize = 575usize;
+const UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID: usize = 576usize;
+const UNICORN_PREFER_LOGICAL_OPERATOR_OVER_TERNARY_ID: usize = 577usize;
+const UNICORN_PREFER_MATH_MIN_MAX_ID: usize = 578usize;
+const UNICORN_PREFER_MATH_TRUNC_ID: usize = 579usize;
+const UNICORN_PREFER_MODERN_DOM_APIS_ID: usize = 580usize;
+const UNICORN_PREFER_MODERN_MATH_APIS_ID: usize = 581usize;
+const UNICORN_PREFER_MODULE_ID: usize = 582usize;
+const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = 583usize;
+const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize = 584usize;
+const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = 585usize;
+const UNICORN_PREFER_NUMBER_COERCION_ID: usize = 586usize;
+const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = 587usize;
+const UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID: usize = 588usize;
+const UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID: usize = 589usize;
+const UNICORN_PREFER_PROTOTYPE_METHODS_ID: usize = 590usize;
+const UNICORN_PREFER_QUERY_SELECTOR_ID: usize = 591usize;
+const UNICORN_PREFER_REFLECT_APPLY_ID: usize = 592usize;
+const UNICORN_PREFER_REGEXP_TEST_ID: usize = 593usize;
+const UNICORN_PREFER_RESPONSE_STATIC_JSON_ID: usize = 594usize;
+const UNICORN_PREFER_SET_HAS_ID: usize = 595usize;
+const UNICORN_PREFER_SET_SIZE_ID: usize = 596usize;
+const UNICORN_PREFER_SINGLE_CALL_ID: usize = 597usize;
+const UNICORN_PREFER_SPREAD_ID: usize = 598usize;
+const UNICORN_PREFER_STRING_RAW_ID: usize = 599usize;
+const UNICORN_PREFER_STRING_REPLACE_ALL_ID: usize = 600usize;
+const UNICORN_PREFER_STRING_SLICE_ID: usize = 601usize;
+const UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = 602usize;
+const UNICORN_PREFER_STRING_TRIM_START_END_ID: usize = 603usize;
+const UNICORN_PREFER_STRUCTURED_CLONE_ID: usize = 604usize;
+const UNICORN_PREFER_TERNARY_ID: usize = 605usize;
+const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = 606usize;
+const UNICORN_PREFER_TYPE_ERROR_ID: usize = 607usize;
+const UNICORN_RELATIVE_URL_STYLE_ID: usize = 608usize;
+const UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID: usize = 609usize;
+const UNICORN_REQUIRE_MODULE_ATTRIBUTES_ID: usize = 610usize;
+const UNICORN_REQUIRE_MODULE_SPECIFIERS_ID: usize = 611usize;
+const UNICORN_REQUIRE_NUMBER_TO_FIXED_DIGITS_ARGUMENT_ID: usize = 612usize;
+const UNICORN_REQUIRE_POST_MESSAGE_TARGET_ORIGIN_ID: usize = 613usize;
+const UNICORN_SWITCH_CASE_BRACES_ID: usize = 614usize;
+const UNICORN_SWITCH_CASE_BREAK_POSITION_ID: usize = 615usize;
+const UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID: usize = 616usize;
+const UNICORN_THROW_NEW_ERROR_ID: usize = 617usize;
+const JSX_A_11_Y_ALT_TEXT_ID: usize = 618usize;
+const JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID: usize = 619usize;
+const JSX_A_11_Y_ANCHOR_HAS_CONTENT_ID: usize = 620usize;
+const JSX_A_11_Y_ANCHOR_IS_VALID_ID: usize = 621usize;
+const JSX_A_11_Y_ARIA_ACTIVEDESCENDANT_HAS_TABINDEX_ID: usize = 622usize;
+const JSX_A_11_Y_ARIA_PROPS_ID: usize = 623usize;
+const JSX_A_11_Y_ARIA_PROPTYPES_ID: usize = 624usize;
+const JSX_A_11_Y_ARIA_ROLE_ID: usize = 625usize;
+const JSX_A_11_Y_ARIA_UNSUPPORTED_ELEMENTS_ID: usize = 626usize;
+const JSX_A_11_Y_AUTOCOMPLETE_VALID_ID: usize = 627usize;
+const JSX_A_11_Y_CLICK_EVENTS_HAVE_KEY_EVENTS_ID: usize = 628usize;
+const JSX_A_11_Y_CONTROL_HAS_ASSOCIATED_LABEL_ID: usize = 629usize;
+const JSX_A_11_Y_HEADING_HAS_CONTENT_ID: usize = 630usize;
+const JSX_A_11_Y_HTML_HAS_LANG_ID: usize = 631usize;
+const JSX_A_11_Y_IFRAME_HAS_TITLE_ID: usize = 632usize;
+const JSX_A_11_Y_IMG_REDUNDANT_ALT_ID: usize = 633usize;
+const JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID: usize = 634usize;
+const JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID: usize = 635usize;
+const JSX_A_11_Y_LANG_ID: usize = 636usize;
+const JSX_A_11_Y_MEDIA_HAS_CAPTION_ID: usize = 637usize;
+const JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVENTS_ID: usize = 638usize;
+const JSX_A_11_Y_NO_ACCESS_KEY_ID: usize = 639usize;
+const JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID: usize = 640usize;
+const JSX_A_11_Y_NO_AUTOFOCUS_ID: usize = 641usize;
+const JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID: usize = 642usize;
+const JSX_A_11_Y_NO_INTERACTIVE_ELEMENT_TO_NONINTERACTIVE_ROLE_ID: usize = 643usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_INTERACTIONS_ID: usize = 644usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID: usize = 645usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID: usize = 646usize;
+const JSX_A_11_Y_NO_REDUNDANT_ROLES_ID: usize = 647usize;
+const JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID: usize = 648usize;
+const JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID: usize = 649usize;
+const JSX_A_11_Y_ROLE_HAS_REQUIRED_ARIA_PROPS_ID: usize = 650usize;
+const JSX_A_11_Y_ROLE_SUPPORTS_ARIA_PROPS_ID: usize = 651usize;
+const JSX_A_11_Y_SCOPE_ID: usize = 652usize;
+const JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID: usize = 653usize;
+const OXC_APPROX_CONSTANT_ID: usize = 654usize;
+const OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID: usize = 655usize;
+const OXC_BAD_BITWISE_OPERATOR_ID: usize = 656usize;
+const OXC_BAD_CHAR_AT_COMPARISON_ID: usize = 657usize;
+const OXC_BAD_COMPARISON_SEQUENCE_ID: usize = 658usize;
+const OXC_BAD_MATCH_ALL_ARG_ID: usize = 659usize;
+const OXC_BAD_MIN_MAX_FUNC_ID: usize = 660usize;
+const OXC_BAD_OBJECT_LITERAL_COMPARISON_ID: usize = 661usize;
+const OXC_BAD_REPLACE_ALL_ARG_ID: usize = 662usize;
+const OXC_BRANCHES_SHARING_CODE_ID: usize = 663usize;
+const OXC_CONST_COMPARISONS_ID: usize = 664usize;
+const OXC_DOUBLE_COMPARISONS_ID: usize = 665usize;
+const OXC_ERASING_OP_ID: usize = 666usize;
+const OXC_MISREFACTORED_ASSIGN_OP_ID: usize = 667usize;
+const OXC_MISSING_THROW_ID: usize = 668usize;
+const OXC_NO_ACCUMULATING_SPREAD_ID: usize = 669usize;
+const OXC_NO_ASYNC_AWAIT_ID: usize = 670usize;
+const OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID: usize = 671usize;
+const OXC_NO_BARREL_FILE_ID: usize = 672usize;
+const OXC_NO_CONST_ENUM_ID: usize = 673usize;
+const OXC_NO_MAP_SPREAD_ID: usize = 674usize;
+const OXC_NO_OPTIONAL_CHAINING_ID: usize = 675usize;
+const OXC_NO_REST_SPREAD_PROPERTIES_ID: usize = 676usize;
+const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = 677usize;
+const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = 678usize;
+const OXC_ONLY_USED_IN_RECURSION_ID: usize = 679usize;
+const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = 680usize;
+const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = 681usize;
+const NEXTJS_GOOGLE_FONT_PRECONNECT_ID: usize = 682usize;
+const NEXTJS_INLINE_SCRIPT_ID_ID: usize = 683usize;
+const NEXTJS_NEXT_SCRIPT_FOR_GA_ID: usize = 684usize;
+const NEXTJS_NO_ASSIGN_MODULE_VARIABLE_ID: usize = 685usize;
+const NEXTJS_NO_ASYNC_CLIENT_COMPONENT_ID: usize = 686usize;
+const NEXTJS_NO_BEFORE_INTERACTIVE_SCRIPT_OUTSIDE_DOCUMENT_ID: usize = 687usize;
+const NEXTJS_NO_CSS_TAGS_ID: usize = 688usize;
+const NEXTJS_NO_DOCUMENT_IMPORT_IN_PAGE_ID: usize = 689usize;
+const NEXTJS_NO_DUPLICATE_HEAD_ID: usize = 690usize;
+const NEXTJS_NO_HEAD_ELEMENT_ID: usize = 691usize;
+const NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID: usize = 692usize;
+const NEXTJS_NO_HTML_LINK_FOR_PAGES_ID: usize = 693usize;
+const NEXTJS_NO_IMG_ELEMENT_ID: usize = 694usize;
+const NEXTJS_NO_PAGE_CUSTOM_FONT_ID: usize = 695usize;
+const NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID: usize = 696usize;
+const NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID: usize = 697usize;
+const NEXTJS_NO_SYNC_SCRIPTS_ID: usize = 698usize;
+const NEXTJS_NO_TITLE_IN_DOCUMENT_HEAD_ID: usize = 699usize;
+const NEXTJS_NO_TYPOS_ID: usize = 700usize;
+const NEXTJS_NO_UNWANTED_POLYFILLIO_ID: usize = 701usize;
+const JSDOC_CHECK_ACCESS_ID: usize = 702usize;
+const JSDOC_CHECK_PROPERTY_NAMES_ID: usize = 703usize;
+const JSDOC_CHECK_TAG_NAMES_ID: usize = 704usize;
+const JSDOC_EMPTY_TAGS_ID: usize = 705usize;
+const JSDOC_IMPLEMENTS_ON_CLASSES_ID: usize = 706usize;
+const JSDOC_NO_BLANK_BLOCKS_ID: usize = 707usize;
+const JSDOC_NO_DEFAULTS_ID: usize = 708usize;
+const JSDOC_REQUIRE_PARAM_ID: usize = 709usize;
+const JSDOC_REQUIRE_PARAM_DESCRIPTION_ID: usize = 710usize;
+const JSDOC_REQUIRE_PARAM_NAME_ID: usize = 711usize;
+const JSDOC_REQUIRE_PARAM_TYPE_ID: usize = 712usize;
+const JSDOC_REQUIRE_PROPERTY_ID: usize = 713usize;
+const JSDOC_REQUIRE_PROPERTY_DESCRIPTION_ID: usize = 714usize;
+const JSDOC_REQUIRE_PROPERTY_NAME_ID: usize = 715usize;
+const JSDOC_REQUIRE_PROPERTY_TYPE_ID: usize = 716usize;
+const JSDOC_REQUIRE_RETURNS_ID: usize = 717usize;
+const JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID: usize = 718usize;
+const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = 719usize;
+const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = 720usize;
+const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = 721usize;
+const JSDOC_REQUIRE_YIELDS_ID: usize = 722usize;
+const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = 723usize;
+const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = 724usize;
+const PROMISE_ALWAYS_RETURN_ID: usize = 725usize;
+const PROMISE_AVOID_NEW_ID: usize = 726usize;
+const PROMISE_CATCH_OR_RETURN_ID: usize = 727usize;
+const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = 728usize;
+const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = 729usize;
+const PROMISE_NO_NESTING_ID: usize = 730usize;
+const PROMISE_NO_NEW_STATICS_ID: usize = 731usize;
+const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = 732usize;
+const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = 733usize;
+const PROMISE_NO_RETURN_WRAP_ID: usize = 734usize;
+const PROMISE_PARAM_NAMES_ID: usize = 735usize;
+const PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID: usize = 736usize;
+const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = 737usize;
+const PROMISE_PREFER_CATCH_ID: usize = 738usize;
+const PROMISE_SPEC_ONLY_ID: usize = 739usize;
+const PROMISE_VALID_PARAMS_ID: usize = 740usize;
+const VITEST_CONSISTENT_EACH_FOR_ID: usize = 741usize;
+const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = 742usize;
+const VITEST_CONSISTENT_TEST_IT_ID: usize = 743usize;
+const VITEST_CONSISTENT_VITEST_VI_ID: usize = 744usize;
+const VITEST_EXPECT_EXPECT_ID: usize = 745usize;
+const VITEST_HOISTED_APIS_ON_TOP_ID: usize = 746usize;
+const VITEST_MAX_EXPECTS_ID: usize = 747usize;
+const VITEST_MAX_NESTED_DESCRIBE_ID: usize = 748usize;
+const VITEST_NO_ALIAS_METHODS_ID: usize = 749usize;
+const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = 750usize;
+const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = 751usize;
+const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = 752usize;
+const VITEST_NO_CONDITIONAL_TESTS_ID: usize = 753usize;
+const VITEST_NO_DISABLED_TESTS_ID: usize = 754usize;
+const VITEST_NO_DUPLICATE_HOOKS_ID: usize = 755usize;
+const VITEST_NO_FOCUSED_TESTS_ID: usize = 756usize;
+const VITEST_NO_HOOKS_ID: usize = 757usize;
+const VITEST_NO_IDENTICAL_TITLE_ID: usize = 758usize;
+const VITEST_NO_IMPORT_NODE_TEST_ID: usize = 759usize;
+const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = 760usize;
+const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 761usize;
+const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = 762usize;
+const VITEST_NO_MOCKS_IMPORT_ID: usize = 763usize;
+const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = 764usize;
+const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = 765usize;
+const VITEST_NO_STANDALONE_EXPECT_ID: usize = 766usize;
+const VITEST_NO_TEST_PREFIXES_ID: usize = 767usize;
+const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = 768usize;
+const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 769usize;
+const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 770usize;
+const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 771usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 772usize;
+const VITEST_PREFER_CALLED_ONCE_ID: usize = 773usize;
+const VITEST_PREFER_CALLED_TIMES_ID: usize = 774usize;
+const VITEST_PREFER_CALLED_WITH_ID: usize = 775usize;
+const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 776usize;
+const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 777usize;
+const VITEST_PREFER_EACH_ID: usize = 778usize;
+const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 779usize;
+const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 780usize;
+const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 781usize;
+const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 782usize;
+const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 783usize;
+const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 784usize;
+const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 785usize;
+const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 786usize;
+const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 787usize;
+const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 788usize;
+const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 789usize;
+const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 790usize;
+const VITEST_PREFER_SPY_ON_ID: usize = 791usize;
+const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 792usize;
+const VITEST_PREFER_STRICT_EQUAL_ID: usize = 793usize;
+const VITEST_PREFER_TO_BE_ID: usize = 794usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = 795usize;
+const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 796usize;
+const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 797usize;
+const VITEST_PREFER_TO_CONTAIN_ID: usize = 798usize;
+const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 799usize;
+const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 800usize;
+const VITEST_PREFER_TODO_ID: usize = 801usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 802usize;
+const VITEST_REQUIRE_HOOK_ID: usize = 803usize;
+const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 804usize;
+const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 805usize;
+const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 806usize;
+const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 807usize;
+const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 808usize;
+const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 809usize;
+const VITEST_VALID_EXPECT_ID: usize = 810usize;
+const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 811usize;
+const VITEST_VALID_TITLE_ID: usize = 812usize;
+const VITEST_WARN_TODO_ID: usize = 813usize;
+const NODE_CALLBACK_RETURN_ID: usize = 814usize;
+const NODE_EXPORTS_STYLE_ID: usize = 815usize;
+const NODE_GLOBAL_REQUIRE_ID: usize = 816usize;
+const NODE_HANDLE_CALLBACK_ERR_ID: usize = 817usize;
+const NODE_NO_EXPORTS_ASSIGN_ID: usize = 818usize;
+const NODE_NO_MIXED_REQUIRES_ID: usize = 819usize;
+const NODE_NO_NEW_REQUIRE_ID: usize = 820usize;
+const NODE_NO_PATH_CONCAT_ID: usize = 821usize;
+const NODE_NO_PROCESS_ENV_ID: usize = 822usize;
+const NODE_NO_SYNC_ID: usize = 823usize;
+const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 824usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 825usize;
+const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 826usize;
+const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 827usize;
+const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 828usize;
+const VUE_MAX_PROPS_ID: usize = 829usize;
+const VUE_NEXT_TICK_STYLE_ID: usize = 830usize;
+const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 831usize;
+const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 832usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 833usize;
+const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 834usize;
+const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 835usize;
+const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 836usize;
+const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 837usize;
+const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 838usize;
+const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 839usize;
+const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 840usize;
+const VUE_NO_DUPE_KEYS_ID: usize = 841usize;
+const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 842usize;
+const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 843usize;
+const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 844usize;
+const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 845usize;
+const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 846usize;
+const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 847usize;
+const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 848usize;
+const VUE_NO_RESERVED_KEYS_ID: usize = 849usize;
+const VUE_NO_RESERVED_PROPS_ID: usize = 850usize;
+const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 851usize;
+const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 852usize;
+const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 853usize;
+const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 854usize;
+const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 855usize;
+const VUE_PROP_NAME_CASING_ID: usize = 856usize;
+const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 857usize;
+const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 858usize;
+const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 859usize;
+const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 860usize;
+const VUE_REQUIRE_PROP_TYPES_ID: usize = 861usize;
+const VUE_REQUIRE_RENDER_RETURN_ID: usize = 862usize;
+const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 863usize;
+const VUE_REQUIRE_TYPED_REF_ID: usize = 864usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 865usize;
+const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 866usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = 867usize;
+const VUE_VALID_DEFINE_OPTIONS_ID: usize = 868usize;
+const VUE_VALID_DEFINE_PROPS_ID: usize = 869usize;
+const VUE_VALID_NEXT_TICK_ID: usize = 870usize;
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -2940,6 +2897,7 @@ static RULE_NAMES: [&str; 849usize] = [
     TypescriptNoExtraneousClass::NAME,
     TypescriptNoFloatingPromises::NAME,
     TypescriptNoForInArray::NAME,
+    TypescriptNoGeneratedEmptyObjectType::NAME,
     TypescriptNoImpliedEval::NAME,
     TypescriptNoImportTypeSideEffects::NAME,
     TypescriptNoInferrableTypes::NAME,
@@ -3077,16 +3035,24 @@ static RULE_NAMES: [&str; 849usize] = [
     JestValidExpectInPromise::NAME,
     JestValidTitle::NAME,
     ReactButtonHasType::NAME,
+    ReactCapitalizedCalls::NAME,
     ReactCheckedRequiresOnchangeOrReadonly::NAME,
     ReactDisplayName::NAME,
+    ReactErrorBoundaries::NAME,
     ReactExhaustiveDeps::NAME,
+    ReactExhaustiveEffectDependencies::NAME,
     ReactForbidComponentProps::NAME,
     ReactForbidDomProps::NAME,
     ReactForbidElements::NAME,
     ReactForwardRefUsesRef::NAME,
     ReactFunctionComponentDefinition::NAME,
+    ReactGlobals::NAME,
     ReactHookUseState::NAME,
+    ReactHooks::NAME,
     ReactIframeMissingSandbox::NAME,
+    ReactImmutability::NAME,
+    ReactIncompatibleLibrary::NAME,
+    ReactInvariant::NAME,
     ReactJsxBooleanValue::NAME,
     ReactJsxCurlyBracePresence::NAME,
     ReactJsxFilenameExtension::NAME,
@@ -3105,11 +3071,13 @@ static RULE_NAMES: [&str; 849usize] = [
     ReactJsxPascalCase::NAME,
     ReactJsxPropsNoSpreadMulti::NAME,
     ReactJsxPropsNoSpreading::NAME,
+    ReactMemoDependencies::NAME,
     ReactNoArrayIndexKey::NAME,
     ReactNoChildrenProp::NAME,
     ReactNoCloneElement::NAME,
     ReactNoDanger::NAME,
     ReactNoDangerWithChildren::NAME,
+    ReactNoDerivingStateInEffects::NAME,
     ReactNoDidMountSetState::NAME,
     ReactNoDidUpdateSetState::NAME,
     ReactNoDirectMutationState::NAME,
@@ -3132,14 +3100,25 @@ static RULE_NAMES: [&str; 849usize] = [
     ReactOnlyExportComponents::NAME,
     ReactPreferEs6Class::NAME,
     ReactPreferFunctionComponent::NAME,
-    ReactReactCompiler::NAME,
+    ReactPreserveManualMemoization::NAME,
+    ReactPurity::NAME,
     ReactReactInJsxScope::NAME,
+    ReactRefs::NAME,
     ReactRequireRenderReturn::NAME,
+    ReactRuleSuppression::NAME,
     ReactRulesOfHooks::NAME,
     ReactSelfClosingComp::NAME,
+    ReactSetStateInEffect::NAME,
+    ReactSetStateInRender::NAME,
     ReactStateInConstructor::NAME,
+    ReactStaticComponents::NAME,
     ReactStylePropObject::NAME,
+    ReactSyntax::NAME,
+    ReactTodo::NAME,
+    ReactUnsupportedSyntax::NAME,
+    ReactUseMemo::NAME,
     ReactVoidDomElementsNoChildren::NAME,
+    ReactVoidUseMemo::NAME,
     ReactPerfJsxNoJsxAsProp::NAME,
     ReactPerfJsxNoNewArrayAsProp::NAME,
     ReactPerfJsxNoNewFunctionAsProp::NAME,
@@ -3817,6 +3796,9 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TYPESCRIPT_NO_EXTRANEOUS_CLASS_ID,
             Self::TypescriptNoFloatingPromises(_) => TYPESCRIPT_NO_FLOATING_PROMISES_ID,
             Self::TypescriptNoForInArray(_) => TYPESCRIPT_NO_FOR_IN_ARRAY_ID,
+            Self::TypescriptNoGeneratedEmptyObjectType(_) => {
+                TYPESCRIPT_NO_GENERATED_EMPTY_OBJECT_TYPE_ID
+            }
             Self::TypescriptNoImpliedEval(_) => TYPESCRIPT_NO_IMPLIED_EVAL_ID,
             Self::TypescriptNoImportTypeSideEffects(_) => TYPESCRIPT_NO_IMPORT_TYPE_SIDE_EFFECTS_ID,
             Self::TypescriptNoInferrableTypes(_) => TYPESCRIPT_NO_INFERRABLE_TYPES_ID,
@@ -4000,18 +3982,26 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JEST_VALID_EXPECT_IN_PROMISE_ID,
             Self::JestValidTitle(_) => JEST_VALID_TITLE_ID,
             Self::ReactButtonHasType(_) => REACT_BUTTON_HAS_TYPE_ID,
+            Self::ReactCapitalizedCalls(_) => REACT_CAPITALIZED_CALLS_ID,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID
             }
             Self::ReactDisplayName(_) => REACT_DISPLAY_NAME_ID,
+            Self::ReactErrorBoundaries(_) => REACT_ERROR_BOUNDARIES_ID,
             Self::ReactExhaustiveDeps(_) => REACT_EXHAUSTIVE_DEPS_ID,
+            Self::ReactExhaustiveEffectDependencies(_) => REACT_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID,
             Self::ReactForbidComponentProps(_) => REACT_FORBID_COMPONENT_PROPS_ID,
             Self::ReactForbidDomProps(_) => REACT_FORBID_DOM_PROPS_ID,
             Self::ReactForbidElements(_) => REACT_FORBID_ELEMENTS_ID,
             Self::ReactForwardRefUsesRef(_) => REACT_FORWARD_REF_USES_REF_ID,
             Self::ReactFunctionComponentDefinition(_) => REACT_FUNCTION_COMPONENT_DEFINITION_ID,
+            Self::ReactGlobals(_) => REACT_GLOBALS_ID,
             Self::ReactHookUseState(_) => REACT_HOOK_USE_STATE_ID,
+            Self::ReactHooks(_) => REACT_HOOKS_ID,
             Self::ReactIframeMissingSandbox(_) => REACT_IFRAME_MISSING_SANDBOX_ID,
+            Self::ReactImmutability(_) => REACT_IMMUTABILITY_ID,
+            Self::ReactIncompatibleLibrary(_) => REACT_INCOMPATIBLE_LIBRARY_ID,
+            Self::ReactInvariant(_) => REACT_INVARIANT_ID,
             Self::ReactJsxBooleanValue(_) => REACT_JSX_BOOLEAN_VALUE_ID,
             Self::ReactJsxCurlyBracePresence(_) => REACT_JSX_CURLY_BRACE_PRESENCE_ID,
             Self::ReactJsxFilenameExtension(_) => REACT_JSX_FILENAME_EXTENSION_ID,
@@ -4032,11 +4022,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => REACT_JSX_PASCAL_CASE_ID,
             Self::ReactJsxPropsNoSpreadMulti(_) => REACT_JSX_PROPS_NO_SPREAD_MULTI_ID,
             Self::ReactJsxPropsNoSpreading(_) => REACT_JSX_PROPS_NO_SPREADING_ID,
+            Self::ReactMemoDependencies(_) => REACT_MEMO_DEPENDENCIES_ID,
             Self::ReactNoArrayIndexKey(_) => REACT_NO_ARRAY_INDEX_KEY_ID,
             Self::ReactNoChildrenProp(_) => REACT_NO_CHILDREN_PROP_ID,
             Self::ReactNoCloneElement(_) => REACT_NO_CLONE_ELEMENT_ID,
             Self::ReactNoDanger(_) => REACT_NO_DANGER_ID,
             Self::ReactNoDangerWithChildren(_) => REACT_NO_DANGER_WITH_CHILDREN_ID,
+            Self::ReactNoDerivingStateInEffects(_) => REACT_NO_DERIVING_STATE_IN_EFFECTS_ID,
             Self::ReactNoDidMountSetState(_) => REACT_NO_DID_MOUNT_SET_STATE_ID,
             Self::ReactNoDidUpdateSetState(_) => REACT_NO_DID_UPDATE_SET_STATE_ID,
             Self::ReactNoDirectMutationState(_) => REACT_NO_DIRECT_MUTATION_STATE_ID,
@@ -4061,14 +4053,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => REACT_ONLY_EXPORT_COMPONENTS_ID,
             Self::ReactPreferEs6Class(_) => REACT_PREFER_ES_6_CLASS_ID,
             Self::ReactPreferFunctionComponent(_) => REACT_PREFER_FUNCTION_COMPONENT_ID,
-            Self::ReactReactCompiler(_) => REACT_REACT_COMPILER_ID,
+            Self::ReactPreserveManualMemoization(_) => REACT_PRESERVE_MANUAL_MEMOIZATION_ID,
+            Self::ReactPurity(_) => REACT_PURITY_ID,
             Self::ReactReactInJsxScope(_) => REACT_REACT_IN_JSX_SCOPE_ID,
+            Self::ReactRefs(_) => REACT_REFS_ID,
             Self::ReactRequireRenderReturn(_) => REACT_REQUIRE_RENDER_RETURN_ID,
+            Self::ReactRuleSuppression(_) => REACT_RULE_SUPPRESSION_ID,
             Self::ReactRulesOfHooks(_) => REACT_RULES_OF_HOOKS_ID,
             Self::ReactSelfClosingComp(_) => REACT_SELF_CLOSING_COMP_ID,
+            Self::ReactSetStateInEffect(_) => REACT_SET_STATE_IN_EFFECT_ID,
+            Self::ReactSetStateInRender(_) => REACT_SET_STATE_IN_RENDER_ID,
             Self::ReactStateInConstructor(_) => REACT_STATE_IN_CONSTRUCTOR_ID,
+            Self::ReactStaticComponents(_) => REACT_STATIC_COMPONENTS_ID,
             Self::ReactStylePropObject(_) => REACT_STYLE_PROP_OBJECT_ID,
+            Self::ReactSyntax(_) => REACT_SYNTAX_ID,
+            Self::ReactTodo(_) => REACT_TODO_ID,
+            Self::ReactUnsupportedSyntax(_) => REACT_UNSUPPORTED_SYNTAX_ID,
+            Self::ReactUseMemo(_) => REACT_USE_MEMO_ID,
             Self::ReactVoidDomElementsNoChildren(_) => REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID,
+            Self::ReactVoidUseMemo(_) => REACT_VOID_USE_MEMO_ID,
             Self::ReactPerfJsxNoJsxAsProp(_) => REACT_PERF_JSX_NO_JSX_AS_PROP_ID,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID,
@@ -4811,6 +4814,9 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::CATEGORY,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::CATEGORY,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::CATEGORY,
+            Self::TypescriptNoGeneratedEmptyObjectType(_) => {
+                TypescriptNoGeneratedEmptyObjectType::CATEGORY
+            }
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::CATEGORY,
             Self::TypescriptNoImportTypeSideEffects(_) => {
                 TypescriptNoImportTypeSideEffects::CATEGORY
@@ -5006,18 +5012,28 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::CATEGORY,
             Self::JestValidTitle(_) => JestValidTitle::CATEGORY,
             Self::ReactButtonHasType(_) => ReactButtonHasType::CATEGORY,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::CATEGORY,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::CATEGORY
             }
             Self::ReactDisplayName(_) => ReactDisplayName::CATEGORY,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::CATEGORY,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::CATEGORY,
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::CATEGORY
+            }
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::CATEGORY,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::CATEGORY,
             Self::ReactForbidElements(_) => ReactForbidElements::CATEGORY,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::CATEGORY,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::CATEGORY,
+            Self::ReactGlobals(_) => ReactGlobals::CATEGORY,
             Self::ReactHookUseState(_) => ReactHookUseState::CATEGORY,
+            Self::ReactHooks(_) => ReactHooks::CATEGORY,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::CATEGORY,
+            Self::ReactImmutability(_) => ReactImmutability::CATEGORY,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::CATEGORY,
+            Self::ReactInvariant(_) => ReactInvariant::CATEGORY,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::CATEGORY,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::CATEGORY,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::CATEGORY,
@@ -5038,11 +5054,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::CATEGORY,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::CATEGORY,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::CATEGORY,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::CATEGORY,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::CATEGORY,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::CATEGORY,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::CATEGORY,
             Self::ReactNoDanger(_) => ReactNoDanger::CATEGORY,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::CATEGORY,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::CATEGORY,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::CATEGORY,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::CATEGORY,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::CATEGORY,
@@ -5067,14 +5085,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::CATEGORY,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::CATEGORY,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::CATEGORY,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::CATEGORY,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::CATEGORY,
+            Self::ReactPurity(_) => ReactPurity::CATEGORY,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::CATEGORY,
+            Self::ReactRefs(_) => ReactRefs::CATEGORY,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::CATEGORY,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::CATEGORY,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::CATEGORY,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::CATEGORY,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::CATEGORY,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::CATEGORY,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::CATEGORY,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::CATEGORY,
             Self::ReactStylePropObject(_) => ReactStylePropObject::CATEGORY,
+            Self::ReactSyntax(_) => ReactSyntax::CATEGORY,
+            Self::ReactTodo(_) => ReactTodo::CATEGORY,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::CATEGORY,
+            Self::ReactUseMemo(_) => ReactUseMemo::CATEGORY,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::CATEGORY,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::CATEGORY,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::CATEGORY,
@@ -5827,6 +5856,9 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::FIX,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::FIX,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::FIX,
+            Self::TypescriptNoGeneratedEmptyObjectType(_) => {
+                TypescriptNoGeneratedEmptyObjectType::FIX
+            }
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::FIX,
             Self::TypescriptNoImportTypeSideEffects(_) => TypescriptNoImportTypeSideEffects::FIX,
             Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::FIX,
@@ -6008,18 +6040,26 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::FIX,
             Self::JestValidTitle(_) => JestValidTitle::FIX,
             Self::ReactButtonHasType(_) => ReactButtonHasType::FIX,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::FIX,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::FIX
             }
             Self::ReactDisplayName(_) => ReactDisplayName::FIX,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::FIX,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::FIX,
+            Self::ReactExhaustiveEffectDependencies(_) => ReactExhaustiveEffectDependencies::FIX,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::FIX,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::FIX,
             Self::ReactForbidElements(_) => ReactForbidElements::FIX,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::FIX,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::FIX,
+            Self::ReactGlobals(_) => ReactGlobals::FIX,
             Self::ReactHookUseState(_) => ReactHookUseState::FIX,
+            Self::ReactHooks(_) => ReactHooks::FIX,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::FIX,
+            Self::ReactImmutability(_) => ReactImmutability::FIX,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::FIX,
+            Self::ReactInvariant(_) => ReactInvariant::FIX,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::FIX,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::FIX,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::FIX,
@@ -6038,11 +6078,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::FIX,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::FIX,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::FIX,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::FIX,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::FIX,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::FIX,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::FIX,
             Self::ReactNoDanger(_) => ReactNoDanger::FIX,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::FIX,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::FIX,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::FIX,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::FIX,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::FIX,
@@ -6067,14 +6109,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::FIX,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::FIX,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::FIX,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::FIX,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::FIX,
+            Self::ReactPurity(_) => ReactPurity::FIX,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::FIX,
+            Self::ReactRefs(_) => ReactRefs::FIX,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::FIX,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::FIX,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::FIX,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::FIX,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::FIX,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::FIX,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::FIX,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::FIX,
             Self::ReactStylePropObject(_) => ReactStylePropObject::FIX,
+            Self::ReactSyntax(_) => ReactSyntax::FIX,
+            Self::ReactTodo(_) => ReactTodo::FIX,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::FIX,
+            Self::ReactUseMemo(_) => ReactUseMemo::FIX,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::FIX,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::FIX,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::FIX,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::FIX,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::FIX,
@@ -6841,6 +6894,9 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::documentation(),
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::documentation(),
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::documentation(),
+            Self::TypescriptNoGeneratedEmptyObjectType(_) => {
+                TypescriptNoGeneratedEmptyObjectType::documentation()
+            }
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::documentation(),
             Self::TypescriptNoImportTypeSideEffects(_) => {
                 TypescriptNoImportTypeSideEffects::documentation()
@@ -7082,11 +7138,16 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::documentation(),
             Self::JestValidTitle(_) => JestValidTitle::documentation(),
             Self::ReactButtonHasType(_) => ReactButtonHasType::documentation(),
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::documentation(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::documentation()
             }
             Self::ReactDisplayName(_) => ReactDisplayName::documentation(),
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::documentation(),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::documentation(),
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::documentation()
+            }
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::documentation(),
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::documentation(),
             Self::ReactForbidElements(_) => ReactForbidElements::documentation(),
@@ -7094,8 +7155,13 @@ impl RuleEnum {
             Self::ReactFunctionComponentDefinition(_) => {
                 ReactFunctionComponentDefinition::documentation()
             }
+            Self::ReactGlobals(_) => ReactGlobals::documentation(),
             Self::ReactHookUseState(_) => ReactHookUseState::documentation(),
+            Self::ReactHooks(_) => ReactHooks::documentation(),
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::documentation(),
+            Self::ReactImmutability(_) => ReactImmutability::documentation(),
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::documentation(),
+            Self::ReactInvariant(_) => ReactInvariant::documentation(),
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::documentation(),
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::documentation(),
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::documentation(),
@@ -7116,11 +7182,15 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::documentation(),
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::documentation(),
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::documentation(),
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::documentation(),
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::documentation(),
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::documentation(),
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::documentation(),
             Self::ReactNoDanger(_) => ReactNoDanger::documentation(),
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::documentation(),
+            Self::ReactNoDerivingStateInEffects(_) => {
+                ReactNoDerivingStateInEffects::documentation()
+            }
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::documentation(),
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::documentation(),
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::documentation(),
@@ -7149,16 +7219,29 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::documentation(),
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::documentation(),
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::documentation(),
-            Self::ReactReactCompiler(_) => ReactReactCompiler::documentation(),
+            Self::ReactPreserveManualMemoization(_) => {
+                ReactPreserveManualMemoization::documentation()
+            }
+            Self::ReactPurity(_) => ReactPurity::documentation(),
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::documentation(),
+            Self::ReactRefs(_) => ReactRefs::documentation(),
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::documentation(),
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::documentation(),
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::documentation(),
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::documentation(),
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::documentation(),
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::documentation(),
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::documentation(),
+            Self::ReactStaticComponents(_) => ReactStaticComponents::documentation(),
             Self::ReactStylePropObject(_) => ReactStylePropObject::documentation(),
+            Self::ReactSyntax(_) => ReactSyntax::documentation(),
+            Self::ReactTodo(_) => ReactTodo::documentation(),
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::documentation(),
+            Self::ReactUseMemo(_) => ReactUseMemo::documentation(),
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::documentation()
             }
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::documentation(),
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::documentation(),
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::documentation(),
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => {
@@ -8434,6 +8517,10 @@ impl RuleEnum {
             }
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::config_schema(generator)
                 .or_else(|| TypescriptNoForInArray::schema(generator)),
+            Self::TypescriptNoGeneratedEmptyObjectType(_) => {
+                TypescriptNoGeneratedEmptyObjectType::config_schema(generator)
+                    .or_else(|| TypescriptNoGeneratedEmptyObjectType::schema(generator))
+            }
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::config_schema(generator)
                 .or_else(|| TypescriptNoImpliedEval::schema(generator)),
             Self::TypescriptNoImportTypeSideEffects(_) => {
@@ -8870,14 +8957,22 @@ impl RuleEnum {
                 .or_else(|| JestValidTitle::schema(generator)),
             Self::ReactButtonHasType(_) => ReactButtonHasType::config_schema(generator)
                 .or_else(|| ReactButtonHasType::schema(generator)),
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::config_schema(generator)
+                .or_else(|| ReactCapitalizedCalls::schema(generator)),
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::config_schema(generator)
                     .or_else(|| ReactCheckedRequiresOnchangeOrReadonly::schema(generator))
             }
             Self::ReactDisplayName(_) => ReactDisplayName::config_schema(generator)
                 .or_else(|| ReactDisplayName::schema(generator)),
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::config_schema(generator)
+                .or_else(|| ReactErrorBoundaries::schema(generator)),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::config_schema(generator)
                 .or_else(|| ReactExhaustiveDeps::schema(generator)),
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::config_schema(generator)
+                    .or_else(|| ReactExhaustiveEffectDependencies::schema(generator))
+            }
             Self::ReactForbidComponentProps(_) => {
                 ReactForbidComponentProps::config_schema(generator)
                     .or_else(|| ReactForbidComponentProps::schema(generator))
@@ -8892,12 +8987,24 @@ impl RuleEnum {
                 ReactFunctionComponentDefinition::config_schema(generator)
                     .or_else(|| ReactFunctionComponentDefinition::schema(generator))
             }
+            Self::ReactGlobals(_) => {
+                ReactGlobals::config_schema(generator).or_else(|| ReactGlobals::schema(generator))
+            }
             Self::ReactHookUseState(_) => ReactHookUseState::config_schema(generator)
                 .or_else(|| ReactHookUseState::schema(generator)),
+            Self::ReactHooks(_) => {
+                ReactHooks::config_schema(generator).or_else(|| ReactHooks::schema(generator))
+            }
             Self::ReactIframeMissingSandbox(_) => {
                 ReactIframeMissingSandbox::config_schema(generator)
                     .or_else(|| ReactIframeMissingSandbox::schema(generator))
             }
+            Self::ReactImmutability(_) => ReactImmutability::config_schema(generator)
+                .or_else(|| ReactImmutability::schema(generator)),
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::config_schema(generator)
+                .or_else(|| ReactIncompatibleLibrary::schema(generator)),
+            Self::ReactInvariant(_) => ReactInvariant::config_schema(generator)
+                .or_else(|| ReactInvariant::schema(generator)),
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::config_schema(generator)
                 .or_else(|| ReactJsxBooleanValue::schema(generator)),
             Self::ReactJsxCurlyBracePresence(_) => {
@@ -8947,6 +9054,8 @@ impl RuleEnum {
             }
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::config_schema(generator)
                 .or_else(|| ReactJsxPropsNoSpreading::schema(generator)),
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::config_schema(generator)
+                .or_else(|| ReactMemoDependencies::schema(generator)),
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::config_schema(generator)
                 .or_else(|| ReactNoArrayIndexKey::schema(generator)),
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::config_schema(generator)
@@ -8959,6 +9068,10 @@ impl RuleEnum {
             Self::ReactNoDangerWithChildren(_) => {
                 ReactNoDangerWithChildren::config_schema(generator)
                     .or_else(|| ReactNoDangerWithChildren::schema(generator))
+            }
+            Self::ReactNoDerivingStateInEffects(_) => {
+                ReactNoDerivingStateInEffects::config_schema(generator)
+                    .or_else(|| ReactNoDerivingStateInEffects::schema(generator))
             }
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::config_schema(generator)
                 .or_else(|| ReactNoDidMountSetState::schema(generator)),
@@ -9019,24 +9132,53 @@ impl RuleEnum {
                 ReactPreferFunctionComponent::config_schema(generator)
                     .or_else(|| ReactPreferFunctionComponent::schema(generator))
             }
-            Self::ReactReactCompiler(_) => ReactReactCompiler::config_schema(generator)
-                .or_else(|| ReactReactCompiler::schema(generator)),
+            Self::ReactPreserveManualMemoization(_) => {
+                ReactPreserveManualMemoization::config_schema(generator)
+                    .or_else(|| ReactPreserveManualMemoization::schema(generator))
+            }
+            Self::ReactPurity(_) => {
+                ReactPurity::config_schema(generator).or_else(|| ReactPurity::schema(generator))
+            }
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::config_schema(generator)
                 .or_else(|| ReactReactInJsxScope::schema(generator)),
+            Self::ReactRefs(_) => {
+                ReactRefs::config_schema(generator).or_else(|| ReactRefs::schema(generator))
+            }
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::config_schema(generator)
                 .or_else(|| ReactRequireRenderReturn::schema(generator)),
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::config_schema(generator)
+                .or_else(|| ReactRuleSuppression::schema(generator)),
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::config_schema(generator)
                 .or_else(|| ReactRulesOfHooks::schema(generator)),
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::config_schema(generator)
                 .or_else(|| ReactSelfClosingComp::schema(generator)),
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::config_schema(generator)
+                .or_else(|| ReactSetStateInEffect::schema(generator)),
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::config_schema(generator)
+                .or_else(|| ReactSetStateInRender::schema(generator)),
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::config_schema(generator)
                 .or_else(|| ReactStateInConstructor::schema(generator)),
+            Self::ReactStaticComponents(_) => ReactStaticComponents::config_schema(generator)
+                .or_else(|| ReactStaticComponents::schema(generator)),
             Self::ReactStylePropObject(_) => ReactStylePropObject::config_schema(generator)
                 .or_else(|| ReactStylePropObject::schema(generator)),
+            Self::ReactSyntax(_) => {
+                ReactSyntax::config_schema(generator).or_else(|| ReactSyntax::schema(generator))
+            }
+            Self::ReactTodo(_) => {
+                ReactTodo::config_schema(generator).or_else(|| ReactTodo::schema(generator))
+            }
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::config_schema(generator)
+                .or_else(|| ReactUnsupportedSyntax::schema(generator)),
+            Self::ReactUseMemo(_) => {
+                ReactUseMemo::config_schema(generator).or_else(|| ReactUseMemo::schema(generator))
+            }
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::config_schema(generator)
                     .or_else(|| ReactVoidDomElementsNoChildren::schema(generator))
             }
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::config_schema(generator)
+                .or_else(|| ReactVoidUseMemo::schema(generator)),
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::config_schema(generator)
                 .or_else(|| ReactPerfJsxNoJsxAsProp::schema(generator)),
             Self::ReactPerfJsxNoNewArrayAsProp(_) => {
@@ -10452,6 +10594,7 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => "typescript",
             Self::TypescriptNoFloatingPromises(_) => "typescript",
             Self::TypescriptNoForInArray(_) => "typescript",
+            Self::TypescriptNoGeneratedEmptyObjectType(_) => "typescript",
             Self::TypescriptNoImpliedEval(_) => "typescript",
             Self::TypescriptNoImportTypeSideEffects(_) => "typescript",
             Self::TypescriptNoInferrableTypes(_) => "typescript",
@@ -10589,16 +10732,24 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => "jest",
             Self::JestValidTitle(_) => "jest",
             Self::ReactButtonHasType(_) => "react",
+            Self::ReactCapitalizedCalls(_) => "react",
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
             Self::ReactDisplayName(_) => "react",
+            Self::ReactErrorBoundaries(_) => "react",
             Self::ReactExhaustiveDeps(_) => "react",
+            Self::ReactExhaustiveEffectDependencies(_) => "react",
             Self::ReactForbidComponentProps(_) => "react",
             Self::ReactForbidDomProps(_) => "react",
             Self::ReactForbidElements(_) => "react",
             Self::ReactForwardRefUsesRef(_) => "react",
             Self::ReactFunctionComponentDefinition(_) => "react",
+            Self::ReactGlobals(_) => "react",
             Self::ReactHookUseState(_) => "react",
+            Self::ReactHooks(_) => "react",
             Self::ReactIframeMissingSandbox(_) => "react",
+            Self::ReactImmutability(_) => "react",
+            Self::ReactIncompatibleLibrary(_) => "react",
+            Self::ReactInvariant(_) => "react",
             Self::ReactJsxBooleanValue(_) => "react",
             Self::ReactJsxCurlyBracePresence(_) => "react",
             Self::ReactJsxFilenameExtension(_) => "react",
@@ -10617,11 +10768,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => "react",
             Self::ReactJsxPropsNoSpreadMulti(_) => "react",
             Self::ReactJsxPropsNoSpreading(_) => "react",
+            Self::ReactMemoDependencies(_) => "react",
             Self::ReactNoArrayIndexKey(_) => "react",
             Self::ReactNoChildrenProp(_) => "react",
             Self::ReactNoCloneElement(_) => "react",
             Self::ReactNoDanger(_) => "react",
             Self::ReactNoDangerWithChildren(_) => "react",
+            Self::ReactNoDerivingStateInEffects(_) => "react",
             Self::ReactNoDidMountSetState(_) => "react",
             Self::ReactNoDidUpdateSetState(_) => "react",
             Self::ReactNoDirectMutationState(_) => "react",
@@ -10644,14 +10797,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => "react",
             Self::ReactPreferEs6Class(_) => "react",
             Self::ReactPreferFunctionComponent(_) => "react",
-            Self::ReactReactCompiler(_) => "react",
+            Self::ReactPreserveManualMemoization(_) => "react",
+            Self::ReactPurity(_) => "react",
             Self::ReactReactInJsxScope(_) => "react",
+            Self::ReactRefs(_) => "react",
             Self::ReactRequireRenderReturn(_) => "react",
+            Self::ReactRuleSuppression(_) => "react",
             Self::ReactRulesOfHooks(_) => "react",
             Self::ReactSelfClosingComp(_) => "react",
+            Self::ReactSetStateInEffect(_) => "react",
+            Self::ReactSetStateInRender(_) => "react",
             Self::ReactStateInConstructor(_) => "react",
+            Self::ReactStaticComponents(_) => "react",
             Self::ReactStylePropObject(_) => "react",
+            Self::ReactSyntax(_) => "react",
+            Self::ReactTodo(_) => "react",
+            Self::ReactUnsupportedSyntax(_) => "react",
+            Self::ReactUseMemo(_) => "react",
             Self::ReactVoidDomElementsNoChildren(_) => "react",
+            Self::ReactVoidUseMemo(_) => "react",
             Self::ReactPerfJsxNoJsxAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewArrayAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => "react_perf",
@@ -11307,6 +11471,9 @@ impl RuleEnum {
             Self::EslintNoUnderscoreDangle(_) => Ok(Self::EslintNoUnderscoreDangle(
                 EslintNoUnderscoreDangle::from_configuration(value)?,
             )),
+            Self::EslintNoUnmodifiedLoopCondition(_) => Ok(Self::EslintNoUnmodifiedLoopCondition(
+                EslintNoUnmodifiedLoopCondition::from_configuration(value)?,
+            )),
             Self::EslintNoUnneededTernary(_) => Ok(Self::EslintNoUnneededTernary(
                 EslintNoUnneededTernary::from_configuration(value)?,
             )),
@@ -11765,9 +11932,6 @@ impl RuleEnum {
             Self::ReactPreferFunctionComponent(_) => Ok(Self::ReactPreferFunctionComponent(
                 ReactPreferFunctionComponent::from_configuration(value)?,
             )),
-            Self::ReactReactCompiler(_) => {
-                Ok(Self::ReactReactCompiler(ReactReactCompiler::from_configuration(value)?))
-            }
             Self::ReactSelfClosingComp(_) => {
                 Ok(Self::ReactSelfClosingComp(ReactSelfClosingComp::from_configuration(value)?))
             }
@@ -12146,859 +12310,40 @@ impl RuleEnum {
     }
     pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
         match self {
-            Self::ImportConsistentTypeSpecifierStyle(rule) => rule.to_configuration(),
-            Self::ImportDefault(rule) => rule.to_configuration(),
-            Self::ImportExport(rule) => rule.to_configuration(),
-            Self::ImportExportsLast(rule) => rule.to_configuration(),
-            Self::ImportExtensions(rule) => rule.to_configuration(),
-            Self::ImportFirst(rule) => rule.to_configuration(),
-            Self::ImportGroupExports(rule) => rule.to_configuration(),
-            Self::ImportMaxDependencies(rule) => rule.to_configuration(),
-            Self::ImportNamed(rule) => rule.to_configuration(),
-            Self::ImportNamespace(rule) => rule.to_configuration(),
-            Self::ImportNewlineAfterImport(rule) => rule.to_configuration(),
-            Self::ImportNoAbsolutePath(rule) => rule.to_configuration(),
-            Self::ImportNoAmd(rule) => rule.to_configuration(),
-            Self::ImportNoAnonymousDefaultExport(rule) => rule.to_configuration(),
-            Self::ImportNoCommonjs(rule) => rule.to_configuration(),
-            Self::ImportNoCycle(rule) => rule.to_configuration(),
-            Self::ImportNoDefaultExport(rule) => rule.to_configuration(),
-            Self::ImportNoDuplicates(rule) => rule.to_configuration(),
-            Self::ImportNoDynamicRequire(rule) => rule.to_configuration(),
-            Self::ImportNoEmptyNamedBlocks(rule) => rule.to_configuration(),
-            Self::ImportNoMutableExports(rule) => rule.to_configuration(),
-            Self::ImportNoNamedAsDefault(rule) => rule.to_configuration(),
-            Self::ImportNoNamedAsDefaultMember(rule) => rule.to_configuration(),
-            Self::ImportNoNamedDefault(rule) => rule.to_configuration(),
-            Self::ImportNoNamedExport(rule) => rule.to_configuration(),
-            Self::ImportNoNamespace(rule) => rule.to_configuration(),
-            Self::ImportNoNodejsModules(rule) => rule.to_configuration(),
-            Self::ImportNoRelativeParentImports(rule) => rule.to_configuration(),
-            Self::ImportNoSelfImport(rule) => rule.to_configuration(),
-            Self::ImportNoUnassignedImport(rule) => rule.to_configuration(),
-            Self::ImportNoWebpackLoaderSyntax(rule) => rule.to_configuration(),
-            Self::ImportPreferDefaultExport(rule) => rule.to_configuration(),
-            Self::ImportUnambiguous(rule) => rule.to_configuration(),
-            Self::EslintAccessorPairs(rule) => rule.to_configuration(),
-            Self::EslintArrayCallbackReturn(rule) => rule.to_configuration(),
-            Self::EslintArrowBodyStyle(rule) => rule.to_configuration(),
-            Self::EslintBlockScopedVar(rule) => rule.to_configuration(),
-            Self::EslintCapitalizedComments(rule) => rule.to_configuration(),
-            Self::EslintClassMethodsUseThis(rule) => rule.to_configuration(),
-            Self::EslintComplexity(rule) => rule.to_configuration(),
-            Self::EslintConstructorSuper(rule) => rule.to_configuration(),
-            Self::EslintCurly(rule) => rule.to_configuration(),
-            Self::EslintDefaultCase(rule) => rule.to_configuration(),
-            Self::EslintDefaultCaseLast(rule) => rule.to_configuration(),
-            Self::EslintDefaultParamLast(rule) => rule.to_configuration(),
-            Self::EslintEqeqeq(rule) => rule.to_configuration(),
-            Self::EslintForDirection(rule) => rule.to_configuration(),
-            Self::EslintFuncNameMatching(rule) => rule.to_configuration(),
-            Self::EslintFuncNames(rule) => rule.to_configuration(),
-            Self::EslintFuncStyle(rule) => rule.to_configuration(),
-            Self::EslintGetterReturn(rule) => rule.to_configuration(),
-            Self::EslintGroupedAccessorPairs(rule) => rule.to_configuration(),
-            Self::EslintGuardForIn(rule) => rule.to_configuration(),
-            Self::EslintIdDenylist(rule) => rule.to_configuration(),
-            Self::EslintIdLength(rule) => rule.to_configuration(),
-            Self::EslintIdMatch(rule) => rule.to_configuration(),
-            Self::EslintInitDeclarations(rule) => rule.to_configuration(),
-            Self::EslintLogicalAssignmentOperators(rule) => rule.to_configuration(),
-            Self::EslintMaxClassesPerFile(rule) => rule.to_configuration(),
-            Self::EslintMaxDepth(rule) => rule.to_configuration(),
-            Self::EslintMaxLines(rule) => rule.to_configuration(),
-            Self::EslintMaxLinesPerFunction(rule) => rule.to_configuration(),
-            Self::EslintMaxNestedCallbacks(rule) => rule.to_configuration(),
-            Self::EslintMaxParams(rule) => rule.to_configuration(),
-            Self::EslintMaxStatements(rule) => rule.to_configuration(),
-            Self::EslintNewCap(rule) => rule.to_configuration(),
-            Self::EslintNoAlert(rule) => rule.to_configuration(),
-            Self::EslintNoArrayConstructor(rule) => rule.to_configuration(),
-            Self::EslintNoAsyncPromiseExecutor(rule) => rule.to_configuration(),
-            Self::EslintNoAwaitInLoop(rule) => rule.to_configuration(),
-            Self::EslintNoBitwise(rule) => rule.to_configuration(),
-            Self::EslintNoCaller(rule) => rule.to_configuration(),
-            Self::EslintNoCaseDeclarations(rule) => rule.to_configuration(),
-            Self::EslintNoClassAssign(rule) => rule.to_configuration(),
-            Self::EslintNoCompareNegZero(rule) => rule.to_configuration(),
-            Self::EslintNoCondAssign(rule) => rule.to_configuration(),
-            Self::EslintNoConsole(rule) => rule.to_configuration(),
-            Self::EslintNoConstAssign(rule) => rule.to_configuration(),
-            Self::EslintNoConstantBinaryExpression(rule) => rule.to_configuration(),
-            Self::EslintNoConstantCondition(rule) => rule.to_configuration(),
-            Self::EslintNoConstructorReturn(rule) => rule.to_configuration(),
-            Self::EslintNoContinue(rule) => rule.to_configuration(),
-            Self::EslintNoControlRegex(rule) => rule.to_configuration(),
-            Self::EslintNoDebugger(rule) => rule.to_configuration(),
-            Self::EslintNoDeleteVar(rule) => rule.to_configuration(),
-            Self::EslintNoDivRegex(rule) => rule.to_configuration(),
-            Self::EslintNoDupeClassMembers(rule) => rule.to_configuration(),
-            Self::EslintNoDupeElseIf(rule) => rule.to_configuration(),
-            Self::EslintNoDupeKeys(rule) => rule.to_configuration(),
-            Self::EslintNoDuplicateCase(rule) => rule.to_configuration(),
-            Self::EslintNoDuplicateImports(rule) => rule.to_configuration(),
-            Self::EslintNoElseReturn(rule) => rule.to_configuration(),
-            Self::EslintNoEmpty(rule) => rule.to_configuration(),
-            Self::EslintNoEmptyCharacterClass(rule) => rule.to_configuration(),
-            Self::EslintNoEmptyFunction(rule) => rule.to_configuration(),
-            Self::EslintNoEmptyPattern(rule) => rule.to_configuration(),
-            Self::EslintNoEmptyStaticBlock(rule) => rule.to_configuration(),
-            Self::EslintNoEqNull(rule) => rule.to_configuration(),
-            Self::EslintNoEval(rule) => rule.to_configuration(),
-            Self::EslintNoExAssign(rule) => rule.to_configuration(),
-            Self::EslintNoExtendNative(rule) => rule.to_configuration(),
-            Self::EslintNoExtraBind(rule) => rule.to_configuration(),
-            Self::EslintNoExtraBooleanCast(rule) => rule.to_configuration(),
-            Self::EslintNoExtraLabel(rule) => rule.to_configuration(),
-            Self::EslintNoFallthrough(rule) => rule.to_configuration(),
-            Self::EslintNoFuncAssign(rule) => rule.to_configuration(),
-            Self::EslintNoGlobalAssign(rule) => rule.to_configuration(),
-            Self::EslintNoImplicitCoercion(rule) => rule.to_configuration(),
-            Self::EslintNoImplicitGlobals(rule) => rule.to_configuration(),
-            Self::EslintNoImpliedEval(rule) => rule.to_configuration(),
-            Self::EslintNoImportAssign(rule) => rule.to_configuration(),
-            Self::EslintNoInlineComments(rule) => rule.to_configuration(),
-            Self::EslintNoInnerDeclarations(rule) => rule.to_configuration(),
-            Self::EslintNoInvalidRegexp(rule) => rule.to_configuration(),
-            Self::EslintNoIrregularWhitespace(rule) => rule.to_configuration(),
-            Self::EslintNoIterator(rule) => rule.to_configuration(),
-            Self::EslintNoLabelVar(rule) => rule.to_configuration(),
-            Self::EslintNoLabels(rule) => rule.to_configuration(),
-            Self::EslintNoLoneBlocks(rule) => rule.to_configuration(),
-            Self::EslintNoLonelyIf(rule) => rule.to_configuration(),
-            Self::EslintNoLoopFunc(rule) => rule.to_configuration(),
-            Self::EslintNoLossOfPrecision(rule) => rule.to_configuration(),
-            Self::EslintNoMagicNumbers(rule) => rule.to_configuration(),
-            Self::EslintNoMisleadingCharacterClass(rule) => rule.to_configuration(),
-            Self::EslintNoMultiAssign(rule) => rule.to_configuration(),
-            Self::EslintNoMultiStr(rule) => rule.to_configuration(),
-            Self::EslintNoNegatedCondition(rule) => rule.to_configuration(),
-            Self::EslintNoNestedTernary(rule) => rule.to_configuration(),
-            Self::EslintNoNew(rule) => rule.to_configuration(),
-            Self::EslintNoNewFunc(rule) => rule.to_configuration(),
-            Self::EslintNoNewNativeNonconstructor(rule) => rule.to_configuration(),
-            Self::EslintNoNewWrappers(rule) => rule.to_configuration(),
-            Self::EslintNoNonoctalDecimalEscape(rule) => rule.to_configuration(),
-            Self::EslintNoObjCalls(rule) => rule.to_configuration(),
-            Self::EslintNoObjectConstructor(rule) => rule.to_configuration(),
-            Self::EslintNoParamReassign(rule) => rule.to_configuration(),
-            Self::EslintNoPlusplus(rule) => rule.to_configuration(),
-            Self::EslintNoPromiseExecutorReturn(rule) => rule.to_configuration(),
-            Self::EslintNoProto(rule) => rule.to_configuration(),
-            Self::EslintNoPrototypeBuiltins(rule) => rule.to_configuration(),
-            Self::EslintNoRedeclare(rule) => rule.to_configuration(),
-            Self::EslintNoRegexSpaces(rule) => rule.to_configuration(),
-            Self::EslintNoRestrictedExports(rule) => rule.to_configuration(),
-            Self::EslintNoRestrictedGlobals(rule) => rule.to_configuration(),
-            Self::EslintNoRestrictedImports(rule) => rule.to_configuration(),
-            Self::EslintNoRestrictedProperties(rule) => rule.to_configuration(),
-            Self::EslintNoReturnAssign(rule) => rule.to_configuration(),
-            Self::EslintNoScriptUrl(rule) => rule.to_configuration(),
-            Self::EslintNoSelfAssign(rule) => rule.to_configuration(),
-            Self::EslintNoSelfCompare(rule) => rule.to_configuration(),
-            Self::EslintNoSequences(rule) => rule.to_configuration(),
-            Self::EslintNoSetterReturn(rule) => rule.to_configuration(),
-            Self::EslintNoShadow(rule) => rule.to_configuration(),
-            Self::EslintNoShadowRestrictedNames(rule) => rule.to_configuration(),
-            Self::EslintNoSparseArrays(rule) => rule.to_configuration(),
-            Self::EslintNoTemplateCurlyInString(rule) => rule.to_configuration(),
-            Self::EslintNoTernary(rule) => rule.to_configuration(),
-            Self::EslintNoThisBeforeSuper(rule) => rule.to_configuration(),
-            Self::EslintNoThrowLiteral(rule) => rule.to_configuration(),
-            Self::EslintNoUnassignedVars(rule) => rule.to_configuration(),
-            Self::EslintNoUndef(rule) => rule.to_configuration(),
-            Self::EslintNoUndefined(rule) => rule.to_configuration(),
-            Self::EslintNoUnderscoreDangle(rule) => rule.to_configuration(),
-            Self::EslintNoUnexpectedMultiline(rule) => rule.to_configuration(),
-            Self::EslintNoUnmodifiedLoopCondition(rule) => rule.to_configuration(),
-            Self::EslintNoUnneededTernary(rule) => rule.to_configuration(),
-            Self::EslintNoUnreachable(rule) => rule.to_configuration(),
-            Self::EslintNoUnreachableLoop(rule) => rule.to_configuration(),
-            Self::EslintNoUnsafeFinally(rule) => rule.to_configuration(),
-            Self::EslintNoUnsafeNegation(rule) => rule.to_configuration(),
-            Self::EslintNoUnsafeOptionalChaining(rule) => rule.to_configuration(),
-            Self::EslintNoUnusedExpressions(rule) => rule.to_configuration(),
-            Self::EslintNoUnusedLabels(rule) => rule.to_configuration(),
-            Self::EslintNoUnusedPrivateClassMembers(rule) => rule.to_configuration(),
-            Self::EslintNoUnusedVars(rule) => rule.to_configuration(),
-            Self::EslintNoUseBeforeDefine(rule) => rule.to_configuration(),
-            Self::EslintNoUselessAssignment(rule) => rule.to_configuration(),
-            Self::EslintNoUselessBackreference(rule) => rule.to_configuration(),
-            Self::EslintNoUselessCall(rule) => rule.to_configuration(),
-            Self::EslintNoUselessCatch(rule) => rule.to_configuration(),
-            Self::EslintNoUselessComputedKey(rule) => rule.to_configuration(),
-            Self::EslintNoUselessConcat(rule) => rule.to_configuration(),
-            Self::EslintNoUselessConstructor(rule) => rule.to_configuration(),
-            Self::EslintNoUselessEscape(rule) => rule.to_configuration(),
-            Self::EslintNoUselessRename(rule) => rule.to_configuration(),
-            Self::EslintNoUselessReturn(rule) => rule.to_configuration(),
-            Self::EslintNoVar(rule) => rule.to_configuration(),
-            Self::EslintNoVoid(rule) => rule.to_configuration(),
-            Self::EslintNoWarningComments(rule) => rule.to_configuration(),
-            Self::EslintNoWith(rule) => rule.to_configuration(),
-            Self::EslintObjectShorthand(rule) => rule.to_configuration(),
-            Self::EslintOneVar(rule) => rule.to_configuration(),
-            Self::EslintOperatorAssignment(rule) => rule.to_configuration(),
-            Self::EslintPreferArrowCallback(rule) => rule.to_configuration(),
-            Self::EslintPreferConst(rule) => rule.to_configuration(),
-            Self::EslintPreferDestructuring(rule) => rule.to_configuration(),
-            Self::EslintPreferExponentiationOperator(rule) => rule.to_configuration(),
-            Self::EslintPreferNamedCaptureGroup(rule) => rule.to_configuration(),
-            Self::EslintPreferNumericLiterals(rule) => rule.to_configuration(),
-            Self::EslintPreferObjectHasOwn(rule) => rule.to_configuration(),
-            Self::EslintPreferObjectSpread(rule) => rule.to_configuration(),
-            Self::EslintPreferPromiseRejectErrors(rule) => rule.to_configuration(),
-            Self::EslintPreferRegexLiterals(rule) => rule.to_configuration(),
-            Self::EslintPreferRestParams(rule) => rule.to_configuration(),
-            Self::EslintPreferSpread(rule) => rule.to_configuration(),
-            Self::EslintPreferTemplate(rule) => rule.to_configuration(),
-            Self::EslintPreserveCaughtError(rule) => rule.to_configuration(),
-            Self::EslintRadix(rule) => rule.to_configuration(),
-            Self::EslintRequireAwait(rule) => rule.to_configuration(),
-            Self::EslintRequireUnicodeRegexp(rule) => rule.to_configuration(),
-            Self::EslintRequireYield(rule) => rule.to_configuration(),
-            Self::EslintSortImports(rule) => rule.to_configuration(),
-            Self::EslintSortKeys(rule) => rule.to_configuration(),
-            Self::EslintSortVars(rule) => rule.to_configuration(),
-            Self::EslintSymbolDescription(rule) => rule.to_configuration(),
-            Self::EslintUnicodeBom(rule) => rule.to_configuration(),
-            Self::EslintUseIsnan(rule) => rule.to_configuration(),
-            Self::EslintValidTypeof(rule) => rule.to_configuration(),
-            Self::EslintVarsOnTop(rule) => rule.to_configuration(),
-            Self::EslintYoda(rule) => rule.to_configuration(),
-            Self::TypescriptAdjacentOverloadSignatures(rule) => rule.to_configuration(),
-            Self::TypescriptArrayType(rule) => rule.to_configuration(),
-            Self::TypescriptAwaitThenable(rule) => rule.to_configuration(),
-            Self::TypescriptBanTsComment(rule) => rule.to_configuration(),
-            Self::TypescriptBanTslintComment(rule) => rule.to_configuration(),
-            Self::TypescriptBanTypes(rule) => rule.to_configuration(),
             Self::TypescriptClassLiteralPropertyStyle(rule) => rule.to_configuration(),
-            Self::TypescriptConsistentGenericConstructors(rule) => rule.to_configuration(),
-            Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.to_configuration(),
             Self::TypescriptConsistentReturn(rule) => rule.to_configuration(),
-            Self::TypescriptConsistentTypeAssertions(rule) => rule.to_configuration(),
-            Self::TypescriptConsistentTypeDefinitions(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeExports(rule) => rule.to_configuration(),
-            Self::TypescriptConsistentTypeImports(rule) => rule.to_configuration(),
             Self::TypescriptDotNotation(rule) => rule.to_configuration(),
-            Self::TypescriptExplicitFunctionReturnType(rule) => rule.to_configuration(),
-            Self::TypescriptExplicitMemberAccessibility(rule) => rule.to_configuration(),
-            Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.to_configuration(),
-            Self::TypescriptMethodSignatureStyle(rule) => rule.to_configuration(),
-            Self::TypescriptNoArrayDelete(rule) => rule.to_configuration(),
             Self::TypescriptNoBaseToString(rule) => rule.to_configuration(),
-            Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.to_configuration(),
             Self::TypescriptNoConfusingVoidExpression(rule) => rule.to_configuration(),
             Self::TypescriptNoDeprecated(rule) => rule.to_configuration(),
-            Self::TypescriptNoDuplicateEnumValues(rule) => rule.to_configuration(),
             Self::TypescriptNoDuplicateTypeConstituents(rule) => rule.to_configuration(),
-            Self::TypescriptNoDynamicDelete(rule) => rule.to_configuration(),
-            Self::TypescriptNoEmptyInterface(rule) => rule.to_configuration(),
-            Self::TypescriptNoEmptyObjectType(rule) => rule.to_configuration(),
-            Self::TypescriptNoExplicitAny(rule) => rule.to_configuration(),
-            Self::TypescriptNoExtraNonNullAssertion(rule) => rule.to_configuration(),
-            Self::TypescriptNoExtraneousClass(rule) => rule.to_configuration(),
             Self::TypescriptNoFloatingPromises(rule) => rule.to_configuration(),
-            Self::TypescriptNoForInArray(rule) => rule.to_configuration(),
-            Self::TypescriptNoImpliedEval(rule) => rule.to_configuration(),
-            Self::TypescriptNoImportTypeSideEffects(rule) => rule.to_configuration(),
-            Self::TypescriptNoInferrableTypes(rule) => rule.to_configuration(),
             Self::TypescriptNoInvalidVoidType(rule) => rule.to_configuration(),
             Self::TypescriptNoMeaninglessVoidOperator(rule) => rule.to_configuration(),
-            Self::TypescriptNoMisusedNew(rule) => rule.to_configuration(),
             Self::TypescriptNoMisusedPromises(rule) => rule.to_configuration(),
             Self::TypescriptNoMisusedSpread(rule) => rule.to_configuration(),
-            Self::TypescriptNoMixedEnums(rule) => rule.to_configuration(),
-            Self::TypescriptNoNamespace(rule) => rule.to_configuration(),
-            Self::TypescriptNoNonNullAssertedNullishCoalescing(rule) => rule.to_configuration(),
-            Self::TypescriptNoNonNullAssertedOptionalChain(rule) => rule.to_configuration(),
-            Self::TypescriptNoNonNullAssertion(rule) => rule.to_configuration(),
-            Self::TypescriptNoRedundantTypeConstituents(rule) => rule.to_configuration(),
-            Self::TypescriptNoRequireImports(rule) => rule.to_configuration(),
-            Self::TypescriptNoRestrictedTypes(rule) => rule.to_configuration(),
-            Self::TypescriptNoThisAlias(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => {
-                rule.to_configuration()
-            }
-            Self::TypescriptNoUnnecessaryQualifier(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnnecessaryTemplateExpression(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryTypeAssertion(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnnecessaryTypeConstraint(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnnecessaryTypeConversion(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnnecessaryTypeParameters(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnsafeArgument(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnsafeAssignment(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnsafeCall(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnsafeDeclarationMerging(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnsafeEnumComparison(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnsafeFunctionType(rule) => rule.to_configuration(),
             Self::TypescriptNoUnsafeMemberAccess(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnsafeReturn(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.to_configuration(),
-            Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.to_configuration(),
-            Self::TypescriptNoUselessDefaultAssignment(rule) => rule.to_configuration(),
-            Self::TypescriptNoUselessEmptyExport(rule) => rule.to_configuration(),
-            Self::TypescriptNoVarRequires(rule) => rule.to_configuration(),
-            Self::TypescriptNoWrapperObjectTypes(rule) => rule.to_configuration(),
-            Self::TypescriptNonNullableTypeAssertionStyle(rule) => rule.to_configuration(),
             Self::TypescriptOnlyThrowError(rule) => rule.to_configuration(),
-            Self::TypescriptParameterProperties(rule) => rule.to_configuration(),
-            Self::TypescriptPreferAsConst(rule) => rule.to_configuration(),
-            Self::TypescriptPreferEnumInitializers(rule) => rule.to_configuration(),
-            Self::TypescriptPreferFind(rule) => rule.to_configuration(),
-            Self::TypescriptPreferForOf(rule) => rule.to_configuration(),
-            Self::TypescriptPreferFunctionType(rule) => rule.to_configuration(),
-            Self::TypescriptPreferIncludes(rule) => rule.to_configuration(),
-            Self::TypescriptPreferLiteralEnumMember(rule) => rule.to_configuration(),
-            Self::TypescriptPreferNamespaceKeyword(rule) => rule.to_configuration(),
             Self::TypescriptPreferNullishCoalescing(rule) => rule.to_configuration(),
             Self::TypescriptPreferOptionalChain(rule) => rule.to_configuration(),
             Self::TypescriptPreferPromiseRejectErrors(rule) => rule.to_configuration(),
             Self::TypescriptPreferReadonly(rule) => rule.to_configuration(),
             Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.to_configuration(),
-            Self::TypescriptPreferReduceTypeParameter(rule) => rule.to_configuration(),
-            Self::TypescriptPreferRegexpExec(rule) => rule.to_configuration(),
-            Self::TypescriptPreferReturnThisType(rule) => rule.to_configuration(),
             Self::TypescriptPreferStringStartsEndsWith(rule) => rule.to_configuration(),
-            Self::TypescriptPreferTsExpectError(rule) => rule.to_configuration(),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.to_configuration(),
-            Self::TypescriptRelatedGetterSetterPairs(rule) => rule.to_configuration(),
             Self::TypescriptRequireArraySortCompare(rule) => rule.to_configuration(),
-            Self::TypescriptRequireAwait(rule) => rule.to_configuration(),
             Self::TypescriptRestrictPlusOperands(rule) => rule.to_configuration(),
             Self::TypescriptRestrictTemplateExpressions(rule) => rule.to_configuration(),
             Self::TypescriptReturnAwait(rule) => rule.to_configuration(),
             Self::TypescriptStrictBooleanExpressions(rule) => rule.to_configuration(),
             Self::TypescriptStrictVoidReturn(rule) => rule.to_configuration(),
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.to_configuration(),
-            Self::TypescriptTripleSlashReference(rule) => rule.to_configuration(),
             Self::TypescriptUnboundMethod(rule) => rule.to_configuration(),
-            Self::TypescriptUnifiedSignatures(rule) => rule.to_configuration(),
-            Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => rule.to_configuration(),
-            Self::JestConsistentTestIt(rule) => rule.to_configuration(),
-            Self::JestExpectExpect(rule) => rule.to_configuration(),
-            Self::JestMaxExpects(rule) => rule.to_configuration(),
-            Self::JestMaxNestedDescribe(rule) => rule.to_configuration(),
-            Self::JestNoAliasMethods(rule) => rule.to_configuration(),
-            Self::JestNoCommentedOutTests(rule) => rule.to_configuration(),
-            Self::JestNoConditionalExpect(rule) => rule.to_configuration(),
-            Self::JestNoConditionalInTest(rule) => rule.to_configuration(),
-            Self::JestNoConfusingSetTimeout(rule) => rule.to_configuration(),
-            Self::JestNoDeprecatedFunctions(rule) => rule.to_configuration(),
-            Self::JestNoDisabledTests(rule) => rule.to_configuration(),
-            Self::JestNoDoneCallback(rule) => rule.to_configuration(),
-            Self::JestNoDuplicateHooks(rule) => rule.to_configuration(),
-            Self::JestNoExport(rule) => rule.to_configuration(),
-            Self::JestNoFocusedTests(rule) => rule.to_configuration(),
-            Self::JestNoHooks(rule) => rule.to_configuration(),
-            Self::JestNoIdenticalTitle(rule) => rule.to_configuration(),
-            Self::JestNoInterpolationInSnapshots(rule) => rule.to_configuration(),
-            Self::JestNoJasmineGlobals(rule) => rule.to_configuration(),
-            Self::JestNoLargeSnapshots(rule) => rule.to_configuration(),
-            Self::JestNoMocksImport(rule) => rule.to_configuration(),
-            Self::JestNoRestrictedJestMethods(rule) => rule.to_configuration(),
-            Self::JestNoRestrictedMatchers(rule) => rule.to_configuration(),
-            Self::JestNoStandaloneExpect(rule) => rule.to_configuration(),
-            Self::JestNoTestPrefixes(rule) => rule.to_configuration(),
-            Self::JestNoTestReturnStatement(rule) => rule.to_configuration(),
-            Self::JestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
-            Self::JestNoUntypedMockFactory(rule) => rule.to_configuration(),
-            Self::JestPaddingAroundAfterAllBlocks(rule) => rule.to_configuration(),
-            Self::JestPaddingAroundTestBlocks(rule) => rule.to_configuration(),
-            Self::JestPreferCalledWith(rule) => rule.to_configuration(),
-            Self::JestPreferComparisonMatcher(rule) => rule.to_configuration(),
-            Self::JestPreferEach(rule) => rule.to_configuration(),
-            Self::JestPreferEndingWithAnExpect(rule) => rule.to_configuration(),
-            Self::JestPreferEqualityMatcher(rule) => rule.to_configuration(),
-            Self::JestPreferExpectAssertions(rule) => rule.to_configuration(),
-            Self::JestPreferExpectResolves(rule) => rule.to_configuration(),
-            Self::JestPreferHooksInOrder(rule) => rule.to_configuration(),
-            Self::JestPreferHooksOnTop(rule) => rule.to_configuration(),
-            Self::JestPreferImportingJestGlobals(rule) => rule.to_configuration(),
-            Self::JestPreferJestMocked(rule) => rule.to_configuration(),
-            Self::JestPreferLowercaseTitle(rule) => rule.to_configuration(),
-            Self::JestPreferMockPromiseShorthand(rule) => rule.to_configuration(),
-            Self::JestPreferMockReturnShorthand(rule) => rule.to_configuration(),
-            Self::JestPreferSnapshotHint(rule) => rule.to_configuration(),
-            Self::JestPreferSpyOn(rule) => rule.to_configuration(),
-            Self::JestPreferStrictEqual(rule) => rule.to_configuration(),
-            Self::JestPreferToBe(rule) => rule.to_configuration(),
-            Self::JestPreferToContain(rule) => rule.to_configuration(),
-            Self::JestPreferToHaveBeenCalled(rule) => rule.to_configuration(),
-            Self::JestPreferToHaveBeenCalledTimes(rule) => rule.to_configuration(),
-            Self::JestPreferToHaveLength(rule) => rule.to_configuration(),
-            Self::JestPreferTodo(rule) => rule.to_configuration(),
-            Self::JestRequireHook(rule) => rule.to_configuration(),
-            Self::JestRequireToThrowMessage(rule) => rule.to_configuration(),
-            Self::JestRequireTopLevelDescribe(rule) => rule.to_configuration(),
-            Self::JestValidDescribeCallback(rule) => rule.to_configuration(),
-            Self::JestValidExpect(rule) => rule.to_configuration(),
-            Self::JestValidExpectInPromise(rule) => rule.to_configuration(),
-            Self::JestValidTitle(rule) => rule.to_configuration(),
-            Self::ReactButtonHasType(rule) => rule.to_configuration(),
-            Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
-            Self::ReactDisplayName(rule) => rule.to_configuration(),
-            Self::ReactExhaustiveDeps(rule) => rule.to_configuration(),
-            Self::ReactForbidComponentProps(rule) => rule.to_configuration(),
-            Self::ReactForbidDomProps(rule) => rule.to_configuration(),
-            Self::ReactForbidElements(rule) => rule.to_configuration(),
-            Self::ReactForwardRefUsesRef(rule) => rule.to_configuration(),
-            Self::ReactFunctionComponentDefinition(rule) => rule.to_configuration(),
-            Self::ReactHookUseState(rule) => rule.to_configuration(),
-            Self::ReactIframeMissingSandbox(rule) => rule.to_configuration(),
-            Self::ReactJsxBooleanValue(rule) => rule.to_configuration(),
-            Self::ReactJsxCurlyBracePresence(rule) => rule.to_configuration(),
-            Self::ReactJsxFilenameExtension(rule) => rule.to_configuration(),
-            Self::ReactJsxFragments(rule) => rule.to_configuration(),
-            Self::ReactJsxHandlerNames(rule) => rule.to_configuration(),
-            Self::ReactJsxKey(rule) => rule.to_configuration(),
-            Self::ReactJsxMaxDepth(rule) => rule.to_configuration(),
-            Self::ReactJsxNoCommentTextnodes(rule) => rule.to_configuration(),
-            Self::ReactJsxNoConstructedContextValues(rule) => rule.to_configuration(),
-            Self::ReactJsxNoDuplicateProps(rule) => rule.to_configuration(),
-            Self::ReactJsxNoLiterals(rule) => rule.to_configuration(),
-            Self::ReactJsxNoScriptUrl(rule) => rule.to_configuration(),
-            Self::ReactJsxNoTargetBlank(rule) => rule.to_configuration(),
-            Self::ReactJsxNoUndef(rule) => rule.to_configuration(),
-            Self::ReactJsxNoUselessFragment(rule) => rule.to_configuration(),
-            Self::ReactJsxPascalCase(rule) => rule.to_configuration(),
-            Self::ReactJsxPropsNoSpreadMulti(rule) => rule.to_configuration(),
-            Self::ReactJsxPropsNoSpreading(rule) => rule.to_configuration(),
-            Self::ReactNoArrayIndexKey(rule) => rule.to_configuration(),
-            Self::ReactNoChildrenProp(rule) => rule.to_configuration(),
-            Self::ReactNoCloneElement(rule) => rule.to_configuration(),
-            Self::ReactNoDanger(rule) => rule.to_configuration(),
-            Self::ReactNoDangerWithChildren(rule) => rule.to_configuration(),
-            Self::ReactNoDidMountSetState(rule) => rule.to_configuration(),
-            Self::ReactNoDidUpdateSetState(rule) => rule.to_configuration(),
-            Self::ReactNoDirectMutationState(rule) => rule.to_configuration(),
-            Self::ReactNoFindDomNode(rule) => rule.to_configuration(),
-            Self::ReactNoIsMounted(rule) => rule.to_configuration(),
-            Self::ReactNoMultiComp(rule) => rule.to_configuration(),
-            Self::ReactNoNamespace(rule) => rule.to_configuration(),
-            Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.to_configuration(),
-            Self::ReactNoReactChildren(rule) => rule.to_configuration(),
-            Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.to_configuration(),
-            Self::ReactNoRenderReturnValue(rule) => rule.to_configuration(),
-            Self::ReactNoSetState(rule) => rule.to_configuration(),
-            Self::ReactNoStringRefs(rule) => rule.to_configuration(),
-            Self::ReactNoThisInSfc(rule) => rule.to_configuration(),
-            Self::ReactNoUnescapedEntities(rule) => rule.to_configuration(),
-            Self::ReactNoUnknownProperty(rule) => rule.to_configuration(),
-            Self::ReactNoUnsafe(rule) => rule.to_configuration(),
-            Self::ReactNoUnstableNestedComponents(rule) => rule.to_configuration(),
-            Self::ReactNoWillUpdateSetState(rule) => rule.to_configuration(),
-            Self::ReactOnlyExportComponents(rule) => rule.to_configuration(),
-            Self::ReactPreferEs6Class(rule) => rule.to_configuration(),
-            Self::ReactPreferFunctionComponent(rule) => rule.to_configuration(),
-            Self::ReactReactCompiler(rule) => rule.to_configuration(),
-            Self::ReactReactInJsxScope(rule) => rule.to_configuration(),
-            Self::ReactRequireRenderReturn(rule) => rule.to_configuration(),
-            Self::ReactRulesOfHooks(rule) => rule.to_configuration(),
-            Self::ReactSelfClosingComp(rule) => rule.to_configuration(),
-            Self::ReactStateInConstructor(rule) => rule.to_configuration(),
-            Self::ReactStylePropObject(rule) => rule.to_configuration(),
-            Self::ReactVoidDomElementsNoChildren(rule) => rule.to_configuration(),
-            Self::ReactPerfJsxNoJsxAsProp(rule) => rule.to_configuration(),
-            Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.to_configuration(),
-            Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.to_configuration(),
-            Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.to_configuration(),
-            Self::UnicornCatchErrorName(rule) => rule.to_configuration(),
-            Self::UnicornConsistentAssert(rule) => rule.to_configuration(),
-            Self::UnicornConsistentDateClone(rule) => rule.to_configuration(),
-            Self::UnicornConsistentEmptyArraySpread(rule) => rule.to_configuration(),
-            Self::UnicornConsistentExistenceIndexCheck(rule) => rule.to_configuration(),
-            Self::UnicornConsistentFunctionScoping(rule) => rule.to_configuration(),
-            Self::UnicornConsistentTemplateLiteralEscape(rule) => rule.to_configuration(),
-            Self::UnicornCustomErrorDefinition(rule) => rule.to_configuration(),
-            Self::UnicornEmptyBraceSpaces(rule) => rule.to_configuration(),
-            Self::UnicornErrorMessage(rule) => rule.to_configuration(),
-            Self::UnicornEscapeCase(rule) => rule.to_configuration(),
-            Self::UnicornExplicitLengthCheck(rule) => rule.to_configuration(),
-            Self::UnicornExplicitTimerDelay(rule) => rule.to_configuration(),
-            Self::UnicornFilenameCase(rule) => rule.to_configuration(),
-            Self::UnicornImportStyle(rule) => rule.to_configuration(),
-            Self::UnicornMaxNestedCalls(rule) => rule.to_configuration(),
-            Self::UnicornNewForBuiltins(rule) => rule.to_configuration(),
-            Self::UnicornNoAbusiveEslintDisable(rule) => rule.to_configuration(),
-            Self::UnicornNoAccessorRecursion(rule) => rule.to_configuration(),
-            Self::UnicornNoAnonymousDefaultExport(rule) => rule.to_configuration(),
-            Self::UnicornNoArrayCallbackReference(rule) => rule.to_configuration(),
-            Self::UnicornNoArrayFillWithReferenceType(rule) => rule.to_configuration(),
-            Self::UnicornNoArrayForEach(rule) => rule.to_configuration(),
-            Self::UnicornNoArrayMethodThisArgument(rule) => rule.to_configuration(),
-            Self::UnicornNoArrayReduce(rule) => rule.to_configuration(),
-            Self::UnicornNoArrayReverse(rule) => rule.to_configuration(),
-            Self::UnicornNoArraySort(rule) => rule.to_configuration(),
-            Self::UnicornNoAwaitExpressionMember(rule) => rule.to_configuration(),
-            Self::UnicornNoAwaitInPromiseMethods(rule) => rule.to_configuration(),
-            Self::UnicornNoConfusingArrayWith(rule) => rule.to_configuration(),
-            Self::UnicornNoConsoleSpaces(rule) => rule.to_configuration(),
-            Self::UnicornNoDocumentCookie(rule) => rule.to_configuration(),
-            Self::UnicornNoEmptyFile(rule) => rule.to_configuration(),
-            Self::UnicornNoHexEscape(rule) => rule.to_configuration(),
-            Self::UnicornNoImmediateMutation(rule) => rule.to_configuration(),
-            Self::UnicornNoInstanceofArray(rule) => rule.to_configuration(),
-            Self::UnicornNoInstanceofBuiltins(rule) => rule.to_configuration(),
-            Self::UnicornNoInvalidFetchOptions(rule) => rule.to_configuration(),
-            Self::UnicornNoInvalidRemoveEventListener(rule) => rule.to_configuration(),
-            Self::UnicornNoLengthAsSliceEnd(rule) => rule.to_configuration(),
-            Self::UnicornNoLonelyIf(rule) => rule.to_configuration(),
-            Self::UnicornNoMagicArrayFlatDepth(rule) => rule.to_configuration(),
-            Self::UnicornNoNegatedCondition(rule) => rule.to_configuration(),
-            Self::UnicornNoNegationInEqualityCheck(rule) => rule.to_configuration(),
-            Self::UnicornNoNestedTernary(rule) => rule.to_configuration(),
-            Self::UnicornNoNewArray(rule) => rule.to_configuration(),
-            Self::UnicornNoNewBuffer(rule) => rule.to_configuration(),
-            Self::UnicornNoNull(rule) => rule.to_configuration(),
-            Self::UnicornNoObjectAsDefaultParameter(rule) => rule.to_configuration(),
-            Self::UnicornNoProcessExit(rule) => rule.to_configuration(),
-            Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.to_configuration(),
-            Self::UnicornNoStaticOnlyClass(rule) => rule.to_configuration(),
-            Self::UnicornNoThenable(rule) => rule.to_configuration(),
-            Self::UnicornNoThisAssignment(rule) => rule.to_configuration(),
-            Self::UnicornNoTypeofUndefined(rule) => rule.to_configuration(),
-            Self::UnicornNoUnnecessaryArrayFlatDepth(rule) => rule.to_configuration(),
-            Self::UnicornNoUnnecessaryArraySpliceCount(rule) => rule.to_configuration(),
-            Self::UnicornNoUnnecessaryAwait(rule) => rule.to_configuration(),
-            Self::UnicornNoUnnecessarySliceEnd(rule) => rule.to_configuration(),
-            Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.to_configuration(),
-            Self::UnicornNoUnreadableIife(rule) => rule.to_configuration(),
-            Self::UnicornNoUselessCollectionArgument(rule) => rule.to_configuration(),
-            Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.to_configuration(),
-            Self::UnicornNoUselessFallbackInSpread(rule) => rule.to_configuration(),
-            Self::UnicornNoUselessIteratorToArray(rule) => rule.to_configuration(),
-            Self::UnicornNoUselessLengthCheck(rule) => rule.to_configuration(),
-            Self::UnicornNoUselessPromiseResolveReject(rule) => rule.to_configuration(),
-            Self::UnicornNoUselessSpread(rule) => rule.to_configuration(),
-            Self::UnicornNoUselessSwitchCase(rule) => rule.to_configuration(),
-            Self::UnicornNoUselessUndefined(rule) => rule.to_configuration(),
-            Self::UnicornNoZeroFractions(rule) => rule.to_configuration(),
-            Self::UnicornNumberLiteralCase(rule) => rule.to_configuration(),
-            Self::UnicornNumericSeparatorsStyle(rule) => rule.to_configuration(),
-            Self::UnicornPreferAddEventListener(rule) => rule.to_configuration(),
-            Self::UnicornPreferArrayFind(rule) => rule.to_configuration(),
-            Self::UnicornPreferArrayFlat(rule) => rule.to_configuration(),
-            Self::UnicornPreferArrayFlatMap(rule) => rule.to_configuration(),
-            Self::UnicornPreferArrayIndexOf(rule) => rule.to_configuration(),
-            Self::UnicornPreferArraySome(rule) => rule.to_configuration(),
-            Self::UnicornPreferAt(rule) => rule.to_configuration(),
-            Self::UnicornPreferBigintLiterals(rule) => rule.to_configuration(),
-            Self::UnicornPreferBlobReadingMethods(rule) => rule.to_configuration(),
-            Self::UnicornPreferClassFields(rule) => rule.to_configuration(),
-            Self::UnicornPreferClasslistToggle(rule) => rule.to_configuration(),
-            Self::UnicornPreferCodePoint(rule) => rule.to_configuration(),
-            Self::UnicornPreferDateNow(rule) => rule.to_configuration(),
-            Self::UnicornPreferDefaultParameters(rule) => rule.to_configuration(),
-            Self::UnicornPreferDomNodeAppend(rule) => rule.to_configuration(),
-            Self::UnicornPreferDomNodeDataset(rule) => rule.to_configuration(),
-            Self::UnicornPreferDomNodeRemove(rule) => rule.to_configuration(),
-            Self::UnicornPreferDomNodeTextContent(rule) => rule.to_configuration(),
-            Self::UnicornPreferEventTarget(rule) => rule.to_configuration(),
-            Self::UnicornPreferExportFrom(rule) => rule.to_configuration(),
-            Self::UnicornPreferGlobalThis(rule) => rule.to_configuration(),
-            Self::UnicornPreferImportMetaProperties(rule) => rule.to_configuration(),
-            Self::UnicornPreferIncludes(rule) => rule.to_configuration(),
-            Self::UnicornPreferKeyboardEventKey(rule) => rule.to_configuration(),
-            Self::UnicornPreferLogicalOperatorOverTernary(rule) => rule.to_configuration(),
-            Self::UnicornPreferMathMinMax(rule) => rule.to_configuration(),
-            Self::UnicornPreferMathTrunc(rule) => rule.to_configuration(),
-            Self::UnicornPreferModernDomApis(rule) => rule.to_configuration(),
-            Self::UnicornPreferModernMathApis(rule) => rule.to_configuration(),
-            Self::UnicornPreferModule(rule) => rule.to_configuration(),
-            Self::UnicornPreferNativeCoercionFunctions(rule) => rule.to_configuration(),
-            Self::UnicornPreferNegativeIndex(rule) => rule.to_configuration(),
-            Self::UnicornPreferNodeProtocol(rule) => rule.to_configuration(),
-            Self::UnicornPreferNumberCoercion(rule) => rule.to_configuration(),
-            Self::UnicornPreferNumberProperties(rule) => rule.to_configuration(),
-            Self::UnicornPreferObjectFromEntries(rule) => rule.to_configuration(),
-            Self::UnicornPreferOptionalCatchBinding(rule) => rule.to_configuration(),
-            Self::UnicornPreferPrototypeMethods(rule) => rule.to_configuration(),
-            Self::UnicornPreferQuerySelector(rule) => rule.to_configuration(),
-            Self::UnicornPreferReflectApply(rule) => rule.to_configuration(),
-            Self::UnicornPreferRegexpTest(rule) => rule.to_configuration(),
-            Self::UnicornPreferResponseStaticJson(rule) => rule.to_configuration(),
-            Self::UnicornPreferSetHas(rule) => rule.to_configuration(),
-            Self::UnicornPreferSetSize(rule) => rule.to_configuration(),
-            Self::UnicornPreferSingleCall(rule) => rule.to_configuration(),
-            Self::UnicornPreferSpread(rule) => rule.to_configuration(),
-            Self::UnicornPreferStringRaw(rule) => rule.to_configuration(),
-            Self::UnicornPreferStringReplaceAll(rule) => rule.to_configuration(),
-            Self::UnicornPreferStringSlice(rule) => rule.to_configuration(),
-            Self::UnicornPreferStringStartsEndsWith(rule) => rule.to_configuration(),
-            Self::UnicornPreferStringTrimStartEnd(rule) => rule.to_configuration(),
-            Self::UnicornPreferStructuredClone(rule) => rule.to_configuration(),
-            Self::UnicornPreferTernary(rule) => rule.to_configuration(),
-            Self::UnicornPreferTopLevelAwait(rule) => rule.to_configuration(),
-            Self::UnicornPreferTypeError(rule) => rule.to_configuration(),
-            Self::UnicornRelativeUrlStyle(rule) => rule.to_configuration(),
-            Self::UnicornRequireArrayJoinSeparator(rule) => rule.to_configuration(),
-            Self::UnicornRequireModuleAttributes(rule) => rule.to_configuration(),
-            Self::UnicornRequireModuleSpecifiers(rule) => rule.to_configuration(),
-            Self::UnicornRequireNumberToFixedDigitsArgument(rule) => rule.to_configuration(),
-            Self::UnicornRequirePostMessageTargetOrigin(rule) => rule.to_configuration(),
-            Self::UnicornSwitchCaseBraces(rule) => rule.to_configuration(),
-            Self::UnicornSwitchCaseBreakPosition(rule) => rule.to_configuration(),
-            Self::UnicornTextEncodingIdentifierCase(rule) => rule.to_configuration(),
-            Self::UnicornThrowNewError(rule) => rule.to_configuration(),
-            Self::JsxA11YAltText(rule) => rule.to_configuration(),
-            Self::JsxA11YAnchorAmbiguousText(rule) => rule.to_configuration(),
-            Self::JsxA11YAnchorHasContent(rule) => rule.to_configuration(),
-            Self::JsxA11YAnchorIsValid(rule) => rule.to_configuration(),
-            Self::JsxA11YAriaActivedescendantHasTabindex(rule) => rule.to_configuration(),
-            Self::JsxA11YAriaProps(rule) => rule.to_configuration(),
-            Self::JsxA11YAriaProptypes(rule) => rule.to_configuration(),
-            Self::JsxA11YAriaRole(rule) => rule.to_configuration(),
-            Self::JsxA11YAriaUnsupportedElements(rule) => rule.to_configuration(),
-            Self::JsxA11YAutocompleteValid(rule) => rule.to_configuration(),
-            Self::JsxA11YClickEventsHaveKeyEvents(rule) => rule.to_configuration(),
-            Self::JsxA11YControlHasAssociatedLabel(rule) => rule.to_configuration(),
-            Self::JsxA11YHeadingHasContent(rule) => rule.to_configuration(),
-            Self::JsxA11YHtmlHasLang(rule) => rule.to_configuration(),
-            Self::JsxA11YIframeHasTitle(rule) => rule.to_configuration(),
-            Self::JsxA11YImgRedundantAlt(rule) => rule.to_configuration(),
-            Self::JsxA11YInteractiveSupportsFocus(rule) => rule.to_configuration(),
-            Self::JsxA11YLabelHasAssociatedControl(rule) => rule.to_configuration(),
-            Self::JsxA11YLang(rule) => rule.to_configuration(),
-            Self::JsxA11YMediaHasCaption(rule) => rule.to_configuration(),
-            Self::JsxA11YMouseEventsHaveKeyEvents(rule) => rule.to_configuration(),
-            Self::JsxA11YNoAccessKey(rule) => rule.to_configuration(),
-            Self::JsxA11YNoAriaHiddenOnFocusable(rule) => rule.to_configuration(),
-            Self::JsxA11YNoAutofocus(rule) => rule.to_configuration(),
-            Self::JsxA11YNoDistractingElements(rule) => rule.to_configuration(),
-            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(rule) => rule.to_configuration(),
-            Self::JsxA11YNoNoninteractiveElementInteractions(rule) => rule.to_configuration(),
-            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(rule) => rule.to_configuration(),
-            Self::JsxA11YNoNoninteractiveTabindex(rule) => rule.to_configuration(),
-            Self::JsxA11YNoRedundantRoles(rule) => rule.to_configuration(),
-            Self::JsxA11YNoStaticElementInteractions(rule) => rule.to_configuration(),
-            Self::JsxA11YPreferTagOverRole(rule) => rule.to_configuration(),
-            Self::JsxA11YRoleHasRequiredAriaProps(rule) => rule.to_configuration(),
-            Self::JsxA11YRoleSupportsAriaProps(rule) => rule.to_configuration(),
-            Self::JsxA11YScope(rule) => rule.to_configuration(),
-            Self::JsxA11YTabindexNoPositive(rule) => rule.to_configuration(),
-            Self::OxcApproxConstant(rule) => rule.to_configuration(),
-            Self::OxcBadArrayMethodOnArguments(rule) => rule.to_configuration(),
-            Self::OxcBadBitwiseOperator(rule) => rule.to_configuration(),
-            Self::OxcBadCharAtComparison(rule) => rule.to_configuration(),
-            Self::OxcBadComparisonSequence(rule) => rule.to_configuration(),
-            Self::OxcBadMatchAllArg(rule) => rule.to_configuration(),
-            Self::OxcBadMinMaxFunc(rule) => rule.to_configuration(),
-            Self::OxcBadObjectLiteralComparison(rule) => rule.to_configuration(),
-            Self::OxcBadReplaceAllArg(rule) => rule.to_configuration(),
-            Self::OxcBranchesSharingCode(rule) => rule.to_configuration(),
-            Self::OxcConstComparisons(rule) => rule.to_configuration(),
-            Self::OxcDoubleComparisons(rule) => rule.to_configuration(),
-            Self::OxcErasingOp(rule) => rule.to_configuration(),
-            Self::OxcMisrefactoredAssignOp(rule) => rule.to_configuration(),
-            Self::OxcMissingThrow(rule) => rule.to_configuration(),
-            Self::OxcNoAccumulatingSpread(rule) => rule.to_configuration(),
-            Self::OxcNoAsyncAwait(rule) => rule.to_configuration(),
-            Self::OxcNoAsyncEndpointHandlers(rule) => rule.to_configuration(),
-            Self::OxcNoBarrelFile(rule) => rule.to_configuration(),
-            Self::OxcNoConstEnum(rule) => rule.to_configuration(),
-            Self::OxcNoMapSpread(rule) => rule.to_configuration(),
-            Self::OxcNoOptionalChaining(rule) => rule.to_configuration(),
-            Self::OxcNoRestSpreadProperties(rule) => rule.to_configuration(),
-            Self::OxcNoThisInExportedFunction(rule) => rule.to_configuration(),
-            Self::OxcNumberArgOutOfRange(rule) => rule.to_configuration(),
-            Self::OxcOnlyUsedInRecursion(rule) => rule.to_configuration(),
-            Self::OxcUninvokedArrayCallback(rule) => rule.to_configuration(),
-            Self::NextjsGoogleFontDisplay(rule) => rule.to_configuration(),
-            Self::NextjsGoogleFontPreconnect(rule) => rule.to_configuration(),
-            Self::NextjsInlineScriptId(rule) => rule.to_configuration(),
-            Self::NextjsNextScriptForGa(rule) => rule.to_configuration(),
-            Self::NextjsNoAssignModuleVariable(rule) => rule.to_configuration(),
-            Self::NextjsNoAsyncClientComponent(rule) => rule.to_configuration(),
-            Self::NextjsNoBeforeInteractiveScriptOutsideDocument(rule) => rule.to_configuration(),
-            Self::NextjsNoCssTags(rule) => rule.to_configuration(),
-            Self::NextjsNoDocumentImportInPage(rule) => rule.to_configuration(),
-            Self::NextjsNoDuplicateHead(rule) => rule.to_configuration(),
-            Self::NextjsNoHeadElement(rule) => rule.to_configuration(),
-            Self::NextjsNoHeadImportInDocument(rule) => rule.to_configuration(),
-            Self::NextjsNoHtmlLinkForPages(rule) => rule.to_configuration(),
-            Self::NextjsNoImgElement(rule) => rule.to_configuration(),
-            Self::NextjsNoPageCustomFont(rule) => rule.to_configuration(),
-            Self::NextjsNoScriptComponentInHead(rule) => rule.to_configuration(),
-            Self::NextjsNoStyledJsxInDocument(rule) => rule.to_configuration(),
-            Self::NextjsNoSyncScripts(rule) => rule.to_configuration(),
-            Self::NextjsNoTitleInDocumentHead(rule) => rule.to_configuration(),
-            Self::NextjsNoTypos(rule) => rule.to_configuration(),
-            Self::NextjsNoUnwantedPolyfillio(rule) => rule.to_configuration(),
-            Self::JsdocCheckAccess(rule) => rule.to_configuration(),
-            Self::JsdocCheckPropertyNames(rule) => rule.to_configuration(),
-            Self::JsdocCheckTagNames(rule) => rule.to_configuration(),
-            Self::JsdocEmptyTags(rule) => rule.to_configuration(),
-            Self::JsdocImplementsOnClasses(rule) => rule.to_configuration(),
-            Self::JsdocNoBlankBlocks(rule) => rule.to_configuration(),
-            Self::JsdocNoDefaults(rule) => rule.to_configuration(),
-            Self::JsdocRequireParam(rule) => rule.to_configuration(),
-            Self::JsdocRequireParamDescription(rule) => rule.to_configuration(),
-            Self::JsdocRequireParamName(rule) => rule.to_configuration(),
-            Self::JsdocRequireParamType(rule) => rule.to_configuration(),
-            Self::JsdocRequireProperty(rule) => rule.to_configuration(),
-            Self::JsdocRequirePropertyDescription(rule) => rule.to_configuration(),
-            Self::JsdocRequirePropertyName(rule) => rule.to_configuration(),
-            Self::JsdocRequirePropertyType(rule) => rule.to_configuration(),
-            Self::JsdocRequireReturns(rule) => rule.to_configuration(),
-            Self::JsdocRequireReturnsDescription(rule) => rule.to_configuration(),
-            Self::JsdocRequireReturnsType(rule) => rule.to_configuration(),
-            Self::JsdocRequireThrowsDescription(rule) => rule.to_configuration(),
-            Self::JsdocRequireThrowsType(rule) => rule.to_configuration(),
-            Self::JsdocRequireYields(rule) => rule.to_configuration(),
-            Self::JsdocRequireYieldsDescription(rule) => rule.to_configuration(),
-            Self::JsdocRequireYieldsType(rule) => rule.to_configuration(),
-            Self::PromiseAlwaysReturn(rule) => rule.to_configuration(),
-            Self::PromiseAvoidNew(rule) => rule.to_configuration(),
-            Self::PromiseCatchOrReturn(rule) => rule.to_configuration(),
-            Self::PromiseNoCallbackInPromise(rule) => rule.to_configuration(),
-            Self::PromiseNoMultipleResolved(rule) => rule.to_configuration(),
-            Self::PromiseNoNesting(rule) => rule.to_configuration(),
-            Self::PromiseNoNewStatics(rule) => rule.to_configuration(),
-            Self::PromiseNoPromiseInCallback(rule) => rule.to_configuration(),
-            Self::PromiseNoReturnInFinally(rule) => rule.to_configuration(),
-            Self::PromiseNoReturnWrap(rule) => rule.to_configuration(),
-            Self::PromiseParamNames(rule) => rule.to_configuration(),
-            Self::PromisePreferAwaitToCallbacks(rule) => rule.to_configuration(),
-            Self::PromisePreferAwaitToThen(rule) => rule.to_configuration(),
-            Self::PromisePreferCatch(rule) => rule.to_configuration(),
-            Self::PromiseSpecOnly(rule) => rule.to_configuration(),
-            Self::PromiseValidParams(rule) => rule.to_configuration(),
-            Self::VitestConsistentEachFor(rule) => rule.to_configuration(),
-            Self::VitestConsistentTestFilename(rule) => rule.to_configuration(),
-            Self::VitestConsistentTestIt(rule) => rule.to_configuration(),
-            Self::VitestConsistentVitestVi(rule) => rule.to_configuration(),
-            Self::VitestExpectExpect(rule) => rule.to_configuration(),
-            Self::VitestHoistedApisOnTop(rule) => rule.to_configuration(),
-            Self::VitestMaxExpects(rule) => rule.to_configuration(),
-            Self::VitestMaxNestedDescribe(rule) => rule.to_configuration(),
-            Self::VitestNoAliasMethods(rule) => rule.to_configuration(),
-            Self::VitestNoCommentedOutTests(rule) => rule.to_configuration(),
-            Self::VitestNoConditionalExpect(rule) => rule.to_configuration(),
-            Self::VitestNoConditionalInTest(rule) => rule.to_configuration(),
-            Self::VitestNoConditionalTests(rule) => rule.to_configuration(),
-            Self::VitestNoDisabledTests(rule) => rule.to_configuration(),
-            Self::VitestNoDuplicateHooks(rule) => rule.to_configuration(),
-            Self::VitestNoFocusedTests(rule) => rule.to_configuration(),
-            Self::VitestNoHooks(rule) => rule.to_configuration(),
-            Self::VitestNoIdenticalTitle(rule) => rule.to_configuration(),
-            Self::VitestNoImportNodeTest(rule) => rule.to_configuration(),
-            Self::VitestNoImportingVitestGlobals(rule) => rule.to_configuration(),
-            Self::VitestNoInterpolationInSnapshots(rule) => rule.to_configuration(),
-            Self::VitestNoLargeSnapshots(rule) => rule.to_configuration(),
-            Self::VitestNoMocksImport(rule) => rule.to_configuration(),
-            Self::VitestNoRestrictedMatchers(rule) => rule.to_configuration(),
-            Self::VitestNoRestrictedViMethods(rule) => rule.to_configuration(),
-            Self::VitestNoStandaloneExpect(rule) => rule.to_configuration(),
-            Self::VitestNoTestPrefixes(rule) => rule.to_configuration(),
-            Self::VitestNoTestReturnStatement(rule) => rule.to_configuration(),
-            Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
-            Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.to_configuration(),
-            Self::VitestPaddingAroundTestBlocks(rule) => rule.to_configuration(),
-            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.to_configuration(),
-            Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
-            Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
-            Self::VitestPreferCalledWith(rule) => rule.to_configuration(),
-            Self::VitestPreferComparisonMatcher(rule) => rule.to_configuration(),
-            Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
-            Self::VitestPreferEach(rule) => rule.to_configuration(),
-            Self::VitestPreferEqualityMatcher(rule) => rule.to_configuration(),
-            Self::VitestPreferExpectAssertions(rule) => rule.to_configuration(),
-            Self::VitestPreferExpectResolves(rule) => rule.to_configuration(),
-            Self::VitestPreferExpectTypeOf(rule) => rule.to_configuration(),
-            Self::VitestPreferHooksInOrder(rule) => rule.to_configuration(),
-            Self::VitestPreferHooksOnTop(rule) => rule.to_configuration(),
-            Self::VitestPreferImportInMock(rule) => rule.to_configuration(),
-            Self::VitestPreferImportingVitestGlobals(rule) => rule.to_configuration(),
-            Self::VitestPreferLowercaseTitle(rule) => rule.to_configuration(),
-            Self::VitestPreferMockPromiseShorthand(rule) => rule.to_configuration(),
-            Self::VitestPreferMockReturnShorthand(rule) => rule.to_configuration(),
-            Self::VitestPreferSnapshotHint(rule) => rule.to_configuration(),
-            Self::VitestPreferSpyOn(rule) => rule.to_configuration(),
-            Self::VitestPreferStrictBooleanMatchers(rule) => rule.to_configuration(),
-            Self::VitestPreferStrictEqual(rule) => rule.to_configuration(),
-            Self::VitestPreferToBe(rule) => rule.to_configuration(),
-            Self::VitestPreferToBeFalsy(rule) => rule.to_configuration(),
-            Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
-            Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
-            Self::VitestPreferToContain(rule) => rule.to_configuration(),
-            Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.to_configuration(),
-            Self::VitestPreferToHaveLength(rule) => rule.to_configuration(),
-            Self::VitestPreferTodo(rule) => rule.to_configuration(),
-            Self::VitestRequireAwaitedExpectPoll(rule) => rule.to_configuration(),
-            Self::VitestRequireHook(rule) => rule.to_configuration(),
-            Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
-                rule.to_configuration()
-            }
-            Self::VitestRequireMockTypeParameters(rule) => rule.to_configuration(),
-            Self::VitestRequireTestTimeout(rule) => rule.to_configuration(),
-            Self::VitestRequireToThrowMessage(rule) => rule.to_configuration(),
-            Self::VitestRequireTopLevelDescribe(rule) => rule.to_configuration(),
-            Self::VitestValidDescribeCallback(rule) => rule.to_configuration(),
-            Self::VitestValidExpect(rule) => rule.to_configuration(),
-            Self::VitestValidExpectInPromise(rule) => rule.to_configuration(),
-            Self::VitestValidTitle(rule) => rule.to_configuration(),
-            Self::VitestWarnTodo(rule) => rule.to_configuration(),
-            Self::NodeCallbackReturn(rule) => rule.to_configuration(),
-            Self::NodeExportsStyle(rule) => rule.to_configuration(),
-            Self::NodeGlobalRequire(rule) => rule.to_configuration(),
-            Self::NodeHandleCallbackErr(rule) => rule.to_configuration(),
-            Self::NodeNoExportsAssign(rule) => rule.to_configuration(),
-            Self::NodeNoMixedRequires(rule) => rule.to_configuration(),
-            Self::NodeNoNewRequire(rule) => rule.to_configuration(),
-            Self::NodeNoPathConcat(rule) => rule.to_configuration(),
-            Self::NodeNoProcessEnv(rule) => rule.to_configuration(),
-            Self::NodeNoSync(rule) => rule.to_configuration(),
-            Self::NodeNoTopLevelAwait(rule) => rule.to_configuration(),
-            Self::VueComponentDefinitionNameCasing(rule) => rule.to_configuration(),
-            Self::VueDefineEmitsDeclaration(rule) => rule.to_configuration(),
-            Self::VueDefinePropsDeclaration(rule) => rule.to_configuration(),
-            Self::VueDefinePropsDestructuring(rule) => rule.to_configuration(),
-            Self::VueMaxProps(rule) => rule.to_configuration(),
-            Self::VueNextTickStyle(rule) => rule.to_configuration(),
-            Self::VueNoArrowFunctionsInWatch(rule) => rule.to_configuration(),
-            Self::VueNoAsyncInComputedProperties(rule) => rule.to_configuration(),
-            Self::VueNoComputedPropertiesInData(rule) => rule.to_configuration(),
-            Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.to_configuration(),
-            Self::VueNoDeprecatedDeleteSet(rule) => rule.to_configuration(),
-            Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.to_configuration(),
-            Self::VueNoDeprecatedEventsApi(rule) => rule.to_configuration(),
-            Self::VueNoDeprecatedModelDefinition(rule) => rule.to_configuration(),
-            Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.to_configuration(),
-            Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.to_configuration(),
-            Self::VueNoDupeKeys(rule) => rule.to_configuration(),
-            Self::VueNoExportInScriptSetup(rule) => rule.to_configuration(),
-            Self::VueNoExposeAfterAwait(rule) => rule.to_configuration(),
-            Self::VueNoImportCompilerMacros(rule) => rule.to_configuration(),
-            Self::VueNoLifecycleAfterAwait(rule) => rule.to_configuration(),
-            Self::VueNoMultipleSlotArgs(rule) => rule.to_configuration(),
-            Self::VueNoRequiredPropWithDefault(rule) => rule.to_configuration(),
-            Self::VueNoReservedComponentNames(rule) => rule.to_configuration(),
-            Self::VueNoReservedKeys(rule) => rule.to_configuration(),
-            Self::VueNoReservedProps(rule) => rule.to_configuration(),
-            Self::VueNoSharedComponentData(rule) => rule.to_configuration(),
-            Self::VueNoSideEffectsInComputedProperties(rule) => rule.to_configuration(),
-            Self::VueNoThisInBeforeRouteEnter(rule) => rule.to_configuration(),
-            Self::VueNoWatchAfterAwait(rule) => rule.to_configuration(),
-            Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
-            Self::VuePropNameCasing(rule) => rule.to_configuration(),
-            Self::VueRequireDefaultExport(rule) => rule.to_configuration(),
-            Self::VueRequireDefaultProp(rule) => rule.to_configuration(),
-            Self::VueRequireDirectExport(rule) => rule.to_configuration(),
-            Self::VueRequirePropTypeConstructor(rule) => rule.to_configuration(),
-            Self::VueRequirePropTypes(rule) => rule.to_configuration(),
-            Self::VueRequireRenderReturn(rule) => rule.to_configuration(),
-            Self::VueRequireSlotsAsFunctions(rule) => rule.to_configuration(),
-            Self::VueRequireTypedRef(rule) => rule.to_configuration(),
-            Self::VueReturnInComputedProperty(rule) => rule.to_configuration(),
-            Self::VueReturnInEmitsValidator(rule) => rule.to_configuration(),
-            Self::VueValidDefineEmits(rule) => rule.to_configuration(),
-            Self::VueValidDefineOptions(rule) => rule.to_configuration(),
-            Self::VueValidDefineProps(rule) => rule.to_configuration(),
-            Self::VueValidNextTick(rule) => rule.to_configuration(),
+            _ => None,
         }
     }
     #[inline(never)]
@@ -13258,6 +12603,7 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(rule) => rule.run(node, ctx),
             Self::TypescriptNoFloatingPromises(rule) => rule.run(node, ctx),
             Self::TypescriptNoForInArray(rule) => rule.run(node, ctx),
+            Self::TypescriptNoGeneratedEmptyObjectType(rule) => rule.run(node, ctx),
             Self::TypescriptNoImpliedEval(rule) => rule.run(node, ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run(node, ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.run(node, ctx),
@@ -13395,16 +12741,24 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.run(node, ctx),
             Self::JestValidTitle(rule) => rule.run(node, ctx),
             Self::ReactButtonHasType(rule) => rule.run(node, ctx),
+            Self::ReactCapitalizedCalls(rule) => rule.run(node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
             Self::ReactDisplayName(rule) => rule.run(node, ctx),
+            Self::ReactErrorBoundaries(rule) => rule.run(node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run(node, ctx),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.run(node, ctx),
             Self::ReactForbidComponentProps(rule) => rule.run(node, ctx),
             Self::ReactForbidDomProps(rule) => rule.run(node, ctx),
             Self::ReactForbidElements(rule) => rule.run(node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run(node, ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.run(node, ctx),
+            Self::ReactGlobals(rule) => rule.run(node, ctx),
             Self::ReactHookUseState(rule) => rule.run(node, ctx),
+            Self::ReactHooks(rule) => rule.run(node, ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run(node, ctx),
+            Self::ReactImmutability(rule) => rule.run(node, ctx),
+            Self::ReactIncompatibleLibrary(rule) => rule.run(node, ctx),
+            Self::ReactInvariant(rule) => rule.run(node, ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run(node, ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run(node, ctx),
             Self::ReactJsxFilenameExtension(rule) => rule.run(node, ctx),
@@ -13423,11 +12777,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run(node, ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run(node, ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run(node, ctx),
+            Self::ReactMemoDependencies(rule) => rule.run(node, ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run(node, ctx),
             Self::ReactNoChildrenProp(rule) => rule.run(node, ctx),
             Self::ReactNoCloneElement(rule) => rule.run(node, ctx),
             Self::ReactNoDanger(rule) => rule.run(node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run(node, ctx),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.run(node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run(node, ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.run(node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run(node, ctx),
@@ -13450,14 +12806,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
             Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
             Self::ReactPreferFunctionComponent(rule) => rule.run(node, ctx),
-            Self::ReactReactCompiler(rule) => rule.run(node, ctx),
+            Self::ReactPreserveManualMemoization(rule) => rule.run(node, ctx),
+            Self::ReactPurity(rule) => rule.run(node, ctx),
             Self::ReactReactInJsxScope(rule) => rule.run(node, ctx),
+            Self::ReactRefs(rule) => rule.run(node, ctx),
             Self::ReactRequireRenderReturn(rule) => rule.run(node, ctx),
+            Self::ReactRuleSuppression(rule) => rule.run(node, ctx),
             Self::ReactRulesOfHooks(rule) => rule.run(node, ctx),
             Self::ReactSelfClosingComp(rule) => rule.run(node, ctx),
+            Self::ReactSetStateInEffect(rule) => rule.run(node, ctx),
+            Self::ReactSetStateInRender(rule) => rule.run(node, ctx),
             Self::ReactStateInConstructor(rule) => rule.run(node, ctx),
+            Self::ReactStaticComponents(rule) => rule.run(node, ctx),
             Self::ReactStylePropObject(rule) => rule.run(node, ctx),
+            Self::ReactSyntax(rule) => rule.run(node, ctx),
+            Self::ReactTodo(rule) => rule.run(node, ctx),
+            Self::ReactUnsupportedSyntax(rule) => rule.run(node, ctx),
+            Self::ReactUseMemo(rule) => rule.run(node, ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run(node, ctx),
+            Self::ReactVoidUseMemo(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run(node, ctx),
@@ -14124,6 +13491,7 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(rule) => rule.run_once(ctx),
             Self::TypescriptNoFloatingPromises(rule) => rule.run_once(ctx),
             Self::TypescriptNoForInArray(rule) => rule.run_once(ctx),
+            Self::TypescriptNoGeneratedEmptyObjectType(rule) => rule.run_once(ctx),
             Self::TypescriptNoImpliedEval(rule) => rule.run_once(ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run_once(ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.run_once(ctx),
@@ -14261,16 +13629,24 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.run_once(ctx),
             Self::JestValidTitle(rule) => rule.run_once(ctx),
             Self::ReactButtonHasType(rule) => rule.run_once(ctx),
+            Self::ReactCapitalizedCalls(rule) => rule.run_once(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
             Self::ReactDisplayName(rule) => rule.run_once(ctx),
+            Self::ReactErrorBoundaries(rule) => rule.run_once(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_once(ctx),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.run_once(ctx),
             Self::ReactForbidComponentProps(rule) => rule.run_once(ctx),
             Self::ReactForbidDomProps(rule) => rule.run_once(ctx),
             Self::ReactForbidElements(rule) => rule.run_once(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_once(ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.run_once(ctx),
+            Self::ReactGlobals(rule) => rule.run_once(ctx),
             Self::ReactHookUseState(rule) => rule.run_once(ctx),
+            Self::ReactHooks(rule) => rule.run_once(ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run_once(ctx),
+            Self::ReactImmutability(rule) => rule.run_once(ctx),
+            Self::ReactIncompatibleLibrary(rule) => rule.run_once(ctx),
+            Self::ReactInvariant(rule) => rule.run_once(ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run_once(ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_once(ctx),
             Self::ReactJsxFilenameExtension(rule) => rule.run_once(ctx),
@@ -14289,11 +13665,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run_once(ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run_once(ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_once(ctx),
+            Self::ReactMemoDependencies(rule) => rule.run_once(ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run_once(ctx),
             Self::ReactNoChildrenProp(rule) => rule.run_once(ctx),
             Self::ReactNoCloneElement(rule) => rule.run_once(ctx),
             Self::ReactNoDanger(rule) => rule.run_once(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_once(ctx),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.run_once(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_once(ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.run_once(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_once(ctx),
@@ -14316,14 +13694,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
             Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
             Self::ReactPreferFunctionComponent(rule) => rule.run_once(ctx),
-            Self::ReactReactCompiler(rule) => rule.run_once(ctx),
+            Self::ReactPreserveManualMemoization(rule) => rule.run_once(ctx),
+            Self::ReactPurity(rule) => rule.run_once(ctx),
             Self::ReactReactInJsxScope(rule) => rule.run_once(ctx),
+            Self::ReactRefs(rule) => rule.run_once(ctx),
             Self::ReactRequireRenderReturn(rule) => rule.run_once(ctx),
+            Self::ReactRuleSuppression(rule) => rule.run_once(ctx),
             Self::ReactRulesOfHooks(rule) => rule.run_once(ctx),
             Self::ReactSelfClosingComp(rule) => rule.run_once(ctx),
+            Self::ReactSetStateInEffect(rule) => rule.run_once(ctx),
+            Self::ReactSetStateInRender(rule) => rule.run_once(ctx),
             Self::ReactStateInConstructor(rule) => rule.run_once(ctx),
+            Self::ReactStaticComponents(rule) => rule.run_once(ctx),
             Self::ReactStylePropObject(rule) => rule.run_once(ctx),
+            Self::ReactSyntax(rule) => rule.run_once(ctx),
+            Self::ReactTodo(rule) => rule.run_once(ctx),
+            Self::ReactUnsupportedSyntax(rule) => rule.run_once(ctx),
+            Self::ReactUseMemo(rule) => rule.run_once(ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_once(ctx),
+            Self::ReactVoidUseMemo(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_once(ctx),
@@ -15015,6 +14404,9 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoFloatingPromises(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoForInArray(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptNoGeneratedEmptyObjectType(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::TypescriptNoImpliedEval(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15196,18 +14588,26 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactButtonHasType(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCapitalizedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::ReactDisplayName(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactErrorBoundaries(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidComponentProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidDomProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactHookUseState(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactImmutability(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactIncompatibleLibrary(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactInvariant(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxFilenameExtension(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15226,11 +14626,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactMemoDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoChildrenProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoCloneElement(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDanger(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15255,14 +14657,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPreferFunctionComponent(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactReactCompiler(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactPreserveManualMemoization(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactPurity(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactReactInJsxScope(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactRefs(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactRuleSuppression(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactRulesOfHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactSelfClosingComp(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactSetStateInEffect(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactSetStateInRender(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactStateInConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactStaticComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactStylePropObject(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactUnsupportedSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactUseMemo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactVoidUseMemo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15974,6 +15387,7 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(rule) => rule.should_run(ctx),
             Self::TypescriptNoFloatingPromises(rule) => rule.should_run(ctx),
             Self::TypescriptNoForInArray(rule) => rule.should_run(ctx),
+            Self::TypescriptNoGeneratedEmptyObjectType(rule) => rule.should_run(ctx),
             Self::TypescriptNoImpliedEval(rule) => rule.should_run(ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.should_run(ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.should_run(ctx),
@@ -16111,16 +15525,24 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.should_run(ctx),
             Self::JestValidTitle(rule) => rule.should_run(ctx),
             Self::ReactButtonHasType(rule) => rule.should_run(ctx),
+            Self::ReactCapitalizedCalls(rule) => rule.should_run(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
             Self::ReactDisplayName(rule) => rule.should_run(ctx),
+            Self::ReactErrorBoundaries(rule) => rule.should_run(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.should_run(ctx),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.should_run(ctx),
             Self::ReactForbidComponentProps(rule) => rule.should_run(ctx),
             Self::ReactForbidDomProps(rule) => rule.should_run(ctx),
             Self::ReactForbidElements(rule) => rule.should_run(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.should_run(ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.should_run(ctx),
+            Self::ReactGlobals(rule) => rule.should_run(ctx),
             Self::ReactHookUseState(rule) => rule.should_run(ctx),
+            Self::ReactHooks(rule) => rule.should_run(ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.should_run(ctx),
+            Self::ReactImmutability(rule) => rule.should_run(ctx),
+            Self::ReactIncompatibleLibrary(rule) => rule.should_run(ctx),
+            Self::ReactInvariant(rule) => rule.should_run(ctx),
             Self::ReactJsxBooleanValue(rule) => rule.should_run(ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.should_run(ctx),
             Self::ReactJsxFilenameExtension(rule) => rule.should_run(ctx),
@@ -16139,11 +15561,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.should_run(ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.should_run(ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.should_run(ctx),
+            Self::ReactMemoDependencies(rule) => rule.should_run(ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.should_run(ctx),
             Self::ReactNoChildrenProp(rule) => rule.should_run(ctx),
             Self::ReactNoCloneElement(rule) => rule.should_run(ctx),
             Self::ReactNoDanger(rule) => rule.should_run(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.should_run(ctx),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.should_run(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.should_run(ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.should_run(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.should_run(ctx),
@@ -16166,14 +15590,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.should_run(ctx),
             Self::ReactPreferEs6Class(rule) => rule.should_run(ctx),
             Self::ReactPreferFunctionComponent(rule) => rule.should_run(ctx),
-            Self::ReactReactCompiler(rule) => rule.should_run(ctx),
+            Self::ReactPreserveManualMemoization(rule) => rule.should_run(ctx),
+            Self::ReactPurity(rule) => rule.should_run(ctx),
             Self::ReactReactInJsxScope(rule) => rule.should_run(ctx),
+            Self::ReactRefs(rule) => rule.should_run(ctx),
             Self::ReactRequireRenderReturn(rule) => rule.should_run(ctx),
+            Self::ReactRuleSuppression(rule) => rule.should_run(ctx),
             Self::ReactRulesOfHooks(rule) => rule.should_run(ctx),
             Self::ReactSelfClosingComp(rule) => rule.should_run(ctx),
+            Self::ReactSetStateInEffect(rule) => rule.should_run(ctx),
+            Self::ReactSetStateInRender(rule) => rule.should_run(ctx),
             Self::ReactStateInConstructor(rule) => rule.should_run(ctx),
+            Self::ReactStaticComponents(rule) => rule.should_run(ctx),
             Self::ReactStylePropObject(rule) => rule.should_run(ctx),
+            Self::ReactSyntax(rule) => rule.should_run(ctx),
+            Self::ReactTodo(rule) => rule.should_run(ctx),
+            Self::ReactUnsupportedSyntax(rule) => rule.should_run(ctx),
+            Self::ReactUseMemo(rule) => rule.should_run(ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.should_run(ctx),
+            Self::ReactVoidUseMemo(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.should_run(ctx),
@@ -16895,6 +16330,9 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::IS_TSGOLINT_RULE,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::IS_TSGOLINT_RULE,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::IS_TSGOLINT_RULE,
+            Self::TypescriptNoGeneratedEmptyObjectType(_) => {
+                TypescriptNoGeneratedEmptyObjectType::IS_TSGOLINT_RULE
+            }
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::IS_TSGOLINT_RULE,
             Self::TypescriptNoImportTypeSideEffects(_) => {
                 TypescriptNoImportTypeSideEffects::IS_TSGOLINT_RULE
@@ -17136,11 +16574,16 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::IS_TSGOLINT_RULE,
             Self::JestValidTitle(_) => JestValidTitle::IS_TSGOLINT_RULE,
             Self::ReactButtonHasType(_) => ReactButtonHasType::IS_TSGOLINT_RULE,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::IS_TSGOLINT_RULE,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::IS_TSGOLINT_RULE
             }
             Self::ReactDisplayName(_) => ReactDisplayName::IS_TSGOLINT_RULE,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::IS_TSGOLINT_RULE,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::IS_TSGOLINT_RULE,
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::IS_TSGOLINT_RULE
+            }
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::IS_TSGOLINT_RULE,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::IS_TSGOLINT_RULE,
             Self::ReactForbidElements(_) => ReactForbidElements::IS_TSGOLINT_RULE,
@@ -17148,8 +16591,13 @@ impl RuleEnum {
             Self::ReactFunctionComponentDefinition(_) => {
                 ReactFunctionComponentDefinition::IS_TSGOLINT_RULE
             }
+            Self::ReactGlobals(_) => ReactGlobals::IS_TSGOLINT_RULE,
             Self::ReactHookUseState(_) => ReactHookUseState::IS_TSGOLINT_RULE,
+            Self::ReactHooks(_) => ReactHooks::IS_TSGOLINT_RULE,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::IS_TSGOLINT_RULE,
+            Self::ReactImmutability(_) => ReactImmutability::IS_TSGOLINT_RULE,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::IS_TSGOLINT_RULE,
+            Self::ReactInvariant(_) => ReactInvariant::IS_TSGOLINT_RULE,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::IS_TSGOLINT_RULE,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::IS_TSGOLINT_RULE,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::IS_TSGOLINT_RULE,
@@ -17170,11 +16618,15 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::IS_TSGOLINT_RULE,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::IS_TSGOLINT_RULE,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::IS_TSGOLINT_RULE,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::IS_TSGOLINT_RULE,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::IS_TSGOLINT_RULE,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::IS_TSGOLINT_RULE,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::IS_TSGOLINT_RULE,
             Self::ReactNoDanger(_) => ReactNoDanger::IS_TSGOLINT_RULE,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::IS_TSGOLINT_RULE,
+            Self::ReactNoDerivingStateInEffects(_) => {
+                ReactNoDerivingStateInEffects::IS_TSGOLINT_RULE
+            }
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::IS_TSGOLINT_RULE,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::IS_TSGOLINT_RULE,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::IS_TSGOLINT_RULE,
@@ -17203,16 +16655,29 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::IS_TSGOLINT_RULE,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::IS_TSGOLINT_RULE,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::IS_TSGOLINT_RULE,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::IS_TSGOLINT_RULE,
+            Self::ReactPreserveManualMemoization(_) => {
+                ReactPreserveManualMemoization::IS_TSGOLINT_RULE
+            }
+            Self::ReactPurity(_) => ReactPurity::IS_TSGOLINT_RULE,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::IS_TSGOLINT_RULE,
+            Self::ReactRefs(_) => ReactRefs::IS_TSGOLINT_RULE,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::IS_TSGOLINT_RULE,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::IS_TSGOLINT_RULE,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::IS_TSGOLINT_RULE,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::IS_TSGOLINT_RULE,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::IS_TSGOLINT_RULE,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::IS_TSGOLINT_RULE,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::IS_TSGOLINT_RULE,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::IS_TSGOLINT_RULE,
             Self::ReactStylePropObject(_) => ReactStylePropObject::IS_TSGOLINT_RULE,
+            Self::ReactSyntax(_) => ReactSyntax::IS_TSGOLINT_RULE,
+            Self::ReactTodo(_) => ReactTodo::IS_TSGOLINT_RULE,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::IS_TSGOLINT_RULE,
+            Self::ReactUseMemo(_) => ReactUseMemo::IS_TSGOLINT_RULE,
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::IS_TSGOLINT_RULE
             }
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::IS_TSGOLINT_RULE,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::IS_TSGOLINT_RULE,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::IS_TSGOLINT_RULE,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => {
@@ -18096,6 +17561,9 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::VERSION,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::VERSION,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::VERSION,
+            Self::TypescriptNoGeneratedEmptyObjectType(_) => {
+                TypescriptNoGeneratedEmptyObjectType::VERSION
+            }
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::VERSION,
             Self::TypescriptNoImportTypeSideEffects(_) => {
                 TypescriptNoImportTypeSideEffects::VERSION
@@ -18291,18 +17759,28 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::VERSION,
             Self::JestValidTitle(_) => JestValidTitle::VERSION,
             Self::ReactButtonHasType(_) => ReactButtonHasType::VERSION,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::VERSION,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::VERSION
             }
             Self::ReactDisplayName(_) => ReactDisplayName::VERSION,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::VERSION,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::VERSION,
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::VERSION
+            }
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::VERSION,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::VERSION,
             Self::ReactForbidElements(_) => ReactForbidElements::VERSION,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::VERSION,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::VERSION,
+            Self::ReactGlobals(_) => ReactGlobals::VERSION,
             Self::ReactHookUseState(_) => ReactHookUseState::VERSION,
+            Self::ReactHooks(_) => ReactHooks::VERSION,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::VERSION,
+            Self::ReactImmutability(_) => ReactImmutability::VERSION,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::VERSION,
+            Self::ReactInvariant(_) => ReactInvariant::VERSION,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::VERSION,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::VERSION,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::VERSION,
@@ -18323,11 +17801,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::VERSION,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::VERSION,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::VERSION,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::VERSION,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::VERSION,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::VERSION,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::VERSION,
             Self::ReactNoDanger(_) => ReactNoDanger::VERSION,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::VERSION,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::VERSION,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::VERSION,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::VERSION,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::VERSION,
@@ -18352,14 +17832,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::VERSION,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::VERSION,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::VERSION,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::VERSION,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::VERSION,
+            Self::ReactPurity(_) => ReactPurity::VERSION,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::VERSION,
+            Self::ReactRefs(_) => ReactRefs::VERSION,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::VERSION,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::VERSION,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::VERSION,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::VERSION,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::VERSION,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::VERSION,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::VERSION,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::VERSION,
             Self::ReactStylePropObject(_) => ReactStylePropObject::VERSION,
+            Self::ReactSyntax(_) => ReactSyntax::VERSION,
+            Self::ReactTodo(_) => ReactTodo::VERSION,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::VERSION,
+            Self::ReactUseMemo(_) => ReactUseMemo::VERSION,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::VERSION,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::VERSION,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::VERSION,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::VERSION,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::VERSION,
@@ -19128,6 +18619,9 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::HAS_CONFIG,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::HAS_CONFIG,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::HAS_CONFIG,
+            Self::TypescriptNoGeneratedEmptyObjectType(_) => {
+                TypescriptNoGeneratedEmptyObjectType::HAS_CONFIG
+            }
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::HAS_CONFIG,
             Self::TypescriptNoImportTypeSideEffects(_) => {
                 TypescriptNoImportTypeSideEffects::HAS_CONFIG
@@ -19333,11 +18827,16 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::HAS_CONFIG,
             Self::JestValidTitle(_) => JestValidTitle::HAS_CONFIG,
             Self::ReactButtonHasType(_) => ReactButtonHasType::HAS_CONFIG,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::HAS_CONFIG,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::HAS_CONFIG
             }
             Self::ReactDisplayName(_) => ReactDisplayName::HAS_CONFIG,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::HAS_CONFIG,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::HAS_CONFIG,
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::HAS_CONFIG
+            }
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::HAS_CONFIG,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::HAS_CONFIG,
             Self::ReactForbidElements(_) => ReactForbidElements::HAS_CONFIG,
@@ -19345,8 +18844,13 @@ impl RuleEnum {
             Self::ReactFunctionComponentDefinition(_) => {
                 ReactFunctionComponentDefinition::HAS_CONFIG
             }
+            Self::ReactGlobals(_) => ReactGlobals::HAS_CONFIG,
             Self::ReactHookUseState(_) => ReactHookUseState::HAS_CONFIG,
+            Self::ReactHooks(_) => ReactHooks::HAS_CONFIG,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::HAS_CONFIG,
+            Self::ReactImmutability(_) => ReactImmutability::HAS_CONFIG,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::HAS_CONFIG,
+            Self::ReactInvariant(_) => ReactInvariant::HAS_CONFIG,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::HAS_CONFIG,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::HAS_CONFIG,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::HAS_CONFIG,
@@ -19367,11 +18871,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::HAS_CONFIG,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::HAS_CONFIG,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::HAS_CONFIG,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::HAS_CONFIG,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::HAS_CONFIG,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::HAS_CONFIG,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::HAS_CONFIG,
             Self::ReactNoDanger(_) => ReactNoDanger::HAS_CONFIG,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::HAS_CONFIG,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::HAS_CONFIG,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::HAS_CONFIG,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::HAS_CONFIG,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::HAS_CONFIG,
@@ -19396,14 +18902,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::HAS_CONFIG,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::HAS_CONFIG,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::HAS_CONFIG,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::HAS_CONFIG,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::HAS_CONFIG,
+            Self::ReactPurity(_) => ReactPurity::HAS_CONFIG,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::HAS_CONFIG,
+            Self::ReactRefs(_) => ReactRefs::HAS_CONFIG,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::HAS_CONFIG,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::HAS_CONFIG,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::HAS_CONFIG,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::HAS_CONFIG,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::HAS_CONFIG,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::HAS_CONFIG,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::HAS_CONFIG,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::HAS_CONFIG,
             Self::ReactStylePropObject(_) => ReactStylePropObject::HAS_CONFIG,
+            Self::ReactSyntax(_) => ReactSyntax::HAS_CONFIG,
+            Self::ReactTodo(_) => ReactTodo::HAS_CONFIG,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::HAS_CONFIG,
+            Self::ReactUseMemo(_) => ReactUseMemo::HAS_CONFIG,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::HAS_CONFIG,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::HAS_CONFIG,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::HAS_CONFIG,
@@ -20179,6 +19696,9 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::INFO,
             Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::INFO,
             Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::INFO,
+            Self::TypescriptNoGeneratedEmptyObjectType(_) => {
+                TypescriptNoGeneratedEmptyObjectType::INFO
+            }
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::INFO,
             Self::TypescriptNoImportTypeSideEffects(_) => TypescriptNoImportTypeSideEffects::INFO,
             Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::INFO,
@@ -20360,18 +19880,26 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::INFO,
             Self::JestValidTitle(_) => JestValidTitle::INFO,
             Self::ReactButtonHasType(_) => ReactButtonHasType::INFO,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::INFO,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::INFO
             }
             Self::ReactDisplayName(_) => ReactDisplayName::INFO,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::INFO,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::INFO,
+            Self::ReactExhaustiveEffectDependencies(_) => ReactExhaustiveEffectDependencies::INFO,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::INFO,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::INFO,
             Self::ReactForbidElements(_) => ReactForbidElements::INFO,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::INFO,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::INFO,
+            Self::ReactGlobals(_) => ReactGlobals::INFO,
             Self::ReactHookUseState(_) => ReactHookUseState::INFO,
+            Self::ReactHooks(_) => ReactHooks::INFO,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::INFO,
+            Self::ReactImmutability(_) => ReactImmutability::INFO,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::INFO,
+            Self::ReactInvariant(_) => ReactInvariant::INFO,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::INFO,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::INFO,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::INFO,
@@ -20390,11 +19918,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::INFO,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::INFO,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::INFO,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::INFO,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::INFO,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::INFO,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::INFO,
             Self::ReactNoDanger(_) => ReactNoDanger::INFO,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::INFO,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::INFO,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::INFO,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::INFO,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::INFO,
@@ -20419,14 +19949,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::INFO,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::INFO,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::INFO,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::INFO,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::INFO,
+            Self::ReactPurity(_) => ReactPurity::INFO,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::INFO,
+            Self::ReactRefs(_) => ReactRefs::INFO,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::INFO,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::INFO,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::INFO,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::INFO,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::INFO,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::INFO,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::INFO,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::INFO,
             Self::ReactStylePropObject(_) => ReactStylePropObject::INFO,
+            Self::ReactSyntax(_) => ReactSyntax::INFO,
+            Self::ReactTodo(_) => ReactTodo::INFO,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::INFO,
+            Self::ReactUseMemo(_) => ReactUseMemo::INFO,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::INFO,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::INFO,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::INFO,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::INFO,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::INFO,
@@ -21129,6 +20670,7 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(rule) => rule.types_info(),
             Self::TypescriptNoFloatingPromises(rule) => rule.types_info(),
             Self::TypescriptNoForInArray(rule) => rule.types_info(),
+            Self::TypescriptNoGeneratedEmptyObjectType(rule) => rule.types_info(),
             Self::TypescriptNoImpliedEval(rule) => rule.types_info(),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.types_info(),
             Self::TypescriptNoInferrableTypes(rule) => rule.types_info(),
@@ -21266,16 +20808,24 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.types_info(),
             Self::JestValidTitle(rule) => rule.types_info(),
             Self::ReactButtonHasType(rule) => rule.types_info(),
+            Self::ReactCapitalizedCalls(rule) => rule.types_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
             Self::ReactDisplayName(rule) => rule.types_info(),
+            Self::ReactErrorBoundaries(rule) => rule.types_info(),
             Self::ReactExhaustiveDeps(rule) => rule.types_info(),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.types_info(),
             Self::ReactForbidComponentProps(rule) => rule.types_info(),
             Self::ReactForbidDomProps(rule) => rule.types_info(),
             Self::ReactForbidElements(rule) => rule.types_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.types_info(),
             Self::ReactFunctionComponentDefinition(rule) => rule.types_info(),
+            Self::ReactGlobals(rule) => rule.types_info(),
             Self::ReactHookUseState(rule) => rule.types_info(),
+            Self::ReactHooks(rule) => rule.types_info(),
             Self::ReactIframeMissingSandbox(rule) => rule.types_info(),
+            Self::ReactImmutability(rule) => rule.types_info(),
+            Self::ReactIncompatibleLibrary(rule) => rule.types_info(),
+            Self::ReactInvariant(rule) => rule.types_info(),
             Self::ReactJsxBooleanValue(rule) => rule.types_info(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.types_info(),
             Self::ReactJsxFilenameExtension(rule) => rule.types_info(),
@@ -21294,11 +20844,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.types_info(),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.types_info(),
             Self::ReactJsxPropsNoSpreading(rule) => rule.types_info(),
+            Self::ReactMemoDependencies(rule) => rule.types_info(),
             Self::ReactNoArrayIndexKey(rule) => rule.types_info(),
             Self::ReactNoChildrenProp(rule) => rule.types_info(),
             Self::ReactNoCloneElement(rule) => rule.types_info(),
             Self::ReactNoDanger(rule) => rule.types_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.types_info(),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.types_info(),
             Self::ReactNoDidMountSetState(rule) => rule.types_info(),
             Self::ReactNoDidUpdateSetState(rule) => rule.types_info(),
             Self::ReactNoDirectMutationState(rule) => rule.types_info(),
@@ -21321,14 +20873,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.types_info(),
             Self::ReactPreferEs6Class(rule) => rule.types_info(),
             Self::ReactPreferFunctionComponent(rule) => rule.types_info(),
-            Self::ReactReactCompiler(rule) => rule.types_info(),
+            Self::ReactPreserveManualMemoization(rule) => rule.types_info(),
+            Self::ReactPurity(rule) => rule.types_info(),
             Self::ReactReactInJsxScope(rule) => rule.types_info(),
+            Self::ReactRefs(rule) => rule.types_info(),
             Self::ReactRequireRenderReturn(rule) => rule.types_info(),
+            Self::ReactRuleSuppression(rule) => rule.types_info(),
             Self::ReactRulesOfHooks(rule) => rule.types_info(),
             Self::ReactSelfClosingComp(rule) => rule.types_info(),
+            Self::ReactSetStateInEffect(rule) => rule.types_info(),
+            Self::ReactSetStateInRender(rule) => rule.types_info(),
             Self::ReactStateInConstructor(rule) => rule.types_info(),
+            Self::ReactStaticComponents(rule) => rule.types_info(),
             Self::ReactStylePropObject(rule) => rule.types_info(),
+            Self::ReactSyntax(rule) => rule.types_info(),
+            Self::ReactTodo(rule) => rule.types_info(),
+            Self::ReactUnsupportedSyntax(rule) => rule.types_info(),
+            Self::ReactUseMemo(rule) => rule.types_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.types_info(),
+            Self::ReactVoidUseMemo(rule) => rule.types_info(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.types_info(),
@@ -21982,6 +21545,7 @@ impl RuleEnum {
             Self::TypescriptNoExtraneousClass(rule) => rule.run_info(),
             Self::TypescriptNoFloatingPromises(rule) => rule.run_info(),
             Self::TypescriptNoForInArray(rule) => rule.run_info(),
+            Self::TypescriptNoGeneratedEmptyObjectType(rule) => rule.run_info(),
             Self::TypescriptNoImpliedEval(rule) => rule.run_info(),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run_info(),
             Self::TypescriptNoInferrableTypes(rule) => rule.run_info(),
@@ -22119,16 +21683,24 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.run_info(),
             Self::JestValidTitle(rule) => rule.run_info(),
             Self::ReactButtonHasType(rule) => rule.run_info(),
+            Self::ReactCapitalizedCalls(rule) => rule.run_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
             Self::ReactDisplayName(rule) => rule.run_info(),
+            Self::ReactErrorBoundaries(rule) => rule.run_info(),
             Self::ReactExhaustiveDeps(rule) => rule.run_info(),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.run_info(),
             Self::ReactForbidComponentProps(rule) => rule.run_info(),
             Self::ReactForbidDomProps(rule) => rule.run_info(),
             Self::ReactForbidElements(rule) => rule.run_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.run_info(),
             Self::ReactFunctionComponentDefinition(rule) => rule.run_info(),
+            Self::ReactGlobals(rule) => rule.run_info(),
             Self::ReactHookUseState(rule) => rule.run_info(),
+            Self::ReactHooks(rule) => rule.run_info(),
             Self::ReactIframeMissingSandbox(rule) => rule.run_info(),
+            Self::ReactImmutability(rule) => rule.run_info(),
+            Self::ReactIncompatibleLibrary(rule) => rule.run_info(),
+            Self::ReactInvariant(rule) => rule.run_info(),
             Self::ReactJsxBooleanValue(rule) => rule.run_info(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_info(),
             Self::ReactJsxFilenameExtension(rule) => rule.run_info(),
@@ -22147,11 +21719,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run_info(),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run_info(),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_info(),
+            Self::ReactMemoDependencies(rule) => rule.run_info(),
             Self::ReactNoArrayIndexKey(rule) => rule.run_info(),
             Self::ReactNoChildrenProp(rule) => rule.run_info(),
             Self::ReactNoCloneElement(rule) => rule.run_info(),
             Self::ReactNoDanger(rule) => rule.run_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.run_info(),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.run_info(),
             Self::ReactNoDidMountSetState(rule) => rule.run_info(),
             Self::ReactNoDidUpdateSetState(rule) => rule.run_info(),
             Self::ReactNoDirectMutationState(rule) => rule.run_info(),
@@ -22174,14 +21748,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.run_info(),
             Self::ReactPreferEs6Class(rule) => rule.run_info(),
             Self::ReactPreferFunctionComponent(rule) => rule.run_info(),
-            Self::ReactReactCompiler(rule) => rule.run_info(),
+            Self::ReactPreserveManualMemoization(rule) => rule.run_info(),
+            Self::ReactPurity(rule) => rule.run_info(),
             Self::ReactReactInJsxScope(rule) => rule.run_info(),
+            Self::ReactRefs(rule) => rule.run_info(),
             Self::ReactRequireRenderReturn(rule) => rule.run_info(),
+            Self::ReactRuleSuppression(rule) => rule.run_info(),
             Self::ReactRulesOfHooks(rule) => rule.run_info(),
             Self::ReactSelfClosingComp(rule) => rule.run_info(),
+            Self::ReactSetStateInEffect(rule) => rule.run_info(),
+            Self::ReactSetStateInRender(rule) => rule.run_info(),
             Self::ReactStateInConstructor(rule) => rule.run_info(),
+            Self::ReactStaticComponents(rule) => rule.run_info(),
             Self::ReactStylePropObject(rule) => rule.run_info(),
+            Self::ReactSyntax(rule) => rule.run_info(),
+            Self::ReactTodo(rule) => rule.run_info(),
+            Self::ReactUnsupportedSyntax(rule) => rule.run_info(),
+            Self::ReactUseMemo(rule) => rule.run_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_info(),
+            Self::ReactVoidUseMemo(rule) => rule.run_info(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_info(),
@@ -22879,6 +22464,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptNoExtraneousClass(TypescriptNoExtraneousClass::default()),
         RuleEnum::TypescriptNoFloatingPromises(TypescriptNoFloatingPromises::default()),
         RuleEnum::TypescriptNoForInArray(TypescriptNoForInArray::default()),
+        RuleEnum::TypescriptNoGeneratedEmptyObjectType(
+            TypescriptNoGeneratedEmptyObjectType::default(),
+        ),
         RuleEnum::TypescriptNoImpliedEval(TypescriptNoImpliedEval::default()),
         RuleEnum::TypescriptNoImportTypeSideEffects(TypescriptNoImportTypeSideEffects::default()),
         RuleEnum::TypescriptNoInferrableTypes(TypescriptNoInferrableTypes::default()),
@@ -23060,18 +22648,26 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestValidExpectInPromise(JestValidExpectInPromise::default()),
         RuleEnum::JestValidTitle(JestValidTitle::default()),
         RuleEnum::ReactButtonHasType(ReactButtonHasType::default()),
+        RuleEnum::ReactCapitalizedCalls(ReactCapitalizedCalls::default()),
         RuleEnum::ReactCheckedRequiresOnchangeOrReadonly(
             ReactCheckedRequiresOnchangeOrReadonly::default(),
         ),
         RuleEnum::ReactDisplayName(ReactDisplayName::default()),
+        RuleEnum::ReactErrorBoundaries(ReactErrorBoundaries::default()),
         RuleEnum::ReactExhaustiveDeps(ReactExhaustiveDeps::default()),
+        RuleEnum::ReactExhaustiveEffectDependencies(ReactExhaustiveEffectDependencies::default()),
         RuleEnum::ReactForbidComponentProps(ReactForbidComponentProps::default()),
         RuleEnum::ReactForbidDomProps(ReactForbidDomProps::default()),
         RuleEnum::ReactForbidElements(ReactForbidElements::default()),
         RuleEnum::ReactForwardRefUsesRef(ReactForwardRefUsesRef::default()),
         RuleEnum::ReactFunctionComponentDefinition(ReactFunctionComponentDefinition::default()),
+        RuleEnum::ReactGlobals(ReactGlobals::default()),
         RuleEnum::ReactHookUseState(ReactHookUseState::default()),
+        RuleEnum::ReactHooks(ReactHooks::default()),
         RuleEnum::ReactIframeMissingSandbox(ReactIframeMissingSandbox::default()),
+        RuleEnum::ReactImmutability(ReactImmutability::default()),
+        RuleEnum::ReactIncompatibleLibrary(ReactIncompatibleLibrary::default()),
+        RuleEnum::ReactInvariant(ReactInvariant::default()),
         RuleEnum::ReactJsxBooleanValue(ReactJsxBooleanValue::default()),
         RuleEnum::ReactJsxCurlyBracePresence(ReactJsxCurlyBracePresence::default()),
         RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
@@ -23090,11 +22686,13 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactJsxPascalCase(ReactJsxPascalCase::default()),
         RuleEnum::ReactJsxPropsNoSpreadMulti(ReactJsxPropsNoSpreadMulti::default()),
         RuleEnum::ReactJsxPropsNoSpreading(ReactJsxPropsNoSpreading::default()),
+        RuleEnum::ReactMemoDependencies(ReactMemoDependencies::default()),
         RuleEnum::ReactNoArrayIndexKey(ReactNoArrayIndexKey::default()),
         RuleEnum::ReactNoChildrenProp(ReactNoChildrenProp::default()),
         RuleEnum::ReactNoCloneElement(ReactNoCloneElement::default()),
         RuleEnum::ReactNoDanger(ReactNoDanger::default()),
         RuleEnum::ReactNoDangerWithChildren(ReactNoDangerWithChildren::default()),
+        RuleEnum::ReactNoDerivingStateInEffects(ReactNoDerivingStateInEffects::default()),
         RuleEnum::ReactNoDidMountSetState(ReactNoDidMountSetState::default()),
         RuleEnum::ReactNoDidUpdateSetState(ReactNoDidUpdateSetState::default()),
         RuleEnum::ReactNoDirectMutationState(ReactNoDirectMutationState::default()),
@@ -23119,14 +22717,25 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactOnlyExportComponents(ReactOnlyExportComponents::default()),
         RuleEnum::ReactPreferEs6Class(ReactPreferEs6Class::default()),
         RuleEnum::ReactPreferFunctionComponent(ReactPreferFunctionComponent::default()),
-        RuleEnum::ReactReactCompiler(ReactReactCompiler::default()),
+        RuleEnum::ReactPreserveManualMemoization(ReactPreserveManualMemoization::default()),
+        RuleEnum::ReactPurity(ReactPurity::default()),
         RuleEnum::ReactReactInJsxScope(ReactReactInJsxScope::default()),
+        RuleEnum::ReactRefs(ReactRefs::default()),
         RuleEnum::ReactRequireRenderReturn(ReactRequireRenderReturn::default()),
+        RuleEnum::ReactRuleSuppression(ReactRuleSuppression::default()),
         RuleEnum::ReactRulesOfHooks(ReactRulesOfHooks::default()),
         RuleEnum::ReactSelfClosingComp(ReactSelfClosingComp::default()),
+        RuleEnum::ReactSetStateInEffect(ReactSetStateInEffect::default()),
+        RuleEnum::ReactSetStateInRender(ReactSetStateInRender::default()),
         RuleEnum::ReactStateInConstructor(ReactStateInConstructor::default()),
+        RuleEnum::ReactStaticComponents(ReactStaticComponents::default()),
         RuleEnum::ReactStylePropObject(ReactStylePropObject::default()),
+        RuleEnum::ReactSyntax(ReactSyntax::default()),
+        RuleEnum::ReactTodo(ReactTodo::default()),
+        RuleEnum::ReactUnsupportedSyntax(ReactUnsupportedSyntax::default()),
+        RuleEnum::ReactUseMemo(ReactUseMemo::default()),
         RuleEnum::ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren::default()),
+        RuleEnum::ReactVoidUseMemo(ReactVoidUseMemo::default()),
         RuleEnum::ReactPerfJsxNoJsxAsProp(ReactPerfJsxNoJsxAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp::default()),

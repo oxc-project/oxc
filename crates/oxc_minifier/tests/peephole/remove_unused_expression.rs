@@ -279,12 +279,12 @@ fn test_fold_sequence_expr() {
 
 #[test]
 fn test_logical_expression() {
-    test("var a; a != null && a.b()", "var a; a?.b()");
-    test("var a; a == null || a.b()", "var a; a?.b()");
+    test("v = function(a) { a != null && a.b() }", "v = function(a) { a?.b() }");
+    test("v = function(a) { a == null || a.b() }", "v = function(a) { a?.b() }");
     test_same("a != null && a.b()"); // a may have a getter
     test_same("a == null || a.b()"); // a may have a getter
-    test("var a; null != a && a.b()", "var a; a?.b()");
-    test("var a; null == a || a.b()", "var a; a?.b()");
+    test("v = function(a) { null != a && a.b() }", "v = function(a) { a?.b() }");
+    test("v = function(a) { null == a || a.b() }", "v = function(a) { a?.b() }");
 
     test("x == null && y", "x ?? y");
     test("x != null || y", "x ?? y");
@@ -416,26 +416,35 @@ fn test_fold_conditional_expression() {
 
 #[test]
 fn test_fold_binary_expression() {
-    test("var a, b; a === b", "var a, b;");
-    test("var a, b; a() === b", "var a, b; a()");
-    test("var a, b; a === b()", "var a, b; b()");
-    test("var a, b; a() === b()", "var a, b; a(), b()");
+    test("v = function(a, b) { a === b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a() === b }", "v = function(a, b) { a() }");
+    test("v = function(a, b) { a === b() }", "v = function(a, b) { b() }");
+    test("v = function(a, b) { a() === b() }", "v = function(a, b) { a(), b() }");
 
-    test("var a, b; a !== b", "var a, b;");
-    test("var a, b; a == b", "var a, b;");
-    test("var a, b; a != b", "var a, b;");
-    test("var a, b; a < b", "var a, b;");
-    test("var a, b; a > b", "var a, b;");
-    test("var a, b; a <= b", "var a, b;");
-    test("var a, b; a >= b", "var a, b;");
+    test("v = function(a, b) { a !== b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a == b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a != b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a < b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a > b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a <= b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a >= b }", "v = function(a, b) {}");
 
-    test_same("var a, b; a + b");
-    test("var a, b; 'a' + b", "var a, b; '' + b");
-    test_same("var a, b; a + '' + b");
-    test("var a, b, c; 'a' + (b === c)", "var a, b, c;");
-    test("var a, b; 'a' + +b", "var a, b; '' + +b"); // can be improved to "var a, b; +b"
-    test_same("var a, b; a + ('' + b)");
-    test("var a, b, c; a + ('' + (b === c))", "var a, b, c; a + ''");
+    test_same("v = function(a, b) { a + b }");
+    test("v = function(a, b) { 'a' + b }", "v = function(a, b) { '' + b }");
+    test_same("v = function(a, b) { a + '' + b }");
+    test("v = function(a, b, c) { 'a' + (b === c) }", "v = function(a, b, c) {}");
+    test("v = function(a, b) { 'a' + +b }", "v = function(a, b) { '' + +b }"); // can be improved to `+b`
+    test_same("v = function(a, b) { a + ('' + b) }");
+    test("v = function(a, b, c) { a + ('' + (b === c)) }", "v = function(a, b, c) { a + '' }");
+
+    test("0.1 + 0.2", "");
+    test_same("v = function(a) { a + ('' + foo()) }");
+}
+
+#[test]
+fn test_remove_unused_uninitialized_module_var_expression() {
+    test("var a; a != null && a.b()", "var a");
+    test("var a, b; a + b", "var a, b");
 }
 
 #[test]
@@ -479,6 +488,20 @@ fn test_fold_iife() {
     test("a((() => b())());", "a(b())");
     test("a((() => true)());", "a(!0)");
     test("a((() => { return true })());", "a(!0)");
+
+    test("(() => { 'use strict'; return a() })()", "a()");
+    test_same_options_source_type(
+        "(() => { 'use strict'; return a() })()",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+    test("(() => { 'use strict'; a() })()", "a()");
+    test_same_options_source_type(
+        "(() => { 'use strict'; a() })()",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+    test_same("(() => { 'use cache'; return a() })()");
 
     test_same("var a = (function () { b() })()");
     test_same("var a = (function () { return b() })()");
@@ -731,6 +754,7 @@ fn remove_unused_class_expression() {
 
     // order
     test_options("(class extends A { [B] = C; [D]() {} })", "A, B, D", &options);
+    test_options("(class extends (A(), B) {})", "A(), B", &options);
 
     // decorators
     test_same_options("(class { @dec foo() {} })", &options);

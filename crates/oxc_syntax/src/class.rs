@@ -4,9 +4,11 @@ use oxc_index::define_index_type;
 
 define_index_type! {
     pub struct ClassId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 define_index_type! {
     pub struct ElementId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 bitflags! {

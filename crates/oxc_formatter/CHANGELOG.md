@@ -4,6 +4,104 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.71.0] - 2026-09-28
+
+### 🚀 Features
+
+- 342527d oxfmt: Bump bundled Prettier version to 3.9.8 (#26999) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- eeba1db formatter: Skip test-call layout when arguments have comments (#27119) (leaysgur)
+- 10b10c5 formatter: Keep comments around `=` on their side and line (#27041) (leaysgur)
+- 9aad365 formatter: Keep comments deferred before an assignment operator (#26997) (waltu)
+- 8fbddb1 formatter/jsdoc: More alignment with original plugin (#27039) (leaysgur)
+- 50be18e formatter: Keep trailing spaces on normal block comments (#27037) (leaysgur)
+- 56d1880 formatter: Nestle adjacent block comments (#27036) (leaysgur)
+- 3be5d94 formatter: Treat `/***` comments as JSDoc (#27035) (leaysgur)
+- cd45f71 formatter: Keep trailing double spaces on JSDoc lines (#26861) (John Costa)
+
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 6c8a862 formatter: Glue `fbt` component and text (#26616) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 68ce610 formatter: Keep after-operator comments in place (#26725) (leaysgur)
+- f91ad92 formatter: Let union place leading comments at `as|satisfies` (#26674) (leaysgur)
+- ea164c0 formatter: Fix block comment with RHS assignment and typecast-ed arrow body (#26672) (leaysgur)
+- 406ff1f formatter: Preserve redundant parens for `TSTypeAliasDeclaration` with suppress comment (#26671) (leaysgur)
+
+### 📚 Documentation
+
+- 095a97c formatter: Unify DIVERGENCES reference (#26748) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- d7e0c82 formatter: Keep an enum member's trailing suppress comment (#26549) (leaysgur)
+- d2fe01e formatter: Unify suppress comment behavior (#26547) (leaysgur)
+- 9dbddca formatter: Keep group flat for own-line comment in JSX (#26475) (leaysgur)
+- bf1d3f6 formatter: Check `this_param` for simple parameters test (#26474) (leaysgur)
+- 33cdc84 formatter: Keep cast-target assignment and commented parameter patterns (#26429) (leaysgur)
+
+### 📚 Documentation
+
+- 66fda4f formatter: Update AGENTS.md comment handling (#26551) (leaysgur)
+- 41abcba formatter: Note why jsx-test-suite snippets stay off (#26515) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- f7acdc0 formatter: Treat a JSDoc cast target as opaque in chain layouts (#26375) (leaysgur)
+- 104061b formatter: Keep JSDoc cast parens with a comment inside them (#26374) (leaysgur)
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
+## [0.66.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- e4298fb formatter/jsdoc: Follow CommonMark for interrupting lists and guard wrapping from creating them (#26098) (leaysgur)
+- a1e21c2 formatter: Apply head body policy everywhere (#26074) (leaysgur)
+- 676b7e1 formatter: Keep comments in their for-head slot, before an empty-statement body and do-while (#26073) (leaysgur)
+- 3bbcea6 formatter: Keep comments between a head and its body out of the braces across all constructs (#26071) (leaysgur)
+- 57537a2 formatter: Place comments between a head and open paren (#26058) (leaysgur)
+- e2d53e7 formatter: Place comments between a statement head and its body (#26043) (leaysgur)
+- 662556c formatter: Print the idempotent placement for comments in dropped parens (#26041) (leaysgur)
+
+### 📚 Documentation
+
+- b879608 formatter,formatter_graphql,formatter_yaml: Annotate own-line comment inlining as known policy violation (#26131) (leaysgur)
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+- a67cb9d formatter,formatter_core: Document comment moving policy (#26075) (leaysgur)
+
+## [0.65.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- bf37dd5 formatter: Preserve class decorators before export when the statement is suppressed (#26034) (leaysgur)
+
+## [0.64.0] - 2026-08-18
+
+### 🚀 Features
+
+- 2adb8fb formatter: Implement `operatorPosition` option (#25581) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 44231fb formatter: Fix comment and indent issues around unions (#25665) (leaysgur)
+- 2465e87 formatter: Keep comments in place when dropping `EmptyStatement` (#25730) (leaysgur)
+- 7e4f3b7 formatter: Print `JSDocUnknownType` (#25729) (leaysgur)
+- 5238d9e formatter: Keep nested awaited-paren member chain grouped in call arguments (#25646) (leaysgur)
+- 7f350d1 formatter: Keep unary comment and print only needed parens (#25526) (leaysgur)
+
 ## [0.63.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

@@ -4,6 +4,94 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.71.0] - 2026-09-28
+
+### 🚀 Features
+
+- e0b1f9f oxfmt: Bump bundled Prettier version to 3.9.9 (#27002) (leaysgur)
+- 342527d oxfmt: Bump bundled Prettier version to 3.9.8 (#26999) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 1f7b8ad oxfmt: Allow repeated CLI calls in the same process (#27051) (Liang)
+
+## [0.70.0] - 2026-09-21
+
+### 🚀 Features
+
+- 415b742 oxlint,oxfmt: Do not discover nested config in Vite+ mode (#26763) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 809090c oxlint,oxfmt: Find all `vite.config.*` variants (#26755) (leaysgur)
+
+### 📚 Documentation
+
+- 8fa3617 oxfmt: Unify DIVERGENCES reference and drop notes (#26750) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- 586f27a formatter_core: Add `prefix_align` builder and `Tag::(Start|End)Prefix` (#26520) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d35d89f oxfmt: Skip shutdown delay on fixed Node 24 releases (#26518) (Pablo García)
+- aef8b4a formatter_css: Handle less-test-suites failures (#26513) (leaysgur)
+- 876fbe3 oxfmt: Expand `Fill` parts in tsx-in-vue (#26427) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- f7acdc0 formatter: Treat a JSDoc cast target as opaque in chain layouts (#26375) (leaysgur)
+- 3b054de formatter_graphql: Align comment printing after open `{` (#26271) (leaysgur)
+- 5f9580d oxfmt: Bump prettier-plugin-tailwindcss (#26273) (leaysgur)
+
+### ⚡ Performance
+
+- 1cad286 oxfmt: Match editorconfig once per file (#26239) (Yuji Sugiura)
+- 260c5eb oxfmt: Match `overrides` once per file (#26238) (leaysgur)
+- 61565bc oxfmt: Share resolved `FormatConfig` via `Arc` instead of cloning per file (#26237) (leaysgur)
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
+## [0.66.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- faf11d9 formatter_yaml: Keep trailing whitespace in block scalars (#26072) (leaysgur)
+
+### ⚡ Performance
+
+- ac4785a diagnostics: Use fixed ANSI styles (#26130) (Boshen)
+
+### 📚 Documentation
+
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+
+## [0.64.0] - 2026-08-18
+
+### 🚀 Features
+
+- c07fe7c oxfmt: Support `experimentalOperatorPosition` (#25643) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- a38f7b3 oxlint,oxfmt: Apply .gitignore only to walk targets, not explicitly named files (#25531) (leaysgur)
+- 1a83a8d oxfmt: Mirror printer line suppression and restore dedent-to-root (#25573) (leaysgur)
+
+### 📚 Documentation
+
+- 223e785 oxfmt/conformance: Update notes on conformance (#25757) (Yuji Sugiura)
+- 673dc6d oxfmt: Move some docs from AGENTS.md to code comment (#25649) (leaysgur)
+- fed6681 oxfmt: Skip expanding overrides options (#25572) (leaysgur)
+
 ## [0.63.0] - 2026-08-10
 
 ### 🚀 Features

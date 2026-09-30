@@ -270,3 +270,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                 }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:40]
+ 1 │ try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: unrelated }); }
+   ·                                        ─────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.

@@ -1,0 +1,343 @@
+//! Bounded walks: the scan back from a query to an anchor, the jump plan it records for the
+//! walk, and the entry points every question goes through.
+//!
+//! A walk starts at an anchor: a token whose context is certain from its neighbours alone (see
+//! [`anchor`]). The scan back to the anchor records the balanced groups it crosses and the last
+//! separator inside each open bracket, so the walk skips group interiors and, once a bracket's
+//! frame kind is known, resumes at the separator. Nothing is guessed: what the walk did not see
+//! was either inside a skipped group, whose closer depends only on how it opened, or before a
+//! separator, which resets the frame.
+//!
+//! [`anchor`]: super::anchor
+
+use crate::token::{OP_KIND_BASE, matches_tk, tk};
+
+use super::anchor::{Anchor, anchor_at, brace_boundary, paren_anchor};
+use super::*;
+use crate::pipeline::disambiguate::WALK_SCAN_CAP;
+
+struct Scan {
+    pub(super) anchor: Anchor,
+    /// Unmatched `<` on the query's own level: the type lists a `>` run there could close.
+    pub(super) angles: u32,
+}
+
+/// What the scan has seen on the level it is in, nearest to the query first: the last `;`, `,`
+/// and `}` boundary, where the walk may resume once the level's frame kind is known, and the `>`
+/// closers waiting for their `<` (`u32::MAX`: one of a run, which the walk cannot jump to).
+struct Level<'a> {
+    semi: Option<usize>,
+    comma: Option<usize>,
+    brace: Option<usize>,
+    /// A braced group was skipped: an expression anchor on the level ended before the query.
+    braces: bool,
+    closers: &'a mut Vec<u32>,
+}
+
+impl Level<'_> {
+    /// Nothing seen yet on a level the scan enters through its opener.
+    fn enter(&mut self) {
+        self.inside_list();
+        self.braces = false;
+        self.closers.clear();
+    }
+
+    /// An open `<` around everything seen so far on the level: the separators inside it are not
+    /// the level's.
+    fn inside_list(&mut self) {
+        self.semi = None;
+        self.comma = None;
+        self.brace = None;
+    }
+
+    /// Record the separators and brace boundary found on the level for the opener (or anchor)
+    /// at `at`.
+    fn record(&self, jumps: &mut Vec<Jump>, at: usize) {
+        if self.semi.is_some() || self.comma.is_some() || self.brace.is_some() {
+            jumps.push(Jump::Sep {
+                at: at as u32,
+                semi: self.semi.map_or(0, |s| s as u32),
+                comma: self.comma.map_or(0, |c| c as u32),
+                brace: self.brace.map_or(0, |b| b as u32),
+            });
+        }
+    }
+
+    /// The walk continues inside this level: the points where it may resume.
+    /// A nonzero close is the closer of the group it stopped in, opened at open.
+    fn resume_point(&self, open: usize, close: usize) -> Anchor {
+        Anchor::Continue {
+            semi: self.semi.map_or(0, |s| s as u32),
+            brace: self.brace.map_or(0, |b| b as u32),
+            open: open as u32,
+            close: close as u32,
+        }
+    }
+}
+
+/// Scan back from `from` (exclusive) to the anchor of a query, recording the walk's jumps in
+/// jumps (nearest first). cont is where the current bounded walk stopped: reaching it, or a
+/// group holding it, means the walk continues from there. None past the scan cap.
+/// A group holding cont is crossed only if can_leave accepts its opener.
+fn scan(
+    tokens: &Tokens,
+    jumps: &mut Vec<Jump>,
+    gts: &mut Vec<u32>,
+    from: usize,
+    mut cont: Option<usize>,
+    can_leave: impl Fn(usize) -> bool,
+) -> Option<Scan> {
+    jumps.clear();
+    gts.clear();
+    let mut steps = 0u32;
+    // Brackets opened (going back) between the query and the position scanned.
+    let mut level = 0u32;
+    let mut lv = Level { semi: None, comma: None, brace: None, braces: false, closers: gts };
+    // Unmatched `<` found on the query's own level.
+    let mut unmatched_lt = 0u32;
+    let mut q = tokens.prev_sig(from);
+    loop {
+        let Some(p) = q else {
+            lv.record(jumps, 0);
+            return Some(Scan { anchor: Anchor::Stmt(0), angles: unmatched_lt });
+        };
+        if cont.is_some_and(|c| p < c) {
+            return Some(Scan { anchor: lv.resume_point(0, 0), angles: unmatched_lt });
+        }
+        steps += 1;
+        if steps > WALK_SCAN_CAP {
+            return None;
+        }
+        let k = tokens.base_kind(p);
+        if k >= OP_KIND_BASE {
+            let c = tokens.src[p];
+            match c {
+                b')' | b']' | b'}' => {
+                    let o = tokens.match_delim_back(p)?;
+                    if cont.is_some_and(|c| o < c) {
+                        if can_leave(o) {
+                            let anchor = lv.resume_point(o, p);
+                            return Some(Scan { anchor, angles: unmatched_lt });
+                        }
+                        // The group holds the walk's seed: find an anchor before it instead.
+                        cont = None;
+                    }
+                    if c == b'}' && lv.brace.is_none() && lv.closers.is_empty() {
+                        lv.brace = brace_boundary(tokens, p);
+                    }
+                    lv.braces |= c == b'}';
+                    jumps.push(Jump::Skip { at: o as u32, to: p as u32 });
+                    q = tokens.prev_sig(o);
+                    continue;
+                }
+                b'(' => {
+                    lv.record(jumps, p);
+                    if let Some(anchor) = paren_anchor(tokens, p) {
+                        return Some(Scan { anchor, angles: unmatched_lt });
+                    }
+                    // A paren that may sit in a type: the walk reaches it from further back.
+                    level += 1;
+                    lv.enter();
+                }
+                b'[' | b'{' => {
+                    lv.record(jumps, p);
+                    level += 1;
+                    lv.enter();
+                }
+                // A separator inside a balanced `<...>` before the query is not the level's.
+                b';' => {
+                    if lv.semi.is_none() && lv.closers.is_empty() {
+                        lv.semi = Some(p);
+                    }
+                }
+                b',' => {
+                    if lv.comma.is_none() && lv.closers.is_empty() {
+                        lv.comma = Some(p);
+                    }
+                }
+                b'>' => {
+                    if !(p > 0 && tokens.src[p - 1] == b'=') {
+                        let n = tokens.run_len(p, b'>');
+                        if n == 1 {
+                            lv.closers.push(p as u32);
+                        } else {
+                            lv.closers.extend(core::iter::repeat_n(u32::MAX, n as usize));
+                        }
+                    }
+                }
+                b'<' if tokens.src[p + 1] != b'=' => {
+                    let n = tokens.run_len(p, b'<');
+                    for _ in 0..n {
+                        match lv.closers.pop() {
+                            Some(g) => {
+                                if n == 1 && g != u32::MAX {
+                                    jumps.push(Jump::Angle { at: p as u32, to: g });
+                                }
+                            }
+                            None => {
+                                if level == 0 {
+                                    unmatched_lt += 1;
+                                }
+                                lv.inside_list();
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+        } else if k == tk!(Ident) {
+            let (kw, anchor) = anchor_at(tokens, p);
+            // A function or class expression is certain only for a query inside it.
+            let anchor = anchor.filter(|a| !(lv.braces && matches!(a, Anchor::Expr(_))));
+            if let Some(anchor) = anchor {
+                let at = match anchor {
+                    Anchor::Stmt(a) | Anchor::Expr(a) => a,
+                    Anchor::Continue { .. } => p,
+                };
+                lv.record(jumps, at);
+                return Some(Scan { anchor, angles: unmatched_lt });
+            }
+            // A `,` after a class or interface keyword may sit in its heritage list, which belongs
+            // to the head, not to the frame around it.
+            if matches_tk!(kw, KwClass | KwInterface) && !tokens.property_name(p) {
+                lv.comma = None;
+                lv.brace = None;
+            }
+        } else if matches_tk!(k, TemplateTail | TemplateMiddle) {
+            // A template: skip back to its head. A middle also opens the substitution the query is
+            // in, so the level changes there.
+            let head = tokens.template_head(p, &mut steps, WALK_SCAN_CAP)?;
+            if cont.is_some_and(|c| head < c) {
+                // The walk stopped inside the template: it steps on through the rest of it.
+                let anchor = Anchor::Continue { semi: 0, brace: 0, open: 0, close: 0 };
+                return Some(Scan { anchor, angles: unmatched_lt });
+            }
+            if k == tk!(TemplateMiddle) {
+                lv.record(jumps, p);
+                level += 1;
+                lv.enter();
+            }
+            jumps.push(Jump::Skip { at: head as u32, to: p as u32 });
+            q = tokens.prev_sig(head);
+            continue;
+        } else if k == tk!(TemplateHead) {
+            // The substitution the query is in.
+            lv.record(jumps, p);
+            level += 1;
+            lv.enter();
+        }
+        q = tokens.prev_sig(p);
+    }
+}
+
+/// Run `f` on a bounded walk for the token at `pos`, scanning back from `from` (the matching
+/// opener of a closer at `pos`, else `pos`). None when no anchor lies within the scan cap or the
+/// walk lost its footing.
+fn local_walk<R>(
+    tokens: &Tokens,
+    walks: &mut Walks,
+    pos: usize,
+    from: usize,
+    f: impl FnOnce(&mut Walk, &Tokens) -> R,
+) -> Option<R> {
+    if !walks.shortcuts() {
+        return None;
+    }
+    let w = &mut walks.local;
+    let s = w.local_scan(tokens, from)?;
+    w.run_local(tokens, s, pos, from);
+    let r = f(w, tokens);
+    (!w.seed_lost).then_some(r)
+}
+
+/// Context at the token starting at `pos` (not through it).
+pub(crate) fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
+    if let Some(s) = local_walk(tokens, walks, pos, pos, |w, _| w.site()) {
+        return s;
+    }
+    walks.full_to(tokens, pos).site()
+}
+
+/// Open `<` lists a `>` run at `pos` would close. When the scan back to the anchor meets no open
+/// `<` on the run's level there is nothing to close, and no walk is needed.
+pub(crate) fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
+    if !walks.shortcuts() {
+        return before(tokens, walks, pos).angles;
+    }
+    let local = {
+        let w = &mut walks.local;
+        match w.local_scan(tokens, pos) {
+            None => None,
+            Some(s) if s.angles == 0 && !matches!(s.anchor, Anchor::Continue { .. }) => Some(0),
+            Some(s) => w.run_local(tokens, s, pos, pos).then(|| w.open_angles()),
+        }
+    };
+    local.unwrap_or_else(|| before(tokens, walks, pos).angles)
+}
+
+/// What the significant token at `pos` leaves behind.
+pub(crate) fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
+    // A closer or template tail: the bounded walk starts at its opener and skips the group.
+    let k = tokens.base_kind(pos);
+    let from = if k >= OP_KIND_BASE && matches!(tokens.src[pos], b')' | b']' | b'}') {
+        tokens.match_delim_back(pos)
+    } else if k == tk!(TemplateTail) {
+        tokens.template_head(pos, &mut 0, WALK_SCAN_CAP)
+    } else {
+        None
+    };
+    let from = from.unwrap_or(pos);
+    if let Some(a) = local_walk(tokens, walks, pos, from, |w, tokens| {
+        if w.walked_to > pos { w.classify_after() } else { w.after_token(tokens, pos) }
+    }) {
+        return a;
+    }
+    after_scoped(tokens, walks, pos)
+}
+
+impl Walk {
+    fn local_scan(&mut self, tokens: &Tokens, from: usize) -> Option<Scan> {
+        let (frames, floor) = (&self.frames, self.seed_depth);
+        let valid = floor != 0 && !self.seed_lost && frames.len() >= floor;
+        let cont = (valid && self.walked_to <= from).then_some(self.walked_to);
+        let can_leave = |open| group_frame(frames, open, floor).is_some();
+        scan(tokens, &mut self.jumps, &mut self.gts, from, cont, can_leave)
+    }
+
+    fn run_local(&mut self, tokens: &Tokens, s: Scan, pos: usize, from: usize) -> bool {
+        self.start(tokens, s.anchor, pos, from);
+        self.advance(tokens, pos);
+        !self.seed_lost
+    }
+
+    /// Seed the walk at `anchor` for a query at `pos` whose closer group opens at `from`, with the
+    /// scan's jumps in `jumps` (nearest first).
+    pub(super) fn start(&mut self, tokens: &Tokens, anchor: Anchor, pos: usize, from: usize) {
+        self.jumps.reverse();
+        if from < pos {
+            self.jumps.push(Jump::Skip { at: from as u32, to: pos as u32 });
+        }
+        self.next_jump = 0;
+        match anchor {
+            Anchor::Continue { semi, brace, open, close } => {
+                if close != 0 {
+                    self.leave_group(tokens, open as usize, close as usize);
+                }
+                self.resume(semi as usize, brace as usize, pos);
+            }
+            Anchor::Stmt(at) | Anchor::Expr(at) => {
+                self.reset(tokens.module);
+                self.walked_to = at;
+                self.prev_end = at;
+                // An operand anchor is certain only inside the construct it opens.
+                let expr = matches!(anchor, Anchor::Expr(_));
+                if expr {
+                    self.expect = Expect::Operand;
+                }
+                self.seed_depth = self.frames.len() + usize::from(expr);
+                self.seed_at = at;
+                self.seed_lost = false;
+            }
+        }
+    }
+}

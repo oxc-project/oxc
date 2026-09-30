@@ -147,6 +147,106 @@ ast:
 
 # Parser-specific commands will be added here as needed
 
+# ==================== LEXER ====================
+
+# `oxc_lexer` compiles to one of two implementations, chosen at build time:
+#
+# * SIMD core, on x86_64 with `avx2` + `bmi2` + `popcnt` enabled
+# * Scalar fallback, everywhere else
+#
+# Both need testing, and they should produce identical results. None of `avx2`, `bmi2` and `popcnt` is in the x86_64
+# baseline on any platform, so reaching the SIMD core always means asking for them explicitly - even on an x86_64 host.
+# The flags live in `.cargo/lexer-simd.toml`, passed with `cargo --config`, which avoids shell quoting entirely
+# (this justfile runs PowerShell on Windows).
+#
+# `--target` is always passed, so that the flags land on the triple the config file names,
+# and so that the two builds get separate target dirs instead of invalidating each other.
+#
+# On an ARM host the SIMD build is cross-compiled and run under emulation - macOS provides that via Rosetta 2.
+# On Mac, ensure x86_64 target is installed: `rustup target add x86_64-apple-darwin`.
+# If it's not, you'll get a "can't find crate for std" error.
+#
+# On ARM Linux or ARM Windows it will fail, loudly, when linking or running.
+_lexer-simd-target := if os() == "macos" { "x86_64-apple-darwin" } else if os() == "windows" { "x86_64-pc-windows-msvc" } else { "x86_64-unknown-linux-gnu" }
+_lexer-simd := "--target " + _lexer-simd-target + " --config .cargo/lexer-simd.toml"
+
+# Run `oxc_lexer`'s tests against the scalar fallback
+test-lexer *args='':
+  cargo test -p oxc_lexer {{args}}
+
+# Run `oxc_lexer`'s tests against the SIMD core
+test-lexer-simd *args='':
+  cargo test -p oxc_lexer {{_lexer-simd}} {{args}}
+
+# Run lexer conformance against the scalar fallback
+conformance-lexer *args='':
+  cargo run -p oxc_coverage --profile coverage --features lexer -- lexer {{args}}
+
+# Run lexer conformance against the SIMD core
+conformance-lexer-simd *args='':
+  cargo run -p oxc_coverage --profile coverage {{_lexer-simd}} --features lexer -- lexer {{args}}
+
+# Lint `oxc_lexer` and the conformance harness against the scalar fallback
+[unix]
+lint-lexer *args='':
+  CARGO_BUILD_WARNINGS=deny cargo clippy -p oxc_lexer -p oxc_coverage --all-targets --all-features {{args}}
+
+[windows]
+lint-lexer *args='':
+  $Env:CARGO_BUILD_WARNINGS='deny'; cargo clippy -p oxc_lexer -p oxc_coverage --all-targets --all-features {{args}}
+
+# Lint `oxc_lexer` and the conformance harness against the SIMD core
+lint-lexer-simd *args='':
+  just lint-lexer {{_lexer-simd}} {{args}}
+
+# The lexer benchmarks measure wallclock time. Unlike the other benchmarks, they don't run on CodSpeed.
+#
+# `oxc_parser`'s lexer is always built without the SIMD flags, so it's benchmarked in a separate build
+# from `oxc_lexer`. Its results are saved as criterion baseline `lexer_old`, and then `oxc_lexer`
+# is compared against that baseline.
+# The "change" which criterion reports for `oxc_lexer` is its time relative to `oxc_parser`'s.
+# The "change" reported for `oxc_parser` (if any) is relative to its previous run.
+#
+# Both benchmarks are built before either is run, so the 2 runs happen back-to-back,
+# without a build between them.
+#
+# `args` are passed to criterion, e.g. `just bench-lexer App.tsx` to run only that file.
+# The recipes set the baseline options themselves, so don't pass those.
+#
+# On an ARM host, `bench-lexer-simd` compares `oxc_parser` running natively against `oxc_lexer`
+# running under emulation, so the comparison is meaningless.
+_bench-lexer := "cargo bench -p oxc_benchmark --no-default-features --features lexer_wallclock --bench"
+
+# Benchmark `oxc_lexer`'s scalar fallback against `oxc_parser`'s lexer
+bench-lexer *args='':
+  {{_bench-lexer}} lexer_wallclock_old --bench lexer_wallclock_new --no-run
+  {{_bench-lexer}} lexer_wallclock_old -- --save-baseline lexer_old {{args}}
+  {{_bench-lexer}} lexer_wallclock_new -- --baseline lexer_old {{args}}
+
+# Benchmark `oxc_lexer`'s SIMD core against `oxc_parser`'s lexer
+bench-lexer-simd *args='':
+  {{_bench-lexer}} lexer_wallclock_old --no-run
+  {{_bench-lexer}} lexer_wallclock_new {{_lexer-simd}} --no-run
+  {{_bench-lexer}} lexer_wallclock_old -- --save-baseline lexer_old {{args}}
+  {{_bench-lexer}} lexer_wallclock_new {{_lexer-simd}} -- --baseline lexer_old {{args}}
+
+# `ready-lexer` fails if any step fails, or if conformance changes the lexer snapshots.
+# Only the lexer snapshots are checked for changes, so it can be run with other uncommitted changes.
+# Snapshots are checked after each conformance run, because the SIMD run overwrites the snapshots from the scalar run.
+_lexer-snapshots := "tasks/coverage/snapshots/lexer_*"
+
+# Lint, test, and run conformance for `oxc_lexer` against both implementations, and check snapshots are unchanged
+ready-lexer:
+  just lint-lexer
+  just lint-lexer-simd
+  just test-lexer
+  just test-lexer-simd
+  just conformance-lexer
+  git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
+  just conformance-lexer-simd
+  git diff --exit-code HEAD -- '{{_lexer-snapshots}}'
+  just doc -p oxc_lexer
+
 # ==================== LINTER ====================
 
 # oxlint release build

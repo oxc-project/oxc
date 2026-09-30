@@ -36,7 +36,7 @@ impl<C: Config> Lexer<'_, C> {
             return self.check_after_numeric_literal(Kind::DecimalBigInt);
         }
 
-        let kind = self.optional_exponent().map_or(Kind::Decimal, |kind| kind);
+        let kind = self.optional_exponent().unwrap_or(Kind::Decimal);
         self.check_after_numeric_literal(kind)
     }
 

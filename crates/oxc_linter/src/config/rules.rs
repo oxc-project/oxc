@@ -226,8 +226,9 @@ impl OxlintRules {
         }
 
         if !errors.is_empty() {
-            // Sort by the error message so output is stable
-            errors.sort_by_key(std::string::ToString::to_string);
+            // Sort by the error message so output is stable. The key is computed once per error
+            // rather than once per comparison, which also keeps the `Display` impl out of the sort.
+            errors.sort_by_cached_key(std::string::ToString::to_string);
             return Err(errors);
         }
 
@@ -444,12 +445,11 @@ impl JsonSchema for OxlintRules {
                                 array.items.is_none() || array.additional_items.is_none(),
                                 "Expected rule to not contain items and additionalItems at the same time"
                             );
-                            if let Some(ref additional_items) = array.additional_items {
+                            if array.additional_items.is_some() {
                                 array.items = Some(SingleOrVec::Vec(vec![
                                     r#gen.subschema_for::<AllowWarnDeny>(),
-                                    *additional_items.clone(),
                                 ]));
-                                array.min_items = Some(2);
+                                array.min_items = Some(1);
                                 array.max_items = None;
                                 return Schema::Object(obj);
                             }

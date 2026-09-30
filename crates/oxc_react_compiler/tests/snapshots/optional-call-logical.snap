@@ -5,28 +5,21 @@ input_file: crates/oxc_react_compiler/fixtures/optional-call-logical.js
 import { c as _c } from "react/compiler-runtime";
 import { useFragment } from "shared-runtime";
 function Component(props) {
-	const $ = _c(3);
-	let t0;
-	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-		t0 = graphql`
+	const $ = _c(2);
+	const item = useFragment(graphql`
       fragment F on T {
         id
       }
-    `;
-		$[0] = t0;
+    `, props.item);
+	let t0;
+	if ($[0] !== item.items) {
+		t0 = item.items?.map(_temp) ?? [];
+		$[0] = item.items;
+		$[1] = t0;
 	} else {
-		t0 = $[0];
+		t0 = $[1];
 	}
-	const item = useFragment(t0, props.item);
-	let t1;
-	if ($[1] !== item.items) {
-		t1 = item.items?.map(_temp) ?? [];
-		$[1] = item.items;
-		$[2] = t1;
-	} else {
-		t1 = $[2];
-	}
-	return t1;
+	return t0;
 }
 function _temp(item_0) {
 	return renderItem(item_0);

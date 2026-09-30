@@ -85,7 +85,7 @@ fn test_ts(source_text: &str, expected: bool) {
     let ctx = Ctx::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::tsx()).parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
@@ -118,7 +118,7 @@ fn test_with_target(source_text: &str, target: &str, expected: bool) {
 fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
@@ -132,7 +132,7 @@ fn test_in_function(source_text: &str, expected: bool) {
     let ctx = Ctx::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::FunctionDeclaration(stmt)) = &ret.program.body.first() else {
@@ -164,7 +164,7 @@ fn test_assign_target_with_global_variables(
     };
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
@@ -915,10 +915,27 @@ fn test_known_global_property_reads() {
     // Math properties
     test("Math.PI", false);
     test("Math.E", false);
+    test("Math.LN10", false);
+    test("Math.LN2", false);
+    test("Math.LOG10E", false);
+    test("Math.LOG2E", false);
+    test("Math.SQRT1_2", false);
+    test("Math.SQRT2", false);
     test("Math.abs", false);
     test("Math.floor", false);
     test("Math.random", false);
     test("Math.unknownProp", true);
+
+    // Number properties
+    test("Number.POSITIVE_INFINITY", false);
+    test("Number.NEGATIVE_INFINITY", false);
+    test("Number.EPSILON", false);
+    test("Number.NaN", false);
+    test("Number.MAX_VALUE", false);
+    test("Number.MIN_VALUE", false);
+    test("Number.MAX_SAFE_INTEGER", false);
+    test("Number.MIN_SAFE_INTEGER", false);
+    test("Number.UNKNOWN", true);
 
     // Object properties
     test("Object.keys", false);

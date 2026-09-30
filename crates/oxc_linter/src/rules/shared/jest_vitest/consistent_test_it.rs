@@ -112,8 +112,7 @@ impl ConsistentTestItConfig {
 
         let config_value = value.get(0).unwrap_or(value);
 
-        let mut config: ConsistentTestItConfig =
-            serde_json::from_value(config_value.clone()).unwrap_or_default();
+        let mut config = ConsistentTestItConfig::deserialize(config_value).unwrap_or_default();
 
         // If withinDescribe wasn't provided, default it to the value of `fn` only if fn was explicitly provided
         if config_value.get("withinDescribe").is_none() && config_value.get("fn").is_some() {

@@ -69,9 +69,10 @@ pub fn to_sort_package_json(config: &FormatConfig) -> Option<sort_package_json::
         || Some(SortPackageJsonConfig::default()),
         SortPackageJsonUserConfig::into_config,
     )?;
-    Some(sort_package_json::SortOptions {
-        sort_scripts: sort_config.sort_scripts.unwrap_or(false),
-        // Small optimization: `oxc_formatter_json` will reformat anyway
-        pretty: false,
-    })
+    Some(
+        sort_package_json::SortOptions::new()
+            .with_sort_scripts(sort_config.sort_scripts.unwrap_or(false))
+            // Small optimization: `oxc_formatter_json` will reformat anyway
+            .with_pretty(false),
+    )
 }

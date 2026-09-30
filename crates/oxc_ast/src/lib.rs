@@ -63,6 +63,7 @@ mod generated {
     #[cfg(feature = "serialize")]
     mod derive_estree;
     mod derive_get_address;
+    mod derive_get_node_id;
     mod derive_get_span;
     mod derive_get_span_mut;
     mod derive_replace_with;

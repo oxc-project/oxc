@@ -182,14 +182,10 @@ impl<'a> TypeScriptNamespace {
         let uid_binding =
             ctx.generate_uid(&binding.name, scope_id, SymbolFlags::FunctionScopedVariable);
 
-        let directives;
-        let namespace_top_level;
-
-        match body {
+        let (directives, namespace_top_level) = match body {
             TSNamespaceDeclarationBody::TSModuleBlock(block) => {
                 let block = block.unbox();
-                directives = block.directives;
-                namespace_top_level = block.body;
+                (block.directives, block.body)
             }
             // We handle `namespace X.Y {}` as if it was
             //   namespace X {
@@ -199,10 +195,9 @@ impl<'a> TypeScriptNamespace {
                 let declaration = Declaration::TSNamespaceDeclaration(declaration);
                 let export_decl = ExportDeclaration::boxed(SPAN, declaration, ctx);
                 let stmt = Statement::ExportDeclaration(export_decl);
-                directives = ArenaVec::new_in(ctx);
-                namespace_top_level = ArenaVec::from_value_in(stmt, ctx);
+                (ArenaVec::new_in(ctx), ArenaVec::from_value_in(stmt, ctx))
             }
-        }
+        };
 
         let mut new_stmts = ArenaVec::new_in(ctx);
 

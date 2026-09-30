@@ -258,8 +258,8 @@ declare_oxc_lint!(
 
 impl Rule for NoRestrictedTypes {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let mut config = serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .map(DefaultRuleConfig::into_inner)?;
+        let mut config =
+            DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)?;
         config.0.index = RestrictedTypesIndex::from_types_map(&config.0.types);
         Ok(config)
     }
