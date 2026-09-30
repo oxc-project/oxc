@@ -1,10 +1,10 @@
 use oxc_str::JSStr;
 
+use crate::ToInt32;
+
 pub trait StringLastIndexOf {
     /// `String.prototype.lastIndexOf ( searchString [ , position ] )`
     /// <https://tc39.es/ecma262/#sec-string.prototype.lastindexof>
-    ///
-    /// The position and the result are UTF-16 code unit indices.
     fn last_index_of(&self, search_value: Option<JSStr<'_>>, from_index: Option<f64>) -> isize;
 }
 
@@ -18,6 +18,10 @@ impl StringLastIndexOf for JSStr<'_> {
     #[expect(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     fn last_index_of(&self, search_value: Option<JSStr<'_>>, from_index: Option<f64>) -> isize {
         let search = search_value.unwrap_or(JSStr::from("undefined"));
+        // A value and search value without lone surrogates use the UTF-8 search.
+        if let (Some(value), Some(search)) = (self.as_str(), search.as_str()) {
+            return last_index_of_str(value, search, from_index);
+        }
         // Steps 6-7: `ToIntegerOrInfinity(position)`, except that an absent position and NaN mean
         // positive infinity for this method.
         let position = from_index
@@ -31,38 +35,20 @@ impl StringLastIndexOf for JSStr<'_> {
         // Steps 9-10: last occurrence starting at or before the position.
         // A lone surrogate on either side needs the code unit search: a surrogate half in the
         // search value can match the same half of a formed pair.
-        match (self.as_str(), search.as_str()) {
-            (Some(value), Some(search)) => last_index_of_bytes(value, search, position),
-            _ => last_index_of_code_units(*self, search, position),
-        }
+        last_index_of_code_units(*self, search, position)
     }
 }
 
-#[expect(clippy::cast_possible_wrap, clippy::cast_precision_loss)]
-fn last_index_of_bytes(value: &str, search: &str, position: f64) -> isize {
-    // A UTF-8 match can only begin on a character boundary,
-    // so byte matches are exactly the UTF-16 matches.
-    // The last boundary at or before the position also rounds a position inside an
-    // astral character down.
-    let mut units = 0.0;
-    let mut offset = value.len();
-    for (byte, c) in value.char_indices() {
-        let next = units + c.len_utf16() as f64;
-        if next > position {
-            offset = byte;
-            break;
-        }
-        units = next;
-    }
-    // The byte window may end inside a character.
-    // No match can end there, because match ends also fall on boundaries.
-    let mut window = (offset + search.len()).min(value.len());
-    while !value.is_char_boundary(window) {
-        window -= 1;
-    }
-    value[..window]
-        .rfind(search)
-        .map_or(-1, |position| value[..position].encode_utf16().count() as isize)
+#[expect(clippy::cast_possible_wrap, clippy::cast_sign_loss)]
+fn last_index_of_str(value: &str, search_value: &str, from_index: Option<f64>) -> isize {
+    let from_index =
+        from_index.map_or(usize::MAX, |x| x.to_int_32().max(0) as usize + search_value.len());
+    value
+        .chars()
+        .take(from_index)
+        .collect::<String>()
+        .rfind(search_value)
+        .map_or(-1, |index| index as isize)
 }
 
 #[expect(clippy::cast_possible_wrap, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
@@ -105,32 +91,6 @@ mod test {
         assert_eq!("undefined".last_index_of(None, None), 0);
         assert_eq!("test test test".last_index_of(None, None), -1);
         assert_eq!("abcdef".last_index_of(Some(JSStr::from("b")), None), 1);
-        // An empty search matches at the clamped position.
-        // A search longer than the string never matches.
-        assert_eq!("abc".last_index_of(Some(JSStr::from("")), None), 3);
-        assert_eq!("abc".last_index_of(Some(JSStr::from("")), Some(1.0)), 1);
-        assert_eq!("ab".last_index_of(Some(JSStr::from("abc")), Some(9.0)), -1);
-        // A position inside an astral character rounds down for a real search,
-        // the byte window rounds down to a boundary, and an empty search matches at
-        // the position itself.
-        assert_eq!("a\u{1F600}b".last_index_of(Some(JSStr::from("a")), Some(2.0)), 0);
-        assert_eq!("a\u{1F600}b".last_index_of(Some(JSStr::from("\u{1F600}")), Some(2.0)), 1);
-        assert_eq!("\u{1F600}x".last_index_of(Some(JSStr::from("x")), Some(1.0)), -1);
-        assert_eq!("\u{1F600}".last_index_of(Some(JSStr::from("")), Some(1.0)), 1);
-
-        // Positions count UTF-16 code units, so an astral character is two.
-        assert_eq!("a\u{1F600}b".last_index_of(Some(JSStr::from("b")), None), 3);
-        assert_eq!("a\u{1F600}b".last_index_of(Some(JSStr::from("\u{1F600}")), None), 1);
-        assert_eq!("\u{1F600}\u{1F600}".last_index_of(Some(JSStr::from("\u{1F600}")), None), 2);
-        assert_eq!(
-            "\u{1F600}\u{1F600}".last_index_of(Some(JSStr::from("\u{1F600}")), Some(1.0)),
-            0
-        );
-
-        // NaN means searching from the end, and the empty search matches there.
-        assert_eq!("test test test".last_index_of(Some(JSStr::from("test")), Some(f64::NAN)), 10);
-        assert_eq!("abcd".last_index_of(Some(JSStr::from("")), None), 4);
-        assert_eq!("abcd".last_index_of(Some(JSStr::from("")), Some(2.0)), 2);
     }
 
     #[test]

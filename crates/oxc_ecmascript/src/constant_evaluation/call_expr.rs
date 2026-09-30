@@ -17,8 +17,8 @@ use oxc_str::{JSStr, JSStrBuilder};
 use oxc_syntax::number::ToJsString;
 
 use crate::{
-    StringCharCodeAt, StringIndexOf, StringLastIndexOf, ToInt32, ToJsString as ToJsStringTrait,
-    ToUint32,
+    StringCharCodeAt, StringIndexOf, StringLastIndexOf, StringSubstring, ToInt32,
+    ToJsString as ToJsStringTrait, ToUint32,
     constant_evaluation::url_encoding::{
         decode_uri_chars, encode_uri_chars, is_uri_always_unescaped,
     },
@@ -199,6 +199,19 @@ fn try_fold_string_substring_or_slice<'a>(
     {
         return None;
     }
+    // A value without lone surrogates uses the UTF-8 substring.
+    if let Some(value) = s.value.as_str() {
+        return Some(ConstantValue::String(JSStr::from_str_in(
+            &value.substring(start_idx, end_idx),
+            ctx,
+        )));
+    }
+    // A NaN end cannot be folded: the number alone no longer says whether the argument was
+    // `undefined` (end of string) or NaN (index zero), and for `slice` a zero end must not
+    // swap with the start.
+    if end_idx.is_some_and(f64::is_nan) {
+        return None;
+    }
     let value = s.value;
     // The guards above leave ordered, in-range positions and a non-NaN end,
     // and a NaN start converts to zero.
@@ -207,36 +220,6 @@ fn try_fold_string_substring_or_slice<'a>(
     };
     let start = to_unit(start_idx, 0);
     let end = to_unit(end_idx, usize::MAX).max(start);
-    if let Some(value) = value.as_str() {
-        // Resolve both UTF-16 positions to byte offsets in one pass.
-        // A position past the end clamps to the end of the string.
-        // When both land on character boundaries the result borrows the arena without allocating.
-        // A boundary inside a surrogate pair drops to the code unit path below,
-        // which splits the pair.
-        let mut units = 0;
-        let mut from = None;
-        let mut to = None;
-        let mut splits_pair = false;
-        for (offset, c) in value.char_indices() {
-            if units == start && from.is_none() {
-                from = Some(offset);
-            }
-            if units == end {
-                to = Some(offset);
-                break;
-            }
-            units += c.len_utf16();
-            if (from.is_none() && units > start) || units > end {
-                splits_pair = true;
-                break;
-            }
-        }
-        if !splits_pair {
-            let from = from.unwrap_or(value.len());
-            let to = to.unwrap_or(value.len());
-            return Some(ConstantValue::String(JSStr::from(&value[from..to])));
-        }
-    }
     // Collect the code units of the window.
     // A window boundary may split a surrogate pair.
     // The lone half is representable, so the result is exact.
