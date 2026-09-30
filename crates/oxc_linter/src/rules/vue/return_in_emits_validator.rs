@@ -216,7 +216,7 @@ fn is_falsy(expr: &Expression<'_>) -> bool {
         Expression::NullLiteral(_) => true,
         Expression::StringLiteral(s) => s.value.is_empty(),
         Expression::BigIntLiteral(big) => big.is_zero(),
-        Expression::Identifier(ident) => expr.is_undefined() || ident.name == "NaN",
+        Expression::Identifier(_) => expr.is_undefined() || expr.is_nan(),
         _ => false,
     }
 }
