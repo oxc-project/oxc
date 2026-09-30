@@ -876,7 +876,16 @@ impl<'a> PeepholeOptimizations {
         if scoping.scope_flags(binding_scope).contains_direct_eval() {
             return false;
         }
-        if scoping.get_resolved_references(symbol_id).any(|r| r.scope_id() != binding_scope) {
+        // References dropped earlier in this pass stay in the symbol's list until the
+        // pass flushes, and one dropped with its subtree still names that subtree's
+        // scope (`if (x) { a = b() } else a = c` folded to `a = x ? b() : c`). A
+        // dropped reference never reappears in the AST, so skipping it lets the merge
+        // happen in the same pass instead of forcing another one.
+        let removed_references = &ctx.state.pass_changes.removed_references;
+        if scoping.get_resolved_reference_ids(symbol_id).iter().any(|&reference_id| {
+            !removed_references.contains(reference_id.index())
+                && scoping.get_reference(reference_id).scope_id() != binding_scope
+        }) {
             return false;
         }
         // Walks the whole initializer, so it runs last.

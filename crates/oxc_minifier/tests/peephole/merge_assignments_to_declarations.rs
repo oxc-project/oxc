@@ -1,6 +1,8 @@
 use oxc_span::SourceType;
 
-use crate::{default_options, test, test_options_source_type, test_same};
+use crate::{
+    default_options, test, test_options_source_type, test_options_with_iterations, test_same,
+};
 
 #[test]
 fn merge_assignments_to_declarations_var() {
@@ -239,4 +241,21 @@ fn merge_assignments_to_declarations_issue_14310() {
         "(function deserializeFormalParameter(pos) { function deserializeBindingPatternKind() { console.log('param', param) } let param; param = deserializeBindingPatternKind(pos + 32); return param; })(0)",
         "(function(pos) { function deserializeBindingPatternKind() { console.log('param', param) } let param; return param = deserializeBindingPatternKind(pos + 32), param })(0)",
     );
+}
+
+/// Folding an `if`/`else` into `a = x ? b : c` drops the branch's reference to `a`
+/// in the same pass. The merge must not count that dropped reference, or `let`
+/// would need one more pass than `var` for the same code.
+#[test]
+fn merge_assignments_to_declarations_let_same_pass_as_var() {
+    for kind in ["var", "let"] {
+        test_options_with_iterations(
+            &format!(
+                "export function f(t, c) {{ {kind} a; if (t) {{ a = h(c) }} else a = c; return k(a) }}"
+            ),
+            &format!("export function f(t, c) {{ {kind} a = t ? h(c) : c; return k(a) }}"),
+            1,
+            &default_options(),
+        );
+    }
 }
