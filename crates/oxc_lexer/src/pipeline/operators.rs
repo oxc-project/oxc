@@ -186,9 +186,11 @@ pub(super) fn opmap_pack(key: u32) -> u32 {
 
 /// Check if up to 4 bytes of source contains a 2-byte, 3-byte, or 4-byte operator.
 ///
-/// Searches for longest operator first, starting at `max_len` length.
+/// Searches for longest operator first, starting at `min(max_len, 4)` length.
 ///
-/// `max_len` must be 2, 3, or 4.
+/// `max_len` should be 2 or more to find an operator.
+/// If `max_len` is < 2, and `bytes` contains padding `\0` bytes from after end of source
+/// in last 3 or 4 bytes, no matching operator can be found.
 ///
 /// If an operator is found, returns a tuple `(kind, len)` where:
 /// - `kind` is the [`TokenKind`] of the operator as a `u32`
@@ -199,7 +201,7 @@ pub(super) fn opmap_pack(key: u32) -> u32 {
 /// `?.` followed by a digit is rejected as a match.
 #[inline(always)]
 pub(super) fn opmap_longest(bytes: [u8; 4], max_len: u32) -> (/* kind*/ u32, /* len */ u32) {
-    if max_len == 4 && bytes == FOUR_BYTE_OP_BYTES {
+    if max_len >= 4 && bytes == FOUR_BYTE_OP_BYTES {
         return (FOUR_BYTE_OP_KIND as u32, 4);
     }
 
