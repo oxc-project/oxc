@@ -1,0 +1,12 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "env": {
+    "browser": true
+  },
+  "rules": {
+    "globals-env-builtin-plugin/unresolved-globals": "error"
+  }
+}

@@ -313,6 +313,7 @@ impl Debug for ExternalLinter {
 ///
 /// Serializes as `{ "globals": { "React": "readonly" }, "envs": { "browser": true } }`.
 /// `envs` only includes the environments that are enabled, so all properties are `true`.
+/// `builtin` env is always included.
 #[derive(Serialize)]
 pub struct GlobalsAndEnvs<'c> {
     globals: &'c OxlintGlobals,
@@ -330,6 +331,12 @@ struct EnabledEnvs<'c>(&'c OxlintEnv);
 impl Serialize for EnabledEnvs<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
+
+        // Native rules treat ES builtin globals as always defined, even if `env` in config does not
+        // include `builtin` (see `LintContext::get_env_global_entry`). Do the same for JS plugins.
+        if !self.0.contains("builtin") {
+            map.serialize_entry("builtin", &true)?;
+        }
 
         for env_name in self.0.iter() {
             map.serialize_entry(env_name, &true)?;
