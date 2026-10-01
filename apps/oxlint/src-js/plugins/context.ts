@@ -262,9 +262,6 @@ const LANGUAGE_OPTIONS = {
 
   /**
    * Environments defined for the file being linted.
-   *
-   * Includes `builtin` (ES builtin globals) unless config explicitly disables it,
-   * even if `env` in config is set without it.
    */
   get env(): Readonly<Envs> {
     // This is a property which ESLint does not have - it uses `ecmaVersion` instead for preset environments
