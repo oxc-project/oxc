@@ -62,13 +62,11 @@ impl Rule for NoMagicArrayFlatDepth {
         }
 
         let first_arg = call_expression.arguments.first().expect("missing argument");
-        let Some(Expression::NumericLiteral(arg)) =
-            first_arg.as_expression().map(Expression::without_parentheses)
-        else {
+        let Some(arg) = first_arg.as_expression().map(Expression::without_parentheses) else {
             return;
         };
 
-        if (arg.value - 1.0).abs() < f64::EPSILON {
+        if !arg.is_number() || arg.is_number_value(1.0) {
             return;
         }
 
@@ -85,7 +83,7 @@ impl Rule for NoMagicArrayFlatDepth {
             return;
         }
 
-        ctx.diagnostic(no_magic_array_flat_map_diagnostic(arg.span));
+        ctx.diagnostic(no_magic_array_flat_map_diagnostic(arg.span()));
     }
 }
 
