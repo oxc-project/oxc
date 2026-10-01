@@ -57,8 +57,8 @@
   | }
   | env: {
   |   "astro": true,
-  |   "builtin": true,
-  |   "node": true
+  |   "node": true,
+  |   "builtin": true
   | }
    ,-[files/nested/2.js:1:1]
  1 | let y;

@@ -3902,6 +3902,69 @@ describe("RuleTester", () => {
     });
   });
 
+  describe("env", () => {
+    // Reports envs, and global references which are not resolved to a variable
+    const envReporterRule: Rule = {
+      create(context) {
+        return {
+          Program(node) {
+            const { through } = context.sourceCode.scopeManager.globalScope!;
+            context.report({
+              message: `env: ${JSON.stringify(context.languageOptions.env)}, unresolved: ${through
+                .map((ref) => ref.identifier.name)
+                .join(", ")}`,
+              node,
+            });
+          },
+        };
+      },
+    };
+
+    it("includes `builtin` if no env defined", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", envReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "Number; foo;",
+            errors: [{ message: 'env: {"builtin":true}, unresolved: foo' }],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+
+    it("includes `builtin` last if env defined without it", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", envReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "Number; window; foo;",
+            languageOptions: { env: { browser: true } },
+            errors: [{ message: 'env: {"browser":true,"builtin":true}, unresolved: foo' }],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+
+    it("does not include `builtin` if explicitly disabled", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", envReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "Number; window; foo;",
+            languageOptions: { env: { builtin: false, browser: true } },
+            errors: [{ message: 'env: {"browser":true}, unresolved: Number, foo' }],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+  });
+
   describe("settings", () => {
     const settingsReporterRule: Rule = {
       create(context) {

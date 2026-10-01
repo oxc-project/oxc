@@ -1374,7 +1374,7 @@ function getParseOptions(test: TestCase): ParseOptions {
  * Normalizes globals values to "readonly", "writable", or "off", same as Rust side does.
  * `null` is only supported in ESLint compatibility mode.
  *
- * Removes envs which are false, same as Rust side does.
+ * Removes envs which are false, and adds `builtin` env last unless explicitly disabled, same as Rust side does.
  *
  * @param test - Test case
  * @returns Globals and envs as JSON string of form `{ "globals": { ... }, "envs": { ... } }`
@@ -1424,15 +1424,13 @@ function getGlobalsJson(test: TestCase): string {
     globals[key] = value;
   }
 
-  // TODO: Tests for `env` in `RuleTester` tests
-
   // Get envs.
   // Remove properties which are `false` - same as Rust side does.
   const originalEnvs = test.languageOptions?.env;
   const envs: Envs = {};
   if (originalEnvs != null) {
     for (const [key, value] of Object.entries(originalEnvs)) {
-      if (value === false) continue;
+      if (value === false || key === "builtin") continue;
 
       // Use `Object.defineProperty` to handle if `key` is "__proto__"
       Object.defineProperty(envs, key, {
@@ -1443,6 +1441,10 @@ function getGlobalsJson(test: TestCase): string {
       });
     }
   }
+
+  // Add `builtin` env last, unless explicitly disabled - same as Rust side does.
+  // Conformance tests provide all globals via `languageOptions.globals`, and set `env` to `{}` to disable `builtin`.
+  if (!CONFORMANCE && originalEnvs?.builtin !== false) envs.builtin = true;
 
   // Serialize globals + envs to JSON
   return JSON.stringify({ globals, envs });

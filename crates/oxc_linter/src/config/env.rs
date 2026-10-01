@@ -80,6 +80,14 @@ impl OxlintEnv {
         self.0.get(key).is_some_and(|v| *v)
     }
 
+    /// Whether the `builtin` env (ES builtin globals) is enabled.
+    ///
+    /// `builtin` is enabled unless config explicitly sets it to `false`, even if `env` is set
+    /// without it. Same as ESLint's eslintrc config (`Object.assign({ builtin: true }, config.env)`).
+    pub fn is_builtin_enabled(&self) -> bool {
+        self.0.get("builtin").copied().unwrap_or(true)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &str> + '_ {
         // Filter out false values
         self.0.iter().filter_map(|(k, v)| (*v).then_some(k.as_str()))
@@ -115,6 +123,17 @@ mod test {
         let env = OxlintEnv::default();
         assert_eq!(env.iter().count(), 1);
         assert!(env.contains("builtin"));
+    }
+
+    #[test]
+    fn test_is_builtin_enabled() {
+        let parse = |value| OxlintEnv::deserialize(&value).unwrap();
+        assert!(OxlintEnv::default().is_builtin_enabled());
+        assert!(parse(serde_json::json!({ "browser": true })).is_builtin_enabled());
+        assert!(parse(serde_json::json!({ "builtin": true })).is_builtin_enabled());
+        assert!(
+            !parse(serde_json::json!({ "builtin": false, "browser": true })).is_builtin_enabled()
+        );
     }
 
     #[test]

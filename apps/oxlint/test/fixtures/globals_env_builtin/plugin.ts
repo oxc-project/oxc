@@ -8,7 +8,12 @@ const plugin: Plugin = {
     "unresolved-globals": {
       create(context) {
         return {
-          Program() {
+          Program(node) {
+            context.report({
+              message: `env: ${JSON.stringify(context.languageOptions.env)}`,
+              node,
+            });
+
             const { globalScope } = context.sourceCode.scopeManager;
             for (const ref of globalScope!.through) {
               context.report({

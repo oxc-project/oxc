@@ -8,5 +8,13 @@
   },
   "rules": {
     "globals-env-builtin-plugin/unresolved-globals": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["files/builtin_disabled.js"],
+      "env": {
+        "builtin": false
+      }
+    }
+  ]
 }
