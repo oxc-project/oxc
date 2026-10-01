@@ -337,9 +337,8 @@ impl Serialize for EnabledEnvs<'_> {
             map.serialize_entry(env_name, &true)?;
         }
 
-        // `builtin` is enabled even if `env` in config doesn't include it, unless explicitly
-        // disabled. It goes last because the last env wins on the JS side when envs define the
-        // same global, and native rules give ES builtin globals precedence
+        // `builtin` goes last because the last env wins on the JS side when envs define the same
+        // global, and native rules give ES builtin globals precedence
         // (see `LintContext::get_env_global_entry`).
         if self.0.is_builtin_enabled() {
             map.serialize_entry("builtin", &true)?;
