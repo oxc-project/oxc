@@ -220,31 +220,7 @@ fn is_in_es6_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
 fn test() {
     use crate::tester::Tester;
 
-    // let too_many_if_else = (1..10)
-    //     .map(|i| {
-    //         "
-    //         if (a > i) {
-    //             foo1()
-    //         } else {
-    //             foo2()
-    //         }
-    //     "
-    //     })
-    //     .collect::<String>();
-
-    // let too_many_if_else_case = format!(
-    //     "
-    //     class Hello extends React.Component {{
-    //         render() {{
-    //             {too_many_if_else}
-    //             return 'div'
-    //         }}
-    //     }}
-    //     ",
-    // );
-
     let pass = vec![
-        // &too_many_if_else_case,
         r"
                     class Hello extends React.Component {
                       render() {
