@@ -230,7 +230,11 @@ impl Config {
             for (rule, severity) in &override_config.rules.builtin_rules {
                 if *severity == AllowWarnDeny::Allow {
                     rules.remove(rule);
-                } else {
+                } else if LintPlugins::try_from(rule.plugin_name())
+                    .is_ok_and(|plugin| builtin_rule_plugins.contains(plugin))
+                {
+                    // Override rules are resolved against the plugins of all overrides, so only
+                    // enable a rule when its plugin is enabled for this file.
                     let _ = rules.remove(rule);
                     rules.insert(rule.clone(), *severity);
                 }
@@ -1640,5 +1644,74 @@ mod test {
             no_unused_vars.is_none(),
             "no-unused-vars should not be re-enabled when correctness is off"
         );
+    }
+
+    fn rule_severity(config: &Config, path: &str, rule_name: &str) -> Option<AllowWarnDeny> {
+        config
+            .apply_overrides(Path::new(path))
+            .rules
+            .iter()
+            .find(|(rule, _)| rule.name() == rule_name)
+            .map(|(_, severity)| *severity)
+    }
+
+    #[test]
+    fn test_override_rule_off_with_plugin_from_another_override() {
+        // https://github.com/oxc-project/oxc/issues/27259
+        let config = config_from_str_with_defaults(
+            r#"
+            {
+                "plugins": ["typescript"],
+                "categories": { "correctness": "error" },
+                "overrides": [
+                    {
+                        "files": ["src/**"],
+                        "plugins": ["jsx-a11y"]
+                    },
+                    {
+                        "files": ["src/components/Logo.jsx"],
+                        "rules": { "jsx-a11y/alt-text": "off" }
+                    }
+                ]
+            }
+            "#,
+        );
+
+        assert_eq!(
+            rule_severity(&config, "src/components/Avatar.jsx", "alt-text"),
+            Some(AllowWarnDeny::Deny)
+        );
+        assert_eq!(rule_severity(&config, "src/components/Logo.jsx", "alt-text"), None);
+    }
+
+    #[test]
+    fn test_override_rule_on_with_plugin_from_another_override() {
+        // https://github.com/oxc-project/oxc/issues/27259
+        let config = config_from_str_with_defaults(
+            r#"
+            {
+                "plugins": ["typescript"],
+                "categories": { "correctness": "off" },
+                "overrides": [
+                    {
+                        "files": ["src/**"],
+                        "plugins": ["jsx-a11y"]
+                    },
+                    {
+                        "files": ["**/Logo.jsx"],
+                        "rules": { "jsx-a11y/alt-text": "error" }
+                    }
+                ]
+            }
+            "#,
+        );
+
+        assert_eq!(
+            rule_severity(&config, "src/components/Logo.jsx", "alt-text"),
+            Some(AllowWarnDeny::Deny)
+        );
+        assert_eq!(rule_severity(&config, "src/components/Avatar.jsx", "alt-text"), None);
+        // `jsx-a11y` is not enabled for files outside `src`, so the rule stays off there.
+        assert_eq!(rule_severity(&config, "lib/Logo.jsx", "alt-text"), None);
     }
 }
