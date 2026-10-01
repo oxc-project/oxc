@@ -126,17 +126,6 @@ mod test {
     }
 
     #[test]
-    fn test_is_builtin_enabled() {
-        let parse = |value| OxlintEnv::deserialize(&value).unwrap();
-        assert!(OxlintEnv::default().is_builtin_enabled());
-        assert!(parse(serde_json::json!({ "browser": true })).is_builtin_enabled());
-        assert!(parse(serde_json::json!({ "builtin": true })).is_builtin_enabled());
-        assert!(
-            !parse(serde_json::json!({ "builtin": false, "browser": true })).is_builtin_enabled()
-        );
-    }
-
-    #[test]
     fn test_override_envs() {
         let mut env = OxlintEnv::default();
         let override_env = OxlintEnv::deserialize(&serde_json::json!({

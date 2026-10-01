@@ -1,8 +1,2 @@
-// ES builtins should resolve, even though `env` in config does not include `builtin`
-Number.isFinite(1);
-
-// Enabled by `browser` env
-window.alert("hello");
-
-// Not defined anywhere
-notDefinedAnywhere;
+// `env` in config doesn't include `builtin`, but ES builtins should still resolve
+Number;

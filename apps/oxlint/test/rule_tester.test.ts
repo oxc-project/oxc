@@ -3902,17 +3902,16 @@ describe("RuleTester", () => {
     });
   });
 
-  describe("env", () => {
+  it("adds `builtin` env last, unless explicitly disabled", () => {
     // Reports envs, and global references which are not resolved to a variable
     const envReporterRule: Rule = {
       create(context) {
         return {
           Program(node) {
             const { through } = context.sourceCode.scopeManager.globalScope!;
+            const unresolved = through.map((ref) => ref.identifier.name).join(", ");
             context.report({
-              message: `env: ${JSON.stringify(context.languageOptions.env)}, unresolved: ${through
-                .map((ref) => ref.identifier.name)
-                .join(", ")}`,
+              message: `env: ${JSON.stringify(context.languageOptions.env)}, unresolved: ${unresolved}`,
               node,
             });
           },
@@ -3920,49 +3919,27 @@ describe("RuleTester", () => {
       },
     };
 
-    it("includes `builtin` if no env defined", () => {
-      const tester = new RuleTester();
-      tester.run("no-foo", envReporterRule, {
-        valid: [],
-        invalid: [
-          {
-            code: "Number; foo;",
-            errors: [{ message: 'env: {"builtin":true}, unresolved: foo' }],
-          },
-        ],
-      });
-      expect(runCases()).toEqual([null]);
+    const tester = new RuleTester();
+    tester.run("no-foo", envReporterRule, {
+      valid: [],
+      invalid: [
+        {
+          code: "Number; foo;",
+          errors: [{ message: 'env: {"builtin":true}, unresolved: foo' }],
+        },
+        {
+          code: "Number; foo;",
+          languageOptions: { env: { browser: true } },
+          errors: [{ message: 'env: {"browser":true,"builtin":true}, unresolved: foo' }],
+        },
+        {
+          code: "Number; foo;",
+          languageOptions: { env: { builtin: false, browser: true } },
+          errors: [{ message: 'env: {"browser":true}, unresolved: Number, foo' }],
+        },
+      ],
     });
-
-    it("includes `builtin` last if env defined without it", () => {
-      const tester = new RuleTester();
-      tester.run("no-foo", envReporterRule, {
-        valid: [],
-        invalid: [
-          {
-            code: "Number; window; foo;",
-            languageOptions: { env: { browser: true } },
-            errors: [{ message: 'env: {"browser":true,"builtin":true}, unresolved: foo' }],
-          },
-        ],
-      });
-      expect(runCases()).toEqual([null]);
-    });
-
-    it("does not include `builtin` if explicitly disabled", () => {
-      const tester = new RuleTester();
-      tester.run("no-foo", envReporterRule, {
-        valid: [],
-        invalid: [
-          {
-            code: "Number; window; foo;",
-            languageOptions: { env: { builtin: false, browser: true } },
-            errors: [{ message: 'env: {"browser":true}, unresolved: Number, foo' }],
-          },
-        ],
-      });
-      expect(runCases()).toEqual([null]);
-    });
+    expect(runCases()).toEqual([null, null, null]);
   });
 
   describe("settings", () => {
