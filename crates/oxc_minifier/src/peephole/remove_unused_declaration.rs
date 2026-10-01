@@ -249,6 +249,18 @@ impl<'a> PeepholeOptimizations {
     /// import 'b'
     /// ```
     pub fn remove_unused_import_specifiers(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::ImportDeclaration(import_decl) = stmt else { return };
+
+        // `import {} from 'x'` -> `import 'x'`
+        if import_decl.phase.is_none()
+            && import_decl.import_kind.is_value()
+            && import_decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.is_empty())
+        {
+            import_decl.specifiers = None;
+            ctx.notice_change();
+            return;
+        }
+
         if ctx.options().treeshake.invalid_import_side_effects
             || ctx.options().unused == CompressOptionsUnused::Keep
         {
@@ -260,8 +272,6 @@ impl<'a> PeepholeOptimizations {
         }
 
         debug_assert!(!ctx.source_type().is_script(), "imports are not allowed in script mode");
-
-        let Statement::ImportDeclaration(import_decl) = stmt else { return };
 
         if let Some(phase) = import_decl.phase {
             let (ImportPhase::Defer | ImportPhase::Source) = phase;

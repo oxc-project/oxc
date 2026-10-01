@@ -535,3 +535,27 @@ In a paragraph printed as written for wiki link risk (`[[` ... `]]`), Prettier s
 after an emphasis followed by `-` into two paragraphs, which breaks the link (d3's READMEs).
 Ours keeps the line.
 
+## setext-heading-wrap
+
+- Why: uniform-rule (same construct, same output: a paragraph)
+- Pin: `tests/fixtures/markdown/prose-wrap/setext-heading-wrap.md`
+
+```markdown
+<!-- input, proseWrap always -->
+Some heading words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+<!-- ours -->
+Some heading words that run on and then
+[a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+<!-- prettier -->
+Some heading words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere)
+end
+===
+```
+
+A setext heading's content wraps like a paragraph's, which Prettier breaks before the link.
+Prettier makes setext headings breakable but prints their children without the paragraph's `flattenFill`:
+each sentence is its own fill, so the whitespace before a link, emphasis or code span ends a fill and never breaks.

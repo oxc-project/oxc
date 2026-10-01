@@ -49,7 +49,7 @@ pub use printer::{PrintResult, PrintWidth, Printed, PrinterOptions};
 pub(crate) use printer::Printer;
 pub use session::embedded::{
     DispatchPayload, DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher,
-    TailwindCollector, dispatch_fragment_ir,
+    dispatch_fragment_ir,
 };
 pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, TailwindSorter};
 pub use source::{SourceText, SpanCursor};

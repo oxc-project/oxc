@@ -5474,16 +5474,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                     ──────────
    ╰────
 
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-export-async-function/input.js:1:8]
- 1 │ export \u0061sync function y() { await x }
-   ·        ──────────
-   ╰────
-
   × Cannot use export statement outside a module
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-export-async-function/input.js:1:1]
  1 │ export \u0061sync function y() { await x }
    · ──────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-export-async-function/input.js:1:8]
+ 1 │ export \u0061sync function y() { await x }
+   ·        ──────────
    ╰────
 
   × Keywords cannot contain escape characters
@@ -14658,11 +14658,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/property-initializer/input.ts:1:25]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/property-initializer/input.ts:1:24]
  1 │ interface I { x: number = 1;}
-   ·                         ─
+   ·                        ▲
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1063): An export assignment cannot be used in a namespace.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-assignment/input.ts:2:3]

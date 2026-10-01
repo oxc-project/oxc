@@ -36,6 +36,7 @@ use self::{
 use super::options::to_oxc_formatter;
 use super::{
     FormatStrategy,
+    global_ignore::matches_with_ancestors,
     options::{ValidatedOptions, validate},
     oxfmtrc::{FormatConfig, Oxfmtrc},
     support::FileKind,
@@ -256,11 +257,7 @@ impl ConfigResolver {
 
     /// Returns `true` if the given path should be ignored by this config's `ignorePatterns`.
     pub fn is_path_ignored(&self, path: &Path, is_dir: bool) -> bool {
-        self.ignore_glob.as_ref().is_some_and(|glob| {
-            // `matched_path_or_any_parents()` panics if path is not under the glob's root.
-            path.starts_with(glob.path())
-                && glob.matched_path_or_any_parents(path, is_dir).is_ignore()
-        })
+        self.ignore_glob.as_ref().is_some_and(|glob| matches_with_ancestors(glob, path, is_dir))
     }
 
     /// Create a resolver, handling both JSON/JSONC and JS/TS config files.

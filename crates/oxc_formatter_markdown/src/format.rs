@@ -102,8 +102,7 @@ pub fn format_to_ir<'a>(
 
     write!(&mut buffer, FormatMarkdownEmbedded { parsed: &parsed });
 
-    // No child of Markdown collects Tailwind classes yet (see `TailwindCollector` in `context.rs`)
-    Ok(EmbeddedIr { ir: buffer.into_vec(), tailwind_classes: Vec::new() })
+    Ok(EmbeddedIr { ir: buffer.into_vec() })
 }
 
 /// Parse the source into the AST, bailing out on any diagnostic.
