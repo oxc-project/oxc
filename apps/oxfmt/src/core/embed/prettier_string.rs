@@ -4,7 +4,7 @@
 //!
 //! Fence routing follows ONE rule, the shared routing table ([`dispatcher::route`]):
 //! a `Route::Native` language formats through the dispatcher via [`super::jsdoc_fence::format_native_fence`] (the build-independent adapter);
-//! the `Route::Prettier` set (md/html/angular) stays on the Prettier string path
+//! the `Route::Prettier` set stays on the Prettier string path
 //! (their Doc→IR conversion has unrepresentable cases, so forcing them through the dispatcher would regress to verbatim;
 //! the wall falls with the HTML Rust port).
 //!
@@ -24,7 +24,7 @@ use crate::core::{
         dispatcher::{self, Route},
         jsdoc_fence,
     },
-    options::{inject_parser, inject_print_width},
+    options::inject_print_width,
 };
 
 /// Build the napi build's string embedder installed on the session.
@@ -43,7 +43,7 @@ pub fn build_string_embedder(
     // so one is invariant across the callback's lifetime: build it once, not per fence.
     let fence_dispatcher = dispatcher::build_dispatcher(Arc::clone(&dispatch_config), None);
     Arc::new(move |language: &str, code: &str, print_width: usize| {
-        let parser_name = match dispatcher::route(language) {
+        let prettier_language = match dispatcher::route(language) {
             // Native branch (JSDoc fenced code blocks): through the dispatcher, never Prettier.
             Route::Native(_) => {
                 return jsdoc_fence::format_native_fence(
@@ -55,16 +55,16 @@ pub fn build_string_embedder(
                     sort_tailwind.as_ref(),
                 );
             }
-            Route::Prettier(prettier_language) => prettier_language.parser(),
+            Route::Prettier(prettier_language) => prettier_language,
             // NOTE: Do not return `Ok(original)` here.
             // We need to keep unsupported content as-is.
             Route::Unsupported => return Err(format!("Unsupported language: {language}")),
         };
+        let parser_name = prettier_language.parser();
         debug_span!("oxfmt::external::format_embedded", parser = parser_name).in_scope(|| {
-            // `clone()` is unavoidable here,
-            // because there may be multiple embedded sections in one JS/TS file.
-            let mut options = dispatch_config.prettier_options().clone();
-            inject_parser(&mut options, parser_name);
+            let Some(mut options) = dispatch_config.prettier_options_for(prettier_language) else {
+                return Err(format!("No plugin enabled for parser: {parser_name}"));
+            };
             // The same effective width the native branch prints at
             inject_print_width(&mut options, print_width);
             (format_embedded)(options, code)

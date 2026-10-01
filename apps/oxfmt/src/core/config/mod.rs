@@ -25,8 +25,6 @@ use tracing::instrument;
 use oxc_config::{ConfigDiscovery, DiscoveredConfigFile, is_js_config_path, vp_version};
 #[cfg(feature = "napi")]
 use oxc_formatter::JsFormatOptions;
-#[cfg(feature = "napi")]
-use oxc_formatter_core::CoreFormatOptions;
 
 use self::{
     editorconfig::{apply_editorconfig, resolve_editorconfig_overrides, root_properties},
@@ -167,14 +165,13 @@ pub fn resolve_for_api(
 #[cfg(feature = "napi")]
 #[derive(Debug)]
 pub struct EmbeddedCallbackResolved {
-    /// Other xxx-in-js options are may be or may not be used, so derived lazily with `config` and `core`.
+    /// Other xxx-in-js options are may be or may not be used, so derived lazily with `config` and `validated`.
     /// `JsFormatOptions` is always needed, so hold it here.
     pub format_options: Box<JsFormatOptions>,
     /// Retained so nested embedded callbacks can derive Prettier options on demand.
     pub config: Arc<FormatConfig>,
-    /// The validated core bundle, carried from resolution so dispatch-config
-    /// construction never re-derives (or re-fails) it.
-    pub core: CoreFormatOptions,
+    /// For the root's dispatch config, see [`crate::core::embed::dispatcher::ResolvedDispatchConfig::for_root`].
+    pub validated: ValidatedOptions,
     pub parent_filepath: PathBuf,
 }
 
@@ -194,9 +191,15 @@ pub fn resolve_for_embedded_js(
     config: FormatConfig,
     parent_filepath: PathBuf,
 ) -> Result<EmbeddedCallbackResolved, String> {
-    let ValidatedOptions { core, sort_imports } = validate(&config)?;
-    let format_options = Box::new(to_oxc_formatter(&config, core, sort_imports));
-    Ok(EmbeddedCallbackResolved { format_options, config: Arc::new(config), core, parent_filepath })
+    let validated = validate(&config)?;
+    let format_options =
+        Box::new(to_oxc_formatter(&config, validated.core, validated.sort_imports.clone()));
+    Ok(EmbeddedCallbackResolved {
+        format_options,
+        config: Arc::new(config),
+        validated,
+        parent_filepath,
+    })
 }
 
 // ---

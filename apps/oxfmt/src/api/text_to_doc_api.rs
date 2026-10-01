@@ -54,7 +54,7 @@ pub fn run(
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<String> {
-    // Embedded text belongs to the host file (`.vue`, `.md`, ...),
+    // Embedded text belongs to the host file (`.vue`, `.mdx`, ...),
     // so the `SourceType` carries no file extension of its own.
     // `source_ext` selects the parse grammar only,
     // and extension-keyed formatter rules (e.g. the `.mts`/`.cts` trailing comma reservation) must not fire from it.
@@ -132,13 +132,13 @@ fn run_full(
     );
     let _cleanup = external_services.cleanup_guard();
 
-    let EmbeddedCallbackResolved { format_options, config, core, parent_filepath } =
+    let EmbeddedCallbackResolved { format_options, config, validated, parent_filepath } =
         resolve_for_embedded_js(config, parent_filepath)
             .expect("`_oxfmtPluginOptionsJson` should contain valid config");
 
     // Per-language options (and the Prettier options JSON with the Tailwind payload)
-    // are mapped lazily at dispatch time; `core` was validated during resolution.
-    let dispatch_config = ResolvedDispatchConfig::for_root(&config, core, &parent_filepath);
+    // are mapped lazily at dispatch time; `validated` comes from resolution.
+    let dispatch_config = ResolvedDispatchConfig::for_root(&config, validated, &parent_filepath);
 
     let services = embed::services::for_root(&external_services, &dispatch_config);
 
