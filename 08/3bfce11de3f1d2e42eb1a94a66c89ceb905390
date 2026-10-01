@@ -1,0 +1,19 @@
+apps/oxfmt/src/core/global_ignore.rs
+  s_25f855cc2fd680::t_91a21adab7abf8 100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "083bfce11de3f1d2e42eb1a94a66c89ceb905390",
+  "prompts": {},
+  "sessions": {
+    "s_25f855cc2fd680": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f5b6-926d-72f3-9d55-f160b1dcaa66",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
