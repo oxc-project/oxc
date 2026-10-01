@@ -1,7 +1,7 @@
 //! Embedded-language formatting orchestration.
 //!
 //! `oxc_formatter_core` holds the abstract contract
-//! (`FormatSession`, `FormatDispatcher`, `DispatchRequest`/`DispatchResponse`, `TailwindCollector`);
+//! (`FormatSession`, `FormatDispatcher`, `DispatchRequest`/`DispatchResponse`);
 //! this module is its concrete counterpart owned by the orchestrator (Oxfmt).
 //!
 //! - [`dispatcher`] (every build):

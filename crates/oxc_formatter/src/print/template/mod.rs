@@ -717,7 +717,10 @@ impl<'a> EachTemplateTable<'a> {
 
             recording.stop();
 
-            let root = Document::new(vec_buffer.into_vec(), Vec::default());
+            // TODO: The printed text IS the output, not just a width measurement,
+            // so a `TailwindClass` inside `expr` (e.g. JSX `className` under `sortTailwindcss`) prints UNSORTED.
+            let root =
+                Document::new(vec_buffer.into_vec(), f.session().unsorted_tailwind_classes());
 
             let print_options = f.options().as_print_options();
             // TODO: if `unwrap()` panics here, it's a internal error

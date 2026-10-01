@@ -2,7 +2,7 @@
 
 pub mod embedded;
 
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use oxc_allocator::Allocator;
 
@@ -27,13 +27,13 @@ const MAX_DISPATCH_DEPTH: u8 = 8;
 pub type StringEmbedder = Arc<dyn Fn(&str, &str, usize) -> Result<String, String> + Send + Sync>;
 
 /// Print-time batch sorter for the classes referenced by `FormatElement::TailwindClass(index)`;
-/// runs once when a root formatter finalizes its `Document`.
+/// runs once when a root formatter finalizes its `Document` ([`FormatSession::take_sorted_tailwind_classes`]).
 pub type TailwindSorter = Arc<dyn Fn(Vec<String>) -> Vec<String> + Send + Sync>;
 
 /// The three per-run services a host installs on a [`FormatSession`], one field per duty.
 ///
 /// Core only transports them; consumers invoke via [`FormatSession::dispatch`] /
-/// [`FormatSession::string_embedder`] / [`FormatSession::sort_tailwind_classes`].
+/// [`FormatSession::string_embedder`] / [`FormatSession::take_sorted_tailwind_classes`].
 /// `None` anywhere means "this run does not provide that service" and each consumer degrades gracefully.
 #[derive(Clone, Default)]
 pub struct SessionServices {
@@ -73,16 +73,28 @@ impl InputKind {
 }
 
 /// Execution unit threaded through a formatting run: one arena, one `GroupId` space,
-/// the run's [`SessionServices`], plus the input's envelope semantics.
+/// one Tailwind class scope, the run's [`SessionServices`], plus the input's envelope semantics.
 ///
 /// The same type serves standalone roots and dispatched children,
 /// so any formatter (not just JS) can dispatch embedded languages.
-/// Cloning hands out another handle to the SAME session (shared `GroupId` space, same depth);
+/// Cloning hands out another handle to the SAME session (shared `GroupId` space and class scope, same depth);
 /// the session for one embedded child is derived internally by [`Self::dispatch`].
 #[derive(Clone)]
 pub struct FormatSession<'a> {
     allocator: &'a Allocator,
     group_id_builder: Arc<UniqueGroupIdBuilder>,
+    /// Pre-sort classes referenced by `FormatElement::TailwindClass(index)`, one scope per root `Document`.
+    ///
+    /// A dispatched child shares its parent's scope, so it adds classes straight into the parent's index space
+    /// (no remap, which could never reach a `TailwindClass` below an `Interned` / `BestFitting` boundary).
+    /// A root formatter opens a fresh scope ([`Self::with_new_tailwind_scope`]),
+    /// so a root nested on the same session (e.g. a JSDoc snippet) never takes its host's classes.
+    ///
+    /// A child whose doc is discarded (an all-or-nothing embed site, a child failing midway)
+    /// leaves its classes as unreferenced entries, which are inert:
+    /// the sorter reorders classes WITHIN each string, never the vector,
+    /// so indices stay stable and unprinted entries never reach the output.
+    tailwind_classes: Rc<RefCell<Vec<String>>>,
     services: SessionServices,
     input_kind: InputKind,
     dispatch_depth: u8,
@@ -107,6 +119,7 @@ impl<'a> FormatSession<'a> {
         Self {
             allocator,
             group_id_builder: Arc::new(UniqueGroupIdBuilder::default()),
+            tailwind_classes: Rc::default(),
             services,
             input_kind,
             dispatch_depth: 0,
@@ -122,6 +135,7 @@ impl<'a> FormatSession<'a> {
         Self {
             allocator: self.allocator,
             group_id_builder: Arc::clone(&self.group_id_builder),
+            tailwind_classes: Rc::clone(&self.tailwind_classes),
             services: self.services.clone(),
             input_kind,
             dispatch_depth: self.dispatch_depth + 1,
@@ -164,14 +178,14 @@ impl<'a> FormatSession<'a> {
     }
 
     /// Formats one embedded request and prints the result to text:
-    /// dispatch → local Tailwind sort → [`Document`] print.
+    /// dispatch in a fresh Tailwind scope → sort that scope → [`Document`] print.
     ///
     /// The string-out counterpart of [`Self::dispatch`], for consumers whose result
     /// must come back as TEXT. The caller supplies `printer_options`, typically its own
     /// print options with the embedding position's effective width, and owns any
     /// re-embedding conventions (e.g. trailing-newline handling) on the returned text.
-    /// A text consumer has no parent index space, so Tailwind classes sort locally
-    /// through this session's sorter instead of merging upward.
+    /// A text consumer has no parent index space, so the child's Tailwind classes
+    /// collect in a fresh scope and sort locally instead of joining this session's scope.
     ///
     /// Returns `Ok(None)` when the dispatch deliberately preserved the input
     /// (see [`DispatchResponse::PreserveOriginal`]); the caller keeps its original text.
@@ -184,14 +198,13 @@ impl<'a> FormatSession<'a> {
         printer_options: PrinterOptions,
     ) -> Result<Option<String>, String> {
         let text_len = request.text.len();
-        let DispatchResponse::Formatted(DispatchPayload { doc, tailwind_classes, .. }) =
-            self.dispatch(request)?
+        let scoped = self.with_new_tailwind_scope();
+        let DispatchResponse::Formatted(DispatchPayload { doc, .. }) = scoped.dispatch(request)?
         else {
             return Ok(None);
         };
-        let tailwind_classes = self.sort_tailwind_classes(tailwind_classes);
 
-        let code = Document::new(doc, tailwind_classes)
+        let code = Document::new(doc, scoped.take_sorted_tailwind_classes())
             .print(text_len, printer_options)
             .map_err(|err| err.to_string())?
             .into_code();
@@ -221,11 +234,40 @@ impl<'a> FormatSession<'a> {
         self.services.string_embedder.as_ref()
     }
 
-    /// Sorts collected Tailwind classes through the print-time service ([`TailwindSorter`]),
-    /// or returns them unsorted when this run installs no sorter.
-    pub fn sort_tailwind_classes(&self, classes: Vec<String>) -> Vec<String> {
+    /// Another handle to this session with an empty Tailwind class scope, for a root `Document`.
+    /// Children dispatched from the returned session share the new scope.
+    #[must_use]
+    pub fn with_new_tailwind_scope(&self) -> Self {
+        Self { tailwind_classes: Rc::default(), ..self.clone() }
+    }
+
+    /// Registers a pre-sort class string in the current scope,
+    /// returning its index for `FormatElement::TailwindClass`.
+    pub fn add_tailwind_class(&self, class: String) -> usize {
+        let mut classes = self.tailwind_classes.borrow_mut();
+        classes.push(class);
+        classes.len() - 1
+    }
+
+    /// A copy of the current scope's classes, unsorted,
+    /// for printing a sub-document before the root finalizes (the scope stays intact).
+    pub fn unsorted_tailwind_classes(&self) -> Vec<String> {
+        self.tailwind_classes.borrow().clone()
+    }
+
+    /// Takes the current scope's classes, sorted through the print-time service ([`TailwindSorter`])
+    /// or unsorted when this run installs no sorter.
+    /// Called once by a root formatter when it finalizes its `Document`.
+    pub fn take_sorted_tailwind_classes(&self) -> Vec<String> {
+        let classes = self.tailwind_classes.take();
         match &self.services.tailwind_sorter {
-            Some(sort) if !classes.is_empty() => sort(classes),
+            Some(sort) if !classes.is_empty() => {
+                let len = classes.len();
+                let sorted = sort(classes);
+                // `TailwindClass(index)` stays valid only if the sorter keeps one entry per class, in order
+                debug_assert_eq!(sorted.len(), len, "TailwindSorter must keep one entry per class");
+                sorted
+            }
             _ => classes,
         }
     }
@@ -235,11 +277,12 @@ impl<'a> FormatSession<'a> {
 mod tests {
     use std::sync::Arc;
 
-    use oxc_allocator::Allocator;
+    use oxc_allocator::{Allocator, ArenaVec};
 
-    use super::{FormatSession, InputKind, MAX_DISPATCH_DEPTH, SessionServices};
+    use super::{FormatSession, InputKind, MAX_DISPATCH_DEPTH, SessionServices, TailwindSorter};
     use crate::{
-        DispatchPayload, DispatchRequest, DispatchResponse, FormatDispatcher, FormatState,
+        DispatchPayload, DispatchRequest, DispatchResponse, Document, FormatDispatcher,
+        FormatElement, FormatState, Interned, PrinterOptions,
     };
 
     fn request<'r>() -> DispatchRequest<'r> {
@@ -264,8 +307,7 @@ mod tests {
         let allocator = Allocator::default();
         let dispatcher: FormatDispatcher = Arc::new(|ctx, _request| {
             Ok(DispatchResponse::Formatted(DispatchPayload {
-                doc: oxc_allocator::ArenaVec::new_in(&ctx.allocator()),
-                tailwind_classes: Vec::new(),
+                doc: ArenaVec::new_in(&ctx.allocator()),
                 child_context: None,
             }))
         });
@@ -287,8 +329,7 @@ mod tests {
         let allocator = Allocator::default();
         let dispatcher: FormatDispatcher = Arc::new(|ctx, _request| {
             Ok(DispatchResponse::Formatted(DispatchPayload {
-                doc: oxc_allocator::ArenaVec::new_in(&ctx.allocator()),
-                tailwind_classes: Vec::new(),
+                doc: ArenaVec::new_in(&ctx.allocator()),
                 child_context: None,
             }))
         });
@@ -342,6 +383,67 @@ mod tests {
         // Ids stay unique across the two states;
         // independent builders would both hand out the same first id.
         assert_ne!(parent_state.group_id("parent"), child_state.group_id("child"));
+    }
+
+    /// Reverses the words of each class string, so a sorted class is distinguishable from an unsorted one.
+    fn reversing_sorter() -> TailwindSorter {
+        Arc::new(|classes: Vec<String>| {
+            classes.iter().map(|c| c.split(' ').rev().collect::<Vec<_>>().join(" ")).collect()
+        })
+    }
+
+    #[test]
+    fn child_class_below_interned_resolves_in_the_parent_scope() {
+        let allocator = Allocator::default();
+        // The child wraps its class in `Interned`, which a parent-side index remap could never reach
+        let dispatcher: FormatDispatcher = Arc::new(|ctx, _request| {
+            let index = ctx.add_tailwind_class("c d".to_string());
+            let inner =
+                ArenaVec::from_array_in([FormatElement::TailwindClass(index)], &ctx.allocator());
+            let doc = ArenaVec::from_array_in(
+                [FormatElement::Interned(Interned::new(inner))],
+                &ctx.allocator(),
+            );
+            Ok(DispatchResponse::Formatted(DispatchPayload { doc, child_context: None }))
+        });
+        let session = FormatSession::with_services(
+            &allocator,
+            InputKind::PhysicalFile,
+            SessionServices {
+                dispatcher: Some(dispatcher),
+                tailwind_sorter: Some(reversing_sorter()),
+                ..SessionServices::default()
+            },
+        );
+
+        // The parent's own class comes first, so the child's local index 0 would collide with it
+        let parent_index = session.add_tailwind_class("a b".to_string());
+        let Ok(DispatchResponse::Formatted(payload)) = session.dispatch(request()) else {
+            panic!("expected a formatted child");
+        };
+        let mut elements = ArenaVec::from_array_in(
+            [FormatElement::TailwindClass(parent_index), FormatElement::Space],
+            &&allocator,
+        );
+        elements.extend(payload.doc);
+
+        let printed = Document::new(elements, session.take_sorted_tailwind_classes())
+            .print(0, PrinterOptions::default())
+            .unwrap();
+        assert_eq!(printed.as_code(), "b a d c");
+    }
+
+    #[test]
+    fn nested_root_scope_keeps_the_host_classes() {
+        let allocator = Allocator::default();
+        let host = FormatSession::new(&allocator, InputKind::PhysicalFile);
+        host.add_tailwind_class("host".to_string());
+
+        // A root finalized on the same session (e.g. a JSDoc snippet) takes only its own scope
+        let nested = host.with_new_tailwind_scope();
+        nested.add_tailwind_class("nested".to_string());
+        assert_eq!(nested.take_sorted_tailwind_classes(), ["nested"]);
+        assert_eq!(host.take_sorted_tailwind_classes(), ["host"]);
     }
 
     #[test]

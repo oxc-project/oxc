@@ -9,7 +9,7 @@
 use oxc_allocator::ArenaVec;
 
 use crate::{
-    Buffer as _, BufferExtensions as _, FormatContext, FormatElement, Formatter, TailwindCollector,
+    Buffer as _, BufferExtensions as _, FormatContext, FormatElement, Formatter,
     builders::{hard_line_break, text},
     dispatch_fragment_ir,
     spec::FrontMatter,
@@ -30,13 +30,11 @@ use crate::{
 /// opening delimiter with the explicit language re-emitted (`---yaml`),
 /// the body IR between hardlines, then the closing delimiter (a `...` closing stays `...`).
 /// Spacing between the block and the host's body stays the caller's concern.
-pub fn write_front_matter<'a, C>(
+pub fn write_front_matter<'a, C: FormatContext>(
     fm: &FrontMatter<'a>,
     embeddable_languages: &[&str],
     f: &mut Formatter<'_, 'a, C>,
-) where
-    C: FormatContext + TailwindCollector,
-{
+) {
     let language = fm.language();
     if embeddable_languages.contains(&language) {
         let body = fm.value.trim();

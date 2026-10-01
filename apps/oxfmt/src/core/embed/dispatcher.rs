@@ -351,7 +351,6 @@ pub fn build_dispatcher(
 
 /// Runs one native branch: a parse failure is a deliberate skip
 /// (the embedded part stays as-is), never an operational error.
-/// The `From<EmbeddedIr>` conversion carries the child's Tailwind classes.
 fn format_native<'a, E: std::fmt::Display>(
     language: &'static str,
     format_to_ir: impl FnOnce() -> Result<EmbeddedIr<'a>, E>,

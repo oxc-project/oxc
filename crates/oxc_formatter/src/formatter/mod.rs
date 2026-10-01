@@ -50,18 +50,18 @@ pub fn format<'ast>(
     // with 95th percentile at 30-38% across all file sizes. This 0.4x multiplier avoids reallocation for 95%+ of files.
     let capacity = (context.source_text().len() * 2) / 5;
 
+    // A root `Document` owns a fresh class scope;
+    // a root nested on the same session (a JSDoc snippet) must not take its host's classes.
+    let session = session.with_new_tailwind_scope();
     let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
     buffer.write_fmt(arguments);
 
     let elements = buffer.into_vec();
-    let mut context = state.into_context();
+    let context = state.into_context();
 
-    let tailwind_classes = context.take_tailwind_classes();
-    let sorted_tailwind_classes = session.sort_tailwind_classes(tailwind_classes);
-
-    let ir = Document::new(elements, sorted_tailwind_classes);
+    let ir = Document::new(elements, session.take_sorted_tailwind_classes());
 
     Formatted::new(ir, context)
 }

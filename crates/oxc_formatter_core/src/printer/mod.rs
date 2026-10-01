@@ -378,7 +378,7 @@ impl<'a> Printer<'a> {
                 debug_assert!(
                     text.is_some(),
                     "TailwindClass index {index} out of bounds ({} classes): \
-                     Was the embedded IR remapped into the parent's class space (`DispatchPayload::into_doc`)?",
+                     Did a root formatter finalize its `Document` from another class scope?",
                     self.state.sorted_tailwind_classes.len(),
                 );
                 if let Some(text) = text {
