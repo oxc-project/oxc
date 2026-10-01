@@ -293,8 +293,7 @@ fn is_init_boolean(init: &Expression) -> bool {
 }
 
 fn is_init_null(init: &Expression) -> bool {
-    let init = init.get_inner_expression();
-    matches!(init, Expression::NullLiteral(_))
+    init.get_inner_expression().is_null()
 }
 
 fn is_init_number(init: &Expression) -> bool {
