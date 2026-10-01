@@ -58,9 +58,9 @@ impl DirectivesStore {
         let map = self.map.lock().expect("DirectivesStore mutex poisoned in should_disable");
         if let Some(directives) = map.get(path) {
             // Check with various rule name formats
-            directives.contains(rule, span)
-                || directives.contains(&format!("typescript-eslint/{rule}"), span)
-                || directives.contains(&format!("@typescript-eslint/{rule}"), span)
+            directives.contains("", rule, span)
+                || directives.contains("typescript-eslint", rule, span)
+                || directives.contains("@typescript-eslint", rule, span)
         } else {
             false
         }
