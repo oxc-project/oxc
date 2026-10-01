@@ -101,21 +101,34 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
     (config_paths, conflicts)
 }
 
+/// Whether the walk has to skip `entry`: a directory which another worker owns, one of the
+/// `workingDirectories` of the workspace folder.
+pub fn is_excluded(entry: &ignore::DirEntry, excluded_dirs: &[PathBuf]) -> bool {
+    excluded_dirs.iter().any(|dir| dir == entry.path())
+}
+
 /// Discover config files by walking DOWN from a root directory.
 /// Will skip the base config file (e.g., root oxlintrc) to avoid duplicate loading.
 ///
 /// Used by LSP where we have a workspace root and need to discover all configs
 /// upfront for file watching and diagnostics.
+///
+/// `excluded_dirs` holds the `workingDirectories` of the workspace folder: a directory which is
+/// handled by its own worker must not contribute a nested config to its workspace folder,
+/// otherwise the same file would be linted with two different configurations.
 pub fn discover_configs_in_tree(
     root: &Path,
     base_config_path: &Path,
+    excluded_dirs: &[PathBuf],
 ) -> impl IntoIterator<Item = DiscoveredConfigFile> {
+    let excluded_dirs = excluded_dirs.to_vec();
     let walker = ignore::WalkBuilder::new(root)
         .hidden(false) // don't skip hidden files
         .parents(false) // disable gitignore from parent dirs
         .ignore(false) // disable .ignore files
         .git_global(false) // disable global gitignore
         .follow_links(true)
+        .filter_entry(move |entry| !is_excluded(entry, &excluded_dirs))
         .build_parallel();
 
     let (sender, receiver) = mpsc::channel::<Vec<DiscoveredConfigFile>>();
@@ -1814,7 +1827,7 @@ mod test {
         std::fs::write(nested_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
 
         let discovered: Vec<_> =
-            discover_configs_in_tree(root_dir.path(), &base_config).into_iter().collect();
+            discover_configs_in_tree(root_dir.path(), &base_config, &[]).into_iter().collect();
 
         // Should find the nested config but NOT the one inside node_modules
         assert_eq!(discovered.len(), 1, "Expected only 1 config (not the node_modules one)");
@@ -1846,7 +1859,7 @@ mod test {
         std::fs::write(nested_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
 
         let discovered: Vec<_> =
-            discover_configs_in_tree(root_dir.path(), &base_config).into_iter().collect();
+            discover_configs_in_tree(root_dir.path(), &base_config, &[]).into_iter().collect();
 
         assert_eq!(discovered.len(), 1, "Expected only 1 config (not the .git one)");
         let path = match &discovered[0] {

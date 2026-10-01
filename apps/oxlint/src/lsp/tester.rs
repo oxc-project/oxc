@@ -1,7 +1,8 @@
 use std::{fmt::Write, path::PathBuf};
 
 use oxc_language_server::{
-    DiagnosticResult, TextDocument, Tool, ToolRestartChanges, uri_utils::file_path_to_uri,
+    ClientMessage, DiagnosticResult, TextDocument, Tool, ToolRestartChanges,
+    resolve_working_directories, route_to_worker, uri_utils::file_path_to_uri,
 };
 use tower_lsp_server::gen_lsp_types::{
     Code, CodeAction, CodeActionContext, CodeActionKind, CodeActionResponse, CodeDescription,
@@ -179,6 +180,8 @@ fn get_snapshot_from_report(report: &FileResult) -> String {
 pub struct Tester<'t> {
     relative_root_dir: &'t str,
     options: serde_json::Value,
+    /// Overrides the snapshot name, needed when the same fixture is tested with different options.
+    snapshot_name: Option<&'static str>,
 }
 
 struct FileResult {
@@ -189,13 +192,72 @@ struct FileResult {
 
 impl Tester<'_> {
     pub fn new(relative_root_dir: &'static str, options: serde_json::Value) -> Self {
-        Self { relative_root_dir, options }
+        Self { relative_root_dir, options, snapshot_name: None }
+    }
+
+    /// Use a custom snapshot name, needed when a fixture is tested with multiple options.
+    pub fn with_snapshot_name(mut self, snapshot_name: &'static str) -> Self {
+        self.snapshot_name = Some(snapshot_name);
+        self
     }
 
     pub fn create_linter(&self) -> ServerLinter {
         let (linter, _client_message) = ServerLinterBuilder::default()
             .build(&Self::get_root_uri(self.relative_root_dir), self.options.clone());
         linter
+    }
+
+    /// Resolve the `workingDirectories` option like the language server does and return the roots
+    /// of every worker: the workspace folder first, then one per working directory.
+    pub fn worker_roots(&self) -> Vec<Uri> {
+        let root_uri = Self::get_root_uri(self.relative_root_dir);
+        let resolved = resolve_working_directories(
+            &root_uri,
+            &self.options,
+            &ServerLinterBuilder::default(),
+            &[],
+        );
+
+        let mut roots = vec![root_uri];
+        roots.extend(resolved.roots);
+        roots
+    }
+
+    /// Create the linter which the language server would route `uri` to.
+    ///
+    /// Uses the same routing as the `WorkerManager`: the worker with the longest matching root
+    /// path wins, so a file inside a working directory is linted by that directory's own linter.
+    pub fn create_linter_for(&self, uri: &Uri) -> ServerLinter {
+        self.build_linter_for(uri).0
+    }
+
+    /// Same as [`Self::create_linter_for`], with the messages the first build of the worker
+    /// reports to the client.
+    pub fn build_linter_for(&self, uri: &Uri) -> (ServerLinter, Vec<ClientMessage>) {
+        self.build_linter_for_build(uri, true)
+    }
+
+    /// Same as [`Self::build_linter_for`], for the first build of the worker or a later one.
+    pub fn build_linter_for_build(
+        &self,
+        uri: &Uri,
+        first_build: bool,
+    ) -> (ServerLinter, Vec<ClientMessage>) {
+        let worker = route_to_worker(
+            &Self::get_root_uri(self.relative_root_dir),
+            &self.options,
+            &ServerLinterBuilder::default(),
+            uri,
+        )
+        .expect("no worker is responsible for the uri");
+
+        ServerLinterBuilder::default().build_excluding(
+            &worker.root,
+            worker.options,
+            &worker.excluded_roots,
+            worker.parent_root.as_deref(),
+            first_build,
+        )
     }
 
     pub fn get_root_uri(relative_root_dir: &str) -> Uri {
@@ -224,7 +286,7 @@ impl Tester<'_> {
         };
         for relative_file_path in relative_file_paths {
             let uri = self.get_file_uri(relative_file_path);
-            let linter = self.create_linter();
+            let linter = self.create_linter_for(&uri);
             let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
             let reports = FileResult {
                 diagnostic: linter.run_diagnostic(TextDocument::new(
@@ -260,7 +322,9 @@ impl Tester<'_> {
         }
 
         #[expect(clippy::disallowed_methods)]
-        let snapshot_name = self.relative_root_dir.replace('/', "_");
+        let snapshot_name = self
+            .snapshot_name
+            .map_or_else(|| self.relative_root_dir.replace('/', "_"), ToString::to_string);
         let mut settings = insta::Settings::clone_current();
         settings.set_prepend_module_to_snapshot(false);
         settings.set_omit_expression(true);
