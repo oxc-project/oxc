@@ -392,6 +392,20 @@ impl<'a> Expression<'a> {
     }
 }
 
+impl IdentifierReference<'_> {
+    /// Returns `true` if this identifier reference is `undefined`.
+    #[inline]
+    pub fn is_undefined(&self) -> bool {
+        self.name == "undefined"
+    }
+
+    /// Returns `true` if this identifier reference is `NaN`.
+    #[inline]
+    pub fn is_nan(&self) -> bool {
+        self.name == "NaN"
+    }
+}
+
 impl Display for IdentifierName<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
