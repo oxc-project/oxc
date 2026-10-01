@@ -392,6 +392,30 @@ const   x   =   1
 --------------------"
 `;
 
+exports[`LSP formatting > ignore patterns > should handle ignore-prettierignore-patterns/vendor/keep.ts 1`] = `
+"--- URI -----------
+file://<fixture>/ignore-prettierignore-patterns/vendor/keep.ts
+--- BEFORE ---------
+const   x   =   1
+
+--- AFTER ----------
+const   x   =   1
+
+--------------------"
+`;
+
+exports[`LSP formatting > ignore patterns > should handle ignore-prettierignore-patterns-wildcard/vendor/keep.ts 1`] = `
+"--- URI -----------
+file://<fixture>/ignore-prettierignore-patterns-wildcard/vendor/keep.ts
+--- BEFORE ---------
+const   x   =   1
+
+--- AFTER ----------
+const x = 1;
+
+--------------------"
+`;
+
 exports[`LSP formatting > in-memory document > should format uri untitled://Untitled-1 1`] = `
 "--- URI -----------
 untitled://Untitled-1

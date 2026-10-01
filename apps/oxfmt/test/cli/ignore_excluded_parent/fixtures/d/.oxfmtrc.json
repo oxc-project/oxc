@@ -1,0 +1,1 @@
+{ "ignorePatterns": ["vendor/", "!vendor/keep.ts"] }

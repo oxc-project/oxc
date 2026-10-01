@@ -125,17 +125,21 @@ describe("LSP formatting", () => {
 
     // Workspace root must be the fixture dir (not the file's dir) for `vendor/` to match
     it.each([
-      "ignore-prettierignore-patterns/vendor/a.ts",
-      "ignore-prettierignore-patterns/drop.gen.ts",
-      "ignore-prettierignore-patterns/keep.gen.ts",
-    ])("should handle %s", async (path) => {
-      const rootUri = pathToFileURL(join(FIXTURES_DIR, "ignore-prettierignore-patterns")).href;
+      ["ignore-prettierignore-patterns", "vendor/a.ts"],
+      ["ignore-prettierignore-patterns", "vendor/keep.ts"],
+      ["ignore-prettierignore-patterns", "drop.gen.ts"],
+      ["ignore-prettierignore-patterns", "keep.gen.ts"],
+      ["ignore-prettierignore-patterns-wildcard", "vendor/keep.ts"],
+    ])("should handle %s/%s", async (fixture, path) => {
+      const rootUri = pathToFileURL(join(FIXTURES_DIR, fixture)).href;
       await using client = createLspConnection();
       await client.initialize([{ uri: rootUri, name: "test" }], {}, [
         { workspaceUri: rootUri, options: null },
       ]);
 
-      expect(await formatFixture(FIXTURES_DIR, path, "typescript", client)).toMatchSnapshot();
+      expect(
+        await formatFixture(FIXTURES_DIR, `${fixture}/${path}`, "typescript", client),
+      ).toMatchSnapshot();
     });
 
     it("should reload `.prettierignore` on watched file change", async () => {

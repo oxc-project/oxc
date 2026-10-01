@@ -1,0 +1,14 @@
+[
+  { "cwd": "a", "args": ["--check", "."] },
+  { "cwd": "a", "args": ["--check", "--no-error-on-unmatched-pattern", "vendor/keep.ts"] },
+  { "cwd": "a", "args": ["--stdin-filepath", "vendor/keep.ts"], "stdin": "input.ts" },
+  { "cwd": "b", "args": ["--check", "."] },
+  { "cwd": "b", "args": ["--check", "vendor/keep.ts"] },
+  { "cwd": "b", "args": ["--stdin-filepath", "vendor/keep.ts"], "stdin": "input.ts" },
+  { "cwd": "c", "args": ["--check", "."] },
+  { "cwd": "c", "args": ["--check", "keep.gen.ts"] },
+  { "cwd": "c", "args": ["--stdin-filepath", "keep.gen.ts"], "stdin": "input.ts" },
+  { "cwd": "d", "args": ["--check", "."] },
+  { "cwd": "d", "args": ["--check", "--no-error-on-unmatched-pattern", "vendor/keep.ts"] },
+  { "cwd": "d", "args": ["--stdin-filepath", "vendor/keep.ts"], "stdin": "input.ts" }
+]

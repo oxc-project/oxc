@@ -1,4 +1,2 @@
 vendor/
-*.gen.ts
-!keep.gen.ts
 !vendor/keep.ts
