@@ -1564,7 +1564,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {
-        match &mut expr.get_inner_expression_mut() {
+        match expr.get_inner_expression_mut() {
             Expression::CallExpression(call_expr) => {
                 call_expr.pure = true;
                 true

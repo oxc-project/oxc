@@ -339,7 +339,7 @@ impl Rule for NoEmptyFunction {
 struct ViolationInfo<'a>(pub Option<(&'static str, Option<Cow<'a, str>>)>);
 impl<'a> From<(&'static str, Option<Cow<'a, str>>)> for ViolationInfo<'a> {
     fn from(value: (&'static str, Option<Cow<'a, str>>)) -> Self {
-        debug_assert!(!value.0.is_empty());
+        debug_assert_ne!(value.0, "");
         Self(Some(value))
     }
 }

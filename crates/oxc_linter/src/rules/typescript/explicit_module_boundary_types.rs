@@ -563,14 +563,13 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                     }
                 }
             }
-        } else {
-            walk_js::walk_arrow_function_body(self, &arrow.body);
+        }
+        walk_js::walk_arrow_function_body(self, &arrow.body);
 
-            // AST is immutable in linter, so `unstable_address` produces stable `Address`es
-            let is_hof = self.is_higher_order_function(arrow.unstable_address());
-            if !is_hof && !is_allowed() {
-                self.ctx.diagnostic(func_missing_return_type(span));
-            }
+        // AST is immutable in linter, so `unstable_address` produces stable `Address`es
+        let is_hof = self.is_higher_order_function(arrow.unstable_address());
+        if !is_hof && !is_allowed() {
+            self.ctx.diagnostic(func_missing_return_type(span));
         }
     }
 
