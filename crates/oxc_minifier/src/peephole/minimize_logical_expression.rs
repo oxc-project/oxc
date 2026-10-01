@@ -4,9 +4,8 @@ use oxc_compat::ESFeature;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, GetSpan, SPAN};
 
-use crate::{TraverseCtx, symbol_metadata::MemberWriteEffect};
-
 use super::PeepholeOptimizations;
+use crate::{TraverseCtx, custom::SequenceExpressionExt, symbol_metadata::MemberWriteEffect};
 
 impl<'a> PeepholeOptimizations {
     pub fn minimize_logical_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -236,7 +235,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Expression::SequenceExpression(sequence_expr) = &e.right {
             let Some(Expression::AssignmentExpression(assignment_expr)) =
-                sequence_expr.expressions.last()
+                sequence_expr.last_expression()
             else {
                 return;
             };
@@ -249,7 +248,7 @@ impl<'a> PeepholeOptimizations {
 
             let Expression::SequenceExpression(sequence_expr) = &mut e.right else { return };
             let Some(Expression::AssignmentExpression(assignment_expr)) =
-                sequence_expr.expressions.pop()
+                sequence_expr.pop_last_expression()
             else {
                 unreachable!()
             };
