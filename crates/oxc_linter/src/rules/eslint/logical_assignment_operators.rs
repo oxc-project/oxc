@@ -7,7 +7,7 @@ use oxc_ast::{
     ast::{
         Argument, AssignmentExpression, AssignmentTarget, BinaryExpression, BinaryOperator,
         CallExpression, Expression, IfStatement, LogicalExpression, LogicalOperator,
-        SimpleAssignmentTarget, Statement, UnaryOperator,
+        SimpleAssignmentTarget, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -512,7 +512,7 @@ fn is_undefined(expression: &Expression, ctx: &LintContext) -> bool {
         Expression::Identifier(identifier) if identifier.name == "undefined" => {
             ctx.is_reference_to_global_variable(identifier)
         }
-        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::Void => {
+        Expression::UnaryExpression(unary) if unary.operator.is_void() => {
             unary.argument.get_inner_expression().is_number_0()
         }
         _ => false,

@@ -228,9 +228,7 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
         }
         TSType::TSUndefinedKeyword(_) => match init.get_inner_expression() {
             Expression::Identifier(id) => id.is_undefined(),
-            Expression::UnaryExpression(unary_expr) => {
-                matches!(unary_expr.operator, UnaryOperator::Void)
-            }
+            Expression::UnaryExpression(unary_expr) => unary_expr.operator.is_void(),
             _ => false,
         },
         _ => false,
