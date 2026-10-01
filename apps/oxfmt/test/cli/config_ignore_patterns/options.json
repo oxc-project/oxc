@@ -14,5 +14,9 @@
   {
     "cwd": "nested_cwd/sub",
     "args": ["--check", "--config", "../.oxfmtrc.json", "."]
+  },
+  {
+    "cwd": "basic",
+    "args": ["--check", "--no-error-on-unmatched-pattern", "not-formatted/bad.js"]
   }
 ]
