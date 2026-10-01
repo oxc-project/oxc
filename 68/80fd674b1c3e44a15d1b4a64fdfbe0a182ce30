@@ -1,0 +1,41 @@
+apps/oxfmt/test/cli/config_ignore_patterns/4.snap.md
+  s_25f855cc2fd680::t_eadf812e8133ea 5,11,13-27
+apps/oxfmt/test/cli/config_ignore_patterns/fixtures/basic/.oxfmtrc.json
+  s_25f855cc2fd680::t_c0e46b9cedd71c 2
+apps/oxfmt/test/cli/config_ignore_patterns/options.json
+  s_25f855cc2fd680::t_f429781fae28ff 17-20
+apps/oxfmt/test/cli/ignore_and_override/6.snap.md
+  s_25f855cc2fd680::t_f3c23195b458aa 5,10-16,26
+apps/oxfmt/test/cli/ignore_and_override/options.json
+  s_25f855cc2fd680::t_dc15e25851c7be 15-19
+apps/oxfmt/test/cli/ignore_patterns/4.snap.md
+  s_25f855cc2fd680::t_0ef00d6cc3fb15 5,10-20,22
+apps/oxfmt/test/cli/ignore_patterns/fixtures/.prettierignore
+  s_25f855cc2fd680::t_6cf10d7906c15a 2
+apps/oxfmt/test/cli/ignore_patterns/options.json
+  s_25f855cc2fd680::t_a02a5c0d5a720c 5-6
+apps/oxfmt/test/cli/stdin_ignore_patterns/fixtures/.oxfmtrc.json
+  s_25f855cc2fd680::t_0d237e22deb0cf 2
+apps/oxfmt/test/cli/stdin_ignore_patterns/fixtures/.prettierignore
+  s_25f855cc2fd680::t_1e6f8393811c46 2
+apps/oxfmt/test/lsp/format/fixtures/ignore-prettierignore-patterns/.prettierignore
+  s_25f855cc2fd680::t_8ebf05c168f03a 4
+apps/oxfmt/test/lsp/format/format.test.ts
+  s_25f855cc2fd680::t_aeaa4c729e9ce0 128-132,138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6880fd674b1c3e44a15d1b4a64fdfbe0a182ce30",
+  "prompts": {},
+  "sessions": {
+    "s_25f855cc2fd680": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f5b6-926d-72f3-9d55-f160b1dcaa66",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
