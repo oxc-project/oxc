@@ -240,7 +240,7 @@ impl<'a> PeepholeOptimizations {
                 unreachable!();
             };
             let Some(mut source_specifiers) = source_import.specifiers.take() else {
-                merges.push((target_index, statement_index));
+                merges.push(statement_index);
                 continue;
             };
 
@@ -248,28 +248,30 @@ impl<'a> PeepholeOptimizations {
             else {
                 unreachable!();
             };
-            let target_specifiers =
-                target_import.specifiers.get_or_insert_with(|| ArenaVec::new_in(ctx));
-            let target_has_default = target_specifiers.iter().any(|specifier| {
-                matches!(specifier, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
-            });
-            if let Some(default_index) = source_specifiers.iter().position(|specifier| {
-                matches!(specifier, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
-            }) {
-                let default_specifier = source_specifiers.remove(default_index);
-                if target_has_default {
-                    target_specifiers.push(Self::default_to_named_import(default_specifier, ctx));
-                } else {
-                    target_specifiers.insert(0, default_specifier);
+            // default must be first specifier in import
+            let is_default_specifier = |s: &ImportDeclarationSpecifier| {
+                matches!(s, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
+            };
+            if let Some(target_specifiers) = &mut target_import.specifiers {
+                if source_specifiers.first().is_some_and(is_default_specifier) {
+                    let default_specifier = source_specifiers.remove(0);
+                    if target_specifiers.first().is_some_and(is_default_specifier) {
+                        target_specifiers
+                            .push(Self::default_to_named_import(default_specifier, ctx));
+                    } else {
+                        target_specifiers.insert(0, default_specifier);
+                    }
                 }
+                target_specifiers.append(&mut source_specifiers);
+            } else {
+                target_import.specifiers = Some(source_specifiers);
             }
-            target_specifiers.append(&mut source_specifiers);
-            merges.push((target_index, statement_index));
+            merges.push(statement_index);
         }
 
         // Remove imports in reverse order so removing a later import does not
         // shift the indices of any merge that is still waiting to be applied.
-        for &(_, source_index) in merges.iter().rev() {
+        for &source_index in merges.iter().rev() {
             stmts.remove(source_index);
         }
     }
