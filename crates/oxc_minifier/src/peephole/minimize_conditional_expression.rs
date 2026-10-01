@@ -1,5 +1,3 @@
-use crate::TraverseCtx;
-use crate::custom::SequenceExpressionExt;
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
@@ -11,6 +9,7 @@ use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::precedence::Precedence;
 
 use super::PeepholeOptimizations;
+use crate::{TraverseCtx, custom::SequenceExpressionExt};
 
 impl<'a> PeepholeOptimizations {
     pub fn minimize_conditional(

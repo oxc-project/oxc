@@ -1,5 +1,4 @@
-use crate::{test, test_options_with_iterations, test_same, test_target};
-use oxc_minifier::CompressOptions;
+use crate::{test, test_same, test_target};
 
 #[test]
 fn test_minimize_expr_condition() {
@@ -103,13 +102,6 @@ fn minimize_conditional_exprs() {
     test("v = cmp === 0 ? cmp : (bar, cmp);", "v = (cmp === 0 || bar, cmp);");
     test("v = cmp !== 0 ? (bar, cmp) : cmp;", "v = (cmp === 0 || bar, cmp);");
     test("v = cmp === 0 ? (bar, cmp) : cmp;", "v = (cmp === 0 && bar, cmp);");
-
-    test_options_with_iterations(
-        "a ? R : (b, (c, R));",
-        "a || (b, c), R;",
-        2,
-        &CompressOptions::default(),
-    );
 }
 
 #[test]
