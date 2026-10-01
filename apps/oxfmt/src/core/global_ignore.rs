@@ -97,7 +97,7 @@ pub fn is_ignored(
 
 /// Check if a path is ignored by the matcher, or by one of its parent directories below the matcher's root.
 ///
-/// Like Git and Prettier, a negated pattern cannot re-include a path if one of its parent directories is excluded.
+/// Like Git, a negated pattern cannot re-include a path if one of its parent directories is excluded.
 /// This gives the same result as a top-down walk, which does not descend into an ignored directory.
 /// A path outside the matcher's root is never ignored.
 pub fn matches_with_ancestors(matcher: &Gitignore, path: &Path, is_dir: bool) -> bool {
