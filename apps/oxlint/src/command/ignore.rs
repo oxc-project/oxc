@@ -44,7 +44,7 @@ mod ignore_options {
         let options = get_ignore_options(".");
         assert_eq!(options.ignore_path, OsString::from(".eslintignore"));
         assert!(!options.no_ignore);
-        assert!(options.ignore_pattern.is_empty());
+        assert_eq!(options.ignore_pattern, []);
     }
 
     #[test]
