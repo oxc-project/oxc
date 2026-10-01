@@ -236,7 +236,7 @@ impl CatchOrReturn {
         }
 
         // somePromise.catch()
-        if self.termination_method.iter().any(|method| method == prop_name) {
+        if self.termination_method.iter().any(|method| method.as_str() == prop_name) {
             return true;
         }
 

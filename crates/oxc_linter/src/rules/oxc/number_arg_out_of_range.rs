@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -62,7 +63,7 @@ impl Rule for NumberArgOutOfRange {
             && let Some(Argument::NumericLiteral(literal)) = expr.arguments.first()
         {
             let value = literal.value;
-            match member.static_property_name() {
+            match member.static_property_name().and_then(JSStr::as_str) {
                 Some(name @ "toString") if !(2.0_f64..=36.0_f64).contains(&value) => {
                     ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 2, 36, expr.span));
                 }

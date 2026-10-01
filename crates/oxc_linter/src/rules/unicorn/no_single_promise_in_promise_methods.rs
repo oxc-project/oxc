@@ -92,6 +92,7 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             .expect("callee is a member expression")
             .static_property_info()
             .expect("callee is a static property");
+        let method_name = method_name.as_str().expect("callee is a known Promise method");
 
         let diagnostic = no_single_promise_in_promise_methods_diagnostic(span, method_name);
 

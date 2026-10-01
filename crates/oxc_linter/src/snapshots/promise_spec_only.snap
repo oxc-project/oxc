@@ -53,3 +53,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ Promise.differingCase()
    · ─────────────────────
    ╰────
+
+  ⚠ promise(spec-only): Avoid using non-standard `Promise["\ud800"]` method.
+   ╭─[spec_only.tsx:1:1]
+ 1 │ Promise["\uD800"]()
+   · ─────────────────
+   ╰────

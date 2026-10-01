@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -224,7 +225,7 @@ fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) 
     if member_expr.is_computed() {
         return false;
     }
-    let Some(static_prop_name) = member_expr.static_property_name() else {
+    let Some(static_prop_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
         return false;
     };
 
