@@ -10,7 +10,7 @@
    : ^^^^^^^^
    `----
 
-  x globals-env-builtin-plugin(unresolved-globals): env: {"browser":true,"builtin":true}, unresolved: none
+  x globals-env-builtin-plugin(unresolved-globals): env: {"builtin":true,"browser":true}, unresolved: none
    ,-[files/index.js:2:1]
  1 | // `env` in config doesn't include `builtin`, but ES builtins should still resolve
  2 | Number;
