@@ -1584,7 +1584,7 @@ mod tests {
 
                 let unused = directives.unused_enable_comments();
 
-                assert!(unused.is_empty());
+                assert_eq!(unused, []);
             },
         );
     }
@@ -1611,7 +1611,7 @@ mod tests {
 
         assert!(!directives.contains("no-console", Span::sized(console_start, 11)));
         assert!(directives.contains("no-debugger", Span::sized(debugger_start, 8)));
-        assert!(directives.unused_enable_comments().is_empty());
+        assert_eq!(directives.unused_enable_comments(), []);
     }
 
     #[test]
@@ -1734,7 +1734,7 @@ mod tests {
                     is_next_line: false,
                 });
 
-                assert!(directives.collect_unused_disable_comments().is_empty());
+                assert_eq!(directives.collect_unused_disable_comments(), []);
             },
         );
     }

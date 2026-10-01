@@ -169,7 +169,7 @@ struct RuleBuckets {
 
 impl RuleBuckets {
     fn clear(&mut self) {
-        for bucket in self.by_type.iter_mut() {
+        for bucket in &mut self.by_type {
             bucket.clear();
         }
         self.any_type.clear();

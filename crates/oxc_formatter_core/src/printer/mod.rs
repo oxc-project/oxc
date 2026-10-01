@@ -1120,11 +1120,11 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         let saved_indent_stack = std::mem::take(&mut printer.state.fits_indent_stack);
         let saved_stack_tem_indent = std::mem::take(&mut printer.state.fits_stack_tem_indent);
         let saved_root_indent_stack = std::mem::take(&mut printer.state.fits_root_indent_stack);
-        debug_assert!(saved_stack.is_empty());
-        debug_assert!(saved_queue.is_empty());
-        debug_assert!(saved_indent_stack.is_empty());
-        debug_assert!(saved_stack_tem_indent.is_empty());
-        debug_assert!(saved_root_indent_stack.is_empty());
+        debug_assert_eq!(saved_stack.len(), 0);
+        debug_assert_eq!(saved_queue.len(), 0);
+        debug_assert_eq!(saved_indent_stack.len(), 0);
+        debug_assert_eq!(saved_stack_tem_indent.len(), 0);
+        debug_assert_eq!(saved_root_indent_stack.len(), 0);
 
         let fits_queue = FitsQueue::new(print_queue, saved_queue);
         let fits_stack = FitsCallStack::new(print_stack, saved_stack);
