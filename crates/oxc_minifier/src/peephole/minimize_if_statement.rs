@@ -1,4 +1,4 @@
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 
 use oxc_semantic::ScopeFlags;
@@ -129,12 +129,15 @@ impl<'a> PeepholeOptimizations {
             ctx.replace_statement_with(&mut if_stmt.consequent, |mut stmt, ctx| {
                 let Statement::IfStatement(inner) = &mut stmt else { unreachable!() };
                 let alternate = inner.alternate.take().unwrap();
-                Statement::new_block_statement_with_scope_id(
-                    stmt.span(),
-                    [stmt, alternate],
-                    scope_id,
-                    ctx,
-                )
+                let span = stmt.span();
+                let mut body = ArenaVec::with_capacity_in(2, ctx);
+                body.push(stmt);
+                if let Statement::BlockStatement(block) = alternate {
+                    Self::handle_block(&mut body, block, ctx);
+                } else {
+                    body.push(alternate);
+                }
+                Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
             });
         }
     }

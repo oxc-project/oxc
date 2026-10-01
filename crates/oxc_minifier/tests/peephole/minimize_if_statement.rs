@@ -106,4 +106,19 @@ fn test_nested_if_without_sequences() {
         "function f(){if(a){if(b)return c;d();}}",
         &options,
     );
+    test_options(
+        "function f(){if(a)if(b)return c;else {d();e();}}",
+        "function f(){if(a){if(b)return c;d();e();}}",
+        &options,
+    );
+    test_options(
+        "function f(){if(a)if(b)return x;else {let x=d();e(x);}}",
+        "function f(){if(a){if(b)return x;{let x=d();e(x);}}}",
+        &options,
+    );
+    test_options(
+        "function f(){if(a)if(b)return g;else {function g(){}e(g);}}",
+        "function f(){if(a){if(b)return g;{function g(){}e(g);}}}",
+        &options,
+    );
 }
