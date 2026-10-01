@@ -30,7 +30,7 @@ use crate::core::{
 /// Build the napi build's string embedder installed on the session.
 ///
 /// Dispatches by language identifier: the native registry when available, otherwise Prettier via `format_embedded`.
-/// The JSDoc fenced consumer reaches every language.
+/// The JSDoc fenced consumer sends only its embedded set (`EMBEDDED_FENCE_LANGUAGES` in `oxc_formatter`).
 ///
 /// `sort_tailwind` is the SAME pre-bound sorter as the session's Tailwind service
 /// (options JSON already applied by `services::for_root`), for the `@apply` classes a CSS fence collects.
