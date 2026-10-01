@@ -1362,8 +1362,7 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
                 // alongside `ref.current` so a declared `ref.current` is reported as a
                 // missing reactive dependency, matching eslint-plugin-react-hooks.
                 // `useRef` bindings already pass because they are not reactive.
-                if is_parent_call_expr
-                    && source.chain.last().is_some_and(|part| part == "current")
+                if is_parent_call_expr && source.chain.last().is_some_and(|part| part == "current")
                 {
                     let mut base_chain = source.chain.clone();
                     base_chain.pop();
