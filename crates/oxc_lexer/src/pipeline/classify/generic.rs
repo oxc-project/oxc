@@ -4,8 +4,11 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bytes::{is_digit, is_word, is_ws},
-    tables::{PUNCT1, Tables, is_kw_init, is_kw_init_ts, is_op_char},
+    keywords::{is_kw_init, is_kw_init_ts},
+    operators::is_op_char,
 };
+
+use super::punct1::PUNCT1;
 
 const FL_WORD: u32 = 0;
 const FL_WS: u32 = 1;
@@ -65,7 +68,6 @@ const fn cls_table(ts: bool) -> [u16; 256] {
 }
 
 pub(super) unsafe fn classify_impl(
-    _t: &Tables,
     ts: bool,
     src: *const u8,
     n: usize,

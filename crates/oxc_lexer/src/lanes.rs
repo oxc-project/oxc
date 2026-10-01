@@ -5,7 +5,12 @@
 
 use std::{ptr, str};
 
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 use std::arch::x86_64::*;
 
 use oxc_ast::ast::{Comment, CommentKind, RegExpFlags};
@@ -38,6 +43,9 @@ pub struct Lanes {
     /// pure-ASCII input.
     pub unicode_leads: Vec<u32>,
     pub module: bool,
+    /// What the disambiguation questions keep across the lex: the context walks,
+    /// the bracket bitmap and the closers the forward scans resolved.
+    pub(crate) disambiguate: crate::pipeline::DisambiguateState,
 }
 
 impl Lanes {
@@ -492,7 +500,12 @@ static KEEP: [u64; 9] = [
     0xffff_ffff_ffff_ffff,
 ];
 
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 #[inline]
 fn cook_short<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
@@ -518,7 +531,12 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     }
 }
 
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 #[inline]
 fn cook_short<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
@@ -549,7 +567,12 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     }
 }
 
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 #[inline]
 fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
     let mut i = bs;
@@ -571,14 +594,24 @@ fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
     false
 }
 
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 #[inline]
 fn span_has_bs(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr(b'\\', &src[bs..be]).is_some()
 }
 
 /// Template variant of [`span_has_bs`]: a raw CR also forces the decode path.
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 #[inline]
 fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
     let mut i = bs;
@@ -604,7 +637,12 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
     false
 }
 
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 #[inline]
 fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize) -> bool {
     memchr::memchr2(b'\\', b'\r', &src[bs..be]).is_some()
@@ -784,12 +822,15 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
         }
 
         // Legacy-octal-like decimal (leading `0` + digit/`_`): oxc_parser
-        // consumes only `[0-9]` here - no separators, no bigint suffix - and
-        // accepts an exponent only as lowercase `e` after an `8`/`9` flipped
+        // consumes only `[0-9]` for the integer part - no separators, no bigint suffix -
+        // and accepts an exponent only as lowercase `e` after an `8`/`9` flipped
         // the run to NonOctalDecimal (`08e1` valid; `00e1` and `08E1` not).
         // Bare `00`/`08` are valid sloppy-mode Annex B, and `.` never flags.
         if matches!(body[1], b'0'..=b'9' | b'_') {
-            if bytes.contains(&b'_') {
+            // Only the integer part is checked here. A fraction or exponent after an `8`/`9`
+            // is ordinary digits, so separators there are valid (`09.1_1`, `09e1_1`),
+            // and the generic checks below catch any that are misplaced.
+            if bytes.iter().take_while(|&&c| c.is_ascii_digit() || c == b'_').any(|&c| c == b'_') {
                 return DiagCode::InvalidNumericSeparator;
             }
             if is_bigint {

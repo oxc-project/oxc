@@ -2,87 +2,6 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
-## template-expression-indent
-
-- Why: invariant (prettier/prettier#19725)
-- Pin: `conformance/fixtures/edge-cases/css-in-js/template-expression-indent.js`, `conformance/fixtures/edge-cases/gql-in-js/template-expression-indent.js`, `conformance/fixtures/edge-cases/html-in-js/template-expression-indent.js`
-- Conformance: `externals/webawesome/carousel/carousel.ts`, `externals/webawesome/color-picker/color-picker.ts`, `externals/webawesome/input/input.ts`
-
-```js
-/* input */
-_ = css`
-  a{
-    color:
-                  ${
-                    a
-                    // comment
-                    + b}
-    ;
-  }
-`;
-
-/* ours */
-_ = css`
-  a {
-    color: ${
-      a +
-      // comment
-      b
-    };
-  }
-`;
-
-/* prettier */
-_ = css`
-  a {
-    color: ${
-                    a +
-                    // comment
-                    b
-                  };
-  }
-`;
-```
-
-A broken `${expr}` inside an embedded template re-indents to the placeholder's position;
-Prettier 3.9.6 preserves the source indentation, not a fixpoint: its second pass yields ours.
-
-## broken-template-comment-indent
-
-- Why: invariant
-- Pin: `conformance/fixtures/edge-cases/xxx-in-js-comment/broken-template-comment-indent.js`
-- Conformance: `externals/prettier/js/multiparser-comments/comment-inside.js`
-
-```js
-/* input */
-html`
-${
-      foo
-  /* comment */
-}
-`;
-
-/* ours */
-html`
-${
-  foo
-  /* comment */
-}
-`;
-
-/* prettier */
-html`
-  ${
-  foo
-  /* comment */
-}
-`;
-```
-
-A `${}` whose embed formatting bails (comments force the broken form) still indents its expression to the placeholder, same as `template-expression-indent`;
-Prettier prints it at ROOT indent, dropping the embed indent entirely (an artifact of its embed bail-out path), not a fixpoint:
-its second pass indents the expression to the placeholder too (at the template body's indent, `  ${` / `    foo`).
-
 ## ts-in-vue-generic-trailing-comma
 
 - Why: uniform-rule (embedded script formats like its standalone file)
@@ -135,3 +54,68 @@ const TomatoButton = Button.extend`
 
 `Xxx.extend` / `Xxx.extend.attr(...)` (styled-components v3, removed in v4) is not recognized as a css-in-js tag,
 so its template stays verbatim; Prettier still formats it. Deprecated API, not worth extending the tag heuristic.
+
+## embedded-template-short-argument
+
+- Why: invariant
+- Pin: `conformance/fixtures/edge-cases/gql-in-js/embedded-template-short-argument.js`
+
+```js
+/* input */
+const schema = graphql(`query{users{x}}`);
+
+/* ours */
+const schema = graphql(`
+  query {
+    users {
+      x
+    }
+  }
+`);
+
+/* prettier */
+const schema =
+  graphql(`
+    query {
+      users {
+        x
+      }
+    }
+  `);
+```
+
+To decide whether an assignment breaks after `=`, Prettier checks if a sole template argument is short by its source text.
+An embedded template is rewritten, so that text says nothing about the output:
+the first pass breaks after `=`, and the second pass hugs, which is not a fixpoint.
+We treat an embedded template as never short, which gives Prettier's second-pass output (its fixpoint).
+
+## embedded-template-invalid-content
+
+- Why: uniform-rule (same construct, same output: the same template with valid content)
+- Pin: `conformance/fixtures/edge-cases/gql-in-js/embedded-template-invalid-content.js`
+
+```js
+/* input */
+foo(
+  gql`
+    query {{{
+  `
+);
+
+/* ours */
+foo(gql`
+    query {{{
+  `);
+
+/* prettier */
+foo(
+  gql`
+    query {{{
+  `,
+);
+```
+
+The layout of an embedded template as a sole argument or an arrow body is decided from the AST, whether its content formats or not.
+Prettier falls back to the source shape when the content fails to format, while it hugs the same template with valid content.
+The verbatim content cannot be re-indented, so its source indentation stays and may look misaligned once hugged (as with any verbatim template Prettier hugs).
+Under `embeddedLanguageFormatting: off`, the source shape still decides, like Prettier.

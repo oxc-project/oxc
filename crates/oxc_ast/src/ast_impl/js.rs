@@ -777,22 +777,6 @@ impl CallExpression<'_> {
         }
     }
 
-    /// Returns `true` if this [`CallExpression`] is a call to `Symbol`
-    /// or [`Symbol.for`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/for).
-    pub fn is_symbol_or_symbol_for_call(&self) -> bool {
-        // TODO: is 'Symbol' reference to global object
-        match &self.callee {
-            Expression::Identifier(id) => id.name == "Symbol",
-            expr => match expr.as_member_expression() {
-                Some(member) => {
-                    matches!(member.object(), Expression::Identifier(id) if id.name == "Symbol")
-                        && member.static_property_name() == Some("for")
-                }
-                None => false,
-            },
-        }
-    }
-
     /// Returns the required module's [`StringLiteral`] if this looks like a call to `require` in
     /// CommonJS (a single string literal argument), or [`None`] otherwise.
     ///
@@ -2022,6 +2006,11 @@ impl<'a> ImportDeclarationSpecifier<'a> {
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => &specifier.local,
             ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => &specifier.local,
         }
+    }
+
+    /// Returns the symbol ID of the bound local identifier.
+    pub fn symbol_id(&self) -> SymbolId {
+        self.local().symbol_id()
     }
 
     /// Returns the name of the bound local identifier for this import declaration specifier.

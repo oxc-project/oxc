@@ -65,6 +65,7 @@ type: `boolean`
 
 Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
 It gets automatically enabled when `configPath` is set.
+Nested config support is always disabled in Vite+ mode.
 
 
 ## fixKind

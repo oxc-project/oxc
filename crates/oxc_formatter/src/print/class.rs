@@ -49,15 +49,10 @@ use super::{
 impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
-            let quote_needed = self.body.iter().any(|signature| {
-                let key = match signature {
-                    ClassElement::PropertyDefinition(property) => &property.key,
-                    ClassElement::AccessorProperty(property) => &property.key,
-                    ClassElement::MethodDefinition(method) => &method.key,
-                    _ => return false,
-                };
-
-                should_preserve_quote(key, f)
+            let quote_needed = self.body.iter().any(|element| {
+                element
+                    .property_key()
+                    .is_some_and(|key| should_preserve_quote(key, element.computed(), f))
             });
             f.context_mut().push_quote_needed(quote_needed);
         }

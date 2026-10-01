@@ -1,6 +1,7 @@
 mod convert_to_dotted_properties;
 mod fold_constants;
 mod inline;
+mod minimize_binary_expression;
 mod minimize_conditional_expression;
 mod minimize_conditions;
 mod minimize_expression_in_boolean_context;
@@ -387,7 +388,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx.state.body_frames.pop();
     }
 
-    fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::merge_imports(&mut program.body, ctx);
+        Self::merge_import_export(&mut program.body, ctx);
         // Private member usage is collected only in full optimization mode.
         debug_assert!(ctx.is_tree_shake_only() || ctx.state.private_member_usage.is_at_root());
     }
@@ -575,6 +578,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::fold_sequence_expression(expr, ctx);
                     Self::minimize_loose_boolean(expr, ctx);
                     Self::minimize_binary(expr, ctx);
+                    Self::minimize_bitwise_binary_expr(expr, ctx);
                     Self::substitute_loose_equals_undefined(expr, ctx);
                     Self::substitute_typeof_undefined(expr, ctx);
                     Self::substitute_rotate_binary_expression(expr, ctx);
@@ -631,7 +635,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }
                 Expression::SequenceExpression(_) => Self::remove_sequence_expression(expr, ctx),
-                Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e, ctx),
+                Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e),
                 Expression::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
                 Expression::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
                 Expression::NewExpression(e) => {

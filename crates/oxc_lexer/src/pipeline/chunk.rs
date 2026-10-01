@@ -1,4 +1,9 @@
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 mod primitives {
     use std::arch::x86_64::*;
 
@@ -36,7 +41,12 @@ mod primitives {
     }
 }
 
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 mod primitives {
     use std::ptr;
 

@@ -450,11 +450,39 @@ impl<'a> Codegen<'a> {
         unsafe { self.code.print_bytes_unchecked(&bytes) };
     }
 
-    /// Print a template literal quasi's raw text. Only untagged templates are escaped under
+    /// Print a template literal quasi's raw text, removing redundant dollar escapes when minifying
+    /// untagged templates. Only untagged templates are escaped under
     /// [CodegenOptions::ascii_only]: a tag function (e.g. `String.raw`) can observe the raw
     /// text, which escaping would change.
     #[inline]
     pub(crate) fn print_template_quasi_raw(&mut self, raw: &str, tagged: bool) {
+        let mut start = 0;
+        if self.options.minify && !tagged {
+            let bytes = raw.as_bytes();
+            for (index, _) in raw.match_indices("\\$") {
+                // Keep escapes which prevent interpolation.
+                if bytes.get(index + 2) == Some(&b'{') {
+                    continue;
+                }
+
+                // Keep backslashes which are themselves escaped.
+                let preceding_backslashes =
+                    bytes[..index].iter().rev().take_while(|&&b| b == b'\\').count();
+                if preceding_backslashes % 2 != 0 {
+                    continue;
+                }
+
+                // The preserved chunk ends with an even backslash run, and the next starts
+                // with `$`, so printing them separately preserves escape handling.
+                self.print_template_quasi_raw_chunk(&raw[start..index], tagged);
+                start = index + 1;
+            }
+        }
+        self.print_template_quasi_raw_chunk(&raw[start..], tagged);
+    }
+
+    #[inline]
+    fn print_template_quasi_raw_chunk(&mut self, raw: &str, tagged: bool) {
         if !self.options.ascii_only || tagged || raw.is_ascii() {
             self.print_str_escaping_script_close_tag(raw);
         } else {

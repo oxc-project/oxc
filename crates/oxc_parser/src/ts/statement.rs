@@ -243,7 +243,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers,
             ModifierKinds::new([ModifierKind::Declare]),
             true,
-            diagnostics::modifier_cannot_be_used_here,
+            |modifier, allowed| match modifier.kind {
+                ModifierKind::Abstract => diagnostics::illegal_abstract_modifier(modifier.span()),
+                _ => diagnostics::modifier_cannot_be_used_here(modifier, allowed),
+            },
         );
         if let Some((implements_kw_span, _)) = implements {
             self.error(diagnostics::interface_implements(implements_kw_span));

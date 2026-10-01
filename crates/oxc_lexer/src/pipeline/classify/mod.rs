@@ -1,17 +1,46 @@
-use crate::pipeline::tables::Tables;
-
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 mod avx2;
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 use avx2::classify_impl;
 
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 mod generic;
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 use generic::classify_impl;
 
+#[cfg(any(
+    test,
+    not(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ))
+))]
+mod punct1;
+
+#[inline(never)]
 pub(super) unsafe fn classify(
-    t: &Tables,
     ts: bool,
     src: *const u8,
     n: usize,
@@ -25,7 +54,7 @@ pub(super) unsafe fn classify(
     misc: *mut u64,
     kind: *mut u8,
 ) {
-    classify_impl(t, ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind);
+    classify_impl(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind);
 
     *word.add(nb) = 0;
     *st.add(nb) = 0;

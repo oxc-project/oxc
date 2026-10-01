@@ -7,10 +7,11 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
+use oxc_formatter_core::arena_cow_str;
 use oxc_markdown_parser::{
     Span,
     ast::{CodeSpan, Emphasis, HardBreakKind, Inline, LinkKind, Strong},
-    unicode,
+    escapes_next, unicode,
 };
 
 use crate::{
@@ -23,7 +24,7 @@ use super::{
     HTML_WHITESPACE, MarkdownFormatter, backticks, escape, is_split_whitespace, join_pieces,
     line_shape::{
         is_line_shape_start, line_from, line_opens_block, line_or_prefix_opens_block, line_shape,
-        printed_line_opens_block, source_line_at,
+        printed_line_at, printed_line_opens_block, source_line_at,
     },
     link,
     parts::{Atom, Parts, Sep},
@@ -31,7 +32,7 @@ use super::{
 };
 
 /// Where the inline children hang; a few rules depend on the immediate parent.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct InlineParent {
     /// The children are a paragraph's (its first / last text gets trimmed).
     pub paragraph: bool,
@@ -48,22 +49,6 @@ pub struct InlineParent {
     pub first_in_document: bool,
     /// The paragraph follows a task list checkbox on its line: its first line is not a line start.
     pub after_checkbox: bool,
-    /// Nothing follows the parent node on its source line (its last child ends the line).
-    pub ends_line: bool,
-}
-
-impl Default for InlineParent {
-    fn default() -> Self {
-        Self {
-            paragraph: false,
-            delimiter: None,
-            strong_neighbor: None,
-            first_in_container: false,
-            first_in_document: false,
-            after_checkbox: false,
-            ends_line: true,
-        }
-    }
 }
 
 /// Paragraph or heading content as one fill.
@@ -139,7 +124,7 @@ fn code_span_literal_runs<'a>(
     let mut at = first.span().start;
     for &(span, is_code) in opaque {
         if span.start > at {
-            mask |= run_mask(source.slice_range(at, span.start).as_bytes(), b'`');
+            mask |= run_mask(source.slice_range(at, span.start).as_bytes(), b'`', true);
         }
         if is_code {
             out.push((span.start, mask));
@@ -302,7 +287,10 @@ pub fn collect_inlines<'a>(
         // After a kept line break, a line that would open a block at column 0 stays paragraph text
         // behind four spaces (indented code cannot interrupt a paragraph)
         if after_kept_break
-            && matches!(child, Inline::Text(_) | Inline::HtmlInline(_) | Inline::Liquid(_))
+            && matches!(
+                child,
+                Inline::Text(_) | Inline::HtmlInline(_) | Inline::Liquid(_) | Inline::MathSpan(_)
+            )
             && printed_line_opens_block(children, i, &break_kept, f)
         {
             parts.push_str("    ");
@@ -375,7 +363,6 @@ pub fn collect_inlines<'a>(
                     ),
                     after_liquid: follows_liquid(children, i),
                     before_soft_break: matches!(children.get(i + 1), Some(Inline::SoftBreak(_))),
-                    ends_line: ends_line(children, i, parent.ends_line),
                     next_word: next_word_of(children, i, parent.delimiter, f),
                     glued_last_word: glued_last_word(children, i, raw, f),
                     cj_spaces,
@@ -432,7 +419,6 @@ pub fn collect_inlines<'a>(
                 parts.push_str(style);
                 let inner = InlineParent {
                     delimiter: Some(style.as_bytes()[0]),
-                    ends_line: ends_line(children, i, parent.ends_line),
                     ..InlineParent::default()
                 };
                 with_depth(f, MarkdownFormatContext::emphasis_depth, |f| {
@@ -450,7 +436,6 @@ pub fn collect_inlines<'a>(
                 let inner = InlineParent {
                     delimiter: Some(style.as_bytes()[0]),
                     strong_neighbor: Some(has_word_neighbor(children, i, f)),
-                    ends_line: ends_line(children, i, parent.ends_line),
                     ..InlineParent::default()
                 };
                 with_depth(f, MarkdownFormatContext::delimiter_depth, |f| {
@@ -463,15 +448,22 @@ pub fn collect_inlines<'a>(
                 let style = &"~~"[..usize::from(s.tildes)];
                 let open = parts.len();
                 parts.push_str(style);
-                let inner = InlineParent {
-                    ends_line: ends_line(children, i, parent.ends_line),
-                    ..InlineParent::default()
-                };
+                let inner = InlineParent::default();
                 collect_inlines(&s.children, inner, parts, f);
                 mark_delimiter(open, parts, false);
                 parts.push_str(style);
             }
-            Inline::Link(l) => link::collect_link(l, parts, f),
+            Inline::Link(l) => {
+                link::collect_link(l, parts, f);
+                // A title keeps its newlines (a label's are collapsed): as after an opaque node
+                if let LinkKind::Inline { title: Some(title), .. } = &l.kind
+                    && let (Some(first), Some(last)) = (title.first(), title.last())
+                    && let Some(risky) =
+                        tail_line_risky(children, first.span.start, last.span.end, None, f)
+                {
+                    f.context().raw_text().set(raw_for(risky));
+                }
+            }
             // Opaque to delimiter pairing (an image's alt text too: it is printed as written)
             _ => {
                 let start = parts.len();
@@ -516,27 +508,39 @@ pub fn collect_inlines<'a>(
                     _ => parts.push_str(raw),
                 }
                 parts.mark(Mark::Opaque { start, end: parts.len() });
-                // A newline inside the node starts a source line with the node's tail; what follows
-                // on that line may be cut by wrapping (`$$\n$$ text`: `$$` alone opens math),
-                // so such a line stays as written
-                if parent.paragraph
-                    && !code_span_joined
-                    && let Some(newline) = raw.rfind('\n')
-                {
-                    let line_start = child.span().start + u32::try_from(newline).unwrap_or(0) + 1;
-                    let line = line_from(
+                // A newline inside the node starts a source line with the node's tail;
+                // what follows on that line may be cut by wrapping (`$$\n$$ text`: `$$` alone opens math),
+                // so such a line stays as written.
+                if !code_span_joined
+                    && let Some(risky) = tail_line_risky(
                         children,
-                        line_start,
-                        code_span_tail.map(|tail| (tail, child.span().end)),
+                        child.span().start,
+                        child.span().end,
+                        code_span_tail,
                         f,
-                    );
-                    let risky = is_line_shape_start(&line.text)
-                        || line_or_prefix_opens_block(&line, true, f);
+                    )
+                {
                     f.context().raw_text().set(raw_for(risky));
                 }
             }
         }
     }
+}
+
+/// After a newline inside `start..end` (a node printed with its line breaks),
+/// whether the source line it starts is a shape or may open a block; `None` without a newline.
+/// `tail`: the printed form of that line up to `end`, when it differs from the source.
+fn tail_line_risky<'a>(
+    children: &[Inline<'_>],
+    start: u32,
+    end: u32,
+    tail: Option<&'a str>,
+    f: &MarkdownFormatter<'_, 'a>,
+) -> Option<bool> {
+    let newline = f.context().source_text().slice_range(start, end).rfind('\n')?;
+    let line_start = start + u32::try_from(newline).unwrap_or(0) + 1;
+    let line = line_from(children, line_start, tail.map(|tail| (tail, end)), f);
+    Some(is_line_shape_start(&line.text) || line_or_prefix_opens_block(&line, true, f))
 }
 
 /// Records a delimiter node whose opening marker was pushed at `open` and whose closing marker
@@ -546,23 +550,33 @@ fn mark_delimiter(open: u32, parts: &mut Parts<'_>, strong: bool) {
 }
 
 /// Bit `n - 1` set: a run of exactly `n` `ch`s occurs in `bytes` (runs past 64 count as 64).
-fn run_mask(bytes: &[u8], ch: u8) -> u64 {
+/// `escapes`: `bytes` is markdown text, where a backslash-escaped `ch` is not part of a run.
+fn run_mask(bytes: &[u8], ch: u8, escapes: bool) -> u64 {
     let mut present: u64 = 0;
     let mut run = 0usize;
-    for &b in bytes.iter().chain(std::iter::once(&0)) {
-        if b == ch {
+    let mut i = 0;
+    loop {
+        let b = bytes.get(i).copied();
+        if b == Some(ch) {
             run += 1;
-        } else if run > 0 {
+            i += 1;
+            continue;
+        }
+        if run > 0 {
             present |= 1u64 << (run.min(64) - 1);
             run = 0;
         }
+        match b {
+            None => return present,
+            Some(b'\\') if escapes && escapes_next(bytes, i) => i += 2,
+            Some(_) => i += 1,
+        }
     }
-    present
 }
 
 /// The smallest run length of `ch` absent from `text`.
 fn min_absent_run(text: &str, ch: u8) -> usize {
-    run_mask(text.as_bytes(), ch).trailing_ones() as usize + 1
+    run_mask(text.as_bytes(), ch, false).trailing_ones() as usize + 1
 }
 
 /// Runs of tabs / newlines become one space (wiki link contents under wrapping).
@@ -596,15 +610,14 @@ fn next_word_of<'a>(
     if matches!(next, Inline::SoftBreak(_) | Inline::HardBreak(_)) {
         return None;
     }
-    // The word runs across nodes (`[^1]:` is a footnote reference and a text)
-    let (mut word, alone_on_line) = first_word_at(children, next.span().start, f)?;
-    // A code span's fence is recomputed: the page shows the printed one, not the source's
-    if let Inline::CodeSpan(c) = next {
-        word = print_code_span(c, f).split(is_split_whitespace).next().unwrap_or(word);
-    }
+    // The word runs across nodes (`[^1]:` is a footnote reference and a text);
+    // a code span's fence is recomputed, so the line is taken as it prints
+    let line: &'a str = arena_cow_str(&printed_line_at(children, i + 1, f).text, f);
+    let word = first_word(line)?;
     // A text's leading run after a soft break is escaped inside emphasis
     // (as `push_text` decides: a space before it, and after it the text's next character or the node edge)
-    let escaped = matches!(next, Inline::Text(_))
+    let in_sentence = matches!(next, Inline::Text(_));
+    let escaped = in_sentence
         && f.context().delimiter_depth().get() > 0
         && !f.context().literal_markers().get()
         && escape::leading_run_escaped(
@@ -612,29 +625,11 @@ fn next_word_of<'a>(
             Some(' '),
             edge_char(children, i + 1, delimiter, false, f),
         );
-    Some(words::NextWord { word, alone_on_line, escaped })
+    Some(words::NextWord { word, line, escaped, in_sentence })
 }
 
-/// The first word of the source line starting at `start`, and whether it is the line's only one.
-fn first_word_at<'a>(
-    children: &[Inline<'_>],
-    start: u32,
-    f: &MarkdownFormatter<'_, 'a>,
-) -> Option<(&'a str, bool)> {
-    let (_, line) = source_line_at(children, start, f);
-    let mut it = line.split(is_split_whitespace).filter(|w| !w.is_empty());
-    let word = it.next()?;
-    Some((word, it.next().is_none()))
-}
-
-/// Nothing follows node `i` on its source line (a node glued after it would be part of the line);
-/// past the last sibling, whether the parent ends its line.
-fn ends_line(children: &[Inline<'_>], i: usize, parent_ends_line: bool) -> bool {
-    match children.get(i + 1) {
-        None => parent_ends_line,
-        Some(Inline::SoftBreak(_) | Inline::HardBreak(_)) => true,
-        Some(_) => false,
-    }
+fn first_word(line: &str) -> Option<&str> {
+    line.split(is_split_whitespace).find(|w| !w.is_empty())
 }
 
 /// The character right before (`before`) or after the text at `i`, as it will be printed:
@@ -663,13 +658,13 @@ fn edge_char<'a>(
 }
 
 /// The last word of text `i` (its printed `raw`) extended by the nodes glued after it
-/// on its source line (a backslash hard break's `\` included), and whether it is the line's last word.
+/// on its source line (a backslash hard break's `\` included).
 fn glued_last_word<'a>(
     children: &'a [Inline<'a>],
     i: usize,
     raw: &str,
     f: &MarkdownFormatter<'_, 'a>,
-) -> Option<(&'a str, bool)> {
+) -> Option<&'a str> {
     // Nothing glues after whitespace, a line end, or a two-space hard break
     match children.get(i + 1) {
         None | Some(Inline::SoftBreak(_)) => return None,
@@ -679,7 +674,7 @@ fn glued_last_word<'a>(
     }
     let last = raw.rsplit(is_split_whitespace).next()?;
     let start = children[i].span().end - u32::try_from(last.len()).unwrap_or(0);
-    first_word_at(children, start, f).filter(|(word, _)| word.len() != last.len())
+    first_word(source_line_at(children, start, f).1).filter(|word| word.len() != last.len())
 }
 
 /// The last word of the text before node `i`.

@@ -1,6 +1,8 @@
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
 
+use crate::core::config_discovery;
+
 #[derive(Debug, Default, Serialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct FormatOptions {
@@ -10,9 +12,11 @@ pub struct FormatOptions {
 }
 
 impl FormatOptions {
-    /// Off with an explicit `fmt.configPath` or `fmt.disableNestedConfig`.
+    /// Nested config search: off with `fmt.disableNestedConfig`, an explicit `fmt.configPath`, or in Vite+ mode.
     pub fn use_nested_configs(&self) -> bool {
-        !self.disable_nested_config && self.config_path.is_none()
+        !self.disable_nested_config
+            && self.config_path.is_none()
+            && config_discovery().nested_configs()
     }
 }
 
