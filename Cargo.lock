@@ -2231,11 +2231,13 @@ version = "1.41.0"
 dependencies = [
  "cow-utils",
  "futures-util",
+ "oxc-schemars",
  "papaya",
  "percent-encoding",
  "rustc-hash",
  "serde",
  "serde_json",
+ "tempfile",
  "tokio",
  "tower-lsp-server",
  "tracing",
