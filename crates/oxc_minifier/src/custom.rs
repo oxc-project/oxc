@@ -1,8 +1,15 @@
 use oxc_ast::ast::{Expression, SequenceExpression};
 
 pub(crate) trait SequenceExpressionExt<'a> {
+    /// Returns the final expression, descending through non-empty trailing sequences.
+    /// For `(a, (b, c))`, returns `c`. An empty outer sequence returns [`None`];
+    /// an empty trailing sequence is returned as-is.
     fn last_expression(&self) -> Option<&Expression<'a>>;
 
+    /// Removes and returns the final expression, descending through trailing sequences
+    /// and discarding any that become empty.
+    /// For `(a, (b, c))`, returns `c` and leaves `(a, (b))`.
+    /// Returns [`None`] if the outer sequence or a trailing nested sequence is already empty.
     fn pop_last_expression(&mut self) -> Option<Expression<'a>>;
 }
 
