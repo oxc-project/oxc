@@ -1,4 +1,4 @@
-use crate::{test, test_same};
+use crate::{CompressOptions, default_options, test, test_options, test_same};
 
 #[test]
 fn test_minimize_if() {
@@ -96,4 +96,14 @@ fn test_dangling_else_codegen() {
     test_same("if(a){if(b)var x=1}else var y=2;");
     test_same("if(a){if(b)var x=1;else if(c)var y=2}else var z=3;");
     test_same("if(a){for(;b;)if(c)var x=1}else var y=2;");
+}
+
+#[test]
+fn test_nested_if_without_sequences() {
+    let options = CompressOptions { sequences: false, ..default_options() };
+    test_options(
+        "function f(){if(a)if(b)return c;else d();}",
+        "function f(){if(a){if(b)return c;d();}}",
+        &options,
+    );
 }

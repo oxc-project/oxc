@@ -120,7 +120,7 @@ impl<'a> PeepholeOptimizations {
         // `if (a) if (b) return x; else y;` => `if (a) { if (b) return x; y; }`
         // Expose the statements to statement-list optimizations without adding
         // blocks solely to disambiguate `else`; codegen handles that.
-        if ctx.options().sequences
+        if !ctx.is_tree_shake_only()
             && let Statement::IfStatement(inner) = &if_stmt.consequent
             && inner.consequent.is_terminated()
             && inner.alternate.as_ref().is_some_and(|stmt| !Self::statement_cares_about_scope(stmt))
