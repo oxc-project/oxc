@@ -83,7 +83,8 @@ impl OxlintEnv {
     /// Whether the `builtin` env (ES builtin globals) is enabled.
     ///
     /// `builtin` is enabled unless config explicitly sets it to `false`, even if `env` is set
-    /// without it. Same as ESLint's eslintrc config (`Object.assign({ builtin: true }, config.env)`).
+    /// without it. Same as ESLint's eslintrc config:
+    /// <https://github.com/eslint/eslint/blob/v8.57.0/lib/linter/linter.js#L1295>
     pub fn is_builtin_enabled(&self) -> bool {
         self.0.get("builtin").copied().unwrap_or(true)
     }

@@ -3,11 +3,11 @@
   "categories": {
     "correctness": "off"
   },
-  "env": {
-    "browser": true
-  },
   "rules": {
     "globals-env-builtin-plugin/unresolved-globals": "error"
+  },
+  "env": {
+    "browser": true
   },
   "overrides": [
     {

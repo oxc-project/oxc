@@ -3902,7 +3902,7 @@ describe("RuleTester", () => {
     });
   });
 
-  it("adds `builtin` env last, unless explicitly disabled", () => {
+  describe("env", () => {
     // Reports envs, and global references which are not resolved to a variable
     const envReporterRule: Rule = {
       create(context) {
@@ -3919,27 +3919,41 @@ describe("RuleTester", () => {
       },
     };
 
-    const tester = new RuleTester();
-    tester.run("no-foo", envReporterRule, {
-      valid: [],
-      invalid: [
-        {
-          code: "Number; foo;",
-          errors: [{ message: 'env: {"builtin":true}, unresolved: foo' }],
-        },
-        {
-          code: "Number; foo;",
-          languageOptions: { env: { browser: true } },
-          errors: [{ message: 'env: {"browser":true,"builtin":true}, unresolved: foo' }],
-        },
-        {
-          code: "Number; foo;",
-          languageOptions: { env: { builtin: false, browser: true } },
-          errors: [{ message: 'env: {"browser":true}, unresolved: Number, foo' }],
-        },
-      ],
+    it("adds `builtin` env last, unless explicitly disabled", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", envReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "Number; foo;",
+            errors: [
+              {
+                message: 'env: {"builtin":true}, unresolved: foo',
+              },
+            ],
+          },
+          {
+            code: "Number; foo;",
+            languageOptions: { env: { browser: true } },
+            errors: [
+              {
+                message: 'env: {"browser":true,"builtin":true}, unresolved: foo',
+              },
+            ],
+          },
+          {
+            code: "Number; foo;",
+            languageOptions: { env: { builtin: false, browser: true } },
+            errors: [
+              {
+                message: 'env: {"browser":true}, unresolved: Number, foo',
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null, null, null]);
     });
-    expect(runCases()).toEqual([null, null, null]);
   });
 
   describe("settings", () => {
