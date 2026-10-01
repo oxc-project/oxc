@@ -41,13 +41,13 @@ pub(crate) fn prev1(bits: &[u64], p: usize) -> Option<usize> {
     let mask = if lim == 63 { !0u64 } else { (1u64 << (lim + 1)) - 1 };
     let x = bits[w] & mask;
     if x != 0 {
-        return Some((w << 6) + (63 - x.leading_zeros() as usize));
+        return Some((w << 6) + x.highest_one().unwrap() as usize);
     }
     while w > 0 {
         w -= 1;
         let x = bits[w];
         if x != 0 {
-            return Some((w << 6) + (63 - x.leading_zeros() as usize));
+            return Some((w << 6) + x.highest_one().unwrap() as usize);
         }
     }
     None

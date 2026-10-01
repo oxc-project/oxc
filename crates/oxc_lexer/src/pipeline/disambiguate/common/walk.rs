@@ -101,7 +101,7 @@ pub(crate) fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8
     let mut bits = b.word(src, n, w) & st[w] & ((1u64 << (from & 63)) - 1);
     loop {
         while bits != 0 {
-            let i = 63 - bits.leading_zeros() as usize;
+            let i = bits.highest_one().unwrap() as usize;
             bits &= !(1u64 << i);
             let pos = (w << 6) | i;
             if kind[pos] >= OP_KIND_BASE {

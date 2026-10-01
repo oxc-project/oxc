@@ -67,13 +67,13 @@ pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize) -> i64 {
     let mask = if lim == 63 { !0u64 } else { (1u64 << (lim + 1)) - 1 };
     let x = *bm.add(w as usize) & mask;
     if x != 0 {
-        return (w << 6) + (63 - x.leading_zeros() as i64);
+        return (w << 6) + i64::from(x.highest_one().unwrap());
     }
     w -= 1;
     while w >= 0 {
         let x = *bm.add(w as usize);
         if x != 0 {
-            return (w << 6) + (63 - x.leading_zeros() as i64);
+            return (w << 6) + i64::from(x.highest_one().unwrap());
         }
         w -= 1;
     }
