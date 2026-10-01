@@ -1,6 +1,6 @@
 use oxc_ast::ast::{Expression, SequenceExpression};
 
-pub(crate) trait SequenceExpressionExt<'a> {
+pub trait SequenceExpressionExt<'a> {
     /// Returns the final expression, descending through non-empty trailing sequences.
     /// For `(a, (b, c))`, returns `c`. An empty outer sequence returns [`None`];
     /// an empty trailing sequence is returned as-is.
