@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, is_terminated::IsTerminated};
 
 use super::PeepholeOptimizations;
 
@@ -117,18 +117,24 @@ impl<'a> PeepholeOptimizations {
             ctx.replace_statement(&mut if_stmt.consequent, consequent);
         }
 
-        Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
-    }
-
-    /// Wrap to avoid ambiguous else.
-    /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
-    fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::IfStatement(if2) = &if_stmt.consequent
-            && if2.alternate.is_some()
+        // `if (a) if (b) return x; else y;` => `if (a) { if (b) return x; y; }`
+        // Expose the statements to statement-list optimizations without adding
+        // blocks solely to disambiguate `else`; codegen handles that.
+        if ctx.options().sequences
+            && let Statement::IfStatement(inner) = &if_stmt.consequent
+            && inner.consequent.is_terminated()
+            && inner.alternate.as_ref().is_some_and(|stmt| !Self::statement_cares_about_scope(stmt))
         {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-            ctx.replace_statement_with(&mut if_stmt.consequent, |e, ctx| {
-                Statement::new_block_statement_with_scope_id(e.span(), [e], scope_id, ctx)
+            ctx.replace_statement_with(&mut if_stmt.consequent, |mut stmt, ctx| {
+                let Statement::IfStatement(inner) = &mut stmt else { unreachable!() };
+                let alternate = inner.alternate.take().unwrap();
+                Statement::new_block_statement_with_scope_id(
+                    stmt.span(),
+                    [stmt, alternate],
+                    scope_id,
+                    ctx,
+                )
             });
         }
     }
