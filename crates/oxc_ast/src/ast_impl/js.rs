@@ -392,6 +392,14 @@ impl<'a> Expression<'a> {
     }
 }
 
+impl IdentifierReference<'_> {
+    /// Returns `true` if this identifier reference is `undefined`.
+    #[inline]
+    pub fn is_undefined(&self) -> bool {
+        self.name == "undefined"
+    }
+}
+
 impl Display for IdentifierName<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
