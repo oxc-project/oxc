@@ -5,7 +5,7 @@
 
 use oxc_formatter_core::{
     Buffer,
-    builders::{align, mark_as_root, text, token},
+    builders::{mark_as_root, space_align, text, token},
     write,
 };
 use oxc_markdown_parser::{
@@ -101,9 +101,10 @@ pub fn write_list<'a>(
                 column_of(source, item.children[1].span().start) < column_of(source, content_column)
             };
         let body = format_with(|f| write_list_item(item, checkbox, prefix.len(), loose, f));
-        let width = if skip_align { 0 } else { u8::try_from(prefix.len()).unwrap_or(u8::MAX) };
-        // The item's content column is the root that verbatim continuation lines return to
-        write!(f, align(width, &mark_as_root(&body)));
+        let width = if skip_align { 0 } else { prefix.len() };
+        // The item's content column is the root that verbatim continuation lines return to.
+        // Its columns are syntax, spaces under `useTabs` too (see `space_align`).
+        write!(f, space_align(width, &mark_as_root(&body)));
     }
 
     f.context().lists().borrow_mut().pop();
@@ -145,13 +146,11 @@ fn write_list_item<'a>(
         }
         // The first child (unless a list) sits right after the checkbox;
         // other children get the tab-width alignment.
-        // `checkbox` is `[x] ` / `[ ] ` / empty, `alignment` is at most 3
-        #[expect(clippy::cast_possible_truncation)]
-        let (checkbox_width, alignment_width) = (checkbox.len() as u8, alignment as u8);
+        // `checkbox` is `[x] ` / `[ ] ` / empty, `alignment` is at most 3.
         if i == 0 && !matches!(child, Block::List(_)) {
-            write!(f, align(checkbox_width, &body));
+            write!(f, space_align(checkbox.len(), &body));
         } else {
-            write!(f, [token(&"   "[..alignment]), align(alignment_width, &body)]);
+            write!(f, [token(&"   "[..alignment]), space_align(alignment, &body)]);
         }
     }
 }

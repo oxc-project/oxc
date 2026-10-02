@@ -323,11 +323,16 @@ where
                         }
 
                         StartPrefix(prefix) => {
+                            let (name, arg) = if prefix.is_spaces() {
+                                ("space_align(", prefix.text().len().to_string())
+                            } else {
+                                ("prefix_align(", format!("{:?}", prefix.text()))
+                            };
                             w!(
                                 f,
                                 [
-                                    token("prefix_align("),
-                                    text(f.allocator().alloc_str(&format!("{:?}", prefix.0))),
+                                    token(name),
+                                    text(f.allocator().alloc_str(&arg)),
                                     token(","),
                                     space(),
                                 ]

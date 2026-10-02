@@ -349,42 +349,23 @@ fn convert_align<'a>(
             out.push(FormatElement::Tag(Tag::EndDedent(DedentMode::Root)));
             Ok(())
         }
-        // A visible string align is a prefix on every line
-        // (markdown's blockquote `"> "` is the only one Prettier's own printers emit):
-        // intern here if a plugin brings another.
-        Value::String(s) if s == "> " => {
-            out.push(FormatElement::Tag(Tag::StartPrefix(Prefix::new(&"> "))));
+        // A string align is a prefix on every line, never turned into a tab under `useTabs`:
+        // markdown's blockquote `"> "` (the only visible one Prettier's own printers emit, intern here if a plugin brings another)
+        // and its container columns `" ".repeat(n)` (`""` aligns nothing)
+        Value::String(s) if s == "> " || s.bytes().all(|b| b == b' ') => {
+            let prefixes: Vec<Prefix> = if s == "> " {
+                vec![Prefix::new(&"> ")]
+            } else {
+                Prefix::spaces(s.len()).collect()
+            };
+            for &prefix in &prefixes {
+                out.push(FormatElement::Tag(Tag::StartPrefix(prefix)));
+            }
             if let Some(contents) = obj.get("contents") {
                 convert_doc(contents, out, ctx)?;
             }
-            out.push(FormatElement::Tag(Tag::EndPrefix));
+            out.extend(prefixes.iter().map(|_| FormatElement::Tag(Tag::EndPrefix)));
             Ok(())
-        }
-        Value::String(s) if s.trim().is_empty() => {
-            // Whitespace alignment (e.g., "  " for markdown list continuation indent).
-            // Prettier uses the string length as the number of spaces to align by.
-            if s.is_empty() {
-                // Empty string → no alignment, just render contents
-                if let Some(contents) = obj.get("contents") {
-                    convert_doc(contents, out, ctx)?;
-                }
-                return Ok(());
-            }
-            debug_assert!(
-                s.len() <= 255,
-                "align string length {} exceeds NonZeroU8 range",
-                s.len()
-            );
-            #[expect(clippy::cast_possible_truncation)]
-            if let Some(nz) = NonZeroU8::new(s.len() as u8) {
-                out.push(FormatElement::Tag(Tag::StartAlign(Align::new(nz))));
-                if let Some(contents) = obj.get("contents") {
-                    convert_doc(contents, out, ctx)?;
-                }
-                out.push(FormatElement::Tag(Tag::EndAlign));
-                return Ok(());
-            }
-            Err(format!("Unsupported align value: {n}"))
         }
         Value::Object(obj_val) => {
             // `align({type: "root"}, ...)` = Prettier's `markAsRoot()`:
@@ -598,21 +579,46 @@ pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a 
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
-    use oxc_formatter_core::{Document, PrintWidth, PrinterOptions, UniqueGroupIdBuilder};
+    use oxc_formatter_core::{
+        Document, IndentStyle, PrintWidth, PrinterOptions, UniqueGroupIdBuilder,
+    };
     use serde_json::{Value, json};
 
     use super::{convert_envelope, postprocess};
 
     fn print_doc(doc: &Value, print_width: u32) -> String {
+        print_doc_with(
+            doc,
+            PrinterOptions::default().with_print_width(PrintWidth::new(print_width)),
+        )
+    }
+
+    fn print_doc_with(doc: &Value, options: PrinterOptions) -> String {
         let allocator = Allocator::default();
         let group_id_builder = UniqueGroupIdBuilder::default();
         let (mut ir, _) =
             convert_envelope(json!([doc, {}]), &allocator, &group_id_builder).unwrap();
         postprocess(&mut ir, &allocator);
-        Document::new(ir, vec![])
-            .print(0, PrinterOptions::default().with_print_width(PrintWidth::new(print_width)))
-            .unwrap()
-            .into_code()
+        Document::new(ir, vec![]).print(0, options).unwrap().into_code()
+    }
+
+    #[test]
+    fn space_string_align_stays_spaces_under_tabs() {
+        let doc = json!([
+            "a",
+            {
+                "type": "align",
+                "n": "  ",
+                "contents": [
+                    { "type": "line", "hard": true },
+                    "b",
+                    { "type": "indent", "contents": [{ "type": "line", "hard": true }, "c"] }
+                ]
+            }
+        ]);
+        let options = PrinterOptions::default().with_indent_style(IndentStyle::Tab);
+        // Prettier's markdown list item: the item's columns, then the child's tab
+        assert_eq!(print_doc_with(&doc, options), "a\n  b\n  \tc");
     }
 
     #[test]

@@ -29,7 +29,7 @@ Every Prettier doc primitive its own language printers emit has a counterpart he
   that manual wiring is `ifBreak({groupId})` there and `if_group_breaks(..).with_group_id(..)` here
   See `oxc_formatter_yaml`'s `mapping_item.rs` for the full pattern.
   Oxfmt's Doc→IR mechanical conversion maps `expandedStates` to the same `BestFitting` primitive.
-- `align` is `prefix_align()`
+- A string `align` is `prefix_align()` (a visible token) or `space_align()` (spaces, which stay spaces under `useTabs` where a number `align` becomes a tab)
 
 ### The printer never trims
 
