@@ -1,0 +1,21 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc-anchored.json e2e/a.steps.ts src/a.steps.ts
+working directory: fixtures/cli/additional_test_patterns
+----------
+
+  x jest(expect-expect): Test has no assertions
+   ,-[e2e/a.steps.ts:1:1]
+ 1 | test('completes a checkout', () => {
+   : ^^^^
+ 2 |   const items = 1;
+   `----
+  help: Add assertion(s) in this Test
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 2 files with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
