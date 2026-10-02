@@ -578,27 +578,6 @@ impl<'a> PeepholeOptimizations {
         ctx.replace_expression_with(target, |b, ctx| Self::join_sequence(a, b, ctx));
     }
 
-    pub fn join_sequence(
-        a: Expression<'a>,
-        b: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        if let Expression::SequenceExpression(mut sequence_expr) = a {
-            // `(a, b); c`
-            sequence_expr.expressions.push(b);
-            return Expression::SequenceExpression(sequence_expr);
-        }
-        let span = a.span();
-        let exprs = if let Expression::SequenceExpression(sequence_expr) = b {
-            // `a; (b, c)`
-            ArenaVec::from_iter_in(std::iter::once(a).chain(sequence_expr.unbox().expressions), ctx)
-        } else {
-            // `a; b`
-            ArenaVec::from_array_in([a, b], ctx)
-        };
-        Expression::new_sequence_expression(span, exprs, ctx)
-    }
-
     /// For variable declarations:
     /// * merge with the previous variable declarator if their kinds are the same
     /// * remove the variable declarator if it is unused

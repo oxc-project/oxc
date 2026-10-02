@@ -147,10 +147,10 @@ impl<'a> PeepholeOptimizations {
         // `a ? d : (b, c, d)` => `(a || (b, c)), d`
         if let Expression::SequenceExpression(alternate) = &mut expr.alternate
             && alternate.expressions.len() > 1
-            && let Some(last) = alternate.expressions.last()
+            && let Some(last) = Self::last_expression_in_sequence(alternate)
             && ctx.expr_eq(last, &expr.consequent)
         {
-            let last_expr = alternate.expressions.pop().unwrap();
+            let last_expr = Self::pop_expression_from_sequence(alternate).unwrap();
             let seq_prefix = if alternate.expressions.len() == 1 {
                 alternate.expressions.pop().unwrap()
             } else {
@@ -176,10 +176,10 @@ impl<'a> PeepholeOptimizations {
         // `a ? (b, c, d) : d` => `(a && (b, c)), d`
         if let Expression::SequenceExpression(consequent) = &mut expr.consequent
             && consequent.expressions.len() > 1
-            && let Some(last) = consequent.expressions.last()
+            && let Some(last) = Self::last_expression_in_sequence(consequent)
             && ctx.expr_eq(last, &expr.alternate)
         {
-            let last_expr = consequent.expressions.pop().unwrap();
+            let last_expr = Self::pop_expression_from_sequence(consequent).unwrap();
             let seq_prefix = if consequent.expressions.len() == 1 {
                 consequent.expressions.pop().unwrap()
             } else {
