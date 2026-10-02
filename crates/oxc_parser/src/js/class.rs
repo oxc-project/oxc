@@ -291,6 +291,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_class_static_block(start);
         }
 
+        // TypeScript-only modifiers are a syntax error in JavaScript files.
+        // Not covered here, to avoid duplicate diagnostics:
+        // - `abstract`: already reported for JS elsewhere
+        // - `const` / `in` / `out`: reported in `parse_class_element_name`
+        // - `static` / `async` / `accessor`: valid JavaScript
+        if !self.is_ts {
+            self.verify_modifiers(
+                &modifiers,
+                ModifierKinds::all_except([
+                    ModifierKind::Public,
+                    ModifierKind::Private,
+                    ModifierKind::Protected,
+                    ModifierKind::Override,
+                    ModifierKind::Readonly,
+                    ModifierKind::Declare,
+                ]),
+                false,
+                |modifier, _| diagnostics::modifier_ts_only(modifier.kind, modifier.span()),
+            );
+        }
+
         let r#abstract = modifiers.contains(ModifierKind::Abstract);
 
         let r#type = if r#abstract {
