@@ -45,6 +45,7 @@ pub trait GenExpr: GetSpan {
 impl Gen for Program<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.is_jsx = self.source_type.is_jsx();
+        p.is_typescript = self.source_type.is_typescript();
 
         // Allow for inserting comments to the top of the file.
         p.print_comments_at(0);
