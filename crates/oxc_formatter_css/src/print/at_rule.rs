@@ -1493,7 +1493,7 @@ fn has_unclaimed_comments_before(end: u32, f: &CssFormatter<'_, '_>) -> bool {
 
 /// Prettier value-parses an `@import` prelude and prints the value AST's groups
 /// (`flattenGroups` drops every single-child group first):
-/// - one comma group: the root IS that group, `group(indent(fill(words)))`
+/// - one comma group: the root IS that group, printed per `write_import_comma_group`
 /// - several: `indent(group(fill(<comma group + ",">...)))`, each comma group per `write_import_comma_group`
 ///
 /// So a long prelude breaks wherever the width runs out (`screen and\n  (max-width: 601px)`),
@@ -1521,7 +1521,8 @@ fn write_import_words<'a>(comma_groups: &[Vec<ImportWord<'_, 'a>>], f: &mut CssF
     };
     if let [words] = comma_groups {
         let body = format_with(move |f: &mut CssFormatter<'_, 'a>| write_words(words, f));
-        write!(f, group(&indent(&body)));
+        let url_first = matches!(words.first(), Some(ImportWord::Href(ImportPreludeHref::Url(_))));
+        write_import_comma_group(&body, words.len(), url_first, f);
         return;
     }
     let last = comma_groups.len() - 1;
@@ -1544,9 +1545,20 @@ fn write_import_words<'a>(comma_groups: &[Vec<ImportWord<'_, 'a>>], f: &mut CssF
     write!(f, indent(&group(&body)));
 }
 
-/// One comma group of a multi-group `@import` prelude (see `write_import_words`):
+/// One comma group of an `@import` prelude (see `write_import_words`):
 /// a multi-word group is `group(indent(words))`, a `url(...)` plus one word `group(words)`
 /// (Prettier's `insideURLFunctionInImportAtRuleNode`), a single word bare.
+///
+/// TODO: Followed for Prettier compatibility, but the layout is inconsistent and could be improved:
+/// - The `url(...)` exception has no counterpart for a string href or more words:
+///   alone, the wrapped word falls to column 0 under `@import`;
+///   in a list, it lines up with the next comma group, where the base rule puts a continuation one level deeper
+/// - The root cause is the value-parser grouping: the href joins the first media query's comma group,
+///   so sibling queries never line up (`url(...)\n    projection,\n  tv`),
+///   and the query list prints unlike `@media`'s (one query per line once broken)
+/// - Candidates: drop the exception (the base rule everywhere),
+///   or print the head (href, `layer()`, `supports()`) then the query list as `@media`'s
+///   (which cannot break inside a query, so a long single query overflows the width)
 fn write_import_comma_group<'a>(
     words: &dyn Format<'a, CssFormatContext<'a>>,
     word_count: usize,

@@ -14,3 +14,8 @@
 /* an unparsed `supports()` condition keeps the source's `ident (` gap */
 @import url("a.css") supports(not (display: grid) and (display: flex));
 @import url("a.css") supports(foo (display: grid));
+/* `url(...)` plus one word wraps without indent, alone or as a comma group; a string href indents */
+@import url("very-very-very-very-very-very-very-very-very-very-long-name.css") layer(base);
+@import "very-very-very-very-very-very-very-very-very-very-long-name-xxxxx.css" layer(base);
+@import url("very-very-very-very-very-very-very-very-very-very-long-name.css") projection,tv;
+@import "very-very-very-very-very-very-very-very-very-very-long-name-xxxxx.css" projection,tv;
