@@ -2749,10 +2749,29 @@ impl Gen for JSXAttributeValue<'_> {
                     p.print_ascii_byte(quote);
                 } else {
                     // A lone surrogate cannot be written directly as UTF-8.
-                    // Use a JavaScript string expression for this generated attribute value.
-                    p.print_ascii_byte(b'{');
-                    p.print_string_literal(lit, false);
-                    p.print_ascii_byte(b'}');
+                    // JSX strings have no backslash escapes, so write it as a character reference.
+                    const HEX: &[u8; 16] = b"0123456789ABCDEF";
+
+                    let quote = if lit.value.chars().any(|c| c == '"') { b'\'' } else { b'"' };
+                    p.print_ascii_byte(quote);
+                    for c in lit.value.chars() {
+                        if let Some(c) = c.to_char() {
+                            p.print_str(c.encode_utf8(&mut [0; 4]));
+                        } else {
+                            let unit = c.to_u32() as usize;
+                            p.code.print_ascii_bytes([
+                                b'&',
+                                b'#',
+                                b'x',
+                                HEX[unit >> 12],
+                                HEX[(unit >> 8) & 0xF],
+                                HEX[(unit >> 4) & 0xF],
+                                HEX[unit & 0xF],
+                                b';',
+                            ]);
+                        }
+                    }
+                    p.print_ascii_byte(quote);
                 }
             }
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
