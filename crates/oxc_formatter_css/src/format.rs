@@ -71,6 +71,8 @@ pub fn format_with_session<'a>(
 
     let context =
         CssFormatContext::new(options, source, comments, /* template_placeholders */ false);
+    // A root `Document` owns a fresh Tailwind class scope
+    let session = session.with_new_tailwind_scope();
     let mut state = FormatState::new_with_session(context, session.clone());
     // Pre-allocate: measured on 616 real-world files (bootstrap, vscode, saleor; css/scss/less),
     // 0.5x source bytes plus a 1024-element floor for tiny-file spikes avoids reallocation for 98% of the corpus.
@@ -80,12 +82,9 @@ pub fn format_with_session<'a>(
     write!(&mut buffer, FormatCssRoot { stylesheet: &stylesheet, has_bom, front_matter });
 
     let elements = buffer.into_vec();
-    let mut context = state.into_context();
+    let context = state.into_context();
 
-    let tailwind_classes = context.take_tailwind_classes();
-    let sorted_tailwind_classes = session.sort_tailwind_classes(tailwind_classes);
-
-    let ir = Document::new(elements, sorted_tailwind_classes);
+    let ir = Document::new(elements, session.take_sorted_tailwind_classes());
 
     Ok(Formatted::new(ir, context))
 }
@@ -138,12 +137,8 @@ pub fn parse_for_format<'a>(
 ///   (`` `PLACEHOLDER-N` `` markers + top-level declarations);
 ///   JSDoc-style whole-stylesheet fragments pass `false`
 ///
-/// The returned [`EmbeddedIr`] also carries the pre-sort `@apply` Tailwind
-/// classes the IR's `TailwindClass(index)` elements refer to (empty unless
-/// [`CssFormatOptions::sort_tailwindcss`] is on).
-/// The parent document owns the batch sort,
-/// so the caller must re-index the elements into the parent's class space
-/// (`DispatchPayload::into_doc`).
+/// `@apply` Tailwind classes go into the session's class scope (shared with the parent),
+/// the parent document owns the batch sort.
 ///
 /// # Errors
 /// Same as [`format()`].
@@ -171,10 +166,7 @@ pub fn format_to_ir<'a>(
 
     write!(&mut buffer, FormatCssEmbedded { stylesheet: &stylesheet, front_matter });
 
-    let elements = buffer.into_vec();
-    let tailwind_classes = state.context_mut().take_tailwind_classes();
-
-    Ok(EmbeddedIr { ir: elements, tailwind_classes })
+    Ok(EmbeddedIr { ir: buffer.into_vec() })
 }
 
 /// Normalized arena source, its front matter (when present),

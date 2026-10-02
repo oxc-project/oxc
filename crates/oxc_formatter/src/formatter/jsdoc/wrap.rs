@@ -558,7 +558,7 @@ mod tests {
     #[test]
     fn test_wrap_empty_text() {
         let result = wrap_text("", 80, 0, false);
-        assert!(result.is_empty());
+        assert_eq!(result, "");
     }
 
     #[test]

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 112/112 (100.00%)
 Positive Passed: 112/112 (100.00%)
-Negative Passed: 244/244 (100.00%)
+Negative Passed: 243/243 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -5141,44 +5141,6 @@ Negative Passed: 244/244 (100.00%)
    ·                                 ▲
    ╰────
   help: Try inserting a semicolon here
-
-  × TS(1266): An optional element cannot follow a rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:1:27]
- 1 │ type OptionalAfterRest = [...a: string[], b?: number];
-   ·                           ───────┬──────  ─────┬────
-   ·                                  │             ╰── Optional element here
-   ·                                  ╰── Rest element seen here
- 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
-   ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:2:23]
- 1 │ type OptionalAfterRest = [...a: string[], b?: number];
- 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
-   ·                       ───────┬──────  ───────┬──────
-   ·                              │               ╰── Second rest element here
-   ·                              ╰── First seen here
- 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
-   ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:3:35]
- 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
- 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
-   ·                                   ─────┬─────  ───────┬──────
-   ·                                        │              ╰── Second rest element here
-   ·                                        ╰── First seen here
- 4 │ type UnnamedRestAfterNamedRest = [...a: string[], ...number[]];
-   ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:4:35]
- 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
- 4 │ type UnnamedRestAfterNamedRest = [...a: string[], ...number[]];
-   ·                                   ───────┬──────  ─────┬─────
-   ·                                          │             ╰── Second rest element here
-   ·                                          ╰── First seen here
-   ╰────
 
   × TS(8011): Type arguments can only be used in TypeScript files.
    ╭─[misc/fail/type-arguments-in-js.js:1:18]

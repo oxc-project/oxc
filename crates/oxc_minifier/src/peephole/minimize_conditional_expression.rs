@@ -1,5 +1,5 @@
 use crate::TraverseCtx;
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
@@ -277,8 +277,7 @@ impl<'a> PeepholeOptimizations {
                         };
                         el.argument.take_in(ctx)
                     };
-                    let mut args =
-                        std::mem::replace(&mut consequent.arguments, ArenaVec::new_in(ctx));
+                    let mut args = consequent.arguments.take_in(ctx);
                     args[0] = Argument::new_spread_element(
                         expr.span,
                         Expression::new_conditional_expression(
@@ -304,8 +303,7 @@ impl<'a> PeepholeOptimizations {
                         consequent.arguments[0].to_expression_mut().take_in(ctx);
                     let alternate_first_arg =
                         alternate.arguments[0].to_expression_mut().take_in(ctx);
-                    let mut args =
-                        std::mem::replace(&mut consequent.arguments, ArenaVec::new_in(ctx));
+                    let mut args = consequent.arguments.take_in(ctx);
                     let cond_expr = Self::minimize_conditional(
                         expr.test.span(),
                         expr.test.take_in(ctx),

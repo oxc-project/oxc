@@ -743,12 +743,17 @@ fn serialize_code(
     }
 }
 
+/// Non-JS/TS fence languages a description embeds: the `prettier-plugin-jsdoc` set (its `parserSynonyms`),
+/// matched case-insensitively as there.
+/// Any other stays verbatim; add one on demand, as long as the host's dispatcher routes it.
+const EMBEDDED_FENCE_LANGUAGES: [&str; 6] = ["css", "less", "scss", "json", "yaml", "html"];
+
 /// Format code block content in a JSDoc Markdown description.
 ///
 /// Routing:
 /// - JS/TS code (fenced with a JS/TS lang tag, fenced with no lang tag, or indented blocks):
 ///   formatted in-process via [`format_jsdoc_js_snippet`] (`oxc_formatter`'s own parser/formatter).
-/// - Non-JS/TS fenced code (css, html, graphql, etc.):
+/// - Non-JS/TS fenced code of [`EMBEDDED_FENCE_LANGUAGES`]:
 ///   when the session carries a string embedder, routed through it (the string channel);
 ///   absent one (Rust-only conformance, or the language has no native branch), preserved verbatim.
 ///
@@ -764,8 +769,10 @@ fn format_code_value<'a>(
     if let Some(l) = lang
         && !is_js_ts_lang(l)
     {
-        if let Some(embed) = opts.session.string_embedder()
-            && let Ok(formatted) = embed(l, code, width)
+        if let Some(language) =
+            EMBEDDED_FENCE_LANGUAGES.into_iter().find(|name| l.eq_ignore_ascii_case(name))
+            && let Some(embed) = opts.session.string_embedder()
+            && let Ok(formatted) = embed(language, code, width)
         {
             return Cow::Owned(formatted);
         }

@@ -278,7 +278,7 @@ fn write_apply_prelude<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) -> bool {
         write!(f, "~");
         write!(f, text(quote));
     }
-    let index = f.context_mut().add_tailwind_class(class_list.to_string());
+    let index = f.session().add_tailwind_class(class_list.to_string());
     f.write_element(FormatElement::TailwindClass(index));
     if let Some(quote) = wrapper {
         write!(f, text(quote));

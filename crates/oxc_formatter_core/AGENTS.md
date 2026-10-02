@@ -29,7 +29,7 @@ Every Prettier doc primitive its own language printers emit has a counterpart he
   that manual wiring is `ifBreak({groupId})` there and `if_group_breaks(..).with_group_id(..)` here
   See `oxc_formatter_yaml`'s `mapping_item.rs` for the full pattern.
   Oxfmt's Doc→IR mechanical conversion maps `expandedStates` to the same `BestFitting` primitive.
-- `align` is `prefix_align()`
+- A string `align` is `prefix_align()` (a visible token) or `space_align()` (spaces, which stay spaces under `useTabs` where a number `align` becomes a tab)
 
 ### The printer never trims
 
@@ -76,18 +76,17 @@ The core is parameterized over a consumer-supplied context so it stays language-
 
 ### Embedded-language infrastructure (`session/`)
 
-`FormatSession` / `FormatDispatcher` / `DispatchRequest` / `DispatchPayload` / `TailwindCollector` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
+`FormatSession` / `FormatDispatcher` / `DispatchRequest` / `DispatchPayload` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
 
 - The orchestrator (oxfmt) assembles the dispatcher, mapping language names to formatter implementations (or a Prettier fallback)
   - Formatter crates only invoke it via `FormatSession::dispatch`
-- Parent and child share one arena and one `GroupId` space through the session
-- A language crate's `format_to_ir` entry returns `EmbeddedIr` (IR + pre-sort Tailwind classes), one shape for every child language, no per-crate tuples
-- Cross-language contract data is first-class on `DispatchPayload` (`tailwind_classes`)
-  - Only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`), core never learns concrete languages
-- Consumers take the doc via `DispatchPayload::into_doc(collector)`, which folds the Tailwind class merge into consumption
-  - The printer's `debug_assert` backstops any hand-rolled consumption that skips the merge
+- Parent and child share one arena, one `GroupId` space, and one Tailwind class scope through the session
+  - A child adds classes straight into the parent's index space, so its doc is written as-is (no remap)
+  - A root formatter opens a fresh scope (`with_new_tailwind_scope`) and sorts it when finalizing its `Document` (`take_sorted_tailwind_classes`)
+- A language crate's `format_to_ir` entry returns `EmbeddedIr`, one shape for every child language, no per-crate tuples
+- Only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`), core never learns concrete languages
 - `FormatSession` (`session/mod.rs`) is the execution unit:
-  - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), the host's `SessionServices`, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
+  - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), one Tailwind class scope (`Rc<RefCell<Vec<String>>>`), the host's `SessionServices`, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
   - `SessionServices` names the three per-run duties, one field each: `dispatcher` (IR channel), `string_embedder` (string-out channel, `(language, code, print_width)`; temporary, see domain (4)'s exit criterion), `tailwind_sorter` (print-time batch sort). Core only transports them
   - `FormatSession::dispatch_to_string(request, printer_options)` is the string-out counterpart of `dispatch` (caller supplies the printer options; `Ok(None)` = deliberate keep; see its rustdoc)
   - `FormatState` holds one (`new_with_session`; plain `new` wraps a service-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write

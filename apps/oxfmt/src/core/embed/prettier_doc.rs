@@ -65,11 +65,7 @@ pub fn build_prettier_fallback(
                             .and_then(Value::as_bool),
                     }) as Box<dyn std::any::Any>
                 });
-                Ok(DispatchResponse::Formatted(DispatchPayload {
-                    doc: ir,
-                    tailwind_classes: Vec::new(),
-                    child_context,
-                }))
+                Ok(DispatchResponse::Formatted(DispatchPayload { doc: ir, child_context }))
             })
             .inspect_err(|err| {
                 debug!("Failed to format embedded doc for parser '{parser_name}': {err}");

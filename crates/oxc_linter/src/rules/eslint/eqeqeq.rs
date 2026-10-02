@@ -312,10 +312,7 @@ fn are_literals_and_same_type(left: &Expression, right: &Expression) -> bool {
 }
 
 fn is_null_check(binary_expr: &BinaryExpression) -> bool {
-    matches!(
-        (&binary_expr.left, &binary_expr.right),
-        (_, Expression::NullLiteral(_)) | (Expression::NullLiteral(_), _)
-    )
+    binary_expr.left.is_null() || binary_expr.right.is_null()
 }
 
 #[test]
