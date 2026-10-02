@@ -101,46 +101,52 @@ mod tests {
 
     use super::*;
 
-    /// Check [`kw_verify_batch`] gets each word's length from the word bitmap and sets its kind,
+    /// Check [`kw_flush`] gets each word's length from the word bitmap and sets its kind,
     /// including for words longer than 16 bytes, and words crossing a 64-byte boundary.
     #[test]
-    fn test_kw_verify_batch() {
-        let words: [(usize, &str, TokenKind, TokenKind); 6] = [
-            (3, "class", TokenKind::KwClass, TokenKind::KwClass),
-            (20, "interface", TokenKind::KwInterface, TokenKind::Ident),
-            (40, "instanceof", TokenKind::KwInstanceof, TokenKind::KwInstanceof),
-            (58, "instanceofabcdefghijklmnopqrstuvwxyz", TokenKind::Ident, TokenKind::Ident),
-            (100, "abcdefghijklmnopq", TokenKind::Ident, TokenKind::Ident),
-            (125, "typeof", TokenKind::KwTypeof, TokenKind::KwTypeof),
+    fn test_kw_flush() {
+        let words: [(usize, &str, TokenKind, bool); 6] = [
+            (3, "class", TokenKind::KwClass, false),
+            (20, "interface", TokenKind::KwInterface, true),
+            (40, "instanceof", TokenKind::KwInstanceof, false),
+            (58, "instanceofabcdefghijklmnopqrstuvwxyz", TokenKind::Ident, false),
+            (100, "abcdefghijklmnopq", TokenKind::Ident, false),
+            (125, "typeof", TokenKind::KwTypeof, false),
         ];
 
         let mut src = [b' '; 256];
+        let mut kinds = [tk!(Whitespace); 256];
         let mut word_bitmap = [0u64; 5];
         let mut positions = vec![];
         for &(pos, text, _, _) in &words {
             src[pos..pos + text.len()].copy_from_slice(text.as_bytes());
             for i in pos..pos + text.len() {
+                kinds[i] = tk!(Ident);
                 word_bitmap[i >> 6] |= 1 << (i & 63);
             }
             positions.push(pos as u32);
         }
 
         for is_ts in [false, true] {
-            let mut kind = [tk!(Ident); 256];
-            // SAFETY: `src` and `kind` cover every word plus 16 bytes,
+            let mut kinds = kinds; // Clone
+            // SAFETY: `src` and `kinds` cover every word plus 16 bytes,
             // and `word_bitmap` has a spare `u64` after the last word
             unsafe {
-                let args =
-                    (src.as_ptr(), word_bitmap.as_ptr(), kind.as_mut_ptr(), positions.as_ptr());
-                if is_ts {
-                    kw_verify_batch::<true>(args.0, args.1, args.2, args.3, positions.len());
-                } else {
-                    kw_verify_batch::<false>(args.0, args.1, args.2, args.3, positions.len());
-                }
+                kw_flush(
+                    is_ts,
+                    src.as_ptr(),
+                    word_bitmap.as_ptr(),
+                    kinds.as_mut_ptr(),
+                    positions.as_ptr(),
+                    positions.len(),
+                );
             }
-            for &(pos, text, ts_kind, js_kind) in &words {
-                let expected = if is_ts { ts_kind } else { js_kind };
-                assert_eq!(kind[pos], expected as u8, "`{text}` (is_ts = {is_ts})");
+
+            for &(pos, text, mut kind, is_ts_only_keyword) in &words {
+                if is_ts_only_keyword && !is_ts {
+                    kind = TokenKind::Ident;
+                }
+                assert_eq!(kinds[pos], kind as u8, "`{text}` (is_ts = {is_ts})");
             }
         }
     }
