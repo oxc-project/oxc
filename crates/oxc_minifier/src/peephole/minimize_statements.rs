@@ -230,10 +230,6 @@ impl<'a> PeepholeOptimizations {
                 continue;
             };
 
-            {
-                let source_stmt = stmts.get(statement_index).unwrap();
-                ctx.drop_statement(source_stmt);
-            }
             let Statement::ImportDeclaration(source_import) =
                 stmts.get_mut(statement_index).unwrap()
             else {
@@ -272,7 +268,8 @@ impl<'a> PeepholeOptimizations {
         // Remove imports in reverse order so removing a later import does not
         // shift the indices of any merge that is still waiting to be applied.
         for &source_index in merges.iter().rev() {
-            stmts.remove(source_index);
+            let source_stmt = stmts.remove(source_index);
+            ctx.drop_statement(&source_stmt);
         }
     }
 
