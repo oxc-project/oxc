@@ -11,6 +11,7 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
+use oxc_str::JSStrBuilder;
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -560,16 +561,23 @@ impl<'a> PeepholeOptimizations {
 
         match object {
             Expression::StringLiteral(s) => {
-                if let StringCharAtResult::Value(c) =
-                    s.value.as_str()?.char_at(Some(property.into()))
-                {
-                    s.span = span;
-                    s.value = Str::from_str_in(&c.to_string(), ctx).into();
-                    s.raw = None;
-                    Some(object.take_in(ctx))
+                let value = if let Some(value) = s.value.as_str() {
+                    let StringCharAtResult::Value(c) = value.char_at(Some(property.into())) else {
+                        return None;
+                    };
+                    Str::from_str_in(&c.to_string(), ctx).into()
                 } else {
-                    None
-                }
+                    // A string with a lone surrogate has no `&str` form, so read the code unit.
+                    // The result is that one code unit, which may itself be a lone surrogate.
+                    let unit = s.value.encode_utf16().nth(property as usize)?;
+                    let mut builder = JSStrBuilder::new_in(ctx);
+                    builder.push_code_unit(unit);
+                    builder.into_js_str()
+                };
+                s.span = span;
+                s.value = value;
+                s.raw = None;
+                Some(object.take_in(ctx))
             }
             Expression::ArrayExpression(array_expr) => {
                 let length_until_spread =
