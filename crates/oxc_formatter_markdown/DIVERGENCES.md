@@ -374,6 +374,10 @@ Prettier tests a regex of list markers, `#`s and `>` only, so a wrapped `<div>`,
 A kept line break (`proseWrap: preserve`) is dropped by the same rule when its next line only stays text
 by its indentation, which a paragraph does not keep: `| x | y |` over an 8-space `|---|---|` prints as one line,
 Prettier's `|---|---|` at column 0 is a table on the next parse (prettier/prettier#19847).
+A delimiter row only counts under a header with as many cells (`lexical::table_delimiter_activates`, asked about the line above):
+under another one it opens nothing and the kept break before it stays.
+A break that cannot be dropped (a hard break, or a line shape on either side of it) keeps the line as text behind four spaces instead:
+indented code cannot interrupt a paragraph (the pin's math span after a hard break).
 Prettier drops the break before `- item`, `# heading` and `> quote` itself.
 
 ## stray-delimiters
@@ -559,3 +563,24 @@ end
 A setext heading's content wraps like a paragraph's, which Prettier breaks before the link.
 Prettier makes setext headings breakable but prints their children without the paragraph's `flattenFill`:
 each sentence is its own fill, so the whitespace before a link, emphasis or code span ends a fill and never breaks.
+
+## nul-character
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/nul-character.md`
+
+```markdown
+<!-- input (␀ is U+0000) -->
+`c␀d`
+
+<!-- ours -->
+`c␀d`
+
+<!-- prettier -->
+`c�d`
+```
+
+A NUL stays as written, in code spans and code blocks too.
+CommonMark replaces it with U+FFFD for security when rendering;
+Prettier prints the decoded value of code, so the replacement lands in the source, while plain text keeps its NUL (a raw slice).
+Ours prints every node as written, the next parse replaces it again.
