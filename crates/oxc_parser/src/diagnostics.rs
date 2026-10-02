@@ -897,6 +897,15 @@ parser_diagnostics! {
             .with_allowed_modifier_help(allowed)
     };
 
+    // The '{0}' modifier can only be used in TypeScript files. ts(8009)
+    modifier_ts_only(modifier: Modifier, _allowed: Option<ModifierKinds>) => {
+        ts_error(
+            "8009",
+            format!("The '{}' modifier can only be used in TypeScript files.", modifier.kind),
+        )
+        .with_label(modifier.span())
+    };
+
     accessor_only_on_property_declaration(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         ts_error("1275", "'accessor' modifier can only appear on a property declaration.")
             .with_label(modifier.span())
