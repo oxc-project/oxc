@@ -2,14 +2,16 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::ast::{Expression, SequenceExpression};
 use oxc_span::GetSpan;
 
-use crate::peephole::PeepholeOptimizations;
+use crate::TraverseCtx;
+
+use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// Joins two expressions into a sequence, preserving evaluation order.
     pub fn join_sequence(
         a: Expression<'a>,
         b: Expression<'a>,
-        ctx: &crate::traverse_context::MinifierTraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         if let Expression::SequenceExpression(mut sequence_expr) = a {
             // `(a, b); c`
@@ -30,7 +32,9 @@ impl<'a> PeepholeOptimizations {
     /// Returns the final expression, descending through non-empty trailing sequences.
     /// For `(a, (b, c))`, returns `c`. An empty outer sequence returns [`None`];
     /// an empty trailing sequence is returned as-is.
-    pub fn last_expression_in_sequence(seq: &SequenceExpression<'a>) -> Option<&Expression<'a>> {
+    pub fn last_expression_in_sequence<'s>(
+        seq: &'s SequenceExpression<'a>,
+    ) -> Option<&'s Expression<'a>> {
         let last = seq.expressions.last()?;
         match last {
             Expression::SequenceExpression(inner) if !inner.expressions.is_empty() => {
