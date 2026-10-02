@@ -3,8 +3,8 @@
 use oxc_formatter_core::{
     Buffer,
     builders::{
-        align, exact_line_breaks, group, hard_line_break, literal_line_break, mark_as_root,
-        soft_line_break_or_space, space, text, token,
+        exact_line_breaks, group, hard_line_break, literal_line_break, mark_as_root,
+        soft_line_break_or_space, space, space_align, text, token,
     },
     format_args,
     spec::{is_suppression_marker, parse_front_matter},
@@ -351,7 +351,7 @@ fn write_footnote_definition<'a>(
     let parent = Parent::Container;
     write!(
         f,
-        align(
+        space_align(
             4,
             &mark_as_root(&format_with(|f| {
                 let first = format_with(|f| write_block(&children[0], children, 0, parent, f));

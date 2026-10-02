@@ -1055,15 +1055,15 @@ fn write_token_value<'a>(
             && (matches!(&only[0].token, Token::LParen(_))
                 || (matches!(&only[0].token, Token::Ident(_))
                     && matches!(&only[1].token, Token::LParen(_))));
-        if top_level && !whole_call {
+        if whole_call {
+            write_token_comma_group(only, top_level, f);
+        } else if top_level {
             let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write_token_comma_group(only, f);
+                write_token_comma_group(only, true, f);
             });
             write!(f, group(&indent(&body)));
-        } else if whole_call {
-            write_token_comma_group(only, f);
         } else {
-            write_token_comma_group_grouped(only, f);
+            write_token_comma_group_grouped(only, false, f);
         }
         return;
     }
@@ -1075,7 +1075,7 @@ fn write_token_value<'a>(
             for (i, group_tokens) in groups_ref.iter().enumerate() {
                 let is_last = i + 1 == groups_ref.len();
                 let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                    write_token_comma_group_grouped(group_tokens, f);
+                    write_token_comma_group_grouped(group_tokens, i == 0, f);
                     if !is_last {
                         write!(f, ",");
                     }
@@ -1106,15 +1106,22 @@ fn write_token_value<'a>(
                     write!(f, soft_line_break_or_space());
                 }
             }
-            write_token_comma_group_grouped(group_tokens, f);
+            write_token_comma_group_grouped(group_tokens, false, f);
         }
     }
 }
 
 /// Space-separated tokens within one comma group;
 /// balanced paren regions are printed as breakable groups.
-fn write_token_comma_group<'a>(tokens: &[TokenWithSpan<'a>], f: &mut CssFormatter<'_, 'a>) {
-    write_token_comma_group_after(None, tokens, f);
+/// `prelude_head`: the group starts the at-rule prelude,
+/// so a spaced `name (` hugs like Prettier's `@include name (...)` rewrite (only the first call);
+/// elsewhere the source gap decides.
+fn write_token_comma_group<'a>(
+    tokens: &[TokenWithSpan<'a>],
+    prelude_head: bool,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    write_token_comma_group_after(None, tokens, prelude_head, f);
 }
 
 /// `write_token_comma_group` with `head` as the fill's first entry
@@ -1122,11 +1129,13 @@ fn write_token_comma_group<'a>(tokens: &[TokenWithSpan<'a>], f: &mut CssFormatte
 fn write_token_comma_group_after<'a>(
     head: Option<&dyn Format<'a, CssFormatContext<'a>>>,
     tokens: &[TokenWithSpan<'a>],
+    prelude_head: bool,
     f: &mut CssFormatter<'_, 'a>,
 ) {
     let source = f.context().source_text();
 
-    let hug_lparen = tokens.len() > 1
+    let hug_lparen = prelude_head
+        && tokens.len() > 1
         && matches!(&tokens[1].token, Token::LParen(_))
         && matches!(&tokens[0].token, Token::Ident(_))
         && !source.text_for(&to_span(&tokens[0].span)).eq_ignore_ascii_case("if");
@@ -1219,7 +1228,11 @@ fn write_token_comma_group_after<'a>(
 /// Wrapper: a comma group is its own breakable group with indent.
 /// Except when it contains paren regions,
 /// which provide their own indentation (avoids double-indenting `name(...)` contents).
-fn write_token_comma_group_grouped<'a>(tokens: &[TokenWithSpan<'a>], f: &mut CssFormatter<'_, 'a>) {
+fn write_token_comma_group_grouped<'a>(
+    tokens: &[TokenWithSpan<'a>],
+    prelude_head: bool,
+    f: &mut CssFormatter<'_, 'a>,
+) {
     // A group that IS one call/paren region delegates breaking to the parens
     let whole_region = !tokens.is_empty()
         && matches!(&tokens[tokens.len() - 1].token, Token::RParen(_))
@@ -1237,11 +1250,11 @@ fn write_token_comma_group_grouped<'a>(tokens: &[TokenWithSpan<'a>], f: &mut Css
             })
             .any(|t| matches!(&t.token, Token::Colon(_)));
     if whole_region || kv_region {
-        write_token_comma_group(tokens, f);
+        write_token_comma_group(tokens, prelude_head, f);
         return;
     }
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        write_token_comma_group(tokens, f);
+        write_token_comma_group(tokens, prelude_head, f);
     });
     write!(f, group(&indent(&body)));
 }
@@ -1789,7 +1802,7 @@ fn write_import_modifier_group<'a>(
                     _ => None,
                 })
                 .collect();
-            write_token_comma_group_after(head.filter(|_| run_start == 0), &tokens, f);
+            write_token_comma_group_after(head.filter(|_| run_start == 0), &tokens, false, f);
         } else {
             value::write_component_value(&values[i], ValueContext::default(), f);
             i += 1;

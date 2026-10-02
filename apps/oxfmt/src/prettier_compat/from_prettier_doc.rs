@@ -208,47 +208,71 @@ fn convert_group<'a>(
         let final_state = expanded_states.last().unwrap_or(contents);
         return convert_group_contents(Some(final_state), gid, true, out, ctx);
     }
-    // A single state is just a regular group. BestFitting requires at least two variants
+    let mut variants = ArenaVec::with_capacity_in(expanded_states.len().max(2), &ctx.allocator);
     if expanded_states.len() <= 1 {
-        return convert_group_contents(Some(contents), gid, false, out, ctx);
+        // A single state still goes through `BestFitting`, as `[flat, expanded]`:
+        // Prettier never propagates a hardline's break into a conditional group,
+        // it prints the state flat when it fits up to its first hardline (YAML's `key: >-`), expanded otherwise.
+        // Without an id the two variants are the same elements, so convert once:
+        // single-state groups nest per YAML mapping level, converting twice would double per level.
+        let flat = convert_variant(contents, GroupMode::Flat, gid, ctx)?;
+        let expanded = if gid.is_some() {
+            convert_variant(contents, GroupMode::Expand, gid, ctx)?
+        } else {
+            flat
+        };
+        variants.push(flat);
+        variants.push(expanded);
+    } else {
+        for (index, state) in
+            std::iter::once(contents).chain(expanded_states.iter().skip(1)).enumerate()
+        {
+            let mode = if index + 1 == expanded_states.len() {
+                GroupMode::Expand
+            } else {
+                GroupMode::Flat
+            };
+            variants.push(convert_variant(state, mode, gid, ctx)?);
+        }
     }
 
-    let mut variants = ArenaVec::with_capacity_in(expanded_states.len(), &ctx.allocator);
-    for (index, state) in
-        std::iter::once(contents).chain(expanded_states.iter().skip(1)).enumerate()
-    {
-        let mode =
-            if index + 1 == expanded_states.len() { GroupMode::Expand } else { GroupMode::Flat };
-        let mut variant = ArenaVec::new_in(&ctx.allocator);
-        variant.push(FormatElement::Tag(Tag::StartEntry));
-        // `BestFitting` itself supplies the selected variant's print mode.
-        // A wrapper group is only needed to publish that mode under Prettier's group ID for `if-break(groupId)` consumers.
-        // Wrapping an ID-less variant would remeasure it after selection
-        // and can incorrectly expand an intermediate state that Prettier prints flat.
-        // (No core Prettier printer passes an id to `conditionalGroup`; this branch is defensive.
-        // Note the same remeasure hazard reappears here via `propagate_expand` if a variant contains a top-level hard line,
-        // so revisit before relying on it for real inputs.)
-        if gid.is_some() {
-            variant.push(FormatElement::Tag(Tag::StartGroup(
-                Group::new().with_id(gid).with_mode(mode),
-            )));
-        }
-        convert_doc(state, &mut variant, ctx)?;
-        if gid.is_some() {
-            variant.push(FormatElement::Tag(Tag::EndGroup));
-        }
-        variant.push(FormatElement::Tag(Tag::EndEntry));
-        // The trailing `EndEntry` tag keeps postprocess's trailing-hardline strip from firing:
-        // a variant retains its trailing hardline (content may follow the `BestFitting`).
-        postprocess(&mut variant, ctx.allocator);
-        variants.push(variant.into_arena_slice());
-    }
-
-    // SAFETY: `expanded_states.len() > 1`, and the loop emits exactly that many variants.
+    // SAFETY: Both branches emit at least two variants.
     out.push(FormatElement::BestFitting(unsafe {
         BestFittingElement::from_vec_unchecked(variants)
     }));
     Ok(())
+}
+
+/// One `BestFitting` variant of a conditional group's `state`, printed in `mode`.
+fn convert_variant<'a>(
+    state: &Value,
+    mode: GroupMode,
+    gid: Option<GroupId>,
+    ctx: &mut FmtCtx<'a, '_>,
+) -> Result<&'a [FormatElement<'a>], String> {
+    let mut variant = ArenaVec::new_in(&ctx.allocator);
+    variant.push(FormatElement::Tag(Tag::StartEntry));
+    // `BestFitting` itself supplies the selected variant's print mode.
+    // A wrapper group is only needed to publish that mode under Prettier's group ID for `if-break(groupId)` consumers.
+    // Wrapping an ID-less variant would remeasure it after selection
+    // and can incorrectly expand an intermediate state that Prettier prints flat.
+    //
+    // (No core Prettier printer passes an id to `conditionalGroup`; this branch is defensive.
+    // Note the same remeasure hazard reappears here via `propagate_expand` if a variant contains a top-level hard line,
+    // so revisit before relying on it for real inputs.)
+    if gid.is_some() {
+        variant
+            .push(FormatElement::Tag(Tag::StartGroup(Group::new().with_id(gid).with_mode(mode))));
+    }
+    convert_doc(state, &mut variant, ctx)?;
+    if gid.is_some() {
+        variant.push(FormatElement::Tag(Tag::EndGroup));
+    }
+    variant.push(FormatElement::Tag(Tag::EndEntry));
+    // The trailing `EndEntry` tag keeps postprocess's trailing-hardline strip from firing:
+    // a variant retains its trailing hardline (content may follow the `BestFitting`).
+    postprocess(&mut variant, ctx.allocator);
+    Ok(variant.into_arena_slice())
 }
 
 fn convert_group_contents<'a>(
@@ -325,42 +349,23 @@ fn convert_align<'a>(
             out.push(FormatElement::Tag(Tag::EndDedent(DedentMode::Root)));
             Ok(())
         }
-        // A visible string align is a prefix on every line
-        // (markdown's blockquote `"> "` is the only one Prettier's own printers emit):
-        // intern here if a plugin brings another.
-        Value::String(s) if s == "> " => {
-            out.push(FormatElement::Tag(Tag::StartPrefix(Prefix::new(&"> "))));
+        // A string align is a prefix on every line, never turned into a tab under `useTabs`:
+        // markdown's blockquote `"> "` (the only visible one Prettier's own printers emit, intern here if a plugin brings another)
+        // and its container columns `" ".repeat(n)` (`""` aligns nothing)
+        Value::String(s) if s == "> " || s.bytes().all(|b| b == b' ') => {
+            let prefixes: Vec<Prefix> = if s == "> " {
+                vec![Prefix::new(&"> ")]
+            } else {
+                Prefix::spaces(s.len()).collect()
+            };
+            for &prefix in &prefixes {
+                out.push(FormatElement::Tag(Tag::StartPrefix(prefix)));
+            }
             if let Some(contents) = obj.get("contents") {
                 convert_doc(contents, out, ctx)?;
             }
-            out.push(FormatElement::Tag(Tag::EndPrefix));
+            out.extend(prefixes.iter().map(|_| FormatElement::Tag(Tag::EndPrefix)));
             Ok(())
-        }
-        Value::String(s) if s.trim().is_empty() => {
-            // Whitespace alignment (e.g., "  " for markdown list continuation indent).
-            // Prettier uses the string length as the number of spaces to align by.
-            if s.is_empty() {
-                // Empty string → no alignment, just render contents
-                if let Some(contents) = obj.get("contents") {
-                    convert_doc(contents, out, ctx)?;
-                }
-                return Ok(());
-            }
-            debug_assert!(
-                s.len() <= 255,
-                "align string length {} exceeds NonZeroU8 range",
-                s.len()
-            );
-            #[expect(clippy::cast_possible_truncation)]
-            if let Some(nz) = NonZeroU8::new(s.len() as u8) {
-                out.push(FormatElement::Tag(Tag::StartAlign(Align::new(nz))));
-                if let Some(contents) = obj.get("contents") {
-                    convert_doc(contents, out, ctx)?;
-                }
-                out.push(FormatElement::Tag(Tag::EndAlign));
-                return Ok(());
-            }
-            Err(format!("Unsupported align value: {n}"))
         }
         Value::Object(obj_val) => {
             // `align({type: "root"}, ...)` = Prettier's `markAsRoot()`:
@@ -574,21 +579,46 @@ pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a 
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
-    use oxc_formatter_core::{Document, PrintWidth, PrinterOptions, UniqueGroupIdBuilder};
+    use oxc_formatter_core::{
+        Document, IndentStyle, PrintWidth, PrinterOptions, UniqueGroupIdBuilder,
+    };
     use serde_json::{Value, json};
 
     use super::{convert_envelope, postprocess};
 
     fn print_doc(doc: &Value, print_width: u32) -> String {
+        print_doc_with(
+            doc,
+            PrinterOptions::default().with_print_width(PrintWidth::new(print_width)),
+        )
+    }
+
+    fn print_doc_with(doc: &Value, options: PrinterOptions) -> String {
         let allocator = Allocator::default();
         let group_id_builder = UniqueGroupIdBuilder::default();
         let (mut ir, _) =
             convert_envelope(json!([doc, {}]), &allocator, &group_id_builder).unwrap();
         postprocess(&mut ir, &allocator);
-        Document::new(ir, vec![])
-            .print(0, PrinterOptions::default().with_print_width(PrintWidth::new(print_width)))
-            .unwrap()
-            .into_code()
+        Document::new(ir, vec![]).print(0, options).unwrap().into_code()
+    }
+
+    #[test]
+    fn space_string_align_stays_spaces_under_tabs() {
+        let doc = json!([
+            "a",
+            {
+                "type": "align",
+                "n": "  ",
+                "contents": [
+                    { "type": "line", "hard": true },
+                    "b",
+                    { "type": "indent", "contents": [{ "type": "line", "hard": true }, "c"] }
+                ]
+            }
+        ]);
+        let options = PrinterOptions::default().with_indent_style(IndentStyle::Tab);
+        // Prettier's markdown list item: the item's columns, then the child's tab
+        assert_eq!(print_doc_with(&doc, options), "a\n  b\n  \tc");
     }
 
     #[test]
@@ -618,14 +648,20 @@ mod tests {
     }
 
     #[test]
-    fn conditional_group_with_one_state_is_a_regular_group() {
-        let group = json!({
-            "type": "group",
-            "contents": ["a", { "type": "line" }, "b"],
-            "expandedStates": [["a", { "type": "line" }, "b"]]
-        });
+    fn conditional_group_with_one_state_fits_up_to_its_first_hardline() {
+        let state = json!([
+            "a:",
+            { "type": "line" },
+            ">-",
+            { "type": "line", "hard": true },
+            { "type": "break-parent" },
+            "b"
+        ]);
+        let group = json!({ "type": "group", "contents": state, "expandedStates": [state] });
 
-        assert_eq!(print_doc(&group, 80), "a b");
+        // A hardline does not break a conditional group (Prettier's YAML block scalar key)
+        assert_eq!(print_doc(&group, 80), "a: >-\nb");
+        assert_eq!(print_doc(&group, 3), "a:\n>-\nb");
     }
 
     #[test]

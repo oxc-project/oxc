@@ -14,6 +14,11 @@ Style facts (markers, fence kind, setext, break kind, list padding, ...) are AST
 so the printer never re-derives layout from the source text.
 Formatter policy (sentence splitting, CJK, aligned lists, escaping) stays here.
 
+Container columns (list item, footnote, indented code) are `space_align`, never `align`:
+the next parse strips exactly those columns and a tab spans up to 4,
+while an `align` becomes a tab under `useTabs` once an `indent` or a blockquote prefix follows it.
+`tests/fixtures/markdown/use-tabs/` pins it.
+
 ### Escaping
 
 Text is printed as written. Escapes are added in three places only:

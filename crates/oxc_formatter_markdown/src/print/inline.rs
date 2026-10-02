@@ -9,9 +9,9 @@ use cow_utils::CowUtils;
 
 use oxc_formatter_core::arena_cow_str;
 use oxc_markdown_parser::{
-    Span,
+    Constructs, Span,
     ast::{CodeSpan, Emphasis, HardBreakKind, Inline, LinkKind, Strong},
-    escapes_next, unicode,
+    escapes_next, lexical, unicode,
 };
 
 use crate::{
@@ -23,8 +23,8 @@ use crate::{
 use super::{
     HTML_WHITESPACE, MarkdownFormatter, backticks, escape, is_split_whitespace, join_pieces,
     line_shape::{
-        is_line_shape_start, line_from, line_opens_block, line_or_prefix_opens_block, line_shape,
-        printed_line_at, printed_line_opens_block, source_line_at,
+        is_line_shape_start, line_above, line_from, line_opens_block, line_or_prefix_opens_block,
+        line_shape, printed_line_at, printed_line_opens_block, source_line_at,
     },
     link,
     parts::{Atom, Parts, Sep},
@@ -625,7 +625,17 @@ fn next_word_of<'a>(
             Some(' '),
             edge_char(children, i + 1, delimiter, false, f),
         );
-    Some(words::NextWord { word, line, escaped, in_sentence })
+    // A delimiter row makes a table only under a matching header: the line above, under `preserve`
+    let header = if f.options().prose_wrap == ProseWrap::Preserve
+        && matches!(children[i], Inline::SoftBreak(_))
+        && lexical::line_start(&Constructs::markdown(), line, true)
+            == Some(lexical::LineStart::TableDelimiterRow)
+    {
+        line_above(children, i, f)
+    } else {
+        None
+    };
+    Some(words::NextWord { word, line, escaped, in_sentence, header })
 }
 
 fn first_word(line: &str) -> Option<&str> {

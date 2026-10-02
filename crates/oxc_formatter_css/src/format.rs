@@ -62,12 +62,8 @@ pub fn format_with_session<'a>(
         session.input_kind() == InputKind::PhysicalFile,
         "format_with_session is the physical-root entry; embedded inputs go through format_to_ir"
     );
-    let ParsedCss { stylesheet, comments, source, has_bom, front_matter } = parse_for_format(
-        session.allocator(),
-        source_text,
-        options,
-        /* template_placeholders */ false,
-    )?;
+    let ParsedCss { stylesheet, comments, source, has_bom, front_matter } =
+        parse_for_format(session.allocator(), source_text, options, CssRoot::Stylesheet)?;
 
     let context =
         CssFormatContext::new(options, source, comments, /* template_placeholders */ false);
@@ -105,7 +101,7 @@ pub struct ParsedCss<'a> {
 ///
 /// [`format()`] goes through this too, so what a caller sees is exactly what gets formatted.
 /// Owns the envelope (BOM split, `\r` normalization, front matter blanking).
-/// `template_placeholders` is [`format_to_ir`]'s css-in-js parse mode.
+/// `root` is what the source is: [`format()`] parses a stylesheet, [`format_to_ir`] a fragment.
 ///
 /// # Errors
 /// Same as [`format()`].
@@ -113,7 +109,7 @@ pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
     options: CssFormatOptions,
-    template_placeholders: bool,
+    root: CssRoot,
 ) -> Result<ParsedCss<'a>, OxcDiagnostic> {
     let (has_bom, source_text) = split_bom(source_text);
 
@@ -121,8 +117,7 @@ pub fn parse_for_format<'a>(
     // the session's dispatcher decides whether its body actually formats (`write_front_matter`).
     let PreparedSource { source, parse_source, front_matter } =
         prepare_source(allocator, source_text);
-    let (stylesheet, comments) =
-        parse_stylesheet(allocator, parse_source, options, template_placeholders)?;
+    let (stylesheet, comments) = parse_stylesheet(allocator, parse_source, options, root)?;
 
     Ok(ParsedCss { stylesheet, comments, source, has_bom, front_matter })
 }
@@ -133,9 +128,9 @@ pub fn parse_for_format<'a>(
 /// Unlike [`format()`], this:
 /// - allocates from the session's shared arena and `GroupId` space
 /// - emits neither a BOM nor the trailing newline
-/// - `template_placeholders` enables the css-in-js parse mode
-///   (`` `PLACEHOLDER-N` `` markers + top-level declarations);
-///   JSDoc-style whole-stylesheet fragments pass `false`
+/// - parses a fragment ([`CssRoot::Fragment`]), so root declarations are statements
+/// - `template_placeholders` enables the css-in-js parse mode ([`CssRoot::CssInJsTemplate`]);
+///   JSDoc / Markdown code blocks pass `false`
 ///
 /// `@apply` Tailwind classes go into the session's class scope (shared with the parent),
 /// the parent document owns the batch sort.
@@ -150,8 +145,9 @@ pub fn format_to_ir<'a>(
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part,
     // so the BOM split inside `parse_for_format` is a no-op here.
+    let root = if template_placeholders { CssRoot::CssInJsTemplate } else { CssRoot::Fragment };
     let ParsedCss { stylesheet, comments, source, front_matter, .. } =
-        parse_for_format(session.allocator(), source_text, options, template_placeholders)?;
+        parse_for_format(session.allocator(), source_text, options, root)?;
     if front_matter.is_some() && !session.input_kind().owns_front_matter() {
         // A fragment (css-in-js, JSDoc fence) never acquires file envelope semantics:
         // refuse the whole child instead of partially treating its head as front matter.
@@ -167,6 +163,18 @@ pub fn format_to_ir<'a>(
     write!(&mut buffer, FormatCssEmbedded { stylesheet: &stylesheet, front_matter });
 
     Ok(EmbeddedIr { ir: buffer.into_vec() })
+}
+
+/// What a CSS source is parsed as.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CssRoot {
+    /// A file: a root declaration is an error (Css / Scss).
+    Stylesheet,
+    /// An embedded part (JSDoc / Markdown code block): the root parses as a block's contents,
+    /// so a root declaration is a statement (AGENTS.md "Error semantics").
+    Fragment,
+    /// A [`Self::Fragment`] from a css-in-js template, with `` `PLACEHOLDER-N` `` markers.
+    CssInJsTemplate,
 }
 
 /// Normalized arena source, its front matter (when present),
@@ -211,7 +219,7 @@ fn parse_stylesheet<'a>(
     allocator: &'a Allocator,
     parse_source: &'a str,
     options: CssFormatOptions,
-    tolerate_placeholders: bool,
+    root: CssRoot,
 ) -> Result<(Stylesheet<'a>, &'a [CssComment]), OxcDiagnostic> {
     debug_assert!(!parse_source.starts_with('\u{feff}'), "callers must never pass a leading BOM");
 
@@ -222,18 +230,21 @@ fn parse_stylesheet<'a>(
             // minus the leading backtick which oxc-css-parser consumes as the placeholder sigil
             // (the closing backtick `TEMPLATE_PLACEHOLDER_SUFFIX` is fixed in oxc-css-parser).
             // Only valid for SCSS; oxc-css-parser asserts that.
-            template_placeholder: tolerate_placeholders.then_some(TemplatePlaceholder {
-                prefix: TEMPLATE_PLACEHOLDER_PREFIX
-                    .strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
-                    .expect("placeholder prefix starts with a backtick"),
-            }),
+            template_placeholder: (root == CssRoot::CssInJsTemplate).then_some(
+                TemplatePlaceholder {
+                    prefix: TEMPLATE_PLACEHOLDER_PREFIX
+                        .strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
+                        .expect("placeholder prefix starts with a backtick"),
+                },
+            ),
+            block_contents: root != CssRoot::Stylesheet,
         })
         .comments()
         .build();
 
     let stylesheet = parser.parse::<Stylesheet>().map_err(|error| to_diagnostic(&error))?;
     // Any recoverable error rejects the file, a root declaration included;
-    // the css-in-js parse mode never emits one (AGENTS.md "Error semantics").
+    // a fragment never emits one (AGENTS.md "Error semantics").
     if let Some(error) = parser.recoverable_errors().first() {
         return Err(to_diagnostic(error));
     }

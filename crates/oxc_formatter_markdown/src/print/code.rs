@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
     Buffer, arena_cow_str,
-    builders::{align, exact_line_breaks, hard_line_break, text, token},
+    builders::{exact_line_breaks, hard_line_break, space_align, text, token},
     write,
 };
 use oxc_markdown_parser::{
@@ -24,7 +24,7 @@ pub fn write_code_block<'a>(code: &'a CodeBlock<'a>, f: &mut MarkdownFormatter<'
         CodeBlockKind::Indented => {
             write!(
                 f,
-                align(
+                space_align(
                     4,
                     &format_with(|f| {
                         write!(f, token("    "));
