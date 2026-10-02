@@ -1,7 +1,7 @@
 //! Lookup tables which `compress_blocks` uses to turn the token-start bitmap into a list of token positions,
 //! 16 bits at a time.
 
-use std::sync::OnceLock;
+use std::{mem::offset_of, sync::OnceLock};
 
 /// Single copy of [`PairLuts`], shared across all threads.
 ///
@@ -24,17 +24,17 @@ static PAIR_LUTS: OnceLock<Box<PairLuts>> = OnceLock::new();
 /// That is used as a `vpshufb` control to gather the kinds of those tokens, and added to
 /// the block's base position to get their start positions.
 ///
-/// The struct is aligned to 64 bytes, and `lut0z` is a multiple of 64 bytes long,
-/// so each 32-byte row of `lutpad` sits within a single cache line.
+/// The struct is aligned to 128 bytes, so it occupies the minimum number of pairs of 64-byte cache lines.
+/// `lut0z` is a multiple of 64 bytes long, so each 32-byte row of `lutpad` sits within a 64-byte cache line.
 /// The 16-byte loads from it never cross a cache line boundary.
-#[repr(C, align(64))]
+#[repr(C, align(128))]
 pub struct PairLuts {
     pub(super) lut0z: [[u8; 8]; 256],
     pub(super) lutpad: [[u8; 32]; 256],
 }
 
 /// Ensure `lutpad` field is aligned on a 64-byte boundary.
-const _: () = assert!(size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
+const _: () = assert!(offset_of!(PairLuts, lutpad).is_multiple_of(64));
 
 impl PairLuts {
     /// Create [`PairLuts`] lookup tables.
