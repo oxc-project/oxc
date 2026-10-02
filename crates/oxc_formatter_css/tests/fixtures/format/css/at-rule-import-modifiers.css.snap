@@ -15,6 +15,9 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 /* a wrap inside a comma group sits one indent deeper than a wrap between comma groups */
 @import "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa.css" some-modifier another-modifier yet-another-one, "bbbbbbbbbbbbbbbbbb.css" tail-word;
 @import url("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.css") tail-word, "b.css" x y;
+/* an unparsed `supports()` condition keeps the source's `ident (` gap */
+@import url("a.css") supports(not (display: grid) and (display: flex));
+@import url("a.css") supports(foo (display: grid));
 
 ==================== Output ====================
 ------------------
@@ -38,6 +41,9 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @import url("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.css")
   tail-word,
   "b.css" x y;
+/* an unparsed `supports()` condition keeps the source's `ident (` gap */
+@import url("a.css") supports(not (display: grid) and (display: flex));
+@import url("a.css") supports(foo (display: grid));
 
 -------------------
 { printWidth: 100 }
@@ -57,5 +63,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   "bbbbbbbbbbbbbbbbbb.css" tail-word;
 @import url("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.css") tail-word,
   "b.css" x y;
+/* an unparsed `supports()` condition keeps the source's `ident (` gap */
+@import url("a.css") supports(not (display: grid) and (display: flex));
+@import url("a.css") supports(foo (display: grid));
 
 ===================== End =====================
