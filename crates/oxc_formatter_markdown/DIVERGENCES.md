@@ -301,6 +301,9 @@ Prettier has no directive construct (#19662 would add micromark's grammar only),
 An opener interrupts a paragraph (as in micromark's directive extension and markdown-it-container),
 so like any block it is printed after a blank line, under `preserve` too; Prettier keeps it on the paragraph's next line.
 
+A fence left open inside a directive closes at the directive's closer (as in micromark's directive extension and markdown-it-container),
+so the closing fence is printed explicitly: a reader without directives (CommonMark, GitHub) reads the open fence on to the next closing run, and sees the output's tree change.
+
 ## line-shapes
 
 - Why: semantics
