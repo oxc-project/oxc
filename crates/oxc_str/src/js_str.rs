@@ -13,6 +13,11 @@ use oxc_estree::{ESTree, LoneSurrogatesString, Serializer as ESTreeSerializer};
 
 use crate::{Ident, JSChar, JSStrBuilder, Str, wtf8::*};
 
+#[path = "js_str/pattern.rs"]
+mod pattern;
+
+pub use pattern::JSStrPattern;
+
 /// An immutable JavaScript string borrowed from source text or arena memory.
 ///
 /// JavaScript strings can contain lone surrogates, which Rust's [`str`] cannot represent.
@@ -36,6 +41,7 @@ use crate::{Ident, JSChar, JSStrBuilder, Str, wtf8::*};
 /// * [`from_bytes_unchecked`] re-borrows them under the same invariants.
 ///
 /// Consumers read the value with [`as_str`], [`chars`], or [`encode_utf16`].
+/// Search methods such as [`contains`] inspect it without UTF-8 conversion.
 ///
 /// Equality uses the canonical bytes, and UTF-8 values hash like `str`. Ordering
 /// by these bytes would differ from JavaScript's UTF-16 ordering, so `JSStr`
@@ -87,6 +93,7 @@ use crate::{Ident, JSChar, JSStrBuilder, Str, wtf8::*};
 /// [`as_str`]: Self::as_str
 /// [`chars`]: Self::chars
 /// [`encode_utf16`]: Self::encode_utf16
+/// [`contains`]: Self::contains
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct JSStr<'a> {
@@ -224,6 +231,68 @@ impl<'a> JSStr<'a> {
     #[inline]
     pub fn encode_utf16(self) -> impl FusedIterator<Item = u16> + Clone + 'a {
         EncodeUtf16 { chars: JSChars { remaining: self.as_bytes() }, pending: 0 }
+    }
+
+    /// Return whether the value contains `pattern`.
+    ///
+    /// See [`JSStrPattern`] for the accepted patterns and how they treat lone surrogates.
+    /// Like `str::contains`, an empty text pattern always matches.
+    ///
+    /// ```
+    /// # use oxc_allocator::Allocator;
+    /// # let allocator = Allocator::new();
+    /// use oxc_str::JSStrBuilder;
+    ///
+    /// let mut builder = JSStrBuilder::new_in(&&allocator);
+    /// builder.push_str("a\n");
+    /// builder.push_code_unit(0xD800);
+    /// let value = builder.into_js_str();
+    /// assert_eq!(value.as_str(), None);
+    /// assert!(value.contains('\n'));
+    /// assert!(!value.contains("ab"));
+    /// ```
+    #[inline]
+    pub fn contains<P: JSStrPattern>(self, pattern: P) -> bool {
+        pattern.is_contained_in(self)
+    }
+
+    /// Return whether the value starts with `pattern`.
+    ///
+    /// See [`JSStrPattern`] for the accepted patterns and how they treat lone surrogates.
+    #[inline]
+    pub fn starts_with<P: JSStrPattern>(self, pattern: P) -> bool {
+        pattern.is_prefix_of(self)
+    }
+
+    /// Return whether the value ends with `pattern`.
+    ///
+    /// See [`JSStrPattern`] for the accepted patterns and how they treat lone surrogates.
+    #[inline]
+    pub fn ends_with<P: JSStrPattern>(self, pattern: P) -> bool {
+        pattern.is_suffix_of(self)
+    }
+
+    /// Return the byte offset of the first match of `pattern`, or `None`.
+    ///
+    /// Like `str::find`, the offset counts bytes of the encoded value,
+    /// here its WTF-8 representation, not UTF-16 code units.
+    /// It can be compared with [`len`] and with other offsets from the same value.
+    /// See [`JSStrPattern`] for the accepted patterns.
+    ///
+    /// [`len`]: Self::len
+    #[inline]
+    pub fn find<P: JSStrPattern>(self, pattern: P) -> Option<usize> {
+        pattern.find_in(self)
+    }
+
+    /// Return the byte offset of the last match of `pattern`, or `None`.
+    ///
+    /// The offset has the same meaning as for [`find`].
+    ///
+    /// [`find`]: Self::find
+    #[inline]
+    pub fn rfind<P: JSStrPattern>(self, pattern: P) -> Option<usize> {
+        pattern.rfind_in(self)
     }
 
     /// Return an adapter that implements [`Display`], like [`Path::display`].

@@ -57,3 +57,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────────────────────────────────
    ╰────
   help: Do not use import syntax to configure webpack loaders
+
+  ⚠ import(no-webpack-loader-syntax): Unexpected `!` in `babel!\uD800`.
+   ╭─[no_webpack_loader_syntax.tsx:1:17]
+ 1 │ import foo from 'babel!\uD800'
+   ·                 ──────────────
+   ╰────
+  help: Do not use import syntax to configure webpack loaders
+
+  ⚠ import(no-webpack-loader-syntax): Unexpected `!` in `\uDC00!lodash`.
+   ╭─[no_webpack_loader_syntax.tsx:1:19]
+ 1 │ var foo = require('\uDC00!lodash')
+   ·                   ───────────────
+   ╰────
+  help: Do not use import syntax to configure webpack loaders
