@@ -35,13 +35,12 @@ impl<'a> PeepholeOptimizations {
     pub fn last_expression_in_sequence<'s>(
         seq: &'s SequenceExpression<'a>,
     ) -> Option<&'s Expression<'a>> {
-        let last = seq.expressions.last()?;
-        match last {
-            Expression::SequenceExpression(inner) if !inner.expressions.is_empty() => {
-                Self::last_expression_in_sequence(inner)
-            }
-            last => Some(last),
+        let mut last = seq.expressions.last()?;
+        while let Expression::SequenceExpression(inner) = last {
+            let Some(next) = inner.expressions.last() else { break };
+            last = next;
         }
+        Some(last)
     }
 
     /// Removes and returns the final expression, descending through trailing sequences
