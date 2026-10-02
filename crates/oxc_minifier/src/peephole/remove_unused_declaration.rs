@@ -77,7 +77,7 @@ impl<'a> PeepholeOptimizations {
         if !ctx.is_expression_whose_name_needs_to_be_kept(init) {
             return false;
         }
-        let Expression::ClassExpression(class) = init.without_parentheses() else {
+        let Expression::ClassExpression(class) = init else {
             return false;
         };
         matches!(Self::classify_class_removability(class, ctx), ClassRemovability::Keep)
