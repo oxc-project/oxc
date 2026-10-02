@@ -13,18 +13,19 @@ use smallvec::SmallVec;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_str::{JSStr, JSStrBuilder};
 use oxc_syntax::number::ToJsString;
 
 use crate::{
-    StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
-    StringSubstring, ToInt32, ToJsString as ToJsStringTrait, ToUint32,
+    StringCharCodeAt, StringIndexOf, StringLastIndexOf, StringSubstring, ToInt32,
+    ToJsString as ToJsStringTrait, ToUint32,
     constant_evaluation::url_encoding::{
         decode_uri_chars, encode_uri_chars, is_uri_always_unescaped,
     },
     side_effects::MayHaveSideEffects,
 };
 
-use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
+use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, js_str_from_cow};
 
 fn try_fold_global_functions<'a>(
     ident: &IdentifierReference<'a>,
@@ -109,7 +110,7 @@ fn try_fold_string_casing<'a>(
     }
 
     let value = match object {
-        Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()?),
+        Expression::StringLiteral(s) => s.value,
         Expression::Identifier(ident) => ident
             .reference_id
             .get()
@@ -117,6 +118,9 @@ fn try_fold_string_casing<'a>(
             .and_then(ConstantValue::into_string)?,
         _ => return None,
     };
+    // Casing and trimming operate on UTF-8.
+    // A value containing a lone surrogate stays unfolded.
+    let value = value.as_str()?;
 
     let result = match name {
         "toLowerCase" => Str::from_str_in(&value.cow_to_lowercase(), ctx),
@@ -126,7 +130,7 @@ fn try_fold_string_casing<'a>(
         "trimEnd" => Str::from_str_in(value.trim_end(), ctx),
         _ => return None,
     };
-    Some(ConstantValue::String(Cow::Borrowed(result.as_str())))
+    Some(ConstantValue::String(result.into()))
 }
 
 fn try_fold_string_index_of<'a>(
@@ -155,8 +159,8 @@ fn try_fold_string_index_of<'a>(
     };
 
     let result = match name {
-        "indexOf" => s.value.index_of(search_value.as_deref(), search_start_index),
-        "lastIndexOf" => s.value.last_index_of(search_value.as_deref(), search_start_index),
+        "indexOf" => s.value.index_of(search_value, search_start_index),
+        "lastIndexOf" => s.value.last_index_of(search_value, search_start_index),
         _ => unreachable!(),
     };
     Some(ConstantValue::Number(result as f64))
@@ -195,8 +199,35 @@ fn try_fold_string_substring_or_slice<'a>(
     {
         return None;
     }
-
-    Some(ConstantValue::String(Cow::Owned(s.value.as_str()?.substring(start_idx, end_idx))))
+    // A value without lone surrogates uses the UTF-8 substring.
+    if let Some(value) = s.value.as_str() {
+        return Some(ConstantValue::String(JSStr::from_str_in(
+            &value.substring(start_idx, end_idx),
+            ctx,
+        )));
+    }
+    // A NaN end cannot be folded: the number alone no longer says whether the argument was
+    // `undefined` (end of string) or NaN (index zero), and for `slice` a zero end must not
+    // swap with the start.
+    if end_idx.is_some_and(f64::is_nan) {
+        return None;
+    }
+    let value = s.value;
+    // The guards above leave ordered, in-range positions and a non-NaN end,
+    // and a NaN start converts to zero.
+    let to_unit = |position: Option<f64>, default: usize| {
+        position.map_or(default, |p| if p.is_nan() { 0 } else { p.trunc().max(0.0) as usize })
+    };
+    let start = to_unit(start_idx, 0);
+    let end = to_unit(end_idx, usize::MAX).max(start);
+    // Collect the code units of the window.
+    // A window boundary may split a surrogate pair.
+    // The lone half is representable, so the result is exact.
+    let mut result = JSStrBuilder::new_in(ctx);
+    for unit in value.encode_utf16().skip(start).take(end - start) {
+        result.push_code_unit(unit);
+    }
+    Some(ConstantValue::String(result.into_js_str()))
 }
 
 fn try_fold_string_char_at<'a>(
@@ -216,12 +247,18 @@ fn try_fold_string_char_at<'a>(
         None => None,
     };
 
-    let result = match s.value.as_str()?.char_at(char_at_index) {
-        StringCharAtResult::Value(c) => c.to_string(),
-        StringCharAtResult::InvalidChar(_) => return None,
-        StringCharAtResult::OutOfRange => String::new(),
+    // The result is the single code unit at the position, which may be one half
+    // of a surrogate pair.
+    // A position out of range gives the empty string.
+    let result = match s.value.char_code_at(char_at_index) {
+        Some(unit) => {
+            let mut result = JSStrBuilder::with_capacity_in(3, ctx);
+            result.push_code_unit(unit as u16);
+            result.into_js_str()
+        }
+        None => JSStr::empty(),
     };
-    Some(ConstantValue::String(Cow::Owned(result)))
+    Some(ConstantValue::String(result))
 }
 
 fn try_fold_string_char_code_at<'a>(
@@ -259,7 +296,11 @@ fn try_fold_starts_with<'a>(
     }
     let Argument::StringLiteral(arg) = args.first().unwrap() else { return None };
     let Expression::StringLiteral(s) = object else { return None };
-    Some(ConstantValue::Boolean(s.value.as_str()?.starts_with(arg.value.as_str()?)))
+    // A UTF-8 search value prefix-matches over WTF-8 bytes even when the receiver
+    // holds lone surrogates.
+    // A search value with a lone surrogate could still match the same half of a formed pair,
+    // which the byte comparison misses, so it stays unfolded.
+    Some(ConstantValue::Boolean(s.value.starts_with(arg.value.as_str()?)))
 }
 
 fn try_fold_string_replace<'a>(
@@ -272,6 +313,9 @@ fn try_fold_string_replace<'a>(
         return None;
     }
     let Expression::StringLiteral(s) = object else { return None };
+    // The replace machinery is UTF-8.
+    // A receiver, search value, or replacement containing a lone surrogate stays unfolded.
+    let value = s.value.as_str()?;
     let search_value = args.first().unwrap();
     let search_value = match search_value {
         Argument::SpreadElement(_) => return None,
@@ -280,25 +324,25 @@ fn try_fold_string_replace<'a>(
             if value.may_have_side_effects(ctx) {
                 return None;
             }
-            value.evaluate_value(ctx)?.into_string()?
+            value.evaluate_value(ctx)?.into_string()?.as_str()?
         }
     };
     let replace_value = args.get(1).unwrap();
     let replace_value = match replace_value {
         Argument::SpreadElement(_) => return None,
         match_expression!(Argument) => {
-            replace_value.to_expression().get_side_free_string_value(ctx)?
+            replace_value.to_expression().get_side_free_string_value(ctx)?.as_str()?
         }
     };
     if replace_value.contains('$') {
         return None;
     }
     let result = match name {
-        "replace" => s.value.as_str()?.cow_replacen(search_value.as_ref(), &replace_value, 1),
-        "replaceAll" => s.value.as_str()?.cow_replace(search_value.as_ref(), &replace_value),
+        "replace" => value.cow_replacen(search_value, replace_value, 1),
+        "replaceAll" => value.cow_replace(search_value, replace_value),
         _ => unreachable!(),
     };
-    Some(ConstantValue::String(result))
+    Some(ConstantValue::String(js_str_from_cow(result, ctx)))
 }
 
 fn try_fold_string_from_char_code<'a>(
@@ -309,15 +353,17 @@ fn try_fold_string_from_char_code<'a>(
     if !ctx.is_global_expr("String", object) {
         return None;
     }
-    let mut s = String::with_capacity(args.len());
+    // Each argument contributes its ToUint16 code unit.
+    // Like the runtime string, a lead surrogate followed by a trail surrogate forms the
+    // supplementary character, and any other surrogate stays a lone unit.
+    // The capacity is in bytes, and a code unit encodes to at most three.
+    let mut result = JSStrBuilder::with_capacity_in(args.len() * 3, ctx);
     for arg in args {
         let expr = arg.as_expression()?;
         let v = expr.get_side_free_number_value(ctx)?;
-        let v = v.to_int_32() as u16 as u32;
-        let c = char::try_from(v).ok()?;
-        s.push(c);
+        result.push_code_unit(v.to_int_32() as u16);
     }
-    Some(ConstantValue::String(Cow::Owned(s)))
+    Some(ConstantValue::String(result.into_js_str()))
 }
 
 fn try_fold_to_string<'a>(
@@ -345,16 +391,16 @@ fn try_fold_to_string<'a>(
             }
             if radix == 10 {
                 let s = lit.value.to_js_string();
-                return Some(ConstantValue::String(Cow::Owned(s)));
+                return Some(ConstantValue::String(JSStr::from_str_in(&s, ctx)));
             }
             // Only convert integers for other radix values.
             let value = lit.value;
             if value.is_infinite() {
                 let s = if value.is_sign_negative() { "-Infinity" } else { "Infinity" };
-                return Some(ConstantValue::String(Cow::Borrowed(s)));
+                return Some(ConstantValue::String(JSStr::from(s)));
             }
             if value.is_nan() {
-                return Some(ConstantValue::String(Cow::Borrowed("NaN")));
+                return Some(ConstantValue::String(JSStr::from("NaN")));
             }
             if value >= 0.0 && value.fract() != 0.0 {
                 return None;
@@ -364,16 +410,19 @@ fn try_fold_to_string<'a>(
                 return None;
             }
             let result = format_radix(i, radix);
-            Some(ConstantValue::String(Cow::Owned(result)))
+            Some(ConstantValue::String(JSStr::from_str_in(&result, ctx)))
         }
         Expression::RegExpLiteral(lit) if args.is_empty() => {
-            lit.to_js_string(ctx).map(ConstantValue::String)
+            lit.to_js_string(ctx).map(|s| ConstantValue::String(js_str_from_cow(s, ctx)))
         }
         e if args.is_empty() && !e.may_have_side_effects(ctx) => e
             .evaluate_value(ctx)
             // `null` and `undefined` returns type errors
             .filter(|v| !v.is_undefined() && !v.is_null())
-            .and_then(|v| v.to_js_string(ctx).map(ConstantValue::String)),
+            .and_then(|v| match v {
+                ConstantValue::String(s) => Some(ConstantValue::String(s)),
+                v => v.to_js_string(ctx).map(|s| ConstantValue::String(js_str_from_cow(s, ctx))),
+            }),
         _ => None,
     }
 }
@@ -548,7 +597,7 @@ fn try_fold_encode_uri<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
-        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+        return Some(ConstantValue::String(JSStr::from("undefined")));
     }
     if args.len() != 1 {
         return None;
@@ -556,6 +605,9 @@ fn try_fold_encode_uri<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
     let string_value = expr.get_side_free_string_value(ctx)?;
+    // `encodeURI` throws a URIError on a lone surrogate at runtime,
+    // so such an input must stay unfolded.
+    let string_value = Cow::Borrowed(string_value.as_str()?);
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -569,7 +621,7 @@ fn try_fold_encode_uri<'a>(
             },
         )
     };
-    Some(ConstantValue::String(encoded))
+    Some(ConstantValue::String(js_str_from_cow(encoded, ctx)))
 }
 
 fn try_fold_encode_uri_component<'a>(
@@ -577,7 +629,7 @@ fn try_fold_encode_uri_component<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
-        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+        return Some(ConstantValue::String(JSStr::from("undefined")));
     }
     if args.len() != 1 {
         return None;
@@ -585,6 +637,9 @@ fn try_fold_encode_uri_component<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
     let string_value = expr.get_side_free_string_value(ctx)?;
+    // `encodeURIComponent` throws a URIError on a lone surrogate at runtime,
+    // so such an input must stay unfolded.
+    let string_value = Cow::Borrowed(string_value.as_str()?);
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -594,7 +649,7 @@ fn try_fold_encode_uri_component<'a>(
             |c| !is_uri_always_unescaped(c),
         )
     };
-    Some(ConstantValue::String(encoded))
+    Some(ConstantValue::String(js_str_from_cow(encoded, ctx)))
 }
 
 fn try_fold_decode_uri<'a>(
@@ -602,7 +657,7 @@ fn try_fold_decode_uri<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
-        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+        return Some(ConstantValue::String(JSStr::from("undefined")));
     }
     if args.len() != 1 {
         return None;
@@ -610,13 +665,16 @@ fn try_fold_decode_uri<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
     let string_value = expr.get_side_free_string_value(ctx)?;
+    // The decode machinery is UTF-8.
+    // An input containing a lone surrogate stays unfolded.
+    let string_value = Cow::Borrowed(string_value.as_str()?);
 
     let decoded = decode_uri_chars(
         string_value,
         #[inline(always)]
         |c| matches!(c, b';' | b',' | b'/' | b'?' | b':' | b'@' | b'&' | b'=' | b'+' | b'$' | b'#'),
     )?;
-    Some(ConstantValue::String(decoded))
+    Some(ConstantValue::String(js_str_from_cow(decoded, ctx)))
 }
 
 fn try_fold_decode_uri_component<'a>(
@@ -624,7 +682,7 @@ fn try_fold_decode_uri_component<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
-        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+        return Some(ConstantValue::String(JSStr::from("undefined")));
     }
     if args.len() != 1 {
         return None;
@@ -632,6 +690,9 @@ fn try_fold_decode_uri_component<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
     let string_value = expr.get_side_free_string_value(ctx)?;
+    // The decode machinery is UTF-8.
+    // An input containing a lone surrogate stays unfolded.
+    let string_value = Cow::Borrowed(string_value.as_str()?);
 
     // decodeURIComponent decodes all percent-encoded sequences
     let decoded = decode_uri_chars(
@@ -639,7 +700,7 @@ fn try_fold_decode_uri_component<'a>(
         #[inline(always)]
         |_| false,
     )?;
-    Some(ConstantValue::String(decoded))
+    Some(ConstantValue::String(js_str_from_cow(decoded, ctx)))
 }
 
 fn try_fold_global_is_nan<'a>(
@@ -687,6 +748,9 @@ fn try_fold_global_parse_float<'a>(
     let arg = args.first().unwrap();
     let expr = arg.as_expression()?;
     let input_string = expr.get_side_free_string_value(ctx)?;
+    // The prefix scan is UTF-8.
+    // An input containing a lone surrogate stays unfolded.
+    let input_string = input_string.as_str()?;
     let trimmed = input_string.trim_start();
     let Some(trimmed_prefix) = find_str_decimal_literal_prefix(trimmed) else {
         return Some(ConstantValue::Number(f64::NAN));
@@ -815,6 +879,9 @@ fn try_fold_global_parse_int<'a>(
     let string_arg = args.first().unwrap();
     let string_expr = string_arg.as_expression()?;
     let string_value = string_expr.evaluate_value_to_string(ctx)?;
+    // The digit scan is UTF-8.
+    // An input containing a lone surrogate stays unfolded.
+    let string_value = string_value.as_str()?;
     let mut string_value = string_value.trim_start();
 
     let mut sign = 1;
