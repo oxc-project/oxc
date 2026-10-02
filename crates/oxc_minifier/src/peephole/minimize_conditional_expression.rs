@@ -8,8 +8,9 @@ use oxc_ecmascript::{
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::precedence::Precedence;
 
-use super::PeepholeOptimizations;
 use crate::{TraverseCtx, custom::SequenceExpressionExt};
+
+use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     pub fn minimize_conditional(
