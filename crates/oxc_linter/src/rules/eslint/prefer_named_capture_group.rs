@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
@@ -11,6 +13,7 @@ use oxc_regular_expression::{
     visit::{RegExpAstKind, Visit},
 };
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -110,20 +113,33 @@ fn check_static_arguments(arg0: Option<&Argument>, arg1: Option<&Argument>, ctx:
         return;
     };
 
-    let Some(pattern_text) = static_string_value(pattern_expr) else {
+    let Some(pattern_value) = static_string_value(pattern_expr, ctx.allocator()) else {
         return;
+    };
+    // The regexp parser takes UTF-8 text.
+    // Capture groups do not depend on a lone surrogate, so each one is parsed as U+FFFD.
+    // Diagnostics use the span of the argument, not spans inside this text.
+    let pattern_text: Cow<'_, str> = match pattern_value.as_str() {
+        Some(text) => Cow::Borrowed(text),
+        None => Cow::Owned(
+            pattern_value
+                .chars()
+                .map(|c| c.to_char().unwrap_or(char::REPLACEMENT_CHARACTER))
+                .collect(),
+        ),
     };
 
     let flags_text = arg1
         .and_then(Argument::as_expression)
         .map(Expression::get_inner_expression)
-        .and_then(static_string_value);
+        .and_then(|expr| static_string_value(expr, ctx.allocator()))
+        .and_then(JSStr::as_str);
 
     let allocator = Allocator::default();
     let Ok(pattern) = LiteralParser::new(
         &allocator,
         &pattern_text,
-        flags_text.as_deref(),
+        flags_text,
         Options { pattern_span_offset: pattern_expr.span().start, flags_span_offset: 0 },
     )
     .parse() else {
@@ -210,6 +226,7 @@ fn test() {
         "new RegExp('a(bc)d' + 'e')",
         r#"new RegExp("foo" + "(a)" + "(b)");"#,
         r#"new RegExp("foo" + "(?:a)" + "(b)");"#,
+        r#"new RegExp("(a)" + "\uD800");"#,
         "RegExp('(a)'+'')",
         "RegExp( '' + '(ab)')",
         "new RegExp(`(ab)${''}`)",

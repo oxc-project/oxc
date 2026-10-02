@@ -3,6 +3,22 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:15]
+ 1 │ var x = new o["a\uD800"]();
+   ·               ────┬────
+   ·                   ╰── This should be uppercase
+   ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:11]
+ 1 │ var x = o["A\uDC00"]();
+   ·           ────┬────
+   ·               ╰── This should be called with `new`
+   ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
    ╭─[new_cap.tsx:1:13]
  1 │ var x = new c();
    ·             ┬
