@@ -1,12 +1,13 @@
-use std::{borrow::Cow, cmp::Ordering, str::Chars};
+use std::{borrow::Cow, cmp::Ordering, iter::Peekable};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::{JSChar, JSStr};
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -133,7 +134,7 @@ impl Rule for SortKeys {
 }
 
 struct FixableProperty<'a> {
-    key: Cow<'a, str>,
+    key: StaticPropertyName<'a>,
     span: Span,
     text: Cow<'a, str>,
     /// `text` already includes the inter-property `,` (lifted with a same-line `// ...` comment).
@@ -148,7 +149,7 @@ fn is_object_sorted(
     sort_order: &SortOrder,
     options: &SortKeysOptions,
 ) -> bool {
-    let mut prev_key: Option<Cow<'_, str>> = None;
+    let mut prev_key: Option<StaticPropertyName<'_>> = None;
 
     for (i, prop) in object.properties.iter().enumerate() {
         match prop {
@@ -190,14 +191,26 @@ fn is_object_sorted(
     true
 }
 
-/// Compare two keys according to sort options, without allocating.
-fn compare_keys(a: &str, b: &str, options: &SortKeysOptions) -> Ordering {
+/// Compare two keys according to sort options.
+fn compare_keys(
+    a: &StaticPropertyName<'_>,
+    b: &StaticPropertyName<'_>,
+    options: &SortKeysOptions,
+) -> Ordering {
+    compare_key_names(a.as_js_str(), b.as_js_str(), options)
+}
+
+fn compare_key_names(a: JSStr<'_>, b: JSStr<'_>, options: &SortKeysOptions) -> Ordering {
     if options.natural {
-        natural_compare(a, b, options.case_sensitive)
-    } else if options.case_sensitive {
+        return natural_compare(a, b, options.case_sensitive);
+    }
+    // Canonical WTF-8 bytes order like code points, so lone surrogates need no decoding.
+    // ESLint compares UTF-16 code units instead, which differs for astral characters (#26242).
+    let (a, b) = (a.as_bytes(), b.as_bytes());
+    if options.case_sensitive {
         a.cmp(b)
     } else {
-        a.bytes().map(|b| b.to_ascii_lowercase()).cmp(b.bytes().map(|b| b.to_ascii_lowercase()))
+        a.iter().map(u8::to_ascii_lowercase).cmp(b.iter().map(u8::to_ascii_lowercase))
     }
 }
 
@@ -440,61 +453,65 @@ fn build_property_text<'a>(
     Cow::Owned(format!("{before_value}{replacement}{after_value}"))
 }
 
-fn natural_compare(a: &str, b: &str, case_sensitive: bool) -> Ordering {
-    let mut a_chars = a.chars();
-    let mut b_chars = b.chars();
+fn natural_compare(a: JSStr<'_>, b: JSStr<'_>, case_sensitive: bool) -> Ordering {
+    let mut a_chars = a.chars().map(JSChar::to_u32).peekable();
+    let mut b_chars = b.chars().map(JSChar::to_u32).peekable();
+    let is_digit = |c: u32| (u32::from(b'0')..=u32::from(b'9')).contains(&c);
+    let normalize = |c: u32| {
+        if !case_sensitive && (u32::from(b'A')..=u32::from(b'Z')).contains(&c) {
+            c + u32::from(b'a' - b'A')
+        } else {
+            c
+        }
+    };
+    let is_alphanumeric = |c| char::from_u32(c).is_some_and(char::is_alphanumeric);
 
     loop {
-        let a_next = a_chars.next();
-        let b_next = b_chars.next();
-
-        match (a_next, b_next) {
+        match (a_chars.peek().copied(), b_chars.peek().copied()) {
             (None, None) => return Ordering::Equal,
             (Some(_), None) => return Ordering::Greater,
             (None, Some(_)) => return Ordering::Less,
-            (Some(a_raw), Some(b_raw)) => {
-                let a_char = if case_sensitive { a_raw } else { a_raw.to_ascii_lowercase() };
-                let b_char = if case_sensitive { b_raw } else { b_raw.to_ascii_lowercase() };
-
-                if a_char == b_char {
+            (Some(a), Some(b)) => {
+                if is_digit(a) && is_digit(b) {
+                    let ordering = compare_numeric(&mut a_chars, &mut b_chars);
+                    if ordering != Ordering::Equal {
+                        return ordering;
+                    }
                     continue;
                 }
-                if a_char.is_ascii_digit() && b_char.is_ascii_digit() {
-                    let n1 = take_numeric(&mut a_chars, a_char);
-                    let n2 = take_numeric(&mut b_chars, b_char);
-                    match n1.cmp(&n2) {
-                        Ordering::Equal => continue,
-                        ord => return ord,
-                    }
+                a_chars.next();
+                b_chars.next();
+                let (a, b) = (normalize(a), normalize(b));
+                if a == b {
+                    continue;
                 }
-                if a_char.is_alphanumeric() && !b_char.is_alphanumeric() {
-                    return Ordering::Greater;
-                }
-                if !a_char.is_alphanumeric() && b_char.is_alphanumeric() {
-                    return Ordering::Less;
-                }
-                if a_char == '[' && b_char.is_alphanumeric() {
-                    return Ordering::Greater;
-                }
-                if a_char.is_alphanumeric() && b_char == '[' {
-                    return Ordering::Less;
-                }
-                return a_char.cmp(&b_char);
+                let ordering = is_alphanumeric(a).cmp(&is_alphanumeric(b));
+                return ordering.then_with(|| a.cmp(&b));
             }
         }
     }
 }
 
-fn take_numeric(iter: &mut Chars, first: char) -> u32 {
-    let mut sum = first.to_digit(10).unwrap();
-    for c in iter.by_ref() {
-        if let Some(digit) = c.to_digit(10) {
-            sum = sum * 10 + digit;
-        } else {
-            break;
+/// Compare whole digit runs without integer overflow or consuming the following character.
+fn compare_numeric(
+    a: &mut Peekable<impl Iterator<Item = u32>>,
+    b: &mut Peekable<impl Iterator<Item = u32>>,
+) -> Ordering {
+    while a.next_if_eq(&u32::from(b'0')).is_some() {}
+    while b.next_if_eq(&u32::from(b'0')).is_some() {}
+    let is_digit = |c: &u32| (u32::from(b'0')..=u32::from(b'9')).contains(c);
+    let (mut a_len, mut b_len) = (0, 0);
+    let mut ordering = Ordering::Equal;
+    loop {
+        let (a_digit, b_digit) = (a.next_if(is_digit), b.next_if(is_digit));
+        a_len += usize::from(a_digit.is_some());
+        b_len += usize::from(b_digit.is_some());
+        match (a_digit, b_digit) {
+            (None, None) => return a_len.cmp(&b_len).then(ordering),
+            (Some(a), Some(b)) => ordering = ordering.then_with(|| a.cmp(&b)),
+            _ => {}
         }
     }
-    sum
 }
 
 fn extract_text_between_spans(source_text: &str, current_span: Span, next_span: Span) -> &str {
@@ -512,6 +529,10 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (
+            r#"var obj = {"a1\uD800": 1, "a2": 2, "a10": 3}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
         ("var obj = {'':1, [``]:2}", Some(serde_json::json!([]))), // { "ecmaVersion": 6 },
         ("var obj = {[``]:1, '':2}", Some(serde_json::json!([]))), // { "ecmaVersion": 6 },
         ("var obj = {'':1, a:2}", Some(serde_json::json!([]))),
@@ -938,9 +959,28 @@ fn test() {
                         ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 2018 }
+        // Lone surrogates order by code point, like every other key.
+        (r#"var obj = {"\uD800": 1, "\uDC00": 2}"#, None),
+        (r#"var obj = {"a": 1, "\uD800": 2}"#, None),
+        (r#"var obj = {"\uDC00": 1, "𐀀": 2}"#, None),
+        (r#"var obj = {"\uE000": 1, "😀": 2}"#, None),
+        (r#"var obj = {"\uD800": 1, "\uD800\uDC00": 2}"#, None),
+        (r#"var obj = {"\uDC00": 1, "\uD800": 2}"#, Some(serde_json::json!(["desc"]))),
+        (
+            r#"var obj = {"\uD800": 3, "a1": 1, "a2": 2}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (
+            r#"var obj = {"A": 1, "b": 2, "\uD800": 3}"#,
+            Some(serde_json::json!(["asc", { "caseSensitive": false }])),
+        ),
     ];
 
     let fail = vec![
+        (
+            r#"var obj = {"a2": 2, "a10": 3, "a1\uD800": 1}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
         ("var obj = {a:1, '':2} // default", None),
         ("var obj = {a:1, [``]:2} // default", None), // { "ecmaVersion": 6 },
         ("var obj = {a:1, _:2, b:3} // default", None),
@@ -1278,11 +1318,27 @@ fn test() {
                         ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 2018 }
+        // Lone surrogates order by code point, like every other key.
+        (r#"var obj = {"\uDC00": 1, "\uD800": 2}"#, None),
+        (r#"var obj = {"\uD800": 1, "a": 2}"#, None),
+        (r#"var obj = {"\uD800\uDC00": 1, "\uD800": 2}"#, None),
+        (r#"var obj = {"\uD800": 1, "\uDC00": 2}"#, Some(serde_json::json!(["desc"]))),
+        (
+            r#"var obj = {"a1": 2, "\uD800": 1}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (
+            r#"var obj = {"\uD800": 1, "b": 2, "A": 3}"#,
+            Some(serde_json::json!(["asc", { "caseSensitive": false }])),
+        ),
     ];
 
     // Add comprehensive fixer tests: the rule now advertises conditional fixes,
     // so provide expect_fix cases.
     let fix = vec![
+        // Lone surrogates keep their source spelling.
+        (r#"var obj = {"\uDC00": 1, "\uD800": 2}"#, r#"var obj = {"\uD800": 2, "\uDC00": 1}"#),
+        (r#"var obj = {"\uD800": 1, a: 2}"#, r#"var obj = {a: 2, "\uD800": 1}"#),
         // Basic alphabetical sorting
         ("var obj = {b:1, a:2}", "var obj = {a:2, b:1}"),
         // Case sensitivity - lowercase comes after uppercase, so a:2 should come after B:1
@@ -1529,4 +1585,65 @@ fn test() {
     ];
 
     Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
+}
+
+#[test]
+fn test_natural_surrogate_fix() {
+    use crate::tester::Tester;
+    let fix = vec![(
+        r#"var obj = {"a2": 2, "a10": 3, "a1\uD800": 1}"#,
+        r#"var obj = {"a1\uD800": 1, "a2": 2, "a10": 3}"#,
+        Some(serde_json::json!(["asc", { "natural": true }])),
+    )];
+    Tester::new::<&str>(SortKeys::NAME, SortKeys::PLUGIN, vec![], vec![]).expect_fix(fix).test();
+}
+
+#[test]
+fn natural_order_is_transitive_with_surrogates() {
+    use oxc_allocator::Allocator;
+    use oxc_str::JSStrBuilder;
+    let allocator = Allocator::new();
+    let mut builder = JSStrBuilder::new_in(&&allocator);
+    builder.push_utf16(&[0x61, 0x31, 0xD800]);
+    let surrogate = builder.into_js_str();
+    let names = [
+        JSStr::from(""),
+        JSStr::from("a2"),
+        JSStr::from("a10"),
+        surrogate,
+        JSStr::from("a100"),
+        JSStr::from("a00100"),
+        JSStr::from("A2"),
+        JSStr::from("a42949672960"),
+        JSStr::from("a42949672961"),
+        JSStr::from("a2a"),
+        JSStr::from("a2b"),
+        JSStr::from("a10a"),
+    ];
+    for case_sensitive in [true, false] {
+        for &a in &names {
+            for &b in &names {
+                let ab = natural_compare(a, b, case_sensitive);
+                assert_eq!(ab, natural_compare(b, a, case_sensitive).reverse());
+                for &c in &names {
+                    if ab != Ordering::Greater
+                        && natural_compare(b, c, case_sensitive) != Ordering::Greater
+                    {
+                        assert_ne!(
+                            natural_compare(a, c, case_sensitive),
+                            Ordering::Greater,
+                            "{a:?} <= {b:?} <= {c:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+    assert_eq!(natural_compare(surrogate, JSStr::from("a2"), true), Ordering::Less);
+    assert_eq!(natural_compare(JSStr::from("a12"), JSStr::from("a100"), true), Ordering::Less);
+    assert_eq!(natural_compare(JSStr::from("a2a"), JSStr::from("a2b"), true), Ordering::Less);
+    assert_eq!(
+        natural_compare(JSStr::from("a42949672960"), JSStr::from("a42949672961"), true),
+        Ordering::Less
+    );
 }

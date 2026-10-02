@@ -52,7 +52,7 @@ use oxc_allocator::{
     Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn,
     UnstableAddress,
 };
-use oxc_ast::ast::*;
+use oxc_ast::{StaticPropertyName, ast::*};
 use oxc_ast_visit::{VisitJs, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
@@ -396,6 +396,7 @@ impl<'a> LegacyDecorator<'a> {
                 let key_name = accessor
                     .key
                     .name()
+                    .and_then(StaticPropertyName::into_cow_str)
                     .unwrap_or_else(|| Cow::Owned(get_var_name_from_node(&accessor.key)));
                 let storage_name =
                     Str::from_strs_array_in(["_", &key_name, "_accessor_storage"], ctx);

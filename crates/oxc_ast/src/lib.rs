@@ -46,7 +46,9 @@ mod ast_impl;
 mod ast_kind_impl;
 pub mod builder;
 pub mod precedence;
+mod static_property_name;
 mod trivia;
+pub use static_property_name::StaticPropertyName;
 
 #[cfg(feature = "serialize")]
 mod serialize;

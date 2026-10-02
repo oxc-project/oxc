@@ -127,7 +127,7 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
         }
         let component_obj = nodes.parent_node(outer.id());
         if is_vue_component_options_object(component_obj, ctx) {
-            return Some(emit_name.into_owned());
+            return Some(emit_name.to_string());
         }
         return None;
     }
@@ -138,7 +138,7 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
         && let AstKind::CallExpression(call) = outer.kind()
         && call.callee.get_identifier_reference().is_some_and(|ident| ident.name == "defineEmits")
     {
-        return Some(emit_name.into_owned());
+        return Some(emit_name.to_string());
     }
 
     None
@@ -545,6 +545,22 @@ fn test() {
                 })
                 </script>
             ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // An emit name with a lone surrogate still reports.
+        (
+            r#"
+                <script>
+                export default {
+                  emits: {
+                    "\uD800" () {
+                    }
+                  }
+                }
+                </script>
+            "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, ops::Deref};
+use std::ops::Deref;
 
 use itertools::Itertools;
 use schemars::JsonSchema;
@@ -20,7 +20,10 @@ use oxc_str::CompactStr;
 
 use crate::{LintContext, rule::Rule};
 
-fn class_methods_use_this_diagnostic(span: Span, name: Option<Cow<'_, str>>) -> OxcDiagnostic {
+fn class_methods_use_this_diagnostic(
+    span: Span,
+    name: Option<oxc_ast::StaticPropertyName<'_>>,
+) -> OxcDiagnostic {
     let method_name_str = name.map_or(String::new(), |name| format!(" `{name}`"));
     OxcDiagnostic::warn(format!("Expected method{method_name_str} to have this."))
         .with_help(format!("Consider converting method{method_name_str} to a static method."))
@@ -253,7 +256,7 @@ impl Rule for ClassMethodsUseThis {
         let Some((function_body, name)) = function_pair else { return };
         if let Some(name_str) = name.name()
             && self.except_methods.iter().any(|method| {
-                method.name == name_str && method.private == name.is_private_identifier()
+                name_str == method.name.as_str() && method.private == name.is_private_identifier()
             })
         {
             return;

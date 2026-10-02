@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         AccessorProperty, Decorator, FormalParameter, MethodDefinition, MethodDefinitionKind,
         PropertyDefinition, TSAccessibility,
@@ -79,7 +79,11 @@ impl Default for ExplicitMemberAccessibilityConfig {
     }
 }
 
-fn missing_accessibility_diagnostic(span: Span, member_type: &str, name: &str) -> OxcDiagnostic {
+fn missing_accessibility_diagnostic(
+    span: Span,
+    member_type: &str,
+    name: impl std::fmt::Display,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Missing accessibility modifier on {member_type} {name}."))
         .with_help("Add an explicit 'public', 'private', or 'protected' modifier. Members without a modifier are implicitly public, which may not be intentional.")
         .with_label(span)
@@ -88,7 +92,7 @@ fn missing_accessibility_diagnostic(span: Span, member_type: &str, name: &str) -
 fn unwanted_public_accessibility_diagnostic(
     span: Span,
     member_type: &str,
-    name: &str,
+    name: impl std::fmt::Display,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Public accessibility modifier on {member_type} {name}."))
         .with_help("Remove the 'public' modifier. Members are public by default, so the modifier is redundant.")
@@ -237,10 +241,10 @@ impl ExplicitMemberAccessibility {
 
         let check = check.unwrap_or(self.accessibility);
 
-        let method_name = method.key.name().unwrap_or(Cow::Borrowed(""));
+        let method_name = method.key.name().unwrap_or_else(|| StaticPropertyName::from(""));
 
         if check == AccessibilityLevel::Off
-            || self.ignored_method_names.iter().any(|n| n.as_str() == &*method_name)
+            || self.ignored_method_names.iter().any(|n| method_name == n.as_str())
         {
             return;
         }
@@ -249,7 +253,7 @@ impl ExplicitMemberAccessibility {
             check,
             method.accessibility,
             method_definition_kind_to_str(method.kind),
-            &method_name,
+            method_name,
             method.span,
             method.key.span(),
             &method.decorators,
@@ -267,12 +271,12 @@ impl ExplicitMemberAccessibility {
             return;
         }
 
-        let name = prop.key.name().unwrap_or(Cow::Borrowed(""));
+        let name = prop.key.name().unwrap_or_else(|| StaticPropertyName::from(""));
         Self::check_member_accessibility(
             check,
             prop.accessibility,
             "class property",
-            &name,
+            name,
             prop.span,
             prop.key.span(),
             &prop.decorators,
@@ -290,12 +294,12 @@ impl ExplicitMemberAccessibility {
             return;
         }
 
-        let name = prop.key.name().unwrap_or(Cow::Borrowed(""));
+        let name = prop.key.name().unwrap_or_else(|| StaticPropertyName::from(""));
         Self::check_member_accessibility(
             check,
             prop.accessibility,
             "class property",
-            &name,
+            name,
             prop.span,
             prop.key.span(),
             &prop.decorators,
@@ -362,7 +366,7 @@ impl ExplicitMemberAccessibility {
         check: AccessibilityLevel,
         accessibility: Option<TSAccessibility>,
         node_type: &str,
-        name: &str,
+        name: impl std::fmt::Display,
         node_span: Span,
         key_span: Span,
         decorators: &[Decorator<'_>],

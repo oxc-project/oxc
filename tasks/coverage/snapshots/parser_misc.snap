@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 112/112 (100.00%)
-Positive Passed: 112/112 (100.00%)
-Negative Passed: 246/246 (100.00%)
+AST Parsed     : 113/113 (100.00%)
+Positive Passed: 113/113 (100.00%)
+Negative Passed: 247/247 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -320,6 +320,14 @@ Negative Passed: 246/246 (100.00%)
  1 │ class C { x = a,b }
    ·                ┬
    ·                ╰── `;` expected
+   ╰────
+
+  × TS(2391): Function implementation is missing or not immediately following the declaration.
+   ╭─[misc/fail/class-method-overload-lone-surrogate-name.ts:2:3]
+ 1 │ class A {
+ 2 │   "\uD800"(): void;
+   ·   ────────
+ 3 │   "\uDC00"() {}
    ╰────
 
   × Logical expressions and coalesce expressions cannot be mixed
