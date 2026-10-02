@@ -16,6 +16,7 @@ use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
 };
+use oxc_data_structures::branch_hints::unlikely;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
 use oxc_str::Ident;
@@ -644,17 +645,40 @@ impl<'a> SemanticBuilder<'a> {
         let root_scope_id = self.scoping.root_scope_id();
         let refs = self.unresolved_references.take();
         for unresolved in refs {
-            if !self.walk_up_resolve_reference(unresolved, root_scope_id) {
+            if !self.resolve_reference(unresolved, root_scope_id) {
                 self.scoping
                     .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
             }
         }
     }
 
-    /// Walk up the scope chain through `last_scope_id`.
+    /// Select the arguments-object lookup only for value references named `arguments`.
+    /// Keep the ordinary scope walk free of per-scope arguments checks.
     #[expect(clippy::inline_always, reason = "Hot path — called for every reference resolution")]
     #[inline(always)]
-    fn walk_up_resolve_reference(
+    fn resolve_reference(
+        &mut self,
+        unresolved: UnresolvedReference<'a>,
+        last_scope_id: ScopeId,
+    ) -> bool {
+        if unlikely(unresolved.name == "arguments")
+            && self
+                .scoping
+                .get_reference(unresolved.reference_id)
+                .flags()
+                .intersects(ReferenceFlags::Value | ReferenceFlags::ValueAsType)
+        {
+            self.walk_up_resolve_reference::<true>(unresolved, last_scope_id)
+        } else {
+            self.walk_up_resolve_reference::<false>(unresolved, last_scope_id)
+        }
+    }
+
+    /// Walk up the scope chain through `last_scope_id`.
+    /// Returns `true` when the reference is resolved or belongs to an implicit arguments object.
+    #[expect(clippy::inline_always, reason = "Hot path — called for every reference resolution")]
+    #[inline(always)]
+    fn walk_up_resolve_reference<const IS_ARGUMENTS: bool>(
         &mut self,
         unresolved: UnresolvedReference<'a>,
         last_scope_id: ScopeId,
@@ -665,6 +689,16 @@ impl<'a> SemanticBuilder<'a> {
                 && self.try_resolve_reference(unresolved.reference_id, symbol_id)
             {
                 return true;
+            }
+            if IS_ARGUMENTS {
+                // The implicit object has no symbol. Finish lookup here, including for parameter
+                // references, so they cannot resume lookup outside this ordinary function.
+                let flags = self.scoping.scope_flags(scope_id);
+                if flags.is_function() && !flags.is_arrow() {
+                    self.scoping
+                        .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
+                    return true;
+                }
             }
             if scope_id == last_scope_id {
                 return false;
@@ -762,7 +796,7 @@ impl<'a> SemanticBuilder<'a> {
             {
                 return true;
             }
-            if self.walk_up_resolve_reference(*unresolved, current_scope_id) {
+            if self.resolve_reference(*unresolved, current_scope_id) {
                 return false;
             }
             // Skip this function body during final resolution. An enclosing parameter resolution
