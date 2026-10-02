@@ -1,3 +1,4 @@
+use crate::TraverseCtx;
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
@@ -7,8 +8,6 @@ use oxc_ecmascript::{
 };
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::precedence::Precedence;
-
-use crate::{TraverseCtx, custom::SequenceExpressionExt};
 
 use super::PeepholeOptimizations;
 
@@ -148,10 +147,10 @@ impl<'a> PeepholeOptimizations {
         // `a ? d : (b, c, d)` => `(a || (b, c)), d`
         if let Expression::SequenceExpression(alternate) = &mut expr.alternate
             && alternate.expressions.len() > 1
-            && let Some(last) = alternate.last_expression()
+            && let Some(last) = Self::last_expression_in_sequence(alternate)
             && ctx.expr_eq(last, &expr.consequent)
         {
-            let last_expr = alternate.pop_last_expression().unwrap();
+            let last_expr = Self::pop_expression_from_sequence(alternate).unwrap();
             let seq_prefix = if alternate.expressions.len() == 1 {
                 alternate.expressions.pop().unwrap()
             } else {
@@ -177,10 +176,10 @@ impl<'a> PeepholeOptimizations {
         // `a ? (b, c, d) : d` => `(a && (b, c)), d`
         if let Expression::SequenceExpression(consequent) = &mut expr.consequent
             && consequent.expressions.len() > 1
-            && let Some(last) = consequent.last_expression()
+            && let Some(last) = Self::last_expression_in_sequence(consequent)
             && ctx.expr_eq(last, &expr.alternate)
         {
-            let last_expr = consequent.pop_last_expression().unwrap();
+            let last_expr = Self::pop_expression_from_sequence(consequent).unwrap();
             let seq_prefix = if consequent.expressions.len() == 1 {
                 consequent.expressions.pop().unwrap()
             } else {

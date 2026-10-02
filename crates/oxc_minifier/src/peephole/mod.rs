@@ -9,6 +9,7 @@ mod minimize_for_statement;
 mod minimize_if_statement;
 mod minimize_logical_expression;
 mod minimize_not_expression;
+mod minimize_sequences;
 mod minimize_statements;
 mod minimize_switch_statements;
 mod normalize;
