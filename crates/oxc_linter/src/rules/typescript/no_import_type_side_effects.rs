@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{ImportDeclarationSpecifier, ImportOrExportKind},
-};
+use oxc_ast::{AstKind, ast::ImportDeclarationSpecifier};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -85,7 +82,7 @@ impl Rule for NoImportTypeSideEffects {
             return;
         };
 
-        if matches!(import_decl.import_kind, ImportOrExportKind::Type) {
+        if import_decl.import_kind.is_type() {
             return;
         }
 
@@ -99,7 +96,7 @@ impl Rule for NoImportTypeSideEffects {
             let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier else {
                 return;
             };
-            if matches!(specifier.import_kind, ImportOrExportKind::Value) {
+            if specifier.import_kind.is_value() {
                 return;
             }
             type_specifiers.push(specifier);

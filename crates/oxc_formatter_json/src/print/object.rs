@@ -3,7 +3,7 @@ use oxc_ast::ast::{
 };
 use oxc_formatter_core::{
     Buffer, Format, FormatContext, arena_cow_str,
-    builders::{block_indent, group, soft_block_indent_with_maybe_space, space, text},
+    builders::{group, soft_block_indent_with_maybe_space, space, text},
     spec::{format_trimmed_number, is_simple_number, normalize_string},
     write,
 };
@@ -13,7 +13,8 @@ use oxc_syntax::identifier::is_identifier_name_patched;
 use crate::{
     comments::{
         FormatLeadingComments, FormatSuppressedNode, FormatTrailingInsideComments,
-        has_line_terminator_after_skipping_comments, is_suppressed_before, write_dangling_comments,
+        has_line_terminator_after_skipping_comments, is_suppressed_before,
+        write_empty_container_comments,
     },
     context::JsonFormatContext,
     options::{Expand, JsonVariant, QuoteProps},
@@ -35,14 +36,8 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
 
         if self.object.properties.is_empty() {
             let dangling = f.context().comments().take_before(self.object.span.end);
-            if dangling.is_empty() {
-                write!(f, "}");
-                return;
-            }
-            let inner = format_with(move |f| {
-                write_dangling_comments(dangling, f);
-            });
-            write!(f, [block_indent(&inner), "}"]);
+            write_empty_container_comments(dangling, f);
+            write!(f, "}");
             return;
         }
 

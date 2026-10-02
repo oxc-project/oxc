@@ -3,7 +3,7 @@ commit: f29aeb9f
 parser_typescript Summary:
 AST Parsed     : 9658/9666 (99.92%)
 Positive Passed: 9651/9666 (99.84%)
-Negative Passed: 1687/2759 (61.15%)
+Negative Passed: 1689/2759 (61.22%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1838,8 +1838,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration7.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration5.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration1.ts
@@ -2071,8 +2069,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/indexSignatures/multipleStringIndexers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/methodSignatures/methodSignaturesWithOverloads.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/objectTypeLiteralSyntax2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/specifyingTypes/typeQueries/typeofANonExportedType.ts
 
@@ -2582,13 +2578,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  17 │ }
     ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/accessorBodyInTypeContext.ts:2:15]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/accessorBodyInTypeContext.ts:2:14]
  1 │ type A = {
  2 │     get foo() { return 0 }
-   ·               ─
+   ·              ▲
  3 │ };
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/accessorParameterAccessibilityModifier.ts:2:11]
@@ -6177,12 +6174,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Only 'readonly' modifier is allowed here.
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateMethodSignatures.ts:1:39]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateMethodSignatures.ts:1:38]
  1 │ interface A<T> { private a(): boolean {} }
-   ·                                       ─
+   ·                                      ▲
  2 │ 
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitSetAccessorNoParameter.ts:2:10]
@@ -7083,21 +7081,23 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  8 │ };
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInInterfaceProperty.ts:2:17]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInInterfaceProperty.ts:2:16]
  1 │ interface Foo {
  2 │     bar: number = 5;
-   ·                 ─
+   ·                ▲
  3 │ }
    ╰────
+  help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInObjectTypeLiteralProperty.ts:2:17]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInObjectTypeLiteralProperty.ts:2:16]
  1 │ var Foo: {
  2 │     bar: number = 5;
-   ·                 ─
+   ·                ▲
  3 │ };
    ╰────
+  help: Try inserting a semicolon here
 
   × Expected `,` or `)` but found `Identifier`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/errorRecoveryInClassDeclaration.ts:4:20]
@@ -8410,7 +8410,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  3 │ }
    ╰────
 
-  × Cannot use import statement outside a module
+  × 'import statement' declaration can only be used at the top level of a module
    ╭─[typescript/tsc/testdata/tests/cases/compiler/importDeclarationInModuleDeclaration2.ts:2:5]
  1 │ function container() {
  2 │     import "fs";
@@ -8632,13 +8632,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × TS(1099): Type argument list cannot be empty.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/instantiateTypeParameter.ts:2:13]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/instantiateTypeParameter.ts:2:8]
  1 │ interface Foo<T> {
  2 │     var x: T<>;
-   ·             ──
+   ·        ▲
  3 │ }
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1021): An index signature must have a type annotation.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/intTypeCheck.ts:37:5]
@@ -10815,13 +10816,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  35 │ }
     ╰────
 
-  × Unexpected token
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tsc/testdata/tests/cases/compiler/optionalPropertiesSyntax.ts:11:7]
  10 │     (): any;
  11 │     ()?: any; //err
-    ·       ─
+    ·       ▲
  12 │     ?(): any; //err
     ╰────
+  help: Try inserting a semicolon here
 
   × TS(1051): A 'set' accessor cannot have an optional parameter.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/optionalSetterParam.ts:3:20]
@@ -11061,13 +11063,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/parseErrorIncorrectReturnToken.ts:2:17]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/parseErrorIncorrectReturnToken.ts:2:16]
  1 │ type F1 = {
  2 │     (n: number) => string; // should be : not =>
-   ·                 ──
+   ·                ▲
  3 │ }
    ╰────
+  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseImportAttributesError.ts:2:30]
@@ -12388,60 +12391,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Valid group names are: foo
 
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:2:17]
- 1 │ // U+13A0 CHEROKEE LETTER A: character inside BMP with both the Unicode properties ID_Start and ID_Continue
- 2 │ /(?<Ꭰ>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
-   ·             ──────────
- 3 │ /(?<\u13A0>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
-   ╰────
-  help: Valid group names are: Ꭰ
-
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:3:13]
- 2 │ /(?<Ꭰ>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
- 3 │ /(?<\u13A0>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
-   ·             ─────
- 4 │ /(?<\u{13A0}>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
-   ╰────
-  help: Valid group names are: \u13A0
-
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:4:15]
- 3 │ /(?<\u13A0>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
- 4 │ /(?<\u{13A0}>)\k<Ꭰ>\k<\u13A0>\k<\u{13A0}>/;
-   ·               ─────
- 5 │ 
-   ╰────
-  help: Valid group names are: \u{13A0}
-
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:6:19]
- 5 │ 
- 6 │ /(?<_Ꭰ>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
-   ·               ───────────
- 7 │ /(?<_\u13A0>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
-   ╰────
-  help: Valid group names are: _Ꭰ
-
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:7:14]
- 6 │ /(?<_Ꭰ>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
- 7 │ /(?<_\u13A0>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
-   ·              ──────
- 8 │ /(?<_\u{13A0}>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
-   ╰────
-  help: Valid group names are: _\u13A0
-
-  × Invalid regular expression: Invalid named reference
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:8:16]
- 7 │ /(?<_\u13A0>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
- 8 │ /(?<_\u{13A0}>)\k<_Ꭰ>\k<_\u13A0>\k<_\u{13A0}>/;
-   ·                ──────
- 9 │ 
-   ╰────
-  help: Valid group names are: _\u{13A0}
-
   × Invalid regular expression: Unterminated capturing group name
     ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:11:4]
  10 │ // U+19D4 NEW TAI LUE DIGIT FOUR: character inside BMP with only ID_Continue
@@ -12469,87 +12418,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ╰────
   help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
 
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:15:19]
- 14 │ 
- 15 │ /(?<_᧔>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
-    ·               ───────────
- 16 │ /(?<_\u19D4>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
-    ╰────
-  help: Valid group names are: _᧔
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:16:14]
- 15 │ /(?<_᧔>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
- 16 │ /(?<_\u19D4>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
-    ·              ──────
- 17 │ /(?<_\u{19D4}>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
-    ╰────
-  help: Valid group names are: _\u19D4
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:17:16]
- 16 │ /(?<_\u19D4>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
- 17 │ /(?<_\u{19D4}>)\k<_᧔>\k<_\u19D4>\k<_\u{19D4}>/;
-    ·                ──────
- 18 │ 
-    ╰────
-  help: Valid group names are: _\u{19D4}
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:20:19]
- 19 │ // U+102A7 CARIAN LETTER A2: character outside BMP with both ID_Start and ID_Continue
- 20 │ /(?<𐊧>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
-    ·             ─────────────
- 21 │ /(?<\u{102A7}>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
-    ╰────
-  help: Valid group names are: 𐊧
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:21:16]
- 20 │ /(?<𐊧>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
- 21 │ /(?<\u{102A7}>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
-    ·                ─────
- 22 │ /(?<\uD800\uDEA7>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
-    ╰────
-  help: Valid group names are: \u{102A7}
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:22:19]
- 21 │ /(?<\u{102A7}>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
- 22 │ /(?<\uD800\uDEA7>)\k<𐊧>\k<\u{102A7}>\k<\uD800\uDEA7>/;
-    ·                   ─────
- 23 │ 
-    ╰────
-  help: Valid group names are: \uD800\uDEA7
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:24:21]
- 23 │ 
- 24 │ /(?<_𐊧>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
-    ·               ──────────────
- 25 │ /(?<_\u{102A7}>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
-    ╰────
-  help: Valid group names are: _𐊧
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:25:17]
- 24 │ /(?<_𐊧>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
- 25 │ /(?<_\u{102A7}>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
-    ·                 ──────
- 26 │ /(?<_\uD800\uDEA7>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
-    ╰────
-  help: Valid group names are: _\u{102A7}
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:26:20]
- 25 │ /(?<_\u{102A7}>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
- 26 │ /(?<_\uD800\uDEA7>)\k<_𐊧>\k<_\u{102A7}>\k<_\uD800\uDEA7>/;
-    ·                    ──────
- 27 │ 
-    ╰────
-  help: Valid group names are: _\uD800\uDEA7
-
   × Invalid regular expression: Invalid surrogate pair
     ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:29:5]
  28 │ // U+1113D CHAKMA DIGIT SEVEN: character outside BMP with only ID_Continue
@@ -12576,33 +12444,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  32 │ 
     ╰────
   help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:33:21]
- 32 │ 
- 33 │ /(?<_𑄽>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
-    ·               ──────────────
- 34 │ /(?<_\u{1113D}>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
-    ╰────
-  help: Valid group names are: _𑄽
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:34:17]
- 33 │ /(?<_𑄽>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
- 34 │ /(?<_\u{1113D}>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
-    ·                 ──────
- 35 │ /(?<_\uD804\uDD3D>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
-    ╰────
-  help: Valid group names are: _\u{1113D}
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:35:20]
- 34 │ /(?<_\u{1113D}>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
- 35 │ /(?<_\uD804\uDD3D>)\k<_𑄽>\k<_\u{1113D}>\k<_\uD804\uDD3D>/;
-    ·                    ──────
- 36 │ 
-    ╰────
-  help: Valid group names are: _\uD804\uDD3D
 
   × Invalid regular expression: Unterminated capturing group name
     ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:40:4]
@@ -12693,23 +12534,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  58 │ 
     ╰────
   help: Use `\uXXXX` or `\u{XXXXX}` format for unicode escapes
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:60:23]
- 59 │ // Cases with Unicode escapes and extended Unicode escapes mixed
- 60 │ /(?<RegExp>)\k<RegExp>\k<\u{52}\u0065gE\u{78}p>\k<\u0052e\u0067\u{45}x\u{70}>/;
-    ·                       ─────────────────────────
- 61 │ /(?<_RegExp>)\k<_RegExp>\k<_\u{52}\u0065gE\u{78}p>\k<_\u0052e\u0067\u{45}x\u{70}>/;
-    ╰────
-  help: Valid group names are: RegExp
-
-  × Invalid regular expression: Invalid named reference
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionGroupNameUnicodeEscapes.ts:61:25]
- 60 │ /(?<RegExp>)\k<RegExp>\k<\u{52}\u0065gE\u{78}p>\k<\u0052e\u0067\u{45}x\u{70}>/;
- 61 │ /(?<_RegExp>)\k<_RegExp>\k<_\u{52}\u0065gE\u{78}p>\k<_\u0052e\u0067\u{45}x\u{70}>/;
-    ·                         ──────────────────────────
-    ╰────
-  help: Valid group names are: _RegExp
 
   × Invalid regular expression: Number is too large in braced quantifier
    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionQuantifierBounds1.ts:3:4]
@@ -16105,6 +15929,22 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  14 │ 
     ╰────
 
+  × TS(1243): 'async' modifier cannot be used with 'abstract' modifier.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:15:14]
+ 14 │ 
+ 15 │     abstract async foo_f();
+    ·              ─────
+ 16 │     async abstract foo_g();
+    ╰────
+
+  × TS(1243): 'async' modifier cannot be used with 'abstract' modifier.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:16:11]
+ 15 │     abstract async foo_f();
+ 16 │     async abstract foo_g();
+    ·           ────────
+ 17 │ }
+    ╰────
+
   × TS(2391): Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts:15:5]
  14 │     
@@ -16137,12 +15977,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  3 │ }
    ╰────
 
-  × 'abstract' modifier cannot be used here.
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts:1:1]
  1 │ abstract interface I {}
    · ────────
    ╰────
-  help: Only 'declare' modifier is allowed here.
 
   × Identifier `C` has already been declared
    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAndVariableWithSameName.ts:1:7]
@@ -25083,18 +24922,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected `}` but found `EOF`
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClass2.ts:15:6]
-  9 │ 
- 10 │ interface I2 extends Foo { // error
-    ·                          ┬
-    ·                          ╰── Opened here
- 11 │     a: {
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClass2.ts:13:19]
  12 │         toString: () => {
  13 │             return 1;
+    ·                   ▲
  14 │         };
- 15 │     }
     ╰────
+  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts:3:8]
@@ -27561,6 +27396,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  3 │ }
    ╰────
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration5.ts:2:23]
+ 1 │ class C {
+ 2 │    [a: string]: number public v: number
+   ·                       ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
   × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration7.ts:2:4]
  1 │ class C {
@@ -27578,14 +27422,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  3 │ }
    ╰────
   help: Allowed modifiers are: static, readonly
-
-  × TS(1031): 'export' modifier cannot appear on class elements of this kind.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:4]
- 1 │ class C {
- 2 │    export [x: string]: string;
-   ·    ──────
- 3 │ }
-   ╰────
 
   × TS(1071): 'export' modifier cannot appear on an index signature.
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:4]
@@ -31963,13 +31799,22 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  25 │ }
     ╰────
 
-  × Unexpected token
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/methodSignatures/objectTypesWithOptionalProperties2.ts:4:8]
  3 │ var a: {
  4 │     x()?: number; // error
-   ·        ─
+   ·        ▲
  5 │ }
    ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/objectTypeLiteralSyntax2.ts:12:21]
+ 11 │ 
+ 12 │ var z: { foo: string bar: string }
+    ·                     ▲
+    ╰────
+  help: Try inserting a semicolon here
 
   × Expected `,` or `}` but found `decimal`
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/numericNamedPropertyDuplicates.ts:20:5]
@@ -32219,26 +32064,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  4 │ type T03 = [...string[]];
    ╰────
 
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:7:21]
- 6 │ 
- 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
-   ·                     ─────┬─────  ──────┬─────
-   ·                          │             ╰── Second rest element here
-   ·                          ╰── First seen here
- 8 │ type V11 = [number, ...string[], boolean?];  // Error
-   ╰────
-
-  × TS(1266): An optional element cannot follow a rest element.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:8:21]
- 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
- 8 │ type V11 = [number, ...string[], boolean?];  // Error
-   ·                     ─────┬─────  ────┬───
-   ·                          │           ╰── Optional element here
-   ·                          ╰── Rest element seen here
- 9 │ type V12 = [number, string?, boolean];  // Error
-   ╰────
-
   × TS(1257): A required element cannot follow an optional element.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:9:21]
   8 │ type V11 = [number, ...string[], boolean?];  // Error
@@ -32247,46 +32072,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                        │        ╰── Required element here
     ·                        ╰── Optional element seen here
  10 │ 
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:11:13]
- 10 │ 
- 11 │ type V15 = [...string[], ...number[]];  // Error
-    ·             ─────┬─────  ─────┬─────
-    ·                  │            ╰── Second rest element here
-    ·                  ╰── First seen here
- 12 │ type V16 = [...string[], ...Array<number>];  // Error
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:12:13]
- 11 │ type V15 = [...string[], ...number[]];  // Error
- 12 │ type V16 = [...string[], ...Array<number>];  // Error
-    ·             ─────┬─────  ────────┬───────
-    ·                  │               ╰── Second rest element here
-    ·                  ╰── First seen here
- 13 │ type V17 = [...Array<string>, ...number[]];  // Error
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:13:13]
- 12 │ type V16 = [...string[], ...Array<number>];  // Error
- 13 │ type V17 = [...Array<string>, ...number[]];  // Error
-    ·             ────────┬───────  ─────┬─────
-    ·                     │              ╰── Second rest element here
-    ·                     ╰── First seen here
- 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:14:13]
- 13 │ type V17 = [...Array<string>, ...number[]];  // Error
- 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
-    ·             ────────┬───────  ────────┬───────
-    ·                     │                 ╰── Second rest element here
-    ·                     ╰── First seen here
- 15 │ 
     ╰────
 
   × TS(2457): Type alias name cannot be 'any'

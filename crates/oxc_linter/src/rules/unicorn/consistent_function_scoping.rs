@@ -475,7 +475,7 @@ impl<'a> Visit<'a> for ReferencesFinder {
     }
 
     fn visit_private_identifier(&mut self, it: &PrivateIdentifier<'a>) {
-        self.private_references.push(it.node_id.get());
+        self.private_references.push(it.node_id());
     }
 
     fn visit_jsx_element_name(&mut self, _it: &JSXElementName<'a>) {

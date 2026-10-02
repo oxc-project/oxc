@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 111/111 (100.00%)
-Positive Passed: 111/111 (100.00%)
-Negative Passed: 238/238 (100.00%)
+AST Parsed     : 112/112 (100.00%)
+Positive Passed: 112/112 (100.00%)
+Negative Passed: 243/243 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -467,6 +467,14 @@ Negative Passed: 238/238 (100.00%)
  2 │     continue a;
    ·              ┬
    ·              ╰── for this label
+ 3 │ }
+   ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+   ╭─[misc/fail/decorated-export-in-block.mjs:2:8]
+ 1 │ {
+ 2 │   @dec export class C {}
+   ·        ──────
  3 │ }
    ╰────
 
@@ -4810,13 +4818,14 @@ Negative Passed: 238/238 (100.00%)
    ╰────
   help: Remove the `?`
 
-  × Unexpected token
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/oxc-5955-2.ts:3:8]
  2 │ interface B {
  3 │     e()?: number;
-   ·        ─
+   ·        ▲
  4 │ }
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1021): An index signature must have a type annotation.
    ╭─[misc/fail/oxc-5955-3.ts:2:5]
@@ -5075,6 +5084,41 @@ Negative Passed: 238/238 (100.00%)
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-call-missing-separator.ts:1:20]
+ 1 │ type T = { (): void next: string };
+   ·                    ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-construct-missing-separator.ts:1:29]
+ 1 │ interface T { new (): object next: string }
+   ·                             ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-getter-missing-separator.ts:1:31]
+ 1 │ type T = { get value(): string next: string };
+   ·                               ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-method-missing-separator.ts:1:29]
+ 1 │ interface T { method(): void next: string }
+   ·                             ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-setter-missing-separator.ts:1:36]
+ 1 │ type T = { set value(value: string) next: string };
+   ·                                    ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]
  3 │ // so the trailing `*` still makes the assertion impossible to erase. Syntax error.
  4 │ const x = 1 + 1 as any as number * 2;
@@ -5097,44 +5141,6 @@ Negative Passed: 238/238 (100.00%)
    ·                                 ▲
    ╰────
   help: Try inserting a semicolon here
-
-  × TS(1266): An optional element cannot follow a rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:1:27]
- 1 │ type OptionalAfterRest = [...a: string[], b?: number];
-   ·                           ───────┬──────  ─────┬────
-   ·                                  │             ╰── Optional element here
-   ·                                  ╰── Rest element seen here
- 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
-   ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:2:23]
- 1 │ type OptionalAfterRest = [...a: string[], b?: number];
- 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
-   ·                       ───────┬──────  ───────┬──────
-   ·                              │               ╰── Second rest element here
-   ·                              ╰── First seen here
- 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
-   ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:3:35]
- 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
- 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
-   ·                                   ─────┬─────  ───────┬──────
-   ·                                        │              ╰── Second rest element here
-   ·                                        ╰── First seen here
- 4 │ type UnnamedRestAfterNamedRest = [...a: string[], ...number[]];
-   ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:4:35]
- 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
- 4 │ type UnnamedRestAfterNamedRest = [...a: string[], ...number[]];
-   ·                                   ───────┬──────  ─────┬─────
-   ·                                          │             ╰── Second rest element here
-   ·                                          ╰── First seen here
-   ╰────
 
   × TS(8011): Type arguments can only be used in TypeScript files.
    ╭─[misc/fail/type-arguments-in-js.js:1:18]

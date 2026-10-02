@@ -5,7 +5,6 @@ use oxc_ast::ast::*;
 use crate::{
     ast_nodes::AstNode,
     formatter::{TailwindContextEntry, prelude::*},
-    print::arrow_function_expression::is_multiline_template_starting_on_same_line,
     utils::{
         call_expression::{callee_opener, is_test_call_expression},
         member_chain::MemberChain,
@@ -14,7 +13,7 @@ use crate::{
     },
     write,
 };
-use arguments::is_simple_module_import;
+use arguments::{is_simple_module_import, is_verbatim_multiline_template_sole_arg};
 
 use super::FormatWrite;
 
@@ -43,16 +42,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 None
             };
 
-        let is_template_literal_single_arg = arguments.len() == 1
-            && arguments.first().unwrap().as_expression().is_some_and(|expr| {
-                is_multiline_template_starting_on_same_line(expr, f.source_text())
-            });
-
-        if !is_template_literal_single_arg
-            && matches!(
-                callee.as_ref(),
-                Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
-            )
+        if matches!(
+            callee.as_ref(),
+            Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
+        ) && !is_verbatim_multiline_template_sole_arg(arguments.as_slice(), Some(self), f)
             && !is_simple_module_import(self.arguments(), f.comments())
             && !is_test_call_expression(self, f.comments())
         {

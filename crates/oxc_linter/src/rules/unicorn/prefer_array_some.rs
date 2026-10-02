@@ -184,9 +184,9 @@ impl Rule for PreferArraySome {
                 }
 
                 if matches_against_zero {
-                    let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
+                    if !bin_expr.right.is_specific_raw_number_literal("0") {
                         return;
-                    };
+                    }
 
                     let Expression::CallExpression(left_call_expr) =
                         &bin_expr.left.without_parentheses()
@@ -194,15 +194,13 @@ impl Rule for PreferArraySome {
                         return;
                     };
 
-                    if right_num_lit.raw.as_ref().unwrap().as_str() == "0"
-                        && is_method_call(
-                            left_call_expr,
-                            None,
-                            Some(&["findIndex", "findLastIndex"]),
-                            None,
-                            Some(1),
-                        )
-                    {
+                    if is_method_call(
+                        left_call_expr,
+                        None,
+                        Some(&["findIndex", "findLastIndex"]),
+                        None,
+                        Some(1),
+                    ) {
                         // TODO: fixer
                         ctx.diagnostic(negative_one_or_zero_filter(
                             call_expr_method_callee_info(left_call_expr).unwrap().0,
@@ -219,11 +217,7 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
-                    return;
-                };
-
-                if right_num_lit.raw.as_ref().unwrap() != "0" {
+                if !bin_expr.right.is_specific_raw_number_literal("0") {
                     return;
                 }
 

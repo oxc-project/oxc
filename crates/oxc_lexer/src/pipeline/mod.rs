@@ -11,6 +11,7 @@ use crate::{
     PAD,
     lanes::Lanes,
     options::LexOptions,
+    pipeline::compress::init_pair_luts,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
 };
 
@@ -27,7 +28,6 @@ mod keywords;
 mod misc;
 mod operators;
 mod scan;
-mod tables;
 
 pub(crate) use disambiguate::State as DisambiguateState;
 
@@ -36,7 +36,6 @@ use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, write_sentinels};
 use misc::{misc_post, misc_pre};
-use tables::Tables;
 
 pub struct Lexer {
     word: Vec<u64>,
@@ -56,11 +55,12 @@ pub struct Lexer {
     pub sig_len: usize,
     out_cap: usize,
     pub lanes: Lanes,
-    tables: &'static Tables,
 }
 
 impl Lexer {
     pub fn new() -> Lexer {
+        init_pair_luts();
+
         Lexer {
             word: Vec::new(),
             st: Vec::new(),
@@ -79,7 +79,6 @@ impl Lexer {
             sig_len: 0,
             out_cap: 0,
             lanes: Lanes::default(),
-            tables: Tables::get(),
         }
     }
 
@@ -160,7 +159,6 @@ impl Lexer {
         let misc = self.misc.as_mut_ptr();
         let kind = self.kind.as_mut_ptr();
         let kwpos = self.kwpos.as_mut_ptr();
-        let t = self.tables;
 
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
@@ -171,7 +169,6 @@ impl Lexer {
         coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
         misc_post(sp, n, st, word, misc, kind, nesc);
         let w = compress(
-            t,
             src,
             n,
             nb,

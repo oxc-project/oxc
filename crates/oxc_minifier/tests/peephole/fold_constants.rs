@@ -4,7 +4,7 @@ static NEG_MAX_SAFE_FLOAT: f64 = -9_007_199_254_740_991_f64;
 static MAX_SAFE_INT: i64 = 9_007_199_254_740_991_i64;
 static NEG_MAX_SAFE_INT: i64 = -9_007_199_254_740_991_i64;
 
-use crate::test;
+use crate::{test, test_same};
 
 // wrap with a function call so it doesn't get removed.
 fn fold(source_text: &str, expected: &str) {
@@ -15,10 +15,6 @@ fn fold(source_text: &str, expected: &str) {
 
 fn fold_same(source_text: &str) {
     fold(source_text, source_text);
-}
-
-fn test_same(source_text: &str) {
-    test(source_text, source_text);
 }
 
 #[test]
@@ -855,12 +851,12 @@ fn test_fold_bitwise_op2() {
     fold("x = y | 3 | 3", "x = y | 3");
     fold("x = 3 | y | 3", "x = y | 3");
 
-    fold("x = y ^ 1 ^ 1", "x = y ^ 0");
+    fold("x = y ^ 1 ^ 1", "x = y | 0");
     fold("x = y ^ 1 ^ 2", "x = y ^ 3");
     fold("x = y ^ 3 ^ 1", "x = y ^ 2");
     fold("x = 3 ^ y ^ 1", "x = y ^ 2");
-    fold("x = y ^ 3 ^ 3", "x = y ^ 0");
-    fold("x = 3 ^ y ^ 3", "x = y ^ 0");
+    fold("x = y ^ 3 ^ 3", "x = y | 0");
+    fold("x = 3 ^ y ^ 3", "x = y | 0");
 
     fold("x = Infinity | NaN", "x=0");
     fold("x = 12 | NaN", "x=12");

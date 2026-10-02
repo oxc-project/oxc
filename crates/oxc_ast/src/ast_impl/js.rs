@@ -392,6 +392,14 @@ impl<'a> Expression<'a> {
     }
 }
 
+impl IdentifierReference<'_> {
+    /// Returns `true` if this identifier reference is `undefined`.
+    #[inline]
+    pub fn is_undefined(&self) -> bool {
+        self.name == "undefined"
+    }
+}
+
 impl Display for IdentifierName<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -2006,6 +2014,11 @@ impl<'a> ImportDeclarationSpecifier<'a> {
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => &specifier.local,
             ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => &specifier.local,
         }
+    }
+
+    /// Returns the symbol ID of the bound local identifier.
+    pub fn symbol_id(&self) -> SymbolId {
+        self.local().symbol_id()
     }
 
     /// Returns the name of the bound local identifier for this import declaration specifier.

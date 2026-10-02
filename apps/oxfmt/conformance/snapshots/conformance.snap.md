@@ -26,21 +26,31 @@
 
 ## gql-in-js
 
-### Option 1: 12/12 (100.00%)
+### Option 1: 13/15 (86.67%)
 
 ```json
 {"printWidth":80}
 ```
 
-### Option 2: 12/12 (100.00%)
+- [edge-cases/gql-in-js/embedded-template-invalid-content.js](diffs/gql-in-js/edge-cases__gql-in-js__embedded-template-invalid-content.js.md)
+  - apps/oxfmt/DIVERGENCES.md#embedded-template-invalid-content
+- [edge-cases/gql-in-js/embedded-template-short-argument.js](diffs/gql-in-js/edge-cases__gql-in-js__embedded-template-short-argument.js.md)
+  - apps/oxfmt/DIVERGENCES.md#embedded-template-short-argument
+
+### Option 2: 13/15 (86.67%)
 
 ```json
 {"printWidth":100}
 ```
 
+- [edge-cases/gql-in-js/embedded-template-invalid-content.js](diffs/gql-in-js/edge-cases__gql-in-js__embedded-template-invalid-content.js.md)
+  - apps/oxfmt/DIVERGENCES.md#embedded-template-invalid-content
+- [edge-cases/gql-in-js/embedded-template-short-argument.js](diffs/gql-in-js/edge-cases__gql-in-js__embedded-template-short-argument.js.md)
+  - apps/oxfmt/DIVERGENCES.md#embedded-template-short-argument
+
 ## css-in-js
 
-### Option 1: 19/21 (90.48%)
+### Option 1: 20/22 (90.91%)
 
 ```json
 {"printWidth":80}
@@ -51,7 +61,7 @@
 - [externals/prettier/js/multiparser-css/styled-components.js](diffs/css-in-js/externals__prettier__js__multiparser-css__styled-components.js.md)
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 
-### Option 2: 19/21 (90.48%)
+### Option 2: 20/22 (90.91%)
 
 ```json
 {"printWidth":100}
@@ -64,7 +74,7 @@
 
 ## html-in-js
 
-### Option 1: 173/197 (87.82%)
+### Option 1: 174/198 (87.88%)
 
 ```json
 {"printWidth":80}
@@ -119,7 +129,7 @@
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
-### Option 2: 187/197 (94.92%)
+### Option 2: 188/198 (94.95%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
@@ -162,13 +172,13 @@
 
 ## md-in-js
 
-### Option 1: 8/8 (100.00%)
+### Option 1: 9/9 (100.00%)
 
 ```json
 {"printWidth":80}
 ```
 
-### Option 2: 8/8 (100.00%)
+### Option 2: 9/9 (100.00%)
 
 ```json
 {"printWidth":100,"proseWrap":"always"}
@@ -176,13 +186,13 @@
 
 ## xxx-in-js-comment
 
-### Option 1: 6/6 (100.00%)
+### Option 1: 7/7 (100.00%)
 
 ```json
 {"printWidth":80}
 ```
 
-### Option 2: 6/6 (100.00%)
+### Option 2: 7/7 (100.00%)
 
 ```json
 {"printWidth":100}

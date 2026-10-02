@@ -45,7 +45,8 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 - See `tests/jsdoc/fixtures` for the covered behavior
   - See also `tests/jsdoc/upstream-jsdoc-bugs.md`
 - Implemented in Rust as a comment-text rewrite at print time (`formatter/trivia.rs`), not an IR transform
-- Non-JS fenced code blocks go through the session's optional `StringEmbedder`; without it (or on failure) they stay verbatim
+- Non-JS fenced code blocks of the `prettier-plugin-jsdoc` set go through the session's optional `StringEmbedder`;
+  without it (or on failure), and for any other language, they stay verbatim
 - Covered by plain fixture-pair tests (`--test jsdoc`, committed input/expected pairs);
   a mismatch is a failing test, not a tracked conformance-report entry
 
@@ -68,6 +69,8 @@ As the JS host, this crate also owns the parent-side concerns in `print/template
 - `.raw` vs `.cooked` selection
 
 Language formatter crates stay free of these rules.
+Without a dispatcher (`embeddedLanguageFormatting: off`), templates print verbatim.
+With one, the layout around an embedded template (a sole argument, an arrow body) is decided from the AST (`embed_hug`), not from the source shape or whether its content formats.
 See `embed/mod.rs` for the shared helpers and `embed/{css,html,graphql,markdown}.rs` for each site's wiring.
 
 js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`. See `apps/oxfmt` in details.

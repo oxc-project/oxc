@@ -42,6 +42,9 @@ pub struct NextWord<'a> {
     /// The word starts a text of the same sentence: the CJK rules see it.
     /// Past another node's edge they do not (Prettier's sentence ends there), so the whitespace may break and stays a space.
     pub in_sentence: bool,
+    /// Only for a `line` that is a table delimiter row after a kept soft break under `preserve`:
+    /// the line above it, when known (`line_shape::line_above`), which decides whether the row opens a table.
+    pub header: Option<&'a str>,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -119,7 +122,7 @@ pub fn push_text<'a>(
                     Some(glued) if is_last => glued,
                     _ => word,
                 };
-                Some(NextWord { word, line: "", escaped, in_sentence: true })
+                Some(NextWord { word, line: "", escaped, in_sentence: true, header: None })
             };
             let cx = TextContext {
                 next_word: next,
@@ -364,7 +367,11 @@ fn looks_like_block_start(next: NextWord<'_>, exact: bool) -> bool {
     }
     if exact {
         // A `|` row is inert on its own: the delimiter row after it is what makes a table, and that break is kept apart
-        return line_opens_block(target, true) || is_line_shape_start(target);
+        let opens = next.header.map_or_else(
+            || line_opens_block(target, true),
+            |header| lexical::table_delimiter_activates(&Constructs::markdown(), header, target),
+        );
+        return opens || is_line_shape_start(target);
     }
     let constructs = Constructs::markdown();
     // A dialect line shape at a line start is printed raw from then on: never create one
