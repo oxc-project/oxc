@@ -438,8 +438,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyIdentifier<'a>>
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_property_key(self.name(), self.computed(), f);
-        write!(f, [":", space(), self.binding()]);
+        AssignmentLike::AssignmentTargetPropertyProperty(self).fmt(f);
     }
 }
 

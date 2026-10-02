@@ -1,8 +1,8 @@
 checker.ts:
   file size: 2922154 # 2.92 MB
-  sys allocs: 19386
-  sys reallocs: 1169
-  sys deallocs: 19385
+  sys allocs: 19387
+  sys reallocs: 1170
+  sys deallocs: 19386
   sys alloc bytes: 6767781 # 6.77 MB
   sys peak growth: 2973674 # 2.97 MB
   arena allocs: 1060573
@@ -33,9 +33,9 @@ RadixUIAdoptionSection.jsx:
 
 pdf.mjs:
   file size: 567296 # 567.30 kB
-  sys allocs: 9778
-  sys reallocs: 1327
-  sys deallocs: 9777
+  sys allocs: 9782
+  sys reallocs: 1328
+  sys deallocs: 9781
   sys alloc bytes: 3141552 # 3.14 MB
   sys peak growth: 1156432 # 1.16 MB
   arena allocs: 430193
