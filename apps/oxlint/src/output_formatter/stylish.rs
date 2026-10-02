@@ -13,7 +13,11 @@ pub struct StylishOutputFormatter;
 
 impl InternalFormatter for StylishOutputFormatter {
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        Box::new(StylishReporter::default())
+        let reporter = StylishReporter::default();
+        // CLI snapshots expect colors regardless of the test process's NO_COLOR setting.
+        #[cfg(test)]
+        let reporter = reporter.with_no_color(false);
+        Box::new(reporter)
     }
 }
 
