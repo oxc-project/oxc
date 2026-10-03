@@ -1,6 +1,6 @@
 var _staticBlock;
 function foo() {}
-export class C {
+export let C = (class C {
   #_ = 1;
   static #_2 = 2;
   #_3() {}
@@ -8,8 +8,7 @@ export class C {
   accessor #_5 = 5;
   static accessor #_6 = 6;
   _7 = 7;
-  static _8 = (_staticBlock = () => foo(), 8);
+  static _8 = ((_value) => (_staticBlock = () => (foo(), this), _value))(8);
   _9() {}
   static _10() {}
-}
-_staticBlock();
+}, _staticBlock());

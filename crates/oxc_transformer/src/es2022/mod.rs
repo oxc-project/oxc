@@ -43,6 +43,12 @@ impl ES2022<'_> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_statement(stmt, ctx);
+        }
+    }
+
     #[inline] // Because this is a no-op in release mode
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {

@@ -1,5 +1,4 @@
 var _staticBlock;
-class A {
-  static x = (_staticBlock = () => this.y = 1, Object.preventExtensions(this));
-}
-_staticBlock();
+let A = (class A {
+  static x = ((_value) => (_staticBlock = () => (this.y = 1, this), _value))(Object.preventExtensions(this));
+}, _staticBlock());

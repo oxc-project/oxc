@@ -1,4 +1,5 @@
-var _staticBlock, _key, _staticBlock2;
+var _staticBlock, _staticBlock2;
+let _key;
 const A = ({ "A": class {
   static #_ = _staticBlock = () => (this.seen = this.name, this);
 } }["A"], _staticBlock());
