@@ -184,14 +184,6 @@ impl<'a> Expression<'a> {
         }
     }
 
-    /// Returns `true` if this [`Expression`] is an [`IdentifierReference`] with specified `name`.
-    pub fn is_specific_ident(&self, name: Ident<'a>) -> bool {
-        match self.get_inner_expression() {
-            Expression::Identifier(ident) => ident.name == name,
-            _ => false,
-        }
-    }
-
     /// Returns `true` if this [`Expression`] is a [`MemberExpression`] with the specified `object`
     /// name and `property` name.
     ///
