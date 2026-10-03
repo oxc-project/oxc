@@ -30,6 +30,44 @@ impl Rule for NoDisabledTests {
 }
 
 #[test]
+fn test_extended_tests() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "import { test as base } from 'vitest'; const custom = base.extend({}); custom('works', () => {});",
+        "import { test as base } from 'vitest'; const custom = base.extend({}); function run(custom) { custom.skip('unrelated', () => {}); }",
+        "import { test } from 'vitest'; import { test as base } from 'other'; const custom = base.extend({}); custom.skip('unrelated', () => {});",
+        "import { test } from 'vitest'; import { test as base } from '@jest/globals'; const custom = base.extend({}); custom.skip('unrelated', () => {});",
+        "import { describe } from 'vitest'; const custom = describe.extend({}); custom.skip('unrelated', () => {});",
+        "import { test } from 'vitest'; const base = { extend() { return other; } }; const custom = base.extend({}); custom.skip('unrelated', () => {});",
+        "import { test as base } from 'vitest'; let custom = base.extend({}); custom = other; custom.skip('unrelated', () => {});",
+        "import { test } from 'vitest'; const first = second.extend({}); const second = first.extend({}); first.skip('cycle', () => {});",
+        "import { test as base } from 'vitest'; let first = base.extend({}); const custom = first.extend({}); first = other; custom.skip('unrelated', () => {});",
+        "import { test as base } from 'vitest'; const custom = base.extend({}); object[custom].skip('unrelated', () => {});",
+        "import { test } from 'vitest'; object[test].skip('unrelated', () => {});",
+        "import { test as base } from 'vitest'; const { custom } = base.extend({}); custom.skip('unrelated', () => {});",
+    ];
+    let fail = vec![
+        "import { test as baseTest } from 'vitest'; const test = baseTest.extend<{ value: boolean }>({ value: true }); test.skip('example', async () => {});",
+        "import { it as base } from 'vitest'; const custom = base.extend({}); custom.skip('example', () => {});",
+        "import { test } from 'vite-plus/test'; const custom = test.extend({}); custom.skip('example', () => {});",
+        "import { test } from '@effect/vitest'; const custom = test.extend({}); custom.skip('example', () => {});",
+        "import { test as base } from 'vitest'; const first = base.extend({}); const second = first.extend({}); second.skip('example', () => {});",
+        "import { test as base } from 'vitest'; const custom = base.extend({}).extend({}); custom.skip('example', () => {});",
+        "import { test as base } from 'vitest'; const custom = base['extend']({}); custom['skip']('example', () => {});",
+        "import { test as base } from 'vitest'; const custom = base.extend({}); const alias = custom; alias.skip('example', () => {});",
+        "import { test as base } from 'vitest'; const alias = base; const custom = alias.extend({}); custom.skip('example', () => {});",
+        "import { test as base } from 'vitest'; const custom = base.extend({}); custom.skip.each([1])('example', () => {});",
+        "import { test as base } from 'vitest'; const custom = base.extend({}); custom('missing callback');",
+        "import { test as base } from 'vitest'; let custom = base.extend({}); custom.skip('example', () => {});",
+    ];
+    Tester::new(NoDisabledTests::NAME, NoDisabledTests::PLUGIN, pass, fail)
+        .with_vitest_plugin(true)
+        .with_snapshot_suffix("extended")
+        .test_and_snapshot();
+}
+
+#[test]
 fn test() {
     use crate::tester::Tester;
 
