@@ -6,7 +6,7 @@ use std::{
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    AllowWarnDeny,
+    AllowWarnDeny, LintFilter, LintFilterKind,
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
 };
@@ -75,6 +75,10 @@ pub struct Config {
 
     /// An optional set of overrides to apply to the base state depending on the file being linted.
     pub(crate) overrides: ResolvedOxlintOverrides,
+
+    /// CLI `-A`/`-W`/`-D` filters. Applied after file overrides so they win
+    /// regardless of whether a rule was configured at the root or in overrides.
+    pub(crate) cli_filters: Vec<LintFilter>,
 }
 
 impl Config {
@@ -108,6 +112,7 @@ impl Config {
             base_rules: rules,
             categories,
             overrides,
+            cli_filters: Vec::new(),
         }
     }
 
@@ -249,6 +254,8 @@ impl Config {
             }
         }
 
+        apply_cli_filters(&mut rules, &self.cli_filters);
+
         let config: Arc<LintConfig> = if plugins == self.base.config.plugins
             && env == self.base.config.env
             && globals == self.base.config.globals
@@ -278,6 +285,56 @@ impl Config {
             rules: Arc::from(rules.into_boxed_slice()),
             config,
             external_rules: Arc::from(external_rules.into_boxed_slice()),
+        }
+    }
+}
+
+fn apply_cli_filters(rules: &mut FxHashMap<RuleEnum, AllowWarnDeny>, filters: &[LintFilter]) {
+    for filter in filters {
+        let (severity, kind) = filter.into();
+        match severity {
+            AllowWarnDeny::Deny | AllowWarnDeny::Warn => match kind {
+                LintFilterKind::Category(category) => {
+                    for (rule, sev) in rules.iter_mut() {
+                        if rule.category() == *category {
+                            *sev = severity;
+                        }
+                    }
+                }
+                LintFilterKind::Rule(plugin, rule_name) => {
+                    let (plugin, rule_name) = super::rules::unalias_plugin_name(plugin, rule_name);
+                    for (rule, sev) in rules.iter_mut() {
+                        if rule.plugin_name() == plugin && rule.name() == rule_name {
+                            *sev = severity;
+                        }
+                    }
+                }
+                LintFilterKind::Generic(name) => {
+                    for (rule, sev) in rules.iter_mut() {
+                        if rule.name() == name {
+                            *sev = severity;
+                        }
+                    }
+                }
+                LintFilterKind::All => {
+                    for sev in rules.values_mut() {
+                        *sev = severity;
+                    }
+                }
+            },
+            AllowWarnDeny::Allow => match kind {
+                LintFilterKind::Category(category) => {
+                    rules.retain(|rule, _| rule.category() != *category);
+                }
+                LintFilterKind::Rule(plugin, rule_name) => {
+                    let (plugin, rule_name) = super::rules::unalias_plugin_name(plugin, rule_name);
+                    rules.retain(|r, _| r.plugin_name() != plugin || r.name() != rule_name);
+                }
+                LintFilterKind::Generic(name) => {
+                    rules.retain(|rule, _| rule.name() != name);
+                }
+                LintFilterKind::All => rules.clear(),
+            },
         }
     }
 }
