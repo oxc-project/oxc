@@ -1453,6 +1453,7 @@ impl ContentEq for ExportFromDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.specifiers, &other.specifiers)
             && ContentEq::content_eq(&self.source, &other.source)
+            && ContentEq::content_eq(&self.phase, &other.phase)
             && ContentEq::content_eq(&self.export_kind, &other.export_kind)
             && ContentEq::content_eq(&self.with_clause, &other.with_clause)
     }
@@ -1468,6 +1469,7 @@ impl ContentEq for ExportAllDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.exported, &other.exported)
             && ContentEq::content_eq(&self.source, &other.source)
+            && ContentEq::content_eq(&self.phase, &other.phase)
             && ContentEq::content_eq(&self.with_clause, &other.with_clause)
             && ContentEq::content_eq(&self.export_kind, &other.export_kind)
     }
