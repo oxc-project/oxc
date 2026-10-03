@@ -2,12 +2,13 @@ use std::ops::Deref;
 
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement},
+    ast::{Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -204,11 +205,17 @@ impl Rule for LabelHasAssociatedControl {
         }
 
         let has_html_for = if let Some(attributes) = ctx.settings().jsx_a11y.attributes.get("for") {
-            attributes
-                .iter()
-                .any(|attr| has_jsx_prop(&element.opening_element, attr.as_str()).is_some())
+            attributes.iter().any(|attr| {
+                has_jsx_prop(&element.opening_element, attr.as_str()).is_some_and(|attr| {
+                    attr.as_attribute()
+                        .is_some_and(|attr| has_attribute_value(attr.value.as_ref(), false))
+                })
+            })
         } else {
-            has_jsx_prop(&element.opening_element, "htmlFor").is_some()
+            has_jsx_prop(&element.opening_element, "htmlFor").is_some_and(|attr| {
+                attr.as_attribute()
+                    .is_some_and(|attr| has_attribute_value(attr.value.as_ref(), false))
+            })
         };
 
         let has_control = self.has_nested_control(element, ctx);
@@ -257,13 +264,7 @@ impl LabelHasAssociatedControl {
     }
 
     fn has_accessible_label<'a>(&self, root: &JSXElement<'a>, ctx: &LintContext<'a>) -> bool {
-        if root.opening_element.attributes.iter().any(|attribute| match attribute {
-            JSXAttributeItem::Attribute(attr) => {
-                let attr_name = get_jsx_attribute_name(&attr.name);
-                self.label_attributes.binary_search(&attr_name.into()).is_ok()
-            }
-            JSXAttributeItem::SpreadAttribute(_) => true,
-        }) {
+        if self.has_labelling_prop(root) {
             return true;
         }
 
@@ -274,6 +275,17 @@ impl LabelHasAssociatedControl {
         }
 
         false
+    }
+
+    fn has_labelling_prop(&self, element: &JSXElement<'_>) -> bool {
+        element.opening_element.attributes.iter().any(|attribute| match attribute {
+            JSXAttributeItem::Attribute(attr) => {
+                let attr_name = get_jsx_attribute_name(&attr.name);
+                self.label_attributes.binary_search(&attr_name.into()).is_ok()
+                    && has_attribute_value(attr.value.as_ref(), true)
+            }
+            JSXAttributeItem::SpreadAttribute(_) => true,
+        })
     }
 
     fn has_nested_control<'a>(&self, root: &JSXElement<'a>, ctx: &LintContext<'a>) -> bool {
@@ -339,25 +351,7 @@ impl LabelHasAssociatedControl {
             JSXChild::ExpressionContainer(_) => true,
             JSXChild::Text(text) => !text.value.as_str().trim().is_empty(),
             JSXChild::Element(element) => {
-                let has_labelling_prop =
-                    element.opening_element.attributes.iter().any(|attr| match attr {
-                        JSXAttributeItem::Attribute(attribute) => {
-                            self.label_attributes.iter().any(|labelling_prop| {
-                                attribute.is_identifier(labelling_prop)
-                                    && attribute.value.as_ref().is_some_and(|attribute_value| {
-                                        match attribute_value {
-                                            JSXAttributeValue::StringLiteral(literal) => {
-                                                !literal.value.as_str().trim().is_empty()
-                                            }
-                                            _ => true,
-                                        }
-                                    })
-                            })
-                        }
-                        JSXAttributeItem::SpreadAttribute(_) => true,
-                    });
-
-                if has_labelling_prop {
+                if self.has_labelling_prop(element) {
                     return true;
                 }
 
@@ -389,6 +383,46 @@ impl LabelHasAssociatedControl {
             }
             JSXChild::Spread(_) => false,
         }
+    }
+}
+
+fn has_attribute_value(value: Option<&JSXAttributeValue<'_>>, trim_strings: bool) -> bool {
+    let has_text = |text: &str| {
+        !(if trim_strings {
+            text.trim_matches(|c| is_white_space(c) || is_line_terminator(c))
+        } else {
+            text
+        })
+        .is_empty()
+    };
+    match value {
+        Some(JSXAttributeValue::StringLiteral(literal)) => has_text(&literal.value),
+        Some(JSXAttributeValue::ExpressionContainer(container)) => {
+            let Some(expression) = container.expression.as_expression() else {
+                return true;
+            };
+            let expression = expression.get_inner_expression();
+            match expression {
+                Expression::StringLiteral(literal) => has_text(&literal.value),
+                Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
+                    template
+                        .quasis
+                        .first()
+                        .and_then(|quasi| quasi.value.cooked.as_ref())
+                        .is_none_or(|text| has_text(text))
+                }
+                Expression::NullLiteral(_) => false,
+                Expression::BooleanLiteral(literal) => literal.value,
+                Expression::NumericLiteral(literal) => {
+                    literal.value != 0.0 && !literal.value.is_nan()
+                }
+                Expression::BigIntLiteral(literal) => !literal.is_zero(),
+                Expression::Identifier(_) => !expression.is_undefined(),
+                _ => true,
+            }
+        }
+        // Bare attributes and unknown values may provide a label, as in the upstream rule.
+        _ => true,
     }
 }
 
@@ -1665,5 +1699,74 @@ fn test() {
     ];
 
     Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_attribute_values() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        (r#"<label aria-label="Name" htmlFor="name" />"#, None, None),
+        (r"<label aria-label={label} htmlFor={id} />", None, None),
+        (r#"<label aria-label htmlFor="name" />"#, None, None),
+        (r#"<label htmlFor="name"><span aria-label /></label>"#, None, None),
+        (r#"<label htmlFor="name"><span {...props} /></label>"#, None, None),
+        (r#"<label {...props} htmlFor="name" />"#, None, None),
+        (r#"<label htmlFor="">Name<input /></label>"#, None, None),
+        (r#"<label aria-label="">Name<input /></label>"#, None, None),
+        (r#"<label htmlFor=" ">Name</label>"#, None, None),
+        (r"<label htmlFor>Name</label>", None, None),
+        (r#"<label aria-label={`Name`} htmlFor="name" />"#, None, None),
+        (r#"<label aria-label={`${label}`} htmlFor="name" />"#, None, None),
+        (r#"<label aria-label={1n} htmlFor="name" />"#, None, None),
+        (r"<label htmlFor={1n}>Name</label>", None, None),
+        (r#"<label aria-label={"\u0085"} htmlFor="name" />"#, None, None),
+        (r#"<label htmlFor="name"><span aria-label={"\u0085"} /></label>"#, None, None),
+        (r#"<label htmlFor={"\uFEFF"}>Name</label>"#, None, None),
+    ];
+    let fail = vec![
+        (r#"<label aria-label="" htmlFor="name" />"#, None, None),
+        (r#"<label aria-label="  " htmlFor="name" />"#, None, None),
+        (r#"<label aria-labelledby="" htmlFor="name" />"#, None, None),
+        (r#"<label alt="" htmlFor="name" />"#, None, None),
+        (r#"<label aria-label={""} htmlFor="name" />"#, None, None),
+        (r#"<label aria-label={"  "} htmlFor="name" />"#, None, None),
+        (r#"<label aria-label={``} htmlFor="name" />"#, None, None),
+        (r#"<label aria-label={null} htmlFor="name" />"#, None, None),
+        (r#"<label aria-label={false} htmlFor="name" />"#, None, None),
+        (r#"<label aria-label={0} htmlFor="name" />"#, None, None),
+        (r#"<label aria-label={0n} htmlFor="name" />"#, None, None),
+        (r#"<label aria-label={"\uFEFF"} htmlFor="name" />"#, None, None),
+        (r#"<label htmlFor="name"><span aria-label={"\uFEFF"} /></label>"#, None, None),
+        (r#"<label aria-label={undefined} htmlFor="name" />"#, None, None),
+        (r#"<label htmlFor="name"><span aria-label={""} /></label>"#, None, None),
+        (r#"<label htmlFor="">Name</label>"#, None, None),
+        (r#"<label htmlFor={""}>Name</label>"#, None, None),
+        (r"<label htmlFor={null}>Name</label>", None, None),
+        (r"<label htmlFor={false}>Name</label>", None, None),
+        (r"<label htmlFor={0n}>Name</label>", None, None),
+        (
+            r#"<label htmlFor="">Name<input /></label>"#,
+            Some(serde_json::json!([{ "assert": "both" }])),
+            None,
+        ),
+        (
+            r#"<label label="" htmlFor="name" />"#,
+            Some(serde_json::json!([{
+                "labelAttributes": ["label"]
+            }])),
+            None,
+        ),
+        (
+            r#"<label for="">Name</label>"#,
+            None,
+            Some(serde_json::json!({"settings": {"jsx-a11y": {
+                "attributes": {"for": ["for"]}
+            }}})),
+        ),
+    ];
+    Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
+        .with_snapshot_suffix("attribute_values")
         .test_and_snapshot();
 }
