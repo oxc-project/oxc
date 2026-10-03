@@ -35,3 +35,16 @@ const objectKey = { toString() { objectConversions++; return "ObjectClass"; } };
 const object = { [objectKey]: class { static { this.seen = this.name; } } };
 expect(object.ObjectClass.seen).toBe("ObjectClass");
 expect(objectConversions).toBe(1);
+
+for (const [key, name] of [[Symbol(), ""], [Symbol(""), "[]"], [Symbol("symbol"), "[symbol]"]]) {
+  class FunctionField {
+    static {}
+    static [key] = function () {};
+  }
+  class ArrowField {
+    static [key] = () => {};
+    static {}
+  }
+  expect(FunctionField[key].name).toBe(name);
+  expect(ArrowField[key].name).toBe(name);
+}

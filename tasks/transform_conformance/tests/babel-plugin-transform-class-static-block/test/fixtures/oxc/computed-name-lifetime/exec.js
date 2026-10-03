@@ -91,3 +91,15 @@ expect(Method.seen).toBe(Method.name);
 expect(typeof Method.seen).toBe("function");
 expect(Getter.seen).toBe("getter");
 expect(new Original().a.name).toBe("a");
+
+function* symbolNamedClass() {
+  const key = Symbol("");
+  return { [key]: class {
+    [yield "field"] = class { static {} };
+  } }[key];
+}
+const symbolGenerator = symbolNamedClass();
+expect(symbolGenerator.next().value).toBe("field");
+const SymbolNamed = symbolGenerator.next("field").value;
+expect(SymbolNamed.name).toBe("[]");
+expect(new SymbolNamed().field.name).toBe("field");

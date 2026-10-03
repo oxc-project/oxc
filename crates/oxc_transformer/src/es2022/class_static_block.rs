@@ -46,7 +46,7 @@ use itoa::Buffer as ItoaBuffer;
 
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, walk};
 use oxc_span::SPAN;
 use oxc_str::Str;
 use oxc_syntax::{
@@ -233,7 +233,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
         }
         // Parameter initializers have no statement list in which to declare per-call temps.
         if matches!(ctx.parent(), Ancestor::FormalParameterInitializer(_))
-            && ContainsStaticBlocks::check(expr)
+            && NeedsTemporaryScope::check(expr)
         {
             *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
         }
@@ -244,7 +244,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let wrap = !prop.r#static && prop.value.as_ref().is_some_and(ContainsStaticBlocks::check);
+        let wrap = !prop.r#static && prop.value.as_ref().is_some_and(NeedsTemporaryScope::check);
         let class = prop.value.as_ref().and_then(|value| {
             if wrap {
                 match value.without_parentheses() {
@@ -494,7 +494,7 @@ impl<'a> ClassStaticBlock<'a> {
                 else {
                     return None;
                 };
-                (value.id.is_none() && ContainsStaticBlocks::check(prop.value.as_ref().unwrap()))
+                (value.id.is_none() && NeedsTemporaryScope::check(prop.value.as_ref().unwrap()))
                     .then_some(index)
             })
             .collect::<Vec<_>>();
@@ -660,23 +660,42 @@ impl<'a> ClassStaticBlock<'a> {
     }
 
     fn needs_name_scope(class: &Class<'_>) -> bool {
-        let has_blocks =
-            class.body.body.iter().any(|element| matches!(element, ClassElement::StaticBlock(_)));
-        class.body.body.iter().any(|element| {
-            let ClassElement::PropertyDefinition(prop) = element else { return false };
-            if matches!(
-                prop.key,
-                PropertyKey::StaticIdentifier(_)
-                    | PropertyKey::PrivateIdentifier(_)
-                    | PropertyKey::StringLiteral(_)
-            ) {
-                return false;
-            }
-            prop.value.as_ref().is_some_and(|value| {
-                value.is_anonymous_function_definition()
-                    && ((prop.r#static && has_blocks) || ContainsStaticBlocks::check(value))
+        Self::needs_static_name_scope(class)
+            || class.body.body.iter().any(|element| {
+                let ClassElement::PropertyDefinition(prop) = element else { return false };
+                !prop.r#static
+                    && Self::needs_name_temp(prop)
+                    && prop.value.as_ref().is_some_and(NeedsTemporaryScope::check)
             })
-        })
+    }
+
+    /// Only fields whose initializers will be changed need their computed names captured.
+    fn needs_static_name_scope(class: &Class<'_>) -> bool {
+        let mut pending_blocks = false;
+        let mut last_needs_name = false;
+        for element in &class.body.body {
+            match element {
+                ClassElement::StaticBlock(_) => pending_blocks = true,
+                ClassElement::PropertyDefinition(prop) if prop.r#static => {
+                    last_needs_name = Self::needs_name_temp(prop);
+                    if pending_blocks && last_needs_name {
+                        return true;
+                    }
+                    pending_blocks = false;
+                }
+                _ => {}
+            }
+        }
+        pending_blocks && last_needs_name
+    }
+
+    fn needs_name_temp(prop: &PropertyDefinition<'_>) -> bool {
+        !matches!(
+            prop.key,
+            PropertyKey::StaticIdentifier(_)
+                | PropertyKey::PrivateIdentifier(_)
+                | PropertyKey::StringLiteral(_)
+        ) && prop.value.as_ref().is_some_and(Expression::is_anonymous_function_definition)
     }
 
     fn property_name(
@@ -923,9 +942,9 @@ struct ClassBindingRebinder<'a, 'ctx> {
 }
 
 #[derive(Default)]
-struct ContainsStaticBlocks(bool);
+struct NeedsTemporaryScope(bool);
 
-impl ContainsStaticBlocks {
+impl NeedsTemporaryScope {
     fn check(expr: &Expression<'_>) -> bool {
         let mut visitor = Self::default();
         visitor.visit_expression(expr);
@@ -933,9 +952,17 @@ impl ContainsStaticBlocks {
     }
 }
 
-impl<'a> Visit<'a> for ContainsStaticBlocks {
-    fn visit_static_block(&mut self, _block: &StaticBlock<'a>) {
-        self.0 = true;
+impl<'a> Visit<'a> for NeedsTemporaryScope {
+    fn visit_class(&mut self, class: &Class<'a>) {
+        if ClassStaticBlock::has_trailing_blocks(class)
+            || ClassStaticBlock::needs_static_name_scope(class)
+        {
+            self.0 = true;
+        } else {
+            // Blocks folded into ordinary fields need no enclosing temporaries. Nested
+            // classes may still introduce deferred closures or captured property keys.
+            walk::walk_class(self, class);
+        }
     }
     fn visit_function(&mut self, _function: &Function<'a>, _flags: ScopeFlags) {}
     fn visit_arrow_function_expression(&mut self, _arrow: &ArrowFunctionExpression<'a>) {}
