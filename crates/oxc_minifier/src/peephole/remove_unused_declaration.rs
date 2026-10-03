@@ -1,7 +1,10 @@
 use super::{PeepholeOptimizations, remove_unused_expression::ClassRemovability};
 use crate::{CompressOptionsUnused, TraverseCtx};
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
+use oxc_ecmascript::{
+    constant_evaluation::{DetermineValueType, ValueType},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_syntax::symbol::SymbolId;
 
 impl<'a> PeepholeOptimizations {
@@ -139,6 +142,68 @@ impl<'a> PeepholeOptimizations {
             }
             BindingPattern::AssignmentPattern(_) => false,
         }
+    }
+
+    /// Remove unused properties from an object pattern whose init is an object literal.
+    ///
+    /// `let { a, b } = { a: 0, b: 1 }` with unused `a` -> `let { b } = { a: 0, b: 1 }`
+    ///
+    /// Reading a property of the literal has no side effects unless the literal has
+    /// an accessor or sets its prototype with `__proto__`.
+    pub fn remove_unused_object_pattern_properties(
+        decl: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let BindingPattern::ObjectPattern(pattern) = &mut decl.id else { return };
+        // Removing a property would add it to the rest object.
+        if pattern.rest.is_some() {
+            return;
+        }
+        let Some(Expression::ObjectExpression(init)) = &decl.init else { return };
+        if !Self::can_remove_unused_declarators(ctx) {
+            return;
+        }
+        if init.properties.iter().any(|prop| {
+            matches!(prop, ObjectPropertyKind::ObjectProperty(p)
+                if p.kind != PropertyKind::Init
+                    || (!p.computed && p.key.is_specific_static_name("__proto__")))
+        }) {
+            return;
+        }
+        let old_len = pattern.properties.len();
+        pattern.properties.retain(|prop| {
+            if !Self::is_removable_binding_property(prop, ctx) {
+                return true;
+            }
+            // Keys are static, so only the default value can hold references.
+            if let BindingPattern::AssignmentPattern(assign) = &prop.value {
+                ctx.drop_expression(&assign.right);
+            }
+            false
+        });
+        if pattern.properties.len() != old_len {
+            ctx.notice_change();
+        }
+    }
+
+    /// A non-computed property binding an unused identifier, with no default value
+    /// or one without side effects (it runs when the property is missing).
+    fn is_removable_binding_property(prop: &BindingProperty<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        if prop.computed {
+            return false;
+        }
+        let ident = match &prop.value {
+            BindingPattern::BindingIdentifier(ident) => ident,
+            BindingPattern::AssignmentPattern(assign) => {
+                let BindingPattern::BindingIdentifier(ident) = &assign.left else { return false };
+                if assign.right.may_have_side_effects(ctx) {
+                    return false;
+                }
+                ident
+            }
+            _ => return false,
+        };
+        ident.symbol_id.get().is_some_and(|id| Self::symbol_is_unused_by_count(id, ctx))
     }
 
     /// Filter unused declarators out of a `KeepVar`-synthesized `var`
