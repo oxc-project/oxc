@@ -55,15 +55,13 @@ fn test_fold_one_child_blocks() {
     // test("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
     test(
         "v = function(x, y) { if(x) { if(y) { var x } else { var z } } }",
-        "v = function(x, y) { if(x) { if(y) var x; else var z } }",
+        "v = function(x, y) { if(x) if(y) var x; else var z }",
     );
 
-    // NOTE - technically we can remove the blocks since both the parent
-    // and child have elses. But we don't since it causes ambiguities in
-    // some cases where not all descendent ifs having elses
+    // Codegen adds braces only when a descendant has an unmatched `if`.
     test(
         "v = function(x, y) { if(x) { if(y) { var x } else { var z } } else { var w } }",
-        "v = function(x, y) { if(x) { if(y) var x; else var z } else var w }",
+        "v = function(x, y) { if(x) if(y) var x; else var z; else var w }",
     );
     test(
         "v = function(x, y) { if(x) { var x } else { if(y) { var y } } }",

@@ -121,7 +121,7 @@ fn test_function_return_optimization() {
     ); // function f(){try{g:if(a())throw 9}finally{}}
     test(
         "function g(a,b){if(a){}else if(b){return()=>typeof f}else function f(){}}",
-        "function g(a,b){if(!a){if(b)return()=>typeof f;else function f(){}}}",
+        "function g(a,b){if(!a)if(b)return()=>typeof f;else function f(){}}",
     );
 
     test("function g(){if(a)return b;return c;var x}", "function g(){return a?b:c;var x;}");

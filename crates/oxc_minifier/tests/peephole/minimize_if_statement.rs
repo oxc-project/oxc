@@ -1,4 +1,4 @@
-use crate::test;
+use crate::{CompressOptions, default_options, test, test_options, test_same};
 
 #[test]
 fn test_minimize_if() {
@@ -73,15 +73,15 @@ fn test_minimize_if() {
 
     test(
         "function f(){if(a)if(b)var x=1;else var y=2;return x+y}",
-        "function f(){if(a){if(b)var x=1;else var y=2}return x+y}",
+        "function f(){if(a)if(b)var x=1;else var y=2;return x+y}",
     );
     test(
         "function f(){if(a)if(b)if(c)var x=1;else var y=2;return x+y}",
-        "function f(){if(a&&b){if(c)var x=1;else var y=2}return x+y}",
+        "function f(){if(a&&b)if(c)var x=1;else var y=2;return x+y}",
     );
     test(
         "function f(){if(!a){}else if(b)var x=1;else var y=2;return x+y}",
-        "function f(){if(a){if(b)var x=1;else var y=2}return x+y}",
+        "function f(){if(a)if(b)var x=1;else var y=2;return x+y}",
     );
     test("function f(){if(a){}else return b;}", "function f(){if(!a)return b;}");
     test("function f(){if(!a){}else return b;}", "function f(){if(a)return b;}");
@@ -89,4 +89,36 @@ fn test_minimize_if() {
     test("function f(){if(a)return c;else b();}", "function f(){if(a)return c;b();}");
     test("function f(){if((a(),b)){}else c();}", "function f(){a(),b||c();}");
     test("function f(){if(a(),!(b||c)){}else d();}", "function f(){a(),!(b||c)||d();}");
+}
+
+#[test]
+fn test_dangling_else_codegen() {
+    test_same("if(a){if(b)var x=1}else var y=2;");
+    test_same("if(a){if(b)var x=1;else if(c)var y=2}else var z=3;");
+    test_same("if(a){for(;b;)if(c)var x=1}else var y=2;");
+}
+
+#[test]
+fn test_nested_if_without_sequences() {
+    let options = CompressOptions { sequences: false, ..default_options() };
+    test_options(
+        "function f(){if(a)if(b)return c;else d();}",
+        "function f(){if(a){if(b)return c;d();}}",
+        &options,
+    );
+    test_options(
+        "function f(){if(a)if(b)return c;else {d();e();}}",
+        "function f(){if(a){if(b)return c;d();e();}}",
+        &options,
+    );
+    test_options(
+        "function f(){if(a)if(b)return x;else {let x=d();e(x);}}",
+        "function f(){if(a){if(b)return x;{let x=d();e(x);}}}",
+        &options,
+    );
+    test_options(
+        "function f(){if(a)if(b)return g;else {function g(){}e(g);}}",
+        "function f(){if(a){if(b)return g;{function g(){}e(g);}}}",
+        &options,
+    );
 }
