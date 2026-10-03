@@ -2,6 +2,146 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'JSX'.
+   ╭─[no_restricted_globals.tsx:1:23]
+ 1 │ export type A = () => JSX.Element;
+   ·                       ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'JSX'.
+   ╭─[no_restricted_globals.tsx:1:23]
+ 1 │ export type B = keyof JSX.IntrinsicElements;
+   ·                       ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'JSX'.
+   ╭─[no_restricted_globals.tsx:1:10]
+ 1 │ type A = JSX;
+   ·          ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'JSX'.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ type A = typeof JSX;
+   ·                 ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test'.
+   ╭─[no_restricted_globals.tsx:1:13]
+ 1 │ let b: { c: Test }
+   ·             ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test'.
+   ╭─[no_restricted_globals.tsx:1:21]
+ 1 │ function foo(param: Test) {}
+   ·                     ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test'.
+   ╭─[no_restricted_globals.tsx:1:6]
+ 1 │ 1 as Test
+   ·      ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test'.
+   ╭─[no_restricted_globals.tsx:1:26]
+ 1 │ class Derived implements Test {}
+   ·                          ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test1'.
+   ╭─[no_restricted_globals.tsx:1:26]
+ 1 │ class Derived implements Test1, Test2 {}
+   ·                          ─────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test2'.
+   ╭─[no_restricted_globals.tsx:1:33]
+ 1 │ class Derived implements Test1, Test2 {}
+   ·                                 ─────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test'.
+   ╭─[no_restricted_globals.tsx:1:27]
+ 1 │ interface Derived extends Test {}
+   ·                           ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test'.
+   ╭─[no_restricted_globals.tsx:1:21]
+ 1 │ type Intersection = Test & {}
+   ·                     ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test'.
+   ╭─[no_restricted_globals.tsx:1:14]
+ 1 │ type Union = Test | {}
+   ·              ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'NS'.
+   ╭─[no_restricted_globals.tsx:1:12]
+ 1 │ let value: NS.Test
+   ·            ──
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Type'.
+   ╭─[no_restricted_globals.tsx:1:12]
+ 1 │ let value: Type<Test>
+   ·            ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test'.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ let value: Type<Test>
+   ·                 ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test'.
+   ╭─[no_restricted_globals.tsx:1:21]
+ 1 │ type Intersection = Test<any>
+   ·                     ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Test'.
+   ╭─[no_restricted_globals.tsx:1:21]
+ 1 │ type Intersection = Test<A, B>
+   ·                     ────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'A'.
+   ╭─[no_restricted_globals.tsx:1:26]
+ 1 │ type Intersection = Test<A, B>
+   ·                          ─
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'B'.
+   ╭─[no_restricted_globals.tsx:1:29]
+ 1 │ type Intersection = Test<A, B>
+   ·                             ─
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
   ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
    ╭─[no_restricted_globals.tsx:1:1]
  1 │ foo
@@ -650,6 +790,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_restricted_globals.tsx:1:20]
  1 │ const foo = obj => hasOwnProperty(obj, 'name');
    ·                    ──────────────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'Promise'.
+   ╭─[no_restricted_globals.tsx:1:10]
+ 1 │ const x: Promise<any> = Promise.resolve();
+   ·          ───────
    ╰────
   help: Use a local variable or function parameter instead of the restricted global.
 

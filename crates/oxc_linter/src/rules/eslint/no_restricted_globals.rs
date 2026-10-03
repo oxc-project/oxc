@@ -270,7 +270,7 @@ impl Rule for NoRestrictedGlobals {
             };
             for &ref_id in ref_ids {
                 let reference = ctx.scoping().get_reference(ref_id);
-                if reference.symbol_id().is_some() || reference.is_type() {
+                if reference.symbol_id().is_some() {
                     continue;
                 }
                 let node = ctx.nodes().get_node(reference.node_id());
@@ -527,25 +527,8 @@ fn test() {
             None,
         ),
         ("type Handler = (event: string) => any", Some(serde_json::json!(["event"])), None),
-        ("let b: { c: Test }", Some(serde_json::json!(["Test"])), None),
-        ("function foo(param: Test) {}", Some(serde_json::json!(["Test"])), None),
-        ("1 as Test", Some(serde_json::json!(["Test"])), None),
-        ("class Derived implements Test {}", Some(serde_json::json!(["Test"])), None),
-        (
-            "class Derived implements Test1, Test2 {}",
-            Some(serde_json::json!(["Test1", "Test2"])),
-            None,
-        ),
-        ("interface Derived extends Test {}", Some(serde_json::json!(["Test"])), None),
-        ("type Intersection = Test & {}", Some(serde_json::json!(["Test"])), None),
-        ("type Union = Test | {}", Some(serde_json::json!(["Test"])), None),
-        ("let value: NS.Test", Some(serde_json::json!(["NS"])), None),
         ("let value: NS.Test", Some(serde_json::json!(["Test"])), None),
         ("let value: NS.Test", Some(serde_json::json!(["NS.Test"])), None),
-        // ("let value: typeof Test", Some(serde_json::json!(["Test"])), None), TODO: @Sysix
-        ("let value: Type<Test>", Some(serde_json::json!(["Type", "Test"])), None),
-        ("type Intersection = Test<any>", Some(serde_json::json!(["Test", "any"])), None),
-        ("type Intersection = Test<A, B>", Some(serde_json::json!(["Test", "A", "B"])), None),
         ("foo.bar", Some(serde_json::json!(["bar"])), None),
         ("foo.globalThis.bar", Some(serde_json::json!(["bar"])), None),
         ("foo.globalThis.bar()", Some(serde_json::json!(["bar"])), None),
@@ -555,9 +538,33 @@ fn test() {
             None,
         ),
         ("function handler(name) { return name.length; }", Some(serde_json::json!(["name"])), None),
+        (
+            "namespace JSX { export type Element = unknown; } type A = JSX.Element;",
+            Some(json!(["JSX"])),
+            None,
+        ),
+        ("type JSX = unknown; type A = JSX;", Some(json!(["JSX"])), None),
+        ("import type { JSX } from './types'; type A = JSX.Element;", Some(json!(["JSX"])), None),
+        ("type A = Other.JSX;", Some(json!(["JSX"])), None),
     ];
 
     let fail = vec![
+        ("export type A = () => JSX.Element;", Some(json!(["JSX"])), None),
+        ("export type B = keyof JSX.IntrinsicElements;", Some(json!(["JSX"])), None),
+        ("type A = JSX;", Some(json!(["JSX"])), None),
+        ("type A = typeof JSX;", Some(json!(["JSX"])), None),
+        ("let b: { c: Test }", Some(json!(["Test"])), None),
+        ("function foo(param: Test) {}", Some(json!(["Test"])), None),
+        ("1 as Test", Some(json!(["Test"])), None),
+        ("class Derived implements Test {}", Some(json!(["Test"])), None),
+        ("class Derived implements Test1, Test2 {}", Some(json!(["Test1", "Test2"])), None),
+        ("interface Derived extends Test {}", Some(json!(["Test"])), None),
+        ("type Intersection = Test & {}", Some(json!(["Test"])), None),
+        ("type Union = Test | {}", Some(json!(["Test"])), None),
+        ("let value: NS.Test", Some(json!(["NS"])), None),
+        ("let value: Type<Test>", Some(json!(["Type", "Test"])), None),
+        ("type Intersection = Test<any>", Some(json!(["Test", "any"])), None),
+        ("type Intersection = Test<A, B>", Some(json!(["Test", "A", "B"])), None),
         ("foo", Some(serde_json::json!(["foo"])), None),
         ("function fn() { foo; }", Some(serde_json::json!(["foo"])), None),
         (
