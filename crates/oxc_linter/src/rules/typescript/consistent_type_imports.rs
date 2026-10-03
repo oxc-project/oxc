@@ -1588,6 +1588,37 @@ export class Foo extends Bar {}
 ",
             None,
         ),
+        // A computed key is evaluated as a value even when the field is `declare`,
+        // so the import backing it is not type-only. `tsc` needs the binding to stay
+        // a value import here, and typescript-eslint does not report these either.
+        (
+            "
+              import { StateKey } from './keys';
+              import type { State } from './types';
+              export class Example {
+                declare protected [StateKey]: State;
+              }
+            ",
+            None,
+        ),
+        (
+            "
+              import { StateKey } from './keys';
+              export abstract class Example {
+                abstract [StateKey]: string;
+              }
+            ",
+            None,
+        ),
+        (
+            "
+              import { MethodKey } from './keys';
+              declare class Example {
+                [MethodKey](): string;
+              }
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
