@@ -146,11 +146,11 @@ static BILLING_AND_SHIPPING: [&str; 11] = [
 fn is_valid_autocomplete_value(value: &str) -> bool {
     let parts: Vec<&str> = value.split_whitespace().collect();
 
-    match parts.len() {
-        1 => VALID_AUTOCOMPLETE_VALUES.contains(parts[0]),
-        2 if ["billing", "shipping"].contains(&parts[0]) => {
-            BILLING_AND_SHIPPING.contains(&parts[1])
-        }
+    match parts.as_slice() {
+        ["billing" | "shipping", token] => BILLING_AND_SHIPPING.contains(token),
+        // WebAuthn Conditional UI: `webauthn` is a trailing autofill token that may
+        // follow an otherwise-valid autocomplete token (e.g. `email webauthn`).
+        [token] | [token, "webauthn"] => VALID_AUTOCOMPLETE_VALUES.contains(token),
         _ => false,
     }
 }
@@ -217,6 +217,9 @@ fn test() {
         // ("<input type={isEmail ? 'email' : 'text'} autocomplete='none' />;", None, None),
         ("<Input type='text' autocomplete='name' />", None, Some(settings())),
         ("<Input type='text' autocomplete='baz' />", None, None),
+        ("<input type='text' autocomplete='email webauthn' />;", None, None),
+        ("<input type='text' autocomplete='username webauthn' />;", None, None),
+        ("<input type='password' autocomplete='current-password webauthn' />;", None, None),
         ("<input type='date' autocomplete='email' />;", None, None),
         ("<input type='number' autocomplete='url' />;", None, None),
         ("<input type='month' autocomplete='tel' />;", None, None),
@@ -229,6 +232,8 @@ fn test() {
 
     let fail = vec![
         ("<input type='text' autocomplete='foo' />;", None, None),
+        ("<input type='text' autocomplete='webauthn email' />;", None, None),
+        ("<input type='text' autocomplete='foo webauthn' />;", None, None),
         ("<input type='text' autocomplete='name invalid' />;", None, None),
         ("<input type='text' autocomplete='invalid name' />;", None, None),
         ("<input type='text' autocomplete='home url' />;", None, None),
