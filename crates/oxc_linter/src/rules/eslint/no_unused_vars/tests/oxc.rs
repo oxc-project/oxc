@@ -924,6 +924,14 @@ fn test_imports() {
             None,
             FixKind::DangerousSuggestion,
         ),
+        // Adjacent unused imports must all be removed in a single --fix pass
+        // (https://github.com/oxc-project/oxc/issues/26943).
+        (
+            "import { a } from './a';\nimport { b } from './b';\nimport { c } from './c';\nexport const keep = 1;\n",
+            "\n\nexport const keep = 1;\n",
+            Some(json!([{ "fix": { "imports": "safe-fix" } }])),
+            FixKind::SafeFix,
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
