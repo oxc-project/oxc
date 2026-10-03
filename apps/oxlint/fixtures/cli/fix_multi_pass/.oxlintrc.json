@@ -1,0 +1,10 @@
+{
+  "categories": {
+    "correctness": "off",
+  },
+  "rules": {
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-new-wrappers": "error",
+  }
+}

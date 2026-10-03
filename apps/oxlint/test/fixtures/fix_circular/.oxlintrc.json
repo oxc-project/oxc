@@ -1,0 +1,10 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "fix-circular-plugin/add-leading-hyphen": "error",
+    "fix-circular-plugin/remove-leading-hyphen": "error"
+  }
+}
