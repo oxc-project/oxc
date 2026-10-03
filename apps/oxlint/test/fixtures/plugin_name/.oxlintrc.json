@@ -1,7 +1,7 @@
 {
   "plugins": ["jsdoc"],
   "jsPlugins": [
-    // `plugin.meta.name` overrides package name
+    // `plugin.meta.namespace` overrides metadata and package names
     "plugin1",
     // Package name used where no `plugin.meta.name`
     "plugin2",
@@ -28,7 +28,7 @@
   "categories": { "correctness": "off" },
   "rules": {
     // `plugin1`
-    "plugin1-name-from-rule/rule": "error",
+    "e18e/rule": "error",
     // `plugin2`
     "plugin2-name-from-package/rule": "error",
     // `eslint-plugin-plugin3`
