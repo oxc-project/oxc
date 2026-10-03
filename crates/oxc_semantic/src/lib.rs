@@ -35,7 +35,7 @@ mod diagnostics;
 mod is_global_reference;
 #[cfg(feature = "jsdoc")]
 mod jsdoc;
-mod label;
+pub mod label;
 mod multi_index_vec;
 mod node;
 mod scoping;

@@ -130,7 +130,7 @@ fn conditional_labeled_var_declarator_not_inlined() {
     // conditional body explicitly.
     test_smallest(
         "function t(c) { if (c) L: var flag = true; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
-        "function t(c) { if (c) L: var flag = !0; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
+        "function t(c) { if (c) var flag = !0; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
     );
 }
 
