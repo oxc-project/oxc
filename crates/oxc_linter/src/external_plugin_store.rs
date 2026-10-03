@@ -49,6 +49,11 @@ pub struct ExternalPluginStore {
     options: IndexVec<ExternalOptionsId, (ExternalRuleId, SmallVec<[serde_json::Value; 1]>)>,
 
     is_enabled: bool,
+
+    /// Specifiers named by `jsPlugins` in a config that were NOT loaded because
+    /// this store is disabled. Recorded so a consumer can *choose* to report the
+    /// skip; nothing here reports anything on its own.
+    skipped_plugin_specifiers: Vec<String>,
 }
 
 impl Default for ExternalPluginStore {
@@ -68,12 +73,35 @@ impl ExternalPluginStore {
             rules: IndexVec::default(),
             options,
             is_enabled,
+            skipped_plugin_specifiers: Vec::new(),
         }
     }
 
     /// Returns `true` if external plugins are enabled.
     pub fn is_enabled(&self) -> bool {
         self.is_enabled
+    }
+
+    /// Record that a config named `specifier` in `jsPlugins` while this store was
+    /// disabled, so the plugin was never loaded and its rules will not run.
+    ///
+    /// De-duplicated and insertion-ordered: nested configs routinely name the same
+    /// plugin, and a consumer rendering this list wants a stable message.
+    pub fn note_skipped_plugin(&mut self, specifier: &str) {
+        if !self.skipped_plugin_specifiers.iter().any(|s| s == specifier) {
+            self.skipped_plugin_specifiers.push(specifier.to_string());
+        }
+    }
+
+    /// Specifiers from `jsPlugins` that were accepted by config parsing but never
+    /// loaded, because this store is disabled.
+    ///
+    /// Empty unless [`Self::is_enabled`] is `false` and some config named a plugin.
+    /// Reporting is the caller's decision — the language server deliberately stays
+    /// silent here (see `fix(language_server): ignore JS plugins`), while a CLI
+    /// that cannot run the plugins should say so.
+    pub fn skipped_plugin_specifiers(&self) -> &[String] {
+        &self.skipped_plugin_specifiers
     }
 
     /// Returns `true` if no external plugins have been loaded.
