@@ -2506,6 +2506,7 @@ dependencies = [
  "cow-utils",
  "indexmap",
  "insta",
+ "lazy-regex",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
