@@ -41,7 +41,7 @@
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
@@ -87,7 +87,53 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock {
             }
         }
 
-        // Transform static blocks
+        // If there are static fields, fold static blocks into their initializers. Emitting a
+        // synthetic private field for a trailing block is observably incorrect when an earlier
+        // static initializer makes the class non-extensible (the private field would be installed
+        // afterwards). A static field initializer is already installed at the right point in the
+        // class initialization sequence, so it provides a safe place to evaluate the block.
+        if body.body.iter().any(
+            |element| matches!(element, ClassElement::PropertyDefinition(prop) if prop.r#static),
+        ) {
+            let mut pending = Vec::new();
+            let mut last_static_property = None;
+
+            for (index, element) in body.body.iter_mut().enumerate() {
+                match element {
+                    ClassElement::StaticBlock(block) => {
+                        pending.push(Self::convert_block_to_expression(block, ctx));
+                    }
+                    ClassElement::PropertyDefinition(prop) if prop.r#static => {
+                        last_static_property = Some(index);
+                        if !pending.is_empty() {
+                            Self::prepend_to_initializer(
+                                prop,
+                                std::mem::take(&mut pending).into_iter(),
+                                ctx,
+                            );
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
+            // There is no following field for trailing blocks. Evaluate them after the last
+            // field's initializer while preserving that field's completion value.
+            if !pending.is_empty()
+                && let Some(index) = last_static_property
+            {
+                let ClassElement::PropertyDefinition(prop) = &mut body.body[index] else {
+                    unreachable!();
+                };
+                Self::append_to_initializer(prop, std::mem::take(&mut pending).into_iter(), ctx);
+            }
+
+            body.body.retain(|element| !matches!(element, ClassElement::StaticBlock(_)));
+            return;
+        }
+
+        // Transform static blocks. With no static fields, no earlier class initialization code
+        // can make the class non-extensible, so the synthetic private field is safe.
         if !has_static_block {
             return;
         }
@@ -101,6 +147,41 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock {
 }
 
 impl ClassStaticBlock {
+    fn prepend_to_initializer<'a>(
+        prop: &mut PropertyDefinition<'a>,
+        expressions: impl Iterator<Item = Expression<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        let mut expressions = expressions.collect::<Vec<_>>();
+        if let Some(value) = prop.value.take() {
+            expressions.push(value);
+        } else {
+            expressions.push(Expression::new_void_0(SPAN, ctx));
+        }
+        prop.value = Some(Expression::new_sequence_expression(
+            SPAN,
+            ArenaVec::from_iter_in(expressions, ctx),
+            ctx,
+        ));
+    }
+
+    fn append_to_initializer<'a>(
+        prop: &mut PropertyDefinition<'a>,
+        expressions: impl Iterator<Item = Expression<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        let mut sequence = Vec::new();
+        sequence.push(prop.value.take().unwrap_or_else(|| Expression::new_void_0(SPAN, ctx)));
+        sequence
+            .extend(expressions.map(|expr| {
+                Expression::new_unary_expression(SPAN, UnaryOperator::Void, expr, ctx)
+            }));
+        prop.value = Some(Expression::new_sequence_expression(
+            SPAN,
+            ArenaVec::from_iter_in(sequence, ctx),
+            ctx,
+        ));
+    }
     /// Convert static block to private field.
     /// `static { foo }` -> `static #_ = foo;`
     /// `static { foo; bar; }` -> `static #_ = (() => { foo; bar; })();`
