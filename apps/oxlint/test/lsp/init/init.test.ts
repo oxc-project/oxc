@@ -57,16 +57,34 @@ describe("LSP initialization", () => {
   it.each([
     [
       undefined,
-      ["**/.oxlintrc.json", "**/.oxlintrc.jsonc", "**/oxlint.config.ts", "**/oxlint.config.mts"],
+      [
+        "**/.oxlintrc.json",
+        "**/.oxlintrc.jsonc",
+        "**/oxlint.config.ts",
+        "**/oxlint.config.mts",
+        "oxlint-suppressions.json",
+      ],
     ],
     [
       { configPath: "" },
-      ["**/.oxlintrc.json", "**/.oxlintrc.jsonc", "**/oxlint.config.ts", "**/oxlint.config.mts"],
+      [
+        "**/.oxlintrc.json",
+        "**/.oxlintrc.jsonc",
+        "**/oxlint.config.ts",
+        "**/oxlint.config.mts",
+        "oxlint-suppressions.json",
+      ],
     ],
-    [{ configPath: "./custom-config.json" }, ["custom-config.json"]],
+    [{ configPath: "./custom-config.json" }, ["custom-config.json", "oxlint-suppressions.json"]],
     [
       { disableNestedConfig: true },
-      [".oxlintrc.json", ".oxlintrc.jsonc", "oxlint.config.ts", "oxlint.config.mts"],
+      [
+        ".oxlintrc.json",
+        ".oxlintrc.jsonc",
+        "oxlint.config.ts",
+        "oxlint.config.mts",
+        "oxlint-suppressions.json",
+      ],
     ],
     // Vite+ mode: only `vite.config.*`, and nested configs are never discovered
     [
@@ -78,6 +96,7 @@ describe("LSP initialization", () => {
         "vite.config.cjs",
         "vite.config.mts",
         "vite.config.cts",
+        "oxlint-suppressions.json",
       ],
       { VP_VERSION: "1" },
     ],
