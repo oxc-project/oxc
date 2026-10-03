@@ -11,7 +11,7 @@ pub struct ValidExpect(Box<ValidExpectConfig>);
 
 impl Default for ValidExpect {
     fn default() -> Self {
-        Self(Box::new(ValidExpectConfig::default().allow_string_message_arg()))
+        Self(Box::new(ValidExpectConfig::default().allow_string_message_arg().allow_assert_api()))
     }
 }
 
@@ -28,12 +28,45 @@ declare_oxc_lint!(
 
 impl Rule for ValidExpect {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(ValidExpectConfig::from_configuration(&value).allow_string_message_arg())))
+        Ok(Self(Box::new(
+            ValidExpectConfig::from_configuration(&value)
+                .allow_string_message_arg()
+                .allow_assert_api(),
+        )))
     }
 
     fn run_once(&self, ctx: &LintContext) {
         self.0.run_once(ctx);
     }
+}
+
+#[test]
+fn test_assert_api() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        ("expect.assert(true);", None),
+        ("expect.assert.isDefined(value);", None),
+        ("expect.assert.exists(value);", None),
+        ("expect.assert.strictEqual(actual, expected, 'message');", None),
+        ("expect['assert']['isDefined'](value);", None),
+        ("expect[`assert`].exists(value);", None),
+        ("import { expect as check } from 'vitest'; check.assert.isDefined(value);", None),
+        (
+            "expect.assert.isDefined(value);",
+            Some(serde_json::json!([{ "minArgs": 2, "maxArgs": 2 }])),
+        ),
+    ];
+    let fail = vec![
+        ("expect(value).assert.isDefined(value);", None),
+        ("expect.not.assert.isDefined(value);", None),
+        ("expect[dynamic].assert.isDefined(value);", None),
+    ];
+
+    Tester::new(ValidExpect::NAME, ValidExpect::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_vitest_plugin(true)
+        .test();
 }
 
 #[test]
