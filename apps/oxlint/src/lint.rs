@@ -1292,6 +1292,15 @@ mod test {
     }
 
     #[test]
+    fn test_allow_filter_prevents_override_fix() {
+        let tester = Tester::new().with_cwd("fixtures/cli/issue_26669".into());
+        let before = "export function example() {\n  let value = 1;\n  return value;\n}\n";
+        let after = "export function example() {\n  const value = 1;\n  return value;\n}\n";
+        tester.test_fix_with_args("sample.js", before, before, &["-A", "prefer-const"]);
+        tester.test_fix("sample.js", before, after);
+    }
+
+    #[test]
     fn test_fix_skip_suggestion() {
         let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
         let test_1 = "debugger\n";
