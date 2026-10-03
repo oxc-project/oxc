@@ -43,8 +43,10 @@ just minsize        # Size benchmarks (PRIMARY METRIC)
 cargo coverage      # Conformance tests
 pnpm --filter "./napi/minify" --filter "./napi/transform" run build-test
 pnpm --dir tasks/e2e test # End-to-end tests
-just ready         # Run before committing
+just ready         # Optional broad integration checkpoint
 ```
+
+Follow the root [local and stacked development guidance](../../../AGENTS.md#local-and-stacked-development) for verification scope and checkpoint timing.
 
 ### Common Patterns
 
