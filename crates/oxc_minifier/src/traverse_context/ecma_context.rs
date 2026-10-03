@@ -181,6 +181,24 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.source_type()
     }
 
+    /// Whether a symbol has no resolved references remaining in the live AST.
+    ///
+    /// `Scoping` is batch-pruned only when the current pass completes, so its
+    /// reference list still contains nodes already removed earlier in this pass.
+    /// The per-pass removal journal supplies the missing incremental view. A
+    /// reference minted during the pass is beyond the journal's capacity and
+    /// therefore remains conservatively live.
+    #[inline]
+    pub fn symbol_is_unused(&self, symbol_id: SymbolId) -> bool {
+        self.state.pass_changes.symbol_is_unused(symbol_id, self.scoping())
+    }
+
+    /// Whether a symbol transitioned from live to unused during this pass.
+    #[inline]
+    pub fn symbol_became_unused(&self, symbol_id: SymbolId) -> bool {
+        self.state.pass_changes.symbol_became_unused(symbol_id, self.scoping())
+    }
+
     /// Whether this run removes dead code without applying size-only rewrites.
     pub fn is_tree_shake_only(&self) -> bool {
         self.state.is_tree_shake_only()
@@ -437,7 +455,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Used by the `replace_*` / `drop_*` helpers.
     #[inline]
     fn dropped_subtree_collector(&mut self) -> DroppedSubtreeCollector<'a, '_> {
-        DroppedSubtreeCollector::new(&mut self.state.pass_changes)
+        DroppedSubtreeCollector::new(&mut self.state.pass_changes, self.scoping.scoping())
     }
 
     /// Replace an expression slot. Marks the pass as having mutated the AST.

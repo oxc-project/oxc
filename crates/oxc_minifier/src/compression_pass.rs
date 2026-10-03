@@ -253,6 +253,7 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
     } else {
         ctx.state.pass_changes.removed_references = BitSet::new_in(refs_len, ctx.allocator());
     }
+    ctx.state.pass_changes.reset_reference_changes();
     ctx.state.pass_changes.direct_eval_dropped = false;
     liveness_inputs_changed
 }
