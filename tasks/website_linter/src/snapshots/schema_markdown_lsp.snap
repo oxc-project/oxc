@@ -125,7 +125,20 @@ type: `boolean`
 
 
 Whether to enable/disable type-aware linting.
-It will override the root config's `typeAware` option if set.
+If set, it applies to every file and overrides the `typeAware` option of every config.
+If unset, each file follows the `typeAware` option of the config which governs it.
+
+
+## typeCheck
+
+type: `boolean`
+
+
+Whether to report the TypeScript compiler diagnostics (experimental type checking).
+If set, it applies to every file linted with type-aware rules and overrides the
+`typeCheck` option of every config; it does not enable type-aware linting itself, so a
+file no config makes type-aware is never type-checked.
+If unset, each file follows the `typeCheck` option of the config which governs it.
 
 
 ## unusedDisableDirectives
@@ -134,3 +147,51 @@ type: `"allow" | "warn" | "deny"`
 
 
 How to handle unused disable directives. By default, they are allowed and ignored.
+If unset, the `reportUnusedDisableDirectives` option of the config which governs each file
+is used.
+
+
+## workingDirectories
+
+type: `array`
+
+
+Additional project roots below the workspace folder, each linted as if it were its own
+workspace folder (like `eslint.workingDirectories`). Entries are existing directories,
+given as a path relative to the workspace folder (`"packages/a"` or
+`{ "directory": "packages/a" }`); glob characters are literal. Handled by the language
+server, not by the tool. Always disabled in Vite+ mode.
+
+A working directory does not inherit the configuration of its workspace folder. Its config
+file becomes the root config instead of a nested config, and a working directory without a
+config file resolves one the same way opening that directory as a workspace folder would.
+
+A file in a working directory is ignored when the `.gitignore` and `.eslintignore` files
+ignore it with the workspace folder opened as usual, or with the working directory opened
+on its own.
+
+
+### workingDirectories[n]
+
+type: `object | string`
+
+
+A single `workingDirectories` entry.
+
+
+#### workingDirectories[n].!cwd
+
+type: `boolean`
+
+
+ESLint's `!cwd`, which asks the client not to change the working directory of the linter
+process. The server gives every working directory its own worker instead, so there is no
+process working directory to keep, and the flag is ignored.
+
+
+#### workingDirectories[n].directory
+
+type: `string`
+
+
+A path relative to the workspace folder.
