@@ -232,7 +232,6 @@ impl<'a> Dummy<'a> for TemplateElement<'a> {
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             tail: Dummy::dummy(allocator),
-            lone_surrogates: Dummy::dummy(allocator),
         }
     }
 }
@@ -1816,7 +1815,6 @@ impl<'a> Dummy<'a> for StringLiteral<'a> {
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             raw: Dummy::dummy(allocator),
-            lone_surrogates: Dummy::dummy(allocator),
         }
     }
 }

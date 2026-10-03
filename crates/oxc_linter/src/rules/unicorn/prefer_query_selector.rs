@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_node_value_not_dom_node};
 
@@ -107,10 +108,17 @@ impl Rule for PreferQuerySelector {
             }
 
             let literal_value = match argument_expr {
-                Expression::StringLiteral(literal) => Some(literal.value.trim()),
+                Expression::StringLiteral(literal) => literal.value.as_str().map(str::trim),
                 Expression::TemplateLiteral(literal) => {
                     if literal.expressions.is_empty() {
-                        literal.quasis.first().unwrap().value.cooked.as_deref().map(str::trim)
+                        literal
+                            .quasis
+                            .first()
+                            .unwrap()
+                            .value
+                            .cooked
+                            .and_then(JSStr::as_str)
+                            .map(str::trim)
                     } else {
                         None
                     }

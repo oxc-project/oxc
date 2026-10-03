@@ -575,7 +575,10 @@ impl<'a> GatherNodeParts<'a> for PrivateIdentifier<'a> {
 
 impl<'a> GatherNodeParts<'a> for StringLiteral<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        f(self.value.as_str());
+        // Only UTF-8 text can contribute to a generated identifier name.
+        if let Some(value) = self.value.as_str() {
+            f(value);
+        }
     }
 }
 

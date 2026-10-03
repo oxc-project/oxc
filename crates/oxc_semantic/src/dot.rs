@@ -44,7 +44,9 @@ impl DebugDotContext<'_, '_> {
         match self.nodes.kind(id) {
             AstKind::NumericLiteral(lit) => Some(lit.value.to_string()),
             AstKind::BooleanLiteral(lit) => Some(lit.value.to_string()),
-            AstKind::StringLiteral(lit) => Some(lit.value.to_string()),
+            AstKind::StringLiteral(lit) => {
+                Some(lit.value.as_str().map_or_else(|| format!("{:?}", lit.value), str::to_owned))
+            }
             AstKind::BigIntLiteral(lit) => Some(lit.value.to_string()),
             AstKind::NullLiteral(_) => Some("null".to_string()),
             _ => None,

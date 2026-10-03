@@ -1,4 +1,3 @@
-use oxc_str::Str;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -153,8 +153,10 @@ fn find_string_property_value(obj: &ObjectExpression<'_>, key: &str) -> Option<S
 
 fn string_literal_value(expr: &Expression<'_>) -> Option<String> {
     match expr {
-        Expression::StringLiteral(lit) => Some(lit.value.to_string()),
-        Expression::TemplateLiteral(tpl) => tpl.single_quasi().map(Str::into_string),
+        Expression::StringLiteral(lit) => lit.value.as_str().map(str::to_owned),
+        Expression::TemplateLiteral(tpl) => {
+            tpl.single_quasi().and_then(JSStr::as_str).map(str::to_owned)
+        }
         _ => None,
     }
 }

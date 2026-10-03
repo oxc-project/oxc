@@ -162,12 +162,12 @@ pub fn embed_hug(
     let has_leading_ws = template
         .quasis
         .first()
-        .and_then(|q| q.value.cooked.as_ref())
+        .and_then(|q| q.value.cooked?.as_str())
         .is_some_and(|s| s.starts_with(|c: char| c.is_ascii_whitespace()));
     let has_trailing_ws = template
         .quasis
         .last()
-        .and_then(|q| q.value.cooked.as_ref())
+        .and_then(|q| q.value.cooked?.as_str())
         .is_some_and(|s| s.ends_with(|c: char| c.is_ascii_whitespace()));
     Some(has_leading_ws && has_trailing_ws)
 }

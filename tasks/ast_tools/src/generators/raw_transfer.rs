@@ -907,6 +907,7 @@ fn generate_enum(
 
 /// Generate deserialize function for a primitive.
 fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &Schema) {
+    let js_str_body;
     #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
         // Reuse deserializer for `&str`
@@ -936,6 +937,16 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         ",
         "f64" => "return float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
+        "JSStr" => {
+            js_str_body = format!(
+                "
+                if (uint8[pos + 12] === 0) return deserializeStr(pos);
+                const buffer = uint8;
+                {WTF8_DESERIALIZER_BODY}
+            "
+            );
+            &js_str_body
+        }
         // Reuse deserializers for zeroed and atomic types
         type_name if type_name.starts_with("NonZero") => return,
         type_name if type_name.starts_with("Atomic") => return,
@@ -1010,6 +1021,35 @@ static STR_DESERIALIZER_BODY: &str = "
 
     // Call `fromCharCode` with temp array
     return fromCharCode.apply(null, arr);
+";
+
+/// Decode canonical WTF-8 into a JavaScript string, including lone surrogates.
+/// The caller provides `buffer`, `int32`, and the address of a `JSStr` in `pos`.
+/// UTF-8 values use the existing string decoder before reaching this slow path.
+pub(super) static WTF8_DESERIALIZER_BODY: &str = "
+    const pos32 = pos >> 2,
+        len = int32[pos32 + 2];
+    pos = int32[pos32];
+    const end = pos + len;
+    let out = '';
+    while (pos < end) {
+        const first = buffer[pos++];
+        let codePoint;
+        if (first < 0x80) {
+            codePoint = first;
+        } else if (first < 0xE0) {
+            codePoint = ((first & 0x1F) << 6) | (buffer[pos++] & 0x3F);
+        } else if (first < 0xF0) {
+            codePoint = ((first & 0x0F) << 12)
+                | ((buffer[pos++] & 0x3F) << 6) | (buffer[pos++] & 0x3F);
+        } else {
+            codePoint = ((first & 7) << 18) | ((buffer[pos++] & 0x3F) << 12)
+                | ((buffer[pos++] & 0x3F) << 6) | (buffer[pos++] & 0x3F);
+        }
+        // Unlike UTF-8 decoders, fromCodePoint preserves surrogate code points.
+        out += String.fromCodePoint(codePoint);
+    }
+    return out;
 ";
 
 /// Generate deserialize function for an `Option`.
