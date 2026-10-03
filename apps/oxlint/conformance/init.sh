@@ -272,3 +272,23 @@ npm install
 
 # Return to `submodules` directory
 cd ..
+
+###############################################################################
+# FormatJS
+###############################################################################
+
+clone_repo formatjs
+
+# Use the upstream Bazel graph for dependencies and generated Unicode data.
+npx --yes --package=@bazel/bazelisk@1.28.1 bazel build //packages/eslint-plugin-formatjs:eslint-plugin-formatjs_test
+test_binary="$(npx --yes --package=@bazel/bazelisk@1.28.1 bazel cquery //packages/eslint-plugin-formatjs:eslint-plugin-formatjs_test --output=files)"
+
+# Copy unchanged sources into a runtime directory with local subpath imports.
+# Bazel runfiles are symlinks, which the conformance test discovery ignores.
+mkdir .oxlint-conformance
+cp packages/eslint-plugin-formatjs/*.ts .oxlint-conformance/
+cp -R packages/eslint-plugin-formatjs/rules packages/eslint-plugin-formatjs/tests .oxlint-conformance/
+printf '%s\n' '{"private":true,"imports":{"#packages/eslint-plugin-formatjs/*":"./*"}}' > .oxlint-conformance/package.json
+ln -s "$(realpath "$test_binary.runfiles/_main/node_modules")" .oxlint-conformance/node_modules
+
+cd ..
