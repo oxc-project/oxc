@@ -76,18 +76,11 @@ impl EngineTargets {
     /// `false` if the feature IS supported (can be used natively).
     /// Use [`Self::supports_es_feature`] for a strict positive capability query.
     pub fn has_feature(&self, feature: ESFeature) -> bool {
-        let feature_engine_targets = &features()[&feature];
-        for (engine, feature_version) in feature_engine_targets.iter() {
-            if let Some(target_version) = self.get(engine) {
-                if *engine == Engine::Es {
-                    return target_version.0 < feature_version.0;
-                }
-                if target_version < feature_version {
-                    return true;
-                }
-            }
+        if self.is_any_target() {
+            return false;
         }
-        false
+
+        !self.supports_es_feature(feature)
     }
 
     /// Check whether every target engine is known to support the given ES feature.
@@ -101,7 +94,13 @@ impl EngineTargets {
 
         let feature_engine_targets = &features()[&feature];
         self.iter().all(|(engine, target_version)| {
-            feature_engine_targets.get(engine).is_some_and(|feature_version| {
+            let feature_version = feature_engine_targets.get(engine).or_else(|| match engine {
+                // Modern `android` targets track the corresponding Chrome version, but the
+                // compatibility table only has explicit Android data for older features.
+                Engine::Android => feature_engine_targets.get(&Engine::Chrome),
+                _ => None,
+            });
+            feature_version.is_some_and(|feature_version| {
                 if *engine == Engine::Es {
                     target_version.0 >= feature_version.0
                 } else {
@@ -189,6 +188,7 @@ fn test_displayed_value_is_parsable() {
 fn test_supports_es_feature() {
     use crate::ESFeature::{
         ES2015ArrowFunctions, ES2015RegExpConstructorCanAlterFlags, ES2020OptionalChaining,
+        ES2026ExplicitResourceManagement,
     };
 
     assert!(!EngineTargets::default().supports_es_feature(ES2015ArrowFunctions));
@@ -228,7 +228,51 @@ fn test_supports_es_feature() {
             .supports_es_feature(ES2015RegExpConstructorCanAlterFlags)
     );
 
+    assert!(
+        !EngineTargets::from_target("android133")
+            .unwrap()
+            .supports_es_feature(ES2026ExplicitResourceManagement)
+    );
+    assert!(
+        EngineTargets::from_target("android134")
+            .unwrap()
+            .supports_es_feature(ES2026ExplicitResourceManagement)
+    );
+
     // Missing compatibility data is not proof of support.
     let rhino = EngineTargets::new(FxHashMap::from_iter([(Engine::Rhino, Version(1, 7, 15))]));
     assert!(!rhino.supports_es_feature(ES2020OptionalChaining));
+}
+
+#[test]
+fn test_has_feature() {
+    use crate::ESFeature::{ES2020OptionalChaining, ES2026ExplicitResourceManagement};
+
+    // No configured target preserves the default of applying no compatibility transforms.
+    assert!(!EngineTargets::default().has_feature(ES2020OptionalChaining));
+
+    // An engine missing from a feature's compatibility table must be treated as unsupported.
+    assert!(
+        EngineTargets::from_target("safari18")
+            .unwrap()
+            .has_feature(ES2026ExplicitResourceManagement)
+    );
+
+    assert!(
+        EngineTargets::from_target("chrome133")
+            .unwrap()
+            .has_feature(ES2026ExplicitResourceManagement)
+    );
+    assert!(
+        !EngineTargets::from_target("chrome134")
+            .unwrap()
+            .has_feature(ES2026ExplicitResourceManagement)
+    );
+
+    // Every configured target must support the feature, regardless of map iteration order.
+    assert!(
+        EngineTargets::from_target_list(&["es2020", "chrome90"])
+            .unwrap()
+            .has_feature(ES2020OptionalChaining)
+    );
 }
