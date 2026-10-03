@@ -1,7 +1,6 @@
 use std::{
-    ffi::OsStr,
-    path::{Component, Path, PathBuf},
-    sync::Arc,
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
 };
 
 use cow_utils::CowUtils;
@@ -9,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -215,6 +214,19 @@ impl NoCycle {
     /// cycle they would find: it follows the same edges under the same filter, and is unbounded
     /// where they stop at `max_depth`.
     fn can_be_in_cycle(&self, root: &ModuleRecord) -> bool {
+        // Default graph (type-only and node_modules skipped): classify every reachable module
+        // once so later files in the same component do not re-walk it.
+        if self.ignore_types && !self.ignore_external {
+            if let Some(&in_cycle) = root.import_cycle_member.get() {
+                return in_cycle;
+            }
+            let _guard = CYCLE_MEMBERSHIP_LOCK.lock().unwrap();
+            if let Some(&in_cycle) = root.import_cycle_member.get() {
+                return in_cycle;
+            }
+            return self.cache_cycle_membership(root);
+        }
+
         // Pointer identity, to avoid cloning a `PathBuf` per node. `root` is never inserted: an
         // edge back to it is the answer, not a node to expand.
         let mut visited = FxHashSet::<usize>::default();
@@ -229,6 +241,153 @@ impl NoCycle {
             }
         }
         false
+    }
+
+    /// Iterative Tarjan SCC over the filtered graph. Ancestor-only DFS misses
+    /// modules that join a cycle through a cross-edge onto an already-finished
+    /// cycle member (repo → item → forEach → … → repo).
+    fn cache_cycle_membership(&self, root: &ModuleRecord) -> bool {
+        const ROOT: usize = usize::MAX;
+
+        struct Frame {
+            id: usize,
+            ptr: usize,
+            child_index: usize,
+            children: Vec<Arc<ModuleRecord>>,
+            self_loop: bool,
+        }
+
+        fn set_member(
+            id: usize,
+            value: bool,
+            root: &ModuleRecord,
+            keep_alive: &[Arc<ModuleRecord>],
+        ) {
+            let cell = if id == ROOT {
+                &root.import_cycle_member
+            } else {
+                &keep_alive[id].import_cycle_member
+            };
+            let _ = cell.set(value);
+        }
+
+        fn ptr_of(id: usize, root: &ModuleRecord, keep_alive: &[Arc<ModuleRecord>]) -> usize {
+            if id == ROOT {
+                std::ptr::from_ref(root) as usize
+            } else {
+                Arc::as_ptr(&keep_alive[id]) as usize
+            }
+        }
+
+        let mut keep_alive = Vec::<Arc<ModuleRecord>>::new();
+        let mut frames = Vec::<Frame>::new();
+        let mut scc_stack = Vec::<usize>::new();
+        let mut on_stack = FxHashSet::<usize>::default();
+        let mut indices = FxHashMap::<usize, u32>::default();
+        let mut lowlink = FxHashMap::<usize, u32>::default();
+        let mut next_index = 1u32;
+
+        let root_ptr = std::ptr::from_ref(root) as usize;
+        indices.insert(root_ptr, 0);
+        lowlink.insert(root_ptr, 0);
+        scc_stack.push(ROOT);
+        on_stack.insert(root_ptr);
+
+        let mut current = Frame {
+            id: ROOT,
+            ptr: root_ptr,
+            child_index: 0,
+            children: self.collect_cycle_children(root),
+            self_loop: false,
+        };
+
+        loop {
+            if current.child_index < current.children.len() {
+                let child = Arc::clone(&current.children[current.child_index]);
+                current.child_index += 1;
+                let child_ptr = Arc::as_ptr(&child) as usize;
+
+                let current_path = if current.id == ROOT {
+                    &root.resolved_absolute_path
+                } else {
+                    &keep_alive[current.id].resolved_absolute_path
+                };
+                if child.resolved_absolute_path == *current_path {
+                    current.self_loop = true;
+                    continue;
+                }
+
+                if child.import_cycle_member.get().is_some() {
+                    continue;
+                }
+
+                if let Some(&child_index) = indices.get(&child_ptr) {
+                    if on_stack.contains(&child_ptr) {
+                        let low = lowlink.get_mut(&current.ptr).unwrap();
+                        *low = (*low).min(child_index);
+                    }
+                    continue;
+                }
+
+                let id = keep_alive.len();
+                keep_alive.push(child);
+                let index = next_index;
+                next_index += 1;
+                indices.insert(child_ptr, index);
+                lowlink.insert(child_ptr, index);
+                scc_stack.push(id);
+                on_stack.insert(child_ptr);
+                frames.push(current);
+                current = Frame {
+                    id,
+                    ptr: child_ptr,
+                    child_index: 0,
+                    children: self.collect_cycle_children(&keep_alive[id]),
+                    self_loop: false,
+                };
+            } else {
+                if let Some(parent) = frames.last() {
+                    let child_low = lowlink[&current.ptr];
+                    let parent_low = lowlink.get_mut(&parent.ptr).unwrap();
+                    *parent_low = (*parent_low).min(child_low);
+                }
+
+                if lowlink[&current.ptr] == indices[&current.ptr] {
+                    let mut scc = Vec::new();
+                    loop {
+                        let id = scc_stack.pop().unwrap();
+                        let ptr = ptr_of(id, root, &keep_alive);
+                        on_stack.remove(&ptr);
+                        scc.push(id);
+                        if id == current.id {
+                            break;
+                        }
+                    }
+                    let in_cycle = scc.len() > 1 || current.self_loop;
+                    for id in scc {
+                        set_member(id, in_cycle, root, &keep_alive);
+                    }
+                }
+
+                if current.id == ROOT {
+                    break;
+                }
+                current = frames.pop().unwrap();
+            }
+        }
+
+        root.import_cycle_member.get().copied().unwrap_or(false)
+    }
+
+    fn collect_cycle_children(&self, module_record: &ModuleRecord) -> Vec<Arc<ModuleRecord>> {
+        let mut children = Vec::new();
+        for (specifier, weak_module_record) in module_record.loaded_modules().iter() {
+            let loaded_module_record = weak_module_record.upgrade().unwrap();
+            if self.should_traverse_module(specifier, &loaded_module_record, module_record) {
+                children.push(loaded_module_record);
+            }
+        }
+        children
     }
 
     /// Pushes `module_record`'s unvisited traversable dependencies onto `stack`; `true` if one of
@@ -265,11 +424,7 @@ impl NoCycle {
     ) -> bool {
         let path = &module.resolved_absolute_path;
 
-        let is_node_module = path
-            .components()
-            .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
-
-        if is_node_module {
+        if module.is_in_node_modules {
             return false;
         }
 
@@ -319,6 +474,11 @@ impl NoCycle {
         true
     }
 }
+
+/// Serializes cycle classification. Concurrent walks that memoize "not in a
+/// cycle" on a node before its SCC is finished otherwise skip the back-edge
+/// that would prove the cycle.
+static CYCLE_MEMBERSHIP_LOCK: Mutex<()> = Mutex::new(());
 
 #[test]
 fn test() {

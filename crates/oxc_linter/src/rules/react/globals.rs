@@ -81,6 +81,15 @@ function Component() {
   return <div />;
 }
 ",
+        // Not a component/hook and not a wrapper: the compiler prefilter must
+        // skip this file without hiding a true positive elsewhere.
+        "
+let someGlobal = false;
+function helper() {
+  someGlobal = true;
+  return someGlobal;
+}
+",
     ];
 
     let fail = vec![
@@ -94,6 +103,22 @@ function Component() {
   setGlobal();
   return <div>{String(someGlobal)}</div>;
 }
+",
+        // Hook named `useX` — a prefilter that only looked for JSX would miss this.
+        "
+let someGlobal = false;
+function useFoo() {
+  someGlobal = true;
+  return useState(0);
+}
+",
+        // Anonymous component via React.memo — a name-only skip would miss this.
+        "
+let someGlobal = false;
+const Component = React.memo(function (props) {
+  someGlobal = true;
+  return <div>{props.text}</div>;
+});
 ",
     ];
 
