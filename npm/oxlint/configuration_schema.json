@@ -3618,6 +3618,26 @@
             }
           ]
         },
+        "jsdoc/no-types": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoTypesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "jsdoc/require-param": {
           "anyOf": [
             {
@@ -15773,6 +15793,32 @@
         }
       },
       "additionalProperties": false
+    },
+    "NoTypesConfig": {
+      "type": "object",
+      "properties": {
+        "contexts": {
+          "description": "Select the node kinds whose JSDoc should be checked. By default, all of the\nlisted node kinds are checked. `any` also checks virtual functions marked\nwith `@callback`, `@function`, `@func`, or `@method`, including unattached\ncomments. In `any` mode, other comments are checked only when attached to\nJavaScript functions or variables initialized with functions.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NoTypesContext"
+          },
+          "markdownDescription": "Select the node kinds whose JSDoc should be checked. By default, all of the\nlisted node kinds are checked. `any` also checks virtual functions marked\nwith `@callback`, `@function`, `@func`, or `@method`, including unattached\ncomments. In `any` mode, other comments are checked only when attached to\nJavaScript functions or variables initialized with functions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoTypesContext": {
+      "type": "string",
+      "enum": [
+        "any",
+        "ArrowFunctionExpression",
+        "FunctionDeclaration",
+        "FunctionExpression",
+        "TSDeclareFunction",
+        "TSMethodSignature",
+        "ClassDeclaration"
+      ]
     },
     "NoUnassignedImportConfig": {
       "type": "object",
