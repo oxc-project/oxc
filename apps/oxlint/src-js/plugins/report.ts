@@ -323,6 +323,7 @@ export function replacePlaceholders(message: string, data: DiagnosticData): stri
  * Same as `getOffsetFromLineColumn` in `location.ts`, except:
  * 1. Does not check that `lineCol` is an object - caller must do that.
  * 2. Allows `column` to be less than 0 or greater than the length of the line.
+ * 3. Clamps the resulting offset to the source text's bounds.
  *
  * Relaxing the restriction on `column` is required because some rules (e.g. ESLint's `func-call-spacing`)
  * produce `column: -1` in some cases.
@@ -331,7 +332,6 @@ export function replacePlaceholders(message: string, data: DiagnosticData): stri
  * @returns The character index of the location in the file.
  * @throws {TypeError} If `lineCol` is not an object with a integer `line` and `column`.
  * @throws {RangeError} If `line` is less than or equal to 0, or greater than the number of lines in the source text.
- * @throws {RangeError} If computed offset is out of range of the source text.
  */
 function getOffsetFromLineColumn(lineCol: LineColumn): number {
   const { line, column } = lineCol;
@@ -368,11 +368,7 @@ function getOffsetFromLineColumn(lineCol: LineColumn): number {
   const lineOffset = lineStartIndices[line - 1];
   const offset = lineOffset + column;
 
-  // Ensure offset is within bounds.
-  // Do this here on JS side to prevent a NAPI error when converting to `u32` on Rust side.
-  if (offset < 0 || offset > sourceText.length) {
-    throw new RangeError("Line/column pair translates to an out of range offset");
-  }
-
-  return offset;
+  // Out-of-range columns must not abort the rule's remaining reports. Clamp before
+  // converting to Rust's `u32`, which cannot represent a negative offset.
+  return Math.max(0, Math.min(offset, sourceText.length));
 }

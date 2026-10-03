@@ -39,22 +39,64 @@
    :   ^^^^^^
    `----
 
-  x Error running JS plugin.
-  | File path: <fixture>/files/negative-loc.js
-  | RangeError: Line/column pair translates to an out of range offset
-  |     at Program (<fixture>/plugin.ts:14:23)
+  x loc-plugin(no-bugger): Negative location
+   ,-[files/negative-loc.js:1:1]
+ 1 | debugger;
+   : ^
+   `----
+
+  x loc-plugin(no-bugger): Negative shorthand location
+   ,-[files/negative-loc.js:1:1]
+ 1 | debugger;
+   : ^
+   `----
+
+  x loc-plugin(no-bugger): Range ends before source
+   ,-[files/negative-loc.js:1:1]
+ 1 | debugger;
+   : ^
+   `----
+
+  x loc-plugin(no-bugger): Range starts before source
+   ,-[files/negative-loc.js:1:1]
+ 1 | debugger;
+   : ^
+   `----
+
+  x loc-plugin(no-bugger): Following finding
+   ,-[files/negative-loc.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^^
+   `----
+
+  x loc-plugin(no-bugger): Bugger!
+   ,-[files/negative-loc.js:1:3]
+ 1 | debugger;
+   :   ^^^^^^
+   `----
+
+  x loc-plugin(no-bugger): Negative column on later line
+   ,-[files/negative-loc.js:1:9]
+ 1 | debugger;
+   :         ^
+   `----
+
+  x loc-plugin(no-bugger): Range after source
+   ,-[files/negative-loc.js:2:1]
+ 1 | debugger;
+   `----
 
   x Error running JS plugin.
   | File path: <fixture>/files/negative-node.js
   | TypeError: `node.range[0]` and `node.range[1]` must be non-negative integers
-  |     at Program (<fixture>/plugin.ts:22:23)
+  |     at Program (<fixture>/plugin.ts:57:23)
 
   x loc-plugin(no-bugger): Out-of-range node
    ,-[files/out-of-range-node.js:3:1]
  2 | debugger;
    `----
 
-Found 0 warnings and 8 errors.
+Found 0 warnings and 15 errors.
 Finished in Xms on 4 files with 1 rules using X threads.
 ```
 
