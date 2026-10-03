@@ -98,48 +98,24 @@ impl LintFilterKind {
             return Err(InvalidFilterKind::Empty);
         }
 
-        if filter.contains('/') {
-            // this is an unfortunate amount of code duplication, but it needs to be done for
-            // `filter` to live long enough to avoid a String allocation for &'static str
+        // Scoped plugin names (`@scope/plugin`) contain a `/` themselves, so split at the last
+        // one, as `parse_rule_key` does for config file keys.
+        let slash = if filter.starts_with('@') { filter.rfind('/') } else { filter.find('/') };
+        if let Some(slash) = slash {
+            if slash == 0 {
+                return Err(InvalidFilterKind::PluginMissing(filter));
+            }
+            if slash + 1 == filter.len() {
+                return Err(InvalidFilterKind::RuleMissing(filter));
+            }
             let (plugin, rule) = match filter {
                 Cow::Borrowed(filter) => {
-                    let mut parts = filter.splitn(2, '/');
-
-                    let plugin = parts
-                        .next()
-                        .ok_or(InvalidFilterKind::PluginMissing(Cow::Borrowed(filter)))?;
-                    if plugin.is_empty() {
-                        return Err(InvalidFilterKind::PluginMissing(Cow::Borrowed(filter)));
-                    }
-
-                    let rule = parts
-                        .next()
-                        .ok_or(InvalidFilterKind::RuleMissing(Cow::Borrowed(filter)))?;
-                    if rule.is_empty() {
-                        return Err(InvalidFilterKind::RuleMissing(Cow::Borrowed(filter)));
-                    }
-
-                    (Cow::Borrowed(plugin), Cow::Borrowed(rule))
+                    (Cow::Borrowed(&filter[..slash]), Cow::Borrowed(&filter[slash + 1..]))
                 }
-                Cow::Owned(filter) => {
-                    let mut parts = filter.splitn(2, '/');
-
-                    let plugin = parts
-                        .next()
-                        .ok_or_else(|| InvalidFilterKind::PluginMissing(filter.clone().into()))?;
-                    if plugin.is_empty() {
-                        return Err(InvalidFilterKind::PluginMissing(filter.into()));
-                    }
-
-                    let rule = parts
-                        .next()
-                        .ok_or_else(|| InvalidFilterKind::RuleMissing(filter.clone().into()))?;
-                    if rule.is_empty() {
-                        return Err(InvalidFilterKind::RuleMissing(filter.into()));
-                    }
-
-                    (Cow::Owned(plugin.to_string()), Cow::Owned(rule.to_string()))
-                }
+                Cow::Owned(filter) => (
+                    Cow::Owned(filter[..slash].to_string()),
+                    Cow::Owned(filter[slash + 1..].to_string()),
+                ),
             };
             Ok(LintFilterKind::Rule(plugin, rule))
         } else {
@@ -249,6 +225,10 @@ mod test {
             ("eslint/no-const-assign", LintFilterKind::Rule("eslint".into(), "no-const-assign".into())),
             ("import/namespace", LintFilterKind::Rule("import".into(), "namespace".into())),
             ("react-hooks/exhaustive-deps", LintFilterKind::Rule("react-hooks".into(), "exhaustive-deps".into())),
+            // scoped plugins split at the last `/`, like config file keys
+            ("@typescript-eslint/no-unused-vars", LintFilterKind::Rule("@typescript-eslint".into(), "no-unused-vars".into())),
+            ("@next/next/google-font-display", LintFilterKind::Rule("@next/next".into(), "google-font-display".into())),
+            ("@scope/custom/rule", LintFilterKind::Rule("@scope/custom".into(), "rule".into())),
             // categories
             ("correctness", LintFilterKind::Category(RuleCategory::Correctness)),
             ("nursery", LintFilterKind::Category(RuleCategory::Nursery)),
@@ -262,6 +242,8 @@ mod test {
         for (input, expected) in test_cases {
             let actual = LintFilterKind::try_from(input).unwrap();
             assert_eq!(actual, expected, "input: {input}");
+            let actual = LintFilterKind::try_from(input.to_string()).unwrap();
+            assert_eq!(actual, expected, "owned input: {input}");
         }
     }
 
