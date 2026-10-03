@@ -90,6 +90,22 @@ impl EngineTargets {
         false
     }
 
+    /// Precompute the answer of [`Self::has_feature`] for every feature in the
+    /// compatibility table.
+    ///
+    /// [`Self::has_feature`] performs a hash lookup and an engine-table walk per call; callers
+    /// that query features repeatedly (e.g. the minifier, per AST node) can compute this cache
+    /// once and answer each query with a single bit test via [`FeatureSupportCache::has_feature`].
+    pub fn feature_support_cache(&self) -> FeatureSupportCache {
+        let mut unsupported = 0u128;
+        for &feature in features().keys() {
+            if self.has_feature(feature) {
+                unsupported |= FeatureSupportCache::bit(feature);
+            }
+        }
+        FeatureSupportCache { unsupported }
+    }
+
     /// Check whether every target engine is known to support the given ES feature.
     ///
     /// Unlike [`Self::has_feature`], this is a strict capability query: an empty target or an
@@ -170,6 +186,66 @@ impl EngineTargets {
         }
         engine_targets.insert(Engine::Es, es_target.unwrap_or(ESTarget::default()).version());
         Ok(engine_targets)
+    }
+}
+
+/// Precomputed answers to [`EngineTargets::has_feature`], built by
+/// [`EngineTargets::feature_support_cache`].
+///
+/// Internally a bitset over [`ESFeature`] discriminants. The representation is private so the
+/// discriminant-to-bit mapping never crosses a crate boundary; `test_feature_bits_fit` pins the
+/// invariant that every table feature fits in the bitset.
+#[derive(Debug, Clone, Copy)]
+pub struct FeatureSupportCache {
+    unsupported: u128,
+}
+
+impl FeatureSupportCache {
+    fn bit(feature: ESFeature) -> u128 {
+        let bit = feature as u32;
+        // At call sites `feature` is a literal variant, so this check constant-folds away.
+        // A feature that would not fit is a codegen-time error caught by `test_feature_bits_fit`;
+        // panicking here (rather than masking the shift) keeps release builds from silently
+        // querying the wrong bit if the generated enum ever outgrows the bitset.
+        assert!(bit < 128, "ESFeature discriminant must fit in the feature bitset");
+        1u128 << bit
+    }
+
+    /// Same answer as [`EngineTargets::has_feature`] on the targets this cache was built from:
+    /// `true` if the feature is NOT supported by all target engines (needs transformation).
+    pub fn has_feature(self, feature: ESFeature) -> bool {
+        self.unsupported & Self::bit(feature) != 0
+    }
+}
+
+/// Pin [`FeatureSupportCache`]'s invariant: every feature in the (generated) compatibility
+/// table maps to a distinct bit inside the bitset. Fails loudly if `ESFeature` outgrows it.
+#[test]
+fn test_feature_bits_fit() {
+    for &feature in features().keys() {
+        assert!(
+            (feature as u32) < 128,
+            "ESFeature::{feature:?} discriminant does not fit in FeatureSupportCache"
+        );
+    }
+}
+
+/// The cache must agree with [`EngineTargets::has_feature`] for every feature, for any target.
+#[test]
+fn test_feature_support_cache_matches_has_feature() {
+    for target in [
+        EngineTargets::default(),
+        EngineTargets::from_target("es2015").unwrap(),
+        EngineTargets::from_target("chrome90").unwrap(),
+    ] {
+        let cache = target.feature_support_cache();
+        for &feature in features().keys() {
+            assert_eq!(
+                cache.has_feature(feature),
+                target.has_feature(feature),
+                "cache disagrees with has_feature for {feature:?} on target {target}"
+            );
+        }
     }
 }
 
