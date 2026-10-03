@@ -242,6 +242,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Rename the file to 'foo_bar.test_utils.js'
 
+  ⚠ unicorn(filename-case): Filename should match `/^[A-Z_]+$/`
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to a name matching `/^[A-Z_]+$/`
+
+  ⚠ unicorn(filename-case): Filename should be in camelCase, or match `/^__.*__$/`
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'fooBar.js', or a name matching `/^__.*__$/`
+
+  ⚠ unicorn(filename-case): Filename should match `/^[A-Z_]+\.ts$/`
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to a name matching `/^[A-Z_]+\.ts$/`
+
   ⚠ unicorn(filename-case): Filename should be in kebab-case
    ╭─[filename_case.tsx:1:1]
    ╰────
