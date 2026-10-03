@@ -1,7 +1,7 @@
 use language_tags::LanguageTag;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue},
+    ast::{Expression, JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -87,13 +87,28 @@ impl Rule for Lang {
 fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
     match get_prop_value(item) {
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
-            !container.expression.is_expression() || !container.expression.is_undefined()
+            let Some(expression) = container.expression.as_expression() else {
+                return true;
+            };
+            match expression.get_inner_expression() {
+                Expression::StringLiteral(literal) => is_valid_language_tag(&literal.value),
+                Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
+                    template
+                        .quasis
+                        .first()
+                        .and_then(|quasi| quasi.value.cooked.as_ref())
+                        .is_none_or(|value| is_valid_language_tag(value))
+                }
+                _ => !expression.is_undefined(),
+            }
         }
-        Some(JSXAttributeValue::StringLiteral(str)) => {
-            LanguageTag::parse(str.value.as_str()).as_ref().is_ok_and(LanguageTag::is_valid)
-        }
+        Some(JSXAttributeValue::StringLiteral(literal)) => is_valid_language_tag(&literal.value),
         _ => true,
     }
+}
+
+fn is_valid_language_tag(value: &str) -> bool {
+    LanguageTag::parse(value).as_ref().is_ok_and(LanguageTag::is_valid)
 }
 
 #[test]
@@ -138,4 +153,40 @@ fn test() {
     ];
 
     Tester::new(Lang::NAME, Lang::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn test_expression_strings() {
+    use crate::tester::Tester;
+
+    let settings = Some(serde_json::json!({ "settings": { "jsx-a11y": {
+        "polymorphicPropName": "as", "components": { "Document": "html" }
+    }}}));
+    let pass = vec![
+        (r#"<html lang={"en"} />"#, None, None),
+        (r#"<html lang={"en-US"} />"#, None, None),
+        (r"<html lang={`zh-Hans`} />", None, None),
+        (r"<html lang={`\u0065n`} />", None, None),
+        (r#"<html lang={("en" as const)} />"#, None, None),
+        (r"<html lang={language} />", None, None),
+        (r"<html lang={`${language}`} />", None, None),
+        (r#"<div lang={"foo"} />"#, None, None),
+        (r#"<Document lang={"en"} />"#, None, settings.clone()),
+        (r#"<Box as="html" lang={`en-US`} />"#, None, settings.clone()),
+    ];
+    let fail = vec![
+        (r#"<html lang={"foo"} />"#, None, None),
+        (r#"<html lang={""} />"#, None, None),
+        (r#"<html lang={"zz-LL"} />"#, None, None),
+        (r"<html lang={``} />", None, None),
+        (r"<html lang={`foo`} />", None, None),
+        (r"<html lang={`\u0066oo`} />", None, None),
+        (r#"<html lang={("foo" as const)} />"#, None, None),
+        (r"<html lang={`zz-LL`} />", None, None),
+        (r#"<Document lang={"foo"} />"#, None, settings.clone()),
+        (r#"<Box as="html" lang={`foo`} />"#, None, settings),
+    ];
+    Tester::new(Lang::NAME, Lang::PLUGIN, pass, fail)
+        .with_snapshot_suffix("expression_strings")
+        .test_and_snapshot();
 }
