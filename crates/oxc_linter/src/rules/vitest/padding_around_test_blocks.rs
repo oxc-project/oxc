@@ -37,6 +37,7 @@ fn test() {
 
     let pass = vec![
         "test('foo', () => {});",
+        "test('foo', () => {});\n\nconst thing = 123;",
         "test('foo', () => {});\n\ntest('bar', () => {});",
         "const thing = 123;\n\ntest('foo', () => {});",
         "{ test('foo', () => {}); }",
@@ -45,6 +46,7 @@ fn test() {
     ];
 
     let fail = vec![
+        "test('foo', () => {});\nconst thing = 123;",
         "test('foo', () => {});test('bar', () => {});",
         "test('foo', () => {});\ntest('bar', () => {});",
         "const thing = 123;\n/* one */\n/* two */\ntest('foo', () => {});",
@@ -82,6 +84,10 @@ describe('other bar', function() {
     ];
 
     let fix = vec![
+        (
+            "test('foo', () => {});\nconst thing = 123;",
+            "test('foo', () => {});\n\nconst thing = 123;",
+        ),
         (
             "test('foo', () => {});test('bar', () => {});",
             "test('foo', () => {});\n\ntest('bar', () => {});",
