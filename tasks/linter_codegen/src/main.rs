@@ -113,7 +113,9 @@ impl RuleRunner for crate::rules::{plugin_module}::{rule_module}::{rule_struct} 
     let formatted_out = rust_fmt(&out);
 
     let target_path = root.join("crates/oxc_linter/src/generated/rule_runner_impls.rs");
-    fs::write(&target_path, formatted_out)?;
+    if !fs::read(&target_path).is_ok_and(|existing| existing == formatted_out.as_bytes()) {
+        fs::write(&target_path, formatted_out)?;
+    }
     println!("Generated {} impls into {}", rule_entries.len(), target_path.display());
 
     Ok(())
@@ -147,7 +149,9 @@ pub fn generate_rules_enum_file() -> io::Result<()> {
     let formatted_out = rust_fmt(&out);
 
     let target_path = root.join("crates/oxc_linter/src/generated/rules_enum.rs");
-    fs::write(&target_path, &formatted_out)?;
+    if !fs::read(&target_path).is_ok_and(|existing| existing == formatted_out.as_bytes()) {
+        fs::write(&target_path, &formatted_out)?;
+    }
     println!(
         "Generated RuleEnum with {} variants into {}",
         rule_entries.len(),
