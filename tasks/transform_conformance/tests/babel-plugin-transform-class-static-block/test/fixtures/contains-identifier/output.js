@@ -1,4 +1,5 @@
+var _staticBlock;
 class C {
-  static #_ = C;
-  static #_2 = x;
+  static #_ = _staticBlock = () => (C, x);
 }
+_staticBlock();

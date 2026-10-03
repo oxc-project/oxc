@@ -54,6 +54,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_expression(expr, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_expression(expr, ctx);
         }
     }
 
@@ -103,6 +105,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     ) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_property_definition(prop, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_property_definition(prop, ctx);
         }
     }
 

@@ -1,11 +1,11 @@
+var _staticBlock;
 let x, y;
-
 class C {
-  static #_ = x = (() => this)();
-  static #_2 = (() => {
+  static #_ = _staticBlock = () => (x = (() => this)(), (() => {
     if (true) {
       y = this;
       z = this;
     }
-  })();
+  })());
 }
+_staticBlock();

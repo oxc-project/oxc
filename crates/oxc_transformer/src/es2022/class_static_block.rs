@@ -1,7 +1,8 @@
 //! ES2022: Class Static Block
 //!
-//! This plugin transforms class static blocks (`class C { static { foo } }`) to an equivalent
-//! using private fields (`class C { static #_ = foo }`).
+//! Fold static blocks into following static field initializers. Defer trailing blocks through
+//! a closure initialized inside the class and called after the class has been initialized.
+//! This avoids adding private fields after a block has made the class non-extensible.
 //!
 //! > This plugin is included in `preset-env`, in ES2022
 //!
@@ -22,13 +23,14 @@
 //!
 //! Output:
 //! ```js
+//! var _staticBlock;
 //! class C {
-//!   static #_ = foo();
-//!   static #_2 = (() => {
+//!   static #_ = _staticBlock = () => (foo(), (() => {
 //!     foo();
 //!     bar();
-//!   })();
+//!   })());
 //! }
+//! _staticBlock();
 //! ```
 //!
 //! ## Implementation
@@ -39,14 +41,17 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-class-static-block>
 //! * Class static initialization blocks TC39 proposal: <https://github.com/tc39/proposal-class-static-block>
 
+use std::collections::hash_map::Entry;
+
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::{ArenaVec, GetAddress, TakeIn, UnstableAddress};
+use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_str::Str;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
+use rustc_hash::FxHashMap;
 
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
@@ -58,15 +63,111 @@ use crate::{
 pub struct ClassStaticBlock<'a> {
     deferred: Vec<Option<BoundIdentifier<'a>>>,
     class_expression_deferred: Vec<Option<BoundIdentifier<'a>>>,
+    class_names: FxHashMap<Address, InferredName<'a>>,
 }
 
-impl<'a> ClassStaticBlock<'a> {
+/// A property key that has already been evaluated and converted to a string or symbol.
+enum InferredName<'a> {
+    Static(Str<'a>),
+    Computed(BoundIdentifier<'a>),
+}
+
+impl<'a> InferredName<'a> {
+    fn expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        match self {
+            Self::Static(name) => Expression::new_string_literal(SPAN, *name, None, ctx),
+            Self::Computed(binding) => binding.create_read_expression(ctx),
+        }
+    }
+}
+
+impl ClassStaticBlock<'_> {
     pub fn new() -> Self {
-        Self { deferred: Vec::new(), class_expression_deferred: Vec::new() }
+        Self {
+            deferred: Vec::new(),
+            class_expression_deferred: Vec::new(),
+            class_names: FxHashMap::default(),
+        }
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        match expr {
+            Expression::ObjectExpression(object) => {
+                for prop in &mut object.properties {
+                    let ObjectPropertyKind::ObjectProperty(prop) = prop else { continue };
+                    let prop = &mut **prop;
+                    // A prototype setter does not perform NamedEvaluation.
+                    if !prop.computed && prop.key.is_specific_static_name("__proto__") {
+                        continue;
+                    }
+                    if let Some(class) = Self::anonymous_deferred_class(&prop.value) {
+                        let address = class.body.address();
+                        let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
+                        self.class_names.insert(address, name);
+                    }
+                }
+            }
+            Expression::ClassExpression(class)
+                if class.id.is_none() && Self::has_trailing_blocks(class) =>
+            {
+                if self.class_names.contains_key(&class.body.address()) {
+                    return;
+                }
+                let name = ctx
+                    .ancestors()
+                    .find_map(|ancestor| match ancestor {
+                        Ancestor::ParenthesizedExpressionExpression(_) => None,
+                        Ancestor::VariableDeclaratorInit(decl) => {
+                            Some(decl.id().get_identifier_name().map(Str::from))
+                        }
+                        Ancestor::AssignmentPatternRight(pattern) => {
+                            Some(pattern.left().get_identifier_name().map(Str::from))
+                        }
+                        Ancestor::FormalParameterInitializer(param) => {
+                            Some(param.pattern().get_identifier_name().map(Str::from))
+                        }
+                        Ancestor::AssignmentExpressionRight(assign)
+                            if assign.operator().is_assign() || assign.operator().is_logical() =>
+                        {
+                            Some(Self::assignment_name(assign.left()))
+                        }
+                        Ancestor::AssignmentTargetWithDefaultInit(target) => {
+                            Some(Self::assignment_name(target.binding()))
+                        }
+                        Ancestor::AssignmentTargetPropertyIdentifierInit(target) => {
+                            Some(Some(Str::from(target.binding().name)))
+                        }
+                        Ancestor::ExportDefaultDeclarationDeclaration(_) => {
+                            Some(Some(Str::from("default")))
+                        }
+                        _ => Some(None),
+                    })
+                    .flatten();
+                if let Some(name) = name {
+                    self.class_names.insert(class.body.address(), InferredName::Static(name));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn enter_property_definition(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(class) = prop.value.as_ref().and_then(Self::anonymous_deferred_class) {
+            let address = class.body.address();
+            // A folded initializer has already supplied the original name.
+            if let Entry::Vacant(entry) = self.class_names.entry(address) {
+                let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
+                entry.insert(name);
+            }
+        }
+    }
+
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         // Loop through class body elements and:
         // 1. Find if there are any `StaticBlock`s.
@@ -109,7 +210,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                     ClassElement::PropertyDefinition(prop) if prop.r#static => {
                         last_static_property = Some(index);
                         if !pending.is_empty() {
-                            Self::prepend_to_initializer(
+                            self.prepend_to_initializer(
                                 prop,
                                 std::mem::take(&mut pending).into_iter(),
                                 ctx,
@@ -134,7 +235,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 let ClassElement::PropertyDefinition(prop) = &mut body.body[index] else {
                     unreachable!();
                 };
-                Self::prepend_to_initializer(prop, [assignment].into_iter(), ctx);
+                self.prepend_to_initializer(prop, std::iter::once(assignment), ctx);
                 Some(binding)
             };
 
@@ -198,52 +299,131 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
                 _ => class.unstable_address(),
             };
-            let call = Self::create_deferred_call(binding, ctx);
+            let call = Self::create_deferred_call(&binding, ctx);
             let statement = Statement::new_expression_statement(SPAN, call, ctx);
             ctx.state.statement_injector.insert_after(&stmt_address, statement);
         }
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !matches!(expr, Expression::ClassExpression(_)) {
-            return;
+        let Expression::ClassExpression(class) = expr else { return };
+        let name = self.class_names.remove(&class.body.address());
+        let deferred = self.class_expression_deferred.pop().flatten();
+        if let Some(name) = name {
+            // Let the engine perform NamedEvaluation before static initialization. Setting
+            // `.name` afterwards is too late, and would overwrite a user-defined static name.
+            // A computed key also handles symbols and the special `__proto__` spelling.
+            let key = PropertyKey::from(name.expression(ctx));
+            let computed =
+                !matches!(&name, InferredName::Static(name) if name.as_str() != "__proto__");
+            let property = ObjectPropertyKind::new_object_property(
+                SPAN,
+                PropertyKind::Init,
+                key,
+                expr.take_in(ctx),
+                false,
+                false,
+                computed,
+                ctx,
+            );
+            let object = Expression::new_object_expression(SPAN, [property], ctx);
+            *expr = Expression::new_computed_member_expression(
+                SPAN,
+                object,
+                name.expression(ctx),
+                false,
+                ctx,
+            );
         }
-        let Some(deferred) = self.class_expression_deferred.pop().flatten() else {
-            return;
-        };
-        let class = expr.take_in(ctx);
-        let call = Self::create_deferred_call(deferred, ctx);
-        *expr = Expression::new_sequence_expression(SPAN, [class, call], ctx);
+        if let Some(deferred) = deferred {
+            let class = expr.take_in(ctx);
+            let call = Self::create_deferred_call(&deferred, ctx);
+            *expr = Expression::new_sequence_expression(SPAN, [class, call], ctx);
+        }
     }
 }
 
-impl ClassStaticBlock<'_> {
-    fn prepend_to_initializer<'a>(
+impl<'a> ClassStaticBlock<'a> {
+    fn assignment_name(target: &AssignmentTarget<'a>) -> Option<Str<'a>> {
+        match target {
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name.into()),
+            _ => None,
+        }
+    }
+
+    fn has_trailing_blocks(class: &Class<'_>) -> bool {
+        for element in class.body.body.iter().rev() {
+            match element {
+                ClassElement::StaticBlock(_) => return true,
+                ClassElement::PropertyDefinition(prop) if prop.r#static => return false,
+                _ => {}
+            }
+        }
+        false
+    }
+
+    fn anonymous_deferred_class<'e>(expr: &'e Expression<'a>) -> Option<&'e Class<'a>> {
+        match expr.without_parentheses() {
+            Expression::ClassExpression(class)
+                if class.id.is_none() && Self::has_trailing_blocks(class) =>
+            {
+                Some(class)
+            }
+            _ => None,
+        }
+    }
+
+    fn property_name(
+        key: &mut PropertyKey<'a>,
+        computed: &mut bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> InferredName<'a> {
+        let name = match key {
+            PropertyKey::PrivateIdentifier(ident) => {
+                Some(Str::from_strs_array_in(["#", ident.name.as_str()], ctx))
+            }
+            PropertyKey::StaticIdentifier(ident) => Some(Str::from(ident.name)),
+            PropertyKey::StringLiteral(lit) => Some(lit.value),
+            _ => None,
+        };
+        if let Some(name) = name {
+            return InferredName::Static(name);
+        }
+        // Capture even an identifier: later keys/initializers can mutate its value. Coercion
+        // belongs here too, since ToPropertyKey can have side effects or produce a symbol.
+        *computed = true;
+        let value = key.take_in(ctx).into_expression();
+        let value = helper_call_expr(
+            Helper::ToPropertyKey,
+            ArenaVec::from_value_in(Argument::from(value), ctx),
+            ctx,
+        );
+        let binding = ctx.generate_uid_in_current_hoist_scope("key");
+        ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
+        *key = PropertyKey::from(create_assignment(&binding, value, SPAN, ctx));
+        InferredName::Computed(binding)
+    }
+
+    fn prepend_to_initializer(
+        &mut self,
         prop: &mut PropertyDefinition<'a>,
         expressions: impl Iterator<Item = Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut expressions = expressions.collect::<Vec<_>>();
         if let Some(mut value) = prop.value.take() {
-            if value.is_anonymous_function_definition()
-                && let Some(name) = prop.key.static_name()
-            {
-                value = helper_call_expr(
-                    Helper::SetFunctionName,
-                    ArenaVec::from_array_in(
-                        [
-                            Argument::from(value),
-                            Argument::new_string_literal(
-                                SPAN,
-                                Str::from_cow_in(&name, ctx),
-                                None,
-                                ctx,
-                            ),
-                        ],
+            if value.is_anonymous_function_definition() {
+                let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
+                if let Expression::ClassExpression(class) = value.without_parentheses() {
+                    self.class_names.insert(class.body.address(), name);
+                } else {
+                    let name = name.expression(ctx);
+                    value = helper_call_expr(
+                        Helper::SetFunctionName,
+                        ArenaVec::from_array_in([Argument::from(value), Argument::from(name)], ctx),
                         ctx,
-                    ),
-                    ctx,
-                );
+                    );
+                }
             }
             expressions.push(value);
         } else {
@@ -256,7 +436,7 @@ impl ClassStaticBlock<'_> {
         ));
     }
 
-    fn create_deferred_initializer<'a>(
+    fn create_deferred_initializer(
         mut expressions: Vec<Expression<'a>>,
         returns_class: bool,
         ctx: &mut TraverseCtx<'a>,
@@ -297,8 +477,8 @@ impl ClassStaticBlock<'_> {
         (binding.clone(), create_assignment(&binding, arrow, SPAN, ctx))
     }
 
-    fn create_deferred_call<'a>(
-        binding: BoundIdentifier<'a>,
+    fn create_deferred_call(
+        binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         Expression::new_call_expression(
@@ -314,7 +494,7 @@ impl ClassStaticBlock<'_> {
     /// Convert static block to expression which will be value of private field.
     /// `static { foo }` -> `foo`
     /// `static { foo; bar; }` -> `(() => { foo; bar; })()`
-    fn convert_block_to_expression<'a>(
+    fn convert_block_to_expression(
         block: &mut StaticBlock<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -347,7 +527,7 @@ impl ClassStaticBlock<'_> {
     /// Convert static block to expression which will be value of private field,
     /// where the static block contains only a single expression.
     /// `static { foo }` -> `foo`
-    fn convert_block_with_single_expression_to_expression<'a>(
+    fn convert_block_with_single_expression_to_expression(
         expr: &mut Expression<'a>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
