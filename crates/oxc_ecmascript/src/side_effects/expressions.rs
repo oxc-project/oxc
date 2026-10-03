@@ -1034,7 +1034,7 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
                     bin_expr.operator,
                     BinaryOperator::Inequality | BinaryOperator::StrictInequality
                 )
-                && unary.argument.is_specific_id(&ident.name)
+                && matches!(&unary.argument, Expression::Identifier(id) if id.name == ident.name)
             {
                 return true;
             }
@@ -1070,7 +1070,7 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
                     bin_expr.operator,
                     BinaryOperator::LessThan | BinaryOperator::LessEqualThan
                 )
-                && unary.argument.is_specific_id(&ident.name)
+                && matches!(&unary.argument, Expression::Identifier(id) if id.name == ident.name)
             {
                 return true;
             }
