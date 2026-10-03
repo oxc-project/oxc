@@ -1,13 +1,9 @@
-use std::{
-    alloc::Layout,
-    mem::ManuallyDrop,
-    ptr::{self, NonNull},
-};
+use std::{ptr, sync::Mutex};
 
 use napi::bindgen_prelude::Uint8Array;
 use napi_derive::napi;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, AllocatorPool};
 use oxc_ast::ast::{Comment, CommentContent, CommentKind};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_estree_tokens::update_tokens_as_js;
@@ -16,20 +12,57 @@ use oxc_napi::get_source_type;
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
 use oxc_semantic::SemanticBuilder;
 
-use crate::generated::raw_transfer_constants::{
-    ACTIVE_SIZE, BLOCK_ALIGN, BLOCK_SIZE, CURSOR_MIN_ALIGN,
-};
+use super::external_linter::fixed_size_chunk_ptr;
+use crate::generated::raw_transfer_constants::BUFFER_SIZE;
 
-/// Layout describing the JS-owned buffer (`BLOCK_SIZE` bytes, aligned on `BLOCK_ALIGN`).
-const BLOCK_LAYOUT: Layout = match Layout::from_size_align(BLOCK_SIZE, BLOCK_ALIGN) {
-    Ok(layout) => layout,
-    Err(_) => unreachable!(),
-};
+/// Fixed-size allocator pools of threads that have exited, kept for reuse by later threads.
+///
+/// A pool's block is never unmapped. Test runners that give each test file its own worker thread
+/// would otherwise map and unmap a 2 GiB block per file; more importantly, a view that JS moved
+/// off its thread (`ArrayBuffer.prototype.transfer` then `postMessage`) can never dangle.
+/// Memory is bounded by the peak number of threads that ever ran `RuleTester` at once.
+static IDLE_POOLS: Mutex<Vec<AllocatorPool>> = Mutex::new(Vec::new());
+
+/// This thread's pool. Returned to `IDLE_POOLS` when the thread exits.
+struct ThreadPool(Option<AllocatorPool>);
+
+impl ThreadPool {
+    fn take_or_create() -> Self {
+        let pool =
+            IDLE_POOLS.lock().unwrap().pop().unwrap_or_else(|| AllocatorPool::new_fixed_size(1));
+        Self(Some(pool))
+    }
+
+    fn pool(&self) -> &AllocatorPool {
+        self.0.as_ref().unwrap()
+    }
+}
+
+impl Drop for ThreadPool {
+    fn drop(&mut self) {
+        if let Some(pool) = self.0.take() {
+            IDLE_POOLS.lock().unwrap().push(pool);
+        }
+    }
+}
+
+thread_local! {
+    /// Pool holding the single fixed-size `Allocator` that `parse_raw_sync` parses into.
+    ///
+    /// Rust owns the buffer, and JS reads it through views obtained from `get_raw_transfer_buffer`.
+    /// JS never allocates the buffer itself. This avoids the 6 GiB `ArrayBuffer` JS would otherwise
+    /// need to obtain a 4 GiB-aligned 2 GiB region, which Bun (4 GiB `ArrayBuffer` limit) cannot
+    /// provide, and lets Windows commit the block lazily.
+    ///
+    /// Thread-local because test runners may execute `RuleTester` on several threads, each with its
+    /// own JS realm and its own `buffers` array. See `IDLE_POOLS` for what happens at thread exit.
+    static ALLOCATOR_POOL: ThreadPool = ThreadPool::take_or_create();
+}
 
 /// Sentinel value for program offset to indicate parsing failed.
 ///
-/// 0 cannot be a valid offset as it's the start of the buffer, which contains the source text.
-/// Allocator bumps downwards, so if source text was empty, the program would be somewhere at end of the buffer.
+/// 0 cannot be a valid offset. The allocator bumps downwards from the end of the buffer,
+/// so `Program` always sits at a non-zero offset.
 const PARSE_FAIL_SENTINEL: u32 = 0;
 
 // Parser options
@@ -48,128 +81,80 @@ pub struct ParserOptions {
     pub ignore_non_fatal_errors: Option<bool>,
 }
 
-/// Get offset within a `Uint8Array` which is aligned on `BLOCK_ALIGN`.
+/// Get a `Uint8Array` view of this thread's raw transfer buffer.
 ///
-/// Does not check that the offset is within bounds of `buffer`.
-/// To ensure it always is, provide a `Uint8Array` of at least `BLOCK_SIZE + BLOCK_ALIGN` bytes.
-#[napi]
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
-    let buffer = &*buffer;
-    // The final `% BLOCK_ALIGN` is to handle where `buffer` is already aligned on `BLOCK_ALIGN`.
-    // In that case, `buffer.as_ptr().addr() % BLOCK_ALIGN == 0`, so without the final `% BLOCK_ALIGN`,
-    // `offset` would be `BLOCK_ALIGN`. The final `% BLOCK_ALIGN` reduces it to `0`.
-    let offset = (BLOCK_ALIGN - (buffer.as_ptr().addr() % BLOCK_ALIGN)) % BLOCK_ALIGN;
-    #[expect(clippy::cast_possible_truncation)]
-    return offset as u32;
-}
-
-/// Parse AST into provided `Uint8Array` buffer, synchronously.
+/// The view covers the allocatable region plus `RawTransferMetadata`, the same region the linter
+/// shares with JS plugins. JS reads the AST from it; the only bytes JS writes are the per-comment
+/// and per-token "deserialized" flags, which Rust rewrites on every parse (the comment content byte
+/// explicitly, the token bytes because every token is written afresh).
 ///
-/// Source text must be written into somewhere towards end of the buffer.
-/// - `source_start` is position of first byte of source text in buffer
-/// - `source_len` is length of source text (in UTF-8 bytes)
-///
-/// This function will parse the source, and write the AST into the buffer, starting at the end (before the source text).
-///
-/// It also writes to the very end of the buffer the offset of `Program` within the buffer.
-///
-/// Caller can deserialize data from the buffer on JS side.
-///
-/// # SAFETY
-///
-/// Caller must ensure:
-/// * Source text is written into the buffer.
-/// * Start of source text is at `source_start` bytes from the start of the buffer.
-/// * Source text's UTF-8 byte length is `source_len`.
-/// * This section of bytes in the buffer comprises a valid UTF-8 string.
-///
-/// If source text is originally a JS string on JS side, and converted to a buffer with
-/// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+/// Rust keeps ownership of the memory, and the block is never unmapped (see `IDLE_POOLS`), so the
+/// view has no finalizer and the `is_double_owned` flag used by the linter's `get_buffer` is never
+/// set. A view always points at mapped memory; after the next parse on its thread it reads that
+/// parse's data, the same contract as the linter's shared buffers. JS may call this more than once:
+/// a test runner that resets its module registry obtains a fresh view of the same memory. Callers
+/// should keep one view per module instance.
 ///
 /// # Panics
 ///
-/// Panics if source text is too long, or AST takes more memory than is available in the buffer.
+/// Panics on the thread's first call if the fixed-size allocation cannot be made
+/// (see `AllocatorPool::new_fixed_size`).
 #[napi]
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-pub unsafe fn parse_raw_sync(
-    filename: String,
-    mut buffer: Uint8Array,
-    source_start: u32,
-    source_len: u32,
-    options: Option<ParserOptions>,
-) {
-    // SAFETY: This function is called synchronously, so buffer cannot be mutated outside this function
-    // during the time this `&mut [u8]` exists
-    let buffer = unsafe { buffer.as_mut() };
+pub fn get_raw_transfer_buffer() -> Uint8Array {
+    ALLOCATOR_POOL.with(|thread_pool| {
+        let allocator = thread_pool.pool().get();
 
-    // SAFETY: `parse_raw_impl` has same safety requirements as this function
-    unsafe { parse_raw_impl(&filename, buffer, source_start, source_len, options) };
+        // SAFETY: `ALLOCATOR_POOL` holds a fixed-size pool, so `allocator` has a `FixedSizeAllocatorMetadata`
+        let chunk_ptr = unsafe { fixed_size_chunk_ptr(allocator.fixed_size_metadata_ptr()) };
+
+        // SAFETY: Range of memory starting at `chunk_ptr` and encompassing `BUFFER_SIZE` is all within
+        // the allocation backing the pool's `Allocator`, which is never freed (see `IDLE_POOLS`).
+        // See doc comment above for the aliasing contract.
+        unsafe { Uint8Array::with_external_data(chunk_ptr.as_ptr(), BUFFER_SIZE, |_ptr, _len| {}) }
+    })
 }
 
-/// Parse AST into buffer.
+/// Parse source text into this thread's raw transfer buffer, synchronously.
 ///
-/// # SAFETY
+/// The source text is copied into the buffer, and the AST is written after it.
+/// The offset of `Program` within the buffer is written into the buffer's `RawTransferMetadata` slot.
 ///
-/// Caller must ensure:
-/// * Source text is written into the buffer.
-/// * Start of source text is at `source_start` bytes from the start of the buffer.
-/// * End of source text is not after `ACTIVE_SIZE` bytes from the start of the buffer.
-/// * Source text's UTF-8 byte length is `source_len`.
-/// * This section of bytes in the buffer comprises a valid UTF-8 string.
+/// Caller can deserialize data from the buffer on JS side, via the view from `getRawTransferBuffer`.
 ///
-/// If source text is originally a JS string on JS side, and converted to a buffer with
-/// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
-#[allow(clippy::items_after_statements, clippy::allow_attributes)]
-unsafe fn parse_raw_impl(
+/// The buffer's contents remain valid until the next call to `parse_raw_sync` on the same thread.
+///
+/// Returns the ID of the buffer the AST was written into.
+///
+/// # Panics
+///
+/// Panics if source text and AST take more memory than is available in the buffer.
+#[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+pub fn parse_raw_sync(
+    filename: String,
+    source_text: String,
+    options: Option<ParserOptions>,
+) -> u32 {
+    ALLOCATOR_POOL.with(|thread_pool| {
+        let allocator = thread_pool.pool().get();
+        parse_raw_impl(&filename, &allocator, &source_text, options);
+        // SAFETY: `allocator` was obtained from a fixed-size `AllocatorPool`, so it has a
+        // `FixedSizeAllocatorMetadata`. Only an immutable reference is created.
+        unsafe { allocator.fixed_size_metadata_ptr().as_ref().id }
+    })
+}
+
+/// Parse source text into `allocator`, and write `RawTransferMetadata` into its metadata slot.
+///
+/// `allocator` must have been obtained from a fixed-size `AllocatorPool`.
+fn parse_raw_impl(
     filename: &str,
-    buffer: &mut [u8],
-    source_start: u32,
-    source_len: u32,
+    allocator: &Allocator,
+    source_text: &str,
     options: Option<ParserOptions>,
 ) {
-    // Check buffer has expected size and alignment
-    assert_eq!(buffer.len(), BLOCK_SIZE);
-    let buffer_ptr = NonNull::from_mut(buffer).cast::<u8>();
-    assert!(buffer_ptr.addr().get().is_multiple_of(BLOCK_ALIGN));
-
-    const _: () = {
-        assert!(BLOCK_SIZE.is_multiple_of(Allocator::RAW_MIN_ALIGN));
-        assert!(BLOCK_SIZE >= Allocator::RAW_MIN_SIZE);
-        assert!(BLOCK_ALIGN.is_multiple_of(Allocator::RAW_MIN_ALIGN));
-    };
-
-    // Create `Allocator`.
-    //
-    // Wrap in `ManuallyDrop` so the allocation doesn't get freed at end of function, or if panic.
-    // The buffer is owned by JS, so Rust must not free it - hence `ManuallyDrop`.
-    // The `backing_alloc_ptr` and `layout` we pass to `from_raw_parts` aren't used (the `Allocator` is never dropped),
-    // but the safety contract requires the chunk region to lie within them, so we describe the buffer itself.
-    //
-    // SAFETY: `buffer_ptr` and `BLOCK_SIZE` outline the entirety of `buffer`.
-    // `buffer_ptr` and `BLOCK_SIZE` are multiples of `ARENA_ALIGN`.
-    // `BLOCK_SIZE` is `>= Allocator::RAW_MIN_SIZE`.
-    // `buffer_ptr` is derived from a `&mut [u8]` slice, so has permission for writes.
-    let allocator =
-        unsafe { Allocator::from_raw_parts(buffer_ptr, BLOCK_SIZE, buffer_ptr, BLOCK_LAYOUT) };
-    let allocator = ManuallyDrop::new(allocator);
-
-    // Check source text is in bounds of active data region of buffer.
-    // Caller guarantees it is, but as this is critical to avoid reading/writing out of bounds,
-    // we add this defensive runtime check.
-    let source_start = source_start as usize;
-    let source_end = source_start + (source_len as usize);
-    assert!(source_end <= ACTIVE_SIZE);
-
-    // Set cursor to before start of source text. AST will be written into the buffer before the source text.
-    // Round down the pointer, so it's aligned on `CURSOR_MIN_ALIGN`.
-    // SAFETY: Caller guarantees that source text starts at `source_start` bytes from start of buffer.
-    unsafe {
-        let cursor_pos = source_start & !(CURSOR_MIN_ALIGN - 1);
-        debug_assert!(cursor_pos <= ACTIVE_SIZE);
-        let cursor_ptr = buffer_ptr.add(cursor_pos);
-        allocator.set_cursor_ptr(cursor_ptr);
-    }
+    // Copy source text into the buffer, same as the linter does for JS plugins
+    let source_text = allocator.alloc_str(source_text);
 
     // Get source type
     let options = options.unwrap_or_default();
@@ -180,23 +165,10 @@ unsafe fn parse_raw_impl(
     // Parse source.
     // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator` exist after this.
     let (program_offset, has_bom, tokens_offset, tokens_len) = {
-        // Get source text from buffer.
-        // Use zero-cost unchecked conversion to `&str` in release builds, full UTF-8 validation in debug builds.
-        let source_text = if cfg!(debug_assertions) {
-            let source_bytes = &buffer[source_start..source_end];
-            str::from_utf8(source_bytes).expect("Source text is not valid UTF-8")
-        } else {
-            // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
-            unsafe {
-                let source_bytes = buffer.get_unchecked(source_start..source_end);
-                str::from_utf8_unchecked(source_bytes)
-            }
-        };
-
         // Parse with same options as linter.
         // We use `RuntimeParserConfig` even though we always pass `true` here, to avoid compiling the parser twice.
         // The linter itself uses `RuntimeParserConfig`.
-        let parser_ret = Parser::new(&allocator, source_text, source_type)
+        let parser_ret = Parser::new(allocator, source_text, source_type)
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,
@@ -283,18 +255,8 @@ unsafe fn parse_raw_impl(
         }
     };
 
-    // Write metadata into end of buffer.
-    //
-    // `RawTransferMetadata` is written at offset `ACTIVE_SIZE` (the end of the allocatable region).
-    // After it sits a slot reserved for `FixedSizeAllocatorMetadata` (left unused in `napi/parser`-style code),
-    // and finally `ChunkFooter` in the last `CHUNK_FOOTER_SIZE` bytes of the buffer.
-    const RAW_METADATA_OFFSET: usize = ACTIVE_SIZE;
-    const _: () = {
-        assert!(RAW_METADATA_OFFSET + size_of::<RawTransferMetadata>() < BLOCK_SIZE);
-        assert!(RAW_METADATA_OFFSET.is_multiple_of(align_of::<RawTransferMetadata>()));
-    };
-
-    #[allow(clippy::cast_possible_truncation)]
+    // Write metadata into the buffer's `RawTransferMetadata` slot, which sits immediately before
+    // `FixedSizeAllocatorMetadata` at the end of the buffer. Same as the linter does for JS plugins.
     let metadata = RawTransferMetadata::new(
         program_offset,
         source_type.is_typescript(),
@@ -304,9 +266,15 @@ unsafe fn parse_raw_impl(
         tokens_len,
     );
 
-    // SAFETY: `RAW_METADATA_OFFSET + size_of::<RawTransferMetadata>()` is less than length of `buffer`.
-    // `buffer_ptr + RAW_METADATA_OFFSET` is aligned for `RawTransferMetadata`.
+    // SAFETY: Caller guarantees `allocator` came from a fixed-size `AllocatorPool`, so it has
+    // a `FixedSizeAllocatorMetadata`, and a `RawTransferMetadata` slot immediately before it.
     unsafe {
-        buffer_ptr.add(RAW_METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);
+        let metadata_ptr = allocator
+            .fixed_size_metadata_ptr()
+            .cast::<u8>()
+            .sub(size_of::<RawTransferMetadata>())
+            .cast::<RawTransferMetadata>();
+        debug_assert!(metadata_ptr.addr().get().is_multiple_of(align_of::<RawTransferMetadata>()));
+        metadata_ptr.write(metadata);
     }
 }

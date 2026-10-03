@@ -250,7 +250,7 @@ async fn lint_impl(
 }
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-pub use crate::js_plugins::parse::{get_buffer_offset, parse_raw_sync};
+pub use crate::js_plugins::parse::{get_raw_transfer_buffer, parse_raw_sync};
 
 /// Returns `true` if raw transfer is supported on this platform.
 #[napi]
