@@ -698,6 +698,7 @@ pub use crate::rules::unicorn::no_zero_fractions::NoZeroFractions as UnicornNoZe
 pub use crate::rules::unicorn::number_literal_case::NumberLiteralCase as UnicornNumberLiteralCase;
 pub use crate::rules::unicorn::numeric_separators_style::NumericSeparatorsStyle as UnicornNumericSeparatorsStyle;
 pub use crate::rules::unicorn::prefer_add_event_listener::PreferAddEventListener as UnicornPreferAddEventListener;
+pub use crate::rules::unicorn::prefer_add_event_listener_options::PreferAddEventListenerOptions as UnicornPreferAddEventListenerOptions;
 pub use crate::rules::unicorn::prefer_array_find::PreferArrayFind as UnicornPreferArrayFind;
 pub use crate::rules::unicorn::prefer_array_flat::PreferArrayFlat as UnicornPreferArrayFlat;
 pub use crate::rules::unicorn::prefer_array_flat_map::PreferArrayFlatMap as UnicornPreferArrayFlatMap;
@@ -1447,6 +1448,7 @@ pub enum RuleEnum {
     UnicornNumberLiteralCase(UnicornNumberLiteralCase),
     UnicornNumericSeparatorsStyle(UnicornNumericSeparatorsStyle),
     UnicornPreferAddEventListener(UnicornPreferAddEventListener),
+    UnicornPreferAddEventListenerOptions(UnicornPreferAddEventListenerOptions),
     UnicornPreferArrayFind(UnicornPreferArrayFind),
     UnicornPreferArrayFlat(UnicornPreferArrayFlat),
     UnicornPreferArrayFlatMap(UnicornPreferArrayFlatMap),
@@ -2325,324 +2327,325 @@ const UNICORN_NO_ZERO_FRACTIONS_ID: usize = 550usize;
 const UNICORN_NUMBER_LITERAL_CASE_ID: usize = 551usize;
 const UNICORN_NUMERIC_SEPARATORS_STYLE_ID: usize = 552usize;
 const UNICORN_PREFER_ADD_EVENT_LISTENER_ID: usize = 553usize;
-const UNICORN_PREFER_ARRAY_FIND_ID: usize = 554usize;
-const UNICORN_PREFER_ARRAY_FLAT_ID: usize = 555usize;
-const UNICORN_PREFER_ARRAY_FLAT_MAP_ID: usize = 556usize;
-const UNICORN_PREFER_ARRAY_INDEX_OF_ID: usize = 557usize;
-const UNICORN_PREFER_ARRAY_SOME_ID: usize = 558usize;
-const UNICORN_PREFER_AT_ID: usize = 559usize;
-const UNICORN_PREFER_BIGINT_LITERALS_ID: usize = 560usize;
-const UNICORN_PREFER_BLOB_READING_METHODS_ID: usize = 561usize;
-const UNICORN_PREFER_CLASS_FIELDS_ID: usize = 562usize;
-const UNICORN_PREFER_CLASSLIST_TOGGLE_ID: usize = 563usize;
-const UNICORN_PREFER_CODE_POINT_ID: usize = 564usize;
-const UNICORN_PREFER_DATE_NOW_ID: usize = 565usize;
-const UNICORN_PREFER_DEFAULT_PARAMETERS_ID: usize = 566usize;
-const UNICORN_PREFER_DOM_NODE_APPEND_ID: usize = 567usize;
-const UNICORN_PREFER_DOM_NODE_DATASET_ID: usize = 568usize;
-const UNICORN_PREFER_DOM_NODE_REMOVE_ID: usize = 569usize;
-const UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID: usize = 570usize;
-const UNICORN_PREFER_EVENT_TARGET_ID: usize = 571usize;
-const UNICORN_PREFER_EXPORT_FROM_ID: usize = 572usize;
-const UNICORN_PREFER_GLOBAL_THIS_ID: usize = 573usize;
-const UNICORN_PREFER_IMPORT_META_PROPERTIES_ID: usize = 574usize;
-const UNICORN_PREFER_INCLUDES_ID: usize = 575usize;
-const UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID: usize = 576usize;
-const UNICORN_PREFER_LOGICAL_OPERATOR_OVER_TERNARY_ID: usize = 577usize;
-const UNICORN_PREFER_MATH_MIN_MAX_ID: usize = 578usize;
-const UNICORN_PREFER_MATH_TRUNC_ID: usize = 579usize;
-const UNICORN_PREFER_MODERN_DOM_APIS_ID: usize = 580usize;
-const UNICORN_PREFER_MODERN_MATH_APIS_ID: usize = 581usize;
-const UNICORN_PREFER_MODULE_ID: usize = 582usize;
-const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = 583usize;
-const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize = 584usize;
-const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = 585usize;
-const UNICORN_PREFER_NUMBER_COERCION_ID: usize = 586usize;
-const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = 587usize;
-const UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID: usize = 588usize;
-const UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID: usize = 589usize;
-const UNICORN_PREFER_PROTOTYPE_METHODS_ID: usize = 590usize;
-const UNICORN_PREFER_QUERY_SELECTOR_ID: usize = 591usize;
-const UNICORN_PREFER_REFLECT_APPLY_ID: usize = 592usize;
-const UNICORN_PREFER_REGEXP_TEST_ID: usize = 593usize;
-const UNICORN_PREFER_RESPONSE_STATIC_JSON_ID: usize = 594usize;
-const UNICORN_PREFER_SET_HAS_ID: usize = 595usize;
-const UNICORN_PREFER_SET_SIZE_ID: usize = 596usize;
-const UNICORN_PREFER_SINGLE_CALL_ID: usize = 597usize;
-const UNICORN_PREFER_SPREAD_ID: usize = 598usize;
-const UNICORN_PREFER_STRING_RAW_ID: usize = 599usize;
-const UNICORN_PREFER_STRING_REPLACE_ALL_ID: usize = 600usize;
-const UNICORN_PREFER_STRING_SLICE_ID: usize = 601usize;
-const UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = 602usize;
-const UNICORN_PREFER_STRING_TRIM_START_END_ID: usize = 603usize;
-const UNICORN_PREFER_STRUCTURED_CLONE_ID: usize = 604usize;
-const UNICORN_PREFER_TERNARY_ID: usize = 605usize;
-const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = 606usize;
-const UNICORN_PREFER_TYPE_ERROR_ID: usize = 607usize;
-const UNICORN_RELATIVE_URL_STYLE_ID: usize = 608usize;
-const UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID: usize = 609usize;
-const UNICORN_REQUIRE_MODULE_ATTRIBUTES_ID: usize = 610usize;
-const UNICORN_REQUIRE_MODULE_SPECIFIERS_ID: usize = 611usize;
-const UNICORN_REQUIRE_NUMBER_TO_FIXED_DIGITS_ARGUMENT_ID: usize = 612usize;
-const UNICORN_REQUIRE_POST_MESSAGE_TARGET_ORIGIN_ID: usize = 613usize;
-const UNICORN_SWITCH_CASE_BRACES_ID: usize = 614usize;
-const UNICORN_SWITCH_CASE_BREAK_POSITION_ID: usize = 615usize;
-const UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID: usize = 616usize;
-const UNICORN_THROW_NEW_ERROR_ID: usize = 617usize;
-const JSX_A_11_Y_ALT_TEXT_ID: usize = 618usize;
-const JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID: usize = 619usize;
-const JSX_A_11_Y_ANCHOR_HAS_CONTENT_ID: usize = 620usize;
-const JSX_A_11_Y_ANCHOR_IS_VALID_ID: usize = 621usize;
-const JSX_A_11_Y_ARIA_ACTIVEDESCENDANT_HAS_TABINDEX_ID: usize = 622usize;
-const JSX_A_11_Y_ARIA_PROPS_ID: usize = 623usize;
-const JSX_A_11_Y_ARIA_PROPTYPES_ID: usize = 624usize;
-const JSX_A_11_Y_ARIA_ROLE_ID: usize = 625usize;
-const JSX_A_11_Y_ARIA_UNSUPPORTED_ELEMENTS_ID: usize = 626usize;
-const JSX_A_11_Y_AUTOCOMPLETE_VALID_ID: usize = 627usize;
-const JSX_A_11_Y_CLICK_EVENTS_HAVE_KEY_EVENTS_ID: usize = 628usize;
-const JSX_A_11_Y_CONTROL_HAS_ASSOCIATED_LABEL_ID: usize = 629usize;
-const JSX_A_11_Y_HEADING_HAS_CONTENT_ID: usize = 630usize;
-const JSX_A_11_Y_HTML_HAS_LANG_ID: usize = 631usize;
-const JSX_A_11_Y_IFRAME_HAS_TITLE_ID: usize = 632usize;
-const JSX_A_11_Y_IMG_REDUNDANT_ALT_ID: usize = 633usize;
-const JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID: usize = 634usize;
-const JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID: usize = 635usize;
-const JSX_A_11_Y_LANG_ID: usize = 636usize;
-const JSX_A_11_Y_MEDIA_HAS_CAPTION_ID: usize = 637usize;
-const JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVENTS_ID: usize = 638usize;
-const JSX_A_11_Y_NO_ACCESS_KEY_ID: usize = 639usize;
-const JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID: usize = 640usize;
-const JSX_A_11_Y_NO_AUTOFOCUS_ID: usize = 641usize;
-const JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID: usize = 642usize;
-const JSX_A_11_Y_NO_INTERACTIVE_ELEMENT_TO_NONINTERACTIVE_ROLE_ID: usize = 643usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_INTERACTIONS_ID: usize = 644usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID: usize = 645usize;
-const JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID: usize = 646usize;
-const JSX_A_11_Y_NO_REDUNDANT_ROLES_ID: usize = 647usize;
-const JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID: usize = 648usize;
-const JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID: usize = 649usize;
-const JSX_A_11_Y_ROLE_HAS_REQUIRED_ARIA_PROPS_ID: usize = 650usize;
-const JSX_A_11_Y_ROLE_SUPPORTS_ARIA_PROPS_ID: usize = 651usize;
-const JSX_A_11_Y_SCOPE_ID: usize = 652usize;
-const JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID: usize = 653usize;
-const OXC_APPROX_CONSTANT_ID: usize = 654usize;
-const OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID: usize = 655usize;
-const OXC_BAD_BITWISE_OPERATOR_ID: usize = 656usize;
-const OXC_BAD_CHAR_AT_COMPARISON_ID: usize = 657usize;
-const OXC_BAD_COMPARISON_SEQUENCE_ID: usize = 658usize;
-const OXC_BAD_MATCH_ALL_ARG_ID: usize = 659usize;
-const OXC_BAD_MIN_MAX_FUNC_ID: usize = 660usize;
-const OXC_BAD_OBJECT_LITERAL_COMPARISON_ID: usize = 661usize;
-const OXC_BAD_REPLACE_ALL_ARG_ID: usize = 662usize;
-const OXC_BRANCHES_SHARING_CODE_ID: usize = 663usize;
-const OXC_CONST_COMPARISONS_ID: usize = 664usize;
-const OXC_DOUBLE_COMPARISONS_ID: usize = 665usize;
-const OXC_ERASING_OP_ID: usize = 666usize;
-const OXC_MISREFACTORED_ASSIGN_OP_ID: usize = 667usize;
-const OXC_MISSING_THROW_ID: usize = 668usize;
-const OXC_NO_ACCUMULATING_SPREAD_ID: usize = 669usize;
-const OXC_NO_ASYNC_AWAIT_ID: usize = 670usize;
-const OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID: usize = 671usize;
-const OXC_NO_BARREL_FILE_ID: usize = 672usize;
-const OXC_NO_CONST_ENUM_ID: usize = 673usize;
-const OXC_NO_MAP_SPREAD_ID: usize = 674usize;
-const OXC_NO_OPTIONAL_CHAINING_ID: usize = 675usize;
-const OXC_NO_REST_SPREAD_PROPERTIES_ID: usize = 676usize;
-const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = 677usize;
-const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = 678usize;
-const OXC_ONLY_USED_IN_RECURSION_ID: usize = 679usize;
-const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = 680usize;
-const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = 681usize;
-const NEXTJS_GOOGLE_FONT_PRECONNECT_ID: usize = 682usize;
-const NEXTJS_INLINE_SCRIPT_ID_ID: usize = 683usize;
-const NEXTJS_NEXT_SCRIPT_FOR_GA_ID: usize = 684usize;
-const NEXTJS_NO_ASSIGN_MODULE_VARIABLE_ID: usize = 685usize;
-const NEXTJS_NO_ASYNC_CLIENT_COMPONENT_ID: usize = 686usize;
-const NEXTJS_NO_BEFORE_INTERACTIVE_SCRIPT_OUTSIDE_DOCUMENT_ID: usize = 687usize;
-const NEXTJS_NO_CSS_TAGS_ID: usize = 688usize;
-const NEXTJS_NO_DOCUMENT_IMPORT_IN_PAGE_ID: usize = 689usize;
-const NEXTJS_NO_DUPLICATE_HEAD_ID: usize = 690usize;
-const NEXTJS_NO_HEAD_ELEMENT_ID: usize = 691usize;
-const NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID: usize = 692usize;
-const NEXTJS_NO_HTML_LINK_FOR_PAGES_ID: usize = 693usize;
-const NEXTJS_NO_IMG_ELEMENT_ID: usize = 694usize;
-const NEXTJS_NO_PAGE_CUSTOM_FONT_ID: usize = 695usize;
-const NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID: usize = 696usize;
-const NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID: usize = 697usize;
-const NEXTJS_NO_SYNC_SCRIPTS_ID: usize = 698usize;
-const NEXTJS_NO_TITLE_IN_DOCUMENT_HEAD_ID: usize = 699usize;
-const NEXTJS_NO_TYPOS_ID: usize = 700usize;
-const NEXTJS_NO_UNWANTED_POLYFILLIO_ID: usize = 701usize;
-const JSDOC_CHECK_ACCESS_ID: usize = 702usize;
-const JSDOC_CHECK_PROPERTY_NAMES_ID: usize = 703usize;
-const JSDOC_CHECK_TAG_NAMES_ID: usize = 704usize;
-const JSDOC_EMPTY_TAGS_ID: usize = 705usize;
-const JSDOC_IMPLEMENTS_ON_CLASSES_ID: usize = 706usize;
-const JSDOC_NO_BLANK_BLOCKS_ID: usize = 707usize;
-const JSDOC_NO_DEFAULTS_ID: usize = 708usize;
-const JSDOC_REQUIRE_PARAM_ID: usize = 709usize;
-const JSDOC_REQUIRE_PARAM_DESCRIPTION_ID: usize = 710usize;
-const JSDOC_REQUIRE_PARAM_NAME_ID: usize = 711usize;
-const JSDOC_REQUIRE_PARAM_TYPE_ID: usize = 712usize;
-const JSDOC_REQUIRE_PROPERTY_ID: usize = 713usize;
-const JSDOC_REQUIRE_PROPERTY_DESCRIPTION_ID: usize = 714usize;
-const JSDOC_REQUIRE_PROPERTY_NAME_ID: usize = 715usize;
-const JSDOC_REQUIRE_PROPERTY_TYPE_ID: usize = 716usize;
-const JSDOC_REQUIRE_RETURNS_ID: usize = 717usize;
-const JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID: usize = 718usize;
-const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = 719usize;
-const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = 720usize;
-const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = 721usize;
-const JSDOC_REQUIRE_YIELDS_ID: usize = 722usize;
-const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = 723usize;
-const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = 724usize;
-const PROMISE_ALWAYS_RETURN_ID: usize = 725usize;
-const PROMISE_AVOID_NEW_ID: usize = 726usize;
-const PROMISE_CATCH_OR_RETURN_ID: usize = 727usize;
-const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = 728usize;
-const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = 729usize;
-const PROMISE_NO_NESTING_ID: usize = 730usize;
-const PROMISE_NO_NEW_STATICS_ID: usize = 731usize;
-const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = 732usize;
-const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = 733usize;
-const PROMISE_NO_RETURN_WRAP_ID: usize = 734usize;
-const PROMISE_PARAM_NAMES_ID: usize = 735usize;
-const PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID: usize = 736usize;
-const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = 737usize;
-const PROMISE_PREFER_CATCH_ID: usize = 738usize;
-const PROMISE_SPEC_ONLY_ID: usize = 739usize;
-const PROMISE_VALID_PARAMS_ID: usize = 740usize;
-const VITEST_CONSISTENT_EACH_FOR_ID: usize = 741usize;
-const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = 742usize;
-const VITEST_CONSISTENT_TEST_IT_ID: usize = 743usize;
-const VITEST_CONSISTENT_VITEST_VI_ID: usize = 744usize;
-const VITEST_EXPECT_EXPECT_ID: usize = 745usize;
-const VITEST_HOISTED_APIS_ON_TOP_ID: usize = 746usize;
-const VITEST_MAX_EXPECTS_ID: usize = 747usize;
-const VITEST_MAX_NESTED_DESCRIBE_ID: usize = 748usize;
-const VITEST_NO_ALIAS_METHODS_ID: usize = 749usize;
-const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = 750usize;
-const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = 751usize;
-const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = 752usize;
-const VITEST_NO_CONDITIONAL_TESTS_ID: usize = 753usize;
-const VITEST_NO_DISABLED_TESTS_ID: usize = 754usize;
-const VITEST_NO_DUPLICATE_HOOKS_ID: usize = 755usize;
-const VITEST_NO_FOCUSED_TESTS_ID: usize = 756usize;
-const VITEST_NO_HOOKS_ID: usize = 757usize;
-const VITEST_NO_IDENTICAL_TITLE_ID: usize = 758usize;
-const VITEST_NO_IMPORT_NODE_TEST_ID: usize = 759usize;
-const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = 760usize;
-const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 761usize;
-const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = 762usize;
-const VITEST_NO_MOCKS_IMPORT_ID: usize = 763usize;
-const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = 764usize;
-const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = 765usize;
-const VITEST_NO_STANDALONE_EXPECT_ID: usize = 766usize;
-const VITEST_NO_TEST_PREFIXES_ID: usize = 767usize;
-const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = 768usize;
-const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 769usize;
-const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 770usize;
-const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 771usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 772usize;
-const VITEST_PREFER_CALLED_ONCE_ID: usize = 773usize;
-const VITEST_PREFER_CALLED_TIMES_ID: usize = 774usize;
-const VITEST_PREFER_CALLED_WITH_ID: usize = 775usize;
-const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 776usize;
-const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 777usize;
-const VITEST_PREFER_EACH_ID: usize = 778usize;
-const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 779usize;
-const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 780usize;
-const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 781usize;
-const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 782usize;
-const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 783usize;
-const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 784usize;
-const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 785usize;
-const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 786usize;
-const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 787usize;
-const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 788usize;
-const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 789usize;
-const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 790usize;
-const VITEST_PREFER_SPY_ON_ID: usize = 791usize;
-const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 792usize;
-const VITEST_PREFER_STRICT_EQUAL_ID: usize = 793usize;
-const VITEST_PREFER_TO_BE_ID: usize = 794usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = 795usize;
-const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 796usize;
-const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 797usize;
-const VITEST_PREFER_TO_CONTAIN_ID: usize = 798usize;
-const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 799usize;
-const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 800usize;
-const VITEST_PREFER_TODO_ID: usize = 801usize;
-const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 802usize;
-const VITEST_REQUIRE_HOOK_ID: usize = 803usize;
-const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 804usize;
-const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 805usize;
-const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 806usize;
-const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 807usize;
-const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 808usize;
-const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 809usize;
-const VITEST_VALID_EXPECT_ID: usize = 810usize;
-const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 811usize;
-const VITEST_VALID_TITLE_ID: usize = 812usize;
-const VITEST_WARN_TODO_ID: usize = 813usize;
-const NODE_CALLBACK_RETURN_ID: usize = 814usize;
-const NODE_EXPORTS_STYLE_ID: usize = 815usize;
-const NODE_GLOBAL_REQUIRE_ID: usize = 816usize;
-const NODE_HANDLE_CALLBACK_ERR_ID: usize = 817usize;
-const NODE_NO_EXPORTS_ASSIGN_ID: usize = 818usize;
-const NODE_NO_MIXED_REQUIRES_ID: usize = 819usize;
-const NODE_NO_NEW_REQUIRE_ID: usize = 820usize;
-const NODE_NO_PATH_CONCAT_ID: usize = 821usize;
-const NODE_NO_PROCESS_ENV_ID: usize = 822usize;
-const NODE_NO_SYNC_ID: usize = 823usize;
-const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 824usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 825usize;
-const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 826usize;
-const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 827usize;
-const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 828usize;
-const VUE_MAX_PROPS_ID: usize = 829usize;
-const VUE_NEXT_TICK_STYLE_ID: usize = 830usize;
-const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 831usize;
-const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 832usize;
-const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 833usize;
-const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 834usize;
-const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 835usize;
-const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 836usize;
-const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 837usize;
-const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 838usize;
-const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 839usize;
-const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 840usize;
-const VUE_NO_DUPE_KEYS_ID: usize = 841usize;
-const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 842usize;
-const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 843usize;
-const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 844usize;
-const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 845usize;
-const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 846usize;
-const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 847usize;
-const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 848usize;
-const VUE_NO_RESERVED_KEYS_ID: usize = 849usize;
-const VUE_NO_RESERVED_PROPS_ID: usize = 850usize;
-const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 851usize;
-const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 852usize;
-const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 853usize;
-const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 854usize;
-const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 855usize;
-const VUE_PROP_NAME_CASING_ID: usize = 856usize;
-const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 857usize;
-const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 858usize;
-const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 859usize;
-const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 860usize;
-const VUE_REQUIRE_PROP_TYPES_ID: usize = 861usize;
-const VUE_REQUIRE_RENDER_RETURN_ID: usize = 862usize;
-const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 863usize;
-const VUE_REQUIRE_TYPED_REF_ID: usize = 864usize;
-const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 865usize;
-const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 866usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = 867usize;
-const VUE_VALID_DEFINE_OPTIONS_ID: usize = 868usize;
-const VUE_VALID_DEFINE_PROPS_ID: usize = 869usize;
-const VUE_VALID_NEXT_TICK_ID: usize = 870usize;
-static RULE_NAMES: [&str; 871usize] = [
+const UNICORN_PREFER_ADD_EVENT_LISTENER_OPTIONS_ID: usize = 554usize;
+const UNICORN_PREFER_ARRAY_FIND_ID: usize = 555usize;
+const UNICORN_PREFER_ARRAY_FLAT_ID: usize = 556usize;
+const UNICORN_PREFER_ARRAY_FLAT_MAP_ID: usize = 557usize;
+const UNICORN_PREFER_ARRAY_INDEX_OF_ID: usize = 558usize;
+const UNICORN_PREFER_ARRAY_SOME_ID: usize = 559usize;
+const UNICORN_PREFER_AT_ID: usize = 560usize;
+const UNICORN_PREFER_BIGINT_LITERALS_ID: usize = 561usize;
+const UNICORN_PREFER_BLOB_READING_METHODS_ID: usize = 562usize;
+const UNICORN_PREFER_CLASS_FIELDS_ID: usize = 563usize;
+const UNICORN_PREFER_CLASSLIST_TOGGLE_ID: usize = 564usize;
+const UNICORN_PREFER_CODE_POINT_ID: usize = 565usize;
+const UNICORN_PREFER_DATE_NOW_ID: usize = 566usize;
+const UNICORN_PREFER_DEFAULT_PARAMETERS_ID: usize = 567usize;
+const UNICORN_PREFER_DOM_NODE_APPEND_ID: usize = 568usize;
+const UNICORN_PREFER_DOM_NODE_DATASET_ID: usize = 569usize;
+const UNICORN_PREFER_DOM_NODE_REMOVE_ID: usize = 570usize;
+const UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID: usize = 571usize;
+const UNICORN_PREFER_EVENT_TARGET_ID: usize = 572usize;
+const UNICORN_PREFER_EXPORT_FROM_ID: usize = 573usize;
+const UNICORN_PREFER_GLOBAL_THIS_ID: usize = 574usize;
+const UNICORN_PREFER_IMPORT_META_PROPERTIES_ID: usize = 575usize;
+const UNICORN_PREFER_INCLUDES_ID: usize = 576usize;
+const UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID: usize = 577usize;
+const UNICORN_PREFER_LOGICAL_OPERATOR_OVER_TERNARY_ID: usize = 578usize;
+const UNICORN_PREFER_MATH_MIN_MAX_ID: usize = 579usize;
+const UNICORN_PREFER_MATH_TRUNC_ID: usize = 580usize;
+const UNICORN_PREFER_MODERN_DOM_APIS_ID: usize = 581usize;
+const UNICORN_PREFER_MODERN_MATH_APIS_ID: usize = 582usize;
+const UNICORN_PREFER_MODULE_ID: usize = 583usize;
+const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = 584usize;
+const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize = 585usize;
+const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = 586usize;
+const UNICORN_PREFER_NUMBER_COERCION_ID: usize = 587usize;
+const UNICORN_PREFER_NUMBER_PROPERTIES_ID: usize = 588usize;
+const UNICORN_PREFER_OBJECT_FROM_ENTRIES_ID: usize = 589usize;
+const UNICORN_PREFER_OPTIONAL_CATCH_BINDING_ID: usize = 590usize;
+const UNICORN_PREFER_PROTOTYPE_METHODS_ID: usize = 591usize;
+const UNICORN_PREFER_QUERY_SELECTOR_ID: usize = 592usize;
+const UNICORN_PREFER_REFLECT_APPLY_ID: usize = 593usize;
+const UNICORN_PREFER_REGEXP_TEST_ID: usize = 594usize;
+const UNICORN_PREFER_RESPONSE_STATIC_JSON_ID: usize = 595usize;
+const UNICORN_PREFER_SET_HAS_ID: usize = 596usize;
+const UNICORN_PREFER_SET_SIZE_ID: usize = 597usize;
+const UNICORN_PREFER_SINGLE_CALL_ID: usize = 598usize;
+const UNICORN_PREFER_SPREAD_ID: usize = 599usize;
+const UNICORN_PREFER_STRING_RAW_ID: usize = 600usize;
+const UNICORN_PREFER_STRING_REPLACE_ALL_ID: usize = 601usize;
+const UNICORN_PREFER_STRING_SLICE_ID: usize = 602usize;
+const UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = 603usize;
+const UNICORN_PREFER_STRING_TRIM_START_END_ID: usize = 604usize;
+const UNICORN_PREFER_STRUCTURED_CLONE_ID: usize = 605usize;
+const UNICORN_PREFER_TERNARY_ID: usize = 606usize;
+const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = 607usize;
+const UNICORN_PREFER_TYPE_ERROR_ID: usize = 608usize;
+const UNICORN_RELATIVE_URL_STYLE_ID: usize = 609usize;
+const UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID: usize = 610usize;
+const UNICORN_REQUIRE_MODULE_ATTRIBUTES_ID: usize = 611usize;
+const UNICORN_REQUIRE_MODULE_SPECIFIERS_ID: usize = 612usize;
+const UNICORN_REQUIRE_NUMBER_TO_FIXED_DIGITS_ARGUMENT_ID: usize = 613usize;
+const UNICORN_REQUIRE_POST_MESSAGE_TARGET_ORIGIN_ID: usize = 614usize;
+const UNICORN_SWITCH_CASE_BRACES_ID: usize = 615usize;
+const UNICORN_SWITCH_CASE_BREAK_POSITION_ID: usize = 616usize;
+const UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID: usize = 617usize;
+const UNICORN_THROW_NEW_ERROR_ID: usize = 618usize;
+const JSX_A_11_Y_ALT_TEXT_ID: usize = 619usize;
+const JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID: usize = 620usize;
+const JSX_A_11_Y_ANCHOR_HAS_CONTENT_ID: usize = 621usize;
+const JSX_A_11_Y_ANCHOR_IS_VALID_ID: usize = 622usize;
+const JSX_A_11_Y_ARIA_ACTIVEDESCENDANT_HAS_TABINDEX_ID: usize = 623usize;
+const JSX_A_11_Y_ARIA_PROPS_ID: usize = 624usize;
+const JSX_A_11_Y_ARIA_PROPTYPES_ID: usize = 625usize;
+const JSX_A_11_Y_ARIA_ROLE_ID: usize = 626usize;
+const JSX_A_11_Y_ARIA_UNSUPPORTED_ELEMENTS_ID: usize = 627usize;
+const JSX_A_11_Y_AUTOCOMPLETE_VALID_ID: usize = 628usize;
+const JSX_A_11_Y_CLICK_EVENTS_HAVE_KEY_EVENTS_ID: usize = 629usize;
+const JSX_A_11_Y_CONTROL_HAS_ASSOCIATED_LABEL_ID: usize = 630usize;
+const JSX_A_11_Y_HEADING_HAS_CONTENT_ID: usize = 631usize;
+const JSX_A_11_Y_HTML_HAS_LANG_ID: usize = 632usize;
+const JSX_A_11_Y_IFRAME_HAS_TITLE_ID: usize = 633usize;
+const JSX_A_11_Y_IMG_REDUNDANT_ALT_ID: usize = 634usize;
+const JSX_A_11_Y_INTERACTIVE_SUPPORTS_FOCUS_ID: usize = 635usize;
+const JSX_A_11_Y_LABEL_HAS_ASSOCIATED_CONTROL_ID: usize = 636usize;
+const JSX_A_11_Y_LANG_ID: usize = 637usize;
+const JSX_A_11_Y_MEDIA_HAS_CAPTION_ID: usize = 638usize;
+const JSX_A_11_Y_MOUSE_EVENTS_HAVE_KEY_EVENTS_ID: usize = 639usize;
+const JSX_A_11_Y_NO_ACCESS_KEY_ID: usize = 640usize;
+const JSX_A_11_Y_NO_ARIA_HIDDEN_ON_FOCUSABLE_ID: usize = 641usize;
+const JSX_A_11_Y_NO_AUTOFOCUS_ID: usize = 642usize;
+const JSX_A_11_Y_NO_DISTRACTING_ELEMENTS_ID: usize = 643usize;
+const JSX_A_11_Y_NO_INTERACTIVE_ELEMENT_TO_NONINTERACTIVE_ROLE_ID: usize = 644usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_INTERACTIONS_ID: usize = 645usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_ELEMENT_TO_INTERACTIVE_ROLE_ID: usize = 646usize;
+const JSX_A_11_Y_NO_NONINTERACTIVE_TABINDEX_ID: usize = 647usize;
+const JSX_A_11_Y_NO_REDUNDANT_ROLES_ID: usize = 648usize;
+const JSX_A_11_Y_NO_STATIC_ELEMENT_INTERACTIONS_ID: usize = 649usize;
+const JSX_A_11_Y_PREFER_TAG_OVER_ROLE_ID: usize = 650usize;
+const JSX_A_11_Y_ROLE_HAS_REQUIRED_ARIA_PROPS_ID: usize = 651usize;
+const JSX_A_11_Y_ROLE_SUPPORTS_ARIA_PROPS_ID: usize = 652usize;
+const JSX_A_11_Y_SCOPE_ID: usize = 653usize;
+const JSX_A_11_Y_TABINDEX_NO_POSITIVE_ID: usize = 654usize;
+const OXC_APPROX_CONSTANT_ID: usize = 655usize;
+const OXC_BAD_ARRAY_METHOD_ON_ARGUMENTS_ID: usize = 656usize;
+const OXC_BAD_BITWISE_OPERATOR_ID: usize = 657usize;
+const OXC_BAD_CHAR_AT_COMPARISON_ID: usize = 658usize;
+const OXC_BAD_COMPARISON_SEQUENCE_ID: usize = 659usize;
+const OXC_BAD_MATCH_ALL_ARG_ID: usize = 660usize;
+const OXC_BAD_MIN_MAX_FUNC_ID: usize = 661usize;
+const OXC_BAD_OBJECT_LITERAL_COMPARISON_ID: usize = 662usize;
+const OXC_BAD_REPLACE_ALL_ARG_ID: usize = 663usize;
+const OXC_BRANCHES_SHARING_CODE_ID: usize = 664usize;
+const OXC_CONST_COMPARISONS_ID: usize = 665usize;
+const OXC_DOUBLE_COMPARISONS_ID: usize = 666usize;
+const OXC_ERASING_OP_ID: usize = 667usize;
+const OXC_MISREFACTORED_ASSIGN_OP_ID: usize = 668usize;
+const OXC_MISSING_THROW_ID: usize = 669usize;
+const OXC_NO_ACCUMULATING_SPREAD_ID: usize = 670usize;
+const OXC_NO_ASYNC_AWAIT_ID: usize = 671usize;
+const OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID: usize = 672usize;
+const OXC_NO_BARREL_FILE_ID: usize = 673usize;
+const OXC_NO_CONST_ENUM_ID: usize = 674usize;
+const OXC_NO_MAP_SPREAD_ID: usize = 675usize;
+const OXC_NO_OPTIONAL_CHAINING_ID: usize = 676usize;
+const OXC_NO_REST_SPREAD_PROPERTIES_ID: usize = 677usize;
+const OXC_NO_THIS_IN_EXPORTED_FUNCTION_ID: usize = 678usize;
+const OXC_NUMBER_ARG_OUT_OF_RANGE_ID: usize = 679usize;
+const OXC_ONLY_USED_IN_RECURSION_ID: usize = 680usize;
+const OXC_UNINVOKED_ARRAY_CALLBACK_ID: usize = 681usize;
+const NEXTJS_GOOGLE_FONT_DISPLAY_ID: usize = 682usize;
+const NEXTJS_GOOGLE_FONT_PRECONNECT_ID: usize = 683usize;
+const NEXTJS_INLINE_SCRIPT_ID_ID: usize = 684usize;
+const NEXTJS_NEXT_SCRIPT_FOR_GA_ID: usize = 685usize;
+const NEXTJS_NO_ASSIGN_MODULE_VARIABLE_ID: usize = 686usize;
+const NEXTJS_NO_ASYNC_CLIENT_COMPONENT_ID: usize = 687usize;
+const NEXTJS_NO_BEFORE_INTERACTIVE_SCRIPT_OUTSIDE_DOCUMENT_ID: usize = 688usize;
+const NEXTJS_NO_CSS_TAGS_ID: usize = 689usize;
+const NEXTJS_NO_DOCUMENT_IMPORT_IN_PAGE_ID: usize = 690usize;
+const NEXTJS_NO_DUPLICATE_HEAD_ID: usize = 691usize;
+const NEXTJS_NO_HEAD_ELEMENT_ID: usize = 692usize;
+const NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID: usize = 693usize;
+const NEXTJS_NO_HTML_LINK_FOR_PAGES_ID: usize = 694usize;
+const NEXTJS_NO_IMG_ELEMENT_ID: usize = 695usize;
+const NEXTJS_NO_PAGE_CUSTOM_FONT_ID: usize = 696usize;
+const NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID: usize = 697usize;
+const NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID: usize = 698usize;
+const NEXTJS_NO_SYNC_SCRIPTS_ID: usize = 699usize;
+const NEXTJS_NO_TITLE_IN_DOCUMENT_HEAD_ID: usize = 700usize;
+const NEXTJS_NO_TYPOS_ID: usize = 701usize;
+const NEXTJS_NO_UNWANTED_POLYFILLIO_ID: usize = 702usize;
+const JSDOC_CHECK_ACCESS_ID: usize = 703usize;
+const JSDOC_CHECK_PROPERTY_NAMES_ID: usize = 704usize;
+const JSDOC_CHECK_TAG_NAMES_ID: usize = 705usize;
+const JSDOC_EMPTY_TAGS_ID: usize = 706usize;
+const JSDOC_IMPLEMENTS_ON_CLASSES_ID: usize = 707usize;
+const JSDOC_NO_BLANK_BLOCKS_ID: usize = 708usize;
+const JSDOC_NO_DEFAULTS_ID: usize = 709usize;
+const JSDOC_REQUIRE_PARAM_ID: usize = 710usize;
+const JSDOC_REQUIRE_PARAM_DESCRIPTION_ID: usize = 711usize;
+const JSDOC_REQUIRE_PARAM_NAME_ID: usize = 712usize;
+const JSDOC_REQUIRE_PARAM_TYPE_ID: usize = 713usize;
+const JSDOC_REQUIRE_PROPERTY_ID: usize = 714usize;
+const JSDOC_REQUIRE_PROPERTY_DESCRIPTION_ID: usize = 715usize;
+const JSDOC_REQUIRE_PROPERTY_NAME_ID: usize = 716usize;
+const JSDOC_REQUIRE_PROPERTY_TYPE_ID: usize = 717usize;
+const JSDOC_REQUIRE_RETURNS_ID: usize = 718usize;
+const JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID: usize = 719usize;
+const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = 720usize;
+const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = 721usize;
+const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = 722usize;
+const JSDOC_REQUIRE_YIELDS_ID: usize = 723usize;
+const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = 724usize;
+const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = 725usize;
+const PROMISE_ALWAYS_RETURN_ID: usize = 726usize;
+const PROMISE_AVOID_NEW_ID: usize = 727usize;
+const PROMISE_CATCH_OR_RETURN_ID: usize = 728usize;
+const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = 729usize;
+const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = 730usize;
+const PROMISE_NO_NESTING_ID: usize = 731usize;
+const PROMISE_NO_NEW_STATICS_ID: usize = 732usize;
+const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = 733usize;
+const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = 734usize;
+const PROMISE_NO_RETURN_WRAP_ID: usize = 735usize;
+const PROMISE_PARAM_NAMES_ID: usize = 736usize;
+const PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID: usize = 737usize;
+const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = 738usize;
+const PROMISE_PREFER_CATCH_ID: usize = 739usize;
+const PROMISE_SPEC_ONLY_ID: usize = 740usize;
+const PROMISE_VALID_PARAMS_ID: usize = 741usize;
+const VITEST_CONSISTENT_EACH_FOR_ID: usize = 742usize;
+const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = 743usize;
+const VITEST_CONSISTENT_TEST_IT_ID: usize = 744usize;
+const VITEST_CONSISTENT_VITEST_VI_ID: usize = 745usize;
+const VITEST_EXPECT_EXPECT_ID: usize = 746usize;
+const VITEST_HOISTED_APIS_ON_TOP_ID: usize = 747usize;
+const VITEST_MAX_EXPECTS_ID: usize = 748usize;
+const VITEST_MAX_NESTED_DESCRIBE_ID: usize = 749usize;
+const VITEST_NO_ALIAS_METHODS_ID: usize = 750usize;
+const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = 751usize;
+const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = 752usize;
+const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = 753usize;
+const VITEST_NO_CONDITIONAL_TESTS_ID: usize = 754usize;
+const VITEST_NO_DISABLED_TESTS_ID: usize = 755usize;
+const VITEST_NO_DUPLICATE_HOOKS_ID: usize = 756usize;
+const VITEST_NO_FOCUSED_TESTS_ID: usize = 757usize;
+const VITEST_NO_HOOKS_ID: usize = 758usize;
+const VITEST_NO_IDENTICAL_TITLE_ID: usize = 759usize;
+const VITEST_NO_IMPORT_NODE_TEST_ID: usize = 760usize;
+const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = 761usize;
+const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 762usize;
+const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = 763usize;
+const VITEST_NO_MOCKS_IMPORT_ID: usize = 764usize;
+const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = 765usize;
+const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = 766usize;
+const VITEST_NO_STANDALONE_EXPECT_ID: usize = 767usize;
+const VITEST_NO_TEST_PREFIXES_ID: usize = 768usize;
+const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = 769usize;
+const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 770usize;
+const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 771usize;
+const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 772usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 773usize;
+const VITEST_PREFER_CALLED_ONCE_ID: usize = 774usize;
+const VITEST_PREFER_CALLED_TIMES_ID: usize = 775usize;
+const VITEST_PREFER_CALLED_WITH_ID: usize = 776usize;
+const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 777usize;
+const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 778usize;
+const VITEST_PREFER_EACH_ID: usize = 779usize;
+const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 780usize;
+const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 781usize;
+const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 782usize;
+const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 783usize;
+const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 784usize;
+const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 785usize;
+const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 786usize;
+const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 787usize;
+const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 788usize;
+const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 789usize;
+const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 790usize;
+const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 791usize;
+const VITEST_PREFER_SPY_ON_ID: usize = 792usize;
+const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 793usize;
+const VITEST_PREFER_STRICT_EQUAL_ID: usize = 794usize;
+const VITEST_PREFER_TO_BE_ID: usize = 795usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = 796usize;
+const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 797usize;
+const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 798usize;
+const VITEST_PREFER_TO_CONTAIN_ID: usize = 799usize;
+const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 800usize;
+const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 801usize;
+const VITEST_PREFER_TODO_ID: usize = 802usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 803usize;
+const VITEST_REQUIRE_HOOK_ID: usize = 804usize;
+const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 805usize;
+const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 806usize;
+const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 807usize;
+const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 808usize;
+const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 809usize;
+const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 810usize;
+const VITEST_VALID_EXPECT_ID: usize = 811usize;
+const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 812usize;
+const VITEST_VALID_TITLE_ID: usize = 813usize;
+const VITEST_WARN_TODO_ID: usize = 814usize;
+const NODE_CALLBACK_RETURN_ID: usize = 815usize;
+const NODE_EXPORTS_STYLE_ID: usize = 816usize;
+const NODE_GLOBAL_REQUIRE_ID: usize = 817usize;
+const NODE_HANDLE_CALLBACK_ERR_ID: usize = 818usize;
+const NODE_NO_EXPORTS_ASSIGN_ID: usize = 819usize;
+const NODE_NO_MIXED_REQUIRES_ID: usize = 820usize;
+const NODE_NO_NEW_REQUIRE_ID: usize = 821usize;
+const NODE_NO_PATH_CONCAT_ID: usize = 822usize;
+const NODE_NO_PROCESS_ENV_ID: usize = 823usize;
+const NODE_NO_SYNC_ID: usize = 824usize;
+const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 825usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 826usize;
+const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 827usize;
+const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 828usize;
+const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 829usize;
+const VUE_MAX_PROPS_ID: usize = 830usize;
+const VUE_NEXT_TICK_STYLE_ID: usize = 831usize;
+const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 832usize;
+const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 833usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 834usize;
+const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 835usize;
+const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 836usize;
+const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 837usize;
+const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 838usize;
+const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 839usize;
+const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 840usize;
+const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 841usize;
+const VUE_NO_DUPE_KEYS_ID: usize = 842usize;
+const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 843usize;
+const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 844usize;
+const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 845usize;
+const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 846usize;
+const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 847usize;
+const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 848usize;
+const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 849usize;
+const VUE_NO_RESERVED_KEYS_ID: usize = 850usize;
+const VUE_NO_RESERVED_PROPS_ID: usize = 851usize;
+const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 852usize;
+const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 853usize;
+const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 854usize;
+const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 855usize;
+const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 856usize;
+const VUE_PROP_NAME_CASING_ID: usize = 857usize;
+const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 858usize;
+const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 859usize;
+const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 860usize;
+const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 861usize;
+const VUE_REQUIRE_PROP_TYPES_ID: usize = 862usize;
+const VUE_REQUIRE_RENDER_RETURN_ID: usize = 863usize;
+const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 864usize;
+const VUE_REQUIRE_TYPED_REF_ID: usize = 865usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 866usize;
+const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 867usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = 868usize;
+const VUE_VALID_DEFINE_OPTIONS_ID: usize = 869usize;
+const VUE_VALID_DEFINE_PROPS_ID: usize = 870usize;
+const VUE_VALID_NEXT_TICK_ID: usize = 871usize;
+static RULE_NAMES: [&str; 872usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3197,6 +3200,7 @@ static RULE_NAMES: [&str; 871usize] = [
     UnicornNumberLiteralCase::NAME,
     UnicornNumericSeparatorsStyle::NAME,
     UnicornPreferAddEventListener::NAME,
+    UnicornPreferAddEventListenerOptions::NAME,
     UnicornPreferArrayFind::NAME,
     UnicornPreferArrayFlat::NAME,
     UnicornPreferArrayFlatMap::NAME,
@@ -4172,6 +4176,9 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(_) => UNICORN_NUMBER_LITERAL_CASE_ID,
             Self::UnicornNumericSeparatorsStyle(_) => UNICORN_NUMERIC_SEPARATORS_STYLE_ID,
             Self::UnicornPreferAddEventListener(_) => UNICORN_PREFER_ADD_EVENT_LISTENER_ID,
+            Self::UnicornPreferAddEventListenerOptions(_) => {
+                UNICORN_PREFER_ADD_EVENT_LISTENER_OPTIONS_ID
+            }
             Self::UnicornPreferArrayFind(_) => UNICORN_PREFER_ARRAY_FIND_ID,
             Self::UnicornPreferArrayFlat(_) => UNICORN_PREFER_ARRAY_FLAT_ID,
             Self::UnicornPreferArrayFlatMap(_) => UNICORN_PREFER_ARRAY_FLAT_MAP_ID,
@@ -5208,6 +5215,9 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::CATEGORY,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::CATEGORY,
             Self::UnicornPreferAddEventListener(_) => UnicornPreferAddEventListener::CATEGORY,
+            Self::UnicornPreferAddEventListenerOptions(_) => {
+                UnicornPreferAddEventListenerOptions::CATEGORY
+            }
             Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::CATEGORY,
             Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::CATEGORY,
             Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::CATEGORY,
@@ -6224,6 +6234,9 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::FIX,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::FIX,
             Self::UnicornPreferAddEventListener(_) => UnicornPreferAddEventListener::FIX,
+            Self::UnicornPreferAddEventListenerOptions(_) => {
+                UnicornPreferAddEventListenerOptions::FIX
+            }
             Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::FIX,
             Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::FIX,
             Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::FIX,
@@ -7373,6 +7386,9 @@ impl RuleEnum {
             }
             Self::UnicornPreferAddEventListener(_) => {
                 UnicornPreferAddEventListener::documentation()
+            }
+            Self::UnicornPreferAddEventListenerOptions(_) => {
+                UnicornPreferAddEventListenerOptions::documentation()
             }
             Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::documentation(),
             Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::documentation(),
@@ -9426,6 +9442,10 @@ impl RuleEnum {
                 UnicornPreferAddEventListener::config_schema(generator)
                     .or_else(|| UnicornPreferAddEventListener::schema(generator))
             }
+            Self::UnicornPreferAddEventListenerOptions(_) => {
+                UnicornPreferAddEventListenerOptions::config_schema(generator)
+                    .or_else(|| UnicornPreferAddEventListenerOptions::schema(generator))
+            }
             Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::config_schema(generator)
                 .or_else(|| UnicornPreferArrayFind::schema(generator)),
             Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::config_schema(generator)
@@ -10894,6 +10914,7 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(_) => "unicorn",
             Self::UnicornNumericSeparatorsStyle(_) => "unicorn",
             Self::UnicornPreferAddEventListener(_) => "unicorn",
+            Self::UnicornPreferAddEventListenerOptions(_) => "unicorn",
             Self::UnicornPreferArrayFind(_) => "unicorn",
             Self::UnicornPreferArrayFlat(_) => "unicorn",
             Self::UnicornPreferArrayFlatMap(_) => "unicorn",
@@ -12903,6 +12924,7 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(rule) => rule.run(node, ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run(node, ctx),
             Self::UnicornPreferAddEventListener(rule) => rule.run(node, ctx),
+            Self::UnicornPreferAddEventListenerOptions(rule) => rule.run(node, ctx),
             Self::UnicornPreferArrayFind(rule) => rule.run(node, ctx),
             Self::UnicornPreferArrayFlat(rule) => rule.run(node, ctx),
             Self::UnicornPreferArrayFlatMap(rule) => rule.run(node, ctx),
@@ -13791,6 +13813,7 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(rule) => rule.run_once(ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run_once(ctx),
             Self::UnicornPreferAddEventListener(rule) => rule.run_once(ctx),
+            Self::UnicornPreferAddEventListenerOptions(rule) => rule.run_once(ctx),
             Self::UnicornPreferArrayFind(rule) => rule.run_once(ctx),
             Self::UnicornPreferArrayFlat(rule) => rule.run_once(ctx),
             Self::UnicornPreferArrayFlatMap(rule) => rule.run_once(ctx),
@@ -14772,6 +14795,9 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferAddEventListener(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferAddEventListenerOptions(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::UnicornPreferArrayFind(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferArrayFlat(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferArrayFlatMap(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15687,6 +15713,7 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(rule) => rule.should_run(ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.should_run(ctx),
             Self::UnicornPreferAddEventListener(rule) => rule.should_run(ctx),
+            Self::UnicornPreferAddEventListenerOptions(rule) => rule.should_run(ctx),
             Self::UnicornPreferArrayFind(rule) => rule.should_run(ctx),
             Self::UnicornPreferArrayFlat(rule) => rule.should_run(ctx),
             Self::UnicornPreferArrayFlatMap(rule) => rule.should_run(ctx),
@@ -16809,6 +16836,9 @@ impl RuleEnum {
             }
             Self::UnicornPreferAddEventListener(_) => {
                 UnicornPreferAddEventListener::IS_TSGOLINT_RULE
+            }
+            Self::UnicornPreferAddEventListenerOptions(_) => {
+                UnicornPreferAddEventListenerOptions::IS_TSGOLINT_RULE
             }
             Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::IS_TSGOLINT_RULE,
             Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::IS_TSGOLINT_RULE,
@@ -17955,6 +17985,9 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::VERSION,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::VERSION,
             Self::UnicornPreferAddEventListener(_) => UnicornPreferAddEventListener::VERSION,
+            Self::UnicornPreferAddEventListenerOptions(_) => {
+                UnicornPreferAddEventListenerOptions::VERSION
+            }
             Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::VERSION,
             Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::VERSION,
             Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::VERSION,
@@ -19033,6 +19066,9 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::HAS_CONFIG,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::HAS_CONFIG,
             Self::UnicornPreferAddEventListener(_) => UnicornPreferAddEventListener::HAS_CONFIG,
+            Self::UnicornPreferAddEventListenerOptions(_) => {
+                UnicornPreferAddEventListenerOptions::HAS_CONFIG
+            }
             Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::HAS_CONFIG,
             Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::HAS_CONFIG,
             Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::HAS_CONFIG,
@@ -20064,6 +20100,9 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::INFO,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::INFO,
             Self::UnicornPreferAddEventListener(_) => UnicornPreferAddEventListener::INFO,
+            Self::UnicornPreferAddEventListenerOptions(_) => {
+                UnicornPreferAddEventListenerOptions::INFO
+            }
             Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::INFO,
             Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::INFO,
             Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::INFO,
@@ -20970,6 +21009,7 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(rule) => rule.types_info(),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.types_info(),
             Self::UnicornPreferAddEventListener(rule) => rule.types_info(),
+            Self::UnicornPreferAddEventListenerOptions(rule) => rule.types_info(),
             Self::UnicornPreferArrayFind(rule) => rule.types_info(),
             Self::UnicornPreferArrayFlat(rule) => rule.types_info(),
             Self::UnicornPreferArrayFlatMap(rule) => rule.types_info(),
@@ -21845,6 +21885,7 @@ impl RuleEnum {
             Self::UnicornNumberLiteralCase(rule) => rule.run_info(),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run_info(),
             Self::UnicornPreferAddEventListener(rule) => rule.run_info(),
+            Self::UnicornPreferAddEventListenerOptions(rule) => rule.run_info(),
             Self::UnicornPreferArrayFind(rule) => rule.run_info(),
             Self::UnicornPreferArrayFlat(rule) => rule.run_info(),
             Self::UnicornPreferArrayFlatMap(rule) => rule.run_info(),
@@ -22832,6 +22873,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNumberLiteralCase(UnicornNumberLiteralCase::default()),
         RuleEnum::UnicornNumericSeparatorsStyle(UnicornNumericSeparatorsStyle::default()),
         RuleEnum::UnicornPreferAddEventListener(UnicornPreferAddEventListener::default()),
+        RuleEnum::UnicornPreferAddEventListenerOptions(
+            UnicornPreferAddEventListenerOptions::default(),
+        ),
         RuleEnum::UnicornPreferArrayFind(UnicornPreferArrayFind::default()),
         RuleEnum::UnicornPreferArrayFlat(UnicornPreferArrayFlat::default()),
         RuleEnum::UnicornPreferArrayFlatMap(UnicornPreferArrayFlatMap::default()),
