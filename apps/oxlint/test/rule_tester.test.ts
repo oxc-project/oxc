@@ -3903,6 +3903,43 @@ describe("RuleTester", () => {
   });
 
   describe("settings", () => {
+    it("merges shared, constructor, and case settings without changing defaults", () => {
+      const shared = { react: { version: "detect", createClass: "createReactClass" }, list: [1] };
+      const instance = { react: { createClass: "makeComponent" }, list: [2], enabled: true };
+      RuleTester.setDefaultConfig({ settings: shared });
+      const tester = new RuleTester({ settings: instance });
+      const received: unknown[] = [];
+      const rule: Rule = {
+        create(context) {
+          received.push(context.settings);
+          return {};
+        },
+      };
+      tester.run("settings", rule, {
+        valid: [
+          "",
+          { code: "let a", settings: { react: { version: "19" }, list: [3], enabled: null } },
+          { code: "let b" },
+        ],
+        invalid: [],
+      });
+      expect(runCases()).toEqual([null, null, null]);
+      expect(received).toEqual([
+        { react: { version: "detect", createClass: "makeComponent" }, list: [2], enabled: true },
+        { react: { version: "19", createClass: "makeComponent" }, list: [3], enabled: null },
+        { react: { version: "detect", createClass: "makeComponent" }, list: [2], enabled: true },
+      ]);
+      expect(shared).toEqual({
+        react: { version: "detect", createClass: "createReactClass" },
+        list: [1],
+      });
+      expect(instance).toEqual({
+        react: { createClass: "makeComponent" },
+        list: [2],
+        enabled: true,
+      });
+    });
+
     const settingsReporterRule: Rule = {
       create(context) {
         return {
