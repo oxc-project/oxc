@@ -627,6 +627,7 @@ pub(crate) mod unicorn {
     pub mod no_useless_iterator_to_array;
     pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;
+    pub mod no_useless_re_export;
     pub mod no_useless_spread;
     pub mod no_useless_switch_case;
     pub mod no_useless_undefined;
