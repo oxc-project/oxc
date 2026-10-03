@@ -21,9 +21,10 @@ import {
   MERGED_TYPE_OFFSET32,
   MERGED_TYPE_TOKEN,
 } from "./tokens_and_comments.ts";
-import { firstTokenAtOrAfter } from "./tokens_methods.ts";
+import { firstTokenAtOrAfter, getTokenBefore } from "./tokens_methods.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
+import type { Node as ESTreeNode } from "../generated/types.d.ts";
 import type { Comment } from "./comments.ts";
 import type { Node, NodeOrToken } from "./types.ts";
 
@@ -229,8 +230,60 @@ export function commentsExistBetween(
  * @param node - The AST node to get the comment for.
  * @returns The JSDoc comment for the given node, or `null` if not found.
  */
-/* oxlint-disable no-unused-vars */
 export function getJSDocComment(node: Node): Comment | null {
-  throw new Error("`sourceCode.getJSDocComment` is not supported at present (and deprecated)"); // TODO
+  const astNode = node as ESTreeNode;
+  let target: ESTreeNode | null = astNode;
+
+  // Match ESLint 9's legacy association rules, including its class expression behavior.
+  // https://github.com/eslint/eslint/blob/v9.39.4/lib/languages/js/source-code/source-code.js
+  switch (astNode.type) {
+    case "FunctionDeclaration":
+    case "ClassDeclaration": {
+      const { parent } = astNode;
+      if (
+        parent?.type === "ExportDefaultDeclaration"
+        || parent?.type === "ExportNamedDeclaration"
+        || parent?.type === "ExportAllDeclaration"
+        || parent?.type === "ExportSpecifier"
+      ) {
+        target = parent;
+      }
+      break;
+    }
+    case "ClassExpression":
+      target = astNode.parent?.parent ?? null;
+      break;
+    case "FunctionExpression":
+    case "ArrowFunctionExpression": {
+      let parent: ESTreeNode | null = astNode.parent;
+      // Callback arguments use only a comment directly before the function.
+      if (parent?.type === "CallExpression" || parent?.type === "NewExpression") break;
+
+      while (
+        parent !== null
+        && getCommentsBefore(parent).length === 0
+        && !parent.type.includes("Function")
+        && parent.type !== "MethodDefinition"
+        && parent.type !== "Property"
+      ) {
+        parent = parent.parent;
+      }
+      if (parent !== null && parent.type !== "FunctionDeclaration" && parent.type !== "Program") {
+        target = parent;
+      }
+      break;
+    }
+    default:
+      return null;
+  }
+
+  if (target === null) return null;
+  const comment = getTokenBefore(target, { includeComments: true });
+  // Do not skip ordinary comments or tokens to find an earlier JSDoc block.
+  return comment !== null
+    && comment.type === "Block"
+    && comment.value.startsWith("*")
+    && target.loc.start.line - comment.loc.end.line <= 1
+    ? comment
+    : null;
 }
-/* oxlint-enable no-unused-vars */
