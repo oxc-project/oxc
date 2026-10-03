@@ -11,7 +11,7 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
-    utils::{get_element_type, is_react_function_call},
+    utils::{get_jsx_element_name, is_react_function_call},
 };
 
 fn forbid_elements_diagnostic(
@@ -136,9 +136,13 @@ impl Rule for ForbidElements {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXOpeningElement(jsx_el) => {
-                let name = &get_element_type(ctx, jsx_el);
+                // Use the literal JSX element name here, matching `jsx-ast-utils/elementType`
+                // used by eslint-plugin-react. Do NOT use `get_element_type`, which applies
+                // the jsx-a11y `components` alias map and polymorphic prop — those settings are
+                // scoped to jsx-a11y rules and must not influence `forbid-elements`.
+                let name = get_jsx_element_name(&jsx_el.name);
 
-                self.add_diagnostic_if_invalid_element(ctx, name, jsx_el.name.span());
+                self.add_diagnostic_if_invalid_element(ctx, &name, jsx_el.name.span());
             }
             AstKind::CallExpression(call_expr) => {
                 if !is_react_function_call(call_expr, r"createElement") {
@@ -206,94 +210,148 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("<button />", Some(serde_json::json!([]))),
-        ("<button />", Some(serde_json::json!([{ "forbid": [] }]))),
-        ("<Button />", Some(serde_json::json!([{ "forbid": ["button"] }]))),
-        ("<Button />", Some(serde_json::json!([{ "forbid": [{ "element": "button" }] }]))),
-        ("React.createElement(button)", Some(serde_json::json!([{ "forbid": ["button"] }]))),
+        ("<button />", Some(serde_json::json!([])), None),
+        ("<button />", Some(serde_json::json!([{ "forbid": [] }])), None),
+        ("<Button />", Some(serde_json::json!([{ "forbid": ["button"] }])), None),
+        ("<Button />", Some(serde_json::json!([{ "forbid": [{ "element": "button" }] }])), None),
+        ("React.createElement(button)", Some(serde_json::json!([{ "forbid": ["button"] }])), None),
         (
             r#"NotReact.createElement("button")"#,
             Some(serde_json::json!([{ "forbid": ["button"] }])),
+            None,
         ),
-        (r#"React.createElement("_thing")"#, Some(serde_json::json!([{ "forbid": ["_thing"] }]))),
-        (r#"React.createElement("Modal")"#, Some(serde_json::json!([{ "forbid": ["Modal"] }]))),
+        (
+            r#"React.createElement("_thing")"#,
+            Some(serde_json::json!([{ "forbid": ["_thing"] }])),
+            None,
+        ),
+        (
+            r#"React.createElement("Modal")"#,
+            Some(serde_json::json!([{ "forbid": ["Modal"] }])),
+            None,
+        ),
         (
             r#"React.createElement("dotted.component")"#,
             Some(serde_json::json!([{ "forbid": ["dotted.component"] }])),
+            None,
         ),
-        ("React.createElement(function() {})", Some(serde_json::json!([{ "forbid": ["button"] }]))),
-        ("React.createElement({})", Some(serde_json::json!([{ "forbid": ["button"] }]))),
-        ("React.createElement(1)", Some(serde_json::json!([{ "forbid": ["button"] }]))),
-        ("React.createElement()", None),
+        (
+            "React.createElement(function() {})",
+            Some(serde_json::json!([{ "forbid": ["button"] }])),
+            None,
+        ),
+        ("React.createElement({})", Some(serde_json::json!([{ "forbid": ["button"] }])), None),
+        ("React.createElement(1)", Some(serde_json::json!([{ "forbid": ["button"] }])), None),
+        ("React.createElement()", None, None),
+        // A custom component aliased to a DOM element via the jsx-a11y `components`
+        // setting must NOT be treated as that DOM element here: `<Link>` is not `<a>`.
+        // This setting is scoped to jsx-a11y rules only.
+        (
+            r#"<Link href="https://example.com">hi</Link>"#,
+            Some(serde_json::json!([{ "forbid": ["a"] }])),
+            Some(
+                serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Link": "a" } } } }),
+            ),
+        ),
     ];
 
     let fail = vec![
-        ("<button />", Some(serde_json::json!([{ "forbid": ["button"] }]))),
-        ("[<Modal />, <button />]", Some(serde_json::json!([{ "forbid": ["button", "Modal"] }]))),
-        ("<dotted.component />", Some(serde_json::json!([{ "forbid": ["dotted.component"] }]))),
+        ("<button />", Some(serde_json::json!([{ "forbid": ["button"] }])), None),
+        (
+            "[<Modal />, <button />]",
+            Some(serde_json::json!([{ "forbid": ["button", "Modal"] }])),
+            None,
+        ),
+        (
+            "<dotted.component />",
+            Some(serde_json::json!([{ "forbid": ["dotted.component"] }])),
+            None,
+        ),
         (
             "<dotted.Component />",
             Some(
                 serde_json::json!([{ "forbid": [{ "element": "dotted.Component", "message": "that ain\"t cool" }] }]),
             ),
+            None,
         ),
         (
             "<button />",
             Some(
                 serde_json::json!([{ "forbid": [{ "element": "button", "message": "use <Button> instead" }] }]),
             ),
+            None,
         ),
         (
             "<button><input /></button>",
             Some(
                 serde_json::json!([{ "forbid": [{ "element": "button" }, { "element": "input" }] }]),
             ),
+            None,
         ),
         (
             "<button><input /></button>",
             Some(serde_json::json!([{ "forbid": [{ "element": "button" }, "input"] }])),
+            None,
         ),
         (
             "<button><input /></button>",
             Some(serde_json::json!([{ "forbid": ["input", { "element": "button" }] }])),
+            None,
         ),
         (
             "<button />",
             Some(
                 serde_json::json!([{ "forbid": [{ "element": "button", "message": "use <Button> instead" }, { "element": "button", "message": "use <Button2> instead" } ] }]),
             ),
+            None,
         ),
         (
             r#"React.createElement("button", {}, child)"#,
             Some(serde_json::json!([{ "forbid": ["button"] }])),
+            None,
         ),
         (
             r#"[React.createElement(Modal), React.createElement("button")]"#,
             Some(serde_json::json!([{ "forbid": ["button", "Modal"] }])),
+            None,
         ),
         (
             "React.createElement(dotted.Component)",
             Some(
                 serde_json::json!([{ "forbid": [{ "element": "dotted.Component", "message": "that ain\"t cool" }] }]),
             ),
+            None,
         ),
         (
             "React.createElement(dotted.component)",
             Some(serde_json::json!([{ "forbid": ["dotted.component"] }])),
+            None,
         ),
-        ("React.createElement(_comp)", Some(serde_json::json!([{ "forbid": ["_comp"] }]))),
+        ("React.createElement(_comp)", Some(serde_json::json!([{ "forbid": ["_comp"] }])), None),
         (
             r#"React.createElement("button")"#,
             Some(
                 serde_json::json!([{ "forbid": [{ "element": "button", "message": "use <Button> instead" }] }]),
             ),
+            None,
         ),
         (
             r#"React.createElement("button", {}, React.createElement("input"))"#,
             Some(
                 serde_json::json!([{ "forbid": [{ "element": "button" }, { "element": "input" }] }]),
             ),
+            None,
         ),
+        // A literal `<a>` is still forbidden even when a `components` alias exists for it.
+        (
+            r#"<a href="https://example.com">hi</a>"#,
+            Some(serde_json::json!([{ "forbid": ["a"] }])),
+            Some(
+                serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Link": "a" } } } }),
+            ),
+        ),
+        // Custom components are still forbidden by their real name.
+        ("<Foo />", Some(serde_json::json!([{ "forbid": ["Foo"] }])), None),
     ];
 
     Tester::new(ForbidElements::NAME, ForbidElements::PLUGIN, pass, fail).test_and_snapshot();
