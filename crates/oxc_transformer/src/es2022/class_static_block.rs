@@ -41,26 +41,32 @@
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
+use oxc_str::Str;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use oxc_traverse::Traverse;
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
-    context::TraverseCtx, state::TransformState,
-    utils::ast_builder::wrap_statements_in_arrow_function_iife,
+    common::helper_loader::{Helper, helper_call_expr},
+    context::TraverseCtx,
+    state::TransformState,
+    utils::ast_builder::{create_assignment, wrap_statements_in_arrow_function_iife},
 };
 
-pub struct ClassStaticBlock;
+pub struct ClassStaticBlock<'a> {
+    deferred: Vec<Option<BoundIdentifier<'a>>>,
+    class_expression_deferred: Vec<Option<BoundIdentifier<'a>>>,
+}
 
-impl ClassStaticBlock {
+impl<'a> ClassStaticBlock<'a> {
     pub fn new() -> Self {
-        Self
+        Self { deferred: Vec::new(), class_expression_deferred: Vec::new() }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock {
+impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         // Loop through class body elements and:
         // 1. Find if there are any `StaticBlock`s.
@@ -87,14 +93,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock {
             }
         }
 
-        // If there are static fields, fold static blocks into their initializers. Emitting a
-        // synthetic private field for a trailing block is observably incorrect when an earlier
-        // static initializer makes the class non-extensible (the private field would be installed
-        // afterwards). A static field initializer is already installed at the right point in the
-        // class initialization sequence, so it provides a safe place to evaluate the block.
-        if body.body.iter().any(
+        let has_static_property = body.body.iter().any(
             |element| matches!(element, ClassElement::PropertyDefinition(prop) if prop.r#static),
-        ) {
+        );
+
+        if has_static_property {
             let mut pending = Vec::new();
             let mut last_static_property = None;
 
@@ -117,43 +120,131 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock {
                 }
             }
 
-            // There is no following field for trailing blocks. Evaluate them after the last
-            // field's initializer while preserving that field's completion value.
-            if !pending.is_empty()
-                && let Some(index) = last_static_property
-            {
+            let deferred = if pending.is_empty() {
+                None
+            } else {
+                let index = last_static_property.expect("static property must exist");
+                let expressions = std::mem::take(&mut pending);
+                let is_class_expression = matches!(
+                    ctx.parent(),
+                    Ancestor::ClassBody(class) if *class.r#type() == ClassType::ClassExpression
+                );
+                let (binding, assignment) =
+                    Self::create_deferred_initializer(expressions, is_class_expression, ctx);
                 let ClassElement::PropertyDefinition(prop) = &mut body.body[index] else {
                     unreachable!();
                 };
-                Self::append_to_initializer(prop, std::mem::take(&mut pending).into_iter(), ctx);
-            }
+                Self::prepend_to_initializer(prop, [assignment].into_iter(), ctx);
+                Some(binding)
+            };
 
             body.body.retain(|element| !matches!(element, ClassElement::StaticBlock(_)));
+            self.deferred.push(deferred);
             return;
         }
 
-        // Transform static blocks. With no static fields, no earlier class initialization code
-        // can make the class non-extensible, so the synthetic private field is safe.
         if !has_static_block {
+            self.deferred.push(None);
             return;
         }
 
-        for element in &mut body.body {
-            if let ClassElement::StaticBlock(block) = element {
-                *element = Self::convert_block_to_private_field(block, &mut keys, ctx);
-            }
+        let expressions = body
+            .body
+            .iter_mut()
+            .filter_map(|element| match element {
+                ClassElement::StaticBlock(block) => {
+                    Some(Self::convert_block_to_expression(block, ctx))
+                }
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        let is_class_expression = matches!(
+            ctx.parent(),
+            Ancestor::ClassBody(class) if *class.r#type() == ClassType::ClassExpression
+        );
+        let (binding, assignment) =
+            Self::create_deferred_initializer(expressions, is_class_expression, ctx);
+        let key = keys.get_unique(ctx);
+        let key = PropertyKey::new_private_identifier(SPAN, key, ctx);
+        let property = ClassElement::new_property_definition(
+            SPAN,
+            PropertyDefinitionType::PropertyDefinition,
+            [],
+            key,
+            None,
+            Some(assignment),
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            None,
+            ctx,
+        );
+        body.body.retain(|element| !matches!(element, ClassElement::StaticBlock(_)));
+        body.body.push(property);
+        self.deferred.push(Some(binding));
+    }
+
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        let deferred = self.deferred.pop().expect("class body must be entered first");
+        if class.r#type == ClassType::ClassExpression {
+            self.class_expression_deferred.push(deferred);
+        } else if let Some(binding) = deferred {
+            let stmt_address = match ctx.parent() {
+                parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
+                | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
+                _ => class.unstable_address(),
+            };
+            let call = Self::create_deferred_call(binding, ctx);
+            let statement = Statement::new_expression_statement(SPAN, call, ctx);
+            ctx.state.statement_injector.insert_after(&stmt_address, statement);
         }
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !matches!(expr, Expression::ClassExpression(_)) {
+            return;
+        }
+        let Some(deferred) = self.class_expression_deferred.pop().flatten() else {
+            return;
+        };
+        let class = expr.take_in(ctx);
+        let call = Self::create_deferred_call(deferred, ctx);
+        *expr = Expression::new_sequence_expression(SPAN, [class, call], ctx);
     }
 }
 
-impl ClassStaticBlock {
+impl ClassStaticBlock<'_> {
     fn prepend_to_initializer<'a>(
         prop: &mut PropertyDefinition<'a>,
         expressions: impl Iterator<Item = Expression<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let mut expressions = expressions.collect::<Vec<_>>();
-        if let Some(value) = prop.value.take() {
+        if let Some(mut value) = prop.value.take() {
+            if value.is_anonymous_function_definition()
+                && let Some(name) = prop.key.static_name()
+            {
+                value = helper_call_expr(
+                    Helper::SetFunctionName,
+                    ArenaVec::from_array_in(
+                        [
+                            Argument::from(value),
+                            Argument::new_string_literal(
+                                SPAN,
+                                Str::from_cow_in(&name, ctx),
+                                None,
+                                ctx,
+                            ),
+                        ],
+                        ctx,
+                    ),
+                    ctx,
+                );
+            }
             expressions.push(value);
         } else {
             expressions.push(Expression::new_void_0(SPAN, ctx));
@@ -165,51 +256,57 @@ impl ClassStaticBlock {
         ));
     }
 
-    fn append_to_initializer<'a>(
-        prop: &mut PropertyDefinition<'a>,
-        expressions: impl Iterator<Item = Expression<'a>>,
-        ctx: &TraverseCtx<'a>,
-    ) {
-        let mut sequence = Vec::new();
-        sequence.push(prop.value.take().unwrap_or_else(|| Expression::new_void_0(SPAN, ctx)));
-        sequence
-            .extend(expressions.map(|expr| {
-                Expression::new_unary_expression(SPAN, UnaryOperator::Void, expr, ctx)
-            }));
-        prop.value = Some(Expression::new_sequence_expression(
-            SPAN,
-            ArenaVec::from_iter_in(sequence, ctx),
-            ctx,
-        ));
-    }
-    /// Convert static block to private field.
-    /// `static { foo }` -> `static #_ = foo;`
-    /// `static { foo; bar; }` -> `static #_ = (() => { foo; bar; })();`
-    fn convert_block_to_private_field<'a>(
-        block: &mut StaticBlock<'a>,
-        keys: &mut Keys<'a>,
+    fn create_deferred_initializer<'a>(
+        mut expressions: Vec<Expression<'a>>,
+        returns_class: bool,
         ctx: &mut TraverseCtx<'a>,
-    ) -> ClassElement<'a> {
-        let expr = Self::convert_block_to_expression(block, ctx);
-
-        let key = keys.get_unique(ctx);
-        let key = PropertyKey::new_private_identifier(SPAN, key, ctx);
-
-        ClassElement::new_property_definition(
-            block.span,
-            PropertyDefinitionType::PropertyDefinition,
+    ) -> (BoundIdentifier<'a>, Expression<'a>) {
+        let binding = ctx.generate_uid_in_current_hoist_scope("staticBlock");
+        ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
+        if returns_class {
+            expressions.push(Expression::new_this_expression(SPAN, ctx));
+        }
+        let body = if expressions.len() == 1 {
+            expressions.pop().unwrap()
+        } else {
+            Expression::new_sequence_expression(SPAN, ArenaVec::from_iter_in(expressions, ctx), ctx)
+        };
+        let scope_id = ctx.insert_scope_below_expression(
+            &body,
+            ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode,
+        );
+        let params = FormalParameters::boxed(
+            SPAN,
+            FormalParameterKind::ArrowFormalParameters,
             [],
-            key,
             None,
-            Some(expr),
-            false,
-            true,
-            false,
-            false,
-            false,
-            false,
+            ctx,
+        );
+        let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
+            SPAN,
             false,
             None,
+            params,
+            None,
+            ArrowFunctionBody::from(body),
+            scope_id,
+            false,
+            false,
+            ctx,
+        );
+        (binding.clone(), create_assignment(&binding, arrow, SPAN, ctx))
+    }
+
+    fn create_deferred_call<'a>(
+        binding: BoundIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        Expression::new_call_expression(
+            SPAN,
+            binding.create_read_expression(ctx),
+            None,
+            [],
+            false,
             ctx,
         )
     }

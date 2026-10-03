@@ -17,7 +17,7 @@ pub struct ES2022<'a> {
     options: ES2022Options,
 
     // Plugins
-    class_static_block: Option<ClassStaticBlock>,
+    class_static_block: Option<ClassStaticBlock<'a>>,
     class_properties: Option<ClassProperties<'a>>,
 }
 
@@ -60,6 +60,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_expression(expr, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.exit_expression(expr, ctx);
         }
     }
 
@@ -79,6 +81,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_class(class, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.exit_class(class, ctx);
         }
     }
 

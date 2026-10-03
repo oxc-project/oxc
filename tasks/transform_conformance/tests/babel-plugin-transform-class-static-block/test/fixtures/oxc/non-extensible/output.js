@@ -1,3 +1,5 @@
+var _staticBlock;
 class A {
-  static x = (Object.preventExtensions(this), void (this.y = 1));
+  static x = (_staticBlock = () => this.y = 1, Object.preventExtensions(this));
 }
+_staticBlock();
