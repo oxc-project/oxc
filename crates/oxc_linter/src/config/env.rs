@@ -80,6 +80,15 @@ impl OxlintEnv {
         self.0.get(key).is_some_and(|v| *v)
     }
 
+    /// Whether the `builtin` env (ES builtin globals) is enabled.
+    ///
+    /// `builtin` is enabled unless config explicitly sets it to `false`, even if `env` is set
+    /// without it. Same as ESLint's eslintrc config:
+    /// <https://github.com/eslint/eslint/blob/v8.57.0/lib/linter/linter.js#L1295>
+    pub fn is_builtin_enabled(&self) -> bool {
+        self.0.get("builtin").copied().unwrap_or(true)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &str> + '_ {
         // Filter out false values
         self.0.iter().filter_map(|(k, v)| (*v).then_some(k.as_str()))
