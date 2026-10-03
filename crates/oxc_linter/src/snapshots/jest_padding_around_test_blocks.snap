@@ -60,6 +60,15 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Make sure there is an empty new line before the it block
 
+  ⚠ jest(padding-around-test-blocks): Missing padding after it block
+    ╭─[padding_around_test_blocks.tsx:20:9]
+ 19 │      it('is another bar w/ it', () => {
+ 20 │      });
+    ·         ▲
+ 21 │      test.skip('skipping', () => {}); // Another comment
+    ╰────
+  help: Make sure there is an empty new line after the it block
+
   ⚠ jest(padding-around-test-blocks): Missing padding before it block
     ╭─[padding_around_test_blocks.tsx:22:6]
  21 │      test.skip('skipping', () => {}); // Another comment
@@ -114,6 +123,15 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Make sure there is an empty new line before the test block
 
+  ⚠ jest(padding-around-test-blocks): Missing padding after test block
+    ╭─[padding_around_test_blocks.tsx:21:38]
+ 20 │      });
+ 21 │      test.skip('skipping', () => {}); // Another comment
+    ·                                      ▲
+ 22 │      it.skip('skipping too', () => {});
+    ╰────
+  help: Make sure there is an empty new line after the test block
+
   ⚠ jest(padding-around-test-blocks): Missing padding before test block
     ╭─[padding_around_test_blocks.tsx:24:2]
  23 │  });xtest('weird', () => {});
@@ -132,6 +150,15 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Make sure there is an empty new line before the xtest block
 
+  ⚠ jest(padding-around-test-blocks): Missing padding after xtest block
+    ╭─[padding_around_test_blocks.tsx:23:30]
+ 22 │      it.skip('skipping too', () => {});
+ 23 │  });xtest('weird', () => {});
+    ·                              ▲
+ 24 │  test
+    ╰────
+  help: Make sure there is an empty new line after the xtest block
+
   ⚠ jest(padding-around-test-blocks): Missing padding before xit block
     ╭─[padding_around_test_blocks.tsx:26:2]
  25 │    .skip('skippy skip', () => {});
@@ -149,3 +176,19 @@ source: crates/oxc_linter/src/tester.rs
  6 │     });
    ╰────
   help: Make sure there is an empty new line before the it block
+
+  ⚠ jest(padding-around-test-blocks): Missing padding after test block
+   ╭─[padding_around_test_blocks.tsx:1:23]
+ 1 │ test('foo', () => {});
+   ·                       ▲
+ 2 │ const thing = 123;
+   ╰────
+  help: Make sure there is an empty new line after the test block
+
+  ⚠ jest(padding-around-test-blocks): Missing padding after it block
+   ╭─[padding_around_test_blocks.tsx:1:21]
+ 1 │ it('foo', () => {});
+   ·                     ▲
+ 2 │ describe('bar', () => {});
+   ╰────
+  help: Make sure there is an empty new line after the it block
