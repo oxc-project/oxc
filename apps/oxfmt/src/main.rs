@@ -1,4 +1,4 @@
-use oxfmt::cli::{CliRunResult, WalkRunner, format_command, init_rayon, init_tracing};
+use oxfmt::cli::{CliRunResult, FormatCommand, WalkRunner, init_rayon, init_tracing};
 
 // Pure Rust CLI entry point.
 // This CLI only supports the basic `Cli` mode.
@@ -7,7 +7,7 @@ use oxfmt::cli::{CliRunResult, WalkRunner, format_command, init_rayon, init_trac
 #[tokio::main]
 async fn main() -> CliRunResult {
     // Parse command line arguments from std::env::args()
-    let command = format_command().run();
+    let command = FormatCommand::parse();
 
     init_tracing();
     init_rayon(command.runtime_options.threads);
