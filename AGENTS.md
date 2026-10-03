@@ -55,7 +55,7 @@ Prerequisites: Rust (MSRV: 1.97), Node.js, pnpm, just
 - All tools already installed (`cargo-insta`, `typos-cli`, `cargo-shear`, `ast-grep`)
 - Rust components already installed (`clippy`, `rust-docs`, `rustfmt`)
 - Use Conventional Commits for commit messages; `.github/workflows/pr.yml` requires a scoped title like `fix(parser): handle trailing comma`
-- Run `just ready` after commits for final checks
+- Choose verification from the changed code; reserve `just ready` for an optional broad integration checkpoint as described below.
 - You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang rust -p '<pattern>'` (or set `--lang` appropriately) and avoid falling back to text-only tools like `rg` or `grep` unless I explicitly request a plain-text search.
 
 ### Essential Commands
@@ -64,7 +64,7 @@ Prerequisites: Rust (MSRV: 1.97), Node.js, pnpm, just
 just fmt             # Format code (run after modifications)
 just test            # Run unit/integration tests
 just conformance     # Run conformance tests
-just ready           # Run all checks (use after commits)
+just ready           # Optional broad integration checkpoint (see below)
 cargo lintgen        # Regenerate linter rules enum and impls after adding/modifying rules
 cargo lint-timings   # Update linter timing data after changing linter rule codegen
 
@@ -79,6 +79,17 @@ just example tool    # Run tool example (e.g., just example linter)
 ```
 
 More commands can be found in `justfile`.
+
+### Local and stacked development
+
+- For Rust implementation or test changes, run `just lint -p <crate>` for affected crates. Where unit/integration tests exist, start with filtered regressions using `just test -p <crate> --tests <filter>` and finish with unfiltered `just test -p <crate>`. Treat unexpected zero-test results as incomplete, even if Cargo exits successfully.
+- Prose-only documentation needs formatting and typo checks. For Rustdoc-only changes, use `just doc -p <crate>` and, when executable examples change, `cargo test -p <crate> --all-features --doc`; do not add runtime crate tests or lint solely for documentation edits.
+- Select checks from each change, or each PR's diff against its parent. Include affected consumers when changing shared AST, string, syntax, or other common APIs.
+- Run the owning subsystem's required generators, conformance, and bindings checks described below; crate tests alone do not cover them. For conformance-only crates such as the parser, use the prescribed conformance suite instead of repeating empty crate-test runs.
+- Rerun checks when their tested code, dependencies, generated inputs, toolchain, or build configuration changes. A commit alone does not require repeating unchanged checks. Report the commands, scope, and results, including any skipped or incomplete checks.
+- Reuse Cargo build artifacts and keep toolchains, profiles, and features consistent. Run Cargo commands serially when sharing a target directory.
+- At a stable integration checkpoint, use `just ready` when broad local validation is still needed, especially after shared API, dependency, or workspace changes. Choose it or the relevant individual checks before running them; do not repeat equivalent checks on unchanged inputs. For a stack, use one run on the stable tip instead of repeating it for every intermediate commit. It requires a clean tracked worktree; review any changes it produces.
+- When the affected scope is unclear or spans the workspace, broaden tests and lint with `just test` and `just lint`, plus relevant subsystem checks. Each independently mergeable PR still needs its required CI; a passing stack tip does not establish that intermediate PRs pass.
 
 ## Manual Testing & Examples
 
