@@ -2555,6 +2555,30 @@ function deserializeBigIntLiteral(pos) {
 function deserializeRegExpLiteral(pos) {
   let start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
+    regexStart = deserializeU32(pos),
+    regexEnd = deserializeU32(pos + 4),
+    flagBits = deserializeU8(pos + 40),
+    rawBits = 0,
+    flagStart = regexEnd;
+  // Raw transfer only handles parsed ASTs. Read flags backwards from the source span.
+  // Reject unknown or repeated flags, including those from parser error recovery.
+  for (; flagStart > regexStart && sourceText.charCodeAt(flagStart - 1) !== 47;) {
+    let index = "gimsuydv".indexOf(sourceText[--flagStart]),
+      bit = 1 << index;
+    if (index === -1 || (rawBits & bit) !== 0) {
+      rawBits = -1;
+      break;
+    }
+    rawBits |= bit;
+  }
+  let flags =
+      rawBits === flagBits && flagStart > regexStart
+        ? sourceText.slice(flagStart, regexEnd)
+        : deserializeRegExpFlags(pos + 40),
+    regex = {
+      pattern: deserializeStr(pos + 16),
+      flags,
+    },
     node = {
       type: "Literal",
       value: null,
@@ -2562,25 +2586,16 @@ function deserializeRegExpLiteral(pos) {
         int32[(pos >> 2) + 12] === 0 && int32[(pos >> 2) + 13] === 0
           ? null
           : sourceText.slice(start, end),
-      regex: null,
+      regex,
       start,
       end,
     },
-    regex = deserializeRegExp(pos + 16),
     value = null;
   try {
     value = new RegExp(regex.pattern, regex.flags);
   } catch {}
   node.value = value;
-  node.regex = regex;
   return node;
-}
-
-function deserializeRegExp(pos) {
-  return {
-    pattern: deserializeStr(pos),
-    flags: deserializeRegExpFlags(pos + 24),
-  };
 }
 
 function deserializeRegExpFlags(pos) {
@@ -5961,6 +5976,10 @@ function deserializeOptionTSMappedTypeModifierOperator(pos) {
 
 function deserializeBoxTSExternalModuleReference(pos) {
   return deserializeTSExternalModuleReference(int32[pos >> 2]);
+}
+
+function deserializeU32(pos) {
+  return int32[pos >> 2] >>> 0;
 }
 
 function deserializeI32(pos) {
