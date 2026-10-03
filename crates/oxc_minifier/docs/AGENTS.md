@@ -46,7 +46,7 @@ pnpm --dir tasks/e2e test # End-to-end tests
 just ready         # Optional broad integration checkpoint
 ```
 
-Follow the root [local and stacked development guidance](../../../AGENTS.md#local-and-stacked-development) for verification scope and checkpoint timing.
+Before selecting verification checks, read the [verification guidance](../../../.agents/verification.md).
 
 ### Common Patterns
 
