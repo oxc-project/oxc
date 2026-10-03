@@ -688,7 +688,7 @@ impl Runtime {
                                 .insert(path.to_path_buf(), disable_directives);
                         }
 
-                        if me.linter.options().fix.is_some() {
+                        if me.linter.should_apply_fixes() {
                             let fix_result = Fixer::new(
                                 dep.source_text,
                                 messages,
