@@ -32,6 +32,14 @@ fn test_import_assignment() {
 }
 
 #[test]
+fn test_import_type_assignment() {
+    SemanticTester::ts("import type Foo = require('./foo')")
+        .has_root_symbol("Foo")
+        .equal_flags(SymbolFlags::TypeImport)
+        .test();
+}
+
+#[test]
 fn test_import_type() {
     SemanticTester::ts(r#"import { type "<A>" as someA } from './a'; "#)
         .has_root_symbol("someA")

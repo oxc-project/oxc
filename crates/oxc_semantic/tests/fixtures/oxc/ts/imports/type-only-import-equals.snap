@@ -1,0 +1,178 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/imports/type-only-import-equals.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 3,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 4,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 5,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 6,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(TypeImport)",
+        "id": 0,
+        "name": "Foo",
+        "node": "TSImportEqualsDeclaration",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "Foo",
+            "node_id": 12,
+            "scope_id": 1
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 1,
+            "name": "Foo",
+            "node_id": 17,
+            "scope_id": 2
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 2,
+            "name": "Foo",
+            "node_id": 22,
+            "scope_id": 3
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 3,
+            "name": "Foo",
+            "node_id": 27,
+            "scope_id": 4
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 9,
+            "name": "Foo",
+            "node_id": 47,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Import)",
+        "id": 1,
+        "name": "Bar",
+        "node": "TSImportEqualsDeclaration",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 6,
+            "name": "Bar",
+            "node_id": 36,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 7,
+            "name": "Bar",
+            "node_id": 40,
+            "scope_id": 5
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 8,
+            "name": "Bar",
+            "node_id": 44,
+            "scope_id": 6
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 10,
+            "name": "Bar",
+            "node_id": 51,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "Plain",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 3,
+        "name": "Qualified",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 4,
+        "name": "Query",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 5,
+        "name": "QualifiedQuery",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 6,
+        "name": "ValueType",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 7,
+        "name": "ValueQuery",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]
