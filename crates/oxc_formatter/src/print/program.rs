@@ -21,6 +21,26 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // BOM: JS is the exception to the entries-own-the-strip rule.
+        // `format_program` is AST-in (the formatter never owns pre-parse text)
+        // and oxc_parser lexes U+FEFF as whitespace itself.
+        // Detect at print time, re-emit once at byte 0.
+        let has_bom = oxc_formatter_core::spec::split_bom(f.source_text().as_str()).0;
+
+        write!(
+            f,
+            [has_bom.then_some(text("\u{feff}")), FormatProgramBody(self), hard_line_break()]
+        );
+    }
+}
+
+/// A program without its envelope (BOM, trailing newline): the embedded root of [`crate::format_to_ir`],
+/// whose host owns the layout around it.
+pub struct FormatProgramBody<'a, 'b>(pub &'b AstNode<'a, Program<'a>>);
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatProgramBody<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let program = self.0;
         let format_trailing_comments = format_with(|f| {
             write!(
                 f,
@@ -28,20 +48,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
             );
         });
 
-        // BOM: JS is the exception to the entries-own-the-strip rule — `format_program`
-        // is AST-in (the formatter never owns pre-parse text) and oxc_parser lexes
-        // U+FEFF as whitespace itself. Detect at print time, re-emit once at byte 0.
-        let has_bom = oxc_formatter_core::spec::split_bom(f.source_text().as_str()).0;
-
         write!(
             f,
             [
-                has_bom.then_some(text("\u{feff}")),
-                self.hashbang(),
-                self.directives(),
-                FormatStatementsWithImports(self.body()),
-                format_trailing_comments,
-                hard_line_break()
+                program.hashbang(),
+                program.directives(),
+                FormatStatementsWithImports(program.body()),
+                format_trailing_comments
             ]
         );
     }

@@ -21,7 +21,7 @@ use crate::{
 };
 
 use super::{
-    HTML_WHITESPACE, MarkdownFormatter, backticks, escape, is_split_whitespace, join_pieces,
+    HTML_WHITESPACE, MarkdownFormatter, escape, fence_run, is_split_whitespace, join_pieces,
     line_shape::{
         is_line_shape_start, line_above, line_from, line_opens_block, line_or_prefix_opens_block,
         line_shape, printed_line_at, printed_line_opens_block, source_line_at,
@@ -781,7 +781,7 @@ pub fn print_code_span<'a>(code: &'a CodeSpan<'a>, f: &MarkdownFormatter<'_, 'a>
     while len <= 64 && literal_runs & (1u64 << (len - 1)) != 0 {
         len += 1;
     }
-    let fence = backticks(len);
+    let fence = fence_run(b'`', len);
     let is_space_or_newline = |c: char| c == ' ' || c == '\n';
     let padding = value.starts_with('`')
         || value.ends_with('`')

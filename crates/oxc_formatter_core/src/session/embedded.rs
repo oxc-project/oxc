@@ -13,13 +13,19 @@
 
 use std::{any::Any, sync::Arc};
 
-use oxc_allocator::ArenaVec;
+use rustc_hash::FxHashMap;
 
-use crate::{FormatContext, FormatElement, FormatSession, Formatter, InputKind};
+use oxc_allocator::{Allocator, ArenaVec};
+
+use crate::{
+    FormatContext, FormatElement, FormatSession, Formatter, IndentWidth, InputKind, LineMode,
+    format_element::{BestFittingElement, Interned, TextWidth},
+    write::formatter::intern_exact,
+};
 
 /// One embedded-language formatting request, as the host formatter states it.
 pub struct DispatchRequest<'r> {
-    /// Generic language identifier (e.g. `"css"`, `"graphql"`);
+    /// Generic language identifier (e.g. `"css"`, `"graphql"`), or a code fence's name as written;
     /// the dispatcher implementation maps it to its own parser/language names.
     pub language: &'r str,
     /// The code to format.
@@ -31,6 +37,13 @@ pub struct DispatchRequest<'r> {
     /// The borrowed counterpart of [`DispatchPayload::child_context`]
     /// (borrowed because the parent outlives the dispatch call).
     pub parent_context: Option<&'r dyn Any>,
+}
+
+impl DispatchRequest<'_> {
+    /// [`Self::parent_context`] as a `T`, when the parent passed one.
+    pub fn parent_context_as<T: Any>(&self) -> Option<&T> {
+        self.parent_context.and_then(|c| c.downcast_ref::<T>())
+    }
 }
 
 /// The dispatcher's answer to a [`DispatchRequest`].
@@ -94,24 +107,126 @@ pub struct DispatchPayload<'a> {
     pub child_context: Option<Box<dyn Any>>,
 }
 
-/// Dispatches one embedded fragment (`InputKind::Fragment`) and hands out its doc.
-///
-/// `None` covers [`DispatchResponse::PreserveOriginal`] and operational errors alike;
-/// the caller keeps its original source.
-/// Embed sites that must inspect [`DispatchPayload::child_context`] first stay manual.
+/// Dispatches one embedded fragment and hands out its doc:
+/// [`dispatch_ir`] with `InputKind::Fragment`.
 pub fn dispatch_fragment_ir<'a, C: FormatContext>(
     f: &Formatter<'_, 'a, C>,
     language: &str,
     text: &str,
     parent_context: Option<&dyn Any>,
 ) -> Option<ArenaVec<'a, FormatElement<'a>>> {
-    let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
-        language,
-        text,
-        input_kind: InputKind::Fragment,
-        parent_context,
-    }) else {
+    dispatch_ir(
+        f,
+        DispatchRequest { language, text, input_kind: InputKind::Fragment, parent_context },
+    )
+}
+
+/// Dispatches one embedded request and hands out its doc.
+///
+/// `None` covers [`DispatchResponse::PreserveOriginal`] and operational errors alike;
+/// the caller keeps its original source.
+/// Embed sites that must inspect [`DispatchPayload::child_context`] first stay manual.
+pub fn dispatch_ir<'a, C: FormatContext>(
+    f: &Formatter<'_, 'a, C>,
+    request: DispatchRequest<'_>,
+) -> Option<ArenaVec<'a, FormatElement<'a>>> {
+    let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(request) else {
         return None;
     };
     Some(result.doc)
+}
+
+/// Rebuild an embedded IR, descending into BestFitting variants and interned content.
+///
+/// `map_text` receives each `Text` and `Token` run (a child may print any character as a token, e.g. JS's `` ` ``);
+/// it either pushes replacement elements into the output and returns `true`, or returns `false` to keep the element unchanged.
+/// A shared `Interned` subtree is rebuilt once and the rebuilt element re-shared.
+#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
+pub fn map_text_in_ir<'a, F>(
+    ir: &[FormatElement<'a>],
+    allocator: &'a Allocator,
+    map_text: &mut F,
+) -> ArenaVec<'a, FormatElement<'a>>
+where
+    F: FnMut(&'a str, &mut ArenaVec<'a, FormatElement<'a>>) -> bool,
+{
+    let mut interned_cache = FxHashMap::default();
+    map_text_in_ir_impl(ir, allocator, map_text, &mut interned_cache)
+}
+
+#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
+fn map_text_in_ir_impl<'a, F>(
+    ir: &[FormatElement<'a>],
+    allocator: &'a Allocator,
+    map_text: &mut F,
+    interned_cache: &mut FxHashMap<Interned<'a>, Option<FormatElement<'a>>>,
+) -> ArenaVec<'a, FormatElement<'a>>
+where
+    F: FnMut(&'a str, &mut ArenaVec<'a, FormatElement<'a>>) -> bool,
+{
+    let mut out = ArenaVec::with_capacity_in(ir.len(), &allocator);
+    for element in ir {
+        match element {
+            FormatElement::Text { text, .. } | FormatElement::Token { text } => {
+                if !map_text(text, &mut out) {
+                    out.push(element.clone());
+                }
+            }
+            FormatElement::BestFitting(best_fitting) => {
+                let mut variants =
+                    ArenaVec::with_capacity_in(best_fitting.variants().len(), &allocator);
+                for variant in best_fitting.variants() {
+                    let mapped = map_text_in_ir_impl(variant, allocator, map_text, interned_cache);
+                    variants.push(mapped.into_arena_slice());
+                }
+                // SAFETY: This rebuild preserves the original BestFitting's variant count.
+                out.push(FormatElement::BestFitting(unsafe {
+                    BestFittingElement::from_vec_unchecked(variants)
+                }));
+            }
+            FormatElement::Interned(interned) => {
+                let mapped = if let Some(mapped) = interned_cache.get(interned) {
+                    mapped.clone()
+                } else {
+                    let mapped = map_text_in_ir_impl(interned, allocator, map_text, interned_cache);
+                    let mapped = intern_exact(allocator, mapped.into_iter());
+                    interned_cache.insert(interned.clone(), mapped.clone());
+                    mapped
+                };
+                out.extend(mapped);
+            }
+            _ => out.push(element.clone()),
+        }
+    }
+    out
+}
+
+/// Pushes `text` with each newline as a literal line (Prettier's `replaceEndOfLine()`).
+///
+/// For a [`map_text_in_ir`] callback:
+/// a literal line adds no indentation of its own, it resumes at the enclosing root (`mark_as_root`).
+///
+/// TODO: An embedding boundary rewrites the child IR with this, because a newline inside a `Text` has two readings:
+/// - the printer prints it as is (column 0), as Prettier prints a string
+/// - the IR to Prettier Doc conversion (oxfmt's `to_prettier_doc`) always makes it a `literalline`
+///
+/// A boundary scope tag (a `mark_as_root` variant whose `Text` newlines resume at the root) would replace the rewrite.
+/// Revisit once the Vue and HTML ports remove the Doc conversion path, which leaves the printer as the only reader.
+pub fn push_text_with_literal_lines<'a>(
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
+    text: &'a str,
+    indent_width: IndentWidth,
+) {
+    // Splitting on `\n` is safe because the IR only contains normalized linebreaks
+    for (i, line) in text.split('\n').enumerate() {
+        if i > 0 {
+            out.push(FormatElement::Line(LineMode::Literal));
+        }
+        if !line.is_empty() {
+            out.push(FormatElement::Text {
+                text: line,
+                width: TextWidth::from_text(line, indent_width),
+            });
+        }
+    }
 }

@@ -171,6 +171,19 @@ const categories: Category[] = [
     ],
   },
   {
+    name: "markdown",
+    sources: [
+      {
+        dir: join(EXTERNALS_DIR, "prettier", "markdown"),
+        ext: ".md",
+        // Cursor offsets and plugin loading are not formatter concerns
+        excludes: ["markdown/cursor/", "markdown/broken-plugins/"],
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-md") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
+  },
+  {
     name: "graphql",
     sources: [{ dir: join(EXTERNALS_DIR, "gitlab"), ext: ".graphql" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],

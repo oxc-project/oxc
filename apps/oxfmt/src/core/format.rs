@@ -2,13 +2,14 @@ use std::{path::Path, sync::Arc};
 
 use tracing::instrument;
 
-use oxc_allocator::AllocatorPool;
+use oxc_allocator::{Allocator, AllocatorPool};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::JsFormatOptions;
-use oxc_formatter_core::{CoreFormatOptions, FormatSession, InputKind, SessionServices};
+use oxc_formatter_core::{FormatSession, InputKind};
 use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
+use oxc_formatter_markdown::MarkdownFormatOptions;
 use oxc_formatter_yaml::YamlFormatOptions;
 use oxc_span::SourceType;
 use oxc_toml::Options as TomlFormatterOptions;
@@ -22,7 +23,8 @@ use super::{
     embed::dispatcher::ResolvedDispatchConfig,
     options::{
         ValidatedOptions, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
-        to_oxc_formatter_json, to_oxc_formatter_yaml, to_oxc_toml, to_sort_package_json,
+        to_oxc_formatter_json, to_oxc_formatter_markdown, to_oxc_formatter_yaml, to_oxc_toml,
+        to_sort_package_json,
     },
     oxfmtrc::FormatConfig,
     support::FileKind,
@@ -38,16 +40,14 @@ use super::{
 #[derive(Debug)]
 pub enum FormatStrategy {
     /// For JS/TS files formatted by oxc_formatter.
-    /// `config` + `core` build the dispatch config for the root's session
+    /// `config` + `validated` build the dispatch config for the root's session
     /// (native xxx-in-js in every build, plus the napi embedded callbacks / Tailwind).
     OxcFormatter {
         path: Arc<Path>,
         source_type: SourceType,
         format_options: Box<JsFormatOptions>,
         config: Arc<FormatConfig>,
-        /// The validated core bundle, carried from resolution so dispatch-config
-        /// construction never re-derives (or re-fails) it.
-        core: CoreFormatOptions,
+        validated: ValidatedOptions,
         insert_final_newline: bool,
     },
     /// For JSON (and JSON-like) files formatted by `oxc_formatter_json`.
@@ -71,15 +71,13 @@ pub enum FormatStrategy {
         insert_final_newline: bool,
     },
     /// For CSS/SCSS/Less files formatted by `oxc_formatter_css`.
-    /// `config` + `core` build the dispatch config for the root's session
+    /// `config` + `validated` build the dispatch config for the root's session
     /// (front matter YAML, plus the napi Tailwind sorter options).
     OxcFormatterCss {
         path: Arc<Path>,
         format_options: Box<CssFormatOptions>,
         config: Arc<FormatConfig>,
-        /// The validated core bundle, carried from resolution so dispatch-config
-        /// construction never re-derives (or re-fails) it.
-        core: CoreFormatOptions,
+        validated: ValidatedOptions,
         insert_final_newline: bool,
     },
     /// For YAML files formatted by `oxc_formatter_yaml`.
@@ -95,6 +93,16 @@ pub enum FormatStrategy {
         path: Arc<Path>,
         yaml_format_options: Box<YamlFormatOptions>,
         json_format_options: Box<JsonFormatOptions>,
+        insert_final_newline: bool,
+    },
+    /// For Markdown files formatted by `oxc_formatter_markdown`.
+    /// `config` + `validated` build the dispatch config for the root's session
+    /// (front matter YAML and fenced code blocks, plus the napi Tailwind sorter options).
+    OxcFormatterMarkdown {
+        path: Arc<Path>,
+        format_options: Box<MarkdownFormatOptions>,
+        config: Arc<FormatConfig>,
+        validated: ValidatedOptions,
         insert_final_newline: bool,
     },
     /// For TOML files.
@@ -129,6 +137,7 @@ impl FormatStrategy {
             | Self::OxcFormatterCss { path, .. }
             | Self::OxcFormatterYaml { path, .. }
             | Self::OxcFormatterYamlRc { path, .. }
+            | Self::OxcFormatterMarkdown { path, .. }
             | Self::OxfmtToml { path, .. } => path,
             #[cfg(feature = "napi")]
             Self::Prettier { path, .. } => path,
@@ -151,7 +160,7 @@ impl FormatStrategy {
     ) -> Self {
         let insert_final_newline = config.insert_final_newline.unwrap_or(true);
         // Borrowed so the resolver's fast path can hand out its cached artifacts per file;
-        // `sort_imports` (the only non-`Copy` member) is cloned in the one arm that needs it.
+        // cloned (for `sort_imports`, the only non-`Copy` member) only by the arms whose root dispatches.
         let core = validated.core;
 
         match kind {
@@ -164,7 +173,7 @@ impl FormatStrategy {
                     validated.sort_imports.clone(),
                 )),
                 config,
-                core,
+                validated: validated.clone(),
                 insert_final_newline,
             },
             FileKind::OxcFormatterJson { path, variant } => Self::OxcFormatterJson {
@@ -191,7 +200,7 @@ impl FormatStrategy {
                 path,
                 format_options: Box::new(to_oxc_formatter_css(&config, core, variant)),
                 config,
-                core,
+                validated: validated.clone(),
                 insert_final_newline,
             },
             FileKind::OxcFormatterYaml { path } => Self::OxcFormatterYaml {
@@ -207,6 +216,13 @@ impl FormatStrategy {
                     core,
                     JsonVariant::Json,
                 )),
+                insert_final_newline,
+            },
+            FileKind::OxcFormatterMarkdown { path } => Self::OxcFormatterMarkdown {
+                path,
+                format_options: Box::new(to_oxc_formatter_markdown(&config, core)),
+                config,
+                validated: validated.clone(),
                 insert_final_newline,
             },
             FileKind::OxfmtToml { path } => Self::OxfmtToml {
@@ -256,18 +272,23 @@ impl SourceFormatter {
         }
     }
 
-    /// The build's default `SessionServices` for a root run (`embed::services::for_root`),
-    /// with the napi transport threaded in; the cfg fork lives here once, not per root.
+    /// A `PhysicalFile` root session at `path` carrying the build's default `SessionServices`
+    /// (`embed::services::for_root`), with the napi transport threaded in;
+    /// the cfg fork lives here once, not per root.
     #[cfg_attr(not(feature = "napi"), expect(clippy::unused_self))]
-    fn root_services(&self, dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionServices {
+    fn root_session<'a>(
+        &self,
+        allocator: &'a Allocator,
+        config: &Arc<FormatConfig>,
+        validated: ValidatedOptions,
+        path: &Path,
+    ) -> FormatSession<'a> {
+        let dispatch_config = ResolvedDispatchConfig::for_root(config, validated, path);
         #[cfg(feature = "napi")]
-        {
-            super::embed::services::for_root(self.external_services(), dispatch_config)
-        }
+        let services = super::embed::services::for_root(self.external_services(), &dispatch_config);
         #[cfg(not(feature = "napi"))]
-        {
-            super::embed::services::for_root(dispatch_config)
-        }
+        let services = super::embed::services::for_root(&dispatch_config);
+        FormatSession::with_services(allocator, InputKind::PhysicalFile, services)
     }
 
     /// Format a file based on its resolved strategy.
@@ -290,7 +311,7 @@ impl SourceFormatter {
                 source_type,
                 format_options,
                 config,
-                core,
+                validated,
                 insert_final_newline,
             } => (
                 self.format_by_oxc_formatter(
@@ -299,7 +320,7 @@ impl SourceFormatter {
                     source_type,
                     *format_options,
                     &config,
-                    core,
+                    validated,
                 ),
                 insert_final_newline,
             ),
@@ -329,7 +350,7 @@ impl SourceFormatter {
                 path,
                 format_options,
                 config,
-                core,
+                validated,
                 insert_final_newline,
             } => (
                 self.format_by_oxc_formatter_css(
@@ -337,7 +358,7 @@ impl SourceFormatter {
                     &path,
                     *format_options,
                     &config,
-                    core,
+                    validated,
                 ),
                 insert_final_newline,
             ),
@@ -356,6 +377,22 @@ impl SourceFormatter {
                     &path,
                     *yaml_format_options,
                     *json_format_options,
+                ),
+                insert_final_newline,
+            ),
+            FormatStrategy::OxcFormatterMarkdown {
+                path,
+                format_options,
+                config,
+                validated,
+                insert_final_newline,
+            } => (
+                self.format_by_oxc_formatter_markdown(
+                    source_text,
+                    &path,
+                    *format_options,
+                    &config,
+                    validated,
                 ),
                 insert_final_newline,
             ),
@@ -414,14 +451,10 @@ impl SourceFormatter {
         source_type: SourceType,
         format_options: JsFormatOptions,
         config: &Arc<FormatConfig>,
-        core: CoreFormatOptions,
+        validated: ValidatedOptions,
     ) -> Result<String, OxcDiagnostic> {
         let allocator = self.allocator_pool.get();
-        let session = {
-            let dispatch_config = ResolvedDispatchConfig::for_root(config, core, path);
-            let services = self.root_services(&dispatch_config);
-            FormatSession::with_services(&allocator, InputKind::PhysicalFile, services)
-        };
+        let session = self.root_session(&allocator, config, validated, path);
 
         let code = {
             let formatted = oxc_formatter::format_with_session(
@@ -533,14 +566,10 @@ impl SourceFormatter {
         path: &Path,
         format_options: CssFormatOptions,
         config: &Arc<FormatConfig>,
-        core: CoreFormatOptions,
+        validated: ValidatedOptions,
     ) -> Result<String, OxcDiagnostic> {
         let allocator = self.allocator_pool.get();
-        let session = {
-            let dispatch_config = ResolvedDispatchConfig::for_root(config, core, path);
-            let services = self.root_services(&dispatch_config);
-            FormatSession::with_services(&allocator, InputKind::PhysicalFile, services)
-        };
+        let session = self.root_session(&allocator, config, validated, path);
 
         let code = {
             let formatted =
@@ -590,6 +619,37 @@ impl SourceFormatter {
             return Ok(printed);
         }
         self.format_by_oxc_formatter_yaml(source_text, path, yaml_format_options)
+    }
+
+    /// Format Markdown source using `oxc_formatter_markdown` on a `PhysicalFile` session
+    /// carrying the build's default services:
+    /// front matter (`yaml` / `toml`) and fenced code blocks dispatch through the registry
+    /// (non-native languages reach Prettier in the napi build, stay verbatim otherwise).
+    /// `embeddedLanguageFormatting: off` installs no dispatcher and both stay verbatim.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_markdown", skip_all)]
+    fn format_by_oxc_formatter_markdown(
+        &self,
+        source_text: &str,
+        path: &Path,
+        format_options: MarkdownFormatOptions,
+        config: &Arc<FormatConfig>,
+        validated: ValidatedOptions,
+    ) -> Result<String, OxcDiagnostic> {
+        let allocator = self.allocator_pool.get();
+        let session = self.root_session(&allocator, config, validated, path);
+
+        let code = {
+            let formatted =
+                oxc_formatter_markdown::format_with_session(&session, source_text, format_options)?;
+            formatted.print().map_err(|err| {
+                OxcDiagnostic::error(format!(
+                    "Failed to print formatted Markdown: {}\n{err}",
+                    path.display()
+                ))
+            })?
+        };
+
+        Ok(code.into_code())
     }
 
     /// Format TOML file using `oxc_toml`.

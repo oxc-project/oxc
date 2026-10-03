@@ -1,8 +1,8 @@
-use oxc_allocator::{ArenaStringBuilder, ArenaVec};
+use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    DispatchRequest, DispatchResponse, FormatElement, IndentWidth, InputKind,
-    format_element::{LineMode, TextWidth},
+    DispatchRequest, DispatchResponse, FormatElement, InputKind, format_element::TextWidth,
+    map_text_in_ir, push_text_with_literal_lines,
 };
 
 use crate::{
@@ -158,7 +158,7 @@ pub(super) fn format_html_doc<'a>(
     // and substituting placeholders inside every `BestFitting` variant.
     // Escaping cannot alter placeholders: the sentinel is ASCII word characters only.
     let indent_width = f.options().indent_width;
-    let ir = super::map_text_in_ir(&ir, f, &mut |text, out| {
+    let ir = map_text_in_ir(&ir, allocator, &mut |text, out| {
         let escaped = super::escape_template_chars(text, allocator);
         let text = escaped.unwrap_or(text);
         if text.contains(PLACEHOLDER_PREFIX) {
@@ -166,7 +166,7 @@ pub(super) fn format_html_doc<'a>(
             if parts.len() > 1 {
                 for (index, part) in parts.iter().enumerate() {
                     if index.is_multiple_of(2) {
-                        push_text_with_line_breaks(out, part, indent_width);
+                        push_text_with_literal_lines(out, part, indent_width);
                     } else {
                         let expression = part
                             .parse::<usize>()
@@ -300,32 +300,6 @@ fn placeholders_are_sequential(ir: &[FormatElement<'_>], next: &mut usize) -> bo
         }
     }
     true
-}
-
-/// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
-///
-/// Uses [`LineMode::Literal`] instead of a hard line break to avoid adding indentation:
-/// the returned HTML Doc already carries its indentation in the text content,
-/// so the surrounding `block_indent` must not add more.
-fn push_text_with_line_breaks<'a>(
-    out: &mut ArenaVec<'a, FormatElement<'a>>,
-    text: &'a str,
-    indent_width: IndentWidth,
-) {
-    let mut first = true;
-    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks
-    for line in text.split('\n') {
-        if !first {
-            out.push(FormatElement::Line(LineMode::Literal));
-        }
-        first = false;
-        if !line.is_empty() {
-            out.push(FormatElement::Text {
-                text: line,
-                width: TextWidth::from_text(line, indent_width),
-            });
-        }
-    }
 }
 
 #[cfg(test)]
