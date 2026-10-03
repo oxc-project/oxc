@@ -1,0 +1,18 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-parameter-body-overwrite.js
+---
+function Component() {
+	let count = 0;
+	const run = _temp2;
+	run(() => count++);
+	return null;
+}
+async function _temp2(cb) {
+	cb = _temp;
+	await 0;
+	cb();
+}
+function _temp() {
+	return null;
+}

@@ -36,7 +36,7 @@ pub fn each_instruction_lvalue(instr: &Instruction) -> PlaceList {
     result
 }
 
-/// Yields lvalues from DeclareLocal/StoreLocal/DeclareContext/StoreContext/Destructure/PostfixUpdate/PrefixUpdate.
+/// Yields lvalues from declarations, stores, destructuring, and update expressions.
 /// Equivalent to TS `eachInstructionValueLValue`.
 pub fn each_instruction_value_lvalue(value: &InstructionValue) -> PlaceList {
     let mut result = PlaceList::new();
@@ -50,8 +50,10 @@ pub fn each_instruction_value_lvalue(value: &InstructionValue) -> PlaceList {
         InstructionValue::Destructure { lvalue, .. } => {
             result.extend(each_pattern_operand(&lvalue.pattern));
         }
-        InstructionValue::PostfixUpdate { lvalue, .. }
-        | InstructionValue::PrefixUpdate { lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { lvalue, .. }
+        | InstructionValue::PostfixUpdateContext { lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { lvalue, .. } => {
             result.push(*lvalue);
         }
         // All other variants have no lvalues
@@ -261,8 +263,10 @@ pub fn each_instruction_value_operand_with_functions(
         InstructionValue::NextPropertyOf { value: val, .. } => {
             result.push(*val);
         }
-        InstructionValue::PostfixUpdate { value: val, .. }
-        | InstructionValue::PrefixUpdate { value: val, .. } => {
+        InstructionValue::PostfixUpdateLocal { value: val, .. }
+        | InstructionValue::PostfixUpdateContext { value: val, .. }
+        | InstructionValue::PrefixUpdateLocal { value: val, .. }
+        | InstructionValue::PrefixUpdateContext { value: val, .. } => {
             result.push(*val);
         }
         InstructionValue::StartMemoize { deps, .. } => {
@@ -1002,8 +1006,10 @@ pub fn for_each_instruction_value_operand_mut(
         InstructionValue::NextPropertyOf { value: val, .. } => {
             f(val);
         }
-        InstructionValue::PostfixUpdate { value: val, .. }
-        | InstructionValue::PrefixUpdate { value: val, .. } => {
+        InstructionValue::PostfixUpdateLocal { value: val, .. }
+        | InstructionValue::PostfixUpdateContext { value: val, .. }
+        | InstructionValue::PrefixUpdateLocal { value: val, .. }
+        | InstructionValue::PrefixUpdateContext { value: val, .. } => {
             f(val);
         }
         InstructionValue::StartMemoize { deps, .. } => {
@@ -1039,7 +1045,7 @@ pub fn for_each_call_argument_mut(args: &mut [PlaceOrSpread], f: &mut dyn FnMut(
 }
 
 /// In-place mutation of an InstructionValue's lvalues (DeclareLocal, StoreLocal, DeclareContext,
-/// StoreContext, Destructure, PostfixUpdate, PrefixUpdate). Does NOT include the instruction's
+/// StoreContext, Destructure, and update expressions). Does NOT include the instruction's
 /// top-level lvalue — use `for_each_instruction_lvalue_mut` for that.
 pub fn for_each_instruction_value_lvalue_mut(
     value: &mut InstructionValue,
@@ -1055,8 +1061,10 @@ pub fn for_each_instruction_value_lvalue_mut(
         InstructionValue::Destructure { lvalue, .. } => {
             for_each_pattern_operand_mut(&mut lvalue.pattern, f);
         }
-        InstructionValue::PostfixUpdate { lvalue, .. }
-        | InstructionValue::PrefixUpdate { lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { lvalue, .. }
+        | InstructionValue::PostfixUpdateContext { lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { lvalue, .. } => {
             f(lvalue);
         }
         _ => {}
@@ -1074,8 +1082,8 @@ pub fn for_each_instruction_lvalue_mut(instr: &mut Instruction, f: &mut dyn FnMu
         InstructionValue::Destructure { lvalue, .. } => {
             for_each_pattern_operand_mut(&mut lvalue.pattern, f);
         }
-        InstructionValue::PostfixUpdate { lvalue, .. }
-        | InstructionValue::PrefixUpdate { lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { lvalue, .. } => {
             f(lvalue);
         }
         _ => {}

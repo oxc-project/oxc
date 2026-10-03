@@ -1,0 +1,19 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-saved-member-function-ignores-later-write.js
+---
+function Component() {
+	let count = 0;
+	const opts = { cb: _temp };
+	const run = async () => {
+		const saved = opts.cb;
+		await 0;
+		saved();
+	};
+	run();
+	opts.cb = () => count++;
+	return null;
+}
+function _temp() {
+	return null;
+}

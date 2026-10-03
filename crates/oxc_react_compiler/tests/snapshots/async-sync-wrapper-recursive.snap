@@ -1,0 +1,15 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-sync-wrapper-recursive.js
+---
+function Component(t0) {
+	const { stop } = t0;
+	let count = 0;
+	const start = () => {
+		if (stop) {
+			start();
+		}
+	};
+	start();
+	return null;
+}

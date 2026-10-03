@@ -1,0 +1,13 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-set-own-foreach.js
+---
+function Component() {
+	let count = 0;
+	const cb = () => count++;
+	const callbacks = new Set([cb]);
+	callbacks.forEach = _temp;
+	callbacks.forEach();
+	return null;
+}
+async function _temp() {}
