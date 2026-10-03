@@ -632,10 +632,21 @@ fn add_configuration_patterns_from_object(
         return;
     };
 
+    // Like ESLint, all string patterns form a single group, so a negated string such as
+    // `!foo/bar` re-includes a path that the other strings restrict.
+    let mut string_group_index: Option<usize> = None;
+
     for path_value in paths_array {
         match path_value {
             Value::String(module_name) => {
-                add_configuration_patterns_from_string(patterns, module_name);
+                if let Some(group) =
+                    string_group_index.and_then(|index| patterns[index].group.as_mut())
+                {
+                    group.push(CompactStr::new(module_name));
+                } else {
+                    string_group_index = Some(patterns.len());
+                    add_configuration_patterns_from_string(patterns, module_name);
+                }
             }
             Value::Object(_) => {
                 if let Ok(pattern) = serde_json::from_value::<RestrictedPattern>(path_value.clone())
@@ -1115,23 +1126,16 @@ impl NoRestrictedImports {
         }
 
         for (source, spans) in &side_effect_import_map {
-            let mut whitelist_found = false;
             let mut err = None;
             for pattern in &self.patterns {
-                match pattern.get_group_glob_result(source) {
-                    GlobResult::Whitelist => {
-                        whitelist_found = true;
-                        break;
-                    }
-                    GlobResult::Found => {
-                        err = Some(get_diagnostic_from_import_name_result_pattern(
-                            spans[0],
-                            source,
-                            &ImportNameResult::GeneralDisallowed,
-                            pattern,
-                        ));
-                    }
-                    GlobResult::None => {}
+                // A negated pattern only re-includes the path within its own group.
+                if matches!(pattern.get_group_glob_result(source), GlobResult::Found) {
+                    err = Some(get_diagnostic_from_import_name_result_pattern(
+                        spans[0],
+                        source,
+                        &ImportNameResult::GeneralDisallowed,
+                        pattern,
+                    ));
                 }
 
                 if pattern.get_regex_result(source) && !pattern.is_side_effect_import_allowed() {
@@ -1143,7 +1147,7 @@ impl NoRestrictedImports {
                     ));
                 }
             }
-            if !whitelist_found && let Some(err) = err {
+            if let Some(err) = err {
                 ctx.diagnostic(err);
             }
         }
@@ -1186,9 +1190,6 @@ impl NoRestrictedImports {
             ctx.diagnostic(diagnostic);
         }
 
-        let mut whitelist_found = false;
-        let mut found_errors = vec![];
-
         for (pattern_index, pattern) in self.patterns.iter().enumerate() {
             let result = &pattern.get_import_name_result(&entry.import_name, entry.is_type);
 
@@ -1196,29 +1197,24 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            match pattern.get_group_glob_result(entry.module_request.name()) {
-                GlobResult::Whitelist => {
-                    whitelist_found = true;
-                    break;
+            // A negated pattern only re-includes the path within its own group.
+            if matches!(
+                pattern.get_group_glob_result(entry.module_request.name()),
+                GlobResult::Found
+            ) {
+                if *result == ImportNameResult::GeneralDisallowed
+                    && !reported_general_patterns
+                        .insert(ReportedGeneralImport::new(pattern_index, entry.statement_span))
+                {
+                    continue;
                 }
-                GlobResult::Found => {
-                    if *result == ImportNameResult::GeneralDisallowed
-                        && !reported_general_patterns
-                            .insert(ReportedGeneralImport::new(pattern_index, entry.statement_span))
-                    {
-                        continue;
-                    }
 
-                    let diagnostic = get_diagnostic_from_import_name_result_pattern(
-                        entry.statement_span,
-                        source,
-                        result,
-                        pattern,
-                    );
-
-                    found_errors.push(diagnostic);
-                }
-                GlobResult::None => (),
+                ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
+                    entry.statement_span,
+                    source,
+                    result,
+                    pattern,
+                ));
             }
 
             if pattern.get_regex_result(entry.module_request.name()) {
@@ -1235,12 +1231,6 @@ impl NoRestrictedImports {
                     result,
                     pattern,
                 ));
-            }
-        }
-
-        if !whitelist_found && !found_errors.is_empty() {
-            for diagnostic in found_errors {
-                ctx.diagnostic(diagnostic);
             }
         }
     }
@@ -1315,9 +1305,6 @@ impl NoRestrictedImports {
             ctx.diagnostic(diagnostic);
         }
 
-        let mut whitelist_found = false;
-        let mut found_errors = vec![];
-
         for pattern in &self.patterns {
             if is_dynamic_import
                 && (pattern.import_names.is_some()
@@ -1334,31 +1321,17 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            match pattern.get_group_glob_result(source) {
-                GlobResult::Whitelist => {
-                    whitelist_found = true;
-                    break;
-                }
-                GlobResult::Found => {
-                    let diagnostic: OxcDiagnostic = get_diagnostic_from_import_name_result_pattern(
-                        span, source, result, pattern,
-                    );
-
-                    found_errors.push(diagnostic);
-                }
-                GlobResult::None => (),
+            // A negated pattern only re-includes the path within its own group.
+            if matches!(pattern.get_group_glob_result(source), GlobResult::Found) {
+                ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
+                    span, source, result, pattern,
+                ));
             }
 
             if pattern.get_regex_result(source) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
                     span, source, result, pattern,
                 ));
-            }
-        }
-
-        if !whitelist_found && !found_errors.is_empty() {
-            for diagnostic in found_errors {
-                ctx.diagnostic(diagnostic);
             }
         }
     }
@@ -1403,9 +1376,6 @@ impl NoRestrictedImports {
             ctx.diagnostic(diagnostic);
         }
 
-        let mut whitelist_found = false;
-        let mut found_errors = vec![];
-
         for (pattern_index, pattern) in self.patterns.iter().enumerate() {
             let result = &pattern.get_export_name_result(&entry.import_name, entry.is_type);
 
@@ -1417,29 +1387,21 @@ impl NoRestrictedImports {
                 continue;
             };
 
-            match pattern.get_group_glob_result(module_request.name()) {
-                GlobResult::Whitelist => {
-                    whitelist_found = true;
-                    break;
+            // A negated pattern only re-includes the path within its own group.
+            if matches!(pattern.get_group_glob_result(module_request.name()), GlobResult::Found) {
+                if *result == ImportNameResult::GeneralDisallowed
+                    && !reported_general_patterns
+                        .insert(ReportedGeneralImport::new(pattern_index, entry.statement_span))
+                {
+                    continue;
                 }
-                GlobResult::Found => {
-                    if *result == ImportNameResult::GeneralDisallowed
-                        && !reported_general_patterns
-                            .insert(ReportedGeneralImport::new(pattern_index, entry.statement_span))
-                    {
-                        continue;
-                    }
 
-                    let diagnostic = get_diagnostic_from_import_name_result_pattern(
-                        entry.statement_span,
-                        source,
-                        result,
-                        pattern,
-                    );
-
-                    found_errors.push(diagnostic);
-                }
-                GlobResult::None => (),
+                ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
+                    entry.statement_span,
+                    source,
+                    result,
+                    pattern,
+                ));
             }
 
             if pattern.get_regex_result(module_request.name()) {
@@ -1456,12 +1418,6 @@ impl NoRestrictedImports {
                     result,
                     pattern,
                 ));
-            }
-        }
-
-        if !whitelist_found && !found_errors.is_empty() {
-            for diagnostic in found_errors {
-                ctx.diagnostic(diagnostic);
             }
         }
     }
@@ -3614,6 +3570,21 @@ fn test() {
             r"import 'foo'; import { bar } from 'foo'; export * from 'foo'; import('foo');",
             Some(serde_json::json!([{ "paths": [], "patterns": [] }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/27258
+        // a negated pattern still re-includes the path inside its own group
+        (
+            r#"import pick from "lodash/pick";"#,
+            Some(serde_json::json!([{
+                "patterns": [
+                    { "group": ["lodash/*", "!lodash/pick"] },
+                    { "group": ["lodash/map"] }
+                ]
+            }])),
+        ),
+        (
+            r#"import pick from "lodash/pick";"#,
+            Some(serde_json::json!([{ "patterns": ["lodash/*", "!lodash/pick"] }])),
+        ),
     ]);
 
     fail.extend([
@@ -3628,6 +3599,52 @@ fn test() {
             Some(
                 serde_json::json!([{ "patterns": [{ "regex": "^foo$", "allowImportNames": ["allowed"] }] }]),
             ),
+        ),
+    ]);
+
+    // https://github.com/oxc-project/oxc/issues/27258
+    // a negated pattern only applies within its own group, so other groups still report the path
+    let negated_in_other_group = serde_json::json!([{
+        "patterns": [
+            {
+                "group": ["lodash/*", "!lodash/pick"],
+                "message": "lodash subpaths are restricted, except lodash/pick."
+            },
+            { "group": ["lodash/pick"], "message": "lodash/pick is restricted." }
+        ]
+    }]);
+
+    fail.extend([
+        (r#"import pick from "lodash/pick";"#, Some(negated_in_other_group.clone())),
+        (
+            r#"import pick from "lodash/pick";"#,
+            Some(serde_json::json!([{
+                "patterns": [
+                    { "group": ["lodash/pick"], "message": "lodash/pick is restricted." },
+                    {
+                        "group": ["lodash/*", "!lodash/pick"],
+                        "message": "lodash subpaths are restricted, except lodash/pick."
+                    }
+                ]
+            }])),
+        ),
+        (
+            r#"import pick from "lodash/pick";"#,
+            Some(serde_json::json!([{
+                "patterns": [
+                    { "group": ["lodash/*", "!lodash/pick"] },
+                    { "regex": "^lodash/pick$", "message": "lodash/pick is restricted." }
+                ]
+            }])),
+        ),
+        (r#"import "lodash/pick";"#, Some(negated_in_other_group.clone())),
+        (r#"export { pick } from "lodash/pick";"#, Some(negated_in_other_group.clone())),
+        (r#"import pick = require("lodash/pick");"#, Some(negated_in_other_group.clone())),
+        (r#"import("lodash/pick");"#, Some(negated_in_other_group)),
+        // string patterns form one group, where the last matching pattern wins
+        (
+            r#"import pick from "lodash/pick";"#,
+            Some(serde_json::json!([{ "patterns": ["!lodash/pick", "lodash/*"] }])),
         ),
     ]);
 
