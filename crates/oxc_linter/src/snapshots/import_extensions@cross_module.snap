@@ -1,0 +1,21 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ import(extensions): Missing file extension in import declaration.
+   ╭─[index.js:2:17]
+ 1 │ 
+ 2 │                 import { example } from "./color";
+   ·                 ──────────────────────────────────
+ 3 │             
+   ╰────
+  help: Add a file extension to this import.
+
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[index.js:2:17]
+ 1 │ 
+ 2 │                 import { example } from "./color.js";
+   ·                 ─────────────────────────────────────
+ 3 │             
+   ╰────
+  help: Remove the file extension from this import.
