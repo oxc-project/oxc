@@ -5,10 +5,13 @@ use oxc_ast::{
     ast::{Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{StringToNumber, ToInt32};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
+use oxc_syntax::{
+    identifier::is_white_space, line_terminator::is_line_terminator, operator::UnaryOperator,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -387,43 +390,107 @@ impl LabelHasAssociatedControl {
 }
 
 fn has_attribute_value(value: Option<&JSXAttributeValue<'_>>, trim_strings: bool) -> bool {
-    let has_text = |text: &str| {
-        !(if trim_strings {
-            text.trim_matches(|c| is_white_space(c) || is_line_terminator(c))
-        } else {
-            text
-        })
-        .is_empty()
-    };
     match value {
-        Some(JSXAttributeValue::StringLiteral(literal)) => has_text(&literal.value),
-        Some(JSXAttributeValue::ExpressionContainer(container)) => {
-            let Some(expression) = container.expression.as_expression() else {
-                return true;
-            };
-            let expression = expression.get_inner_expression();
-            match expression {
-                Expression::StringLiteral(literal) => has_text(&literal.value),
-                Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
-                    template
-                        .quasis
-                        .first()
-                        .and_then(|quasi| quasi.value.cooked.as_ref())
-                        .is_none_or(|text| has_text(text))
-                }
-                Expression::NullLiteral(_) => false,
-                Expression::BooleanLiteral(literal) => literal.value,
-                Expression::NumericLiteral(literal) => {
-                    literal.value != 0.0 && !literal.value.is_nan()
-                }
-                Expression::BigIntLiteral(literal) => !literal.is_zero(),
-                Expression::Identifier(_) => !expression.is_undefined(),
-                _ => true,
-            }
+        Some(JSXAttributeValue::StringLiteral(literal)) => {
+            AttributeValue::from_literal(&literal.value).has_value(trim_strings)
         }
+        Some(JSXAttributeValue::ExpressionContainer(container)) => container
+            .expression
+            .as_expression()
+            .and_then(get_attribute_expression_value)
+            .is_none_or(|value| value.has_value(trim_strings)),
         // Bare attributes and unknown values may provide a label, as in the upstream rule.
         _ => true,
     }
+}
+
+// Match jsx-ast-utils' primitive value extraction rather than runtime string truthiness.
+#[derive(Clone, Copy)]
+enum AttributeValue<'a> {
+    String(&'a str),
+    Number(f64),
+    BigInt(bool),
+}
+
+impl<'a> AttributeValue<'a> {
+    fn from_literal(text: &'a str) -> Self {
+        if text.eq_ignore_ascii_case("false") {
+            Self::Number(0.0)
+        } else if text.eq_ignore_ascii_case("true") {
+            Self::Number(1.0)
+        } else {
+            Self::String(text)
+        }
+    }
+
+    fn has_value(self, trim_strings: bool) -> bool {
+        match self {
+            Self::String(text) => {
+                let text = if trim_strings {
+                    text.trim_matches(|c| is_white_space(c) || is_line_terminator(c))
+                } else {
+                    text
+                };
+                !text.is_empty()
+            }
+            Self::Number(value) => value != 0.0 && !value.is_nan(),
+            Self::BigInt(nonzero) => nonzero,
+        }
+    }
+
+    fn to_number(self) -> Option<f64> {
+        match self {
+            Self::String(text) => Some(text.string_to_number()),
+            Self::Number(value) => Some(value),
+            Self::BigInt(_) => None,
+        }
+    }
+}
+
+fn get_attribute_expression_value<'a>(
+    expression: &'a Expression<'_>,
+) -> Option<AttributeValue<'a>> {
+    let value = match expression.get_inner_expression() {
+        Expression::StringLiteral(literal) => AttributeValue::from_literal(&literal.value),
+        Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
+            AttributeValue::String(template.quasis.first()?.value.cooked.as_ref()?)
+        }
+        Expression::NullLiteral(_) => AttributeValue::Number(0.0),
+        Expression::BooleanLiteral(literal) => AttributeValue::Number(f64::from(literal.value)),
+        Expression::NumericLiteral(literal) => AttributeValue::Number(literal.value),
+        Expression::BigIntLiteral(literal) => AttributeValue::BigInt(!literal.is_zero()),
+        Expression::Identifier(identifier) => match identifier.name.as_str() {
+            "undefined" => AttributeValue::Number(f64::NAN),
+            "Infinity" => AttributeValue::Number(f64::INFINITY),
+            // Upstream represents unknown identifiers by their name.
+            name => AttributeValue::String(name),
+        },
+        Expression::UnaryExpression(unary) => {
+            let value = match unary.operator {
+                // jsx-ast-utils returns undefined for both operators.
+                UnaryOperator::Void | UnaryOperator::Typeof => f64::NAN,
+                UnaryOperator::Delete => 1.0,
+                operator => {
+                    let argument = get_attribute_expression_value(&unary.argument)?;
+                    if unary.operator == UnaryOperator::UnaryNegation
+                        && matches!(argument, AttributeValue::BigInt(_))
+                    {
+                        return Some(argument);
+                    }
+                    match operator {
+                        UnaryOperator::UnaryNegation => -argument.to_number()?,
+                        UnaryOperator::UnaryPlus => argument.to_number()?,
+                        UnaryOperator::LogicalNot => f64::from(!argument.has_value(false)),
+                        UnaryOperator::BitwiseNot => f64::from(!argument.to_number()?.to_int_32()),
+                        _ => unreachable!(),
+                    }
+                }
+            };
+            AttributeValue::Number(value)
+        }
+        _ => return None,
+    };
+    Some(value)
 }
 
 #[test]
@@ -1768,5 +1835,41 @@ fn test_attribute_values() {
     ];
     Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
         .with_snapshot_suffix("attribute_values")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_falsy_attribute_values() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        r#"<label aria-label="true" htmlFor="name" />"#,
+        r#"<label aria-label=" false " htmlFor="name" />"#,
+        r#"<label aria-label={-1} htmlFor="name" />"#,
+        r#"<label aria-label={!false} htmlFor="name" />"#,
+        r#"<label aria-label={!!true} htmlFor="name" />"#,
+        r#"<label aria-label={~0} htmlFor="name" />"#,
+        r#"<label aria-label={+"true"} htmlFor="name" />"#,
+        r#"<label aria-label={delete object.label} htmlFor="name" />"#,
+    ];
+    let fail = vec![
+        r#"<label aria-label="false" htmlFor="name" />"#,
+        r#"<label aria-label="FaLsE" htmlFor="name" />"#,
+        r#"<label aria-label={"false"} htmlFor="name" />"#,
+        r#"<label htmlFor="false">Name</label>"#,
+        r#"<label htmlFor="name"><span aria-label="false" /></label>"#,
+        r#"<label aria-label={-unknown} htmlFor="name" />"#,
+        r#"<label aria-label={-0} htmlFor="name" />"#,
+        r#"<label aria-label={-0n} htmlFor="name" />"#,
+        r#"<label aria-label={+0} htmlFor="name" />"#,
+        r#"<label aria-label={!true} htmlFor="name" />"#,
+        r#"<label aria-label={!!false} htmlFor="name" />"#,
+        r#"<label aria-label={~(-1)} htmlFor="name" />"#,
+        r#"<label aria-label={+"false"} htmlFor="name" />"#,
+        r"<label htmlFor={void 0}>Name</label>",
+        r#"<label aria-label={typeof value} htmlFor="name" />"#,
+    ];
+    Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
+        .with_snapshot_suffix("falsy_attribute_values")
         .test_and_snapshot();
 }
