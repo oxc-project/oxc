@@ -3,27 +3,11 @@
 
 use super::*;
 
-/// A jump a bounded walk takes after stepping the token at `at`.
+/// A balanced group a bounded walk skips, from its opener to its closer.
 #[derive(Clone, Copy)]
-pub(super) enum Jump {
-    /// `at` opens a balanced group whose closer is at `to`: the walk resumes at the closer.
-    Skip { at: u32, to: u32 },
-    /// `at` is a `<` balanced by the `>` at `to`: the walk resumes there if it read the `<` as a
-    /// list opener (a comparison walks on).
-    Angle { at: u32, to: u32 },
-    /// `at` opens a frame (or is an anchor inside one) holding the last `;` and `,` at `semi` /
-    /// `comma` and the last `}` boundary at `brace` (0: none) before the query: the walk resumes
-    /// at the nearest one its frame kind allows. A brace boundary is the token after a `}` that
-    /// must start a statement or member, so the frame is reset as a `;` would.
-    Sep { at: u32, semi: u32, comma: u32, brace: u32 },
-}
-
-impl Jump {
-    fn at(self) -> usize {
-        match self {
-            Jump::Skip { at, .. } | Jump::Angle { at, .. } | Jump::Sep { at, .. } => at as usize,
-        }
-    }
+pub(super) struct Jump {
+    pub(super) at: u32,
+    pub(super) to: u32,
 }
 
 /// What may come next at the walk's position.
@@ -52,14 +36,6 @@ impl Walk {
     }
 }
 
-/// Index of the bracket frame opened at open, if closing it keeps the walk's floor frames.
-pub(super) fn group_frame(frames: &[Frame], open: usize, floor: usize) -> Option<usize> {
-    frames
-        .iter()
-        .rposition(|f| f.at as usize == open && f.kind.closer() != 0)
-        .filter(|&i| i >= floor)
-}
-
 #[derive(Default)]
 pub(super) struct Walk {
     /// Frame count right after a bounded walk started at its anchor (0: the full walk); the walk
@@ -73,7 +49,6 @@ pub(super) struct Walk {
     pub(super) seed_lost: bool,
     /// Jumps of the current bounded walk, in source order, and the next one to consider.
     pub(super) jumps: Vec<Jump>,
-    pub(super) gts: Vec<u32>,
     pub(super) next_jump: usize,
     pub(super) frames: Vec<Frame>,
     /// Next unprocessed byte position: every token start below it has been walked.
@@ -110,19 +85,13 @@ pub(super) struct Walk {
 
 impl Walk {
     pub(super) fn new() -> Walk {
-        Walk {
-            jumps: Vec::with_capacity(64),
-            gts: Vec::with_capacity(8),
-            frames: Vec::with_capacity(64),
-            ..Walk::default()
-        }
+        Walk { jumps: Vec::with_capacity(64), frames: Vec::with_capacity(64), ..Walk::default() }
     }
 
     pub(super) fn reset(&mut self, module: bool) {
         let frames = std::mem::take(&mut self.frames);
         let jumps = std::mem::take(&mut self.jumps);
-        let gts = std::mem::take(&mut self.gts);
-        *self = Walk { frames, jumps, gts, ..Walk::default() };
+        *self = Walk { frames, jumps, ..Walk::default() };
         self.frames.clear();
         self.frames.push(Frame { kind: FrameKind::Root, is_async: module, ..Frame::default() });
     }
@@ -143,23 +112,8 @@ impl Walk {
     }
 
     pub(super) fn push(&mut self, kind: FrameKind) -> &mut Frame {
-        self.frames.push(Frame { kind, at: self.last_start as u32, ..Frame::default() });
+        self.frames.push(Frame { kind, ..Frame::default() });
         self.frames.last_mut().unwrap()
-    }
-
-    /// Leave the group the walk stopped in: drop the frames opened inside it and step its closer.
-    pub(super) fn leave_group(&mut self, tokens: &Tokens, open: usize, close: usize) {
-        let Some(i) = group_frame(&self.frames, open, self.seed_depth) else {
-            self.seed_lost = true;
-            return;
-        };
-        self.frames.truncate(i + 1);
-        self.clear_prev();
-        self.decorator = 0;
-        self.export_default = false;
-        self.jsx_closing = false;
-        self.prev_end = close;
-        self.walked_to = self.step(tokens, close);
     }
 
     pub(super) fn pop(&mut self) -> Frame {
@@ -335,109 +289,18 @@ impl Walk {
     /// planned jump when the token opens a group or a frame that allows one. A jump lands on a
     /// closer or separator, so no line break is reported before it.
     fn jump(&mut self, pos: usize, end: usize, limit: usize) -> usize {
-        while self.next_jump < self.jumps.len() {
-            let j = self.jumps[self.next_jump];
-            let at = j.at();
+        while let Some(&Jump { at, to }) = self.jumps.get(self.next_jump) {
+            let (at, to) = (at as usize, to as usize);
             if at > pos {
                 break;
             }
             self.next_jump += 1;
-            if at < pos {
-                continue;
-            }
-            let to = match j {
-                Jump::Skip { to, .. } => to as usize,
-                Jump::Angle { to, .. } => {
-                    if self.top_kind() == FrameKind::Angle {
-                        to as usize
-                    } else {
-                        0
-                    }
-                }
-                Jump::Sep { semi, comma, brace, .. } => {
-                    let semi = if semi != 0 && self.sep_allowed(b';') { semi as usize } else { 0 };
-                    let comma =
-                        if comma != 0 && self.sep_allowed(b',') { comma as usize } else { 0 };
-                    let brace =
-                        if brace != 0 && self.sep_allowed(b'}') { brace as usize } else { 0 };
-                    let to = semi.max(comma).max(brace);
-                    if to == brace && to > pos && to <= limit {
-                        self.resume_member();
-                    }
-                    to
-                }
-            };
-            if to > pos && to <= limit {
+            if at == pos && to > pos && to <= limit {
                 self.prev_end = to;
                 return to;
             }
         }
         end
-    }
-
-    /// A continued walk: jump to the nearest of the `;` at `semi` and the brace boundary at
-    /// `brace` (0: none) before `limit` that its innermost bracket frame allows.
-    pub(super) fn resume(&mut self, semi: usize, brace: usize, limit: usize) {
-        let k = self.frames[self.stmt_frame()].kind;
-        let semi = if semi != 0 && Self::sep_allowed_in(k, b';') { semi } else { 0 };
-        let brace = if brace != 0 && Self::sep_allowed_in(k, b'}') { brace } else { 0 };
-        let to = semi.max(brace);
-        if to <= self.walked_to || to > limit {
-            return;
-        }
-        self.pop_virtual();
-        if to == brace {
-            self.resume_member();
-        }
-        self.walked_to = to;
-        self.prev_end = to;
-        while self.next_jump < self.jumps.len() && self.jumps[self.next_jump].at() < to {
-            self.next_jump += 1;
-        }
-    }
-
-    /// The state at a member or statement start after a `}` in the innermost frame: what its `;`
-    /// would leave.
-    fn resume_member(&mut self) {
-        if self.top_kind() == FrameKind::ClassBody {
-            self.top_mut().next_member();
-            self.operand_done();
-        } else {
-            self.end_statement();
-            self.clear_prev();
-        }
-    }
-
-    /// Can the walk resume at a `;` / `,` of the innermost frame, or after a `}` boundary in it?
-    /// Only where the separator resets the frame: statements after `;`, members and elements after
-    /// `,`, statements and members after a body or a nested literal.
-    fn sep_allowed(&self, sep: u8) -> bool {
-        Self::sep_allowed_in(self.top_kind(), sep)
-    }
-
-    fn sep_allowed_in(k: FrameKind, sep: u8) -> bool {
-        if sep == b'}' {
-            return k.is_stmt_holder() || matches!(k, FrameKind::ClassBody | FrameKind::TypeLit);
-        }
-        if sep == b';' {
-            k.is_stmt_holder()
-                || matches!(k, FrameKind::ClassBody | FrameKind::TypeLit | FrameKind::Head)
-        } else {
-            matches!(
-                k,
-                FrameKind::Object
-                    | FrameKind::Array
-                    | FrameKind::Call
-                    | FrameKind::Params
-                    | FrameKind::Group
-                    | FrameKind::TypeLit
-                    | FrameKind::ModuleSpec
-                    | FrameKind::TypeParen
-                    | FrameKind::TypeBracket
-                    | FrameKind::Head
-                    | FrameKind::Sub
-            )
-        }
     }
 
     /// What the token at pos leaves behind: it is stepped unless it is the tail of the last one.
@@ -500,7 +363,6 @@ impl Walk {
             in_type,
             operand: self.operand_allowed() && !in_type && !self.stmt_done,
             type_params: self.type_params_expected(),
-            angles: self.open_angles(),
         }
     }
 
