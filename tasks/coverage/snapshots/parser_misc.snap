@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 113/113 (100.00%)
 Positive Passed: 113/113 (100.00%)
-Negative Passed: 249/249 (100.00%)
+Negative Passed: 250/250 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -673,6 +673,12 @@ Negative Passed: 249/249 (100.00%)
    · ─────────────
    ╰────
   help: Wrap the type assertion in parentheses to make the precedence explicit
+
+  × TS(8006): 'interface' declarations can only be used in TypeScript files.
+   ╭─[misc/fail/export-default-interface.js:1:26]
+ 1 │ export default interface I {}
+   ·                          ─
+   ╰────
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
    ╭─[misc/fail/export-equal-with-normal-export.ts:4:1]
