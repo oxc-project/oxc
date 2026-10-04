@@ -333,7 +333,7 @@ impl ConfigResolver {
         let discovery = config_discovery();
         for dir in cwd.ancestors() {
             let Some(config_file) = discovery
-                .find_unique_config_by_readdir(dir, false)
+                .find_unique_config_by_readdir(dir, true)
                 .map_err(|e| Into::<oxc_diagnostics::OxcDiagnostic>::into(e).to_string())?
             else {
                 continue;
@@ -615,6 +615,40 @@ mod tests_slow_path_validation {
         let resolver = resolver_from_json(serde_json::json!({ "printWidth": 80 }));
         let kind = FileKind::OxfmtToml { path: Arc::from(PathBuf::from("Cargo.toml").as_path()) };
         assert!(resolver.resolve(kind).is_ok());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn auto_discovery_follows_symlinked_config() {
+        use std::os::unix::fs::symlink;
+
+        let project = tempfile::tempdir().unwrap();
+        let shared_config = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(shared_config.path(), r#"{"singleQuote": true}"#).unwrap();
+        symlink(shared_config.path(), project.path().join(".oxfmtrc.json")).unwrap();
+
+        let mut resolver = ConfigResolver::discover_config(project.path(), None, None).unwrap();
+        resolver.build_and_validate().unwrap();
+
+        assert_eq!(resolver.base.as_ref().unwrap().0.single_quote, Some(true));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn nested_discovery_follows_symlinked_config() {
+        use std::os::unix::fs::symlink;
+
+        let project = tempfile::tempdir().unwrap();
+        let nested = project.path().join("nested");
+        std::fs::create_dir(&nested).unwrap();
+        let shared_config = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(shared_config.path(), r#"{"singleQuote": true}"#).unwrap();
+        symlink(shared_config.path(), nested.join(".oxfmtrc.json")).unwrap();
+
+        let scopes = ConfigScopes::load(project.path(), None, true, None).unwrap();
+        let resolver = scopes.resolve(&nested.join("input.js")).unwrap();
+
+        assert_eq!(resolver.base.as_ref().unwrap().0.single_quote, Some(true));
     }
 
     /// `resolve_for_api` must validate even for `Prettier` kinds.

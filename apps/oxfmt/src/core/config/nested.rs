@@ -128,7 +128,7 @@ impl NestedConfigCtx {
     ) -> ConfigLoadResult {
         let Some(config_file) = self
             .discovery
-            .find_unique_config_by_readdir(dir, false)
+            .find_unique_config_by_readdir(dir, true)
             .map_err(|e| Into::<OxcDiagnostic>::into(e).to_string())?
         else {
             return Ok(None);
