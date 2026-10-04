@@ -320,7 +320,7 @@ impl<'a> PeepholeOptimizations {
             AssignmentTarget::PrivateFieldExpression(e) => &e.object,
             _ => return,
         };
-        if let Expression::Identifier(ident) = object.get_inner_expression()
+        if let Expression::Identifier(ident) = object
             && let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id()
         {
             ctx.state.symbols.record_member_write_effect(symbol_id, MemberWriteEffect::Hazard);

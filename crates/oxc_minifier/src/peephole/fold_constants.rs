@@ -261,7 +261,7 @@ impl<'a> PeepholeOptimizations {
     /// filters anyway.
     fn is_cheap_to_number_operand(e: &Expression<'a>) -> bool {
         matches!(
-            e.get_inner_expression(),
+            e,
             Expression::NumericLiteral(_)
                 | Expression::StringLiteral(_)
                 | Expression::BooleanLiteral(_)
@@ -411,7 +411,7 @@ impl<'a> PeepholeOptimizations {
     /// Lower bound for the minified size of a numeric expression. Parentheses are deliberately
     /// omitted, so accepting a fold based on this count cannot make the output longer.
     fn numeric_expression_size_lower_bound(expr: &Expression<'a>) -> Option<usize> {
-        match expr.get_inner_expression() {
+        match expr {
             Expression::NumericLiteral(lit) => Self::number_literal_source_len(lit.value),
             Expression::UnaryExpression(e)
                 if matches!(
@@ -484,7 +484,7 @@ impl<'a> PeepholeOptimizations {
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(usize, bool)> {
-        let result = match expr.get_inner_expression() {
+        let result = match expr {
             Expression::StringLiteral(lit) => (lit.value.len() + 2, false),
             Expression::NumericLiteral(lit) => (Self::number_literal_source_len(lit.value)?, false),
             Expression::BooleanLiteral(_) => (2, false),
@@ -1063,7 +1063,7 @@ fn try_fold_chain_at_element<'a>(
 }
 
 fn try_fold_chain_at_expr<'a>(expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) -> ChainFold<'a> {
-    match expr.get_inner_expression_mut() {
+    match expr {
         Expression::CallExpression(c) => try_fold_call_expression(c, ctx),
         match_member_expression!(Expression) => {
             try_fold_member_expression(expr.to_member_expression_mut(), ctx)
@@ -1161,7 +1161,7 @@ fn try_fold_at_optional<'a>(
 /// [`cjs-module-lexer`]: https://github.com/nodejs/cjs-module-lexer
 /// [esbuild]: https://github.com/evanw/esbuild/blob/v0.28.0/internal/linker/linker.go#L5127-L5138
 pub(super) fn is_cjs_module_exports_hint(expr: &Expression<'_>) -> bool {
-    let Expression::AssignmentExpression(assign) = expr.get_inner_expression() else {
+    let Expression::AssignmentExpression(assign) = expr else {
         return false;
     };
     assign.operator == AssignmentOperator::Assign
