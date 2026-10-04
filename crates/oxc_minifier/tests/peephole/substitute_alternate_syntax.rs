@@ -1115,7 +1115,7 @@ fn test_flatten_array_spread_elements() {
 }
 
 #[test]
-fn fold_sequence_expression() {
+fn test_fold_sequence_expression() {
     test("(a(), b) + c", "a(), b + c");
     test("(a(), b, c) + d", "a(), b, c + d");
 
@@ -1137,4 +1137,16 @@ fn fold_sequence_expression() {
         "async function a() { await (c(1), d(2), 3) }",
         "async function a() { c(1), d(2), await 3 }",
     );
+}
+
+#[test]
+fn test_fold_yield_expression() {
+    test("function* a() { yield 2 }", "function* a() { yield 2; }");
+    test("function* a() { yield void 0; }", "function* a() { yield; }");
+    test("function* a() { yield undefined; }", "function* a() { yield; }");
+    test("function* a() { yield fn(); }", "function* a() { yield fn(); }");
+    test_same("function* a() { yield* void 0; }");
+    test("function* a() { yield* undefined; }", "function* a() { yield* void 0; }");
+    test("function* a() { yield* fn(); }", "function* a() { yield* fn(); }");
+    test_same("function* a(undefined) { yield undefined; }");
 }
