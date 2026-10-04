@@ -93,7 +93,7 @@ use oxc_ast::{
     builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_diagnostics::Diagnostics;
-use oxc_span::{SourceType, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
@@ -864,12 +864,20 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         let mut replacements = ArenaVec::new_in(self);
 
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
+        // Statement indices recorded before any reparse. Dropping statements that an
+        // earlier reparse consumed shifts every later index.
+        let mut removed_before = 0usize;
+        let mut consumed_through = 0usize;
         // Ranges refer to the original tokens and to the flat replacement buffer
         let mut edits = ArenaVec::with_capacity_in(
             if self.lexer.config.tokens() { checkpoints.len() } else { 0 },
             self,
         );
-        for (stmt_index, checkpoint) in checkpoints {
+        for (recorded_index, checkpoint) in checkpoints {
+            if recorded_index < consumed_through {
+                continue;
+            }
+            let stmt_index = recorded_index - removed_before;
             self.rewind(checkpoint);
             let replacement_start = replacements.len();
 
@@ -889,9 +897,24 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 p.parse_statement_list_item(StatementContext::Program)
             });
 
-            // Replace the statement if the index is valid
+            // Replace the statement if the index is valid.
+            // A reparse can consume source that the first pass split into later
+            // statements (`await /a(); b();/g`). Those statements are inside the
+            // replacement and must not remain in the program.
             if stmt_index < statements.len() {
+                let end = stmt.span().end;
                 statements[stmt_index] = stmt;
+                let remove_from = stmt_index + 1;
+                let remove_to = statements[remove_from..]
+                    .iter()
+                    .position(|following| following.span().start >= end)
+                    .map_or(statements.len(), |offset| remove_from + offset);
+                if remove_to > remove_from {
+                    let drained = remove_to - remove_from;
+                    statements.drain(remove_from..remove_to);
+                    removed_before += drained;
+                    consumed_through = recorded_index + 1 + drained;
+                }
             }
 
             if self.lexer.config.tokens() {
@@ -1391,6 +1414,24 @@ mod test {
                 (Kind::Semicolon, 5, 6),
             ]
         );
+    }
+
+    #[test]
+    fn unambiguous_await_reparse_drops_statements_consumed_by_regexp() {
+        let allocator = Allocator::default();
+        for source in [
+            "await /a(); b(); c(); d(); e(); f()/g;\nexport {}\n",
+            "before(); await /a(); b(); c()/g; after(); export {};",
+            "await /x/u; b(); export {};",
+        ] {
+            let parse = |source_type| Parser::new(&allocator, source, source_type).parse();
+            let unambiguous = parse(SourceType::unambiguous());
+            let module = parse(SourceType::mjs());
+            let spans = |program: &oxc_ast::ast::Program<'_>| {
+                program.body.iter().map(GetSpan::span).collect::<Vec<_>>()
+            };
+            assert_eq!(spans(&unambiguous.program), spans(&module.program), "{source}");
+        }
     }
 
     #[test]
