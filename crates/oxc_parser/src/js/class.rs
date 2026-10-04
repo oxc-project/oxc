@@ -267,6 +267,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 false,
                 diagnostics::cannot_appear_on_class_elements,
             );
+            if !parser.is_ts {
+                parser.verify_modifiers(
+                    modifiers,
+                    ModifierKinds::new([
+                        ModifierKind::Export,
+                        ModifierKind::Default,
+                        ModifierKind::Static,
+                        ModifierKind::Async,
+                        ModifierKind::Accessor,
+                    ]),
+                    false,
+                    |modifier, _| diagnostics::modifier_in_ts(modifier.kind, modifier.span()),
+                );
+            }
         }
 
         let start = self.cur_start();

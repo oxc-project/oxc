@@ -3,7 +3,7 @@ commit: f29aeb9f
 parser_typescript Summary:
 AST Parsed     : 9658/9666 (99.92%)
 Positive Passed: 9651/9666 (99.84%)
-Negative Passed: 1689/2759 (61.22%)
+Negative Passed: 1691/2759 (61.29%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -569,8 +569,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementationFileOrderReversed.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationPublicMethodSyntaxOfClass.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFunctionWithPrototypeNoErrorTruncationNoCrash.ts
 
@@ -1802,8 +1800,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/node/nodeModulesTopLevelAwait.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/override/override_js3.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript3/Accessors/parserES3Accessors1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript3/Accessors/parserES3Accessors3.ts
@@ -2762,6 +2758,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  6 │     get length() { return 0; }
    ·                  ▲
  7 │ }
+   ╰────
+
+  × TS(8009): The 'declare' modifier can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/ambientPropertyDeclarationInJs.ts:6:5]
+ 5 │ 
+ 6 │     declare prop: string;
+   ·     ───────
+ 7 │ 
    ╰────
 
   × Expected `;` but found `:`
@@ -8931,6 +8935,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·           ┬ ┬
    ·           │ ╰── `,` or `)` expected
    ·           ╰── Opened here
+   ╰────
+
+  × TS(8009): The 'public' modifier can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationPublicMethodSyntaxOfClass.ts:2:5]
+ 1 │ class C {
+ 2 │     public foo() {
+   ·     ──────
+ 3 │     }
    ╰────
 
   × TS(8012): Parameter modifiers can only be used in TypeScript files.
@@ -25980,6 +25992,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  26 │ }
     ╰────
   help: No modifiers are allowed here.
+
+  × TS(8009): The 'override' modifier can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/override/override_js3.ts:7:5]
+ 6 │ class D extends B {
+ 7 │     override foo (v) {}
+   ·     ────────
+ 8 │     /** @override */
+   ╰────
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:3:15]

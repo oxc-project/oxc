@@ -1197,6 +1197,11 @@ parser_diagnostics! {
         ts_error("5087", "A labeled tuple element is declared as rest with a '...' before the name, rather than before the type.").with_label(span)
     };
 
+    modifier_in_ts(kind: ModifierKind, span: Span) => {
+        ts_error("8009", format!("The '{kind}' modifier can only be used in TypeScript files."))
+            .with_label(span)
+    };
+
     parameter_modifiers_in_ts(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
             .with_label(modifier.span())
