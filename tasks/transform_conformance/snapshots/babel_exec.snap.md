@@ -1,8 +1,8 @@
-commit: fd665901
+commit: 4f4ef5d4
 
 node: v26.5.0
 
-Passed: 318 of 413 (77.00%)
+Passed: 318 of 416 (76.44%)
 
 Failures:
 
@@ -503,9 +503,21 @@ ReferenceError: _Foo_brand is not defined
     at new Foo (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js:8:40)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js:19:13
 
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-half-constructed-static-exec.test.js
+AssertionError: expected true to be false // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-half-constructed-static-exec.test.js:29:15
+
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js
 AssertionError: expected 2 to be 5 // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js:18:25
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-initialization-exec.test.js
+AssertionError: expected [ true, true, true, true, true, …(3) ] to deeply equal [ false, true, true, false, …(4) ]
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-initialization-exec.test.js:23:17
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-redeclared-in-loop-exec.test.js
+AssertionError: expected [ true, true, true, true ] to deeply equal [ false, true, true, true ]
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-field-redeclared-in-loop-exec.test.js:15:18
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js
 AssertionError: expected 2 to be 5 // Object.is equality

@@ -1,6 +1,6 @@
-commit: fd665901
+commit: 4f4ef5d4
 
-Passed: 731/1165
+Passed: 731/1166
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -765,7 +765,10 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (24/59)
+# babel-plugin-transform-private-property-in-object (24/60)
+* assumption-noUninitializedPrivateFieldAccess/static-field/input.js
+x Output mismatch
+
 * assumption-privateFieldsAsProperties/accessor/input.js
 x Output mismatch
 
