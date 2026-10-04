@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label htmlFor="" for="name">Name</label>
+   · ─────────────────────────────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label for="name" htmlFor="">Name</label>
+   · ─────────────────────────────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label htmlFor={null} for="name">Name</label>
+   · ─────────────────────────────────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label htmlFor={false} for="name">Name</label>
+   · ──────────────────────────────────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label htmlFor="" for="name">Name<input /></label>
+   · ─────────────────────────────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.

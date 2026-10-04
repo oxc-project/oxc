@@ -207,19 +207,17 @@ impl Rule for LabelHasAssociatedControl {
             return;
         }
 
-        let has_html_for = if let Some(attributes) = ctx.settings().jsx_a11y.attributes.get("for") {
-            attributes.iter().any(|attr| {
-                has_jsx_prop(&element.opening_element, attr.as_str()).is_some_and(|attr| {
-                    attr.as_attribute()
-                        .is_some_and(|attr| has_attribute_value(attr.value.as_ref(), false))
-                })
-            })
+        // Upstream validates the first present alias, even when its value is falsy.
+        let html_for_attribute = if let Some(attributes) =
+            ctx.settings().jsx_a11y.attributes.get("for")
+        {
+            attributes.iter().find_map(|attr| has_jsx_prop(&element.opening_element, attr.as_str()))
         } else {
-            has_jsx_prop(&element.opening_element, "htmlFor").is_some_and(|attr| {
-                attr.as_attribute()
-                    .is_some_and(|attr| has_attribute_value(attr.value.as_ref(), false))
-            })
+            has_jsx_prop(&element.opening_element, "htmlFor")
         };
+        let has_html_for = html_for_attribute
+            .and_then(JSXAttributeItem::as_attribute)
+            .is_some_and(|attr| has_attribute_value(attr.value.as_ref(), false));
 
         let has_control = self.has_nested_control(element, ctx);
 
@@ -1893,5 +1891,42 @@ fn test_raw_template_attribute_values() {
     ];
     Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
         .with_snapshot_suffix("raw_template_attribute_values")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_attribute_alias_precedence() {
+    use crate::tester::Tester;
+
+    let settings = Some(serde_json::json!({"settings": {"jsx-a11y": {
+        "attributes": {"for": ["htmlFor", "for"]}
+    }}}));
+    let pass = vec![
+        (r#"<label for="name">Name</label>"#, None, settings.clone()),
+        (r#"<label htmlFor="name" for="">Name</label>"#, None, settings.clone()),
+        (r#"<label for="" htmlFor="name">Name</label>"#, None, settings.clone()),
+        (r#"<label htmlFor={id} for="name">Name</label>"#, None, settings.clone()),
+        (r#"<label htmlFor="" for="name">Name<input /></label>"#, None, settings.clone()),
+        (
+            r#"<label htmlFor="" for="name">Name</label>"#,
+            None,
+            Some(serde_json::json!({"settings": {"jsx-a11y": {
+                "attributes": {"for": ["for", "htmlFor"]}
+            }}})),
+        ),
+    ];
+    let fail = vec![
+        (r#"<label htmlFor="" for="name">Name</label>"#, None, settings.clone()),
+        (r#"<label for="name" htmlFor="">Name</label>"#, None, settings.clone()),
+        (r#"<label htmlFor={null} for="name">Name</label>"#, None, settings.clone()),
+        (r#"<label htmlFor={false} for="name">Name</label>"#, None, settings.clone()),
+        (
+            r#"<label htmlFor="" for="name">Name<input /></label>"#,
+            Some(serde_json::json!([{ "assert": "both" }])),
+            settings,
+        ),
+    ];
+    Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
+        .with_snapshot_suffix("attribute_alias_precedence")
         .test_and_snapshot();
 }
