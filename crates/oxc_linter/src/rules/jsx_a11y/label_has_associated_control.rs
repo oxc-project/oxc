@@ -521,7 +521,7 @@ fn test() {
         })
     }
 
-    let pass = vec![
+    let mut pass = vec![
         (
             r#"<label htmlFor="js_id"><span><span><span>A label</span></span></span></label>"#,
             Some(serde_json::json!([{ "depth": 4, "assert": "htmlFor" }])),
@@ -1077,7 +1077,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         (
             r#"<label htmlFor="js_id"><span><span><span>A label</span></span></span></label>"#,
             Some(serde_json::json!([{
@@ -1764,169 +1764,161 @@ fn test() {
         ),
     ];
 
+    {
+        pass.extend(vec![
+            (r#"<label aria-label="Name" htmlFor="name" />"#, None, None),
+            (r"<label aria-label={label} htmlFor={id} />", None, None),
+            (r#"<label aria-label htmlFor="name" />"#, None, None),
+            (r#"<label htmlFor="name"><span aria-label /></label>"#, None, None),
+            (r#"<label htmlFor="name"><span {...props} /></label>"#, None, None),
+            (r#"<label {...props} htmlFor="name" />"#, None, None),
+            (r#"<label htmlFor="">Name<input /></label>"#, None, None),
+            (r#"<label aria-label="">Name<input /></label>"#, None, None),
+            (r#"<label htmlFor=" ">Name</label>"#, None, None),
+            (r"<label htmlFor>Name</label>", None, None),
+            (r#"<label aria-label={`Name`} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={`${label}`} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={1n} htmlFor="name" />"#, None, None),
+            (r"<label htmlFor={1n}>Name</label>", None, None),
+            (r#"<label aria-label={"\u0085"} htmlFor="name" />"#, None, None),
+            (r#"<label htmlFor="name"><span aria-label={"\u0085"} /></label>"#, None, None),
+            (r#"<label htmlFor={"\uFEFF"}>Name</label>"#, None, None),
+        ]);
+        fail.extend(vec![
+            (r#"<label aria-label="" htmlFor="name" />"#, None, None),
+            (r#"<label aria-label="  " htmlFor="name" />"#, None, None),
+            (r#"<label aria-labelledby="" htmlFor="name" />"#, None, None),
+            (r#"<label alt="" htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={""} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={"  "} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={``} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={null} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={false} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={0} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={0n} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={"\uFEFF"} htmlFor="name" />"#, None, None),
+            (r#"<label htmlFor="name"><span aria-label={"\uFEFF"} /></label>"#, None, None),
+            (r#"<label aria-label={undefined} htmlFor="name" />"#, None, None),
+            (r#"<label htmlFor="name"><span aria-label={""} /></label>"#, None, None),
+            (r#"<label htmlFor="">Name</label>"#, None, None),
+            (r#"<label htmlFor={""}>Name</label>"#, None, None),
+            (r"<label htmlFor={null}>Name</label>", None, None),
+            (r"<label htmlFor={false}>Name</label>", None, None),
+            (r"<label htmlFor={0n}>Name</label>", None, None),
+            (
+                r#"<label htmlFor="">Name<input /></label>"#,
+                Some(serde_json::json!([{ "assert": "both" }])),
+                None,
+            ),
+            (
+                r#"<label label="" htmlFor="name" />"#,
+                Some(serde_json::json!([{
+                    "labelAttributes": ["label"]
+                }])),
+                None,
+            ),
+            (
+                r#"<label for="">Name</label>"#,
+                None,
+                Some(serde_json::json!({"settings": {"jsx-a11y": {
+                    "attributes": {"for": ["for"]}
+                }}})),
+            ),
+        ]);
+    }
+
+    {
+        pass.extend(
+            vec![
+                r#"<label aria-label="true" htmlFor="name" />"#,
+                r#"<label aria-label=" false " htmlFor="name" />"#,
+                r#"<label aria-label={-1} htmlFor="name" />"#,
+                r#"<label aria-label={!false} htmlFor="name" />"#,
+                r#"<label aria-label={!!true} htmlFor="name" />"#,
+                r#"<label aria-label={~0} htmlFor="name" />"#,
+                r#"<label aria-label={+"true"} htmlFor="name" />"#,
+                r#"<label aria-label={delete object.label} htmlFor="name" />"#,
+            ]
+            .into_iter()
+            .map(|code| (code, None, None)),
+        );
+        fail.extend(
+            vec![
+                r#"<label aria-label="false" htmlFor="name" />"#,
+                r#"<label aria-label="FaLsE" htmlFor="name" />"#,
+                r#"<label aria-label={"false"} htmlFor="name" />"#,
+                r#"<label htmlFor="false">Name</label>"#,
+                r#"<label htmlFor="name"><span aria-label="false" /></label>"#,
+                r#"<label aria-label={-unknown} htmlFor="name" />"#,
+                r#"<label aria-label={-0} htmlFor="name" />"#,
+                r#"<label aria-label={-0n} htmlFor="name" />"#,
+                r#"<label aria-label={+0} htmlFor="name" />"#,
+                r#"<label aria-label={!true} htmlFor="name" />"#,
+                r#"<label aria-label={!!false} htmlFor="name" />"#,
+                r#"<label aria-label={~(-1)} htmlFor="name" />"#,
+                r#"<label aria-label={+"false"} htmlFor="name" />"#,
+                r"<label htmlFor={void 0}>Name</label>",
+                r#"<label aria-label={typeof value} htmlFor="name" />"#,
+            ]
+            .into_iter()
+            .map(|code| (code, None, None)),
+        );
+    }
+
+    {
+        pass.extend(
+            vec![
+                r#"<label aria-label={`\uFEFF`} htmlFor="name" />"#,
+                r#"<label htmlFor="name"><span aria-label={`\uFEFF`} /></label>"#,
+                r#"<label aria-label={`\n`} htmlFor="name" />"#,
+                r#"<label aria-label={`false`} htmlFor="name" />"#,
+                r"<label htmlFor={`\uFEFF`}>Name</label>",
+            ]
+            .into_iter()
+            .map(|code| (code, None, None)),
+        );
+        fail.extend(
+            vec![
+                r#"<label aria-label={``} htmlFor="name" />"#,
+                r#"<label aria-label={`  `} htmlFor="name" />"#,
+                r"<label htmlFor={``}>Name</label>",
+            ]
+            .into_iter()
+            .map(|code| (code, None, None)),
+        );
+    }
+
+    {
+        let settings = Some(serde_json::json!({"settings": {"jsx-a11y": {
+            "attributes": {"for": ["htmlFor", "for"]}
+        }}}));
+        pass.extend(vec![
+            (r#"<label for="name">Name</label>"#, None, settings.clone()),
+            (r#"<label htmlFor="name" for="">Name</label>"#, None, settings.clone()),
+            (r#"<label for="" htmlFor="name">Name</label>"#, None, settings.clone()),
+            (r#"<label htmlFor={id} for="name">Name</label>"#, None, settings.clone()),
+            (r#"<label htmlFor="" for="name">Name<input /></label>"#, None, settings.clone()),
+            (
+                r#"<label htmlFor="" for="name">Name</label>"#,
+                None,
+                Some(serde_json::json!({"settings": {"jsx-a11y": {
+                    "attributes": {"for": ["for", "htmlFor"]}
+                }}})),
+            ),
+        ]);
+        fail.extend(vec![
+            (r#"<label htmlFor="" for="name">Name</label>"#, None, settings.clone()),
+            (r#"<label for="name" htmlFor="">Name</label>"#, None, settings.clone()),
+            (r#"<label htmlFor={null} for="name">Name</label>"#, None, settings.clone()),
+            (r#"<label htmlFor={false} for="name">Name</label>"#, None, settings.clone()),
+            (
+                r#"<label htmlFor="" for="name">Name<input /></label>"#,
+                Some(serde_json::json!([{ "assert": "both" }])),
+                settings,
+            ),
+        ]);
+    }
+
     Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
-        .test_and_snapshot();
-}
-
-#[test]
-fn test_attribute_values() {
-    use crate::tester::Tester;
-
-    let pass = vec![
-        (r#"<label aria-label="Name" htmlFor="name" />"#, None, None),
-        (r"<label aria-label={label} htmlFor={id} />", None, None),
-        (r#"<label aria-label htmlFor="name" />"#, None, None),
-        (r#"<label htmlFor="name"><span aria-label /></label>"#, None, None),
-        (r#"<label htmlFor="name"><span {...props} /></label>"#, None, None),
-        (r#"<label {...props} htmlFor="name" />"#, None, None),
-        (r#"<label htmlFor="">Name<input /></label>"#, None, None),
-        (r#"<label aria-label="">Name<input /></label>"#, None, None),
-        (r#"<label htmlFor=" ">Name</label>"#, None, None),
-        (r"<label htmlFor>Name</label>", None, None),
-        (r#"<label aria-label={`Name`} htmlFor="name" />"#, None, None),
-        (r#"<label aria-label={`${label}`} htmlFor="name" />"#, None, None),
-        (r#"<label aria-label={1n} htmlFor="name" />"#, None, None),
-        (r"<label htmlFor={1n}>Name</label>", None, None),
-        (r#"<label aria-label={"\u0085"} htmlFor="name" />"#, None, None),
-        (r#"<label htmlFor="name"><span aria-label={"\u0085"} /></label>"#, None, None),
-        (r#"<label htmlFor={"\uFEFF"}>Name</label>"#, None, None),
-    ];
-    let fail = vec![
-        (r#"<label aria-label="" htmlFor="name" />"#, None, None),
-        (r#"<label aria-label="  " htmlFor="name" />"#, None, None),
-        (r#"<label aria-labelledby="" htmlFor="name" />"#, None, None),
-        (r#"<label alt="" htmlFor="name" />"#, None, None),
-        (r#"<label aria-label={""} htmlFor="name" />"#, None, None),
-        (r#"<label aria-label={"  "} htmlFor="name" />"#, None, None),
-        (r#"<label aria-label={``} htmlFor="name" />"#, None, None),
-        (r#"<label aria-label={null} htmlFor="name" />"#, None, None),
-        (r#"<label aria-label={false} htmlFor="name" />"#, None, None),
-        (r#"<label aria-label={0} htmlFor="name" />"#, None, None),
-        (r#"<label aria-label={0n} htmlFor="name" />"#, None, None),
-        (r#"<label aria-label={"\uFEFF"} htmlFor="name" />"#, None, None),
-        (r#"<label htmlFor="name"><span aria-label={"\uFEFF"} /></label>"#, None, None),
-        (r#"<label aria-label={undefined} htmlFor="name" />"#, None, None),
-        (r#"<label htmlFor="name"><span aria-label={""} /></label>"#, None, None),
-        (r#"<label htmlFor="">Name</label>"#, None, None),
-        (r#"<label htmlFor={""}>Name</label>"#, None, None),
-        (r"<label htmlFor={null}>Name</label>", None, None),
-        (r"<label htmlFor={false}>Name</label>", None, None),
-        (r"<label htmlFor={0n}>Name</label>", None, None),
-        (
-            r#"<label htmlFor="">Name<input /></label>"#,
-            Some(serde_json::json!([{ "assert": "both" }])),
-            None,
-        ),
-        (
-            r#"<label label="" htmlFor="name" />"#,
-            Some(serde_json::json!([{
-                "labelAttributes": ["label"]
-            }])),
-            None,
-        ),
-        (
-            r#"<label for="">Name</label>"#,
-            None,
-            Some(serde_json::json!({"settings": {"jsx-a11y": {
-                "attributes": {"for": ["for"]}
-            }}})),
-        ),
-    ];
-    Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
-        .with_snapshot_suffix("attribute_values")
-        .test_and_snapshot();
-}
-
-#[test]
-fn test_falsy_attribute_values() {
-    use crate::tester::Tester;
-
-    let pass = vec![
-        r#"<label aria-label="true" htmlFor="name" />"#,
-        r#"<label aria-label=" false " htmlFor="name" />"#,
-        r#"<label aria-label={-1} htmlFor="name" />"#,
-        r#"<label aria-label={!false} htmlFor="name" />"#,
-        r#"<label aria-label={!!true} htmlFor="name" />"#,
-        r#"<label aria-label={~0} htmlFor="name" />"#,
-        r#"<label aria-label={+"true"} htmlFor="name" />"#,
-        r#"<label aria-label={delete object.label} htmlFor="name" />"#,
-    ];
-    let fail = vec![
-        r#"<label aria-label="false" htmlFor="name" />"#,
-        r#"<label aria-label="FaLsE" htmlFor="name" />"#,
-        r#"<label aria-label={"false"} htmlFor="name" />"#,
-        r#"<label htmlFor="false">Name</label>"#,
-        r#"<label htmlFor="name"><span aria-label="false" /></label>"#,
-        r#"<label aria-label={-unknown} htmlFor="name" />"#,
-        r#"<label aria-label={-0} htmlFor="name" />"#,
-        r#"<label aria-label={-0n} htmlFor="name" />"#,
-        r#"<label aria-label={+0} htmlFor="name" />"#,
-        r#"<label aria-label={!true} htmlFor="name" />"#,
-        r#"<label aria-label={!!false} htmlFor="name" />"#,
-        r#"<label aria-label={~(-1)} htmlFor="name" />"#,
-        r#"<label aria-label={+"false"} htmlFor="name" />"#,
-        r"<label htmlFor={void 0}>Name</label>",
-        r#"<label aria-label={typeof value} htmlFor="name" />"#,
-    ];
-    Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
-        .with_snapshot_suffix("falsy_attribute_values")
-        .test_and_snapshot();
-}
-
-#[test]
-fn test_raw_template_attribute_values() {
-    use crate::tester::Tester;
-
-    let pass = vec![
-        r#"<label aria-label={`\uFEFF`} htmlFor="name" />"#,
-        r#"<label htmlFor="name"><span aria-label={`\uFEFF`} /></label>"#,
-        r#"<label aria-label={`\n`} htmlFor="name" />"#,
-        r#"<label aria-label={`false`} htmlFor="name" />"#,
-        r"<label htmlFor={`\uFEFF`}>Name</label>",
-    ];
-    let fail = vec![
-        r#"<label aria-label={``} htmlFor="name" />"#,
-        r#"<label aria-label={`  `} htmlFor="name" />"#,
-        r"<label htmlFor={``}>Name</label>",
-    ];
-    Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
-        .with_snapshot_suffix("raw_template_attribute_values")
-        .test_and_snapshot();
-}
-
-#[test]
-fn test_attribute_alias_precedence() {
-    use crate::tester::Tester;
-
-    let settings = Some(serde_json::json!({"settings": {"jsx-a11y": {
-        "attributes": {"for": ["htmlFor", "for"]}
-    }}}));
-    let pass = vec![
-        (r#"<label for="name">Name</label>"#, None, settings.clone()),
-        (r#"<label htmlFor="name" for="">Name</label>"#, None, settings.clone()),
-        (r#"<label for="" htmlFor="name">Name</label>"#, None, settings.clone()),
-        (r#"<label htmlFor={id} for="name">Name</label>"#, None, settings.clone()),
-        (r#"<label htmlFor="" for="name">Name<input /></label>"#, None, settings.clone()),
-        (
-            r#"<label htmlFor="" for="name">Name</label>"#,
-            None,
-            Some(serde_json::json!({"settings": {"jsx-a11y": {
-                "attributes": {"for": ["for", "htmlFor"]}
-            }}})),
-        ),
-    ];
-    let fail = vec![
-        (r#"<label htmlFor="" for="name">Name</label>"#, None, settings.clone()),
-        (r#"<label for="name" htmlFor="">Name</label>"#, None, settings.clone()),
-        (r#"<label htmlFor={null} for="name">Name</label>"#, None, settings.clone()),
-        (r#"<label htmlFor={false} for="name">Name</label>"#, None, settings.clone()),
-        (
-            r#"<label htmlFor="" for="name">Name<input /></label>"#,
-            Some(serde_json::json!([{ "assert": "both" }])),
-            settings,
-        ),
-    ];
-    Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
-        .with_snapshot_suffix("attribute_alias_precedence")
         .test_and_snapshot();
 }
