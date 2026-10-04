@@ -1,8 +1,8 @@
-commit: f29aeb9f
+commit: 4f5ddae2
 
 parser_typescript Summary:
-AST Parsed     : 9658/9666 (99.92%)
-Positive Passed: 9651/9666 (99.84%)
+AST Parsed     : 9661/9669 (99.92%)
+Positive Passed: 9654/9669 (99.84%)
 Negative Passed: 1691/2759 (61.29%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
