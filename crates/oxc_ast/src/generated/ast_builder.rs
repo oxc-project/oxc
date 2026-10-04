@@ -9062,6 +9062,7 @@ impl<'a> Statement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `exported`: If this declaration is re-named
     /// * `source`
+    /// * `phase`: `Some(ImportPhase::Defer)` for `export defer * as ns from 'module'`.
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
     #[inline]
@@ -9069,6 +9070,7 @@ impl<'a> Statement<'a> {
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         export_kind: ImportOrExportKind,
         builder: &impl GetAstBuilder<'a>,
@@ -9077,6 +9079,7 @@ impl<'a> Statement<'a> {
             span,
             exported,
             source,
+            phase,
             with_clause,
             export_kind,
             builder.builder(),
@@ -9150,6 +9153,7 @@ impl<'a> Statement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `specifiers`
     /// * `source`
+    /// * `phase`: `Some(ImportPhase::Defer)` for `export defer { foo } from 'module'`.
     /// * `export_kind`: `export type { foo } from 'module'`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
@@ -9157,6 +9161,7 @@ impl<'a> Statement<'a> {
         span: Span,
         specifiers: impl IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         export_kind: ImportOrExportKind,
         with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &impl GetAstBuilder<'a>,
@@ -9165,6 +9170,7 @@ impl<'a> Statement<'a> {
             span,
             specifiers,
             source,
+            phase,
             export_kind,
             with_clause,
             builder.builder(),
@@ -15674,6 +15680,7 @@ impl<'a> ModuleDeclaration<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `exported`: If this declaration is re-named
     /// * `source`
+    /// * `phase`: `Some(ImportPhase::Defer)` for `export defer * as ns from 'module'`.
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
     #[inline]
@@ -15681,6 +15688,7 @@ impl<'a> ModuleDeclaration<'a> {
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         export_kind: ImportOrExportKind,
         builder: &impl GetAstBuilder<'a>,
@@ -15689,6 +15697,7 @@ impl<'a> ModuleDeclaration<'a> {
             span,
             exported,
             source,
+            phase,
             with_clause,
             export_kind,
             builder.builder(),
@@ -15762,6 +15771,7 @@ impl<'a> ModuleDeclaration<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `specifiers`
     /// * `source`
+    /// * `phase`: `Some(ImportPhase::Defer)` for `export defer { foo } from 'module'`.
     /// * `export_kind`: `export type { foo } from 'module'`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
@@ -15769,6 +15779,7 @@ impl<'a> ModuleDeclaration<'a> {
         span: Span,
         specifiers: impl IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         export_kind: ImportOrExportKind,
         with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &impl GetAstBuilder<'a>,
@@ -15777,6 +15788,7 @@ impl<'a> ModuleDeclaration<'a> {
             span,
             specifiers,
             source,
+            phase,
             export_kind,
             with_clause,
             builder.builder(),
@@ -16434,6 +16446,7 @@ impl<'a> ExportFromDeclaration<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `specifiers`
     /// * `source`
+    /// * `phase`: `Some(ImportPhase::Defer)` for `export defer { foo } from 'module'`.
     /// * `export_kind`: `export type { foo } from 'module'`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
@@ -16441,6 +16454,7 @@ impl<'a> ExportFromDeclaration<'a> {
         span: Span,
         specifiers: impl IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         export_kind: ImportOrExportKind,
         with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &impl GetAstBuilder<'a>,
@@ -16451,6 +16465,7 @@ impl<'a> ExportFromDeclaration<'a> {
             span,
             specifiers: specifiers.into_in(builder.allocator()),
             source,
+            phase,
             export_kind,
             with_clause,
         }
@@ -16465,6 +16480,7 @@ impl<'a> ExportFromDeclaration<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `specifiers`
     /// * `source`
+    /// * `phase`: `Some(ImportPhase::Defer)` for `export defer { foo } from 'module'`.
     /// * `export_kind`: `export type { foo } from 'module'`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
@@ -16472,13 +16488,14 @@ impl<'a> ExportFromDeclaration<'a> {
         span: Span,
         specifiers: impl IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         export_kind: ImportOrExportKind,
         with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
-            Self::new(span, specifiers, source, export_kind, with_clause, builder),
+            Self::new(span, specifiers, source, phase, export_kind, with_clause, builder),
             &builder.allocator(),
         )
     }
@@ -16532,6 +16549,7 @@ impl<'a> ExportAllDeclaration<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `exported`: If this declaration is re-named
     /// * `source`
+    /// * `phase`: `Some(ImportPhase::Defer)` for `export defer * as ns from 'module'`.
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
     #[inline]
@@ -16539,6 +16557,7 @@ impl<'a> ExportAllDeclaration<'a> {
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         export_kind: ImportOrExportKind,
         builder: &impl GetAstBuilder<'a>,
@@ -16549,6 +16568,7 @@ impl<'a> ExportAllDeclaration<'a> {
             span,
             exported,
             source,
+            phase,
             with_clause,
             export_kind,
         }
@@ -16563,6 +16583,7 @@ impl<'a> ExportAllDeclaration<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `exported`: If this declaration is re-named
     /// * `source`
+    /// * `phase`: `Some(ImportPhase::Defer)` for `export defer * as ns from 'module'`.
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
     #[inline]
@@ -16570,13 +16591,14 @@ impl<'a> ExportAllDeclaration<'a> {
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         export_kind: ImportOrExportKind,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
-            Self::new(span, exported, source, with_clause, export_kind, builder),
+            Self::new(span, exported, source, phase, with_clause, export_kind, builder),
             &builder.allocator(),
         )
     }

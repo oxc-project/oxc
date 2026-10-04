@@ -22458,13 +22458,6 @@ Negative Passed: 4653/4653 (100.00%)
     ╰────
 
   × Unexpected token
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-export-defer-namespace.js:33:8]
- 32 │ 
- 33 │ export defer * as ns from "./dep_FIXTURE.js";
-    ·        ─────
-    ╰────
-
-  × Unexpected token
     ╭─[test262/test/language/keywords/ident-ref-break.js:21:7]
  20 │ 
  21 │ break = 1;

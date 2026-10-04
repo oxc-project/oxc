@@ -1369,6 +1369,12 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    export_defer_star_without_as(span: Span) => {
+        OxcDiagnostic::error("`export defer *` is not allowed. Explicitly list the re-exported names.")
+            .with_help("Use `export defer { ... } from` or `export defer * as ns from`")
+            .with_label(span)
+    };
+
     ts_import_type_options_expected_with(span: Span) => {
         OxcDiagnostic::error("Expected 'with' in import type options").with_label(span)
     };

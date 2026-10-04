@@ -928,12 +928,13 @@ const _: () = {
     assert!(offset_of!(ExportNamedDeclaration, export_kind) == 12);
     assert!(offset_of!(ExportNamedDeclaration, specifiers) == 16);
 
-    // Padding: 3 bytes
+    // Padding: 2 bytes
     assert!(size_of::<ExportFromDeclaration>() == 96);
     assert!(align_of::<ExportFromDeclaration>() == 8);
     assert!(offset_of!(ExportFromDeclaration, span) == 0);
     assert!(offset_of!(ExportFromDeclaration, node_id) == 8);
-    assert!(offset_of!(ExportFromDeclaration, export_kind) == 12);
+    assert!(offset_of!(ExportFromDeclaration, phase) == 12);
+    assert!(offset_of!(ExportFromDeclaration, export_kind) == 13);
     assert!(offset_of!(ExportFromDeclaration, specifiers) == 16);
     assert!(offset_of!(ExportFromDeclaration, source) == 40);
     assert!(offset_of!(ExportFromDeclaration, with_clause) == 88);
@@ -945,12 +946,13 @@ const _: () = {
     assert!(offset_of!(ExportDefaultDeclaration, node_id) == 8);
     assert!(offset_of!(ExportDefaultDeclaration, declaration) == 16);
 
-    // Padding: 3 bytes
+    // Padding: 2 bytes
     assert!(size_of::<ExportAllDeclaration>() == 128);
     assert!(align_of::<ExportAllDeclaration>() == 8);
     assert!(offset_of!(ExportAllDeclaration, span) == 0);
     assert!(offset_of!(ExportAllDeclaration, node_id) == 8);
-    assert!(offset_of!(ExportAllDeclaration, export_kind) == 12);
+    assert!(offset_of!(ExportAllDeclaration, phase) == 12);
+    assert!(offset_of!(ExportAllDeclaration, export_kind) == 13);
     assert!(offset_of!(ExportAllDeclaration, exported) == 16);
     assert!(offset_of!(ExportAllDeclaration, source) == 72);
     assert!(offset_of!(ExportAllDeclaration, with_clause) == 120);
@@ -2770,12 +2772,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ExportNamedDeclaration, export_kind) == 12);
     assert!(offset_of!(ExportNamedDeclaration, specifiers) == 16);
 
-    // Padding: 3 bytes
+    // Padding: 2 bytes
     assert!(size_of::<ExportFromDeclaration>() == 68);
     assert!(align_of::<ExportFromDeclaration>() == 4);
     assert!(offset_of!(ExportFromDeclaration, span) == 0);
     assert!(offset_of!(ExportFromDeclaration, node_id) == 8);
-    assert!(offset_of!(ExportFromDeclaration, export_kind) == 12);
+    assert!(offset_of!(ExportFromDeclaration, phase) == 12);
+    assert!(offset_of!(ExportFromDeclaration, export_kind) == 13);
     assert!(offset_of!(ExportFromDeclaration, specifiers) == 16);
     assert!(offset_of!(ExportFromDeclaration, source) == 32);
     assert!(offset_of!(ExportFromDeclaration, with_clause) == 64);
@@ -2787,12 +2790,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ExportDefaultDeclaration, node_id) == 8);
     assert!(offset_of!(ExportDefaultDeclaration, declaration) == 12);
 
-    // Padding: 3 bytes
+    // Padding: 2 bytes
     assert!(size_of::<ExportAllDeclaration>() == 88);
     assert!(align_of::<ExportAllDeclaration>() == 4);
     assert!(offset_of!(ExportAllDeclaration, span) == 0);
     assert!(offset_of!(ExportAllDeclaration, node_id) == 8);
-    assert!(offset_of!(ExportAllDeclaration, export_kind) == 12);
+    assert!(offset_of!(ExportAllDeclaration, phase) == 12);
+    assert!(offset_of!(ExportAllDeclaration, export_kind) == 13);
     assert!(offset_of!(ExportAllDeclaration, exported) == 16);
     assert!(offset_of!(ExportAllDeclaration, source) == 52);
     assert!(offset_of!(ExportAllDeclaration, with_clause) == 84);
