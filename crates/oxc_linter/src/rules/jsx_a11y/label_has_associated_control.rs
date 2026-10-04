@@ -453,7 +453,8 @@ fn get_attribute_expression_value<'a>(
     let value = match expression.get_inner_expression() {
         Expression::StringLiteral(literal) => AttributeValue::from_literal(&literal.value),
         Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
-            AttributeValue::String(template.quasis.first()?.value.cooked.as_ref()?)
+            // jsx-ast-utils uses raw template text, including escape sequences.
+            AttributeValue::String(template.quasis.first()?.value.raw.as_str())
         }
         Expression::NullLiteral(_) => AttributeValue::Number(0.0),
         Expression::BooleanLiteral(literal) => AttributeValue::Number(f64::from(literal.value)),
@@ -1871,5 +1872,26 @@ fn test_falsy_attribute_values() {
     ];
     Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
         .with_snapshot_suffix("falsy_attribute_values")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_raw_template_attribute_values() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        r#"<label aria-label={`\uFEFF`} htmlFor="name" />"#,
+        r#"<label htmlFor="name"><span aria-label={`\uFEFF`} /></label>"#,
+        r#"<label aria-label={`\n`} htmlFor="name" />"#,
+        r#"<label aria-label={`false`} htmlFor="name" />"#,
+        r"<label htmlFor={`\uFEFF`}>Name</label>",
+    ];
+    let fail = vec![
+        r#"<label aria-label={``} htmlFor="name" />"#,
+        r#"<label aria-label={`  `} htmlFor="name" />"#,
+        r"<label htmlFor={``}>Name</label>",
+    ];
+    Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
+        .with_snapshot_suffix("raw_template_attribute_values")
         .test_and_snapshot();
 }
