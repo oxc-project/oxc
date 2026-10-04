@@ -21647,18 +21647,18 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
 
   × TS(1222): An overload signature cannot be declared as a generator.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts:2:7]
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts:2:5]
  1 │ class C {
  2 │     *f(s: string): Iterable<any>;
-   ·       ───────────────────────────
+   ·     ─────────────────────────────
  3 │     *f(s: number): Iterable<any>;
    ╰────
 
   × TS(1222): An overload signature cannot be declared as a generator.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts:3:7]
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts:3:5]
  2 │     *f(s: string): Iterable<any>;
  3 │     *f(s: number): Iterable<any>;
-   ·       ───────────────────────────
+   ·     ─────────────────────────────
  4 │     *f(s: any): Iterable<any> { }
    ╰────
 
