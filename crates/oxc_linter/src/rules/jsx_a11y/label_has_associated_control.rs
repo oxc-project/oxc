@@ -2,12 +2,16 @@ use std::ops::Deref;
 
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement},
+    ast::{Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{StringToNumber, ToInt32};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use oxc_syntax::{
+    identifier::is_white_space, line_terminator::is_line_terminator, operator::UnaryOperator,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -203,13 +207,17 @@ impl Rule for LabelHasAssociatedControl {
             return;
         }
 
-        let has_html_for = if let Some(attributes) = ctx.settings().jsx_a11y.attributes.get("for") {
-            attributes
-                .iter()
-                .any(|attr| has_jsx_prop(&element.opening_element, attr.as_str()).is_some())
+        // Upstream validates the first present alias, even when its value is falsy.
+        let html_for_attribute = if let Some(attributes) =
+            ctx.settings().jsx_a11y.attributes.get("for")
+        {
+            attributes.iter().find_map(|attr| has_jsx_prop(&element.opening_element, attr.as_str()))
         } else {
-            has_jsx_prop(&element.opening_element, "htmlFor").is_some()
+            has_jsx_prop(&element.opening_element, "htmlFor")
         };
+        let has_html_for = html_for_attribute
+            .and_then(JSXAttributeItem::as_attribute)
+            .is_some_and(|attr| has_attribute_value(attr.value.as_ref(), false));
 
         let has_control = self.has_nested_control(element, ctx);
 
@@ -257,13 +265,7 @@ impl LabelHasAssociatedControl {
     }
 
     fn has_accessible_label<'a>(&self, root: &JSXElement<'a>, ctx: &LintContext<'a>) -> bool {
-        if root.opening_element.attributes.iter().any(|attribute| match attribute {
-            JSXAttributeItem::Attribute(attr) => {
-                let attr_name = get_jsx_attribute_name(&attr.name);
-                self.label_attributes.binary_search(&attr_name.into()).is_ok()
-            }
-            JSXAttributeItem::SpreadAttribute(_) => true,
-        }) {
+        if self.has_labelling_prop(root) {
             return true;
         }
 
@@ -274,6 +276,17 @@ impl LabelHasAssociatedControl {
         }
 
         false
+    }
+
+    fn has_labelling_prop(&self, element: &JSXElement<'_>) -> bool {
+        element.opening_element.attributes.iter().any(|attribute| match attribute {
+            JSXAttributeItem::Attribute(attr) => {
+                let attr_name = get_jsx_attribute_name(&attr.name);
+                self.label_attributes.binary_search(&attr_name.into()).is_ok()
+                    && has_attribute_value(attr.value.as_ref(), true)
+            }
+            JSXAttributeItem::SpreadAttribute(_) => true,
+        })
     }
 
     fn has_nested_control<'a>(&self, root: &JSXElement<'a>, ctx: &LintContext<'a>) -> bool {
@@ -339,25 +352,7 @@ impl LabelHasAssociatedControl {
             JSXChild::ExpressionContainer(_) => true,
             JSXChild::Text(text) => !text.value.as_str().trim().is_empty(),
             JSXChild::Element(element) => {
-                let has_labelling_prop =
-                    element.opening_element.attributes.iter().any(|attr| match attr {
-                        JSXAttributeItem::Attribute(attribute) => {
-                            self.label_attributes.iter().any(|labelling_prop| {
-                                attribute.is_identifier(labelling_prop)
-                                    && attribute.value.as_ref().is_some_and(|attribute_value| {
-                                        match attribute_value {
-                                            JSXAttributeValue::StringLiteral(literal) => {
-                                                !literal.value.as_str().trim().is_empty()
-                                            }
-                                            _ => true,
-                                        }
-                                    })
-                            })
-                        }
-                        JSXAttributeItem::SpreadAttribute(_) => true,
-                    });
-
-                if has_labelling_prop {
+                if self.has_labelling_prop(element) {
                     return true;
                 }
 
@@ -392,6 +387,111 @@ impl LabelHasAssociatedControl {
     }
 }
 
+fn has_attribute_value(value: Option<&JSXAttributeValue<'_>>, trim_strings: bool) -> bool {
+    match value {
+        Some(JSXAttributeValue::StringLiteral(literal)) => {
+            AttributeValue::from_literal(&literal.value).has_value(trim_strings)
+        }
+        Some(JSXAttributeValue::ExpressionContainer(container)) => container
+            .expression
+            .as_expression()
+            .and_then(get_attribute_expression_value)
+            .is_none_or(|value| value.has_value(trim_strings)),
+        // Bare attributes and unknown values may provide a label, as in the upstream rule.
+        _ => true,
+    }
+}
+
+// Match jsx-ast-utils' primitive value extraction rather than runtime string truthiness.
+#[derive(Clone, Copy)]
+enum AttributeValue<'a> {
+    String(&'a str),
+    Number(f64),
+    BigInt(bool),
+}
+
+impl<'a> AttributeValue<'a> {
+    fn from_literal(text: &'a str) -> Self {
+        if text.eq_ignore_ascii_case("false") {
+            Self::Number(0.0)
+        } else if text.eq_ignore_ascii_case("true") {
+            Self::Number(1.0)
+        } else {
+            Self::String(text)
+        }
+    }
+
+    fn has_value(self, trim_strings: bool) -> bool {
+        match self {
+            Self::String(text) => {
+                let text = if trim_strings {
+                    text.trim_matches(|c| is_white_space(c) || is_line_terminator(c))
+                } else {
+                    text
+                };
+                !text.is_empty()
+            }
+            Self::Number(value) => value != 0.0 && !value.is_nan(),
+            Self::BigInt(nonzero) => nonzero,
+        }
+    }
+
+    fn to_number(self) -> Option<f64> {
+        match self {
+            Self::String(text) => Some(text.string_to_number()),
+            Self::Number(value) => Some(value),
+            Self::BigInt(_) => None,
+        }
+    }
+}
+
+fn get_attribute_expression_value<'a>(
+    expression: &'a Expression<'_>,
+) -> Option<AttributeValue<'a>> {
+    let value = match expression.get_inner_expression() {
+        Expression::StringLiteral(literal) => AttributeValue::from_literal(&literal.value),
+        Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
+            // jsx-ast-utils uses raw template text, including escape sequences.
+            AttributeValue::String(template.quasis.first()?.value.raw.as_str())
+        }
+        Expression::NullLiteral(_) => AttributeValue::Number(0.0),
+        Expression::BooleanLiteral(literal) => AttributeValue::Number(f64::from(literal.value)),
+        Expression::NumericLiteral(literal) => AttributeValue::Number(literal.value),
+        Expression::BigIntLiteral(literal) => AttributeValue::BigInt(!literal.is_zero()),
+        Expression::Identifier(identifier) => match identifier.name.as_str() {
+            "undefined" => AttributeValue::Number(f64::NAN),
+            "Infinity" => AttributeValue::Number(f64::INFINITY),
+            // Upstream represents unknown identifiers by their name.
+            name => AttributeValue::String(name),
+        },
+        Expression::UnaryExpression(unary) => {
+            let value = match unary.operator {
+                // jsx-ast-utils returns undefined for both operators.
+                UnaryOperator::Void | UnaryOperator::Typeof => f64::NAN,
+                UnaryOperator::Delete => 1.0,
+                operator => {
+                    let argument = get_attribute_expression_value(&unary.argument)?;
+                    if unary.operator == UnaryOperator::UnaryNegation
+                        && matches!(argument, AttributeValue::BigInt(_))
+                    {
+                        return Some(argument);
+                    }
+                    match operator {
+                        UnaryOperator::UnaryNegation => -argument.to_number()?,
+                        UnaryOperator::UnaryPlus => argument.to_number()?,
+                        UnaryOperator::LogicalNot => f64::from(!argument.has_value(false)),
+                        UnaryOperator::BitwiseNot => f64::from(!argument.to_number()?.to_int_32()),
+                        _ => unreachable!(),
+                    }
+                }
+            };
+            AttributeValue::Number(value)
+        }
+        _ => return None,
+    };
+    Some(value)
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -421,7 +521,7 @@ fn test() {
         })
     }
 
-    let pass = vec![
+    let mut pass = vec![
         (
             r#"<label htmlFor="js_id"><span><span><span>A label</span></span></span></label>"#,
             Some(serde_json::json!([{ "depth": 4, "assert": "htmlFor" }])),
@@ -977,7 +1077,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         (
             r#"<label htmlFor="js_id"><span><span><span>A label</span></span></span></label>"#,
             Some(serde_json::json!([{
@@ -1663,6 +1763,161 @@ fn test() {
             None,
         ),
     ];
+
+    {
+        pass.extend(vec![
+            (r#"<label aria-label="Name" htmlFor="name" />"#, None, None),
+            (r"<label aria-label={label} htmlFor={id} />", None, None),
+            (r#"<label aria-label htmlFor="name" />"#, None, None),
+            (r#"<label htmlFor="name"><span aria-label /></label>"#, None, None),
+            (r#"<label htmlFor="name"><span {...props} /></label>"#, None, None),
+            (r#"<label {...props} htmlFor="name" />"#, None, None),
+            (r#"<label htmlFor="">Name<input /></label>"#, None, None),
+            (r#"<label aria-label="">Name<input /></label>"#, None, None),
+            (r#"<label htmlFor=" ">Name</label>"#, None, None),
+            (r"<label htmlFor>Name</label>", None, None),
+            (r#"<label aria-label={`Name`} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={`${label}`} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={1n} htmlFor="name" />"#, None, None),
+            (r"<label htmlFor={1n}>Name</label>", None, None),
+            (r#"<label aria-label={"\u0085"} htmlFor="name" />"#, None, None),
+            (r#"<label htmlFor="name"><span aria-label={"\u0085"} /></label>"#, None, None),
+            (r#"<label htmlFor={"\uFEFF"}>Name</label>"#, None, None),
+        ]);
+        fail.extend(vec![
+            (r#"<label aria-label="" htmlFor="name" />"#, None, None),
+            (r#"<label aria-label="  " htmlFor="name" />"#, None, None),
+            (r#"<label aria-labelledby="" htmlFor="name" />"#, None, None),
+            (r#"<label alt="" htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={""} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={"  "} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={``} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={null} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={false} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={0} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={0n} htmlFor="name" />"#, None, None),
+            (r#"<label aria-label={"\uFEFF"} htmlFor="name" />"#, None, None),
+            (r#"<label htmlFor="name"><span aria-label={"\uFEFF"} /></label>"#, None, None),
+            (r#"<label aria-label={undefined} htmlFor="name" />"#, None, None),
+            (r#"<label htmlFor="name"><span aria-label={""} /></label>"#, None, None),
+            (r#"<label htmlFor="">Name</label>"#, None, None),
+            (r#"<label htmlFor={""}>Name</label>"#, None, None),
+            (r"<label htmlFor={null}>Name</label>", None, None),
+            (r"<label htmlFor={false}>Name</label>", None, None),
+            (r"<label htmlFor={0n}>Name</label>", None, None),
+            (
+                r#"<label htmlFor="">Name<input /></label>"#,
+                Some(serde_json::json!([{ "assert": "both" }])),
+                None,
+            ),
+            (
+                r#"<label label="" htmlFor="name" />"#,
+                Some(serde_json::json!([{
+                    "labelAttributes": ["label"]
+                }])),
+                None,
+            ),
+            (
+                r#"<label for="">Name</label>"#,
+                None,
+                Some(serde_json::json!({"settings": {"jsx-a11y": {
+                    "attributes": {"for": ["for"]}
+                }}})),
+            ),
+        ]);
+    }
+
+    {
+        pass.extend(
+            vec![
+                r#"<label aria-label="true" htmlFor="name" />"#,
+                r#"<label aria-label=" false " htmlFor="name" />"#,
+                r#"<label aria-label={-1} htmlFor="name" />"#,
+                r#"<label aria-label={!false} htmlFor="name" />"#,
+                r#"<label aria-label={!!true} htmlFor="name" />"#,
+                r#"<label aria-label={~0} htmlFor="name" />"#,
+                r#"<label aria-label={+"true"} htmlFor="name" />"#,
+                r#"<label aria-label={delete object.label} htmlFor="name" />"#,
+            ]
+            .into_iter()
+            .map(|code| (code, None, None)),
+        );
+        fail.extend(
+            vec![
+                r#"<label aria-label="false" htmlFor="name" />"#,
+                r#"<label aria-label="FaLsE" htmlFor="name" />"#,
+                r#"<label aria-label={"false"} htmlFor="name" />"#,
+                r#"<label htmlFor="false">Name</label>"#,
+                r#"<label htmlFor="name"><span aria-label="false" /></label>"#,
+                r#"<label aria-label={-unknown} htmlFor="name" />"#,
+                r#"<label aria-label={-0} htmlFor="name" />"#,
+                r#"<label aria-label={-0n} htmlFor="name" />"#,
+                r#"<label aria-label={+0} htmlFor="name" />"#,
+                r#"<label aria-label={!true} htmlFor="name" />"#,
+                r#"<label aria-label={!!false} htmlFor="name" />"#,
+                r#"<label aria-label={~(-1)} htmlFor="name" />"#,
+                r#"<label aria-label={+"false"} htmlFor="name" />"#,
+                r"<label htmlFor={void 0}>Name</label>",
+                r#"<label aria-label={typeof value} htmlFor="name" />"#,
+            ]
+            .into_iter()
+            .map(|code| (code, None, None)),
+        );
+    }
+
+    {
+        pass.extend(
+            vec![
+                r#"<label aria-label={`\uFEFF`} htmlFor="name" />"#,
+                r#"<label htmlFor="name"><span aria-label={`\uFEFF`} /></label>"#,
+                r#"<label aria-label={`\n`} htmlFor="name" />"#,
+                r#"<label aria-label={`false`} htmlFor="name" />"#,
+                r"<label htmlFor={`\uFEFF`}>Name</label>",
+            ]
+            .into_iter()
+            .map(|code| (code, None, None)),
+        );
+        fail.extend(
+            vec![
+                r#"<label aria-label={``} htmlFor="name" />"#,
+                r#"<label aria-label={`  `} htmlFor="name" />"#,
+                r"<label htmlFor={``}>Name</label>",
+            ]
+            .into_iter()
+            .map(|code| (code, None, None)),
+        );
+    }
+
+    {
+        let settings = Some(serde_json::json!({"settings": {"jsx-a11y": {
+            "attributes": {"for": ["htmlFor", "for"]}
+        }}}));
+        pass.extend(vec![
+            (r#"<label for="name">Name</label>"#, None, settings.clone()),
+            (r#"<label htmlFor="name" for="">Name</label>"#, None, settings.clone()),
+            (r#"<label for="" htmlFor="name">Name</label>"#, None, settings.clone()),
+            (r#"<label htmlFor={id} for="name">Name</label>"#, None, settings.clone()),
+            (r#"<label htmlFor="" for="name">Name<input /></label>"#, None, settings.clone()),
+            (
+                r#"<label htmlFor="" for="name">Name</label>"#,
+                None,
+                Some(serde_json::json!({"settings": {"jsx-a11y": {
+                    "attributes": {"for": ["for", "htmlFor"]}
+                }}})),
+            ),
+        ]);
+        fail.extend(vec![
+            (r#"<label htmlFor="" for="name">Name</label>"#, None, settings.clone()),
+            (r#"<label for="name" htmlFor="">Name</label>"#, None, settings.clone()),
+            (r#"<label htmlFor={null} for="name">Name</label>"#, None, settings.clone()),
+            (r#"<label htmlFor={false} for="name">Name</label>"#, None, settings.clone()),
+            (
+                r#"<label htmlFor="" for="name">Name<input /></label>"#,
+                Some(serde_json::json!([{ "assert": "both" }])),
+                settings,
+            ),
+        ]);
+    }
 
     Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
         .test_and_snapshot();
