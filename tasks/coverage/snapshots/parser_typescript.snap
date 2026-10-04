@@ -18261,10 +18261,10 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ╰────
 
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:5]
  31 │ abstract class B {
  32 │     abstract #quux = 3;      // Error
-    ·              ─────
+    ·     ────────
  33 │ }
     ╰────
 

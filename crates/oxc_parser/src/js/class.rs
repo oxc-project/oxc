@@ -797,7 +797,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
         if r#abstract && name.is_private_identifier() {
-            self.error(diagnostics::abstract_with_private_identifier(name.span()));
+            let modifier = modifiers.get(ModifierKind::Abstract).unwrap();
+            self.error(diagnostics::abstract_with_private_identifier(modifier.span()));
         }
         if r#abstract && initializer.is_some() {
             let (name, span) = self.abstract_member_name(&name);
