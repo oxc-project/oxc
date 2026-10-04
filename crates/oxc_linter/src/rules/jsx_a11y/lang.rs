@@ -141,6 +141,16 @@ fn test() {
         ("<Foo lang={undefined} />", None, None),
         ("<Foo lang='en' />", None, Some(settings())),
         ("<Box as='html' lang='en'  />", None, Some(settings())),
+        (r#"<html lang={"en"} />"#, None, None),
+        (r#"<html lang={"en-US"} />"#, None, None),
+        (r"<html lang={`zh-Hans`} />", None, None),
+        (r"<html lang={`\u0065n`} />", None, None),
+        (r#"<html lang={("en" as const)} />"#, None, None),
+        (r"<html lang={language} />", None, None),
+        (r"<html lang={`${language}`} />", None, None),
+        (r#"<div lang={"foo"} />"#, None, None),
+        (r#"<Foo lang={"en"} />"#, None, Some(settings())),
+        (r#"<Box as="html" lang={`en-US`} />"#, None, Some(settings())),
     ];
 
     let fail = vec![
@@ -150,31 +160,6 @@ fn test() {
         ("<html lang={undefined} />", None, None),
         ("<Foo lang={undefined} />", None, Some(settings())),
         ("<Box as='html' lang='foo' />", None, Some(settings())),
-    ];
-
-    Tester::new(Lang::NAME, Lang::PLUGIN, pass, fail).test_and_snapshot();
-}
-
-#[test]
-fn test_expression_strings() {
-    use crate::tester::Tester;
-
-    let settings = Some(serde_json::json!({ "settings": { "jsx-a11y": {
-        "polymorphicPropName": "as", "components": { "Document": "html" }
-    }}}));
-    let pass = vec![
-        (r#"<html lang={"en"} />"#, None, None),
-        (r#"<html lang={"en-US"} />"#, None, None),
-        (r"<html lang={`zh-Hans`} />", None, None),
-        (r"<html lang={`\u0065n`} />", None, None),
-        (r#"<html lang={("en" as const)} />"#, None, None),
-        (r"<html lang={language} />", None, None),
-        (r"<html lang={`${language}`} />", None, None),
-        (r#"<div lang={"foo"} />"#, None, None),
-        (r#"<Document lang={"en"} />"#, None, settings.clone()),
-        (r#"<Box as="html" lang={`en-US`} />"#, None, settings.clone()),
-    ];
-    let fail = vec![
         (r#"<html lang={"foo"} />"#, None, None),
         (r#"<html lang={""} />"#, None, None),
         (r#"<html lang={"zz-LL"} />"#, None, None),
@@ -183,10 +168,9 @@ fn test_expression_strings() {
         (r"<html lang={`\u0066oo`} />", None, None),
         (r#"<html lang={("foo" as const)} />"#, None, None),
         (r"<html lang={`zz-LL`} />", None, None),
-        (r#"<Document lang={"foo"} />"#, None, settings.clone()),
-        (r#"<Box as="html" lang={`foo`} />"#, None, settings),
+        (r#"<Foo lang={"foo"} />"#, None, Some(settings())),
+        (r#"<Box as="html" lang={`foo`} />"#, None, Some(settings())),
     ];
-    Tester::new(Lang::NAME, Lang::PLUGIN, pass, fail)
-        .with_snapshot_suffix("expression_strings")
-        .test_and_snapshot();
+
+    Tester::new(Lang::NAME, Lang::PLUGIN, pass, fail).test_and_snapshot();
 }
