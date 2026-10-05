@@ -10,10 +10,12 @@ import {
   CAT_IDENT,
   CAT_INT_DIGIT,
   CAT_OP_UN_NEG,
+  CAT_OP_UN_NOT_AFTER_LT,
   CAT_OP_UN_PLUS,
   CAT_OP_UPD_DEC,
   CAT_OP_UPD_INC,
   CAT_OTHER,
+  CAT_REGEX_SLASH,
 } from "./categories.ts";
 import { debugAssertLastFresh, write } from "./write.ts";
 
@@ -21,14 +23,14 @@ import type { Category } from "./categories.ts";
 import type { State } from "../state.ts";
 
 // `printSpaceBeforeIdentifier` selects the categories needing a space by their position in `Category` numbering.
-// Check `category <= CAT_INT_DIGIT` matches the intended categories, and no others.
+// Check `category <= CAT_REGEX_SLASH` matches the intended categories, and no others.
 if (DEBUG) {
   for (const category of ALL_CATEGORIES) {
-    const expected = [CAT_IDENT, CAT_INT_DIGIT].includes(category);
-    const actual = category <= CAT_INT_DIGIT;
+    const expected = [CAT_IDENT, CAT_INT_DIGIT, CAT_REGEX_SLASH].includes(category);
+    const actual = category <= CAT_REGEX_SLASH;
     debugAssert(
       actual === expected,
-      `Category ${category} disagrees with \`last <= CAT_INT_DIGIT\``,
+      `Category ${category} disagrees with \`last <= CAT_REGEX_SLASH\``,
     );
   }
 }
@@ -46,23 +48,27 @@ export function printSpaceBeforeIdentifier(state: State): void {
   // `last` starts as `CAT_OTHER` (start of output behaves like after whitespace),
   // so no empty-output check is needed.
   // Everything needing a space before an identifier is one of the lowest codes, so this is one compare -
-  // identifier characters and a plain-digit number.
-  if (state.last <= CAT_INT_DIGIT) write(state, " ", CAT_OTHER);
+  // identifier characters, a plain-digit number, and a regex closed with no flags.
+  if (state.last <= CAT_REGEX_SLASH) write(state, " ", CAT_OTHER);
 }
 
 // `printSpaceBeforeOperator` selects the categories needing a space by their position in `Category` numbering.
-// Check `category >= CAT_OP_UN_PLUS` matches the intended categories, and no others.
+// Check `category >= CAT_OP_UN_NOT_AFTER_LT` matches the intended categories, and no others.
 // `CAT_OP_UN_NOT` is deliberately absent - `printSpaceBeforeOperatorSlow` has no clause for a
 // plain `!`, so it sits below the range and storing it costs the slow path nothing.
 if (DEBUG) {
   for (const category of ALL_CATEGORIES) {
-    const expected = [CAT_OP_UN_PLUS, CAT_OP_UPD_INC, CAT_OP_UN_NEG, CAT_OP_UPD_DEC].includes(
-      category,
-    );
-    const actual = category >= CAT_OP_UN_PLUS;
+    const expected = [
+      CAT_OP_UN_NOT_AFTER_LT,
+      CAT_OP_UN_PLUS,
+      CAT_OP_UPD_INC,
+      CAT_OP_UN_NEG,
+      CAT_OP_UPD_DEC,
+    ].includes(category);
+    const actual = category >= CAT_OP_UN_NOT_AFTER_LT;
     debugAssert(
       actual === expected,
-      `Category ${category} disagrees with \`last >= CAT_OP_UN_PLUS\``,
+      `Category ${category} disagrees with \`last >= CAT_OP_UN_NOT_AFTER_LT\``,
     );
   }
 }
@@ -82,7 +88,7 @@ export function printSpaceBeforeOperator(state: State, next: Category): void {
   // The slow path only runs when an operator it distinguishes was the immediately preceding token,
   // which is rare in pretty output. Keep the hot check inlinable.
   const prev = state.last;
-  if (prev >= CAT_OP_UN_PLUS) printSpaceBeforeOperatorSlow(state, prev, next);
+  if (prev >= CAT_OP_UN_NOT_AFTER_LT) printSpaceBeforeOperatorSlow(state, prev, next);
 }
 
 /**
@@ -91,6 +97,14 @@ export function printSpaceBeforeOperator(state: State, next: Category): void {
  *
  * In pretty mode binary operators are written space-padded, so they never leave an operator code in `last`
  * and are never passed as `next` - only unary and update operators reach here.
+ * Oxc's `print_space_before_operator` also has clauses for the binary cases, but those were already
+ * unreachable here, and there is now no code which could produce a binary operator's category.
+ *
+ * Only prefix operators appear as `next` - `+ +y`, `- --y` - which is why `prev` being `++` or
+ * `--` matches no clause. That is not a gap: in pretty output a postfix `++`/`--` is always
+ * followed by punctuation or a padded binary operator, never directly by another operator. (The
+ * asymmetry is the Rust original's, where it is live in minified mode - unpadded `(x++)+y` must
+ * print `x+++y` with no space, while unary `+ +y` must keep one.)
  *
  * @param prev - Category of the operator written last
  * @param next - Category of the operator about to be written
@@ -99,6 +113,7 @@ function printSpaceBeforeOperatorSlow(state: State, prev: Category, next: Catego
   if (
     (prev === CAT_OP_UN_PLUS && (next === CAT_OP_UN_PLUS || next === CAT_OP_UPD_INC))
     || (prev === CAT_OP_UN_NEG && (next === CAT_OP_UN_NEG || next === CAT_OP_UPD_DEC))
+    || (prev === CAT_OP_UN_NOT_AFTER_LT && next === CAT_OP_UPD_DEC)
   ) {
     write(state, " ", CAT_OTHER);
   }

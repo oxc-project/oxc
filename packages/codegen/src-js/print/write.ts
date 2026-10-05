@@ -11,11 +11,13 @@ import {
   CAT_LT,
   CAT_OP_UN_NEG,
   CAT_OP_UN_NOT,
+  CAT_OP_UN_NOT_AFTER_LT,
   CAT_OP_UN_PLUS,
   CAT_OP_UPD_DEC,
   CAT_OP_UPD_INC,
   CAT_OTHER,
   CAT_QUESTION,
+  CAT_REGEX_SLASH,
 } from "./categories.ts";
 
 import type { Category } from "./categories.ts";
@@ -37,13 +39,14 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  */
 export function write(state: State, code: string, last: Category): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
-  debugAssertCategoryMatches(code, last);
+  debugAssertCategoryMatches(state, code, last);
 
   state.last = last;
   state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
   }
 }
 
@@ -59,13 +62,14 @@ export function write(state: State, code: string, last: Category): void {
  */
 export function writeIdent(state: State, code: string): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
-  debugAssertCategoryMatches(code, CAT_IDENT);
+  debugAssertCategoryMatches(state, code, CAT_IDENT);
 
   state.last = CAT_IDENT;
   state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
   }
 }
 
@@ -82,7 +86,7 @@ export function writeIdent(state: State, code: string): void {
  */
 export function writePrivate(state: State, name: string): void {
   debugAssert(name.length > 0, "`name` should not be an empty string");
-  debugAssertCategoryMatches(name, CAT_IDENT);
+  debugAssertCategoryMatches(state, name, CAT_IDENT);
 
   state.last = CAT_IDENT;
   state.output += "#";
@@ -90,6 +94,7 @@ export function writePrivate(state: State, name: string): void {
 
   if (DEBUG) {
     state.lastIsStale = false;
+    state.lastCharWritten = name[name.length - 1];
   }
 }
 
@@ -117,7 +122,7 @@ export function writeWithMap(
   node: UnnamedMappableNode,
 ): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
-  debugAssertCategoryMatches(code, last);
+  debugAssertCategoryMatches(state, code, last);
 
   markMapStart(state, start, end, node);
 
@@ -126,6 +131,7 @@ export function writeWithMap(
 
   if (DEBUG) {
     state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
   }
 }
 
@@ -154,7 +160,7 @@ export function writeWithMapNamed(
   node: IdentMappableNode,
 ): void {
   debugAssert(name.length > 0, "`name` should not be an empty string");
-  debugAssertCategoryMatches(name, CAT_IDENT);
+  debugAssertCategoryMatches(state, name, CAT_IDENT);
   debugAssertNameMatches(node, name);
 
   markMapNamed(state, name, false, 0, start, end, node);
@@ -164,6 +170,7 @@ export function writeWithMapNamed(
 
   if (DEBUG) {
     state.lastIsStale = false;
+    state.lastCharWritten = name[name.length - 1];
   }
 }
 
@@ -193,7 +200,7 @@ export function writeWithMapNamedPrivate(
   node: ESTree.PrivateIdentifier,
 ): void {
   debugAssert(name.length > 0, "`name` should not be an empty string");
-  debugAssertCategoryMatches(name, CAT_IDENT);
+  debugAssertCategoryMatches(state, name, CAT_IDENT);
   debugAssertNameMatches(node, name);
 
   markMapNamed(state, name, false, 1, start, end, node);
@@ -204,6 +211,7 @@ export function writeWithMapNamedPrivate(
 
   if (DEBUG) {
     state.lastIsStale = false;
+    state.lastCharWritten = name[name.length - 1];
   }
 }
 
@@ -227,6 +235,7 @@ export function writeNoLast(state: State, code: string): void {
 
   if (DEBUG) {
     state.lastIsStale = true;
+    if (code.length > 0) state.lastCharWritten = code[code.length - 1];
   }
 }
 
@@ -260,6 +269,7 @@ export function writeWithMapNoLast(
 
   if (DEBUG) {
     state.lastIsStale = true;
+    if (code.length > 0) state.lastCharWritten = code[code.length - 1];
   }
 }
 
@@ -296,6 +306,7 @@ export function writeWithMapNamedNoLast(
 
   if (DEBUG) {
     state.lastIsStale = true;
+    if (name.length > 0) state.lastCharWritten = name[name.length - 1];
   }
 }
 
@@ -331,6 +342,7 @@ export function writeWithMapNamedJSXNoLast(
 
   if (DEBUG) {
     state.lastIsStale = true;
+    if (name.length > 0) state.lastCharWritten = name[name.length - 1];
   }
 }
 
@@ -362,7 +374,7 @@ export function writeWithMapEnd(
   node: MappableNode,
 ): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
-  debugAssertCategoryMatches(code, last);
+  debugAssertCategoryMatches(state, code, last);
 
   markMapEnd(state, start, end, node);
 
@@ -371,6 +383,7 @@ export function writeWithMapEnd(
 
   if (DEBUG) {
     state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
   }
 }
 
@@ -828,11 +841,12 @@ const JSX_IDENTIFIER_REGEX = /^[\p{ID_Start}$_](?:[\p{ID_Continue}$-]|\u200C|\u2
  *
  * Debug builds only. Removed by minifier in release builds.
  *
+ * @param state - Printer state
  * @param code - Code being appended to output
  * @param last - Category of the last character of `code`
  * @throws - If `last` and `code` do not match
  */
-function debugAssertCategoryMatches(code: string, last: Category): void {
+function debugAssertCategoryMatches(state: State, code: string, last: Category): void {
   if (!DEBUG) return;
 
   const ch = code.at(-1)!;
@@ -859,13 +873,19 @@ function debugAssertCategoryMatches(code: string, last: Category): void {
       ok = last === CAT_OP_UN_NEG;
     }
   } else if (ch === "!") {
-    ok = last === CAT_OP_UN_NOT;
+    // The two operator categories are told apart by the character before the `!`, which also proves
+    // the `CAT_OP_UN_NOT_AFTER_LT` branch in `printUnaryExpression` fires exactly when it should
+    if (last === CAT_OP_UN_NOT_AFTER_LT) {
+      ok = state.lastCharWritten === "<";
+    } else {
+      ok = last === CAT_OP_UN_NOT && state.lastCharWritten !== "<";
+    }
   } else if (ch === "<") {
     ok = last === CAT_LT;
   } else if (ch === "?") {
     ok = last === CAT_QUESTION;
   } else if (ch === "/") {
-    ok = last === CAT_OTHER;
+    ok = last === CAT_REGEX_SLASH;
   } else if (ch === ")" || ch === "]") {
     ok = last === CAT_CLOSE_BRACKET;
   } else {
