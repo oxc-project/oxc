@@ -1049,6 +1049,14 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Remove `void 0` from a non-delegating `yield`.
+    /// `yield void 0` -> `yield`
+    pub fn substitute_yield_expression(expr: &mut YieldExpression<'a>) {
+        if !expr.delegate && expr.argument.as_ref().is_some_and(Expression::is_void_0) {
+            expr.argument = None;
+        }
+    }
+
     fn compress_variable_declarator(
         decl: &mut VariableDeclarator<'a>,
         kind: VariableDeclarationKind,
@@ -1802,14 +1810,6 @@ impl<'a> PeepholeOptimizations {
         seq_expr.expressions.push(expr.take_in(ctx));
         let new_value = Expression::SequenceExpression(seq_expr);
         ctx.replace_expression(expr, new_value);
-    }
-
-    /// Remove `void 0` from a non-delegating `yield`.
-    /// `yield void 0` -> `yield`
-    pub fn fold_yield_expression(expr: &mut YieldExpression<'a>) {
-        if !expr.delegate && expr.argument.as_ref().is_some_and(Expression::is_void_0) {
-            expr.argument = None;
-        }
     }
 
     fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: Ident<'a>) -> bool {

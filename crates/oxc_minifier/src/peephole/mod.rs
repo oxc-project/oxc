@@ -591,7 +591,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::fold_sequence_expression(expr, ctx);
                 }
                 Expression::YieldExpression(e) => {
-                    Self::fold_yield_expression(e);
+                    Self::substitute_yield_expression(e);
                     Self::fold_sequence_expression(expr, ctx);
                 }
                 Expression::AwaitExpression(_) => {

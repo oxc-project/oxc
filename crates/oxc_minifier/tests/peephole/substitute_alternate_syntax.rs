@@ -1140,7 +1140,7 @@ fn test_fold_sequence_expression() {
 }
 
 #[test]
-fn test_fold_yield_expression() {
+fn test_substitute_yield_expression() {
     test("function* a() { yield 2 }", "function* a() { yield 2; }");
     test("function* a() { yield void 0; }", "function* a() { yield; }");
     test("function* a() { yield undefined; }", "function* a() { yield; }");
