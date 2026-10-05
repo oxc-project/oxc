@@ -128,6 +128,7 @@ oxc_ast_macros = { version = "0.153.0", path = "crates/oxc_ast_macros" } # AST p
 oxc_ast_visit = { version = "0.153.0", path = "crates/oxc_ast_visit" } # AST visitor pattern
 oxc_cfg = { version = "0.153.0", path = "crates/oxc_cfg" } # Control flow graph
 oxc_codegen = { version = "0.153.0", path = "crates/oxc_codegen", default-features = false } # Code generation
+oxc_comment_assignment = { version = "0.153.0", path = "crates/oxc_comment_assignment" } # Comment assignment
 oxc_compat = { version = "0.153.0", path = "crates/oxc_compat" } # Browser compatibility
 oxc_data_structures = { version = "0.153.0", path = "crates/oxc_data_structures" } # Shared data structures
 oxc_diagnostics = { version = "0.153.0", path = "crates/oxc_diagnostics" } # Error reporting

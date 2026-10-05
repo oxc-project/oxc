@@ -39,7 +39,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
 
         self.expect_closing(Kind::RCurly, opening_span);
-        FunctionBody::boxed(self.end_span(start), directives, statements, self)
+        let body = FunctionBody::boxed(self.end_span(start), directives, statements, self);
+        let start = body.statements.last().map_or_else(
+            || body.directives.last().map_or(body.span.start, |directive| directive.span.end),
+            |statement| statement.span().end,
+        );
+        self.assign_body_end_comments(body.node_id.get(), body.span, start);
+        body
     }
 
     pub(crate) fn parse_formal_parameters(
@@ -174,7 +180,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         rest
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_formal_parameter_with_decorators(
+        &mut self,
+        func_kind: FunctionKind,
+        start: u32,
+        decorators: ArenaVec<'a, Decorator<'a>>,
+    ) -> FormalParameter<'a> {
+        if self.cur_token().has_preceding_comment() {
+            self.parse_with_leading_comments(|p| {
+                p.parse_formal_parameter_core(func_kind, start, decorators)
+            })
+        } else {
+            self.parse_formal_parameter_core(func_kind, start, decorators)
+        }
+    }
+
+    fn parse_formal_parameter_core(
         &mut self,
         func_kind: FunctionKind,
         start: u32,

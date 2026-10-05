@@ -86,22 +86,6 @@ impl<'a> TriviaBuilder<'a> {
         self.no_side_effects_comments = None;
     }
 
-    pub fn mark_pure_comments_applied(&mut self, (start, end): (u32, NonZeroU32)) {
-        for comment in &mut self.comments[start as usize..end.get() as usize] {
-            if comment.content == CommentContent::PureNotApplied {
-                comment.content = CommentContent::Pure;
-            }
-        }
-    }
-
-    pub fn mark_no_side_effects_comments_applied(&mut self, (start, end): (u32, NonZeroU32)) {
-        for comment in &mut self.comments[start as usize..end.get() as usize] {
-            if comment.content == CommentContent::NoSideEffectsNotApplied {
-                comment.content = CommentContent::NoSideEffects;
-            }
-        }
-    }
-
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
         // The irregular whitespaces array is ordered; only add if not added before, to avoid
         // duplicates when the parser looks ahead (e.g. `peek_token`) and rewinds, then re-lexes the
@@ -563,19 +547,28 @@ mod test {
     use crate::Parser;
 
     fn get_comments(source_text: &str) -> Vec<Comment> {
-        let allocator = Allocator::default();
-        let source_type = SourceType::default();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.diagnostics.is_empty());
-        ret.program.comments.into_iter().collect::<Vec<_>>()
+        get_comments_with_source_type(source_text, SourceType::default())
     }
 
     fn get_comments_typescript(source_text: &str) -> Vec<Comment> {
+        get_comments_with_source_type(source_text, SourceType::default().with_typescript(true))
+    }
+
+    fn get_comments_with_source_type(source_text: &str, source_type: SourceType) -> Vec<Comment> {
         let allocator = Allocator::default();
-        let source_type = SourceType::default().with_typescript(true);
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
-        ret.program.comments.into_iter().collect::<Vec<_>>()
+        // These tests check lexer metadata independently of parser node ownership.
+        ret.program
+            .comments
+            .into_iter()
+            .map(|mut comment| {
+                assert_ne!(comment.node_id.get(), Comment::UNASSIGNED_NODE_ID);
+                comment.node_id.set(NodeId::DUMMY);
+                comment.placement = CommentPlacement::Leading;
+                comment
+            })
+            .collect()
     }
 
     #[test]

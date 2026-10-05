@@ -26,6 +26,7 @@ static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
 impl<'a, C: Config> Lexer<'a, C> {
     /// Section 12.4 Single Line Comment
     pub(super) fn skip_single_line_comment(&mut self, kind: CommentKind) -> Kind {
+        self.token.set_has_preceding_comment();
         byte_search! {
             lexer: self,
             table: LINE_BREAK_TABLE,
@@ -82,6 +83,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
+        self.token.set_has_preceding_comment();
         // We need to identify if comment contains line breaks or not
         // (`CommentKind::SingleLineBlock` or `CommentKind::MultiLineBlock`).
         // So we have to use the loop below for the first line of the comment even if

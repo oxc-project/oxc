@@ -6,6 +6,7 @@ use oxc_regular_expression::ast::Pattern;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{
+    node::NodeId,
     number::{BigintBase, NumberBase},
     precedence::Precedence,
 };
@@ -64,7 +65,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return lhs;
         }
 
+        let original_id = lhs.node_id();
         let expr = self.parse_sequence_expression(start, lhs);
+        self.remap_leading_comment_owner(start, original_id, expr.node_id());
 
         if has_decorator {
             self.ctx = self.ctx.and_decorator(true);
@@ -306,7 +309,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut expression = if expressions.len() == 1 {
             expressions.remove(0)
         } else {
-            Expression::new_sequence_expression(expr_span, expressions, self)
+            let original_id = expressions[0].node_id();
+            let expression = Expression::new_sequence_expression(expr_span, expressions, self);
+            self.remap_leading_comment_owner(expr_span.start, original_id, expression.node_id());
+            expression
         };
 
         match &mut expression {
@@ -314,14 +320,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 arrow_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     arrow_expr.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    self.mark_no_side_effects_comments_applied(arrow_expr.node_id.get(), comments);
                 }
             }
             Expression::FunctionExpression(func_expr) => {
                 func_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     func_expr.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    self.mark_no_side_effects_comments_applied(func_expr.node_id.get(), comments);
                 }
             }
             _ => {}
@@ -788,12 +794,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         parse: impl FnOnce(&mut Self) -> Expression<'a>,
     ) -> Expression<'a> {
-        let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+        if self.lexer.trivia_builder.previous_token_pure_comments().is_some() {
+            self.parse_with_pure_comments(parse)
+        } else {
+            parse(self)
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn parse_with_pure_comments(
+        &mut self,
+        parse: impl FnOnce(&mut Self) -> Expression<'a>,
+    ) -> Expression<'a> {
+        let comments = self.lexer.trivia_builder.previous_token_pure_comments().unwrap();
         let mut expr = parse(self);
-        if let Some(comments) = pure_comments
-            && Self::set_pure_on_call_or_new_expr(&mut expr)
-        {
-            self.lexer.trivia_builder.mark_pure_comments_applied(comments);
+        if let Some(node_id) = Self::set_pure_on_call_or_new_expr(&mut expr) {
+            self.mark_pure_comments_applied(node_id, comments);
         }
         expr
     }
@@ -1390,9 +1407,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 continue;
             }
 
+            let has_comments = self.cur_token().has_preceding_comment();
             self.bump_any(); // bump operator
             let rhs_start = self.cur_start();
+            let has_comments = has_comments || self.cur_token().has_preceding_comment();
             let rhs = self.parse_binary_expression_or_higher(left_precedence);
+            if has_comments {
+                self.assign_sibling_comments(
+                    lhs.node_id(),
+                    lhs.span().end,
+                    rhs.node_id(),
+                    rhs_start,
+                );
+            }
 
             lhs = if kind.is_logical_operator() {
                 let span = self.end_span(lhs_start);
@@ -1454,18 +1481,41 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs: Expression<'a>,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let question_span = self.token.span();
-        if !self.eat(Kind::Question) {
+        if !self.at(Kind::Question) {
             return lhs;
         }
+        let question_span = self.token.span();
+        let has_comments = self.cur_token().has_preceding_comment();
+        self.bump_any();
+        let prefix_end = self.cur_start();
+        let has_comments = has_comments || self.cur_token().has_preceding_comment();
         let consequent = self.context_add(Context::In, |p| {
             p.parse_assignment_expression_or_higher_impl(
                 /* allow_return_type_in_arrow_function */ false,
             )
         });
+        if has_comments {
+            self.assign_sibling_comments(
+                lhs.node_id(),
+                lhs.span().end,
+                consequent.node_id(),
+                prefix_end,
+            );
+        }
+        let has_comments = self.cur_token().has_preceding_comment();
         self.expect_conditional_alternative(question_span);
+        let prefix_end = self.cur_start();
+        let has_comments = has_comments || self.cur_token().has_preceding_comment();
         let alternate =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
+        if has_comments {
+            self.assign_sibling_comments(
+                consequent.node_id(),
+                consequent.span().end,
+                alternate.node_id(),
+                prefix_end,
+            );
+        }
         Expression::new_conditional_expression(
             self.end_span(lhs_start),
             lhs,
@@ -1482,38 +1532,66 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_assignment_expression_or_higher_impl(
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
+        if self.cur_token().has_preceding_comment()
+            && (self.statement_comment_start != self.cur_start()
+                || self.lexer.trivia_builder.previous_token_no_side_effects_comments().is_some())
+        {
+            self.parse_assignment_expression_with_comments(allow_return_type_in_arrow_function)
+        } else {
+            self.parse_assignment_expression_core(allow_return_type_in_arrow_function)
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn parse_assignment_expression_with_comments(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        let comments = self.leading_expression_comments();
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
+        let mut expression =
+            self.parse_assignment_expression_core(allow_return_type_in_arrow_function);
+        if let Some(comments) = no_side_effects_comments
+            && let Some(node_id) = Self::set_pure_on_function_expr(&mut expression)
+        {
+            self.mark_no_side_effects_comments_applied(node_id, comments);
+        }
+        if let Some(comments) = comments {
+            self.assign_expression_leading_comments(
+                expression.node_id(),
+                expression.span().start,
+                comments,
+            );
+        }
+        expression
+    }
+
+    fn parse_assignment_expression_core(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
             return self.parse_yield_expression();
         }
         // `() => {}`, `(x) => {}`
-        if let Some(mut arrow_expr) = self
+        if let Some(arrow_expr) = self
             .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
         {
-            if let Some(comments) = no_side_effects_comments
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-            {
-                func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
-            }
             return arrow_expr;
         }
         // `async x => {}`
-        if let Some(mut arrow_expr) = self
+        if let Some(arrow_expr) = self
             .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
         {
-            if let Some(comments) = no_side_effects_comments
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-            {
-                func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
-            }
             return arrow_expr;
         }
 
@@ -1527,51 +1605,37 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if kind == Kind::Arrow
             && let Expression::Identifier(ident) = &lhs
         {
-            let mut arrow_expr = self.parse_simple_arrow_function_expression(
+            let arrow_expr = self.parse_simple_arrow_function_expression(
                 start,
                 ident,
                 /* async */ false,
                 allow_return_type_in_arrow_function,
             );
-            if let Some(comments) = no_side_effects_comments
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-            {
-                func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
-            }
             return arrow_expr;
         }
 
         if kind.is_assignment_operator() {
-            return self.parse_assignment_expression_recursive(
+            let expression = self.parse_assignment_expression_recursive(
                 start,
                 lhs,
                 lhs_parenthesized_span,
                 allow_return_type_in_arrow_function,
             );
+            return expression;
         }
 
-        let mut expr =
-            self.parse_conditional_expression_rest(start, lhs, allow_return_type_in_arrow_function);
-
-        if let Some(comments) = no_side_effects_comments
-            && Self::set_pure_on_function_expr(&mut expr)
-        {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
-        }
-
-        expr
+        self.parse_conditional_expression_rest(start, lhs, allow_return_type_in_arrow_function)
     }
 
-    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {
+    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> Option<NodeId> {
         match expr.get_inner_expression_mut() {
             Expression::CallExpression(call_expr) => {
                 call_expr.pure = true;
-                true
+                Some(call_expr.node_id.get())
             }
             Expression::NewExpression(new_expr) => {
                 new_expr.pure = true;
-                true
+                Some(new_expr.node_id.get())
             }
             expr @ match_member_expression!(Expression) => {
                 Self::set_pure_on_call_or_new_expr(expr.to_member_expression_mut().object_mut())
@@ -1579,7 +1643,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Expression::ChainExpression(chain_expr) => match &mut chain_expr.expression {
                 ChainElement::CallExpression(call_expr) => {
                     call_expr.pure = true;
-                    true
+                    Some(call_expr.node_id.get())
                 }
                 element @ match_member_expression!(ChainElement) => {
                     Self::set_pure_on_call_or_new_expr(
@@ -1590,21 +1654,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Self::set_pure_on_call_or_new_expr(&mut non_null_expr.expression)
                 }
             },
-            _ => false,
+            _ => None,
         }
     }
 
-    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) -> bool {
+    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) -> Option<NodeId> {
         match expr {
             Expression::FunctionExpression(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id.get())
             }
             Expression::ArrowFunctionExpression(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id.get())
             }
-            _ => false,
+            _ => None,
         }
     }
 

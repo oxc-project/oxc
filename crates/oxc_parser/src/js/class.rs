@@ -244,6 +244,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_class_element(&mut self) -> ClassElement<'a> {
+        let leading_comments = self.leading_node_comments();
         let elem = self.parse_class_element_impl();
         if let ClassElement::MethodDefinition(def) = &elem
             && def.value.body.is_none()
@@ -252,6 +253,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             for decorator in &def.decorators {
                 self.error(diagnostics::decorator_on_overload(decorator.span));
             }
+        }
+        if let Some(comments) = leading_comments {
+            self.assign_node_leading_comments(elem.node_id(), elem.span().start, comments);
         }
         elem
     }
@@ -427,7 +431,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Context::Yield | Context::Return,
             Self::parse_block,
         );
-        ClassElement::new_static_block(self.end_span(start), block.unbox().body, self)
+        let gap_start =
+            block.body.last().map_or(block.span.start, |statement| statement.span().end);
+        let element =
+            ClassElement::new_static_block(self.end_span(start), block.unbox().body, self);
+        self.assign_body_end_comments(element.node_id(), element.span(), gap_start);
+        element
     }
 
     /// <https://github.com/tc39/proposal-decorators>
