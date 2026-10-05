@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -11,11 +11,11 @@ use oxc_span::SourceType;
 
 use crate::{
     core::{
-        EmbeddedCallbackResolved, ExternalServices, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb,
-        JsFormatFileCb, JsSortTailwindClassesCb,
+        ExternalServices, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
+        JsSortTailwindClassesCb,
         embed::{self, dispatcher::ResolvedDispatchConfig},
+        options::{ValidatedOptions, to_oxc_formatter, validate},
         oxfmtrc::FormatConfig,
-        resolve_for_embedded_js,
     },
     prettier_compat::to_prettier_doc,
 };
@@ -122,7 +122,7 @@ fn run_full(
 ) -> Option<Value> {
     // Tailwind paths in the payload are already absolute (resolved by the host before serialization),
     // so no `cwd` is threaded through here.
-    let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
+    let (config, validated, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
 
     let external_services = ExternalServices::new(
         format_file_cb,
@@ -132,13 +132,11 @@ fn run_full(
     );
     let _cleanup = external_services.cleanup_guard();
 
-    let EmbeddedCallbackResolved { format_options, config, validated, parent_filepath } =
-        resolve_for_embedded_js(config, parent_filepath)
-            .expect("`_oxfmtPluginOptionsJson` should contain valid config");
-
+    let format_options = to_oxc_formatter(&config, validated.core, validated.sort_imports.clone());
     // Per-language options (and the Prettier options JSON with the Tailwind payload)
-    // are mapped lazily at dispatch time; `validated` comes from resolution.
-    let dispatch_config = ResolvedDispatchConfig::for_root(&config, validated, &parent_filepath);
+    // are mapped lazily at dispatch time.
+    let dispatch_config =
+        ResolvedDispatchConfig::for_root(Arc::new(config), Arc::new(validated), &parent_filepath);
 
     let services = embed::services::for_root(&external_services, &dispatch_config);
 
@@ -151,7 +149,7 @@ fn run_full(
         services,
     );
     let formatted = match tokio::task::block_in_place(|| {
-        oxc_formatter::format_with_session(&session, source_text, source_type, *format_options)
+        oxc_formatter::format_with_session(&session, source_text, source_type, format_options)
     }) {
         Ok(formatted) => formatted,
         Err(err) => {
@@ -186,12 +184,10 @@ fn run_fragment(
     oxfmt_plugin_options_json: &str,
     kind: FragmentKind,
 ) -> Option<Value> {
-    let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
-    // Reuses the same config resolver as `run_full()`, but only `format_options` is needed here,
+    // Unlike `run_full()`, only the JS options are needed,
     // since `run_fragment()` does not dispatch external services callbacks.
-    let resolved = resolve_for_embedded_js(config, parent_filepath)
-        .expect("`_oxfmtPluginOptionsJson` should contain valid config");
-    let format_options = resolved.format_options;
+    let (config, validated, _) = parse_payload(oxfmt_plugin_options_json);
+    let format_options = to_oxc_formatter(&config, validated.core, validated.sort_imports);
 
     // Map the Prettier-side fragment kind to the formatter's usage context.
     // The parens-vs-no-parens / quote-style decisions live inside `format_fragment`.
@@ -206,7 +202,7 @@ fn run_fragment(
         &allocator,
         source_text,
         source_type,
-        *format_options,
+        format_options,
         context,
     ) {
         Ok(formatted) => formatted,
@@ -226,8 +222,8 @@ fn run_fragment(
 
 // ---
 
-/// Deserialize `_oxfmtPluginOptionsJson` into the typed config + parent filepath.
-fn parse_payload(oxfmt_plugin_options_json: &str) -> (FormatConfig, PathBuf) {
+/// Deserialize `_oxfmtPluginOptionsJson` into the validated config + parent filepath.
+fn parse_payload(oxfmt_plugin_options_json: &str) -> (FormatConfig, ValidatedOptions, PathBuf) {
     #[derive(Deserialize)]
     struct Payload {
         config: FormatConfig,
@@ -235,5 +231,7 @@ fn parse_payload(oxfmt_plugin_options_json: &str) -> (FormatConfig, PathBuf) {
     }
     let payload: Payload = serde_json::from_str(oxfmt_plugin_options_json)
         .expect("`_oxfmtPluginOptionsJson` should deserialize");
-    (payload.config, PathBuf::from(payload.filepath))
+    let validated =
+        validate(&payload.config).expect("`_oxfmtPluginOptionsJson` should contain valid config");
+    (payload.config, validated, PathBuf::from(payload.filepath))
 }

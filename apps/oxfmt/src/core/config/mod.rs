@@ -11,7 +11,6 @@ pub use nested::NestedConfigCtx;
 pub use scopes::ConfigScopes;
 
 use std::{
-    borrow::Cow,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -23,15 +22,11 @@ use serde_json::Value;
 use tracing::instrument;
 
 use oxc_config::{ConfigDiscovery, DiscoveredConfigFile, is_js_config_path, vp_version};
-#[cfg(feature = "napi")]
-use oxc_formatter::JsFormatOptions;
 
 use self::{
     editorconfig::{apply_editorconfig, resolve_editorconfig_overrides, root_properties},
     overrides::OxfmtrcOverrides,
 };
-#[cfg(feature = "napi")]
-use super::options::to_oxc_formatter;
 use super::{
     FormatStrategy,
     global_ignore::matches_with_ancestors,
@@ -126,14 +121,14 @@ pub enum ResolveOutcome {
 /// so a plugin-gating change can never leave one path behind.
 fn into_outcome(
     config: Arc<FormatConfig>,
-    validated: &ValidatedOptions,
+    validated: Arc<ValidatedOptions>,
     kind: FileKind,
 ) -> ResolveOutcome {
     #[cfg(feature = "napi")]
     if let Some(plugin) = kind.requires_plugin(&config) {
         return ResolveOutcome::MissingPlugin(plugin);
     }
-    ResolveOutcome::Format(FormatStrategy::from_format_config(config, validated, kind))
+    ResolveOutcome::Format(FormatStrategy { kind, config, validated })
 }
 
 /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
@@ -158,48 +153,7 @@ pub fn resolve_for_api(
     // downstream mapping consumes the derived artifacts and cannot re-fail,
     // and `Prettier` kinds have no later chance before values reach Prettier.
     let validated = validate(&format_config)?;
-    Ok(into_outcome(Arc::new(format_config), &validated, kind))
-}
-
-/// Resolved options ready for the embedded callback to drive `oxc_formatter`.
-#[cfg(feature = "napi")]
-#[derive(Debug)]
-pub struct EmbeddedCallbackResolved {
-    /// Other xxx-in-js options are may be or may not be used, so derived lazily with `config` and `validated`.
-    /// `JsFormatOptions` is always needed, so hold it here.
-    pub format_options: Box<JsFormatOptions>,
-    /// Retained so nested embedded callbacks can derive Prettier options on demand.
-    pub config: Arc<FormatConfig>,
-    /// For the root's dispatch config, see [`crate::core::embed::dispatcher::ResolvedDispatchConfig::for_root`].
-    pub validated: ValidatedOptions,
-    pub parent_filepath: PathBuf,
-}
-
-/// Resolve options for an embedded JS/TS fragment.
-///
-/// Called from [`crate::api::text_to_doc_api`] when Prettier invokes the
-/// `prettier-plugin-oxfmt` callback with the typed config + parent filepath
-/// recovered from `_oxfmtPluginOptionsJson`.
-///
-/// Returns the materialized pieces directly rather than a [`FormatStrategy`]
-/// because the callback drives `oxc_formatter` itself, not via `SourceFormatter::format()`.
-///
-/// Tailwind paths in `config` are already absolute (resolved by the host before serialization),
-/// so no `cwd` is threaded through here.
-#[cfg(feature = "napi")]
-pub fn resolve_for_embedded_js(
-    config: FormatConfig,
-    parent_filepath: PathBuf,
-) -> Result<EmbeddedCallbackResolved, String> {
-    let validated = validate(&config)?;
-    let format_options =
-        Box::new(to_oxc_formatter(&config, validated.core, validated.sort_imports.clone()));
-    Ok(EmbeddedCallbackResolved {
-        format_options,
-        config: Arc::new(config),
-        validated,
-        parent_filepath,
-    })
+    Ok(into_outcome(Arc::new(format_config), Arc::new(validated), kind))
 }
 
 // ---
@@ -225,7 +179,7 @@ pub struct ConfigResolver {
     /// together with its validation-gate artifacts,
     /// so the pair can never go stale against each other and the fast path re-derives nothing.
     /// `Arc` so the fast path hands out shares instead of deep-cloning per file.
-    base: Option<(Arc<FormatConfig>, ValidatedOptions)>,
+    base: Option<(Arc<FormatConfig>, Arc<ValidatedOptions>)>,
     /// Resolved overrides from `.oxfmtrc` for file-specific matching.
     oxfmtrc_overrides: Option<OxfmtrcOverrides>,
     /// Ignore glob built from this config's `ignorePatterns`.
@@ -428,7 +382,7 @@ impl ConfigResolver {
         // Eagerly validate; see method doc for the rationale.
         // The snapshot and its gate artifacts are cached as one pair for the fast path.
         let validated = validate(&format_config)?;
-        self.base = Some((Arc::new(format_config), validated));
+        self.base = Some((Arc::new(format_config), Arc::new(validated)));
 
         // Build ignore glob from `ignorePatterns` config field
         let ignore_patterns = oxfmtrc.ignore_patterns.unwrap_or_default();
@@ -443,7 +397,7 @@ impl ConfigResolver {
     #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %kind.path().display()))]
     pub fn resolve(&self, kind: FileKind) -> Result<ResolveOutcome, String> {
         let (format_config, validated) = self.resolve_options(kind.path())?;
-        Ok(into_outcome(format_config, &validated, kind))
+        Ok(into_outcome(format_config, validated, kind))
     }
 
     /// Resolve `FormatConfig` for a specific file path.
@@ -455,7 +409,7 @@ impl ConfigResolver {
     ///
     /// Fast path: reuses the snapshot + gate artifacts cached by [`Self::build_and_validate`].
     /// Slow path: always validates the merged config here
-    ///   the single gate for every kind (downstream carving is infallible;
+    ///   the single gate for every kind (the format step's option mapping is infallible;
     ///   for `Prettier` kinds this is also the only safety net before values reach Prettier).
     ///
     /// # Errors
@@ -465,7 +419,7 @@ impl ConfigResolver {
     fn resolve_options(
         &self,
         path: &Path,
-    ) -> Result<(Arc<FormatConfig>, Cow<'_, ValidatedOptions>), String> {
+    ) -> Result<(Arc<FormatConfig>, Arc<ValidatedOptions>), String> {
         let oxfmtrc_overrides =
             self.oxfmtrc_overrides.as_ref().map_or_else(Vec::new, |o| o.matching(path));
         // `.editorconfig` `[*]` is already folded in during `build_and_validate()`,
@@ -477,7 +431,7 @@ impl ConfigResolver {
         if oxfmtrc_overrides.is_empty() && editorconfig_overrides.is_none() {
             let (config, validated) =
                 self.base.as_ref().expect("`build_and_validate()` must be called first");
-            return Ok((Arc::clone(config), Cow::Borrowed(validated)));
+            return Ok((Arc::clone(config), Arc::clone(validated)));
         }
 
         // Slow path: must rebuild from `raw_config`, NOT from the cached `base` snapshot.
@@ -508,7 +462,7 @@ impl ConfigResolver {
         // see method doc for what kinds of errors are caught and why this is the single gate.
         let validated = validate(&format_config)?;
 
-        Ok((Arc::new(format_config), Cow::Owned(validated)))
+        Ok((Arc::new(format_config), Arc::new(validated)))
     }
 }
 
@@ -570,7 +524,7 @@ mod tests_slow_path_validation {
     }
 
     /// PR #21919 follow-up: invalid override values must be caught at resolve time
-    /// (`from_format_config` is infallible, so `resolve_options`'s slow-path validation is the only gate).
+    /// (the format step is infallible, so `resolve_options`'s slow-path validation is the only gate).
     /// Without it, `printWidth: 1000` (above LineWidth::MAX = 320) would silently leak into the Prettier options.
     #[test]
     #[cfg(feature = "napi")]
@@ -586,9 +540,6 @@ mod tests_slow_path_validation {
         let kind = FileKind::Prettier {
             path: Arc::from(PathBuf::from("data.json").as_path()),
             parser_name: "json",
-            supports_tailwind: false,
-            supports_oxfmt: false,
-            supports_svelte: false,
         };
         let err = resolver.resolve(kind).unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
@@ -629,9 +580,6 @@ mod tests_slow_path_validation {
         let kind = FileKind::Prettier {
             path: Arc::from(PathBuf::from("page.vue").as_path()),
             parser_name: "vue",
-            supports_tailwind: true,
-            supports_oxfmt: true,
-            supports_svelte: false,
         };
         let err = resolve_for_api(serde_json::json!({ "printWidth": 1000 }), kind, Path::new("."))
             .unwrap_err();

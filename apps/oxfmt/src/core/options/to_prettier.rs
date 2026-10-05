@@ -187,7 +187,7 @@ pub fn inject_filepath(opts: &mut Value, path: &Path) {
 /// Inject Tailwind plugin keys derived from `config.sort_tailwindcss`.
 ///
 /// No-ops when `sortTailwindcss` is disabled in config (activation check).
-/// The caller gates this on capability (`supports_tailwind`).
+/// The caller gates this on capability (the Prettier parser).
 ///
 /// See: <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
 pub fn inject_tailwind_plugin_payload(opts: &mut Value, config: &FormatConfig) {
@@ -230,7 +230,7 @@ pub fn build_prettier_options(config: &FormatConfig, path: &Path) -> Value {
 /// Inject Svelte plugin keys derived from `config.svelte`.
 ///
 /// No-ops when `svelte` is disabled (unset or `false`) — `Bool(true)` falls back to defaults.
-/// The callers gate this on capability: a `.svelte` / `.mdx` file (`supports_svelte`),
+/// The callers gate this on capability: a `.svelte` / `.mdx` file,
 /// and a Markdown code block through the Doc→IR fallback (`ResolvedDispatchConfig::prettier_options_for`).
 ///
 /// See: <https://github.com/sveltejs/prettier-plugin-svelte#options>
@@ -260,7 +260,7 @@ pub fn inject_svelte_plugin_payload(opts: &mut Value, config: &FormatConfig) {
 /// `filepath` is shipped explicitly because Prettier replaces it with
 /// `dummy.{ts,tsx}` for some embedded contexts (e.g., js-in-mdx).
 ///
-/// The caller gates this on capability (`supports_oxfmt`).
+/// The caller gates this on capability (the Prettier parser).
 ///
 /// # Panics
 ///

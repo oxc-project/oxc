@@ -8,12 +8,9 @@ use std::sync::{Arc, OnceLock};
 
 use tracing::{debug, debug_span};
 
-use oxc_formatter::{
-    CssInJsTemplate, JsEmbeddedIn, JsFormatOptions, MarkdownInJsTemplate, SortImportsOptions,
-};
+use oxc_formatter::{CssInJsTemplate, JsEmbeddedIn, JsFormatOptions, MarkdownInJsTemplate};
 use oxc_formatter_core::{
-    CoreFormatOptions, DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher,
-    FormatSession,
+    DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher, FormatSession,
 };
 use oxc_formatter_core::{FormatOptions, PrinterOptions};
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
@@ -148,12 +145,11 @@ pub struct ResolvedDispatchConfig {
     /// Embedded children inherit it, mirroring Prettier's `textToDoc` (parent-options spread);
     /// never a re-resolution for a virtual path.
     config: Arc<FormatConfig>,
-    /// Core options validated once by the config-resolution gate (`options::validate`).
+    /// The config-resolution gate's artifacts (`options::validate`), shared with the resolver's cache.
     /// Holding them pre-validated is what lets the per-language mappers be infallible.
-    core: CoreFormatOptions,
-    /// The gate's other artifact, for JS children: a Markdown code block is a whole program,
+    /// `sort_imports` is for JS children too: a Markdown code block is a whole program,
     /// sorted like the host's own imports (and a Vue `<script>`'s).
-    sort_imports: Option<SortImportsOptions>,
+    validated: Arc<ValidatedOptions>,
     js: OnceLock<JsFormatOptions>,
     graphql: OnceLock<GraphqlFormatOptions>,
     /// One cell per [`CssVariant`]: JSDoc fences dispatch css/scss/less as-is, while css-in-js always uses Scss.
@@ -185,12 +181,10 @@ struct PrettierOptions {
 
 impl ResolvedDispatchConfig {
     /// Private so [`Self::for_root`] stays the only construction recipe.
-    fn new(config: Arc<FormatConfig>, validated: ValidatedOptions) -> Self {
-        let ValidatedOptions { core, sort_imports } = validated;
+    fn new(config: Arc<FormatConfig>, validated: Arc<ValidatedOptions>) -> Self {
         Self {
             config,
-            core,
-            sort_imports,
+            validated,
             js: OnceLock::new(),
             graphql: OnceLock::new(),
             css: [OnceLock::new(), OnceLock::new(), OnceLock::new()],
@@ -208,11 +202,11 @@ impl ResolvedDispatchConfig {
     /// `validated` is the config-resolution gate's artifacts (`options::validate`),
     /// carried from resolution so they never get re-derived (or re-fail) here.
     pub fn for_root(
-        config: &Arc<FormatConfig>,
-        validated: ValidatedOptions,
+        config: Arc<FormatConfig>,
+        validated: Arc<ValidatedOptions>,
         path: &std::path::Path,
     ) -> Arc<Self> {
-        let dispatch_config = Self::new(Arc::clone(config), validated);
+        let dispatch_config = Self::new(config, validated);
         #[cfg(feature = "napi")]
         let dispatch_config = dispatch_config.with_path(path.to_path_buf());
         #[cfg(not(feature = "napi"))]
@@ -239,12 +233,18 @@ impl ResolvedDispatchConfig {
 
     pub fn js_options(&self) -> JsFormatOptions {
         self.js
-            .get_or_init(|| to_oxc_formatter(&self.config, self.core, self.sort_imports.clone()))
+            .get_or_init(|| {
+                to_oxc_formatter(
+                    &self.config,
+                    self.validated.core,
+                    self.validated.sort_imports.clone(),
+                )
+            })
             .clone()
     }
 
     pub fn graphql_options(&self) -> GraphqlFormatOptions {
-        *self.graphql.get_or_init(|| to_oxc_formatter_graphql(&self.config, self.core))
+        *self.graphql.get_or_init(|| to_oxc_formatter_graphql(&self.config, self.validated.core))
     }
 
     pub fn css_options(&self, variant: CssVariant) -> CssFormatOptions {
@@ -253,11 +253,11 @@ impl ResolvedDispatchConfig {
             CssVariant::Scss => &self.css[1],
             CssVariant::Less => &self.css[2],
         };
-        *cell.get_or_init(|| to_oxc_formatter_css(&self.config, self.core, variant))
+        *cell.get_or_init(|| to_oxc_formatter_css(&self.config, self.validated.core, variant))
     }
 
     pub fn yaml_options(&self) -> YamlFormatOptions {
-        *self.yaml.get_or_init(|| to_oxc_formatter_yaml(&self.config, self.core))
+        *self.yaml.get_or_init(|| to_oxc_formatter_yaml(&self.config, self.validated.core))
     }
 
     pub fn json_options(&self, variant: JsonVariant) -> JsonFormatOptions {
@@ -271,18 +271,18 @@ impl ResolvedDispatchConfig {
                 )
             }
         };
-        *cell.get_or_init(|| to_oxc_formatter_json(&self.config, self.core, variant))
+        *cell.get_or_init(|| to_oxc_formatter_json(&self.config, self.validated.core, variant))
     }
 
     pub fn markdown_options(&self) -> MarkdownFormatOptions {
-        *self.markdown.get_or_init(|| to_oxc_formatter_markdown(&self.config, self.core))
+        *self.markdown.get_or_init(|| to_oxc_formatter_markdown(&self.config, self.validated.core))
     }
 
     /// Printer options from the shared resolved core bundle;
     /// the fence adapter ([`super::jsdoc_fence`]) derives its per-fence options from these
     /// (width overridden to the fence's effective width).
     pub fn print_options(&self) -> PrinterOptions {
-        self.core.as_print_options()
+        self.validated.core.as_print_options()
     }
 }
 
@@ -475,7 +475,7 @@ mod tests {
     fn dispatch_config() -> Arc<ResolvedDispatchConfig> {
         Arc::new(ResolvedDispatchConfig::new(
             Arc::new(FormatConfig::default()),
-            ValidatedOptions { core: CoreFormatOptions::default(), sort_imports: None },
+            Arc::new(ValidatedOptions { core: CoreFormatOptions::default(), sort_imports: None }),
         ))
     }
 
