@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 522
 ---
 
   ⚠ unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
