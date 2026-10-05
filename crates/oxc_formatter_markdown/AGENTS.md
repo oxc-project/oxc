@@ -87,7 +87,7 @@ Pin fixtures are named after their entry's slug (a comment would be an HTML bloc
 ### Fixture fingerprint
 
 `tests/fixtures/fingerprint.rs` serializes the AST's meaning (structure, decoded text, destinations, labels) and ignores what formatting may change
-(spans, markers, fence style, text splitting, whitespace runs, tightness, whitespace next to Chinese / Japanese characters, trailing whitespace of verbatim lines, info string whitespace).
+(spans, markers, fence style, text splitting, whitespace runs, tightness, trailing whitespace of verbatim lines, info string whitespace).
 The harness asserts it is identical for input and output: every fixture is a `parse(format(x)) ≅ parse(x)` check, which idempotency alone cannot give (a corrupted output is often a fixpoint).
 Extend the ignore set only with a reason written next to it.
 

@@ -272,13 +272,13 @@ pub fn collect_inlines<'a>(
     let break_kept = |j: usize, f: &MarkdownFormatter<'_, 'a>| -> bool {
         f.context().raw_text().get() != Raw::No || raw_line(j + 1, f) != Raw::No
     };
-    // Prettier's sentence is a run of texts joined by soft breaks; its CJ spacing style is one statistic.
-    let mut sentence_cj_spaces: Option<Option<bool>> = None;
+    // Whether the sentence (a run of texts joined by soft breaks) has CJK text, scanned once per sentence.
+    let mut sentence_has_cjk: Option<bool> = None;
     // The previous sibling was a line break that stays in the output
     let mut last_break_kept = false;
     for (i, child) in children.iter().enumerate() {
         if !matches!(child, Inline::Text(_) | Inline::SoftBreak(_)) {
-            sentence_cj_spaces = None;
+            sentence_has_cjk = None;
         }
         let after_kept_break = last_break_kept;
         if !matches!(child, Inline::SoftBreak(_) | Inline::HardBreak(_)) {
@@ -332,8 +332,8 @@ pub fn collect_inlines<'a>(
                 } else {
                     (None, None)
                 };
-                let cj_spaces = *sentence_cj_spaces
-                    .get_or_insert_with(|| sentence_cj_spaces_at(children, i, f));
+                let has_cjk =
+                    *sentence_has_cjk.get_or_insert_with(|| sentence_has_cjk_at(children, i));
                 // A paragraph's first line that opens a block
                 // (the rest of a paragraph a definition was split from) is escaped: `\- x`, `1\. x`
                 if i == 0
@@ -365,7 +365,7 @@ pub fn collect_inlines<'a>(
                     before_soft_break: matches!(children.get(i + 1), Some(Inline::SoftBreak(_))),
                     next_word: next_word_of(children, i, parent.delimiter, f),
                     glued_last_word: glued_last_word(children, i, raw, f),
-                    cj_spaces,
+                    has_cjk,
                     ..words::TextContext::default()
                 };
                 words::push_text(raw, cx, parts, f);
@@ -381,19 +381,19 @@ pub fn collect_inlines<'a>(
                     // A separator, not content: the next line is measured on its own
                     parts.push_sep(Sep::HardLine);
                 } else {
-                    let cj_spaces = *sentence_cj_spaces
-                        .get_or_insert_with(|| sentence_cj_spaces_at(children, i, f));
+                    let has_cjk =
+                        *sentence_has_cjk.get_or_insert_with(|| sentence_has_cjk_at(children, i));
                     let cx = words::TextContext {
                         next_word: next_word_of(children, i, parent.delimiter, f),
                         after_liquid: follows_liquid(children, i),
-                        // Only the CJK rules look back (a trailing `\` was escaped by the text);
-                        // a word glued to an autolink literal is part of it, the break after it stays a space
-                        prev_word: if cj_spaces.is_some() && !glued_to_autolink(children, i, f) {
+                        // Only the CJK rules look back (a trailing `\` was escaped by the text),
+                        // and `preserve` keeps the break anyway
+                        prev_word: if has_cjk && f.options().prose_wrap != ProseWrap::Preserve {
                             prev_word_of(children, i, f)
                         } else {
                             None
                         },
-                        cj_spaces,
+                        has_cjk,
                         ..words::TextContext::default()
                     };
                     words::push_whitespace(true, &cx, parts, f);
@@ -707,40 +707,17 @@ fn autolink_stretch(children: &[Inline<'_>], i: usize, raw: &str) -> usize {
     }
 }
 
-/// The text before node `i` is one word in an autolink literal's stretch (`http://x.y2` + `.`):
-/// what follows the break must not glue to it (`push_text` makes the same call for its first word).
-fn glued_to_autolink<'a>(
-    children: &'a [Inline<'a>],
-    i: usize,
-    f: &MarkdownFormatter<'_, 'a>,
-) -> bool {
-    let Some(Inline::Text(t)) = children.get(i.wrapping_sub(1)) else { return false };
-    let raw = f.context().slice(t.span);
-    !raw.contains(is_split_whitespace) && autolink_stretch(children, i - 1, raw) > 0
-}
-
 fn follows_liquid(children: &[Inline<'_>], i: usize) -> bool {
     matches!(children.get(i.wrapping_sub(1)), Some(Inline::Liquid(_)))
 }
 
-/// `usesCJSpaces` of the sentence (run of texts and soft breaks) containing node `i`;
-/// `None` without CJK text, which is the common case and skips the scan and the CJK rules.
-fn sentence_cj_spaces_at<'a>(
-    children: &'a [Inline<'a>],
-    i: usize,
-    f: &MarkdownFormatter<'_, 'a>,
-) -> Option<bool> {
-    let in_sentence = |c: &Inline<'a>| matches!(c, Inline::Text(_) | Inline::SoftBreak(_));
+/// The sentence (run of texts and soft breaks) containing node `i` has CJK text;
+/// without it, the common case, the CJK rules are skipped.
+fn sentence_has_cjk_at(children: &[Inline<'_>], i: usize) -> bool {
+    let in_sentence = |c: &Inline<'_>| matches!(c, Inline::Text(_) | Inline::SoftBreak(_));
     let start = (0..i).rev().take_while(|&j| in_sentence(&children[j])).last().unwrap_or(i);
     let end = (i..children.len()).take_while(|&j| in_sentence(&children[j])).last().unwrap_or(i);
-    let texts = children[start..=end].iter().filter_map(|c| match c {
-        Inline::Text(t) => Some(t),
-        _ => None,
-    });
-    if !texts.clone().any(|t| t.contains_cjk) {
-        return None;
-    }
-    Some(words::uses_cj_spaces(texts.map(|t| f.context().slice(t.span))))
+    children[start..=end].iter().any(|c| matches!(c, Inline::Text(t) if t.contains_cjk))
 }
 
 /// A word character directly before or after node `i`.

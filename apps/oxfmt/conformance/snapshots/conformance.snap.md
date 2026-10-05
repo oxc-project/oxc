@@ -245,7 +245,7 @@
 - [externals/prettier/markdown/thematicBreak/simple.md](diffs/markdown/externals__prettier__markdown__thematicBreak__simple.md.md)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
 
-### Option 2: 270/282 (95.74%)
+### Option 2: 269/282 (95.39%)
 
 ```json
 {"printWidth":100,"proseWrap":"always"}
@@ -273,6 +273,8 @@
   - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
 - [externals/prettier/markdown/paragraph/cjk.md](diffs/markdown/externals__prettier__markdown__paragraph__cjk.md.md)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#container-directive
+- [externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md](diffs/markdown/externals__prettier__markdown__splitCjkText__symbolSpaceNewLine.md.md)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#cj-line-break
 - [externals/prettier/markdown/thematicBreak/simple.md](diffs/markdown/externals__prettier__markdown__thematicBreak__simple.md.md)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
 

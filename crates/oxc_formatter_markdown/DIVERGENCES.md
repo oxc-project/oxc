@@ -505,27 +505,42 @@ delimiter escaped when a later line could close it as front matter (a line start
 or a thematic break, which prints `---`): the next parse (Prettier's and ours) would read the block as front matter.
 Prettier prints it as written (the leading blank line that kept it out of front matter is dropped).
 
-## autolink-cjk-space
+## cj-line-break
 
-- Why: semantics
-- Pin: `tests/fixtures/markdown/prose-wrap/autolink-cjk-space.md`
+- Why: semantics (prettier/prettier#20143)
+- Pin: `tests/fixtures/markdown/prose-wrap/cj-line-break.md`
+- Conformance: `markdown/splitCjkText/symbolSpaceNewLine.md`
+- Oxfmt: `externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md`
 
 ```markdown
 <!-- input, proseWrap always -->
+日本語の文章は
+改行しても
+そのままです。
+
 見て http://x.y2.
 。次
 
 <!-- ours -->
-見て http://x.y2. 。次
+日本語の文章は
+改行しても
+そのままです。
+
+見て http://x.y2.
+。次
 
 <!-- prettier -->
+日本語の文章は改行してもそのままです。
+
 見て http://x.y2.。次
 ```
 
-A line break right after the trailing punctuation of an autolink literal stays a space, whatever the
-Chinese / Japanese rules would make of it: the literal runs to the next whitespace, so joined to `。次`
-it becomes `http://x.y2.。次` on the next parse (`autolink_stretch`).
-Prettier drops the break between the two punctuation characters and the link changes.
+A line break next to Chinese / Japanese text is kept under every `proseWrap`,
+except between a Korean and a CJ letter, where it is a space.
+Browsers disagree on such a break (Firefox drops it, Chrome and Safari render a space),
+so removing it or making it a space changes the rendered text in some of them.
+Joined, an autolink literal also takes the CJ punctuation after it (`http://x.y2.。次`).
+Prettier `main` keeps the break since #20143; the pin (3.9.9) removes it or makes it a space.
 
 ## wiki-link-risk-link-text
 
