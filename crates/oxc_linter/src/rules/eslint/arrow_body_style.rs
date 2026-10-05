@@ -255,6 +255,11 @@ impl ArrowBodyStyle {
                     && let Statement::ReturnStatement(return_statement) = &body.statements[0]
                     && let Some(return_arg) = &return_statement.argument
                 {
+                    // Removing the braces can change ASI: `() => { return bar }\n(1)` becomes a call.
+                    if Self::next_line_is_asi_hazard(arrow_func_expr, ctx) {
+                        ctx.diagnostic(unexpected_block_diagnostic(body.span));
+                        return;
+                    }
                     ctx.diagnostic_with_fix(unexpected_block_diagnostic(body.span), |fixer| {
                         Self::fix_block_to_concise(
                             arrow_func_expr,
@@ -290,6 +295,11 @@ impl ArrowBodyStyle {
                         return;
                     };
 
+                    // Removing the braces can change ASI: `() => { return bar }\n(1)` becomes a call.
+                    if Self::next_line_is_asi_hazard(arrow_func_expr, ctx) {
+                        ctx.diagnostic(unexpected_block_diagnostic(body.span));
+                        return;
+                    }
                     ctx.diagnostic_with_fix(unexpected_block_diagnostic(body.span), |fixer| {
                         Self::fix_block_to_concise(
                             arrow_func_expr,
@@ -304,6 +314,48 @@ impl ArrowBodyStyle {
             }
             _ => {}
         }
+    }
+
+    /// True when the first non-whitespace byte after the arrow body starts a token that
+    /// would continue the concise expression across a newline (ASI hazard).
+    /// Mirrors ESLint's `hasASIProblem`: `( [ ` + - /`.
+    fn next_line_is_asi_hazard<'a>(
+        arrow_func_expr: &ArrowFunctionExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) -> bool {
+        let source = ctx.source_text().as_bytes();
+        let mut i = arrow_func_expr.body.span().end as usize;
+        let mut saw_newline = false;
+        while i < source.len() {
+            match source[i] {
+                b' ' | b'\t' | b'\r' | 0x0c | 0x0b => i += 1,
+                b'\n' => {
+                    saw_newline = true;
+                    i += 1;
+                }
+                b'/' if source.get(i + 1) == Some(&b'/') => {
+                    i += 2;
+                    while i < source.len() && source[i] != b'\n' {
+                        i += 1;
+                    }
+                }
+                b'/' if source.get(i + 1) == Some(&b'*') => {
+                    i += 2;
+                    while i + 1 < source.len() && !(source[i] == b'*' && source[i + 1] == b'/') {
+                        if source[i] == b'\n' {
+                            saw_newline = true;
+                        }
+                        i += 1;
+                    }
+                    i = (i + 2).min(source.len());
+                }
+                _ => break,
+            }
+        }
+        if !saw_newline {
+            return false;
+        }
+        matches!(source.get(i), Some(b'(' | b'[' | b'`' | b'+' | b'-' | b'/'))
     }
 
     /// Fix: Convert concise body to block body
@@ -1102,6 +1154,49 @@ var foo = () =>
             r#"var foo = () => { "use strict"; };"#,
             r#"var foo = () => { "use strict"; };"#,
             Some(serde_json::json!(["never"])),
+        ),
+        // ASI hazards: report, but do not fold the next statement into the arrow (#27227).
+        (
+            "var foo = () => { return bar }\n(1).toString()",
+            "var foo = () => { return bar }\n(1).toString()",
+            None,
+        ),
+        (
+            "var foo = () => { return bar }\n[1, 2, 3].map(foo)",
+            "var foo = () => { return bar }\n[1, 2, 3].map(foo)",
+            None,
+        ),
+        (
+            "var foo = () => { return bar }\n/re/.test(x)",
+            "var foo = () => { return bar }\n/re/.test(x)",
+            None,
+        ),
+        (
+            "var foo = () => { return bar }\n`template`",
+            "var foo = () => { return bar }\n`template`",
+            None,
+        ),
+        (
+            "var foo = () => { return bar }\n+1",
+            "var foo = () => { return bar }\n+1",
+            None,
+        ),
+        (
+            "var foo = () => { return bar }\n-1",
+            "var foo = () => { return bar }\n-1",
+            None,
+        ),
+        // A comment between the arrow and the next statement still counts.
+        (
+            "var foo = () => { return bar }\n/* c */\n(1).toString()",
+            "var foo = () => { return bar }\n/* c */\n(1).toString()",
+            None,
+        ),
+        // Same line is not an ASI boundary; the existing fix still applies.
+        (
+            "var foo = () => { return bar }; (1).toString()",
+            "var foo = () =>  bar ; (1).toString()",
+            None,
         ),
     ];
 
