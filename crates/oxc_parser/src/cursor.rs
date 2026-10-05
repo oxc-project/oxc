@@ -1,7 +1,7 @@
 //! Code related to navigating `Token`s from the lexer
 
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::ast::{BindingRestElement, RegExpFlags};
+use oxc_ast::ast::{BindingRestElement, Comment, RegExpFlags};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -16,6 +16,8 @@ pub struct ParserCheckpoint<'a> {
     cur_token: Token,
     prev_token_end: u32,
     errors_pos: usize,
+    comment_assignment_epoch: usize,
+    statement_comment_start: u32,
     fatal_error: Option<FatalError<'a>>,
 }
 
@@ -312,6 +314,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             cur_token: self.token,
             prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
+            comment_assignment_epoch: self.comment_assignment_epoch,
+            statement_comment_start: self.statement_comment_start,
             fatal_error: self.fatal_error.take(),
         }
     }
@@ -322,17 +326,40 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             cur_token: self.token,
             prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
+            comment_assignment_epoch: self.comment_assignment_epoch,
+            statement_comment_start: self.statement_comment_start,
             fatal_error: self.fatal_error.take(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_token_end, errors_pos, fatal_error } =
-            checkpoint;
+        let ParserCheckpoint {
+            lexer,
+            cur_token,
+            prev_token_end,
+            errors_pos,
+            fatal_error,
+            comment_assignment_epoch,
+            statement_comment_start,
+        } = checkpoint;
+
+        if self.comment_assignment_epoch != comment_assignment_epoch {
+            // Speculation may discard completed nodes. Ownership written by
+            // that parse starts after the previous token, including comments
+            // preceding its first token. Keep earlier completed owners and let
+            // the fallback pass resolve only the speculative range.
+            let comments = &mut self.lexer.trivia_builder.comments;
+            let begin = comments.partition_point(|comment| comment.span.end <= prev_token_end);
+            for comment in &mut comments[begin..] {
+                comment.node_id.set(Comment::UNASSIGNED_NODE_ID);
+            }
+            self.comment_assignment_epoch = comment_assignment_epoch;
+        }
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_token_end;
+        self.statement_comment_start = statement_comment_start;
         self.errors.truncate(errors_pos);
         self.fatal_error = fatal_error;
     }

@@ -200,7 +200,7 @@ pub enum CommentPlacement {
 /// Borrow comments when reading them, or use [`Clone::clone`] to obtain an owned value.
 #[ast]
 #[generate_derive(ContentEq, ESTree, GetSpan)]
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 #[estree(add_fields(value = CommentValue), no_ts_def, no_parent)]
 pub struct Comment {
     /// The span of the comment text, with leading and trailing delimiters.
@@ -223,6 +223,7 @@ pub struct Comment {
     pub attached_to: u32,
 
     /// ID of the owning node, remapped by semantic analysis through a shared reference.
+    /// [`Self::UNASSIGNED_NODE_ID`] indicates that ownership has not been assigned.
     #[estree(skip)]
     pub node_id: Cell<NodeId>,
 
@@ -248,7 +249,17 @@ pub struct Comment {
     pub content: CommentContent,
 }
 
+#[expect(clippy::derivable_impls, reason = "Unassigned comments use a non-default node ID")]
+impl Default for Comment {
+    fn default() -> Self {
+        Self { position: CommentPosition::default(), ..Self::new(0, 0, CommentKind::default()) }
+    }
+}
+
 impl Comment {
+    /// Sentinel for comments without an owner, distinct from [`NodeId::ROOT`].
+    pub const UNASSIGNED_NODE_ID: NodeId = NodeId::new(NodeId::MAX_INDEX);
+
     /// Create a line or block comment at a given location.
     #[inline]
     pub fn new(start: u32, end: u32, kind: CommentKind) -> Self {
@@ -260,7 +271,7 @@ impl Comment {
             position: CommentPosition::Trailing,
             newlines: CommentNewlines::None,
             content: CommentContent::None,
-            node_id: Cell::new(NodeId::DUMMY),
+            node_id: Cell::new(Self::UNASSIGNED_NODE_ID),
             placement: CommentPlacement::Leading,
         }
     }
@@ -428,7 +439,7 @@ impl<'alloc> CloneIn<'alloc> for Comment {
     fn clone_in_impl(&self, with_semantic_ids: CloneInSemanticIds, _: &'alloc Allocator) -> Self {
         let comment = self.clone();
         if with_semantic_ids == CloneInSemanticIds::Without {
-            comment.node_id.set(NodeId::DUMMY);
+            comment.node_id.set(Self::UNASSIGNED_NODE_ID);
         }
         comment
     }
