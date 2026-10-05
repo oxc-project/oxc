@@ -17,6 +17,7 @@ const ALL_COMPONENTS = [
   "parser",
   "transformer",
   "semantic",
+  "comment_assignment",
   "minifier",
   "codegen",
   "formatter",
@@ -59,6 +60,9 @@ function checkGlobalChanges(changedFiles) {
  * @returns {string} Feature name
  */
 function getFeatureForComponent(component) {
+  if (component === "comment_assignment") {
+    return "comment_assignment";
+  }
   if (component === "linter") {
     return "linter";
   }
