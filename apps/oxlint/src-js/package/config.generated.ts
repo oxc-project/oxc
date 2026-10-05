@@ -1647,7 +1647,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-object-from-entries"?: RuleNoConfig | [AllowWarnDeny, PreferObjectFromEntriesConfig];
   "unicorn/prefer-optional-catch-binding"?: RuleNoConfig;
   "unicorn/prefer-prototype-methods"?: RuleNoConfig;
-  "unicorn/prefer-query-selector"?: RuleNoConfig;
+  "unicorn/prefer-query-selector"?: RuleNoConfig | [AllowWarnDeny, PreferQuerySelector];
   "unicorn/prefer-reflect-apply"?: RuleNoConfig;
   "unicorn/prefer-regexp-test"?: RuleNoConfig;
   "unicorn/prefer-response-static-json"?: RuleNoConfig;
@@ -2112,6 +2112,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, PreferExportFrom]
     | [AllowWarnDeny, PreferNumberPropertiesConfig]
     | [AllowWarnDeny, PreferObjectFromEntriesConfig]
+    | [AllowWarnDeny, PreferQuerySelector]
     | [AllowWarnDeny, PreferSingleCallConfig]
     | [AllowWarnDeny, PreferStructuredCloneConfig]
     | [AllowWarnDeny, PreferTernaryOption]
@@ -6993,6 +6994,9 @@ export interface PreferObjectFromEntriesConfig {
    * Additional functions to treat as equivalents to `Object.fromEntries`.
    */
   functions?: string[];
+}
+export interface PreferQuerySelector {
+  allowWithVariables?: boolean;
 }
 export interface PreferSingleCallConfig {
   /**
