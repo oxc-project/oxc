@@ -273,24 +273,30 @@ Prettier keeps it verbatim because postcss swallows the run as an opaque prelude
 Selector-position Sass interpolation normalizes inner spaces like value-position interpolation does in both formatters;
 Prettier keeps SELECTOR interpolation verbatim.
 
-## warn-error-requote
+## prelude-string-requote
 
 - Why: uniform-rule (option governs: singleQuote)
-- Pin: `tests/fixtures/format/scss/unknown-at-rule-edges.scss`
+- Pin: `tests/fixtures/format/scss/unknown-at-rule-edges.scss`, `tests/fixtures/format/css/prelude-string-requote.css`
 
 ```scss
 /* input */
 @error 'single quotes get normalized';
+@keyframes 'validString' {}
 
 /* ours */
 @error "single quotes get normalized";
+@keyframes "validString" {
+}
 
 /* prettier */
 @error 'single quotes get normalized';
+@keyframes 'validString' {
+}
 ```
 
-`@warn` / `@error` prelude strings re-quote per the `singleQuote` option: `oxc-css-parser` parses them as `SassExpr`, so they go through the structured printer (see `at_rule.rs`);
-Prettier keeps them as a raw string verbatim.
+A string in an at-rule prelude we parse typed re-quotes per the `singleQuote` option:
+the `@warn` / `@error` prelude (a `SassExpr`) and a `@keyframes` name (`at_rule.rs` `write_keyframes_name`) go through the structured printer;
+Prettier keeps the at-rule params as a raw string verbatim.
 Every other string in a declaration value re-quotes per the same option in both formatters.
 
 ## call-after-line-comment-indent
@@ -1385,3 +1391,148 @@ At-rule names, property names, media feature names and the prelude keywords next
 Values keep their case (`LANDSCAPE`, `FLEX`), as in any declaration: a value may be a case-sensitive custom ident (`animation-name`, `grid-area`).
 So do case-sensitive names (`layer(FOO)`) and any identifier carrying a variable or interpolation marker (`@media @PHONE`, `#{$Q}`).
 Prettier lowercases only what its `maybeToLowerCase` reaches (at-rule names, `media-feature`, declaration props) and prints the neighbouring keywords as its media-query parser or value parser hands them over: verbatim.
+
+## missed-semicolon-accepted
+
+- Why: uniform-rule (acceptance: the grammar owner decides)
+- Pin: `tests/fixtures/format/css/missed-semicolon-accepted.css`
+
+```css
+/* input */
+a {
+  left: 0
+  top: 0;
+}
+
+/* ours */
+a {
+  left: 0 top: 0;
+}
+
+/* prettier: CssSyntaxError: Missed semicolon, the input is left as-is */
+```
+
+A `;`-less declaration runs to the next `;`: `oxc-css-parser` reads one declaration, a value being any component-value run (css-syntax-3; its README "Acceptance");
+postcss rejects a value with a `word:` after its first word.
+Same tokens, so same meaning: a browser drops the whole declaration either way.
+SCSS / Less keep rejecting it (dart-sass / lessc), so those stay as-is.
+
+## combinator-spacing
+
+- Why: uniform-rule (same construct, same output: the `>` / `+` / `~` combinators)
+- Pin: `tests/fixtures/format/css/combinator-spacing.css`
+
+```css
+/* input */
+col.selected||td {}
+col.selected || td {}
+.a^b {}
+.a^^b {}
+
+/* ours */
+col.selected || td {
+}
+col.selected || td {
+}
+.a ^ b {
+}
+.a ^^ b {
+}
+
+/* prettier */
+col.selected||td {
+}
+col.selected||td {
+}
+.a^b {
+}
+.a^^b {
+}
+```
+
+Every combinator other than the descendant one prints with a space on each side (`selector.rs` `write_combinator`);
+Prettier spaces only `>` / `+` / `~` / `>>>`, prints the others as written, and glues a spaced `||` too.
+
+## document-url-brace
+
+- Why: uniform-rule (same construct, same output: `@document url("x") {`)
+- Pin: `tests/fixtures/format/css/document-url-brace.css`
+
+```css
+/* input */
+@document url("https://www.example.com/") {}
+
+/* ours */
+@document url("https://www.example.com/") {
+}
+
+/* prettier */
+@document url("https://www.example.com/")
+{
+}
+```
+
+The typed `@document` / `@-moz-document` prelude keeps the `{` on its line;
+Prettier takes the `//` of `https://` for a line comment and moves the `{` to its own line.
+A raw prelude (unknown at-rule params) still takes the same `//` test as Prettier (`comments.rs` `last_line_has_inline_comment`), so there the two agree.
+
+## value-semicolon-glue
+
+- Why: uniform-rule (same construct, same output: the SCSS `if()` branch separator; prettier/prettier#19384)
+- Pin: `tests/fixtures/format/css/value-semicolon-glue.css`
+
+```css
+/* input */
+a {
+  b: if(media(width < 700px): 1 ; else: 2);
+  c: foo(x ; y);
+}
+
+/* ours */
+a {
+  b: if(media(width < 700px): 1; else: 2);
+  c: foo(x; y);
+}
+
+/* prettier */
+a {
+  b: if(media(width < 700px): 1 ; else: 2);
+  c: foo(x ; y);
+}
+```
+
+A `;` in a value glues to what precedes it, in every dialect (`value.rs` `base_separator`);
+Prettier glues it only between SCSS `if()` branches and keeps the source space elsewhere.
+
+## supports-function-args-indent
+
+- Why: uniform-rule (same construct, same output: the function in a declaration value)
+- Pin: `tests/fixtures/format/css/supports-function-args-indent.css`
+
+```css
+/* input */
+@supports not (clip-path: shape(from center left, curve by 200px 0 with 50% -50% from start / 50% 0 from origin, close)) {}
+
+/* ours */
+@supports not (
+  clip-path: shape(
+    from center left,
+    curve by 200px 0 with 50% -50% from start / 50% 0 from origin,
+    close
+  )
+) {
+}
+
+/* prettier */
+@supports not (
+  clip-path: shape(
+      from center left,
+      curve by 200px 0 with 50% -50% from start / 50% 0 from origin,
+      close
+    )
+) {
+}
+```
+
+A broken function call inside a `@supports` declaration indents its arguments one level, as the same declaration does inside a rule;
+Prettier indents the arguments and `)` one level further there, its prelude value group adding its own indent.
