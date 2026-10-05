@@ -1,0 +1,47 @@
+crates/oxc_formatter/src/utils/member_chain/mod.rs
+  s_834cf9c6b3ed21::t_67500395c289ea 125-128,141-145
+crates/oxc_formatter/tests/fixtures/js/member-chains/breaking-last-group/arguments.js.snap
+  s_834cf9c6b3ed21::t_e04fb4e6a7d66f 1-539
+crates/oxc_formatter/tests/fixtures/js/member-chains/breaking-last-group/objects.js.snap
+  s_834cf9c6b3ed21::t_ed0afc0a26c0c1 1-435
+crates/oxc_formatter/tests/fixtures/js/member-chains/breaking-last-group/typescript.tsx.snap
+  s_834cf9c6b3ed21::t_6119c70d474c07 1-444
+crates/oxc_formatter/tests/fixtures/js/member-chains/conditional.js.snap
+  s_834cf9c6b3ed21::t_5da44009169164 22-31,38-47
+crates/oxc_formatter/tests/fixtures/ts/arguments/issue-26465.ts.snap
+  s_834cf9c6b3ed21::t_159ac74bd12783 22-26,39-43,46-50
+crates/oxc_formatter/tests/fixtures/ts/member-chains/issue-16177.ts.snap
+  s_834cf9c6b3ed21::t_fac5103cacb2fd 47-57
+crates/oxc_formatter/tests/member_chain.rs
+  s_834cf9c6b3ed21::t_2224f225718746 1-56
+crates/oxc_formatter/tests/snapshots/conformance__prettier-js.snap
+  s_834cf9c6b3ed21::t_6fd56f699652b2 5,40,50-53
+crates/oxc_formatter/tests/snapshots/conformance__prettier-ts.snap
+  s_834cf9c6b3ed21::t_1a789a0eaae71e 5,12
+crates/oxc_formatter/DIVERGENCES.md
+  s_834cf9c6b3ed21::t_7b7bf8d7bc127b 781-818
+crates/oxc_formatter/tests/fixtures/js/member-chains/breaking-last-group/arguments.js
+  s_834cf9c6b3ed21::t_c1108c38d308bf 1-38
+crates/oxc_formatter/tests/fixtures/js/member-chains/breaking-last-group/objects.js
+  s_834cf9c6b3ed21::t_809cd9ea0ef8be 1-25
+crates/oxc_formatter/tests/fixtures/js/member-chains/breaking-last-group/options.json
+  s_834cf9c6b3ed21::t_864744b50ffdc5 1-5
+crates/oxc_formatter/tests/fixtures/js/member-chains/breaking-last-group/typescript.tsx
+  s_834cf9c6b3ed21::t_9aad9a0cfcfeee 1-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1f5e2a24d73962826122172d3224bf1593a8c11f",
+  "prompts": {},
+  "sessions": {
+    "s_834cf9c6b3ed21": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ecab-d8c1-7cd2-ae3a-9cfd721a72d5",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
