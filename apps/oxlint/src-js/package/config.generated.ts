@@ -6996,6 +6996,10 @@ export interface PreferObjectFromEntriesConfig {
   functions?: string[];
 }
 export interface PreferQuerySelector {
+  /**
+   * When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.
+   * This avoids the need to manually compose a CSS selector string, which can be less readable.
+   */
   allowWithVariables?: boolean;
 }
 export interface PreferSingleCallConfig {

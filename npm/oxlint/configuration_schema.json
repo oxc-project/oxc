@@ -18060,8 +18060,10 @@
       "type": "object",
       "properties": {
         "allowWithVariables": {
+          "description": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable.",
           "default": false,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable."
         }
       },
       "additionalProperties": false
