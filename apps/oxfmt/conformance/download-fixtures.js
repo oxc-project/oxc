@@ -1,16 +1,19 @@
 // oxlint-disable no-console, no-await-in-loop
 
-import { exec } from "node:child_process";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { exec, spawn } from "node:child_process";
+import { once } from "node:events";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createInterface } from "node:readline";
 import { promisify } from "node:util";
 import pkg from "../package.json" with { type: "json" };
 
 const execAsync = promisify(exec);
 
 const externalsDir = join(import.meta.dirname, "fixtures", "externals");
-const cwd = join(import.meta.dirname, "..");
 
+// `repo` is `<owner>/<name>` plus the directory to take, `version` is any ref (a tag or a commit)
 const sources = [
   // xxx-in-js
   {
@@ -79,37 +82,54 @@ const sources = [
   },
 ];
 
-// Group sources by repository and download each group sequentially.
-// Parallel `degit` calls for the same repo+ref share a single tarball cache path;
-// one process sees the other's partially written tarball, fails to extract it,
-// and silently falls back to `git clone` which ignores the subdirectory,
-// dumping the entire repository into the fixture directory.
-const sourcesByRepo = new Map();
-for (const source of sources) {
-  const repoKey = source.repo.split("/").slice(0, 2).join("/");
-  if (!sourcesByRepo.has(repoKey)) sourcesByRepo.set(repoKey, []);
-  sourcesByRepo.get(repoKey).push(source);
-}
+// Group sources by archive, so an archive shared by several sources downloads once.
+const sourcesByArchive = Map.groupBy(
+  sources,
+  ({ repo, version }) => `${repo.split("/").slice(0, 2).join("/")}#${version}`,
+);
 
 await Promise.all(
-  [...sourcesByRepo.values()].map(async (group) => {
-    for (const { name, repo, version } of group) {
+  [...sourcesByArchive.values()].map(async (group) => {
+    // Stamp-based skip (same scheme as `oxc_formatter_tests`' suite provisioning):
+    // the stamp is written last, so a half-downloaded tree is always re-done.
+    const stale = group.filter(({ name, repo, version }) => {
+      const stamp = join(externalsDir, name, ".version");
+      const upToDate =
+        existsSync(stamp) && readFileSync(stamp, "utf8").trim() === `${repo}#${version}`;
+      if (upToDate) console.log(`Up-to-date: ${name}@${version}`);
+      return !upToDate;
+    });
+    if (stale.length === 0) return;
+
+    const [owner, repoName] = group[0].repo.split("/");
+    const { version } = group[0];
+    console.log(`Downloading ${owner}/${repoName}@${version}...`);
+    const tmp = mkdtempSync(join(tmpdir(), "oxfmt-fixtures-"));
+    const tarball = join(tmp, "archive.tar.gz");
+    await execAsync(
+      `curl -fsSL -o "${tarball}" https://codeload.github.com/${owner}/${repoName}/tar.gz/${version}`,
+    );
+    const top = await topDirectory(tarball);
+
+    for (const { name, repo } of stale) {
       const dest = join(externalsDir, name);
-
-      // Stamp-based skip (same scheme as `oxc_formatter_tests`' suite provisioning):
-      // the stamp is written last, so a half-downloaded tree is always re-done.
-      const stamp = join(dest, ".version");
-      const pin = `${repo}#${version}`;
-      if (existsSync(stamp) && readFileSync(stamp, "utf8").trim() === pin) {
-        console.log(`Up-to-date: ${name}@${version}`);
-        continue;
-      }
       rmSync(dest, { recursive: true, force: true });
-
-      console.log(`Downloading ${name}@${version} fixtures...`);
-      await execAsync(`pnpm exec degit ${repo}#${version} "${dest}"`, { cwd });
-      writeFileSync(stamp, pin);
+      mkdirSync(dest, { recursive: true });
+      const subdir = repo.split("/").slice(2);
+      await execAsync(
+        `tar -xzf "${tarball}" -C "${dest}" --strip-components=${subdir.length + 1} "${[top, ...subdir].join("/")}"`,
+      );
+      writeFileSync(join(dest, ".version"), `${repo}#${version}`);
       console.log(`Done: ${name}@${version}`);
     }
+    rmSync(tmp, { recursive: true });
   }),
 );
+
+/** The archive's top directory, GitHub's `<name>-<ref>` with the ref normalized (e.g. no leading `v`). */
+async function topDirectory(tarball) {
+  const tar = spawn("tar", ["-tzf", tarball]);
+  const [line] = await once(createInterface({ input: tar.stdout }), "line");
+  tar.kill();
+  return line.split("/")[0];
+}
