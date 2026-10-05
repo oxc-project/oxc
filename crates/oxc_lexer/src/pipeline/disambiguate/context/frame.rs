@@ -94,7 +94,7 @@ pub(super) const R_EXPR: u8 = 5; // `as T` / `satisfies T`: ends at any expressi
 // What an Angle list is (`state`).
 pub(super) const A_VALUE: u8 = 1; // declaration type parameters or `f<T>(x)` type arguments
 pub(super) const A_IN_TYPE: u8 = 3; // a list inside a type
-pub(super) const A_ASSERT: u8 = 4; // `<T>x` assertion or `<T,>() =>` generic arrow
+pub(super) const A_ASSERT: u8 = 4; // an operand follows: an assertion or leading type parameters
 
 // ClassHead: an interface head (reg).
 pub(super) const C_INTERFACE: u8 = 1;

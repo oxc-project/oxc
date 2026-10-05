@@ -199,11 +199,6 @@ impl Walk {
         if f.kind.is_stmt_holder() { f.state } else { D_NONE }
     }
 
-    pub(super) fn top_reg(&self) -> u8 {
-        let f = self.top();
-        if f.kind.is_stmt_holder() { f.reg } else { S_NONE }
-    }
-
     pub(super) fn set_stmt_reg(&mut self, v: u8) {
         let i = self.stmt_frame();
         if self.frames[i].kind.is_stmt_holder() {
@@ -445,12 +440,12 @@ impl Walk {
         }
     }
 
-    /// Process the single token at `pos` (which must be the next unprocessed token) and report what
-    /// it leaves behind.
+    /// What the token at pos leaves behind: it is stepped unless it is the tail of the last one.
     pub(super) fn after_token(&mut self, tokens: &Tokens, pos: usize) -> After {
-        debug_assert!(pos >= self.walked_to);
-        let end = self.step(tokens, pos);
-        self.walked_to = end.max(self.walked_to);
+        if pos >= self.walked_to {
+            let end = self.step(tokens, pos);
+            self.walked_to = end.max(self.walked_to);
+        }
         self.classify_after()
     }
 
@@ -558,6 +553,7 @@ impl Walk {
             r.inner = inner;
         }
         self.value_done();
+        self.no_type_args = true;
     }
 
     pub(super) fn type_operator(&mut self) {
