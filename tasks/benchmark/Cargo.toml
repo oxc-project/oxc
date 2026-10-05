@@ -49,6 +49,11 @@ name = "semantic"
 harness = false
 
 [[bench]]
+name = "comment_assignment"
+harness = false
+required-features = ["comment_assignment"]
+
+[[bench]]
 name = "linter"
 harness = false
 
@@ -87,6 +92,7 @@ oxc_allocator = { workspace = true, optional = true }
 oxc_ast = { workspace = true, optional = true, features = ["serialize"] }
 oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
 oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
+oxc_comment_assignment = { workspace = true, optional = true }
 oxc_estree_tokens = { workspace = true, optional = true }
 oxc_formatter = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
@@ -114,7 +120,7 @@ serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 
 [features]
-default = ["compiler", "linter"]
+default = ["compiler", "linter", "comment_assignment"]
 codspeed = ["criterion2/codspeed"]
 codspeed_napi = ["criterion2/codspeed", "dep:serde", "dep:serde_json"]
 
@@ -138,6 +144,15 @@ compiler = [
   "dep:oxc_tasks_common",
   "dep:oxc_transformer",
   "dep:cow-utils",
+]
+comment_assignment = [
+  "dep:oxc_allocator",
+  "dep:oxc_ast",
+  "dep:oxc_ast_visit",
+  "dep:oxc_comment_assignment",
+  "dep:oxc_parser",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
 ]
 linter = [
   "dep:oxc_allocator",
@@ -178,6 +193,7 @@ ignored = [
   "oxc_ast",
   "oxc_ast_visit",
   "oxc_codegen",
+  "oxc_comment_assignment",
   "oxc_estree_tokens",
   "oxc_formatter",
   "oxc_isolated_declarations",

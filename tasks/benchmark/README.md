@@ -12,6 +12,16 @@ cargo bench -p oxc_benchmark --bench parser -- --save-baseline main
 critcmp # via `cargo binstall critcmp`
 ```
 
+## Comment assignment
+
+The benchmark calls the public assignment pass on parsed ASTs, with a plain node-counting traversal for comparison. Parsing stays outside the timed section; writing attachments into comment storage is included. Both cases preserve the IDs assigned by the parser.
+
+```sh
+cargo bench -p oxc_benchmark --bench comment_assignment --no-default-features --features comment_assignment
+```
+
+Inputs include the standard parser and semantic fixtures: Radix UI, React, Excalidraw's `App.tsx`, `binder.ts`, and `kitchen-sink.tsx`. Synthetic inputs cover comment-free, sparse, dense, deeply nested, long comment runs, and template substitutions. CI runs this benchmark as a separate CodSpeed component.
+
 ## Lexer
 
 `oxc_lexer` is benchmarked head-to-head against the lexer in `oxc_parser`, measuring wallclock time.
