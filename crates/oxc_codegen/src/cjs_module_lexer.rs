@@ -55,6 +55,7 @@ pub fn try_print_require_call(p: &mut Codegen<'_>, call: &CallExpression<'_>) ->
     };
     p.print_ascii_byte(b'(');
     p.print_string_literal(str_lit, false);
+    p.print_inside_comments(call.node_id());
     p.add_source_mapping_end(call.span);
     p.print_ascii_byte(b')');
     true
@@ -93,6 +94,7 @@ pub fn try_print_define_property_call(
             arg.print(p, ctx);
         }
     }
+    p.print_inside_comments(call.node_id());
     p.add_source_mapping_end(call.span);
     p.print_ascii_byte(b')');
     true
@@ -120,13 +122,16 @@ pub fn try_print_exports_computed_target(
     {
         return false;
     }
+    let comments = p.start_node_comments(member.node_id());
     member.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
     if member.optional {
         p.print_str("?.");
     }
     p.print_ascii_byte(b'[');
     p.print_string_literal(key, false);
+    p.print_inside_comments(member.node_id());
     p.print_ascii_byte(b']');
+    p.finish_node_comments(comments);
     true
 }
 

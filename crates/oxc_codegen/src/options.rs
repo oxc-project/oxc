@@ -34,7 +34,9 @@ pub struct CodegenOptions {
 
     /// Print comments?
     ///
-    /// At present, only some leading comments are preserved.
+    /// Run `oxc_comment_assignment::CommentAssignment` on the program before codegen
+    /// to preserve leading, trailing, and dangling comments by node ID. Programs
+    /// without comment attachments use the existing source-offset lookup.
     ///
     /// Default is [CommentOptions::default].
     pub comments: CommentOptions,
@@ -118,7 +120,8 @@ impl CodegenOptions {
 pub struct CommentOptions {
     /// Print normal comments that do not have special meanings.
     ///
-    /// At present only statement level comments are printed.
+    /// Comment attachments preserve these inside expressions and containers as
+    /// well as before and after statements.
     ///
     /// Default is `true`.
     pub normal: bool,

@@ -24,6 +24,7 @@ use pico_args::Arguments;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
+use oxc_comment_assignment::CommentAssignment;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
@@ -89,7 +90,9 @@ fn parse<'a>(
     for error in ret.diagnostics {
         println!("{}", error.render_with_source_code(source_text.to_string()));
     }
-    ret.program
+    let mut program = ret.program;
+    CommentAssignment::new().assign(&mut program);
+    program
 }
 
 /// Generate JavaScript code from an AST

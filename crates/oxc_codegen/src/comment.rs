@@ -4,11 +4,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
 
 use oxc_ast::{
-    Comment, CommentKind,
+    Comment, CommentContent, CommentKind,
     ast::{Expression, Program},
 };
 use oxc_span::GetSpan;
-use oxc_syntax::line_terminator::LineTerminatorSplitter;
+use oxc_syntax::{line_terminator::LineTerminatorSplitter, node::NodeId};
 
 use crate::{Codegen, LegalComment, options::CommentOptions};
 
@@ -48,7 +48,7 @@ pub enum AnnotationKind {
 
 impl AnnotationKind {
     #[inline]
-    fn matches(self, comment: &Comment) -> bool {
+    pub(crate) fn matches(self, comment: &Comment) -> bool {
         match self {
             Self::Pure => comment.is_pure(),
             Self::NoSideEffects => comment.is_no_side_effects(),
@@ -62,9 +62,9 @@ impl AnnotationKind {
     #[inline]
     fn canonical(self, newline_after: bool) -> &'static str {
         match (self, newline_after) {
-            (Self::Pure, false) => "/* @__PURE__ */ ",
+            (Self::Pure, false) => "/* @__PURE__ */",
             (Self::Pure, true) => "/* @__PURE__ */\n",
-            (Self::NoSideEffects, false) => "/* @__NO_SIDE_EFFECTS__ */ ",
+            (Self::NoSideEffects, false) => "/* @__NO_SIDE_EFFECTS__ */",
             (Self::NoSideEffects, true) => "/* @__NO_SIDE_EFFECTS__ */\n",
         }
     }
@@ -77,8 +77,26 @@ impl Codegen<'_> {
         }
         // Each retained comment can create at most one map entry. Reserving
         // this upper bound avoids incremental map growth while preprocessing.
-        self.comments.reserve(comments.len());
+        let assigned = comments.iter().filter(|comment| comment.attachment.is_some()).count();
+        self.comments.reserve(comments.len() - assigned);
+        self.attached_comments.reserve(assigned);
         for comment in comments {
+            if let Some(attachment) = comment.attachment {
+                // Token-relative helpers only classify leading JSDoc and legal
+                // comments. Ownership also preserves those in trailing positions.
+                let retain = match comment.content {
+                    CommentContent::Legal | CommentContent::JsdocLegal => {
+                        self.options.print_legal_comment()
+                    }
+                    CommentContent::Jsdoc => self.options.print_jsdoc_comment(),
+                    CommentContent::None => self.options.print_normal_comment(),
+                    _ => self.options.print_annotation_comment(),
+                };
+                if retain {
+                    self.attached_comments.push(*comment, attachment);
+                }
+                continue;
+            }
             // Stash pure / no-side-effects comments by `attached_to` so the
             // emission site can recover the verbatim source text instead of
             // falling back to the canonical literal (rolldown#9408).
@@ -110,6 +128,7 @@ impl Codegen<'_> {
                 self.comments.entry(comment.attached_to).or_default().push(*comment);
             }
         }
+        self.attached_comments.sort();
     }
 
     pub(crate) fn has_comment(&self, start: u32) -> bool {
@@ -137,9 +156,23 @@ impl Codegen<'_> {
     pub(crate) fn print_annotation_comment(
         &mut self,
         start: u32,
+        node_id: NodeId,
         kind: AnnotationKind,
         newline_after: bool,
     ) {
+        if self.print_attached_annotation(node_id, kind) {
+            return;
+        }
+        // Generated annotations need the same separation as assigned source
+        // comments, including after unary and spread operators.
+        if self.last_byte() == Some(b'/') {
+            self.print_hard_space();
+        } else if self
+            .last_byte()
+            .is_some_and(|byte| !matches!(byte, b' ' | b'\t' | b'\n' | b'(' | b'[' | b'{'))
+        {
+            self.print_soft_space();
+        }
         if self.source_text.is_some()
             && let Some(comment) = self.annotation_comments.get(&start).copied()
             && kind.matches(&comment)
@@ -151,11 +184,14 @@ impl Codegen<'_> {
             if newline_after {
                 self.print_hard_newline();
             } else {
-                self.print_str(" ");
+                self.print_soft_space();
             }
             return;
         }
         self.print_str(kind.canonical(newline_after));
+        if !newline_after {
+            self.print_soft_space();
+        }
     }
 
     pub(crate) fn print_leading_comments(&mut self, start: u32) {
@@ -410,7 +446,7 @@ impl Codegen<'_> {
         }
     }
 
-    fn print_comment(&mut self, comment: &Comment) {
+    pub(crate) fn print_comment(&mut self, comment: &Comment) {
         let Some(source_text) = self.source_text else {
             return;
         };
@@ -466,7 +502,11 @@ impl Codegen<'_> {
         let mut comments = vec![];
 
         let source_text = program.source_text;
-        for comment in program.comments.iter().filter(|c| c.is_legal()) {
+        for comment in program.comments.iter().filter(|c| {
+            c.is_legal()
+                || (c.attachment.is_some()
+                    && matches!(c.content, CommentContent::Legal | CommentContent::JsdocLegal))
+        }) {
             let mut text = Cow::Borrowed(comment.span.source_text(source_text));
             if comment.is_multiline_block() {
                 let mut buffer = String::with_capacity(text.len());

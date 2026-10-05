@@ -6,6 +6,7 @@ use std::ops::Not;
 
 use oxc_ast::ast::{BinaryExpression, Expression, LogicalExpression};
 use oxc_syntax::{
+    node::NodeId,
     operator::{BinaryOperator, LogicalOperator},
     precedence::{GetPrecedence, Precedence},
 };
@@ -19,17 +20,48 @@ pub enum Binaryish<'a> {
 }
 
 impl<'a> Binaryish<'a> {
-    pub fn left(&self) -> &'a Expression<'a> {
+    pub fn left(&self, p: &Codegen) -> &'a Expression<'a> {
         match self {
-            Self::Binary(e) => e.left.without_parentheses(),
-            Self::Logical(e) => e.left.without_parentheses(),
+            Self::Binary(e) => {
+                if p.attached_comments.is_empty() {
+                    e.left.without_parentheses()
+                } else {
+                    &e.left
+                }
+            }
+            Self::Logical(e) => {
+                if p.attached_comments.is_empty() {
+                    e.left.without_parentheses()
+                } else {
+                    &e.left
+                }
+            }
         }
     }
 
-    pub fn right(&self) -> &'a Expression<'a> {
+    pub fn right(&self, p: &Codegen) -> &'a Expression<'a> {
         match self {
-            Self::Binary(e) => e.right.without_parentheses(),
-            Self::Logical(e) => e.right.without_parentheses(),
+            Self::Binary(e) => {
+                if p.attached_comments.is_empty() {
+                    e.right.without_parentheses()
+                } else {
+                    &e.right
+                }
+            }
+            Self::Logical(e) => {
+                if p.attached_comments.is_empty() {
+                    e.right.without_parentheses()
+                } else {
+                    &e.right
+                }
+            }
+        }
+    }
+
+    pub fn node_id(self) -> NodeId {
+        match self {
+            Self::Binary(node) => node.node_id(),
+            Self::Logical(node) => node.node_id(),
         }
     }
 
@@ -50,6 +82,17 @@ pub enum BinaryishOperator {
 impl BinaryishOperator {
     fn is_binary(self) -> bool {
         matches!(self, Self::Binary(_))
+    }
+}
+
+impl Binaryish<'_> {
+    #[inline]
+    fn needs_parens(self, precedence: Precedence, parent: BinaryishOperator, ctx: Context) -> bool {
+        let operator = self.operator();
+        (precedence >= operator.precedence()
+            && (parent.is_binary() || precedence != parent.precedence()))
+            || (operator == BinaryishOperator::Binary(BinaryOperator::In)
+                && ctx.contains(Context::FORBID_IN))
     }
 }
 
@@ -116,7 +159,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 break;
             }
 
-            let left = v.e.left();
+            let left = v.e.left(p);
             let left_binary = match left {
                 Expression::BinaryExpression(e) => Some(Binaryish::Binary(e)),
                 Expression::LogicalExpression(e) => Some(Binaryish::Logical(e)),
@@ -125,12 +168,17 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
             let Some(left_binary) = left_binary else {
                 if !cjs_module_lexer::try_print_equality_string(p, v.operator, left) {
-                    left.gen_expr(p, v.left_precedence, v.ctx);
+                    left.print_expr(p, v.left_precedence, v.ctx);
                 }
                 v.visit_right_and_finish(p);
                 break;
             };
 
+            if !p.attached_comments.is_empty() {
+                p.start_binary_comments(left_binary.node_id(), |_| {
+                    left_binary.needs_parens(v.left_precedence, v.operator, v.ctx)
+                });
+            }
             p.binary_expr_stack.push(v);
             v = BinaryExpressionVisitor {
                 e: left_binary,
@@ -159,13 +207,8 @@ impl<'a> BinaryExpressionVisitor<'a> {
         // We don't need to print parentheses if both sides use the same logical operator
         // For example: `(a     &&     b)         && c` should be printed as `a && b && c`
         //                      ^^  e.operator()  ^^ self.operator
-        let precedence_check = self.precedence >= e.operator().precedence()
-            && (self.operator.is_binary() || self.precedence != self.operator.precedence());
-
+        self.wrap = e.needs_parens(self.precedence, self.operator, self.ctx);
         self.operator = e.operator();
-        self.wrap = precedence_check
-            || (self.operator == BinaryishOperator::Binary(BinaryOperator::In)
-                && self.ctx.intersects(Context::FORBID_IN));
 
         if self.wrap {
             p.print_ascii_byte(b'(');
@@ -173,6 +216,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
             //           ^^^^^^^^^^^^ has been wrapped in parens, so it doesn't need to
             //                        print parens for `a in b` again.
             self.ctx &= Context::FORBID_IN.not();
+            p.print_deferred_leading_comments(e.node_id());
         }
 
         self.left_precedence = self.operator.lower_precedence();
@@ -188,12 +232,12 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
         match self.operator {
             BinaryishOperator::Logical(LogicalOperator::Coalesce) => {
-                if let Expression::LogicalExpression(logical_expr) = e.left()
+                if let Expression::LogicalExpression(logical_expr) = e.left(p)
                     && matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or)
                 {
                     self.left_precedence = Precedence::Prefix;
                 }
-                if let Expression::LogicalExpression(logical_expr) = e.right()
+                if let Expression::LogicalExpression(logical_expr) = e.right(p)
                     && matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or)
                 {
                     self.right_precedence = Precedence::Prefix;
@@ -204,7 +248,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 // must be parenthesized. Negative numbers and BigInts print with a
                 // leading `-`, i.e. as a unary operator.
                 if matches!(
-                    e.left(),
+                    e.left(p),
                     Expression::UnaryExpression(_)
                         | Expression::AwaitExpression(_)
                         | Expression::TSTypeAssertion(_)
@@ -217,7 +261,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
             BinaryishOperator::Binary(BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd) => {
                 // Without parentheses, `|` or `&` becomes part of the type in
                 // `(value satisfies Type) | other` or `(value satisfies Type) & other`.
-                if matches!(e.left(), Expression::TSSatisfiesExpression(_)) {
+                if matches!(e.left(p), Expression::TSSatisfiesExpression(_)) {
                     self.left_precedence = Precedence::Compare;
                 }
             }
@@ -225,8 +269,8 @@ impl<'a> BinaryExpressionVisitor<'a> {
             _ => {}
         }
 
-        if let Expression::PrivateInExpression(e) = self.e.left() {
-            e.gen_expr(p, self.left_precedence, self.ctx);
+        if let Expression::PrivateInExpression(e) = self.e.left(p) {
+            e.print_expr(p, self.left_precedence, self.ctx);
             self.visit_right_and_finish(p);
             return false;
         }
@@ -238,7 +282,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         p.print_soft_space();
         self.operator.r#gen(p);
         p.print_soft_space();
-        let right = self.e.right();
+        let right = self.e.right(p);
         if let Binaryish::Logical(e) = self.e {
             // Annotation-gated (see the helper's doc): statements get merged
             // into logical RHS positions on mutated ASTs. Pass the unstripped
@@ -247,10 +291,14 @@ impl<'a> BinaryExpressionVisitor<'a> {
             p.print_annotation_comments_before_expression(&e.right);
         }
         if !cjs_module_lexer::try_print_equality_string(p, self.operator, right) {
-            right.gen_expr(p, self.right_precedence, self.ctx);
+            right.print_expr(p, self.right_precedence, self.ctx);
         }
         if self.wrap {
+            p.print_trailing_comments_inside_parens(self.e.node_id());
             p.print_ascii_byte(b')');
+        }
+        if !p.attached_comments.is_empty() {
+            p.finish_binary_comments(self.e.node_id());
         }
     }
 }

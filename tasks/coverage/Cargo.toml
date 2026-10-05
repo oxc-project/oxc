@@ -25,6 +25,7 @@ doctest = false
 cow-utils = { workspace = true }
 oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "conformance"] }
 oxc_estree_tokens = { workspace = true }
+oxc_comment_assignment = { workspace = true }
 oxc_lexer = { workspace = true, optional = true }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }

@@ -663,6 +663,32 @@ fn unapplied_annotation_comments() {
 }
 
 #[test]
+fn jsx_expression_precedence() {
+    for preserve_parens in [false, true] {
+        let parse_options =
+            oxc_parser::ParseOptions { preserve_parens, ..oxc_parser::ParseOptions::default() };
+        test_with_parse_options(
+            "let i = <InferParamComponent values={[1, 2, 3, 4]} selectHandler={(val) => {}} />;",
+            "let i = <InferParamComponent values={[\n\t1,\n\t2,\n\t3,\n\t4\n]} selectHandler={(val) => {}} />;\n",
+            parse_options,
+        );
+        test_with_parse_options(
+            "const i = <C value={a = b} sequence={(a, b)}>{(val) => {}}</C>;",
+            "const i = <C value={a = b} sequence={(a, b)}>{(val) => {}}</C>;\n",
+            parse_options,
+        );
+    }
+    test_minify(
+        "let i = <InferParamComponent values={[1, 2, 3, 4]} selectHandler={(val) => {}} />;",
+        "let i=<InferParamComponent values={[1,2,3,4]} selectHandler={val=>{}}/>;",
+    );
+    test_minify(
+        "const i = <C value={a = b} sequence={(a, b)}>{(val) => {}}</C>;",
+        "const i=<C value={a=b} sequence={(a,b)}>{val=>{}}</C>;",
+    );
+}
+
+#[test]
 fn pife() {
     test_same("foo((() => 0));\n");
     test_minify_same("foo((()=>0));");

@@ -201,6 +201,7 @@ fn jsx_is_not_escaped() {
     );
 }
 
+#[cfg(feature = "sourcemap")]
 mod sourcemap {
     use super::*;
 
