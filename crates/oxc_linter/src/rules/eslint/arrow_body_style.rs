@@ -1176,16 +1176,8 @@ var foo = () =>
             "var foo = () => { return bar }\n`template`",
             None,
         ),
-        (
-            "var foo = () => { return bar }\n+1",
-            "var foo = () => { return bar }\n+1",
-            None,
-        ),
-        (
-            "var foo = () => { return bar }\n-1",
-            "var foo = () => { return bar }\n-1",
-            None,
-        ),
+        ("var foo = () => { return bar }\n+1", "var foo = () => { return bar }\n+1", None),
+        ("var foo = () => { return bar }\n-1", "var foo = () => { return bar }\n-1", None),
         // A comment between the arrow and the next statement still counts.
         (
             "var foo = () => { return bar }\n/* c */\n(1).toString()",
