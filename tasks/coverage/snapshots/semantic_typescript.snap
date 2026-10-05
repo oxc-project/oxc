@@ -1,8 +1,8 @@
-commit: f29aeb9f
+commit: 4f5ddae2
 
 semantic_typescript Summary:
 AST Parsed     : 5575/5575 (100.00%)
-Positive Passed: 4073/5575 (73.06%)
+Positive Passed: 4072/5575 (73.04%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -299,6 +299,80 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["a", "value"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/asConstReadonlyTupleInferenceThroughNestedGenericCall.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["a", "b", "box", "check1", "f", "f2", "g", "h", "id", "neverValue", "ok1", "ok2", "r1", "r2", "r3", "r4", "r5", "z"]
+rebuilt        : ScopeId(0): ["check1", "ok1", "ok2", "r1", "r2", "r3", "r4", "r5", "z"]
+Reference symbol mismatch for "f":
+after transform: SymbolId(10) "f"
+rebuilt        : <None>
+Reference symbol mismatch for "box":
+after transform: SymbolId(7) "box"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(19) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(20) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "f2":
+after transform: SymbolId(13) "f2"
+rebuilt        : <None>
+Reference symbol mismatch for "box":
+after transform: SymbolId(7) "box"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(19) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(20) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "f":
+after transform: SymbolId(10) "f"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(19) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(20) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "g":
+after transform: SymbolId(28) "g"
+rebuilt        : <None>
+Reference symbol mismatch for "box":
+after transform: SymbolId(7) "box"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(19) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(20) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "h":
+after transform: SymbolId(32) "h"
+rebuilt        : <None>
+Reference symbol mismatch for "box":
+after transform: SymbolId(7) "box"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(19) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(20) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "id":
+after transform: SymbolId(16) "id"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(19) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(20) "b"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["a", "b", "box", "f", "f2", "g", "h", "id"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/assertionFunctionWildcardImport1.ts
 Bindings mismatch:

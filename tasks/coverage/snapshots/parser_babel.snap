@@ -1,4 +1,4 @@
-commit: fd665901
+commit: 4f4ef5d4
 
 parser_babel Summary:
 AST Parsed     : 2239/2239 (100.00%)
@@ -12459,10 +12459,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   help: Try inserting a semicolon here
 
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
-   ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts:2:12]
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts:2:3]
  1 │ abstract class TSAbstractClass {
  2 │   abstract #foo: boolean;
-   ·            ────
+   ·   ────────
  3 │ }
    ╰────
 
@@ -13722,10 +13722,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
 
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts:2:12]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts:2:3]
  1 │ abstract class A {
  2 │   abstract #a;
-   ·            ──
+   ·   ────────
  3 │ }
    ╰────
 

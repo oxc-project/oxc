@@ -256,9 +256,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.1.0
-      degit:
-        specifier: 'catalog:'
-        version: 3.10.0
       diff:
         specifier: ^9.0.0
         version: 9.0.0

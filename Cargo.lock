@@ -2151,6 +2151,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
+ "rustc-hash",
  "serde_json",
 ]
 
@@ -2888,6 +2889,7 @@ dependencies = [
  "oxc_formatter_css",
  "oxc_formatter_graphql",
  "oxc_formatter_json",
+ "oxc_formatter_markdown",
  "oxc_formatter_yaml",
  "oxc_language_server",
  "oxc_napi",

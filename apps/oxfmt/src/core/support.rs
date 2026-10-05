@@ -70,6 +70,9 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     if is_yaml_file(file_name, extension) {
         return Some(FileKind::OxcFormatterYaml { path });
     }
+    if is_markdown_file(file_name, extension) {
+        return Some(FileKind::OxcFormatterMarkdown { path });
+    }
 
     // Prettier-delegated files are only supported with the `napi` feature
     #[cfg(feature = "napi")]
@@ -113,6 +116,8 @@ pub enum FileKind {
     /// Files like `.prettierrc`:
     /// mirroring Prettier's yaml embed, they are formatted as JSON first, then fall back to YAML if that fails.
     OxcFormatterYamlRc { path: Arc<Path> },
+    /// Markdown files formatted by `oxc_formatter_markdown`.
+    OxcFormatterMarkdown { path: Arc<Path> },
     /// TOML files formatted by taplo (Pure Rust).
     OxfmtToml { path: Arc<Path> },
     /// Files formatted by delegating to Prettier (Tier 3/4).
@@ -141,6 +146,7 @@ impl FileKind {
             | Self::OxcFormatterCss { path, .. }
             | Self::OxcFormatterYaml { path }
             | Self::OxcFormatterYamlRc { path }
+            | Self::OxcFormatterMarkdown { path }
             | Self::OxfmtToml { path } => path,
             #[cfg(feature = "napi")]
             Self::Prettier { path, .. } => path,
@@ -187,16 +193,14 @@ static OXFMT_PARSERS: phf::Set<&'static str> = phf_set! {
     // "html",
     "vue",
     "svelte",
-    // "markdown",
     // "mdx",
 };
 
 /// Parsers(files) that benefit from `prettier-plugin-svelte`.
-/// `.svelte` is the primary target; `markdown`/`mdx` allow ` ```svelte ` code blocks.
+/// `.svelte` is the primary target; `mdx` allows ` ```svelte ` code blocks.
 #[cfg(feature = "napi")]
 static SVELTE_PARSERS: phf::Set<&'static str> = phf_set! {
     "svelte",
-    "markdown",
     "mdx",
 };
 
@@ -414,19 +418,39 @@ static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 
 // ---
 
+/// Returns `true` if this is a Markdown file (handled by `oxc_formatter_markdown`).
+fn is_markdown_file(file_name: &str, extension: Option<&str>) -> bool {
+    if MARKDOWN_FILENAMES.contains(file_name) {
+        return true;
+    }
+    extension.is_some_and(|ext| MARKDOWN_EXTENSIONS.contains(ext))
+}
+
+static MARKDOWN_FILENAMES: phf::Set<&'static str> = phf_set! {
+    "contents.lr",
+    "README",
+};
+
+static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "md",
+    "livemd",
+    "markdown",
+    "mdown",
+    "mdwn",
+    "mkd",
+    "mkdn",
+    "mkdown",
+    "ronn",
+    "scd",
+    "workbook",
+};
+
+// ---
+
 /// Returns the Prettier parser name for the file, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 #[cfg(feature = "napi")]
 fn get_prettier_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
-    // Markdown and variants
-    if MARKDOWN_FILENAMES.contains(file_name) {
-        return Some("markdown");
-    }
-    if let Some(ext) = extension
-        && MARKDOWN_EXTENSIONS.contains(ext)
-    {
-        return Some("markdown");
-    }
     if extension == Some("mdx") {
         return Some("mdx");
     }
@@ -478,27 +502,6 @@ static HTML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 static HANDLEBARS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "handlebars",
     "hbs",
-};
-
-#[cfg(feature = "napi")]
-static MARKDOWN_FILENAMES: phf::Set<&'static str> = phf_set! {
-    "contents.lr",
-    "README",
-};
-
-#[cfg(feature = "napi")]
-static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "md",
-    "livemd",
-    "markdown",
-    "mdown",
-    "mdwn",
-    "mkd",
-    "mkdn",
-    "mkdown",
-    "ronn",
-    "scd",
-    "workbook",
 };
 
 // ---
@@ -661,12 +664,14 @@ mod tests {
             // Handlebars
             ("template.handlebars", Some("glimmer")),
             ("partial.hbs", Some("glimmer")),
-            // Markdown
-            ("README", Some("markdown")),
-            ("contents.lr", Some("markdown")),
-            ("docs.md", Some("markdown")),
-            ("guide.markdown", Some("markdown")),
-            ("notes.mdown", Some("markdown")),
+            // Markdown files are routed to `oxc_formatter_markdown` in `classify_file_kind`
+            // and excluded from this map.
+            ("README", None),
+            ("contents.lr", None),
+            ("docs.md", None),
+            ("guide.markdown", None),
+            ("notes.mdown", None),
+            // MDX
             ("page.mdx", Some("mdx")),
             // YAML files are routed to `oxc_formatter_yaml` in `classify_file_kind`
             // and excluded from this map.
@@ -786,6 +791,18 @@ mod tests {
         // YAML lock files are excluded, not formatted
         let result = classify_file_kind(Arc::from(Path::new("pnpm-lock.yaml")));
         assert!(result.is_none(), "`pnpm-lock.yaml` should be excluded");
+    }
+
+    #[test]
+    fn test_markdown_files_route_to_oxc_formatter_markdown() {
+        // MARKDOWN_EXTENSIONS and MARKDOWN_FILENAMES
+        for file_name in ["docs.md", "guide.markdown", "notes.mdown", "README", "contents.lr"] {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatterMarkdown { .. })),
+                "`{file_name}` should be routed to oxc_formatter_markdown"
+            );
+        }
     }
 
     #[test]

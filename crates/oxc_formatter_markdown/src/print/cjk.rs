@@ -1,20 +1,18 @@
 //! Word kinds for the CJK line-breaking rules (Prettier's `splitText` / `printWhitespace`).
 //!
-//! A whitespace-delimited word is split into runs of non-CJK characters
-//! and single CJK characters (a variation selector stays with its base);
-//! only the edge runs matter to the printer,
-//! and the split as a whole feeds the "does this sentence put spaces around CJ text" statistic.
+//! Only the characters at the ends of a whitespace-delimited word matter to the printer
+//! (a variation selector stays with its base).
 //!
 //! The tables are Prettier's own character classes
 //! (`constants.evaluate.js`: `cjk-regex` + Script_Extensions / General_Category for CJK,
-//! ASCII punctuation + `\p{P}` (+ U+3000, U+FF5E) for punctuation, `\p{Script_Extensions=Hangul}` for Korean),
+//! `\p{P}` (+ U+3000, U+FF5E) for punctuation, `\p{Script_Extensions=Hangul}` for Korean),
 //! enumerated with Node 26 (Unicode 17).
 //! Regenerate by testing every code point against those regexes and collapsing the hits into ranges.
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     NonCjk,
-    /// Chinese or Japanese letter: no spaces between words, a line break is not a space.
+    /// Chinese or Japanese letter: no spaces between words, a line break next to it is kept.
     CjLetter,
     /// Korean letter: words are space-separated, as in Latin script.
     KLetter,
@@ -27,65 +25,31 @@ impl Kind {
     }
 }
 
-/// The run at one end of a word, as the whitespace next to it sees it.
-#[derive(Clone, Copy, Debug)]
-pub struct Edge {
-    pub kind: Kind,
-    /// The run's character on the whitespace side.
-    pub ch: char,
-    /// That character is punctuation (a CJK punctuation run always is).
-    pub punctuation: bool,
+/// The kind of the word's first character.
+pub fn first_kind(word: &str) -> Option<Kind> {
+    word.chars().next().map(kind)
 }
 
-/// The kinds of a word's runs, in order.
-pub fn kinds(word: &str) -> impl Iterator<Item = Kind> + '_ {
-    runs(word).map(|(_, kind)| kind)
-}
-
-/// The word's first and last run, as edges.
-pub fn edges(word: &str) -> Option<(Edge, Edge)> {
-    let mut it = runs(word);
-    let (first_run, first_kind) = it.next()?;
-    let (last_run, last_kind) = it.last().unwrap_or((first_run, first_kind));
-    let first_ch = first_run.chars().next()?;
-    let last_ch = last_run.chars().next_back()?;
-    let edge = |kind: Kind, ch: char| Edge {
-        kind,
-        ch,
-        punctuation: kind == Kind::CjkPunctuation || is_punctuation(ch),
-    };
-    Some((edge(first_kind, first_ch), edge(last_kind, last_ch)))
-}
-
-/// Splits a word into runs: each CJK character (plus a following variation selector) on its own,
-/// non-CJK characters together.
-fn runs(word: &str) -> impl Iterator<Item = (&str, Kind)> {
-    let mut rest = word;
-    std::iter::from_fn(move || {
-        let c = rest.chars().next()?;
-        let (len, kind) = if is_cjk(c) {
-            let mut len = c.len_utf8();
-            if let Some(vs) = rest[len..].chars().next()
-                && is_variation_selector(vs)
-            {
-                len += vs.len_utf8();
-            }
-            let kind = if is_punctuation(c) {
-                Kind::CjkPunctuation
-            } else if is_hangul(c) {
-                Kind::KLetter
-            } else {
-                Kind::CjLetter
-            };
-            (len, kind)
-        } else {
-            let len = rest.find(is_cjk).unwrap_or(rest.len());
-            (len, Kind::NonCjk)
-        };
-        let (run, tail) = rest.split_at(len);
-        rest = tail;
-        Some((run, kind))
+/// The kind of the word's last character; a trailing variation selector stays with its base.
+pub fn last_kind(word: &str) -> Option<Kind> {
+    let mut chars = word.chars();
+    let last = chars.next_back()?;
+    Some(match chars.next_back() {
+        Some(base) if is_variation_selector(last) && is_cjk(base) => kind(base),
+        _ => kind(last),
     })
+}
+
+fn kind(c: char) -> Kind {
+    if !is_cjk(c) {
+        Kind::NonCjk
+    } else if is_punctuation(c) {
+        Kind::CjkPunctuation
+    } else if is_hangul(c) {
+        Kind::KLetter
+    } else {
+        Kind::CjLetter
+    }
 }
 
 fn is_variation_selector(c: char) -> bool {
@@ -100,11 +64,8 @@ fn is_hangul(c: char) -> bool {
     in_ranges(HANGUL, c)
 }
 
-/// ASCII punctuation, U+3000, U+FF5E, or Unicode general category P.
-pub fn is_punctuation(c: char) -> bool {
-    if c.is_ascii() {
-        return c.is_ascii_punctuation();
-    }
+/// U+3000, U+FF5E, or Unicode general category P (only asked about CJK characters).
+fn is_punctuation(c: char) -> bool {
     matches!(c, '\u{3000}' | '\u{FF5E}') || in_ranges(PUNCTUATION, c)
 }
 

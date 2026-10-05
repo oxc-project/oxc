@@ -11,8 +11,9 @@ use oxc_css_parser::{
         KeyframesName, LessImportOptions, LessImportPrelude, MediaCondition,
         MediaConditionAfterMediaType, MediaConditionKind, MediaFeature, MediaFeatureComparisonKind,
         MediaFeatureName, MediaInParens, MediaInParensKind, MediaQuery, MediaQueryList,
-        NamespacePreludeUri, SassAtRootKind, SimpleBlock, SupportsCondition, SupportsConditionKind,
-        SupportsInParens, SupportsInParensKind, TokenSeq, UnknownAtRulePrelude,
+        NamespacePreludeUri, SassAtRootKind, SimpleBlock, SupportsAnd, SupportsCondition,
+        SupportsConditionKind, SupportsInParens, SupportsInParensKind, SupportsNot, SupportsOr,
+        TokenSeq, UnknownAtRulePrelude,
     },
     pos::Span,
     token::{Token, TokenWithSpan},
@@ -21,10 +22,10 @@ use oxc_css_parser::{
 use oxc_formatter_core::{
     Buffer, Format, FormatElement, arena_cow_str,
     builders::{
-        empty_line, group, hard_line_break, indent, soft_line_break, soft_line_break_or_space,
-        space, text,
+        empty_line, group, hard_line_break, indent, soft_block_indent, soft_line_break,
+        soft_line_break_or_space, space, text,
     },
-    write,
+    format_args, write,
 };
 
 use crate::{
@@ -1050,12 +1051,7 @@ fn write_token_value<'a>(
         let only = groups[0];
         // `name( ... )` covering the whole group:
         // the parens govern breaking/indent; anything else gets the continuation indent.
-        let whole_call = only.len() > 2
-            && matches!(&only[only.len() - 1].token, Token::RParen(_))
-            && (matches!(&only[0].token, Token::LParen(_))
-                || (matches!(&only[0].token, Token::Ident(_))
-                    && matches!(&only[1].token, Token::LParen(_))));
-        if whole_call {
+        if only.len() > 2 && is_one_paren_region(only) {
             write_token_comma_group(only, top_level, f);
         } else if top_level {
             let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
@@ -1225,6 +1221,26 @@ fn write_token_comma_group_after<'a>(
     filler.finish();
 }
 
+/// Whether `tokens` is one `( ... )` or `name( ... )` region:
+/// the opening paren closes at the last token
+/// (`--f(a) returns type(b)` ends with a `)` too, but is two regions).
+fn is_one_paren_region(tokens: &[TokenWithSpan<'_>]) -> bool {
+    let open = match tokens {
+        [TokenWithSpan { token: Token::LParen(_), .. }, ..] => 0,
+        [
+            TokenWithSpan { token: Token::Ident(_), .. },
+            TokenWithSpan { token: Token::LParen(_), .. },
+            ..,
+        ] => 1,
+        _ => return false,
+    };
+    let mut depth = 0;
+    tokens[open..].iter().position(|t| {
+        depth += value::token_depth_delta(&t.token);
+        depth == 0
+    }) == Some(tokens.len() - open - 1)
+}
+
 /// Wrapper: a comma group is its own breakable group with indent.
 /// Except when it contains paren regions,
 /// which provide their own indentation (avoids double-indenting `name(...)` contents).
@@ -1234,12 +1250,7 @@ fn write_token_comma_group_grouped<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     // A group that IS one call/paren region delegates breaking to the parens
-    let whole_region = !tokens.is_empty()
-        && matches!(&tokens[tokens.len() - 1].token, Token::RParen(_))
-        && (matches!(&tokens[0].token, Token::LParen(_))
-            || (tokens.len() > 1
-                && matches!(&tokens[0].token, Token::Ident(_))
-                && matches!(&tokens[1].token, Token::LParen(_))));
+    let whole_region = is_one_paren_region(tokens);
     // A `$key: (region)` pair also delegates to the parens
     let kv_region = !whole_region
         && matches!(tokens.last().map(|t| &t.token), Some(Token::RParen(_)))
@@ -2159,57 +2170,81 @@ fn write_supports_condition<'a>(condition: &SupportsCondition<'a>, f: &mut CssFo
     // A fill of keywords and parenthesized terms:
     // a long condition breaks AFTER `and`/`or`, one indent in
     // (`postcss-values` prints the params as a value group, so each word/paren is its own fill entry).
-    let condition_end = to_span(condition.span()).end;
-    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        let mut filler = f.fill();
-        for kind in &condition.conditions {
-            let (keyword, in_parens) = match kind {
-                SupportsConditionKind::SupportsInParens(in_parens) => (None, in_parens),
-                SupportsConditionKind::And(and) => (Some(&and.keyword), &and.condition),
-                SupportsConditionKind::Or(or) => (Some(&or.keyword), &or.condition),
-                SupportsConditionKind::Not(not) => (Some(&not.keyword), &not.condition),
-            };
-            // A `//` among the entries breaks the condition
-            if let Some(keyword) = keyword {
-                let kw = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                    let span = to_span(keyword.span());
-                    value::write_with_comments(span, condition_end, f, |f| {
-                        write_maybe_lowercase(f.context().source_text().text_for(&span), f);
-                    });
-                });
-                filler.entry(&soft_line_break_or_space(), &kw);
-            }
-            let term = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                value::write_with_comments(to_span(in_parens.span()), condition_end, f, |f| {
-                    write_supports_in_parens(in_parens, f);
-                });
+    let end = to_span(condition.span()).end;
+    let keyword = |keyword| format_with(move |f| write_supports_keyword(keyword, end, f));
+    let term = |in_parens| format_with(move |f| write_supports_term(in_parens, end, f));
+    let not = |not| format_with(move |f| write_supports_not(not, end, f));
+
+    match condition.conditions.as_slice() {
+        // A lone term is no fill entry, so its parens see what follows when deciding to open.
+        // It may carry hardlines of its own (`selector(\n :focus-visible // c\n)`) that must not be re-indented.
+        [SupportsConditionKind::SupportsInParens(in_parens)] => write!(f, group(&term(in_parens))),
+        [SupportsConditionKind::Not(n)] => write!(f, group(&not(n))),
+        conditions => {
+            let body = format_with(|f: &mut CssFormatter<'_, 'a>| {
+                let mut filler = f.fill();
+                for kind in conditions {
+                    match kind {
+                        SupportsConditionKind::SupportsInParens(in_parens) => {
+                            filler.entry(&soft_line_break_or_space(), &term(in_parens));
+                        }
+                        SupportsConditionKind::And(SupportsAnd {
+                            keyword: kw, condition, ..
+                        })
+                        | SupportsConditionKind::Or(SupportsOr {
+                            keyword: kw, condition, ..
+                        }) => {
+                            filler.entry(&soft_line_break_or_space(), &keyword(kw));
+                            filler.entry(&soft_line_break_or_space(), &term(condition));
+                        }
+                        SupportsConditionKind::Not(n) => {
+                            filler.entry(&soft_line_break_or_space(), &not(n));
+                        }
+                    }
+                }
+                filler.finish();
             });
-            filler.entry(&soft_line_break_or_space(), &term);
+            write!(f, group(&indent(&body)));
         }
-        filler.finish();
-    });
-    // Only a multi-term condition gets the indent:
-    // a lone term may carry hardlines of its own (`selector(\n :focus-visible // c\n)`)
-    // that must not be re-indented.
-    if condition.conditions.len() > 1 {
-        write!(f, group(&indent(&body)));
-    } else {
-        write!(f, group(&body));
     }
+}
+
+/// `and` / `or` / `not`, lowercased; a `//` after it breaks the condition.
+fn write_supports_keyword<'a>(keyword: &Ident<'a>, end: u32, f: &mut CssFormatter<'_, 'a>) {
+    let span = to_span(keyword.span());
+    value::write_with_comments(span, end, f, |f| {
+        write_maybe_lowercase(f.context().source_text().text_for(&span), f);
+    });
+}
+
+/// `not` only ever leads its term, so it stays on the term's line.
+fn write_supports_not<'a>(not: &SupportsNot<'a>, end: u32, f: &mut CssFormatter<'_, 'a>) {
+    write_supports_keyword(&not.keyword, end, f);
+    write!(f, space());
+    write_supports_term(&not.condition, end, f);
+}
+
+fn write_supports_term<'a>(
+    in_parens: &SupportsInParens<'a>,
+    end: u32,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    value::write_with_comments(to_span(in_parens.span()), end, f, |f| {
+        write_supports_in_parens(in_parens, f);
+    });
 }
 
 fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
     match &in_parens.kind {
+        // An over-wide term opens its parens (Prettier's parenthesized value group)
         SupportsInParensKind::SupportsCondition(condition) => {
-            write!(f, "(");
-            write_supports_condition(condition, f);
-            write!(f, ")");
+            let content = format_with(|f| write_supports_condition(condition, f));
+            write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
         SupportsInParensKind::Feature(feature) => {
-            write!(f, "(");
-            statement::write_declaration(&feature.decl, f);
-            write!(f, ")");
+            let content = format_with(|f| statement::write_declaration(&feature.decl, f));
+            write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
         SupportsInParensKind::Selector(list) => {
             write!(f, "selector(");

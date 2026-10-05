@@ -15,28 +15,27 @@ use oxc_formatter::HtmlEmbedMeta;
 use oxc_formatter_core::{DispatchPayload, DispatchResponse, FormatSession};
 
 use crate::{
-    core::{
-        embed::{
-            FormatEmbeddedDocWithConfigCallback,
-            dispatcher::{PrettierDocFallback, PrettierLanguage, ResolvedDispatchConfig},
-        },
-        options::inject_parser,
+    core::embed::{
+        FormatEmbeddedDocWithConfigCallback,
+        dispatcher::{PrettierDocFallback, PrettierLanguage, ResolvedDispatchConfig},
     },
     prettier_compat::from_prettier_doc,
 };
 
 /// Build the Prettier Doc→IR fallback installed on the dispatcher's `Route::Prettier` arm.
-/// The routing table already narrowed the language, so there is nothing left to reject here.
+/// The routing table already narrowed the language; only a language whose plugin is off is rejected (as-is).
 pub fn build_prettier_fallback(
     dispatch_config: Arc<ResolvedDispatchConfig>,
     format_embedded_doc: FormatEmbeddedDocWithConfigCallback,
 ) -> PrettierDocFallback {
     Arc::new(move |session: &FormatSession<'_>, language: PrettierLanguage, text: &str| {
         let parser_name = language.parser();
+        let Some(options) = dispatch_config.prettier_options_for(language) else {
+            debug!("The plugin for parser '{parser_name}' is not enabled, part stays as-is");
+            return Ok(DispatchResponse::PreserveOriginal);
+        };
         debug_span!("oxfmt::external::format_embedded_doc", parser = parser_name)
             .in_scope(|| {
-                let mut options = dispatch_config.prettier_options().clone();
-                inject_parser(&mut options, parser_name);
                 let doc_json_str = (format_embedded_doc)(options, text).map_err(|err| {
                     format!("Failed to get Doc for embedded code (parser '{parser_name}'): {err}")
                 })?;
