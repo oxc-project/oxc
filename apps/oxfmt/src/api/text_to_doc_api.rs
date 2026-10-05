@@ -132,11 +132,11 @@ fn run_full(
     );
     let _cleanup = external_services.cleanup_guard();
 
-    let format_options = to_oxc_formatter(&config, validated.core, validated.sort_imports.clone());
     // Per-language options (and the Prettier options JSON with the Tailwind payload)
     // are mapped lazily at dispatch time.
     let dispatch_config =
         ResolvedDispatchConfig::for_root(Arc::new(config), Arc::new(validated), &parent_filepath);
+    let format_options = dispatch_config.js_options();
 
     let services = embed::services::for_root(&external_services, &dispatch_config);
 

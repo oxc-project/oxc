@@ -16,9 +16,8 @@ use super::options::{
 use super::{
     embed::dispatcher::ResolvedDispatchConfig,
     options::{
-        ValidatedOptions, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
-        to_oxc_formatter_json, to_oxc_formatter_markdown, to_oxc_formatter_yaml, to_oxc_toml,
-        to_sort_package_json,
+        ValidatedOptions, to_oxc_formatter_graphql, to_oxc_formatter_json, to_oxc_formatter_yaml,
+        to_oxc_toml, to_sort_package_json,
     },
     oxfmtrc::FormatConfig,
     support::FileKind,
@@ -79,11 +78,15 @@ impl SourceFormatter {
 
         let FormatStrategy { kind, config, validated } = strategy;
         let core = validated.core;
+        // Roots with a session take options from their dispatch config,
+        // others map them directly without building one.
         let result = match kind {
             FileKind::OxcFormatter { path, source_type } => {
                 let allocator = self.allocator_pool.get();
-                let options = to_oxc_formatter(&config, core, validated.sort_imports.clone());
-                let session = self.root_session(&allocator, &config, validated, &path);
+                let dispatch_config =
+                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
+                let session = self.root_session(&allocator, &dispatch_config);
+                let options = dispatch_config.js_options();
                 let result =
                     oxc_formatter::format_with_session(&session, source_text, source_type, options)
                         .and_then(|formatted| print(formatted, &path));
@@ -120,8 +123,10 @@ impl SourceFormatter {
             }
             FileKind::OxcFormatterCss { path, variant } => {
                 let allocator = self.allocator_pool.get();
-                let options = to_oxc_formatter_css(&config, core, variant);
-                let session = self.root_session(&allocator, &config, validated, &path);
+                let dispatch_config =
+                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
+                let session = self.root_session(&allocator, &dispatch_config);
+                let options = dispatch_config.css_options(variant);
                 oxc_formatter_css::format_with_session(&session, source_text, options)
                     .and_then(|formatted| print(formatted, &path))
             }
@@ -140,8 +145,10 @@ impl SourceFormatter {
                 }),
             FileKind::OxcFormatterMarkdown { path } => {
                 let allocator = self.allocator_pool.get();
-                let options = to_oxc_formatter_markdown(&config, core);
-                let session = self.root_session(&allocator, &config, validated, &path);
+                let dispatch_config =
+                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
+                let session = self.root_session(&allocator, &dispatch_config);
+                let options = dispatch_config.markdown_options();
                 oxc_formatter_markdown::format_with_session(&session, source_text, options)
                     .and_then(|formatted| print(formatted, &path))
             }
@@ -173,15 +180,12 @@ impl SourceFormatter {
     fn root_session<'a>(
         &self,
         allocator: &'a Allocator,
-        config: &Arc<FormatConfig>,
-        validated: Arc<ValidatedOptions>,
-        path: &Path,
+        dispatch_config: &Arc<ResolvedDispatchConfig>,
     ) -> FormatSession<'a> {
-        let dispatch_config = ResolvedDispatchConfig::for_root(Arc::clone(config), validated, path);
         #[cfg(feature = "napi")]
-        let services = super::embed::services::for_root(self.external_services(), &dispatch_config);
+        let services = super::embed::services::for_root(self.external_services(), dispatch_config);
         #[cfg(not(feature = "napi"))]
-        let services = super::embed::services::for_root(&dispatch_config);
+        let services = super::embed::services::for_root(dispatch_config);
         FormatSession::with_services(allocator, InputKind::PhysicalFile, services)
     }
 
