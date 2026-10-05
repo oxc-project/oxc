@@ -13,9 +13,6 @@ pub(super) enum Anchor {
     Stmt(usize),
     /// An operand starts at the paren here, whose group holds the query.
     Expr(usize),
-    /// The bounded walk already covers this point and continues from where it stopped.
-    /// It first leaves the group from open to close that it stopped in, when close is not 0.
-    Continue { semi: u32, brace: u32, open: u32, close: u32 },
 }
 
 /// Is the word at `p` an attribute inside a JSX opening tag? Scans back over attribute names,
@@ -198,22 +195,6 @@ fn second_follower(tokens: &Tokens, f: usize, ops: &[u8]) -> bool {
 fn second_word(tokens: &Tokens, f: usize) -> u8 {
     let s = tokens.peek(f + 1);
     if s.kind == tk!(Ident) { tokens.ident_kw(s.pos) } else { 0 }
-}
-
-/// After the `}` at `c`: the position of a token that must start a statement or member there
-/// (a name, string, number, private name or decorator; not `as` / `satisfies` / `in` /
-/// `instanceof`, which continue a value), or None.
-pub(super) fn brace_boundary(tokens: &Tokens, c: usize) -> Option<usize> {
-    let f = tokens.peek(c + 1);
-    let ok = match f.kind {
-        tk!(Ident) => !matches_tk!(
-            tokens.ident_kw(f.pos),
-            KwAs | KwSatisfies | KwIn | KwInstanceof | KwOf | KwImplements | KwExtends | KwFrom
-        ),
-        tk!(PrivateIdent | String | Number | BigInt) => true,
-        _ => f.kind >= OP_KIND_BASE && f.byte == b'@',
-    };
-    ok.then_some(f.pos)
 }
 
 /// The `(` at `p` holds the query: where the walk starts when the token before makes the paren an

@@ -105,8 +105,6 @@ pub(super) const L_INTERFACE_BODY: u8 = 1;
 #[derive(Clone, Copy, Default)]
 pub(super) struct Frame {
     pub(super) kind: FrameKind,
-    /// Start of the token that opened the frame.
-    pub(super) at: u32,
     pub(super) is_generator: bool,
     pub(super) is_async: bool,
     /// Braces: closing this frame ends a value.

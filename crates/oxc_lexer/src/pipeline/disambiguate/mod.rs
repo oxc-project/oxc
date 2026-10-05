@@ -38,6 +38,9 @@ pub(super) use type_context::{gt_run_split, jsx_over_generic, lt_run_split};
 /// past it the walk from the start of the source answers.
 pub(crate) const WALK_SCAN_CAP: u32 = 2048;
 
+/// Scan steps bounded walks may take, plus one per 32 bytes, before the full walk answers the rest.
+pub(crate) const LOCAL_WALK_BUDGET: u32 = 16384;
+
 /// Step cap for the rules which answer without a walk: finding the JSX tag around a keyword,
 /// and settling a `>` run from the tokens around it.
 pub(crate) const RULE_SCAN_CAP: u32 = 256;
