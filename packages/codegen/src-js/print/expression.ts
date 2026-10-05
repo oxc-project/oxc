@@ -8,7 +8,9 @@ import {
   CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_INT_DIGIT,
+  CAT_LT,
   CAT_OP_UN_NOT,
+  CAT_OP_UN_NOT_AFTER_LT,
   CAT_OTHER,
   CAT_QUESTION,
   CAT_START_OF_ARROW_EXPR,
@@ -678,6 +680,9 @@ function printUpdateExpression(
 /**
  * Wraps from `PREC_PREFIX` upwards and prints its argument at `PREC_EXPONENTIATION`,
  * so a `**` operand takes parens of its own - `-a ** b` does not parse.
+ *
+ * A `!` written straight after a `<` records a category of its own, so that a `--`
+ * printed next is spaced off it and cannot complete `<!--`.
  */
 function printUnaryExpression(
   node: ESTree.UnaryExpression,
@@ -699,8 +704,12 @@ function printUnaryExpression(
     isDeleteInfinity =
       operator === "delete" && node.argument.type === "Literal" && node.argument.value === Infinity;
   } else {
-    const operatorCode = unaryOperatorCode(operator);
+    let operatorCode = unaryOperatorCode(operator);
     printSpaceBeforeOperator(state, operatorCode);
+    debugAssertLastFresh(state);
+    if (operatorCode === CAT_OP_UN_NOT && state.last === CAT_LT) {
+      operatorCode = CAT_OP_UN_NOT_AFTER_LT;
+    }
     writeWithMap(state, operator, operatorCode, node.start, node.end, node);
   }
 

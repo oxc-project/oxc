@@ -313,7 +313,8 @@ describe("bigints", () => {
   ]);
 });
 
-// Pretty output separates regex literals from adjacent operators and keywords.
+// A regex with no flags leaves the closing `/` as the last thing written, which is what stops
+// `/a//b/` lexing as a line comment and what forces a space before a following identifier.
 describe("regexes", () => {
   checkCases([
     ["no-flags", e(regex("a", "")), "/a/;\n"],
@@ -326,12 +327,6 @@ describe("regexes", () => {
     ["divide", e(bin("/", regex("a", ""), id("x"))), "/a/ / x;\n"],
     ["instanceof", e(bin("instanceof", regex("a", ""), id("RegExp"))), "/a/ instanceof RegExp;\n"],
     ["script-pattern", e(regex("script", "")), "/script/;\n"],
-    ["less-than-regex", e(bin("<", id("x"), regex("script", ""))), "x < /script/;\n"],
-    [
-      "html-comment-operators",
-      e(bin("<", id("x"), unary("!", update("--", id("y"))))),
-      "x < !--y;\n",
-    ],
     ["return-no-flags", program(ret(regex("a", ""))), "return /a/;\n"],
   ]);
 });

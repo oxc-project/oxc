@@ -100,6 +100,10 @@ export class State {
   // Only used in debug builds. See `debugAssertLastFresh`.
   declare lastIsStale: boolean;
 
+  // The character the output currently ends with.
+  // Only used in debug builds. See `debugAssertCategoryMatches`.
+  declare lastCharWritten: string;
+
   // Deferred source mappings. When source maps are enabled, `mapPositions` is the process-wide
   // buffer above, holding generated/source offset pairs, and `mapPositionsLen` is how much of it
   // this print has filled.
@@ -161,6 +165,7 @@ export class State {
     // Debug-only fields for checking `last` is correct on both writes and reads
     if (DEBUG) {
       this.lastIsStale = false;
+      this.lastCharWritten = "";
     }
 
     // `writeWithMap*` functions record the output offset and original position of every mapped node,

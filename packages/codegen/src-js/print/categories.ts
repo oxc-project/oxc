@@ -15,8 +15,8 @@ import { debugAssert } from "../asserts.ts";
 //
 // Three properties of the layout are load bearing, so keep them if you add a code:
 //
-// 1. `CAT_IDENT` through `CAT_INT_DIGIT` are the classes needing a space before a following identifier,
-//    and they are the lowest codes, so `printSpaceBeforeIdentifier` is one compare against `CAT_INT_DIGIT`.
+// 1. `CAT_IDENT` through `CAT_REGEX_SLASH` are the classes needing a space before a following identifier,
+//    and they are the lowest codes, so `printSpaceBeforeIdentifier` is one compare against `CAT_REGEX_SLASH`.
 //    The unary and update operators are likewise contiguous, and the highest codes, so `printSpaceBeforeOperator`
 //    is one compare too.
 //
@@ -30,9 +30,10 @@ import { debugAssert } from "../asserts.ts";
 //
 // The whole numbering:
 //
-// Group 0 to 1: A following identifier needs a space (`printSpaceBeforeIdentifier` checks `last <= CAT_INT_DIGIT`)
+// Group 0 to 2: A following identifier needs a space (`printSpaceBeforeIdentifier` checks `last <= CAT_REGEX_SLASH`)
 //    0  CAT_IDENT                      Identifier part - letters, digits, `_`, `$`, ID_Continue
 //    1  CAT_INT_DIGIT                  Numeric literal of plain digits (`0 .toExponential()`)
+//    2  CAT_REGEX_SLASH                Regex closed with no flags
 //
 // Group 3 to 10: Checked individually
 //    3  CAT_OTHER                      Anything else not covered by another category - punctuation, whitespace
@@ -44,7 +45,8 @@ import { debugAssert } from "../asserts.ts";
 //    9  CAT_CLOSE_BRACKET              `)` or `]`
 //   10  CAT_OP_UN_NOT                  `!`
 //
-// Group 12 to 15: Operators `printSpaceBeforeOperatorSlow` needs to tell apart (`last >= CAT_OP_UN_PLUS`)
+// Group 11 to 15: Operators `printSpaceBeforeOperatorSlow` needs to tell apart (`last >= CAT_OP_UN_NOT_AFTER_LT`)
+//   11  CAT_OP_UN_NOT_AFTER_LT         `!` written straight after a `<`
 //   12  CAT_OP_UN_PLUS                 `+`
 //   13  CAT_OP_UPD_INC                 `++`
 //   14  CAT_OP_UN_NEG                  `-`
@@ -57,6 +59,7 @@ import { debugAssert } from "../asserts.ts";
 export type Category =
   | typeof CAT_IDENT
   | typeof CAT_INT_DIGIT
+  | typeof CAT_REGEX_SLASH
   | typeof CAT_OTHER
   | typeof CAT_LT
   | typeof CAT_QUESTION
@@ -65,6 +68,7 @@ export type Category =
   | typeof CAT_START_OF_DEFAULT_EXPORT
   | typeof CAT_CLOSE_BRACKET
   | typeof CAT_OP_UN_NOT
+  | typeof CAT_OP_UN_NOT_AFTER_LT
   | typeof CAT_OP_UN_PLUS
   | typeof CAT_OP_UPD_INC
   | typeof CAT_OP_UN_NEG
@@ -79,10 +83,18 @@ export const CAT_IDENT = 0;
  */
 export const CAT_INT_DIGIT = 1;
 
+/**
+ * A regex's closing `/`, written only where the regex has no flags.
+ *
+ * In the identifier range because `/a/ in x` needs the space just as much as `x in y` does -
+ * without it the `in` would be read as regex flags. With flags, `CAT_IDENT` says the same thing.
+ */
+export const CAT_REGEX_SLASH = 2;
+
 /** Anything not covered by another category - punctuation, whitespace, a quote. */
 export const CAT_OTHER = 3;
 
-/** `<`, which must not merge with a following `<` in a TypeScript type assertion. */
+/** `<`, which a following `!` must not merge with into `<!--`. */
 export const CAT_LT = 4;
 
 /** `?`, which must not merge with a following `?` into `??` - see `TSJSDocNullableType`. */
@@ -131,12 +143,22 @@ export const CAT_START_OF_ARROW_EXPR = 8;
 export const CAT_CLOSE_BRACKET = 9;
 
 /**
- * `!`, both the unary operator and TS's postfix `!` (non-null assertion, definite assignment).
+ * `!`, written anywhere other than straight after a `<` - both the unary operator and TS's
+ * postfix `!` (non-null assertion, definite assignment), which postfix position keeps off a `<`.
  *
  * An operator code, but deliberately below the range `printSpaceBeforeOperator` gates on -
  * no following operator merges with a plain `!`, so storing this never costs the slow path a call.
  */
 export const CAT_OP_UN_NOT = 10;
+
+/**
+ * `!` written immediately after a `<`, which is the `<!--` hazard.
+ * Folding the check on the preceding character into the code saves tracking the second-last character.
+ *
+ * The first of the operators `printSpaceBeforeOperator` gates on - writing one of these
+ * is what records it, so no separate field tracks which operator came last.
+ */
+export const CAT_OP_UN_NOT_AFTER_LT = 11;
 
 /** `+`, which must not merge with a following `+` or `++`. */
 export const CAT_OP_UN_PLUS = 12;
@@ -147,7 +169,7 @@ export const CAT_OP_UPD_INC = 13;
 /** `-`, which must not merge with a following `-` or `--`. */
 export const CAT_OP_UN_NEG = 14;
 
-/** `--`, which must not follow a `-` without a space. */
+/** `--`, which must not follow a `-`, nor the `!` of a `<!`. */
 export const CAT_OP_UPD_DEC = 15;
 
 /**
@@ -159,6 +181,7 @@ export const CAT_OP_UPD_DEC = 15;
 export const ALL_CATEGORIES: Category[] = [
   CAT_IDENT,
   CAT_INT_DIGIT,
+  CAT_REGEX_SLASH,
   CAT_OTHER,
   CAT_LT,
   CAT_QUESTION,
@@ -167,6 +190,7 @@ export const ALL_CATEGORIES: Category[] = [
   CAT_START_OF_ARROW_EXPR,
   CAT_CLOSE_BRACKET,
   CAT_OP_UN_NOT,
+  CAT_OP_UN_NOT_AFTER_LT,
   CAT_OP_UN_PLUS,
   CAT_OP_UPD_INC,
   CAT_OP_UN_NEG,
