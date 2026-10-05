@@ -1536,7 +1536,7 @@ function collectEntries(
  * Note: Source text is limited to 1 GiB max, so number of tokens cannot exceed 2^30.
  * This makes it safe to use `>> 1` for division by 2 below (which is faster than `>>> 1`).
  *
- * @param int32 - `Int32Array` buffer (tokens, comments, or tokensAndComments)
+ * @param int32 - `Int32Array` buffer (tokens or tokensAndComments)
  * @param offset - Source offset to search for
  * @param startIndex - Starting entry index for the search
  * @param length - Total number of entries in the buffer

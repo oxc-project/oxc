@@ -4,12 +4,7 @@
 
 import { buffer, initSourceText, sourceText } from "./source_code.ts";
 import { computeLoc } from "./location.ts";
-import {
-  COMMENT_SIZE,
-  DESERIALIZED_FLAG_OFFSET,
-  TOKENS_OFFSET_POS_32,
-  TOKENS_LEN_POS_32,
-} from "../generated/constants.ts";
+import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
 import { EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
@@ -262,7 +257,10 @@ const TOKEN_TYPES: TokenType["type"][] = [
 
 // Details of Rust `Token` type
 export const TOKEN_SIZE = 16;
-debugAssert(TOKEN_SIZE === COMMENT_SIZE, "Size of token, comment, and merged entry must be equal");
+export const TOKEN_SIZE32 = TOKEN_SIZE >> 2;
+
+// The final byte of Rust's `Token` is unused and initialized to 0.
+const TOKEN_DESERIALIZED_FLAG_OFFSET = TOKEN_SIZE - 1;
 
 const TOKEN_SIZE_SHIFT = 4;
 debugAssert(TOKEN_SIZE === 1 << TOKEN_SIZE_SHIFT);
@@ -420,7 +418,7 @@ function deserializeTokenIfNeeded(index: number): Token | null {
   const pos = index << TOKEN_SIZE_SHIFT;
 
   // Fast path: If already deserialized, exit
-  const flagPos = pos + DESERIALIZED_FLAG_OFFSET;
+  const flagPos = pos + TOKEN_DESERIALIZED_FLAG_OFFSET;
   if (tokensUint8[flagPos] !== FLAG_NOT_DESERIALIZED) return null;
 
   // Mark token as deserialized, so it won't be deserialized again
@@ -540,7 +538,7 @@ function debugCheckDeserializedTokens(): void {
 
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
-    const flagPos = (i << TOKEN_SIZE_SHIFT) + DESERIALIZED_FLAG_OFFSET;
+    const flagPos = (i << TOKEN_SIZE_SHIFT) + TOKEN_DESERIALIZED_FLAG_OFFSET;
     if (tokensUint8![flagPos] !== FLAG_DESERIALIZED) {
       throw new Error(`Token ${i} not marked as deserialized after \`deserializeTokens()\` call`);
     }
