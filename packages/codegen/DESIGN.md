@@ -124,11 +124,10 @@ This has 3 advantages over storing the last character:
 
 That one `last` field replaces all of this:
 
-| Rust                                  | Question it answers                 | JS                       |
-| :------------------------------------ | :---------------------------------- | :----------------------- |
-| `last_byte()` + `is_identifier_part`  | Would a following identifier merge? | `CAT_IDENT`              |
-| `last_byte() == Some(b'?')`           | Would a following `?` make `??`?    | `CAT_QUESTION`           |
-| `peek_nth_byte_back(1) == Some(b'<')` | Is this `!` the `!` of a `<!`?      | `CAT_OP_UN_NOT_AFTER_LT` |
+| Rust                                 | Question it answers                 | JS             |
+| :----------------------------------- | :---------------------------------- | :------------- |
+| `last_byte()` + `is_identifier_part` | Would a following identifier merge? | `CAT_IDENT`    |
+| `last_byte() == Some(b'?')`          | Would a following `?` make `??`?    | `CAT_QUESTION` |
 
 ### Extending this scheme to operators
 
@@ -152,11 +151,10 @@ to avoid the huge perf hit of reading the last character from `output`.
 
 So we might as well use `last` to record operators too, and also some similar character classes:
 
-| Rust                                    | Question it answers                                     | JS                |
-| :-------------------------------------- | :------------------------------------------------------ | :---------------- |
-| `code.len() == prev_op_end` + `prev_op` | Which operator came last, and was it right before this? | `CAT_OP_*`        |
-| `code.len() == need_space_before_dot`   | Is space needed after digit? e.g. `0 .toExponential()`  | `CAT_INT_DIGIT`   |
-| `code.len() == prev_reg_exp_end`        | Did a flagless regex just close?                        | `CAT_REGEX_SLASH` |
+| Rust                                    | Question it answers                                     | JS              |
+| :-------------------------------------- | :------------------------------------------------------ | :-------------- |
+| `code.len() == prev_op_end` + `prev_op` | Which operator came last, and was it right before this? | `CAT_OP_*`      |
+| `code.len() == need_space_before_dot`   | Is space needed after digit? e.g. `0 .toExponential()`  | `CAT_INT_DIGIT` |
 
 All these Rust state fields, and every read of the output buffer, collapse into one field in the JS printer.
 
@@ -164,13 +162,10 @@ It costs no write barrier to store (because categories are represented by "SMI" 
 to test. Being touched by every single write, it is the hottest field in `State`, reliably in L1 cache,
 and probably often also benefits from fast store-to-load forwarding.
 
-#### The `<!--` case, as an example
-
-Rust decides whether a `!` is the `!` of a `<!--` hazard by peeking at the _second_-to-last byte,
-at the moment a `--` is about to be written.
-
-Here the question is answered when the `!` is written, where the preceding character is already known,
-and the answer is baked into which category gets stored. The reader has nothing left to look up.
+The JS printer only produces pretty output. Binary operators always have spaces around them, so
+`<` followed by `!--` cannot become `<!--`, and a regex literal cannot merge with a following
+binary operator or keyword. These cases need no additional categories. Unary operators still
+need separation: `+ +x` and `- --x` must keep their spaces.
 
 ### Position marks
 
@@ -233,9 +228,9 @@ The full table is at the top of [`print/categories.ts`] and is the authority.
 
 Three properties are relied on. Adding a code without preserving them will silently space output wrongly.
 
-1. **Identifier hazards are the lowest codes.** So `printSpaceBeforeIdentifier` is `last <= CAT_REGEX_SLASH` -
+1. **Identifier hazards are the lowest codes.** So `printSpaceBeforeIdentifier` is `last <= CAT_INT_DIGIT` -
    one compare, no table, no branch tree. The operators `printSpaceBeforeOperator` must distinguish are the highest,
-   for the same reason (`last >= CAT_OP_UN_NOT_AFTER_LT`).
+   for the same reason (`last >= CAT_OP_UN_PLUS`).
 2. **The `CAT_START_OF_*` codes sit between those two ranges**, which is what makes both range checks
    treat them as "nothing to separate".
 3. **`CAT_START_OF_STMT` is odd, with the other two marks either side.** The five reader sites each ask

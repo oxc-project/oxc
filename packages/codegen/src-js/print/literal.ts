@@ -7,7 +7,6 @@ import {
   CAT_INT_DIGIT,
   CAT_OP_UN_NEG,
   CAT_OTHER,
-  CAT_REGEX_SLASH,
 } from "./categories.ts";
 import { write, writeIdent, writeNoLast, writeWithMap, writeWithMapNoLast } from "./write.ts";
 import { printSpaceBeforeIdentifier, printSpaceBeforeOperator } from "./space.ts";
@@ -149,38 +148,14 @@ function printNumericLiteral(
 
 /**
  * Print a regex literal from its pattern and flags.
- *
- * A regex with no flags ends in `/`, which is recorded as its own category, because a `/`
- * immediately after it would open a comment.
  */
 function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
-  // Neither of the separating spaces below can be needed in pretty mode, so the check is not made.
-  // Both guard against a regex being written immediately after something, and nothing can be
-  // immediately before a regex here: every operator which could put one after a `/` or a `<` is
-  // written space padded, so `last` is always the space.
-  //
-  // A minified mode would stop padding operators and make both reachable again, so this code would
-  // need to be restored. `CAT_REGEX_SLASH` is left in place for that - the code is still written
-  // after a flagless regex, and it still sits in the range `printSpaceBeforeIdentifier` tests,
-  // which costs nothing and is what keeps this a 4 line restoration.
-  //
-  //   debugAssertLastFresh(state);
-  //   const { last } = state;
-  //   if (last === CAT_REGEX_SLASH || (last === CAT_LT && /^script/i.test(pattern.slice(0, 6)))) {
-  //     write(state, " ", CAT_OTHER);
-  //   }
-  //
-  // * `last === CAT_REGEX_SLASH` keeps `/a//b/` from lexing as a line comment
-  // * `CAT_LT` arm keeps `<` followed by `/script...` from closing a host `<script>` element.
-
   writeWithMapNoLast(state, "/", node.start, node.end, node);
   writeNoLast(state, node.regex.pattern);
 
-  // `CAT_REGEX_SLASH` rather than `CAT_OTHER`. It means "a regex just closed", which is what the
-  // commented-out check above would read. With flags, the flags are what `last` describes instead.
   const { flags } = node.regex;
   if (flags === "") {
-    write(state, "/", CAT_REGEX_SLASH);
+    write(state, "/", CAT_OTHER);
   } else {
     writeNoLast(state, "/");
     writeIdent(state, flags);
