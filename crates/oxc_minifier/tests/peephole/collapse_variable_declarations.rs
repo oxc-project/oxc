@@ -27,7 +27,7 @@ mod join_vars {
             "var x = 2; foo(x), x = 3, x = 1; var y = 2, z = 4; x = 5",
         );
 
-        test("/* comment */const a = 1; const b = 2", "/* comment */const a = 1, b = 2");
+        test("/* comment */const a = 1; const b = 2", "const a = 1, b = 2;\n");
     }
 
     #[test]

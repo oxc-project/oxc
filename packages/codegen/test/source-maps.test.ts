@@ -93,6 +93,16 @@ describe("Rust conformance", () => {
     },
     { name: "astral-new.js", code: "new 𐐀;", lang: "js" as const },
     {
+      name: "empty-do.js",
+      code: "function f() { do; while (test()); }",
+      lang: "js" as const,
+    },
+    {
+      name: "import-attributes.js",
+      code: 'import value from "mod" with { type: "json", "extra": "value" };',
+      lang: "js" as const,
+    },
+    {
       name: "large-line-gap.js",
       code: `\`${"\n".repeat(200)}\`;\nvalue;`,
       lang: "js" as const,

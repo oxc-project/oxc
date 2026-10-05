@@ -27,7 +27,7 @@ function Component() {
 			setFoo(newData);
 		}
 	}, [foo, bar]);
-	return <div>
+	return (<div>
       {foo}, {bar}
-    </div>;
+    </div>);
 }

@@ -147,6 +147,18 @@ impl CodeBuffer {
         self.buf.len()
     }
 
+    /// Shorten the buffer to `len` bytes. Does nothing if `len` exceeds its length.
+    ///
+    /// # Panics
+    /// Panics if `len` is inside a UTF-8 character.
+    #[inline]
+    pub fn truncate(&mut self, len: usize) {
+        if len < self.buf.len() {
+            assert!(self.as_str().is_char_boundary(len), "not a UTF-8 character boundary");
+            self.buf.truncate(len);
+        }
+    }
+
     /// Returns the capacity of the buffer in bytes.
     ///
     /// This is *not* the same as capacity in characters,
@@ -896,6 +908,28 @@ mod test {
         assert_eq!(code.peek_nth_byte_back(1), Some(b'a'));
         assert_eq!(code.peek_nth_byte_back(2), Some(b'b'));
         assert_eq!(code.peek_nth_byte_back(3), None);
+    }
+
+    #[test]
+    fn truncate() {
+        let mut code = CodeBuffer::new();
+        code.print_str("aéz");
+        code.truncate(10);
+        assert_eq!(code.as_str(), "aéz");
+        code.truncate(3);
+        assert_eq!(code.as_str(), "aé");
+        code.truncate(1);
+        assert_eq!(code.as_str(), "a");
+        code.truncate(0);
+        assert_eq!(code.as_str(), "");
+    }
+
+    #[test]
+    #[should_panic(expected = "not a UTF-8 character boundary")]
+    fn truncate_inside_code_point() {
+        let mut code = CodeBuffer::new();
+        code.print_str("é");
+        code.truncate(1);
     }
 
     #[test]

@@ -2867,7 +2867,6 @@ function deserializeRegExp(pos) {
 function deserializeRegExpFlags(pos) {
   let flagBits = deserializeU8(pos),
     flags = "";
-  // Alphabetical order
   flagBits & 64 && (flags += "d");
   flagBits & 1 && (flags += "g");
   flagBits & 2 && (flags += "i");
@@ -5288,9 +5287,6 @@ function deserializeStr(pos) {
     // String is all ASCII, so slice from `sourceTextLatin`
     return sourceTextLatin.substr(pos - sourceStartPos, len);
   }
-  // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
-  // Copy bytes into temp array.
-  // If any byte is non-ASCII, use `utf8Slice`.
   let arr = stringDecodeArrays[len];
   for (let i = 0; i < len; i++) {
     let b = uint8[pos + i];

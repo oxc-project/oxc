@@ -106,9 +106,11 @@ catch(e) {
 ----------
 try {
 	something();
-} 
+}
 /* istanbul ignore next */
-catch (e) {}
+ catch (e) {
+	// should never happen
+}
 
 ########## 20
 try { console.log('test'); }
@@ -137,7 +139,8 @@ catch (err) // v8 ignore next
 ----------
 try {
 	something();
-} catch (err) {
+} catch (err) // v8 ignore next
+{
 	handle(err);
 }
 

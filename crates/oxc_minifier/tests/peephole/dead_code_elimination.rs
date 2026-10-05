@@ -596,26 +596,26 @@ fn keep_use_strict_directives() {
 fn preserve_legal_comment_when_dce_removes_anchor() {
     // https://github.com/oxc-project/oxc/issues/19750
     // Each test below covers a scope where DCE removes a legal comment's
-    // anchor; codegen must re-emit it at the next surviving anchor in scope.
+    // owner; codegen preserves the orphan at EOF.
     test_with_options(
         "//! some license\nconst foo = 'value';\nconsole.log(foo);",
-        "//! some license\nconsole.log('value');",
+        "console.log(\"value\");\n//! some license\n",
         CompressOptions::dce(),
     );
     test_with_options(
         "/*! @license */\nconst foo = 'value';\nconsole.log(foo);",
-        "/*! @license */\nconsole.log('value');",
+        "console.log(\"value\");\n/*! @license */\n",
         CompressOptions::dce(),
     );
     test_with_options(
         "/* @preserve */\nconst foo = 'value';\nconsole.log(foo);",
-        "/* @preserve */\nconsole.log('value');",
+        "console.log(\"value\");\n/* @preserve */\n",
         CompressOptions::dce(),
     );
-    // Non-legal comment is dropped with its anchor.
+    // Normal comments are dropped with their removed owners.
     test_with_options(
         "// regular comment\nconst foo = 'value';\nconsole.log(foo);",
-        "console.log('value');",
+        "console.log(\"value\");\n",
         CompressOptions::dce(),
     );
     // No DCE → comment stays at its original anchor.
@@ -626,19 +626,19 @@ fn preserve_legal_comment_when_dce_removes_anchor() {
     );
     test_with_options(
         "//! license\nconst foo = 'unused';\nbar();",
-        "//! license\nbar();",
+        "bar();\n//! license\n",
         CompressOptions::dce(),
     );
     // Multiple orphans flush in source order.
     test_with_options(
         "//! A\nconst a = 'x';\n//! B\nconst b = 'y';\nf(a, b);",
-        "//! A\n//! B\nf('x', 'y');",
+        "f(\"x\", \"y\");\n//! A\n//! B\n",
         CompressOptions::dce(),
     );
-    // Orphan stays above a surviving sibling's own legal comment.
+    // A surviving sibling keeps its owner; the orphan is emitted at EOF.
     test_with_options(
         "//! orphan-A\nconst a = 'unused';\n//! kept-B\nconsole.log('hi');",
-        "//! orphan-A\n//! kept-B\nconsole.log('hi');",
+        "//! kept-B\nconsole.log(\"hi\");\n//! orphan-A\n",
         CompressOptions::dce(),
     );
     // All top-level removed → flushed at program scope-end.
@@ -653,41 +653,38 @@ fn preserve_legal_comment_when_dce_removes_anchor() {
         "//! top\nfunction f() {\n\t//! body\n\treturn 1;\n}\nconsole.log(f());",
         CompressOptions::dce(),
     );
-    // Inner anchor removed, sibling survives → flushed inside function scope.
+    // Removed inner owners are emitted at EOF.
     test_with_options(
         "function f() {\n  //! body\n  const innerUnused = 'x';\n  return 1;\n}\nconsole.log(f());",
-        "function f() {\n\t//! body\n\treturn 1;\n}\nconsole.log(f());",
+        "function f() {\n\treturn 1;\n}\nconsole.log(f());\n//! body\n",
         CompressOptions::dce(),
     );
-    // No surviving sibling → DCE inlines empty `f()` to `void 0`; orphan
-    // re-anchors at the next surviving top-level stmt.
+    // DCE inlines an empty `f()`; its orphan is emitted at EOF.
     test_with_options(
         "function f() {\n  //! body\n  const innerUnused = 'x';\n}\nconsole.log(f());",
-        "//! body\nconsole.log(void 0);",
+        "console.log(void 0);\n//! body\n",
         CompressOptions::dce(),
     );
     // BlockStatement scope.
     test_with_options(
         "try {\n  //! caught\n  const ignored = 'x';\n  a();\n  b();\n} catch (e) {}",
-        "try {\n\t//! caught\n\ta();\n\tb();\n} catch (e) {}",
+        "try {\n\ta();\n\tb();\n} catch (e) {}\n//! caught\n",
         CompressOptions::dce(),
     );
     // SwitchCase scope, multi-stmt consequent.
     test_with_options(
         "switch (x) {\n  case 1:\n    //! case\n    const ignored = 'x';\n    a();\n    b();\n}",
-        "switch (x) {\n\tcase 1:\n\t\t//! case\n\t\ta();\n\t\tb();\n}",
+        "switch (x) {\n\tcase 1:\n\t\ta();\n\t\tb();\n}\n//! case\n",
         CompressOptions::dce(),
     );
-    // SwitchCase with one surviving consequent stmt: the inline `case 1: stmt`
-    // path must fall through to multi-line so the flush fires inside the case.
-    // Asserted directly because canonical roundtrip uses an inline format that
-    // doesn't match our multi-line orphan layout.
+    // A removed SwitchCase owner is also preserved at EOF when the single
+    // surviving statement uses the inline case format.
     {
         let source = "switch (x) {\n  case 1:\n    //! case\n    const ignored = 'x';\n    survivor();\n}\nafter();";
         let result = run(source, SourceType::default(), Some(CompressOptions::dce()));
         let case_pos = result.find("//! case").expect("comment preserved");
         let close_pos = result.find("\n}").expect("switch close");
-        assert!(case_pos < close_pos, "legal comment escaped the case scope: {result}");
+        assert!(case_pos > close_pos, "orphan was claimed by surviving case syntax: {result}");
     }
 }
 
@@ -697,12 +694,12 @@ fn preserve_at_license_legal_comment_when_dce_removes_anchor() {
     // Cover the only remaining marker — `/* @license */` standalone (no `!`).
     test_with_options(
         "/* @license */\nconst foo = 'val';\nconsole.log(foo);",
-        "/* @license */\nconsole.log('val');",
+        "console.log(\"val\");\n/* @license */\n",
         CompressOptions::dce(),
     );
     test_with_options(
         "/*x@license*/\nconst foo = 'val';\nconsole.log(foo);",
-        "/*x@license*/\nconsole.log('val');",
+        "console.log(\"val\");\n/*x@license*/\n",
         CompressOptions::dce(),
     );
 }
