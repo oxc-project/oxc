@@ -845,6 +845,44 @@ Prettier glues the sign to the number (removing the source space, a postcss word
 Matching that gluing is ad-hoc work for a torture-test-only shape.
 A sign GLUED in the source never gains a space in either implementation (that direction is the parser's folded-sign handling, not a divergence).
 
+## signed-value-resplit
+
+- Why: uniform-rule (same construct, same output: the item in first position, an unsigned item)
+- Pin: `tests/fixtures/format/css/signed-value-resplit.css`
+- Conformance: `css/fill-value/fill.css`
+- Oxfmt: `externals/gitlab/stylesheets/framework/variables.scss`, `externals/ng-zorro-antd/components/table/style/index.less`
+
+```css
+/* input */
+font-family: Arial, -apple-system;
+-webkit-mask-position-x: 50px, 25%, -3em;
+background: url("/shared-assets/images/examples/web-animations/cat_sprite.png") -600px 0 no-repeat;
+
+/* ours */
+font-family: Arial, -apple-system;
+-webkit-mask-position-x: 50px, 25%, -3em;
+background: url("/shared-assets/images/examples/web-animations/cat_sprite.png")
+  -600px 0 no-repeat;
+
+/* prettier */
+font-family:
+  Arial,
+  -apple-system;
+-webkit-mask-position-x:
+  50px,
+  25%,
+  -3em;
+background: url("/shared-assets/images/examples/web-animations/cat_sprite.png") -600px
+  0 no-repeat;
+```
+
+postcss-values splits a signed word (`-apple-system`, `-3em`, `-@var`) past the first position into an operator + word,
+the re-split word AGENTS.md's "Acceptance" does not follow:
+- as a two-node item, it breaks the comma list one item per line (`shouldBreakList`), though `-apple-system, Arial` and `50px, 25%, 3em` stay on one line
+- as a math operator, it glues to the word before it, overflowing the line
+
+Ours prints a signed item as one word, like the same item in first position or unsigned.
+
 ## css-glued-minus-paren
 
 - Why: uniform-rule (same construct, same output: the `-(` shapes Prettier keeps glued)
@@ -873,29 +911,33 @@ Css mode only (hence the prefix): in Less and Scss, Prettier keeps `3px -(4px)` 
 ## fill-break-position
 
 - Why: cost
-- Pin: `tests/fixtures/format/css/fill-math-chunk-break.css`
-- Conformance: `css/fill-value/fill.css`
+- Pin: `tests/fixtures/format/scss/fill-break-position.scss`
 - Oxfmt: `externals/webawesome/number-input/number-input.styles.ts`, `externals/webawesome/page/page.styles.ts`,
-  `externals/ng-zorro-antd/components/style/themes/compact.less`, `externals/ng-zorro-antd/components/style/themes/default.less`, `externals/ng-zorro-antd/components/style/themes/variable.less`, `externals/ng-zorro-antd/components/table/style/index.less`, `externals/ng-zorro-antd/components/table/style/rtl.less`,
+  `externals/ng-zorro-antd/components/style/themes/default.less`, `externals/ng-zorro-antd/components/style/themes/variable.less`, `externals/ng-zorro-antd/components/table/style/rtl.less`,
   `externals/gitlab/stylesheets/components/content_editor.scss`, `externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss`, `externals/gitlab/stylesheets/framework/sidebar.scss`
 
-```css
-/* input (nested one level, print width 80) */
-margin-left: sg-layout-width(logo-shopify) / 2 * -1 + sg-offset-x(page-nav) / 2;
+```scss
+/* input (nested three levels, print width 80) */
+height: calc(#{$calc-application-viewport-height} - #{$mr-sticky-header-height} - var(--mr-review-bar-height));
 
 /* ours */
-margin-left: sg-layout-width(logo-shopify) / 2 * -1 + sg-offset-x(page-nav)
-  / 2;
+height: calc(
+  #{$calc-application-viewport-height} - #{$mr-sticky-header-height} -
+    var(--mr-review-bar-height)
+);
 
 /* prettier */
-margin-left: sg-layout-width(logo-shopify) / 2 * -1 +
-  sg-offset-x(page-nav) / 2;
+height: calc(
+  #{$calc-application-viewport-height} -
+    #{$mr-sticky-header-height} - var(--mr-review-bar-height)
+);
 ```
 
-An over-wide math-y value run (css token soup here):
-Prettier's fill fit-check breaks INSIDE the wide chunk;
-our core `fill` (biome semantics) breaks the SEPARATOR instead.
+A math-y value run (token soup here):
+Prettier's fill breaks at an earlier separator, though the next chunk still fits;
+our core `fill` (biome semantics) breaks only at the last fitting separator.
 Layout-only, the principled fix is the shared core-fill fit-check change (needs a JS-conformance impact experiment first).
+A spaced `/` is not part of this: it glues to its left operand and breaks after, as in Prettier (`tests/fixtures/format/css/fill-math-chunk-break.css`).
 
 ## less-value-interpolation-rejected
 

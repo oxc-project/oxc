@@ -228,7 +228,7 @@
 
 ## less
 
-### Option 1: 402/409 (98.29%)
+### Option 1: 403/409 (98.53%)
 
 ```json
 {"printWidth":80}
@@ -236,8 +236,6 @@
 
 - [externals/ng-zorro-antd/components/style/mixins/customize.less](diffs/less/externals__ng-zorro-antd__components__style__mixins__customize.less.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#less-guard-list-inline
-- [externals/ng-zorro-antd/components/style/themes/compact.less](diffs/less/externals__ng-zorro-antd__components__style__themes__compact.less.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/ng-zorro-antd/components/style/themes/dark.less](diffs/less/externals__ng-zorro-antd__components__style__themes__dark.less.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
 - [externals/ng-zorro-antd/components/style/themes/default.less](diffs/less/externals__ng-zorro-antd__components__style__themes__default.less.md)
@@ -245,7 +243,7 @@
 - [externals/ng-zorro-antd/components/style/themes/variable.less](diffs/less/externals__ng-zorro-antd__components__style__themes__variable.less.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width, crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/ng-zorro-antd/components/table/style/index.less](diffs/less/externals__ng-zorro-antd__components__table__style__index.less.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
+  - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
 - [externals/ng-zorro-antd/components/table/style/rtl.less](diffs/less/externals__ng-zorro-antd__components__table__style__rtl.less.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 
@@ -345,7 +343,7 @@
 
 ## scss
 
-### Option 1: 203/217 (93.55%)
+### Option 1: 202/217 (93.09%)
 
 ```json
 {"printWidth":80}
@@ -357,6 +355,8 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing
 - [externals/gitlab/stylesheets/framework/variables_overrides.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables_overrides.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#map-item-break-comma-lists-only
+- [externals/gitlab/stylesheets/framework/variables.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables.scss.md)
+  - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
 - [externals/gitlab/stylesheets/highlight/conflict_colors.scss](diffs/scss/externals__gitlab__stylesheets__highlight__conflict_colors.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#map-paren-value-blank-lines
 - [externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles___ide_theme_overrides.scss.md)
@@ -380,7 +380,7 @@
 - [externals/gitlab/stylesheets/pages/settings.scss](diffs/scss/externals__gitlab__stylesheets__pages__settings.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing
 
-### Option 2: 204/217 (94.01%)
+### Option 2: 203/217 (93.55%)
 
 ```json
 {"printWidth":100}
@@ -392,6 +392,8 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/gitlab/stylesheets/framework/variables_overrides.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables_overrides.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#map-item-break-comma-lists-only
+- [externals/gitlab/stylesheets/framework/variables.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables.scss.md)
+  - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
 - [externals/gitlab/stylesheets/highlight/conflict_colors.scss](diffs/scss/externals__gitlab__stylesheets__highlight__conflict_colors.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#map-paren-value-blank-lines
 - [externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles___ide_theme_overrides.scss.md)
