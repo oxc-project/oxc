@@ -172,17 +172,23 @@
 
 ## md-in-js
 
-### Option 1: 9/9 (100.00%)
+### Option 1: 9/10 (90.00%)
 
 ```json
 {"printWidth":80}
 ```
 
-### Option 2: 9/9 (100.00%)
+- [externals/prettier/js/multiparser-markdown/codeblock.js](diffs/md-in-js/externals__prettier__js__multiparser-markdown__codeblock.js.md)
+  - apps/oxfmt/DIVERGENCES.md#nested-fence-length
+
+### Option 2: 9/10 (90.00%)
 
 ```json
 {"printWidth":100,"proseWrap":"always"}
 ```
+
+- [externals/prettier/js/multiparser-markdown/codeblock.js](diffs/md-in-js/externals__prettier__js__multiparser-markdown__codeblock.js.md)
+  - apps/oxfmt/DIVERGENCES.md#nested-fence-length
 
 ## xxx-in-js-comment
 
@@ -211,6 +217,88 @@
 ```json
 {"printWidth":120,"singleQuote":true,"htmlWhitespaceSensitivity":"ignore","bracketSameLine":true,"svelteIndentScriptAndStyle":true,"svelteSortOrder":"options-scripts-styles-markup","svelte":{"indentScriptAndStyle":true,"sortOrder":"options-scripts-styles-markup"}}
 ```
+
+## markdown
+
+### Option 1: 273/282 (96.81%)
+
+```json
+{"printWidth":80}
+```
+
+- [edge-cases/xxx-in-md/line-ranged-code-block.md](diffs/markdown/edge-cases__xxx-in-md__line-ranged-code-block.md.md)
+  - apps/oxfmt/DIVERGENCES.md#line-ranged-code-block
+- [edge-cases/xxx-in-md/lwc-code-block.md](diffs/markdown/edge-cases__xxx-in-md__lwc-code-block.md.md)
+  - apps/oxfmt/DIVERGENCES.md#lwc-code-block
+- [edge-cases/xxx-in-md/nested-fence-length.md](diffs/markdown/edge-cases__xxx-in-md__nested-fence-length.md.md)
+  - apps/oxfmt/DIVERGENCES.md#nested-fence-length
+- [edge-cases/xxx-in-md/whitespace-only-code-block.md](diffs/markdown/edge-cases__xxx-in-md__whitespace-only-code-block.md.md)
+  - apps/oxfmt/DIVERGENCES.md#whitespace-only-code-block
+- [externals/prettier/markdown/code/lwc/lwc.md](diffs/markdown/externals__prettier__markdown__code__lwc__lwc.md.md)
+  - apps/oxfmt/DIVERGENCES.md#lwc-code-block
+- [externals/prettier/markdown/link/encodedLink.md](diffs/markdown/externals__prettier__markdown__link__encodedLink.md.md)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#url-escaping
+- [externals/prettier/markdown/list/parser-regression/issue-17778.md](diffs/markdown/externals__prettier__markdown__list__parser-regression__issue-17778.md.md)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#wrapped-block-starts
+- [externals/prettier/markdown/markdown/real-world-case.md](diffs/markdown/externals__prettier__markdown__markdown__real-world-case.md.md)
+  - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
+- [externals/prettier/markdown/thematicBreak/simple.md](diffs/markdown/externals__prettier__markdown__thematicBreak__simple.md.md)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
+
+### Option 2: 270/282 (95.74%)
+
+```json
+{"printWidth":100,"proseWrap":"always"}
+```
+
+- [edge-cases/xxx-in-md/line-ranged-code-block.md](diffs/markdown/edge-cases__xxx-in-md__line-ranged-code-block.md.md)
+  - apps/oxfmt/DIVERGENCES.md#line-ranged-code-block
+- [edge-cases/xxx-in-md/lwc-code-block.md](diffs/markdown/edge-cases__xxx-in-md__lwc-code-block.md.md)
+  - apps/oxfmt/DIVERGENCES.md#lwc-code-block
+- [edge-cases/xxx-in-md/nested-fence-length.md](diffs/markdown/edge-cases__xxx-in-md__nested-fence-length.md.md)
+  - apps/oxfmt/DIVERGENCES.md#nested-fence-length
+- [edge-cases/xxx-in-md/whitespace-only-code-block.md](diffs/markdown/edge-cases__xxx-in-md__whitespace-only-code-block.md.md)
+  - apps/oxfmt/DIVERGENCES.md#whitespace-only-code-block
+- [externals/prettier/markdown/blockquote/ignore-code.md](diffs/markdown/externals__prettier__markdown__blockquote__ignore-code.md.md)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#ignored-block-trailing-quote-line
+- [externals/prettier/markdown/blockquote/notext-end.md](diffs/markdown/externals__prettier__markdown__blockquote__notext-end.md.md)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#line-shapes
+- [externals/prettier/markdown/code/lwc/lwc.md](diffs/markdown/externals__prettier__markdown__code__lwc__lwc.md.md)
+  - apps/oxfmt/DIVERGENCES.md#lwc-code-block
+- [externals/prettier/markdown/heading/setext/issue-6013-2.md](diffs/markdown/externals__prettier__markdown__heading__setext__issue-6013-2.md.md)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#setext-heading-wrap
+- [externals/prettier/markdown/link/encodedLink.md](diffs/markdown/externals__prettier__markdown__link__encodedLink.md.md)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#url-escaping
+- [externals/prettier/markdown/markdown/real-world-case.md](diffs/markdown/externals__prettier__markdown__markdown__real-world-case.md.md)
+  - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
+- [externals/prettier/markdown/paragraph/cjk.md](diffs/markdown/externals__prettier__markdown__paragraph__cjk.md.md)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#container-directive
+- [externals/prettier/markdown/thematicBreak/simple.md](diffs/markdown/externals__prettier__markdown__thematicBreak__simple.md.md)
+  - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
+
+## markdown-mdn
+
+### Option 1: 360/362 (99.45%)
+
+```json
+{"printWidth":80,"bracketSameLine":true}
+```
+
+- [externals/mdn-css-guides/custom_functions_and_mixins/using_custom_functions/index.md](diffs/markdown-mdn/externals__mdn-css-guides__custom_functions_and_mixins__using_custom_functions__index.md.md)
+  - crates/oxc_formatter_css/DIVERGENCES.md#value-semicolon-glue
+- [externals/mdn-css-guides/values_and_units/textual_data_types/index.md](diffs/markdown-mdn/externals__mdn-css-guides__values_and_units__textual_data_types__index.md.md)
+  - crates/oxc_formatter_css/DIVERGENCES.md#prelude-string-requote
+
+### Option 2: 360/362 (99.45%)
+
+```json
+{"printWidth":100}
+```
+
+- [externals/mdn-css-guides/custom_functions_and_mixins/using_custom_functions/index.md](diffs/markdown-mdn/externals__mdn-css-guides__custom_functions_and_mixins__using_custom_functions__index.md.md)
+  - crates/oxc_formatter_css/DIVERGENCES.md#value-semicolon-glue
+- [externals/mdn-css-guides/values_and_units/textual_data_types/index.md](diffs/markdown-mdn/externals__mdn-css-guides__values_and_units__textual_data_types__index.md.md)
+  - crates/oxc_formatter_css/DIVERGENCES.md#prelude-string-requote
 
 ## graphql
 

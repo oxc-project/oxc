@@ -74,6 +74,18 @@ const sources = [
     repo: "facebook/docusaurus/packages/docusaurus-theme-classic/src",
     version: "v3.9.2",
   },
+  // markdown
+  {
+    name: "mdn-learn",
+    repo: "mdn/content/files/en-us/learn_web_development/core",
+    // No tags; pin to a commit (2026-10 main)
+    version: "5137b45128dcf07ac636da68184f00aab30ec1cc",
+  },
+  {
+    name: "mdn-css-guides",
+    repo: "mdn/content/files/en-us/web/css/guides",
+    version: "5137b45128dcf07ac636da68184f00aab30ec1cc",
+  },
   // jsdoc
   {
     name: "svelte",

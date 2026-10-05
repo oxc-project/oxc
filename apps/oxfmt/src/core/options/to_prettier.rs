@@ -230,8 +230,8 @@ pub fn build_prettier_options(config: &FormatConfig, path: &Path) -> Value {
 /// Inject Svelte plugin keys derived from `config.svelte`.
 ///
 /// No-ops when `svelte` is disabled (unset or `false`) — `Bool(true)` falls back to defaults.
-/// The caller gates this on capability (`supports_svelte`):
-/// `.svelte` is the primary target, plus `markdown`/`mdx` for code blocks.
+/// The callers gate this on capability: a `.svelte` / `.mdx` file (`supports_svelte`),
+/// and a Markdown code block through the Doc→IR fallback (`ResolvedDispatchConfig::prettier_options_for`).
 ///
 /// See: <https://github.com/sveltejs/prettier-plugin-svelte#options>
 pub fn inject_svelte_plugin_payload(opts: &mut Value, config: &FormatConfig) {

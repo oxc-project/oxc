@@ -7,6 +7,7 @@
 //! - [`to_oxc_formatter_css()`]: `oxc_formatter_css::CssFormatOptions` for CSS/SCSS/Less formatting
 //! - [`to_oxc_formatter_graphql()`]: `oxc_formatter_graphql::GraphqlFormatOptions` for GraphQL formatting
 //! - [`to_oxc_formatter_yaml()`]: `oxc_formatter_yaml::YamlFormatOptions` for YAML formatting
+//! - [`to_oxc_formatter_markdown()`]: `oxc_formatter_markdown::MarkdownFormatOptions` for Markdown formatting
 //! - [`to_oxc_toml()`]: `oxc_toml::Options` for TOML formatting
 //! - `to_prettier`(NAPI-only): Prettier-compatible JSON, plus `inject_*` helpers for
 //!   layering in `parser` / `filepath` / plugin payloads at the format step
@@ -19,6 +20,7 @@ mod to_oxc_formatter;
 mod to_oxc_formatter_css;
 mod to_oxc_formatter_graphql;
 mod to_oxc_formatter_json;
+mod to_oxc_formatter_markdown;
 mod to_oxc_formatter_yaml;
 mod to_oxc_toml;
 #[cfg(feature = "napi")]
@@ -29,6 +31,7 @@ pub use to_oxc_formatter::to_oxc_formatter;
 pub use to_oxc_formatter_css::to_oxc_formatter_css;
 pub use to_oxc_formatter_graphql::to_oxc_formatter_graphql;
 pub use to_oxc_formatter_json::{to_oxc_formatter_json, to_sort_package_json};
+pub use to_oxc_formatter_markdown::to_oxc_formatter_markdown;
 pub use to_oxc_formatter_yaml::to_oxc_formatter_yaml;
 pub use to_oxc_toml::to_oxc_toml;
 #[cfg(feature = "napi")]

@@ -277,6 +277,7 @@ Prettier keeps SELECTOR interpolation verbatim.
 
 - Why: uniform-rule (option governs: singleQuote)
 - Pin: `tests/fixtures/format/scss/unknown-at-rule-edges.scss`, `tests/fixtures/format/css/prelude-string-requote.css`
+- Oxfmt: `externals/mdn-css-guides/values_and_units/textual_data_types/index.md`
 
 ```scss
 /* input */
@@ -1480,6 +1481,7 @@ A raw prelude (unknown at-rule params) still takes the same `//` test as Prettie
 
 - Why: uniform-rule (same construct, same output: the SCSS `if()` branch separator; prettier/prettier#19384)
 - Pin: `tests/fixtures/format/css/value-semicolon-glue.css`
+- Oxfmt: `externals/mdn-css-guides/custom_functions_and_mixins/using_custom_functions/index.md`
 
 ```css
 /* input */
