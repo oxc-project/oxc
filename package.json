@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
+    "emnapi": "catalog:",
     "oxfmt": "^0.71.0",
     "oxlint": "^1.66.0",
     "oxlint-tsgolint": "7.0.2003"
