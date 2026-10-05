@@ -310,7 +310,7 @@ impl ConfigResolver {
     ///
     /// Also used as the default (empty config) fallback when no config file is found.
     #[instrument(level = "debug", name = "oxfmt::config::from_json_config", skip_all)]
-    pub(crate) fn from_json_config(
+    fn from_json_config(
         oxfmtrc_path: Option<&Path>,
         editorconfig: Option<Arc<EditorConfig>>,
     ) -> Result<Self, String> {
