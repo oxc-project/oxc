@@ -214,6 +214,20 @@ though no type 7 block can interrupt a paragraph on a regular line.
 Printed with the container's prefix the line is no longer lazy, so a blank line keeps the block apart;
 Prettier prints it adjacent, and the next parse reads it as part of the paragraph.
 
+In a tight list item the line stays lazy, and the block's other lines keep the item's content column:
+
+```markdown
+<!-- input, ours -->
+- a
+<a>
+    b
+
+<!-- prettier (the html loses the 2 columns before `b`) -->
+- a
+<a>
+  b
+```
+
 ## list-after-html-block
 
 - Why: semantics (prettier/prettier#17690)
@@ -636,3 +650,34 @@ a
 A fenced code block whose info string has a backtick keeps its `~~~` fence; any other fence is printed with backticks.
 A backtick fence cannot have a backtick in its info string (CommonMark),
 so Prettier's opener is a paragraph on the next parse and its closer opens a code block that runs to the end of the document.
+
+## footnote-kept-line-break
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/prose-wrap/footnote-kept-line-break.md`
+
+```markdown
+<!-- input -->
+[^1]: a b\
+=
+
+<!-- ours (every proseWrap) -->
+[^1]:
+    a b\
+        =
+
+<!-- prettier, preserve (a setext heading on the next parse) -->
+[^1]:
+    a b\
+    =
+
+<!-- prettier, never -->
+[^1]: a b\
+=
+```
+
+A footnote's single paragraph follows the marker only when it prints as one line, under every `proseWrap`:
+`always` also breaks it for the width, the other modes only for a line break the paragraph keeps.
+Prettier asks `preserve` whether the source is one line, and its block form above moves the lazy `=` into the footnote,
+where it underlines the paragraph.
+Its `never` keeps the marker line whatever the paragraph holds (admissible here); ours follows the same rule as the other modes.

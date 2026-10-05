@@ -203,23 +203,6 @@ fn markers_as_written(f: &MarkdownFormatter<'_, '_>) -> bool {
     f.context().raw_text().get() == Raw::Line || f.context().literal_markers().get()
 }
 
-/// Under `proseWrap: preserve`, whether any soft break of this paragraph survives printing
-/// (one before a block-start-looking word is joined away; one next to a dialect shape line stays).
-pub fn keeps_a_line_break<'a>(children: &'a [Inline<'a>], f: &MarkdownFormatter<'_, 'a>) -> bool {
-    let last = children.len().wrapping_sub(1);
-    children.iter().enumerate().any(|(i, child)| {
-        matches!(child, Inline::SoftBreak(_))
-            && i != 0
-            && i != last
-            && (line_shape(children, i + 1, false, false, f)
-                || !words::prevents_break(
-                    true,
-                    next_word_of(children, i, None, f),
-                    ProseWrap::Preserve,
-                ))
-    })
-}
-
 /// Prettier's `riskyParagraphPositions`: a `[[` in text, followed by `]]` (text or a wiki link's).
 /// Wrapping such a paragraph could merge `[[foo\n[[wiki link]]` into one link,
 /// so its text is printed as written.

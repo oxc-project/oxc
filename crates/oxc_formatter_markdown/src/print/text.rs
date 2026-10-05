@@ -241,7 +241,7 @@ pub fn push_whitespace<'a>(
 }
 
 /// Never break before a word that would start a block.
-pub fn prevents_break(newline: bool, next: Option<NextWord<'_>>, prose_wrap: ProseWrap) -> bool {
+fn prevents_break(newline: bool, next: Option<NextWord<'_>>, prose_wrap: ProseWrap) -> bool {
     let Some(next) = next else { return false };
     if next.escaped {
         return false;

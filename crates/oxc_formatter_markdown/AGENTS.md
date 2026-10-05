@@ -96,4 +96,8 @@ Extend the ignore set only with a reason written next to it.
 `tests/invariants.rs` formats a deterministic token-soup corpus (the parser repo's differential generator) under every `proseWrap` and checks the fingerprint and idempotency.
 The default corpus must fail exactly on `KNOWN_FAILURES` (the documents and their classes are listed there);
 remove an entry when its class is fixed, any other failure is a regression.
+
+Other seeds pass (3 / 5 / 7 / 8 / 13 / 21 / 42 / 99) except one known class, seed 11 #5:
+a liquid tag continued on a lazy line (`2. {% x` + `y %}`) is inline in a paragraph,
+re-indented into the item it becomes a liquid flow block (micromark reads the two the same way).
 `MD_FUZZ_SEED` / `MD_FUZZ_COUNT` run other corpora, `MD_FUZZ_FILE` prints one document's fingerprints.
