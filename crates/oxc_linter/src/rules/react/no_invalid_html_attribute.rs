@@ -545,8 +545,16 @@ fn check_pair(
         }
     }
 
-    let expected =
-        siblings.iter().map(|sibling| format!("`{sibling}`")).collect::<Vec<_>>().join(" or ");
+    // Built in one buffer rather than formatting each sibling and joining them.
+    let mut expected = String::new();
+    for (i, sibling) in siblings.iter().enumerate() {
+        if i > 0 {
+            expected.push_str(" or ");
+        }
+        expected.push('`');
+        expected.push_str(sibling);
+        expected.push('`');
+    }
     ctx.diagnostic(unpaired_value_diagnostic(value, &expected, span));
 }
 
