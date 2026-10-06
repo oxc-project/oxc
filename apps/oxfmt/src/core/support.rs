@@ -16,7 +16,7 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     // PERF: Standard JS/TS extensions are by far the most common case, so resolve them first.
     // This relies on `EXCLUDE_FILENAMES` containing no JS/TS file, see `exclude_filenames_are_not_js_or_ts` test.
     if let Ok(source_type) = SourceType::from_path(&path) {
-        return Some(FileKind::OxcFormatter { path, source_type });
+        return Some(FileKind::Native { path, language: NativeLanguage::Js(source_type) });
     }
 
     let file_name = path.file_name()?.to_str()?;
@@ -28,32 +28,35 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     let ext = path.extension().and_then(|ext| ext.to_str()).unwrap_or_default();
 
     if is_extra_js_file(file_name, ext) {
-        return Some(FileKind::OxcFormatter { path, source_type: SourceType::default() });
+        return Some(FileKind::Native {
+            path,
+            language: NativeLanguage::Js(SourceType::default()),
+        });
     }
     if TOML_FILENAMES.contains(file_name) || ext == "toml" || file_name.ends_with(".toml.example") {
-        return Some(FileKind::OxcFormatterToml { path });
+        return Some(FileKind::Native { path, language: NativeLanguage::Toml });
     }
     if file_name == "package.json" {
-        return Some(FileKind::OxcFormatterJsonPackageJson { path });
+        return Some(FileKind::PackageJson { path });
     }
     if let Some(variant) = json_variant(file_name, ext) {
-        return Some(FileKind::OxcFormatterJson { path, variant });
+        return Some(FileKind::Native { path, language: NativeLanguage::Json(variant) });
     }
     if GRAPHQL_EXTENSIONS.contains(ext) {
-        return Some(FileKind::OxcFormatterGraphql { path });
+        return Some(FileKind::Native { path, language: NativeLanguage::Graphql });
     }
     if let Some(variant) = css_variant(ext) {
-        return Some(FileKind::OxcFormatterCss { path, variant });
+        return Some(FileKind::Native { path, language: NativeLanguage::Css(variant) });
     }
     // Before the generic YAML check, since Prettier tries to format them as JSON first
     if YAML_RC_FILENAMES.contains(file_name) {
-        return Some(FileKind::OxcFormatterYamlRc { path });
+        return Some(FileKind::YamlRc { path });
     }
     if YAML_FILENAMES.contains(file_name) || YAML_EXTENSIONS.contains(ext) {
-        return Some(FileKind::OxcFormatterYaml { path });
+        return Some(FileKind::Native { path, language: NativeLanguage::Yaml });
     }
     if MARKDOWN_FILENAMES.contains(file_name) || MARKDOWN_EXTENSIONS.contains(ext) {
-        return Some(FileKind::OxcFormatterMarkdown { path });
+        return Some(FileKind::Native { path, language: NativeLanguage::Markdown });
     }
 
     #[cfg(feature = "napi")]
@@ -68,29 +71,15 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
 ///
 /// Consumed by the resolver to construct a [`super::FormatStrategy`] with the resolved config.
 #[derive(Debug)]
-// Every variant is `OxcFormatter*` without the napi-only `Prettier`
-#[cfg_attr(not(feature = "napi"), expect(clippy::enum_variant_names))]
 pub enum FileKind {
-    /// JS/TS files formatted by `oxc_formatter`.
-    OxcFormatter { path: Arc<Path>, source_type: SourceType },
-    /// JSON (and JSON-like) files formatted by `oxc_formatter_json`.
-    OxcFormatterJson { path: Arc<Path>, variant: JsonVariant },
+    /// Files formatted by a Rust formatter (`oxc_formatter_*`).
+    Native { path: Arc<Path>, language: NativeLanguage },
     /// `package.json`: sorted by `sort-package-json`,
     /// then formatted by `oxc_formatter_json` with the `json-stringify` variant.
-    OxcFormatterJsonPackageJson { path: Arc<Path> },
-    /// GraphQL files formatted by `oxc_formatter_graphql`.
-    OxcFormatterGraphql { path: Arc<Path> },
-    /// CSS/SCSS/Less files formatted by `oxc_formatter_css`.
-    OxcFormatterCss { path: Arc<Path>, variant: CssVariant },
-    /// YAML files formatted by `oxc_formatter_yaml`.
-    OxcFormatterYaml { path: Arc<Path> },
+    PackageJson { path: Arc<Path> },
     /// Files like `.prettierrc`: mirroring Prettier's yaml embed,
     /// formatted as JSON first, then as YAML if that fails.
-    OxcFormatterYamlRc { path: Arc<Path> },
-    /// Markdown files formatted by `oxc_formatter_markdown`.
-    OxcFormatterMarkdown { path: Arc<Path> },
-    /// TOML files formatted by `oxc_formatter_toml`.
-    OxcFormatterToml { path: Arc<Path> },
+    YamlRc { path: Arc<Path> },
     /// Files formatted by delegating to Prettier (Tier 3/4).
     #[cfg(feature = "napi")]
     Prettier { path: Arc<Path>, language: PrettierLanguage },
@@ -99,34 +88,50 @@ pub enum FileKind {
 impl FileKind {
     pub fn path(&self) -> &Arc<Path> {
         match self {
-            Self::OxcFormatter { path, .. }
-            | Self::OxcFormatterJson { path, .. }
-            | Self::OxcFormatterJsonPackageJson { path }
-            | Self::OxcFormatterGraphql { path }
-            | Self::OxcFormatterCss { path, .. }
-            | Self::OxcFormatterYaml { path }
-            | Self::OxcFormatterYamlRc { path }
-            | Self::OxcFormatterMarkdown { path }
-            | Self::OxcFormatterToml { path } => path,
+            Self::Native { path, .. } | Self::PackageJson { path } | Self::YamlRc { path } => path,
             #[cfg(feature = "napi")]
             Self::Prettier { path, .. } => path,
         }
     }
 
-    /// Short name for tracing, the Prettier parser name for `Prettier`.
-    pub fn name(&self) -> &'static str {
+    /// Label for tracing spans and logs, the Prettier parser name for `Prettier`.
+    pub fn trace_label(&self) -> &'static str {
         match self {
-            Self::OxcFormatter { .. } => "js",
-            Self::OxcFormatterJson { .. } => "json",
-            Self::OxcFormatterJsonPackageJson { .. } => "package_json",
-            Self::OxcFormatterGraphql { .. } => "graphql",
-            Self::OxcFormatterCss { .. } => "css",
-            Self::OxcFormatterYaml { .. } => "yaml",
-            Self::OxcFormatterYamlRc { .. } => "yaml_rc",
-            Self::OxcFormatterMarkdown { .. } => "markdown",
-            Self::OxcFormatterToml { .. } => "toml",
+            Self::Native { language, .. } => language.trace_label(),
+            Self::PackageJson { .. } => "package_json",
+            Self::YamlRc { .. } => "yaml_rc",
             #[cfg(feature = "napi")]
             Self::Prettier { language, .. } => language.parser(),
+        }
+    }
+}
+
+/// Languages formatted by a Rust formatter (`oxc_formatter_*`),
+/// both embedded parts ([`route`](super::embed::dispatcher::route)) and whole files ([`FileKind::Native`]).
+#[derive(Debug)]
+pub enum NativeLanguage {
+    Js(SourceType),
+    Graphql,
+    /// The fence-derived variant;
+    /// the css-in-js typed context overrides it to Scss + placeholders at dispatch time (see the css branch).
+    Css(CssVariant),
+    Yaml,
+    Json(JsonVariant),
+    Markdown,
+    Toml,
+}
+
+impl NativeLanguage {
+    /// Label for tracing spans and logs.
+    pub fn trace_label(&self) -> &'static str {
+        match self {
+            Self::Js(_) => "js",
+            Self::Graphql => "graphql",
+            Self::Css(_) => "css",
+            Self::Yaml => "yaml",
+            Self::Json(_) => "json",
+            Self::Markdown => "markdown",
+            Self::Toml => "toml",
         }
     }
 }
@@ -473,7 +478,7 @@ mod tests {
         for file_name in js_or_ts_files {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxcFormatter { .. })),
+                matches!(result, Some(FileKind::Native { language: NativeLanguage::Js(_), .. })),
                 "`{file_name}` should be routed to oxc_formatter"
             );
         }
@@ -482,7 +487,7 @@ mod tests {
         for file_name in ["shader.frag", "random.frag", "xstart.frag"] {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                !matches!(result, Some(FileKind::OxcFormatter { .. })),
+                !matches!(result, Some(FileKind::Native { language: NativeLanguage::Js(_), .. })),
                 "`{file_name}` should NOT be routed to oxc_formatter"
             );
         }
@@ -581,7 +586,7 @@ mod tests {
         for (file_name, expected) in test_cases {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxcFormatterJson { variant, .. }) if variant == expected),
+                matches!(result, Some(FileKind::Native { language: NativeLanguage::Json(variant), .. }) if variant == expected),
                 "`{file_name}` should be routed to oxc_formatter_json ({expected:?})"
             );
         }
@@ -589,7 +594,7 @@ mod tests {
         // `package.json` also uses the `json-stringify` variant,
         // but is the lone dedicated kind for the sorting pre-process
         let kind = classify_file_kind(Arc::from(Path::new("package.json"))).unwrap();
-        assert!(matches!(kind, FileKind::OxcFormatterJsonPackageJson { .. }));
+        assert!(matches!(kind, FileKind::PackageJson { .. }));
     }
 
     #[test]
@@ -597,7 +602,7 @@ mod tests {
         for file_name in ["schema.graphql", "query.gql", "types.graphqls"] {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxcFormatterGraphql { .. })),
+                matches!(result, Some(FileKind::Native { language: NativeLanguage::Graphql, .. })),
                 "`{file_name}` should be routed to oxc_formatter_graphql"
             );
         }
@@ -617,7 +622,7 @@ mod tests {
         for (file_name, expected) in test_cases {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxcFormatterCss { variant, .. }) if variant == expected),
+                matches!(result, Some(FileKind::Native { language: NativeLanguage::Css(variant), .. }) if variant == expected),
                 "`{file_name}` should be routed to oxc_formatter_css ({expected:?})"
             );
         }
@@ -635,7 +640,7 @@ mod tests {
         ] {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxcFormatterYaml { .. })),
+                matches!(result, Some(FileKind::Native { language: NativeLanguage::Yaml, .. })),
                 "`{file_name}` should be routed to oxc_formatter_yaml"
             );
         }
@@ -644,7 +649,7 @@ mod tests {
         for file_name in [".prettierrc", ".stylelintrc", ".lintstagedrc"] {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxcFormatterYamlRc { .. })),
+                matches!(result, Some(FileKind::YamlRc { .. })),
                 "`{file_name}` should be routed to the JSON-first YAML rc kind"
             );
         }
@@ -660,7 +665,7 @@ mod tests {
         for file_name in ["docs.md", "guide.markdown", "notes.mdown", "README", "contents.lr"] {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxcFormatterMarkdown { .. })),
+                matches!(result, Some(FileKind::Native { language: NativeLanguage::Markdown, .. })),
                 "`{file_name}` should be routed to oxc_formatter_markdown"
             );
         }
@@ -681,7 +686,7 @@ mod tests {
         for file_name in toml_files {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxcFormatterToml { .. })),
+                matches!(result, Some(FileKind::Native { language: NativeLanguage::Toml, .. })),
                 "`{file_name}` should be detected as TOML"
             );
         }

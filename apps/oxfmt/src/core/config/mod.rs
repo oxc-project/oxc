@@ -494,6 +494,7 @@ fn build_ignore_glob(
 mod tests_slow_path_validation {
     use std::{path::PathBuf, sync::Arc};
 
+    use crate::core::support::NativeLanguage;
     #[cfg(feature = "napi")]
     use crate::core::support::PrettierLanguage;
 
@@ -536,9 +537,9 @@ mod tests_slow_path_validation {
             ]
         }));
 
-        let kind = FileKind::OxcFormatter {
+        let kind = FileKind::Native {
             path: Arc::from(PathBuf::from("src/test.ts").as_path()),
-            source_type: oxc_span::SourceType::ts(),
+            language: NativeLanguage::Js(oxc_span::SourceType::ts()),
         };
         let err = resolver.resolve(kind).unwrap_err();
         assert!(err.contains("tabWidth"), "expected tabWidth validation error, got: {err}");
@@ -549,8 +550,10 @@ mod tests_slow_path_validation {
     #[test]
     fn fast_path_resolve_succeeds() {
         let resolver = resolver_from_json(serde_json::json!({ "printWidth": 80 }));
-        let kind =
-            FileKind::OxcFormatterToml { path: Arc::from(PathBuf::from("Cargo.toml").as_path()) };
+        let kind = FileKind::Native {
+            path: Arc::from(PathBuf::from("Cargo.toml").as_path()),
+            language: NativeLanguage::Toml,
+        };
         assert!(resolver.resolve(kind).is_ok());
     }
 

@@ -28,22 +28,8 @@ use crate::core::{
         to_oxc_formatter_yaml,
     },
     oxfmtrc::FormatConfig,
-    support::PrettierLanguage,
+    support::{NativeLanguage, PrettierLanguage},
 };
-
-/// The native half of the routing table:
-/// a request/fence language routed to [`Route::Native`] parses to its Rust formatter branch here.
-pub enum NativeLanguage {
-    Js(SourceType),
-    Graphql,
-    /// The fence-derived variant;
-    /// the css-in-js typed context overrides it to Scss + placeholders at dispatch time (see the css branch).
-    Css(CssVariant),
-    Yaml,
-    Json(JsonVariant),
-    Markdown,
-    Toml,
-}
 
 /// Where a language identifier routes.
 pub enum Route {
@@ -118,8 +104,8 @@ pub struct ResolvedDispatchConfig {
     /// One cell per [`CssVariant`]: JSDoc fences dispatch css/scss/less as-is, while css-in-js always uses Scss.
     css: [OnceLock<CssFormatOptions>; 3],
     yaml: OnceLock<YamlFormatOptions>,
-    /// One cell per fence-reachable [`JsonVariant`] (json / jsonc / json5; `JsonStringify` is `package.json`-only).
-    json: [OnceLock<JsonFormatOptions>; 3],
+    /// One cell per [`JsonVariant`].
+    json: [OnceLock<JsonFormatOptions>; 4],
     markdown: OnceLock<MarkdownFormatOptions>,
     toml: OnceLock<TomlFormatOptions>,
     /// The options handed to Prettier; see [`PrettierOptions`].
@@ -153,7 +139,7 @@ impl ResolvedDispatchConfig {
             graphql: OnceLock::new(),
             css: [OnceLock::new(), OnceLock::new(), OnceLock::new()],
             yaml: OnceLock::new(),
-            json: [OnceLock::new(), OnceLock::new(), OnceLock::new()],
+            json: [OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new()],
             markdown: OnceLock::new(),
             toml: OnceLock::new(),
             #[cfg(feature = "napi")]
@@ -230,11 +216,7 @@ impl ResolvedDispatchConfig {
             JsonVariant::Json => &self.json[0],
             JsonVariant::Jsonc => &self.json[1],
             JsonVariant::Json5 => &self.json[2],
-            JsonVariant::JsonStringify => {
-                unreachable!(
-                    "JsonStringify is the package.json pipeline's variant, never dispatched"
-                )
-            }
+            JsonVariant::JsonStringify => &self.json[3],
         };
         *cell.get_or_init(|| to_oxc_formatter_json(&self.config, self.validated.core, variant))
     }
@@ -326,73 +308,72 @@ pub fn build_dispatcher(
     Arc::new(move |session: &FormatSession<'_>, request: DispatchRequest<'_>| {
         let text = request.text;
         match route(request.language) {
-            Route::Native(NativeLanguage::Js(source_type)) => {
-                let embedded_in = request
-                    .parent_context_as::<XxxInMarkdownCodeBlock>()
-                    .map(|_| JsEmbeddedIn::MarkdownCodeBlock);
-                Ok(format_native("js", || {
-                    oxc_formatter::format_to_ir(
+            Route::Native(language) => {
+                Ok(format_native(language.trace_label(), || match language {
+                    NativeLanguage::Js(source_type) => {
+                        let embedded_in = request
+                            .parent_context_as::<XxxInMarkdownCodeBlock>()
+                            .map(|_| JsEmbeddedIn::MarkdownCodeBlock);
+                        oxc_formatter::format_to_ir(
+                            session,
+                            text,
+                            source_type,
+                            dispatch_config.js_options(),
+                            embedded_in,
+                        )
+                    }
+                    NativeLanguage::Graphql => oxc_formatter_graphql::format_to_ir(
                         session,
                         text,
-                        source_type,
-                        dispatch_config.js_options(),
-                        embedded_in,
-                    )
-                }))
-            }
-            Route::Native(NativeLanguage::Graphql) => Ok(format_native("graphql", || {
-                oxc_formatter_graphql::format_to_ir(
-                    session,
-                    text,
-                    dispatch_config.graphql_options(),
-                )
-            })),
-            Route::Native(NativeLanguage::Css(variant)) => {
-                // css-in-js (typed `CssInJsTemplate` context) is always parsed as SCSS with `${}` placeholder markers.
-                // Any other caller gets the strict standalone grammar with the fence/request language's variant.
-                let (variant, template_placeholders) =
-                    if request.parent_context_as::<CssInJsTemplate>().is_some() {
-                        (CssVariant::Scss, true)
-                    } else {
-                        (variant, false)
-                    };
-                Ok(format_native("css", || {
-                    oxc_formatter_css::format_to_ir(
+                        dispatch_config.graphql_options(),
+                    ),
+                    NativeLanguage::Css(variant) => {
+                        // css-in-js (typed `CssInJsTemplate` context) is always parsed as SCSS with `${}` placeholder markers.
+                        // Any other caller gets the strict standalone grammar with the fence/request language's variant.
+                        let (variant, template_placeholders) =
+                            if request.parent_context_as::<CssInJsTemplate>().is_some() {
+                                (CssVariant::Scss, true)
+                            } else {
+                                (variant, false)
+                            };
+                        oxc_formatter_css::format_to_ir(
+                            session,
+                            text,
+                            dispatch_config.css_options(variant),
+                            template_placeholders,
+                        )
+                    }
+                    NativeLanguage::Yaml => oxc_formatter_yaml::format_to_ir(
                         session,
                         text,
-                        dispatch_config.css_options(variant),
-                        template_placeholders,
-                    )
-                }))
-            }
-            Route::Native(NativeLanguage::Yaml) => Ok(format_native("yaml", || {
-                oxc_formatter_yaml::format_to_ir(session, text, dispatch_config.yaml_options())
-            })),
-            Route::Native(NativeLanguage::Json(variant)) => Ok(format_native("json", || {
-                oxc_formatter_json::format_to_ir(
-                    session,
-                    text,
-                    dispatch_config.json_options(variant),
-                )
-            })),
-            Route::Native(NativeLanguage::Markdown) => {
-                // `~` fences in a JS template, and in Markdown nested in one (md-in-md-in-js)
-                let in_js_template = request.parent_context_as::<MarkdownInJsTemplate>().is_some()
-                    || request
-                        .parent_context_as::<XxxInMarkdownCodeBlock>()
-                        .is_some_and(|c| c.in_js_template);
-                Ok(format_native("markdown", || {
-                    oxc_formatter_markdown::format_to_ir(
+                        dispatch_config.yaml_options(),
+                    ),
+                    NativeLanguage::Json(variant) => oxc_formatter_json::format_to_ir(
                         session,
                         text,
-                        dispatch_config.markdown_options(),
-                        in_js_template,
-                    )
+                        dispatch_config.json_options(variant),
+                    ),
+                    NativeLanguage::Markdown => {
+                        // `~` fences in a JS template, and in Markdown nested in one (md-in-md-in-js)
+                        let in_js_template =
+                            request.parent_context_as::<MarkdownInJsTemplate>().is_some()
+                                || request
+                                    .parent_context_as::<XxxInMarkdownCodeBlock>()
+                                    .is_some_and(|c| c.in_js_template);
+                        oxc_formatter_markdown::format_to_ir(
+                            session,
+                            text,
+                            dispatch_config.markdown_options(),
+                            in_js_template,
+                        )
+                    }
+                    NativeLanguage::Toml => oxc_formatter_toml::format_to_ir(
+                        session,
+                        text,
+                        dispatch_config.toml_options(),
+                    ),
                 }))
             }
-            Route::Native(NativeLanguage::Toml) => Ok(format_native("toml", || {
-                oxc_formatter_toml::format_to_ir(session, text, dispatch_config.toml_options())
-            })),
 
             // Prettier-served languages: Doc→IR fallback when available (napi),
             // deliberate skip otherwise (pure build).
