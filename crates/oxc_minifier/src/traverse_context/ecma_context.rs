@@ -429,7 +429,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         if !expr.is_anonymous_function_definition() {
             return false;
         }
-        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
+        let is_class = matches!(expr, Expression::ClassExpression(_));
         (options.class && is_class) || (options.function && !is_class)
     }
 

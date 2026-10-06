@@ -171,6 +171,31 @@ const categories: Category[] = [
     ],
   },
   {
+    name: "markdown",
+    sources: [
+      {
+        dir: join(EXTERNALS_DIR, "prettier", "markdown"),
+        ext: ".md",
+        // Cursor offsets and plugin loading are not formatter concerns
+        excludes: ["markdown/cursor/", "markdown/broken-plugins/"],
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-md") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
+  },
+  {
+    // Real-world documents, dense with fenced code (css / html / js)
+    name: "markdown-mdn",
+    sources: [
+      { dir: join(EXTERNALS_DIR, "mdn-learn"), ext: ".md" },
+      { dir: join(EXTERNALS_DIR, "mdn-css-guides"), ext: ".md" },
+    ],
+    // mdn's own `.prettierrc` first: the documents are already formatted by it.
+    // `proseWrap: always` is left to the `markdown` category,
+    // mdn's GitHub alerts and macros would fail on known divergences (`line-shapes`) in bulk.
+    optionSets: [{ printWidth: 80, bracketSameLine: true }, { printWidth: 100 }],
+  },
+  {
     name: "graphql",
     sources: [{ dir: join(EXTERNALS_DIR, "gitlab"), ext: ".graphql" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],

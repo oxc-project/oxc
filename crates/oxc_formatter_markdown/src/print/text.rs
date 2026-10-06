@@ -7,7 +7,7 @@
 //! - a line break before a word that would start a block (`-`, `1.`, `#`, `>`) never breaks
 //!
 //! Around Chinese / Japanese text a whitespace follows Prettier's `printWhitespace`:
-//! a line break between CJ characters is not a space, and a space next to one never breaks
+//! a line break next to CJ is kept, and a space next to one never breaks
 //! (`cjk` classifies the word edges).
 
 use std::borrow::Cow;
@@ -19,7 +19,7 @@ use crate::options::ProseWrap;
 
 use super::{
     MarkdownFormatter,
-    cjk::{self, Edge, Kind},
+    cjk::{self, Kind},
     escape::{
         ends_with_unescaped_backslash, is_fake_setext_underline, leading_run_escaped,
         print_delimited_word,
@@ -76,9 +76,8 @@ pub struct TextContext<'a> {
     /// The last word of the previous sibling text (a soft break's other side), for the CJK rules only;
     /// a trailing `\` there was escaped by the text (see `push_text`).
     pub prev_word: Option<&'a str>,
-    /// The sentence puts spaces between CJ and non-CJK words (Prettier's `usesCJSpaces`);
-    /// `None` when it has no CJK text at all.
-    pub cj_spaces: Option<bool>,
+    /// The sentence has CJK text (the parser's `contains_cjk`); without it the word edges are not classified.
+    pub has_cjk: bool,
     /// Inside a reference link's raw content, where a line break never prevents a break.
     pub is_link: bool,
 }
@@ -99,8 +98,6 @@ pub fn push_text<'a>(
     let mut is_first = true;
     let leading_ws = raw.starts_with(is_split_whitespace);
     let mut prev_word: Option<&'a str> = None;
-    // `prev_word` is the text's first word
-    let mut prev_is_first = false;
     loop {
         // Whitespace before the next word (leading, or the run after the previous word).
         let after_ws = rest.trim_start_matches(is_split_whitespace);
@@ -126,9 +123,7 @@ pub fn push_text<'a>(
             };
             let cx = TextContext {
                 next_word: next,
-                // The first word inside an autolink literal's stretch is part of the link:
-                // the whitespace after it stays a space (a CJ neighbor must not glue to the link)
-                prev_word: prev_word.filter(|_| !(cx.autolink_stretch > 0 && prev_is_first)),
+                prev_word,
                 after_liquid: is_first && cx.after_liquid,
                 ..cx
             };
@@ -144,7 +139,6 @@ pub fn push_text<'a>(
             break;
         }
         prev_word = Some(word);
-        prev_is_first = is_first;
         let printed: Cow<'a, str> = if in_delimiter {
             let prev = if is_first { cx.edge_prev } else { Some(' ') };
             let next = if is_last { cx.edge_next } else { Some(' ') };
@@ -184,7 +178,7 @@ pub fn push_text<'a>(
 
 /// The whitespace (a space run, or one holding a `newline`) between `cx.prev_word`
 /// and `cx.next_word` (`None`: the whitespace touches a node edge):
-/// a separator that may break, a space, or nothing.
+/// a kept line break, a separator that may break, or a space.
 pub fn push_whitespace<'a>(
     newline: bool,
     cx: &TextContext<'a>,
@@ -208,136 +202,46 @@ pub fn push_whitespace<'a>(
         options.prose_wrap
     };
 
-    if prose_wrap == ProseWrap::Preserve && newline {
+    if newline && prose_wrap == ProseWrap::Preserve {
         parts.push_sep(Sep::HardLine);
         return;
     }
-    // The CJK rules only apply to a sentence with CJK text
-    let (prev, next) = if cx.cj_spaces.is_some() {
+    // A space breaks only under `always`; otherwise it stays a space whatever its neighbors
+    let (prev, next) = if cx.has_cjk && (newline || prose_wrap == ProseWrap::Always) {
         (
-            cx.prev_word.and_then(|w| cjk::edges(w).map(|(_, last)| last)),
-            cx.next_word
-                .filter(|w| w.in_sentence)
-                .and_then(|w| cjk::edges(w.word).map(|(first, _)| first)),
+            cx.prev_word.and_then(cjk::last_kind),
+            cx.next_word.filter(|w| w.in_sentence).and_then(|w| cjk::first_kind(w.word)),
         )
     } else {
         (None, None)
     };
-    let can_be_space = !newline || line_break_can_be_space(prev, next, cx);
+    // Next to CJ, except Korean next to a CJ letter (a space everywhere)
+    let cj_bound = (prev.is_some_and(Kind::is_cj) || next.is_some_and(Kind::is_cj))
+        && !matches!(
+            (prev, next),
+            (Some(Kind::KLetter), Some(Kind::CjLetter))
+                | (Some(Kind::CjLetter), Some(Kind::KLetter))
+        );
+    // Prettier's `isLineBreakAmbiguous`: browsers disagree on whether the break is a space or nothing
+    if newline && cj_bound {
+        parts.push_sep(Sep::HardLine);
+        return;
+    }
+    // Prettier's `isBreakable`: never a break between CJ and a neighbor word,
+    // a node edge (`None`) may break
     let breakable = prose_wrap == ProseWrap::Always
         && f.context().no_wrap_depth().get() == 0
-        && is_breakable(prev, next, cx);
-    match (breakable, can_be_space) {
-        (true, true) => parts.push_sep(Sep::Line),
-        (true, false) => parts.push_sep(Sep::SoftLine),
-        (false, true) => parts.push_str(" "),
-        (false, false) => {}
+        && !(cj_bound && prev.is_some() && next.is_some());
+    // Any line break left here is a space (Prettier's `lineBreakCanBeConvertedToSpace`)
+    if breakable {
+        parts.push_sep(Sep::Line);
+    } else {
+        parts.push_str(" ");
     }
-}
-
-/// Prettier's `lineBreakCanBeConvertedToSpace`.
-fn line_break_can_be_space(prev: Option<Edge>, next: Option<Edge>, cx: &TextContext<'_>) -> bool {
-    if cx.is_link {
-        return true;
-    }
-    let (Some(prev), Some(next)) = (prev, next) else { return true };
-    let latin_like = |kind: Kind| matches!(kind, Kind::NonCjk | Kind::KLetter);
-    // Between non-CJK / Korean words, or Korean and CJ, a line break is a space
-    if (latin_like(prev.kind) && latin_like(next.kind))
-        || matches!(
-            (prev.kind, next.kind),
-            (Kind::KLetter, Kind::CjLetter) | (Kind::CjLetter, Kind::KLetter)
-        )
-    {
-        return true;
-    }
-    // A delimiter run glued to a CJ character gains flanking it did not have (`」\n**` → `」**` closes);
-    // a space keeps it inert, as the line break did
-    if is_delimiter_char(prev.ch) || is_delimiter_char(next.ch) {
-        return true;
-    }
-    // Around CJK punctuation or between CJ letters it is nothing
-    if prev.kind == Kind::CjkPunctuation
-        || next.kind == Kind::CjkPunctuation
-        || (prev.kind == Kind::CjLetter && next.kind == Kind::CjLetter)
-    {
-        return false;
-    }
-    // Between CJ and non-CJK: a space next to ASCII punctuation (`:::` fences),
-    // nothing next to other punctuation (`〜`, `…`), else the sentence's own style.
-    if prev.ch.is_ascii_punctuation() || next.ch.is_ascii_punctuation() {
-        return true;
-    }
-    if prev.punctuation || next.punctuation {
-        return false;
-    }
-    cx.cj_spaces.unwrap_or(false)
-}
-
-/// `*` `_` `~` `` ` ``: runs of these pair up by flanking or by length, so their neighbors matter.
-fn is_delimiter_char(c: char) -> bool {
-    matches!(c, '*' | '_' | '~' | '`')
-}
-
-/// Prettier's `isBreakable` for a `" "` / `"\n"` whitespace under `always`.
-fn is_breakable(prev: Option<Edge>, next: Option<Edge>, cx: &TextContext<'_>) -> bool {
-    if cx.is_link {
-        return true;
-    }
-    let (Some(prev), Some(next)) = (prev, next) else { return true };
-    // Korean next to CJ breaks;
-    // anything else next to CJ never does (browsers turn the break into a space)
-    matches!(
-        (prev.kind, next.kind),
-        (Kind::KLetter, Kind::CjLetter) | (Kind::CjLetter, Kind::KLetter)
-    ) || !(prev.kind.is_cj() || next.kind.is_cj())
-}
-
-/// Prettier's `usesCJSpaces`, over the words of one sentence (the texts of a soft-break run):
-/// whether spaces outnumber nothing between CJ and non-CJK words.
-/// `words` yields each text's words with the whitespace before them (`None` for the first).
-pub fn uses_cj_spaces<'a>(texts: impl Iterator<Item = &'a str>) -> bool {
-    let (mut spaces, mut nothing) = (0u32, 0u32);
-    let counts = |a: Kind, b: Kind| {
-        matches!((a, b), (Kind::CjLetter, Kind::NonCjk) | (Kind::NonCjk, Kind::CjLetter))
-    };
-    for text in texts {
-        let mut prev_last: Option<Kind> = None;
-        let mut rest = text;
-        loop {
-            let after_ws = rest.trim_start_matches(is_split_whitespace);
-            let ws = &rest[..rest.len() - after_ws.len()];
-            rest = after_ws;
-            let word_end = rest.find(is_split_whitespace).unwrap_or(rest.len());
-            let (word, tail) = rest.split_at(word_end);
-            if word.is_empty() {
-                break;
-            }
-            let mut kinds = cjk::kinds(word);
-            let first = kinds.next().unwrap_or(Kind::NonCjk);
-            if let Some(prev) = prev_last
-                && !ws.is_empty()
-                && !ws.contains('\n')
-                && counts(prev, first)
-            {
-                spaces += 1;
-            }
-            let mut last = first;
-            for kind in kinds {
-                if counts(last, kind) {
-                    nothing += 1;
-                }
-                last = kind;
-            }
-            prev_last = Some(last);
-            rest = tail;
-        }
-    }
-    spaces > nothing
 }
 
 /// Never break before a word that would start a block.
-pub fn prevents_break(newline: bool, next: Option<NextWord<'_>>, prose_wrap: ProseWrap) -> bool {
+fn prevents_break(newline: bool, next: Option<NextWord<'_>>, prose_wrap: ProseWrap) -> bool {
     let Some(next) = next else { return false };
     if next.escaped {
         return false;

@@ -362,13 +362,13 @@ impl<'a> AstKind<'a> {
     }
 }
 
-impl AstKind<'_> {
+impl<'a> AstKind<'a> {
     /// Get the AST kind name with minimal details. Particularly useful for
     /// when debugging an iteration over an AST.
     ///
     /// Note that this method does not exist in release builds. Do not include
     /// usage of this method within your code.
-    pub fn debug_name(&self) -> std::borrow::Cow<'_, str> {
+    pub fn debug_name(&self) -> std::borrow::Cow<'a, str> {
         use std::borrow::Cow;
 
         const COMPUTED: &str = "<computed>";

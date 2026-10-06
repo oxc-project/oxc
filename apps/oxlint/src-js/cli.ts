@@ -176,6 +176,12 @@ if (!process.stdout.isTTY) {
   // @ts-expect-error: `_handle` is an internal API
   process.stdout._handle?.setBlocking?.(true);
 }
+// Same for stderr, aligned with the fix in `oxfmt` CLI.
+// https://github.com/oxc-project/oxc/issues/27361
+// Currently Oxlint barely writes to stderr (diagnostics go to stdout),
+// but output beyond the pipe buffer would be lost otherwise.
+// @ts-expect-error: `_handle` is an internal API
+if (!process.stderr.isTTY) process.stderr._handle?.setBlocking?.(true);
 
 // LSP uses stdout for communication, so write logs to stderr to avoid breaking the protocol.
 // Since LSP is handled on the Rust side, we have to check the flag here. (`lint()` starts the server and waits)

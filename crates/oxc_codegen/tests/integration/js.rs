@@ -780,6 +780,93 @@ fn big_int() {
     test_minify("function a() { return 1n }", "function a(){return 1n}");
 }
 
+/// A negative `BigIntLiteral` never comes from the parser (`-1n` parses as a unary minus around `1n`),
+/// but the minifier creates one when it folds e.g. `~0n` to `-1n`.
+/// Its `-` must not run into a `-` printed before it, which would make `--`.
+/// After a keyword it needs no space, whether it starts with `-` or is wrapped in `(...)`,
+/// as neither can continue the keyword.
+#[test]
+fn negative_big_int_literal() {
+    let allocator = Allocator::default();
+    let ast = AstBuilder::new(&allocator);
+
+    let negative_one =
+        || Expression::new_big_int_literal(SPAN, "-1", None, BigintBase::Decimal, &ast);
+    let expr_stmt = |expr| Statement::new_expression_statement(SPAN, expr, &ast);
+    let cases = [
+        // `-(-1n)`
+        (
+            expr_stmt(Expression::new_unary_expression(
+                SPAN,
+                UnaryOperator::UnaryNegation,
+                negative_one(),
+                &ast,
+            )),
+            "- -1n;\n",
+            "- -1n;",
+        ),
+        // `+(-1n)` needs no space
+        (
+            expr_stmt(Expression::new_unary_expression(
+                SPAN,
+                UnaryOperator::UnaryPlus,
+                negative_one(),
+                &ast,
+            )),
+            "+-1n;\n",
+            "+-1n;",
+        ),
+        // `y - (-1n)`
+        (
+            expr_stmt(Expression::new_binary_expression(
+                SPAN,
+                Expression::new_identifier(SPAN, "y", &ast),
+                BinaryOperator::Subtraction,
+                negative_one(),
+                &ast,
+            )),
+            "y - -1n;\n",
+            "y- -1n;",
+        ),
+        // `return -1n` needs no space when minified
+        (
+            Statement::new_return_statement(SPAN, Some(negative_one()), &ast),
+            "return -1n;\n",
+            "return-1n;",
+        ),
+        // `return (-1n).x` needs no space when minified either
+        (
+            Statement::new_return_statement(
+                SPAN,
+                Some(Expression::new_static_member_expression(
+                    SPAN,
+                    negative_one(),
+                    IdentifierName::new(SPAN, "x", &ast),
+                    false,
+                    &ast,
+                )),
+                &ast,
+            ),
+            "return (-1n).x;\n",
+            "return(-1n).x;",
+        ),
+    ];
+
+    for (stmt, expected, expected_minified) in cases {
+        let program =
+            Program::new(SPAN, oxc_span::SourceType::mjs(), "", [], None, [], [stmt], &ast);
+
+        let result = Codegen::new().build(&program).code;
+        assert_eq!(result, expected);
+
+        let result = Codegen::new()
+            .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+            .build(&program)
+            .code;
+        assert_eq!(result, expected_minified);
+    }
+}
+
 #[test]
 #[ignore = "Minify bigint is not implemented."]
 fn big_int_minify() {

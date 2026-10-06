@@ -10,7 +10,7 @@ import {
   CAT_INT_DIGIT,
   CAT_LT,
   CAT_OP_UN_NOT,
-  CAT_OP_UN_NOT_AFTER_LT,
+  CAT_OP_LT_THEN_UN_NOT,
   CAT_OTHER,
   CAT_QUESTION,
   CAT_START_OF_ARROW_EXPR,
@@ -708,7 +708,7 @@ function printUnaryExpression(
     printSpaceBeforeOperator(state, operatorCode);
     debugAssertLastFresh(state);
     if (operatorCode === CAT_OP_UN_NOT && state.last === CAT_LT) {
-      operatorCode = CAT_OP_UN_NOT_AFTER_LT;
+      operatorCode = CAT_OP_LT_THEN_UN_NOT;
     }
     writeWithMap(state, operator, operatorCode, node.start, node.end, node);
   }

@@ -15,3 +15,7 @@
   height: calc(50% + ((100% - 20px)));
   min-height: calc(((10vh)) + calc((5vh)));
 }
+/* an over-wide operand opens its parens */
+.c {
+  opacity: calc((progress(var(--container-width), var(--custom-min-width), var(--custom-max-width)) / 2) + 0.5);
+}

@@ -38,9 +38,6 @@ impl Walk {
                 self.jsx_element_done();
                 pos + 1
             }
-            tk!(JsxText | String | Ident | Number | BigInt | TemplateNoSub) => {
-                tokens.next_start(pos + 1)
-            }
             _ if k >= OP_KIND_BASE => {
                 match c {
                     b'{' => {

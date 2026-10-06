@@ -6,7 +6,7 @@
 //! Language-specific routing lives in `core::embed`;
 //! [`postprocess`] here is the conversion's finishing pass (Prettier-fallback path only).
 
-use std::num::NonZeroU8;
+use std::num::{NonZeroU8, NonZeroU32};
 
 use rustc_hash::FxHashMap;
 use serde_json::Value;
@@ -486,7 +486,10 @@ fn extract_group_id(
 /// the finishing step of the Doc→IR conversion (Prettier-fallback path only;
 /// Rust formatters write IR that never needs it):
 /// - strip trailing hardline (useless for embedded parts)
-/// - collapse double-hardlines `[HardWithoutExpand, ExpandParent, HardWithoutExpand, ExpandParent]` → `[Empty, ExpandParent]`
+/// - a hardline right after a line break prints its own newline (`ExactLineBreaks(1)`):
+///   Prettier's hardline always does, the core printer's drops on an empty line.
+///   Tags in between are looked through (`fill(["a", hardline, "", hardline, "b"])`, whitespace-sensitive HTML text),
+///   so every blank line survives.
 /// - merge consecutive Text nodes (the Prettier Doc path can emit adjacent `Text`s)
 /// - trim a Text's trailing spaces/tabs when a hard/empty line follows:
 ///   Prettier's own printer trims at every line break,
@@ -508,17 +511,25 @@ pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a 
     let mut write = 0;
     let mut read = 0;
     while read < ir.len() {
-        // Collapse double-hardline → empty line
-        if read + 3 < ir.len()
-            && matches!(ir[read], FormatElement::Line(LineMode::HardWithoutExpand))
-            && matches!(ir[read + 1], FormatElement::ExpandParent)
-            && matches!(ir[read + 2], FormatElement::Line(LineMode::HardWithoutExpand))
-            && matches!(ir[read + 3], FormatElement::ExpandParent)
+        // A `hardline` pair (its break-parent keeps the propagation as is) right after a line break
+        if matches!(ir[read], FormatElement::Line(LineMode::HardWithoutExpand))
+            && matches!(ir.get(read + 1), Some(FormatElement::ExpandParent))
+            && ir[..write]
+                .iter()
+                .rev()
+                .find(|el| !matches!(el, FormatElement::Tag(_) | FormatElement::ExpandParent))
+                .is_some_and(|el| {
+                    matches!(
+                        el,
+                        FormatElement::Line(
+                            LineMode::HardWithoutExpand | LineMode::ExactLineBreaks(_)
+                        )
+                    )
+                })
         {
-            ir[write] = FormatElement::Line(LineMode::Empty);
-            ir[write + 1] = FormatElement::ExpandParent;
-            write += 2;
-            read += 4;
+            ir[write] = FormatElement::Line(LineMode::ExactLineBreaks(NonZeroU32::MIN));
+            write += 1;
+            read += 1;
         } else if matches!(ir[read], FormatElement::Text { .. }) {
             // Merge consecutive Text nodes
             let run_start = read;
@@ -619,6 +630,16 @@ mod tests {
         let options = PrinterOptions::default().with_indent_style(IndentStyle::Tab);
         // Prettier's markdown list item: the item's columns, then the child's tab
         assert_eq!(print_doc_with(&doc, options), "a\n  b\n  \tc");
+    }
+
+    #[test]
+    fn fill_keeps_blank_lines_of_empty_parts() {
+        let hardline = json!([{ "type": "line", "hard": true }, { "type": "break-parent" }]);
+        let doc = json!({
+            "type": "fill",
+            "parts": ["a", hardline, "", hardline, "b", hardline, "", hardline, "", hardline, "c"]
+        });
+        assert_eq!(print_doc(&doc, 80), "a\n\nb\n\n\nc");
     }
 
     #[test]

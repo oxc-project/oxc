@@ -1,0 +1,7 @@
+/* A comment leading a list item stays on its line when the item's first chunk fits after it */
+a {
+  mask:
+    url("masks.svg#star") left / 16px repeat-y,
+    /* 16px-wide mask on the left side */ url("masks.svg#circle") right / 16px
+      repeat-y; /* 16px-wide mask against right side */
+}
