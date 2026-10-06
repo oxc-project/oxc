@@ -11,12 +11,6 @@ use crate::{
     },
 };
 
-#[derive(Clone, Copy)]
-enum SuppressionMatch {
-    AtOrBelowBaseline,
-    ExactBaseline,
-}
-
 /// A split collection of lint diagnostics into suppressed/unsuppressed diagnostics.
 struct SuppressionPartition {
     /// Messages that should be shown to the user.
@@ -72,11 +66,7 @@ impl DiffManager {
         let suppression_file =
             SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
 
-        let partition = Self::partition_lint_diagnostics(
-            &suppression_file,
-            messages,
-            SuppressionMatch::AtOrBelowBaseline,
-        );
+        let partition = Self::partition_lint_diagnostics(&suppression_file, messages, false);
 
         if let Some(counts) = partition.runtime_counts {
             self.runtime_map.merge_file(filename, counts);
@@ -110,11 +100,7 @@ impl DiffManager {
         let suppression_file =
             SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
 
-        let partition = Self::partition_lint_diagnostics(
-            &suppression_file,
-            messages,
-            SuppressionMatch::ExactBaseline,
-        );
+        let partition = Self::partition_lint_diagnostics(&suppression_file, messages, true);
 
         (partition.unsuppressed, partition.suppressed)
     }
@@ -153,7 +139,7 @@ impl DiffManager {
     fn partition_lint_diagnostics(
         suppression_file_state: &SuppressionFile<'_>,
         lint_diagnostics: Vec<Message>,
-        suppression_match: SuppressionMatch,
+        require_exact_baseline: bool,
     ) -> SuppressionPartition {
         let build_suppression_map = |diagnostics: &Vec<Message>| {
             let mut suppression_tracking: FxHashMap<String, DiagnosticCounts> =
@@ -183,7 +169,7 @@ impl DiffManager {
             SuppressionFileState::New => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
-                if matches!(suppression_match, SuppressionMatch::ExactBaseline) {
+                if require_exact_baseline {
                     return SuppressionPartition {
                         unsuppressed: lint_diagnostics,
                         suppressed: Vec::new(),
@@ -232,11 +218,10 @@ impl DiffManager {
                         return false;
                     };
 
-                    match suppression_match {
-                        SuppressionMatch::AtOrBelowBaseline => {
-                            count_file.count < count_runtime.count
-                        }
-                        SuppressionMatch::ExactBaseline => count_file.count != count_runtime.count,
+                    if require_exact_baseline {
+                        count_file.count != count_runtime.count
+                    } else {
+                        count_file.count < count_runtime.count
                     }
                 };
 
