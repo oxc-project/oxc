@@ -16,8 +16,8 @@ use super::options::{
 use super::{
     embed::dispatcher::ResolvedDispatchConfig,
     options::{
-        ValidatedOptions, to_oxc_formatter_graphql, to_oxc_formatter_json, to_oxc_formatter_yaml,
-        to_oxc_toml, to_sort_package_json,
+        ValidatedOptions, to_oxc_formatter_graphql, to_oxc_formatter_json, to_oxc_formatter_toml,
+        to_oxc_formatter_yaml, to_sort_package_json,
     },
     oxfmtrc::FormatConfig,
     support::FileKind,
@@ -152,8 +152,8 @@ impl SourceFormatter {
                 oxc_formatter_markdown::format_with_session(&session, source_text, options)
                     .and_then(|formatted| print(formatted, &path))
             }
-            FileKind::OxfmtToml { .. } => {
-                Ok(oxc_toml::format(source_text, to_oxc_toml(&config, core)))
+            FileKind::OxcFormatterToml { .. } => {
+                oxc_formatter_toml::format(source_text, to_oxc_formatter_toml(&config, core))
             }
             #[cfg(feature = "napi")]
             FileKind::Prettier { path, parser_name } => {

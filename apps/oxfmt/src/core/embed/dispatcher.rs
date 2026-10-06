@@ -17,13 +17,15 @@ use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_markdown::{MarkdownFormatOptions, XxxInMarkdownCodeBlock};
+use oxc_formatter_toml::TomlFormatOptions;
 use oxc_formatter_yaml::YamlFormatOptions;
 use oxc_span::SourceType;
 
 use crate::core::{
     options::{
         ValidatedOptions, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
-        to_oxc_formatter_json, to_oxc_formatter_markdown, to_oxc_formatter_yaml,
+        to_oxc_formatter_json, to_oxc_formatter_markdown, to_oxc_formatter_toml,
+        to_oxc_formatter_yaml,
     },
     oxfmtrc::FormatConfig,
 };
@@ -39,6 +41,7 @@ pub enum NativeLanguage {
     Yaml,
     Json(JsonVariant),
     Markdown,
+    Toml,
 }
 
 /// Languages Prettier still formats for us (no Rust formatter yet).
@@ -119,6 +122,7 @@ pub fn route(language: &str) -> Route {
         "handlebars" | "hbs" => Route::Prettier(PrettierLanguage::Handlebars),
         "mdx" => Route::Prettier(PrettierLanguage::Mdx),
         "markdown" | "md" => Route::Native(NativeLanguage::Markdown),
+        "toml" => Route::Native(NativeLanguage::Toml),
         // JS / TS by file extension, which carries the module kind and JSX.
         // A component's inline template is found from its decorator, not from the fence (`angular-ts`).
         _ => {
@@ -158,6 +162,7 @@ pub struct ResolvedDispatchConfig {
     /// One cell per fence-reachable [`JsonVariant`] (json / jsonc / json5; `JsonStringify` is `package.json`-only).
     json: [OnceLock<JsonFormatOptions>; 3],
     markdown: OnceLock<MarkdownFormatOptions>,
+    toml: OnceLock<TomlFormatOptions>,
     /// The options handed to Prettier; see [`PrettierOptions`].
     #[cfg(feature = "napi")]
     prettier: PrettierOptions,
@@ -191,6 +196,7 @@ impl ResolvedDispatchConfig {
             yaml: OnceLock::new(),
             json: [OnceLock::new(), OnceLock::new(), OnceLock::new()],
             markdown: OnceLock::new(),
+            toml: OnceLock::new(),
             #[cfg(feature = "napi")]
             prettier: PrettierOptions::default(),
         }
@@ -276,6 +282,10 @@ impl ResolvedDispatchConfig {
 
     pub fn markdown_options(&self) -> MarkdownFormatOptions {
         *self.markdown.get_or_init(|| to_oxc_formatter_markdown(&self.config, self.validated.core))
+    }
+
+    pub fn toml_options(&self) -> TomlFormatOptions {
+        *self.toml.get_or_init(|| to_oxc_formatter_toml(&self.config, self.validated.core))
     }
 
     /// Printer options from the shared resolved core bundle;
@@ -420,6 +430,9 @@ pub fn build_dispatcher(
                     )
                 }))
             }
+            Route::Native(NativeLanguage::Toml) => Ok(format_native("toml", || {
+                oxc_formatter_toml::format_to_ir(session, text, dispatch_config.toml_options())
+            })),
 
             // Prettier-served languages: Doc→IR fallback when available (napi),
             // deliberate skip otherwise (pure build).
@@ -435,7 +448,7 @@ pub fn build_dispatcher(
                 }
             }
 
-            // A language without a formatter is a deliberate skip, in every build.
+            // A language without a formatter is a deliberate skip, in every build
             Route::Unsupported => {
                 debug!("No formatter for language '{}', part stays as-is", request.language);
                 Ok(DispatchResponse::PreserveOriginal)
@@ -519,6 +532,7 @@ mod tests {
             "json5",
             "markdown",
             "md",
+            "toml",
         ] {
             let text = match language {
                 "graphql" | "gql" => "{ a }",
@@ -577,7 +591,7 @@ mod tests {
             },
         );
 
-        for (language, text) in [("html", "<div></div>"), ("toml", "a = 1")] {
+        for (language, text) in [("html", "<div></div>"), ("ini", "a = 1")] {
             let response = session.dispatch(DispatchRequest {
                 language,
                 text,

@@ -544,7 +544,8 @@ mod tests_slow_path_validation {
     #[test]
     fn fast_path_resolve_succeeds() {
         let resolver = resolver_from_json(serde_json::json!({ "printWidth": 80 }));
-        let kind = FileKind::OxfmtToml { path: Arc::from(PathBuf::from("Cargo.toml").as_path()) };
+        let kind =
+            FileKind::OxcFormatterToml { path: Arc::from(PathBuf::from("Cargo.toml").as_path()) };
         assert!(resolver.resolve(kind).is_ok());
     }
 

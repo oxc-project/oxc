@@ -31,7 +31,7 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
         return Some(FileKind::OxcFormatter { path, source_type: SourceType::default() });
     }
     if TOML_FILENAMES.contains(file_name) || ext == "toml" || file_name.ends_with(".toml.example") {
-        return Some(FileKind::OxfmtToml { path });
+        return Some(FileKind::OxcFormatterToml { path });
     }
     if file_name == "package.json" {
         return Some(FileKind::OxcFormatterJsonPackageJson { path });
@@ -68,6 +68,8 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
 ///
 /// Consumed by the resolver to construct a [`super::FormatStrategy`] with the resolved config.
 #[derive(Debug)]
+// Every variant is `OxcFormatter*` without the napi-only `Prettier`
+#[cfg_attr(not(feature = "napi"), expect(clippy::enum_variant_names))]
 pub enum FileKind {
     /// JS/TS files formatted by `oxc_formatter`.
     OxcFormatter { path: Arc<Path>, source_type: SourceType },
@@ -87,8 +89,8 @@ pub enum FileKind {
     OxcFormatterYamlRc { path: Arc<Path> },
     /// Markdown files formatted by `oxc_formatter_markdown`.
     OxcFormatterMarkdown { path: Arc<Path> },
-    /// TOML files formatted by `oxc_toml`.
-    OxfmtToml { path: Arc<Path> },
+    /// TOML files formatted by `oxc_formatter_toml`.
+    OxcFormatterToml { path: Arc<Path> },
     /// Files formatted by delegating to Prettier (Tier 3/4).
     #[cfg(feature = "napi")]
     Prettier { path: Arc<Path>, parser_name: &'static str },
@@ -105,7 +107,7 @@ impl FileKind {
             | Self::OxcFormatterYaml { path }
             | Self::OxcFormatterYamlRc { path }
             | Self::OxcFormatterMarkdown { path }
-            | Self::OxfmtToml { path } => path,
+            | Self::OxcFormatterToml { path } => path,
             #[cfg(feature = "napi")]
             Self::Prettier { path, .. } => path,
         }
@@ -122,7 +124,7 @@ impl FileKind {
             Self::OxcFormatterYaml { .. } => "yaml",
             Self::OxcFormatterYamlRc { .. } => "yaml_rc",
             Self::OxcFormatterMarkdown { .. } => "markdown",
-            Self::OxfmtToml { .. } => "toml",
+            Self::OxcFormatterToml { .. } => "toml",
             #[cfg(feature = "napi")]
             Self::Prettier { parser_name, .. } => parser_name,
         }
@@ -639,7 +641,7 @@ mod tests {
         for file_name in toml_files {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxfmtToml { .. })),
+                matches!(result, Some(FileKind::OxcFormatterToml { .. })),
                 "`{file_name}` should be detected as TOML"
             );
         }

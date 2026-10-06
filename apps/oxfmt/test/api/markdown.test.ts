@@ -83,6 +83,57 @@ describe("Markdown", () => {
     expect(result.code).toBe(source);
   });
 
+  it("formats TOML front matter and code blocks", async () => {
+    const source =
+      '+++\ntitle="x"\n+++\n\n- a\n\n  ```toml\n  arr=[1,\n  2]\n  s = """\n  x\n    y"""\n  ```\n\n```toml\nbad = = 1\n```\n';
+    const result = await format("a.md", source);
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toMatchInlineSnapshot(`
+      "+++
+      title = "x"
+      +++
+
+      - a
+
+        \`\`\`toml
+        arr = [1, 2]
+        s = """
+        x
+          y"""
+        \`\`\`
+
+      \`\`\`toml
+      bad = = 1
+      \`\`\`
+      "
+    `);
+  });
+
+  // Pinned divergence: TOML is formatted at the full `printWidth` regardless of its column,
+  // while other languages count from it (see `crates/oxc_formatter_toml/AGENTS.md`)
+  it("formats TOML code blocks without counting the embedding column", async () => {
+    const source =
+      '- a\n\n  ```toml\n  a = ["aaaa", "bbbb"]\n  ```\n\n  ```yaml\n  a: [aaaa, bbbbbbbbb]\n  ```\n';
+    const result = await format("a.md", source, { printWidth: 20 });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toMatchInlineSnapshot(`
+      "- a
+
+        \`\`\`toml
+        a = ["aaaa", "bbbb"]
+        \`\`\`
+
+        \`\`\`yaml
+        a:
+          [
+            aaaa,
+            bbbbbbbbb,
+          ]
+        \`\`\`
+      "
+    `);
+  });
+
   it("keeps front matter and code blocks verbatim under embeddedLanguageFormatting: off", async () => {
     const source = "---\ntitle:   Home\n---\n\n```css\na{color:red}\n```\n";
     const result = await format("a.md", source, { embeddedLanguageFormatting: "off" });

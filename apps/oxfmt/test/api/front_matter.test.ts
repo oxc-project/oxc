@@ -44,16 +44,17 @@ describe("CSS front matter", () => {
     expect(result.code).toBe("---\na: 1\n---\n");
   });
 
-  it("keeps non-YAML blocks verbatim", async () => {
+  it("keeps custom language blocks verbatim", async () => {
     // Custom language: never dispatched (Prettier keeps it raw too).
     const custom = await format("a.css", "---mycustomparser\na:   1\n---\nb {}\n");
     expect(custom.errors).toStrictEqual([]);
     expect(custom.code).toBe("---mycustomparser\na:   1\n---\n\nb {\n}\n");
+  });
 
-    // TOML: dispatched but no native formatter, degrades to verbatim.
-    const toml = await format("a.css", "+++\na   =   1\n+++\nb {}\n");
-    expect(toml.errors).toStrictEqual([]);
-    expect(toml.code).toBe("+++\na   =   1\n+++\n\nb {\n}\n");
+  it("formats a TOML block", async () => {
+    const result = await format("a.css", "+++\na   =   1\n+++\nb {}\n");
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe("+++\na = 1\n+++\n\nb {\n}\n");
   });
 
   it("keeps the block verbatim when the YAML does not parse", async () => {

@@ -1728,9 +1728,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-toml"
-version = "0.14.6"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71bca8630e33e93a38d8dceb0daba6f562f29215b47098a7f05e8d295227ed94"
+checksum = "7456e981b4eef3e7c557a302720d1d2f8308ef8cd49ff51f6c00b45637e5bc08"
 
 [[package]]
 name = "oxc-yaml-parser"
@@ -2170,6 +2170,17 @@ dependencies = [
  "serde_json",
  "similar 3.2.0",
  "walkdir",
+]
+
+[[package]]
+name = "oxc_formatter_toml"
+version = "0.72.0"
+dependencies = [
+ "oxc-toml",
+ "oxc_allocator",
+ "oxc_diagnostics",
+ "oxc_formatter_core",
+ "oxc_span",
 ]
 
 [[package]]
@@ -2880,7 +2891,6 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc-schemars",
- "oxc-toml",
  "oxc_allocator",
  "oxc_config",
  "oxc_diagnostics",
@@ -2890,6 +2900,7 @@ dependencies = [
  "oxc_formatter_graphql",
  "oxc_formatter_json",
  "oxc_formatter_markdown",
+ "oxc_formatter_toml",
  "oxc_formatter_yaml",
  "oxc_language_server",
  "oxc_napi",

@@ -273,8 +273,6 @@ pub fn to_span(span: &oxc_css_parser::Span) -> Span {
 }
 
 fn write_front_matter<'a>(fm: &FrontMatter<'a>, f: &mut CssFormatter<'_, 'a>) {
-    // NOTE: TOML currently has no IR-capable formatter, so it degrades to verbatim through `PreserveOriginal`.
-    // Still need to specify here since blank TOML frontmatter will be normalized.
     oxc_formatter_core::write_front_matter(fm, &["yaml", "toml"], f);
 }
 
