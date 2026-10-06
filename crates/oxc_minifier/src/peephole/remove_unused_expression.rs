@@ -240,6 +240,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        Self::de_morgan_for_void_expr(logical_expr, ctx);
         false
     }
 

@@ -32,6 +32,74 @@ fn test_remove_unused_optional_chain_keeps_base_side_effects() {
 }
 
 #[test]
+fn test_de_morgan_for_unused_expr() {
+    test_same("!a || b()"); // a && b()
+    test_same("!a && b()"); // a || b()
+    test_same("!a() || b()"); // a() && b()
+    test_same("!a() && b()"); // a() || b()
+    test_same("a && b()");
+    test_same("a || b()");
+    test_same("a === b && c()");
+    test_same("a !== b || c()");
+    test_same("a && !b && d()");
+    test_same("a || !b && c()");
+    test_same("!a && !b && c()"); // a || b || c()
+    test_same("a && (!b || c())");
+    // complex
+    test("a || (!b || c())", "a || !b || c()");
+    test("(!a || b === c) && b()", "a && b !== c || b()");
+    test("(!a || b === !0) && (c = { d: !!e })", "a && b !== !0 || (c = { d: !!e })");
+    test("a && b !== c || d()", "a && b !== c || d()");
+    test("(!a && !b && !c && !d && !e) || f()", "(a || b || c || d || e) && f()");
+    test("(!a() || b === c) && d()", "a() && b !== c || d()");
+    test("u() || ((!a || b === c) && d())", "u() || a && b !== c || d()");
+    test("u() && ((!a || b === c) && d())", "u() && (!a || b === c) && d()");
+    test("(!a || b === c) && (d(), e())", "a && b !== c || (d(), e())");
+    test("a || (!b || d())", "a || !b || d()");
+    test("(!a || !b) && (c() || d())", "a && b || c() || d()");
+    test("(!a || !b || !c) && (d() || e())", "a && b && c || d() || e()");
+    // folding
+    test("if ((!a || b === c) && d()) e()", "(!a || b === c) && d() && e()");
+    test("if (!a || b === c) d()", "a && b !== c || d()");
+    test("if (a && b !== c); else d()", "a && b !== c || d()");
+    test("if (!a || b()) c()", "(!a || b()) && c()");
+    test("if (!a && b()) c()", "!a && b() && c()");
+    // move to
+    test(
+        "for ((!a || b === c) && d(); e(); (!f || g === h) && i()) j()",
+        "for (a && b !== c || d(); e(); f && g !== h || i()) j()",
+    );
+    // after removal
+    test("(!a || b === c) ?? run()", "!a || (b, c)");
+}
+
+#[test]
+fn test_de_morgan_for_unused_expr_observed() {
+    // call
+    test_same("a(!b || c())");
+    test_same("a(!b && c())");
+    test_same("a((!a || b === c) && d())");
+    test_same("a((b(), !c || d()))");
+    test_same("a((!b || c(), d()))");
+    test("a(((!b || c === d) && e(), f()))", "a((b && c !== d || e(), f()))");
+    // return
+    test_same("function f() { return !a || b() }");
+    test_same("function f() { return !a && b() }");
+    test_same("function f() { return (!a || b === c) && d() }");
+    // assignment
+    test_same("a = !b || c()");
+    test_same("a = (!b || c === d) && e()");
+    // coalesce
+    test_same("(a() || b()) ?? c()");
+    test_same("(!a || b()) ?? c()");
+    test_same("(!a && b()) ?? c()");
+    test_same("(a < b || c < d) && e()");
+    test_same("(a ?? b) && e()");
+    // boolean
+    test_same("for (!a || b(); c(); !d && e()) f()");
+}
+
+#[test]
 fn test_remove_unused_this() {
     // In a derived class constructor, `this` before `super()` throws a ReferenceError,
     // so it must be kept (https://github.com/oxc-project/oxc/issues/21364).

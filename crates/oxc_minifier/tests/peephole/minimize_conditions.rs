@@ -298,7 +298,6 @@ fn test_minimize_while_condition() {
 }
 
 #[test]
-#[ignore = "TODO: De Morgan's law optimization not yet implemented"]
 fn test_minimize_demorgan_remove_leading_not() {
     test("if(!(!a||!b)&&c) foo()", "((a&&b)&&c)&&foo()");
     test("if(!(x&&y)) foo()", "x&&y||foo()");
@@ -326,7 +325,6 @@ fn test_minimize_demorgan2b() {
 }
 
 #[test]
-#[ignore = "TODO: De Morgan's law optimization not yet implemented"]
 fn test_minimize_demorgan3() {
     test("if((!a||!b)&&(c||d)) foo()", "(a&&b||!c&&!d)||foo()");
 }
