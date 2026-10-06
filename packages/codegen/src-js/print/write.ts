@@ -11,7 +11,7 @@ import {
   CAT_LT,
   CAT_OP_UN_NEG,
   CAT_OP_UN_NOT,
-  CAT_OP_UN_NOT_AFTER_LT,
+  CAT_OP_LT_THEN_UN_NOT,
   CAT_OP_UN_PLUS,
   CAT_OP_UPD_DEC,
   CAT_OP_UPD_INC,
@@ -874,8 +874,8 @@ function debugAssertCategoryMatches(state: State, code: string, last: Category):
     }
   } else if (ch === "!") {
     // The two operator categories are told apart by the character before the `!`, which also proves
-    // the `CAT_OP_UN_NOT_AFTER_LT` branch in `printUnaryExpression` fires exactly when it should
-    if (last === CAT_OP_UN_NOT_AFTER_LT) {
+    // the `CAT_OP_LT_THEN_UN_NOT` branch in `printUnaryExpression` fires exactly when it should
+    if (last === CAT_OP_LT_THEN_UN_NOT) {
       ok = state.lastCharWritten === "<";
     } else {
       ok = last === CAT_OP_UN_NOT && state.lastCharWritten !== "<";
