@@ -190,17 +190,25 @@ function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
 /**
  * Print a bigint literal, parenthesizing a negative one where the position needs it,
  * same as `printNumericLiteral` does.
+ *
+ * Also like `printNumericLiteral`, a negative one is spaced off a preceding `-` or `--`
+ * the same way a unary minus is, so `-(-1n)` prints as `- -1n`, not `--1n`.
  */
 function printBigIntLiteral(node: ESTree.BigIntLiteral, state: State, precedence: number): void {
-  printSpaceBeforeIdentifier(state);
-
   const value = node.bigint;
-  if (value.startsWith("-") && precedence >= PREC_PREFIX) {
-    writeWithMapNoLast(state, "(", node.start, node.end, node);
-    writeNoLast(state, value);
-    write(state, "n)", CAT_CLOSE_BRACKET);
+  if (value.startsWith("-")) {
+    if (precedence >= PREC_PREFIX) {
+      writeWithMapNoLast(state, "(", node.start, node.end, node);
+      writeNoLast(state, value);
+      write(state, "n)", CAT_CLOSE_BRACKET);
+      return;
+    }
+
+    printSpaceBeforeOperator(state, CAT_OP_UN_NEG);
   } else {
-    writeWithMapNoLast(state, value, node.start, node.end, node);
-    writeIdent(state, "n");
+    printSpaceBeforeIdentifier(state);
   }
+
+  writeWithMapNoLast(state, value, node.start, node.end, node);
+  writeIdent(state, "n");
 }
