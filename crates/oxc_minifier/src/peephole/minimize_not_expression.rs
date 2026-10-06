@@ -237,7 +237,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // TODO: use precedence or parent operator to determine if inversion will produce parens
-        if delta + 2 >= 0 {
+        if delta >= -2 {
             return;
         }
         Self::de_morgan_invert(&mut expr.left, ctx, true);
