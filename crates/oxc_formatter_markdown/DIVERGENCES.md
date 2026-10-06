@@ -380,8 +380,8 @@ Prettier wraps it like any line: a break right after the destination makes it a 
 Some words that push the tag to the edge of the line so the html block <div>x</div> lands first.
 
 <!-- ours -->
-Some words that push the tag to the edge of the line so the html block <div>x</div>
-lands first.
+Some words that push the tag to the edge of the line so the html
+block <div>x</div> lands first.
 
 <!-- prettier -->
 Some words that push the tag to the edge of the line so the html block
@@ -491,7 +491,7 @@ See [[the `first second` note]] for details.
 In a paragraph printed as written for wiki link risk (Prettier's `riskyParagraphPositions`, `[[` ... `]]`),
 a code span keeps its line break too; Prettier joins it, and the one-line `[[...]]` is a wiki link on the next parse.
 
-## leading-dashes
+## leading-dashes-paragraph
 
 - Why: semantics
 - Pin: `tests/fixtures/markdown/leading-dashes-paragraph.md`
@@ -632,17 +632,17 @@ Ours prints every node as written, the next parse replaces it again.
 
 ````markdown
 <!-- input -->
-~~~js `x`
+~~~sh `x`
 a
 ~~~
 
 <!-- ours -->
-~~~js `x`
+~~~sh `x`
 a
 ~~~
 
 <!-- prettier -->
-```js `x`
+```sh `x`
 a
 ```
 ````
