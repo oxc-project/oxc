@@ -949,13 +949,7 @@ impl ServerLinter {
             })
             .collect();
 
-        if let Some(severity) = match self.suppressed_violation_severity {
-            SuppressedViolationSeverity::Hint => Some(DiagnosticSeverity::Hint),
-            SuppressedViolationSeverity::Info => Some(DiagnosticSeverity::Information),
-            SuppressedViolationSeverity::Warn => Some(DiagnosticSeverity::Warning),
-            SuppressedViolationSeverity::Error => Some(DiagnosticSeverity::Error),
-            SuppressedViolationSeverity::Off => None,
-        } {
+        if let Some(severity) = self.suppressed_violation_severity.as_diagnostic_severity() {
             for message in partition.suppressed {
                 if let Some(mut report) = message_to_lsp_diagnostic(
                     message,

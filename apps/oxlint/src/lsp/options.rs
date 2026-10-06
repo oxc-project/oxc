@@ -2,6 +2,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap};
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
+use tower_lsp_server::gen_lsp_types::DiagnosticSeverity;
 
 use oxc_linter::{FixKind, normalize_rule_name};
 use tracing::error;
@@ -35,6 +36,19 @@ pub enum SuppressedViolationSeverity {
     Warn,
     Error,
     Off,
+}
+
+impl SuppressedViolationSeverity {
+    /// Returns the corresponding LSP [`DiagnosticSeverity`] for this suppressed violation severity, if applicable.
+    pub fn as_diagnostic_severity(self) -> Option<DiagnosticSeverity> {
+        match self {
+            SuppressedViolationSeverity::Hint => Some(DiagnosticSeverity::Hint),
+            SuppressedViolationSeverity::Info => Some(DiagnosticSeverity::Information),
+            SuppressedViolationSeverity::Warn => Some(DiagnosticSeverity::Warning),
+            SuppressedViolationSeverity::Error => Some(DiagnosticSeverity::Error),
+            SuppressedViolationSeverity::Off => None,
+        }
+    }
 }
 
 /// LSP Options
