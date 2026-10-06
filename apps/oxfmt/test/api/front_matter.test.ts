@@ -68,6 +68,13 @@ describe("CSS front matter", () => {
     });
     expect(result.errors).toStrictEqual([]);
     expect(result.code).toBe("---\ntitle:   Home\n---\n\nb {\n}\n");
+
+    // Even an empty block is not normalized
+    const empty = await format("a.css", "---\n\n---\nb {}\n", {
+      embeddedLanguageFormatting: "off",
+    });
+    expect(empty.errors).toStrictEqual([]);
+    expect(empty.code).toBe("---\n\n---\n\nb {\n}\n");
   });
 
   it("keeps a physical BOM at byte 0, before the block", async () => {

@@ -31,7 +31,7 @@ pub fn format<'a>(
     options: CssFormatOptions,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
     // NOTE: this wrapper labels the run `PhysicalFile` with NO services:
-    // front matter is detected but its body degrades to verbatim (`PreserveOriginal`),
+    // front matter is detected but kept verbatim (no dispatcher),
     // and `@apply` Tailwind classes print unsorted.
     // Hosts that want them use `format_with_session` with the services installed.
     format_with_session(
