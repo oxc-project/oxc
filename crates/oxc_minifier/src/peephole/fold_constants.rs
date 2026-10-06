@@ -525,8 +525,8 @@ impl<'a> PeepholeOptimizations {
     /// rational and therefore round to the same double.
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_precision_loss)]
     fn try_reduce_integer_division_operands(
-        e: &BinaryExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        e: &mut BinaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // Yields no constant, so it can never enable a removal.
         if ctx.is_tree_shake_only() {
@@ -563,13 +563,9 @@ impl<'a> PeepholeOptimizations {
 
         let new_left_expr = ctx.value_to_expr(e.left.span(), ConstantValue::Number(new_left));
         let new_right_expr = ctx.value_to_expr(e.right.span(), ConstantValue::Number(new_right));
-        Some(Expression::new_binary_expression(
-            e.span,
-            new_left_expr,
-            BinaryOperator::Division,
-            new_right_expr,
-            ctx,
-        ))
+        ctx.replace_expression(&mut e.left, new_left_expr);
+        ctx.replace_expression(&mut e.right, new_right_expr);
+        None
     }
 
     /// A numeric literal whose value is a non-zero integer within the safe-integer range.
