@@ -66,7 +66,7 @@ impl DiffManager {
         let suppression_file =
             SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
 
-        let partition = Self::partition_lint_diagnostics(&suppression_file, messages, false);
+        let partition = Self::suppress_lint_diagnostics(&suppression_file, messages, false);
 
         if let Some(counts) = partition.runtime_counts {
             self.runtime_map.merge_file(filename, counts);
@@ -100,7 +100,7 @@ impl DiffManager {
         let suppression_file =
             SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
 
-        let partition = Self::partition_lint_diagnostics(&suppression_file, messages, true);
+        let partition = Self::suppress_lint_diagnostics(&suppression_file, messages, true);
 
         (partition.unsuppressed, partition.suppressed)
     }
@@ -129,14 +129,14 @@ impl DiffManager {
         self.runtime_map
     }
 
-    /// Partition messages into `(surfaced, suppressed, runtime_counts)` for a file.
+    /// Partitions the input lint diagnostics into separate groups of suppressed and
+    /// unsuppressed diagnostics.
     ///
-    /// `surfaced` are the diagnostics that should be reported according to `suppression_match`,
-    /// plus all warnings. `suppressed` are the error-severity diagnostics covered by the baseline.
-    /// Callers that only care about surfaced diagnostics (e.g. the CLI) discard `suppressed`;
-    /// callers that want to render suppressed diagnostics differently (e.g. the language server)
-    /// keep them.
-    fn partition_lint_diagnostics(
+    /// Accepts a `require_exact_baseline` argument that determines how errors are surfaced if the runtime counts are
+    /// different than the baseline count for the file:
+    /// - `require_exact_baseline: true` - errors are only surfaced if the runtime counts exactly match the baseline counts.
+    /// - `require_exact_baseline: false` - errors are surfaced even if the runtime counts do not exactly match the baseline counts.
+    fn suppress_lint_diagnostics(
         suppression_file_state: &SuppressionFile<'_>,
         lint_diagnostics: Vec<Message>,
         require_exact_baseline: bool,
@@ -218,10 +218,14 @@ impl DiffManager {
                         return false;
                     };
 
+                    // Diagnostics are surfaced as long as we haven't exceeded the expected count based on the baseline
+                    // (e.g., for LSP). However, if we require an exact baseline (like in the CLI) then diagnostics are
+                    // only surfaced if the baseline exactly matches.
                     if require_exact_baseline {
-                        count_file.count != count_runtime.count
+                        count_runtime.count != count_file.count
                     } else {
-                        count_file.count < count_runtime.count
+                        // Only surface diagnostics if we've exceeded the expected count.
+                        count_runtime.count > count_file.count
                     }
                 };
 
