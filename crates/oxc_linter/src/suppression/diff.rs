@@ -12,13 +12,11 @@ use crate::{
 };
 
 /// A split collection of lint diagnostics into suppressed/unsuppressed diagnostics.
-struct SuppressionPartition {
+pub struct SuppressionPartition {
     /// Messages that should be shown to the user.
-    unsuppressed: Vec<Message>,
+    pub unsuppressed: Vec<Message>,
     /// Messages that should not be shown to the user because they are suppressed based on the baseline.
-    suppressed: Vec<Message>,
-    /// Actual runtime counts for the diagnostics in this file, if any.
-    runtime_counts: Option<FxHashMap<String, DiagnosticCounts>>,
+    pub suppressed: Vec<Message>,
 }
 
 pub struct DiffManager {
@@ -66,16 +64,17 @@ impl DiffManager {
         let suppression_file =
             SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
 
-        let partition = Self::suppress_lint_diagnostics(&suppression_file, messages, false);
+        let (partition, runtime_counts) =
+            Self::suppress_lint_diagnostics(&suppression_file, messages, false);
 
-        if let Some(counts) = partition.runtime_counts {
+        if let Some(counts) = runtime_counts {
             self.runtime_map.merge_file(filename, counts);
         }
 
         partition.unsuppressed
     }
 
-    /// Partition a file's messages into `(surfaced, suppressed)` using the recorded baseline,
+    /// Partition a file's messages into suppressed and unsuppressed diagnostics using the recorded baseline,
     /// without mutating runtime state.
     ///
     /// Only rules whose runtime count exactly matches the baseline are suppressed. Rules whose
@@ -86,13 +85,13 @@ impl DiffManager {
         file_path: &Path,
         cwd: &Path,
         messages: Vec<Message>,
-    ) -> (Vec<Message>, Vec<Message>) {
+    ) -> SuppressionPartition {
         if self.ignore_diff {
-            return (messages, Vec::new());
+            return SuppressionPartition { unsuppressed: messages, suppressed: Vec::new() };
         }
 
         let Ok(file_path) = file_path.strip_prefix(cwd) else {
-            return (messages, Vec::new());
+            return SuppressionPartition { unsuppressed: messages, suppressed: Vec::new() };
         };
 
         let filename = Filename::new(file_path);
@@ -100,9 +99,7 @@ impl DiffManager {
         let suppression_file =
             SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
 
-        let partition = Self::suppress_lint_diagnostics(&suppression_file, messages, true);
-
-        (partition.unsuppressed, partition.suppressed)
+        Self::suppress_lint_diagnostics(&suppression_file, messages, true).0
     }
 
     /// Mark that a file was seen but produced no violations (e.g. all fixed).
@@ -130,7 +127,7 @@ impl DiffManager {
     }
 
     /// Partitions the input lint diagnostics into separate groups of suppressed and
-    /// unsuppressed diagnostics.
+    /// unsuppressed diagnostics and also returns the actual runtime counts for the diagnostics.
     ///
     /// Accepts a `require_exact_baseline` argument that determines how errors are surfaced if the runtime counts are
     /// different than the baseline count for the file:
@@ -140,7 +137,7 @@ impl DiffManager {
         suppression_file_state: &SuppressionFile<'_>,
         lint_diagnostics: Vec<Message>,
         require_exact_baseline: bool,
-    ) -> SuppressionPartition {
+    ) -> (SuppressionPartition, Option<FxHashMap<String, DiagnosticCounts>>) {
         let build_suppression_map = |diagnostics: &Vec<Message>| {
             let mut suppression_tracking: FxHashMap<String, DiagnosticCounts> =
                 FxHashMap::default();
@@ -161,20 +158,21 @@ impl DiffManager {
         };
 
         match suppression_file_state.suppression_state() {
-            SuppressionFileState::Ignored => SuppressionPartition {
-                unsuppressed: lint_diagnostics,
-                suppressed: Vec::new(),
-                runtime_counts: None,
-            },
+            SuppressionFileState::Ignored => (
+                SuppressionPartition { unsuppressed: lint_diagnostics, suppressed: Vec::new() },
+                None,
+            ),
             SuppressionFileState::New => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
                 if require_exact_baseline {
-                    return SuppressionPartition {
-                        unsuppressed: lint_diagnostics,
-                        suppressed: Vec::new(),
-                        runtime_counts: Some(runtime_suppression_tracking),
-                    };
+                    return (
+                        SuppressionPartition {
+                            unsuppressed: lint_diagnostics,
+                            suppressed: Vec::new(),
+                        },
+                        Some(runtime_suppression_tracking),
+                    );
                 }
 
                 // Error-severity diagnostics are being written to the new suppressions file, so
@@ -183,21 +181,22 @@ impl DiffManager {
                     .into_iter()
                     .partition(|message| message.error.severity == Severity::Error);
 
-                SuppressionPartition {
-                    unsuppressed,
-                    suppressed,
-                    runtime_counts: Some(runtime_suppression_tracking),
-                }
+                (
+                    SuppressionPartition { unsuppressed, suppressed },
+                    Some(runtime_suppression_tracking),
+                )
             }
             SuppressionFileState::Exists => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
                 let Some(recorded_violations) = suppression_file_state.suppression_data() else {
-                    return SuppressionPartition {
-                        unsuppressed: lint_diagnostics,
-                        suppressed: Vec::new(),
-                        runtime_counts: Some(runtime_suppression_tracking),
-                    };
+                    return (
+                        SuppressionPartition {
+                            unsuppressed: lint_diagnostics,
+                            suppressed: Vec::new(),
+                        },
+                        Some(runtime_suppression_tracking),
+                    );
                 };
 
                 let (unsuppressed, suppressed) =
@@ -230,11 +229,10 @@ impl DiffManager {
                         }
                     });
 
-                SuppressionPartition {
-                    unsuppressed,
-                    suppressed,
-                    runtime_counts: Some(runtime_suppression_tracking),
-                }
+                (
+                    SuppressionPartition { unsuppressed, suppressed },
+                    Some(runtime_suppression_tracking),
+                )
             }
         }
     }
