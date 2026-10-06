@@ -13,7 +13,7 @@ pub use tracking::{
     DiagnosticCounts, Filename, SuppressionFile, SuppressionFileState, SuppressionTracking,
 };
 
-pub use diff::DiffManager;
+pub use diff::{DiffManager, SuppressionPartition};
 
 type StaticSuppressionMap = Arc<FxHashMap<Filename, FxHashMap<String, DiagnosticCounts>>>;
 

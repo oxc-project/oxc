@@ -19,7 +19,8 @@ use tracing::{debug, error, warn};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DiffManager, ExternalLinter,
     ExternalPluginStore, FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner,
-    LintRunnerBuilder, LintServiceOptions, Linter, Oxlintrc, SuppressionTracking, read_to_string,
+    LintRunnerBuilder, LintServiceOptions, Linter, Oxlintrc, SuppressionPartition,
+    SuppressionTracking, read_to_string,
 };
 
 use oxc_language_server::{
@@ -471,9 +472,9 @@ impl WorkspaceSuppressions {
         &self,
         path: &Path,
         messages: Vec<oxc_linter::Message>,
-    ) -> (Vec<oxc_linter::Message>, Vec<oxc_linter::Message>) {
+    ) -> SuppressionPartition {
         let Some(manager) = &self.manager else {
-            return (messages, Vec::new());
+            return SuppressionPartition { suppressed: Vec::new(), unsuppressed: messages };
         };
 
         let path = ResolvedPath::from(path.to_path_buf());
@@ -933,9 +934,10 @@ impl ServerLinter {
 
         // Split off diagnostics covered by the bulk-suppression baseline. `surfaced` are reported
         // normally; `suppressed` are either hidden or rendered at the configured severity.
-        let (surfaced, suppressed) = self.suppressions.partition_file(path, raw_messages);
+        let partition = self.suppressions.partition_file(path, raw_messages);
 
-        let mut messages: Vec<DiagnosticReport> = surfaced
+        let mut messages: Vec<DiagnosticReport> = partition
+            .unsuppressed
             .into_iter()
             .filter_map(|message| {
                 message_to_lsp_diagnostic(
@@ -954,7 +956,7 @@ impl ServerLinter {
             SuppressedViolationSeverity::Error => Some(DiagnosticSeverity::Error),
             SuppressedViolationSeverity::Off => None,
         } {
-            for message in suppressed {
+            for message in partition.suppressed {
                 if let Some(mut report) = message_to_lsp_diagnostic(
                     message,
                     uri,
@@ -1124,11 +1126,10 @@ mod tests_builder {
         );
 
         let unresolved_source_path = unresolved_workspace_root.join("source.js");
-        let (surfaced, suppressed) =
-            suppressions.partition_file(&unresolved_source_path, vec![message]);
+        let partition = suppressions.partition_file(&unresolved_source_path, vec![message]);
 
-        assert!(surfaced.is_empty());
-        assert_eq!(suppressed.len(), 1);
+        assert!(partition.unsuppressed.is_empty());
+        assert_eq!(partition.suppressed.len(), 1);
     }
 }
 
