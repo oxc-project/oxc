@@ -17,8 +17,8 @@ use super::wrap::{wrap_plain_paragraphs, wrap_plain_paragraphs_balance};
 use detect::needs_mdast_parsing;
 use nodes::serialize_children;
 use preprocess::{
-    convert_star_list_markers, escape_false_list_markers, normalize_legacy_ordered_list_markers,
-    protect_jsdoc_links, restore_in_string,
+    convert_star_list_markers, normalize_legacy_ordered_list_markers, protect_jsdoc_links,
+    restore_in_string,
 };
 
 /// Format a markdown description using mdast parsing.
@@ -99,7 +99,6 @@ pub fn format_description_mdast(
 
     let text = normalize_legacy_ordered_list_markers(text);
     let text = convert_star_list_markers(&text);
-    let text = escape_false_list_markers(&text);
 
     // Protect JSDoc inline tags from markdown parsing (GFM autolink would mangle URLs)
     let (protected, placeholders) = protect_jsdoc_links(&text);

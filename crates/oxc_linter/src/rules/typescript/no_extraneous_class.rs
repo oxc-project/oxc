@@ -145,7 +145,7 @@ impl Rule for NoExtraneousClass {
                     ctx.diagnostic_with_suggestion(
                         empty_class_diagnostic(span, has_decorators),
                         |fixer| {
-                            if has_decorators {
+                            if has_decorators || class.is_expression() {
                                 return fixer.noop();
                             }
                             if let AstKind::ExportDeclaration(decl) =
@@ -361,6 +361,12 @@ fn test() {
             "@foo class Foo {}",
             "@foo class Foo {}",
             Some(json!([{ "allowWithDecorator": false }])),
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const classes = { Foo: class Foo {} };",
+            "const classes = { Foo: class Foo {} };",
+            None,
             FixKind::DangerousSuggestion,
         ),
     ];

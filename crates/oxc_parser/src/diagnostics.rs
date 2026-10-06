@@ -428,20 +428,6 @@ parser_diagnostics! {
         ])
     };
 
-    // A rest element cannot follow another rest element. ts(1265)
-    rest_element_cannot_follow_another_rest_element(seen_span: Span, span: Span) => {
-        ts_error("1265", "A rest element cannot follow another rest element.")
-            .with_labels([span.label("Second rest element here"), seen_span.label("First seen here")])
-    };
-
-    // An optional element cannot follow a rest element. ts(1266)
-    optional_element_cannot_follow_rest_element(span: Span, rest_span: Span) => {
-        ts_error("1266", "An optional element cannot follow a rest element.").with_labels([
-            span.label("Optional element here"),
-            rest_span.label("Rest element seen here"),
-        ])
-    };
-
     // A type-only import can specify a default import or named bindings, but not both. ts(1363)
     type_only_import_default_and_named(specifier_span: Span) => {
         ts_error(
@@ -885,12 +871,34 @@ parser_diagnostics! {
         OxcDiagnostic::error("A rest parameter cannot have an initializer.").with_label(span)
     };
 
+    top_level(statement: &'static str, span: Span) => {
+        OxcDiagnostic::error(format!(
+            "'{statement}' declaration can only be used at the top level of a module"
+        ))
+        .with_label(span)
+    };
+
+    module_code(statement: &'static str, span: Span) => {
+        OxcDiagnostic::error(format!("Cannot use {statement} outside a module")).with_label(span)
+    };
+
     import_requires_a_specifier(span: Span) => {
         OxcDiagnostic::error("import() requires a specifier.").with_label(span)
     };
 
+    declare_modifier_on_import(span: Span) => {
+        ts_error("1079", "A 'declare' modifier cannot be used with an import declaration.")
+            .with_label(span)
+    };
+
     modifier_cannot_be_used_here(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
+            .with_label(modifier.span())
+            .with_allowed_modifier_help(allowed)
+    };
+
+    accessor_only_on_property_declaration(modifier: Modifier, allowed: Option<ModifierKinds>) => {
+        ts_error("1275", "'accessor' modifier can only appear on a property declaration.")
             .with_label(modifier.span())
             .with_allowed_modifier_help(allowed)
     };
@@ -1187,6 +1195,11 @@ parser_diagnostics! {
 
     rest_after_tuple_member_name(span: Span) => {
         ts_error("5087", "A labeled tuple element is declared as rest with a '...' before the name, rather than before the type.").with_label(span)
+    };
+
+    modifier_in_ts(kind: ModifierKind, span: Span) => {
+        ts_error("8009", format!("The '{kind}' modifier can only be used in TypeScript files."))
+            .with_label(span)
     };
 
     parameter_modifiers_in_ts(modifier: Modifier, allowed: Option<ModifierKinds>) => {

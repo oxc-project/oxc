@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🚀 Features
+
+- 3255b89 transform-react: Add `reportDiagnostics` option to expose recoverable React Compiler diagnostics (#26624) (Jack)
+- f585cb4 napi: Add threadless WASI builds (#26898) (Boshen)
+
+## [0.148.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- e74de61 transform-react: Match Babel diagnostic reporting (#26128) (Boshen)
+
 ## [0.145.0] - 2026-08-18
 
 ### 🐛 Bug Fixes

@@ -242,6 +242,38 @@ fn test_comment_at_top_of_file() {
 }
 
 #[test]
+fn test_html_closing_annotation_after_code() {
+    use oxc_allocator::Allocator;
+    use oxc_codegen::{Codegen, CodegenOptions};
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source_type = SourceType::script();
+    for (source, pretty_delimiter, minified_delimiter) in [
+        ("foo();\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "//"),
+        ("if (true)\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "//", "//"),
+        ("label:\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "//", "//"),
+        ("--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "-->"),
+        ("{\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}\n}", "-->", "//"),
+    ] {
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(ret.diagnostics.is_empty(), "Invalid source: {source}");
+
+        for minify in [false, true] {
+            let options = CodegenOptions { minify, ..CodegenOptions::default() };
+            let code = Codegen::new().with_options(options.clone()).build(&ret.program).code;
+            let reparsed = Parser::new(&allocator, &code, source_type).parse();
+            assert!(reparsed.diagnostics.is_empty(), "Invalid output: {code}");
+            let expected_comment = if minify { minified_delimiter } else { pretty_delimiter };
+            assert!(code.contains(&format!("{expected_comment} @__NO_SIDE_EFFECTS__\n")));
+            let second = Codegen::new().with_options(options).build(&reparsed.program).code;
+            assert_eq!(code, second);
+        }
+    }
+}
+
+#[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
     // A comment-only JSX expression container must not leak a leading space onto
@@ -1010,4 +1042,21 @@ fn test_comment_inside_double_parenthesized_pife_arrow() {
 fn test_comment_on_paren_protected_prologue_boundary() {
     test_same("// leading comment\n(\"use strict\");\nfoo();\n");
     test_same("\"use asm\";\n// leading comment\n(\"use strict\");\nfoo();\n");
+}
+
+#[test]
+fn test_block_comment_line_terminators() {
+    for separator in ["\u{2028}", "\u{2029}", "\n", "\r", "\r\n"] {
+        let source = format!("function f(){{return (/* first{separator}second */ {{}});}}");
+        test(&source, "function f() {\n\treturn (/* first\n\tsecond */ {});\n}\n");
+        test_idempotency(&source);
+    }
+    for separator in ["", "\u{2027}", "\u{202a}", "\u{00a0}"] {
+        let source = format!("function f(){{return (/* first{separator}second */ {{}});}}");
+        test(
+            &source,
+            &format!("function f() {{\n\treturn (/* first{separator}second */ {{}});\n}}\n"),
+        );
+        test_idempotency(&source);
+    }
 }

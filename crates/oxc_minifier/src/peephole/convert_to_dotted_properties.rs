@@ -25,9 +25,9 @@ impl<'a> PeepholeOptimizations {
             expr.replace_with(|expr| {
                 let MemberExpression::ComputedMemberExpression(e) = expr else { unreachable!() };
                 let ComputedMemberExpression { span, object, optional, .. } = e.unbox();
-                MemberExpression::StaticMemberExpression(StaticMemberExpression::boxed(
+                MemberExpression::new_static_member_expression(
                     span, object, property, optional, ctx,
-                ))
+                )
             });
             ctx.notice_change();
             return;

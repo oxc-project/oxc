@@ -84,6 +84,7 @@ declare_oxc_lint!(
     correctness,
     version = "1.70.0",
     config = NoDupeKeys,
+    short_description = "Disallow duplication of field names.",
 );
 
 impl Rule for NoDupeKeys {

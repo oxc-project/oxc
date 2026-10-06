@@ -47,6 +47,12 @@ describe("parse", () => {
     expect(ret.errors.length).toBe(1);
   });
 
+  it("rejects module syntax in script without semantic checks", () => {
+    const ret = parseSync("test.js", 'import "foo";\nexport {};', { sourceType: "script" });
+    // Reported at `import` and `export` keywords
+    expect(ret.errors.map((error) => error.labels[0].start)).toEqual([0, 14]);
+  });
+
   describe("sets lang and sourceType", () => {
     const langs: ParserOptions["lang"][] = ["js", "ts", "jsx", "tsx"];
 

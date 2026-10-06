@@ -1,15 +1,7 @@
 // Modules.
 
-import {
-  CAT_IDENT,
-  CAT_OTHER,
-  CAT_START_OF_DEFAULT_EXPORT,
-  write,
-  writeIdent,
-  writeNoLast,
-  writeWithMap,
-  writeWithMapNamed,
-} from "./write.ts";
+import { CAT_IDENT, CAT_OTHER, CAT_START_OF_DEFAULT_EXPORT } from "./categories.ts";
+import { write, writeIdent, writeNoLast, writeWithMap, writeWithMapNamed } from "./write.ts";
 import { printClass } from "./class.ts";
 import { printExpression } from "./expression.ts";
 import { printFunction } from "./function.ts";
@@ -122,8 +114,13 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
 
         if (TS && specifier.importKind === "type") write(state, "type ", CAT_OTHER);
 
-        const importedName = moduleExportName(specifier.imported, state);
-        const { local } = specifier;
+        const { imported, local } = specifier;
+        if (imported.type === "Literal" && imported.value === local.name) {
+          printSpaceBeforeIdentifier(state);
+          writeWithMapNamed(state, local.name, local.start, local.end, local);
+          break;
+        }
+        const importedName = moduleExportName(imported, state);
         if (importedName !== local.name) {
           write(state, " as ", CAT_OTHER);
           writeWithMapNamed(state, local.name, local.start, local.end, local);

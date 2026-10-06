@@ -344,16 +344,18 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
   // Deserialize comment into a cached `Comment` object
   const comment = cachedComments[index];
 
-  const isBlock = commentsUint8[pos + COMMENT_KIND_OFFSET] !== COMMENT_LINE_KIND;
+  // HTML comment discriminants equal their delimiter lengths (3 or 4).
+  const kind = commentsUint8[pos + COMMENT_KIND_OFFSET];
+  const isBlock = kind !== COMMENT_LINE_KIND && kind < 3;
 
   const pos32 = pos >> 2,
     start = commentsInt32[pos32],
     end = commentsInt32[pos32 + 1];
 
   comment.type = isBlock ? "Block" : "Line";
-  // Line comments: `// text` -> slice `start + 2..end`
+  // Line comments: skip `//`, `-->`, or `<!--`
   // Block comments: `/* text */` -> slice `start + 2..end - 2`
-  comment.value = sourceText.slice(start + 2, end - (+isBlock << 1));
+  comment.value = sourceText.slice(start + (kind < 3 ? 2 : kind), end - (+isBlock << 1));
   comment.range[0] = comment.start = start;
   comment.range[1] = comment.end = end;
 

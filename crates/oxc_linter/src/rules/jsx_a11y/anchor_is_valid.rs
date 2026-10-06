@@ -1,5 +1,9 @@
 use std::ops::Deref;
 
+use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
@@ -8,8 +12,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -22,8 +24,7 @@ fn missing_href_attribute<S: AsRef<str>>(span: Span, valid_attrs: &[S]) -> OxcDi
     let help = if valid_attrs.len() == 1 {
         format!("Provide the `{}` attribute for the `a` element.", valid_attrs[0].as_ref())
     } else {
-        let list =
-            valid_attrs.iter().map(|a| format!("`{}`", a.as_ref())).collect::<Vec<_>>().join(", ");
+        let list = valid_attrs.iter().map(|a| format!("`{}`", a.as_ref())).join(", ");
         format!("Provide one of these attributes for the `a` element: {list}")
     };
     OxcDiagnostic::warn("Missing `href` attribute for the `a` element.")

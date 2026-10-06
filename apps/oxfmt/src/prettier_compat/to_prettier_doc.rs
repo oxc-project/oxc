@@ -97,9 +97,17 @@ struct StackEntry {
 enum StartTagInfo {
     Indent,
     Align(u8),
+    /// Prettier's string `align`
+    Prefix(&'static str),
     Dedent(DedentMode),
-    Group { id: Option<GroupId>, should_break: bool },
-    ConditionalContent { mode: PrintMode, group_id: Option<GroupId> },
+    Group {
+        id: Option<GroupId>,
+        should_break: bool,
+    },
+    ConditionalContent {
+        mode: PrintMode,
+        group_id: Option<GroupId>,
+    },
     IndentIfGroupBreaks(GroupId),
     Fill,
     Entry,
@@ -371,21 +379,32 @@ fn convert_elements(
                     }
                     printer.pending_space = false;
                 }
-                let key = interned_cache_key(interned);
-                let id = if let Some(&id) = state.interned_to_ref.get(&key) {
-                    id
-                } else {
-                    // Reserve the slot index now:
-                    // the recursive `convert_elements` call below may push more refs,
-                    // so `state.refs.len()` would no longer equal this Interned's slot when we go to fill it.
-                    let id = state.refs.len();
-                    state.refs.push(Value::Null);
-                    state.interned_to_ref.insert(key, id);
+                // `fill` parts must stay a flat `[item, separator, ...]` list,
+                // but the formatter may wrap all entries in one `Interned` (e.g. JSX children).
+                // Splice them like the printer does, instead of emitting one opaque `_REF` part.
+                if matches!(
+                    stack.last().and_then(|entry| entry.start_info.as_ref()),
+                    Some(StartTagInfo::Fill)
+                ) {
                     let converted = convert_shared_elements(interned, state)?;
-                    state.refs[id] = normalize_array(converted);
-                    id
-                };
-                current_children_mut(&mut stack)?.push(json!({ "_REF": id }));
+                    current_children_mut(&mut stack)?.extend(converted);
+                } else {
+                    let key = interned_cache_key(interned);
+                    let id = if let Some(&id) = state.interned_to_ref.get(&key) {
+                        id
+                    } else {
+                        // Reserve the slot index now:
+                        // the recursive `convert_elements` call below may push more refs,
+                        // so `state.refs.len()` would no longer equal this Interned's slot when we go to fill it.
+                        let id = state.refs.len();
+                        state.refs.push(Value::Null);
+                        state.interned_to_ref.insert(key, id);
+                        let converted = convert_shared_elements(interned, state)?;
+                        state.refs[id] = normalize_array(converted);
+                        id
+                    };
+                    current_children_mut(&mut stack)?.push(json!({ "_REF": id }));
+                }
                 printer.line = LineState::Content;
             }
             FormatElement::BestFitting(best_fitting) => {
@@ -540,6 +559,7 @@ fn extract_start_tag_info(tag: &Tag) -> StartTagInfo {
     match tag {
         Tag::StartIndent => StartTagInfo::Indent,
         Tag::StartAlign(align) => StartTagInfo::Align(align.count().get()),
+        Tag::StartPrefix(prefix) => StartTagInfo::Prefix(prefix.text()),
         Tag::StartDedent(mode) => StartTagInfo::Dedent(*mode),
         Tag::StartGroup(group) => {
             StartTagInfo::Group { id: group.id(), should_break: !group.mode().is_flat() }
@@ -576,6 +596,9 @@ fn build_doc(start_info: Option<&StartTagInfo>, children: Vec<Value>) -> Value {
         }
         StartTagInfo::Align(count) => {
             json!({"type": "align", "n": *count, "contents": normalize_array(children)})
+        }
+        StartTagInfo::Prefix(prefix) => {
+            json!({"type": "align", "n": *prefix, "contents": normalize_array(children)})
         }
         StartTagInfo::MarkAsRoot => {
             // Prettier's `markAsRoot()` = `align({type: "root"}, ...)`
@@ -805,7 +828,7 @@ mod tests {
 
     use serde_json::{Value, json};
 
-    use oxc_formatter_core::{DedentMode, FormatElement, LineMode, Tag};
+    use oxc_formatter_core::{DedentMode, FormatElement, LineMode, Prefix, Tag};
 
     use super::{format_elements_to_prettier_doc, is_hard_line};
 
@@ -912,6 +935,16 @@ mod tests {
         // replacing it with a soft line could let the enclosing group flatten and lose the break.
         let doc = to_doc(&[A, HARD_NO_EXPAND, SOFT, A]);
         assert_eq!(count_hardlines(&doc), 1);
+    }
+
+    #[test]
+    fn prefix_align_is_a_string_align() {
+        let doc = to_doc(&[
+            FormatElement::Tag(Tag::StartPrefix(Prefix::new(&"> "))),
+            A,
+            FormatElement::Tag(Tag::EndPrefix),
+        ]);
+        assert_eq!(doc["doc"], json!({"type": "align", "n": "> ", "contents": "a"}));
     }
 
     #[test]

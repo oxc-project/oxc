@@ -53,12 +53,14 @@ pub type ExternalLinterLintFileCb = Arc<
                 String,
                 // Globals JSON
                 String,
+                // Whether to collect per-rule timing information
+                bool,
                 // Workspace URI (e.g. `file:///path/to/workspace`).
                 // `None` in CLI mode (single workspace), `Some` in LSP mode.
                 Option<String>,
                 // Allocator
                 &Allocator,
-            ) -> Result<Vec<LintFileResult>, String>
+            ) -> Result<LintFileOutput, LintFileFailure>
             + Sync
             + Send,
     >,
@@ -81,6 +83,41 @@ pub struct LintFileResult {
     pub end: u32,
     pub fixes: Option<Vec<JsFix>>,
     pub suggestions: Option<Vec<JsSuggestion>>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LintFileOutput {
+    pub diagnostics: Vec<LintFileResult>,
+    pub timings: Option<LintFileTimings>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LintFileFailure {
+    pub message: String,
+    pub timings: Option<LintFileTimings>,
+}
+
+impl From<String> for LintFileFailure {
+    fn from(message: String) -> Self {
+        Self { message, timings: None }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LintFileTimings {
+    pub rules: Vec<LintFileTiming>,
+    pub runtime_ms: f64,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LintFileTiming {
+    pub rule_index: u32,
+    pub duration_ms: f64,
+    pub calls: u64,
 }
 
 /// Fix in form sent from JS to Rust.

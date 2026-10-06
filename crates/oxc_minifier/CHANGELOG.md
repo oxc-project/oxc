@@ -4,6 +4,121 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🚀 Features
+
+- 61003c7 minifier: Fold undefined argument in non delegating yield (#27324) (Armano)
+- adb1139 minifier: Merge import statements against the same module (#25534) (翠)
+- cc82598 minifier: Merge import and export statements against the same module (#25533) (翠)
+- 1c352ce minifier: Minimize bitwise binary expressions (#27107) (Armano)
+- d1a0bcc minifier: Merge statements after terminating if block branches (#26667) (Armano)
+- 7a95376 minifier: Merge adjucent if stmt with the same content (#26445) (Armano)
+
+### 🐛 Bug Fixes
+
+- 565d75d minifier: Correct indopedency when processing nested sequences (#27273) (Armano)
+- da1fed2 minifier: Fold conditional expressions with long sequences (#27083) (Armano)
+- 4cf9ae2 minifier: Preserve sibling declarations in arguments copy rewrite (#27140) (camc314)
+
+### ⚡ Performance
+
+- 99e3c15 minifier: Small performance improvement when merging imports (#27238) (Armano)
+- 466ef10 minifier: Update expressions in place in `merge_import_export` (#27226) (Armano)
+- 028ffb8 minifier: Update nodes in place in `wrap_to_avoid_ambiguous_else` (#27194) (Armano)
+- 6fcd135 minifier: Avoid conversion from ident to str when for substitute symbols (#27209) (Armano)
+- 0b9799d minifier: Reduce usage of minimize_conditional (#26028) (Armano)
+- 3ca3ded minifier: Short-circuit IfStatement termination on alternate (#25198) (Armano)
+
+### 📚 Documentation
+
+- 335ce79 agents: Scope verification for local and stacked work (#27299) (Dunqing)
+
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- c380c85 minifier: Preserve iife with directives (#27060) (Armano)
+- d79ad19 codegen: Remove redundant dollar escapes in minified templates (#26924) (camc314)
+
+### ⚡ Performance
+
+- 0afbf85 minifier: Fold logical expressions in place (#26768) (Armano)
+- 3471f29 minifier: Avoid creation of empty block when folding try finally (#26971) (Armano)
+- 3893d64 minifier: Update boolean context expressions in place (#26823) (Armano)
+- de8af47 minifier: Take return argument directly when converting arrow fn (#26830) (Armano)
+- fc37ba0 minifier: Reduce allocations when minimizing assignments (#26609) (Armano)
+- dce64f6 minifier: Use ident hashes for catch var and arguments (#26907) (Armano)
+- 57610b3 minifier: Use ident hashes in label comparison (#26887) (Armano)
+
+## [0.151.0] - 2026-09-21
+
+### 🐛 Bug Fixes
+
+- cd7228f minifier: Add missing negation for boolean literal (#26847) (Armano)
+
+### ⚡ Performance
+
+- 3f1e3aa minifier: Preallocate stmts vec size to avoid excesive reallocs (#26856) (Armano)
+- 5f72954 minifier: Reduce allocations when processing if statements (#26666) (Armano)
+
+## [0.150.0] - 2026-09-14
+
+### 🚀 Features
+
+- ca649e0 ecma: Define math constants as known globals and resolve their types (#26585) (Armano)
+- 80a76a0 minifier: Negate binary comparison for `typeof x < 'u'` (#26367) (Armano)
+
+### ⚡ Performance
+
+- a242469 minfiier: Reduce allocs when creating indirect access (#26601) (Armano)
+- 5b4787f minifier: Update chain expressions in place (#26544) (Armano)
+- 0bc1661 minifier: Try merging before creating new expression statements (#26556) (Armano)
+- c78d707 minifier: Process newly created stmt in handle_if_statement (#26541) (Armano)
+- 029c84b minfier: Update expressions in place when substituting alternate syntax (#26460) (Armano)
+
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 66744f0 parser: [**BREAKING**] Rename `panicked` to `fatal_error` in `ParserReturn` (#26382) (overlookmotel)
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- a17de58 minifier: Process of return/throw in non last position and fix async * inlining (#26214) (Armano)
+
+### 🐛 Bug Fixes
+
+- 853ffab ecmascript: Avoid `charAt` panic on 32-bit (#26244) (camc314)
+
+### ⚡ Performance
+
+- 34a242e minifier: Use `Ident` for property mangler (#26334) (sapphi-red)
+- 5303f5c minifier: Unify merging of last expression into target sequence (#26264) (Armano)
+- 2ca7d29 minifier: Consume nodes in minimize_statements in reverse order (#26258) (Armano)
+- 5b3e335 minifier: Use `Ident` instead of `Str` in `KeepVar` (#26332) (sapphi-red)
+- 51366fb minifier: Use `IdentHashSet` in `PrivateMemberUsageStack` (#26331) (sapphi-red)
+- d19c42a minifier: Merge nested if stmt in place instead of creating dummies (#26351) (Armano)
+
+### 📚 Documentation
+
+- a8ed2a7 minifier: Fix stale validation instructions (#26251) (camc314)
+
+## [0.148.0] - 2026-08-31
+
+### 🚀 Features
+
+- 784e9fa minifier: Invert `!0` and `!1` in place for boolean context to `1` and `0` (#26050) (Armano)
+- 1e902cc minifier: Expand fold leading assignments into the var decl (#26142) (Armano)
+- 3ed4f6a minifier: Expand de morgan's optimization to allow move of `!` (#25930) (Armano)
+
+### 🐛 Bug Fixes
+
+- b874f48 ecmascript: `Math.round` only exact half ties (#26150) (camc314)
+- a625378 minifier: Coerce omitted `indexOf` search argument (#26149) (camc314)
+- dc7398b ecmascript: Trim trailing whitespace in string to number (#26148) (camc314)
+
 ## [0.147.0] - 2026-08-24
 
 ### 🚀 Features

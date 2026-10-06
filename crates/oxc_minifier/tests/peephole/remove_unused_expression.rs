@@ -489,6 +489,20 @@ fn test_fold_iife() {
     test("a((() => true)());", "a(!0)");
     test("a((() => { return true })());", "a(!0)");
 
+    test("(() => { 'use strict'; return a() })()", "a()");
+    test_same_options_source_type(
+        "(() => { 'use strict'; return a() })()",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+    test("(() => { 'use strict'; a() })()", "a()");
+    test_same_options_source_type(
+        "(() => { 'use strict'; a() })()",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+    test_same("(() => { 'use cache'; return a() })()");
+
     test_same("var a = (function () { b() })()");
     test_same("var a = (function () { return b() })()");
     test_same("var a = (function () { return this })()");
@@ -740,6 +754,7 @@ fn remove_unused_class_expression() {
 
     // order
     test_options("(class extends A { [B] = C; [D]() {} })", "A, B, D", &options);
+    test_options("(class extends (A(), B) {})", "A(), B", &options);
 
     // decorators
     test_same_options("(class { @dec foo() {} })", &options);

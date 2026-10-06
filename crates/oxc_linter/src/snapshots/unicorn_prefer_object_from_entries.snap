@@ -304,3 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
+
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+   ╭─[prefer_object_from_entries.tsx:1:1]
+ 1 │ utils.foo(pairs)
+   · ─────────
+   ╰────
+  help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.

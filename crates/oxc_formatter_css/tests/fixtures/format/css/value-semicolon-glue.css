@@ -1,0 +1,5 @@
+/* DIVERGENCES.md#value-semicolon-glue */
+a {
+  b: if(media(width < 700px): 1 ; else: 2);
+  c: foo(x ; y);
+}

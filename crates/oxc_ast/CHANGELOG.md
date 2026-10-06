@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🚀 Features
+
+- 07833c0 ast: Tie `debug_name` return lifetime to the underlying AST node (#27295) (sadan)
+- cc82598 minifier: Merge import and export statements against the same module (#25533) (翠)
+
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+
+### 📚 Documentation
+
+- cd80e3f ast: Correct `JSXExpressionContainer` example (#26975) (camc314)
+- 8cb05e3 ast: Simplify `JSXAttribute` value description (#26974) (camc314)
+- fda7fbb ast: Correct `TSNumberKeyword` example (#26973) (camc314)
+- e63c439 ast: Clarify `RegExpFlags::V` flag features (#26972) (camc314)
+- 278288e ast: Correct `JSXText` example (#26970) (camc314)
+- e9ff529 ast: Correct `TSIntrinsicKeyword` example (#26967) (camc314)
+- c643ce4 ast: Fix `TSTupleType` example syntax (#26966) (camc314)
+- 895b1a7 ast: Correct `TSPropertySignature` usage example (#26964) (camc314)
+- 8d8cc7c ast: Correct `Class` abstract example values (#26963) (camc314)
+- f7ef2e2 ast: Use valid variance example for `TSTypeParameter` (#26962) (camc314)
+- 145fcdb ast: Attach `pure` comment to `NewExpression` field (#26961) (camc314)
+- 06dfd9f ast: Clarify `TSNonNullExpression` docs (#26960) (camc314)
+- d5f92b5 ast: Add docs for TSNonNullExpression (#26910) (camchenry)
+- 4a76723 ast: Add docs for TSNamespaceExportDeclaration (#26909) (camchenry)
+- de41927 ast: Add docs for `TSInstantiationExpression` (#26908) (camchenry)
+
+## [0.150.0] - 2026-09-14
+
+### 📚 Documentation
+
+- 38533ac ast: Move type annotation span comment to span field (#26522) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 🚀 Features
+
+- bfb4c57 parser: Distinguish unapplied no-side-effects comments (#26120) (碳苯 Carbon)
+- 1d9b9d3 ast: Add `GetNodeId` trait (#26145) (camc314)
+
+## [0.148.0] - 2026-08-31
+
+### 🚀 Features
+
+- 5672585 parser: Attach all comments to nodes (#25944) (camc314)
+
+### 🐛 Bug Fixes
+
+- dc09a3a parser: Avoid panic on escaped string export names (#26146) (camc314)
+
 ## [0.147.0] - 2026-08-24
 
 ### 🐛 Bug Fixes

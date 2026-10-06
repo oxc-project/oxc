@@ -6,7 +6,9 @@
 // The cache is not this build's. It is created once per process alongside `State`, which carries it here,
 // so the levels one build has grown are there for the next one - see `state.ts`.
 
-import { CAT_OTHER, write } from "./write.ts";
+import { CAT_OTHER } from "./categories.ts";
+import { OUTPUT_CHUNK_LENGTH, spillOutputChunk } from "./flatten.ts";
+import { write } from "./write.ts";
 
 import type { State } from "../state.ts";
 
@@ -16,6 +18,10 @@ import type { State } from "../state.ts";
  * Inline statement bodies ask for a space where an indent would go, which keeps `if (x) foo()` on one line.
  */
 export function printIndent(state: State): void {
+  // Flatten chunk if `state.output` has grown beyond limit.
+  // Once per line, not once per write - see comment on `OUTPUT_CHUNK_LENGTH` in `flatten.ts`.
+  if (state.output.length >= OUTPUT_CHUNK_LENGTH) spillOutputChunk(state);
+
   if (state.pendingIndentAsSpace) {
     write(state, " ", CAT_OTHER);
     state.pendingIndentAsSpace = false;
@@ -42,10 +48,10 @@ function growIndents(state: State, level: number): string {
   let { length } = indents;
   let indent = indents[length - 1];
   for (; length <= level; length++) {
-    indent += indentString;
-    // Force the cons string flat.
-    // That costs here, but it is appended to the output many times afterwards.
-    indent.charCodeAt(0);
+    // Use `join` instead of `indent += indentString` to produce a flat string instead of a rope.
+    // That costs a little here, but is a one-time cost, and it is appended to the output many times afterwards,
+    // so reduces the number of segments in `output` rope string for every file.
+    indent = [indent, indentString].join("");
     indents.push(indent);
   }
 

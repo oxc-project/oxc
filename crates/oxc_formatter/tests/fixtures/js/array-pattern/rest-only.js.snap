@@ -3,16 +3,19 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 const [...rest] = arr;
+[...rest] = arr;
 
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
 const [...rest] = arr;
+[...rest] = arr;
 
 -------------------
 { printWidth: 100 }
 -------------------
 const [...rest] = arr;
+[...rest] = arr;
 
 ===================== End =====================

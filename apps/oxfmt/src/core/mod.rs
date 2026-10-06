@@ -1,6 +1,7 @@
 mod config;
 pub mod embed;
 mod format;
+mod global_ignore;
 pub mod options;
 pub mod oxfmtrc;
 mod support;
@@ -9,19 +10,11 @@ pub mod utils;
 #[cfg(feature = "napi")]
 mod external_services;
 
-pub use config::{
-    ConfigResolver, NestedConfigCtx, ResolveOutcome, resolve_editorconfig_path,
-    resolve_file_scope_config,
-};
-// `config_discovery` is consumed only by LSP code paths (napi-gated).
+pub use config::{ConfigResolver, ConfigScopes, ResolveOutcome, config_discovery};
 #[cfg(feature = "napi")]
-pub use config::config_discovery;
-#[cfg(feature = "napi")]
-pub use config::{
-    EmbeddedCallbackResolved, JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader,
-    resolve_for_api, resolve_for_embedded_js,
-};
+pub use config::{JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader, resolve_for_api};
 pub use format::{FormatResult, FormatStrategy, SourceFormatter};
+pub use global_ignore::{build_global_ignore_matchers, is_ignored, resolve_ignore_paths};
 pub use support::classify_file_kind;
 
 #[cfg(feature = "napi")]

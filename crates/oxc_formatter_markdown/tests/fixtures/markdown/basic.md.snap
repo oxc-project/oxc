@@ -1,0 +1,93 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# Title
+
+A paragraph with *emphasis*, **strong**, `code` and a [link](https://example.com "title").
+
+- one
+- two
+  - nested
+
+1. first
+2. second
+
+> quoted
+
+```js
+const x = 1;
+```
+
+| a | b |
+| - | :-: |
+| 1 | 2 |
+
+---
+
+Text with a hard break  
+and a soft
+break.
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# Title
+
+A paragraph with _emphasis_, **strong**, `code` and a [link](https://example.com "title").
+
+- one
+- two
+  - nested
+
+1. first
+2. second
+
+> quoted
+
+```js
+const x = 1;
+```
+
+| a   |  b  |
+| --- | :-: |
+| 1   |  2  |
+
+---
+
+Text with a hard break  
+and a soft
+break.
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# Title
+
+A paragraph with _emphasis_, **strong**, `code` and a [link](https://example.com "title").
+
+- one
+- two
+  - nested
+
+1. first
+2. second
+
+> quoted
+
+```js
+const x = 1;
+```
+
+| a   |  b  |
+| --- | :-: |
+| 1   |  2  |
+
+---
+
+Text with a hard break  
+and a soft
+break.
+
+===================== End =====================

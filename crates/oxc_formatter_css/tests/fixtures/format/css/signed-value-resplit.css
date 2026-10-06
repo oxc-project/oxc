@@ -1,0 +1,9 @@
+/* A signed item past the first position prints like an unsigned one (DIVERGENCES.md#signed-value-resplit):
+   it does not break the list, and it does not glue to the word before it. */
+a {
+  font-family: Arial, -apple-system;
+  font-family: -apple-system, Arial;
+  -webkit-mask-position-x: 50px, 25%, -3em;
+  -webkit-mask-position-x: 50px, 25%, 3em;
+  background: url("/shared-assets/images/examples/web-animations/cat_sprite.png") -600px 0 no-repeat;
+}

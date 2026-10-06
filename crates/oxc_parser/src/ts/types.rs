@@ -53,7 +53,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
         let return_type = {
             let return_type_start = self.cur_start();
-            let return_type = self.parse_return_type();
+            let return_type = self.parse_return_type(Kind::Arrow);
             TSTypeAnnotation::boxed(self.end_span(return_type_start), return_type, self)
         };
 
@@ -128,7 +128,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_modifiers(false, false);
         }
         let kind = self.cur_kind();
-        if kind.is_identifier() || kind == Kind::This {
+        if kind.is_binding_identifier() || kind == Kind::This {
             self.bump_any();
             return true;
         }
@@ -969,35 +969,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
 
-        let mut seen_rest_span: Option<Span> = None;
         let mut seen_optional_span: Option<Span> = None;
         let (elements, _) =
             self.parse_delimited_list(Kind::RBrack, Kind::Comma, opening_span, |me| {
                 let tuple = me.parse_tuple_element();
-                // check for array type, because unknown types can be destructed, example of valid code:
-                // type C<T extends unknown[]> = [...string[], ...T];
-                // example of invalid code:
-                // type C<T extends unknown[]> = [...string[], ...T[]];
-                if let TSTupleElement::TSRestType(rest) = &tuple
-                    && match &rest.type_annotation {
-                        TSType::TSArrayType(_) => true,
-                        // Check for `Array<...>` type
-                        TSType::TSTypeReference(ts_ref) => match &ts_ref.type_name {
-                            TSTypeName::IdentifierReference(id_ref) => id_ref.name == "Array",
-                            _ => false,
-                        },
-                        _ => false,
-                    }
-                {
-                    if let Some(seen_span) = seen_rest_span {
-                        me.error(diagnostics::rest_element_cannot_follow_another_rest_element(
-                            seen_span,
-                            tuple.span(),
-                        ));
-                    }
-                    seen_rest_span = Some(tuple.span());
-                }
-
                 if !match &tuple {
                     TSTupleElement::TSOptionalType(_) | TSTupleElement::TSRestType(_) => true,
                     TSTupleElement::TSNamedTupleMember(named) => named.optional,
@@ -1015,12 +990,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     TSTupleElement::TSNamedTupleMember(named) => named.optional,
                     _ => false,
                 } {
-                    if let Some(seen_rest_span) = seen_rest_span {
-                        me.error(diagnostics::optional_element_cannot_follow_rest_element(
-                            tuple.span(),
-                            seen_rest_span,
-                        ));
-                    }
                     seen_optional_span = Some(tuple.span());
                 }
 
@@ -1318,12 +1287,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
         let start = self.cur_start();
-        let return_type = self.parse_return_type();
+        let return_type = self.parse_return_type(Kind::Colon);
         Some(TSTypeAnnotation::boxed(self.end_span(start), return_type, self))
     }
 
-    fn parse_return_type(&mut self) -> TSType<'a> {
-        self.bump_any();
+    fn parse_return_type(&mut self, separator: Kind) -> TSType<'a> {
+        self.expect(separator);
         self.context_remove(Context::DisallowConditionalTypes, Self::parse_type_or_type_predicate)
     }
 
@@ -1423,7 +1392,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         match kind {
             TSMethodSignatureKind::Get => {
-                if !params.items.is_empty() {
+                if params.parameters_count() != 0 {
                     self.error(diagnostics::getter_parameters(params.span));
                 }
             }
@@ -1594,11 +1563,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return;
         }
         // Didn't have a comma.  We must have a (possible ASI) semicolon.
-        self.bump(Kind::Semicolon);
+        self.asi();
     }
 
     fn parse_ts_index_signature_name(&mut self) -> TSIndexSignatureName<'a> {
         let start = self.cur_start();
+        self.check_identifier(self.cur_kind(), self.ctx);
         let name = self.parse_identifier_name().name;
         if self.at(Kind::Question) {
             self.error(diagnostics::index_signature_question_mark(self.cur_token().span()));

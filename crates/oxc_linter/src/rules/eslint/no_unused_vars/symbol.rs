@@ -170,7 +170,11 @@ impl Symbol<'_, '_> {
     /// NOTE: does not support CJS right now.
     pub fn is_exported(&self, exported_names: &FxHashSet<&str>) -> bool {
         let is_in_exportable_scope = self.is_root() || self.is_in_ts_namespace();
-        is_in_exportable_scope && (exported_names.contains(self.name()) || self.in_export_node())
+        // `exported_names` contains module-level local exports. Applying it to
+        // symbols inside a TypeScript namespace makes a private namespace
+        // binding look exported whenever a root binding has the same name.
+        let exported_by_name = self.is_root() && exported_names.contains(self.name());
+        is_in_exportable_scope && (exported_by_name || self.in_export_node())
     }
 
     /// Convenience wrapper that builds the export set (for call sites that check one symbol).

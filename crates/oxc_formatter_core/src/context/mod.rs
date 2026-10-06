@@ -24,8 +24,8 @@ pub trait FormatContext {
     /// Returns the sorted Tailwind CSS class string for the given index,
     /// or `None` if the language does not support Tailwind or the index is invalid.
     ///
-    /// Used by the document debug renderer to display `FormatElement::TailwindClass`.
-    /// Languages that support Tailwind sorting (currently JS/TS) should override this.
+    /// Used by the document debug renderer to display `FormatElement::TailwindClass`;
+    /// only its `SimpleFormatContext` overrides this (classes live in the session, not in language contexts).
     fn get_tailwind_class(&self, _idx: usize) -> Option<&str> {
         None
     }

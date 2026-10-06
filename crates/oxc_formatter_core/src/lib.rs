@@ -36,7 +36,7 @@ pub use format_element::document::Document;
 pub use format_element::formatted::Formatted;
 pub use format_element::group_id::{GroupId, UniqueGroupIdBuilder};
 pub use format_element::tag::{
-    self, Align, Condition, DedentMode, Group, GroupMode, Label, LabelId, Tag, TagKind,
+    self, Align, Condition, DedentMode, Group, GroupMode, Label, LabelId, Prefix, Tag, TagKind,
 };
 pub use format_element::{
     BestFittingElement, FormatElement, FormatElements, Interned, LINE_TERMINATORS, LineMode,
@@ -49,7 +49,7 @@ pub use printer::{PrintResult, PrintWidth, Printed, PrinterOptions};
 pub(crate) use printer::Printer;
 pub use session::embedded::{
     DispatchPayload, DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher,
-    TailwindCollector, dispatch_fragment_ir,
+    dispatch_fragment_ir, dispatch_ir, map_text_in_ir, push_text_with_literal_lines,
 };
 pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, TailwindSorter};
 pub use source::{SourceText, SpanCursor};

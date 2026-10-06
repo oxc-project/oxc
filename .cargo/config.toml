@@ -21,6 +21,12 @@ rustflags = ["-C", "target-feature=+crt-static"]
 [target.aarch64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
 
+[target.wasm32-wasip1]
+rustflags = ["-C", "target-feature=+simd128"]
+
+[target.wasm32-wasip1-threads]
+rustflags = ["-C", "target-feature=+simd128"]
+
 [target.'cfg(target_os = "windows")']
 rustflags = [
   # Disables linking against the default Universal C Runtime (libucrt.lib). This prevents conflicts if another CRT library is linked manually.

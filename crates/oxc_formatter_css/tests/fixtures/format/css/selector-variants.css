@@ -25,3 +25,5 @@ a[href^="//"] {}
 a[href="http://example.com"] {}
 input:not([type="radio"], [type="checkbox"]) {}
 section:has(:not([type="radio"], [type="checkbox"])) {}
+[part~="control"]:has(> input:focus-visible:not(:disabled)) {}
+.a:has(+ .b, ~ .c) {}

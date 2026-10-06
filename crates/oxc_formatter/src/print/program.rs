@@ -9,9 +9,9 @@ use crate::{
     ast_nodes::AstNode,
     formatter::{prelude::*, trivia::FormatTrailingComments},
     ir_transform::sort_imports_chunk,
-    print::semicolon::OptionalSemicolon,
+    print::semicolon::{OptionalSemicolon, suppressed_statement_content_end},
     utils::{
-        export_declaration_span, export_default_declaration_span, is_dropped_statement,
+        is_dropped_statement, statement_span,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
     },
     write,
@@ -21,6 +21,26 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // BOM: JS is the exception to the entries-own-the-strip rule.
+        // `format_program` is AST-in (the formatter never owns pre-parse text)
+        // and oxc_parser lexes U+FEFF as whitespace itself.
+        // Detect at print time, re-emit once at byte 0.
+        let has_bom = oxc_formatter_core::spec::split_bom(f.source_text().as_str()).0;
+
+        write!(
+            f,
+            [has_bom.then_some(text("\u{feff}")), FormatProgramBody(self), hard_line_break()]
+        );
+    }
+}
+
+/// A program without its envelope (BOM, trailing newline): the embedded root of [`crate::format_to_ir`],
+/// whose host owns the layout around it.
+pub struct FormatProgramBody<'a, 'b>(pub &'b AstNode<'a, Program<'a>>);
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatProgramBody<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let program = self.0;
         let format_trailing_comments = format_with(|f| {
             write!(
                 f,
@@ -28,20 +48,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
             );
         });
 
-        // BOM: JS is the exception to the entries-own-the-strip rule — `format_program`
-        // is AST-in (the formatter never owns pre-parse text) and oxc_parser lexes
-        // U+FEFF as whitespace itself. Detect at print time, re-emit once at byte 0.
-        let has_bom = oxc_formatter_core::spec::split_bom(f.source_text().as_str()).0;
-
         write!(
             f,
             [
-                has_bom.then_some(text("\u{feff}")),
-                self.hashbang(),
-                self.directives(),
-                FormatStatementsWithImports(self.body()),
-                format_trailing_comments,
-                hard_line_break()
+                program.hashbang(),
+                program.directives(),
+                FormatStatementsWithImports(program.body()),
+                format_trailing_comments
             ]
         );
     }
@@ -79,16 +92,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
                 }
             }
 
-            let span = match stmt.as_ref() {
-                // `@decorator export class A {}`: Start the span at the decorator
-                Statement::ExportDeclaration(export) => export_declaration_span(export),
-                Statement::ExportDefaultDeclaration(export) => {
-                    export_default_declaration_span(export)
-                }
-                _ => stmt.span(),
-            };
-
-            join.entry(span, stmt);
+            join.entry(statement_span(stmt.as_ref()), stmt);
         }
     }
 }
@@ -150,9 +154,8 @@ fn format_import_decls_with_sort<'a, 'iter>(
 /// An `ImportDeclaration` is suppressed if it has a leading or trailing suppression comment,
 /// which causes it to be emitted verbatim and act as a partition boundary, excluding it from the sortable run.
 fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &JsFormatter<'_, '_>) -> bool {
-    let span = stmt.span();
-    let comments = f.comments();
-    comments.is_suppressed(span.start) || comments.has_trailing_suppression_comment(span.end)
+    f.comments()
+        .is_node_suppressed(stmt.span(), || suppressed_statement_content_end(stmt.as_ref(), f))
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<'a>>> {
@@ -162,8 +165,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<
             return;
         };
 
-        // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
-        // the last directive, for example:
+        // if next_sibling's first leading_trivia has more than one new_line,
+        // we should add an extra empty line at the end of the last directive, for example:
         //```js
         // "use strict"; <- first leading new_line
         //  			 <- second leading new_line
@@ -175,6 +178,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<
 
         // If the last directive has a trailing comment, `lines_after` stops at the first
         // non-whitespace character (`/`) and returns 0 before counting any newlines.
+        // Only the LAST directive is checked here
+        // (between-directive blanks go through `get_lines_before`, which is not subject to this hazard);
+        // the per-comment-kind pins live in `tests/fixtures/js/directives/issue-21152*.js`, one file each.
         let check_pos = f
             .context()
             .comments()

@@ -2,6 +2,7 @@
 
 When reviewing pull requests in this repository:
 
+- Do not guess or infer compiler errors. Only report them when supported by actual compiler diagnostics.
 - Treat files inside any `fixtures` directories as test data, not production code.
 - Fixture files may intentionally contain buggy, unsafe, or syntactically invalid code to validate parser/linter/transformer behavior.
 - Do not report normal code-quality or correctness issues for fixture files.

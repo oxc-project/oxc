@@ -48,11 +48,9 @@ declare_oxc_lint!(
     /// const foo = array.flatMap(x => x);
     /// const foo = array.reduce((a, b) => a.concat(b), []);
     /// const foo = array.reduce((a, b) => [...a, ...b], []);
-    /// const foo = [].concat(maybeArray);
     /// const foo = [].concat(...array);
     /// const foo = [].concat.apply([], array);
     /// const foo = Array.prototype.concat.apply([], array);
-    /// const foo = Array.prototype.concat.call([], maybeArray);
     /// const foo = Array.prototype.concat.call([], ...array);
     /// ```
     ///
@@ -321,7 +319,6 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     }
 }
 
-// `[].concat(maybeArray)`
 // `[].concat(...array)`
 fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     if call_expr.optional || !is_method_call(call_expr, None, Some(&["concat"]), Some(1), Some(1)) {
@@ -336,9 +333,15 @@ fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
         return;
     }
 
-    // `array.concat(maybeArray)`
+    // `[].concat(...array)`
+    //
+    // Only the spread form flattens, matching eslint-plugin-unicorn's `emptyArrayConcat`:
+    // `[].concat(value)` is plain normalization of a single value into an array, so it is not
+    // reported.
     if let Expression::ArrayExpression(array_expr) = member_expr.object() {
-        if !array_expr.elements.is_empty() {
+        if !array_expr.elements.is_empty()
+            || !matches!(call_expr.arguments.first(), Some(Argument::SpreadElement(_)))
+        {
             return;
         }
         ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
@@ -346,7 +349,6 @@ fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
 }
 
 // - `[].concat.apply([], array)` and `Array.prototype.concat.apply([], array)`
-// - `[].concat.call([], maybeArray)` and `Array.prototype.concat.call([], maybeArray)`
 // - `[].concat.call([], ...array)` and `Array.prototype.concat.call([], ...array)`
 fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
@@ -361,12 +363,18 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
         let is_call_call = is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2));
         let is_apply_call = is_method_call(call_expr, None, Some(&["apply"]), Some(2), Some(2));
 
+        // `call` only consumes an array of concat arguments when the second argument is spread,
+        // while `apply` passes the array as-is, so a spread there is not flattening.
+        // Plain normalization such as `[].concat.call([], value)` is not reported, matching
+        // eslint-plugin-unicorn.
+        let is_spread_second_argument =
+            matches!(call_expr.arguments.get(1), Some(Argument::SpreadElement(_)));
+
         if (is_call_call || is_apply_call)
             && is_prototype_property(member_expr_obj, "concat", Some("Array"))
             && let Some(first_argument) = call_expr.arguments[0].as_expression()
             && is_empty_array_expression(first_argument)
-            && (is_call_call
-                || !matches!(call_expr.arguments.get(1), Some(Argument::SpreadElement(_))))
+            && (if is_call_call { is_spread_second_argument } else { !is_spread_second_argument })
         {
             if is_apply_call
                 && let Some(Argument::Identifier(array)) = call_expr.arguments.get(1)
@@ -470,6 +478,41 @@ fn test() {
         "[].concat(array, EXTRA_ARGUMENT)",
         "[]?.concat(array)",
         "[].concat?.(array)",
+        // Plain `[].concat(value)` normalization: only the spread form flattens
+        "[].concat(array)",
+        "[].concat(maybeArray)",
+        "[].concat( ((0, maybeArray)) )",
+        "[].concat( ((maybeArray)) )",
+        "[].concat( [foo] )",
+        "[].concat( [[foo]] )",
+        "function foo(){return[].concat(maybeArray)}",
+        "async function a() { return [].concat(await getArray()); }",
+        "[].concat(some./**/array)",
+        "[/**/].concat(some./**/array)",
+        "[/**/].concat(some.array)",
+        // `call` only flattens when the second argument is spread, so the plain normalization
+        // forms below are not reported either
+        "[].concat.call([], maybeArray)",
+        "[].concat.call([], ((0, maybeArray)))",
+        "[].concat.call([], ((maybeArray)))",
+        "[].concat.call([], [foo])",
+        "[].concat.call([], [[foo]])",
+        "Array.prototype.concat.call([], maybeArray)",
+        "Array.prototype.concat.call([], ((0, maybeArray)))",
+        "Array.prototype.concat.call([], ((maybeArray)))",
+        "Array.prototype.concat.call([], [foo])",
+        "Array.prototype.concat.call([], [[foo]])",
+        "Array.prototype.concat.call([], (0, array))",
+        "before()
+            Array.prototype.concat.call([], +1)",
+        "before()
+            Array.prototype.concat.call([], 1)",
+        "before()
+            Array.prototype.concat.call([], 1.)",
+        "before()
+            Array.prototype.concat.call([], .1)",
+        "before()
+            Array.prototype.concat.call([], 1.0)",
         "new [].concat(...array)",
         "[][concat](...array)",
         "[].notConcat(...array)",
@@ -551,12 +594,6 @@ fn test() {
         "array.reduce((a, b) => [...a, ...b], [])",
         "array.reduce((a, b) => [...a, ...b,], [])",
         "function foo(){return[].reduce((a, b) => [...a, ...b,], [])}",
-        "[].concat(maybeArray)",
-        "[].concat( ((0, maybeArray)) )",
-        "[].concat( ((maybeArray)) )",
-        "[].concat( [foo] )",
-        "[].concat( [[foo]] )",
-        "function foo(){return[].concat(maybeArray)}",
         "[].concat(...array)",
         "[].concat(...(( array )))",
         "[].concat(...(( [foo] )))",
@@ -570,11 +607,6 @@ fn test() {
         "[].concat.apply([], [foo])",
         "[].concat.apply([], [[foo]])",
         "function flatten() { return [].concat.apply([], arguments); }",
-        "[].concat.call([], maybeArray)",
-        "[].concat.call([], ((0, maybeArray)))",
-        "[].concat.call([], ((maybeArray)))",
-        "[].concat.call([], [foo])",
-        "[].concat.call([], [[foo]])",
         "[].concat.call([], ...array)",
         "[].concat.call([], ...((0, array)))",
         "[].concat.call([], ...((array)))",
@@ -587,11 +619,6 @@ fn test() {
         "Array.prototype.concat.apply([], [foo])",
         "Array.prototype.concat.apply([], [[foo]])",
         "function flatten() { return Array.prototype.concat.apply([], arguments); }",
-        "Array.prototype.concat.call([], maybeArray)",
-        "Array.prototype.concat.call([], ((0, maybeArray)))",
-        "Array.prototype.concat.call([], ((maybeArray)))",
-        "Array.prototype.concat.call([], [foo])",
-        "Array.prototype.concat.call([], [[foo]])",
         "Array.prototype.concat.call([], ...array)",
         "Array.prototype.concat.call([], ...((0, array)))",
         "Array.prototype.concat.call([], ...((array)))",
@@ -606,33 +633,18 @@ fn test() {
             Array.prototype.concat.apply([], [array].concat(array))",
         "before()
             Array.prototype.concat.apply([], +1)",
-        "before()
-            Array.prototype.concat.call([], +1)",
         "Array.prototype.concat.apply([], (0, array))",
-        "Array.prototype.concat.call([], (0, array))",
-        "async function a() { return [].concat(await getArray()); }",
         // "_.flatten((0, array))",
         // "async function a() { return _.flatten(await getArray()); }",
         // "async function a() { return _.flatten((await getArray())); }",
         "before()
             Array.prototype.concat.apply([], 1)",
         "before()
-            Array.prototype.concat.call([], 1)",
-        "before()
             Array.prototype.concat.apply([], 1.)",
-        "before()
-            Array.prototype.concat.call([], 1.)",
         "before()
             Array.prototype.concat.apply([], .1)",
         "before()
-            Array.prototype.concat.call([], .1)",
-        "before()
             Array.prototype.concat.apply([], 1.0)",
-        "before()
-            Array.prototype.concat.call([], 1.0)",
-        "[].concat(some./**/array)",
-        "[/**/].concat(some./**/array)",
-        "[/**/].concat(some.array)",
         "const Items = [] as unknown[]; Items.flatMap(x => x);",
     ];
 

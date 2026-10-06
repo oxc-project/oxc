@@ -9,6 +9,8 @@ import {
   CAT_OP_UN_NOT,
   CAT_OTHER,
   CAT_START_OF_STMT,
+} from "./categories.ts";
+import {
   markMapStart,
   write,
   writeIdent,
