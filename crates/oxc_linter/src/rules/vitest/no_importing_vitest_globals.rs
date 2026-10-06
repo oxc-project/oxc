@@ -255,7 +255,8 @@ fn process_declaration<'a>(
             continue;
         };
 
-        if VITEST_GLOBALS.contains(&property_name.as_ref()) {
+        // A key without a UTF-8 name, such as a numeric key, is not a Vitest global.
+        if property_name.as_str().is_some_and(|name| VITEST_GLOBALS.contains(&name)) {
             global_vitest_spans.push(property.span);
         } else {
             non_global_imports.push(ctx.source_range(property.span).to_string());
@@ -399,6 +400,11 @@ import { it, describe } from 'vitest'",
         ("const x = 1, { describe } = require('vitest');", "const x = 1;", None),
         ("const x = 1, { describe } = require('vitest'), y = 2;", "const x = 1, y = 2;", None),
         ("const { describe, it } = require('vitest');", "", None),
+        (
+            r#"const { describe, 0: x } = require("vitest");"#,
+            "const { 0: x } = require('vitest');",
+            None,
+        ),
         ("const { describe } = require('@effect/vitest');", "", None),
         (
             "const { describe, BenchFactory } = require('vitest');",

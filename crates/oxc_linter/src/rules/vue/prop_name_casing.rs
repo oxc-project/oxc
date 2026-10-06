@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
         ObjectPropertyKind, PropertyKey, TSSignature,
@@ -181,8 +181,9 @@ impl PropNameCasing {
             TSSignature::TSMethodSignature(sig) => (sig.key.static_name(), sig.key.span()),
             _ => return,
         };
-        let Some(name) = key_opt else { return };
-        self.report_if_invalid(name.as_ref(), span, ctx);
+        let name = key_opt.and_then(StaticPropertyName::into_cow_str);
+        let Some(name) = name else { return };
+        self.report_if_invalid(&name, span, ctx);
     }
 
     fn report_if_invalid(&self, name: &str, span: Span, ctx: &LintContext<'_>) {

@@ -9,7 +9,7 @@ use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::GetSpan;
 use oxc_str::{Ident, JSStr};
 
-use super::{AstKind, AstType, ast::*};
+use super::{AstKind, AstType, StaticPropertyName, ast::*};
 
 impl<'a> AstKind<'a> {
     /// Get the [`AstType`] of an [`AstKind`].
@@ -489,9 +489,11 @@ impl<'a> AstKind<'a> {
             Self::ImportExpression(_) => "ImportExpression".into(),
             Self::PrivateInExpression(_) => "PrivateInExpression".into(),
 
-            Self::ObjectProperty(p) => {
-                format!("ObjectProperty({})", p.key.name().as_deref().unwrap_or(COMPUTED)).into()
-            }
+            Self::ObjectProperty(p) => format!(
+                "ObjectProperty({})",
+                p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED))
+            )
+            .into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),

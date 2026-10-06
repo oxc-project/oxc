@@ -107,10 +107,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                     // Babel only handles static identifiers e.g. `{foo: React.createClass({})}`,
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
-                    if let Some(name) = prop.key().static_name() {
-                        break JSStr::from_str_in(&name, ctx);
-                    }
-                    return;
+                    let Some(name) = prop.key().static_name() else { return };
+                    break name.into_js_str_in(ctx);
                 }
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.
