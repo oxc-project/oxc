@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -282,7 +282,7 @@ impl NoLargeSnapshotsConfig {
         member_expr: &MemberExpression,
         ctx: &LintContext,
     ) -> bool {
-        let Some(snapshot_name) = member_expr.static_property_name() else {
+        let Some(snapshot_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
             return false;
         };
         let Some(file_name) = ctx.file_path().to_str() else {

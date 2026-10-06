@@ -6,7 +6,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 
 use crate::{
     AstNode,
@@ -110,10 +110,10 @@ fn get_sync_property_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
             }
         }
         Expression::ComputedMemberExpression(member) => {
-            if let Some(name) = member.static_property_name()
-                && name.as_str().ends_with("Sync")
+            if let Some(name) = member.static_property_name().and_then(JSStr::as_str)
+                && name.ends_with("Sync")
             {
-                return Some(name.as_str());
+                return Some(name);
             }
             get_sync_property_name(&member.object)
         }

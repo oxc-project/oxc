@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
@@ -129,7 +130,7 @@ impl Rule for NoNamedAsDefaultMember {
                         continue;
                     };
                     let Some(prop_str) =
-                        member_expr_kind.static_property_name().map(|n| n.as_str())
+                        member_expr_kind.static_property_name().and_then(JSStr::as_str)
                     else {
                         continue;
                     };
