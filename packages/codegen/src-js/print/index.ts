@@ -10,6 +10,7 @@
 // Reference: `oxc/crates/oxc_codegen/src/{gen.rs,lib.rs,str.rs,binary_expr_visitor.rs}`
 
 import { debugAssert, typeAssertIs } from "../asserts.ts";
+import { flattenString } from "./flatten.ts";
 import { generateSourceMap } from "./source_map.ts";
 import { printProgram, printStatement } from "./statement.ts";
 
@@ -37,6 +38,25 @@ export function printSync(node: ESTree.Node, state: State, options: Options): Co
     printStatement(node, state);
   }
 
+  // Flatten the output before handing it on - see `flatten.ts` for why, and why this way.
+  //
+  // A large print has already flattened most of its output into `state.outputChunks` chunk by chunk (see `flatten.ts`),
+  // leaving `state.output` as the tail. Those flat chunks and the tail are joined here, which is a straight copy,
+  // and the result is a proper flat string.
+  const { outputChunks } = state;
+  let output;
+  if (outputChunks === null) {
+    output = state.output;
+    flattenString(output);
+  } else {
+    // `state.output` may be empty, which `join` ignores. A lone chunk comes back as-is, and it is already flat.
+    outputChunks.push(state.output);
+    output = outputChunks.join("");
+    // The chunks are now redundant. Drop them now rather than when `state` dies, so a GC during `generateSourceMap`
+    // collects them, instead of pointlessly retaining and copying them
+    state.outputChunks = null;
+  }
+
   // This is removed by minifier in non-sourcemap builds.
   //
   // The `skipSourcemapGeneration` check exists only in benchmark builds -
@@ -45,8 +65,8 @@ export function printSync(node: ESTree.Node, state: State, options: Options): Co
   // @ts-expect-error `skipSourcemapGeneration` is benchmarks-only, so is not in `Options`
   if (SOURCEMAPS && (!BENCHMARKS || !options.skipSourcemapGeneration)) {
     debugAssert(options.sourcemap === true, "`options.sourcemap` should be true in a maps build");
-    return { code: state.output, map: generateSourceMap(state, options) };
+    return { code: output, map: generateSourceMap(state, output, options) };
   }
 
-  return { code: state.output, map: null };
+  return { code: output, map: null };
 }

@@ -65,20 +65,20 @@ impl Rule for NoUndef {
     fn run_once(&self, ctx: &LintContext) {
         let symbol_table = ctx.scoping();
 
-        for reference_id_list in ctx.scoping().root_unresolved_references_ids() {
-            for reference_id in reference_id_list {
-                let reference = symbol_table.get_reference(reference_id);
+        for (name, reference_id_list) in symbol_table.root_unresolved_references() {
+            let mut references = reference_id_list
+                .iter()
+                .map(|&reference_id| symbol_table.get_reference(reference_id))
+                .filter(|reference| !reference.is_type());
+            let Some(first_reference) = references.next() else {
+                continue;
+            };
 
-                if reference.is_type() {
-                    continue;
-                }
+            if ctx.is_global_defined(name) {
+                continue;
+            }
 
-                let name = ctx.semantic().reference_name(reference);
-
-                if ctx.is_global_defined(name) {
-                    continue;
-                }
-
+            for reference in std::iter::once(first_reference).chain(references) {
                 // Skip reporting error for 'arguments' if it's in a function scope
                 if name == "arguments"
                     && ctx
@@ -269,6 +269,44 @@ fn test() {
 
     let pass = vec![("foo", None, Some(serde_json::json!({ "globals": { "foo": "readonly" } })))];
     let fail = vec![("foo", None, Some(serde_json::json!({ "globals": { "foo": "off" } })))];
+
+    Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail).test();
+}
+
+#[test]
+fn test_repeated_unresolved_names() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        ("let value: Array<string>; Array; Array.isArray(value);", None, None),
+        (
+            "customGlobal; function f() { customGlobal; } customGlobal;",
+            None,
+            Some(serde_json::json!({ "globals": { "customGlobal": "readonly" } })),
+        ),
+        (
+            "window; function f() { window; } window;",
+            None,
+            Some(serde_json::json!({ "env": { "browser": true } })),
+        ),
+        ("f(); value; function f() { value; } var value;", None, None),
+        ("let value: Missing; typeof Missing;", None, None),
+    ];
+    let fail = vec![
+        ("let value: Missing; Missing;", None, None),
+        ("typeof missing; missing;", None, None),
+        ("function f() { return arguments; } arguments;", None, None),
+        (
+            "customGlobal; function f() { customGlobal; } customGlobal;",
+            None,
+            Some(serde_json::json!({ "globals": { "customGlobal": "off" } })),
+        ),
+        (
+            "window; function f() { window; } window;",
+            None,
+            Some(serde_json::json!({ "env": { "browser": false } })),
+        ),
+    ];
 
     Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail).test();
 }

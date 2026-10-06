@@ -1,4 +1,4 @@
-# DIVERGENCE (prettier#19524): props keep their source order, never reordered.
+# DIVERGENCE (DIVERGENCES.md#anchor-tag-props-order; prettier#19524): props keep their source order, never reordered.
 - !!str &a1 one
 - &a2 !!str two
 - !!int 3

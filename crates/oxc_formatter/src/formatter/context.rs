@@ -1,5 +1,3 @@
-use std::mem;
-
 use oxc_ast::Comment;
 use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
@@ -81,15 +79,11 @@ impl TailwindContextEntry {
 /// Context object storing data relevant when formatting an object.
 pub struct JsFormatContext<'ast> {
     options: JsFormatOptions,
-
     source_text: SourceText<'ast>,
-
     source_type: SourceType,
-
     comments: Comments<'ast>,
 
     cached_elements: FxHashMap<Span, FormatElement<'ast>>,
-
     /// One-shot handoff of the assignment layout to the arrow expression on the RHS of an assignment-like,
     /// keyed by the arrow's span so no other node can consume it.
     /// Set (and cleared) by `WithAssignmentLayout` around formatting the arrow, taken by the arrow's `write`.
@@ -102,13 +96,13 @@ pub struct JsFormatContext<'ast> {
     /// structures (e.g., `{ a: { "b-c": 1 } }` where only the inner object needs quoted keys).
     quote_needed_stack: Vec<bool>,
 
-    /// Collected Tailwind CSS class strings from JSX attributes.
-    /// These will be sorted by an external callback and replaced during printing.
-    tailwind_classes: Vec<String>,
-
     /// Stack tracking whether we're inside a Tailwind class context.
     /// When non-empty, StringLiterals should be sorted as Tailwind classes.
     tailwind_context_stack: Vec<TailwindContextEntry>,
+
+    /// Set only for an embedded program (see [`crate::format_to_ir`]):
+    /// its sole statement prints without its semicolon.
+    embedding_omits_semicolon: bool,
 }
 
 impl std::fmt::Debug for JsFormatContext<'_> {
@@ -120,16 +114,7 @@ impl std::fmt::Debug for JsFormatContext<'_> {
             .field("comments", &self.comments)
             .field("cached_elements", &self.cached_elements)
             .field("quote_needed_stack", &self.quote_needed_stack)
-            .field("tailwind_classes", &self.tailwind_classes)
             .finish()
-    }
-}
-
-/// Lets embedded children's classes merge into this context's index space
-/// (`DispatchPayload::into_doc` at each embed site).
-impl oxc_formatter_core::TailwindCollector for JsFormatContext<'_> {
-    fn add_class(&mut self, class: String) -> usize {
-        self.add_tailwind_class(class)
     }
 }
 
@@ -142,10 +127,6 @@ impl oxc_formatter_core::FormatContext for JsFormatContext<'_> {
 
     fn source_code(&self) -> &str {
         &self.source_text
-    }
-
-    fn get_tailwind_class(&self, idx: usize) -> Option<&str> {
-        self.tailwind_classes.get(idx).map(String::as_str)
     }
 }
 
@@ -165,8 +146,8 @@ impl<'ast> JsFormatContext<'ast> {
             cached_elements: FxHashMap::default(),
             arrow_assignment_layout: None,
             quote_needed_stack: Vec::new(),
-            tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
+            embedding_omits_semicolon: false,
         }
     }
 
@@ -252,22 +233,12 @@ impl<'ast> JsFormatContext<'ast> {
         *self.quote_needed_stack.last().unwrap_or(&false)
     }
 
-    /// Add a Tailwind CSS class string found in JSX attributes.
-    /// Returns the index where the class was stored.
-    pub fn add_tailwind_class(&mut self, class: String) -> usize {
-        let index = self.tailwind_classes.len();
-        self.tailwind_classes.push(class);
-        index
+    pub(crate) fn set_embedding_omits_semicolon(&mut self, omit: bool) {
+        self.embedding_omits_semicolon = omit;
     }
 
-    /// Take all collected Tailwind classes, clearing the internal storage.
-    pub fn take_tailwind_classes(&mut self) -> Vec<String> {
-        mem::take(&mut self.tailwind_classes)
-    }
-
-    /// Set the collected Tailwind CSS classes.
-    pub fn set_tailwind_classes(&mut self, classes: Vec<String>) {
-        self.tailwind_classes = classes;
+    pub(crate) fn embedding_omits_semicolon(&self) -> bool {
+        self.embedding_omits_semicolon
     }
 
     /// Push a Tailwind context entry onto the stack.

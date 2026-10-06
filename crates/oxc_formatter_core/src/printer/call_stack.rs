@@ -1,9 +1,12 @@
 use std::{fmt::Debug, num::NonZeroU8};
 
-use crate::{IndentStyle, InvalidDocumentError, PrintError, PrintMode, PrintResult, TagKind};
+use crate::{
+    IndentStyle, InvalidDocumentError, PrintError, PrintMode, PrintResult, TagKind,
+    format_element::tag::Prefix,
+};
 
 use super::{
-    Indention,
+    Indention, PrefixNode,
     stack::{Stack, StackedStack},
 };
 
@@ -245,6 +248,11 @@ pub(super) trait IndentStack {
     }
     fn align(&mut self, count: NonZeroU8) {
         let next_indent = self.indention().set_align(count);
+        self.current_stack_mut().push(next_indent);
+    }
+    /// `Tag::StartPrefix`; `nodes` is the printer's prefix arena.
+    fn prefix(&mut self, prefix: Prefix, nodes: &mut Vec<PrefixNode>, indent_style: IndentStyle) {
+        let next_indent = self.indention().set_prefix(prefix, nodes, indent_style);
         self.current_stack_mut().push(next_indent);
     }
 }

@@ -64,6 +64,11 @@ pub fn prune_non_escaping_scopes<'a>(
     // First build up a map of which instructions are involved in creating which values,
     // and which values are returned.
     let mut state = CollectState::new();
+    // A named function expression's private name is available on entry, even
+    // when it is only captured by a nested function.
+    if let Some(self_binding) = &func.self_binding {
+        state.declare(env.identifiers[self_binding.identifier].declaration_id);
+    }
     for param in &func.params {
         let place = match param {
             ParamPattern::Place(p) => p,
@@ -995,9 +1000,7 @@ fn compute_memoized_identifiers(
         memoized: &mut FxHashSet<DeclarationId>,
     ) -> Result<bool, OxcDiagnostic> {
         let Some(&(level, _, _, _, seen)) = identifier_nodes.get(&id) else {
-            // Upstream raises an "Expected a node for all identifiers" invariant
-            // here; this port has always been lenient instead.
-            return Ok(false);
+            return Err(diagnostics::invariant_expected_node_all_identifiers(id.index()));
         };
         if seen {
             return Ok(identifier_nodes.get(&id).unwrap().1);

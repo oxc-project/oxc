@@ -1,0 +1,104 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/functions/parameter-initializers.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(f)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "a",
+            "node": "FormalParameter(a)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 0,
+                "name": "a",
+                "node_id": 12,
+                "scope_id": 1
+              },
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 2,
+                "name": "a",
+                "node_id": 23,
+                "scope_id": 1
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 3,
+            "name": "b",
+            "node": "FormalParameter(b)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 3,
+                "name": "b",
+                "node_id": 24,
+                "scope_id": 1
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 4,
+            "name": "c",
+            "node": "FormalParameter(c)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 4,
+                "name": "c",
+                "node_id": 25,
+                "scope_id": 1
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 5,
+            "name": "g",
+            "node": "VariableDeclarator(g)",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "g",
+        "node": "VariableDeclarator(g)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "g",
+            "node_id": 15,
+            "scope_id": 1
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 1,
+        "name": "f",
+        "node": "Function(f)",
+        "references": []
+      }
+    ]
+  }
+]

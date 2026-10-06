@@ -1,3 +1,9 @@
+use std::fmt::Write as _;
+
+use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression},
@@ -6,9 +12,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use std::fmt::Write as _;
 
 use crate::{
     AstNode,
@@ -34,11 +37,8 @@ fn join_termination_methods(methods: &[CompactStr], as_call: bool) -> String {
             )
         }
         [methods @ .., last] => {
-            let mut message = methods
-                .iter()
-                .map(|method| format_termination_method(method, as_call))
-                .collect::<Vec<_>>()
-                .join(", ");
+            let mut message =
+                methods.iter().map(|method| format_termination_method(method, as_call)).join(", ");
             let _ = write!(message, ", or {}", format_termination_method(last, as_call));
             message
         }
@@ -51,8 +51,7 @@ fn catch_or_return_diagnostic(methods: &[CompactStr], span: Span) -> OxcDiagnost
         [method] => format!("`{method}` or `return`"),
         [first, second] => format!("`{first}`, `{second}`, or `return`"),
         [methods @ .., last] => {
-            let mut message =
-                methods.iter().map(|method| format!("`{method}`")).collect::<Vec<_>>().join(", ");
+            let mut message = methods.iter().map(|method| format!("`{method}`")).join(", ");
             let _ = write!(message, ", `{last}`, or `return`");
             message
         }

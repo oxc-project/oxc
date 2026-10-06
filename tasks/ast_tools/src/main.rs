@@ -251,6 +251,7 @@ const DERIVES: &[&(dyn Derive + Sync)] = &[
     &derives::DeriveReplaceWith,
     &derives::DeriveGetAddress,
     &derives::DeriveUnstableAddress,
+    &derives::DeriveGetNodeId,
     &derives::DeriveGetSpan,
     &derives::DeriveGetSpanMut,
     &derives::DeriveContentEq,

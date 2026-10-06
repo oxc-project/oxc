@@ -8,9 +8,7 @@ use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::utils::{
-    export_declaration_span, export_default_declaration_span, is_dropped_statement,
-};
+use crate::utils::{is_dropped_statement, statement_span};
 
 use super::{AstNode, AstNodes};
 
@@ -50,13 +48,7 @@ fn get_statement_span(stmt: &Statement<'_>) -> Option<u32> {
     if is_dropped_statement(stmt) {
         return None;
     }
-    Some(match stmt {
-        Statement::ExportDefaultDeclaration(export) => {
-            export_default_declaration_span(export).start
-        }
-        Statement::ExportDeclaration(export) => export_declaration_span(export).start,
-        _ => stmt.span().start,
-    })
+    Some(statement_span(stmt).start)
 }
 
 macro_rules! impl_ast_node_vec {

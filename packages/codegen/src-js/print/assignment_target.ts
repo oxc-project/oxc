@@ -2,7 +2,8 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
-import { CAT_CLOSE_BRACKET, CAT_OTHER, write, writeWithMap, writeWithMapNamed } from "./write.ts";
+import { CAT_CLOSE_BRACKET, CAT_OTHER } from "./categories.ts";
+import { write, writeWithMap, writeWithMapNamed } from "./write.ts";
 import { printExpression, printMemberExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
 import { CTX_NONE } from "./operators.ts";

@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Issue #21152 sibling: multiline block comment (see issue-21152.js)
+"use client"; /* multi
+line
+comment */
+
+import { Foo } from "foo";
+import { Bar } from "bar";
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Issue #21152 sibling: multiline block comment (see issue-21152.js)
+"use client"; /* multi
+line
+comment */
+
+import { Foo } from "foo";
+import { Bar } from "bar";
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Issue #21152 sibling: multiline block comment (see issue-21152.js)
+"use client"; /* multi
+line
+comment */
+
+import { Foo } from "foo";
+import { Bar } from "bar";
+
+===================== End =====================

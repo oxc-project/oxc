@@ -33,8 +33,6 @@ const IGNORE: &[&str] = &[
     "js/async-do-expressions/",
     "js/do",
     "jsx/do/",
-    // Facebook Translation (fbt) is not supported
-    "jsx/fbt/",
     // Experimental syntax: `export X from "mod"`
     "js/export-default/export-default-from",
     "js/export-default/escaped",
@@ -74,6 +72,7 @@ const IGNORE: &[&str] = &[
     "js/babel-plugins",
     // Embedded languages in template literals
     "js/comments-closure-typecast/styled-components.js",
+    "js/embeded",
     "js/multiparser",
     "typescript/multiparser",
     "typescript/angular-component-examples",
@@ -125,6 +124,7 @@ fn skip_unsupported_options(spec: &OptionSet) -> bool {
 const JS: ConformanceConfig = ConformanceConfig {
     language: "js",
     fixture_roots: &["js", "jsx"],
+    // `None` also leaves `jsx/jsx-test-suite` snippets unexercised, on purpose for now
     exact_parser: None,
     ignore: IGNORE,
     skip_spec: Some(skip_unsupported_options),

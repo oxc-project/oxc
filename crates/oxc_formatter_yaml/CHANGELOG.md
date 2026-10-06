@@ -4,6 +4,41 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.69.0] - 2026-09-21
+
+### 📚 Documentation
+
+- 09ecfa7 formatter_yaml: Unify DIVERGENCES reference (#26746) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- dc45cc3 formatter_test: Test Prettier dynamic snippet tests (#26469) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d226e6f formatter_yaml: Bump oxc-yaml-parser to 0.0.6 (#26472) (leaysgur)
+- 8b41fc0 formatter_yaml: Clamp `tab_width: 0` to 1 to keep semantics (#26471) (leaysgur)
+- dea2ba0 formatter_core: Do not panic with align(0) (#26468) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
+## [0.66.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- faf11d9 formatter_yaml: Keep trailing whitespace in block scalars (#26072) (leaysgur)
+
+### 📚 Documentation
+
+- b879608 formatter,formatter_graphql,formatter_yaml: Annotate own-line comment inlining as known policy violation (#26131) (leaysgur)
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+
 ## [0.64.0] - 2026-08-18
 
 ### 🐛 Bug Fixes

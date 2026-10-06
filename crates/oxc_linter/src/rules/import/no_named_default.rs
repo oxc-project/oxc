@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{ImportDeclarationSpecifier, ImportOrExportKind},
-};
+use oxc_ast::{AstKind, ast::ImportDeclarationSpecifier};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
@@ -57,9 +54,7 @@ impl Rule for NoNamedDefault {
                 let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier else {
                     continue;
                 };
-                if matches!(specifier.import_kind, ImportOrExportKind::Value)
-                    && specifier.imported.name() == "default"
-                {
+                if specifier.import_kind.is_value() && specifier.imported.name() == "default" {
                     ctx.diagnostic(no_named_default_diagnostic(specifier.imported.span()));
                 }
             }

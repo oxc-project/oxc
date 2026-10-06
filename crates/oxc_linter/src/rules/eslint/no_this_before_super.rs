@@ -161,7 +161,7 @@ impl NoThisBeforeSuper {
 
             let class = parent_3.kind().as_class()?;
             let super_class = class.heritage_expression()?;
-            return Some(!matches!(super_class, Expression::NullLiteral(_)));
+            return Some(!super_class.is_null());
         }
 
         Some(false)

@@ -89,7 +89,10 @@ fn check_array_prototype_methods(call_expr: &CallExpression, ctx: &LintContext) 
             .first()
             .is_some_and(|arg| arg.as_expression().is_none_or(|expr| is_node_not_function(expr)))
         || call_expr.arguments.get(1).is_some_and(|arg| matches!(arg, Argument::SpreadElement(_)))
-        || does_expr_match_any_path(&call_expr.callee, IGNORED)
+        || does_expr_match_any_path(
+            &call_expr.callee,
+            IGNORED.iter().map(|path| path.iter().copied()),
+        )
     {
         return;
     }
@@ -142,7 +145,7 @@ fn is_node_not_function(expr: &Expression) -> bool {
         | Expression::NewExpression(_)
         | Expression::TaggedTemplateExpression(_)
         | Expression::ThisExpression(_) => true,
-        Expression::Identifier(ident) if ident.name == "undefined" => true,
+        Expression::Identifier(ident) => ident.is_undefined(),
         Expression::CallExpression(call_expr) => {
             !is_method_call(call_expr, None, Some(&["bind"]), None, None)
         }

@@ -8,7 +8,7 @@ use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 use oxc_str::static_ident;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
 
 fn no_array_constructor_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid calls to the `Array` constructor")
@@ -96,7 +96,12 @@ impl Rule for NoArrayConstructor {
                 } else {
                     ctx.source_range(Span::new(arguments[0].span().start, span.end - 1))
                 };
-                fixer.replace(span, format!("[{replacement}]"))
+                // A `[` opening an expression statement continues the previous line when
+                // that line ends without a semicolon: `foo` then `Array()` on the next
+                // line would be rewritten to `[]` directly under `foo`, i.e. a member
+                // access on it, which does not even parse.
+                let semi = if ast_util::could_be_asi_hazard(node, ctx) { ";" } else { "" };
+                fixer.replace(span, format!("{semi}[{replacement}]"))
             });
         }
     }
@@ -256,7 +261,18 @@ fn test() {
         ("Array(x, y);", "[x, y];"),
         ("new Array(0, 1, 2);", "[0, 1, 2];"),
         ("Array(0, 1, 2);", "[0, 1, 2];"),
-        // TODO: These currently produce invalid syntax, need to fix the fixer.
+        // A statement-initial `[` continues the line above when it has no semicolon.
+        ("foo\nArray()", "foo\n;[]"),
+        ("foo\nArray(1, 2)", "foo\n;[1, 2]"),
+        ("foo\nnew Array()", "foo\n;[]"),
+        ("foo;\nArray()", "foo;\n[]"),
+        ("Array()", "[]"),
+        ("if (x) Array()", "if (x) []"),
+        // TODO: these no longer produce invalid syntax, but they still differ: after a
+        // `}) as Fn` line the fixer now inserts a `;` that the expected output below
+        // does not have. `[` after a type position is read as an array type (`Fn[]`),
+        // so the semicolon is not obviously wrong - the expectation needs a decision
+        // before these can be enabled.
         // (
         //     r#"
         //                 (function () {

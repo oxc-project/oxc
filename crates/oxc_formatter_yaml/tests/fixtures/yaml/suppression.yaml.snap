@@ -2,8 +2,8 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# oxfmt-ignore freezes exactly ONE node (never everything after it,
-# prettier#13008); above the first item of a block collection it freezes
+# DIVERGES: oxfmt-ignore freezes exactly ONE node, never everything after it
+# (see DIVERGENCES.md#prettier-ignore-range); above the first item of a block collection it freezes
 # that item, same as it does for any later item.
 # oxfmt-ignore
 kept:   {  as: is  }
@@ -42,8 +42,8 @@ flow: [
 ------------------
 { printWidth: 80 }
 ------------------
-# oxfmt-ignore freezes exactly ONE node (never everything after it,
-# prettier#13008); above the first item of a block collection it freezes
+# DIVERGES: oxfmt-ignore freezes exactly ONE node, never everything after it
+# (see DIVERGENCES.md#prettier-ignore-range); above the first item of a block collection it freezes
 # that item, same as it does for any later item.
 # oxfmt-ignore
 kept:   {  as: is  }
@@ -81,8 +81,8 @@ flow: [
 -------------------
 { printWidth: 100 }
 -------------------
-# oxfmt-ignore freezes exactly ONE node (never everything after it,
-# prettier#13008); above the first item of a block collection it freezes
+# DIVERGES: oxfmt-ignore freezes exactly ONE node, never everything after it
+# (see DIVERGENCES.md#prettier-ignore-range); above the first item of a block collection it freezes
 # that item, same as it does for any later item.
 # oxfmt-ignore
 kept:   {  as: is  }

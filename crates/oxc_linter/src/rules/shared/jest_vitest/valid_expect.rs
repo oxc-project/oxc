@@ -23,6 +23,8 @@ fn valid_expect_diagnostic<S: Into<Cow<'static, str>>>(
     OxcDiagnostic::warn(x1).with_help(x2).with_label(span3)
 }
 
+pub const SHORT_DESCRIPTION: &str = "Enforce valid `expect()` usage.";
+
 pub const DOCUMENTATION: &str = r"### What it does
 
 Checks that `expect()` is called correctly.

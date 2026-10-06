@@ -4,9 +4,9 @@
 //! it will be drawn in. Label text stays borrowed and is split into display
 //! lines only when it is drawn.
 
-use owo_colors::Style;
-
 use oxc_span::Span;
+
+use crate::handlers::theme::Style;
 
 /// How a label is being drawn on the current output line.
 ///

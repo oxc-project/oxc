@@ -9,7 +9,8 @@
 // Each form is written to the output in pieces, so no candidate string is ever built.
 
 import { debugAssert } from "../asserts.ts";
-import { CAT_INT_DIGIT, markMapStart, write, writeIdent, writeNoLast } from "./write.ts";
+import { CAT_INT_DIGIT } from "./categories.ts";
+import { markMapStart, write, writeIdent, writeNoLast } from "./write.ts";
 
 import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";

@@ -1,0 +1,54 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* An empty value prints as `prop:;`.
+   A custom property's whitespace-only value IS its value
+   (`var(--x)` substitutes a space for `--x: ;`, nothing for `--x:;`), so it stays verbatim. */
+a {
+  color: ;
+  color:;
+  *zoom: ;
+  --x: ;
+  --y:;
+  --z:   ;
+}
+$e: ;
+$f:;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* An empty value prints as `prop:;`.
+   A custom property's whitespace-only value IS its value
+   (`var(--x)` substitutes a space for `--x: ;`, nothing for `--x:;`), so it stays verbatim. */
+a {
+  color:;
+  color:;
+  *zoom:;
+  --x: ;
+  --y:;
+  --z:   ;
+}
+$e:;
+$f:;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* An empty value prints as `prop:;`.
+   A custom property's whitespace-only value IS its value
+   (`var(--x)` substitutes a space for `--x: ;`, nothing for `--x:;`), so it stays verbatim. */
+a {
+  color:;
+  color:;
+  *zoom:;
+  --x: ;
+  --y:;
+  --z:   ;
+}
+$e:;
+$f:;
+
+===================== End =====================

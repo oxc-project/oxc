@@ -52,7 +52,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::LParen);
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
-            self.bump(Kind::Comma);
+            if !self.at(Kind::RParen) {
+                self.expect(Kind::Comma);
+            }
             Some(param)
         } else {
             None
@@ -348,7 +350,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if ctx.has_ambient() {
                 self.error(diagnostics::generator_in_ambient_context(self.end_span(generator)));
             } else if body.is_none() {
-                self.error(diagnostics::overload_signature_generator(self.end_span(start)));
+                self.error(diagnostics::overload_signature_generator(
+                    self.end_span(start.min(generator)),
+                ));
             }
         }
         self.verify_modifiers(

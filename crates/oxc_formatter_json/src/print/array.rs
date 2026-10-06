@@ -2,15 +2,14 @@ use oxc_ast::ast::{ArrayExpression, ArrayExpressionElement, Expression};
 use oxc_formatter_core::{
     Buffer, Format, FormatContext,
     builders::{
-        block_indent, empty_line, group, if_group_breaks, soft_block_indent,
-        soft_line_break_or_space, text,
+        empty_line, group, if_group_breaks, soft_block_indent, soft_line_break_or_space, text,
     },
     write,
 };
 use oxc_span::GetSpan;
 
 use crate::{
-    comments::{FormatTrailingInsideComments, write_dangling_comments},
+    comments::{FormatTrailingInsideComments, write_empty_container_comments},
     context::JsonFormatContext,
     separated::{TrailingSeparator, blank_line_after_comma, write_separated},
 };
@@ -27,14 +26,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
 
         if self.array.elements.is_empty() {
             let dangling = f.context().comments().take_before(self.array.span.end);
-            if !dangling.is_empty() {
-                write!(
-                    f,
-                    [block_indent(&format_with(move |f| {
-                        write_dangling_comments(dangling, f);
-                    }))]
-                );
-            }
+            write_empty_container_comments(dangling, f);
             write!(f, "]");
             return;
         }

@@ -61,6 +61,15 @@ pub struct ReactCompilerOptions {
     #[napi(ts_type = "'none' | 'critical_errors' | 'all_errors'")]
     pub panic_threshold: Option<String>,
 
+    /// Include recoverable React Compiler diagnostics in `errors`.
+    ///
+    /// Enable this to receive recoverable diagnostics (bail-outs, rule suppressions,
+    /// lint findings) while code is still produced. Fatal diagnostics are reported
+    /// regardless of this option.
+    ///
+    /// @default false
+    pub report_diagnostics: Option<bool>,
+
     /// React runtime target. React 17 and 18 use `react-compiler-runtime`;
     /// React 19 uses `react/compiler-runtime`.
     ///
@@ -74,13 +83,15 @@ pub struct ReactCompilerOptions {
     /// Enable `"use memo if(...)"` directive-driven gating.
     pub dynamic_gating: Option<ReactCompilerDynamicGating>,
 
-    /// Analyze and report diagnostics without applying compiler output.
+    /// Analyze without applying compiler output. Pair with `reportDiagnostics`
+    /// to receive the findings.
     ///
     /// @deprecated Prefer `outputMode: "lint"`.
     /// @default false
     pub no_emit: Option<bool>,
 
-    /// Select client, SSR, or lint output.
+    /// Select client, SSR, or lint output. Lint findings are recoverable
+    /// diagnostics, so pair lint output with `reportDiagnostics`.
     #[napi(ts_type = "'client' | 'ssr' | 'lint'")]
     pub output_mode: Option<String>,
 
@@ -272,6 +283,15 @@ pub struct ReactCompilerEnvironmentOptions {
 }
 
 impl TransformOptions {
+    /// Whether recoverable React Compiler diagnostics are forwarded to `errors`
+    /// (`reactCompiler.reportDiagnostics`).
+    pub(crate) fn report_react_compiler_diagnostics(&self) -> bool {
+        matches!(
+            &self.react_compiler,
+            Some(Either::B(options)) if options.report_diagnostics == Some(true)
+        )
+    }
+
     pub(crate) fn resolve(
         self,
         filename: &str,

@@ -84,12 +84,7 @@ fn missing_dependency_diagnostic(
         format!("'{}'", deps[0])
     } else {
         let mut iter = deps.iter();
-        let all_but_last = iter
-            .by_ref()
-            .take(deps.len() - 1)
-            .map(|s| format!("'{s}'"))
-            .collect::<Vec<_>>()
-            .join(", ");
+        let all_but_last = iter.by_ref().take(deps.len() - 1).map(|s| format!("'{s}'")).join(", ");
         let last = iter.next().unwrap();
         format!("{all_but_last}, and '{last}'")
     };

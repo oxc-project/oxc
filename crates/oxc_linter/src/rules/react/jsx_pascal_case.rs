@@ -145,13 +145,14 @@ impl Rule for JsxPascalCase {
             return;
         }
 
-        let check_names: Vec<&str> = if is_namespaced_name {
-            name.split(':').collect()
+        let separator = if is_namespaced_name {
+            Some(':')
         } else if is_member_expression {
-            name.split('.').collect()
+            Some('.')
         } else {
-            vec![name]
+            None
         };
+        let check_names = name.split(|ch| Some(ch) == separator);
 
         for split_name in check_names {
             if split_name.len() == 1 {

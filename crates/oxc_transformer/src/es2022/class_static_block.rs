@@ -242,8 +242,9 @@ impl<'a> Keys<'a> {
     #[cold]
     #[inline(never)]
     fn get_unique_slow(&mut self, ctx: &TraverseCtx<'a>) -> Str<'a> {
-        // Source text length is limited to `u32::MAX` so impossible to have more than `u32::MAX`
-        // private keys. So `u32` is sufficient here.
+        // Source text is limited to `MAX_LEN` (defined in `oxc_parser`), which is less than `u32::MAX`.
+        // So a class cannot have anywhere near `u32::MAX` private keys.
+        // So `u32` is sufficient here, and `i` cannot overflow.
         let mut i = 2u32;
         let mut buffer = ItoaBuffer::new();
         let mut num_str;

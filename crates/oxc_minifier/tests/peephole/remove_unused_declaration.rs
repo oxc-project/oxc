@@ -866,7 +866,7 @@ fn keep_script_root_var_in_nested_statement_after_cycle_removed() {
     let source = "function outer() { function d1() { return x + d2() } function d2() { return d1() } return 1 } outer(); switch (1) { case 1: var x = 42; }";
     // Script globals can be rebound through global-object properties without a
     // resolved write reference, so the call cannot reuse a pure summary.
-    let expected = "function outer() { return 1 } if (outer(), !0) var x = 42;";
+    let expected = "function outer() { return 1 } if (outer(), 1) var x = 42;";
     test_options_source_type(source, expected, SourceType::script(), &options);
 
     // CommonJS top-level vars are wrapper-local, so ordinary counts may remove them.
@@ -1005,6 +1005,13 @@ fn keep_recursive_function_with_unused_keep_option() {
 fn remove_unused_import_specifiers() {
     let options = CompressOptions::smallest();
 
+    test_options("import {} from 'a';", "import 'a';", &options);
+    test_options(
+        "import {} from 'a' with { type: 'json' };",
+        "import 'a' with { type: 'json' };",
+        &options,
+    );
+
     test_options("import a from 'a'", "import 'a';", &options);
     test_options("import a from 'a'; foo()", "import 'a'; foo();", &options);
     test_same_options(
@@ -1064,7 +1071,7 @@ fn remove_unused_import_specifiers() {
     test_options("import { a as b } from 'a'", "import 'a';", &options);
     test_same_options("import { a as b } from 'a'; foo(b);", &options);
 
-    test_same_options("import { a } from 'a'; export { a };", &options);
+    test_options("import { a } from 'a'; export { a };", "export { a } from 'a';", &options);
     // Keep imports when direct eval is present
     test_same_options("import { a } from 'a'; eval('a');", &options);
     test_same_options("import a from 'a'; eval('a');", &options);

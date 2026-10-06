@@ -686,7 +686,7 @@ mod test {
             );
             // will panic if provided invalid markdown
             let html = to_html_with_options(rule.documentation().unwrap(), &options).unwrap();
-            assert!(!html.is_empty());
+            assert_ne!(html, "");
         }
     }
 

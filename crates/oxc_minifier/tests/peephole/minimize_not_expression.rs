@@ -13,6 +13,13 @@ fn minimize_duplicate_nots() {
     test_same("function k () { return !!x; }");
     test("var k = () => { return !!x; }", "var k = () => !!x");
     test_same("var k = () => !!x;");
+    // Negation of a `1`, `0` is boolean context.
+    test("var v = !(!0);", "var v = !1;");
+    test("var v = !(!1);", "var v = !0;");
+    test("var v = !(a || !0);", "var v = !(a || 1);");
+    test("var v = !(a && !1);", "var v = !(a && 0);");
+    // fold not into sequence
+    test("var v = !(a, b)", "var v = (a, !b)");
 }
 
 #[test]
@@ -22,6 +29,9 @@ fn minimize_nots_with_de_morgan_comparison_chains() {
     test("if (!(a === b || c === d)) throw x;", "if (a !== b && c !== d) throw x;");
     // `&&` dual.
     test("if (!(a == b && c == d)) throw x;", "if (a != b || c != d) throw x;");
+    // typeof
+    test("if (!(typeof a < 'u' && !b)) throw x;", "if (typeof a > 'u' || b) throw x;");
+    test("if (!(typeof a != 'undefined' && !b)) throw x;", "if (typeof a > 'u' || b) throw x;");
     // The fold is involutive, so the `if (!x) return` collapse (which negates
     // the test again) still reaches its old output.
     test(
@@ -48,6 +58,7 @@ fn minimize_nots_with_de_morgan_comparison_chains() {
 fn minimize_nots_with_de_morgan_negative_cases() {
     // Relational comparisons don't invert freely (NaN), so the chain must stay.
     test_same("if (!(a < b || c < d)) throw x;");
+    test_same("if (!(typeof a < 'u' || c < d)) throw x;");
     // A mixed operand would need a bare `!`; that fold is not involutive and can
     // regress shapes whose test is negated again later (e.g. branch swaps), so
     // it's left alone.
@@ -57,10 +68,26 @@ fn minimize_nots_with_de_morgan_negative_cases() {
     // Existing shapes that consume the `!` for free must not regress.
     test("var v = !!(a == b || c == d);", "var v = a == b || c == d;");
     test("if (!(a == b && c == d)) x(); else y();", "a != b || c != d ? x() : y();");
+    // mixed unary-not leaves in both boolean and value contexts.
+    test("if (!(!a || b)) x();", "a && !b && x();");
+    test_same("var v = !(!a || b);");
+    test("if (!(a == b || !c && d == e)) x();", "a == b || !c && d == e || x();");
+    // parenthesis-size guard.
+    test_same("if (!(a == b || fn1())) throw x;");
+    test_same("if (!(a == b && fn1())) throw x;");
+    test("var v = !!(!a || b);", "var v = !(a && !b);");
+    test("var v = !!(a && !b);", "var v = !(!a || b);");
+    test_same("if (!(a < b || !c)) throw x;");
+    test_same("if (!(a in b || c == d)) throw x;");
+    test("if (!(a === b && (a ?? b))) throw x;", "if (!(a === b && (a ?? b))) throw x;");
+    test("if (!(a === b && !a)) throw x;", "if (a !== b || a) throw x;");
 }
 
 #[test]
 fn minimize_nots_with_binary_expressions() {
+    test_same("var v = !(x > 'u');");
+    test_same("var v = !(x > 0);");
+    test_same("var v = !(typeof x > typeof y);");
     test("!(x === undefined)", "x");
     test("!(typeof(x) === 'undefined')", "");
     test("!(typeof(x()) === 'undefined')", "x()");
@@ -71,4 +98,10 @@ fn minimize_nots_with_binary_expressions() {
     test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
     test("!(a === 1 ? void 0 : a.b)", "a !== 1 && a.b;");
     test("!(a, b)", "a, b");
+    test("var v = !(typeof x < 'u')", "var v = typeof x > 'u';");
+    test("var v = !('u' > typeof x)", "var v = 'u' < typeof x;");
+    test_same("var v = !(typeof x <= 'u');");
+    test_same("var v = !(typeof x >= 'u');");
+    test_same("var v = !(typeof x < 'string');");
+    test_same("var v = !(typeof x > 'string');");
 }
