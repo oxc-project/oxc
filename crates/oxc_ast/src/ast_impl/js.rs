@@ -176,6 +176,7 @@ impl<'a> Expression<'a> {
     }
 
     /// Returns `true` if this [`Expression`] is an [`IdentifierReference`] with specified `name`.
+    #[expect(clippy::needless_pass_by_value)]
     pub fn is_specific_id<N>(&self, name: N) -> bool
     where
         Ident<'a>: PartialEq<N>,
@@ -533,6 +534,7 @@ impl<'a> PropertyKey<'a> {
     }
 
     /// Returns `true` if this property key is exactly equal to the given identifier name.
+    #[expect(clippy::needless_pass_by_value)]
     pub fn is_specific_id<N>(&self, name: N) -> bool
     where
         Ident<'a>: PartialEq<N>,
