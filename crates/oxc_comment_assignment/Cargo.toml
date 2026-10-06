@@ -27,6 +27,8 @@ oxc_ast_visit = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
+smallvec = { workspace = true }
+
 [dev-dependencies]
 oxc_allocator = { workspace = true }
 oxc_parser = { workspace = true }

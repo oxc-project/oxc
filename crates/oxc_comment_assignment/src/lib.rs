@@ -8,6 +8,8 @@ use oxc_ast::ast::Program;
 
 use engine::AssignmentVisitor;
 
+pub use engine::CommentAssignmentState;
+
 /// Assigns comment ownership using the node IDs already present in the AST.
 #[derive(Default)]
 pub struct CommentAssignment;

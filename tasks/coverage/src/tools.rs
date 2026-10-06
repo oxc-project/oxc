@@ -13,10 +13,10 @@ use oxc::{
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic},
     minifier::CompressOptions,
     parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig},
+    semantic::SemanticBuilder,
     span::{ModuleKind, SourceType, Span},
     transformer::{JsxOptions, JsxRuntime, TransformOptions},
 };
-use oxc_comment_assignment::CommentAssignment;
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_pretty_json};
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, JsFormatOptions,
@@ -392,8 +392,8 @@ fn run_codegen(code: &str, source_type: SourceType) -> TestResult {
     TestResult::Passed
 }
 
-/// Exercise comment ownership separately from semantic analysis, which will
-/// integrate assignment and ID rewrites in later changes.
+/// Exercise ownership assigned by semantic, including retention and idempotency
+/// when comments are printed without transforming the AST.
 fn run_attached_codegen(code: &str, source_type: SourceType, minify: bool) -> TestResult {
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, code, source_type).parse();
@@ -404,7 +404,7 @@ fn run_attached_codegen(code: &str, source_type: SourceType, minify: bool) -> Te
     }
     let mut program = parsed.program;
     let source_type = program.source_type;
-    CommentAssignment::new().assign(&mut program);
+    SemanticBuilder::new_compiler().build_with_comments(&mut program);
     let options =
         oxc::codegen::CodegenOptions { minify, ..oxc::codegen::CodegenOptions::default() };
     let printed = oxc::codegen::Codegen::new().with_options(options.clone()).build(&program).code;
@@ -446,7 +446,7 @@ fn run_attached_codegen(code: &str, source_type: SourceType, minify: bool) -> Te
         );
     }
     let mut program = reparsed.program;
-    CommentAssignment::new().assign(&mut program);
+    SemanticBuilder::new_compiler().build_with_comments(&mut program);
     let printed2 = oxc::codegen::Codegen::new().with_options(options).build(&program).code;
     if printed == printed2 {
         TestResult::Passed

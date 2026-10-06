@@ -16,6 +16,7 @@ use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
 };
+use oxc_comment_assignment::CommentAssignmentState;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
 use oxc_str::Ident;
@@ -104,6 +105,10 @@ pub struct SemanticBuilder<'a> {
     stats: Option<Stats>,
     excess_capacity: f64,
 
+    // Allocate ownership state only when comment assignment is requested and
+    // the program has comments. Keep the disabled path small for other callers.
+    comment_assignment: Option<Box<CommentAssignmentState<'a>>>,
+
     /// Should enum member values be evaluated?
     enum_eval: bool,
 
@@ -124,7 +129,7 @@ pub struct SemanticBuilder<'a> {
     ast_node_records: Vec<NodeId>,
 }
 
-/// Data returned by [`SemanticBuilder::build`].
+/// Data returned by [`SemanticBuilder::build`] or [`SemanticBuilder::build_with_comments`].
 pub struct SemanticBuilderReturn<'a> {
     /// Built semantic model.
     pub semantic: Semantic<'a>,
@@ -161,6 +166,7 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
+            comment_assignment: None,
             enum_eval: false,
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
@@ -303,8 +309,59 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Finalize the builder.
     ///
+    /// Use [`Self::build_with_comments`] to assign comments while allocating node IDs.
+    ///
     /// # Panics
-    pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
+    pub fn build(self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
+        self.build_impl(program, None)
+    }
+
+    /// Build semantic information and assign source comments in the same traversal.
+    ///
+    /// Comment owners use the node IDs allocated by semantic analysis. This works
+    /// with both the full node store and the compiler's ancestry stack. Programs
+    /// without comments take the same path as [`Self::build`].
+    ///
+    /// Use this on an AST whose structure still matches its source text. Existing
+    /// attachments are replaced using source positions.
+    ///
+    /// ```
+    /// use oxc_allocator::Allocator;
+    /// use oxc_parser::Parser;
+    /// use oxc_semantic::SemanticBuilder;
+    /// use oxc_span::SourceType;
+    ///
+    /// let allocator = Allocator::default();
+    /// let mut program = Parser::new(&allocator, "/* leading */ call();", SourceType::mjs())
+    ///     .parse().program;
+    /// let result = SemanticBuilder::new_compiler().build_with_comments(&mut program);
+    /// assert!(result.diagnostics.is_empty());
+    /// assert!(result.semantic.comments()[0].attachment.is_some());
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the AST exceeds the limits of semantic's node or scope IDs.
+    pub fn build_with_comments(
+        mut self,
+        program: &'a mut Program<'_>,
+    ) -> SemanticBuilderReturn<'a> {
+        if program.comments.is_empty() {
+            return self.build(program);
+        }
+        // Obtain exclusive provenance before creating the shared AST references
+        // retained by semantic analysis. Only the buffer's attachments are written;
+        // the arena vector's header stays unchanged throughout the build.
+        let comments_ptr = program.comments.as_mut_ptr();
+        self.comment_assignment = Some(Box::new(CommentAssignmentState::new(&program.comments)));
+        self.build_impl(program, Some(comments_ptr))
+    }
+
+    fn build_impl(
+        mut self,
+        program: &'a Program<'a>,
+        comments_ptr: Option<*mut oxc_ast::Comment>,
+    ) -> SemanticBuilderReturn<'a> {
         self.source_text = program.source_text;
         self.source_type = program.source_type;
         #[cfg(feature = "jsdoc")]
@@ -343,6 +400,26 @@ impl<'a> SemanticBuilder<'a> {
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
+
+        if let Some(assignment) = self.comment_assignment.take() {
+            let attachments = assignment.finish();
+            assert_eq!(attachments.len(), program.comments.len());
+            let comments_ptr = comments_ptr.unwrap();
+            for (index, attachment) in attachments.enumerate() {
+                // SAFETY: `build_with_comments` obtained this pointer from the
+                // exclusively borrowed program before sharing the AST. The
+                // traversal neither moves nor resizes the arena comment buffer.
+                // `finish` consumes all direct references to its elements; JSDoc
+                // retains only source-text references. Stored AST nodes reference
+                // the Program/vector header, which is unchanged, and Semantic's
+                // comment slice is created below, after these writes. The length
+                // check above guarantees each index is in bounds.
+                unsafe {
+                    std::ptr::addr_of_mut!((*comments_ptr.add(index)).attachment)
+                        .write(Some(attachment));
+                }
+            }
+        }
 
         // Check that estimated counts accurately (unless in release mode)
         #[cfg(debug_assertions)]
@@ -853,6 +930,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     // NB: Not called for `Program`.
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.create_ast_node(kind);
+        if let Some(assignment) = &mut self.comment_assignment {
+            assignment.enter_node(kind);
+        }
     }
 
     /// Both this function and `checker::check` must be inlined. Each `visit_*` method calls
@@ -866,6 +946,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if self.check_syntax_error {
             checker::check(kind, self);
+        }
+        if let Some(assignment) = &mut self.comment_assignment {
+            assignment.leave_node();
         }
         self.pop_ast_node();
     }
@@ -907,6 +990,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 );
             }
             AstNodeStoreKind::Ancestry(stack) => stack.push(kind),
+        }
+
+        if let Some(assignment) = &mut self.comment_assignment {
+            assignment.enter_node(kind);
         }
 
         let is_ambient = self.source_type.is_typescript_definition();

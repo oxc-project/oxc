@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use smallvec::SmallVec;
+
 use oxc_ast::{
     AstKind, Comment, CommentAttachment, CommentContent, CommentPlacement,
     ast::{Declaration, ExportDefaultDeclarationKind, Program, Statement, TemplateElement},
@@ -114,14 +116,73 @@ impl Frame<'_> {
     }
 }
 
-pub struct AssignmentVisitor<'a, 'p> {
+/// Comment ownership driven by an existing AST traversal.
+///
+/// This state reuses the IDs assigned by the caller. Enter the Program first,
+/// enter each child after assigning its node ID,
+/// and leave every node in reverse nesting order. The traversal must visit all
+/// nodes and keep each node's ID unchanged until it finishes.
+///
+/// Scratch storage scales with comments and active ancestors, rather than nodes.
+/// Up to eight comments use inline scratch storage.
+pub struct CommentAssignmentState<'a> {
+    state: AssignmentState<'a, SmallVec<[Pending; INLINE_COMMENTS]>>,
+}
+
+impl<'a> CommentAssignmentState<'a> {
+    /// Start assigning the source-ordered comments of a program.
+    pub fn new(comments: &'a [Comment]) -> Self {
+        Self {
+            state: AssignmentState::new(
+                comments,
+                std::iter::repeat_n(Pending::new(), comments.len()).collect(),
+            ),
+        }
+    }
+
+    /// Enter a node whose ID has already been assigned by the caller.
+    #[inline]
+    pub fn enter_node(&mut self, kind: AstKind<'a>) {
+        self.state.enter_node(kind);
+    }
+
+    /// Leave the most recently entered node.
+    ///
+    /// # Panics
+    ///
+    /// Panics if there is no matching entry.
+    #[inline]
+    pub fn leave_node(&mut self) {
+        self.state.leave_node();
+    }
+
+    /// Finish the traversal and return ownership in the original comment order.
+    ///
+    /// Consuming the state releases its references to the source comments before
+    /// the caller writes attachments back to them.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the traversal leaves comments unassigned. In debug builds, also
+    /// panics if some entered nodes have not been left.
+    pub fn finish(self) -> impl ExactSizeIterator<Item = CommentAttachment> + use<> {
+        self.state.assert_finished();
+        self.state.pending.into_iter().map(|pending| pending.attachment.unwrap())
+    }
+}
+
+struct AssignmentState<'a, P> {
     comments: &'a [Comment],
-    pending: &'p mut [Pending],
+    pending: P,
     frames: Vec<Frame<'a>>,
     skipped_depth: usize,
 }
 
-impl<'a, 'p> AssignmentVisitor<'a, 'p> {
+pub struct AssignmentVisitor<'a, 'p> {
+    state: AssignmentState<'a, &'p mut [Pending]>,
+}
+
+impl<'a> AssignmentVisitor<'a, '_> {
     pub fn assign(program: &mut Program<'a>) {
         let comment_count = program.comments.len();
         if comment_count <= INLINE_COMMENTS {
@@ -137,9 +198,10 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
         {
             // Select inline or heap storage once. The traversal uses the same
             // slice in both cases, without checking the storage kind per access.
-            let mut visitor = AssignmentVisitor::new(&program.comments, pending);
+            let mut visitor =
+                AssignmentVisitor { state: AssignmentState::new(&program.comments, pending) };
             visitor.visit_program(program);
-            visitor.finish();
+            visitor.state.assert_finished();
         }
         // Release the traversal's shared references before writing ownership.
         // Reuse the existing scratch entries; no separate output table is needed.
@@ -147,8 +209,10 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             comment.attachment = pending.attachment;
         }
     }
+}
 
-    fn new(comments: &'a [Comment], pending: &'p mut [Pending]) -> Self {
+impl<'a, P: AsRef<[Pending]> + AsMut<[Pending]>> AssignmentState<'a, P> {
+    fn new(comments: &'a [Comment], pending: P) -> Self {
         Self {
             comments,
             pending,
@@ -159,14 +223,35 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
         }
     }
 
-    fn finish(self) {
+    fn assert_finished(&self) {
         debug_assert!(self.frames.is_empty());
         debug_assert_eq!(self.skipped_depth, 0);
-        debug_assert!(self.pending.iter().all(|pending| pending.attachment.is_some()));
+        debug_assert!(self.pending.as_ref().iter().all(|pending| pending.attachment.is_some()));
+    }
+
+    #[inline]
+    fn enter_node(&mut self, kind: AstKind<'a>) {
+        // Keep the sparse-subtree path inline without duplicating the full
+        // ownership algorithm for every AST node kind.
+        if self.skipped_depth != 0 {
+            self.skipped_depth += 1;
+            return;
+        }
+        self.enter(kind);
+    }
+
+    #[inline]
+    fn leave_node(&mut self) {
+        if self.skipped_depth != 0 {
+            self.skipped_depth -= 1;
+        } else {
+            self.leave();
+        }
     }
 
     #[inline(never)]
     fn enter(&mut self, kind: AstKind<'a>) {
+        let pending = self.pending.as_mut();
         // Raw text cannot receive JavaScript comments. In particular, visiting all
         // template quasis first must not consume substitution comments.
         if matches!(kind, AstKind::TemplateElement(_) | AstKind::JSXText(_)) {
@@ -208,7 +293,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             for index in (parent.window.start..parent.leading_end.min(inside_begin))
                 .chain(gap_begin..inside_begin)
             {
-                if parent.accepts(index, &self.pending[index])
+                if parent.accepts(index, &pending[index])
                     && carries_leading_comment(
                         parent.kind,
                         kind,
@@ -219,7 +304,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
                     begin = begin.min(index);
                     // Only inherited prefixes need routing information per
                     // comment. Interior comments simply pass through the window.
-                    self.pending[index].container = child;
+                    pending[index].container = child;
                     leading_count += 1;
                 }
             }
@@ -237,7 +322,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
                 end
             };
             if end < parent.window.end && self.comments[end].span.start >= span.end {
-                let pending = &mut self.pending[end];
+                let pending = &mut pending[end];
                 if parent.accepts(end, pending) {
                     pending.previous = pending
                         .previous
@@ -250,7 +335,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             // Seed the nearest gap comment that remains in the parent. An
             // annotation moving into the child must not hide that boundary.
             for index in (gap_begin..inside_begin).rev() {
-                let pending = &mut self.pending[index];
+                let pending = &mut pending[index];
                 if parent.accepts(index, pending)
                     && !carries_leading_comment(parent.kind, kind, &self.comments[index], false)
                 {
@@ -320,10 +405,11 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
 
     #[inline(never)]
     fn resolve(&mut self, frame: &mut Frame<'a>) {
+        let pending = self.pending.as_mut();
         // Child boundaries only seed adjacent comments. Carry those neighbors
         // across each gap, so long sibling lists never scan the whole window per child.
         let mut previous = None;
-        for (offset, pending) in self.pending[frame.window.clone()].iter_mut().enumerate() {
+        for (offset, pending) in pending[frame.window.clone()].iter_mut().enumerate() {
             if frame.can_resolve(frame.window.start + offset, pending) {
                 pending.previous = pending
                     .previous
@@ -339,7 +425,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
         }
         let mut next = None;
         for index in frame.window.clone().rev() {
-            let pending = &mut self.pending[index];
+            let pending = &mut pending[index];
             if !frame.can_resolve(index, pending) {
                 continue;
             }
@@ -388,22 +474,12 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
 
     #[inline]
     fn enter_node(&mut self, kind: AstKind<'a>) {
-        // Keep the sparse-subtree path here so it can inline into the generated
-        // walker without inlining the full ownership algorithm for every node kind.
-        if self.skipped_depth != 0 {
-            self.skipped_depth += 1;
-            return;
-        }
-        self.enter(kind);
+        self.state.enter_node(kind);
     }
 
     #[inline]
     fn leave_node(&mut self, _kind: AstKind<'a>) {
-        if self.skipped_depth != 0 {
-            self.skipped_depth -= 1;
-        } else {
-            self.leave();
-        }
+        self.state.leave_node();
     }
 }
 

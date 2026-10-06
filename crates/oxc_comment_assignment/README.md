@@ -18,3 +18,5 @@ for comment in &program.comments {
 The pass accepts a mutable Program reference and stores attachments directly on its comments. The AST must have unique node IDs, with ID `0` reserved for Program, as provided by the parser or semantic analysis. Each source comment stores its owner's ID and leading, trailing, or dangling placement in `Comment::attachment`. Parsing leaves attachments unset.
 
 Running the pass preserves node IDs and existing semantic data. Programs without comments require no traversal.
+
+When building semantic information, use `SemanticBuilder::build_with_comments(&mut program)` to assign comments during semantic's traversal and reuse its node IDs. `CommentAssignmentState` exposes the same ownership engine to traversals that allocate their own IDs.

@@ -28,6 +28,7 @@ oxc_allocator = { workspace = true, features = ["bitset"] }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_cfg = { workspace = true, optional = true }
+oxc_comment_assignment = { workspace = true }
 oxc_data_structures = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
@@ -45,6 +46,7 @@ smallvec = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob"] }
+oxc_codegen = { workspace = true }
 oxc_parser = { workspace = true }
 rustc-hash = { workspace = true }
 serde_json = { workspace = true }
