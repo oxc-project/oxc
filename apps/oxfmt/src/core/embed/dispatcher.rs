@@ -281,7 +281,10 @@ impl ResolvedDispatchConfig {
 
         let mut options = self.prettier_options().clone();
         crate::core::options::inject_parser(&mut options, language.parser());
-        if matches!(language, PrettierLanguage::Svelte) {
+        // Embedded parts only (whole files go through `format_by_prettier`):
+        // - svelte-in-md: a ```svelte code block
+        // - svelte-in-mdx-in-md: `mdx` allows ```svelte code blocks
+        if matches!(language, PrettierLanguage::Svelte | PrettierLanguage::Mdx) {
             crate::core::options::inject_svelte_plugin_payload(&mut options, &self.config);
         }
         Some(options)
