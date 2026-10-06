@@ -28,6 +28,7 @@ use crate::core::{
         to_oxc_formatter_yaml,
     },
     oxfmtrc::FormatConfig,
+    support::PrettierLanguage,
 };
 
 /// The native half of the routing table:
@@ -42,48 +43,6 @@ pub enum NativeLanguage {
     Json(JsonVariant),
     Markdown,
     Toml,
-}
-
-/// Languages Prettier still formats for us (no Rust formatter yet).
-///
-/// [`PrettierDocFallback`] receives this instead of a raw string,
-/// so the fallback can never be handed a language the table did not route to it.
-/// The set shrinks as Rust ports land, and the type disappears with the last port.
-#[derive(Clone, Copy)]
-pub enum PrettierLanguage {
-    Html,
-    Angular,
-    Vue,
-    /// Formatted only when `prettier-plugin-svelte` is enabled (`svelte` config key).
-    Svelte,
-    Handlebars,
-    Mdx,
-}
-
-#[cfg(feature = "napi")]
-impl PrettierLanguage {
-    /// The Prettier `parser` name injected into the options JSON.
-    ///
-    /// NOTE: language identifiers happen to overlap with some Prettier parser names,
-    /// but `oxc_formatter` treats them as generic language names;
-    /// this method is the only place mapping EMBEDDED language identifiers to Prettier parsers
-    /// (the whole-file Tier 3/4 path has its own filename-keyed map in `core::support`).
-    pub fn parser(self) -> &'static str {
-        match self {
-            Self::Html => "html",
-            Self::Angular => "angular",
-            Self::Vue => "vue",
-            Self::Svelte => "svelte",
-            Self::Handlebars => "glimmer",
-            Self::Mdx => "mdx",
-        }
-    }
-
-    /// Whether the Doc→IR conversion must surface `HtmlEmbedMeta`
-    /// (`htmlHasMultipleRootElements`) to the embed site.
-    pub fn wants_html_meta(self) -> bool {
-        matches!(self, Self::Html | Self::Angular)
-    }
 }
 
 /// Where a language identifier routes.
@@ -316,15 +275,13 @@ impl ResolvedDispatchConfig {
     /// [`Self::prettier_options`] for one `language`: its parser, plus the payload of the plugin it needs.
     /// `None` when that plugin is not enabled (svelte without the `svelte` config key): the part stays as-is.
     pub fn prettier_options_for(&self, language: PrettierLanguage) -> Option<serde_json::Value> {
-        let needs_svelte = matches!(language, PrettierLanguage::Svelte);
-
-        if needs_svelte && !self.config.is_svelte_enabled() {
+        if language.missing_plugin(&self.config).is_some() {
             return None;
         }
 
         let mut options = self.prettier_options().clone();
         crate::core::options::inject_parser(&mut options, language.parser());
-        if needs_svelte {
+        if matches!(language, PrettierLanguage::Svelte) {
             crate::core::options::inject_svelte_plugin_payload(&mut options, &self.config);
         }
         Some(options)

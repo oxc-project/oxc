@@ -57,8 +57,8 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     }
 
     #[cfg(feature = "napi")]
-    if let Some(parser_name) = prettier_parser_name(file_name, ext) {
-        return Some(FileKind::Prettier { path, parser_name });
+    if let Some(language) = prettier_language(file_name, ext) {
+        return Some(FileKind::Prettier { path, language });
     }
 
     None
@@ -93,7 +93,7 @@ pub enum FileKind {
     OxcFormatterToml { path: Arc<Path> },
     /// Files formatted by delegating to Prettier (Tier 3/4).
     #[cfg(feature = "napi")]
-    Prettier { path: Arc<Path>, parser_name: &'static str },
+    Prettier { path: Arc<Path>, language: PrettierLanguage },
 }
 
 impl FileKind {
@@ -126,19 +126,59 @@ impl FileKind {
             Self::OxcFormatterMarkdown { .. } => "markdown",
             Self::OxcFormatterToml { .. } => "toml",
             #[cfg(feature = "napi")]
-            Self::Prettier { parser_name, .. } => parser_name,
+            Self::Prettier { language, .. } => language.parser(),
+        }
+    }
+}
+
+/// Languages Prettier still formats for us (no Rust formatter yet),
+/// both embedded parts ([`route`](super::embed::dispatcher::route)) and whole files ([`FileKind::Prettier`]).
+///
+/// The Prettier paths receive this instead of a raw string,
+/// so they can never be handed an unknown language.
+/// The set shrinks as Rust ports land, and the type disappears with the last port.
+#[derive(Debug, Clone, Copy)]
+pub enum PrettierLanguage {
+    Html,
+    Angular,
+    Vue,
+    /// Formatted only when `prettier-plugin-svelte` is enabled (`svelte` config key).
+    Svelte,
+    Handlebars,
+    Mdx,
+    /// Whole files only: [`route`](super::embed::dispatcher::route) never returns it.
+    #[cfg(feature = "napi")]
+    Mjml,
+}
+
+#[cfg(feature = "napi")]
+impl PrettierLanguage {
+    /// The Prettier `parser` name injected into the options JSON.
+    /// The only map from languages to Prettier parsers (e.g. `Handlebars` → `glimmer`).
+    pub fn parser(self) -> &'static str {
+        match self {
+            Self::Html => "html",
+            Self::Angular => "angular",
+            Self::Vue => "vue",
+            Self::Svelte => "svelte",
+            Self::Handlebars => "glimmer",
+            Self::Mdx => "mdx",
+            Self::Mjml => "mjml",
         }
     }
 
-    /// Returns the config key of an opt-in Prettier plugin
-    /// that this file requires but the resolved config does NOT enable.
+    /// The config key of the opt-in plugin this language requires, when `config` does NOT enable it.
     ///
-    /// `.svelte` files cannot be formatted without `prettier-plugin-svelte`,
+    /// `svelte` cannot be formatted without `prettier-plugin-svelte`,
     /// which is enabled by the `svelte` config key.
-    #[cfg(feature = "napi")]
-    pub fn requires_plugin(&self, config: &FormatConfig) -> Option<&'static str> {
-        matches!(self, Self::Prettier { parser_name: "svelte", .. } if !config.is_svelte_enabled())
-            .then_some("svelte")
+    pub fn missing_plugin(self, config: &FormatConfig) -> Option<&'static str> {
+        (matches!(self, Self::Svelte) && !config.is_svelte_enabled()).then_some("svelte")
+    }
+
+    /// Whether the Doc→IR conversion must surface `HtmlEmbedMeta`
+    /// (`htmlHasMultipleRootElements`) to the embed site.
+    pub fn wants_html_meta(self) -> bool {
+        matches!(self, Self::Html | Self::Angular)
     }
 }
 
@@ -324,22 +364,22 @@ static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 
 // ---
 
-/// Returns the Prettier parser name for the file, if supported.
+/// Returns the [`PrettierLanguage`] for the file, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 #[cfg(feature = "napi")]
-fn prettier_parser_name(file_name: &str, ext: &str) -> Option<&'static str> {
+fn prettier_language(file_name: &str, ext: &str) -> Option<PrettierLanguage> {
     if file_name.ends_with(".component.html") {
-        return Some("angular");
+        return Some(PrettierLanguage::Angular);
     }
     Some(match ext {
-        "html" | "hta" | "htm" | "inc" | "xht" | "xhtml" => "html",
-        "vue" => "vue",
+        "html" | "hta" | "htm" | "inc" | "xht" | "xhtml" => PrettierLanguage::Html,
+        "vue" => PrettierLanguage::Vue,
         // Formatting is gated by `ResolveOutcome::MissingPlugin` (requires `svelte` config),
         // classified here so that each caller can surface a friendly error or skip.
-        "svelte" => "svelte",
-        "mdx" => "mdx",
-        "mjml" => "mjml",
-        "handlebars" | "hbs" => "glimmer",
+        "svelte" => PrettierLanguage::Svelte,
+        "mdx" => PrettierLanguage::Mdx,
+        "mjml" => PrettierLanguage::Mjml,
+        "handlebars" | "hbs" => PrettierLanguage::Handlebars,
         _ => return None,
     })
 }
@@ -450,10 +490,10 @@ mod tests {
 
     #[test]
     #[cfg(feature = "napi")]
-    fn test_prettier_parser_name() {
+    fn test_prettier_language() {
         fn get_parser_name(file_name: &str) -> Option<&'static str> {
             let ext = Path::new(file_name).extension().and_then(|ext| ext.to_str());
-            prettier_parser_name(file_name, ext.unwrap_or_default())
+            prettier_language(file_name, ext.unwrap_or_default()).map(PrettierLanguage::parser)
         }
 
         let test_cases = vec![

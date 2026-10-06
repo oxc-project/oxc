@@ -214,7 +214,9 @@ fn into_outcome(
     kind: FileKind,
 ) -> ResolveOutcome {
     #[cfg(feature = "napi")]
-    if let Some(plugin) = kind.requires_plugin(&config) {
+    if let FileKind::Prettier { language, .. } = &kind
+        && let Some(plugin) = language.missing_plugin(&config)
+    {
         return ResolveOutcome::MissingPlugin(plugin);
     }
     ResolveOutcome::Format(FormatStrategy { kind, config, validated })
@@ -492,6 +494,9 @@ fn build_ignore_glob(
 mod tests_slow_path_validation {
     use std::{path::PathBuf, sync::Arc};
 
+    #[cfg(feature = "napi")]
+    use crate::core::support::PrettierLanguage;
+
     use super::*;
 
     fn resolver_from_json(raw: serde_json::Value) -> ConfigResolver {
@@ -509,14 +514,14 @@ mod tests_slow_path_validation {
         let resolver = resolver_from_json(serde_json::json!({
             "printWidth": 80,
             "overrides": [
-                { "files": ["*.json"], "options": { "printWidth": 1000 } }
+                { "files": ["*.html"], "options": { "printWidth": 1000 } }
             ]
         }));
 
         // Slow path triggers because the override matches.
         let kind = FileKind::Prettier {
-            path: Arc::from(PathBuf::from("data.json").as_path()),
-            parser_name: "json",
+            path: Arc::from(PathBuf::from("index.html").as_path()),
+            language: PrettierLanguage::Html,
         };
         let err = resolver.resolve(kind).unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
@@ -557,7 +562,7 @@ mod tests_slow_path_validation {
     fn resolve_for_api_rejects_invalid_value_for_prettier() {
         let kind = FileKind::Prettier {
             path: Arc::from(PathBuf::from("page.vue").as_path()),
-            parser_name: "vue",
+            language: PrettierLanguage::Vue,
         };
         let err = resolve_for_api(serde_json::json!({ "printWidth": 1000 }), kind, Path::new("."))
             .unwrap_err();

@@ -13,6 +13,8 @@ use super::options::{
     inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_svelte_plugin_payload,
     inject_tailwind_plugin_payload, to_prettier,
 };
+#[cfg(feature = "napi")]
+use super::support::PrettierLanguage;
 use super::{
     embed::dispatcher::ResolvedDispatchConfig,
     options::{
@@ -156,8 +158,8 @@ impl SourceFormatter {
                 oxc_formatter_toml::format(source_text, to_oxc_formatter_toml(&config, core))
             }
             #[cfg(feature = "napi")]
-            FileKind::Prettier { path, parser_name } => {
-                self.format_by_prettier(source_text, &path, parser_name, &config)
+            FileKind::Prettier { path, language } => {
+                self.format_by_prettier(source_text, &path, language, &config)
             }
         };
 
@@ -244,29 +246,31 @@ impl SourceFormatter {
 
     /// Format a file by delegating to Prettier,
     /// with plugin payloads injected when the parser can use them.
-    #[instrument(level = "debug", name = "oxfmt::external::format_file", skip_all, fields(parser = %parser_name))]
+    #[instrument(level = "debug", name = "oxfmt::external::format_file", skip_all, fields(parser = %language.parser()))]
     fn format_by_prettier(
         &self,
         source_text: &str,
         path: &Path,
-        parser_name: &str,
+        language: PrettierLanguage,
         config: &FormatConfig,
     ) -> Result<String, OxcDiagnostic> {
+        use PrettierLanguage::{Angular, Handlebars, Html, Mdx, Svelte, Vue};
+
         let mut prettier_options = to_prettier(config);
-        inject_parser(&mut prettier_options, parser_name);
+        inject_parser(&mut prettier_options, language.parser());
         inject_filepath(&mut prettier_options, path);
 
         // CSS/SCSS/Less also benefit, but they are formatted by `oxc_formatter_css`
-        if matches!(parser_name, "html" | "vue" | "angular" | "glimmer" | "svelte") {
+        if matches!(language, Html | Vue | Angular | Handlebars | Svelte) {
             inject_tailwind_plugin_payload(&mut prettier_options, config);
         }
-        // Parsers that embed JS/TS code.
+        // Languages that embed JS/TS code.
         // Expressions like `__vue_expression` and `__ng_directive` are not supported yet.
-        if matches!(parser_name, "vue" | "svelte") {
+        if matches!(language, Vue | Svelte) {
             inject_oxfmt_plugin_payload(&mut prettier_options, config, path);
         }
         // `mdx` allows ```svelte code blocks
-        if matches!(parser_name, "svelte" | "mdx") {
+        if matches!(language, Svelte | Mdx) {
             inject_svelte_plugin_payload(&mut prettier_options, config);
         }
 

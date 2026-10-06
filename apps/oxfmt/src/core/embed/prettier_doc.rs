@@ -15,9 +15,12 @@ use oxc_formatter::HtmlEmbedMeta;
 use oxc_formatter_core::{DispatchPayload, DispatchResponse, FormatSession};
 
 use crate::{
-    core::embed::{
-        FormatEmbeddedDocWithConfigCallback,
-        dispatcher::{PrettierDocFallback, PrettierLanguage, ResolvedDispatchConfig},
+    core::{
+        embed::{
+            FormatEmbeddedDocWithConfigCallback,
+            dispatcher::{PrettierDocFallback, ResolvedDispatchConfig},
+        },
+        support::PrettierLanguage,
     },
     prettier_compat::from_prettier_doc,
 };
