@@ -42,8 +42,6 @@ pub(super) struct Walk {
     /// stays valid while that frame is on the stack.
     /// An operand anchor counts one more: the construct it opens, past which the walk would guess.
     pub(super) seed_depth: usize,
-    /// The anchor of a bounded walk.
-    pub(super) seed_at: usize,
     /// A bounded walk popped its anchor frame (or met an unbalanced closer): its state is a guess
     /// from here on.
     pub(super) seed_lost: bool,
@@ -276,8 +274,7 @@ impl Walk {
                 break;
             }
             let end = self.step(tokens, pos);
-            // An async anchor has not opened its function yet.
-            if self.frames.len() < self.seed_depth && pos != self.seed_at {
+            if self.frames.len() < self.seed_depth {
                 self.seed_lost = true;
             }
             pos = self.jump(pos, end, limit);
@@ -295,7 +292,7 @@ impl Walk {
                 break;
             }
             self.next_jump += 1;
-            if at == pos && to > pos && to <= limit {
+            if at == pos && to <= limit {
                 self.prev_end = to;
                 return to;
             }
