@@ -23,3 +23,7 @@ if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
 ` + s,
 );
 fs.writeFileSync(path, data);
+
+const wasip1BrowserPath = pathJoin(packageDir, "minify.wasip1-browser.js");
+const wasip1Browser = fs.readFileSync(wasip1BrowserPath, "utf-8").replaceAll(/[ \t]+$/gmu, "");
+fs.writeFileSync(wasip1BrowserPath, wasip1Browser);

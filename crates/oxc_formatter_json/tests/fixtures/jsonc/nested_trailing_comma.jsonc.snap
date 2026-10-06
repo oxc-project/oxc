@@ -2,6 +2,7 @@
 source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
+// jsonc allows comments and (per option) trailing commas
 {
   "matrix": [
     [1, 2, 3],
@@ -18,6 +19,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 ------------------------------------
 { printWidth: 80, variant: "jsonc" }
 ------------------------------------
+// jsonc allows comments and (per option) trailing commas
 {
   "matrix": [
     [1, 2, 3],
@@ -33,6 +35,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 -------------------------------------
 { printWidth: 100, variant: "jsonc" }
 -------------------------------------
+// jsonc allows comments and (per option) trailing commas
 {
   "matrix": [
     [1, 2, 3],
@@ -48,6 +51,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 -----------------------------------------------------------
 { printWidth: 80, trailingComma: "none", variant: "jsonc" }
 -----------------------------------------------------------
+// jsonc allows comments and (per option) trailing commas
 {
   "matrix": [
     [1, 2, 3],
@@ -63,6 +67,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 ------------------------------------------------------------
 { printWidth: 100, trailingComma: "none", variant: "jsonc" }
 ------------------------------------------------------------
+// jsonc allows comments and (per option) trailing commas
 {
   "matrix": [
     [1, 2, 3],

@@ -1,6 +1,7 @@
 mod convert_to_dotted_properties;
 mod fold_constants;
 mod inline;
+mod minimize_binary_expression;
 mod minimize_conditional_expression;
 mod minimize_conditions;
 mod minimize_expression_in_boolean_context;
@@ -8,7 +9,9 @@ mod minimize_for_statement;
 mod minimize_if_statement;
 mod minimize_logical_expression;
 mod minimize_not_expression;
+mod minimize_sequences;
 mod minimize_statements;
+mod minimize_switch_statements;
 mod normalize;
 mod remove_dead_code;
 mod remove_unused_declaration;
@@ -386,7 +389,12 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx.state.body_frames.pop();
     }
 
-    fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        // skip merging import / export for cjs and scripts as they can't contain import stmt
+        if !ctx.source_type().is_script() && !ctx.source_type().is_commonjs() {
+            Self::merge_imports(&mut program.body, ctx);
+            Self::merge_import_export(&mut program.body, ctx);
+        }
         // Private member usage is collected only in full optimization mode.
         debug_assert!(ctx.is_tree_shake_only() || ctx.state.private_member_usage.is_at_root());
     }
@@ -411,7 +419,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::ForStatement(_) => Self::try_fold_for(stmt, ctx),
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
-                Statement::SwitchStatement(_) => Self::try_fold_switch(stmt, ctx),
+                Statement::SwitchStatement(_) => {
+                    Self::drop_unreachable_switch_cases(stmt, ctx);
+                    Self::try_fold_switch(stmt, ctx);
+                }
                 Statement::FunctionDeclaration(_) => {
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
@@ -432,11 +443,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::IfStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                     Self::try_fold_if(stmt, ctx);
-                    if let Statement::IfStatement(if_stmt) = stmt
-                        && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
-                    {
-                        ctx.replace_statement(stmt, folded_stmt);
-                    }
+                    Self::try_minimize_if(stmt, ctx);
                 }
                 Statement::WhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
@@ -452,7 +459,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 }
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
-                Statement::SwitchStatement(_) => Self::try_fold_switch(stmt, ctx),
+                Statement::SwitchStatement(_) => {
+                    Self::drop_unreachable_switch_cases(stmt, ctx);
+                    Self::try_fold_switch(stmt, ctx);
+                }
                 Statement::FunctionDeclaration(f) => {
                     Self::init_function_declaration_symbol_value(f.id.as_ref(), ctx);
                     Self::remove_unused_function_declaration(stmt, ctx);
@@ -572,6 +582,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::fold_sequence_expression(expr, ctx);
                     Self::minimize_loose_boolean(expr, ctx);
                     Self::minimize_binary(expr, ctx);
+                    Self::minimize_bitwise_binary_expr(expr, ctx);
                     Self::substitute_loose_equals_undefined(expr, ctx);
                     Self::substitute_typeof_undefined(expr, ctx);
                     Self::substitute_rotate_binary_expression(expr, ctx);
@@ -582,7 +593,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_unary_plus(expr, ctx);
                     Self::fold_sequence_expression(expr, ctx);
                 }
-                Expression::YieldExpression(_) | Expression::AwaitExpression(_) => {
+                Expression::YieldExpression(e) => {
+                    Self::substitute_yield_expression(e);
+                    Self::fold_sequence_expression(expr, ctx);
+                }
+                Expression::AwaitExpression(_) => {
                     Self::fold_sequence_expression(expr, ctx);
                 }
                 Expression::StaticMemberExpression(_) => {
@@ -628,7 +643,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }
                 Expression::SequenceExpression(_) => Self::remove_sequence_expression(expr, ctx),
-                Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e, ctx),
+                Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e),
                 Expression::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
                 Expression::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
                 Expression::NewExpression(e) => {
@@ -785,7 +800,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.private_member_usage.record_use(node.field.name.into());
+        ctx.state.private_member_usage.record_use(node.field.name);
     }
 
     fn exit_private_in_expression(
@@ -796,6 +811,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.private_member_usage.record_use(node.left.name.into());
+        ctx.state.private_member_usage.record_use(node.left.name);
     }
 }

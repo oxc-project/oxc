@@ -8,16 +8,6 @@
   | Error: `after` hook threw
   |     at after (<fixture>/plugin.ts:108:15)
 
-  x Error running JS plugin.
-  | File path: <fixture>/files/throwInBefore/1.js
-  | Error: `before` hook threw
-  |     at before (<fixture>/plugin.ts:82:15)
-
-  x Error running JS plugin.
-  | File path: <fixture>/files/throwInVisit/1.js
-  | Error: `Identifier` visit function threw
-  |     at Identifier (<fixture>/plugin.ts:124:15)
-
   x create-once-errors-plugin(before-and-after-late): after hook:
   | id: create-once-errors-plugin/before-and-after-late
   | filename: <fixture>/files/throwInAfter/2.js
@@ -44,6 +34,11 @@
    : ^
    `----
 
+  x Error running JS plugin.
+  | File path: <fixture>/files/throwInBefore/1.js
+  | Error: `before` hook threw
+  |     at before (<fixture>/plugin.ts:82:15)
+
   x create-once-errors-plugin(before-and-after-late): after hook:
   | id: create-once-errors-plugin/before-and-after-late
   | filename: <fixture>/files/throwInBefore/2.js
@@ -63,6 +58,11 @@
  1 | let y;
    : ^
    `----
+
+  x Error running JS plugin.
+  | File path: <fixture>/files/throwInVisit/1.js
+  | Error: `Identifier` visit function threw
+  |     at Identifier (<fixture>/plugin.ts:124:15)
 
   x create-once-errors-plugin(before-and-after-late): after hook:
   | id: create-once-errors-plugin/before-and-after-late

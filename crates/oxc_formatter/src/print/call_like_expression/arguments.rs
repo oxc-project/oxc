@@ -1,6 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, RemoveSoftLinesBuffer, SourceText, format_element};
+use oxc_formatter_core::{FormatElement, RemoveSoftLinesBuffer, format_element};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -19,16 +19,17 @@ use crate::{
         FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
         array_element_list::can_concisely_print_array_list,
         arrow_function_expression::{
-            FunctionCacheMode, GroupedCallArgumentLayout, is_huggable_html_embed,
+            FunctionCacheMode, GroupedCallArgumentLayout,
             is_multiline_template_starting_on_same_line,
         },
+        embed_hug,
         function::FormatFunction,
         parameters::has_only_simple_parameters,
     },
     utils::{
         call_expression::is_test_call_expression,
         expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
-        member_chain::simple_argument::SimpleArgument,
+        member_chain::simple_argument::SimpleArgument, typecast::is_cast_target,
     },
     write,
 };
@@ -61,6 +62,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
                 None
             };
 
+        let call = call_expression.map(AsRef::as_ref);
+
         if is_simple_module_import
             || call_expression.is_some_and(|call| {
                 is_commonjs_or_amd_call(self, call, f)
@@ -73,11 +76,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
                                     | Argument::TaggedTemplateExpression(_)
                             )
                         ))
-                        && is_test_call_expression(call))
+                        && is_test_call_expression(call, f.comments()))
             })
-            || is_multiline_template_only_args(self, f.source_text())
-            || is_graphql_call_with_single_template_arg(self, call_expression)
-            || is_huggable_html_embed_single_arg(self, f)
+            || is_verbatim_multiline_template_sole_arg(arguments, call, f)
             || is_react_hook_with_deps_array(self, f.comments())
         {
             return write!(
@@ -118,7 +119,17 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
             return format_all_args_broken_out(self, true, f);
         }
 
-        if let Some(group_layout) = arguments_grouped_layout(self, f) {
+        // A sole embedded template expands like a last argument (unlike a verbatim one)
+        let group_layout = match arguments.as_slice() {
+            [argument]
+                if argument.as_expression().and_then(|expr| embed_hug(expr, call, f))
+                    == Some(true) =>
+            {
+                Some(GroupedCallArgumentLayout::GroupedLastArgument)
+            }
+            _ => arguments_grouped_layout(self, f),
+        };
+        if let Some(group_layout) = group_layout {
             write_grouped_arguments(self, group_layout, f);
         } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
             let trailing_operator = FormatTrailingCommas::All.trailing_separator(f.options());
@@ -570,37 +581,34 @@ fn can_group_arrow_function_expression_argument(
     is_arrow_recursion: bool,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    arrow_function.get_expression().is_none_or(|expr| match expr {
-        Expression::ObjectExpression(_)
-        | Expression::ArrayExpression(_)
-        | Expression::JSXElement(_)
-        | Expression::JSXFragment(_) => true,
-        Expression::ArrowFunctionExpression(inner_arrow_function) => {
-            can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
-        }
-        // In Prettier's Babel AST, a JSDoc type cast like `/** @type {X} */ (expr)` preserves
-        // the `ParenthesizedExpression` wrapper, so `arg.body` is not a CallExpression and
-        // `couldExpandArg` naturally returns false. In oxc's AST the parens are stripped, so we
-        // must explicitly check for type cast comments to prevent incorrect grouping.
-        // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/call-arguments.js#L232-L234
-        //
-        // A call wrapped in `ChainExpression` / `TSNonNullExpression`
-        // (e.g. `a?.b()`, `a.b()!`) counts as a call,
-        // like Prettier's `isCallExpression(stripChainElementWrappers(body))`.
-        //
-        // NOTE: The conditional check is deliberately asymmetric:
-        // Prettier matches a bare `ConditionalExpression` body only,
-        // so a wrapped one (`(a ? b : c)!`) does not count.
-        // Not derivable from a principle; follow Prettier if it changes.
-        expr if matches!(expr, Expression::ConditionalExpression(_))
-            || as_call_expression_without_chain_wrappers(expr).is_some() =>
-        {
-            !is_arrow_recursion
-                && !f
-                    .comments()
-                    .has_type_cast_comment_in_range(arrow_function.span.start, expr.span().start)
-        }
-        _ => false,
+    arrow_function.get_expression().is_none_or(|expr| {
+        let shape_can_group = match expr {
+            Expression::ObjectExpression(_)
+            | Expression::ArrayExpression(_)
+            | Expression::JSXElement(_)
+            | Expression::JSXFragment(_) => true,
+            Expression::ArrowFunctionExpression(inner_arrow_function) => {
+                can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
+            }
+            // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/call-arguments.js#L232-L234
+            //
+            // A call wrapped in `ChainExpression` / `TSNonNullExpression`
+            // (e.g. `a?.b()`, `a.b()!`) counts as a call,
+            // like Prettier's `isCallExpression(stripChainElementWrappers(body))`.
+            //
+            // NOTE: The conditional check is deliberately asymmetric:
+            // Prettier matches a bare `ConditionalExpression` body only,
+            // so a wrapped one (`(a ? b : c)!`) does not count.
+            // Not derivable from a principle; follow Prettier if it changes.
+            expr if matches!(expr, Expression::ConditionalExpression(_))
+                || as_call_expression_without_chain_wrappers(expr).is_some() =>
+            {
+                !is_arrow_recursion
+            }
+            _ => false,
+        };
+        // A cast-wrapped body has no shape (see `is_cast_target`)
+        shape_can_group && !is_cast_target(expr.span(), f)
     })
 }
 
@@ -635,7 +643,7 @@ fn write_grouped_arguments<'a>(
                         AstNodes::Function(function)
                             if !group_layout.is_grouped_first()
                                 && (!only_one_argument
-                                    || function_has_only_simple_parameters(&function.params)) =>
+                                    || function_has_only_simple_parameters(function)) =>
                         {
                             has_cached = true;
                             return write!(f, [FormatFunction::new_cached(function), comma]);
@@ -879,7 +887,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedLastArgument<'a, '_> {
         // to remove any soft line breaks.
         match self.argument.as_ast_nodes() {
             AstNodes::Function(function)
-                if !self.is_only || function_has_only_simple_parameters(&function.params) =>
+                if !self.is_only || function_has_only_simple_parameters(function) =>
             {
                 FormatFunction::new_cached(function).fmt(f);
             }
@@ -899,8 +907,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedLastArgument<'a, '_> {
     }
 }
 
-fn function_has_only_simple_parameters(params: &FormalParameters<'_>) -> bool {
-    has_only_simple_parameters(params, false)
+fn function_has_only_simple_parameters(function: &Function<'_>) -> bool {
+    has_only_simple_parameters(&function.params, function.this_param.as_deref(), false)
 }
 
 /// Tests if this a simple module import like `import("module-name")` or `require("module-name")`.
@@ -1017,38 +1025,17 @@ fn is_commonjs_or_amd_call(
     }
 }
 
-/// Returns `true` if `arguments` contains a single [multiline template literal argument that starts on its own ](is_multiline_template_starting_on_same_line).
-fn is_multiline_template_only_args(arguments: &[Argument], source_text: SourceText) -> bool {
-    if arguments.len() != 1 {
-        return false;
-    }
-
-    arguments
-        .first()
-        .unwrap()
-        .as_expression()
-        .is_some_and(|expr| is_multiline_template_starting_on_same_line(expr, source_text))
-}
-
-/// Returns `true` if `arguments` is a single template literal inside a `graphql()` call.
-/// This triggers the "hugging" layout where the backtick is adjacent to `(`.
-fn is_graphql_call_with_single_template_arg<'a>(
+/// Returns `true` for a sole template argument printed verbatim (not embedded)
+/// that [starts on the same line and spans lines](is_multiline_template_starting_on_same_line).
+pub fn is_verbatim_multiline_template_sole_arg(
     arguments: &[Argument],
-    call: Option<&&AstNode<'a, CallExpression<'a>>>,
+    call: Option<&CallExpression>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
-    arguments.len() == 1
-        && matches!(arguments.first(), Some(Argument::TemplateLiteral(_)))
-        && call.is_some_and(
-            |c| matches!(&c.callee, Expression::Identifier(id) if id.name.as_str() == "graphql"),
-        )
-}
-
-/// Returns `true` if the single argument is an HTML embed template that should be hugged.
-fn is_huggable_html_embed_single_arg(arguments: &[Argument], f: &JsFormatter<'_, '_>) -> bool {
-    if arguments.len() != 1 {
-        return false;
-    }
-    arguments.first().unwrap().as_expression().is_some_and(|expr| is_huggable_html_embed(expr, f))
+    matches!(arguments, [argument] if argument.as_expression().is_some_and(|expr| {
+        embed_hug(expr, call, f).is_none()
+            && is_multiline_template_starting_on_same_line(expr, f.source_text())
+    }))
 }
 
 /// This function is used to check if the code is a hook-like code:

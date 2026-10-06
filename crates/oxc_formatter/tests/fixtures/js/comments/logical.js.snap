@@ -2,22 +2,43 @@
 source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
+// Kept isolated: a known NON-IDEMPOTENT shape (matches Prettier's first pass).
+// The trailing `/* 2 */` rides the formatter-added precedence parens outward
+// on the second pass; folding this into a pin fixture would pollute its
+// idempotent snapshot.
 code || !escapeless && (true /* 1 */ || false /* 2 */)
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
+// Kept isolated: a known NON-IDEMPOTENT shape (matches Prettier's first pass).
+// The trailing `/* 2 */` rides the formatter-added precedence parens outward
+// on the second pass; folding this into a pin fixture would pollute its
+// idempotent snapshot.
 code || (!escapeless && (true /* 1 */ || false) /* 2 */);
 
 ---------- Not idempotent (second pass) ----------
+// Kept isolated: a known NON-IDEMPOTENT shape (matches Prettier's first pass).
+// The trailing `/* 2 */` rides the formatter-added precedence parens outward
+// on the second pass; folding this into a pin fixture would pollute its
+// idempotent snapshot.
 code || (!escapeless && (true /* 1 */ || false)) /* 2 */;
 
 -------------------
 { printWidth: 100 }
 -------------------
+// Kept isolated: a known NON-IDEMPOTENT shape (matches Prettier's first pass).
+// The trailing `/* 2 */` rides the formatter-added precedence parens outward
+// on the second pass; folding this into a pin fixture would pollute its
+// idempotent snapshot.
 code || (!escapeless && (true /* 1 */ || false) /* 2 */);
 
 ---------- Not idempotent (second pass) ----------
+// Kept isolated: a known NON-IDEMPOTENT shape (matches Prettier's first pass).
+// The trailing `/* 2 */` rides the formatter-added precedence parens outward
+// on the second pass; folding this into a pin fixture would pollute its
+// idempotent snapshot.
 code || (!escapeless && (true /* 1 */ || false)) /* 2 */;
 
 ===================== End =====================

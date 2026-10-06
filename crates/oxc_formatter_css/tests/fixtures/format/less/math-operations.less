@@ -12,3 +12,18 @@
   height: @base * 2;
   flex: @a -@b;
 }
+.explicit {
+  c: 2px ./ 2;
+  e: ((16px ./ 2) / 2) ./ 2;
+}
+.spacing {
+  // `*` always spaced, unless an `@word` swallowed it
+  t9: 2em*1em;
+  t7: (2em*1em) + 20;
+  h: (10px / 2px+6px-1px*2);
+  g: @base*2;
+  // `/` spaced next to a word-like operand, number-only division keeps its glue
+  m: @margins[zero] (@margins[ten]/2) !important;
+  w: @w/2;
+  d: 10px/8px;
+}

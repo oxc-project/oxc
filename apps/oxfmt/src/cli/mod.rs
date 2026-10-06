@@ -1,7 +1,6 @@
 pub(crate) mod command;
 mod init;
 mod reporter;
-mod resolve;
 mod result;
 mod service;
 #[cfg(feature = "napi")]

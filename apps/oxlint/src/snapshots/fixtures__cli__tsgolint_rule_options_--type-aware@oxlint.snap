@@ -90,13 +90,14 @@ working directory: fixtures/cli/tsgolint_rule_options
  112 |   console.log(input.value);
      `----
 
-  x typescript(prefer-readonly): Member 'handler' is never reassigned; mark it as `readonly`.
+  x typescript(prefer-readonly): Member 'handler' is never reassigned.
      ,-[test.ts:117:3]
  116 | class PreferReadonlyOptionExample {
  117 |   private handler = () => 1;
      :   ^^^^^^^^^^^^^^^
  118 |   getValue() {
      `----
+  help: Mark it as `readonly`.
 
   x typescript(prefer-string-starts-ends-with): Use 'String#startsWith' method instead.
      ,-[test.ts:128:28]

@@ -356,10 +356,6 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         }
     }
 
-    // fn target_span(&self) -> Option<Span> {
-    //     self.target_symbol.as_ref().map(|id| id.span)
-    // }
-
     fn with_target_binding(&mut self, binding: Option<&BindingIdentifier<'a>>) -> bool {
         if let Some(id) = binding {
             self.target_symbol = Some(TargetSymbol {
@@ -567,14 +563,13 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                     }
                 }
             }
-        } else {
-            walk_js::walk_arrow_function_body(self, &arrow.body);
+        }
+        walk_js::walk_arrow_function_body(self, &arrow.body);
 
-            // AST is immutable in linter, so `unstable_address` produces stable `Address`es
-            let is_hof = self.is_higher_order_function(arrow.unstable_address());
-            if !is_hof && !is_allowed() {
-                self.ctx.diagnostic(func_missing_return_type(span));
-            }
+        // AST is immutable in linter, so `unstable_address` produces stable `Address`es
+        let is_hof = self.is_higher_order_function(arrow.unstable_address());
+        if !is_hof && !is_allowed() {
+            self.ctx.diagnostic(func_missing_return_type(span));
         }
     }
 
@@ -814,7 +809,6 @@ impl<'a> VisitJs<'a> for ExplicitTypesChecker<'a, '_> {
         }
     }
     fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
-        // let name = param.get_identifier_name();
         if let Some(ty) = &it.type_annotation {
             if !self.rule.allow_arguments_explicitly_typed_as_any
                 && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))

@@ -12,6 +12,9 @@ fn test_fold_return_result() {
     test("function f(){return void 0;}", "function f(){}");
     test("function f(){return void foo();}", "function f(){foo()}");
     test("function f(){return undefined;}", "function f(){}");
+    test("function f(){return a,void 0;}", "function f(){a;}");
+    test("function f(){b;return a,void 0;}", "function f(){b,a;}");
+    test("function f(){b,c;return a,void 0;}", "function f(){b,c,a;}");
     test("function f(){if(a()){return undefined;}}", "function f(){a()}");
     test_same("function a(undefined) { return undefined; }");
     test_same("function f(){return foo()}");
@@ -772,6 +775,10 @@ fn fold_function_spread_args() {
     test("f(a, ...[])", "f(a)");
     test("new F(...[])", "new F()");
     test("new F(...[1])", "new F(1)");
+
+    test("f(...[1], ...a)", "f(1, ...a)");
+    test("f(...[1, , 3], ...a)", "f(1, void 0, 3, ...a)");
+    test("new F(...[1], ...a)", "new F(1, ...a)");
 }
 
 #[test]
@@ -1047,6 +1054,24 @@ fn test_rewrite_arguments_copy_loop() {
     test_same(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r, a) }",
     );
+
+    // A previous pass may fold sibling `var` declarations into the loop initializer.
+    // Those bindings must survive even when the copy loop looks otherwise rewritable.
+    test(
+        "function _() { for (var r = [], a = 0, keep; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+        "function _() { var r = [...arguments], keep; use(r, keep) }",
+    );
+    test(
+        "function _() { var items = [], t = 0, i, u, r; for (; t < arguments.length; t++) items[t] = arguments[t]; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
+        "function _() { var items = [...arguments], i, u, r; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
+    );
+    test(
+        "function _() { for (var r = [], a = 0, keep; a < arguments.length; a++) r[a] = arguments[a]; use(keep) }",
+        "function _() { var keep; use(keep) }",
+    );
+    test_same(
+        "function _() { for (var r = [], a = 0, keep = side(); a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
 }
 
 #[test]
@@ -1090,7 +1115,7 @@ fn test_flatten_array_spread_elements() {
 }
 
 #[test]
-fn fold_sequence_expression() {
+fn test_fold_sequence_expression() {
     test("(a(), b) + c", "a(), b + c");
     test("(a(), b, c) + d", "a(), b, c + d");
 
@@ -1112,4 +1137,16 @@ fn fold_sequence_expression() {
         "async function a() { await (c(1), d(2), 3) }",
         "async function a() { c(1), d(2), await 3 }",
     );
+}
+
+#[test]
+fn test_substitute_yield_expression() {
+    test("function* a() { yield 2 }", "function* a() { yield 2; }");
+    test("function* a() { yield void 0; }", "function* a() { yield; }");
+    test("function* a() { yield undefined; }", "function* a() { yield; }");
+    test("function* a() { yield fn(); }", "function* a() { yield fn(); }");
+    test_same("function* a() { yield* void 0; }");
+    test("function* a() { yield* undefined; }", "function* a() { yield* void 0; }");
+    test("function* a() { yield* fn(); }", "function* a() { yield* fn(); }");
+    test_same("function* a(undefined) { yield undefined; }");
 }

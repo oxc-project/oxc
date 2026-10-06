@@ -204,11 +204,12 @@ unsafe fn parse_raw_impl(
             })
             .with_config(RuntimeParserConfig::new(true))
             .parse();
-        let ParserReturn { program: parsed_program, diagnostics, mut tokens, panicked, .. } =
+        let ParserReturn { program: parsed_program, diagnostics, mut tokens, fatal_error, .. } =
             parser_ret;
         let program = allocator.alloc(parsed_program);
 
-        let mut parsing_failed = panicked || (!diagnostics.is_empty() && !ignore_non_fatal_errors);
+        let mut parsing_failed =
+            fatal_error || (!diagnostics.is_empty() && !ignore_non_fatal_errors);
 
         // Check for semantic errors.
         // If `ignore_non_fatal_errors` is `true`, skip running semantic, as any errors will be ignored anyway.

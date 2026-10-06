@@ -628,16 +628,13 @@ fn get_resolve_symbol_id(expr: &Expression) -> (Option<SymbolId>, Option<SymbolI
         }
         _ => None,
     };
-    let symbol_ids = params.map_or(vec![], |params| {
-        params
-            .items
-            .iter()
-            .map(|param| param.pattern.get_binding_identifier().map(BindingIdentifier::symbol_id))
-            .collect::<Vec<_>>()
-    });
-    let resolve_symbol_id = symbol_ids.first().copied().unwrap_or(None);
-    let reject_symbol_id = symbol_ids.get(1).copied().unwrap_or(None);
-    (resolve_symbol_id, reject_symbol_id)
+    let Some(params) = params else { return (None, None) };
+    let mut symbol_ids = params
+        .items
+        .iter()
+        .take(2)
+        .map(|param| param.pattern.get_binding_identifier().map(BindingIdentifier::symbol_id));
+    (symbol_ids.next().flatten(), symbol_ids.next().flatten())
 }
 
 #[inline]

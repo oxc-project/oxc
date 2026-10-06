@@ -57,4 +57,4 @@ let result = minifier.minify(&mut program);
 - [Assumptions](./docs/ASSUMPTIONS.md) - Code assumptions for optimization
 - [Correctness](./docs/CORRECTNESS.md) - Testing and validation
 - [Roadmap](./docs/ROADMAP.md) - Development plan
-- [Claude Guide](./docs/CLAUDE.md) - AI assistant reference
+- [Agent Guide](./docs/AGENTS.md) - AI assistant reference

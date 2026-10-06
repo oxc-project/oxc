@@ -28,6 +28,8 @@ fn expect_expect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+pub const SHORT_DESCRIPTION: &str = "Enforce that each test has at least one `expect()` call.";
+
 pub const DOCUMENTATION: &str = r"### What it does
 
 This rule triggers when there is no call made to `expect` in a test, ensure that there is at least one `expect` call made in a test.

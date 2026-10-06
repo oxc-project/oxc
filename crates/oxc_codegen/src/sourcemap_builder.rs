@@ -1,4 +1,4 @@
-use std::{borrow::Cow, path::Path};
+use std::{borrow::Cow, collections::hash_map::Entry, path::Path};
 
 use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_span::Span;
@@ -66,12 +66,14 @@ pub struct SourcemapBuilder<'a> {
 impl<'a> SourcemapBuilder<'a> {
     pub fn new(path: &Path, source_text: &'a str) -> Self {
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
+        // Estimate mapping and name counts from source length to reduce reallocations.
+        let source_len = source_text.len();
         Self {
             source_name: path.to_string_lossy().into_owned(),
             original_source: source_text,
-            names: Vec::new(),
+            names: Vec::with_capacity(source_len / 64),
             names_map: FxHashMap::default(),
-            tokens: Vec::new(),
+            tokens: Vec::with_capacity(source_len / 4),
             last_generated_update: 0,
             last_position: None,
             line_offset_tables,
@@ -93,7 +95,7 @@ impl<'a> SourcemapBuilder<'a> {
             source_contents: vec![Some(Cow::Borrowed(self.original_source))],
             tokens: self.tokens.into_boxed_slice(),
             token_chunks: None,
-            x_google_ignore_list: None,
+            ignore_list: None,
             debug_id: None,
         })
     }
@@ -152,13 +154,16 @@ impl<'a> SourcemapBuilder<'a> {
     }
 
     fn add_name(&mut self, name: &'a str) -> u32 {
-        if let Some(&id) = self.names_map.get(name) {
-            return id;
+        match self.names_map.entry(name) {
+            Entry::Occupied(entry) => *entry.get(),
+            Entry::Vacant(entry) => {
+                let id = u32::try_from(self.names.len())
+                    .expect("sourcemap names length should fit in u32");
+                entry.insert(id);
+                self.names.push(name);
+                id
+            }
         }
-        let id = u32::try_from(self.names.len()).expect("sourcemap names length should fit in u32");
-        self.names_map.insert(name, id);
-        self.names.push(name);
-        id
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -378,7 +383,7 @@ impl<'a> SourcemapBuilder<'a> {
     }
 
     fn generate_line_offset_tables(content: &str) -> LineOffsetTables {
-        let mut lines = vec![];
+        let mut lines = Vec::with_capacity(content.len() / 24 + 1);
         let mut column_offsets = IndexVec::new();
 
         // Used as a buffer to reduce memory reallocations.

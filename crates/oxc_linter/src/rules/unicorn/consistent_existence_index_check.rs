@@ -196,9 +196,11 @@ fn get_replacement(right: &Expression, operator: BinaryOperator) -> Option<GetRe
 fn is_negative_one(expression: &Expression) -> bool {
     if let Expression::UnaryExpression(unary_expression) = expression
         && unary_expression.operator == UnaryOperator::UnaryNegation
-        && let Expression::NumericLiteral(value) = &unary_expression.argument.get_inner_expression()
     {
-        return value.raw.as_ref().unwrap() == "1";
+        return unary_expression
+            .argument
+            .get_inner_expression()
+            .is_specific_raw_number_literal("1");
     }
 
     false

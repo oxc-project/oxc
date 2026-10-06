@@ -275,6 +275,18 @@ impl NoUnusedVars {
 
         let text_after = &source[(span.end as usize)..];
         let trailing = count_whitespace_or_commas(text_after.chars());
+        if let Some((_, next_specifier)) = named_imports.get(named_pos + 1)
+            && let Some(offset) =
+                fixer.find_next_token_within(span.end, next_specifier.span().start, ",")
+            && offset >= trailing
+        {
+            // A comment stopped the whitespace scan before the separator.
+            // Remove the comma separately to preserve the comment.
+            let mut fix = fixer.for_multifix().new_fix_with_capacity(2);
+            fix.push(fixer.delete_range(span));
+            fix.push(fixer.delete_range(Span::sized(span.end + offset, 1)));
+            return fix.with_message("Remove unused import");
+        }
         fixer.delete_range(span.expand_right(trailing))
     }
 }

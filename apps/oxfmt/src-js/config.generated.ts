@@ -77,9 +77,16 @@ export interface Oxfmtrc {
    */
   bracketSpacing?: boolean;
   /**
-   * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+   * Control whether to format embedded parts in the file.
+   * For example:
+   * - CSS-in-JS: template literal
+   * - JS-in-Vue: `<script>` block
+   * - JS-in-Markdown: code fence
+   * - YAML-in-CSS/Markdown: front matter
    *
-   * - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
+   * With `"off"`, these parts are kept as-is.
+   *
+   * - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
@@ -414,9 +421,16 @@ export interface FormatConfig {
    */
   bracketSpacing?: boolean;
   /**
-   * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+   * Control whether to format embedded parts in the file.
+   * For example:
+   * - CSS-in-JS: template literal
+   * - JS-in-Vue: `<script>` block
+   * - JS-in-Markdown: code fence
+   * - YAML-in-CSS/Markdown: front matter
    *
-   * - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
+   * With `"off"`, these parts are kept as-is.
+   *
+   * - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
@@ -632,6 +646,8 @@ export interface SortImportsConfig {
    *
    * If you specify multiple conditions like `elementNamePattern`, `selector`, and `modifiers`,
    * all conditions must be met for an import to match the custom group (AND logic).
+   *
+   * NOTE: Predefined group names (e.g. `side_effect`, `external`) and `unknown` are reserved and cannot be used as `groupName`.
    *
    * - Default: `[]`
    */

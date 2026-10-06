@@ -50,7 +50,7 @@ declare_oxc_lint!(
     NoTypos,
     nextjs,
     correctness,
-    pending,
+    suggestion,
     version = "0.2.1",
     short_description = "Detects common typos in Next.js data fetching function names.",
 );
@@ -99,7 +99,9 @@ impl Rule for NoTypos {
 
 fn check_function_name(name: &str, span: Span, ctx: &LintContext) {
     if let Some(suggestion) = best_match(name, NEXTJS_DATA_FETCHING_FUNCTIONS, THRESHOLD) {
-        ctx.diagnostic(no_typos_diagnostic(name, suggestion, span));
+        ctx.diagnostic_with_suggestion(no_typos_diagnostic(name, suggestion, span), |fixer| {
+            fixer.replace(span, suggestion)
+        });
     }
 }
 
@@ -253,5 +255,32 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTypos::NAME, NoTypos::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (
+            "export const getStaticpaths = async () => {};",
+            "export const getStaticPaths = async () => {};",
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            "export async function getStaticPathss() {};\nexport async function getStaticPropss() {};",
+            "export async function getStaticPaths() {};\nexport async function getStaticProps() {};",
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            "export const getServurSideProps = () => {};",
+            "export const getServerSideProps = () => {};",
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            "export const getStaticProp = () => {};",
+            "export const getStaticProps = () => {};",
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+    ];
+
+    Tester::new(NoTypos::NAME, NoTypos::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

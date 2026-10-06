@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -69,12 +71,8 @@ impl Rule for NoNewBuffer {
             };
 
             // Build arguments string
-            let args_text = new_expr
-                .arguments
-                .iter()
-                .map(|arg| ctx.source_range(arg.span()))
-                .collect::<Vec<_>>()
-                .join(", ");
+            let args_text =
+                new_expr.arguments.iter().map(|arg| ctx.source_range(arg.span())).join(", ");
 
             let replacement = format!("Buffer.{method}({args_text})");
             fixer.replace(expr_span, replacement)

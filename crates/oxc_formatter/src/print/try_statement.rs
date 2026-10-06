@@ -12,67 +12,64 @@ use crate::{
 };
 
 use super::FormatWrite;
+use crate::utils::{
+    format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    statement_body::{write_comments_between_blocks, write_head_body_separator},
+};
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let block = self.block();
         let handler = self.handler();
         let finalizer = self.finalizer();
-        write!(f, ["try", space()]);
 
-        if f.comments().has_leading_own_line_comment(block.span.start) {
-            // Use `write` rather than `write!` in order to avoid printing leading own line comments for `block`.
-            block.write(f);
-        } else {
-            write!(f, block);
-        }
+        write!(f, "try");
+        write_head_body_separator(block.span.start, f);
+        write_block_before_keyword(block, handler.is_some() || finalizer.is_some(), f);
 
         if let Some(handler) = handler {
-            write!(f, [space(), handler]);
+            write!(f, space());
+            write_block_before_keyword(handler, finalizer.is_some(), f);
         }
         if let Some(finalizer) = finalizer {
-            write!(f, [space(), "finally", space()]);
-            if f.comments().has_leading_own_line_comment(finalizer.span.start) {
-                // Use `write` rather than `write!` in order to avoid printing leading own line comments for `finalizer`.
-                finalizer.write(f);
-            } else {
-                write!(f, finalizer);
-            }
+            // Lexical scan for the keyword's first byte: the gap holds only trivia and `finally`.
+            let previous_end = handler.map_or(block.span().end, |handler| handler.span().end);
+            let before_keyword =
+                f.context().comments().comments_before_character(previous_end, b'f');
+            // The pending space is dropped at a line start and coalesced otherwise
+            write_comments_between_blocks(before_keyword, f);
+            write!(f, [space(), "finally"]);
+            write_head_body_separator(finalizer.span.start, f);
+            write!(f, finalizer);
         }
+    }
+}
+
+/// Prints `node`, suppressing its generic trailing pass when a keyword (`catch`/`finally`) follows,
+/// so it cannot claim a line comment past that keyword; the keyword site splits the comments instead.
+fn write_block_before_keyword<'a, T>(node: &T, keyword_follows: bool, f: &mut JsFormatter<'_, 'a>)
+where
+    T: Format<'a, JsFormatContext<'a>> + GetSpan,
+{
+    if keyword_follows {
+        FormatNodeWithoutTrailingComments(node).fmt(f);
+    } else {
+        node.fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let comments = f.context().comments();
-        let leading_comments = comments.comments_before(self.span.start);
-        let has_line_comment = leading_comments.iter().any(|comment| comment.has_newlines_around());
-
-        if has_line_comment {
-            // `try {} /* comment */\n catch (e) {}`
-            // should be formatted like:
-            // `try {} catch (e) { /* comment */ }`
-            //
-            // Comments before the catch clause should be printed in the block statement.
-            // We cache them here to avoid the `params` printing them accidentally.
-            let printed_comments = f.intern(&FormatLeadingComments::Comments(leading_comments));
-            if let Some(comments) = printed_comments {
-                f.context_mut().cache_element(&self.span, comments);
-            }
-        } else if !leading_comments.is_empty() {
-            // otherwise, print them before `catch`
-            write!(f, [FormatTrailingComments::Comments(leading_comments), space()]);
+        let leading_comments = f.context().comments().comments_before(self.span.start);
+        if write_comments_between_blocks(leading_comments, f) {
+            write!(f, space());
         }
 
-        write!(f, ["catch", space(), self.param(), space()]);
+        write!(f, ["catch", space(), self.param()]);
 
         let block = self.body();
-        if f.comments().has_leading_own_line_comment(block.span.start) {
-            // Use `write` rather than `write!` in order to avoid printing leading own line comments for `block`.
-            block.write(f);
-        } else {
-            write!(f, block);
-        }
+        write_head_body_separator(block.span.start, f);
+        write!(f, block);
     }
 }
 
@@ -98,19 +95,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
                 f,
                 soft_block_indent(&format_with(|f| {
                     write!(f, [FormatLeadingComments::Comments(leading_comments)]);
-                    let printed_len_before_pattern =
-                        f.context().comments().printed_comments().len();
                     write!(f, self.pattern());
                     write!(f, self.type_annotation());
-                    if trailing_comments.is_empty() ||
-                    // The `pattern` cannot print comments that are below it, so we need to check whether there
-                    // are any trailing comments that haven't been printed yet. If there are, print them.
-                    f.context().comments().printed_comments().len() - printed_len_before_pattern
-                        == trailing_comments.len()
-                    {
-                    } else {
-                        write!(f, FormatTrailingComments::Comments(trailing_comments));
-                    }
+                    // Re-queried after the cursor advanced:
+                    // the pattern may have printed part of the earlier `trailing_comments` slice already
+                    let remaining =
+                        f.context().comments().comments_before_character(self.span().end, b')');
+                    write!(f, FormatTrailingComments::Comments(remaining));
                 }))
             );
         } else {
@@ -118,7 +109,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
             write!(f, self.type_annotation());
         }
 
-        self.format_trailing_comments(f);
+        // Bound the trailing print at the `)`:
+        // the generic pass would claim an end-of-line comment past it and flush it beyond the catch body's `{`.
+        // (Re-queried again: the branch above advances the cursor.)
+        let remaining = f.context().comments().comments_before_character(self.span().end, b')');
+        write!(f, FormatTrailingComments::Comments(remaining));
 
         write!(f, ")");
     }

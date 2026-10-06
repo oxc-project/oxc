@@ -257,6 +257,12 @@ describe("Embedded languages", () => {
       expect(result.code).toMatchSnapshot();
     });
 
+    it("should not format multiple embedded languages in one file (off)", async () => {
+      const result = await format("mixed.js", mixedSource, { embeddedLanguageFormatting: "off" });
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).toMatchSnapshot();
+    });
+
     it("should not format regular templates, prettier-ignore, unsupported tags, and invalid syntax", async () => {
       const result = await format("misc.js", miscSource);
       expect(result.errors).toStrictEqual([]);

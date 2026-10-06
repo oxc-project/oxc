@@ -14,6 +14,15 @@ export class Visitor {
   constructor(visitor: VisitorObject);
   visit(program: Program): void;
 }
+
+/**
+ * Which binding artifact the generated loader actually loaded: `'native'` for
+ * a native addon, otherwise the `platformArchABI` of the WASI flavor. Every
+ * flavor napi-rs can build is listed, because `NAPI_RS_NATIVE_LIBRARY_PATH`
+ * can point the loader at a WASI artifact this package does not build itself.
+ */
+export declare const __napiBindingTarget: 'native' | 'wasm32-wasi' | 'wasm32-wasip1'
+
 export interface Comment {
   type: 'Line' | 'Block'
   value: string
@@ -38,8 +47,9 @@ export interface OxcError {
 export declare const enum Severity {
   Error = 'Error',
   Warning = 'Warning',
-  Advice = 'Advice'
+  Advice = 'Advice',
 }
+
 export declare class ParseResult {
   get program(): import("@oxc-project/types").Program
   get module(): EcmaScriptModule
@@ -85,7 +95,7 @@ export declare const enum ExportExportNameKind {
   /** `export default expression` */
   Default = 'Default',
   /** `export * from "mod" */
-  None = 'None'
+  None = 'None',
 }
 
 export interface ExportImportName {
@@ -103,7 +113,7 @@ export declare const enum ExportImportNameKind {
   /** `export * from "mod"` */
   AllButDefault = 'AllButDefault',
   /** Does not have a specifier. */
-  None = 'None'
+  None = 'None',
 }
 
 export interface ExportLocalName {
@@ -122,7 +132,7 @@ export declare const enum ExportLocalNameKind {
    * If the exported value is not locally accessible from within the module.
    * `export default function () {}`
    */
-  None = 'None'
+  None = 'None',
 }
 
 export interface ImportName {
@@ -138,7 +148,7 @@ export declare const enum ImportNameKind {
   /** `import * as ns from "mod"` */
   NamespaceObject = 'NamespaceObject',
   /** `import defaultExport from "mod"` */
-  Default = 'Default'
+  Default = 'Default',
 }
 
 /**

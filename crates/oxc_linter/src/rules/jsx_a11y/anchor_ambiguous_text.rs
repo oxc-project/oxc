@@ -1,5 +1,9 @@
 use std::borrow::Cow;
 
+use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXChild, JSXElement},
@@ -8,8 +12,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -149,9 +151,7 @@ fn normalize_str(text: &str) -> CompactStr {
     });
 
     if normalized_str.contains(char::is_whitespace) {
-        let parts: Vec<String> =
-            normalized_str.split_whitespace().map(std::string::ToString::to_string).collect();
-        return CompactStr::from(parts.join(" "));
+        return CompactStr::from(normalized_str.split_whitespace().join(" "));
     }
 
     CompactStr::from(normalized_str)

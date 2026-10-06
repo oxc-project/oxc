@@ -8,12 +8,8 @@ import {
   CAT_OP_UN_NEG,
   CAT_OTHER,
   CAT_REGEX_SLASH,
-  write,
-  writeIdent,
-  writeNoLast,
-  writeWithMap,
-  writeWithMapNoLast,
-} from "./write.ts";
+} from "./categories.ts";
+import { write, writeIdent, writeNoLast, writeWithMap, writeWithMapNoLast } from "./write.ts";
 import { printSpaceBeforeIdentifier, printSpaceBeforeOperator } from "./space.ts";
 import { printNonNegativeFloat } from "./number.ts";
 import { CTX_TYPESCRIPT } from "./operators.ts";

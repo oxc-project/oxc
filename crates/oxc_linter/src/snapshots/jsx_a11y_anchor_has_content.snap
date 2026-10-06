@@ -10,6 +10,62 @@ source: crates/oxc_linter/src/tester.rs
   help: Provide screen reader accessible content when using `a` elements.
 
   ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:14]
+ 1 │ <div render={<a />} />
+   ·              ─────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:20]
+ 1 │ <my-button render={<a />} />
+   ·                    ─────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:9]
+ 1 │ <Button><a /></Button>
+   ·         ─────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:11]
+ 1 │ <Button>{(<a />)}</Button>
+   ·           ─────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:22]
+ 1 │ <Button render={<div><a /></div>} />
+   ·                      ─────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:19]
+ 1 │ <Button render={<><a /></>} />
+   ·                   ─────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:23]
+ 1 │ <Button render={() => <a />} />
+   ·                       ─────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:29]
+ 1 │ <Button render={condition ? <a /> : null} />
+   ·                             ─────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
    ╭─[anchor_has_content.tsx:1:1]
  1 │ <a><Bar aria-hidden /></a>
    · ──────────────────────────
