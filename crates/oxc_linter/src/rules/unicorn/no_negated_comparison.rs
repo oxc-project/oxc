@@ -198,7 +198,7 @@ fn check_comparison<'a>(
         apply_bang_removal_fix(
             fixer,
             node,
-            &replacement,
+            replacement,
             "Use the opposite comparison operator instead of negating the comparison.",
             ctx,
         )
@@ -225,16 +225,17 @@ fn check_logical<'a>(
         return;
     }
 
-    let Some(replacement) = flipped_logical_text(logical_argument, ctx, None) else {
-        ctx.diagnostic(diagnostic);
-        return;
-    };
-
+    // Built inside the closure so that runs without fixes enabled skip it. The
+    // caller already checked `only_equality_comparisons`, so `None` is not
+    // expected here; it still withholds the fix rather than panicking.
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
+        let Some(replacement) = flipped_logical_text(logical_argument, ctx) else {
+            return fixer.noop();
+        };
         apply_bang_removal_fix(
             fixer,
             node,
-            &replacement,
+            replacement,
             "Apply De Morgan's law instead of negating the whole expression.",
             ctx,
         )
@@ -416,7 +417,7 @@ fn continues_identifier(c: char) -> bool {
 fn apply_bang_removal_fix<'a>(
     fixer: RuleFixer<'_, 'a>,
     node: &AstNode<'a>,
-    replacement: &Replacement,
+    replacement: Replacement,
     message: &'static str,
     ctx: &LintContext<'a>,
 ) -> RuleFix {
@@ -429,8 +430,13 @@ fn apply_bang_removal_fix<'a>(
         || starts_with_brace_or_declaration_keyword(&replacement.text)
         || (replacement.exposes_in && is_in_for_statement_init(node, ctx));
 
-    let text =
-        if needs_parens { format!("({})", replacement.text) } else { replacement.text.clone() };
+    let mut text = replacement.text;
+    if needs_parens {
+        // The builders reserve room for these two bytes, so this normally
+        // shifts the text in place rather than reallocating.
+        text.insert(0, '(');
+        text.push(')');
+    }
     let first_char = text.chars().next().expect("replacement text is never empty");
 
     // Merge hazard: deleting `!` right after a keyword/identifier that isn't
@@ -468,7 +474,17 @@ fn apply_bang_removal_fix<'a>(
 /// Returns the source text of `comparison` with its (outermost) operator
 /// replaced by its inverse, preserving everything else verbatim (whitespace,
 /// comments, and any nested sub-expressions such as `a === b === c`).
+///
+/// The capacity leaves room for the parentheses [`apply_bang_removal_fix`] may
+/// add; an inverse operator is always as long as the original one.
 fn flipped_comparison_text(comparison: &BinaryExpression, ctx: &LintContext) -> String {
+    let mut out = String::with_capacity(comparison.span.size() as usize + 2);
+    push_flipped_comparison(comparison, ctx, &mut out);
+    out
+}
+
+/// [`flipped_comparison_text`], appending to `out` instead of allocating.
+fn push_flipped_comparison(comparison: &BinaryExpression, ctx: &LintContext, out: &mut String) {
     let inverse = comparison
         .operator
         .equality_inverse_operator()
@@ -484,7 +500,9 @@ fn flipped_comparison_text(comparison: &BinaryExpression, ctx: &LintContext) -> 
     let op_start = (comparison.left.span().end + offset - span.start) as usize;
     let op_end = op_start + op_str.len();
 
-    format!("{}{}{}", &text[..op_start], inverse.as_str(), &text[op_end..])
+    out.push_str(&text[..op_start]);
+    out.push_str(inverse.as_str());
+    out.push_str(&text[op_end..]);
 }
 
 /// Rebuilds `expr` with De Morgan's law applied, adding parentheses only where
@@ -501,18 +519,28 @@ fn flipped_comparison_text(comparison: &BinaryExpression, ctx: &LintContext) -> 
 /// parentheses are dropped - the leaf is re-emitted from `comparison.span` -
 /// so an `in` they were shielding becomes exposed and is reported through
 /// [`Replacement::exposes_in`].
-fn flipped_logical_text(
+///
+/// The whole tree is written into a single buffer sized from the source, so the
+/// rewrite allocates once instead of once per node.
+fn flipped_logical_text(expr: &Expression, ctx: &LintContext) -> Option<Replacement> {
+    let mut text = String::with_capacity(expr.span().size() as usize + 2);
+    let (precedence, exposes_in) = push_flipped_logical(expr, ctx, None, &mut text)?;
+    Some(Replacement { text, precedence, exposes_in })
+}
+
+/// Appends the De Morgan rewrite of `expr` to `out`, returning the precedence
+/// and [`Replacement::exposes_in`] of what was appended. On [`None`], `out`
+/// holds a partial rewrite and must be discarded.
+fn push_flipped_logical(
     expr: &Expression,
     ctx: &LintContext,
     parent_new_operator: Option<LogicalOperator>,
-) -> Option<Replacement> {
+    out: &mut String,
+) -> Option<(Precedence, bool)> {
     match expr.without_parentheses() {
         Expression::BinaryExpression(comparison) if comparison.operator.is_equality() => {
-            Some(Replacement {
-                text: flipped_comparison_text(comparison, ctx),
-                precedence: Precedence::Equals,
-                exposes_in: comparison_exposes_in(comparison),
-            })
+            push_flipped_comparison(comparison, ctx, out);
+            Some((Precedence::Equals, comparison_exposes_in(comparison)))
         }
         Expression::LogicalExpression(logical) => {
             let new_operator = match logical.operator {
@@ -522,23 +550,26 @@ fn flipped_logical_text(
                 LogicalOperator::Coalesce => return None,
             };
 
-            let left = flipped_logical_text(&logical.left, ctx, Some(new_operator))?;
-            let right = flipped_logical_text(&logical.right, ctx, Some(new_operator))?;
-            let text = format!("{} {} {}", left.text, new_operator.as_str(), right.text);
-            let exposes_in = left.exposes_in || right.exposes_in;
-
             let needs_parens = parent_new_operator == Some(LogicalOperator::And)
                 && new_operator == LogicalOperator::Or;
 
             if needs_parens {
+                out.push('(');
+            }
+            let (_, left_exposes_in) =
+                push_flipped_logical(&logical.left, ctx, Some(new_operator), out)?;
+            out.push(' ');
+            out.push_str(new_operator.as_str());
+            out.push(' ');
+            let (_, right_exposes_in) =
+                push_flipped_logical(&logical.right, ctx, Some(new_operator), out)?;
+
+            if needs_parens {
+                out.push(')');
                 // The parentheses added here shield everything inside them.
-                Some(Replacement {
-                    text: format!("({text})"),
-                    precedence: Precedence::Prefix,
-                    exposes_in: false,
-                })
+                Some((Precedence::Prefix, false))
             } else {
-                Some(Replacement { text, precedence: new_operator.precedence(), exposes_in })
+                Some((new_operator.precedence(), left_exposes_in || right_exposes_in))
             }
         }
         _ => None,
