@@ -693,11 +693,11 @@ impl<'a> PeepholeOptimizations {
                     };
                     if test_expr.operator == BinaryOperator::GreaterThan
                         && cons_expr.operator == BinaryOperator::Subtraction
-                        && matches!(&test_expr.left, Expression::Identifier(id) if id.name == name_e)
+                        && test_expr.left.is_specific_id(name_e)
                         && matches!(&test_expr.right, Expression::NumericLiteral(n) if n.value == offset)
-                        && matches!(&cons_expr.left, Expression::Identifier(id) if id.name == name_e)
+                        && cons_expr.left.is_specific_id(name_e)
                         && matches!(&cons_expr.right, Expression::NumericLiteral(n) if n.value == offset)
-                        && matches!(&cond_expr.alternate, Expression::NumericLiteral(n) if n.value == 0.0)
+                        && cond_expr.alternate.is_number_0()
                     {
                         VerifyArrayArgResult::WithOffset
                     } else {
@@ -1158,7 +1158,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<&'a str> {
         match callee {
             Expression::StaticMemberExpression(e) => {
-                if !matches!(&e.object, Expression::Identifier(ident) if ident.name == "window") {
+                if !e.object.is_specific_id("window") {
                     return None;
                 }
                 Some(e.property.name.as_str())
