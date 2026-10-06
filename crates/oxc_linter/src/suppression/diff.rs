@@ -179,12 +179,12 @@ impl DiffManager {
 
                 // Error-severity diagnostics are being written to the new suppressions file, so
                 // they are suppressed. Only warnings surface.
-                let (suppressed, surfaced): (Vec<Message>, Vec<Message>) = lint_diagnostics
+                let (suppressed, unsuppressed): (Vec<Message>, Vec<Message>) = lint_diagnostics
                     .into_iter()
                     .partition(|message| message.error.severity == Severity::Error);
 
                 SuppressionPartition {
-                    unsuppressed: surfaced,
+                    unsuppressed,
                     suppressed,
                     runtime_counts: Some(runtime_suppression_tracking),
                 }
@@ -200,40 +200,38 @@ impl DiffManager {
                     };
                 };
 
-                let is_surfaced = |message: &Message| {
-                    // Warnings are not suppressed — always pass through
-                    if message.error.severity != Severity::Error {
-                        return true;
-                    }
+                let (unsuppressed, suppressed) =
+                    lint_diagnostics.into_iter().partition(|message: &Message| {
+                        // Warnings are not suppressed — always pass through
+                        if message.error.severity != Severity::Error {
+                            return true;
+                        }
 
-                    let Some(key) = oxc_code_short_canonical_name(&message.error.code) else {
-                        return true;
-                    };
+                        let Some(key) = oxc_code_short_canonical_name(&message.error.code) else {
+                            return true;
+                        };
 
-                    let Some(count_file) = recorded_violations.get(&key) else {
-                        return true;
-                    };
+                        let Some(count_file) = recorded_violations.get(&key) else {
+                            return true;
+                        };
 
-                    let Some(count_runtime) = runtime_suppression_tracking.get(&key) else {
-                        return false;
-                    };
+                        let Some(count_runtime) = runtime_suppression_tracking.get(&key) else {
+                            return false;
+                        };
 
-                    // Diagnostics are surfaced as long as we haven't exceeded the expected count based on the baseline
-                    // (e.g., for LSP). However, if we require an exact baseline (like in the CLI) then diagnostics are
-                    // only surfaced if the baseline exactly matches.
-                    if require_exact_baseline {
-                        count_runtime.count != count_file.count
-                    } else {
-                        // Only surface diagnostics if we've exceeded the expected count.
-                        count_runtime.count > count_file.count
-                    }
-                };
-
-                let (surfaced, suppressed): (Vec<Message>, Vec<Message>) =
-                    lint_diagnostics.into_iter().partition(is_surfaced);
+                        // Diagnostics are surfaced as long as we haven't exceeded the expected count based on the baseline
+                        // (e.g., for LSP). However, if we require an exact baseline (like in the CLI) then diagnostics are
+                        // only surfaced if the baseline exactly matches.
+                        if require_exact_baseline {
+                            count_runtime.count != count_file.count
+                        } else {
+                            // Only surface diagnostics if we've exceeded the expected count.
+                            count_runtime.count > count_file.count
+                        }
+                    });
 
                 SuppressionPartition {
-                    unsuppressed: surfaced,
+                    unsuppressed,
                     suppressed,
                     runtime_counts: Some(runtime_suppression_tracking),
                 }
