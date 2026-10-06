@@ -8,7 +8,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, Expression, JSXAttributeName, JSXAttributeValue,
-        JSXElementName, JSXOpeningElement, ObjectExpression, ObjectPropertyKind,
+        JSXElementName, JSXOpeningElement, ObjectExpression, ObjectPropertyKind, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -365,12 +365,10 @@ impl NoInvalidHtmlAttribute {
             let ObjectPropertyKind::ObjectProperty(prop) = prop else {
                 continue;
             };
-            // Resolves `rel`, `"rel"` and `["rel"]` alike; a key that is only
-            // known at runtime yields `None`.
-            let Some(key) = prop.key.static_name() else {
+            let Some(key) = string_key_name(&prop.key) else {
                 continue;
             };
-            let Some(attribute) = self.checked_attribute(&key) else {
+            let Some(attribute) = self.checked_attribute(key) else {
                 continue;
             };
             let name = attribute.name();
@@ -397,6 +395,20 @@ impl NoInvalidHtmlAttribute {
 
             check_create_element_value(attribute, &prop.value, element, ctx);
         }
+    }
+}
+
+/// Resolves `rel`, `"rel"`, `["rel"]` and `` [`rel`] `` alike; a key that is only
+/// known at runtime yields `None`.
+///
+/// Unlike [`PropertyKey::static_name`], this borrows instead of stringifying
+/// numeric and regex keys, which can never name an attribute this rule checks.
+fn string_key_name<'a>(key: &PropertyKey<'a>) -> Option<&'a str> {
+    match key {
+        PropertyKey::StaticIdentifier(ident) => Some(ident.name.as_str()),
+        PropertyKey::StringLiteral(lit) => Some(lit.value.as_str()),
+        PropertyKey::TemplateLiteral(lit) => lit.single_quasi().map(|quasi| quasi.as_str()),
+        _ => None,
     }
 }
 
@@ -430,14 +442,6 @@ fn for_each_run<'s>(value: &'s str, mut f: impl FnMut(usize, &'s str, bool)) {
         f(start, &value[start..end], is_whitespace);
         start = end;
     }
-}
-
-/// Looks `key` up in a table whose keys are all lowercase, ignoring ASCII case.
-///
-/// HTML link types are ASCII case-insensitive, so `NOFOLLOW` names the same link
-/// type as `nofollow`. Only a key that actually contains uppercase allocates.
-fn get_ignore_ascii_case<'m, V>(map: &'m Map<&'static str, V>, key: &str) -> Option<&'m V> {
-    map.get(key.cow_to_ascii_lowercase().as_ref())
 }
 
 /// Validates a string value written as a single space delimited list, which is
@@ -493,7 +497,11 @@ fn check_literal_value(
             return;
         }
 
-        let valid = match get_ignore_ascii_case(values, run) {
+        // The tables are keyed in lowercase, and HTML link types are ASCII
+        // case-insensitive. Lowercased once for both lookups; only a value that
+        // actually contains uppercase allocates.
+        let key = run.cow_to_ascii_lowercase();
+        let valid = match values.get(key.as_ref()) {
             None => {
                 ctx.diagnostic(never_valid_diagnostic(run, name, run_span));
                 false
@@ -507,7 +515,7 @@ fn check_literal_value(
 
         // A value already reported as invalid here has been advised once; adding
         // its partner would not make it valid, so the pairing advice is skipped.
-        if valid && let Some(siblings) = get_ignore_ascii_case(pairs, run) {
+        if valid && let Some(siblings) = pairs.get(key.as_ref()) {
             check_pair(siblings, run, &value[offset + run.len()..], run_span, &resolvable, ctx);
         }
     });
@@ -584,7 +592,9 @@ fn check_create_element_value(
         return;
     }
 
-    match get_ignore_ascii_case(attribute.values(), value) {
+    // Lowercased once for both lookups, as in `check_literal_value`.
+    let key = value.cow_to_ascii_lowercase();
+    match attribute.values().get(key.as_ref()) {
         None => ctx.diagnostic(never_valid_diagnostic(value, name, span)),
         Some(elements) if !elements.contains(element) => {
             ctx.diagnostic(invalid_value_diagnostic(value, name, element, span));
@@ -592,7 +602,7 @@ fn check_create_element_value(
         // The whole value is one key here rather than a list, so a value that
         // needs a partner can never be followed by one.
         Some(_) => {
-            if let Some(siblings) = get_ignore_ascii_case(attribute.pairs(), value) {
+            if let Some(siblings) = attribute.pairs().get(key.as_ref()) {
                 check_pair(siblings, value, "", span, &|_| true, ctx);
             }
         }
