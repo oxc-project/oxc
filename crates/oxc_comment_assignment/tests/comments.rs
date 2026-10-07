@@ -148,6 +148,30 @@ fn program_frame_includes_comments_outside_a_narrow_program_span() {
 }
 
 #[test]
+fn comment_free_function_bodies_preserve_neighbor_attachments() {
+    let allocator = Allocator::default();
+    let body = "value += left * right;\n".repeat(256);
+    let source = format!(
+        "/* first */\nfunction first() {{ {body} }} // first tail\n\
+         /* second */\nfunction second() {{ {body} }} // second tail"
+    );
+    let mut program = parse(&allocator, &source, SourceType::mjs());
+    let first_id = program.body[0].node_id();
+    let second_id = program.body[1].node_id();
+    assign(&mut program);
+
+    assert_eq!(
+        attachments(&program),
+        [
+            CommentAttachment { node_id: first_id, placement: CommentPlacement::Leading },
+            CommentAttachment { node_id: first_id, placement: CommentPlacement::Trailing },
+            CommentAttachment { node_id: second_id, placement: CommentPlacement::Leading },
+            CommentAttachment { node_id: second_id, placement: CommentPlacement::Trailing },
+        ],
+    );
+}
+
+#[test]
 fn sparse_comment_survives_frame_stack_growth() {
     let allocator = Allocator::default();
     let source = format!("{}/* leaf */ value;{}", "{\n".repeat(128), "}\n".repeat(128));
