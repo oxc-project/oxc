@@ -25,7 +25,7 @@ impl<'a> AstBuild<'a> for ParserAstBuilder<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         let index = self.next_node_id.get();
-        assert!(index < NodeId::MAX_INDEX, "Too many AST nodes");
+        assert!(index < NodeId::ORPHANED.index(), "Too many AST nodes");
         self.next_node_id.set(index + 1);
         NodeId::new(index)
     }

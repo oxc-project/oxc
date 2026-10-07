@@ -1,21 +1,21 @@
 checker.ts:
   file size: 2922154 # 2.92 MB
-  sys allocs: 122
+  sys allocs: 126
   sys reallocs: 5
-  sys deallocs: 122
-  sys alloc bytes: 14996287 # 15.00 MB
-  sys peak growth: 10169560 # 10.17 MB
+  sys deallocs: 126
+  sys alloc bytes: 15258751 # 15.26 MB
+  sys peak growth: 10300792 # 10.30 MB
   arena allocs: 56229
   arena reallocs: 5084
   arena size: 16501016 # 16.50 MB
 
 App.tsx:
   file size: 415342 # 415.34 kB
-  sys allocs: 61
+  sys allocs: 65
   sys reallocs: 8
-  sys deallocs: 61
-  sys alloc bytes: 2128539 # 2.13 MB
-  sys peak growth: 1612427 # 1.61 MB
+  sys deallocs: 65
+  sys alloc bytes: 2161627 # 2.16 MB
+  sys peak growth: 1628971 # 1.63 MB
   arena allocs: 7727
   arena reallocs: 920
   arena size: 2782336 # 2.78 MB
@@ -33,9 +33,9 @@ RadixUIAdoptionSection.jsx:
 
 pdf.mjs:
   file size: 567296 # 567.30 kB
-  sys allocs: 2427
+  sys allocs: 2431
   sys reallocs: 205
-  sys deallocs: 2427
+  sys deallocs: 2431
   sys alloc bytes: 5313795 # 5.31 MB
   sys peak growth: 3693355 # 3.69 MB
   arena allocs: 19585
@@ -44,31 +44,31 @@ pdf.mjs:
 
 antd.js:
   file size: 6686316 # 6.69 MB
-  sys allocs: 860
+  sys allocs: 864
   sys reallocs: 56
-  sys deallocs: 860
-  sys alloc bytes: 29973448 # 29.97 MB
-  sys peak growth: 19934725 # 19.93 MB
+  sys deallocs: 864
+  sys alloc bytes: 31565976 # 31.57 MB
+  sys peak growth: 20730989 # 20.73 MB
   arena allocs: 181528
   arena reallocs: 34406
   arena size: 44087584 # 44.09 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB
-  sys allocs: 33
+  sys allocs: 37
   sys reallocs: 1
-  sys deallocs: 33
-  sys alloc bytes: 963008 # 963.01 kB
-  sys peak growth: 657404 # 657.40 kB
+  sys deallocs: 37
+  sys alloc bytes: 979712 # 979.71 kB
+  sys peak growth: 665756 # 665.76 kB
   arena allocs: 2930
   arena reallocs: 244
   arena size: 1092336 # 1.09 MB
 
 kitchen-sink.tsx:
   file size: 732898 # 732.90 kB
-  sys allocs: 1854
+  sys allocs: 1858
   sys reallocs: 174
-  sys deallocs: 1854
+  sys deallocs: 1858
   sys alloc bytes: 5304252 # 5.30 MB
   sys peak growth: 3707425 # 3.71 MB
   arena allocs: 31107
