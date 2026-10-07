@@ -1,0 +1,25 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.ts:1:22]
+ 1 │ const foo = <boolean>!(a === b);
+   ·                      ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.ts:2:1]
+ 1 │ foo
+ 2 │ !(<boolean>a === b)
+   · ───────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.ts:1:22]
+ 1 │ const foo = <boolean>!(a === b && c === d);
+   ·                      ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
