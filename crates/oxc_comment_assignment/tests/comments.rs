@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{
     AstKind, AstType, CommentAttachment, CommentContent, CommentPlacement, ast::Program,
@@ -11,7 +13,18 @@ use oxc_syntax::node::NodeId;
 fn parse<'a>(allocator: &'a Allocator, source: &'a str, source_type: SourceType) -> Program<'a> {
     let ret = Parser::new(allocator, source, source_type).parse();
     assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
-    ret.program
+    let program = ret.program;
+    let nodes = nodes(&program);
+    for comment in &program.comments {
+        let owner = comment
+            .attachment
+            .as_ref()
+            .expect("Parser returned an unassigned comment")
+            .node_id
+            .get();
+        assert!(nodes.iter().any(|node| node.id == owner));
+    }
+    program
 }
 
 struct Node {
@@ -50,13 +63,13 @@ fn assign(program: &mut Program<'_>) {
     let nodes = nodes(program);
     assert_eq!(nodes.iter().map(|node| node.id).collect::<Vec<_>>(), before);
     for comment in &program.comments {
-        let entry = comment.attachment.expect("Unassigned comment");
-        assert!(nodes.iter().any(|node| node.id == entry.node_id));
+        let entry = comment.attachment.as_ref().expect("Unassigned comment");
+        assert!(nodes.iter().any(|node| node.id == entry.node_id.get()));
     }
 }
 
 fn attachments(program: &Program<'_>) -> Vec<CommentAttachment> {
-    program.comments.iter().map(|comment| comment.attachment.unwrap()).collect()
+    program.comments.iter().map(|comment| comment.attachment.as_ref().unwrap().clone()).collect()
 }
 
 #[track_caller]
@@ -69,7 +82,9 @@ fn attachment(program: &Program<'_>, source: &str) -> CommentAttachment {
         })
         .unwrap_or_else(|| panic!("Comment not found: {source}"))
         .attachment
+        .as_ref()
         .unwrap()
+        .clone()
 }
 
 #[track_caller]
@@ -102,7 +117,7 @@ fn comment_only_program_owns_all_comments() {
     assign(&mut program);
 
     assert_eq!(program.comments.len(), 3);
-    assert!(attachments(&program).iter().all(|entry| entry.node_id == program.node_id.get()));
+    assert!(attachments(&program).iter().all(|entry| entry.node_id.get() == program.node_id.get()));
 }
 
 #[test]
@@ -119,8 +134,14 @@ fn hashbang_and_directive_nodes_preserve_ids_with_comments() {
     assert_eq!(
         attachments(&program),
         [
-            CommentAttachment { node_id: statement, placement: CommentPlacement::Leading },
-            CommentAttachment { node_id: statement, placement: CommentPlacement::Trailing },
+            CommentAttachment {
+                node_id: Cell::new(statement),
+                placement: CommentPlacement::Leading
+            },
+            CommentAttachment {
+                node_id: Cell::new(statement),
+                placement: CommentPlacement::Trailing
+            },
         ],
     );
 }
@@ -136,12 +157,15 @@ fn program_frame_includes_comments_outside_a_narrow_program_span() {
 
     assert_eq!(
         attachment(&program, "/* leading */"),
-        CommentAttachment { node_id: NodeId::ROOT, placement: CommentPlacement::Leading },
+        CommentAttachment {
+            node_id: Cell::new(NodeId::ROOT),
+            placement: CommentPlacement::Leading
+        },
     );
     assert_eq!(
         attachment(&program, "// trailing"),
         CommentAttachment {
-            node_id: node_id(&program, AstType::ExpressionStatement, "value;"),
+            node_id: Cell::new(node_id(&program, AstType::ExpressionStatement, "value;")),
             placement: CommentPlacement::Trailing,
         },
     );
@@ -163,10 +187,22 @@ fn comment_free_function_bodies_preserve_neighbor_attachments() {
     assert_eq!(
         attachments(&program),
         [
-            CommentAttachment { node_id: first_id, placement: CommentPlacement::Leading },
-            CommentAttachment { node_id: first_id, placement: CommentPlacement::Trailing },
-            CommentAttachment { node_id: second_id, placement: CommentPlacement::Leading },
-            CommentAttachment { node_id: second_id, placement: CommentPlacement::Trailing },
+            CommentAttachment {
+                node_id: Cell::new(first_id),
+                placement: CommentPlacement::Leading
+            },
+            CommentAttachment {
+                node_id: Cell::new(first_id),
+                placement: CommentPlacement::Trailing
+            },
+            CommentAttachment {
+                node_id: Cell::new(second_id),
+                placement: CommentPlacement::Leading
+            },
+            CommentAttachment {
+                node_id: Cell::new(second_id),
+                placement: CommentPlacement::Trailing
+            },
         ],
     );
 }
@@ -181,7 +217,7 @@ fn sparse_comment_survives_frame_stack_growth() {
     assert_eq!(
         attachment(&program, "/* leaf */"),
         CommentAttachment {
-            node_id: node_id(&program, AstType::ExpressionStatement, "value;"),
+            node_id: Cell::new(node_id(&program, AstType::ExpressionStatement, "value;")),
             placement: CommentPlacement::Leading,
         },
     );
@@ -197,7 +233,7 @@ fn sparse_nested_ternary_keeps_the_comment_in_the_inner_branch() {
     );
     assign(&mut program);
     let entry = attachment(&program, "/* inner */");
-    assert_eq!(entry.node_id, node_id(&program, AstType::NumericLiteral, "0"));
+    assert_eq!(entry.node_id.get(), node_id(&program, AstType::NumericLiteral, "0"));
     assert_eq!(entry.placement, CommentPlacement::Leading);
 }
 
@@ -217,7 +253,7 @@ fn ancestors_resolve_their_gaps_after_children_claim_nested_comments() {
         ("// trailing", statement_id, CommentPlacement::Trailing),
     ] {
         let entry = attachment(&program, comment);
-        assert_eq!((entry.node_id, entry.placement), (owner, placement));
+        assert_eq!((entry.node_id.get(), entry.placement), (owner, placement));
     }
 }
 
@@ -239,7 +275,7 @@ fn leading_and_exact_trailing_comments_attach_to_outer_statements() {
         ("// next", second, CommentPlacement::Leading),
     ] {
         let entry = attachment(&program, comment);
-        assert_eq!((entry.node_id, entry.placement), (expected_node, expected_placement));
+        assert_eq!((entry.node_id.get(), entry.placement), (expected_node, expected_placement));
     }
 }
 
@@ -259,7 +295,7 @@ fn empty_delimiters_and_closing_gaps_keep_dangling_comments() {
         let mut program = parse(&allocator, source, SourceType::mjs());
         assign(&mut program);
         let entry = attachment(&program, "/* inside */");
-        assert_eq!(entry.node_id, node_id(&program, kind, container), "{source}");
+        assert_eq!(entry.node_id.get(), node_id(&program, kind, container), "{source}");
         assert_eq!(entry.placement, CommentPlacement::Dangling, "{source}");
     }
 }
@@ -278,7 +314,7 @@ fn jsx_comments_belong_to_the_empty_expression() {
             .find(|node| node.kind == AstType::JSXEmptyExpression)
             .unwrap();
         let entry = attachment(&program, "/* inside */");
-        assert_eq!(entry.node_id, empty.id);
+        assert_eq!(entry.node_id.get(), empty.id);
         assert_eq!(entry.placement, CommentPlacement::Dangling);
     }
 }
@@ -302,7 +338,7 @@ fn template_children_claim_comments_after_quasis_were_visited() {
         assign(&mut program);
         for (comment, owner) in [("/* one */", "First"), ("/* two */", "Second")] {
             let entry = attachment(&program, comment);
-            assert_eq!(entry.node_id, node_id(&program, owner_kind, owner), "{source}");
+            assert_eq!(entry.node_id.get(), node_id(&program, owner_kind, owner), "{source}");
             assert_eq!(entry.placement, CommentPlacement::Trailing);
         }
     }
@@ -320,10 +356,10 @@ fn overlapping_this_parameter_and_parameter_list_do_not_reassign_comments() {
 
     let entry = attachment(&program, "/* context */");
     assert_eq!(entry.placement, CommentPlacement::Leading);
-    assert_eq!(entry.node_id, node_id(&program, AstType::TSTypeReference, "Context"),);
+    assert_eq!(entry.node_id.get(), node_id(&program, AstType::TSTypeReference, "Context"),);
     let entry = attachment(&program, "/* value */");
     assert_eq!(entry.placement, CommentPlacement::Leading);
-    assert_eq!(entry.node_id, node_id(&program, AstType::FormalParameter, "value: number"),);
+    assert_eq!(entry.node_id.get(), node_id(&program, AstType::FormalParameter, "value: number"),);
 }
 
 #[test]
@@ -341,7 +377,7 @@ fn decorators_before_export_keep_comments_in_the_decorator() {
         let entry = attachment(&program, "/* inside */");
 
         assert_eq!(
-            entry.node_id,
+            entry.node_id.get(),
             node_id(&program, AstType::IdentifierReference, "value"),
             "{source}",
         );
@@ -365,7 +401,7 @@ fn applied_annotations_attach_to_the_flagged_nodes() {
             .find(|node| node.kind == owner_kind && node.pure)
             .unwrap_or_else(|| panic!("Annotation was not applied in {source}"));
 
-        assert_eq!(attachments(&program)[0].node_id, owner.id, "{source}");
+        assert_eq!(attachments(&program)[0].node_id.get(), owner.id, "{source}");
         assert_eq!(attachments(&program)[0].placement, CommentPlacement::Leading);
     }
 }
@@ -379,7 +415,7 @@ fn property_key_annotations_attach_to_literals() {
         let allocator = Allocator::default();
         let mut program = parse(&allocator, source, SourceType::mjs());
         assign(&mut program);
-        assert_eq!(attachments(&program)[0].node_id, node_id(&program, kind, literal));
+        assert_eq!(attachments(&program)[0].node_id.get(), node_id(&program, kind, literal));
         assert_eq!(attachments(&program)[0].placement, CommentPlacement::Leading);
     }
 }
@@ -398,7 +434,7 @@ fn direct_import_magic_comments_are_dangling_on_the_import() {
             .into_iter()
             .find(|node| node.kind == AstType::ImportExpression)
             .unwrap();
-        assert_eq!(attachments(&program)[0].node_id, import.id, "{source}");
+        assert_eq!(attachments(&program)[0].node_id.get(), import.id, "{source}");
         assert_eq!(attachments(&program)[0].placement, CommentPlacement::Dangling);
     }
 }
@@ -414,7 +450,7 @@ fn nested_magic_comments_are_not_captured_by_an_outer_import() {
     assign(&mut program);
     let owner = nodes(&program)
         .into_iter()
-        .find(|node| node.id == attachments(&program)[0].node_id)
+        .find(|node| node.id == attachments(&program)[0].node_id.get())
         .unwrap();
     assert_ne!(owner.kind, AstType::ImportExpression);
 }
@@ -431,7 +467,7 @@ fn file_coverage_comments_belong_to_program() {
         let allocator = Allocator::default();
         let mut program = parse(&allocator, source, SourceType::mjs());
         assign(&mut program);
-        assert_eq!(attachments(&program)[0].node_id, program.node_id.get());
+        assert_eq!(attachments(&program)[0].node_id.get(), program.node_id.get());
         assert_eq!(attachments(&program)[0].placement, CommentPlacement::Leading);
     }
 }
@@ -446,12 +482,11 @@ fn source_comments_are_unchanged_and_repeated_assignments_are_identical() {
     );
     let source_comments = program.comments.to_vec();
 
-    assert!(program.comments.iter().all(|comment| comment.attachment.is_none()));
-    assign(&mut program);
     let first = attachments(&program);
     assign(&mut program);
+    assign(&mut program);
 
-    assert!(program.comments.iter().zip(&source_comments).all(|(a, b)| a.content_eq(b)));
+    assert_eq!(program.comments.as_slice(), source_comments.as_slice());
     assert_eq!(first, attachments(&program));
 }
 
@@ -473,7 +508,10 @@ fn leading_comments_keep_their_statement_owners_across_repeated_assignments() {
         for (comment, node_id) in program.comments.iter().zip(statements) {
             assert_eq!(
                 comment.attachment,
-                Some(CommentAttachment { node_id, placement: CommentPlacement::Leading })
+                Some(CommentAttachment {
+                    node_id: Cell::new(node_id),
+                    placement: CommentPlacement::Leading
+                })
             );
         }
         let first = attachments(&program);
@@ -510,9 +548,9 @@ fn normal_comments_keep_their_ownership_before_annotation_comments() {
         let normal = attachment(&program, "// normal");
         let annotation = attachment(&program, annotation);
 
-        assert_eq!(normal.node_id, node_id(&program, normal_kind, normal_source));
+        assert_eq!(normal.node_id.get(), node_id(&program, normal_kind, normal_source));
         assert_eq!(normal.placement, CommentPlacement::Leading);
-        assert_eq!(annotation.node_id, node_id(&program, annotation_kind, annotation_source));
+        assert_eq!(annotation.node_id.get(), node_id(&program, annotation_kind, annotation_source));
         assert_eq!(annotation.placement, CommentPlacement::Leading);
     }
 }
@@ -553,7 +591,7 @@ fn template_substitution_edges_attach_to_the_substitution_root() {
             [("/*before*/", CommentPlacement::Leading), ("/*after*/", CommentPlacement::Trailing)]
         {
             let entry = attachment(&program, comment);
-            assert_eq!((entry.node_id, entry.placement), (root, placement), "{source}");
+            assert_eq!((entry.node_id.get(), entry.placement), (root, placement), "{source}");
         }
     }
 }
@@ -574,7 +612,7 @@ fn this_parameter_edges_survive_the_overlapping_parameter_list() {
         ("// this tail", CommentPlacement::Trailing),
     ] {
         let entry = attachment(&program, comment);
-        assert_eq!((entry.node_id, entry.placement), (this_parameter, placement));
+        assert_eq!((entry.node_id.get(), entry.placement), (this_parameter, placement));
     }
 }
 
@@ -606,7 +644,7 @@ fn pure_annotations_follow_flagged_calls_through_wrappers() {
             let flagged: Vec<_> = nodes(&program).into_iter().filter(|node| node.pure).collect();
             assert_eq!(flagged.len(), 1, "{source}");
 
-            assert_eq!(attachments(&program)[0].node_id, flagged[0].id, "{source}");
+            assert_eq!(attachments(&program)[0].node_id.get(), flagged[0].id, "{source}");
             assert_eq!(attachments(&program)[0].placement, CommentPlacement::Leading);
         }
     }
@@ -634,7 +672,7 @@ fn no_side_effects_annotations_follow_export_and_const_prefixes() {
         assert!(functions[0].pure, "{source}");
         assert!(functions[1..].iter().all(|node| !node.pure), "{source}");
 
-        assert_eq!(attachments(&program)[0].node_id, functions[0].id, "{source}");
+        assert_eq!(attachments(&program)[0].node_id.get(), functions[0].id, "{source}");
         assert_eq!(attachments(&program)[0].placement, CommentPlacement::Leading);
     }
 }
@@ -659,7 +697,7 @@ fn const_prefix_annotations_skip_functions_in_binding_patterns() {
         {
             let entry = attachment(&program, comment);
             assert_eq!(
-                entry.node_id,
+                entry.node_id.get(),
                 node_id(&program, AstType::ArrowFunctionExpression, function)
             );
             assert_eq!(entry.placement, CommentPlacement::Leading);
@@ -687,8 +725,8 @@ fn nested_annotations_stay_with_their_own_targets() {
         let mut program = parse(&allocator, source, SourceType::mjs());
         assign(&mut program);
         for (index, target) in [outer, inner].into_iter().enumerate() {
-            let entry = program.comments[index].attachment.unwrap();
-            assert_eq!(entry.node_id, node_id(&program, kind, target), "{source}");
+            let entry = program.comments[index].attachment.as_ref().unwrap();
+            assert_eq!(entry.node_id.get(), node_id(&program, kind, target), "{source}");
             assert_eq!(entry.placement, CommentPlacement::Leading);
         }
     }
@@ -711,7 +749,7 @@ fn no_side_effects_annotations_follow_parenthesized_functions() {
             assert_eq!(program.comments[0].content, CommentContent::NoSideEffects, "{source}");
             assign(&mut program);
             assert_eq!(
-                attachments(&program)[0].node_id,
+                attachments(&program)[0].node_id.get(),
                 node_id(&program, AstType::ArrowFunctionExpression, "() => 1"),
                 "{source}",
             );
@@ -740,12 +778,12 @@ fn unapplied_annotations_do_not_move_to_later_flagged_nodes() {
         assert_eq!(program.comments[1].content, applied);
         assign(&mut program);
         let flagged = nodes(&program).into_iter().find(|node| node.pure).unwrap();
-        let before = program.comments[0].attachment.unwrap();
-        let after = program.comments[1].attachment.unwrap();
+        let before = program.comments[0].attachment.as_ref().unwrap();
+        let after = program.comments[1].attachment.as_ref().unwrap();
 
-        assert_eq!(before.node_id, node_id(&program, AstType::ExpressionStatement, "value;"));
-        assert_ne!(before.node_id, flagged.id);
-        assert_eq!(after.node_id, flagged.id);
+        assert_eq!(before.node_id.get(), node_id(&program, AstType::ExpressionStatement, "value;"));
+        assert_ne!(before.node_id.get(), flagged.id);
+        assert_eq!(after.node_id.get(), flagged.id);
     }
 }
 
@@ -800,14 +838,14 @@ fn ownership_moves_with_comments_when_the_vector_changes() {
     assign(&mut program);
     let first = attachment(&program, "// first");
     let second = attachment(&program, "// second");
-    let copied = program.comments[0];
-    assert_eq!(copied.attachment, Some(first));
+    let comment = &program.comments[0];
+    assert_eq!(comment.attachment.as_ref(), Some(&first));
     let removed = program.comments.remove(1);
     program.comments.reverse();
 
     assert_eq!(attachment(&program, "// first"), first);
     assert_eq!(attachment(&program, "// second"), second);
-    assert_eq!(removed.attachment.unwrap().node_id, first.node_id);
+    assert_eq!(removed.attachment.as_ref().unwrap().node_id.get(), first.node_id.get());
 }
 
 #[test]
@@ -816,13 +854,13 @@ fn ast_cloning_keeps_attachments_only_with_semantic_ids() {
     let mut program = parse(&allocator, "// leading\nfirst();", SourceType::mjs());
     assign(&mut program);
     let owner = attachment(&program, "// leading");
-    assert_ne!(owner.node_id, NodeId::ROOT);
+    assert_ne!(owner.node_id.get(), NodeId::ROOT);
 
     let cloned = program.clone_in(&allocator);
     assert!(cloned.comments[0].attachment.is_none());
     let mut cloned = program.clone_in_with_semantic_ids(&allocator);
     assert_eq!(attachment(&cloned, "// leading"), owner);
-    assert_eq!(node_id(&cloned, AstType::ExpressionStatement, "first();"), owner.node_id);
+    assert_eq!(node_id(&cloned, AstType::ExpressionStatement, "first();"), owner.node_id.get());
     cloned.comments[0].attachment = None;
     assert_eq!(attachment(&program, "// leading"), owner);
 }
