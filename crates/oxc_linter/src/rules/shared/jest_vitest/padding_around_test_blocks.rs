@@ -3,7 +3,8 @@ use oxc_ast::AstKind;
 use crate::{
     context::LintContext,
     utils::{
-        JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode, parse_general_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode,
+        parse_general_jest_fn_call, report_missing_padding_after_jest_block,
         report_missing_padding_before_jest_block,
     },
 };
@@ -69,4 +70,9 @@ pub fn run<'a>(jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         return;
     }
     report_missing_padding_before_jest_block(node, ctx, name);
+    // Any test block covers the gap after this one through its own "before" check, and `test` /
+    // `it` and their variants are interchangeable, so match on the kind rather than the name.
+    report_missing_padding_after_jest_block(node, ctx, name, |next| {
+        JestFnKind::from(next) == JestFnKind::General(JestGeneralFnKind::Test)
+    });
 }

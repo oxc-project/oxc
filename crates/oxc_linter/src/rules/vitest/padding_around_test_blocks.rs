@@ -42,6 +42,13 @@ fn test() {
         "{ test('foo', () => {}); }",
         "describe('foo', () => {\ntest('bar', () => {});\n});",
         "const thing = 123;\n\n/* one */\n/* two */\ntest('foo', () => {});",
+        // Issue: <https://github.com/oxc-project/oxc/issues/25590>
+        "test('foo', () => {});
+
+const thing = 123;",
+        "test('foo', () => {});
+
+it('bar', () => {});",
     ];
 
     let fail = vec![
@@ -79,6 +86,11 @@ describe('other bar', function() {
     });
 });
             ",
+        // Issue: <https://github.com/oxc-project/oxc/issues/25590>
+        "test('foo', () => {});
+const thing = 123;",
+        "it('foo', () => {});
+describe('bar', () => {});",
     ];
 
     let fix = vec![
@@ -168,6 +180,13 @@ describe('other bar', function() {
     });
 });
             ",
+        ),
+        (
+            "test('foo', () => {});
+const thing = 123;",
+            "test('foo', () => {});
+
+const thing = 123;",
         ),
     ];
     Tester::new(PaddingAroundTestBlocks::NAME, PaddingAroundTestBlocks::PLUGIN, pass, fail)
