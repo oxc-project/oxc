@@ -25,6 +25,13 @@ impl NodeId {
 
     /// Node id of the Program node.
     pub const ROOT: Self = NodeId::new(0);
+
+    /// Reserved owner ID for a comment whose AST node was removed.
+    ///
+    /// AST traversals must not assign this ID to a node. Keeping orphaned
+    /// attachments distinct from unassigned comments prevents source-position
+    /// fallback from attaching them to unrelated generated code.
+    pub const ORPHANED: Self = NodeId::new(Self::MAX_INDEX - 1);
 }
 
 impl Default for NodeId {

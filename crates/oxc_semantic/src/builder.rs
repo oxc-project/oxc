@@ -31,6 +31,7 @@ use crate::{
     binder::{Binder, ModuleInstanceState},
     checker,
     class::ClassTableBuilder,
+    comments::CommentIdRemapper,
     diagnostics::redeclaration,
     label::UnusedLabels,
     node::{Ancestry, AstNodeStore, AstNodeStoreKind},
@@ -104,6 +105,12 @@ pub struct SemanticBuilder<'a> {
     stats: Option<Stats>,
     excess_capacity: f64,
 
+    // Allocate sparse remapping state only when comments have existing owners.
+    comment_remapper: Option<Box<CommentIdRemapper<'a>>>,
+    // Reject ordinary descendants without dereferencing the boxed remapper.
+    // None means every owner has been found, or there were no candidates.
+    minimum_comment_owner: Option<NodeId>,
+
     /// Should enum member values be evaluated?
     enum_eval: bool,
 
@@ -161,6 +168,8 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
+            comment_remapper: None,
+            minimum_comment_owner: None,
             enum_eval: false,
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
@@ -301,10 +310,20 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
-    /// Finalize the builder.
+    /// Build semantic information, preserving existing comment ownership as node IDs change.
+    ///
+    /// The parser establishes comment ownership. This method remaps those owners
+    /// without using source positions, including after AST transformations.
+    /// Removed owners become [`NodeId::ORPHANED`]. Comments without attachments,
+    /// such as clones made without node IDs, remain unassigned.
     ///
     /// # Panics
+    ///
+    /// Panics if the AST exceeds the limits of semantic's node or scope IDs.
     pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
+        self.comment_remapper = CommentIdRemapper::new(&program.comments).map(Box::new);
+        self.minimum_comment_owner =
+            self.comment_remapper.as_ref().and_then(|remapper| remapper.minimum_old_id());
         self.source_text = program.source_text;
         self.source_type = program.source_type;
         #[cfg(feature = "jsdoc")]
@@ -343,6 +362,10 @@ impl<'a> SemanticBuilder<'a> {
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
+
+        if let Some(remapper) = self.comment_remapper.take() {
+            remapper.finish();
+        }
 
         // Check that estimated counts accurately (unless in release mode)
         #[cfg(debug_assertions)]
@@ -438,7 +461,7 @@ impl<'a> SemanticBuilder<'a> {
 
         // 1. Standalone node-id increment.
         let node_id = self.node_store.alloc_node_id();
-        kind.set_node_id(node_id);
+        self.set_node_id(kind, node_id);
         let parent_node_id = self.node_store.current_node_id;
         self.node_store.current_node_id = node_id;
 
@@ -461,6 +484,24 @@ impl<'a> SemanticBuilder<'a> {
             AstNodeStoreKind::Ancestry(stack) => stack.push(kind),
         }
         self.record_ast_node();
+    }
+
+    #[inline]
+    fn set_node_id(&mut self, kind: AstKind<'a>, node_id: NodeId) {
+        if let Some(minimum_owner) = self.minimum_comment_owner
+            && kind.node_id() >= minimum_owner
+        {
+            self.remap_comment_owner(kind.node_id(), node_id);
+        }
+        kind.set_node_id(node_id);
+    }
+
+    #[inline(never)]
+    fn remap_comment_owner(&mut self, old_id: NodeId, new_id: NodeId) {
+        if let Some(remapper) = &mut self.comment_remapper {
+            remapper.enter_node(old_id, new_id);
+            self.minimum_comment_owner = remapper.minimum_old_id();
+        }
     }
 
     #[inline]
@@ -889,7 +930,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // 1. Standalone node-id increment: `Program` is always `NodeId::ROOT`.
         let node_id = self.node_store.alloc_node_id();
         debug_assert_eq!(node_id, NodeId::ROOT);
-        kind.set_node_id(node_id);
+        self.set_node_id(kind, node_id);
         self.node_store.current_node_id = node_id;
         // 2 & 3. Either the full node store or the ancestry stack — never both.
         #[cfg(feature = "cfg")]
