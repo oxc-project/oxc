@@ -1,3 +1,5 @@
+mod comment_inputs;
+
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
@@ -31,6 +33,20 @@ fn bench_parser(criterion: &mut Criterion) {
         });
     }
 
+    group.finish();
+}
+
+fn bench_parser_comments(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("parser_comments");
+    for (name, source) in comment_inputs::inputs() {
+        let mut allocator = Allocator::default();
+        group.bench_function(name, |b| {
+            b.iter(|| {
+                black_box(Parser::new(&allocator, &source, oxc_span::SourceType::mjs()).parse());
+                allocator.reset();
+            });
+        });
+    }
     group.finish();
 }
 
@@ -122,5 +138,5 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(parser, bench_parser, bench_estree, bench_estree_tokens);
+criterion_group!(parser, bench_parser, bench_parser_comments, bench_estree, bench_estree_tokens);
 criterion_main!(parser);
