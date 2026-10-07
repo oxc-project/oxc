@@ -1,0 +1,19 @@
+{
+  "name": "unplugin",
+  "type": "module",
+  "version": "1.0.0",
+  "count": 3,
+  "negative": -2,
+  "flag": true,
+  "nothing": null,
+  "keywords": ["a", "b"],
+  "mixed": [1, "a", true],
+  "empty": [],
+  "objects": [{ "x": 1 }, { "x": 2 }],
+  "nested": {
+    "deep": { "value": 1 },
+    "list": [{ "z": 1 }]
+  },
+  "with-dash": "kebab",
+  "123number": "quoted-key"
+}
