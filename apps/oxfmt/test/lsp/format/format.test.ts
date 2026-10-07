@@ -25,6 +25,7 @@ describe("LSP formatting", () => {
   describe("config options", () => {
     it.each([
       ["config-semi/test.ts", "typescript"],
+      ["config-symlink/test.ts", "typescript"],
       ["config-js-semi/test.ts", "typescript"],
       ["config-no-sort-package-json/package.json", "json"],
       ["config-vue-indent/test.vue", "vue"],

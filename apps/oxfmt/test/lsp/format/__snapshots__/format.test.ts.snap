@@ -220,6 +220,18 @@ file://<fixture>/config-svelte/test.svelte
 --------------------"
 `;
 
+exports[`LSP formatting > config options > should apply config from config-symlink/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/config-symlink/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1
+
+--------------------"
+`;
+
 exports[`LSP formatting > config options > should apply config from config-vite-semi/test.ts 1`] = `
 "--- URI -----------
 file://<fixture>/config-vite-semi/test.ts
