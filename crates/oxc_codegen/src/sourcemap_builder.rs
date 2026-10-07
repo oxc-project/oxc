@@ -153,6 +153,17 @@ impl<'a> SourcemapBuilder<'a> {
         self.last_position = Some(position);
     }
 
+    /// Rewind the generated cursor after removing trailing ASCII spaces or tabs.
+    /// Existing tokens retain their recorded columns; subsequent mappings must
+    /// scan new output from the shortened end, including a following newline.
+    #[expect(clippy::cast_possible_truncation)]
+    pub(crate) fn truncate_generated_whitespace(&mut self, output_len: usize) {
+        if output_len < self.last_generated_update {
+            self.generated_column -= (self.last_generated_update - output_len) as u32;
+            self.last_generated_update = output_len;
+        }
+    }
+
     fn add_name(&mut self, name: &'a str) -> u32 {
         match self.names_map.entry(name) {
             Entry::Occupied(entry) => *entry.get(),
@@ -661,6 +672,23 @@ mod test {
                 .and_then(oxc_sourcemap::SourceViewToken::get_name),
             Some("b")
         );
+    }
+
+    #[test]
+    fn mapping_after_trimming_generated_whitespace() {
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "ab");
+        builder.add_source_mapping(b"a   ", 0, None);
+        assert_eq!((builder.generated_line, builder.generated_column), (0, 4));
+
+        builder.truncate_generated_whitespace(1);
+        builder.add_source_mapping(b"a\nb", 1, None);
+        assert_eq!((builder.generated_line, builder.generated_column), (1, 1));
+        assert_eq!(builder.last_generated_update, 3);
+
+        // No mapped whitespace was removed, so the generated cursor stays put.
+        builder.truncate_generated_whitespace(3);
+        builder.add_source_mapping(b"a\nb\nc", 0, None);
+        assert_eq!((builder.generated_line, builder.generated_column), (2, 1));
     }
 
     #[test]

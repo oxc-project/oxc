@@ -15,8 +15,7 @@ export declare const __napiBindingTarget: 'native' | 'wasm32-wasi' | 'wasm32-was
  * Returns `null` if the source text could not be parsed without errors, which tells the caller
  * there is nothing to compare for this fixture.
  *
- * Comments are not printed. `oxc-codegen` does not print comments, and the ESTree AST the JS side
- * works from carries no comment data anyway.
+ * Comments are printed when requested, using the same ownership pass as the parser binding.
  *
  * # Errors
  *
@@ -48,6 +47,8 @@ export interface Options {
    * Default `false`.
    */
   preserveParens?: boolean
+  /** Print attached source comments. Default `false`. */
+  comments?: boolean
 }
 
 export interface Comment {

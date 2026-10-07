@@ -26,6 +26,9 @@ export interface Options {
    */
   indent?: string;
 
+  /** Print attached node comments. Defaults to `false`. */
+  comments?: boolean;
+
   /**
    * Non-negative integer indent level to start from, from `0` to `1000`. Defaults to `0`.
    */

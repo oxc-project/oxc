@@ -101,6 +101,7 @@ export function checkFixture(
   lang: Lang,
   sourceType: SourceTypeOption,
   astType?: "js" | "ts",
+  comments = false,
 ): boolean {
   const ts = astType === undefined ? lang[0] === "t" : astType === "ts";
   const jsx = lang.endsWith("x");
@@ -109,11 +110,17 @@ export function checkFixture(
   for (const preserveParens of PRESERVE_PARENS_MODES) {
     // Rust first.
     // `null` means the fixture does not parse cleanly, so nothing to compare.
-    const expected = rustPrint(filename, sourceText, { lang, sourceType, preserveParens });
+    const expected = rustPrint(filename, sourceText, {
+      lang,
+      sourceType,
+      preserveParens,
+      comments,
+    });
     if (expected === null) continue;
 
     const { program, errors } = parseSync(filename, sourceText, {
       preserveParens,
+      attachComments: comments,
       lang,
       sourceType,
       astType,
@@ -127,7 +134,10 @@ export function checkFixture(
     // rather than a printer one, and saying so is more use than a diff of printed output.
     expect(errors, "Rust parsed this fixture cleanly but `oxc-parser` did not").toEqual([]);
 
-    const { code: actual } = printSync(program, { ts, jsx });
+    // Array-hole comments have no surviving ESTree owner. Printing them is outside this change.
+    if (comments && hasElisionComments(program)) continue;
+
+    const { code: actual } = printSync(program, { ts, jsx, comments });
     expect(actual, `preserveParens: ${preserveParens}`).toBe(expected.code);
 
     // Source maps use the maps-enabled build, which is compiled separately from the normal printer.
@@ -135,6 +145,7 @@ export function checkFixture(
     const { code: actualWithSourceMap, map } = printSync(program, {
       ts,
       jsx,
+      comments,
       sourcemap: true,
       sourceFilename: filename,
       sourceText,
@@ -192,4 +203,17 @@ export function test262SourceType(sourceText: string): SourceTypeOption {
   if (flags === null) return "script";
 
   return /\bmodule\b/.test(flags[1]) ? "module" : "script";
+}
+
+function hasElisionComments(value: unknown): boolean {
+  if (value === null || typeof value !== "object") return false;
+  if (
+    "comments" in value
+    && (value.comments as { dangling?: { container?: { kind: string } }[] } | null)?.dangling?.some(
+      (c) => c.container?.kind === "Elision",
+    )
+  ) {
+    return true;
+  }
+  return Object.values(value).some(hasElisionComments);
 }

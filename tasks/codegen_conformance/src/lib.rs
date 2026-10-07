@@ -15,18 +15,22 @@ use std::{
 };
 
 use napi_derive::napi;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{
-    ArrowFunctionExpression, ExportAllDeclaration, ExportFromDeclaration, Function,
-    ImportDeclaration, WithClauseKeyword,
+use oxc_ast::{
+    Comment, CommentPlacement,
+    ast::{
+        ArrowFunctionExpression, ExportAllDeclaration, ExportFromDeclaration, Function,
+        ImportDeclaration, WithClauseKeyword,
+    },
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
 use oxc_napi::get_source_type;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_sourcemap::napi::SourceMap;
-use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax::{node::NodeId, scope::ScopeFlags};
 
 /// Options describing how a fixture should be parsed.
 ///
@@ -41,6 +45,8 @@ pub struct Options {
     /// Whether to keep the `ParenthesizedExpression` / `TSParenthesizedType` wrapper nodes.
     /// Default `false`.
     pub preserve_parens: Option<bool>,
+    /// Print attached source comments. Default `false`.
+    pub comments: Option<bool>,
 }
 
 /// Generated code and its source mappings.
@@ -57,8 +63,7 @@ pub struct CodegenResult {
 /// Returns `null` if the source text could not be parsed without errors, which tells the caller
 /// there is nothing to compare for this fixture.
 ///
-/// Comments are not printed. `oxc-codegen` does not print comments, and the ESTree AST the JS side
-/// works from carries no comment data anyway.
+/// Comments are printed when requested, using the same ownership pass as the parser binding.
 ///
 /// # Errors
 ///
@@ -71,8 +76,12 @@ pub fn codegen(
     source_text: String,
     options: Option<Options>,
 ) -> napi::Result<Option<CodegenResult>> {
-    let options =
-        options.unwrap_or(Options { lang: None, source_type: None, preserve_parens: None });
+    let options = options.unwrap_or(Options {
+        lang: None,
+        source_type: None,
+        preserve_parens: None,
+        comments: None,
+    });
 
     // Oxc should never panic, but a panic in a Node addon aborts the process, which would throw
     // away the whole conformance run. Contain it, surfacing it as a JS error. `null` is reserved
@@ -84,6 +93,7 @@ pub fn codegen(
             options.lang.as_deref(),
             options.source_type.as_deref(),
             options.preserve_parens.unwrap_or(false),
+            options.comments.unwrap_or(false),
         )
     }))
     .map_err(|_| napi::Error::from_reason(format!("Oxc code generator panicked for {filename}")))
@@ -95,6 +105,7 @@ fn codegen_impl(
     lang: Option<&str>,
     source_type_option: Option<&str>,
     preserve_parens: bool,
+    comments: bool,
 ) -> Option<CodegenResult> {
     let source_type = get_source_type(filename, lang, source_type_option);
 
@@ -116,10 +127,29 @@ fn codegen_impl(
     }
 
     let mut program = ret.program;
-    Normalize { preserve_parens }.visit_program(&mut program);
+    let owners = program
+        .comments
+        .iter()
+        .filter(|_| comments)
+        .map(|comment| comment.node_id.get())
+        .filter(|node_id| *node_id != Comment::UNASSIGNED_NODE_ID)
+        .collect();
+    let mut dangling = FxHashMap::default();
+    for comment in &program.comments {
+        if comments
+            && comment.node_id.get() != Comment::UNASSIGNED_NODE_ID
+            && comment.placement == CommentPlacement::Dangling
+        {
+            dangling
+                .entry(comment.node_id.get())
+                .and_modify(|end: &mut u32| *end = (*end).min(comment.span.end))
+                .or_insert(comment.span.end);
+        }
+    }
+    Normalize { preserve_parens, owners, dangling }.visit_program(&mut program);
 
     let codegen_options = CodegenOptions {
-        comments: CommentOptions::disabled(),
+        comments: if comments { CommentOptions::default() } else { CommentOptions::disabled() },
         source_map_path: Some(PathBuf::from(filename)),
         ..CodegenOptions::default()
     };
@@ -140,6 +170,8 @@ fn codegen_impl(
 struct Normalize {
     /// `true` when the AST keeps its `ParenthesizedExpression` / `TSParenthesizedType` wrappers.
     preserve_parens: bool,
+    owners: FxHashSet<NodeId>,
+    dangling: FxHashMap<NodeId, u32>,
 }
 
 impl<'a> VisitMut<'a> for Normalize {
@@ -172,22 +204,27 @@ impl<'a> VisitMut<'a> for Normalize {
     ///  It also does not record which keyword introduced the attributes, so `assert {...}` and `with {...}`
     /// are indistinguishable.
     fn visit_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
-        if decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.is_empty()) {
+        if decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.is_empty())
+            && self
+                .dangling
+                .get(&decl.node_id.get())
+                .is_none_or(|end| *end > decl.source.span.start)
+        {
             decl.specifiers = None;
         }
-        normalize_with_clause(&mut decl.with_clause);
+        normalize_with_clause(&mut decl.with_clause, &self.owners);
         walk_mut::walk_import_declaration(self, decl);
     }
 
     /// As `visit_import_declaration`, for `export ... from "m"`.
     fn visit_export_from_declaration(&mut self, decl: &mut ExportFromDeclaration<'a>) {
-        normalize_with_clause(&mut decl.with_clause);
+        normalize_with_clause(&mut decl.with_clause, &self.owners);
         walk_mut::walk_export_from_declaration(self, decl);
     }
 
     /// As `visit_import_declaration`, for `export * from "m"`.
     fn visit_export_all_declaration(&mut self, decl: &mut ExportAllDeclaration<'a>) {
-        normalize_with_clause(&mut decl.with_clause);
+        normalize_with_clause(&mut decl.with_clause, &self.owners);
         walk_mut::walk_export_all_declaration(self, decl);
     }
 }
@@ -195,10 +232,14 @@ impl<'a> VisitMut<'a> for Normalize {
 /// Drop an empty `with` clause, and forget which keyword introduced a non-empty one.
 fn normalize_with_clause(
     with_clause: &mut Option<oxc_allocator::Box<'_, oxc_ast::ast::WithClause<'_>>>,
+    owners: &FxHashSet<NodeId>,
 ) {
     if let Some(inner) = with_clause {
         inner.keyword = WithClauseKeyword::With;
 
+        if owners.contains(&inner.node_id.get()) {
+            return;
+        }
         if let Some(first) = inner.with_entries.first() {
             // ESTree exposes the entries but not the `WithClause` wrapper or its `{` span.
             // Use the first location both representations can carry as the clause's mapping anchor.

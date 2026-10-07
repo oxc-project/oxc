@@ -1,5 +1,15 @@
 // Statements.
 
+import {
+  hasAttachedComments,
+  rememberComments,
+  startNodeComments,
+  finishNodeComments,
+  hasInsideComments,
+  printInsideComments,
+  printContainerComments,
+  expressionStartsWithCommentNewline,
+} from "./comments.ts";
 import { typeAssertIs } from "../asserts.ts";
 import { printAssignmentTarget } from "./assignment_target.ts";
 import { printBindingPattern } from "./binding_pattern.ts";
@@ -59,7 +69,10 @@ export function printProgram(node: ESTree.Program, state: State): void {
     write(state, "\n", CAT_OTHER);
   }
 
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printDirectivesAndStatements(node.body, state);
+  if (COMMENTS) printInsideComments(node, state);
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -74,7 +87,9 @@ export function printDirectivesAndStatements(
   state: State,
 ): void {
   const { length } = body;
-  if (length === 0) return;
+  if (length === 0) {
+    return;
+  }
 
   let i = 0;
   let stmt = body[0];
@@ -82,7 +97,9 @@ export function printDirectivesAndStatements(
     if (stmt.directive != null) {
       typeAssertIs<ESTree.Directive>(stmt);
       printDirective(stmt, state);
-      if (++i >= length) return;
+      if (++i >= length) {
+        return;
+      }
       stmt = body[i];
     } else {
       // Ensure a string literal (only possible via parentheses, since a bare one would be a directive)
@@ -92,9 +109,20 @@ export function printDirectivesAndStatements(
         const mapsIndent = state.indentLevel > 0 || state.pendingIndentAsSpace;
         printIndent(state);
         if (mapsIndent) markMapStart(state, stmt.start, stmt.end, stmt);
-        writeNoLast(state, "(");
-        printString(state, inner.value, inner.start, inner.end, inner);
-        write(state, ");\n", CAT_OTHER);
+        const statementOwner = COMMENTS && startNodeComments(stmt, state);
+        if (COMMENTS && hasAttachedComments(state)) {
+          const wrap = stmt.expression.type !== "ParenthesizedExpression";
+          if (wrap) write(state, "(", CAT_OTHER);
+          printExpression(stmt.expression, state, PREC_LOWEST, CTX_NONE);
+          if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+        } else {
+          writeNoLast(state, "(");
+          printString(state, inner.value, inner.start, inner.end, inner);
+          write(state, ")", CAT_CLOSE_BRACKET);
+        }
+        if (COMMENTS) printInsideComments(stmt, state);
+        write(state, ";\n", CAT_OTHER);
+        if (statementOwner) finishNodeComments(stmt, state);
         i++;
       }
       break;
@@ -112,6 +140,7 @@ export function printDirectivesAndStatements(
  * the other one.
  */
 function printDirective(stmt: ESTree.Directive, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(stmt, state);
   printIndent(state);
 
   const { directive } = stmt;
@@ -135,7 +164,10 @@ function printDirective(stmt: ESTree.Directive, state: State): void {
   writeWithMapNoLast(state, quote, stmt.start, stmt.end, stmt);
   writeNoLast(state, directive);
   writeNoLast(state, quote);
+  if (COMMENTS) printInsideComments(stmt, state);
   write(state, ";\n", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(stmt, state);
 }
 
 /**
@@ -145,6 +177,7 @@ function printDirective(stmt: ESTree.Directive, state: State): void {
  * the output at the start of a fresh line for the next one.
  */
 export function printStatement(node: ESTree.Statement | UnknownNode, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   // Arms are ordered roughly in order of most common nodes.
   // V8 turns this into (essentially) as chain of `if ... else if ... else if...`,
   // so making common nodes short-circuit early is a large perf boost.
@@ -155,6 +188,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "VariableDeclaration":
       printIndent(state);
       printVariableDeclaration(node, state, CTX_NONE);
+      if (COMMENTS) printInsideComments(node, state);
       write(state, ";\n", CAT_OTHER);
       break;
     case "BlockStatement":
@@ -192,8 +226,13 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       writeWithMap(state, "break", CAT_IDENT, node.start, node.end, node);
       if (node.label != null) {
         write(state, " ", CAT_OTHER);
-        writeWithMapNamed(state, node.label.name, node.label.start, node.label.end, node.label);
+        {
+          const nameCommentOwner = COMMENTS && startNodeComments(node.label, state);
+          writeWithMapNamed(state, node.label.name, node.label.start, node.label.end, node.label);
+          if (nameCommentOwner) finishNodeComments(node.label, state);
+        }
       }
+      if (COMMENTS) printInsideComments(node, state);
       write(state, ";\n", CAT_OTHER);
       break;
     case "ContinueStatement":
@@ -202,8 +241,13 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       writeWithMap(state, "continue", CAT_IDENT, node.start, node.end, node);
       if (node.label != null) {
         write(state, " ", CAT_OTHER);
-        writeWithMapNamed(state, node.label.name, node.label.start, node.label.end, node.label);
+        {
+          const nameCommentOwner = COMMENTS && startNodeComments(node.label, state);
+          writeWithMapNamed(state, node.label.name, node.label.start, node.label.end, node.label);
+          if (nameCommentOwner) finishNodeComments(node.label, state);
+        }
       }
+      if (COMMENTS) printInsideComments(node, state);
       write(state, ";\n", CAT_OTHER);
       break;
     case "TryStatement":
@@ -213,7 +257,11 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       printIndent(state);
       printSpaceBeforeIdentifier(state);
       writeWithMap(state, "throw ", CAT_OTHER, node.start, node.end, node);
+      const wrapComment = COMMENTS && expressionStartsWithCommentNewline(node.argument, state);
+      if (wrapComment) write(state, "(", CAT_OTHER);
       printExpression(node.argument, state, PREC_LOWEST, CTX_NONE);
+      if (wrapComment) write(state, ")", CAT_CLOSE_BRACKET);
+      if (COMMENTS) printInsideComments(node, state);
       write(state, ";\n", CAT_OTHER);
       break;
     case "ForInStatement":
@@ -231,8 +279,13 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       printIndent(state);
       printSpaceBeforeIdentifier(state);
       markMapStart(state, node.start, node.end, node);
-      writeWithMapNamed(state, node.label.name, node.label.start, node.label.end, node.label);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(node.label, state);
+        writeWithMapNamed(state, node.label.name, node.label.start, node.label.end, node.label);
+        if (nameCommentOwner) finishNodeComments(node.label, state);
+      }
       write(state, ":", CAT_OTHER);
+      if (COMMENTS) printInsideComments(node, state);
       printBody(node.body, state);
       break;
     case "EmptyStatement":
@@ -262,7 +315,9 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "DebuggerStatement":
       printIndent(state);
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, "debugger;\n", CAT_OTHER, node.start, node.end, node);
+      writeWithMap(state, "debugger", CAT_IDENT, node.start, node.end, node);
+      if (COMMENTS) printInsideComments(node, state);
+      write(state, ";\n", CAT_OTHER);
       break;
     /* IF TS */
     case "TSModuleDeclaration":
@@ -278,6 +333,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "TSTypeAliasDeclaration":
       printIndent(state);
       printTSTypeAliasDeclaration(node, state);
+      if (COMMENTS) printInsideComments(node, state);
       write(state, ";\n", CAT_OTHER);
       break;
     case "TSEnumDeclaration":
@@ -288,6 +344,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "TSImportEqualsDeclaration":
       printIndent(state);
       printTSImportEqualsDeclaration(node, state);
+      if (COMMENTS) printInsideComments(node, state);
       write(state, ";\n", CAT_OTHER);
       break;
     case "TSDeclareFunction":
@@ -299,18 +356,26 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       printIndent(state);
       write(state, "export = ", CAT_OTHER);
       printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
+      if (COMMENTS) printInsideComments(node, state);
       write(state, ";\n", CAT_OTHER);
       break;
     case "TSNamespaceExportDeclaration":
       printIndent(state);
       write(state, "export as namespace ", CAT_OTHER);
-      writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(node.id, state);
+        writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+        if (nameCommentOwner) finishNodeComments(node.id, state);
+      }
+      if (COMMENTS) printInsideComments(node, state);
       write(state, ";\n", CAT_OTHER);
       break;
     /* END_IF */
     default:
       throw new Error(`Unknown statement type: ${node.type}`);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -320,12 +385,16 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
  * The indent is written first, so the mark is the last thing to touch `last` before the expression.
  */
 function printExpressionStatement(node: ESTree.ExpressionStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const mapsIndent = state.indentLevel > 0 || state.pendingIndentAsSpace;
   printIndent(state);
   if (mapsIndent) markMapStart(state, node.start, node.end, node);
   state.last = CAT_START_OF_STMT;
   printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
+  if (COMMENTS) printInsideComments(node, state);
   write(state, ";\n", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -340,6 +409,7 @@ export function printVariableDeclaration(
   state: State,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printSpaceBeforeIdentifier(state);
 
   // The node's mapping goes on whichever of these is written first
@@ -359,12 +429,17 @@ export function printVariableDeclaration(
     if (i > 0) write(state, ", ", CAT_OTHER);
 
     const declarator = declarations[i];
+    const declaratorOwner = COMMENTS && startNodeComments(declarator, state);
     const { id } = declarator;
     if (TS && declarator.definite) {
       // `let x!: T` - the `!` sits between the name and its annotation
       typeAssertIs<ESTree.BindingIdentifier>(id);
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, id.name, id.start, id.end, id);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(id, state);
+        writeWithMapNamed(state, id.name, id.start, id.end, id);
+        if (nameCommentOwner) finishNodeComments(id, state);
+      }
       write(state, "!", CAT_OP_UN_NOT);
       if (id.typeAnnotation != null) {
         printTypeAnnotation(id.typeAnnotation, state);
@@ -377,7 +452,10 @@ export function printVariableDeclaration(
       write(state, " = ", CAT_OTHER);
       printExpression(declarator.init, state, PREC_COMMA, ctx);
     }
+    if (declaratorOwner) finishNodeComments(declarator, state);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -388,11 +466,13 @@ export function printVariableDeclaration(
  * ` else`, ` catch` or a newline themselves.
  */
 function printBlockStatement(block: ESTree.BlockStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(block, state);
   const { body } = block;
   const { length } = body;
-  if (length === 0) {
+  if (length === 0 && (!COMMENTS || !hasInsideComments(block, state))) {
     writeWithMapNoLast(state, "{", block.start, block.end, block);
     writeWithMapEnd(state, "}", CAT_OTHER, block.start, block.end, block);
+    if (commentOwner) finishNodeComments(block, state);
     return;
   }
 
@@ -403,9 +483,15 @@ function printBlockStatement(block: ESTree.BlockStatement, state: State): void {
     printStatement(body[i], state);
   }
 
+  if (COMMENTS) {
+    printInsideComments(block, state);
+    if (state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
+  }
   state.indentLevel--;
   printIndent(state);
   writeWithMapEnd(state, "}", CAT_OTHER, block.start, block.end, block);
+
+  if (commentOwner) finishNodeComments(block, state);
 }
 
 /**
@@ -416,6 +502,7 @@ function printBlockStatement(block: ESTree.BlockStatement, state: State): void {
  * `else` cannot attach to the wrong one - see `wrapToAvoidAmbiguousElse`.
  */
 function printIf(node: ESTree.IfStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printSpaceBeforeIdentifier(state);
 
   writeWithMap(state, "if (", CAT_OTHER, node.start, node.end, node);
@@ -458,6 +545,8 @@ function printIf(node: ESTree.IfStatement, state: State): void {
       printBody(alternate, state);
     }
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -492,18 +581,25 @@ function wrapToAvoidAmbiguousElse(stmt: ESTree.Statement): boolean {
  * With none, the keyword is recorded as an identifier, so anything printed after it keeps a separating space.
  */
 function printReturnStatement(node: ESTree.ReturnStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
   const { argument } = node;
   if (argument != null) {
     writeWithMap(state, "return ", CAT_OTHER, node.start, node.end, node);
+    const wrapComment = COMMENTS && expressionStartsWithCommentNewline(argument, state);
+    if (wrapComment) write(state, "(", CAT_OTHER);
     printExpression(argument, state, PREC_LOWEST, CTX_NONE);
+    if (wrapComment) write(state, ")", CAT_CLOSE_BRACKET);
   } else {
     writeWithMap(state, "return", CAT_IDENT, node.start, node.end, node);
   }
 
+  if (COMMENTS) printInsideComments(node, state);
   write(state, ";\n", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -511,6 +607,7 @@ function printReturnStatement(node: ESTree.ReturnStatement, state: State): void 
  * The handler and the finalizer are each written only if present.
  */
 function printTryStatement(node: ESTree.TryStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
@@ -520,16 +617,23 @@ function printTryStatement(node: ESTree.TryStatement, state: State): void {
 
   const { handler } = node;
   if (handler != null) {
+    const handlerOwner = COMMENTS && startNodeComments(handler, state);
     writeIdent(state, " catch");
 
     if (handler.param != null) {
       write(state, " (", CAT_OTHER);
+      if (COMMENTS) printContainerComments(handler.param, state, "CatchParameter", "leading");
       printBindingPattern(handler.param, state);
+      if (COMMENTS) {
+        printInsideComments(handler.param, state, "CatchParameter");
+        printContainerComments(handler.param, state, "CatchParameter", "trailing");
+      }
       write(state, ")", CAT_CLOSE_BRACKET);
     }
 
     write(state, " ", CAT_OTHER);
     printBlockStatement(handler.body, state);
+    if (handlerOwner) finishNodeComments(handler, state);
   }
 
   if (node.finalizer != null) {
@@ -538,6 +642,8 @@ function printTryStatement(node: ESTree.TryStatement, state: State): void {
   }
 
   write(state, "\n", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -545,6 +651,7 @@ function printTryStatement(node: ESTree.TryStatement, state: State): void {
  * and each indents its own statements again - see `printSwitchCase`.
  */
 function printSwitchStatement(node: ESTree.SwitchStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
@@ -557,6 +664,7 @@ function printSwitchStatement(node: ESTree.SwitchStatement, state: State): void 
   if (length === 0) {
     writeWithMapNoLast(state, "{", node.start, node.end, node);
     writeWithMapEnd(state, "}\n", CAT_OTHER, node.start, node.end, node);
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -567,9 +675,15 @@ function printSwitchStatement(node: ESTree.SwitchStatement, state: State): void 
     printSwitchCase(cases[i], state);
   }
 
+  if (COMMENTS && hasInsideComments(node, state)) {
+    printInsideComments(node, state);
+    if (state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
+  }
   state.indentLevel--;
   printIndent(state);
   writeWithMapEnd(state, "}\n", CAT_OTHER, node.start, node.end, node);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -577,6 +691,7 @@ function printSwitchStatement(node: ESTree.SwitchStatement, state: State): void 
  * Any other count goes onto separate lines a level deeper, so an empty case prints as just its label.
  */
 function printSwitchCase(node: ESTree.SwitchCase, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
 
   if (node.test != null) {
@@ -592,6 +707,7 @@ function printSwitchCase(node: ESTree.SwitchCase, state: State): void {
   const { length } = consequent;
   if (length === 1) {
     printBody(consequent[0], state);
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -603,6 +719,8 @@ function printSwitchCase(node: ESTree.SwitchCase, state: State): void {
   }
 
   state.indentLevel--;
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -610,6 +728,7 @@ function printSwitchCase(node: ESTree.SwitchCase, state: State): void {
  * and the body goes through `printBody` like every other loop here.
  */
 function printWhileStatement(node: ESTree.WhileStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
@@ -618,6 +737,8 @@ function printWhileStatement(node: ESTree.WhileStatement, state: State): void {
   write(state, ")", CAT_CLOSE_BRACKET);
 
   printBody(node.body, state);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -628,6 +749,7 @@ function printWhileStatement(node: ESTree.WhileStatement, state: State): void {
  * The closing `);` is always written out rather than left to ASI.
  */
 function printDoWhileStatement(node: ESTree.DoWhileStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
@@ -639,6 +761,7 @@ function printDoWhileStatement(node: ESTree.DoWhileStatement, state: State): voi
     printBlockStatement(body, state);
     write(state, " ", CAT_OTHER);
   } else if (body.type === "EmptyStatement") {
+    if (COMMENTS && state.pendingIndentAsSpace) printIndent(state);
     writeWithMap(state, ";\n", CAT_OTHER, body.start, body.end, body);
     printIndent(state);
   } else {
@@ -651,7 +774,11 @@ function printDoWhileStatement(node: ESTree.DoWhileStatement, state: State): voi
 
   write(state, "while (", CAT_OTHER);
   printExpression(node.test, state, PREC_LOWEST, CTX_NONE);
-  write(state, ");\n", CAT_OTHER);
+  write(state, ")", CAT_CLOSE_BRACKET);
+  if (COMMENTS) printInsideComments(node, state);
+  write(state, ";\n", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -662,6 +789,7 @@ function printDoWhileStatement(node: ESTree.DoWhileStatement, state: State): voi
  * and for the update the closing paren too, into a single write.
  */
 function printForStatement(node: ESTree.ForStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
@@ -693,6 +821,8 @@ function printForStatement(node: ESTree.ForStatement, state: State): void {
   }
 
   printBody(node.body, state);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -700,6 +830,7 @@ function printForStatement(node: ESTree.ForStatement, state: State): void {
  * so an `in` inside its initializer parenthesizes itself instead of ending the head early.
  */
 function printForInStatement(node: ESTree.ForInStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
@@ -717,6 +848,8 @@ function printForInStatement(node: ESTree.ForInStatement, state: State): void {
   write(state, ")", CAT_CLOSE_BRACKET);
 
   printBody(node.body, state);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -728,6 +861,7 @@ function printForInStatement(node: ESTree.ForInStatement, state: State): void {
  * prints at `PREC_COMMA` so a sequence takes parens.
  */
 function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
@@ -756,6 +890,8 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
   write(state, ")", CAT_CLOSE_BRACKET);
 
   printBody(node.body, state);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -797,14 +933,18 @@ function forOfHeadStartsWithLet(left: ESTree.Expression): boolean {
  * on the current line.
  */
 function printBody(stmt: ESTree.Statement, state: State): void {
+  const commentOwner = COMMENTS && stmt.type !== "EmptyStatement" && startNodeComments(stmt, state);
   if (stmt.type === "BlockStatement") {
-    write(state, " ", CAT_OTHER);
+    if (!COMMENTS || state.commentLastChar !== " ") write(state, " ", CAT_OTHER);
     printBlockStatement(stmt, state);
     write(state, "\n", CAT_OTHER);
   } else if (stmt.type === "EmptyStatement") {
+    if (COMMENTS) rememberComments(stmt, state);
     write(state, ";\n", CAT_OTHER);
   } else {
     state.pendingIndentAsSpace = true;
     printStatement(stmt, state);
   }
+
+  if (commentOwner) finishNodeComments(stmt, state);
 }

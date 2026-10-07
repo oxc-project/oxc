@@ -14,10 +14,10 @@ const fixturePaths = (await readdir(JSX_DIR_PATH, { recursive: true }))
   .filter((path) => path.endsWith(".jsx"))
   .sort();
 
-describe.concurrent("JSX", () => {
+describe.concurrent.for([false, true])("JSX comments=%s", (comments) => {
   // oxlint-disable-next-line vitest/expect-expect
   it.for(fixturePaths)("%s", async (path, ctx) => {
     const sourceText = await readFile(pathJoin(JSX_DIR_PATH, path), "utf8");
-    if (!checkFixture(path, sourceText, "jsx", "unambiguous")) ctx.skip();
+    if (!checkFixture(path, sourceText, "jsx", "unambiguous", undefined, comments)) ctx.skip();
   });
 });

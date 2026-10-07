@@ -11,5 +11,5 @@ const packageDirPath = pathJoin(import.meta.dirname, "..");
 // so whichever runs second would delete the other's output.
 rmSync(pathJoin(packageDirPath, "dist"), { recursive: true, force: true });
 
-// Build both flavours with TSDown
+// Build the entry point and printer variants with TSDown
 execSync("pnpm tsdown", { stdio: "inherit", cwd: packageDirPath });

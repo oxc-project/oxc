@@ -3,6 +3,7 @@
 // Every write records what it ends with, as a category rather than as the character itself -
 // see `categories.ts` for what the categories are, and why.
 
+import { writeCommentCode } from "./comments.ts";
 import { debugAssert } from "../asserts.ts";
 import {
   CAT_CLOSE_BRACKET,
@@ -42,7 +43,8 @@ export function write(state: State, code: string, last: Category): void {
   debugAssertCategoryMatches(state, code, last);
 
   state.last = last;
-  state.output += code;
+  if (COMMENTS) writeCommentCode(state, code);
+  else state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = false;
@@ -65,7 +67,8 @@ export function writeIdent(state: State, code: string): void {
   debugAssertCategoryMatches(state, code, CAT_IDENT);
 
   state.last = CAT_IDENT;
-  state.output += code;
+  if (COMMENTS) writeCommentCode(state, code);
+  else state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = false;
@@ -89,8 +92,13 @@ export function writePrivate(state: State, name: string): void {
   debugAssertCategoryMatches(state, name, CAT_IDENT);
 
   state.last = CAT_IDENT;
-  state.output += "#";
-  state.output += name;
+  if (COMMENTS) {
+    writeCommentCode(state, "#");
+    writeCommentCode(state, name);
+  } else {
+    state.output += "#";
+    state.output += name;
+  }
 
   if (DEBUG) {
     state.lastIsStale = false;
@@ -127,7 +135,8 @@ export function writeWithMap(
   markMapStart(state, start, end, node);
 
   state.last = last;
-  state.output += code;
+  if (COMMENTS) writeCommentCode(state, code);
+  else state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = false;
@@ -166,7 +175,8 @@ export function writeWithMapNamed(
   markMapNamed(state, name, false, 0, start, end, node);
 
   state.last = CAT_IDENT;
-  state.output += name;
+  if (COMMENTS) writeCommentCode(state, name);
+  else state.output += name;
 
   if (DEBUG) {
     state.lastIsStale = false;
@@ -206,8 +216,13 @@ export function writeWithMapNamedPrivate(
   markMapNamed(state, name, false, 1, start, end, node);
 
   state.last = CAT_IDENT;
-  state.output += "#";
-  state.output += name;
+  if (COMMENTS) {
+    writeCommentCode(state, "#");
+    writeCommentCode(state, name);
+  } else {
+    state.output += "#";
+    state.output += name;
+  }
 
   if (DEBUG) {
     state.lastIsStale = false;
@@ -231,7 +246,8 @@ export function writeWithMapNamedPrivate(
  * @param code - Text to append, which unlike `write` may be empty
  */
 export function writeNoLast(state: State, code: string): void {
-  state.output += code;
+  if (COMMENTS) writeCommentCode(state, code);
+  else state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = true;
@@ -265,7 +281,8 @@ export function writeWithMapNoLast(
 ): void {
   markMapStart(state, start, end, node);
 
-  state.output += code;
+  if (COMMENTS) writeCommentCode(state, code);
+  else state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = true;
@@ -302,7 +319,8 @@ export function writeWithMapNamedNoLast(
 
   markMapNamed(state, name, false, 0, start, end, node);
 
-  state.output += name;
+  if (COMMENTS) writeCommentCode(state, name);
+  else state.output += name;
 
   if (DEBUG) {
     state.lastIsStale = true;
@@ -338,7 +356,8 @@ export function writeWithMapNamedJSXNoLast(
 
   markMapNamed(state, name, true, 0, start, end, node);
 
-  state.output += name;
+  if (COMMENTS) writeCommentCode(state, name);
+  else state.output += name;
 
   if (DEBUG) {
     state.lastIsStale = true;
@@ -379,7 +398,8 @@ export function writeWithMapEnd(
   markMapEnd(state, start, end, node);
 
   state.last = last;
-  state.output += code;
+  if (COMMENTS) writeCommentCode(state, code);
+  else state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = false;
@@ -571,7 +591,12 @@ function markMapNamed(
   }
 
   if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
-  mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
+  mapPositions[mapPositionsLen] =
+    state.spilledOutputLength
+    + state.output.length
+    + (COMMENTS
+      ? state.commentPendingWhitespace.length + (state.commentPendingNewline ? 1 : 0)
+      : 0);
   mapPositions[mapPositionsLen + 1] = start;
   state.mapPositionsLen = mapPositionsLen + 2;
 }
@@ -619,7 +644,12 @@ function recordMapping(state: State, sourceOffset: number): void {
   if (mapPositions[mapPositionsLen - 1] === sourceOffset) return;
 
   if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
-  mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
+  mapPositions[mapPositionsLen] =
+    state.spilledOutputLength
+    + state.output.length
+    + (COMMENTS
+      ? state.commentPendingWhitespace.length + (state.commentPendingNewline ? 1 : 0)
+      : 0);
   mapPositions[mapPositionsLen + 1] = sourceOffset;
   state.mapPositionsLen = mapPositionsLen + 2;
 }

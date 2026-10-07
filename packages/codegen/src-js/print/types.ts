@@ -16,6 +16,7 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 /** A node whose type the printer doesn't handle. */
 export interface UnknownNode {
   type: "<unknown node>";
+  comments?: ESTree.NodeComments | null;
 }
 
 /** An `Expression` which is a literal. */
@@ -68,6 +69,7 @@ export type ExportNamedDeclarationNode = Omit<ESTree.ExportNamedDeclaration, "de
  */
 export interface MappableNode {
   type: string;
+  comments?: ESTree.NodeComments | null;
   start?: number;
   end?: number;
 }

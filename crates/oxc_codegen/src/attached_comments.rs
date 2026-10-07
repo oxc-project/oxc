@@ -184,11 +184,26 @@ impl Codegen<'_> {
         // Wrapping printers defer the whole leading group, so neighboring
         // comments keep their source order inside generated parentheses.
         if node_id != NodeId::ROOT && !defer_leading {
+            let offset = self.code.len();
+            let statement = self.start_of_stmt == offset;
+            let arrow = self.start_of_arrow_expr == offset;
+            let export = self.start_of_default_export == offset;
             self.print_attached_placement(CommentPlacement::Leading);
             if self.last_byte() == Some(b'\n') {
                 self.print_indent();
             } else {
                 self.consume_pending_indent_space();
+            }
+            // Leading comments do not change the expression's syntactic position.
+            let offset = self.code.len();
+            if statement {
+                self.start_of_stmt = offset;
+            }
+            if arrow {
+                self.start_of_arrow_expr = offset;
+            }
+            if export {
+                self.start_of_default_export = offset;
             }
         }
         self.attached_comments.frames.push(CommentFrame {
@@ -313,6 +328,10 @@ impl Codegen<'_> {
             // A following comment's source newline supersedes that separator.
             while self.last_byte().is_some_and(|byte| matches!(byte, b' ' | b'\t')) {
                 self.code.truncate(self.code.len() - 1);
+            }
+            #[cfg(feature = "sourcemap")]
+            if let Some(builder) = &mut self.sourcemap_builder {
+                builder.truncate_generated_whitespace(self.code.len());
             }
             self.print_hard_newline();
         }

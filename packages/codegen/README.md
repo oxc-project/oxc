@@ -74,6 +74,21 @@ const { code } = printSync(program, {
 });
 ```
 
+### Comments
+
+Request ownership when parsing and enable it when printing:
+
+```js
+const { program } = parseSync("input.js", "// answer\nconst answer = 42;", {
+  attachComments: true,
+});
+const { code } = printSync(program, { comments: true });
+```
+
+Comment buckets move with their owning nodes when you edit the AST. Printing leaves the AST
+unchanged and uses transferred comment text and formatting metadata. `sourceText` is required
+only for source maps. Missing comment properties are treated as empty.
+
 ## API
 
 ### `printSync(node, options?)`
@@ -116,6 +131,7 @@ an empty `mappings` string.
 | `startingIndentLevel` | `number`  | `0`     | Starting indent level, from `0` to `1000`                        |
 | `jsx`                 | `boolean` | `false` | Enable TSX-safe printing for ambiguous TypeScript syntax         |
 | `ts`                  | `boolean` | `false` | Select the printer that supports TypeScript nodes                |
+| `comments`            | `boolean` | `false` | Print attached leading, trailing, and dangling comments          |
 | `sourcemap`           | `boolean` | `false` | Return a Source Map v3 object in `map`                           |
 | `sourceFilename`      | `string`  | `""`    | Original source filename recorded in the source map              |
 | `sourceText`          | `string`  | -       | Original text required for source-map mappings and content       |
@@ -132,7 +148,7 @@ implementation details and performance constraints.
 
 ## Current limitations
 
-- Comments are not printed.
+- Comments attached to array holes are not yet printed.
 - Minified output is not supported.
 
 ## Benchmarks
@@ -152,3 +168,15 @@ Representative time per `printSync` call:
 
 These figures come from one machine and are illustrative, not a regression baseline.
 Results vary between runs, most noticeably for large fixtures such as `antd.js`.
+
+To compare attached comment printing with the default path, build release printers and parser,
+then run the comment benchmark from the repository root:
+
+```sh
+pnpm --filter oxc-codegen run build
+pnpm --filter oxc-parser run build
+pnpm --filter oxc-codegen exec vitest bench --run attached-comments.bench.js
+```
+
+It covers React, Binder, Kitchen Sink, and synthetic comment-free, sparse, and dense inputs,
+with source maps enabled and disabled. Parsing happens outside the printer timings.

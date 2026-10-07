@@ -30,7 +30,7 @@ const fixturePaths = (await readdir(FIXTURES_DIR_PATH, { recursive: true, withFi
   .map((entry) => pathJoin(pathRelative(FIXTURES_DIR_PATH, entry.parentPath), entry.name))
   .sort();
 
-describe.concurrent("local fixtures", () => {
+describe.concurrent.for([false, true])("local fixtures comments=%s", (comments) => {
   it.each(fixturePaths)("%s", async (path) => {
     const sourceText = await readFile(pathJoin(FIXTURES_DIR_PATH, path), "utf8");
     const lang = langOfPath(path);
@@ -38,7 +38,7 @@ describe.concurrent("local fixtures", () => {
 
     // Local fixtures are ordinary source files rather than test cases with frontmatter. Let the
     // parser recognize imports and exports while still accepting scripts.
-    expect(checkFixture(path, sourceText, lang, "unambiguous")).toBe(true);
+    expect(checkFixture(path, sourceText, lang, "unambiguous", undefined, comments)).toBe(true);
   });
 });
 
