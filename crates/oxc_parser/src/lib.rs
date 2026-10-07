@@ -776,7 +776,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.finalize_tokens()
         };
 
-        program.comments = self.lexer.trivia_builder.comments;
+        program.comments = ArenaVec::from_iter_in(self.lexer.trivia_builder.comments, &self.ast);
 
         ParserReturn {
             program,

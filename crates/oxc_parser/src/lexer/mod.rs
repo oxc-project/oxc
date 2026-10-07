@@ -100,7 +100,7 @@ pub struct Lexer<'a, C: Config> {
     /// If resolved to Script → discard these errors.
     pub(crate) deferred_module_errors: Vec<ParserDiagnostic<'a>>,
 
-    pub(crate) trivia_builder: TriviaBuilder<'a>,
+    pub(crate) trivia_builder: TriviaBuilder,
 
     /// Data store for escaped strings, indexed by [Token::start] when [Token::escaped] is true
     pub escaped_strings: FxHashMap<u32, &'a str>,
@@ -159,7 +159,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             token,
             errors: vec![],
             deferred_module_errors: vec![],
-            trivia_builder: TriviaBuilder::new_in(allocator),
+            trivia_builder: TriviaBuilder::new(),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
