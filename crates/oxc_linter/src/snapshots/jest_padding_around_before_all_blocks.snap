@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jest(padding-around-before-all-blocks): Missing padding before beforeAll block
+   ╭─[padding_around_before_all_blocks.tsx:3:1]
+ 2 │ const someText = 'abc';
+ 3 │ beforeAll(() => {
+   · ▲
+ 4 │ });
+   ╰────
+  help: Make sure there is an empty new line before the beforeAll block
+
+  ⚠ jest(padding-around-before-all-blocks): Missing padding after beforeAll block
+   ╭─[padding_around_before_all_blocks.tsx:5:1]
+ 4 │ });
+ 5 │ describe('someText', () => {
+   · ▲
+ 6 │   const something = 'abc';
+   ╰────
+  help: Make sure there is an empty new line after the beforeAll block
+
+  ⚠ jest(padding-around-before-all-blocks): Missing padding before beforeAll block
+   ╭─[padding_around_before_all_blocks.tsx:8:3]
+ 7 │   // A comment
+ 8 │   beforeAll(() => {
+   ·   ▲
+ 9 │     // stuff
+   ╰────
+  help: Make sure there is an empty new line before the beforeAll block
+
+  ⚠ jest(padding-around-before-all-blocks): Missing padding before beforeAll block
+    ╭─[padding_around_before_all_blocks.tsx:11:3]
+ 10 │   });
+ 11 │   beforeAll(() => {
+    ·   ▲
+ 12 │     // other stuff
+    ╰────
+  help: Make sure there is an empty new line before the beforeAll block
+
+  ⚠ jest(padding-around-before-all-blocks): Missing padding before beforeAll block
+    ╭─[padding_around_before_all_blocks.tsx:18:3]
+ 17 │   const something = 'abc';
+ 18 │   beforeAll(() => {
+    ·   ▲
+ 19 │     // stuff
+    ╰────
+  help: Make sure there is an empty new line before the beforeAll block
