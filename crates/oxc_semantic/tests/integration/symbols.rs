@@ -1,4 +1,4 @@
-use oxc_semantic::{Reference, SymbolFlags};
+use oxc_semantic::{Reference, ReferenceFlags, SymbolFlags};
 
 use crate::util::SemanticTester;
 
@@ -23,6 +23,37 @@ fn assert_root_and_single_local_reference_counts(
         assert_eq!(scoping.get_resolved_references(root_symbol).count(), root_count, "{name}");
         assert_eq!(scoping.get_resolved_references(local_symbol).count(), local_count, "{name}");
     }
+}
+
+/// `delete a?.b` and `delete (a.b)` are property writes, same as `delete a.b`.
+/// https://github.com/oxc-project/oxc/issues/27419
+#[test]
+fn test_delete_member_write_target() {
+    for code in [
+        "delete a.b",
+        "delete a.b.c",
+        "delete a?.b",
+        "delete a?.b.c",
+        "delete a.b?.c",
+        "delete (a.b)",
+    ] {
+        let source = format!("const a = {{}}; {code};");
+        let source: &'static str = Box::leak(source.into_boxed_str());
+        let tester = SemanticTester::js(source);
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        let symbol = scoping.get_root_binding("a".into()).unwrap();
+        let flags: Vec<_> =
+            scoping.get_resolved_references(symbol).map(|reference| reference.flags()).collect();
+        assert_eq!(flags, vec![ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget], "{code}");
+    }
+
+    // Bare `delete` is not a property modification.
+    SemanticTester::js("let x; delete x;")
+        .with_script(true)
+        .has_some_symbol("x")
+        .has_number_of_references_where(0, |reference| reference.flags().is_member_write_target())
+        .test();
 }
 
 #[test]
