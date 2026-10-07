@@ -247,10 +247,12 @@ pub struct Comment {
     #[estree(skip)]
     pub content: CommentContent,
 
-    /// Owning AST node and placement, set by comment assignment after parsing.
+    /// Owning AST node and placement, established before the parser returns.
     ///
     /// This travels with the comment when the comment vector is changed.
-    /// Reassign ownership if node IDs are rewritten or the AST structure changes.
+    /// Semantic analysis remaps owners when rewriting node IDs, including after
+    /// AST transformations. Removed owners become [`NodeId::ORPHANED`].
+    /// Standalone lexer comments and manually constructed comments can be unassigned.
     /// Cloning an AST without semantic IDs clears the attachment.
     #[content_eq(skip)]
     #[estree(skip)]

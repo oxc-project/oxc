@@ -557,19 +557,27 @@ mod test {
     use crate::Parser;
 
     fn get_comments(source_text: &str) -> Vec<Comment> {
-        let allocator = Allocator::default();
-        let source_type = SourceType::default();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.diagnostics.is_empty());
-        ret.program.comments.into_iter().collect::<Vec<_>>()
+        get_comments_with_source_type(source_text, SourceType::default())
     }
 
     fn get_comments_typescript(source_text: &str) -> Vec<Comment> {
+        get_comments_with_source_type(source_text, SourceType::default().with_typescript(true))
+    }
+
+    fn get_comments_with_source_type(source_text: &str, source_type: SourceType) -> Vec<Comment> {
         let allocator = Allocator::default();
-        let source_type = SourceType::default().with_typescript(true);
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
-        ret.program.comments.into_iter().collect::<Vec<_>>()
+        // These tests check lexer metadata independently of parser node ownership.
+        ret.program
+            .comments
+            .into_iter()
+            .map(|mut comment| {
+                assert!(comment.attachment.is_some());
+                comment.attachment = None;
+                comment
+            })
+            .collect()
     }
 
     #[test]

@@ -93,6 +93,7 @@ use oxc_ast::{
     ast::{Expression, Program, Statement},
     builder::{AstBuilder, GetAstBuilder},
 };
+use oxc_comment_assignment::CommentAssignment;
 use oxc_diagnostics::Diagnostics;
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
@@ -170,6 +171,8 @@ pub struct ParserReturn<'a> {
     /// Every node has a unique node ID within this AST. Program has ID zero;
     /// other IDs follow construction order and may have gaps from discarded nodes.
     /// Semantic analysis replaces these with its own dense node IDs.
+    /// Every source comment has an attachment using these IDs, including on
+    /// recovered ASTs. Fatal errors attach retained comments to the empty Program.
     ///
     /// ## Validity
     /// It is possible for the AST to be present and semantically invalid. This will happen if
@@ -786,6 +789,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         };
 
         program.comments = self.lexer.trivia_builder.comments;
+        CommentAssignment::new().assign(&mut program);
 
         ParserReturn {
             program,
@@ -1056,6 +1060,74 @@ mod test {
         assert!(ret.program.is_empty());
         assert!(ret.diagnostics.is_empty());
         assert!(!ret.is_flow_language);
+    }
+
+    #[test]
+    fn comment_ownership_is_available_in_every_parser_config() {
+        use oxc_ast::CommentPlacement;
+
+        let allocator = Allocator::default();
+        let source = "/* before */ first(); // after";
+        let check = |ret: ParserReturn<'_>| {
+            assert!(ret.diagnostics.is_empty());
+            assert_eq!(ret.program.comments.len(), 2);
+            let owner = ret.program.body[0].node_id();
+            for (comment, placement) in ret
+                .program
+                .comments
+                .iter()
+                .zip([CommentPlacement::Leading, CommentPlacement::Trailing])
+            {
+                let attachment = comment.attachment.as_ref().unwrap();
+                assert_eq!(attachment.node_id.get(), owner);
+                assert_eq!(attachment.placement, placement);
+            }
+        };
+        check(Parser::new(&allocator, source, SourceType::mjs()).parse());
+        check(
+            Parser::new(&allocator, source, SourceType::mjs())
+                .with_config(config::TokensParserConfig)
+                .parse(),
+        );
+        for tokens in [false, true] {
+            check(
+                Parser::new(&allocator, source, SourceType::mjs())
+                    .with_config(config::RuntimeParserConfig::new(tokens))
+                    .parse(),
+            );
+        }
+    }
+
+    #[test]
+    fn recovered_programs_return_attached_comments() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(
+            &allocator,
+            "/* before */ return /* argument */ value; // after",
+            SourceType::mjs(),
+        )
+        .parse();
+        assert!(!ret.diagnostics.is_empty());
+        assert!(!ret.fatal_error);
+        assert_eq!(ret.program.comments.len(), 3);
+        assert!(ret.program.comments.iter().all(|comment| comment.attachment.is_some()));
+    }
+
+    #[test]
+    fn fatal_errors_attach_retained_comments_to_program() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(
+            &allocator,
+            "/* before */ first(); /* discarded */ const =;",
+            SourceType::mjs(),
+        )
+        .parse();
+        assert!(ret.fatal_error);
+        assert!(ret.program.body.is_empty());
+        assert_eq!(ret.program.comments.len(), 2);
+        assert!(ret.program.comments.iter().all(|comment| {
+            comment.attachment.as_ref().unwrap().node_id.get() == ret.program.node_id.get()
+        }));
     }
 
     #[test]

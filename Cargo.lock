@@ -2473,6 +2473,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
+ "oxc_comment_assignment",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_ecmascript",

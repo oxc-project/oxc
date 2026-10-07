@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::{cell::Cell, ops::Range};
 
 use oxc_ast::{
     AstKind, Comment, CommentAttachment, CommentContent, CommentPlacement,
@@ -36,7 +36,7 @@ struct Pending {
     container: Neighbor,
     previous: Option<Neighbor>,
     next: Option<Neighbor>,
-    attachment: Option<CommentAttachment>,
+    attachment: Option<(NodeId, CommentPlacement)>,
 }
 
 impl Pending {
@@ -144,7 +144,10 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
         // Release the traversal's shared references before writing ownership.
         // Reuse the existing scratch entries; no separate output table is needed.
         for (comment, pending) in program.comments.iter_mut().zip(pending) {
-            comment.attachment = pending.attachment;
+            comment.attachment = pending.attachment.map(|(node_id, placement)| CommentAttachment {
+                node_id: Cell::new(node_id),
+                placement,
+            });
         }
     }
 
@@ -372,7 +375,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             if pending.attachment.is_none() {
                 frame.resolved += 1;
             }
-            pending.attachment = Some(CommentAttachment { node_id, placement });
+            pending.attachment = Some((node_id, placement));
             pending.container = frame.node;
         }
     }
