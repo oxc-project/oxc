@@ -756,3 +756,12 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────
    ╰────
   help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "vue" should not be included in the import declaration.
+   ╭─[extensions.tsx:2:17]
+ 1 │ 
+ 2 │                 import Component from "@cp/Component.vue";
+   ·                 ──────────────────────────────────────────
+ 3 │             
+   ╰────
+  help: Remove the file extension from this import.
