@@ -18913,6 +18913,9 @@
         "name"
       ],
       "properties": {
+        "allowDynamicImport": {
+          "type": "boolean"
+        },
         "allowImportNames": {
           "type": "array",
           "items": {
@@ -18940,6 +18943,9 @@
     "RestrictedPattern": {
       "type": "object",
       "properties": {
+        "allowDynamicImport": {
+          "type": "boolean"
+        },
         "allowImportNamePattern": {
           "type": "string"
         },
