@@ -1,6 +1,5 @@
 use std::{
-    ffi::OsStr,
-    path::{Component, Path, PathBuf},
+    path::{Path, PathBuf},
     sync::Arc,
 };
 
@@ -154,7 +153,7 @@ impl Rule for NoCycle {
             return;
         }
 
-        let needle = &module_record.resolved_absolute_path;
+        let needle = module_record.path_id;
         let mut direct_imports = module_record
             .loaded_modules()
             .iter()
@@ -172,7 +171,7 @@ impl Rule for NoCycle {
             let mut stack =
                 vec![(key.clone(), loaded_module_record.resolved_absolute_path.clone())];
 
-            if loaded_module_record.resolved_absolute_path == *needle {
+            if loaded_module_record.path_id == needle {
                 ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
                 continue;
             }
@@ -189,7 +188,7 @@ impl Rule for NoCycle {
                     }
                 })
                 .visit_fold(false, &loaded_module_record, |_, (_, val), _| {
-                    if val.resolved_absolute_path == *needle {
+                    if val.path_id == needle {
                         VisitFoldWhile::Stop(true)
                     } else {
                         VisitFoldWhile::Next(false)
@@ -245,9 +244,9 @@ impl NoCycle {
             if !self.should_traverse_module(specifier, &loaded_module_record, module_record) {
                 continue;
             }
-            // By path, not pointer: that is what the walks report on, and one file can have
+            // By path id, not pointer: that is what the walks report on, and one file can have
             // several records (one per section).
-            if loaded_module_record.resolved_absolute_path == root.resolved_absolute_path {
+            if loaded_module_record.path_id == root.path_id {
                 return true;
             }
             if visited.insert(Arc::as_ptr(&loaded_module_record) as usize) {
@@ -263,13 +262,7 @@ impl NoCycle {
         module: &Arc<ModuleRecord>,
         parent: &ModuleRecord,
     ) -> bool {
-        let path = &module.resolved_absolute_path;
-
-        let is_node_module = path
-            .components()
-            .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
-
-        if is_node_module {
+        if module.is_node_module {
             return false;
         }
 
@@ -306,7 +299,7 @@ impl NoCycle {
         // export function example1() { }
         // export * as Example from './test.js';
         // ```
-        if path == &parent.resolved_absolute_path
+        if module.path_id == parent.path_id
             && let Some(e) = module
                 .indirect_export_entries
                 .iter()
