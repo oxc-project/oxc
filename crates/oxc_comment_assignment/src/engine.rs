@@ -2,9 +2,9 @@ use std::ops::Range;
 
 use oxc_ast::{
     AstKind, Comment, CommentAttachment, CommentContent, CommentPlacement,
-    ast::{Declaration, ExportDefaultDeclarationKind, Program, TemplateElement},
+    ast::{Declaration, ExportDefaultDeclarationKind, Program, Statement, TemplateElement},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, walk};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::node::NodeId;
 
@@ -379,6 +379,13 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
 }
 
 impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
+    #[inline]
+    fn visit_statement(&mut self, statement: &Statement<'a>) {
+        if self.skipped_depth == 0 {
+            walk::walk_statement(self, statement);
+        }
+    }
+
     #[inline]
     fn enter_node(&mut self, kind: AstKind<'a>) {
         // Keep the sparse-subtree path here so it can inline into the generated
