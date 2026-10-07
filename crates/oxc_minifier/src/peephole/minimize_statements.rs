@@ -765,23 +765,17 @@ impl<'a> PeepholeOptimizations {
         if ctx.is_tree_shake_only() {
             return false;
         }
-        let (object, key) = match &assign_expr.left {
-            AssignmentTarget::StaticMemberExpression(e) => {
-                (&e.object, KeyName::Str(e.property.name.as_str()))
-            }
-            AssignmentTarget::ComputedMemberExpression(e) => {
-                let Some(key) = KeyName::from_literal(&e.expression) else {
-                    return false;
-                };
-                (&e.object, key)
-            }
-            _ => return false,
+        let Some(member) = assign_expr.left.as_member_expression() else {
+            return false;
+        };
+        let Some(key) = KeyName::from_member_expression(member) else {
+            return false;
         };
         // `__proto__` changes the prototype instead of defining a property.
         if matches!(key, KeyName::Str("__proto__")) {
             return false;
         }
-        let Expression::Identifier(object) = object else {
+        let Expression::Identifier(object) = member.object() else {
             return false;
         };
         let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() else {
@@ -837,12 +831,14 @@ impl<'a> PeepholeOptimizations {
         if let Some(index) = existing_index
             && let ObjectPropertyKind::ObjectProperty(property) = &mut object_expr.properties[index]
             && !property.method
-            && !property.shorthand
             && !property.value.may_have_side_effects(ctx)
         {
             // "var o = { a: 1 }; o.a = 2" => "var o = { a: 2 }"
-            // The old value moves into the assignment; the caller drops it, which records the change.
+            // The old value moves into the assignment, which the caller drops. That records the
+            // change and the old value's references, so no `drop_*` is needed here.
             mem::swap(&mut property.value, &mut assign_expr.right);
+            // "var o = { a }; o.a = 2" => "var o = { a: 2 }"
+            property.shorthand = false;
         } else {
             // "var o = { ...a }; o.b = 1" => "var o = { ...a, b: 1 }"
             let property_key = match &mut assign_expr.left {
@@ -2431,6 +2427,17 @@ impl<'k> KeyName<'k> {
             Expression::StringLiteral(s) if !s.lone_surrogates => Some(Self::Str(s.value.as_str())),
             Expression::NumericLiteral(n) if n.value.is_finite() => Some(Self::Num(n.value)),
             _ => None,
+        }
+    }
+
+    /// The property name of a member expression, or `None` if it is not known statically.
+    fn from_member_expression(member: &'k MemberExpression<'_>) -> Option<Self> {
+        match member {
+            MemberExpression::StaticMemberExpression(e) => {
+                Some(Self::Str(e.property.name.as_str()))
+            }
+            MemberExpression::ComputedMemberExpression(e) => Self::from_literal(&e.expression),
+            MemberExpression::PrivateFieldExpression(_) => None,
         }
     }
 

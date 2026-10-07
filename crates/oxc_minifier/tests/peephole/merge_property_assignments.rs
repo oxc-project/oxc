@@ -2,7 +2,7 @@ use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, CompressOptionsKeepNames, default_options, test, test_options,
-    test_options_source_type, test_same, test_same_options_source_type,
+    test_options_source_type, test_same, test_same_options_source_type, test_smallest,
 };
 
 #[test]
@@ -54,6 +54,7 @@ fn existing_key() {
     // the last plain property with the key is replaced in place
     test("var o = { a: 1, b: 2 }; o.a = 3", "var o = { a: 3, b: 2 }");
     test("var o = { a: 1, b: 2, a: 3 }; o.a = 4", "var o = { a: 1, b: 2, a: 4 }");
+    test("var o = { 1: true, '1': false, b: 2 }; o['1'] = 0", "var o = { 1: !0, 1: 0, b: 2 }");
     test("var o = { 'a b': 1, c: 2 }; o['a b'] = 3", "var o = { 'a b': 3, c: 2 }");
     test("var o = { 1: 1, b: 2 }; o['1'] = 3", "var o = { 1: 3, b: 2 }");
     test("var o = { 0x10: 1, b: 2 }; o[16] = 3", "var o = { 16: 3, b: 2 }");
@@ -71,13 +72,22 @@ fn existing_key() {
         "var o = { '1000000000000000000000': 1, b: 2 }; o[1e21] = 3",
         "var o = { '1000000000000000000000': 1, b: 2, 1e21: 3 }",
     );
-    // the old value has side effects, or is a method or shorthand: append
+    // a shorthand whose read has no side effects is replaced too
+    test("function f(a) { var o = { a }; o.a = 1; return o }", "function f(a) { return { a: 1 } }");
+    test(
+        "function f(a) { var o = { a: a, b: 2 }; o.a = 1; return o }",
+        "function f(a) { return { a: 1, b: 2 } }",
+    );
+    test("var o = { Math, b: 2 }; o.Math = 1", "var o = { Math: 1, b: 2 }");
+    // the caller drops the old value, so `h` has no references left
+    test_smallest(
+        "export function f() { function h() {} var o = { h, b: 2 }; o.h = 1; return o }",
+        "export function f() { return { h: 1, b: 2 } }",
+    );
+    // the old value has side effects, or is a method: append
     test("var o = { a: g() }; o.a = 1", "var o = { a: g(), a: 1 }");
     test("var o = { a() {} }; o.a = 1", "var o = { a() {}, a: 1 }");
-    test(
-        "function f(a) { var o = { a }; o.a = 1; return o }",
-        "function f(a) { return { a, a: 1 } }",
-    );
+    test("var o = { a, b: 2 }; o.a = 1", "var o = { a, b: 2, a: 1 }");
 }
 
 #[test]
@@ -90,6 +100,8 @@ fn bail() {
     test_same("var o = {}; o[a] = 1");
     test_same("var o = {}; o[null] = 1");
     test_same("var o = { inf: 1 }; o[1e999] = 2");
+    // a regex key is `String(/a/ig)`, which is "/a/gi", not its source text
+    test_same("var o = { '/a/ig': 1, b: 2 }; o[/a/ig] = 2");
     // a lone surrogate is stored as `\u{FFFD}` and its code in hex
     test_same("var o = { '\u{FFFD}d800': 1, b: 2 }; o['\\uD800'] = 3");
     // `__proto__` sets the prototype
