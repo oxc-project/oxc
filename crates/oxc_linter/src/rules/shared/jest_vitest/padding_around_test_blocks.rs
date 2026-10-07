@@ -3,10 +3,12 @@ use oxc_ast::AstKind;
 use crate::{
     context::LintContext,
     utils::{
-        JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode, parse_general_jest_fn_call,
-        report_missing_padding_before_jest_block,
+        JestGeneralFnKind, JestPaddingConfig, JestPaddingTarget, ParsedGeneralJestFnCall,
+        PossibleJestNode, parse_general_jest_fn_call, report_missing_padding_around_jest_block,
     },
 };
+
+const PADDING_TARGETS: &[JestPaddingTarget] = &[JestPaddingTarget::Test];
 
 pub const DOCUMENTATION: &str = r"### What it does
 
@@ -68,5 +70,10 @@ pub fn run<'a>(jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     if kind != JestGeneralFnKind::Test {
         return;
     }
-    report_missing_padding_before_jest_block(node, ctx, name);
+    report_missing_padding_around_jest_block(
+        node,
+        ctx,
+        name,
+        JestPaddingConfig::new(PADDING_TARGETS),
+    );
 }
