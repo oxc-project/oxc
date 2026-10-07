@@ -1610,6 +1610,7 @@ export interface DummyRuleMap {
   "unicorn/number-literal-case"?: RuleNoConfig;
   "unicorn/numeric-separators-style"?: RuleNoConfig | [AllowWarnDeny, NumericSeparatorsStyleConfig];
   "unicorn/prefer-add-event-listener"?: RuleNoConfig;
+  "unicorn/prefer-add-event-listener-options"?: RuleNoConfig;
   "unicorn/prefer-array-find"?: RuleNoConfig;
   "unicorn/prefer-array-flat"?: RuleNoConfig;
   "unicorn/prefer-array-flat-map"?: RuleNoConfig;

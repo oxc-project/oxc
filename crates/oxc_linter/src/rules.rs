@@ -634,6 +634,7 @@ pub(crate) mod unicorn {
     pub mod number_literal_case;
     pub mod numeric_separators_style;
     pub mod prefer_add_event_listener;
+    pub mod prefer_add_event_listener_options;
     pub mod prefer_array_find;
     pub mod prefer_array_flat;
     pub mod prefer_array_flat_map;
