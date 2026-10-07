@@ -178,7 +178,7 @@ impl<'a> PeepholeOptimizations {
                         };
                         if let Some((name, id)) = name_and_id
                             && Self::inject_optional_chaining_if_matched(
-                                &name,
+                                name,
                                 id,
                                 logical_right,
                                 ctx,
@@ -1097,10 +1097,9 @@ impl<'a> PeepholeOptimizations {
             // Unwrap parens and sequence tails — `(0, x)` — so the
             // classification does not change when a later fold surfaces
             // the inner expression.
-            let mut e = super_class.get_inner_expression();
-            while let Expression::SequenceExpression(seq) = e {
-                let Some(last) = seq.expressions.last() else { break };
-                e = last.get_inner_expression();
+            let mut e = super_class;
+            if let Expression::SequenceExpression(seq) = e {
+                e = Self::last_expression_in_sequence(seq).unwrap_or(e);
             }
             // Keep the existing statically-provable TypeError for literal
             // arrow heritage: `class C extends (() => {}) {}`.

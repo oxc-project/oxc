@@ -177,16 +177,20 @@ pub struct FormatConfig {
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
 
-    /// Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+    /// Control whether to format embedded parts in the file.
+    /// For example:
+    /// - CSS-in-JS: template literal
+    /// - JS-in-Vue: `<script>` block
+    /// - JS-in-Markdown: code fence
+    /// - YAML-in-CSS/Markdown: front matter
     ///
-    /// - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
+    /// With `"off"`, these parts are kept as-is.
+    ///
+    /// - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
     /// - Default: `"auto"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
 
-    // ============================================================================================
-    // Prettier compatible options and only used by Prettier
-    // ============================================================================================
     /// How to wrap prose.
     ///
     /// By default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.
@@ -197,6 +201,10 @@ pub struct FormatConfig {
     /// - Default: `"preserve"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prose_wrap: Option<ProseWrapConfig>,
+
+    // ============================================================================================
+    // Prettier compatible options and only used by Prettier
+    // ============================================================================================
     /// Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
     ///
     /// - Languages: HTML, Angular, Vue, Handlebars, Svelte

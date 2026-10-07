@@ -26,8 +26,9 @@ const CSS: ConformanceConfig = ConformanceConfig {
     ignore: &[
         // postcss-conditionals (archived: https://github.com/andyjansson/postcss-conditionals).
         "css/atrule/if-else.css",
-        // YAML frontmatter
+        // YAML frontmatter, needs the dispatcher this harness doesn't install
         "css/yaml/dirty.css",
+        "css/yaml/empty_newlines.css",
         // range formatting / IDE cursor, not whole-file formatting
         "css/range/",
         "css/cursor/",

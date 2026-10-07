@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
 use crate::{
-    ParserConfig as Config, ParserImpl, diagnostics,
+    ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierKind, Modifiers},
 };
@@ -452,12 +452,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         TSNamespaceExportDeclaration::boxed(self.end_span(start), id, self)
     }
 
+    /// Check the parse goal and placement of the `import` / `export` declaration at the current token.
+    pub(crate) fn check_module_declaration(&mut self, stmt_ctx: StatementContext) {
+        // TypeScript cannot tell script from module by syntax,
+        // and permits module declarations in namespaces and ambient modules.
+        if self.is_ts {
+            return;
+        }
+        let statement = if self.at(Kind::Import) { "import statement" } else { "export statement" };
+        let span = self.cur_token().span();
+        if self.source_type.is_script() || self.source_type.is_commonjs() {
+            self.error(diagnostics::module_code(statement, span));
+        } else if stmt_ctx != StatementContext::Program {
+            self.error(diagnostics::top_level(statement, span));
+        }
+    }
+
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
     pub(crate) fn parse_export_declaration(
         &mut self,
         start: u32,
         mut decorators: ArenaVec<'a, Decorator<'a>>,
+        stmt_ctx: StatementContext,
     ) -> Statement<'a> {
+        self.check_module_declaration(stmt_ctx);
         self.bump_any(); // bump `export`
         // `export` is unambiguously module syntax (ECMA-262 §16.2.3): commit to the
         // Module goal so the declaration parses under `Await` on the first pass and

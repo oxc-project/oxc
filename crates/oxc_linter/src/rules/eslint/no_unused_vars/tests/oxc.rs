@@ -1929,17 +1929,6 @@ fn test_ambient_export_modifiers() {
         .test();
 }
 
-// #[test]
-// fn test_template() {
-//     let pass = vec![];
-
-//     let fail = vec![];
-
-//     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
-//         .with_snapshot_suffix("<replace>")
-//         .test_and_snapshot();
-// }
-
 #[test]
 fn test_remove_array_element_before_rest() {
     let fix = vec![(
@@ -2079,6 +2068,50 @@ fn ignore_patterns_in_array_rest() {
         ("const [..._rest] = items;", array_options.clone()),
         ("const [...[rest]] = items;", array_options),
         ("const [...{length}] = items;", object_options),
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn disabled_arguments_do_not_report_used_ignore_patterns() {
+    let options = Some(json!([{
+        "args": "none", "argsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+    }]));
+    let pass = vec![
+        ("function f(_a) { return _a; } f();", options.clone()),
+        ("function f(..._args) { return _args; } f();", options.clone()),
+        ("function f({_a}) { return _a; } f();", options.clone()),
+        ("function f([_a]) { return _a; } f();", options),
+    ];
+    let fail = vec![
+        (
+            "function f([_a]) { return _a; } f();",
+            Some(json!([{
+                "args": "none", "destructuredArrayIgnorePattern": "^_",
+                "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "function f(...[_a]) { return _a; } f();",
+            Some(json!([{
+                "args": "none", "argsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "function f(_a) { return _a; } f();",
+            Some(json!([{
+                "args": "all", "argsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "const _a = 1; use(_a);",
+            Some(json!([{
+                "args": "none", "varsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
     ];
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()

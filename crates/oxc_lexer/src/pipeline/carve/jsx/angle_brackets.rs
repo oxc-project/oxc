@@ -3,11 +3,7 @@ use crate::{error::DiagCode, lanes::Lanes};
 use crate::pipeline::{
     bitmap::bm_get,
     bytes::{is_id_start, is_word, line_break_in},
-    disambiguate::{
-        Tokens, Walks, arrow_after_params, jsx_site_is_expression, ts_type_region_open,
-        type_parameter_list_head,
-    },
-    tables::Tables,
+    disambiguate::jsx_over_generic,
     token_view,
 };
 
@@ -22,7 +18,6 @@ enum AngleVerdict {
 
 #[inline]
 pub(super) unsafe fn jsx_over_type_params(
-    t: &Tables,
     src: *const u8,
     srcs: &[u8],
     st: *const u64,
@@ -43,11 +38,9 @@ pub(super) unsafe fn jsx_over_type_params(
         AngleVerdict::Jsx => true,
         AngleVerdict::Ambiguous { gt, lp } => {
             let tokens = token_view(
-                t,
                 src,
                 st,
                 opch,
-                word,
                 kind,
                 n,
                 ts,
@@ -57,7 +50,7 @@ pub(super) unsafe fn jsx_over_type_params(
                 &lanes.disambiguate.closers,
             );
             let (jsx, unterminated) =
-                jsx_ambiguous_site(&tokens, &mut lanes.disambiguate.walks, lt, lp);
+                jsx_over_generic(&tokens, &mut lanes.disambiguate.walks, lt, lp);
             if unterminated {
                 lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
             }
@@ -127,18 +120,4 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
         return v;
     }
     AngleVerdict::Jsx
-}
-
-/// Is the ambiguous `<T>(` at `lt` JSX (true) or a type-parameter list (false)? The second
-/// answer says whether it is an unterminated JSX element to report: a generic arrow shape at a
-/// site where an operand may start.
-#[inline(never)]
-fn jsx_ambiguous_site(tokens: &Tokens, walks: &mut Walks, lt: usize, lp: usize) -> (bool, bool) {
-    if ts_type_region_open(tokens, walks, lt) || type_parameter_list_head(tokens, walks, lt) {
-        return (false, false);
-    }
-    if arrow_after_params(tokens, lp) {
-        return (false, jsx_site_is_expression(tokens, walks, lt));
-    }
-    (true, false)
 }

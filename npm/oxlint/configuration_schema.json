@@ -9511,7 +9511,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/prefer-query-selector": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferQuerySelector"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/prefer-reflect-apply": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -16940,6 +16957,12 @@
     "OnlyExportComponentsConfig": {
       "type": "object",
       "properties": {
+        "allowCompoundComponents": {
+          "description": "Allow an exported object when every property is a React component.\nThis matches Vite's compound component support. The object must be non-empty,\ncontain no nested objects, spreads, or accessors, and anonymous functions\nmust use a component name as a static property key.\n\n```jsx\n// Allowed when allowCompoundComponents: true\nconst Root = () => <div />;\nconst Label = () => <span />;\nexport const Tag = { Root, Label };\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Allow an exported object when every property is a React component.\nThis matches Vite's compound component support. The object must be non-empty,\ncontain no nested objects, spreads, or accessors, and anonymous functions\nmust use a component name as a static property key.\n\n```jsx\n// Allowed when allowCompoundComponents: true\nconst Root = () => <div />;\nconst Label = () => <span />;\nexport const Tag = { Root, Label };\n```"
+        },
         "allowConstantExport": {
           "description": "Allow exporting primitive constants (string/number/boolean/template literal)\nalongside component exports without triggering a violation. Recommended when your\nbundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`\npreset).\n\n```jsx\n// Allowed when allowConstantExport: true\nexport const VERSION = \"3\";\nexport const Foo = () => null;\n```",
           "default": false,
@@ -18049,6 +18072,18 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to allow rejecting Promises with values typed as `unknown`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferQuerySelector": {
+      "type": "object",
+      "properties": {
+        "allowWithVariables": {
+          "description": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable."
         }
       },
       "additionalProperties": false

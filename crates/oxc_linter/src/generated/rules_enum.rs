@@ -12028,6 +12028,9 @@ impl RuleEnum {
             Self::UnicornPreferObjectFromEntries(_) => Ok(Self::UnicornPreferObjectFromEntries(
                 UnicornPreferObjectFromEntries::from_configuration(value)?,
             )),
+            Self::UnicornPreferQuerySelector(_) => Ok(Self::UnicornPreferQuerySelector(
+                UnicornPreferQuerySelector::from_configuration(value)?,
+            )),
             Self::UnicornPreferSingleCall(_) => Ok(Self::UnicornPreferSingleCall(
                 UnicornPreferSingleCall::from_configuration(value)?,
             )),

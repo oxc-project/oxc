@@ -886,7 +886,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
             // Parse the statement with await context enabled (TopLevel context is already set)
             let stmt = self.context_add(Context::Await, |p| {
-                p.parse_statement_list_item(StatementContext::StatementList)
+                p.parse_statement_list_item(StatementContext::Program)
             });
 
             // Replace the statement if the index is valid

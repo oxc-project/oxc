@@ -1,26 +1,29 @@
 use std::{ptr, slice};
 
-use crate::{error::DiagCode, lanes::Lanes, token::tk};
+use crate::{
+    error::DiagCode,
+    lanes::Lanes,
+    token::{TokenKind, tk},
+};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::{is_digit, is_word, is_ws},
     disambiguate::{gt_run_split, lt_run_split},
-    operators::{is_op_char, opmap_longest, opmap_pack},
+    operators::{is_op_char, opmap_longest, opmap_pack2, opmap_pack3},
     scan::scan_number,
-    tables::{KwSet, Tables},
     token_view,
 };
 
 mod keywords;
 pub use keywords::KWB;
-use keywords::kw_flush;
+use keywords::{kw_flush, kw_match_word};
 
 /// [`glue_number`] computes the kind as `NUM + is_bigint` - keep them adjacent.
 const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
 
+#[inline(never)]
 pub unsafe fn coalesce(
-    t: &Tables,
     src: *const u8,
     n: usize,
     st: *mut u64,
@@ -34,7 +37,6 @@ pub unsafe fn coalesce(
     ts: bool,
     lanes: &mut Lanes,
 ) {
-    let kw = if ts { &t.keywords.kwts } else { &t.keywords.kwjs };
     lanes.disambiguate.restart(lanes.module);
     let nw = (n + 63) >> 6;
     let mut opprev: u64 = 0;
@@ -124,7 +126,7 @@ pub unsafe fn coalesce(
                         continue;
                     }
                 }
-                cursor = glue_number(t, kw, src, n, st, opch, word, kind, p, lanes);
+                cursor = glue_number(ts, src, n, st, opch, word, kind, p, lanes);
             } else {
                 let y2 = (op >> bit) | ((opnext << (63 - bit)) << 1);
                 let run = (!y2).trailing_zeros() as usize;
@@ -134,19 +136,17 @@ pub unsafe fn coalesce(
                 // In TS, `>` may close nested type args including `Foo<T>= 1`, so fusing can diverge.
                 // Cheap inline byte checks handle this
                 if b0 == b'>'
-                    && kw.ts_key
+                    && ts
                     && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1))))
                 {
                     let kw_final = (w & !(KWB - 1)) << 6;
                     let tokens = token_view(
-                        t,
                         src,
                         st,
                         opch,
-                        word,
                         kind,
                         n,
-                        ts,
+                        true,
                         kw_final,
                         lanes.module,
                         &lanes.disambiguate.brackets,
@@ -160,16 +160,14 @@ pub unsafe fn coalesce(
                     }
                 }
                 // Mirror case: `Array<<T>(x: T) => T>` opens two lists, not `<<` shift-left.
-                if b0 == b'<' && b1 == b'<' && kw.ts_key {
+                if b0 == b'<' && b1 == b'<' && ts {
                     let tokens = token_view(
-                        t,
                         src,
                         st,
                         opch,
-                        word,
                         kind,
                         n,
-                        ts,
+                        true,
                         0,
                         lanes.module,
                         &lanes.disambiguate.brackets,
@@ -181,9 +179,9 @@ pub unsafe fn coalesce(
                     }
                 }
                 if run == 2 {
-                    let key = (q & 0xFFFF) | (2u32 << 24);
-                    let pack = opmap_pack(key);
-                    let mut ok = ((pack ^ key) & 0xFF_FFFF) == 0;
+                    let key = q & 0xFFFF;
+                    let pack = opmap_pack2(key);
+                    let mut ok = pack as u16 == q as u16;
                     let kk = (pack >> 24) as u8;
                     ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8));
                     let hm: u8 = 0u8.wrapping_sub(ok as u8);
@@ -198,48 +196,45 @@ pub unsafe fn coalesce(
                     continue;
                 }
                 let b2 = (q >> 16) as u8;
-                let key3 = (q & 0xFF_FFFF) | (3u32 << 24);
-                let p3 = opmap_pack(key3);
+                let key3 = q & 0xFF_FFFF;
+                let p3 = opmap_pack3(key3);
                 let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
-                let key2a = (q & 0xFFFF) | (2u32 << 24);
-                let pa = opmap_pack(key2a);
+                let key2a = q & 0xFFFF;
+                let pa = opmap_pack2(key2a);
                 let ka = (pa >> 24) as u8;
-                let mut ok2a = ((pa ^ key2a) & 0xFF_FFFF) == 0;
+                let mut ok2a = pa as u16 == q as u16;
                 ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
-                let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
-                let pb = opmap_pack(key2b);
+                let key2b = key3 >> 8;
+                let pb = opmap_pack2(key2b);
                 let kb = (pb >> 24) as u8;
-                let mut ok2b = ((pb ^ key2b) & 0xFF_FFFF) == 0;
+                let mut ok2b = pb as u16 == key2b as u16;
                 ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8));
-                let sel3 = ok3;
-                let sel2a = !ok3 && ok2a;
-                let sel2b = !ok3 && !ok2a && ok2b;
-                let m0: u8 = 0u8.wrapping_sub((sel3 || sel2a) as u8);
-                let k0v: u8 = if sel3 { (p3 >> 24) as u8 } else { ka };
+                let c1 = ok3 | ok2a; // token at `p` is 2+ bytes
+                let sel2b = !c1 & ok2b; // 2-byte token starts at `p + 1`
+                let c2 = ok3 | sel2b; // `p + 2` is not a token start
+                let m0: u8 = 0u8.wrapping_sub(c1 as u8);
+                let k0v: u8 = if ok3 { (p3 >> 24) as u8 } else { ka };
                 *kind.add(p) = (*kind.add(p) & !m0) | (k0v & m0);
                 let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
                 *kind.add(p + 1) = (*kind.add(p + 1) & !m1) | (kb & m1);
-                let clr1 = ((sel3 || sel2a) as u64) << ((p + 1) & 63);
+                let clr1 = (c1 as u64) << ((p + 1) & 63);
                 *st.add((p + 1) >> 6) &= !clr1;
-                let clr2 = ((sel3 || sel2b) as u64) << ((p + 2) & 63);
+                let clr2 = (c2 as u64) << ((p + 2) & 63);
                 *st.add((p + 2) >> 6) &= !clr2;
-                let mut adv = if sel3 { 3 } else { run - 1 };
-                adv = if sel2a { 2 } else { adv };
-                adv = if sel2b { 3 } else { adv };
-                cursor = p + adv;
+                // `run == 3` in this arm
+                cursor = p + 2 + c2 as usize;
             }
         }
         if w & (KWB - 1) == KWB - 1 {
-            kw_flush(kw, src, word, kind, kwpos, k);
+            kw_flush(ts, src, word, kind, kwpos, k);
             k = 0;
         }
     }
-    kw_flush(kw, src, word, kind, kwpos, k);
+    kw_flush(ts, src, word, kind, kwpos, k);
 }
 
 unsafe fn glue_number(
-    t: &Tables,
-    kw: &KwSet,
+    ts: bool,
     src: *const u8,
     n: usize,
     st: *mut u64,
@@ -287,10 +282,8 @@ unsafe fn glue_number(
                 // word bitmap, no match right after a member `.` (a number
                 // ending in `.` is that dot-run's first dot).
                 if *src.add(e2 - 1) != b'.' {
-                    let wb = word as *const u8;
-                    let x = ptr::read_unaligned(wb.add(e2 >> 3) as *const u64) >> (e2 & 7);
-                    let kk = kw.lookup(src.add(e2), (!x).trailing_zeros() as usize);
-                    if kk != 0 {
+                    let kk = kw_match_word(ts, src, word, e2);
+                    if kk != TokenKind::Ident {
                         *kind.add(e2) = kk as u8;
                     }
                 }
@@ -303,19 +296,17 @@ unsafe fn glue_number(
         if e2 + 1 < n && is_op_char(c) && bm_get(opch, e2 + 1) {
             // A numeric literal type ends its type argument list here (`Map<A, 1.5>>`); without this the number's own munch
             // reaches the `>` run before `coalesce` ever raises it as an event.
-            if c == b'>' && kw.ts_key && matches!(*src.add(e2 + 1), b'>' | b'=') {
+            if c == b'>' && ts && matches!(*src.add(e2 + 1), b'>' | b'=') {
                 let end = bm_next0(opch, e2, n);
                 // Keyword kinds are final only below this window's batch.
                 let kw_final = ((e2 >> 6) & !(KWB - 1)) << 6;
                 let tokens = token_view(
-                    t,
                     src,
                     st,
                     opch,
-                    word,
                     kind,
                     n,
-                    kw.ts_key,
+                    true,
                     kw_final,
                     lanes.module,
                     &lanes.disambiguate.brackets,
@@ -353,10 +344,9 @@ unsafe fn munch_walk(
     while end - pos >= 2 {
         bm_set(st, pos);
         let rem = end - pos;
-        let lmax: u32 = if rem < 4 { rem as u32 } else { 4 };
         let bytes = *src.add(pos).cast::<[u8; 4]>();
-        let (opk, opl) = opmap_longest(bytes, lmax);
-        if opk != 0 {
+        let (opk, opl) = opmap_longest(bytes, rem as u32);
+        if let Some(opk) = opk {
             *kind.add(pos) = opk as u8;
             let mut j = 1usize;
             while j < opl as usize {

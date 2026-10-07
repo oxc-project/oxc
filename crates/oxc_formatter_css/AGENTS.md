@@ -12,7 +12,7 @@ Prettier compatible CSS/SCSS/Less formatter (`oxfmt`'s Tier 1 backend), using th
 - Entry points:
   - `format()`: standalone files, on a service-less session
   - `format_with_session()`: standalone, on the caller's `FormatSession`
-  - `format_to_ir()`: embedded use via the dispatcher (`template_placeholders` = the css-in-js parse mode)
+  - `format_to_ir()`: embedded use via the dispatcher, parsing a fragment (`CssRoot`; `template_placeholders` = the css-in-js parse mode)
   - `parse_for_format()`: the parse `format()` runs, exposed for callers that inspect the AST (e.g. the fixture harness's fingerprint)
 
 ### Forked parser
@@ -37,8 +37,8 @@ The shared policy applies; CSS specifics:
 
 - `oxc-css-parser` is error-tolerant via `parser.recoverable_errors()`, but any parse error still bails out
 - `TopLevelDeclaration`: a root declaration in Css and Scss, so standalone `format()` rejects it (README "Acceptance")
-  - In the css-in-js parse mode (`template_placeholder`, Scss-only) the parser treats it as a statement and emits nothing
-    - `` css`display: flex;` `` is the dominant css-in-js shape
+  - `format_to_ir()` parses a fragment (`CssRoot::Fragment`, the parser's `block_contents`): the root follows the rules inside a block, so it is a statement
+    - `` css`display: flex;` `` is the dominant css-in-js shape, and MDN-style property snippets in Markdown code blocks
   - Less parses and formats it: less.js accepts it at parse time and fails only at eval
 
 ### Comments

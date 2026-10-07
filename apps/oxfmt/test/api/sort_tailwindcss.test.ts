@@ -1327,4 +1327,57 @@ describe("Tailwind CSS Sorting in CSS (@apply)", () => {
     expect(result.code).toContain("@apply flex p-4;");
     expect(result.errors).toStrictEqual([]);
   });
+
+  it("should sort css-in-js @apply and JSX className in the same file", async () => {
+    const input = [
+      'const A = <div className="p-4 flex" />;',
+      "const B = styled.div`",
+      "  @apply p-4 flex;",
+      "`;",
+      'const C = <div className="text-sm grid" />;',
+    ].join("\n");
+
+    const result = await format("test.tsx", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain('className="flex p-4"');
+    expect(result.code).toContain("@apply flex p-4;");
+    expect(result.code).toContain('className="grid text-sm"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // The table cell prints standalone, it keeps the classes but unsorted for now
+  it("should keep JSX className in a jest each table", async () => {
+    const input = [
+      "test.each`",
+      "  a | b",
+      '  ${<div className="p-4 flex" />} | ${1}',
+      "`('x', () => {});",
+    ].join("\n");
+
+    const result = await format("test.tsx", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain('className="p-4 flex"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // A JSDoc js fence formats as a nested root on the host's session,
+  // it must not take the host's classes.
+  it("should keep JSX className sorted next to a JSDoc js fence", async () => {
+    const input = [
+      'const A = <div className="p-4 flex" />;',
+      "/**",
+      " * ```js",
+      " * foo( 1 )",
+      " * ```",
+      " */",
+      'export const B = <div className="text-sm grid" />;',
+    ].join("\n");
+
+    const result = await format("test.tsx", input, { sortTailwindcss: {}, jsdoc: {} });
+
+    expect(result.code).toContain('className="flex p-4"');
+    expect(result.code).toContain("foo(1);");
+    expect(result.code).toContain('className="grid text-sm"');
+    expect(result.errors).toStrictEqual([]);
+  });
 });

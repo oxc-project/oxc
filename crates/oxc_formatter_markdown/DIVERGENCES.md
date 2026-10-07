@@ -7,6 +7,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 - Why: semantics (prettier/prettier#19839)
 - Pin: `tests/fixtures/markdown/leading-thematic-break.md`
 - Conformance: `markdown/thematicBreak/simple.md`, `markdown/commonmark-test-suite/snippet: example-11.md`, `example-50.md` to `example-54.md`
+- Oxfmt: `externals/prettier/markdown/thematicBreak/simple.md`
 
 ```markdown
 <!-- input -->
@@ -41,6 +42,7 @@ Prettier `main` prints `***` since #19839; the pin (3.9.9) still prints `---`.
 - Why: semantics (prettier/prettier#19482, prettier/prettier#19849, prettier/prettier#19891)
 - Pin: `tests/fixtures/markdown/url-escaping.md`
 - Conformance: `markdown/link/encodedLink.md`
+- Oxfmt: `externals/prettier/markdown/link/encodedLink.md`
 
 ```markdown
 <!-- input -->
@@ -85,6 +87,7 @@ so an indent written as spaces plus a tab becomes a fenced block.
 
 - Why: uniform-rule (same construct, same output: a blockquote's trailing blank `>` line under `proseWrap: preserve`)
 - Pin: `tests/fixtures/markdown/prose-wrap/ignored-block-trailing-quote-line.md`
+- Oxfmt: `externals/prettier/markdown/blockquote/ignore-code.md`
 
 ```markdown
 <!-- input -->
@@ -211,6 +214,51 @@ though no type 7 block can interrupt a paragraph on a regular line.
 Printed with the container's prefix the line is no longer lazy, so a blank line keeps the block apart;
 Prettier prints it adjacent, and the next parse reads it as part of the paragraph.
 
+In a tight list item the line stays lazy, and the block's other lines keep the item's content column:
+
+```markdown
+<!-- input, ours -->
+- a
+<a>
+    b
+
+<!-- prettier (the html loses the 2 columns before `b`) -->
+- a
+<a>
+  b
+```
+
+## list-after-html-block
+
+- Why: semantics (prettier/prettier#17690)
+- Pin: `tests/fixtures/markdown/list-after-html-block.md`
+
+```markdown
+<!-- input -->
+- a
+
+  <div>
+
+  - b
+
+<!-- ours -->
+- a
+
+  <div>
+
+  - b
+
+<!-- prettier (the list item becomes html, one per pass) -->
+- a
+
+  <div>
+  - b
+```
+
+A nested list after a type 6 / 7 HTML block keeps its blank line: only a blank line ends such a block.
+Prettier joins any list in a list item to the previous block, and the next parse reads the first list line as part of the html.
+Types 1 to 5 end at their end marker, so a list after them is printed adjacent as Prettier does.
+
 ## list-marker-after-ignored-list
 
 - Why: semantics
@@ -244,6 +292,7 @@ Prettier alternates from the marker it would have printed (`-`), prints `*` next
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/container-directive.md`
 - Conformance: `markdown/paragraph/cjk.md`
+- Oxfmt: `externals/prettier/markdown/paragraph/cjk.md`
 
 ```markdown
 <!-- input -->
@@ -270,11 +319,15 @@ Prettier has no directive construct (#19662 would add micromark's grammar only),
 An opener interrupts a paragraph (as in micromark's directive extension and markdown-it-container),
 so like any block it is printed after a blank line, under `preserve` too; Prettier keeps it on the paragraph's next line.
 
+A fence left open inside a directive closes at the directive's closer (as in micromark's directive extension and markdown-it-container),
+so the closing fence is printed explicitly: a reader without directives (CommonMark, GitHub) reads the open fence on to the next closing run, and sees the output's tree change.
+
 ## line-shapes
 
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/line-shapes.md`
 - Conformance: `markdown/blockquote/notext-end.md`
+- Oxfmt: `externals/prettier/markdown/blockquote/notext-end.md`
 
 ```markdown
 <!-- input -->
@@ -320,14 +373,15 @@ Prettier wraps it like any line: a break right after the destination makes it a 
 
 - Why: semantics (prettier/prettier#13634, prettier/prettier#19112, prettier/prettier#19847)
 - Pin: `tests/fixtures/markdown/prose-wrap/wrapped-block-starts.md`
+- Oxfmt: `externals/prettier/markdown/list/parser-regression/issue-17778.md`
 
 ```markdown
 <!-- input, proseWrap always -->
 Some words that push the tag to the edge of the line so the html block <div>x</div> lands first.
 
 <!-- ours -->
-Some words that push the tag to the edge of the line so the html block <div>x</div>
-lands first.
+Some words that push the tag to the edge of the line so the html
+block <div>x</div> lands first.
 
 <!-- prettier -->
 Some words that push the tag to the edge of the line so the html block
@@ -340,10 +394,15 @@ The parser's `lexical::line_start` decides, asked about the line the wrap would 
 Prettier tests a regex of list markers, `#`s and `>` only, so a wrapped `<div>`, `<!--`, `***`, `---`, fence,
 `|` row or `[^x]:` opens a block on the next parse.
 
-A kept line break (`proseWrap: preserve`) is dropped by the same rule when its next line only stays text
-by its indentation, which a paragraph does not keep: `| x | y |` over an 8-space `|---|---|` prints as one line,
+A kept line break (`proseWrap: preserve`) is dropped by the same rule when its next line only stays text by its indentation,
+which a paragraph does not keep: `| x | y |` over an 8-space `|---|---|` prints as one line,
 Prettier's `|---|---|` at column 0 is a table on the next parse (prettier/prettier#19847).
-Prettier drops the break before `- item`, `# heading` and `> quote` itself.
+A delimiter row only counts under a header with as many cells (`lexical::table_delimiter_activates`, asked about the line above):
+under another one it opens nothing and the kept break before it stays.
+A break that cannot be dropped (a hard break, or a line shape on either side of it) keeps the line as text behind four spaces instead:
+indented code cannot interrupt a paragraph (the pin's math span after a hard break).
+Prettier drops the break before `- item`, `# heading` and `> quote` itself, and before `1000000000.` too,
+which its regex takes for a list marker (a marker has at most 9 digits).
 
 ## stray-delimiters
 
@@ -432,7 +491,7 @@ See [[the `first second` note]] for details.
 In a paragraph printed as written for wiki link risk (Prettier's `riskyParagraphPositions`, `[[` ... `]]`),
 a code span keeps its line break too; Prettier joins it, and the one-line `[[...]]` is a wiki link on the next parse.
 
-## leading-dashes
+## leading-dashes-paragraph
 
 - Why: semantics
 - Pin: `tests/fixtures/markdown/leading-dashes-paragraph.md`
@@ -460,27 +519,42 @@ delimiter escaped when a later line could close it as front matter (a line start
 or a thematic break, which prints `---`): the next parse (Prettier's and ours) would read the block as front matter.
 Prettier prints it as written (the leading blank line that kept it out of front matter is dropped).
 
-## autolink-cjk-space
+## cj-line-break
 
-- Why: semantics
-- Pin: `tests/fixtures/markdown/prose-wrap/autolink-cjk-space.md`
+- Why: semantics (prettier/prettier#20143)
+- Pin: `tests/fixtures/markdown/prose-wrap/cj-line-break.md`
+- Conformance: `markdown/splitCjkText/symbolSpaceNewLine.md`
+- Oxfmt: `externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md`
 
 ```markdown
 <!-- input, proseWrap always -->
+日本語の文章は
+改行しても
+そのままです。
+
 見て http://x.y2.
 。次
 
 <!-- ours -->
-見て http://x.y2. 。次
+日本語の文章は
+改行しても
+そのままです。
+
+見て http://x.y2.
+。次
 
 <!-- prettier -->
+日本語の文章は改行してもそのままです。
+
 見て http://x.y2.。次
 ```
 
-A line break right after the trailing punctuation of an autolink literal stays a space, whatever the
-Chinese / Japanese rules would make of it: the literal runs to the next whitespace, so joined to `。次`
-it becomes `http://x.y2.。次` on the next parse (`autolink_stretch`).
-Prettier drops the break between the two punctuation characters and the link changes.
+A line break next to Chinese / Japanese text is kept under every `proseWrap`,
+except between a Korean and a CJ letter, where it is a space.
+Browsers disagree on such a break (Firefox drops it, Chrome and Safari render a space),
+so removing it or making it a space changes the rendered text in some of them.
+Joined, an autolink literal also takes the CJ punctuation after it (`http://x.y2.。次`).
+Prettier `main` keeps the break since #20143; the pin (3.9.9) removes it or makes it a space.
 
 ## wiki-link-risk-link-text
 
@@ -504,3 +578,106 @@ In a paragraph printed as written for wiki link risk (`[[` ... `]]`), Prettier s
 after an emphasis followed by `-` into two paragraphs, which breaks the link (d3's READMEs).
 Ours keeps the line.
 
+## setext-heading-wrap
+
+- Why: uniform-rule (same construct, same output: a paragraph)
+- Pin: `tests/fixtures/markdown/prose-wrap/setext-heading-wrap.md`
+- Oxfmt: `externals/prettier/markdown/heading/setext/issue-6013-2.md`
+
+```markdown
+<!-- input, proseWrap always -->
+Some heading words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+<!-- ours -->
+Some heading words that run on and then
+[a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+<!-- prettier -->
+Some heading words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere)
+end
+===
+```
+
+A setext heading's content wraps like a paragraph's, which Prettier breaks before the link.
+Prettier makes setext headings breakable but prints their children without the paragraph's `flattenFill`:
+each sentence is its own fill, so the whitespace before a link, emphasis or code span ends a fill and never breaks.
+
+## nul-character
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/nul-character.md`
+
+```markdown
+<!-- input (␀ is U+0000) -->
+`c␀d`
+
+<!-- ours -->
+`c␀d`
+
+<!-- prettier -->
+`c�d`
+```
+
+A NUL stays as written, in code spans and code blocks too.
+CommonMark replaces it with U+FFFD for security when rendering;
+Prettier prints the decoded value of code, so the replacement lands in the source, while plain text keeps its NUL (a raw slice).
+Ours prints every node as written, the next parse replaces it again.
+
+## fence-info-backtick
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/fence-info-backtick.md`
+
+````markdown
+<!-- input -->
+~~~sh `x`
+a
+~~~
+
+<!-- ours -->
+~~~sh `x`
+a
+~~~
+
+<!-- prettier -->
+```sh `x`
+a
+```
+````
+
+A fenced code block whose info string has a backtick keeps its `~~~` fence; any other fence is printed with backticks.
+A backtick fence cannot have a backtick in its info string (CommonMark),
+so Prettier's opener is a paragraph on the next parse and its closer opens a code block that runs to the end of the document.
+
+## footnote-kept-line-break
+
+- Why: semantics
+- Pin: `tests/fixtures/markdown/prose-wrap/footnote-kept-line-break.md`
+
+```markdown
+<!-- input -->
+[^1]: a b\
+=
+
+<!-- ours (every proseWrap) -->
+[^1]:
+    a b\
+        =
+
+<!-- prettier, preserve (a setext heading on the next parse) -->
+[^1]:
+    a b\
+    =
+
+<!-- prettier, never -->
+[^1]: a b\
+=
+```
+
+A footnote's single paragraph follows the marker only when it prints as one line, under every `proseWrap`:
+`always` also breaks it for the width, the other modes only for a line break the paragraph keeps.
+Prettier asks `preserve` whether the source is one line, and its block form above moves the lazy `=` into the footnote,
+where it underlines the paragraph.
+Its `never` keeps the marker line whatever the paragraph holds (admissible here); ours follows the same rule as the other modes.

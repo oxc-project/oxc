@@ -5,7 +5,7 @@
 
 use oxc_formatter_core::{
     Buffer,
-    builders::{align, mark_as_root, text, token},
+    builders::{dedent, hard_line_break, mark_as_root, space_align, text, token},
     write,
 };
 use oxc_markdown_parser::{
@@ -87,23 +87,10 @@ pub fn write_list<'a>(
         let prefix: &'a str = f.allocator().alloc_str(&prefix);
         write!(f, text(prefix));
 
-        // A `[paragraph, html]` item whose html sits left of the content column is
-        // micromark's lazy type 7 quirk (oxc-markdown-parser DIVERGENCES.md): the html stays where it was, unaligned.
-        // (Prettier drops the alignment whenever the two columns differ,
-        // which moves an html block indented past a task checkbox out of the item:
-        // DIVERGENCES.md#list-html-block-alignment)
-        let skip_align =
-            item.children.len() == 2 && matches!(item.children[1], Block::HtmlBlock(_)) && {
-                let source = f.context().source_text().as_str();
-                let content_column = item
-                    .checkbox
-                    .map_or(item.children[0].span().start, |checkbox| checkbox.span.start);
-                column_of(source, item.children[1].span().start) < column_of(source, content_column)
-            };
         let body = format_with(|f| write_list_item(item, checkbox, prefix.len(), loose, f));
-        let width = if skip_align { 0 } else { u8::try_from(prefix.len()).unwrap_or(u8::MAX) };
-        // The item's content column is the root that verbatim continuation lines return to
-        write!(f, align(width, &mark_as_root(&body)));
+        // The item's content column is the root that verbatim continuation lines return to.
+        // Its columns are syntax, spaces under `useTabs` too (see `space_align`).
+        write!(f, space_align(prefix.len(), &mark_as_root(&body)));
     }
 
     f.context().lists().borrow_mut().pop();
@@ -126,7 +113,19 @@ fn write_list_item<'a>(
 
     for (i, child) in item.children.iter().enumerate() {
         if i > 0 {
-            block::write_gap(&item.children, i, parent, f);
+            let blank = block::double_gap(&item.children, i, parent, f);
+            // A type 7 HTML block right after a paragraph starts on a lazy line
+            // (micromark's quirk, oxc-markdown-parser DIVERGENCES.md): that line stays in the parent's column,
+            // the block's other lines are in the item (DIVERGENCES.md#lazy-html-block)
+            let lazy_html = matches!(
+                (&item.children[i - 1], child),
+                (Block::Paragraph(_), Block::HtmlBlock(h)) if h.kind == 7
+            );
+            if lazy_html && !blank {
+                write!(f, dedent(&hard_line_break()));
+            } else {
+                write_gap(blank, f);
+            }
         }
         // The first block follows the checkbox on its line: its first line is not a line start
         let child_parent = if i == 0 && !checkbox.is_empty() {
@@ -145,13 +144,11 @@ fn write_list_item<'a>(
         }
         // The first child (unless a list) sits right after the checkbox;
         // other children get the tab-width alignment.
-        // `checkbox` is `[x] ` / `[ ] ` / empty, `alignment` is at most 3
-        #[expect(clippy::cast_possible_truncation)]
-        let (checkbox_width, alignment_width) = (checkbox.len() as u8, alignment as u8);
+        // `checkbox` is `[x] ` / `[ ] ` / empty, `alignment` is at most 3.
         if i == 0 && !matches!(child, Block::List(_)) {
-            write!(f, align(checkbox_width, &body));
+            write!(f, space_align(checkbox.len(), &body));
         } else {
-            write!(f, [token(&"   "[..alignment]), align(alignment_width, &body)]);
+            write!(f, [token(&"   "[..alignment]), space_align(alignment, &body)]);
         }
     }
 }

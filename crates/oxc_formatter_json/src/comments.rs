@@ -2,7 +2,10 @@ use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
     Buffer, Format, LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
-    builders::{empty_line, expand_parent, hard_line_break, line_suffix, maybe_space, space, text},
+    builders::{
+        block_indent, empty_line, expand_parent, group, hard_line_break, line_suffix, maybe_space,
+        soft_block_indent, space, text,
+    },
     normalize_newlines,
     spec::is_suppression_marker,
     write,
@@ -224,14 +227,27 @@ fn write_gap(gap: &[u8], f: &mut JsonFormatter<'_, '_>) {
     }
 }
 
-/// Emit dangling comments inside an empty container (the caller wraps the result in
-/// [`oxc_formatter_core::builders::block_indent`] or similar).
-pub fn write_dangling_comments(comments: &[Comment], f: &mut JsonFormatter<'_, '_>) {
-    for (i, comment) in comments.iter().enumerate() {
-        if i > 0 {
-            write!(f, hard_line_break());
+/// Emit dangling comments inside an empty container, between its brackets.
+/// - Block comments only: stays inline when it fits (`[/* x */]`)
+/// - Any line comment: always expanded, the closing bracket needs its own line
+///
+/// Multiple comments are joined by hard line breaks, so they expand the group anyway.
+pub fn write_empty_container_comments(comments: &[Comment], f: &mut JsonFormatter<'_, '_>) {
+    if comments.is_empty() {
+        return;
+    }
+    let inner = format_with(move |f| {
+        for (i, comment) in comments.iter().enumerate() {
+            if i > 0 {
+                write!(f, hard_line_break());
+            }
+            write_comment_text(comment, f);
         }
-        write_comment_text(comment, f);
+    });
+    if comments.iter().any(|c| c.is_line()) {
+        write!(f, block_indent(&inner));
+    } else {
+        write!(f, group(&soft_block_indent(&inner)));
     }
 }
 

@@ -24,13 +24,13 @@
       "markdownDescription": "Print spaces between brackets in object literals.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML\n- Default: `true`"
     },
     "embeddedLanguageFormatting": {
-      "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`",
+      "description": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`",
       "allOf": [
         {
           "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
         }
       ],
-      "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
+      "markdownDescription": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
     },
     "endOfLine": {
       "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
@@ -299,13 +299,13 @@
           "markdownDescription": "Print spaces between brackets in object literals.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML\n- Default: `true`"
         },
         "embeddedLanguageFormatting": {
-          "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`",
+          "description": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`",
           "allOf": [
             {
               "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
             }
           ],
-          "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
+          "markdownDescription": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
         },
         "endOfLine": {
           "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",

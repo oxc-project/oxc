@@ -352,6 +352,8 @@ describe("unary and update expressions", () => {
     ["delete-infinity", e(unary("delete", num(Infinity))), "delete (0, Infinity);\n"],
     ["minus-negative-literal", e(unary("-", num(-1))), "- -1;\n"],
     ["plus-negative-literal", e(unary("+", num(-1))), "+-1;\n"],
+    ["minus-negative-bigint", e(unary("-", big("-1"))), "- -1n;\n"],
+    ["plus-negative-bigint", e(unary("+", big("-1"))), "+-1n;\n"],
     ["preinc", e(update("++", id("x"))), "++x;\n"],
     ["postinc", e(update("++", id("x"), false)), "x++;\n"],
     ["predec", e(update("--", id("x"))), "--x;\n"],

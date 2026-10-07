@@ -5,6 +5,7 @@ import {
   CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_LT,
+  CAT_OP_LT_THEN_UN_NOT,
   CAT_OP_UN_NOT,
   CAT_OTHER,
   CAT_QUESTION,
@@ -266,7 +267,15 @@ function printTSType(
         printTSType(tsTypeAnnotationOf(node.typeAnnotation), state);
         write(state, "!", CAT_OP_UN_NOT);
       } else {
-        write(state, "!", CAT_OP_UN_NOT);
+        // `CAT_OP_LT_THEN_UN_NOT` exists to keep a `--` written next from completing `<!--`.
+        // That can't happen here - a type follows the `!`, and no type starts with `--`.
+        // So `CAT_OP_UN_NOT` is always safe here.
+        // In debug builds we have to use `CAT_OP_LT_THEN_UN_NOT` after a `<` (e.g. `Array<!string>`),
+        // because `debugAssertCategoryMatches` requires it for every `!` which follows a `<`,
+        // and would throw in tests if it's not.
+        // In release builds, we use `CAT_OP_UN_NOT` unconditionally, to avoid the branch.
+        debugAssertLastFresh(state);
+        write(state, "!", DEBUG && state.last === CAT_LT ? CAT_OP_LT_THEN_UN_NOT : CAT_OP_UN_NOT);
         printTSType(tsTypeAnnotationOf(node.typeAnnotation), state);
       }
       break;

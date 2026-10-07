@@ -207,7 +207,24 @@ fn number_adjacency_resolves_with_active_set() {
     assert_eq!(ts[0], TokenKind::Number);
     assert_eq!(ts[1], TokenKind::KwIs);
     let js2 = kinds("3is x", false, false);
+    assert_eq!(js2[0], TokenKind::Number);
     assert_eq!(js2[1], TokenKind::Ident);
+    // `get` is contextual, so it's an identifier.
+    let ts2 = kinds("3get x", true, false);
+    assert_eq!(ts2[0], TokenKind::Number);
+    assert_eq!(ts2[1], TokenKind::Ident);
+}
+
+#[test]
+fn number_adjacency_long_words() {
+    // A 10-byte keyword abutting a number is resolved too.
+    let js = kinds("3instanceof x", false, false);
+    assert_eq!(js[0], TokenKind::Number);
+    assert_eq!(js[1], TokenKind::KwInstanceof);
+    // A longer word starting with a keyword is not a keyword, even if it's longer than 16 bytes.
+    let long = kinds("3instanceofabcdefghijklmnopqrstuvwxyz x", false, false);
+    assert_eq!(long[0], TokenKind::Number);
+    assert_eq!(long[1], TokenKind::Ident);
 }
 
 #[test]

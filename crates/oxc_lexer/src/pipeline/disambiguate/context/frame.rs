@@ -1,19 +1,6 @@
 //! What the walk remembers per frame: the kind of every open bracket or virtual frame,
 //! its per-kind state, and the keyword codes the walk reads off the source.
 
-use crate::token::matches_tk;
-
-/// A keyword that is a whole type by itself (`any`, `null`, `this`, ...): it takes no type
-/// arguments, so a `<` after it is a comparison.
-#[rustfmt::skip::macros(matches_tk)]
-pub(super) fn keyword_type(kw: u8) -> bool {
-    matches_tk!(
-        kw,
-        KwAny | KwBigInt | KwBoolean | KwNever | KwNumber | KwObject | KwString | KwSymbol
-        | KwUndefined | KwUnknown | KwVoid | KwNull | KwThis | KwTrue | KwFalse
-    )
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub(super) enum FrameKind {
     #[default]
@@ -23,11 +10,8 @@ pub(super) enum FrameKind {
     FnBody,
     ArrowBody,
     ClassBody,
-    StaticBlock,
     Object,
-    Pattern,
     TypeLit,
-    EnumBody,
     ModuleSpec,
     Container,
     // A template substitution (`${` .. `}`), opened by a TemplateHead or TemplateMiddle and closed
@@ -40,11 +24,9 @@ pub(super) enum FrameKind {
     Group,
     TypeParen,
     // Brackets.
-    Index,
     Array,
     ComputedKey,
     TypeBracket,
-    ArrayPattern,
     // JSX.
     JsxTag,
     JsxElem,
@@ -55,19 +37,6 @@ pub(super) enum FrameKind {
     FnHead,
     ClassHead,
 }
-
-// Head kinds.
-pub(super) const H_IF: u8 = 1;
-
-pub(super) const H_WHILE: u8 = 2;
-
-pub(super) const H_FOR: u8 = 3;
-
-pub(super) const H_WITH: u8 = 4;
-
-pub(super) const H_SWITCH: u8 = 5;
-
-pub(super) const H_CATCH: u8 = 6;
 
 // Declarator state on statement frames and for-heads (`state`).
 pub(super) const D_NONE: u8 = 0;
@@ -83,38 +52,24 @@ pub(super) const S_NONE: u8 = 0;
 
 pub(super) const S_CASE: u8 = 1;
 
-pub(super) const S_LABEL: u8 = 2;
-
 pub(super) const S_IMPORT: u8 = 3;
 
 pub(super) const S_EXPORT: u8 = 4;
-
-pub(super) const S_TYPE: u8 = 5;
 
 pub(super) const S_TYPE_NAME: u8 = 6;
 
 pub(super) const S_BREAK: u8 = 7;
 
-pub(super) const S_NAMESPACE: u8 = 8;
-
-pub(super) const S_ENUM: u8 = 9;
-
 pub(super) const S_EXPORT_AS: u8 = 11;
-
-pub(super) const S_EXPORT_AS_NS: u8 = 12;
-
-pub(super) const S_IMPORT_NAME: u8 = 13;
 
 pub(super) const S_DECLARE_MODULE: u8 = 14;
 
-// For-head state (`state`).
-pub(super) const F_START: u8 = 0;
+pub(super) const S_ATTRS: u8 = 15;
 
-pub(super) const F_BOUND: u8 = 1;
+// Head state: a for head before its first semicolon, where of after a value is the keyword.
+pub(super) const F_OF: u8 = 0;
 
-pub(super) const F_EXPR: u8 = 2;
-
-pub(super) const F_ITER: u8 = 3;
+pub(super) const F_NO_OF: u8 = 1;
 
 // Member state on Object / ClassBody / TypeLit (`state`).
 pub(super) const M_KEY_POS: u8 = 0;
@@ -131,22 +86,17 @@ pub(super) const MOD_GEN: u8 = 2;
 pub(super) const MOD_STATIC: u8 = 4;
 
 // TypeRegion end rule (`state`).
-pub(super) const R_ASSERT: u8 = 1; // `<T>x`: ends at its closing `>`
 pub(super) const R_ARROW_RET: u8 = 2; // `(a): T =>`: ends at `=>`
 pub(super) const R_INLINE: u8 = 3; // declarator/param/member annotation: ends at `=`/`,`/closer/`{`
 pub(super) const R_STMT: u8 = 4; // alias / import-equals / bodiless module: ends at `;`/ASI
 pub(super) const R_EXPR: u8 = 5; // `as T` / `satisfies T`: ends at any expression token
-pub(super) const R_INTERFACE: u8 = 6; // `interface X ... { }`: ends after its body
 
 // What an Angle list is (`state`).
-pub(super) const A_DECL_PARAMS: u8 = 1; // type parameters of a declaration head or member
-pub(super) const A_EXPR_ARGS: u8 = 2; // type arguments on an expression: `f<T>(x)`
+pub(super) const A_VALUE: u8 = 1; // declaration type parameters or `f<T>(x)` type arguments
 pub(super) const A_IN_TYPE: u8 = 3; // a list inside a type
-pub(super) const A_ASSERT: u8 = 4; // `<T>x` assertion or `<T,>() =>` generic arrow
+pub(super) const A_ASSERT: u8 = 4; // an operand follows: an assertion or leading type parameters
 
-// ClassHead heritage state (`state`), and its interface marker (`reg`).
-pub(super) const C_EXTENDS: u8 = 1;
-pub(super) const C_IMPLEMENTS: u8 = 2;
+// ClassHead: an interface head (reg).
 pub(super) const C_INTERFACE: u8 = 1;
 
 // TypeLit (`state`): the body of an interface, which ends the statement when closed.
@@ -157,8 +107,6 @@ pub(super) struct Frame {
     pub(super) kind: FrameKind,
     pub(super) is_generator: bool,
     pub(super) is_async: bool,
-    pub(super) strict: bool,
-    pub(super) reserved: bool,
     /// Braces: closing this frame ends a value.
     pub(super) is_value: bool,
     /// Type frames: part of a declaration type (vs embedded in an expression).
@@ -169,11 +117,9 @@ pub(super) struct Frame {
     pub(super) inner: bool,
     pub(super) state: u8,
     pub(super) reg: u8,
-    /// Member modifier bits (Object / ClassBody).
+    /// Modifier bits: an Object or ClassBody member's, or the async before a Group.
     pub(super) mods: u8,
-    pub(super) head: u8,
     pub(super) open_questions: u16,
-    pub(super) prologue: bool,
 }
 
 impl Frame {
@@ -187,18 +133,6 @@ impl Frame {
     pub(super) fn next_member(&mut self) {
         self.state = M_KEY_POS;
         self.mods = 0;
-    }
-
-    pub(super) fn child(&self, kind: FrameKind) -> Frame {
-        let init = self.field_init();
-        Frame {
-            kind,
-            is_generator: self.is_generator && !init,
-            is_async: self.is_async && !init,
-            strict: self.strict,
-            reserved: self.reserved && !init,
-            ..Frame::default()
-        }
     }
 }
 
@@ -218,11 +152,7 @@ impl FrameKind {
     pub(super) fn is_stmt_holder(self) -> bool {
         matches!(
             self,
-            FrameKind::Root
-                | FrameKind::Block
-                | FrameKind::FnBody
-                | FrameKind::ArrowBody
-                | FrameKind::StaticBlock
+            FrameKind::Root | FrameKind::Block | FrameKind::FnBody | FrameKind::ArrowBody
         )
     }
 
@@ -239,11 +169,8 @@ impl FrameKind {
             | FrameKind::FnBody
             | FrameKind::ArrowBody
             | FrameKind::ClassBody
-            | FrameKind::StaticBlock
             | FrameKind::Object
-            | FrameKind::Pattern
             | FrameKind::TypeLit
-            | FrameKind::EnumBody
             | FrameKind::ModuleSpec
             | FrameKind::Container => b'}',
             FrameKind::Head
@@ -251,11 +178,7 @@ impl FrameKind {
             | FrameKind::Call
             | FrameKind::Group
             | FrameKind::TypeParen => b')',
-            FrameKind::Index
-            | FrameKind::Array
-            | FrameKind::ComputedKey
-            | FrameKind::TypeBracket
-            | FrameKind::ArrayPattern => b']',
+            FrameKind::Array | FrameKind::ComputedKey | FrameKind::TypeBracket => b']',
             _ => 0,
         }
     }

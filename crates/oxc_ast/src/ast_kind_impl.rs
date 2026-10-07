@@ -362,13 +362,13 @@ impl<'a> AstKind<'a> {
     }
 }
 
-impl AstKind<'_> {
+impl<'a> AstKind<'a> {
     /// Get the AST kind name with minimal details. Particularly useful for
     /// when debugging an iteration over an AST.
     ///
     /// Note that this method does not exist in release builds. Do not include
     /// usage of this method within your code.
-    pub fn debug_name(&self) -> std::borrow::Cow<'_, str> {
+    pub fn debug_name(&self) -> std::borrow::Cow<'a, str> {
         use std::borrow::Cow;
 
         const COMPUTED: &str = "<computed>";
@@ -653,28 +653,6 @@ impl<'a> MemberExpressionKind<'a> {
         match self {
             Self::Computed(member_expr) => member_expr.static_property_name(),
             Self::Static(member_expr) => Some(member_expr.property.name.into()),
-            Self::PrivateField(_) => None,
-        }
-    }
-
-    /// Returns the static property name of this member expression, if it has one, along with the source code [`Span`],
-    /// or `None` otherwise.
-    ///
-    /// If you don't need the [`Span`], use [`MemberExpressionKind::static_property_name`] instead.
-    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
-        match self {
-            Self::Computed(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
-                Expression::TemplateLiteral(lit) => {
-                    if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
-            Self::Static(expr) => Some((expr.property.span, expr.property.name.as_str())),
             Self::PrivateField(_) => None,
         }
     }

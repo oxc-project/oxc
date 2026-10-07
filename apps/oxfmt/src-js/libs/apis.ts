@@ -36,7 +36,7 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
   return loadCached("prettier", async () => {
     const prettier = await import("prettier");
 
-    // NOTE: This is needed for xxx-in-js formatting to work correctly.
+    // NOTE: This is needed for xxx-in-js and xxx-in-md formatting to work correctly.
     //
     // Prettier internally extends `options` with hidden fields for embedded-formatters during printing.
     // However, `__debug.printToDoc()` runs `normalizeFormatOptions()` which strips unknown keys.
@@ -49,7 +49,8 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
     // there should be no side effects on other calls that don't set these fields.
     // @ts-expect-error: Use internal API
     const { formatOptionsHiddenDefaults } = prettier.__internal;
-    // For html(angular)-in-js: Prevent attribute level formatting from running.
+    // For every embedded call (html-in-js, xxx-in-md), as Prettier's `textToDoc()` always sets it.
+    // For html-family children, this prevents attribute level formatting from running.
     // (e.g., CSS in `style="..."` attributes, JS in `onclick="..."` event handlers)
     // This does NOT affect `<style>`/`<script>` tags, they are always formatted.
     // Ideally we'd only block JS attributes while allowing CSS attributes (because no nesting is possible in CSS),
@@ -62,8 +63,6 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
     // - or flaky traversal of the `Doc` output
     // to extract the same information, since this hooks into the AST.
     formatOptionsHiddenDefaults.__onHtmlRoot = null;
-    // For md-in-js: Use `~` instead of `` ` `` for code fences
-    formatOptionsHiddenDefaults.__inJsTemplate = null;
 
     return prettier;
   });
@@ -85,7 +84,7 @@ export async function formatFile({ code, options }: FormatFileParam): Promise<st
   const prettier = CACHES.prettier ?? (await loadPrettier());
 
   // NOTE: Plugins order matters here!
-  // This plugin add `svelte` parser to support for `.svelte` files, and is also needed for `svelte-in-md` to work
+  // This plugin add `svelte` parser to support for `.svelte` files, and is also needed for `svelte-in-mdx` to work
   if ("_useSveltePlugin" in options) await setupSveltePlugin(options);
   // Enable Tailwind CSS plugin, this plugin transforms `parsers` already installed by prior plugins
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
@@ -173,24 +172,23 @@ export async function formatEmbeddedDoc({
 }: FormatEmbeddedDocParam): Promise<string> {
   const prettier = CACHES.prettier ?? (await loadPrettier());
 
+  // NOTE: Plugins order matters here, same as `formatFile()`
+  // Add `svelte` parser for ` ```svelte ` code blocks in Markdown
+  if ("_useSveltePlugin" in options) await setupSveltePlugin(options);
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
 
   const metadata: Record<string, unknown> = {};
 
-  // html(angular)-in-js specific options: see the comment in `loadPrettier()` for rationale
+  // Every caller is an embedding parent (JS, Markdown), as Prettier's `textToDoc()` sets it:
+  // see the comment in `loadPrettier()` for rationale. Any truthy value works
+  options.parentParser = "OXFMT";
+
+  // html(angular)-in-js specific options
   if (options.parser === "html" || options.parser === "angular") {
-    // Any truthy value works
-    options.parentParser = "OXFMT";
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/html.js#L42-L44
     options.__onHtmlRoot = (root: { children?: unknown[] }) =>
       (metadata.htmlHasMultipleRootElements = (root.children?.length ?? 0) > 1);
-  }
-
-  // md-in-js specific options: see the comment in `loadPrettier()` for rationale
-  if (options.parser === "markdown") {
-    // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L21
-    options.__inJsTemplate = true;
   }
 
   // NOTE: This will throw if:

@@ -1647,7 +1647,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-object-from-entries"?: RuleNoConfig | [AllowWarnDeny, PreferObjectFromEntriesConfig];
   "unicorn/prefer-optional-catch-binding"?: RuleNoConfig;
   "unicorn/prefer-prototype-methods"?: RuleNoConfig;
-  "unicorn/prefer-query-selector"?: RuleNoConfig;
+  "unicorn/prefer-query-selector"?: RuleNoConfig | [AllowWarnDeny, PreferQuerySelector];
   "unicorn/prefer-reflect-apply"?: RuleNoConfig;
   "unicorn/prefer-regexp-test"?: RuleNoConfig;
   "unicorn/prefer-response-static-json"?: RuleNoConfig;
@@ -2113,6 +2113,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, PreferExportFrom]
     | [AllowWarnDeny, PreferNumberPropertiesConfig]
     | [AllowWarnDeny, PreferObjectFromEntriesConfig]
+    | [AllowWarnDeny, PreferQuerySelector]
     | [AllowWarnDeny, PreferSingleCallConfig]
     | [AllowWarnDeny, PreferStructuredCloneConfig]
     | [AllowWarnDeny, PreferTemporal]
@@ -5438,6 +5439,20 @@ export interface NoUnstableNestedComponentsConfig {
 }
 export interface OnlyExportComponentsConfig {
   /**
+   * Allow an exported object when every property is a React component.
+   * This matches Vite's compound component support. The object must be non-empty,
+   * contain no nested objects, spreads, or accessors, and anonymous functions
+   * must use a component name as a static property key.
+   *
+   * ```jsx
+   * // Allowed when allowCompoundComponents: true
+   * const Root = () => <div />;
+   * const Label = () => <span />;
+   * export const Tag = { Root, Label };
+   * ```
+   */
+  allowCompoundComponents?: boolean;
+  /**
    * Allow exporting primitive constants (string/number/boolean/template literal)
    * alongside component exports without triggering a violation. Recommended when your
    * bundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`
@@ -6981,6 +6996,13 @@ export interface PreferObjectFromEntriesConfig {
    * Additional functions to treat as equivalents to `Object.fromEntries`.
    */
   functions?: string[];
+}
+export interface PreferQuerySelector {
+  /**
+   * When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.
+   * This avoids the need to manually compose a CSS selector string, which can be less readable.
+   */
+  allowWithVariables?: boolean;
 }
 export interface PreferSingleCallConfig {
   /**

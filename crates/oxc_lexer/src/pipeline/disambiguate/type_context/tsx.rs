@@ -9,20 +9,22 @@
 
 use crate::pipeline::disambiguate::{Tokens, Walks, context};
 
-/// Is the `<` at `lt` inside a type: an annotation, an alias, a type literal or a type argument
-/// list? A `<` there opens a list, never a JSX element.
-pub(crate) fn ts_type_region_open(tokens: &Tokens, walks: &mut Walks, lt: usize) -> bool {
-    context::before(tokens, walks, lt).in_type
-}
+use super::bytes::arrow_after_params;
 
-/// Does the `<` at `lt` open the type parameters of a declaration head or member
-/// (`function f<`, `class C<`, `m<T>() {}`)?
-pub(crate) fn type_parameter_list_head(tokens: &Tokens, walks: &mut Walks, lt: usize) -> bool {
-    context::before(tokens, walks, lt).type_params
-}
-
-/// Can an operand start at `lt`? A generic arrow there is an expression, so a `<T>(...)` that
-/// turns out not to be one is an unterminated JSX element.
-pub(crate) fn jsx_site_is_expression(tokens: &Tokens, walks: &mut Walks, lt: usize) -> bool {
-    context::before(tokens, walks, lt).operand
+/// Whether the ambiguous < at lt is JSX, and whether it is an unterminated element to report.
+#[inline(never)]
+pub(crate) fn jsx_over_generic(
+    tokens: &Tokens,
+    walks: &mut Walks,
+    lt: usize,
+    lp: usize,
+) -> (bool, bool) {
+    let site = context::before(tokens, walks, lt);
+    if site.in_type || site.type_params {
+        return (false, false);
+    }
+    if arrow_after_params(tokens, lp) {
+        return (false, site.operand);
+    }
+    (true, false)
 }

@@ -220,6 +220,18 @@ file://<fixture>/config-svelte/test.svelte
 --------------------"
 `;
 
+exports[`LSP formatting > config options > should apply config from config-symlink/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/config-symlink/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1
+
+--------------------"
+`;
+
 exports[`LSP formatting > config options > should apply config from config-vite-semi/test.ts 1`] = `
 "--- URI -----------
 file://<fixture>/config-vite-semi/test.ts
@@ -347,6 +359,42 @@ const   x   =   1
 exports[`LSP formatting > ignore patterns > should handle ignore-prettierignore/ignored.ts 1`] = `
 "--- URI -----------
 file://<fixture>/ignore-prettierignore/ignored.ts
+--- BEFORE ---------
+const   x   =   1
+
+--- AFTER ----------
+const   x   =   1
+
+--------------------"
+`;
+
+exports[`LSP formatting > ignore patterns > should handle ignore-prettierignore-patterns/drop.gen.ts 1`] = `
+"--- URI -----------
+file://<fixture>/ignore-prettierignore-patterns/drop.gen.ts
+--- BEFORE ---------
+const   x   =   1
+
+--- AFTER ----------
+const   x   =   1
+
+--------------------"
+`;
+
+exports[`LSP formatting > ignore patterns > should handle ignore-prettierignore-patterns/keep.gen.ts 1`] = `
+"--- URI -----------
+file://<fixture>/ignore-prettierignore-patterns/keep.gen.ts
+--- BEFORE ---------
+const   x   =   1
+
+--- AFTER ----------
+const x = 1;
+
+--------------------"
+`;
+
+exports[`LSP formatting > ignore patterns > should handle ignore-prettierignore-patterns/vendor/a.ts 1`] = `
+"--- URI -----------
+file://<fixture>/ignore-prettierignore-patterns/vendor/a.ts
 --- BEFORE ---------
 const   x   =   1
 

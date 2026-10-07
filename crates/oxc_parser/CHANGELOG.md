@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- 6a7d48b parser: Report abstract private field error on modifier (#27314) (camc314)
+- 2ff6fb5 parser: Include generator marker in overload diagnostic span (#27313) (camc314)
+- 4359a66 parser: Reject TypeScript class modifiers in JavaScript (#27312) (camc314)
+- d0b9372 parser: Remove type-dependent tuple rest diagnostics (#27234) (camc314)
+- 3d61a59 parser: Validate TypeScript type member separators (#27222) (camc314)
+- b2793fa parser: Reject module syntax in script (#27220) (leaysgur)
+- 5914a24 parser: Report `TS1243` for abstract async methods (#27192) (camc314)
+- c6c6e5e parser: Report `TS1242` for interfaces with `abstract` modifier (#27191) (camc314)
+- dd0bbb9 parser: Avoid duplicate index signature modifier diagnostic (#27190) (camc314)
+
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+- 01ff33e parser: Reject module export names containing a lone surrogate (#26953) (Dunqing)
+
 ## [0.151.0] - 2026-09-21
 
 ### 🐛 Bug Fixes

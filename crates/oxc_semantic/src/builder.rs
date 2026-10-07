@@ -2444,7 +2444,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_ts_method_signature(&mut self, sig: &TSMethodSignature<'a>) {
         let kind = AstKind::TSMethodSignature(self.alloc(sig));
         self.enter_node(kind);
-        self.enter_scope(ScopeFlags::empty(), &sig.scope_id);
         self.visit_span(&sig.span);
         if sig.computed {
             // interface A { [prop](): string }
@@ -2453,6 +2452,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.visit_property_key(&sig.key);
         self.current_reference_flags = ReferenceFlags::empty();
+        self.enter_scope(ScopeFlags::empty(), &sig.scope_id);
         if let Some(type_parameters) = &sig.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }

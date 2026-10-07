@@ -207,9 +207,7 @@ impl JsxNoLiterals {
     fn resolve_element_name(id_ref: &IdentifierReference, ctx: &LintContext) -> CompactStr {
         let local_name = id_ref.name.to_compact_str();
 
-        let Some(reference_id) = id_ref.reference_id.get() else {
-            return local_name;
-        };
+        let reference_id = id_ref.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
             return local_name;
         };

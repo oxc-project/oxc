@@ -1482,17 +1482,24 @@ impl GenExpr for NumericLiteral<'_> {
 
 impl GenExpr for BigIntLiteral<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
-        p.print_space_before_identifier();
-        p.add_source_mapping(self.span);
         let value = self.value.as_str();
-        if value.starts_with('-') && precedence >= Precedence::Prefix {
-            p.print_ascii_byte(b'(');
-            p.print_str(value);
-            p.print_str("n)");
+        if value.starts_with('-') {
+            if precedence >= Precedence::Prefix {
+                p.add_source_mapping(self.span);
+                p.print_ascii_byte(b'(');
+                p.print_str(value);
+                p.print_str("n)");
+                return;
+            }
+            // Printed as-is, starting with `-`, so it must not run into a `-` or `--` printed before it,
+            // the same as a negative `NumericLiteral`. `- -1n`, not `--1n`.
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
         } else {
-            p.print_str(value);
-            p.print_ascii_byte(b'n');
+            p.print_space_before_identifier();
         }
+        p.add_source_mapping(self.span);
+        p.print_str(value);
+        p.print_ascii_byte(b'n');
     }
 }
 

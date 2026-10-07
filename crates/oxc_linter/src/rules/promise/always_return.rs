@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, Statement, UnaryOperator},
+    ast::{AssignmentTarget, Expression, Statement},
 };
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind,
@@ -263,7 +263,7 @@ fn is_last_callback(node: &AstNode, ctx: &LintContext) -> bool {
             }
             AstKind::UnaryExpression(unary_expr) => {
                 // e.g. void promise.then(() => value)
-                return unary_expr.operator == UnaryOperator::Void;
+                return unary_expr.operator.is_void();
             }
             AstKind::SequenceExpression(sequence_expr) => {
                 // e.g. (promise.then(() => value), expr)

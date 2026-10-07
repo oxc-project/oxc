@@ -41,5 +41,6 @@ versioned_files = [
   "crates/oxc_formatter_css/Cargo.toml",
   "crates/oxc_formatter_yaml/Cargo.toml",
   "crates/oxc_formatter_markdown/Cargo.toml",
+  "crates/oxc_formatter_toml/Cargo.toml",
   "npm/oxfmt/package.json",
 ]

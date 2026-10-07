@@ -80,10 +80,7 @@ impl ExpressionExt for Expression<'_> {
                 }
 
                 match expr.operator {
-                    AssignmentOperator::Addition => {
-                        matches!(&expr.right, Expression::NumericLiteral(lit)
-                            if (lit.value - 1f64).abs() < f64::EPSILON)
-                    }
+                    AssignmentOperator::Addition => expr.right.is_number_value(1.0),
                     AssignmentOperator::Assign => {
                         let Expression::BinaryExpression(bin_expr) = &expr.right else {
                             return false;
@@ -94,9 +91,9 @@ impl ExpressionExt for Expression<'_> {
                         }
 
                         match (&bin_expr.left, &bin_expr.right) {
-                            (Expression::Identifier(id), Expression::NumericLiteral(lit))
-                            | (Expression::NumericLiteral(lit), Expression::Identifier(id)) => {
-                                id.name == var_name && (lit.value - 1f64).abs() < f64::EPSILON
+                            (Expression::Identifier(id), number)
+                            | (number, Expression::Identifier(id)) => {
+                                id.name == var_name && number.is_number_value(1.0)
                             }
                             _ => false,
                         }

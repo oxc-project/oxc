@@ -133,7 +133,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -151,7 +151,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -303,13 +303,13 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_config/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_toml/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: ./.github/actions/check-changes
         id: filter-conformance
         with:
-          paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_toml/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
@@ -457,7 +457,7 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_config/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_toml/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
@@ -497,7 +497,7 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: crate-ci/typos@512fc24f32f44ab01972217aaaf3dc86ec234d53 # v1.50.2
+      - uses: crate-ci/typos@00f422f3b19c57bc6338715ebfe3316d38768461 # v1.50.3
         with:
           files: .
 
@@ -534,8 +534,7 @@ jobs:
     name: Doc
     runs-on: namespace-profile-linux-x64-default
     env:
-      # FIXME(ci): Unpin once rust-lang/rust#154878 is resolved.
-      TOOLCHAIN: nightly-2026-04-01
+      TOOLCHAIN: nightly-2026-09-30
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
@@ -577,7 +576,7 @@ jobs:
             rust
             pnpm
 
-      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just
@@ -636,7 +635,7 @@ jobs:
           path: /home/runner/.rustup
           cache: rust
 
-      - uses: taiki-e/install-action@76c2e6406e52637deed7160d77bded76bd83e06e # v2.87.14
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just
@@ -666,6 +665,55 @@ jobs:
           grep -qxF "Lexer implementation: ${{ matrix.variant }}" "$RUNNER_TEMP/lexer.log" ||
             { echo "::error::Expected ${{ matrix.variant }}, but the harness reported otherwise"; exit 1; }
           git diff --exit-code
+
+  lexer-benchmark:
+    # Benchmark `oxc_lexer`'s SIMD core against the lexer in `oxc_parser`, built without the SIMD flags
+    # (see `lexer` job above).
+    #
+    # Measures wallclock time, so doesn't use CodSpeed. `oxc_lexer` is designed to exploit out-of-order execution
+    # and branch prediction, which CodSpeed's CPU simulation does not model.
+    # Results are only printed in the log. The "change" reported for `oxc_lexer` is relative to `oxc_parser`.
+    #
+    # Only runs when `oxc_lexer` or the benchmark itself changes.
+    # See the LEXER section of `justfile` for the recipe.
+    name: Lexer Benchmark
+    runs-on: namespace-profile-linux-x64-default
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+
+      - name: Check if lexer benchmark should run
+        id: filter
+        uses: ./.github/actions/check-changes
+        with:
+          paths: crates/oxc_lexer/,tasks/benchmark/benches/lexer_wallclock_old.rs,tasks/benchmark/benches/lexer_wallclock_new.rs,tasks/benchmark/benches/lexer_common.rs,.cargo/lexer-simd.toml,justfile,.github/workflows/ci.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          path: /home/runner/.rustup
+          cache: rust
+
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          tool: just
+
+      - name: Benchmark
+        # The `oxc_lexer` benchmark prints which implementation it was built with (`oxc_lexer::IS_SIMD`).
+        # Checking it here is what guarantees this job benchmarked the SIMD core.
+        # The `oxc_parser` benchmark checks for itself that it was built without the SIMD flags.
+        if: steps.filter.outputs.changed == 'true'
+        env:
+          # Keep criterion's saved results out of `target`, which may be cached.
+          # Otherwise criterion would also compare `oxc_parser` against an earlier CI run.
+          CRITERION_HOME: ${{ runner.temp }}/criterion
+        run: |
+          set -o pipefail
+          just bench-lexer-simd | tee "$RUNNER_TEMP/bench.log"
+          grep -qxF "Lexer implementation: SIMD" "$RUNNER_TEMP/bench.log" ||
+            { echo "::error::Expected SIMD, but the benchmark reported otherwise"; exit 1; }
 
   test-codegen:
     name: Test Codegen

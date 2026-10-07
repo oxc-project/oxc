@@ -1,7 +1,8 @@
 use crate::{error::DiagCode, token::TokenKind};
 
 use crate::pipeline::disambiguate::tests::{
-    FileType, diag_codes_of, division, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, stream,
+    FileType, diag_codes_of, division, gt_run_fused, gt_run_split, is_fused_gt, kinds_of, regex,
+    stream,
 };
 
 use crate::pipeline::disambiguate::FORWARD_SCAN_CAP;
@@ -1170,4 +1171,76 @@ fn tsx_template_type_with_deeply_nested_substitutions_in_expression_type_argumen
     let deep = format!("{}U{}", "`${".repeat(10), "}`".repeat(10));
     let code = format!("x = f<`${{<T>(x: T) => {deep}}}`>(1);");
     assert!(diag_codes_of(&code, ScriptTSX).is_empty(), "{code}");
+}
+
+#[test]
+fn no_function_type_after_a_type_operator_or_a_name_on_the_line_before() {
+    for word in ["keyof", "readonly", "unique", "infer", "abstract", "asserts", "is", "as"] {
+        gt_run_fused(&format!("f<{word}\n<T>>(x);"));
+    }
+    gt_run_split("f<abstract<T>>(x);");
+    gt_run_split("f<z.infer<typeof s>>();");
+    gt_run_split("f<A<[...infer U]>>();");
+    gt_run_fused("x = c ? f<a : A<B>>(y);");
+    gt_run_split("x = f<A extends B ? C : D<E>>(y);");
+}
+
+#[test]
+fn trivia_inside_a_lt_lt_generic_function_type() {
+    for code in [
+        "let a: Array<</*c*/T>(x: T) => T>;",
+        "let a: Array<<T> /*c*/ (x: T) => T>;",
+        "let a: Array<<T>(x: T) /*c*/ => T>;",
+    ] {
+        let ks = kinds_of(code, ScriptTS);
+        assert!(!ks.contains(&TokenKind::LShift), "{code:?}: {ks:?}");
+    }
+}
+
+#[test]
+fn yield_and_await_are_type_names_in_a_type_list() {
+    gt_run_split("x = a<b<yield>>(1);");
+    gt_run_split("x = a<b<await>>(1);");
+    gt_run_split("function* g() { x = a<b<yield>>(1); }");
+}
+
+#[test]
+fn implements_after_a_run_starts_an_expression() {
+    gt_run_fused("x = a<b<c>> implements;");
+}
+
+#[test]
+fn type_query_on_this_takes_type_arguments() {
+    gt_run_split("let x: M<typeof this<typeof this<A>>>\n+1;");
+}
+
+#[test]
+fn return_type_run_after_a_walk_that_stopped_in_a_method_body() {
+    gt_run_split("class A { m() { x as P<Q<T>>; } n() {} o(): P<Q<T>> {} }");
+}
+
+#[test]
+fn expression_operators_in_a_type_literal_rule_out_type_arguments() {
+    // No type takes a binary sign, a ternary without extends, or a sign before a name.
+    for code in [
+        "x = f<{a: b + c}>\n/re/g;",
+        "x = f<{a: b - c}>\n/re/g;",
+        "x = f<{a: b ? c : d}>\n/re/g;",
+        "x = f<{a: [b ? c : d]}>\n/re/g;",
+        "x = f<-b>\n/re/g;",
+    ] {
+        regex(code, ScriptTS);
+    }
+    for code in [
+        "x = f<{+readonly [K in T]+?: V}>\n/2/g;",
+        "x = f<{-readonly [K in T]-?: V}>\n/2/g;",
+        "x = f<{a?(): b, c: d extends e ? f : g}>\n/2/g;",
+        "x = f<{a: [b?, c?: d]}>\n/2/g;",
+        "x = f<- 1n>\n/2/g;",
+        "x = f<{get [a + b](): c}>\n/2/g;",
+        "x = f<{a: b\nc?: d}>\n/2/g;",
+        "x = f<{a: b\n<T>(): c}>\n/2/g;",
+    ] {
+        division(code, ScriptTS);
+    }
 }

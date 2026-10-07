@@ -571,6 +571,7 @@ In the head the declaration has no terminator of its own; we keep it verbatim an
 
 - Why: uniform-rule (same construct, same output: suppressed statement)
 - Pin: `tests/fixtures/js/semicolons/suppressed-statement.js`, `tests/fixtures/ts/semicolons/suppressed-class-member.ts`
+- Oxfmt: `externals/prettier/markdown/markdown/real-world-case.md`
 
 ```js
 // input (semi: true)
@@ -705,3 +706,76 @@ Prettier keeps the Markdown hard break in `/**` only, following jsdoc3.
 Tools disagree on `/***`: TypeScript (`isJSDocLikeText`, so editor hovers) treats it as JSDoc, jsdoc3 ignores it.
 Formatting it as JSDoc does not break jsdoc3, which ignores it either way.
 Type cast comments already follow the rule, in Prettier too.
+
+## test-call-comment-order
+
+- Why: invariant (prettier/prettier#20029, prettier/prettier#20043)
+- Pin: `tests/fixtures/js/calls/test-call-comment-order.js`
+
+```js
+// input
+test("x", () => {
+  run();
+}, // first
+// second
+60000);
+
+// ours
+test(
+  "x",
+  () => {
+    run();
+  }, // first
+  // second
+  60000,
+);
+
+// prettier
+test("x", () => {
+  run();
+}, // second // first
+60000);
+```
+
+Prettier's compact test call layout merges and reverses the comments, and is not a fixpoint.
+We fall back to the regular argument layout when comments sit around the arguments, following prettier/prettier#20043.
+A same-line block comment also falls back, the same output as the other special call layouts (React hook, `require`).
+
+## callee-arguments-gap-comment
+
+- Why: invariant
+- Pin: `tests/fixtures/js/calls/callee-opener-comment.js`, `tests/fixtures/ts/calls/callee-opener-comment.ts`
+- Conformance: `js/last-argument-expansion/edge_case.js`, `typescript/call/callee-comments.ts`
+
+A call's `(` and `<` are delimiters (see AGENTS.md "Head-body and operator gaps (class 3)"), so a comment between the callee and the opener stays on the callee side (except AGENTS.md "Open debts").
+
+```js
+// input
+foo /* c */ (a);
+foo
+// c
+(a);
+foo
+/* c */ (a);
+
+// ours
+foo /* c */(a);
+foo
+// c
+(a);
+foo
+/* c */ (a);
+
+// prettier
+foo(/* c */ a);
+foo(
+  // c
+  a,
+);
+foo(/* c */ a);
+```
+
+Prettier keeps an end-of-line comment there (`foo // c` + `(a)`, the same as ours) but moves a same-line block comment and an own-line comment into the arguments.
+Its function declarations keep the same-line block comment outside (`function foo /* c */(a) {}`).
+Before `<`, Prettier glues an own-line comment back onto the callee's line (`foo// c` + `<T>(a)`); we keep it own-line.
+Before an optional call's `?.`, Prettier moves an own-line comment into the arguments as well; we keep it own-line.
