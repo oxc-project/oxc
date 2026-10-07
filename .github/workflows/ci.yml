@@ -786,7 +786,18 @@ jobs:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           cargo minsize --compress-only pr
-          git fetch --depth 1 origin "$BASE_REF"
+          if fetch_output=$(git fetch --depth 1 origin "$BASE_REF" 2>&1); then
+            printf '%s\n' "$fetch_output" >&2
+          else
+            fetch_status=$?
+            printf '%s\n' "$fetch_output" >&2
+            if [[ "$BASE_REF" == graphite-base/* ]] &&
+              grep -Fxq "fatal: couldn't find remote ref $BASE_REF" <<< "$fetch_output"; then
+              printf 'Skipped minify output diff: base ref `%s` is no longer available on origin.\n' "$BASE_REF" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            exit "$fetch_status"
+          fi
           git checkout -f FETCH_HEAD
           cargo minsize --compress-only main
 
