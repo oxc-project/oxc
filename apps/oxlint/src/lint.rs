@@ -395,8 +395,8 @@ impl CliRunner {
 
         // TODO(refactor): pull this into a shared function, so that the language server can use
         // the same functionality.
-        let use_cross_module = lint_config.plugins().has_import()
-            || nested_configs.values().any(|config| config.plugins().has_import());
+        let use_cross_module = lint_config.plugins_with_overrides().has_import()
+            || nested_configs.values().any(|config| config.plugins_with_overrides().has_import());
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
@@ -1594,6 +1594,15 @@ mod test {
         let args = &[];
         Tester::new()
             .with_cwd("fixtures/cli/cross_module_extended_config".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_cross_modules_with_overrides() {
+        // https://github.com/oxc-project/oxc/issues/27337
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/cli/cross_module_overrides".into())
             .test_and_snapshot(args);
     }
 

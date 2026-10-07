@@ -163,15 +163,17 @@ impl ServerLinterBuilder {
         let use_nested_config = options.use_nested_configs();
         let fix_kind = FixKind::from(options.fix_kind);
 
-        let use_cross_module = config_builder.plugins().has_import()
-            || (use_nested_config
-                && nested_configs.values().any(|config| config.plugins().has_import()));
-
         extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build(&mut external_plugin_store).unwrap_or_else(|err| {
             warn!("Failed to build config: {err}");
             ConfigStoreBuilder::empty().build(&mut ExternalPluginStore::new(false)).unwrap()
         });
+
+        let use_cross_module = base_config.plugins_with_overrides().has_import()
+            || (use_nested_config
+                && nested_configs
+                    .values()
+                    .any(|config| config.plugins_with_overrides().has_import()));
 
         if external_plugin_store.is_empty() {
             external_linter = None;
@@ -1409,6 +1411,12 @@ mod test {
     #[test]
     fn test_cross_module_no_cycle_extended_config() {
         Tester::new("fixtures/lsp/cross_module_extended_config", json!({}))
+            .test_and_snapshot_single_file("dep-a.ts");
+    }
+
+    #[test]
+    fn test_cross_module_no_cycle_overrides() {
+        Tester::new("fixtures/lsp/cross_module_overrides", json!({}))
             .test_and_snapshot_single_file("dep-a.ts");
     }
 
