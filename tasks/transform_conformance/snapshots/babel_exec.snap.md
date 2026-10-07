@@ -143,17 +143,27 @@ TypeError: attempted to use private field on non-instance
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-loose-private-methods-access-exec.test.js:13:9
 
 ./fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js
-./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js:6
-	export { A };
-	^^^^^^
-
-SyntaxError: Unexpected token 'export'
-    at new Script (node:vm:118:7)
-    at createScript (node:vm:270:10)
-    at Object.runInThisContext (node:vm:318:10)
-    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.3.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1286:80)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.3.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1193:73)
+RolldownError: Parse failure: Parse failed with 2 errors:
+'export statement' declaration can only be used at the top level of a module
+2: import _usingCtx2 from "/@id/__x00__@oxc-project+runtime@0.153.0/helpers/esm/usingCtx.js";
+3: test("exec", () => {
+4:   export { A };
+     ^
+5:   export { B };
+6:   try {'export statement' declaration can only be used at the top level of a module
+3: test("exec", () => {
+4:   export { A };
+5:   export { B };
+     ^
+6:   try {
+7:     var _usingCtx = _usingCtx2();
+At file: /fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js:4:1
+    at error (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/shared/logs-D6uA606S.mjs:166:24)
+    at normalizeParseError (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/parse-ast-index.mjs:25:9)
+    at wrap (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/parse-ast-index.mjs:5:39)
+    at parseAstAsync (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/parse-ast-index.mjs:54:9)
+    at ssrTransformScript (./node_modules/.pnpm/vite@8.3.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/chunks/node.js:16361:9)
+    at loadAndTransform (./node_modules/.pnpm/vite@8.3.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/chunks/node.js:20022:64)
 
 ./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js
 ReferenceError: Cannot access 'a' before initialization
