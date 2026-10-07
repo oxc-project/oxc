@@ -95,6 +95,29 @@ impl OxlintRules {
     pub fn is_empty(&self) -> bool {
         self.rules.is_empty()
     }
+
+    /// Names of the type-aware (`tsgolint`) rules this config turns on by naming them in `rules`.
+    ///
+    /// Rules turned on through a category are not reported: several type-aware rules are part of
+    /// `correctness`, which is on by default, so every config would match.
+    pub fn explicitly_enabled_type_aware_rules(&self) -> Vec<String> {
+        self.rules
+            .iter()
+            .filter(|rule_config| rule_config.severity.is_warn_deny())
+            .filter(|rule_config| {
+                let (rule_name, plugin_name) = transform_rule_and_plugin_name(
+                    &rule_config.rule_name,
+                    &rule_config.plugin_name,
+                );
+                RULES.iter().any(|rule| {
+                    rule.name() == rule_name
+                        && rule.plugin_name() == plugin_name
+                        && rule.is_tsgolint_rule()
+                })
+            })
+            .map(|rule_config| rule_config.full_name().into_owned())
+            .collect()
+    }
 }
 
 /// A fully qualified rule name.
