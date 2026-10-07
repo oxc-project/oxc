@@ -10,6 +10,7 @@ mod manual_pure_functions;
 mod merge_assignments_to_declarations;
 mod merge_import_export;
 mod merge_imports;
+mod merge_property_assignments;
 mod minimize_binary_expression;
 mod minimize_conditional_expression;
 mod minimize_conditions;
