@@ -208,7 +208,14 @@ struct BindingPatternKindAndTsFields<'a, 'b> {
 }
 
 impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        let span = self.kind.span();
+        serializer.record_comment_owner(
+            self.kind.node_id().raw().get(),
+            "BindingPattern",
+            span.start,
+            span.end,
+        );
         let mut state = serializer.serialize_struct();
 
         let mut span = match &self.kind {
@@ -420,7 +427,13 @@ impl ConcatElement for FormalParameters<'_> {
 }
 
 impl ESTree for FormalParameterRest<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        serializer.record_comment_owner(
+            self.node_id.get().raw().get(),
+            "FormalParameterRest",
+            self.span.start,
+            self.span.end,
+        );
         let rest = self;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
@@ -733,8 +746,14 @@ impl ESTree for TSParameterPropertyAssignmentPattern<'_, '_> {
 pub struct FunctionParams<'a, 'b>(pub &'b Function<'a>);
 
 impl ESTree for FunctionParams<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
         let func = self.0;
+        serializer.record_comment_owner(
+            func.params.node_id.get().raw().get(),
+            "FormalParameters",
+            func.params.span.start,
+            func.params.span.end,
+        );
         if serializer.include_ts_fields() {
             Concat2(&func.this_param, func.params.as_ref()).serialize(serializer);
         } else {
@@ -790,8 +809,14 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
 pub struct ImportDeclarationWithClause<'a, 'b>(pub &'b ImportDeclaration<'a>);
 
 impl ESTree for ImportDeclarationWithClause<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
         if let Some(with_clause) = &self.0.with_clause {
+            serializer.record_comment_owner(
+                with_clause.node_id.get().raw().get(),
+                "WithClause",
+                with_clause.span.start,
+                with_clause.span.end,
+            );
             with_clause.with_entries.serialize(serializer);
         } else {
             EmptyArray(()).serialize(serializer);
@@ -810,8 +835,14 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
 pub struct ExportFromDeclarationWithClause<'a, 'b>(pub &'b ExportFromDeclaration<'a>);
 
 impl ESTree for ExportFromDeclarationWithClause<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
         if let Some(with_clause) = &self.0.with_clause {
+            serializer.record_comment_owner(
+                with_clause.node_id.get().raw().get(),
+                "WithClause",
+                with_clause.span.start,
+                with_clause.span.end,
+            );
             with_clause.with_entries.serialize(serializer);
         } else {
             EmptyArray(()).serialize(serializer);
@@ -845,8 +876,14 @@ impl ESTree for ExportDeclarationExportKind<'_, '_> {
 pub struct ExportAllDeclarationWithClause<'a, 'b>(pub &'b ExportAllDeclaration<'a>);
 
 impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
         if let Some(with_clause) = &self.0.with_clause {
+            serializer.record_comment_owner(
+                with_clause.node_id.get().raw().get(),
+                "WithClause",
+                with_clause.span.start,
+                with_clause.span.end,
+            );
             with_clause.with_entries.serialize(serializer);
         } else {
             EmptyArray(()).serialize(serializer);

@@ -153,6 +153,10 @@ fn generate_deserializers(
             sourceStartPos = 0, firstNonAsciiPos = 0;
 
         let parent = null;
+        /* IF COMMENTS */
+        import {{ attachCommentGroup }} from '../../raw-transfer/attached-comments.js';
+        let commentOwners = null;
+        /* END_IF */
 
         const {{ fromCharCode }} = String,
             {{ utf8Slice, latin1Slice }} = Buffer.prototype;
@@ -217,6 +221,7 @@ fn generate_deserializers(
             }}
 
             const data = deserialize(int32[{data_pointer_pos_32}]);
+            if (COMMENTS) commentOwners = null;
             resetBuffer();
             return data;
         }}
@@ -303,37 +308,40 @@ fn generate_deserializers(
         variant_paths: Vec<String>,
     }
 
-    impl VariantGenerator<6> for VariantGen {
-        const FLAG_NAMES: [&str; 6] =
-            ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS", "LINTER"];
+    impl VariantGenerator<7> for VariantGen {
+        const FLAG_NAMES: [&str; 7] =
+            ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS", "LINTER", "COMMENTS"];
 
-        fn variants(&mut self) -> Vec<[bool; 6]> {
+        fn variants(&mut self) -> Vec<[bool; 7]> {
             let mut variants = Vec::with_capacity(9);
 
             // Parser deserializers
             for is_ts in [false, true] {
                 for range in [false, true] {
                     for parent in [false, true] {
-                        self.variant_paths.push(format!(
-                            "{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/deserialize/{}{}{}.js",
+                        for comments in [false, true] {
+                            self.variant_paths.push(format!(
+                            "{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/deserialize/{}{}{}{}.js",
                             if is_ts { "ts" } else { "js" },
                             if range { "_range" } else { "" },
                             if parent { "_parent" } else { "" },
+                            if comments { "_comments" } else { "" },
                         ));
 
-                        variants.push([
-                            is_ts, range, /* loc */ false, parent,
-                            /* preserve_parens */ true, /* linter */ false,
-                        ]);
+                            variants.push([
+                                is_ts, range, /* loc */ false, parent,
+                                /* preserve_parens */ true, /* linter */ false, comments,
+                            ]);
+                        }
                     }
                 }
             }
-
             // Linter deserializer
             self.variant_paths.push(format!("{OXLINT_APP_PATH}/src-js/generated/deserialize.js"));
             variants.push([
                 /* is_ts */ true, /* range */ true, /* loc */ true,
                 /* parent */ true, /* preserve_parens */ false, /* linter */ true,
+                false,
             ]);
 
             variants
@@ -342,9 +350,12 @@ fn generate_deserializers(
         fn pre_process_variant<'a>(
             &self,
             program: &mut Program<'a>,
-            flags: [bool; 6],
+            flags: [bool; 7],
             allocator: &'a Allocator,
         ) {
+            if flags[6] {
+                CommentFieldAdder::new(allocator).visit_program(program);
+            }
             if flags[2] {
                 // `loc` enabled
                 LocFieldAdder::new(allocator).visit_program(program);
@@ -362,19 +373,21 @@ fn generate_deserializers(
     for is_ts in [false, true] {
         for range in [false, true] {
             for parent in [false, true] {
-                outputs.push((
-                    format!(
-                        "{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/deserialize/{}{}{}.d.ts",
-                        if is_ts { "ts" } else { "js" },
-                        if range { "_range" } else { "" },
-                        if parent { "_parent" } else { "" },
-                    ),
-                    code_type_definition_parser.clone(),
-                ));
+                for comments in [false, true] {
+                    outputs.push((
+                        format!(
+                            "{NAPI_PARSER_PACKAGE_PATH}/src-js/generated/deserialize/{}{}{}{}.d.ts",
+                            if is_ts { "ts" } else { "js" },
+                            if range { "_range" } else { "" },
+                            if parent { "_parent" } else { "" },
+                            if comments { "_comments" } else { "" },
+                        ),
+                        code_type_definition_parser.clone(),
+                    ));
+                }
             }
         }
     }
-
     // Add type definition file for linter
     outputs.push((
         format!("{OXLINT_APP_PATH}/src-js/generated/deserialize.d.ts"),
@@ -430,7 +443,7 @@ fn generate_struct(
         })
     });
 
-    let body = body.unwrap_or_else(|| {
+    let mut body = body.unwrap_or_else(|| {
         let mut inline_preamble_str = String::new();
         let mut fields_str = String::new();
         let mut assignments_preamble_str = String::new();
@@ -534,6 +547,90 @@ fn generate_struct(
         "
         )
     });
+
+    // Comments-enabled builds need the enclosing ESTree node when a native
+    // container is flattened to an array. No parent pointer is exposed unless requested.
+    body =
+        body.cow_replace("if (PARENT) parent =", "if (PARENT || COMMENTS) parent =").into_owned();
+    if struct_def.name() == "RawTransferData" {
+        let field = |name| struct_def.field_by_name(name);
+        let comments_pos = pos_offset(field("comments").offset_64());
+        let comments_fn = field("comments").type_def(schema).deser_name(schema);
+        let program_pos = pos_offset(field("program").offset_64());
+        let program_fn = field("program").type_def(schema).deser_name(schema);
+        let module_pos = pos_offset(field("module").offset_64());
+        let module_fn = field("module").type_def(schema).deser_name(schema);
+        let errors_pos = pos_offset(field("errors").offset_64());
+        let errors_fn = field("errors").type_def(schema).deser_name(schema);
+        let comment = schema.type_by_name("Comment").as_struct().unwrap();
+        let id = comment.field_by_name("node_id").offset_64();
+        let placement = comment.field_by_name("placement").offset_64();
+        let unassigned_id = oxc_ast::Comment::UNASSIGNED_NODE_ID.index();
+        let size = comment.layout_64().size;
+        let kind = comment.field_by_name("kind").offset_64();
+        let newlines = comment.field_by_name("newlines").offset_64();
+        let content = comment.field_by_name("content").offset_64();
+        body = format!(
+            "if (COMMENTS) {{
+            const base = pos;
+            const comments = {comments_fn}({comments_pos});
+            const commentPos = int32[({comments_pos}) >> 2];
+            commentOwners = new Map();
+            for (let i = 0; i < comments.length; i++) {{
+                pos = commentPos + i * {size};
+                const comment = comments[i];
+                comment.kind = uint8[pos + {kind}];
+                comment.newlines = uint8[pos + {newlines}];
+                comment.content = uint8[pos + {content}];
+                comment.container = null;
+                const id = (~int32[(pos + {id}) >> 2]) >>> 0;
+                if (id === {unassigned_id}) continue;
+                let group = commentOwners.get(id);
+                if (group === undefined) commentOwners.set(id, group = []);
+                group.push([comment, uint8[pos + {placement}]]);
+            }}
+            pos = base;
+            return {{ program: {program_fn}({program_pos}), comments,
+                module: {module_fn}({module_pos}), errors: {errors_fn}({errors_pos}) }};
+        }} {body}"
+        );
+    } else if struct_def.kind.has_kind
+        && let Some(id) = struct_def.fields.iter().find(|f| f.name() == "node_id")
+    {
+        let id_offset = id.offset_64();
+        let span = struct_def.field_by_name("span").offset_64();
+        let kind = struct_def.name();
+        let kind_code = if kind == "ImportDeclaration" {
+            let field = struct_def.field_by_name("specifiers");
+            let option = field.type_def(schema).as_option().unwrap();
+            let (none, _) = get_option_none_condition_and_offset(
+                option,
+                option.inner_type(schema),
+                field.offset_64(),
+            );
+            format!("({none}) ? 'ImportDeclaration' : 'ImportSpecifiers'")
+        } else {
+            format!("'{kind}'")
+        };
+        body = format!("if (COMMENTS) {{
+            const previousParent = parent;
+            const originalPos = pos;
+            const result = (() => {{ {body} }})();
+            if (!Array.isArray(result) && result !== null && typeof result === 'object' && !('comments' in result)) result.comments = null;
+            pos = originalPos;
+            const id = (~int32[(pos + {id_offset}) >> 2]) >>> 0;
+            const group = commentOwners.get(id);
+            if (group !== undefined) {{
+                commentOwners.delete(id);
+                const kind = {kind_code};
+                const target = kind === 'FormalParameters' || kind === 'WithClause' || kind === 'Elision' ? previousParent : result;
+                attachCommentGroup(target, group, kind,
+                    int32[(pos + {span}) >> 2], int32[(pos + {span} + 4) >> 2]);
+            }}
+            parent = previousParent;
+            return result;
+        }} {body}");
+    }
 
     #[rustfmt::skip]
     write_it!(code, "
@@ -1824,5 +1921,39 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
         }
 
         walk_mut::walk_object_expression(self, obj_expr);
+    }
+}
+
+/// Give every emitted AST object a predictable comments field in the opt-in variants.
+/// This also covers objects synthesized by hand-written ESTree converters.
+struct CommentFieldAdder<'a> {
+    ast: AstBuilder<'a>,
+}
+impl<'a> CommentFieldAdder<'a> {
+    fn new(allocator: &'a Allocator) -> Self {
+        Self { ast: AstBuilder::new(allocator) }
+    }
+}
+impl<'a> VisitMut<'a> for CommentFieldAdder<'a> {
+    fn visit_object_expression(&mut self, object: &mut ObjectExpression<'a>) {
+        let is_node = object.properties.iter().any(|property| matches!(property,
+            ObjectPropertyKind::ObjectProperty(p) if p.key.static_name().is_some_and(|name| name == "type")
+                && matches!(p.value, Expression::StringLiteral(_))));
+        if is_node {
+            object.properties.insert(
+                1,
+                ObjectPropertyKind::new_object_property(
+                    SPAN,
+                    PropertyKind::Init,
+                    PropertyKey::new_static_identifier(SPAN, "comments", &self.ast),
+                    Expression::new_null_literal(SPAN, &self.ast),
+                    false,
+                    false,
+                    false,
+                    &self.ast,
+                ),
+            );
+        }
+        walk_mut::walk_object_expression(self, object);
     }
 }

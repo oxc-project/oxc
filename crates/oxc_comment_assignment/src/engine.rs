@@ -428,6 +428,14 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
                 (frame.node.id, CommentPlacement::Leading)
             } else if frame.substitution && comment.span.start >= frame.kind.span().end {
                 (frame.node.id, CommentPlacement::Trailing)
+            } else if let AstKind::ImportDeclaration(import) = frame.kind
+                && import.specifiers.as_ref().is_some_and(|specifiers| specifiers.is_empty())
+                && comment.span.end <= import.source.span.start
+            {
+                // The empty specifier clause has no child node of its own.
+                // Keep its comments inside the import's braces rather than
+                // routing them to the following module string.
+                (frame.node.id, CommentPlacement::Dangling)
             } else if matches!(frame.kind, AstKind::ImportExpression(_))
                 && (comment.is_webpack() || comment.is_vite() || comment.is_turbopack())
             {

@@ -104,6 +104,9 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
         buffer.print_strs_array(["\"", key, "\":"]);
         formatter.before_field_value(buffer);
         value.serialize(&mut *self.serializer);
+        if C::COMMENTS && key == "type" {
+            self.serialize_field("comments", &Option::<bool>::None);
+        }
     }
 
     /// Serialize struct field which is JS syntax only (not in TS AST).

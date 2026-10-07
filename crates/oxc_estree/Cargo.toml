@@ -24,10 +24,11 @@ oxc_data_structures = { workspace = true, features = [
 
 dragonbox_ecma = { workspace = true, optional = true }
 itoa = { workspace = true, optional = true }
+rustc-hash = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["dep:oxc_data_structures", "dep:itoa", "dep:dragonbox_ecma"]
+serialize = ["dep:oxc_data_structures", "dep:itoa", "dep:dragonbox_ecma", "dep:rustc-hash"]
 
 [lib]
 doctest = false

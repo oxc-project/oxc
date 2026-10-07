@@ -140,7 +140,11 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
     }
 
     let include_ts_fields = ast_type == AstType::TypeScript;
-    let program_and_fixes = program.to_estree_json_with_fixes(include_ts_fields, ranges);
+    let program_and_fixes = if options.attach_comments == Some(true) {
+        program.to_estree_json_with_comment_fixes(include_ts_fields, ranges)
+    } else {
+        program.to_estree_json_with_fixes(include_ts_fields, ranges)
+    };
 
     let module = EcmaScriptModule::from(&module_record);
 

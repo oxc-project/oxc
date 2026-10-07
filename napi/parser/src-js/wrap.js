@@ -1,8 +1,16 @@
-export function wrap(result) {
+import { attachCommentGroup } from "./raw-transfer/attached-comments.js";
+
+export function wrap(result, attachComments = false) {
   let program, module, comments, errors;
+  function init() {
+    if (!program) {
+      if (attachComments) comments = result.comments;
+      program = jsonParseAst(result.program, comments);
+    }
+  }
   return {
     get program() {
-      if (!program) program = jsonParseAst(result.program);
+      init();
       return program;
     },
     get module() {
@@ -10,6 +18,7 @@ export function wrap(result) {
       return module;
     },
     get comments() {
+      if (attachComments) init();
       if (!comments) comments = result.comments;
       return comments;
     },
@@ -31,10 +40,31 @@ export function wrap(result) {
 // Walk down the AST to these nodes and alter them.
 // Compiling the list of fixes on Rust side avoids having to do a full AST traversal on JS side
 // to locate the likely very few `Literal`s which need fixing.
-export function jsonParseAst(programJson) {
-  const { node: program, fixes } = JSON.parse(programJson);
+export function jsonParseAst(programJson, comments) {
+  const { node: program, fixes, commentFixes } = JSON.parse(programJson);
   for (const fixPath of fixes) {
     applyFix(program, fixPath);
+  }
+  if (commentFixes !== undefined) {
+    if (program.range !== undefined) {
+      for (const comment of comments) comment.range = [comment.start, comment.end];
+    }
+    for (const [path, index, placement, kind, newlines, content, container] of commentFixes) {
+      let node = program;
+      for (const key of path) node = node[key];
+      const comment = comments[index];
+      comment.kind = kind;
+      comment.newlines = newlines;
+      comment.content = content;
+      comment.container = null;
+      attachCommentGroup(
+        node,
+        [[comment, placement]],
+        container?.[0] ?? "",
+        container?.[1] ?? 0,
+        container?.[2] ?? 0,
+      );
+    }
   }
   return program;
 }
