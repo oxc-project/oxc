@@ -182,7 +182,12 @@ impl<'a> IsLiteralValue<'a, '_> for ObjectPropertyKind<'a> {
                 Expression::ArrayExpression(expr) => expr.is_literal_value(include_functions, ctx),
                 Expression::StringLiteral(_) => true,
                 Expression::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
-                Expression::ObjectExpression(expr) => expr.is_literal_value(include_functions, ctx),
+                // Spreading an object calls its getters.
+                Expression::ObjectExpression(expr) => {
+                    !expr.properties.iter().any(
+                        |p| matches!(p, Self::MethodProperty(m) if m.kind == ObjectMethodKind::Get),
+                    ) && expr.is_literal_value(include_functions, ctx)
+                }
                 _ => false,
             },
         }
