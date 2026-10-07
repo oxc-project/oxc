@@ -55,7 +55,9 @@ impl SemanticId for NodeId {}
 
 /// Get the [`NodeId`] of given AST node.
 ///
-/// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+/// Parser-assigned IDs are unique within the parsed AST but may have gaps and
+/// do not follow visitor order. Semantic analysis replaces them with dense IDs
+/// that index its node store. Synthetically-created nodes may have [`NodeId::DUMMY`].
 pub trait GetNodeId {
     /// Get the [`NodeId`] for an AST node.
     fn node_id(&self) -> NodeId;
