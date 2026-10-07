@@ -823,7 +823,7 @@ fn test_property_write_side_effects() {
     );
     test_options(
         "const a = {}; const b = a; b.add = 1; export { b };",
-        "const b = {}; b.add = 1; export { b };",
+        "const b = { add: 1 }; export { b };",
         &options,
     );
     test_options(
@@ -868,14 +868,17 @@ fn test_property_write_side_effects() {
     );
 
     // Object literal with nested setter in property value
-    test_same_options(
-        "const obj = { bar: { set x(v) { console.log(v); } } }; obj.bar = 1;",
+    // (`g()` keeps the write from merging into the literal)
+    test_options(
+        "const obj = { bar: { set x(v) { console.log(v); } } }; g(); obj.bar = 1;",
+        "const obj = { bar: { set x(v) { console.log(v); } } }; g(), obj.bar = 1;",
         &options,
     );
 
     // Deeply nested setter in property value (depth 2+)
-    test_same_options(
-        "const obj = { bar: { baz: { set x(v) { console.log(v); } } } }; obj.bar = 1;",
+    test_options(
+        "const obj = { bar: { baz: { set x(v) { console.log(v); } } } }; g(); obj.bar = 1;",
+        "const obj = { bar: { baz: { set x(v) { console.log(v); } } } }; g(), obj.bar = 1;",
         &options,
     );
 
@@ -1031,9 +1034,9 @@ fn test_drop_write_only_property_assignments_by_default() {
     test_smallest("var o = {}; o['__proto__'] = x;", "var o = {}; o.__proto__ = x;");
 
     // Escapes: any non-member-write use of the binding blocks the drop.
-    test_smallest("var o = {}; o.x = 1; use(o);", "var o = {}; o.x = 1, use(o);");
+    test_smallest("var o = {}; o.x = 1; use(o);", "use({ x: 1 });");
     test_same_smallest("var o = {}; o.x = o;");
-    test_same_smallest("var o = {}; o.x = () => o;");
+    test_smallest("var o = {}; o.x = () => o;", "var o = { x: () => o };");
     test_same_smallest("export var o = {}; o.x = 1;");
 
     // Read-modify interference (hazard): compound/logical/update ops READ the
@@ -1054,7 +1057,7 @@ fn test_drop_write_only_property_assignments_by_default() {
 
     // Chained-write base (hazard): dropping `a.b = {}` while `a.b.c = 1`
     // survives would throw at runtime.
-    test_smallest("var a = {}; a.b = {}; a.b.c = 1;", "var a = {}; a.b = {}, a.b.c = 1;");
+    test_smallest("var a = {}; a.b = {}; a.b.c = 1;", "var a = { b: {} }; a.b.c = 1;");
 
     // `__proto__` write in a hoisted function runs before the property write —
     // the hazard scan is execution-order independent because `Normalize` seeds
@@ -1068,7 +1071,7 @@ fn test_drop_write_only_property_assignments_by_default() {
     // the plain write drops, the delete stays.
     test_smallest("var o = {}; o.x = 1; delete o.x;", "var o = {}; delete o.x;");
     // Chained delete reads the intermediate object — everything stays.
-    test_smallest("var a = {}; a.b = {}; delete a.b.c;", "var a = {}; a.b = {}, delete a.b.c;");
+    test_smallest("var a = {}; a.b = {}; delete a.b.c;", "var a = { b: {} }; delete a.b.c;");
 
     // Setter observation via the object itself: not a fresh value.
     test_same_smallest("class A { static set foo(v) { console.log(v); } } A.foo = 1;");
@@ -1084,7 +1087,7 @@ fn test_drop_write_only_property_assignments_by_default() {
     // Direct eval can observe anything.
     test_smallest(
         "export function f() { var o = {}; o.x = 1; eval(''); }",
-        "export function f() { var o = {}; o.x = 1, eval(''); }",
+        "export function f() { var o = { x: 1 }; eval(''); }",
     );
     // --- Kind-aware key denylist ---
     // A write that would throw a strict-mode `TypeError`, or observably coerce,

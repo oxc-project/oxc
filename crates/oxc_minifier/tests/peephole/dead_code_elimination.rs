@@ -295,6 +295,12 @@ fn dead_after_throw_drop_triggers_unused_declarator_removal() {
     );
 }
 
+// Only full minify merges a property write into the object literal before it.
+#[test]
+fn keep_property_assignment_after_object_literal() {
+    test_same("export function f() { var o = {}; o.a = 1; return o; }");
+}
+
 #[test]
 fn pure_comment_for_pure_global_constructors() {
     test("var x = new WeakSet; foo(x)", "var x = /* @__PURE__ */ new WeakSet();\nfoo(x)");
