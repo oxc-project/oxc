@@ -43,20 +43,10 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - name: Determine affected components
+      - name: Select parser performance experiment
         id: set-matrix
-        env:
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_BASE_REF: ${{ github.base_ref }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_SHA: ${{ github.sha }}
-          GITHUB_REF: ${{ github.ref }}
-          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          MATRIX=$(node .github/scripts/generate-benchmark-matrix.js)
-          echo "Matrix: $MATRIX"
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo 'matrix=[{"component":"parser","feature":"compiler","mode":"simulation"}]' >> "$GITHUB_OUTPUT"
 
   benchmark:
     needs: determine-matrix
