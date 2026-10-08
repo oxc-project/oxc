@@ -15,8 +15,8 @@ use oxc_config::{
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 
 use crate::core::{
-    ConfigResolver, ConfigScopes, FormatStrategy, ResolveOutcome, build_global_ignore_matchers,
-    classify_file_kind, is_ignored,
+    ConfigResolver, ConfigScopes, FormatPlan, ResolveOutcome, build_global_ignore_matchers,
+    classify_file, is_ignored,
 };
 
 /// Orchestrates file discovery with nested config and ignore handling.
@@ -107,7 +107,7 @@ impl ScopedWalker {
         config_scopes: &ConfigScopes,
         ignore_paths: &[PathBuf],
         with_node_modules: bool,
-        tx_entry: &mpsc::Sender<FormatStrategy>,
+        tx_entry: &mpsc::Sender<FormatPlan>,
         tx_error: &DiagnosticSender,
     ) -> Result<(), String> {
         // Global ignores: .prettierignore, --ignore-path, CLI `!` patterns
@@ -182,17 +182,13 @@ impl ScopedWalker {
                     continue;
                 }
 
-                let Some(strategy) = resolve_format_strategy(
-                    Arc::from(file.as_path()),
-                    &config_resolver,
-                    tx_error,
-                    &self.cwd,
-                ) else {
+                let Some(plan) = resolve_format_plan(file, &config_resolver, tx_error, &self.cwd)
+                else {
                     continue;
                 };
 
                 directly_processed.insert(file.clone());
-                if tx_entry.send(strategy).is_err() {
+                if tx_entry.send(plan).is_err() {
                     break;
                 }
             }
@@ -318,7 +314,7 @@ impl GlobMatcher {
 /// `OnceLock::set` ensures only the first writer wins.
 #[derive(Clone)]
 struct WalkSinks {
-    tx_entry: mpsc::Sender<FormatStrategy>,
+    tx_entry: mpsc::Sender<FormatPlan>,
     tx_error: DiagnosticSender,
     fatal_error: Arc<OnceLock<String>>,
 }
@@ -542,9 +538,9 @@ impl WalkVisitor {
 
     /// Format eligibility:
     /// - Resolve scope for `path`
-    /// - Apply scope-local `ignorePatterns` / glob / kind filters
+    /// - Apply scope-local `ignorePatterns` / glob / file type filters
     /// - Dispatch to format workers
-    fn dispatch_format(&mut self, path: PathBuf) -> ignore::WalkState {
+    fn dispatch_format(&mut self, path: &Path) -> ignore::WalkState {
         let parent = path.parent().expect("walk yields absolute paths");
 
         if let Err(err) = self.ensure_scope_cached(parent) {
@@ -557,21 +553,20 @@ impl WalkVisitor {
         // Scope-local `ignorePatterns`:
         // - parent dir (cached) catches directory patterns like `lib`
         // - file-level catches patterns like `temp.js`
-        if *parent_ignored || resolver.is_path_ignored(&path, false) {
+        if *parent_ignored || resolver.is_path_ignored(path, false) {
             return ignore::WalkState::Continue;
         }
         if let Some(glob_matcher) = &self.filters.glob_matcher
-            && !glob_matcher.matches(&path)
+            && !glob_matcher.matches(path)
         {
             return ignore::WalkState::Continue;
         }
-        let Some(strategy) =
-            resolve_format_strategy(Arc::from(path), resolver, &self.sinks.tx_error, &self.cwd)
+        let Some(plan) = resolve_format_plan(path, resolver, &self.sinks.tx_error, &self.cwd)
         else {
             return ignore::WalkState::Continue;
         };
 
-        if self.sinks.tx_entry.send(strategy).is_err() {
+        if self.sinks.tx_entry.send(plan).is_err() {
             return ignore::WalkState::Quit;
         }
 
@@ -628,33 +623,32 @@ impl ignore::ParallelVisitor for WalkVisitor {
             return ignore::WalkState::Continue;
         }
 
-        self.dispatch_format(path)
+        self.dispatch_format(&path)
     }
 }
 
 // ---
 
-/// Classify `path`, resolve its scope, and return the format strategy if any.
+/// Classify `path`, resolve its scope, and return the format plan if any.
 ///
 /// `None` means "not a formatting target" or "missing plugin"; resolve errors
 /// are reported via `tx_error` and also yield `None` so callers can move on
 /// to the next file.
-#[expect(clippy::needless_pass_by_value)] // caller has no further use for `path`
-fn resolve_format_strategy(
-    path: Arc<Path>,
+fn resolve_format_plan(
+    path: &Path,
     resolver: &ConfigResolver,
     tx_error: &DiagnosticSender,
     cwd: &Path,
-) -> Option<FormatStrategy> {
-    let kind = classify_file_kind(Arc::clone(&path))?;
-    match resolver.resolve(kind) {
-        Ok(ResolveOutcome::Format(strategy)) => Some(strategy),
+) -> Option<FormatPlan> {
+    let strategy = classify_file(path)?;
+    match resolver.resolve(path, strategy) {
+        Ok(ResolveOutcome::Format(plan)) => Some(plan),
         Ok(ResolveOutcome::MissingPlugin(_)) => None,
         Err(err) => {
             // Report a per-file config resolve error via the diagnostic channel.
             let diagnostics = DiagnosticService::wrap_diagnostics(
                 cwd,
-                &path,
+                path,
                 "",
                 vec![
                     OxcDiagnostic::error(format!(

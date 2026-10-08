@@ -214,7 +214,7 @@ Prettier formats it when a space separates the language, and keeps `js{1,3}` as 
 ```
 ````
 
-A Markdown code block's language is looked up in Shiki's ids and aliases (`route()` in `src/core/embed/dispatcher.rs`);
+A Markdown code block's language is looked up in Shiki's ids and aliases (`route_embedded()` in `src/core/language.rs`);
 `lwc` is none of them, so the block stays as written.
 Prettier looks it up in linguist, where `lwc` is an alias of its Lightning Web Components language.
 
@@ -244,3 +244,34 @@ Prettier looks it up in linguist, where `lwc` is an alias of its Lightning Web C
 
 A blank `.json` file formats to an empty one, and so does a code block of blank lines, an empty block like `jsonc` / `css` / `js` in Prettier too.
 Prettier keeps `json` / `json5` blocks as written: their parser rejects a blank document inside Markdown.
+
+## astro-style-lang-sass
+
+- Why: cost
+- Pin: `conformance/fixtures/edge-cases/astro/style-lang-sass.astro`
+- Conformance: `externals/plugin-astro/styles/with-sass/input.astro`, `externals/plugin-astro/styles/with-indented-sass/input.astro`, `externals/plugin-astro/styles/format-nested-sass-style-tag-content/input.astro`
+
+```astro
+<!-- input -->
+<style lang="sass">
+.a
+      color: red
+</style>
+
+<!-- ours -->
+<style lang="sass">
+.a
+      color: red
+</style>
+
+<!-- prettier -->
+<style lang="sass">
+  .a
+    color: red
+</style>
+```
+
+`<style lang="sass">` (indented syntax) stays verbatim, consistent with Vue / Svelte and also `.sass` file.
+`prettier-plugin-astro` formats it with bundled `sass-formatter`, which we do not bundle (patched out).
+Rare in Astro projects (GitHub code search, 2026-10: about 350 files in 72 repos, vs 29k for `lang="scss"`).
+Not tested but `oxc-css-parser` already parses it, so we can add Sass support for `oxc_formatter_css` in the future.

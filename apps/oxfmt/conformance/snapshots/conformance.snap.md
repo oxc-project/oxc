@@ -218,6 +218,40 @@
 {"printWidth":120,"singleQuote":true,"htmlWhitespaceSensitivity":"ignore","bracketSameLine":true,"svelteIndentScriptAndStyle":true,"svelteSortOrder":"options-scripts-styles-markup","svelte":{"indentScriptAndStyle":true,"sortOrder":"options-scripts-styles-markup"}}
 ```
 
+## astro
+
+### Option 1: 107/112 (95.54%)
+
+```json
+{"printWidth":80,"astro":{}}
+```
+
+- [edge-cases/astro/style-lang-sass.astro](diffs/astro/edge-cases__astro__style-lang-sass.astro.md)
+  - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
+- [externals/plugin-astro/other/prettier-ignore-js/input.astro](diffs/astro/externals__plugin-astro__other__prettier-ignore-js__input.astro.md)
+  - unclassified
+- [externals/plugin-astro/styles/format-nested-sass-style-tag-content/input.astro](diffs/astro/externals__plugin-astro__styles__format-nested-sass-style-tag-content__input.astro.md)
+  - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
+- [externals/plugin-astro/styles/with-indented-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-indented-sass__input.astro.md)
+  - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
+- [externals/plugin-astro/styles/with-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-sass__input.astro.md)
+  - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
+
+### Option 2: 108/112 (96.43%)
+
+```json
+{"printWidth":120,"singleQuote":true,"semi":false,"astroAllowShorthand":true,"astroCompressHTML":"html","astro":{"allowShorthand":true,"compressHTML":"html"}}
+```
+
+- [edge-cases/astro/style-lang-sass.astro](diffs/astro/edge-cases__astro__style-lang-sass.astro.md)
+  - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
+- [externals/plugin-astro/styles/format-nested-sass-style-tag-content/input.astro](diffs/astro/externals__plugin-astro__styles__format-nested-sass-style-tag-content__input.astro.md)
+  - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
+- [externals/plugin-astro/styles/with-indented-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-indented-sass__input.astro.md)
+  - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
+- [externals/plugin-astro/styles/with-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-sass__input.astro.md)
+  - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
+
 ## markdown
 
 ### Option 1: 273/282 (96.81%)

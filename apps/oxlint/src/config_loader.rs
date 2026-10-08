@@ -82,7 +82,7 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
             if !inserted {
                 break;
             }
-            match discovery.find_unique_config_by_readdir(dir, true) {
+            match discovery.find_unique_config_by_readdir(dir) {
                 Ok(Some(config)) => {
                     if config.path() == base_config_path {
                         base_config_found = true;
@@ -506,7 +506,7 @@ impl<'a> ConfigLoader<'a> {
         dir: &Path,
     ) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
         let config_file =
-            discovery.find_unique_config_by_readdir(dir, true).map_err(OxcDiagnostic::from)?;
+            discovery.find_unique_config_by_readdir(dir).map_err(OxcDiagnostic::from)?;
 
         match config_file {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {

@@ -76,7 +76,7 @@ pub fn run(
         "vue-for-binding-left" => Some(FragmentKind::VueForBindingLeft),
         "vue-bindings" => Some(FragmentKind::VueBindings),
         "vue-script-generic" => Some(FragmentKind::VueScriptGeneric),
-        // "vue-script" | "svelte-script"
+        // "vue-script" | "svelte-script" | "astro"
         _ => None,
     };
 
@@ -143,7 +143,7 @@ fn run_full(
     let allocator = Allocator::default();
     let session = FormatSession::with_services(
         &allocator,
-        // A Vue/Svelte `<script>` block is a complete document the host passes as embedded input,
+        // A Vue/Svelte/Astro `<script>` (or Astro frontmatter) block is a complete document the host passes as embedded input,
         // never the owner of file envelopes (BOM / front matter).
         InputKind::VirtualDocument,
         services,

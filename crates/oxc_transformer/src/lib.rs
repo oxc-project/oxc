@@ -633,6 +633,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         }
         self.x2_es2018.enter_statement(stmt, ctx);
         self.x2_es2026.enter_statement(stmt, ctx);
+        self.x2_es2022.enter_statement(stmt, ctx);
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
