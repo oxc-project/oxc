@@ -98,8 +98,6 @@ impl ServerLinterBuilder {
             }
         };
         let root_path = uri_to_file_path(root_uri).unwrap();
-        // Read the suppression-display option up front, before `options` is partially moved below.
-        let suppressed_violation_severity = options.suppressed_violation_severity;
         // create a set for config errors, because if the main config fails to load,
         // the same error might occur again.
         let mut client_messages = FxHashSet::default();
@@ -287,7 +285,7 @@ impl ServerLinterBuilder {
                 lint_options.report_unused_directive,
                 options.rules_customization,
                 suppressions,
-                suppressed_violation_severity,
+                options.suppressed_violation_severity,
             ),
             client_messages.into_iter().collect(),
         )
