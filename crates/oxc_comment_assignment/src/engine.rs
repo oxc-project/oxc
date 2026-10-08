@@ -38,7 +38,6 @@ struct Pending {
     previous: Option<Neighbor>,
     next: Option<Neighbor>,
     attachment: Option<(NodeId, CommentPlacement)>,
-    unresolved_end: usize,
 }
 
 impl Pending {
@@ -48,7 +47,6 @@ impl Pending {
             previous: None,
             next: None,
             attachment: None,
-            unresolved_end: 0,
         }
     }
 }
@@ -118,7 +116,7 @@ impl Frame<'_> {
 }
 
 pub struct AssignmentVisitor<'a, 'p> {
-    comments: &'a [Comment],
+    comments: &'p [Comment],
     pending: &'p mut [Pending],
     frames: Vec<Frame<'a>>,
     skip_children: bool,
@@ -126,45 +124,50 @@ pub struct AssignmentVisitor<'a, 'p> {
 
 impl<'a, 'p> AssignmentVisitor<'a, 'p> {
     pub fn assign<const PRESERVE: bool>(program: &mut Program<'a>) {
-        let comment_count = program.comments.len();
-        if comment_count <= INLINE_COMMENTS {
-            let mut pending = [Pending::new(); INLINE_COMMENTS];
-            Self::assign_with_pending::<PRESERVE>(program, &mut pending[..comment_count]);
-        } else {
-            let mut pending = vec![Pending::new(); comment_count];
-            Self::assign_with_pending::<PRESERVE>(program, &mut pending);
-        }
-    }
-
-    fn assign_with_pending<const PRESERVE: bool>(
-        program: &mut Program<'a>,
-        pending: &mut [Pending],
-    ) {
-        let mut unresolved = 0;
-        for (comment, pending) in program.comments.iter().zip(pending.iter_mut()) {
-            if PRESERVE && let Some(attachment) = &comment.attachment {
-                pending.attachment = Some((attachment.node_id.get(), attachment.placement));
-                // A zero-sized container prevents later overlapping frames from
-                // replacing ownership established while parsing.
-                pending.container = Neighbor::new(NodeId::ROOT, Span::new(0, 0));
-            } else {
-                unresolved += 1;
+        // Routing only the unassigned comments lets source-ordered sibling
+        // searches jump past comments already owned by completed statements.
+        let remaining = if PRESERVE {
+            let count =
+                program.comments.iter().filter(|comment| comment.attachment.is_none()).count();
+            if count == 0 {
+                return;
             }
-            pending.unresolved_end = unresolved;
-        }
-        if unresolved == 0 {
+            let mut remaining = Vec::with_capacity(count);
+            remaining.extend(
+                program.comments.iter().filter(|comment| comment.attachment.is_none()).cloned(),
+            );
+            remaining
+        } else {
+            Vec::new()
+        };
+        let comments = if PRESERVE { remaining.as_slice() } else { &program.comments };
+        let comment_count = comments.len();
+        if comment_count == 0 {
             return;
         }
+        let mut inline = [Pending::new(); INLINE_COMMENTS];
+        let mut heap = Vec::new();
+        let pending = if comment_count <= INLINE_COMMENTS {
+            &mut inline[..comment_count]
+        } else {
+            heap.resize(comment_count, Pending::new());
+            &mut heap[..]
+        };
         {
             // Select inline or heap storage once. The traversal uses the same
             // slice in both cases, without checking the storage kind per access.
-            let mut visitor = AssignmentVisitor::new(&program.comments, pending);
+            let mut visitor = AssignmentVisitor::new(comments, pending);
             visitor.visit_program(program);
             visitor.finish();
         }
         // Release the traversal's shared references before writing ownership.
         // Reuse the existing scratch entries; no separate output table is needed.
-        for (comment, pending) in program.comments.iter_mut().zip(pending) {
+        for (comment, pending) in program
+            .comments
+            .iter_mut()
+            .filter(|comment| !PRESERVE || comment.attachment.is_none())
+            .zip(pending)
+        {
             comment.attachment = pending.attachment.map(|(node_id, placement)| CommentAttachment {
                 node_id: Cell::new(node_id),
                 placement,
@@ -172,7 +175,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
         }
     }
 
-    fn new(comments: &'a [Comment], pending: &'p mut [Pending]) -> Self {
+    fn new(comments: &'p [Comment], pending: &'p mut [Pending]) -> Self {
         Self {
             comments,
             pending,
@@ -344,13 +347,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             (0, 0, self.comments.len())
         };
 
-        let unresolved = if inside_begin == end {
-            0
-        } else {
-            self.pending[end - 1].unresolved_end
-                - if inside_begin == 0 { 0 } else { self.pending[inside_begin - 1].unresolved_end }
-        } + leading_count;
-        if unresolved == 0 {
+        if begin == end {
             // Descendants of a comment-free child need no ownership work.
             self.skip_children = true;
             return;
@@ -378,7 +375,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             substitution,
             // Already resolved comments in overlapping windows can make this an
             // overestimate. They never contribute to the resolved count again.
-            unresolved,
+            unresolved: end - inside_begin + leading_count,
             resolved: 0,
         });
     }
@@ -392,7 +389,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             parent.unresolved -= frame.resolved;
             parent.resolved += frame.resolved;
         } else {
-            debug_assert_eq!(frame.resolved, self.pending.last().unwrap().unresolved_end);
+            debug_assert_eq!(frame.resolved, self.comments.len());
         }
     }
 
