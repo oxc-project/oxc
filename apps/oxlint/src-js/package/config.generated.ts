@@ -5121,6 +5121,10 @@ export interface HookUseStateConfig {
    * When true the rule will ignore the name of the destructured value.
    */
   allowDestructuredState?: boolean;
+  /**
+   * Ignore the naming convention when either binding starts with an underscore.
+   */
+  allowUnused?: boolean;
 }
 export interface JsxBooleanValueOptions {
   /**
