@@ -3,12 +3,9 @@ use std::{cell::Cell, ops::Range};
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind, Comment, CommentAttachment, CommentContent, CommentPlacement,
-    ast::{
-        BindingPattern, Declaration, ExportDefaultDeclarationKind, Expression, JSXChild, Program,
-        Statement, TSType, TemplateElement,
-    },
+    ast::{Declaration, ExportDefaultDeclarationKind, Program, Statement, TemplateElement},
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::Visit;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::node::NodeId;
 
@@ -122,7 +119,7 @@ pub struct AssignmentVisitor<'a, 'p> {
     comments: &'a [Comment],
     pending: &'p mut [Pending],
     frames: Vec<Frame<'a>>,
-    skipped_depth: usize,
+    skip_children: bool,
 }
 
 impl<'a, 'p> AssignmentVisitor<'a, 'p> {
@@ -162,23 +159,30 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             // Sparse inputs usually need a short ancestor chain. Reserve a
             // smaller buffer for them; deeper trees can grow it normally.
             frames: Vec::with_capacity(if comments.len() <= INLINE_COMMENTS { 8 } else { 32 }),
-            skipped_depth: 0,
+            skip_children: false,
         }
     }
 
     fn finish(self) {
         debug_assert!(self.frames.is_empty());
-        debug_assert_eq!(self.skipped_depth, 0);
+        debug_assert!(!self.skip_children);
         debug_assert!(self.pending.iter().all(|pending| pending.attachment.is_some()));
     }
 
     #[inline(never)]
-    fn enter(&mut self, kind: AstKind<'a>, original_span: Span, node_id: NodeId) {
-        let mut span = effective_span(kind, original_span);
+    fn enter(&mut self, kind: AstKind<'a>) {
+        // Raw text cannot receive JavaScript comments. In particular, visiting all
+        // template quasis first must not consume substitution comments.
+        if matches!(kind, AstKind::TemplateElement(_) | AstKind::JSXText(_)) {
+            self.skip_children = true;
+            return;
+        }
+
+        let mut span = effective_span(kind);
         let mut substitution = false;
         let mut leading_count = 0;
         let (begin, inside_begin, end) = if let Some(parent) = self.frames.last_mut() {
-            if let Some(window) = substitution_span(parent.kind, original_span) {
+            if let Some(window) = substitution_span(parent.kind, kind.span()) {
                 span = window;
                 substitution = true;
             }
@@ -197,16 +201,16 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
                             parent.node.span().contains_inclusive(neighbor.span())
                         });
                         if pending.previous.is_none_or(|previous| previous.end < span.end) {
-                            pending.previous = Some(Neighbor::new(node_id, span));
+                            pending.previous = Some(Neighbor::new(kind.node_id(), span));
                         }
                     }
                 }
                 parent.high_water_start = span.start;
-                self.skipped_depth = 1;
+                self.skip_children = true;
                 return;
             }
             let comments = &self.comments[parent.window.clone()];
-            let child = Neighbor::new(node_id, span);
+            let child = Neighbor::new(kind.node_id(), span);
             let mut gap_begin;
             let inside_begin = if span.start >= parent.high_water_start {
                 // Increasing child starts are the common case. Each parent cursor
@@ -297,13 +301,13 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
 
         if begin == end {
             // Descendants of a comment-free child need no ownership work.
-            self.skipped_depth = 1;
+            self.skip_children = true;
             return;
         }
-        let node = Neighbor::new(node_id, span);
+        let node = Neighbor::new(kind.node_id(), span);
         let mut leading_end = inside_begin;
-        if span.start < original_span.start {
-            while leading_end < end && self.comments[leading_end].span.end <= original_span.start {
+        if span.start < kind.span().start {
+            while leading_end < end && self.comments[leading_end].span.end <= kind.span().start {
                 leading_end += 1;
             }
         }
@@ -404,9 +408,6 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
 impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
     #[inline]
     fn visit_statements(&mut self, statements: &ArenaVec<'a, Statement<'a>>) {
-        if self.skipped_depth != 0 {
-            return;
-        }
         let mut remaining = statements.as_slice();
         while !remaining.is_empty() {
             let parent = self.frames.last().unwrap();
@@ -425,66 +426,20 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
         }
     }
 
-    // Union visitors do not enter a node themselves. Once a parent has an empty
-    // comment window, stop here before dispatching into its descendants.
     #[inline]
-    fn visit_expression(&mut self, expression: &Expression<'a>) {
-        if self.skipped_depth == 0 {
-            walk::walk_expression(self, expression);
-        }
-    }
-
-    #[inline]
-    fn visit_binding_pattern(&mut self, pattern: &BindingPattern<'a>) {
-        if self.skipped_depth == 0 {
-            walk::walk_binding_pattern(self, pattern);
-        }
-    }
-
-    #[inline]
-    fn visit_ts_type(&mut self, ty: &TSType<'a>) {
-        if self.skipped_depth == 0 {
-            walk::walk_ts_type(self, ty);
-        }
-    }
-
-    #[inline]
-    fn visit_jsx_child(&mut self, child: &JSXChild<'a>) {
-        if self.skipped_depth == 0 {
-            walk::walk_jsx_child(self, child);
-        }
-    }
-
-    #[inline]
-    fn visit_statement(&mut self, statement: &Statement<'a>) {
-        if self.skipped_depth == 0 {
-            walk::walk_statement(self, statement);
-        }
+    fn skip_children(&mut self, _kind: AstKind<'a>) -> bool {
+        self.skip_children
     }
 
     #[inline]
     fn enter_node(&mut self, kind: AstKind<'a>) {
-        // Keep the sparse-subtree path here so it can inline into the generated
-        // walker without inlining the full ownership algorithm for every node kind.
-        if self.skipped_depth != 0 {
-            self.skipped_depth += 1;
-            return;
-        }
-        // Raw text cannot receive JavaScript comments. In particular, visiting all
-        // template quasis first must not consume substitution comments.
-        if matches!(kind, AstKind::TemplateElement(_) | AstKind::JSXText(_)) {
-            self.skipped_depth = 1;
-            return;
-        }
-        // Extract these in the inlined walker while the node kind is known,
-        // avoiding large AstKind dispatches in the shared ownership algorithm.
-        self.enter(kind, kind.span(), kind.node_id());
+        self.enter(kind);
     }
 
     #[inline]
     fn leave_node(&mut self, _kind: AstKind<'a>) {
-        if self.skipped_depth != 0 {
-            self.skipped_depth -= 1;
+        if self.skip_children {
+            self.skip_children = false;
         } else {
             self.leave();
         }
@@ -570,7 +525,8 @@ fn carries_leading_comment(
     child.span() == target
 }
 
-fn effective_span(kind: AstKind<'_>, mut span: Span) -> Span {
+fn effective_span(kind: AstKind<'_>) -> Span {
+    let mut span = kind.span();
     let decorators = match kind {
         AstKind::Class(node) => Some(&node.decorators),
         AstKind::MethodDefinition(node) => Some(&node.decorators),
