@@ -47,8 +47,16 @@ impl ES2022<'_> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
-    #[inline] // Fast exit when the standalone static block transform is disabled
+    #[inline] // Only class declarations and exports need standalone static block lowering
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !matches!(
+            stmt,
+            Statement::ClassDeclaration(_)
+                | Statement::ExportDeclaration(_)
+                | Statement::ExportDefaultDeclaration(_)
+        ) {
+            return;
+        }
         if let ClassTransform::StaticBlock(class_static_block) = &mut self.class_transform {
             class_static_block.enter_statement(stmt, ctx);
         }
