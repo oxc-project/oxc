@@ -86,14 +86,6 @@ impl<'a> TriviaBuilder<'a> {
         self.no_side_effects_comments = None;
     }
 
-    pub fn mark_pure_comments_applied(&mut self, (start, end): (u32, NonZeroU32)) {
-        for comment in &mut self.comments[start as usize..end.get() as usize] {
-            if comment.content == CommentContent::PureNotApplied {
-                comment.content = CommentContent::Pure;
-            }
-        }
-    }
-
     pub fn mark_no_side_effects_comments_applied(&mut self, (start, end): (u32, NonZeroU32)) {
         for comment in &mut self.comments[start as usize..end.get() as usize] {
             if comment.content == CommentContent::NoSideEffectsNotApplied {

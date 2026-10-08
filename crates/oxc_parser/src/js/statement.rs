@@ -353,13 +353,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn assign_binary_operand_comments(
+    pub(crate) fn assign_sibling_comments(
         &mut self,
-        left: &Expression<'a>,
-        right: &Expression<'a>,
+        left_id: NodeId,
+        left_end: u32,
+        right_id: NodeId,
         prefix_end: u32,
     ) {
-        let left_end = left.span().end;
         let comments = &mut self.lexer.trivia_builder.comments;
         let end = comments.partition_point(|comment| comment.span.end <= prefix_end);
         for comment in comments[..end].iter_mut().rev() {
@@ -370,12 +370,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 continue;
             }
             let (node_id, placement) = if comment.is_trailing() && comment.attached_to == left_end {
-                (left.node_id(), CommentPlacement::Trailing)
+                (left_id, CommentPlacement::Trailing)
             } else {
-                (right.node_id(), CommentPlacement::Leading)
+                (right_id, CommentPlacement::Leading)
             };
             comment.attachment = Some(CommentAttachment { node_id: Cell::new(node_id), placement });
             self.comment_assignment_epoch += 1;
+        }
+    }
+
+    pub(crate) fn mark_pure_comments_applied(
+        &mut self,
+        node_id: NodeId,
+        (begin, end): (u32, NonZeroU32),
+    ) {
+        for comment in &mut self.lexer.trivia_builder.comments[begin as usize..end.get() as usize] {
+            if matches!(comment.content, CommentContent::PureNotApplied | CommentContent::Pure) {
+                comment.content = CommentContent::Pure;
+                comment.attachment = Some(CommentAttachment {
+                    node_id: Cell::new(node_id),
+                    placement: CommentPlacement::Leading,
+                });
+                self.comment_assignment_epoch += 1;
+            }
         }
     }
 
@@ -569,8 +586,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump `if`
         let test = self.parse_paren_expression();
         let consequent = self.parse_statement_list_item(StatementContext::If);
-        let alternate =
-            self.eat(Kind::Else).then(|| self.parse_statement_list_item(StatementContext::If));
+        let alternate = if self.at(Kind::Else) {
+            let has_comments = self.cur_token().has_preceding_comment();
+            self.bump_any();
+            let prefix_end = self.cur_start();
+            let has_comments = has_comments || self.cur_token().has_preceding_comment();
+            let alternate = self.parse_statement_list_item(StatementContext::If);
+            if has_comments {
+                self.assign_sibling_comments(
+                    consequent.node_id(),
+                    consequent.span().end,
+                    alternate.node_id(),
+                    prefix_end,
+                );
+            }
+            Some(alternate)
+        } else {
+            None
+        };
         Statement::new_if_statement(self.end_span(start), test, consequent, alternate, self)
     }
 

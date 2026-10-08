@@ -6,6 +6,7 @@ use oxc_regular_expression::ast::Pattern;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{
+    node::NodeId,
     number::{BigintBase, NumberBase},
     precedence::Precedence,
 };
@@ -796,9 +797,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
         let mut expr = parse(self);
         if let Some(comments) = pure_comments
-            && Self::set_pure_on_call_or_new_expr(&mut expr)
+            && let Some(node_id) = Self::set_pure_on_call_or_new_expr(&mut expr)
         {
-            self.lexer.trivia_builder.mark_pure_comments_applied(comments);
+            self.mark_pure_comments_applied(node_id, comments);
         }
         expr
     }
@@ -1401,7 +1402,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let has_comments = has_comments || self.cur_token().has_preceding_comment();
             let rhs = self.parse_binary_expression_or_higher(left_precedence);
             if has_comments {
-                self.assign_binary_operand_comments(&lhs, &rhs, rhs_start);
+                self.assign_sibling_comments(
+                    lhs.node_id(),
+                    lhs.span().end,
+                    rhs.node_id(),
+                    rhs_start,
+                );
             }
 
             lhs = if kind.is_logical_operator() {
@@ -1464,18 +1470,41 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs: Expression<'a>,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let question_span = self.token.span();
-        if !self.eat(Kind::Question) {
+        if !self.at(Kind::Question) {
             return lhs;
         }
+        let question_span = self.token.span();
+        let has_comments = self.cur_token().has_preceding_comment();
+        self.bump_any();
+        let prefix_end = self.cur_start();
+        let has_comments = has_comments || self.cur_token().has_preceding_comment();
         let consequent = self.context_add(Context::In, |p| {
             p.parse_assignment_expression_or_higher_impl(
                 /* allow_return_type_in_arrow_function */ false,
             )
         });
+        if has_comments {
+            self.assign_sibling_comments(
+                lhs.node_id(),
+                lhs.span().end,
+                consequent.node_id(),
+                prefix_end,
+            );
+        }
+        let has_comments = self.cur_token().has_preceding_comment();
         self.expect_conditional_alternative(question_span);
+        let prefix_end = self.cur_start();
+        let has_comments = has_comments || self.cur_token().has_preceding_comment();
         let alternate =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
+        if has_comments {
+            self.assign_sibling_comments(
+                consequent.node_id(),
+                consequent.span().end,
+                alternate.node_id(),
+                prefix_end,
+            );
+        }
         Expression::new_conditional_expression(
             self.end_span(lhs_start),
             lhs,
@@ -1605,15 +1634,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         expr
     }
 
-    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {
+    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> Option<NodeId> {
         match expr.get_inner_expression_mut() {
             Expression::CallExpression(call_expr) => {
                 call_expr.pure = true;
-                true
+                Some(call_expr.node_id.get())
             }
             Expression::NewExpression(new_expr) => {
                 new_expr.pure = true;
-                true
+                Some(new_expr.node_id.get())
             }
             expr @ match_member_expression!(Expression) => {
                 Self::set_pure_on_call_or_new_expr(expr.to_member_expression_mut().object_mut())
@@ -1621,7 +1650,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Expression::ChainExpression(chain_expr) => match &mut chain_expr.expression {
                 ChainElement::CallExpression(call_expr) => {
                     call_expr.pure = true;
-                    true
+                    Some(call_expr.node_id.get())
                 }
                 element @ match_member_expression!(ChainElement) => {
                     Self::set_pure_on_call_or_new_expr(
@@ -1632,7 +1661,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Self::set_pure_on_call_or_new_expr(&mut non_null_expr.expression)
                 }
             },
-            _ => false,
+            _ => None,
         }
     }
 

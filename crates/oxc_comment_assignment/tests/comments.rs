@@ -902,6 +902,14 @@ fn parser_exit_assignment_matches_the_complete_pass() {
         ),
         ("[first, /* array */ [second], /* default */ third = 1] = source;", SourceType::mjs()),
         ("[first, // array\n [second], // default\n third = 1] = source;", SourceType::mjs()),
+        (
+            "const x = test // question\n ? yes // colon\n : no;\n\
+             if (test) { first(); } // consequent\n /* else */ else second();\n\
+             const pure = /*#__PURE__*/ factory().member;\n\
+             const defaulted = (value = /*#__PURE__*/ factory()) => value;\n\
+             const ordinary = (value = /*#__PURE__*/ factory()) + value;",
+            SourceType::mjs(),
+        ),
         ("f(/* argument */ true, /* conditional */ (ready ? yes : no));", SourceType::mjs()),
         (
             "class A { static [(/* sequence */ class {}, /* assignment */ value = () => 0)]; }",
