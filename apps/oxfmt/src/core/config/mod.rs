@@ -28,11 +28,11 @@ use self::{
     overrides::OxfmtrcOverrides,
 };
 use super::{
-    FormatStrategy,
+    FormatPlan,
     global_ignore::matches_with_ancestors,
     options::{ValidatedOptions, validate},
     oxfmtrc::{FormatConfig, Oxfmtrc},
-    support::FileKind,
+    support::FormatStrategy,
     utils,
 };
 
@@ -192,12 +192,12 @@ impl ConfigLoader {
 
 // ---
 
-/// Outcome of resolving a [`FileKind`] against a [`FormatConfig`],
+/// Outcome of resolving a [`FormatStrategy`] against a [`FormatConfig`],
 /// constructed by [`ConfigResolver::resolve`] / [`resolve_for_api`].
 #[derive(Debug)]
 pub enum ResolveOutcome {
-    /// Ready to format with this strategy.
-    Format(FormatStrategy),
+    /// Ready to format with this plan.
+    Format(FormatPlan),
     /// The file's parser requires a plugin that the resolved config did NOT enable.
     /// The payload carries the missing config key (e.g. `"svelte"`)
     /// so callers can construct a friendly error or log message.
@@ -211,15 +211,16 @@ pub enum ResolveOutcome {
 fn into_outcome(
     config: Arc<FormatConfig>,
     validated: Arc<ValidatedOptions>,
-    kind: FileKind,
+    path: &Path,
+    strategy: FormatStrategy,
 ) -> ResolveOutcome {
     #[cfg(feature = "napi")]
-    if let FileKind::Prettier { language, .. } = &kind
+    if let FormatStrategy::Prettier(language) = &strategy
         && let Some(plugin) = language.missing_plugin(&config)
     {
         return ResolveOutcome::MissingPlugin(plugin);
     }
-    ResolveOutcome::Format(FormatStrategy { kind, config, validated })
+    ResolveOutcome::Format(FormatPlan { path: Arc::from(path), strategy, config, validated })
 }
 
 /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
@@ -234,7 +235,8 @@ fn into_outcome(
 #[cfg(feature = "napi")]
 pub fn resolve_for_api(
     raw_config: Value,
-    kind: FileKind,
+    path: &Path,
+    strategy: FormatStrategy,
     cwd: &Path,
 ) -> Result<ResolveOutcome, String> {
     let mut format_config: FormatConfig =
@@ -242,9 +244,9 @@ pub fn resolve_for_api(
     format_config.resolve_tailwind_paths(cwd);
     // Validate eagerly, as the single gate for every option (core + js/sortImports):
     // downstream mapping consumes the derived artifacts and cannot re-fail,
-    // and `Prettier` kinds have no later chance before values reach Prettier.
+    // and the `Prettier` strategy has no later chance before values reach Prettier.
     let validated = validate(&format_config)?;
-    Ok(into_outcome(Arc::new(format_config), Arc::new(validated), kind))
+    Ok(into_outcome(Arc::new(format_config), Arc::new(validated), path, strategy))
 }
 
 // ---
@@ -391,10 +393,10 @@ impl ConfigResolver {
     /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
     ///
     /// Returns `Err` only when the merged config (after override application) fails validation.
-    #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %kind.path().display()))]
-    pub fn resolve(&self, kind: FileKind) -> Result<ResolveOutcome, String> {
-        let (format_config, validated) = self.resolve_options(kind.path())?;
-        Ok(into_outcome(format_config, validated, kind))
+    #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %path.display()))]
+    pub fn resolve(&self, path: &Path, strategy: FormatStrategy) -> Result<ResolveOutcome, String> {
+        let (format_config, validated) = self.resolve_options(path)?;
+        Ok(into_outcome(format_config, validated, path, strategy))
     }
 
     /// Resolve `FormatConfig` for a specific file path.
@@ -406,8 +408,8 @@ impl ConfigResolver {
     ///
     /// Fast path: reuses the snapshot + gate artifacts cached by [`Self::build_and_validate`].
     /// Slow path: always validates the merged config here
-    ///   the single gate for every kind (the format step's option mapping is infallible;
-    ///   for `Prettier` kinds this is also the only safety net before values reach Prettier).
+    ///   the single gate for every strategy (the format step's option mapping is infallible;
+    ///   for the `Prettier` strategy this is also the only safety net before values reach Prettier).
     ///
     /// # Errors
     /// Returns `Err` when overrides introduce invalid values, including:
@@ -492,8 +494,6 @@ fn build_ignore_glob(
 
 #[cfg(test)]
 mod tests_slow_path_validation {
-    use std::{path::PathBuf, sync::Arc};
-
     use crate::core::support::NativeLanguage;
     #[cfg(feature = "napi")]
     use crate::core::support::PrettierLanguage;
@@ -520,11 +520,9 @@ mod tests_slow_path_validation {
         }));
 
         // Slow path triggers because the override matches.
-        let kind = FileKind::Prettier {
-            path: Arc::from(PathBuf::from("index.html").as_path()),
-            language: PrettierLanguage::Html,
-        };
-        let err = resolver.resolve(kind).unwrap_err();
+        let path = Path::new("index.html");
+        let err =
+            resolver.resolve(path, FormatStrategy::Prettier(PrettierLanguage::Html)).unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
     }
 
@@ -537,11 +535,9 @@ mod tests_slow_path_validation {
             ]
         }));
 
-        let kind = FileKind::Native {
-            path: Arc::from(PathBuf::from("src/test.ts").as_path()),
-            language: NativeLanguage::Js(oxc_span::SourceType::ts()),
-        };
-        let err = resolver.resolve(kind).unwrap_err();
+        let path = Path::new("src/test.ts");
+        let strategy = FormatStrategy::Native(NativeLanguage::Js(oxc_span::SourceType::ts()));
+        let err = resolver.resolve(path, strategy).unwrap_err();
         assert!(err.contains("tabWidth"), "expected tabWidth validation error, got: {err}");
     }
 
@@ -550,25 +546,25 @@ mod tests_slow_path_validation {
     #[test]
     fn fast_path_resolve_succeeds() {
         let resolver = resolver_from_json(serde_json::json!({ "printWidth": 80 }));
-        let kind = FileKind::Native {
-            path: Arc::from(PathBuf::from("Cargo.toml").as_path()),
-            language: NativeLanguage::Toml,
-        };
-        assert!(resolver.resolve(kind).is_ok());
+        let path = Path::new("Cargo.toml");
+        assert!(resolver.resolve(path, FormatStrategy::Native(NativeLanguage::Toml)).is_ok());
     }
 
-    /// `resolve_for_api` must validate even for `Prettier` kinds.
+    /// `resolve_for_api` must validate even for the `Prettier` strategy.
     /// Without the eager `validate()` call,
     /// `printWidth: 1000` would silently flow through to Prettier via the NAPI `format()` API.
     #[test]
     #[cfg(feature = "napi")]
     fn resolve_for_api_rejects_invalid_value_for_prettier() {
-        let kind = FileKind::Prettier {
-            path: Arc::from(PathBuf::from("page.vue").as_path()),
-            language: PrettierLanguage::Vue,
-        };
-        let err = resolve_for_api(serde_json::json!({ "printWidth": 1000 }), kind, Path::new("."))
-            .unwrap_err();
+        let path = Path::new("page.vue");
+        let strategy = FormatStrategy::Prettier(PrettierLanguage::Vue);
+        let err = resolve_for_api(
+            serde_json::json!({ "printWidth": 1000 }),
+            path,
+            strategy,
+            Path::new("."),
+        )
+        .unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
     }
 }

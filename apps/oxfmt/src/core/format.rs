@@ -22,25 +22,20 @@ use super::{
         to_oxc_formatter_yaml, to_sort_package_json,
     },
     oxfmtrc::FormatConfig,
-    support::{FileKind, NativeLanguage},
+    support::{FormatStrategy, NativeLanguage},
 };
 
-/// A classified file with its resolved config.
+/// A file's path and [`FormatStrategy`] with its resolved config, ready to format once given the source text.
 ///
 /// Built by [`super::ConfigResolver::resolve`] or `resolve_for_api`,
 /// where every fallible conversion already ran (`options::validate`).
 /// So the per-formatter options are mapped from `config` + `validated` at the format step.
 #[derive(Debug)]
-pub struct FormatStrategy {
-    pub(crate) kind: FileKind,
+pub struct FormatPlan {
+    pub(crate) path: Arc<Path>,
+    pub(crate) strategy: FormatStrategy,
     pub(crate) config: Arc<FormatConfig>,
     pub(crate) validated: Arc<ValidatedOptions>,
-}
-
-impl FormatStrategy {
-    pub fn path(&self) -> &Arc<Path> {
-        self.kind.path()
-    }
 }
 
 // ---
@@ -65,9 +60,9 @@ impl SourceFormatter {
         }
     }
 
-    /// Format a file based on its resolved strategy.
-    #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %strategy.path().display(), kind = %strategy.kind.trace_label()))]
-    pub fn format(&self, source_text: &str, strategy: FormatStrategy) -> FormatResult {
+    /// Format a file following its plan.
+    #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %plan.path.display(), strategy = %plan.strategy.trace_label()))]
+    pub fn format(&self, source_text: &str, plan: FormatPlan) -> FormatResult {
         // > Editors must not insert newlines in empty files when saving those files,
         // > even if insert_final_newline = true.
         // https://spec.editorconfig.org/#supported-pairs
@@ -78,12 +73,12 @@ impl SourceFormatter {
             };
         }
 
-        let FormatStrategy { kind, config, validated } = strategy;
+        let FormatPlan { path, strategy, config, validated } = plan;
         let core = validated.core;
         // Roots with a session take options from their dispatch config,
         // others map them directly without building one.
-        let result = match kind {
-            FileKind::Native { path, language: NativeLanguage::Js(source_type) } => {
+        let result = match strategy {
+            FormatStrategy::Native(NativeLanguage::Js(source_type)) => {
                 let allocator = self.allocator_pool.get();
                 let dispatch_config =
                     ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
@@ -101,10 +96,10 @@ impl SourceFormatter {
                 }
                 result
             }
-            FileKind::Native { path, language: NativeLanguage::Json(variant) } => {
+            FormatStrategy::Native(NativeLanguage::Json(variant)) => {
                 self.format_json(source_text, &path, to_oxc_formatter_json(&config, core, variant))
             }
-            FileKind::PackageJson { path } => {
+            FormatStrategy::PackageJson => {
                 // `sort_package_json` only accepts strictly valid JSON,
                 // but the `json-stringify` parser also accepts unquoted keys, trailing commas, etc.
                 // So format without sorting rather than bailing out.
@@ -117,13 +112,13 @@ impl SourceFormatter {
                     to_oxc_formatter_json(&config, core, JsonVariant::JsonStringify),
                 )
             }
-            FileKind::Native { path, language: NativeLanguage::Graphql } => {
+            FormatStrategy::Native(NativeLanguage::Graphql) => {
                 let options = to_oxc_formatter_graphql(&config, core);
                 let allocator = self.allocator_pool.get();
                 oxc_formatter_graphql::format(&allocator, source_text, options)
                     .and_then(|formatted| print(formatted, &path))
             }
-            FileKind::Native { path, language: NativeLanguage::Css(variant) } => {
+            FormatStrategy::Native(NativeLanguage::Css(variant)) => {
                 let allocator = self.allocator_pool.get();
                 let dispatch_config =
                     ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
@@ -132,11 +127,11 @@ impl SourceFormatter {
                 oxc_formatter_css::format_with_session(&session, source_text, options)
                     .and_then(|formatted| print(formatted, &path))
             }
-            FileKind::Native { path, language: NativeLanguage::Yaml } => {
+            FormatStrategy::Native(NativeLanguage::Yaml) => {
                 self.format_yaml(source_text, &path, to_oxc_formatter_yaml(&config, core))
             }
             // Mirroring Prettier's yaml embed: JSON if the whole text parses as JSON, YAML otherwise
-            FileKind::YamlRc { path } => self
+            FormatStrategy::YamlRc => self
                 .format_json(
                     source_text,
                     &path,
@@ -145,7 +140,7 @@ impl SourceFormatter {
                 .or_else(|_| {
                     self.format_yaml(source_text, &path, to_oxc_formatter_yaml(&config, core))
                 }),
-            FileKind::Native { path, language: NativeLanguage::Markdown } => {
+            FormatStrategy::Native(NativeLanguage::Markdown) => {
                 let allocator = self.allocator_pool.get();
                 let dispatch_config =
                     ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
@@ -154,11 +149,11 @@ impl SourceFormatter {
                 oxc_formatter_markdown::format_with_session(&session, source_text, options)
                     .and_then(|formatted| print(formatted, &path))
             }
-            FileKind::Native { language: NativeLanguage::Toml, .. } => {
+            FormatStrategy::Native(NativeLanguage::Toml) => {
                 oxc_formatter_toml::format(source_text, to_oxc_formatter_toml(&config, core))
             }
             #[cfg(feature = "napi")]
-            FileKind::Prettier { path, language } => {
+            FormatStrategy::Prettier(language) => {
                 self.format_by_prettier(source_text, &path, language, &config)
             }
         };

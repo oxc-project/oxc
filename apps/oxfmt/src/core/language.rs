@@ -110,7 +110,7 @@ impl Language {
     }
 
     /// LSP only: the extension of the fake path for an in-memory document,
-    /// which `classify_file_kind` and `overrides` see as a real file.
+    /// which `classify_file` and `overrides` see as a real file.
     #[cfg(feature = "napi")]
     pub fn to_lsp_extension(self) -> &'static str {
         match self {

@@ -18,7 +18,7 @@ use super::{
 };
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{ConfigScopes, FormatStrategy, SourceFormatter, resolve_ignore_paths, utils};
+use crate::core::{ConfigScopes, FormatPlan, SourceFormatter, resolve_ignore_paths, utils};
 
 pub struct WalkRunner {
     options: FormatCommand,
@@ -122,7 +122,7 @@ impl WalkRunner {
         };
 
         // Shared channel for format entries from all scopes
-        let (tx_entry, rx_entry) = mpsc::channel::<FormatStrategy>();
+        let (tx_entry, rx_entry) = mpsc::channel::<FormatPlan>();
         // Collect format results (changed paths or unchanged count)
         let (tx_success, rx_success) = mpsc::channel();
         // Diagnostic from formatting service

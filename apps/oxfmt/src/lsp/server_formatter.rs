@@ -17,8 +17,8 @@ use oxc_language_server::{
 
 use crate::core::{
     ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
-    SourceFormatter, build_global_ignore_matchers, classify_file_kind, config_discovery,
-    is_ignored, resolve_ignore_paths, utils,
+    SourceFormatter, build_global_ignore_matchers, classify_file, config_discovery, is_ignored,
+    resolve_ignore_paths, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -363,12 +363,12 @@ impl ServerFormatter {
             return None;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(path)) else {
+        let Some(strategy) = classify_file(path) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
-        let strategy = match resolver.resolve(kind) {
-            Ok(ResolveOutcome::Format(strategy)) => strategy,
+        let plan = match resolver.resolve(path, strategy) {
+            Ok(ResolveOutcome::Format(plan)) => plan,
             Ok(ResolveOutcome::MissingPlugin(plugin)) => {
                 warn!(
                     "Skipping `.{plugin}`: `{plugin}` plugin is not enabled in resolved config: {}",
@@ -381,9 +381,9 @@ impl ServerFormatter {
                 return None;
             }
         };
-        debug!("strategy = {strategy:?}");
+        debug!("plan = {plan:?}");
 
-        Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, strategy)))
+        Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, plan)))
     }
 
     fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
