@@ -109,6 +109,14 @@ export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type SnapshotHintMode = "always" | "multi";
 export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+export type NoTypesContext =
+  | "any"
+  | "ArrowFunctionExpression"
+  | "FunctionDeclaration"
+  | "FunctionExpression"
+  | "TSDeclareFunction"
+  | "TSMethodSignature"
+  | "ClassDeclaration";
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
@@ -1028,6 +1036,7 @@ export interface DummyRuleMap {
   "jsdoc/implements-on-classes"?: RuleNoConfig;
   "jsdoc/no-blank-blocks"?: RuleNoConfig | [AllowWarnDeny, NoBlankBlocks];
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
+  "jsdoc/no-types"?: RuleNoConfig | [AllowWarnDeny, NoTypesConfig];
   "jsdoc/require-param"?: RuleNoConfig | [AllowWarnDeny, RequireParamConfig];
   "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
   "jsdoc/require-param-name"?: RuleNoConfig;
@@ -1871,6 +1880,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, EmptyTagsConfig]
     | [AllowWarnDeny, NoBlankBlocks]
     | [AllowWarnDeny, NoDefaultsConfig]
+    | [AllowWarnDeny, NoTypesConfig]
     | [AllowWarnDeny, RequireParamConfig]
     | [AllowWarnDeny, RequireParamDescriptionConfig]
     | [AllowWarnDeny, RequireParamTypeConfig]
@@ -2946,6 +2956,16 @@ export interface NoDefaultsConfig {
    * If true, report the presence of optional param names (square brackets) on `@param` tags.
    */
   noOptionalParamNames?: boolean;
+}
+export interface NoTypesConfig {
+  /**
+   * Select the node kinds whose JSDoc should be checked. By default, all of the
+   * listed node kinds are checked. `any` also checks virtual functions marked
+   * with `@callback`, `@function`, `@func`, or `@method`, including unattached
+   * comments. In `any` mode, other comments are checked only when attached to
+   * JavaScript functions or variables initialized with functions.
+   */
+  contexts?: NoTypesContext[];
 }
 export interface RequireParamConfig {
   /**

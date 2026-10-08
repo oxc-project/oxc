@@ -193,6 +193,8 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
 
         | AstKind::Decorator(_)
 
+        | AstKind::TSMethodSignature(_)
+
         | AstKind::ExportAllDeclaration(_)
         | AstKind::ExportDeclaration(_)
         | AstKind::ExportDefaultDeclaration(_)
