@@ -173,19 +173,12 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
     }
 
     #[inline(never)]
-    fn enter(&mut self, kind: AstKind<'a>) {
-        // Raw text cannot receive JavaScript comments. In particular, visiting all
-        // template quasis first must not consume substitution comments.
-        if matches!(kind, AstKind::TemplateElement(_) | AstKind::JSXText(_)) {
-            self.skipped_depth = 1;
-            return;
-        }
-
-        let mut span = effective_span(kind);
+    fn enter(&mut self, kind: AstKind<'a>, original_span: Span, node_id: NodeId) {
+        let mut span = effective_span(kind, original_span);
         let mut substitution = false;
         let mut leading_count = 0;
         let (begin, inside_begin, end) = if let Some(parent) = self.frames.last_mut() {
-            if let Some(window) = substitution_span(parent.kind, kind.span()) {
+            if let Some(window) = substitution_span(parent.kind, original_span) {
                 span = window;
                 substitution = true;
             }
@@ -204,7 +197,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
                             parent.node.span().contains_inclusive(neighbor.span())
                         });
                         if pending.previous.is_none_or(|previous| previous.end < span.end) {
-                            pending.previous = Some(Neighbor::new(kind.node_id(), span));
+                            pending.previous = Some(Neighbor::new(node_id, span));
                         }
                     }
                 }
@@ -213,7 +206,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
                 return;
             }
             let comments = &self.comments[parent.window.clone()];
-            let child = Neighbor::new(kind.node_id(), span);
+            let child = Neighbor::new(node_id, span);
             let mut gap_begin;
             let inside_begin = if span.start >= parent.high_water_start {
                 // Increasing child starts are the common case. Each parent cursor
@@ -307,10 +300,10 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             self.skipped_depth = 1;
             return;
         }
-        let node = Neighbor::new(kind.node_id(), span);
+        let node = Neighbor::new(node_id, span);
         let mut leading_end = inside_begin;
-        if span.start < kind.span().start {
-            while leading_end < end && self.comments[leading_end].span.end <= kind.span().start {
+        if span.start < original_span.start {
+            while leading_end < end && self.comments[leading_end].span.end <= original_span.start {
                 leading_end += 1;
             }
         }
@@ -477,7 +470,15 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
             self.skipped_depth += 1;
             return;
         }
-        self.enter(kind);
+        // Raw text cannot receive JavaScript comments. In particular, visiting all
+        // template quasis first must not consume substitution comments.
+        if matches!(kind, AstKind::TemplateElement(_) | AstKind::JSXText(_)) {
+            self.skipped_depth = 1;
+            return;
+        }
+        // Extract these in the inlined walker while the node kind is known,
+        // avoiding large AstKind dispatches in the shared ownership algorithm.
+        self.enter(kind, kind.span(), kind.node_id());
     }
 
     #[inline]
@@ -569,8 +570,7 @@ fn carries_leading_comment(
     child.span() == target
 }
 
-fn effective_span(kind: AstKind<'_>) -> Span {
-    let mut span = kind.span();
+fn effective_span(kind: AstKind<'_>, mut span: Span) -> Span {
     let decorators = match kind {
         AstKind::Class(node) => Some(&node.decorators),
         AstKind::MethodDefinition(node) => Some(&node.decorators),
