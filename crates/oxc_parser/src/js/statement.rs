@@ -159,22 +159,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     #[inline(never)]
     fn parse_statement_with_comments(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
-        let Some(comments) = self.leading_node_comments() else {
-            return self.parse_statement_core(stmt_ctx);
-        };
+        let comments = self.leading_node_comments();
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         let previous_start = self.statement_comment_start;
-        self.statement_comment_start = self.cur_start();
-        let stmt = self.parse_statement_core(stmt_ctx);
+        if comments.is_some() {
+            self.statement_comment_start = self.cur_start();
+        }
+        let mut stmt = self.parse_statement_core(stmt_ctx);
         self.statement_comment_start = previous_start;
-        self.assign_statement_comments(&stmt, comments);
+        if let Some(comments) = no_side_effects_comments
+            && Self::set_pure_on_function_stmt(&mut stmt)
+        {
+            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        }
+        if let Some(comments) = comments {
+            self.assign_statement_comments(&stmt, comments);
+        }
         stmt
     }
 
     fn parse_statement_core(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
-        let no_side_effects_comments =
-            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
-
-        let mut stmt = match self.cur_kind() {
+        let stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
             Kind::Semicolon => self.parse_empty_statement(),
             Kind::If => self.parse_if_statement(),
@@ -235,12 +241,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => self.parse_expression_or_labeled_statement(),
         };
-
-        if let Some(comments) = no_side_effects_comments
-            && Self::set_pure_on_function_stmt(&mut stmt)
-        {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
-        }
 
         if self.cur_token().has_preceding_comment()
             && !matches!(&stmt, Statement::ExpressionStatement(node) if matches!(node.expression, Expression::StringLiteral(_)))
