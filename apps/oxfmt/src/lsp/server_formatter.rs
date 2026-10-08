@@ -5,7 +5,7 @@ use std::{
 
 use ignore::gitignore::Gitignore;
 use tower_lsp_server::gen_lsp_types::{
-    DocumentFormattingProvider, Pattern, Range, ServerCapabilities, TextEdit, Uri,
+    DocumentFormattingProvider, MessageType, Pattern, Range, ServerCapabilities, TextEdit, Uri,
 };
 use tracing::{debug, error, warn};
 
@@ -77,16 +77,15 @@ impl ServerFormatterBuilder {
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_services(Some(self.external_services.clone()));
 
-        (
-            ServerFormatter::new(
-                root_path.to_path_buf(),
-                source_formatter,
-                JsConfigLoaderCb::clone(&self.js_config_loader),
-                explicit_config_path,
-                use_nested_config,
-            ),
-            Vec::new(),
-        )
+        let (formatter, client_message) = ServerFormatter::new(
+            root_path.to_path_buf(),
+            source_formatter,
+            JsConfigLoaderCb::clone(&self.js_config_loader),
+            explicit_config_path,
+            use_nested_config,
+        );
+
+        (formatter, client_message.into_iter().collect())
     }
 }
 
@@ -200,7 +199,7 @@ impl Tool for ServerFormatter {
         // and only the root resolver, `.editorconfig` and `.prettierignore` do eager file IO.
         // The trade-off is over-eviction, a config change in one nested dir also drops cached probes elsewhere.
         // But format requests are sporadic enough that lazy re-population costs nothing observable.
-        let new_state = Self::build_state(
+        let (new_state, client_message) = Self::build_state(
             &self.root_path,
             self.explicit_config_path.as_deref(),
             self.use_nested_config,
@@ -208,7 +207,11 @@ impl Tool for ServerFormatter {
         );
         *self.state.write().expect("state rwlock poisoned") = Arc::new(new_state);
 
-        ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() }
+        ToolRestartChanges {
+            tool: None,
+            watch_patterns: None,
+            client_messages: client_message.into_iter().collect(),
+        }
     }
 
     fn run_format(&self, document: TextDocument) -> Result<Vec<TextEdit>, String> {
@@ -277,21 +280,24 @@ impl ServerFormatter {
         js_config_loader: JsConfigLoaderCb,
         explicit_config_path: Option<PathBuf>,
         use_nested_config: bool,
-    ) -> Self {
-        let state = Self::build_state(
+    ) -> (Self, Vec<ClientMessage>) {
+        let (state, client_message) = Self::build_state(
             &root_path,
             explicit_config_path.as_deref(),
             use_nested_config,
             &js_config_loader,
         );
-        Self {
-            root_path,
-            source_formatter,
-            js_config_loader,
-            explicit_config_path,
-            use_nested_config,
-            state: RwLock::new(Arc::new(state)),
-        }
+        (
+            Self {
+                root_path,
+                source_formatter,
+                js_config_loader,
+                explicit_config_path,
+                use_nested_config,
+                state: RwLock::new(Arc::new(state)),
+            },
+            client_message,
+        )
     }
 
     /// Build a fresh [`FormatterState`] from scratch.
@@ -308,29 +314,45 @@ impl ServerFormatter {
         explicit_config_path: Option<&Path>,
         use_nested_config: bool,
         js_config_loader: &JsConfigLoaderCb,
-    ) -> FormatterState {
-        let scopes = ConfigScopes::load(
+    ) -> (FormatterState, Vec<ClientMessage>) {
+        let mut client_message = vec![];
+        let scopes = match ConfigScopes::load(
             root_path,
             explicit_config_path,
             use_nested_config,
             Some(js_config_loader),
-        )
-        .unwrap_or_else(|err| {
-            warn!("{err}\nFalling back to default config for {}", root_path.display());
-            ConfigScopes::with_default_root(root_path, use_nested_config, Some(js_config_loader))
-        });
+        ) {
+            Ok(scopes) => scopes,
+            Err(err) => {
+                client_message.push(ClientMessage {
+                    message: format!("{}: {err}", root_path.display()),
+                    r#type: MessageType::Error,
+                });
+                ConfigScopes::with_default_root(
+                    root_path,
+                    use_nested_config,
+                    Some(js_config_loader),
+                )
+            }
+        };
 
         // NOTE: `.gitignore` is intentionally NOT included here.
         // An LSP document is explicitly formatted by the user.
         // (CLI also formats explicitly specified git ignored files.)
-        let ignore_matchers = resolve_ignore_paths(root_path, &[])
+        let ignore_matchers = match resolve_ignore_paths(root_path, &[])
             .and_then(|paths| build_global_ignore_matchers(root_path, &[], &paths))
-            .unwrap_or_else(|err| {
-                warn!("Failed to load .prettierignore: {err}, proceeding without ignore globs");
+        {
+            Ok(matchers) => matchers,
+            Err(err) => {
+                client_message.push(ClientMessage {
+                    message: format!("Failed to load .prettierignore: {err}"),
+                    r#type: MessageType::Error,
+                });
                 vec![]
-            });
+            }
+        };
 
-        FormatterState { scopes, ignore_matchers }
+        (FormatterState { scopes, ignore_matchers }, client_message)
     }
 
     /// Snapshot the current state.

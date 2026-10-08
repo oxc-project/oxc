@@ -14,6 +14,7 @@ import {
   InitializedNotification,
   InitializeRequest,
   RegistrationRequest,
+  ShowMessageNotification,
   ShutdownRequest,
   StreamMessageReader,
   StreamMessageWriter,
@@ -95,6 +96,15 @@ export function createLspConnection(env: Record<string, string> = {}) {
       return await new Promise((resolve) => {
         const disposer = connection.onRequest(RegistrationRequest.type, (params) => {
           resolve(params.registrations);
+          disposer.dispose();
+        });
+      });
+    },
+
+    getShowMessage(): Promise<{ type: number; message: string }> {
+      return new Promise((resolve) => {
+        const disposer = connection.onNotification(ShowMessageNotification.type, (params) => {
+          resolve(params);
           disposer.dispose();
         });
       });
@@ -318,6 +328,19 @@ function uriSnapshotHeader(fileUri: string, fixtureDir: string): string {
   return `
   --- URI -----------
 ${safeUri}`;
+}
+
+export function snapshotShowMessages(messages: { type: number; message: string }[]): string {
+  if (messages.length === 0) {
+    return "--- Show Messages ---------\n(none)";
+  }
+
+  return [
+    "--- Show Messages ---------",
+    ...messages.map(
+      ({ type, message }, index) => `[${index}] type=${type}\n${sanitizeMessage(message)}`,
+    ),
+  ].join("\n");
 }
 
 function sanitizeMessage(message: string): string {
