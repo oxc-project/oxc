@@ -43,6 +43,7 @@ impl ES2022<'_> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
+    #[inline] // Fast exit when the standalone static block transform is disabled
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.enter_statement(stmt, ctx);
@@ -65,7 +66,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
         }
     }
 
+    #[inline] // Both transforms only act on class expressions
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !matches!(expr, Expression::ClassExpression(_)) {
+            return;
+        }
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_expression(expr, ctx);
         } else if let Some(class_static_block) = &mut self.class_static_block {
