@@ -12,23 +12,25 @@ use oxc_syntax::node::NodeId;
 /// checkpoint can still survive in the returned AST.
 pub struct ParserAstBuilder<'a> {
     allocator: &'a Allocator,
-    next_node_id: Cell<u32>,
+    // NonMaxU32 stores the complement of its index. Keep the counter in that
+    // form so constructing each NodeId can reuse its bits.
+    next_node_id_complement: Cell<u32>,
 }
 
 impl<'a> ParserAstBuilder<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator, next_node_id: Cell::new(1) }
+        Self { allocator, next_node_id_complement: Cell::new(!1) }
     }
 }
 
 impl<'a> AstBuild<'a> for ParserAstBuilder<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
-        let index = self.next_node_id.get();
-        // Check the reserved maximum before incrementing, so the u32 counter
+        let complement = self.next_node_id_complement.get();
+        // Check the reserved maximum before decrementing, so the counter
         // cannot wrap and reuse an ID.
-        let node_id = NodeId::new(index as usize);
-        self.next_node_id.set(index + 1);
+        let node_id = NodeId::new((!complement) as usize);
+        self.next_node_id_complement.set(complement - 1);
         node_id
     }
 }
@@ -58,7 +60,7 @@ mod tests {
     fn node_ids_reject_the_reserved_maximum() {
         let allocator = Allocator::default();
         let builder = ParserAstBuilder::new(&allocator);
-        builder.next_node_id.set(u32::MAX - 1);
+        builder.next_node_id_complement.set(1);
         assert_eq!(builder.node_id().index(), NodeId::MAX_INDEX);
         builder.node_id();
     }
