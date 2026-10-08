@@ -5,13 +5,13 @@ use std::{
 
 use ignore::gitignore::Gitignore;
 use tower_lsp_server::gen_lsp_types::{
-    DocumentFormattingProvider, Pattern, Range, ServerCapabilities, TextEdit, Uri,
+    DocumentFormattingProvider, MessageType, Pattern, Range, ServerCapabilities, TextEdit, Uri,
 };
 use tracing::{debug, error, warn};
 
 use oxc_language_server::{
-    Capabilities, ClientMessage, LanguageId, TextDocument, Tool, ToolBuildResult, ToolBuilder,
-    ToolRestartChanges, offset_to_position, uri_utils::uri_to_file_path,
+    BuildContext, Capabilities, ClientMessage, LanguageId, TextDocument, Tool, ToolBuildResult,
+    ToolBuilder, ToolRestartChanges, offset_to_position, uri_utils::uri_to_file_path,
     utils::normalize_user_config_path_to_watch_pattern,
 };
 
@@ -55,6 +55,23 @@ impl ServerFormatterBuilder {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> (ServerFormatter, Vec<ClientMessage>) {
+        self.build_with_parent_root(root_uri, options, None)
+    }
+
+    /// Same as [`Self::build`], honouring the `.prettierignore` files between `parent_root` and
+    /// the root.
+    ///
+    /// `parent_root` is the workspace folder of a `workingDirectories` sub worker: the sub worker
+    /// still honours the ignore files of the workspace folder above it.
+    ///
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
+    pub fn build_with_parent_root(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        parent_root: Option<&Path>,
+    ) -> (ServerFormatter, Vec<ClientMessage>) {
         let options = deserialize_lsp_options(options);
 
         let root_path = uri_to_file_path(root_uri).unwrap();
@@ -77,15 +94,34 @@ impl ServerFormatterBuilder {
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_services(Some(self.external_services.clone()));
 
+        let mut client_messages = Vec::new();
+        if let Some(parent_root) = parent_root
+            && is_ignored(
+                &ServerFormatter::load_ignore_matchers(parent_root),
+                &root_path,
+                true,
+                true,
+            )
+        {
+            client_messages.push(ClientMessage {
+                r#type: MessageType::Warning,
+                message: format!(
+                    "`workingDirectories` entry `{}` is ignored by the `.prettierignore` of its workspace folder, its files are not formatted",
+                    root_path.strip_prefix(parent_root).unwrap_or(&root_path).display()
+                ),
+            });
+        }
+
         (
             ServerFormatter::new(
                 root_path.to_path_buf(),
                 source_formatter,
                 JsConfigLoaderCb::clone(&self.js_config_loader),
+                parent_root.map(Path::to_path_buf),
                 explicit_config_path,
                 use_nested_config,
             ),
-            Vec::new(),
+            client_messages,
         )
     }
 }
@@ -103,6 +139,28 @@ impl ToolBuilder for ServerFormatterBuilder {
         let (tool, client_messages) = self.build(root_uri, options);
         ToolBuildResult { tool: Box::new(tool), client_messages }
     }
+
+    fn build_with_context(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        context: BuildContext<'_>,
+    ) -> ToolBuildResult {
+        // `context.excluded_roots` is deliberately ignored: the formatter resolves its
+        // configuration lazily, by walking upwards from the file being formatted, so it never
+        // eagerly loads anything from a `workingDirectories` sub root.
+        let parent_root = context
+            .parent_root
+            .and_then(|uri| uri_to_file_path(uri).map(std::borrow::Cow::into_owned));
+        let (tool, client_messages) =
+            self.build_with_parent_root(root_uri, options, parent_root.as_deref());
+        ToolBuildResult { tool: Box::new(tool), client_messages }
+    }
+
+    /// Off in Vite+ mode, like nested configs: Vite+ owns the configuration.
+    fn use_working_directories(&self) -> bool {
+        config_discovery().nested_configs()
+    }
 }
 
 // ---
@@ -111,6 +169,9 @@ pub struct ServerFormatter {
     root_path: PathBuf,
     source_formatter: SourceFormatter,
     js_config_loader: JsConfigLoaderCb,
+    /// The workspace folder of a `workingDirectories` sub worker, whose `.prettierignore` files
+    /// between it and `root_path` are still honoured.
+    parent_root: Option<PathBuf>,
     /// Explicit `fmt.configPath` from LSP settings.
     /// When set, all files use this single config.
     explicit_config_path: Option<PathBuf>,
@@ -129,7 +190,7 @@ pub struct ServerFormatter {
 /// Per-rebuild snapshot of everything read from workspace files.
 struct FormatterState {
     scopes: ConfigScopes,
-    /// `.prettierignore` matchers (workspace-level, shared across all scopes).
+    /// `.prettierignore` matchers (workspace-level, shared across all scopes), deepest file first.
     ignore_matchers: Vec<Gitignore>,
 }
 
@@ -146,7 +207,7 @@ impl Tool for ServerFormatter {
         let old_option = deserialize_lsp_options(old_options_json.clone());
         let new_option = deserialize_lsp_options(new_options_json.clone());
 
-        if old_option == new_option {
+        if !old_option.needs_restart(&new_option) {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: None,
@@ -202,6 +263,7 @@ impl Tool for ServerFormatter {
         // But format requests are sporadic enough that lazy re-population costs nothing observable.
         let new_state = Self::build_state(
             &self.root_path,
+            self.parent_root.as_deref(),
             self.explicit_config_path.as_deref(),
             self.use_nested_config,
             &self.js_config_loader,
@@ -275,11 +337,13 @@ impl ServerFormatter {
         root_path: PathBuf,
         source_formatter: SourceFormatter,
         js_config_loader: JsConfigLoaderCb,
+        parent_root: Option<PathBuf>,
         explicit_config_path: Option<PathBuf>,
         use_nested_config: bool,
     ) -> Self {
         let state = Self::build_state(
             &root_path,
+            parent_root.as_deref(),
             explicit_config_path.as_deref(),
             use_nested_config,
             &js_config_loader,
@@ -288,6 +352,7 @@ impl ServerFormatter {
             root_path,
             source_formatter,
             js_config_loader,
+            parent_root,
             explicit_config_path,
             use_nested_config,
             state: RwLock::new(Arc::new(state)),
@@ -305,6 +370,7 @@ impl ServerFormatter {
     /// Likewise, a broken `.prettierignore` is skipped with a warning.
     fn build_state(
         root_path: &Path,
+        parent_root: Option<&Path>,
         explicit_config_path: Option<&Path>,
         use_nested_config: bool,
         js_config_loader: &JsConfigLoaderCb,
@@ -323,14 +389,26 @@ impl ServerFormatter {
         // NOTE: `.gitignore` is intentionally NOT included here.
         // An LSP document is explicitly formatted by the user.
         // (CLI also formats explicitly specified git ignored files.)
-        let ignore_matchers = resolve_ignore_paths(root_path, &[])
-            .and_then(|paths| build_global_ignore_matchers(root_path, &[], &paths))
+        let mut ignore_matchers = Self::load_ignore_matchers(root_path);
+
+        // A `workingDirectories` sub worker is rooted inside its workspace folder: a file is
+        // ignored when the formatter ignores it with that folder opened on its own, or with the
+        // working directory opened on its own.
+        if let Some(parent_root) = parent_root {
+            ignore_matchers.extend(Self::load_ignore_matchers(parent_root));
+        }
+
+        FormatterState { scopes, ignore_matchers }
+    }
+
+    /// The `.prettierignore` matchers of `directory`.
+    fn load_ignore_matchers(directory: &Path) -> Vec<Gitignore> {
+        resolve_ignore_paths(directory, &[])
+            .and_then(|paths| build_global_ignore_matchers(directory, &[], &paths))
             .unwrap_or_else(|err| {
                 warn!("Failed to load .prettierignore: {err}, proceeding without ignore globs");
                 vec![]
-            });
-
-        FormatterState { scopes, ignore_matchers }
+            })
     }
 
     /// Snapshot the current state.
@@ -488,6 +566,211 @@ fn compute_minimal_text_edit<'a>(
 
 // ---
 
+/// `workingDirectories` turns a directory below the workspace folder into its own project root,
+/// so it is formatted with its own configuration.
+#[cfg(test)]
+mod test_working_directories {
+    use std::path::PathBuf;
+
+    use oxc_language_server::{
+        ClientMessage, LanguageId, TextDocument, Tool, resolve_working_directories,
+        sub_worker_options,
+        uri_utils::{file_path_to_uri, uri_to_file_path},
+        utils::find_root_for_uri,
+    };
+    use serde_json::json;
+    use tower_lsp_server::gen_lsp_types::{TextEdit, Uri};
+
+    use crate::lsp::server_formatter::{ServerFormatter, ServerFormatterBuilder};
+
+    const FIXTURE: &str = "fixtures/lsp/working_directories";
+    const PACKAGE_A_FIXTURE: &str = "fixtures/lsp/working_directories/packages/a";
+
+    fn absolute(fixture: &str, relative: &str) -> PathBuf {
+        std::env::current_dir().expect("could not get current dir").join(fixture).join(relative)
+    }
+
+    fn root_uri(fixture: &str) -> Uri {
+        file_path_to_uri(std::env::current_dir().expect("could not get current dir").join(fixture))
+            .unwrap()
+    }
+
+    /// Resolve the `workingDirectories` option like the language server does and return the roots
+    /// of every worker: the workspace folder first, then one per working directory.
+    fn worker_roots(fixture: &str, options: &serde_json::Value) -> Vec<Uri> {
+        let root_uri = root_uri(fixture);
+        let resolved =
+            resolve_working_directories(&root_uri, options, &ServerFormatterBuilder::dummy(), &[]);
+
+        let mut roots = vec![root_uri];
+        roots.extend(resolved.roots);
+        roots
+    }
+
+    /// Build the formatter the language server would route `relative_file_path` to: the worker
+    /// with the longest matching root path wins.
+    fn build_formatter(
+        fixture: &str,
+        options: &serde_json::Value,
+        relative_file_path: &str,
+    ) -> (ServerFormatter, Vec<ClientMessage>, Uri) {
+        let roots = worker_roots(fixture, options);
+        let uri = file_path_to_uri(absolute(fixture, relative_file_path)).unwrap();
+
+        let index = find_root_for_uri(&roots, &uri).expect("no worker is responsible for the uri");
+
+        // a sub worker never sees the `workingDirectories` option itself, but it still honours the
+        // ignore files of its workspace folder
+        let (worker_options, parent_root) = if index == 0 {
+            (options.clone(), None)
+        } else {
+            (
+                sub_worker_options(options),
+                uri_to_file_path(&roots[0]).map(std::borrow::Cow::into_owned),
+            )
+        };
+
+        let (formatter, client_messages) = ServerFormatterBuilder::dummy().build_with_parent_root(
+            &roots[index],
+            worker_options,
+            parent_root.as_deref(),
+        );
+        (formatter, client_messages, uri)
+    }
+
+    /// Format a file through the worker the language server would route it to.
+    fn format(options: &serde_json::Value, relative_file_path: &str) -> Vec<TextEdit> {
+        let (formatter, _client_messages, uri) =
+            build_formatter(FIXTURE, options, relative_file_path);
+
+        formatter
+            .run_format(TextDocument::new(&uri, LanguageId::new("typescript".into()), None))
+            .unwrap()
+    }
+
+    /// Whether the formatter the language server routes the file to ignores it.
+    fn is_ignored(fixture: &str, options: &serde_json::Value, relative_file_path: &str) -> bool {
+        let (formatter, _client_messages, _uri) =
+            build_formatter(fixture, options, relative_file_path);
+
+        formatter
+            .format_file(&absolute(fixture, relative_file_path), "const a =  \"x\"  ;\n")
+            .is_none()
+    }
+
+    #[test]
+    fn test_sub_worker_is_created_for_the_package() {
+        let roots = worker_roots(FIXTURE, &json!({ "workingDirectories": ["packages/a"] }));
+        assert_eq!(roots.len(), 2);
+        assert!(roots[1].as_str().ends_with("/packages/a"));
+
+        // without the option there is only the workspace folder worker
+        assert_eq!(worker_roots(FIXTURE, &json!({})).len(), 1);
+    }
+
+    #[test]
+    fn test_config_path_is_relative_to_the_working_directory() {
+        // `fmt.configPath` is resolved by the worker of `packages/a`, so `custom.json` is looked up
+        // in `packages/a`. It sets `semi: false`, which removes the trailing semicolon.
+        let edits = format(
+            &json!({ "fmt.configPath": "custom.json", "workingDirectories": ["packages/a"] }),
+            "packages/a/src/index.ts",
+        );
+
+        assert_eq!(edits.len(), 1);
+        assert_eq!(edits[0].new_text, "");
+    }
+
+    #[test]
+    fn test_config_path_without_working_directories() {
+        // Contrast: without `workingDirectories` the only worker is the workspace folder one, so
+        // `custom.json` is looked up at the workspace folder root where it does not exist, and the
+        // workspace folder config (`semi` unset) is used, which leaves the file unchanged.
+        let edits = format(&json!({ "fmt.configPath": "custom.json" }), "packages/a/src/index.ts");
+
+        assert!(edits.is_empty(), "{edits:?}");
+    }
+
+    /// A working directory still honours the `.prettierignore` of the workspace folder above it,
+    /// like the CLI does when it runs from inside the package.
+    #[test]
+    fn test_sub_worker_honours_the_ignore_files_of_its_workspace_folder() {
+        let options = json!({ "workingDirectories": ["packages/a"] });
+
+        // the workspace folder `.prettierignore` ignores `generated/`
+        let edits = format(&options, "packages/a/generated/index.ts");
+        assert!(edits.is_empty(), "{edits:?}");
+
+        // the very same content is reformatted when it is not ignored
+        let edits = format(&options, "packages/a/src/unformatted.ts");
+        assert_ne!(edits, []);
+    }
+
+    /// Semantics rule 3: a file below a working directory is ignored when the formatter ignores
+    /// it with the workspace folder opened without `workingDirectories`, or with the working
+    /// directory opened alone. A working directory never un-ignores a file: the `!dist/` of
+    /// `packages/a/.prettierignore` does not put back what the workspace folder excludes, and
+    /// the `.prettierignore` of the working directory excludes more.
+    #[test]
+    fn test_ignore_parity_with_the_folder_and_the_directory_alone() {
+        let with_option = json!({ "workingDirectories": ["packages/a"] });
+
+        // `generated`, `dist` and `build` are excluded by the workspace folder, `local` by the
+        // working directory itself, and `src` by nobody
+        for file in [
+            "generated/index.ts",
+            "dist/index.ts",
+            "build/index.ts",
+            "src/index.ts",
+            "local/main.ts",
+        ] {
+            let from_working_directory =
+                is_ignored(FIXTURE, &with_option, &format!("packages/a/{file}"));
+            assert_eq!(
+                from_working_directory,
+                is_ignored(FIXTURE, &json!({}), &format!("packages/a/{file}"))
+                    || is_ignored(PACKAGE_A_FIXTURE, &json!({}), file),
+                "{file}"
+            );
+            assert_eq!(from_working_directory, file != "src/index.ts", "{file}");
+        }
+    }
+
+    /// Semantics rule 3: a working directory below a directory the workspace folder ignores is
+    /// reported when its formatter is built, and its files get the result of the workspace folder.
+    #[test]
+    fn test_a_working_directory_below_an_ignored_directory() {
+        let with_option = json!({ "workingDirectories": ["vendor/lib"] });
+
+        let (_, messages, _) = build_formatter(FIXTURE, &with_option, "vendor/lib/index.ts");
+        assert_eq!(messages.len(), 1, "{messages:?}");
+        assert!(
+            messages[0]
+                .message
+                .contains("is ignored by the `.prettierignore` of its workspace folder"),
+            "{messages:?}"
+        );
+        assert_eq!(
+            is_ignored(FIXTURE, &with_option, "vendor/lib/index.ts"),
+            is_ignored(FIXTURE, &json!({}), "vendor/lib/index.ts")
+        );
+
+        // a working directory nobody ignores is not reported
+        let (_, messages, _) = build_formatter(
+            FIXTURE,
+            &json!({ "workingDirectories": ["packages/a"] }),
+            "packages/a/src/index.ts",
+        );
+        assert!(messages.is_empty(), "{messages:?}");
+    }
+
+    #[test]
+    fn test_files_outside_a_working_directory_stay_with_the_workspace_folder() {
+        let edits = format(&json!({ "workingDirectories": ["packages/a"] }), "index.ts");
+        assert!(edits.is_empty(), "{edits:?}");
+    }
+}
+
 #[cfg(test)]
 mod tests_builder {
     use crate::lsp::server_formatter::ServerFormatterBuilder;
@@ -507,6 +790,11 @@ mod tests_builder {
             capabilities.document_formatting_provider,
             Some(DocumentFormattingProvider::Bool(true))
         );
+    }
+
+    #[test]
+    fn test_use_working_directories() {
+        assert!(ServerFormatterBuilder::dummy().use_working_directories());
     }
 }
 
