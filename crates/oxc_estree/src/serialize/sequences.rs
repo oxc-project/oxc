@@ -12,16 +12,16 @@ pub trait SequenceSerializer {
 /// Serializer for sequences.
 ///
 /// This is returned by `ESTreeSerializer::serialize_sequence`.
-pub struct ESTreeSequenceSerializer<'s, C: Config, F: Formatter> {
+pub struct ESTreeSequenceSerializer<'s, 'a, C: Config, F: Formatter> {
     /// Serializer
-    serializer: &'s mut ESTreeSerializer<C, F>,
+    serializer: &'s mut ESTreeSerializer<'a, C, F>,
     /// Length of sequence
     len: usize,
 }
 
-impl<'s, C: Config, F: Formatter> ESTreeSequenceSerializer<'s, C, F> {
+impl<'s, 'a, C: Config, F: Formatter> ESTreeSequenceSerializer<'s, 'a, C, F> {
     /// Create new [`ESTreeSequenceSerializer`].
-    pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<C, F>) -> Self {
+    pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<'a, C, F>) -> Self {
         // Push item to `trace_path`. It will be replaced with a `TracePathPart::Index`
         // when serializing each item in the sequence, and popped off again in `end` method.
         if serializer.config.fixes() {
@@ -34,7 +34,7 @@ impl<'s, C: Config, F: Formatter> ESTreeSequenceSerializer<'s, C, F> {
     }
 }
 
-impl<C: Config, F: Formatter> SequenceSerializer for ESTreeSequenceSerializer<'_, C, F> {
+impl<C: Config, F: Formatter> SequenceSerializer for ESTreeSequenceSerializer<'_, '_, C, F> {
     /// Serialize sequence entry.
     fn serialize_element<T: ESTree + ?Sized>(&mut self, value: &T) {
         // Update last item in trace path to current sequence index
