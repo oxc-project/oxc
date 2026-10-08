@@ -1492,17 +1492,46 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_assignment_expression_or_higher_impl(
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let leading_comments = self.leading_expression_comments();
+        if self.cur_token().has_preceding_comment() {
+            self.parse_assignment_expression_with_comments(allow_return_type_in_arrow_function)
+        } else {
+            self.parse_assignment_expression_core(allow_return_type_in_arrow_function)
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn parse_assignment_expression_with_comments(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        let comments = self.leading_expression_comments();
+        let expression = self.parse_assignment_expression_core(allow_return_type_in_arrow_function);
+        if let Some(comments) = comments {
+            self.assign_expression_leading_comments(
+                expression.node_id(),
+                expression.span().start,
+                comments,
+            );
+        }
+        expression
+    }
+
+    fn parse_assignment_expression_core(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
-            let expression = self.parse_yield_expression();
-            return self.finish_expression_comments(expression, leading_comments);
+            return self.parse_yield_expression();
         }
         // `() => {}`, `(x) => {}`
         if let Some(mut arrow_expr) = self
@@ -1514,7 +1543,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 func.pure = true;
                 self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
-            return self.finish_expression_comments(arrow_expr, leading_comments);
+            return arrow_expr;
         }
         // `async x => {}`
         if let Some(mut arrow_expr) = self
@@ -1526,7 +1555,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 func.pure = true;
                 self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
-            return self.finish_expression_comments(arrow_expr, leading_comments);
+            return arrow_expr;
         }
 
         let start = self.cur_start();
@@ -1551,7 +1580,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 func.pure = true;
                 self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
-            return self.finish_expression_comments(arrow_expr, leading_comments);
+            return arrow_expr;
         }
 
         if kind.is_assignment_operator() {
@@ -1561,7 +1590,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 lhs_parenthesized_span,
                 allow_return_type_in_arrow_function,
             );
-            return self.finish_expression_comments(expression, leading_comments);
+            return expression;
         }
 
         let mut expr =
@@ -1573,23 +1602,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
         }
 
-        self.finish_expression_comments(expr, leading_comments)
-    }
-
-    #[inline]
-    fn finish_expression_comments(
-        &mut self,
-        expression: Expression<'a>,
-        comments: Option<std::num::NonZeroU32>,
-    ) -> Expression<'a> {
-        if let Some(comments) = comments {
-            self.assign_expression_leading_comments(
-                expression.node_id(),
-                expression.span().start,
-                comments,
-            );
-        }
-        expression
+        expr
     }
 
     fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {
