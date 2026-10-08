@@ -211,7 +211,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !leading_comments.is_empty() {
             self.assign_statement_comments(&stmt, leading_comments);
         }
-        if !matches!(&stmt, Statement::ExpressionStatement(node) if matches!(node.expression, Expression::StringLiteral(_)))
+        if self.cur_token().has_preceding_comment()
+            && !matches!(&stmt, Statement::ExpressionStatement(node) if matches!(node.expression, Expression::StringLiteral(_)))
         {
             self.assign_trailing_comments(stmt.node_id(), stmt.span().end);
         }
@@ -220,6 +221,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[inline]
     fn leading_statement_comments(&self) -> Range<usize> {
+        if !self.cur_token().has_preceding_comment() {
+            return 0..0;
+        }
         let comments = &self.lexer.trivia_builder.comments;
         let start = self.cur_start();
         let end = if comments.last().is_none_or(|comment| comment.span.end <= start) {
@@ -899,7 +903,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let case = SwitchCase::new(self.end_span(start), test, consequent, self);
         // A case shares its end with its last statement. A trailing comment
         // outside that boundary belongs to the case in the enclosing switch.
-        self.assign_trailing_comments(case.node_id.get(), case.span.end);
+        if self.cur_token().has_preceding_comment() {
+            self.assign_trailing_comments(case.node_id.get(), case.span.end);
+        }
         case
     }
 
