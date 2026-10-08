@@ -250,8 +250,7 @@ pub struct Comment {
     /// Owning AST node and placement, established before the parser returns.
     ///
     /// This travels with the comment when the comment vector is changed.
-    /// Semantic analysis remaps owners when rewriting node IDs, including after
-    /// AST transformations. Removed owners become [`NodeId::ORPHANED`].
+    /// Rewriting node IDs or transforming the AST can invalidate owners.
     /// Standalone lexer comments and manually constructed comments can be unassigned.
     /// Cloning an AST without semantic IDs clears the attachment.
     #[content_eq(skip)]

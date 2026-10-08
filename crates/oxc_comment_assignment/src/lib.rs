@@ -22,8 +22,7 @@ impl CommentAssignment {
     /// Assign ownership of every comment in `program`.
     ///
     /// The parser runs this automatically. Use this standalone entry point only
-    /// when the AST still matches its source text; semantic analysis preserves
-    /// existing owners after transformations.
+    /// when the AST still matches its source text.
     ///
     /// The AST must have unique node IDs, with [`oxc_syntax::node::NodeId::ROOT`]
     /// reserved for Program, as provided by the parser or semantic analysis.
