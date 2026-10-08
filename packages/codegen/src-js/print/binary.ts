@@ -13,8 +13,11 @@ import type { LiteralExtras } from "./types.ts";
 import type {
   BinaryExpression,
   BinaryOperator,
+  Expression,
   LogicalExpression,
   LogicalOperator,
+  ParenthesizedExpression,
+  PrivateIdentifier,
   PrivateInExpression,
 } from "../../../../npm/oxc-types/types.d.ts";
 
@@ -65,31 +68,38 @@ export function printBinaryish(
     parent: null,
   };
 
+  // An operand can be any expression, so reading its `type` is a megamorphic load.
+  // Each left operand's `type` is read once, and carried down the left spine to the next level.
+  let { left } = node;
+  let leftType: (Expression | PrivateIdentifier)["type"] = left.type;
+
+  // At the top of each iteration, `left` is `v.e.left`, and `leftType` is its `type`
   for (;;) {
     binCheckAndPrepare(v, state);
 
-    const left = withoutParens(v.e.left);
-    if (left.type === "BinaryExpression" || left.type === "LogicalExpression") {
-      if (left.type === "BinaryExpression" && left.left.type === "PrivateIdentifier") {
+    while (leftType === "ParenthesizedExpression") {
+      left = (left as ParenthesizedExpression).expression;
+      leftType = left.type;
+    }
+
+    let nextLeft;
+    if (leftType === "BinaryExpression") {
+      nextLeft = (left as BinaryExpression | PrivateInExpression).left;
+      leftType = nextLeft.type;
+
+      if (leftType === "PrivateIdentifier") {
         // Private-in expression as the left operand
-        typeAssertIs<PrivateInExpression>(left);
-        printPrivateInExpression(left, state, v.leftPrecedence);
+        printPrivateInExpression(left as PrivateInExpression, state, v.leftPrecedence);
         binVisitRightAndFinish(v, state);
         break;
       }
 
-      typeAssertIs<BinaryExpression | LogicalExpression>(left);
-
-      v = {
-        e: left,
-        precedence: v.leftPrecedence,
-        ctx: v.ctx,
-        leftPrecedence: PREC_LOWEST,
-        operator: v.operator,
-        wrap: false,
-        rightPrecedence: PREC_LOWEST,
-        parent: v,
-      };
+      typeAssertIs<BinaryExpression>(left);
+      typeAssertIs<Expression>(nextLeft);
+    } else if (leftType === "LogicalExpression") {
+      typeAssertIs<LogicalExpression>(left);
+      nextLeft = left.left;
+      leftType = nextLeft.type;
     } else {
       // `v.e.left` prints, not the unwrapped `left` - a `ParenthesizedExpression` around a function
       // expression is how Oxc's `pife` flag reaches this printer, and the arm for it in `printExpression`
@@ -99,6 +109,19 @@ export function printBinaryish(
       binVisitRightAndFinish(v, state);
       break;
     }
+
+    v = {
+      e: left,
+      precedence: v.leftPrecedence,
+      ctx: v.ctx,
+      leftPrecedence: PREC_LOWEST,
+      operator: v.operator,
+      wrap: false,
+      rightPrecedence: PREC_LOWEST,
+      parent: v,
+    };
+
+    left = nextLeft;
   }
 
   while ((v = v.parent) !== null) {
