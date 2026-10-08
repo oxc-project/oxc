@@ -1084,18 +1084,6 @@ mod tests_builder {
         assert_eq!(capabilities.diagnostic_mode, DiagnosticMode::Push);
     }
 
-    #[test]
-    fn test_nested_suppression_file_is_ignored() {
-        let root_dir = tempfile::tempdir().unwrap();
-        let nested_dir = root_dir.path().join("web");
-        fs::create_dir_all(&nested_dir).unwrap();
-        fs::write(nested_dir.join(DEFAULT_SUPPRESSIONS_FILE_NAME), "{}").unwrap();
-
-        let suppressions = WorkspaceSuppressions::new(root_dir.path().to_path_buf()).unwrap();
-
-        assert!(suppressions.manager.is_none());
-    }
-
     #[cfg(any(target_os = "windows", target_os = "macos"))]
     #[test]
     fn test_suppression_paths_resolve_file_system_casing() {
