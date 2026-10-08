@@ -344,9 +344,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } = checkpoint;
 
         if self.comment_assignment_epoch != comment_assignment_epoch {
-            // Speculation may discard completed statements. Fall back to the
-            // ownership pass rather than retaining IDs from the discarded AST.
-            for comment in &mut self.lexer.trivia_builder.comments {
+            // Speculation may discard completed nodes. Ownership written by
+            // that parse starts after the previous token, including comments
+            // preceding its first token. Keep earlier completed owners and let
+            // the fallback pass resolve only the speculative range.
+            let comments = &mut self.lexer.trivia_builder.comments;
+            let begin = comments.partition_point(|comment| comment.span.end <= prev_token_end);
+            for comment in &mut comments[begin..] {
                 comment.attachment = None;
             }
             self.comment_assignment_epoch = comment_assignment_epoch;

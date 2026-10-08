@@ -358,7 +358,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         TSInterfaceBody::boxed(self.end_span(start), body_list, self)
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_ts_type_signature(&mut self) -> TSSignature<'a> {
+        let signature = if self.cur_token().has_preceding_comment() {
+            self.parse_with_leading_comments(Self::parse_ts_type_signature_core)
+        } else {
+            self.parse_ts_type_signature_core()
+        };
+        if self.cur_token().has_preceding_comment() {
+            self.assign_trailing_comments(signature.node_id(), signature.span().end);
+        }
+        signature
+    }
+
+    fn parse_ts_type_signature_core(&mut self) -> TSSignature<'a> {
         let start = self.cur_start();
         let kind = self.cur_kind();
 

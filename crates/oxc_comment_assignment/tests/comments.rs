@@ -945,6 +945,14 @@ fn parser_exit_assignment_matches_the_complete_pass() {
              /* label */ label: /* body */ work();",
             SourceType::mjs(),
         ),
+        (
+            "interface I { /* property */ value: number; // property tail\n\
+             /* method */ method(/* parameter */ value: number): void; // method tail\n }\n\
+             function f(/* parameter */ value: number) { const { /* binding */ item } = value; }\n\
+             const o = { /* spread */ ...source, key: value, // property tail\n };\n\
+             const view = <Widget /* attribute */ value={1} /* spread */ {...props} />;",
+            SourceType::tsx(),
+        ),
         ("/* before */ before(); function invalid( {", SourceType::mjs()),
     ] {
         let allocator = Allocator::default();

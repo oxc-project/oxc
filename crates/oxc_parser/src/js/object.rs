@@ -47,10 +47,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Dot3 => ObjectPropertyKind::SpreadProperty(self.parse_spread_element()),
             _ => ObjectPropertyKind::ObjectProperty(self.parse_object_literal_element()),
         };
-        if let Some(comments) = leading_comments
-            && let ObjectPropertyKind::ObjectProperty(node) = &property
-        {
-            self.assign_node_leading_comments(node.node_id.get(), node.span().start, comments);
+        if let Some(comments) = leading_comments {
+            self.assign_node_leading_comments(property.node_id(), property.span().start, comments);
+        }
+        if self.cur_token().has_preceding_comment() {
+            self.assign_trailing_comments(property.node_id(), property.span().end);
         }
         property
     }

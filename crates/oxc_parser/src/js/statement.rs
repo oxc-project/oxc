@@ -4,7 +4,7 @@ use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
-use oxc_syntax::node::NodeId;
+use oxc_syntax::{GetNodeId, node::NodeId};
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
@@ -317,6 +317,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (begin != end).then(|| NonZeroU32::new(begin as u32 + 1).unwrap())
     }
 
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn parse_with_leading_comments<T: GetSpan + GetNodeId>(
+        &mut self,
+        parse: impl FnOnce(&mut Self) -> T,
+    ) -> T {
+        let comments = self.leading_node_comments();
+        let node = parse(self);
+        if let Some(comments) = comments {
+            self.assign_node_leading_comments(node.node_id(), node.span().start, comments);
+        }
+        node
+    }
+
     fn assign_statement_comments(&mut self, stmt: &Statement<'a>, comments: NonZeroU32) {
         self.assign_node_leading_comments(stmt.node_id(), stmt.span().start, comments);
     }
@@ -443,7 +457,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[cold]
     #[inline(never)]
-    fn assign_trailing_comments(&mut self, node_id: NodeId, boundary: u32) {
+    pub(crate) fn assign_trailing_comments(&mut self, node_id: NodeId, boundary: u32) {
         let next_start = self.cur_start();
         let comments = &mut self.lexer.trivia_builder.comments;
         let end = if comments.last().is_none_or(|comment| comment.span.end <= next_start) {

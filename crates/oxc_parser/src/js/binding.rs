@@ -151,7 +151,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `BindingProperty`[Yield, Await] :
     ///     `SingleNameBinding`[?Yield, ?Await]
     ///     `PropertyName`[?Yield, ?Await] : `BindingElement`[?Yield, ?Await]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(super) fn parse_binding_property(&mut self) -> BindingProperty<'a> {
+        if self.cur_token().has_preceding_comment() {
+            self.parse_with_leading_comments(Self::parse_binding_property_core)
+        } else {
+            self.parse_binding_property_core()
+        }
+    }
+
+    fn parse_binding_property_core(&mut self) -> BindingProperty<'a> {
         let start = self.cur_start();
 
         let mut shorthand = false;

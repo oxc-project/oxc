@@ -422,15 +422,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 break;
             }
-            let attribute = match kind {
-                Kind::LCurly => {
-                    JSXAttributeItem::SpreadAttribute(self.parse_jsx_spread_attribute())
-                }
-                _ => JSXAttributeItem::Attribute(self.parse_jsx_attribute()),
+            let attribute = if self.cur_token().has_preceding_comment() {
+                self.parse_with_leading_comments(Self::parse_jsx_attribute_item)
+            } else {
+                self.parse_jsx_attribute_item()
             };
             attributes.push(attribute);
         }
         attributes
+    }
+
+    fn parse_jsx_attribute_item(&mut self) -> JSXAttributeItem<'a> {
+        if self.at(Kind::LCurly) {
+            JSXAttributeItem::SpreadAttribute(self.parse_jsx_spread_attribute())
+        } else {
+            JSXAttributeItem::Attribute(self.parse_jsx_attribute())
+        }
     }
 
     /// `JSXAttribute` :
