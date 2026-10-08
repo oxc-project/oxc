@@ -6,7 +6,7 @@ use oxc_ast::{
 };
 use oxc_ast_visit::Visit;
 use oxc_comment_assignment::CommentAssignment;
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Parser, config::RuntimeParserConfig};
 use oxc_span::{ContentEq, GetSpan, SourceType, Span};
 use oxc_syntax::node::NodeId;
 
@@ -870,6 +870,11 @@ fn parser_exit_assignment_matches_the_complete_pass() {
     for (source, source_type) in [
         ("/* directive */ 'use strict'; /* statement */ first();", SourceType::mjs()),
         ("switch (value) { default: /* leading */ break; /* trailing */ }", SourceType::mjs()),
+        (
+            "switch (value) { case 0: first(); // statement\n\
+             if (ready) second(); // case\n default: last(); } // switch",
+            SourceType::mjs(),
+        ),
         ("@dec /* export */ export class C {}", SourceType::ts()),
         ("/* export */ export default @dec /* class */ class C {}", SourceType::ts()),
         ("const f = (a = () => { /* body */ work(); }) => a;", SourceType::ts()),
@@ -881,10 +886,18 @@ fn parser_exit_assignment_matches_the_complete_pass() {
         ("/* before */ before(); function invalid( {", SourceType::mjs()),
     ] {
         let allocator = Allocator::default();
-        let mut program = Parser::new(&allocator, source, source_type).parse().program;
-        let actual = attachments(&program);
-        assign(&mut program);
-        assert_eq!(actual, attachments(&program), "{source}");
+        for tokens in [false, true] {
+            for preserve_parens in [false, true] {
+                let mut program = Parser::new(&allocator, source, source_type)
+                    .with_config(RuntimeParserConfig::new(tokens))
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse()
+                    .program;
+                let actual = attachments(&program);
+                assign(&mut program);
+                assert_eq!(actual, attachments(&program), "{source}");
+            }
+        }
     }
 }
 

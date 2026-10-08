@@ -4,6 +4,7 @@ use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
+use oxc_syntax::node::NodeId;
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
@@ -210,6 +211,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !leading_comments.is_empty() {
             self.assign_statement_comments(&stmt, leading_comments);
         }
+        if !matches!(&stmt, Statement::ExpressionStatement(node) if matches!(node.expression, Expression::StringLiteral(_)))
+        {
+            self.assign_trailing_comments(stmt.node_id(), stmt.span().end);
+        }
         stmt
     }
 
@@ -259,6 +264,31 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 comment.attachment = Some(CommentAttachment {
                     node_id: Cell::new(stmt.node_id()),
                     placement: CommentPlacement::Leading,
+                });
+                self.comment_assignment_epoch += 1;
+            }
+        }
+    }
+
+    fn assign_trailing_comments(&mut self, node_id: NodeId, boundary: u32) {
+        let next_start = self.cur_start();
+        let comments = &mut self.lexer.trivia_builder.comments;
+        let end = if comments.last().is_none_or(|comment| comment.span.end <= next_start) {
+            comments.len()
+        } else {
+            comments.partition_point(|comment| comment.span.end <= next_start)
+        };
+        for comment in comments[..end].iter_mut().rev() {
+            if comment.span.start < boundary {
+                break;
+            }
+            if comment.attached_to == boundary
+                && comment.is_trailing()
+                && comment.content != CommentContent::CoverageIgnoreFile
+            {
+                comment.attachment = Some(CommentAttachment {
+                    node_id: Cell::new(node_id),
+                    placement: CommentPlacement::Trailing,
                 });
                 self.comment_assignment_epoch += 1;
             }
@@ -866,7 +896,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             consequent.push(stmt);
         }
-        SwitchCase::new(self.end_span(start), test, consequent, self)
+        let case = SwitchCase::new(self.end_span(start), test, consequent, self);
+        // A case shares its end with its last statement. A trailing comment
+        // outside that boundary belongs to the case in the enclosing switch.
+        self.assign_trailing_comments(case.node_id.get(), case.span.end);
+        case
     }
 
     /// Section 14.14 Throw Statement
