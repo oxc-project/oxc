@@ -139,7 +139,7 @@ pub trait Tool: Send + Sync {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ClientMessage {
     /// The message to be sent to the client.
     pub message: String,

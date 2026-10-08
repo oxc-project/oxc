@@ -3,15 +3,13 @@ use std::str::FromStr;
 use std::sync::{Arc, OnceLock};
 
 use ignore::gitignore::Gitignore;
-use oxc_language_server::uri_utils::uri_to_file_path;
-use oxc_language_server::{ClientMessage, ToolBuildResult};
 use rustc_hash::{FxHashMap, FxHashSet};
-use tower_lsp_server::gen_lsp_types::{CodeActionProvider, CodeActionResponse, DiagnosticProvider};
 use tower_lsp_server::{
     gen_lsp_types::{
-        CodeActionKind, CodeActionOptions, CodeActionTriggerKind, Diagnostic, DiagnosticOptions,
-        ExecuteCommandOptions, Pattern, ServerCapabilities, Uri, WorkDoneProgressOptions,
-        WorkspaceEdit,
+        CodeActionKind, CodeActionOptions, CodeActionProvider, CodeActionResponse,
+        CodeActionTriggerKind, Diagnostic, DiagnosticOptions, DiagnosticProvider,
+        ExecuteCommandOptions, MessageType, Pattern, ServerCapabilities, Uri,
+        WorkDoneProgressOptions, WorkspaceEdit,
     },
     jsonrpc::ErrorCode,
 };
@@ -24,11 +22,12 @@ use oxc_linter::{
 };
 
 use oxc_language_server::{
-    Capabilities, CodeActionParams, ConcurrentHashMap, DiagnosticMode, DiagnosticResult,
-    TextDocument, Tool, ToolBuilder, ToolRestartChanges,
-    utils::normalize_user_config_path_to_watch_pattern,
+    Capabilities, ClientMessage, CodeActionParams, ConcurrentHashMap, DiagnosticMode,
+    DiagnosticResult, TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
+    uri_utils::uri_to_file_path, utils::normalize_user_config_path_to_watch_pattern,
 };
 
+use crate::lsp::utils::{config_loader_error_to_message, oxc_diagnostic_to_client_message};
 use crate::{
     config_loader::{
         ConfigLoader, build_nested_configs, config_file_names, discover_configs_in_tree,
@@ -96,13 +95,18 @@ impl ServerLinterBuilder {
         let root_path = uri_to_file_path(root_uri).unwrap();
         let mut external_linter = self.external_linter.as_ref();
         let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
+        // create a set for config errors, because if the main config fails to load,
+        // the same error might occur again.
+        let mut client_messages = FxHashSet::default();
 
         // Setup JS workspace. This must be done before loading any configs
         if let Some(external_linter) = external_linter {
             let res = (external_linter.create_workspace)(root_uri.to_string());
 
             if let Err(err) = res {
-                error!("Failed to setup JS workspace:\n{err}\n");
+                let message = format!("Failed to setup JS workspace:\n{err}\n");
+                error!(message);
+                client_messages.insert(ClientMessage { message, r#type: MessageType::Error });
             }
         }
 
@@ -119,7 +123,9 @@ impl ServerLinterBuilder {
         let mut oxlintrc = match loader.load_root_config(&root_path, config_path.as_ref()) {
             Ok(config) => config,
             Err(e) => {
-                warn!("Failed to load config: {e}");
+                let message = oxc_diagnostic_to_client_message(&e);
+                error!(message.message);
+                client_messages.insert(message);
                 Oxlintrc::default()
             }
         };
@@ -127,7 +133,7 @@ impl ServerLinterBuilder {
 
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
-        let nested_configs = if options.use_nested_configs() {
+        let (nested_configs, config_client_message) = if options.use_nested_configs() {
             self.create_nested_configs(
                 &root_path,
                 &oxlintrc.path,
@@ -137,8 +143,10 @@ impl ServerLinterBuilder {
                 Some(root_uri.as_ref()),
             )
         } else {
-            FxHashMap::default()
+            (FxHashMap::default(), Vec::new())
         };
+
+        client_messages.extend(config_client_message);
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
         // Without a config file there are no patterns and the root is never consulted,
@@ -154,7 +162,11 @@ impl ServerLinterBuilder {
         ) {
             Ok(builder) => builder,
             Err(e) => {
-                warn!("Failed to build config from oxlintrc: {e}");
+                let message = format!("Failed to build config from oxlintrc:\n{e}");
+                // show message in LSP stderr
+                error!(message);
+
+                client_messages.insert(ClientMessage { message, r#type: MessageType::Error });
                 ConfigStoreBuilder::default()
             }
         };
@@ -169,7 +181,9 @@ impl ServerLinterBuilder {
 
         extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build(&mut external_plugin_store).unwrap_or_else(|err| {
-            warn!("Failed to build config: {err}");
+            let message = format!("Failed to build config:\n{err}");
+            error!("{message}");
+            client_messages.insert(ClientMessage { message, r#type: MessageType::Error });
             ConfigStoreBuilder::empty().build(&mut ExternalPluginStore::new(false)).unwrap()
         });
 
@@ -204,7 +218,9 @@ impl ServerLinterBuilder {
                 external_linter,
             );
             if let Err(err) = res {
-                error!("Failed to setup JS plugins config:\n{err}\n");
+                let message = format!("Failed to setup JS plugins config:\n{err}");
+                error!("{message}");
+                client_messages.insert(ClientMessage { message, r#type: MessageType::Error });
             }
         }
 
@@ -229,7 +245,11 @@ impl ServerLinterBuilder {
         {
             Ok(runner) => runner,
             Err(e) => {
-                warn!("Failed to initialize type-aware linting: {e}");
+                let message = format!("Failed to initialize type-aware linting:\n{e}");
+
+                error!(message);
+
+                client_messages.insert(ClientMessage { message, r#type: MessageType::Error });
                 let linter =
                     Linter::new(lint_options, config_store_clone, external_linter.cloned())
                         .with_workspace_uri(Some(root_uri.as_ref()));
@@ -254,7 +274,7 @@ impl ServerLinterBuilder {
                 lint_options.report_unused_directive,
                 options.rules_customization,
             ),
-            Vec::new(),
+            client_messages.into_iter().collect(),
         )
     }
 }
@@ -332,7 +352,7 @@ impl ServerLinterBuilder {
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
         workspace_uri: Option<&str>,
-    ) -> FxHashMap<PathBuf, Config> {
+    ) -> (FxHashMap<PathBuf, Config>, Vec<ClientMessage>) {
         let config_paths = discover_configs_in_tree(root_path, base_config_path);
 
         #[cfg_attr(not(feature = "napi"), allow(unused_mut))]
@@ -350,15 +370,21 @@ impl ServerLinterBuilder {
 
         let (configs, errors) = loader.load_discovered_with_root_dir(root_path, config_paths);
 
+        let mut client_messages = Vec::with_capacity(errors.len());
         for error in errors {
-            if let Some(path) = error.path() {
-                warn!("Skipping config file {}: {:?}", path.display(), error);
-            } else {
-                warn!("Skipping config file: {:?}", error);
-            }
+            let message = config_loader_error_to_message(error);
+
+            // send message to LSP stderr
+            warn!(message);
+
+            // show message to the LSP client, if there is already a message, append to it
+            client_messages.push(ClientMessage { message, r#type: MessageType::Error });
         }
 
-        build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths))
+        (
+            build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths)),
+            client_messages,
+        )
     }
 
     #[expect(clippy::filetype_is_file)]
@@ -1140,7 +1166,7 @@ mod test {
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut extended_paths = FxHashSet::default();
         let base_config_path = get_file_path("fixtures/lsp/init_nested_configs/.oxlintrc.json");
-        let configs = builder.create_nested_configs(
+        let (configs, client_message) = builder.create_nested_configs(
             &get_file_path("fixtures/lsp/init_nested_configs"),
             &base_config_path,
             &mut external_plugin_store,
@@ -1155,6 +1181,7 @@ mod test {
         assert_eq!(configs_dirs.len(), 2);
         assert!(configs_dirs[1].ends_with("deep2"));
         assert!(configs_dirs[0].ends_with("deep1"));
+        assert_eq!(client_message, []);
     }
 
     #[test]
