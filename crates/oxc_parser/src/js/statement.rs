@@ -340,6 +340,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    pub(crate) fn assign_empty_body_comments(&mut self, node_id: NodeId, span: Span) {
+        let comments = &mut self.lexer.trivia_builder.comments;
+        if comments.last().is_none_or(|comment| comment.span.end <= span.start) {
+            return;
+        }
+        let end = comments.partition_point(|comment| comment.span.end <= span.end);
+        for comment in comments[..end].iter_mut().rev() {
+            if comment.span.start < span.start {
+                break;
+            }
+            if comment.content != CommentContent::CoverageIgnoreFile {
+                comment.attachment = Some(CommentAttachment {
+                    node_id: Cell::new(node_id),
+                    placement: CommentPlacement::Dangling,
+                });
+                self.comment_assignment_epoch += 1;
+            }
+        }
+    }
+
     fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
         match stmt {
             Statement::FunctionDeclaration(func) => {
@@ -410,6 +430,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_block_statement(&mut self) -> Statement<'a> {
         let block = self.parse_block();
+        if block.body.is_empty() {
+            self.assign_empty_body_comments(block.node_id.get(), block.span);
+        }
         Statement::BlockStatement(block)
     }
 

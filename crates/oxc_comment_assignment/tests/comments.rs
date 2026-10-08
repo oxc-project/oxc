@@ -881,6 +881,11 @@ fn parser_exit_assignment_matches_the_complete_pass() {
         ),
         ("enum E { /* first */ A = 1, /* second */ B }", SourceType::ts()),
         ("first(); /* string */ 'value';", SourceType::mjs()),
+        (
+            "{ /* block */ } function f() { /* function */ } const g = () => { /* arrow */ };",
+            SourceType::mjs(),
+        ),
+        ("function f() { /* istanbul ignore file */ }", SourceType::mjs()),
         ("f(/* argument */ true, /* conditional */ (ready ? yes : no));", SourceType::mjs()),
         (
             "class A { static [(/* sequence */ class {}, /* assignment */ value = () => 0)]; }",

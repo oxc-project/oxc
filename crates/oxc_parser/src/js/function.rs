@@ -39,7 +39,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
 
         self.expect_closing(Kind::RCurly, opening_span);
-        FunctionBody::boxed(self.end_span(start), directives, statements, self)
+        let body = FunctionBody::boxed(self.end_span(start), directives, statements, self);
+        if body.directives.is_empty() && body.statements.is_empty() {
+            self.assign_empty_body_comments(body.node_id.get(), body.span);
+        }
+        body
     }
 
     pub(crate) fn parse_formal_parameters(
