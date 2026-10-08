@@ -119,7 +119,7 @@ impl<'a> PeepholeOptimizations {
         e.unbox().argument
     }
 
-    fn de_morgan_expr_delta(
+    fn de_morgan_expr_size_delta(
         expr: &Expression<'a>,
         parent_op: LogicalOperator,
         boolean_context: bool,
@@ -173,7 +173,7 @@ impl<'a> PeepholeOptimizations {
         }
         let mut delta = 0;
         for side in [&e.left, &e.right] {
-            delta += Self::de_morgan_expr_delta(side, e.operator, boolean_context)?;
+            delta += Self::de_morgan_expr_size_delta(side, e.operator, boolean_context)?;
         }
         Some(delta)
     }
@@ -226,7 +226,8 @@ impl<'a> PeepholeOptimizations {
         if expr.operator.is_coalesce() {
             return;
         }
-        let Some(mut delta) = Self::de_morgan_expr_delta(&expr.left, expr.operator, true) else {
+        let Some(mut delta) = Self::de_morgan_expr_size_delta(&expr.left, expr.operator, true)
+        else {
             return;
         };
         let inverse =
