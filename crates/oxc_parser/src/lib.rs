@@ -659,8 +659,12 @@ struct ParserImpl<'a, C: ParserConfig> {
     /// The end range of the previous token
     prev_token_end: u32,
 
-    /// Changes to ownership established when statements finish parsing.
+    /// Changes to comment ownership established during parsing.
     comment_assignment_epoch: usize,
+
+    /// Start of the statement whose prefix comments are assigned on completion.
+    /// `u32::MAX` means no statement prefix is active.
+    statement_comment_start: u32,
 
     /// Parser state
     state: ParserState<'a>,
@@ -704,6 +708,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             token: Token::default(),
             prev_token_end: 0,
             comment_assignment_epoch: 0,
+            statement_comment_start: u32::MAX,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
             ast: ParserAstBuilder::new(allocator),

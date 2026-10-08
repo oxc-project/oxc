@@ -939,6 +939,12 @@ fn parser_exit_assignment_matches_the_complete_pass() {
             "/* before */ before(); /* await */ await /x/u; export {}; /* after */ after();",
             SourceType::unambiguous(),
         ),
+        (
+            "/* statement */ (value = () => { /* nested */ work(); }) + value;\n\
+             /* arrow */ (value = () => { /* nested */ work(); }) => value;\n\
+             /* label */ label: /* body */ work();",
+            SourceType::mjs(),
+        ),
         ("/* before */ before(); function invalid( {", SourceType::mjs()),
     ] {
         let allocator = Allocator::default();

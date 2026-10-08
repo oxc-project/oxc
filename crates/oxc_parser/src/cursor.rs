@@ -17,6 +17,7 @@ pub struct ParserCheckpoint<'a> {
     prev_token_end: u32,
     errors_pos: usize,
     comment_assignment_epoch: usize,
+    statement_comment_start: u32,
     fatal_error: Option<FatalError<'a>>,
 }
 
@@ -314,6 +315,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             comment_assignment_epoch: self.comment_assignment_epoch,
+            statement_comment_start: self.statement_comment_start,
             fatal_error: self.fatal_error.take(),
         }
     }
@@ -325,6 +327,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             comment_assignment_epoch: self.comment_assignment_epoch,
+            statement_comment_start: self.statement_comment_start,
             fatal_error: self.fatal_error.take(),
         }
     }
@@ -337,6 +340,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             errors_pos,
             fatal_error,
             comment_assignment_epoch,
+            statement_comment_start,
         } = checkpoint;
 
         if self.comment_assignment_epoch != comment_assignment_epoch {
@@ -351,6 +355,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_token_end;
+        self.statement_comment_start = statement_comment_start;
         self.errors.truncate(errors_pos);
         self.fatal_error = fatal_error;
     }

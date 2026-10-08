@@ -1527,7 +1527,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        if self.cur_token().has_preceding_comment() {
+        if self.cur_token().has_preceding_comment()
+            && self.statement_comment_start != self.cur_start()
+        {
             self.parse_assignment_expression_with_comments(allow_return_type_in_arrow_function)
         } else {
             self.parse_assignment_expression_core(allow_return_type_in_arrow_function)

@@ -143,11 +143,34 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `StatementListItem`[Yield, Await, Return] :
     ///     Statement[?Yield, ?Await, ?Return]
     ///     Declaration[?Yield, ?Await]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_statement_list_item(
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
-        let leading_comments = self.leading_node_comments();
+        if self.cur_token().has_preceding_comment() {
+            self.parse_statement_with_comments(stmt_ctx)
+        } else {
+            self.parse_statement_core(stmt_ctx)
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn parse_statement_with_comments(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
+        let Some(comments) = self.leading_node_comments() else {
+            return self.parse_statement_core(stmt_ctx);
+        };
+        let previous_start = self.statement_comment_start;
+        self.statement_comment_start = self.cur_start();
+        let stmt = self.parse_statement_core(stmt_ctx);
+        self.statement_comment_start = previous_start;
+        self.assign_statement_comments(&stmt, comments);
+        stmt
+    }
+
+    fn parse_statement_core(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
 
@@ -219,9 +242,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
         }
 
-        if let Some(comments) = leading_comments {
-            self.assign_statement_comments(&stmt, comments);
-        }
         if self.cur_token().has_preceding_comment()
             && !matches!(&stmt, Statement::ExpressionStatement(node) if matches!(node.expression, Expression::StringLiteral(_)))
         {
