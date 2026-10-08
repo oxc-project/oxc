@@ -869,6 +869,17 @@ fn ast_cloning_keeps_attachments_only_with_semantic_ids() {
 fn parser_exit_assignment_matches_the_complete_pass() {
     for (source, source_type) in [
         ("/* directive */ 'use strict'; /* statement */ first();", SourceType::mjs()),
+        ("'use strict'; // directive\n /* statement */ first();", SourceType::mjs()),
+        (
+            "({ /* shorthand */ name, /* default */ value = 1, /* renamed */ key: target } = source);",
+            SourceType::mjs(),
+        ),
+        ("const f = ({ /* parameter */ name = 1 }) => name;", SourceType::ts()),
+        (
+            "class C { /* method */ method() {} /* field */ field = 1; @dec /* decorated */ other() {} }",
+            SourceType::ts(),
+        ),
+        ("enum E { /* first */ A = 1, /* second */ B }", SourceType::ts()),
         ("switch (value) { default: /* leading */ break; /* trailing */ }", SourceType::mjs()),
         (
             "switch (value) { case 0: first(); // statement\n\

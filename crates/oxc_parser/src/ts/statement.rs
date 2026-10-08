@@ -59,6 +59,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_ts_enum_member(&mut self) -> TSEnumMember<'a> {
+        let leading_comments = self.leading_node_comments();
         let start = self.cur_start();
         let id = self.parse_ts_enum_member_name();
         let initializer = if self.eat(Kind::Eq) {
@@ -66,7 +67,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             None
         };
-        TSEnumMember::new(self.end_span(start), id, initializer, self)
+        let member = TSEnumMember::new(self.end_span(start), id, initializer, self);
+        if let Some(comments) = leading_comments {
+            self.assign_node_leading_comments(member.node_id.get(), member.span.start, comments);
+        }
+        member
     }
 
     fn parse_ts_enum_member_name(&mut self) -> TSEnumMemberName<'a> {

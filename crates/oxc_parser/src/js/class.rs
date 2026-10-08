@@ -244,6 +244,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_class_element(&mut self) -> ClassElement<'a> {
+        let leading_comments = self.leading_node_comments();
         let elem = self.parse_class_element_impl();
         if let ClassElement::MethodDefinition(def) = &elem
             && def.value.body.is_none()
@@ -252,6 +253,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             for decorator in &def.decorators {
                 self.error(diagnostics::decorator_on_overload(decorator.span));
             }
+        }
+        if let Some(comments) = leading_comments {
+            self.assign_node_leading_comments(elem.node_id(), elem.span().start, comments);
         }
         elem
     }

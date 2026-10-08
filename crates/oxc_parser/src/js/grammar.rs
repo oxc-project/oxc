@@ -215,7 +215,9 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
 
 impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for AssignmentTargetProperty<'a> {
     fn cover(property: ObjectProperty<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        if property.shorthand {
+        let original_id = property.node_id.get();
+        let start = property.span.start;
+        let target = if property.shorthand {
             let binding = match property.key {
                 PropertyKey::StaticIdentifier(ident) => {
                     let ident = ident.unbox();
@@ -240,6 +242,9 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for AssignmentTarget
                 property.computed,
                 p,
             )
-        }
+        };
+        // Cover grammar replaces the property node while retaining its span.
+        p.remap_leading_comment_owner(start, original_id, target.node_id());
+        target
     }
 }

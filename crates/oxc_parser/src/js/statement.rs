@@ -1,4 +1,4 @@
-use std::{cell::Cell, ops::Range};
+use std::{cell::Cell, num::NonZeroU32};
 
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
@@ -99,7 +99,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let string = string.unbox();
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
-                        directives.push(Directive::new(span, string, Str::from(src), self));
+                        let directive = Directive::new(span, string, Str::from(src), self);
+                        if let Some(comments) = self.leading_node_comments_at(span.start) {
+                            self.assign_node_leading_comments(
+                                directive.node_id.get(),
+                                span.start,
+                                comments,
+                            );
+                        }
+                        if self.cur_token().has_preceding_comment() {
+                            self.assign_trailing_comments(directive.node_id.get(), span.end);
+                        }
+                        directives.push(directive);
                         continue;
                     }
                     stmt => {
@@ -136,7 +147,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
-        let leading_comments = self.leading_statement_comments();
+        let leading_comments = self.leading_node_comments();
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
 
@@ -208,8 +219,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
         }
 
-        if !leading_comments.is_empty() {
-            self.assign_statement_comments(&stmt, leading_comments);
+        if let Some(comments) = leading_comments {
+            self.assign_statement_comments(&stmt, comments);
         }
         if self.cur_token().has_preceding_comment()
             && !matches!(&stmt, Statement::ExpressionStatement(node) if matches!(node.expression, Expression::StringLiteral(_)))
@@ -220,12 +231,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     #[inline]
-    fn leading_statement_comments(&self) -> Range<usize> {
+    pub(crate) fn leading_node_comments(&self) -> Option<(u32, NonZeroU32)> {
         if !self.cur_token().has_preceding_comment() {
-            return 0..0;
+            return None;
         }
+        self.leading_node_comments_at(self.cur_start())
+    }
+
+    #[inline]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "Comments fit within the parser's u32 source offsets"
+    )]
+    fn leading_node_comments_at(&self, start: u32) -> Option<(u32, NonZeroU32)> {
         let comments = &self.lexer.trivia_builder.comments;
-        let start = self.cur_start();
         let end = if comments.last().is_none_or(|comment| comment.span.end <= start) {
             comments.len()
         } else {
@@ -235,10 +254,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         while begin != 0 && comments[begin - 1].attached_to == start {
             begin -= 1;
         }
-        begin..end
+        (begin != end).then(|| (begin as u32, NonZeroU32::new(end as u32).unwrap()))
     }
 
-    fn assign_statement_comments(&mut self, stmt: &Statement<'a>, range: Range<usize>) {
+    fn assign_statement_comments(&mut self, stmt: &Statement<'a>, comments: (u32, NonZeroU32)) {
         // String expression statements can become directives, replacing their
         // IDs. Leave these and annotations that target descendants to the pass.
         if matches!(stmt, Statement::ExpressionStatement(node) if matches!(node.expression, Expression::StringLiteral(_)))
@@ -249,9 +268,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             return;
         }
-        // Decorators can move the statement's start past the token at entry.
-        let start = stmt.span().start;
-        for comment in &mut self.lexer.trivia_builder.comments[range] {
+        self.assign_node_leading_comments(stmt.node_id(), stmt.span().start, comments);
+    }
+
+    pub(crate) fn assign_node_leading_comments(
+        &mut self,
+        node_id: NodeId,
+        start: u32,
+        (begin, end): (u32, NonZeroU32),
+    ) {
+        // Decorators can move a node's start past the token at entry.
+        for comment in &mut self.lexer.trivia_builder.comments[begin as usize..end.get() as usize] {
             if comment.attached_to != start {
                 continue;
             }
@@ -266,9 +293,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             if comment.is_leading() {
                 comment.attachment = Some(CommentAttachment {
-                    node_id: Cell::new(stmt.node_id()),
+                    node_id: Cell::new(node_id),
                     placement: CommentPlacement::Leading,
                 });
+                self.comment_assignment_epoch += 1;
+            }
+        }
+    }
+
+    pub(crate) fn remap_leading_comment_owner(&mut self, start: u32, from: NodeId, to: NodeId) {
+        let comments = &mut self.lexer.trivia_builder.comments;
+        let end = comments.partition_point(|comment| comment.span.end <= start);
+        for comment in comments[..end].iter_mut().rev() {
+            if comment.attached_to != start {
+                break;
+            }
+            if let Some(attachment) = &comment.attachment
+                && attachment.node_id.get() == from
+            {
+                attachment.node_id.set(to);
                 self.comment_assignment_epoch += 1;
             }
         }
@@ -857,6 +900,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_switch_case(&mut self) -> SwitchCase<'a> {
+        let leading_comments = self.leading_node_comments();
         let start = self.cur_start();
         let test = match self.cur_kind() {
             Kind::Default => {
@@ -901,6 +945,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             consequent.push(stmt);
         }
         let case = SwitchCase::new(self.end_span(start), test, consequent, self);
+        if let Some(comments) = leading_comments {
+            self.assign_node_leading_comments(case.node_id.get(), case.span.start, comments);
+        }
         // A case shares its end with its last statement. A trailing comment
         // outside that boundary belongs to the case in the enclosing switch.
         if self.cur_token().has_preceding_comment() {

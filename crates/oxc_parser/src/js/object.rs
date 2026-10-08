@@ -1,5 +1,6 @@
 use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
@@ -41,10 +42,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_object_expression_property(&mut self) -> ObjectPropertyKind<'a> {
-        match self.cur_kind() {
+        let leading_comments = self.leading_node_comments();
+        let property = match self.cur_kind() {
             Kind::Dot3 => ObjectPropertyKind::SpreadProperty(self.parse_spread_element()),
             _ => ObjectPropertyKind::ObjectProperty(self.parse_object_literal_element()),
+        };
+        if let Some(comments) = leading_comments
+            && let ObjectPropertyKind::ObjectProperty(node) = &property
+        {
+            self.assign_node_leading_comments(node.node_id.get(), node.span().start, comments);
         }
+        property
     }
 
     /// `PropertyDefinition`[Yield, Await]
