@@ -9276,6 +9276,9 @@
             }
           ]
         },
+        "unicorn/no-useless-re-export": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-useless-spread": {
           "$ref": "#/definitions/RuleNoConfig"
         },

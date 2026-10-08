@@ -1,0 +1,108 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:2:21]
+ 1 │ export * from './foo.js';
+ 2 │             export {foo} from './foo.js';
+   ·                     ───
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:1:9]
+ 1 │ export {foo} from './foo.js';
+   ·         ───
+ 2 │             export * from './foo.js';
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:2:26]
+ 1 │ export * from './foo.js';
+ 2 │             export type {Foo} from './foo.js';
+   ·                          ───
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:2:26]
+ 1 │ export type * from './foo.js';
+ 2 │             export type {Foo} from './foo.js';
+   ·                          ───
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:3:21]
+ 2 │             export * from './foo.js';
+ 3 │             export {foo} from './foo.js';
+   ·                     ───
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:3:21]
+ 2 │             export * as ns from './bar.js';
+ 3 │             export {foo} from './foo.js';
+   ·                     ───
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:3:21]
+ 2 │             export * from './foo.js';
+ 3 │             export {foo} from './foo.js';
+   ·                     ───
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:3:21]
+ 2 │             export type * from './foo.js';
+ 3 │             export {foo} from './foo.js';
+   ·                     ───
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:2:21]
+ 1 │ export * from './foo.js';
+ 2 │             export {type Foo} from './foo.js';
+   ·                     ────────
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:2:21]
+ 1 │ export * from './foo.js';
+ 2 │             export {foo, bar as baz} from './foo.js';
+   ·                     ───
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:2:21]
+ 1 │ export * from './foo.js';
+ 2 │             export {'foo'} from './foo.js';
+   ·                     ─────
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:2:21]
+ 1 │ export * from './foo.json' with {type: 'json'};
+ 2 │             export {foo} from './foo.json' with {type: 'json'};
+   ·                     ───
+   ╰────
+  help: Remove this export specifier.
+
+  ⚠ unicorn(no-useless-re-export): Redundant re-export already covered by `export *` from the same module.
+   ╭─[no_useless_re_export.tsx:2:21]
+ 1 │ export * from './foo.js';
+ 2 │             export {foo} from './foo.js';
+   ·                     ───
+ 3 │             declare module 'x' {
+   ╰────
+  help: Remove this export specifier.
