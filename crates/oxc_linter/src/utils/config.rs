@@ -1,4 +1,4 @@
-use lazy_regex::{Regex, RegexBuilder};
+use lazy_regex::{BytesRegex, Regex, RegexBuilder};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -52,6 +52,21 @@ where
 
     Option::<String>::deserialize(deserializer)?
         .map(|pattern| RegexBuilder::new(&pattern).build())
+        .transpose()
+        .map_err(D::Error::custom)
+}
+
+/// Deserialize a Unicode byte regex for matching potentially non-UTF-8 text.
+pub fn deserialize_bytes_regex_option<'de, D>(
+    deserializer: D,
+) -> Result<Option<BytesRegex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| BytesRegex::new(&pattern))
         .transpose()
         .map_err(D::Error::custom)
 }

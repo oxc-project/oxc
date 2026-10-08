@@ -275,6 +275,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Rename the function or the variable/property so the names satisfy this rule.
 
+  ⚠ eslint(func-name-matching): Function name `foo` should match property name `\ud800`.
+   ╭─[func_name_matching.tsx:1:54]
+ 1 │ Object.defineProperty(o, "\uD800", { value: function foo() {} })
+   ·                                                      ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
   ⚠ eslint(func-name-matching): Function name `y` should match property name `x`.
    ╭─[func_name_matching.tsx:1:24]
  1 │ class C { x = function y() {}; }

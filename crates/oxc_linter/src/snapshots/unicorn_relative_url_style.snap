@@ -57,3 +57,17 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──
    ╰────
   help: Add `./` prefix
+
+  ⚠ unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
+   ╭─[relative_url_style.tsx:1:9]
+ 1 │ new URL("./a\uD800", "https://x.com/")
+   ·         ───────────
+   ╰────
+  help: Remove leading `./`
+
+  ⚠ unicorn(relative-url-style): Add a `./` prefix to the relative URL.
+   ╭─[relative_url_style.tsx:1:9]
+ 1 │ new URL("a\uD800", "https://x.com/")
+   ·         ─────────
+   ╰────
+  help: Add `./` prefix

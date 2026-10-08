@@ -472,9 +472,9 @@ fn string_literal_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<&'a str> {
     }
 }
 
-fn string_literal_argument<'a>(argument: &'a Argument<'a>) -> Option<&'a str> {
+fn string_literal_argument<'a>(argument: &'a Argument<'a>) -> Option<JSStr<'a>> {
     match argument.as_expression()?.without_parentheses() {
-        Expression::StringLiteral(lit) => lit.value.as_str(),
+        Expression::StringLiteral(lit) => Some(lit.value),
         _ => None,
     }
 }
@@ -841,6 +841,10 @@ fn test() {
             "(Object?.defineProperties)(foo, { bar: { value: function bar() {} } })",
             Some(serde_json::json!(["never", { "considerPropertyDescriptor": true }])),
         ), // { "ecmaVersion": 2020 },
+        (
+            r#"Object.defineProperty(o, "\uD800", { value: function foo() {} })"#,
+            Some(serde_json::json!(["always", { "considerPropertyDescriptor": true }])),
+        ),
         ("class C { x = function y() {}; }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
         ("class C { x = function x() {}; }", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 2022 },
         ("class C { 'x' = function y() {}; }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },

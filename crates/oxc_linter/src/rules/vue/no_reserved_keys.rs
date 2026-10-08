@@ -53,7 +53,11 @@ fn reserved_key_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Key `{name}` is reserved.")).with_label(span)
 }
 
-fn starts_with_underscore_diagnostic(key: &str, group: &str, span: Span) -> OxcDiagnostic {
+fn starts_with_underscore_diagnostic(
+    key: impl std::fmt::Display,
+    group: &str,
+    span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Key `{key}` is reserved in `{group}` group.")).with_label(span)
 }
 
@@ -219,14 +223,17 @@ impl NoReservedKeys {
     fn check_keys<'a>(&self, group: &str, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         for prop_kind in &obj.properties {
             let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
-            let Some(n) = p.key.static_name().and_then(StaticPropertyName::into_cow_str) else {
+            let Some(name) = p.key.static_name() else {
                 continue;
             };
+            let name = name.as_js_str();
             let span = p.key.span();
-            if self.is_reserved(&n) {
-                ctx.diagnostic(reserved_key_diagnostic(&n, span));
-            } else if matches!(group, "data" | "asyncData") && n.starts_with('_') {
-                ctx.diagnostic(starts_with_underscore_diagnostic(&n, group, span));
+            if let Some(n) = name.as_str()
+                && self.is_reserved(n)
+            {
+                ctx.diagnostic(reserved_key_diagnostic(n, span));
+            } else if matches!(group, "data" | "asyncData") && name.starts_with('_') {
+                ctx.diagnostic(starts_with_underscore_diagnostic(name.display(), group, span));
             }
         }
     }
@@ -580,6 +587,18 @@ fn test() {
                 })
                 </script>
             ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"
+                <script>
+                new Vue({
+                  data: () => ({ "_\uD800": 1 })
+                })
+                </script>
+            "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
