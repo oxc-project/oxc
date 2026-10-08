@@ -2,8 +2,9 @@ use std::{
     env,
     ffi::OsStr,
     fmt::Debug,
-    io::{ErrorKind, Write},
-    path::{Path, PathBuf, absolute},
+    fs::File,
+    io::{self, BufRead, BufReader, ErrorKind, Write},
+    path::{Component, Path, PathBuf, absolute},
     sync::Arc,
     time::Instant,
 };
@@ -83,6 +84,7 @@ impl CliRunner {
 
         let LintCommand {
             paths,
+            files_from,
             filter,
             basic_options,
             warning_options,
@@ -103,7 +105,26 @@ impl CliRunner {
         let external_linter = self.external_linter.as_ref();
 
         let mut paths = paths;
-        let provided_path_count = paths.len();
+        let has_explicit_paths = !paths.is_empty() || files_from.is_some();
+        if let Some(file_list) = files_from {
+            let result = if file_list.as_os_str() == "-" {
+                read_paths_from(io::stdin().lock(), &mut paths)
+            } else {
+                let file = if file_list.is_absolute() {
+                    File::open(&file_list)
+                } else {
+                    File::open(self.cwd.join(&file_list))
+                };
+                file.and_then(|file| read_paths_from(BufReader::new(file), &mut paths))
+            };
+            if let Err(err) = result {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to read file list '{}': {err}\n", file_list.display()),
+                );
+                return CliRunResult::InvalidOptionFilesFrom;
+            }
+        }
         let now = Instant::now();
 
         let filters = match Self::get_filters(filter) {
@@ -186,7 +207,7 @@ impl CliRunner {
             });
         }
 
-        if paths.is_empty() && provided_path_count == 0 {
+        if paths.is_empty() && !has_explicit_paths {
             paths.push(self.cwd.clone());
         }
 
@@ -621,6 +642,21 @@ impl CliRunner {
     }
 }
 
+fn read_paths_from(reader: impl BufRead, paths: &mut Vec<PathBuf>) -> io::Result<()> {
+    for line in reader.lines() {
+        let line = line?;
+        if line.is_empty() {
+            continue;
+        }
+        let path = PathBuf::from(line);
+        if path.components().any(|component| component == Component::ParentDir) {
+            return Err(io::Error::new(ErrorKind::InvalidInput, "PATH must not contain \"..\""));
+        }
+        paths.push(path);
+    }
+    Ok(())
+}
+
 impl CliRunner {
     #[must_use]
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
@@ -764,6 +800,7 @@ fn render_config_builder_error(
 mod test {
     use std::fs;
 
+    use crate::cli::CliRunResult;
     use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
     use oxc_linter::rules::RULES;
 
@@ -775,6 +812,53 @@ mod test {
                 (cells.len() == 5 && cells[0] == name && cells[1] == plugin).then_some(cells)
             })
             .unwrap_or_else(|| panic!("Missing rule row for {plugin}/{name}"))
+    }
+
+    #[test]
+    fn files_from_selects_only_manifest_and_positional_paths() {
+        let directory = tempfile::tempdir().unwrap();
+        for file in ["a .. spaced.js", "β.js", "extra.js", "excluded.js"] {
+            fs::write(directory.path().join(file), "debugger;\n").unwrap();
+        }
+        fs::create_dir(directory.path().join("lists")).unwrap();
+        fs::write(directory.path().join("lists/files.txt"), "a .. spaced.js\r\n\r\nβ.js").unwrap();
+
+        let tester = Tester::new().with_cwd(directory.path().to_path_buf());
+        let (output, result) = tester.test_output(&[
+            "--debug",
+            "files",
+            "--files-from",
+            "lists/files.txt",
+            "extra.js",
+        ]);
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+        assert_eq!(output.lines().collect::<Vec<_>>(), ["a .. spaced.js", "extra.js", "β.js"]);
+    }
+
+    #[test]
+    fn files_from_empty_manifest_does_not_lint_cwd() {
+        let directory = tempfile::tempdir().unwrap();
+        fs::write(directory.path().join("excluded.js"), "debugger;\n").unwrap();
+        fs::write(directory.path().join("files.txt"), "\n\r\n").unwrap();
+        let tester = Tester::new().with_cwd(directory.path().to_path_buf());
+
+        let (_, result) = tester.test_output(&["--files-from", "files.txt"]);
+        assert!(matches!(result, CliRunResult::LintNoFilesFound));
+
+        let (_, result) =
+            tester.test_output(&["--files-from", "files.txt", "--no-error-on-unmatched-pattern"]);
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+    }
+
+    #[test]
+    fn files_from_preserves_parent_path_rejection() {
+        let directory = tempfile::tempdir().unwrap();
+        fs::write(directory.path().join("inside.js"), "debugger;\n").unwrap();
+        fs::write(directory.path().join("files.txt"), "inside.js\n../outside.js\n").unwrap();
+        let (_, result) = Tester::new()
+            .with_cwd(directory.path().to_path_buf())
+            .test_output(&["--files-from", "files.txt"]);
+        assert!(matches!(result, CliRunResult::InvalidOptionFilesFrom));
     }
 
     // lints the full directory of fixtures,

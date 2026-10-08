@@ -68,6 +68,12 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub suppression_options: SuppressionOptions,
 
+    /// Read additional newline-separated paths from FILE; use - for stdin.
+    /// Paths are relative to the current working directory, not the file list.
+    /// Empty lines are ignored. An empty list does not default to linting the current directory.
+    #[bpaf(long("files-from"), argument("FILE"), hide_usage)]
+    pub files_from: Option<PathBuf>,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
