@@ -2352,7 +2352,7 @@ impl<'a> VisitJs<'a> for FindInOperatorInArrowBody {
         if self.found {
             return;
         }
-        let is_block_body = !it.expression;
+        let is_block_body = !it.is_expression();
         if is_block_body {
             self.arrow_body_depth += 1;
         }
