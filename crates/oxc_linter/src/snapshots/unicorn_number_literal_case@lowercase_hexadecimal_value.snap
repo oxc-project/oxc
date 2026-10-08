@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(number-literal-case): Unexpected hexadecimal digits in uppercase.
+   ╭─[number_literal_case.tsx:1:15]
+ 1 │ const foo = 0xABCDEF
+   ·               ──────
+   ╰────
+  help: Use lowercase for hexadecimal digits.
+
+  ⚠ unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
+   ╭─[number_literal_case.tsx:1:14]
+ 1 │ const foo = 0Xabcdef
+   ·              ─
+   ╰────
+  help: Use lowercase for the number literal prefix `0x`.
+
+  ⚠ unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in uppercase.
+   ╭─[number_literal_case.tsx:1:13]
+ 1 │ const foo = 0XaBcD_EFn
+   ·             ──────────
+   ╰────
+  help: Use lowercase for the number literal prefix `0x` and lowercase for hexadecimal digits.
