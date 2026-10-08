@@ -1399,16 +1399,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let has_comments = self.cur_token().has_preceding_comment();
             self.bump_any(); // bump operator
             let rhs_start = self.cur_start();
-            let has_comments = has_comments || self.cur_token().has_preceding_comment();
-            let rhs = self.parse_binary_expression_or_higher(left_precedence);
-            if has_comments {
-                self.assign_sibling_comments(
-                    lhs.node_id(),
-                    lhs.span().end,
-                    rhs.node_id(),
-                    rhs_start,
-                );
-            }
+            let rhs = if has_comments || self.cur_token().has_preceding_comment() {
+                self.parse_binary_operand_with_comments(&lhs, left_precedence, rhs_start)
+            } else {
+                self.parse_binary_expression_or_higher(left_precedence)
+            };
 
             lhs = if kind.is_logical_operator() {
                 let span = self.end_span(lhs_start);
@@ -1458,6 +1453,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         lhs
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn parse_binary_operand_with_comments(
+        &mut self,
+        lhs: &Expression<'a>,
+        precedence: Precedence,
+        rhs_start: u32,
+    ) -> Expression<'a> {
+        let rhs = self.parse_binary_expression_or_higher(precedence);
+        self.assign_sibling_comments(lhs.node_id(), lhs.span().end, rhs.node_id(), rhs_start);
+        rhs
     }
 
     /// Section 13.14 Conditional Expression
