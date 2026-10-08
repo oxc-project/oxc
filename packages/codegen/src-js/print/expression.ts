@@ -12,7 +12,6 @@ import {
   CAT_OP_UN_NOT,
   CAT_OP_LT_THEN_UN_NOT,
   CAT_OTHER,
-  CAT_QUESTION,
   CAT_START_OF_ARROW_EXPR,
   CAT_START_OF_STMT,
 } from "./categories.ts";
@@ -288,15 +287,17 @@ export function printMemberExpression(
   } else {
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
 
-    if (node.optional) {
-      write(state, "?", CAT_QUESTION);
-    } else {
-      debugAssertLastFresh(state);
-      // `0.toExponential()` is invalid; `0 .toExponential()` is valid
-      if (state.last === CAT_INT_DIGIT) write(state, " ", CAT_OTHER);
-    }
-
-    write(state, ".", CAT_OTHER);
+    debugAssertLastFresh(state);
+    write(
+      state,
+      node.optional
+        ? "?."
+        : // `0.toExponential()` is invalid. Add a space before the dot -> `0 .toExponential()`.
+          state.last === CAT_INT_DIGIT
+          ? " ."
+          : ".",
+      CAT_OTHER,
+    );
 
     const { property } = node;
     if (property.type === "PrivateIdentifier") {
