@@ -29,7 +29,7 @@ use crate::react_compiler_hir::visitors::{
 };
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, IdentifierId,
-    InstructionValue, MutationReason, ParamPattern, Place, Terminal, is_jsx_type,
+    InstructionValue, MutationReason, ParamPattern, Place, Terminal, Type, is_jsx_type,
     is_primitive_type,
 };
 use oxc_span::Span;
@@ -380,6 +380,32 @@ impl AliasingState {
             if entry.transitive {
                 for (capture, when) in &node_captures {
                     if *when >= index {
+                        continue;
+                    }
+                    // Capturing a function-valued binding does not execute it.
+                    // Preserve the propagation when this function body calls
+                    // the capture directly, but do not infer execution merely
+                    // because an invoked closure captures a callback (for
+                    // example an onClick handler).
+                    let is_called_by_function = match node.value {
+                        NodeValue::Function { function_id } => {
+                            env.functions[function_id].instructions.iter().any(|instr| {
+                                matches!(
+                                    &instr.value,
+                                    InstructionValue::CallExpression { callee, .. }
+                                        if env.identifiers[callee.identifier].declaration_id
+                                            == env.identifiers[*capture].declaration_id
+                                )
+                            })
+                        }
+                        _ => false,
+                    };
+                    if !is_called_by_function
+                        && matches!(
+                            env.types[env.identifiers[*capture].type_],
+                            Type::Function { .. }
+                        )
+                    {
                         continue;
                     }
                     queue.push(QueueEntry {

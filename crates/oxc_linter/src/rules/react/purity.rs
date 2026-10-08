@@ -106,6 +106,63 @@ function Component() {
 }
 
 #[test]
+fn event_handler_created_inside_map_is_not_rendered() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        // The handler's impure call only runs after a click, not while rendering the list.
+        "
+const ITEMS = [{ id: 'a' }, { id: 'b' }];
+export function Component({ onPick }) {
+  function handlePick(item) {
+    onPick(item.id, Date.now());
+  }
+  return <div>{ITEMS.map((item) => <button key={item.id} onClick={() => handlePick(item)} />)}</div>;
+}
+",
+        // An inline event handler may itself call an impure function.
+        "
+const ITEMS = [{ id: 'a' }, { id: 'b' }];
+export function Component() {
+  return <div>{ITEMS.map((item) => <button key={item.id} onClick={() => Date.now()} />)}</div>;
+}
+",
+        // Passing the handler directly has the same event-time behavior.
+        "
+const ITEMS = [{ id: 'a' }, { id: 'b' }];
+export function Component() {
+  function handlePick() {
+    Date.now();
+  }
+  return <div>{ITEMS.map((item) => <button key={item.id} onClick={handlePick} />)}</div>;
+}
+",
+        // The same helper is safe when its event wrapper is outside the map callback.
+        "
+const ITEMS = [{ id: 'a' }, { id: 'b' }];
+export function Component({ onPick }) {
+  function handlePick(item) {
+    onPick(item.id, Date.now());
+  }
+  return <div><button onClick={() => handlePick(ITEMS[0])} /></div>;
+}
+",
+    ];
+
+    let fail = vec![
+        // Calls from the map callback itself still execute during render.
+        "
+const ITEMS = [{ id: 'a' }, { id: 'b' }];
+export function Component() {
+  return <div>{ITEMS.map((item) => Date.now())}</div>;
+}
+",
+    ];
+
+    Tester::new(Purity::NAME, Purity::PLUGIN, pass, fail).intentionally_allow_no_fix_tests().test();
+}
+
+#[test]
 fn skips_node_modules() {
     use std::path::PathBuf;
 
