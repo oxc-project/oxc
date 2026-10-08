@@ -1,0 +1,206 @@
+use memchr::{memchr, memmem};
+
+use super::{JSChar, JSChars, JSStr};
+use crate::wtf8::*;
+
+mod private {
+    pub trait Sealed {}
+}
+
+/// A search pattern for [`JSStr`]: `&str`, `char`, or `FnMut(char) -> bool`.
+///
+/// Character patterns and predicates never match lone surrogates; predicates
+/// are not called for them. Even a negated predicate such as
+/// `|c: char| !c.is_whitespace()` does not match a lone surrogate.
+/// Use [`JSStr::chars`] to inspect every code point, including surrogates.
+pub trait JSStrPattern: private::Sealed {
+    /// Return whether `haystack` contains this pattern.
+    #[expect(clippy::wrong_self_convention, reason = "mirrors std's `Pattern::is_contained_in`")]
+    fn is_contained_in(self, haystack: JSStr<'_>) -> bool
+    where
+        Self: Sized,
+    {
+        self.find_in(haystack).is_some()
+    }
+
+    /// Return the WTF-8 byte offset of the first match in `haystack`, or `None`.
+    fn find_in(self, haystack: JSStr<'_>) -> Option<usize>;
+
+    /// Return the WTF-8 byte offset of the last match in `haystack`, or `None`.
+    fn rfind_in(self, haystack: JSStr<'_>) -> Option<usize>;
+
+    /// Return whether this pattern matches the start of `haystack`.
+    #[expect(clippy::wrong_self_convention, reason = "mirrors std's `Pattern::is_prefix_of`")]
+    fn is_prefix_of(self, haystack: JSStr<'_>) -> bool;
+
+    /// Return whether this pattern matches the end of `haystack`.
+    #[expect(clippy::wrong_self_convention, reason = "mirrors std's `Pattern::is_suffix_of`")]
+    fn is_suffix_of(self, haystack: JSStr<'_>) -> bool;
+}
+
+impl private::Sealed for &str {}
+
+// UTF-8 patterns cannot start or end inside a WTF-8 code point or match a lone
+// surrogate's encoding, so byte searches preserve code point boundaries.
+impl JSStrPattern for &str {
+    #[inline]
+    fn is_contained_in(self, haystack: JSStr<'_>) -> bool {
+        match haystack.as_str() {
+            Some(haystack) => haystack.contains(self),
+            None => memmem::find(haystack.as_bytes(), self.as_bytes()).is_some(),
+        }
+    }
+
+    #[inline]
+    fn find_in(self, haystack: JSStr<'_>) -> Option<usize> {
+        memmem::find(haystack.as_bytes(), self.as_bytes())
+    }
+
+    #[inline]
+    fn rfind_in(self, haystack: JSStr<'_>) -> Option<usize> {
+        match haystack.as_str() {
+            Some(haystack) => haystack.rfind(self),
+            None => memmem::rfind(haystack.as_bytes(), self.as_bytes()),
+        }
+    }
+
+    #[inline]
+    fn is_prefix_of(self, haystack: JSStr<'_>) -> bool {
+        haystack.as_bytes().starts_with(self.as_bytes())
+    }
+
+    #[inline]
+    fn is_suffix_of(self, haystack: JSStr<'_>) -> bool {
+        haystack.as_bytes().ends_with(self.as_bytes())
+    }
+}
+
+impl private::Sealed for char {}
+
+impl JSStrPattern for char {
+    #[inline]
+    fn is_contained_in(self, haystack: JSStr<'_>) -> bool {
+        // ASCII bytes cannot occur inside a multibyte WTF-8 code point.
+        if self.is_ascii() {
+            return memchr(self as u8, haystack.as_bytes()).is_some();
+        }
+        match haystack.as_str() {
+            Some(haystack) => haystack.contains(self),
+            None => self.encode_utf8(&mut [0; 4]).find_in(haystack).is_some(),
+        }
+    }
+
+    #[inline]
+    fn find_in(self, haystack: JSStr<'_>) -> Option<usize> {
+        if self.is_ascii() {
+            return memchr(self as u8, haystack.as_bytes());
+        }
+        match haystack.as_str() {
+            Some(haystack) => haystack.find(self),
+            None => self.encode_utf8(&mut [0; 4]).find_in(haystack),
+        }
+    }
+
+    #[inline]
+    fn rfind_in(self, haystack: JSStr<'_>) -> Option<usize> {
+        match haystack.as_str() {
+            Some(haystack) => haystack.rfind(self),
+            None => self.encode_utf8(&mut [0; 4]).rfind_in(haystack),
+        }
+    }
+
+    #[inline]
+    fn is_prefix_of(self, haystack: JSStr<'_>) -> bool {
+        self.encode_utf8(&mut [0; 4]).is_prefix_of(haystack)
+    }
+
+    #[inline]
+    fn is_suffix_of(self, haystack: JSStr<'_>) -> bool {
+        self.encode_utf8(&mut [0; 4]).is_suffix_of(haystack)
+    }
+}
+
+// `FnMut` is a fundamental trait, so this blanket impl cannot overlap with the
+// concrete impls above.
+impl<F: FnMut(char) -> bool> private::Sealed for F {}
+
+impl<F: FnMut(char) -> bool> JSStrPattern for F {
+    #[inline]
+    fn find_in(self, haystack: JSStr<'_>) -> Option<usize> {
+        find_char(haystack, self)
+    }
+
+    #[inline]
+    fn rfind_in(self, haystack: JSStr<'_>) -> Option<usize> {
+        rfind_char(haystack, self)
+    }
+
+    #[inline]
+    fn is_prefix_of(self, haystack: JSStr<'_>) -> bool {
+        first_char_matches(haystack, self)
+    }
+
+    #[inline]
+    fn is_suffix_of(self, haystack: JSStr<'_>) -> bool {
+        last_char_matches(haystack, self)
+    }
+}
+
+/// Iterate code points with their WTF-8 byte offsets.
+fn char_offsets(haystack: JSStr<'_>) -> impl Iterator<Item = (usize, JSChar)> + '_ {
+    let len = haystack.len();
+    let mut chars = JSChars { remaining: haystack.as_bytes() };
+    std::iter::from_fn(move || {
+        let offset = len - chars.remaining.len();
+        chars.next().map(|c| (offset, c))
+    })
+}
+
+/// Decode the last code point, if any.
+fn last_char(haystack: JSStr<'_>) -> Option<JSChar> {
+    let bytes = haystack.as_bytes();
+    // The last non-continuation byte starts the final code point,
+    // and the bytes after it are exactly that code point's continuation bytes.
+    let start = bytes.iter().rposition(|&byte| byte & !CONT_MASK != CONT_TAG)?;
+    JSChars { remaining: &bytes[start..] }.next()
+}
+
+fn find_char(haystack: JSStr<'_>, mut matches: impl FnMut(char) -> bool) -> Option<usize> {
+    match haystack.as_str() {
+        Some(haystack) => haystack.find(matches),
+        None => char_offsets(haystack)
+            .find(|(_, c)| c.to_char().is_some_and(&mut matches))
+            .map(|(offset, _)| offset),
+    }
+}
+
+fn rfind_char(haystack: JSStr<'_>, mut matches: impl FnMut(char) -> bool) -> Option<usize> {
+    if let Some(haystack) = haystack.as_str() {
+        return haystack.rfind(matches);
+    }
+    // Walk code points from the end, as `str::rfind` does, so the predicate sees
+    // them in the same order.
+    // Each non-continuation byte starts a code point, and the bytes up to the previous start
+    // are exactly that point.
+    let bytes = haystack.as_bytes();
+    let mut end = bytes.len();
+    while let Some(start) = bytes[..end].iter().rposition(|&byte| byte & !CONT_MASK != CONT_TAG) {
+        let c = JSChars { remaining: &bytes[start..end] }.next();
+        if c.and_then(JSChar::to_char).is_some_and(&mut matches) {
+            return Some(start);
+        }
+        end = start;
+    }
+    None
+}
+
+fn first_char_matches(haystack: JSStr<'_>, matches: impl FnMut(char) -> bool) -> bool {
+    haystack.chars().next().and_then(JSChar::to_char).is_some_and(matches)
+}
+
+fn last_char_matches(haystack: JSStr<'_>, matches: impl FnMut(char) -> bool) -> bool {
+    match haystack.as_str() {
+        Some(haystack) => haystack.ends_with(matches),
+        None => last_char(haystack).and_then(JSChar::to_char).is_some_and(matches),
+    }
+}
