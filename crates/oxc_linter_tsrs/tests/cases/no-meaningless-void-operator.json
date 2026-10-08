@@ -1,0 +1,80 @@
+{
+  "source": "no_meaningless_void_operator_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n(() =\u003e {})();\n\nfunction foo() {}\nfoo(); // nothing to discard\n\nfunction bar(x: number) {\n  void x;\n  return 2;\n}\nvoid bar(); // discarding a number\n    "
+        },
+        {
+          "code": "\nfunction bar(x: never) {\n  void x;\n}\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "void (() =\u003e {})();",
+          "output": [
+            " (() =\u003e {})();"
+          ],
+          "errors": [
+            {
+              "messageId": "meaninglessVoidOperator",
+              "line": 1,
+              "column": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo() {}\nvoid foo();\n      ",
+          "output": [
+            "\nfunction foo() {}\n foo();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "meaninglessVoidOperator",
+              "line": 3,
+              "column": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction bar(x: never) {\n  void x;\n}\n      ",
+          "options": {
+            "checkNever": true
+          },
+          "errors": [
+            {
+              "messageId": "meaninglessVoidOperator",
+              "line": 3,
+              "column": 3,
+              "suggestions": [
+                {
+                  "messageId": "removeVoid",
+                  "output": "\nfunction bar(x: never) {\n   x;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = (() =\u003e {}) as (() =\u003e void) | undefined;\nvoid foo?.();\n      ",
+          "output": [
+            "\nconst foo = (() =\u003e {}) as (() =\u003e void) | undefined;\n foo?.();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "meaninglessVoidOperator",
+              "line": 3,
+              "column": 1,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

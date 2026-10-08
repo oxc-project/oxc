@@ -1,0 +1,1815 @@
+{
+  "source": "strict_boolean_expressions_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "true ? 'a' : 'b';"
+        },
+        {
+          "code": "\n\tif (false) {\n\t}\n    "
+        },
+        {
+          "code": "while (true) {}"
+        },
+        {
+          "code": "for (; false; ) {}"
+        },
+        {
+          "code": "!true;"
+        },
+        {
+          "code": "false || 123;"
+        },
+        {
+          "code": "true \u0026\u0026 'foo';"
+        },
+        {
+          "code": "!(false || true);"
+        },
+        {
+          "code": "true \u0026\u0026 false ? true : false;"
+        },
+        {
+          "code": "(false \u0026\u0026 true) || false;"
+        },
+        {
+          "code": "(false \u0026\u0026 true) || [];"
+        },
+        {
+          "code": "(false \u0026\u0026 1) || (true \u0026\u0026 2);"
+        },
+        {
+          "code": "\ndeclare const x: boolean;\nif (x) {\n}\n    "
+        },
+        {
+          "code": "(x: boolean) =\u003e !x;"
+        },
+        {
+          "code": "\u003cT extends boolean\u003e(x: T) =\u003e (x ? 1 : 0);"
+        },
+        {
+          "code": "\ndeclare const x: never;\nif (x) {\n}\n    "
+        },
+        {
+          "code": "\nif ('') {\n}\n    "
+        },
+        {
+          "code": "while ('x') {}"
+        },
+        {
+          "code": "for (; ''; ) {}"
+        },
+        {
+          "code": "('' \u0026\u0026 '1') || x;"
+        },
+        {
+          "code": "\ndeclare const x: string;\nif (x) {\n}\n    "
+        },
+        {
+          "code": "(x: string) =\u003e !x;"
+        },
+        {
+          "code": "\u003cT extends string\u003e(x: T) =\u003e (x ? 1 : 0);"
+        },
+        {
+          "code": "\nif (0) {\n}\n    "
+        },
+        {
+          "code": "while (1n) {}"
+        },
+        {
+          "code": "for (; Infinity; ) {}"
+        },
+        {
+          "code": "(0 / 0 \u0026\u0026 1 + 2) || x;"
+        },
+        {
+          "code": "\ndeclare const x: number;\nif (x) {\n}\n    "
+        },
+        {
+          "code": "(x: bigint) =\u003e !x;"
+        },
+        {
+          "code": "\u003cT extends number\u003e(x: T) =\u003e (x ? 1 : 0);"
+        },
+        {
+          "code": "\ndeclare const x: null | object;\nif (x) {\n}\n    "
+        },
+        {
+          "code": "(x?: { a: any }) =\u003e !x;"
+        },
+        {
+          "code": "\u003cT extends {} | null | undefined\u003e(x: T) =\u003e (x ? 1 : 0);"
+        },
+        {
+          "code": "\n        declare const x: boolean | null;\n        if (x) {\n        }\n      ",
+          "options": {
+            "allowNullableBoolean": true
+          }
+        },
+        {
+          "code": "\n        (x?: boolean) =\u003e !x;\n      ",
+          "options": {
+            "allowNullableBoolean": true
+          }
+        },
+        {
+          "code": "\n        \u003cT extends boolean | null | undefined\u003e(x: T) =\u003e (x ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableBoolean": true
+          }
+        },
+        {
+          "code": "\n        const a: (undefined | boolean | null)[] = [true, undefined, null];\n        a.some(x =\u003e x);\n      ",
+          "options": {
+            "allowNullableBoolean": true
+          }
+        },
+        {
+          "code": "\n        declare const x: string | null;\n        if (x) {\n        }\n      ",
+          "options": {
+            "allowNullableString": true
+          }
+        },
+        {
+          "code": "\n        (x?: string) =\u003e !x;\n      ",
+          "options": {
+            "allowNullableString": true
+          }
+        },
+        {
+          "code": "\n        \u003cT extends string | null | undefined\u003e(x: T) =\u003e (x ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableString": true
+          }
+        },
+        {
+          "code": "\n        declare const x: number | null;\n        if (x) {\n        }\n      ",
+          "options": {
+            "allowNullableNumber": true
+          }
+        },
+        {
+          "code": "\n        (x?: number) =\u003e !x;\n      ",
+          "options": {
+            "allowNullableNumber": true
+          }
+        },
+        {
+          "code": "\n        \u003cT extends number | null | undefined\u003e(x: T) =\u003e (x ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableNumber": true
+          }
+        },
+        {
+          "code": "\n        declare const arrayOfArrays: (null | unknown[])[];\n        const isAnyNonEmptyArray1 = arrayOfArrays.some(array =\u003e array?.length);\n      ",
+          "options": {
+            "allowNullableNumber": true
+          }
+        },
+        {
+          "code": "\n        declare const x: any;\n        if (x) {\n        }\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\n        x =\u003e !x;\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\n        \u003cT extends any\u003e(x: T) =\u003e (x ? 1 : 0);\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\n        declare const arrayOfArrays: any[];\n        const isAnyNonEmptyArray1 = arrayOfArrays.some(array =\u003e array);\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\n        1 \u0026\u0026 true \u0026\u0026 'x' \u0026\u0026 {};\n      ",
+          "options": {
+            "allowNumber": true,
+            "allowString": true
+          }
+        },
+        {
+          "code": "\n        let x = 0 || false || '' || null;\n      ",
+          "options": {
+            "allowNumber": true,
+            "allowString": true
+          }
+        },
+        {
+          "code": "\n        if (1 \u0026\u0026 true \u0026\u0026 'x') void 0;\n      ",
+          "options": {
+            "allowNumber": true,
+            "allowString": true
+          }
+        },
+        {
+          "code": "\n        if (0 || false || '') void 0;\n      ",
+          "options": {
+            "allowNumber": true,
+            "allowString": true
+          }
+        },
+        {
+          "code": "\n        1 \u0026\u0026 true \u0026\u0026 'x' ? {} : null;\n      ",
+          "options": {
+            "allowNumber": true,
+            "allowString": true
+          }
+        },
+        {
+          "code": "\n        0 || false || '' ? null : {};\n      ",
+          "options": {
+            "allowNumber": true,
+            "allowString": true
+          }
+        },
+        {
+          "code": "\n        declare const arrayOfArrays: string[];\n        const isAnyNonEmptyArray1 = arrayOfArrays.some(array =\u003e array);\n      ",
+          "options": {
+            "allowString": true
+          }
+        },
+        {
+          "code": "\n        declare const arrayOfArrays: number[];\n        const isAnyNonEmptyArray1 = arrayOfArrays.some(array =\u003e array);\n      ",
+          "options": {
+            "allowNumber": true
+          }
+        },
+        {
+          "code": "\n        declare const arrayOfArrays: (null | object)[];\n        const isAnyNonEmptyArray1 = arrayOfArrays.some(array =\u003e array);\n      ",
+          "options": {
+            "allowNullableObject": true
+          }
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 0,\n          That = 1,\n        }\n        const rand = Math.random();\n        let theEnum: ExampleEnum | null = null;\n        if (rand \u003c 0.3) {\n          theEnum = ExampleEnum.This;\n        }\n        if (theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": true
+          }
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 0,\n          That = 1,\n        }\n        const rand = Math.random();\n        let theEnum: ExampleEnum | null = null;\n        if (rand \u003c 0.3) {\n          theEnum = ExampleEnum.This;\n        }\n        if (!theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": true
+          }
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 1,\n          That = 2,\n        }\n        const rand = Math.random();\n        let theEnum: ExampleEnum | null = null;\n        if (rand \u003c 0.3) {\n          theEnum = ExampleEnum.This;\n        }\n        if (!theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": true
+          }
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 'one',\n          That = 'two',\n        }\n        const rand = Math.random();\n        let theEnum: ExampleEnum | null = null;\n        if (rand \u003c 0.3) {\n          theEnum = ExampleEnum.This;\n        }\n        if (!theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": true
+          }
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 0,\n          That = 'one',\n        }\n        (value?: ExampleEnum) =\u003e (value ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableEnum": true
+          }
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = '',\n          That = 1,\n        }\n        (value?: ExampleEnum) =\u003e (!value ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableEnum": true
+          }
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 'this',\n          That = 1,\n        }\n        (value?: ExampleEnum) =\u003e (!value ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableEnum": true
+          }
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = '',\n          That = 0,\n        }\n        (value?: ExampleEnum) =\u003e (!value ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableEnum": true
+          }
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = '',\n          That = 0,\n        }\n        declare const arrayOfArrays: (ExampleEnum | null)[];\n        const isAnyNonEmptyArray1 = arrayOfArrays.some(array =\u003e array);\n      ",
+          "options": {
+            "allowNullableEnum": true
+          }
+        },
+        {
+          "code": "\nfunction f(arg: 'a' | null) {\n  if (arg) console.log(arg);\n}\n    "
+        },
+        {
+          "code": "\nfunction f(arg: 'a' | 'b' | null) {\n  if (arg) console.log(arg);\n}\n    "
+        },
+        {
+          "code": "\ndeclare const x: 1 | null;\ndeclare const y: 1;\nif (x) {\n}\nif (y) {\n}\n      ",
+          "options": {
+            "allowNumber": true
+          }
+        },
+        {
+          "code": "\nfunction f(arg: 1 | null) {\n  if (arg) console.log(arg);\n}\n    "
+        },
+        {
+          "code": "\nfunction f(arg: 1 | 2 | null) {\n  if (arg) console.log(arg);\n}\n    "
+        },
+        {
+          "code": "\ninterface Options {\n  readonly enableSomething?: true;\n}\n\nfunction f(opts: Options): void {\n  if (opts.enableSomething) console.log('Do something');\n}\n    "
+        },
+        {
+          "code": "\ndeclare const x: true | null;\nif (x) {\n}\n    "
+        },
+        {
+          "code": "\ndeclare const x: 'a' | null;\ndeclare const y: 'a';\nif (x) {\n}\nif (y) {\n}\n      ",
+          "options": {
+            "allowString": true
+          }
+        },
+        {
+          "code": "\ndeclare const foo: boolean \u0026 { __BRAND: 'Foo' };\nif (foo) {\n}\n    "
+        },
+        {
+          "code": "\ndeclare const foo: true \u0026 { __BRAND: 'Foo' };\nif (foo) {\n}\n    "
+        },
+        {
+          "code": "\ndeclare const foo: false \u0026 { __BRAND: 'Foo' };\nif (foo) {\n}\n    "
+        },
+        {
+          "code": "\ndeclare function assert(a: number, b: unknown): asserts a;\ndeclare const nullableString: string | null;\ndeclare const boo: boolean;\nassert(boo, nullableString);\n    "
+        },
+        {
+          "code": "\ndeclare function assert(a: boolean, b: unknown): asserts b is string;\ndeclare const nullableString: string | null;\ndeclare const boo: boolean;\nassert(boo, nullableString);\n    "
+        },
+        {
+          "code": "\ndeclare function assert(a: number, b: unknown): asserts b;\ndeclare const nullableString: string | null;\ndeclare const boo: boolean;\nassert(nullableString, boo);\n    "
+        },
+        {
+          "code": "\ndeclare function assert(a: number, b: unknown): asserts b;\ndeclare const nullableString: string | null;\ndeclare const boo: boolean;\nassert(...nullableString, nullableString);\n    "
+        },
+        {
+          "code": "\ndeclare function assert(\n  this: object,\n  a: number,\n  b?: unknown,\n  c?: unknown,\n): asserts c;\ndeclare const nullableString: string | null;\ndeclare const foo: number;\nconst o: { assert: typeof assert } = {\n  assert,\n};\no.assert(foo, nullableString);\n    "
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): x is string;\ndeclare const nullableString: string | null;\nassert(nullableString);\n      "
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): asserts missing;\ndeclare const nullableString: string | null;\nassert(nullableString);\n      "
+        },
+        {
+          "code": "\nclass ThisAsserter {\n  assertThis(this: unknown, arg2: unknown): asserts this {}\n}\n\ndeclare const lol: string | number | unknown | null;\n\nconst thisAsserter: ThisAsserter = new ThisAsserter();\nthisAsserter.assertThis(lol);\n      "
+        },
+        {
+          "code": "\nfunction assert(this: object, a: number, b: unknown): asserts b;\nfunction assert(a: bigint, b: unknown): asserts b;\nfunction assert(this: object, a: string, two: string): asserts two;\nfunction assert(\n  this: object,\n  a: string,\n  assertee: string,\n  c: bigint,\n  d: object,\n): asserts assertee;\nfunction assert(...args: any[]): void;\n\nfunction assert(...args: any[]) {\n  throw new Error('lol');\n}\n\ndeclare const nullableString: string | null;\nassert(3 as any, nullableString);\n      "
+        },
+        {
+          "code": "\ndeclare const assert: any;\ndeclare const nullableString: string | null;\nassert(nullableString);\n    "
+        },
+        {
+          "code": "\n      for (let x = 0; ; x++) {\n        break;\n      }\n    "
+        },
+        {
+          "code": "\n[true, false].some(function (x) {\n  return x;\n});\n    "
+        },
+        {
+          "code": "\n[true, false].some(function check(x) {\n  return x;\n});\n    "
+        },
+        {
+          "code": "\n[true, false].some(x =\u003e {\n  return x;\n});\n    "
+        },
+        {
+          "code": "\n[1, null].filter(function (x) {\n  return x != null;\n});\n    "
+        },
+        {
+          "code": "\n['one', 'two', ''].filter(function (x) {\n  return !!x;\n});\n    "
+        },
+        {
+          "code": "\n['one', 'two', ''].filter(function (x): boolean {\n  return !!x;\n});\n    "
+        },
+        {
+          "code": "\n['one', 'two', ''].filter(function (x): boolean {\n  if (x) {\n    return true;\n  }\n});\n    "
+        },
+        {
+          "code": "\n['one', 'two', ''].filter(function (x): boolean {\n  if (x) {\n    return true;\n  }\n\n  throw new Error('oops');\n});\n    "
+        },
+        {
+          "code": "\ndeclare const predicate: (string) =\u003e boolean;\n['one', 'two', ''].filter(predicate);\n    "
+        },
+        {
+          "code": "\ndeclare function notNullish\u003cT\u003e(x: T): x is NonNullable\u003cT\u003e;\n['one', null].filter(notNullish);\n    "
+        },
+        {
+          "code": "\ndeclare function predicate(x: string | null): x is string;\n['one', null].filter(predicate);\n    "
+        },
+        {
+          "code": "\ndeclare function predicate\u003cT extends boolean\u003e(x: string | null): T;\n['one', null].filter(predicate);\n    "
+        },
+        {
+          "code": "\ndeclare function f(x: number): boolean;\ndeclare function f(x: string | null): boolean;\n\n[35].filter(f);\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nif (true \u0026\u0026 1 + 1) {\n}\n      ",
+          "options": {
+            "allowNullableObject": false,
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "while (false || 'a' + 'b') {}",
+          "options": {
+            "allowNullableObject": false,
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(x: object) =\u003e (true || false || x ? true : false);",
+          "options": {
+            "allowNullableObject": false,
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "if (('' \u0026\u0026 {}) || (0 \u0026\u0026 void 0)) { }",
+          "options": {
+            "allowNullableObject": false,
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const array: string[];\n        array.some(x =\u003e x);\n      ",
+          "options": {
+            "allowNullableBoolean": true,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: true \u0026 { __BRAND: 'Foo' };\nif (('' \u0026\u0026 foo) || (0 \u0026\u0026 void 0)) { }\n      ",
+          "options": {
+            "allowNullableObject": false,
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: false \u0026 { __BRAND: 'Foo' };\nif (('' \u0026\u0026 {}) || (foo \u0026\u0026 void 0)) { }\n      ",
+          "options": {
+            "allowNullableObject": false,
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "'asd' \u0026\u0026 123 \u0026\u0026 [] \u0026\u0026 null;",
+          "options": {
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "'asd' || 123 || [] || null;",
+          "options": {
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let x = (1 \u0026\u0026 'a' \u0026\u0026 null) || 0 || '' || {};",
+          "options": {
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "return (1 || 'a' || null) \u0026\u0026 0 \u0026\u0026 '' \u0026\u0026 {};",
+          "options": {
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "console.log((1 \u0026\u0026 []) || ('a' \u0026\u0026 {}));",
+          "options": {
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "if ((1 \u0026\u0026 []) || ('a' \u0026\u0026 {})) void 0;",
+          "options": {
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let x = null || 0 || 'a' || [] ? {} : undefined;",
+          "options": {
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "return !(null || 0 || 'a' || []);",
+          "options": {
+            "allowNumber": false,
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "null || {};",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "undefined \u0026\u0026 [];",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: null;\nif (x) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(x: undefined) =\u003e !x;",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends null | undefined\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends null\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends undefined\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "[] || 1;",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "({}) \u0026\u0026 'a';",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: symbol;\nif (x) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(x: () =\u003e void) =\u003e !x;",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends object\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends Object | Function\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends { a: number }\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends () =\u003e void\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "while ('') {}",
+          "options": {
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "for (; 'foo'; ) {}",
+          "options": {
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: string;\nif (x) {\n}\n      ",
+          "options": {
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(x: string) =\u003e !x;",
+          "options": {
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends string\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "options": {
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "while (0n) {}",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "for (; 123; ) {}",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: number;\nif (x) {\n}\n      ",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(x: bigint) =\u003e !x;",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends number\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "![]['length']; // doesn't count as array.length when computed",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: any[] \u0026 { notLength: number };\nif (a.notLength) {\n}\n      ",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nif (![].length) {\n}\n      ",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n(a: number[]) =\u003e a.length \u0026\u0026 '...';\n      ",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n\u003cT extends unknown[]\u003e(...a: T) =\u003e a.length || 'empty';\n      ",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: string | number;\nif (x) {\n}\n      ",
+          "options": {
+            "allowNumber": true,
+            "allowString": true
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorOther",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(x: bigint | string) =\u003e !x;",
+          "options": {
+            "allowNumber": true,
+            "allowString": true
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorOther",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends number | bigint | string\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "options": {
+            "allowNumber": true,
+            "allowString": true
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorOther",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: boolean | null;\nif (x) {\n}\n      ",
+          "options": {
+            "allowNullableBoolean": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableBoolean",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(x?: boolean) =\u003e !x;",
+          "options": {
+            "allowNullableBoolean": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableBoolean",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends boolean | null | undefined\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "options": {
+            "allowNullableBoolean": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableBoolean",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: object | null;\nif (x) {\n}\n      ",
+          "options": {
+            "allowNullableObject": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(x?: { a: number }) =\u003e !x;",
+          "options": {
+            "allowNullableObject": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends {} | null | undefined\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "options": {
+            "allowNullableObject": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: string | null;\nif (x) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(x?: string) =\u003e !x;",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends string | null | undefined\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: '' | 'bar' | null) {\n  if (!x) {\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: number | null;\nif (x) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(x?: number) =\u003e !x;",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends number | null | undefined\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: 0 | 1 | null) {\n  if (!x) {\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 0,\n          That = 1,\n        }\n        const theEnum = Math.random() \u003c 0.3 ? ExampleEnum.This : null;\n        if (theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 0,\n          That = 1,\n        }\n        const theEnum = Math.random() \u003c 0.3 ? ExampleEnum.This : null;\n        if (!theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This,\n          That,\n        }\n        const theEnum = Math.random() \u003c 0.3 ? ExampleEnum.This : null;\n        if (!theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = '',\n          That = 'a',\n        }\n        const theEnum = Math.random() \u003c 0.3 ? ExampleEnum.This : null;\n        if (!theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = '',\n          That = 0,\n        }\n        const theEnum = Math.random() \u003c 0.3 ? ExampleEnum.This : null;\n        if (!theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 'one',\n          That = 'two',\n        }\n        const theEnum = Math.random() \u003c 0.3 ? ExampleEnum.This : null;\n        if (!theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 1,\n          That = 2,\n        }\n        const theEnum = Math.random() \u003c 0.3 ? ExampleEnum.This : null;\n        if (!theEnum) {\n        }\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 0,\n          That = 'one',\n        }\n        (value?: ExampleEnum) =\u003e (value ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = '',\n          That = 1,\n        }\n        (value?: ExampleEnum) =\u003e (!value ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = 'this',\n          That = 1,\n        }\n        (value?: ExampleEnum) =\u003e (!value ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum ExampleEnum {\n          This = '',\n          That = 0,\n        }\n        (value?: ExampleEnum) =\u003e (!value ? 1 : 0);\n      ",
+          "options": {
+            "allowNullableEnum": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nif (x) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorAny",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "x =\u003e !x;",
+          "errors": [
+            {
+              "messageId": "conditionErrorAny",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT extends any\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorAny",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT,\u003e(x: T) =\u003e (x ? 1 : 0);",
+          "errors": [
+            {
+              "messageId": "conditionErrorAny",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: string[] | null;\nif (x) {\n}\n      ",
+          "tsconfig": "tsconfig.unstrict.json",
+          "errors": [
+            {
+              "messageId": "noStrictNullCheck",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const obj: { x: number } | null;\n        !obj ? 1 : 0\n        !obj\n        obj || 0\n        obj \u0026\u0026 1 || 0\n      ",
+          "options": {
+            "allowNullableObject": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableObject",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNullableObject",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNullableObject",
+              "suggestions": []
+            },
+            {
+              "messageId": "conditionErrorNullableObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): asserts x;\ndeclare const nullableString: string | null;\nassert(nullableString);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assert(a: number, b: unknown): asserts b;\ndeclare const nullableString: string | null;\nassert(foo, nullableString);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assert(a: number, b: unknown): asserts b;\ndeclare function assert(one: number, two: unknown): asserts two;\ndeclare const nullableString: string | null;\nassert(foo, nullableString);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assert(this: object, a: number, b: unknown): asserts b;\ndeclare const nullableString: string | null;\nassert(foo, nullableString);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction asserts1(x: string | number | undefined): asserts x {}\nfunction asserts2(x: string | number | undefined): asserts x {}\n\nconst maybeString = Math.random() ? 'string'.slice() : undefined;\n\nconst someAssert: typeof asserts1 | typeof asserts2 =\n  Math.random() \u003e 0.5 ? asserts1 : asserts2;\n\nsomeAssert(maybeString);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction assert(this: object, a: number, b: unknown): asserts b;\nfunction assert(a: bigint, b: unknown): asserts b;\nfunction assert(this: object, a: string, two: string): asserts two;\nfunction assert(\n  this: object,\n  a: string,\n  assertee: string,\n  c: bigint,\n  d: object,\n): asserts assertee;\n\nfunction assert(...args: any[]) {\n  throw new Error('lol');\n}\n\ndeclare const nullableString: string | null;\nassert(3 as any, nullableString);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction assert(this: object, a: number, b: unknown): asserts b;\nfunction assert(a: bigint, b: unknown): asserts b;\nfunction assert(this: object, a: string, two: string): asserts two;\nfunction assert(\n  this: object,\n  a: string,\n  assertee: string,\n  c: bigint,\n  d: object,\n): asserts assertee;\nfunction assert(a: any, two: unknown, ...rest: any[]): asserts two;\n\nfunction assert(...args: any[]) {\n  throw new Error('lol');\n}\n\ndeclare const nullableString: string | null;\nassert(3 as any, nullableString, 'more', 'args', 'afterwards');\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assert(a: boolean, b: unknown): asserts b;\ndeclare function assert({ a }: { a: boolean }, b: unknown): asserts b;\ndeclare const nullableString: string | null;\ndeclare const boo: boolean;\nassert(boo, nullableString);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction assert(one: unknown): asserts one;\nfunction assert(one: unknown, two: unknown): asserts two;\nfunction assert(...args: unknown[]) {\n  throw new Error('not implemented');\n}\ndeclare const nullableString: string | null;\nassert(nullableString);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n['one', 'two', ''].find(x =\u003e {\n  return x;\n});\n      ",
+          "options": {
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n['one', 'two', ''].find(x =\u003e {\n  return;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n['one', 'two', ''].findLast(x =\u003e {\n  return undefined;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n['one', 'two', ''].find(x =\u003e {\n  if (x) {\n    return Math.random() \u003e 0.5;\n  }\n});\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableBoolean",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst predicate = (x: string) =\u003e {\n  if (x) {\n    return Math.random() \u003e 0.5;\n  }\n};\n\n['one', 'two', ''].find(predicate);\n      ",
+          "options": {
+            "allowNullableBoolean": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableBoolean",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[1, null].every(async x =\u003e {\n  return x != null;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "predicateCannotBeAsync",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst predicate = async x =\u003e {\n  return x != null;\n};\n\n[1, null].every(predicate);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[1, null].every((x): boolean | number =\u003e {\n  return x != null;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorOther",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[1, null].every((x): boolean | undefined =\u003e {\n  return x != null;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableBoolean",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[1, null].every((x, i) =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[() =\u003e {}, null].every((x: () =\u003e void) =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[() =\u003e {}, null].every(function (x: () =\u003e void) {});\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[() =\u003e {}, null].every(() =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function f(x: number): string;\ndeclare function f(x: string | null): boolean;\n\n[35].filter(f);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorOther",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function f(x: number): string;\ndeclare function f(x: number | boolean): boolean;\ndeclare function f(x: string | null): boolean;\n\n[35].filter(f);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorOther",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo\u003cT\u003e(x: number): T;\n[1, null].every(foo);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorAny",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT extends number\u003e(x: number): T {}\n[1, null].every(foo);\n      ",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const nullOrString: string | null;\n['one', null].filter(x =\u003e nullOrString);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const nullOrString: string | null;\n['one', null].filter(x =\u003e !nullOrString);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableString",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const anyValue: any;\n['one', null].filter(x =\u003e anyValue);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorAny",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const nullOrBoolean: boolean | null;\n[true, null].filter(x =\u003e nullOrBoolean);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableBoolean",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nenum ExampleEnum {\n  This = 0,\n  That = 1,\n}\nconst theEnum = Math.random() \u003c 0.3 ? ExampleEnum.This : null;\n[0, 1].filter(x =\u003e theEnum);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableEnum",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const nullOrNumber: number | null;\n[0, null].filter(x =\u003e nullOrNumber);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst objectValue: object = {};\n[{ a: 0 }, {}].filter(x =\u003e objectValue);\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst objectValue: object = {};\n[{ a: 0 }, {}].filter(x =\u003e {\n  return objectValue;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "conditionErrorObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const nullOrObject: object | null;\n[{ a: 0 }, null].filter(x =\u003e nullOrObject);\n      ",
+          "options": {
+            "allowNullableObject": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNullableObject",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst numbers: number[] = [1];\n[1, 2].filter(x =\u003e numbers.length);\n      ",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst numberValue: number = 1;\n[1, 2].filter(x =\u003e numberValue);\n      ",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorNumber",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst stringValue: string = 'hoge';\n['hoge', 'foo'].filter(x =\u003e stringValue);\n      ",
+          "options": {
+            "allowString": false
+          },
+          "errors": [
+            {
+              "messageId": "conditionErrorString",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

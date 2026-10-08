@@ -15,6 +15,8 @@ description.workspace = true
 
 [features]
 default = []
+# Type-aware rules in-process on tsrs (oxc_linter_tsrs) instead of the `tsgolint` subprocess.
+tsrs = ["dep:oxc_linter_tsrs"]
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
 force_test_reporter = []
 
@@ -37,6 +39,7 @@ oxc_diagnostics = { workspace = true }
 oxc_estree_tokens = { workspace = true }
 oxc_ecmascript = { workspace = true, features = ["side_effects"] }
 oxc_index = { workspace = true }
+oxc_linter_tsrs = { workspace = true, optional = true }
 oxc_macros = { workspace = true, features = ["ruledocs"] }
 oxc_parser = { workspace = true }
 oxc_react_compiler = { workspace = true }

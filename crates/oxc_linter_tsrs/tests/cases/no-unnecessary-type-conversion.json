@@ -1,0 +1,825 @@
+{
+  "source": "no_unnecessary_type_conversion_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "String(1);"
+        },
+        {
+          "code": "(1).toString();"
+        },
+        {
+          "code": "`${1}`;"
+        },
+        {
+          "code": "'' + 1;"
+        },
+        {
+          "code": "1 + '';"
+        },
+        {
+          "code": "\n      let str = 1;\n      str += '';\n    "
+        },
+        {
+          "code": "const obj = { prop: 'asdf' }; obj.prop += '';"
+        },
+        {
+          "code": "const arr = ['asdf']; arr[0] += '';"
+        },
+        {
+          "code": "Number('2');"
+        },
+        {
+          "code": "+'2';"
+        },
+        {
+          "code": "~~'2';"
+        },
+        {
+          "code": "~~1.1;"
+        },
+        {
+          "code": "~~-1.1;"
+        },
+        {
+          "code": "~~(1.5 + 2.3);"
+        },
+        {
+          "code": "~~(1 / 3);"
+        },
+        {
+          "code": "Boolean(0);"
+        },
+        {
+          "code": "!!0;"
+        },
+        {
+          "code": "BigInt(3);"
+        },
+        {
+          "code": "new String('asdf');"
+        },
+        {
+          "code": "new Number(2);"
+        },
+        {
+          "code": "new Boolean(true);"
+        },
+        {
+          "code": "!false;"
+        },
+        {
+          "code": "~2;"
+        },
+        {
+          "code": "\n      function String(value: unknown) {\n        return value;\n      }\n      String('asdf');\n      export {};\n    "
+        },
+        {
+          "code": "\n      function Number(value: unknown) {\n        return value;\n      }\n      Number(2);\n      export {};\n    "
+        },
+        {
+          "code": "\n      function Boolean(value: unknown) {\n        return value;\n      }\n      Boolean(true);\n      export {};\n    "
+        },
+        {
+          "code": "\n      function BigInt(value: unknown) {\n        return value;\n      }\n      BigInt(3n);\n      export {};\n    "
+        },
+        {
+          "code": "\n      function toString(value: unknown) {\n        return value;\n      }\n      toString('asdf');\n    "
+        },
+        {
+          "code": "\n      export {};\n      declare const toString: string;\n      toString.toUpperCase();\n    "
+        },
+        {
+          "code": "String(...(['asdf'] as [string]));"
+        },
+        {
+          "code": "String('asdf', console.log('extra'));"
+        },
+        {
+          "code": "'asdf'.toString(console.log('extra'));"
+        },
+        {
+          "code": "String(new String());"
+        },
+        {
+          "code": "new String().toString();"
+        },
+        {
+          "code": "'' + new String();"
+        },
+        {
+          "code": "new String() + '';"
+        },
+        {
+          "code": "\n      let str = new String();\n      str += '';\n    "
+        },
+        {
+          "code": "Number(new Number());"
+        },
+        {
+          "code": "+new Number();"
+        },
+        {
+          "code": "~~new Number();"
+        },
+        {
+          "code": "Boolean(new Boolean());"
+        },
+        {
+          "code": "!!new Boolean();"
+        },
+        {
+          "code": "\n      enum CustomIds {\n        Id1 = 'id1',\n        Id2 = 'id2',\n      }\n      const customId = 'id1';\n      const compareWithToString = customId === CustomIds.Id1.toString();\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "String('asdf');",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 7,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "'asdf';"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "'asdf' satisfies string;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "'asdf'.toString();",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 8,
+              "endColumn": 18,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "'asdf';"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "'asdf' satisfies string;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "'' + 'asdf';",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 6,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "'asdf';"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "'asdf' satisfies string;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "'asdf' + '';",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 7,
+              "endColumn": 12,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "'asdf';"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "'asdf' satisfies string;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nlet str = 'asdf';\nstr += '';\n      ",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "line": 3,
+              "column": 1,
+              "endLine": 3,
+              "endColumn": 10,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "\nlet str = 'asdf';\n\n      "
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "\nlet str = 'asdf';\nstr satisfies string;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nlet str = 'asdf';\n'asdf' + (str += '');\n      ",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 20,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "\nlet str = 'asdf';\n'asdf' + (str);\n      "
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "\nlet str = 'asdf';\n'asdf' + (str satisfies string);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "Number(123);",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 7,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "123;"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "123 satisfies number;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "+123;",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 2,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "123;"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "123 satisfies number;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "~~123;",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 3,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "123;"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "123 satisfies number;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "Boolean(true);",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 8,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "true;"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "true satisfies boolean;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "!!true;",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 3,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "true;"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "true satisfies boolean;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "BigInt(3n);",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 7,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "3n;"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "3n satisfies bigint;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function f\u003cT extends string\u003e(x: T) {\n          return String(x);\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "line": 3,
+              "column": 18,
+              "endLine": 3,
+              "endColumn": 24,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "\n        function f\u003cT extends string\u003e(x: T) {\n          return x;\n        }\n      "
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "\n        function f\u003cT extends string\u003e(x: T) {\n          return x satisfies string;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function f\u003cT extends number\u003e(x: T) {\n          return Number(x);\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "line": 3,
+              "column": 18,
+              "endLine": 3,
+              "endColumn": 24,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "\n        function f\u003cT extends number\u003e(x: T) {\n          return x;\n        }\n      "
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "\n        function f\u003cT extends number\u003e(x: T) {\n          return x satisfies number;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function f\u003cT extends boolean\u003e(x: T) {\n          return Boolean(x);\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "line": 3,
+              "column": 18,
+              "endLine": 3,
+              "endColumn": 25,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "\n        function f\u003cT extends boolean\u003e(x: T) {\n          return x;\n        }\n      "
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "\n        function f\u003cT extends boolean\u003e(x: T) {\n          return x satisfies boolean;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function f\u003cT extends bigint\u003e(x: T) {\n          return BigInt(x);\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "line": 3,
+              "column": 18,
+              "endLine": 3,
+              "endColumn": 24,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "\n        function f\u003cT extends bigint\u003e(x: T) {\n          return x;\n        }\n      "
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "\n        function f\u003cT extends bigint\u003e(x: T) {\n          return x satisfies bigint;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "function f\u003cT extends string\u003e(x: T) { return x + ''; }",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "function f\u003cT extends string\u003e(x: T) { return x; }"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "function f\u003cT extends string\u003e(x: T) { return x satisfies string; }"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "function f\u003cT extends string\u003e(x: T) { return '' + x; }",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "function f\u003cT extends string\u003e(x: T) { return x; }"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "function f\u003cT extends string\u003e(x: T) { return x satisfies string; }"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "function f\u003cT extends string\u003e(x: T) {\nx += '';\nreturn x;\n}\n",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "function f\u003cT extends string\u003e(x: T) {\n\nreturn x;\n}\n"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "function f\u003cT extends string\u003e(x: T) {\nx satisfies string;\nreturn x;\n}\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "function f\u003cT extends number\u003e(x: T) { return +x; }",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "function f\u003cT extends number\u003e(x: T) { return x; }"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "function f\u003cT extends number\u003e(x: T) { return x satisfies number; }"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "function f\u003cT extends boolean\u003e(x: T) { return !!x; }",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "function f\u003cT extends boolean\u003e(x: T) { return x; }"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "function f\u003cT extends boolean\u003e(x: T) { return x satisfies boolean; }"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "function f\u003cT extends 3 | 4\u003e(x: T) { return ~~x; }",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "function f\u003cT extends 3 | 4\u003e(x: T) { return x; }"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "function f\u003cT extends 3 | 4\u003e(x: T) { return x satisfies number; }"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "String('a' + 'b').length;",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 7,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "('a' + 'b').length;"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "(('a' + 'b') satisfies string).length;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "('a' + 'b').toString().length;",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 13,
+              "endColumn": 23,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "('a' + 'b').length;"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "(('a' + 'b') satisfies string).length;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "2 * +(2 + 2);",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 5,
+              "endColumn": 6,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "2 * (2 + 2);"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "2 * ((2 + 2) satisfies number);"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "2 * Number(2 + 2);",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 5,
+              "endColumn": 11,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "2 * (2 + 2);"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "2 * ((2 + 2) satisfies number);"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "false \u0026\u0026 !!(false || true);",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 10,
+              "endColumn": 12,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "false \u0026\u0026 (false || true);"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "false \u0026\u0026 ((false || true) satisfies boolean);"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "false \u0026\u0026 Boolean(false || true);",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 10,
+              "endColumn": 17,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "false \u0026\u0026 (false || true);"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "false \u0026\u0026 ((false || true) satisfies boolean);"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "2n * BigInt(2n + 2n);",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 6,
+              "endColumn": 12,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "2n * (2n + 2n);"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "2n * ((2n + 2n) satisfies bigint);"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        let str = 'asdf';\n        String(str).length;\n      ",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "line": 3,
+              "column": 9,
+              "endLine": 3,
+              "endColumn": 15,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "\n        let str = 'asdf';\n        str.length;\n      "
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "\n        let str = 'asdf';\n        (str satisfies string).length;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        let str = 'asdf';\n        str.toString().length;\n      ",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 13,
+              "endColumn": 23,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "\n        let str = 'asdf';\n        str.length;\n      "
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "\n        let str = 'asdf';\n        (str satisfies string).length;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "~~1;",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 3,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "1;"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "1 satisfies number;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "~~-1;",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "column": 1,
+              "endColumn": 3,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "(-1);"
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "(-1) satisfies number;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const threeOrFour: 3 | 4;\n        ~~threeOrFour;\n      ",
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeConversion",
+              "line": 3,
+              "column": 9,
+              "endColumn": 11,
+              "suggestions": [
+                {
+                  "messageId": "suggestRemove",
+                  "output": "\n        declare const threeOrFour: 3 | 4;\n        threeOrFour;\n      "
+                },
+                {
+                  "messageId": "suggestSatisfies",
+                  "output": "\n        declare const threeOrFour: 3 | 4;\n        threeOrFour satisfies number;\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

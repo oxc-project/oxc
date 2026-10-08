@@ -1,0 +1,1355 @@
+{
+  "source": "no_unnecessary_type_parameters_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.json",
+      "valid": [
+        {
+          "code": "\n      class ClassyArray\u003cT\u003e {\n        arr: T[];\n      }\n    "
+        },
+        {
+          "code": "\n      class ClassyArray\u003cT\u003e {\n        value1: T;\n        value2: T;\n      }\n    "
+        },
+        {
+          "code": "\n      class ClassyArray\u003cT\u003e {\n        arr: T[];\n        constructor(arr: T[]) {\n          this.arr = arr;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class ClassyArray\u003cT\u003e {\n        arr: T[];\n        workWith(value: T) {\n          this.arr.indexOf(value);\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      abstract class ClassyArray\u003cT\u003e {\n        arr: T[];\n        abstract workWith(value: T): void;\n      }\n    "
+        },
+        {
+          "code": "\n      class Box\u003cT\u003e {\n        val: T | null = null;\n        get() {\n          return this.val;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class Joiner\u003cT extends string | number\u003e {\n        join(els: T[]) {\n          return els.map(el =\u003e '' + el).join(',');\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      interface Base\u003cT\u003e {}\n      class Derived\u003cT\u003e implements Base\u003cT\u003e {\n        value: T;\n      }\n    "
+        },
+        {
+          "code": "\n      declare class Foo {\n        getProp\u003cT\u003e(this: Record\u003c'prop', T\u003e): T;\n      }\n    "
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: T) =\u003e T;"
+        },
+        {
+          "code": "type Fn = \u003cT extends string\u003e(input: T) =\u003e T;"
+        },
+        {
+          "code": "type Fn = \u003cT extends string\u003e(input: T) =\u003e `a${T}b`;"
+        },
+        {
+          "code": "type Fn = new \u003cT\u003e(input: T) =\u003e T;"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: T) =\u003e typeof input;"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: T) =\u003e keyof typeof input;"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: Partial\u003cT\u003e) =\u003e typeof input;"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: Partial\u003cT\u003e) =\u003e input is T;"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: T) =\u003e { [K in keyof T]: K };"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: T) =\u003e { [K in keyof T as K]: string };"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: T) =\u003e { [K in keyof T as `${K \u0026 string}`]: string };"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: T) =\u003e Partial\u003cT\u003e;"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: { [i: number]: T }) =\u003e T;"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: { [i: number]: T }) =\u003e Partial\u003cT\u003e;"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: { [i: string]: T }) =\u003e Partial\u003cT\u003e;"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: T) =\u003e { [i: number]: T };"
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(input: T) =\u003e { [i: string]: T };"
+        },
+        {
+          "code": "type Fn = \u003cT extends unknown[]\u003e(input: T) =\u003e Omit\u003cT, 'length'\u003e;"
+        },
+        {
+          "code": "\n      interface I {\n        \u003cT\u003e(value: T): T;\n      }\n    "
+        },
+        {
+          "code": "\n      interface I {\n        new \u003cT\u003e(value: T): T;\n      }\n    "
+        },
+        {
+          "code": "\n      function identity\u003cT\u003e(arg: T): T {\n        return arg;\n      }\n    "
+        },
+        {
+          "code": "\n      function printProperty\u003cT\u003e(obj: T, key: keyof T) {\n        console.log(obj[key]);\n      }\n    "
+        },
+        {
+          "code": "\n      function getProperty\u003cT, K extends keyof T\u003e(obj: T, key: K) {\n        return obj[key];\n      }\n    "
+        },
+        {
+          "code": "\n      function box\u003cT\u003e(val: T) {\n        return { val };\n      }\n    "
+        },
+        {
+          "code": "\n      function doStuff\u003cK, V\u003e(map: Map\u003cK, V\u003e, key: K) {\n        let v = map.get(key);\n        v = 1;\n        map.set(key, v);\n        return v;\n      }\n    "
+        },
+        {
+          "code": "\n      function makeMap\u003cK, V\u003e() {\n        return new Map\u003cK, V\u003e();\n      }\n    "
+        },
+        {
+          "code": "\n      function makeMap\u003cK, V\u003e(ks: K[], vs: V[]) {\n        const r = new Map\u003cK, V\u003e();\n        ks.forEach((k, i) =\u003e {\n          r.set(k, vs[i]);\n        });\n        return r;\n      }\n    "
+        },
+        {
+          "code": "\n      function arrayOfPairs\u003cT\u003e() {\n        return [] as [T, T][];\n      }\n    "
+        },
+        {
+          "code": "\n      function isNonNull\u003cT\u003e(v: T): v is Exclude\u003cT, null\u003e {\n        return v !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function both\u003cArgs extends unknown[]\u003e(\n        fn1: (...args: Args) =\u003e void,\n        fn2: (...args: Args) =\u003e void,\n      ): (...args: Args) =\u003e void {\n        return function (...args: Args) {\n          fn1(...args);\n          fn2(...args);\n        };\n      }\n    "
+        },
+        {
+          "code": "\n      function lengthyIdentity\u003cT extends { length: number }\u003e(x: T) {\n        return x;\n      }\n    "
+        },
+        {
+          "code": "\n      interface Lengthy {\n        length: number;\n      }\n      function lengthyIdentity\u003cT extends Lengthy\u003e(x: T) {\n        return x;\n      }\n    "
+        },
+        {
+          "code": "\n      function ItemComponent\u003cT\u003e(props: { item: T; onSelect: (item: T) =\u003e void }) {}\n    "
+        },
+        {
+          "code": "\n      interface ItemProps\u003cT\u003e {\n        item: readonly T;\n        onSelect: (item: T) =\u003e void;\n      }\n      function ItemComponent\u003cT\u003e(props: ItemProps\u003cT\u003e) {}\n    "
+        },
+        {
+          "code": "\n      function useFocus\u003cT extends HTMLOrSVGElement\u003e(): [\n        React.RefObject\u003cT\u003e,\n        () =\u003e void,\n      ];\n    "
+        },
+        {
+          "code": "\n      function findFirstResult\u003cU\u003e(\n        inputs: unknown[],\n        getResult: (t: unknown) =\u003e U | undefined,\n      ): U | undefined;\n    "
+        },
+        {
+          "code": "\n      function findFirstResult\u003cT, U\u003e(\n        inputs: T[],\n        getResult: (t: T) =\u003e () =\u003e [U | undefined],\n      ): () =\u003e [U | undefined];\n    "
+        },
+        {
+          "code": "\n      function getData\u003cT\u003e(url: string): Promise\u003cT | null\u003e {\n        return Promise.resolve(null);\n      }\n    "
+        },
+        {
+          "code": "\n      function getData\u003cT\u003e(url: string): Promise\u003cT extends null ? T : null\u003e {\n        return Promise.resolve(null);\n      }\n    "
+        },
+        {
+          "code": "\n      function getData\u003cT extends string\u003e(url: string): Promise\u003c`a${T}b`\u003e {\n        return Promise.resolve(null);\n      }\n    "
+        },
+        {
+          "code": "\n      async function getData\u003cT\u003e(url: string): Promise\u003cT | null\u003e {\n        return null;\n      }\n    "
+        },
+        {
+          "code": "declare function get(): void;"
+        },
+        {
+          "code": "declare function get\u003cT\u003e(param: T[]): T;"
+        },
+        {
+          "code": "declare function box\u003cT\u003e(val: T): { val: T };"
+        },
+        {
+          "code": "declare function identity\u003cT\u003e(param: T): T;"
+        },
+        {
+          "code": "declare function compare\u003cT\u003e(param1: T, param2: T): boolean;"
+        },
+        {
+          "code": "declare function example\u003cT\u003e(a: Set\u003cT\u003e): T;"
+        },
+        {
+          "code": "declare function example\u003cT\u003e(a: Set\u003cT\u003e, b: T[]): void;"
+        },
+        {
+          "code": "declare function example\u003cT\u003e(a: Map\u003cT, T\u003e): void;"
+        },
+        {
+          "code": "declare function example\u003cT, U extends T\u003e(t: T, u: U): U;"
+        },
+        {
+          "code": "declare function makeSet\u003cK\u003e(): Set\u003cK\u003e;"
+        },
+        {
+          "code": "declare function makeSet\u003cK\u003e(): [Set\u003cK\u003e];"
+        },
+        {
+          "code": "declare function makeSets\u003cK\u003e(): Set\u003cK\u003e[];"
+        },
+        {
+          "code": "declare function makeSets\u003cK\u003e(): [Set\u003cK\u003e][];"
+        },
+        {
+          "code": "declare function makeMap\u003cK, V\u003e(): Map\u003cK, V\u003e;"
+        },
+        {
+          "code": "declare function makeMap\u003cK, V\u003e(): [Map\u003cK, V\u003e];"
+        },
+        {
+          "code": "declare function makeArray\u003cT\u003e(): T[];"
+        },
+        {
+          "code": "declare function makeArrayNullish\u003cT\u003e(): (T | null)[];"
+        },
+        {
+          "code": "declare function makeTupleMulti\u003cT\u003e(): [T | null, T | null];"
+        },
+        {
+          "code": "declare function takeTupleMulti\u003cT\u003e(input: [T, T]): void;"
+        },
+        {
+          "code": "declare function takeTupleMultiNullish\u003cT\u003e(input: [T | null, T | null]): void;"
+        },
+        {
+          "code": "declare function arrayOfPairs\u003cT\u003e(): [T, T][];"
+        },
+        {
+          "code": "declare function fetchJson\u003cT\u003e(url: string): Promise\u003cT\u003e;"
+        },
+        {
+          "code": "declare function fetchJsonTuple\u003cT\u003e(url: string): Promise\u003c[T]\u003e;"
+        },
+        {
+          "code": "declare function fn\u003cT\u003e(input: T): 0 extends 0 ? T : never;"
+        },
+        {
+          "code": "declare function useFocus\u003cT extends HTMLOrSVGElement\u003e(): [React.RefObject\u003cT\u003e];"
+        },
+        {
+          "code": "\n      declare function useFocus\u003cT extends HTMLOrSVGElement\u003e(): {\n        ref: React.RefObject\u003cT\u003e;\n      };\n    "
+        },
+        {
+          "code": "\n      interface TwoMethods\u003cT\u003e {\n        a(x: T): void;\n        b(x: T): void;\n      }\n\n      declare function two\u003cT\u003e(props: TwoMethods\u003cT\u003e): void;\n    "
+        },
+        {
+          "code": "\n      type Obj = { a: string };\n\n      declare function hasOwnProperty\u003cK extends keyof Obj\u003e(\n        obj: Obj,\n        key: K,\n      ): obj is Obj \u0026 { [key in K]-?: Obj[key] };\n    "
+        },
+        {
+          "code": "\n      type AsMutable\u003cT extends readonly unknown[]\u003e = {\n        -readonly [Key in keyof T]: T[Key];\n      };\n\n      declare function makeMutable\u003cT\u003e(input: T): MakeMutable\u003cT\u003e;\n    "
+        },
+        {
+          "code": "\n      type AsMutable\u003cT extends readonly unknown[]\u003e = {\n        -readonly [Key in keyof T]: T[Key];\n      };\n\n      declare function makeMutable\u003cT\u003e(input: T): MakeMutable\u003ctypeof input\u003e;\n    "
+        },
+        {
+          "code": "\n      type ValueNulls\u003cU extends string\u003e = {} \u0026 {\n        [P in U]: null;\n      };\n\n      declare function invert\u003cT extends string\u003e(obj: T): ValueNulls\u003cT\u003e;\n    "
+        },
+        {
+          "code": "\n      interface Middle {\n        inner: boolean;\n      }\n\n      type Conditional\u003cT extends Middle\u003e = {} \u0026 (T['inner'] extends true ? {} : {});\n\n      function withMiddle\u003cT extends Middle = Middle\u003e(options: T): Conditional\u003cT\u003e {\n        return options;\n      }\n    "
+        },
+        {
+          "code": "\n\n      declare function forEachReturnStatement\u003cT\u003e(\n        body: ts.Block,\n        visitor: (stmt: ts.ReturnStatement) =\u003e T,\n      ): T | undefined;\n    "
+        },
+        {
+          "code": "\n\n      declare const isNodeOfType: \u003cNodeType extends AST_NODE_TYPES\u003e(\n        nodeType: NodeType,\n      ) =\u003e node is Extract\u003cTSESTree.Node, { type: NodeType }\u003e;\n    "
+        },
+        {
+          "code": "\n\n      const isNodeOfType =\n        \u003cNodeType extends AST_NODE_TYPES\u003e(nodeType: NodeType) =\u003e\n        (\n          node: TSESTree.Node | null,\n        ): node is Extract\u003cTSESTree.Node, { type: NodeType }\u003e =\u003e\n          node?.type === nodeType;\n    "
+        },
+        {
+          "code": "\n\n      export const isNotTokenOfTypeWithConditions =\n        \u003c\n          TokenType extends AST_TOKEN_TYPES,\n          ExtractedToken extends Extract\u003cTSESTree.Token, { type: TokenType }\u003e,\n          Conditions extends Partial\u003cExtractedToken\u003e,\n        \u003e(\n          tokenType: TokenType,\n          conditions: Conditions,\n        ): ((\n          token: TSESTree.Token | null | undefined,\n        ) =\u003e token is Exclude\u003cTSESTree.Token, Conditions \u0026 ExtractedToken\u003e) =\u003e\n        (token): token is Exclude\u003cTSESTree.Token, Conditions \u0026 ExtractedToken\u003e =\u003e\n          tokenType in conditions;\n    "
+        },
+        {
+          "code": "\n      type Foo\u003cT, S\u003e = S extends 'somebody'\n        ? T extends 'once'\n          ? 'told'\n          : 'me'\n        : never;\n\n      declare function foo\u003cT\u003e(data: T): \u003cS\u003e(other: S) =\u003e Foo\u003cT, S\u003e;\n    "
+        },
+        {
+          "code": "\n      type Foo\u003cT, S\u003e = S extends 'somebody'\n        ? T extends 'once'\n          ? 'told'\n          : 'me'\n        : never;\n\n      declare function foo\u003cT\u003e(data: T): \u003cS\u003e(other: S) =\u003e Foo\u003cS, T\u003e;\n    "
+        },
+        {
+          "code": "\n      declare function mapObj\u003cK extends string, V\u003e(\n        obj: { [key in K]?: V },\n        fn: (key: K, val: V) =\u003e number,\n      ): number[];\n    "
+        },
+        {
+          "code": "\n      declare function mappedReturnType\u003cT extends string\u003e(\n        x: T,\n      ): { [K in T]: Capitalize\u003cK\u003e };\n\n      function inferredMappedReturnType\u003cT extends string\u003e(x: T) {\n        return mappedReturnType(x);\n      }\n    "
+        },
+        {
+          "code": "\n      declare function mappedReturnType\u003cT extends string\u003e(\n        x: T,\n      ): { [K in T]: Capitalize\u003cK\u003e };\n\n      function inferredMappedReturnType\u003cT extends string\u003e(x: T) {\n        return () =\u003e mappedReturnType(x);\n      }\n    "
+        },
+        {
+          "code": "\n      declare function mappedReturnType\u003cT extends string\u003e(\n        x: T,\n      ): { [K in T]: Capitalize\u003cK\u003e };\n\n      function inferredMappedReturnType\u003cT extends string\u003e(x: T) {\n        return [{ value: () =\u003e mappedReturnType(x) }];\n      }\n    "
+        },
+        {
+          "code": "\ntype Identity\u003cT\u003e = T;\n\ntype Mapped\u003cT, Value\u003e = Identity\u003c{ [P in keyof T]: Value }\u003e;\n\ndeclare function sillyFoo\u003cData, Value\u003e(\n  c: Value,\n): (data: Data) =\u003e Mapped\u003cData, Value\u003e;\n    "
+        },
+        {
+          "code": "\ntype Silly\u003cT\u003e = { [P in keyof T]: T[P] };\n\ntype SillyFoo\u003cT, Value\u003e = Silly\u003c{ [P in keyof T]: Value }\u003e;\n\ntype Foo\u003cT, Value\u003e = { [P in keyof T]: Value };\n\ndeclare function foo\u003cT, Constant\u003e(data: T, c: Constant): Foo\u003cT, Constant\u003e;\ndeclare function foo\u003cT, Constant\u003e(c: Constant): (data: T) =\u003e Foo\u003cT, Constant\u003e;\n\ndeclare function sillyFoo\u003cT, Constant\u003e(\n  data: T,\n  c: Constant,\n): SillyFoo\u003cT, Constant\u003e;\ndeclare function sillyFoo\u003cT, Constant\u003e(\n  c: Constant,\n): (data: T) =\u003e SillyFoo\u003cT, Constant\u003e;\n    "
+        },
+        {
+          "code": "\nconst f = \u003cT,\u003e(setValue: (v: T) =\u003e void, getValue: () =\u003e NoInfer\u003cT\u003e) =\u003e {};\n    "
+        },
+        {
+          "code": "\nconst f = \u003cT,\u003e(\n  setValue: (v: T) =\u003e NoInfer\u003cT\u003e,\n  getValue: (v: NoInfer\u003cT\u003e) =\u003e NoInfer\u003cT\u003e,\n) =\u003e {};\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "const func = \u003cT,\u003e(param: T) =\u003e null;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "const func = (param: unknown) =\u003e null;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "const func = \u003cT,\u003e(param: [T]) =\u003e null;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "const func = (param: [unknown]) =\u003e null;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "const func = \u003cT,\u003e(param: T[]) =\u003e null;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "const func = (param: unknown[]) =\u003e null;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "const f1 = \u003cT,\u003e(): T =\u003e {};",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "const f1 = (): unknown =\u003e {};"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        interface I {\n          \u003cT\u003e(value: T): void;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        interface I {\n          (value: unknown): void;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        interface I {\n          m\u003cT\u003e(x: T): void;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        interface I {\n          m(x: unknown): void;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        class Joiner\u003cT extends string | number\u003e {\n          join(el: T, other: string) {\n            return [el, other].join(',');\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        class Joiner {\n          join(el: string | number, other: string) {\n            return [el, other].join(',');\n          }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class C\u003cV\u003e {}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        declare class C {}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class C\u003cT, U\u003e {\n          method(param: T): U;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        declare class C\u003cU\u003e {\n          method(param: unknown): U;\n        }\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        declare class C\u003cT\u003e {\n          method(param: T): unknown;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class C {\n          method\u003cT, U\u003e(param: T): U;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        declare class C {\n          method\u003cU\u003e(param: unknown): U;\n        }\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        declare class C {\n          method\u003cT\u003e(param: T): unknown;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class C {\n          prop: \u003cP\u003e() =\u003e P;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        declare class C {\n          prop: () =\u003e unknown;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class Foo {\n          foo\u003cT\u003e(this: T): void;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        declare class Foo {\n          foo(this: unknown): void;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function third\u003cA, B, C\u003e(a: A, b: B, c: C): C {\n          return c;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function third\u003cB, C\u003e(a: unknown, b: B, c: C): C {\n          return c;\n        }\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function third\u003cA, C\u003e(a: A, b: unknown, c: C): C {\n          return c;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo\u003cT\u003e(_: T) {\n          const x: T = null!;\n          const y: T = null!;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function foo(_: unknown) {\n          const x: unknown = null!;\n          const y: unknown = null!;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo\u003cT\u003e(_: T): void {\n          const x: T = null!;\n          const y: T = null!;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function foo(_: unknown): void {\n          const x: unknown = null!;\n          const y: unknown = null!;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT\u003e(_: T): \u003cT\u003e(input: T) =\u003e T {\n  const x: T = null!;\n  const y: T = null!;\n  return null!;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\nfunction foo(_: unknown): \u003cT\u003e(input: T) =\u003e T {\n  const x: unknown = null!;\n  const y: unknown = null!;\n  return null!;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo\u003cT\u003e(_: T) {\n          function withX(): T {\n            return null!;\n          }\n          function withY(): T {\n            return null!;\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function foo(_: unknown) {\n          function withX(): unknown {\n            return null!;\n          }\n          function withY(): unknown {\n            return null!;\n          }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function parseYAML\u003cT\u003e(input: string): T {\n          return input as any as T;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function parseYAML(input: string): unknown {\n          return input as any as unknown;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function printProperty\u003cT, K extends keyof T\u003e(obj: T, key: K) {\n          console.log(obj[key]);\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function printProperty\u003cT\u003e(obj: T, key: keyof T) {\n          console.log(obj[key]);\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function fn\u003cT\u003e(param: string) {\n          let v: T = null!;\n          return v;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function fn(param: string) {\n          let v: unknown = null!;\n          return v;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function both\u003c\n          Args extends unknown[],\n          CB1 extends (...args: Args) =\u003e void,\n          CB2 extends (...args: Args) =\u003e void,\n        \u003e(fn1: CB1, fn2: CB2): (...args: Args) =\u003e void {\n          return function (...args: Args) {\n            fn1(...args);\n            fn2(...args);\n          };\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function both\u003c\n          Args extends unknown[],\n          CB2 extends (...args: Args) =\u003e void,\n        \u003e(fn1: (...args: Args) =\u003e void, fn2: CB2): (...args: Args) =\u003e void {\n          return function (...args: Args) {\n            fn1(...args);\n            fn2(...args);\n          };\n        }\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function both\u003c\n          Args extends unknown[],\n          CB1 extends (...args: Args) =\u003e void,\n        \u003e(fn1: CB1, fn2: (...args: Args) =\u003e void): (...args: Args) =\u003e void {\n          return function (...args: Args) {\n            fn1(...args);\n            fn2(...args);\n          };\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function getLength\u003cT extends { length: number }\u003e(x: T) {\n          return x.length;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        function getLength(x: { length: number }) {\n          return x.length;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Lengthy {\n          length: number;\n        }\n        function getLength\u003cT extends Lengthy\u003e(x: T) {\n          return x.length;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        interface Lengthy {\n          length: number;\n        }\n        function getLength(x: Lengthy) {\n          return x.length;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function get\u003cT\u003e(): unknown;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get(): unknown;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function get\u003cT\u003e(): T;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get(): unknown;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function get\u003cT extends object\u003e(): T;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get(): object;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function take\u003cT\u003e(param: T): void;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function take(param: unknown): void;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function take\u003cT extends object\u003e(param: T): void;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function take(param: object): void;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function take\u003cT, U = T\u003e(param1: T, param2: U): void;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function take\u003cT\u003e(param1: T, param2: unknown): void;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function take\u003cT, U extends T\u003e(param: T): U;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function take\u003cT\u003e(param: T): T;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function take\u003cT, U extends T\u003e(param: U): U;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function take\u003cU extends unknown\u003e(param: U): U;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function get\u003cT, U = T\u003e(param: U): U;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get\u003cU = unknown\u003e(param: U): U;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function get\u003cT, U extends T = T\u003e(param: T): U;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get\u003cT\u003e(param: T): T;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function compare\u003cT, U extends T\u003e(param1: T, param2: U): boolean;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function compare\u003cT\u003e(param1: T, param2: T): boolean;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function get\u003cT\u003e(param: \u003cU, V\u003e(param: U) =\u003e V): T;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get(param: \u003cU, V\u003e(param: U) =\u003e V): unknown;"
+                }
+              ]
+            },
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get\u003cT\u003e(param: \u003cV\u003e(param: unknown) =\u003e V): T;"
+                }
+              ]
+            },
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get\u003cT\u003e(param: \u003cU\u003e(param: U) =\u003e unknown): T;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function get\u003cT\u003e(param: \u003cT, U\u003e(param: T) =\u003e U): T;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "line": 1,
+              "column": 22,
+              "endColumn": 23,
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get(param: \u003cT, U\u003e(param: T) =\u003e U): unknown;"
+                }
+              ]
+            },
+            {
+              "messageId": "sole",
+              "column": 33,
+              "endColumn": 34,
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get\u003cT\u003e(param: \u003cU\u003e(param: unknown) =\u003e U): T;"
+                }
+              ]
+            },
+            {
+              "messageId": "sole",
+              "column": 36,
+              "endColumn": 37,
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function get\u003cT\u003e(param: \u003cT\u003e(param: T) =\u003e unknown): T;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function makeReadonlyArray\u003cT\u003e(): readonly T[];",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function makeReadonlyArray(): readonly unknown[];"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function makeReadonlyTuple\u003cT\u003e(): readonly [T];",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function makeReadonlyTuple(): readonly [unknown];"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function makeReadonlyTupleNullish\u003cT\u003e(): readonly [T | null];",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function makeReadonlyTupleNullish(): readonly [unknown | null];"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function takeArray\u003cT\u003e(input: T[]): void;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function takeArray(input: unknown[]): void;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function takeArrayNullish\u003cT\u003e(input: (T | null)[]): void;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function takeArrayNullish(input: (unknown | null)[]): void;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function takeTuple\u003cT\u003e(input: [T]): void;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function takeTuple(input: [unknown]): void;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "declare function takeTupleMultiUnrelated\u003cT\u003e(input: [T, number]): void;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "declare function takeTupleMultiUnrelated(input: [unknown, number]): void;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function takeTupleMultiUnrelatedNullish\u003cT\u003e(\n          input: [T | null, null],\n        ): void;\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        declare function takeTupleMultiUnrelatedNullish(\n          input: [unknown | null, null],\n        ): void;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "type Fn = \u003cT\u003e() =\u003e T;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "type Fn = () =\u003e unknown;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "type Fn = \u003cT\u003e() =\u003e [];",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "type Fn = () =\u003e [];"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        type Other = 0;\n        type Fn = \u003cT\u003e() =\u003e Other;\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        type Other = 0;\n        type Fn = () =\u003e Other;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        type Other = 0 | 1;\n        type Fn = \u003cT\u003e() =\u003e Other;\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        type Other = 0 | 1;\n        type Fn = () =\u003e Other;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "type Fn = \u003cU\u003e(param: U) =\u003e void;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "type Fn = (param: unknown) =\u003e void;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "type Ctr = new \u003cT\u003e() =\u003e T;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "type Ctr = new () =\u003e unknown;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "type Fn = \u003cT\u003e() =\u003e { [K in keyof T]: K };",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "type Fn = () =\u003e { [K in keyof unknown]: K };"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "type Fn = \u003cT\u003e() =\u003e { [K in 'a']: T };",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "type Fn = () =\u003e { [K in 'a']: unknown };"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "type Fn = \u003cT\u003e(value: unknown) =\u003e value is T;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "type Fn = (value: unknown) =\u003e value is unknown;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "type Fn = \u003cT extends string\u003e() =\u003e `a${T}b`;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "type Fn = () =\u003e `a${string}b`;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function mapObj\u003cK extends string, V\u003e(\n          obj: { [key in K]?: V },\n          fn: (key: K) =\u003e number,\n        ): number[];\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\n        declare function mapObj\u003cK extends string\u003e(\n          obj: { [key in K]?: unknown },\n          fn: (key: K) =\u003e number,\n        ): number[];\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function setItem\u003cT\u003e(T): T;\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\ndeclare function setItem(T): unknown;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ninterface StorageService {\n  setItem\u003cT\u003e(input: { key: string, value: T }): Promise\u003cvoid\u003e;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\ninterface StorageService {\n  setItem(input: { key: string, value: unknown }): Promise\u003cvoid\u003e;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "type Fn = \u003cT extends keyof T\u003e() =\u003e void;",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "type Fn = () =\u003e void;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype Compute\u003cA\u003e = A extends Function ? A : { [K in keyof A]: Compute\u003cA[K]\u003e };\ntype Equal\u003cX, Y\u003e =\n  (\u003cT1\u003e() =\u003e T1 extends Compute\u003cX\u003e ? 1 : 2) extends\n    (\u003cT2\u003e() =\u003e T2 extends Compute\u003cY\u003e ? 1 : 2)\n  ? true\n  : false;\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\ntype Compute\u003cA\u003e = A extends Function ? A : { [K in keyof A]: Compute\u003cA[K]\u003e };\ntype Equal\u003cX, Y\u003e =\n  (() =\u003e unknown extends Compute\u003cX\u003e ? 1 : 2) extends\n    (\u003cT2\u003e() =\u003e T2 extends Compute\u003cY\u003e ? 1 : 2)\n  ? true\n  : false;\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\ntype Compute\u003cA\u003e = A extends Function ? A : { [K in keyof A]: Compute\u003cA[K]\u003e };\ntype Equal\u003cX, Y\u003e =\n  (\u003cT1\u003e() =\u003e T1 extends Compute\u003cX\u003e ? 1 : 2) extends\n    (() =\u003e unknown extends Compute\u003cY\u003e ? 1 : 2)\n  ? true\n  : false;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction f\u003cT extends any\u003e(x: T): void {\n  // @ts-expect-error\n  x.notAMethod();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\nfunction f(x: unknown): void {\n  // @ts-expect-error\n  x.notAMethod();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nclass Joiner {\n  join\u003cT extends number\u003e(els: T[]) {\n    return els.map(el =\u003e '' + el).join(',');\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\nclass Joiner {\n  join(els: number[]) {\n    return els.map(el =\u003e '' + el).join(',');\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction join\u003cT extends string | number\u003e(els: T[]) {\n  return els.map(el =\u003e '' + el).join(',');\n}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\nfunction join(els: (string | number)[]) {\n  return els.map(el =\u003e '' + el).join(',');\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction join\u003cT extends string \u0026 number\u003e(els: T[]) {\n  return els.map(el =\u003e '' + el).join(',');\n}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\nfunction join(els: (string \u0026 number)[]) {\n  return els.map(el =\u003e '' + el).join(',');\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction join\u003cT extends (string \u0026 number) | boolean\u003e(els: T[]) {\n  return els.map(el =\u003e '' + el).join(',');\n}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\nfunction join(els: ((string \u0026 number) | boolean)[]) {\n  return els.map(el =\u003e '' + el).join(',');\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction join\u003cT extends (string | number)\u003e(els: T[]) {\n  return els.map(el =\u003e '' + el).join(',');\n}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\nfunction join(els: (string | number)[]) {\n  return els.map(el =\u003e '' + el).join(',');\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction join\u003cT extends { hoge: string } | { hoge: number }\u003e(els: T['hoge'][]) {\n  return els.map(el =\u003e '' + el).join(',');\n}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\nfunction join(els: ({ hoge: string } | { hoge: number })['hoge'][]) {\n  return els.map(el =\u003e '' + el).join(',');\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = string;\ntype B = string;\ntype C = string;\ndeclare function f\u003cT extends A | B\u003e(): T \u0026 C;\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\ntype A = string;\ntype B = string;\ntype C = string;\ndeclare function f(): (A | B) \u0026 C;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = string;\ntype B = string;\ntype C = string;\ntype D = string;\ndeclare function f\u003cT extends A extends B ? C : D\u003e(): T | null;\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\ntype A = string;\ntype B = string;\ntype C = string;\ntype D = string;\ndeclare function f(): (A extends B ? C : D) | null;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare class C {\n  m\u003cT\u003e(x: { self: C; arg: T }): void;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "sole",
+              "suggestions": [
+                {
+                  "messageId": "replaceUsagesWithConstraint",
+                  "output": "\ndeclare class C {\n  m(x: { self: C; arg: unknown }): void;\n}\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

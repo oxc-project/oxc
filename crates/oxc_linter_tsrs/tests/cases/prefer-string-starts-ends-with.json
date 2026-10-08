@@ -1,0 +1,1018 @@
+{
+  "source": "prefer_string_starts_ends_with_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.json",
+      "valid": [
+        {
+          "code": "\n      function f(s: string[]) {\n        s[0] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[] | null) {\n        s?.[0] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[] | undefined) {\n        s?.[0] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s[0] + 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s[1] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string | undefined) {\n        s?.[1] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string | string[]) {\n        s[0] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: any) {\n        s[0] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f\u003cT\u003e(s: T) {\n        s[0] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[]) {\n        s[s.length - 1] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[] | undefined) {\n        s?.[s.length - 1] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s[s.length - 2] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string | undefined) {\n        s?.[s.length - 2] === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[]) {\n        s.charAt(0) === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[] | undefined) {\n        s?.charAt(0) === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.charAt(0) + 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.charAt(1) === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string | undefined) {\n        s?.charAt(1) === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.charAt() === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[]) {\n        s.charAt(s.length - 1) === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(a: string, b: string, c: string) {\n        (a + b).charAt((a + c).length - 1) === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(a: string, b: string, c: string) {\n        (a + b).charAt(c.length - 1) === 'a';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[]) {\n        s.indexOf(needle) === 0;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string | string[]) {\n        s.indexOf(needle) === 0;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.indexOf(needle) === s.length - needle.length;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[]) {\n        s.lastIndexOf(needle) === s.length - needle.length;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.lastIndexOf(needle) === 0;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(/^foo/);\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(/foo$/);\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(/^foo/) + 1;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(/foo$/) + 1;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: { match(x: any): boolean }) {\n        s.match(/^foo/) !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: { match(x: any): boolean }) {\n        s.match(/foo$/) !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(/foo/) !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(/^foo$/) !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(/^foo./) !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(/^foo|bar/) !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(new RegExp('')) !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(pattern) !== null; // cannot check '^'/'$'\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(new RegExp('^/!{[', 'u')) !== null; // has syntax error\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match() !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(777) !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(/^bar/) !== undefined;\n      }\n    "
+        },
+        {
+          "code": "\n      const missing = undefined;\n      function f(s: string) {\n        s.match(/^bar/) === missing;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.match(/^bar/g) !== null;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        /^bar/g.test(s);\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        /bar$/y.test(s);\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[]) {\n        s.slice(0, needle.length) === needle;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string[]) {\n        s.slice(-needle.length) === needle;\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.slice(1, 4) === 'bar';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.slice(-4, -1) === 'bar';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.slice(1) === 'bar';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string | null) {\n        s?.slice(1) === 'bar';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        pattern.test(s);\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        /^bar/.test();\n      }\n    "
+        },
+        {
+          "code": "\n      function f(x: { test(): void }, s: string) {\n        x.test(s);\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.slice(0, -4) === 'car';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(x: string, s: string) {\n        x.endsWith('foo') \u0026\u0026 x.slice(0, -4) === 'bar';\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.slice(0, length) === needle; // the 'length' can be different to 'needle.length'\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.slice(-length) === needle; // 'length' can be different\n      }\n    "
+        },
+        {
+          "code": "\n      function f(s: string) {\n        s.slice(0, 3) === needle;\n      }\n    "
+        },
+        {
+          "code": "\n        declare const s: string;\n        s[0] === 'a';\n      ",
+          "options": {
+            "allowSingleElementEquality": "always"
+          }
+        },
+        {
+          "code": "\n        declare const s: string;\n        s[s.length - 1] === 'a';\n      ",
+          "options": {
+            "allowSingleElementEquality": "always"
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\n        function f(s: string) {\n          s[0] === 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s?.[0] === 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s?.startsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s[0] !== 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s?.[0] !== 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s?.startsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s[0] == 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s[0] != 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s[0] === 'あ';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith('あ');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s[0] === '👍'; // the length is 2.\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string, t: string) {\n          s[0] === t; // the length of t is unknown.\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s[s.length - 1] === 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          (s)[0] === (\"a\")\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          (s).startsWith(\"a\")\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.charAt(0) === 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.charAt(0) !== 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.charAt(0) == 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.charAt(0) != 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.charAt(0) === 'あ';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith('あ');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.charAt(0) === '👍'; // the length is 2.\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string, t: string) {\n          s.charAt(0) === t; // the length of t is unknown.\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.charAt(s.length - 1) === 'a';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith('a');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          (s).charAt(0) === \"a\";\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          (s).startsWith(\"a\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.indexOf(needle) === 0;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s?.indexOf(needle) === 0;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s?.startsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.indexOf(needle) !== 0;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.indexOf(needle) == 0;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.indexOf(needle) != 0;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.lastIndexOf('bar') === s.length - 3;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.lastIndexOf('bar') !== s.length - 3;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.endsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.lastIndexOf('bar') == s.length - 3;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.lastIndexOf('bar') != s.length - 3;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.endsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.lastIndexOf('bar') === s.length - 'bar'.length;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.lastIndexOf(needle) === s.length - needle.length;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.match(/^bar/) !== null;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s?.match(/^bar/) !== null;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s?.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.match(/^bar/) != null;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.match(/^bar/) != undefined;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.match(/bar$/) !== null;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.match(/bar$/) != null;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.match(/^bar/) === null;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.match(/^bar/) == null;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.match(/^bar/) == undefined;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.match(/bar$/) === null;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.endsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.match(/bar$/) == null;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.endsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const pattern = /^bar/;\n        function f(s: string) {\n          s.match(pattern) != null;\n        }\n      ",
+          "output": [
+            "\n        const pattern = /^bar/;\n        function f(s: string) {\n          s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const pattern = new RegExp('^bar');\n        function f(s: string) {\n          s.match(pattern) != null;\n        }\n      ",
+          "output": [
+            "\n        const pattern = new RegExp('^bar');\n        function f(s: string) {\n          s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const pattern = /^\"quoted\"/;\n        function f(s: string) {\n          s.match(pattern) != null;\n        }\n      ",
+          "output": [
+            "\n        const pattern = /^\"quoted\"/;\n        function f(s: string) {\n          s.startsWith(\"\\\"quoted\\\"\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.slice(0, 3) === 'bar';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s?.slice(0, 3) === 'bar';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s?.startsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.slice(0, 3) !== 'bar';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.slice(0, 3) == 'bar';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.slice(0, 3) != 'bar';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.startsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.slice(0, needle.length) === needle;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.slice(0, needle.length) == needle; // hating implicit type conversion\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.slice(-3) === 'bar';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.slice(-3) !== 'bar';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          !s.endsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.slice(-needle.length) === needle;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.slice(s.length - needle.length) === needle;\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.substring(0, 3) === 'bar';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.substring(-3) === 'bar'; // the code is probably mistake.\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          s.substring(s.length - 3, s.length) === 'bar';\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          /^bar/.test(s);\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          /^bar/?.test(s);\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s?.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          /bar$/.test(s);\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          s.endsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferEndsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const pattern = /^bar/;\n        function f(s: string) {\n          pattern.test(s);\n        }\n      ",
+          "output": [
+            "\n        const pattern = /^bar/;\n        function f(s: string) {\n          s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const pattern = new RegExp('^bar');\n        function f(s: string) {\n          pattern.test(s);\n        }\n      ",
+          "output": [
+            "\n        const pattern = new RegExp('^bar');\n        function f(s: string) {\n          s.startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const pattern = /^\"quoted\"/;\n        function f(s: string) {\n          pattern.test(s);\n        }\n      ",
+          "output": [
+            "\n        const pattern = /^\"quoted\"/;\n        function f(s: string) {\n          s.startsWith(\"\\\"quoted\\\"\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: string) {\n          /^bar/.test(a + b);\n        }\n      ",
+          "output": [
+            "\n        function f(s: string) {\n          (a + b).startsWith(\"bar\");\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(s: 'a' | 'b') {\n          s.indexOf(needle) === 0;\n        }\n      ",
+          "output": [
+            "\n        function f(s: 'a' | 'b') {\n          s.startsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f\u003cT extends 'a' | 'b'\u003e(s: T) {\n          s.indexOf(needle) === 0;\n        }\n      ",
+          "output": [
+            "\n        function f\u003cT extends 'a' | 'b'\u003e(s: T) {\n          s.startsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type SafeString = string \u0026 { __HTML_ESCAPED__: void };\n        function f(s: SafeString) {\n          s.indexOf(needle) === 0;\n        }\n      ",
+          "output": [
+            "\n        type SafeString = string \u0026 { __HTML_ESCAPED__: void };\n        function f(s: SafeString) {\n          s.startsWith(needle);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferStartsWith",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

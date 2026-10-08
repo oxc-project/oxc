@@ -1,0 +1,572 @@
+{
+  "source": "no_useless_default_assignment_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n      function Bar({ foo = '' }: { foo?: string }) {\n        return foo;\n      }\n    "
+        },
+        {
+          "code": "\n      const { foo } = { foo: 'bar' };\n    "
+        },
+        {
+          "code": "\n      [1, 2, 3, undefined].map((a = 42) =\u003e a + 1);\n    "
+        },
+        {
+          "code": "\n      function test(a?: number) {\n        return a;\n      }\n    "
+        },
+        {
+          "code": "\n      const obj: { a?: string } = {};\n      const { a = 'default' } = obj;\n    "
+        },
+        {
+          "code": "\n      function test(options?: { offset?: number }) {\n        const { offset = 5 } = { ...options };\n        offset.toString();\n      }\n    ",
+          "tsconfig": "tsconfig.exactOptionalPropertyTypes.json"
+        },
+        {
+          "code": "\n      function test(a: string | undefined = 'default') {\n        return a;\n      }\n    "
+        },
+        {
+          "code": "\n      (a: string = 'default') =\u003e a;\n    "
+        },
+        {
+          "code": "\n      function test(a: string = 'default') {\n        return a;\n      }\n    "
+        },
+        {
+          "code": "\n      class C {\n        public test(a: string = 'default') {\n          return a;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      const obj: { a: string | undefined } = { a: undefined };\n      const { a = 'default' } = obj;\n    "
+        },
+        {
+          "code": "\n      function test(arr: number[] | undefined = []) {\n        return arr;\n      }\n    "
+        },
+        {
+          "code": "\n      function Bar({ nested: { foo = '' } = {} }: { nested?: { foo?: string } }) {\n        return foo;\n      }\n    "
+        },
+        {
+          "code": "\n      function test(a: any = 'default') {\n        return a;\n      }\n    "
+        },
+        {
+          "code": "\n      function test(a: unknown = 'default') {\n        return a;\n      }\n    "
+        },
+        {
+          "code": "\n      function test(a = 5) {\n        return a;\n      }\n    "
+        },
+        {
+          "code": "\n      function createValidator(): () =\u003e void {\n        return (param = 5) =\u003e {};\n      }\n    "
+        },
+        {
+          "code": "\n      function Bar({ foo = '' }: { foo: any }) {\n        return foo;\n      }\n    "
+        },
+        {
+          "code": "\n      function Bar({ foo = '' }: { foo: unknown }) {\n        return foo;\n      }\n    "
+        },
+        {
+          "code": "\n      function getValue(): undefined;\n      function getValue(box: { value: string }): string;\n      function getValue({ value = '' }: { value?: string } = {}): string | undefined {\n        return value;\n      }\n    "
+        },
+        {
+          "code": "\n      function getValueObject({ value = '' }: Partial\u003c{ value: string }\u003e) {\n        return value;\n      }\n    "
+        },
+        {
+          "code": "\n      const { value = 'default' } = someUnknownFunction();\n    "
+        },
+        {
+          "code": "\n      const [value = 'default'] = someUnknownFunction();\n    "
+        },
+        {
+          "code": "\n      for (const { value = 'default' } of []) {\n      }\n    "
+        },
+        {
+          "code": "\n      for (const [value = 'default'] of []) {\n      }\n    "
+        },
+        {
+          "code": "\n      declare const x: [[number | undefined]];\n      const [[a = 1]] = x;\n    "
+        },
+        {
+          "code": "\n      function foo(x: string = '') {}\n    "
+        },
+        {
+          "code": "\n      class C {\n        method(x: string = '') {}\n      }\n    "
+        },
+        {
+          "code": "\n      const foo = (x: string = '') =\u003e {};\n    "
+        },
+        {
+          "code": "\n      const obj = { ab: { x: 1 } };\n      const {\n        ['a' + 'b']: { x = 1 },\n      } = obj;\n    "
+        },
+        {
+          "code": "\n      const obj = { ab: 1 };\n      const { ['a' + 'b']: x = 1 } = obj;\n    "
+        },
+        {
+          "code": "\n      for ([[a = 1]] of []) {\n      }\n    "
+        },
+        {
+          "code": "\n        declare const g: Array\u003cstring\u003e;\n        const [foo = ''] = g;\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\n        declare const g: Record\u003cstring, string\u003e;\n        const { foo = '' } = g;\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\n        declare const h: { [key: string]: string };\n        const { bar = '' } = h;\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\n      declare const g: Array\u003cstring\u003e;\n      const [foo = ''] = g;\n    "
+        },
+        {
+          "code": "\n      declare const g: Record\u003cstring, string\u003e;\n      const { foo = '' } = g;\n    "
+        },
+        {
+          "code": "\n      declare const h: { [key: string]: string };\n      const { bar = '' } = h;\n    "
+        },
+        {
+          "code": "\n      type Merge = boolean | ((incoming: string[]) =\u003e void);\n\n      const policy: { merge: Merge } = {\n        merge: (incoming: string[] = []) =\u003e {\n          incoming;\n        },\n      };\n    "
+        },
+        {
+          "code": "\n      const [a, b = ''] = 'somestr'.split('.');\n    "
+        },
+        {
+          "code": "\n      declare const params: string[];\n      const [c = '123'] = params;\n    "
+        },
+        {
+          "code": "\n      declare function useCallback\u003cT\u003e(callback: T);\n      useCallback((value: number[] = []) =\u003e {});\n    "
+        },
+        {
+          "code": "\n      declare const tuple: [string];\n      const [a, b = 'default'] = tuple;\n    "
+        },
+        {
+          "code": "\n      const run = (cb: (...args: unknown[]) =\u003e void) =\u003e cb();\n      const cb = (p: boolean = true) =\u003e null;\n      run(cb);\n      run((p: boolean = true) =\u003e null);\n    "
+        },
+        {
+          "code": "\n      const { a = 'default' } = Math.random() \u003e 0.5 ? { a: 'Hello' } : {};\n    "
+        },
+        {
+          "code": "\n      const { a = 'default' } =\n        Math.random() \u003e 0.5 ? (Math.random() \u003e 0.5 ? { a: 'Hello' } : {}) : {};\n    "
+        },
+        {
+          "code": "\n      function findPosts({\n        category,\n        maxResults = 100,\n      }: {\n        category: string;\n        maxResults?: number;\n      }): Promise\u003cstring[]\u003e {\n        return Promise.resolve([category, String(maxResults)]);\n      }\n    "
+        },
+        {
+          "code": "\n      const { a = 'baz' } = cond ? {} : { a: 'bar' };\n    "
+        },
+        {
+          "code": "\n      const { a = 'baz' } = cond ? foo : { a: 'bar' };\n    "
+        },
+        {
+          "code": "\n      const { a = 'baz' } = foo \u0026\u0026 { a: 'bar' };\n    "
+        },
+        {
+          "code": "\n      const { a = 'baz' } = cond ? { a: 'foo', ...extra } : { a: 'bar' };\n    "
+        },
+        {
+          "code": "\n      const { a = 'baz' } = cond ? { ...foo } : { a: 'bar' };\n    "
+        },
+        {
+          "code": "\n      const key = Math.random() \u003e 0.5 ? 'a' : 'b';\n      const { a = 'baz' } = cond ? { [key]: 'foo' } : { [key]: 'bar' };\n    "
+        },
+        {
+          "code": "\n      const { a = 'baz' } = cond ? foo \u0026\u0026 { a: 'bar' } : { a: 'baz' };\n    "
+        },
+        {
+          "code": "\n      const obj: unknown = { a: 'bar' };\n      const { a = 'baz' } = cond ? obj : { a: 'bar' };\n    "
+        },
+        {
+          "code": "\n      const sym = Symbol('a');\n      const { a = 'baz' } = cond ? { [sym]: 'foo' } : { [sym]: 'bar' };\n    "
+        },
+        {
+          "code": "\n      const { a = 'baz' } = cond ? { [`a${1}`]: 'foo' } : { a: 'bar' };\n    "
+        },
+        {
+          "code": "\n      class AbstractEntity {\n        public a: string | undefined;\n        public static fromJson\u003cT extends { a: string }\u003e(\n          this: new () =\u003e T,\n          { inner = { a: 'test' } }: { inner?: { a: string } },\n        ): T {\n          const entity = new this();\n          entity.a = inner?.a;\n          return entity;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      type FetchFn\u003cTParams\u003e =\n        Partial\u003cTParams\u003e extends TParams\n          ? (params?: TParams) =\u003e void\n          : (params: TParams) =\u003e void;\n\n      function createFetcher\u003cTParams\u003e() {\n        type Params = TParams;\n\n        const fn: FetchFn\u003cTParams\u003e = (\n          params: Partial\u003cParams\u003e = {} as Partial\u003cParams\u003e,\n        ) =\u003e {\n          console.log(params);\n        };\n\n        return fn;\n      }\n    "
+        },
+        {
+          "code": "\n      interface Foos {\n        bar?: number;\n      }\n      const foos: Foos[] = [];\n      foos.flatMap(({ bar = 42 }) =\u003e bar);\n    "
+        },
+        {
+          "code": "\n      function f(this: void, { bar = 42 }: { bar?: number }) {\n        return bar;\n      }\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\n        function Bar({ foo = '' }: { foo: string }) {\n          return foo;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 2,
+              "column": 30,
+              "endColumn": 32,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        function Bar({ foo }: { foo: string }) {\n          return foo;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        class C {\n          public method({ foo = '' }: { foo: string }) {\n            return foo;\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 3,
+              "column": 33,
+              "endColumn": 35,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        class C {\n          public method({ foo }: { foo: string }) {\n            return foo;\n          }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const { 'literal-key': literalKey = 'default' } = { 'literal-key': 'value' };\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 2,
+              "column": 45,
+              "endColumn": 54,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        const { 'literal-key': literalKey } = { 'literal-key': 'value' };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        [1, 2, 3].map((a = 42) =\u003e a + 1);\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 2,
+              "column": 28,
+              "endColumn": 30,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        [1, 2, 3].map((a) =\u003e a + 1);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function getValue(): undefined;\n        function getValue(box: { value: string }): string;\n        function getValue({ value = '' }: { value: string } = {}): string | undefined {\n          return value;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 4,
+              "column": 37,
+              "endColumn": 39,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        function getValue(): undefined;\n        function getValue(box: { value: string }): string;\n        function getValue({ value }: { value: string } = {}): string | undefined {\n          return value;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function getValue([value = '']: [string]) {\n          return value;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 2,
+              "column": 36,
+              "endColumn": 38,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        function getValue([value]: [string]) {\n          return value;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const x: { hello: { world: string } };\n\n        const {\n          hello: { world = '' },\n        } = x;\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 5,
+              "column": 28,
+              "endColumn": 30,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        declare const x: { hello: { world: string } };\n\n        const {\n          hello: { world },\n        } = x;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const x: { hello: Array\u003c{ world: string }\u003e };\n\n        const {\n          hello: [{ world = '' }],\n        } = x;\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 5,
+              "column": 29,
+              "endColumn": 31,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        declare const x: { hello: Array\u003c{ world: string }\u003e };\n\n        const {\n          hello: [{ world }],\n        } = x;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        interface B {\n          foo: (b: boolean | string) =\u003e void;\n        }\n\n        const h: B = {\n          foo: (b = false) =\u003e {},\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 7,
+              "column": 21,
+              "endColumn": 26,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        interface B {\n          foo: (b: boolean | string) =\u003e void;\n        }\n\n        const h: B = {\n          foo: (b) =\u003e {},\n        };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(a = undefined) {}\n      ",
+          "output": [
+            "\n        function foo(a) {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "uselessUndefined",
+              "line": 2,
+              "column": 26,
+              "endColumn": 35,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const { a = undefined } = {};\n      ",
+          "output": [
+            "\n        const { a } = {};\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "uselessUndefined",
+              "line": 2,
+              "column": 21,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const [a = undefined] = [];\n      ",
+          "output": [
+            "\n        const [a] = [];\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "uselessUndefined",
+              "line": 2,
+              "column": 20,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo({ a = undefined }) {}\n      ",
+          "output": [
+            "\n        function foo({ a }) {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "uselessUndefined",
+              "line": 2,
+              "column": 28,
+              "endColumn": 37,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function myFunction(p1: string, p2: number | undefined = undefined) {\n          console.log(p1, p2);\n        }\n      ",
+          "output": [
+            "\n        function myFunction(p1: string, p2?: number | undefined) {\n          console.log(p1, p2);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferOptionalSyntax",
+              "line": 2,
+              "column": 66,
+              "endColumn": 75,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type SomeType = number | undefined;\n        function f(\n          /* comment */ x /* comment 2 */ : /* comment 3 */ SomeType /* comment 4 */ = /* comment 5 */ undefined,\n        ) {}\n      ",
+          "output": [
+            "\n        type SomeType = number | undefined;\n        function f(\n          /* comment */ x? /* comment 2 */ : /* comment 3 */ SomeType,\n        ) {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferOptionalSyntax",
+              "line": 4,
+              "column": 104,
+              "endColumn": 113,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function Bar({ foo = '' }: { foo: string }) {\n          return foo;\n        }\n      ",
+          "tsconfig": "tsconfig.unstrict.json",
+          "errors": [
+            {
+              "messageId": "noStrictNullCheck",
+              "column": 1,
+              "suggestions": []
+            },
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 2,
+              "column": 30,
+              "endColumn": 32,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        function Bar({ foo }: { foo: string }) {\n          return foo;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(a = undefined) {}\n      ",
+          "tsconfig": "tsconfig.unstrict.json",
+          "output": [
+            "\n        function foo(a) {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noStrictNullCheck",
+              "column": 1,
+              "suggestions": []
+            },
+            {
+              "messageId": "uselessUndefined",
+              "line": 2,
+              "column": 26,
+              "endColumn": 35,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const { a = 'baz' } = Math.random() \u003c 0.5 ? { a: 'foo' } : { a: 'bar' };\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 2,
+              "column": 21,
+              "endColumn": 26,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        const { a } = Math.random() \u003c 0.5 ? { a: 'foo' } : { a: 'bar' };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const { a = 'baz' } =\n          Math.random() \u003c 0.5\n            ? { a: 'foo' }\n            : Math.random() \u003e 0.2\n              ? { a: 'bar' }\n              : { a: 'qux' };\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 2,
+              "column": 21,
+              "endColumn": 26,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        const { a } =\n          Math.random() \u003c 0.5\n            ? { a: 'foo' }\n            : Math.random() \u003e 0.2\n              ? { a: 'bar' }\n              : { a: 'qux' };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const { a = 'baz' } = cond ? { ['a']: 'foo' } : { ['a']: 'bar' };\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 2,
+              "column": 21,
+              "endColumn": 26,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        const { a } = cond ? { ['a']: 'foo' } : { ['a']: 'bar' };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const { a = 'baz' } = cond ? { a() {} } : { a: 'bar' };\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 2,
+              "column": 21,
+              "endColumn": 26,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        const { a } = cond ? { a() {} } : { a: 'bar' };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const { a = 'b' } = Math.random() \u003c 0.5 ? { [`a`]: 'a' } : { a: 'b' };\n      ",
+          "errors": [
+            {
+              "messageId": "uselessDefaultAssignment",
+              "line": 2,
+              "column": 21,
+              "endColumn": 24,
+              "suggestions": [
+                {
+                  "messageId": "removeDefaultAssignment",
+                  "output": "\n        const { a } = Math.random() \u003c 0.5 ? { [`a`]: 'a' } : { a: 'b' };\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

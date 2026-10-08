@@ -1,0 +1,248 @@
+{
+  "source": "prefer_regexp_exec_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "'something'.match();"
+        },
+        {
+          "code": "'something'.match(/thing/g);"
+        },
+        {
+          "code": "\nconst text = 'something';\nconst search = /thing/g;\ntext.match(search);\n    "
+        },
+        {
+          "code": "\nconst match = (s: RegExp) =\u003e 'something';\nmatch(/thing/);\n    "
+        },
+        {
+          "code": "\nconst a = { match: (s: RegExp) =\u003e 'something' };\na.match(/thing/);\n    "
+        },
+        {
+          "code": "\nfunction f(s: string | string[]) {\n  s.match(/e/);\n}\n    "
+        },
+        {
+          "code": "(Math.random() \u003e 0.5 ? 'abc' : 123).match(2);"
+        },
+        {
+          "code": "'212'.match(2);"
+        },
+        {
+          "code": "'212'.match(+2);"
+        },
+        {
+          "code": "'oNaNo'.match(NaN);"
+        },
+        {
+          "code": "'Infinity contains -Infinity and +Infinity in JavaScript.'.match(Infinity);"
+        },
+        {
+          "code": "'Infinity contains -Infinity and +Infinity in JavaScript.'.match(+Infinity);"
+        },
+        {
+          "code": "'Infinity contains -Infinity and +Infinity in JavaScript.'.match(-Infinity);"
+        },
+        {
+          "code": "'void and null'.match(null);"
+        },
+        {
+          "code": "\nconst matchers = ['package-lock.json', /regexp/];\nconst file = '';\nmatchers.some(matcher =\u003e !!file.match(matcher));\n    "
+        },
+        {
+          "code": "\nconst matchers = [/regexp/, 'package-lock.json'];\nconst file = '';\nmatchers.some(matcher =\u003e !!file.match(matcher));\n    "
+        },
+        {
+          "code": "\nconst matchers = [{ match: (s: RegExp) =\u003e false }];\nconst file = '';\nmatchers.some(matcher =\u003e !!file.match(matcher));\n    "
+        },
+        {
+          "code": "\nfunction test(pattern: string) {\n  'hello hello'.match(RegExp(pattern, 'g'))?.reduce(() =\u003e []);\n}\n    "
+        },
+        {
+          "code": "\nfunction test(pattern: string) {\n  'hello hello'.match(new RegExp(pattern, 'gi'))?.reduce(() =\u003e []);\n}\n    "
+        },
+        {
+          "code": "\nfunction test(text: string, pattern: string, flags: string) {\n  text.match(new RegExp(pattern, flags));\n}\n    "
+        },
+        {
+          "code": "\nconst matchCount = (str: string, re: RegExp) =\u003e {\n  return (str.match(re) || []).length;\n};\n    "
+        },
+        {
+          "code": "\nfunction test(str: string) {\n  str.match('[a-z');\n}\n    "
+        },
+        {
+          "code": "\nconst text = 'something';\ndeclare const search: RegExp;\ntext.match(search);\n      "
+        },
+        {
+          "code": "\nconst text = 'something';\ndeclare const obj: { search: RegExp };\ntext.match(obj.search);\n      "
+        },
+        {
+          "code": "\nconst text = 'something';\ndeclare function returnsRegexp(): RegExp;\ntext.match(returnsRegexp());\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "'something'.match(/thing/);",
+          "output": [
+            "/thing/.exec('something');"
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 1,
+              "column": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "'something'.match('^[a-z]+thing/?$');",
+          "output": [
+            "/^[a-z]+thing\\/?$/.exec('something');"
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 1,
+              "column": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst text = 'something';\nconst search = /thing/;\ntext.match(search);\n      ",
+          "output": [
+            "\nconst text = 'something';\nconst search = /thing/;\nsearch.exec(text);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 4,
+              "column": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst text = 'something';\nconst search = 'thing';\ntext.match(search);\n      ",
+          "output": [
+            "\nconst text = 'something';\nconst search = 'thing';\nRegExp(search).exec(text);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 4,
+              "column": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(text: string, pattern: string) {\n  text.match(pattern);\n}\n      ",
+          "output": [
+            "\nfunction test(text: string, pattern: string) {\n  RegExp(pattern).exec(text);\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 3,
+              "column": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction f(s: 'a' | 'b') {\n  s.match('a');\n}\n      ",
+          "output": [
+            "\nfunction f(s: 'a' | 'b') {\n  /a/.exec(s);\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 3,
+              "column": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype SafeString = string \u0026 { __HTML_ESCAPED__: void };\nfunction f(s: SafeString) {\n  s.match(/thing/);\n}\n      ",
+          "output": [
+            "\ntype SafeString = string \u0026 { __HTML_ESCAPED__: void };\nfunction f(s: SafeString) {\n  /thing/.exec(s);\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 4,
+              "column": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction f\u003cT extends 'a' | 'b'\u003e(s: T) {\n  s.match(/thing/);\n}\n      ",
+          "output": [
+            "\nfunction f\u003cT extends 'a' | 'b'\u003e(s: T) {\n  /thing/.exec(s);\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 3,
+              "column": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst text = 'something';\nconst search = new RegExp('test', '');\ntext.match(search);\n      ",
+          "output": [
+            "\nconst text = 'something';\nconst search = new RegExp('test', '');\nsearch.exec(text);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 4,
+              "column": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(pattern: string) {\n  'check'.match(new RegExp(pattern, undefined));\n}\n      ",
+          "output": [
+            "\nfunction test(pattern: string) {\n  new RegExp(pattern, undefined).exec('check');\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 3,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction temp(text: string): void {\n  text.match(new RegExp(`${'hello'}`));\n  text.match(new RegExp(`${'hello'.toString()}`));\n}\n      ",
+          "output": [
+            "\nfunction temp(text: string): void {\n  new RegExp(`${'hello'}`).exec(text);\n  new RegExp(`${'hello'.toString()}`).exec(text);\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 3,
+              "column": 8,
+              "suggestions": []
+            },
+            {
+              "messageId": "regExpExecOverStringMatch",
+              "line": 4,
+              "column": 8,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

@@ -1,0 +1,285 @@
+{
+  "source": "no_for_in_array_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.json",
+      "valid": [
+        {
+          "code": "\nfor (const x of [3, 4, 5]) {\n  console.log(x);\n}\n    "
+        },
+        {
+          "code": "\nfor (const x in { a: 1, b: 2, c: 3 }) {\n  console.log(x);\n}\n    "
+        },
+        {
+          "code": "\ndeclare const nullish: null | undefined;\n// @ts-expect-error\nfor (const k in nullish) {\n}\n    "
+        },
+        {
+          "code": "\ndeclare const obj: {\n  [key: number]: number;\n};\n\nfor (const key in obj) {\n  console.log(key);\n}\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nfor (const x in [3, 4, 5]) {\n  console.log(x);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 2,
+              "column": 1,
+              "endLine": 2,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst z = [3, 4, 5];\nfor (const x in z) {\n  console.log(x);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 3,
+              "column": 1,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst fn = (arr: number[]) =\u003e {\n  for (const x in arr) {\n    console.log(x);\n  }\n};\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst fn = (arr: number[] | string[]) =\u003e {\n  for (const x in arr) {\n    console.log(x);\n  }\n};\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst fn = \u003cT extends any[]\u003e(arr: T) =\u003e {\n  for (const x in arr) {\n    console.log(x);\n  }\n};\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfor (const x\n  in\n    (\n      (\n        (\n          [3, 4, 5]\n        )\n      )\n    )\n  )\n  // weird\n  /* spot for a */\n  // comment\n  /* ) */\n  /* ( */\n  {\n  console.log(x);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 2,
+              "column": 1,
+              "endLine": 11,
+              "endColumn": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfor (const x\n  in\n    (\n      (\n        (\n          [3, 4, 5]\n        )\n      )\n    )\n  )\n  // weird\n  /* spot for a */\n  // comment\n  /* ) */\n  /* ( */\n\n  ((((console.log('body without braces ')))));\n\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 2,
+              "column": 1,
+              "endLine": 11,
+              "endColumn": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const array: string[] | null;\n\nfor (const key in array) {\n  console.log(key);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const array: number[] | undefined;\n\nfor (const key in array) {\n  console.log(key);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const array: boolean[] | { a: 1; b: 2; c: 3 };\n\nfor (const key in array) {\n  console.log(key);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const array: [number, string];\n\nfor (const key in array) {\n  console.log(key);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const array: [number, string] | { a: 1; b: 2; c: 3 };\n\nfor (const key in array) {\n  console.log(key);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const array: string[] | Record\u003cnumber, string\u003e;\n\nfor (const key in array) {\n  console.log(key);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst arrayLike = /fe/.exec('foo');\n\nfor (const x in arrayLike) {\n  console.log(x);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arrayLike: HTMLCollection;\n\nfor (const x in arrayLike) {\n  console.log(x);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arrayLike: NodeList;\n\nfor (const x in arrayLike) {\n  console.log(x);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo() {\n  for (const a in arguments) {\n    console.log(a);\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const array:\n  | (({ a: string } \u0026 string[]) | Record\u003cstring, boolean\u003e)\n  | Record\u003cnumber, string\u003e;\n\nfor (const key in array) {\n  console.log(key);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 6,
+              "column": 1,
+              "endLine": 6,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const array:\n  | (({ a: string } \u0026 RegExpExecArray) | Record\u003cstring, boolean\u003e)\n  | Record\u003cnumber, string\u003e;\n\nfor (const key in array) {\n  console.log(k);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 6,
+              "column": 1,
+              "endLine": 6,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const obj: {\n  [key: number]: number;\n  length: 1;\n};\n\nfor (const key in obj) {\n  console.log(key);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forInViolation",
+              "line": 7,
+              "column": 1,
+              "endLine": 7,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

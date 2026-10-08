@@ -1,0 +1,606 @@
+{
+  "source": "dot_notation_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "a.b;"
+        },
+        {
+          "code": "a.b.c;"
+        },
+        {
+          "code": "a['12'];"
+        },
+        {
+          "code": "a[b];"
+        },
+        {
+          "code": "a[0];"
+        },
+        {
+          "code": "a.b.c;",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a.arguments;",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a.let;",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a.yield;",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a.eval;",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a[0];",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a['while'];",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a['true'];",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a['null'];",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a[true];",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a[null];",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a.true;",
+          "options": {
+            "allowKeywords": true
+          }
+        },
+        {
+          "code": "a.null;",
+          "options": {
+            "allowKeywords": true
+          }
+        },
+        {
+          "code": "a['snake_case'];",
+          "options": {
+            "allowPattern": "^[a-z]+(_[a-z]+)+$"
+          }
+        },
+        {
+          "code": "a['lots_of_snake_case'];",
+          "options": {
+            "allowPattern": "^[a-z]+(_[a-z]+)+$"
+          }
+        },
+        {
+          "code": "a[`time${range}`];"
+        },
+        {
+          "code": "a[`while`];",
+          "options": {
+            "allowKeywords": false
+          }
+        },
+        {
+          "code": "a[`time range`];"
+        },
+        {
+          "code": "a.true;"
+        },
+        {
+          "code": "a.null;"
+        },
+        {
+          "code": "a[undefined];"
+        },
+        {
+          "code": "a[void 0];"
+        },
+        {
+          "code": "a[b()];"
+        },
+        {
+          "code": "a[/(?\u003czero\u003e0)/];"
+        },
+        {
+          "code": "\nclass X {\n  private priv_prop = 123;\n}\n\nconst x = new X();\nx['priv_prop'] = 123;\n      ",
+          "options": {
+            "allowPrivateClassPropertyAccess": true
+          }
+        },
+        {
+          "code": "\nclass X {\n  protected protected_prop = 123;\n}\n\nconst x = new X();\nx['protected_prop'] = 123;\n      ",
+          "options": {
+            "allowProtectedClassPropertyAccess": true
+          }
+        },
+        {
+          "code": "\nclass X {\n  prop: string;\n  [key: string]: number;\n}\n\nconst x = new X();\nx['hello'] = 3;\n      ",
+          "options": {
+            "allowIndexSignaturePropertyAccess": true
+          }
+        },
+        {
+          "code": "\ninterface Nested {\n  property: string;\n  [key: string]: number | string;\n}\n\nclass Dingus {\n  nested: Nested;\n}\n\nlet dingus: Dingus | undefined;\n\ndingus?.nested.property;\ndingus?.nested['hello'];\n      ",
+          "options": {
+            "allowIndexSignaturePropertyAccess": true
+          }
+        },
+        {
+          "code": "\nclass X {\n  private priv_prop = 123;\n}\n\nlet x: X | undefined;\nconsole.log(x?.['priv_prop']);\n      ",
+          "options": {
+            "allowPrivateClassPropertyAccess": true
+          }
+        },
+        {
+          "code": "\nclass X {\n  protected priv_prop = 123;\n}\n\nlet x: X | undefined;\nconsole.log(x?.['priv_prop']);\n      ",
+          "options": {
+            "allowProtectedClassPropertyAccess": true
+          }
+        },
+        {
+          "code": "\ntype Foo = {\n  bar: boolean;\n  [key: `key_${string}`]: number;\n};\ndeclare const foo: Foo;\nfoo['key_baz'];\n      ",
+          "tsconfig": "tsconfig.noPropertyAccessFromIndexSignature.json"
+        },
+        {
+          "code": "\ntype Key = Lowercase\u003cstring\u003e;\ntype Foo = {\n  BAR: boolean;\n  [key: Lowercase\u003cstring\u003e]: number;\n};\ndeclare const foo: Foo;\nfoo['bar'];\n      ",
+          "tsconfig": "tsconfig.noPropertyAccessFromIndexSignature.json"
+        },
+        {
+          "code": "\ntype ExtraKey = `extra${string}`;\n\ntype Foo = {\n  foo: string;\n  [extraKey: ExtraKey]: number;\n};\n\nfunction f\u003cT extends Foo\u003e(x: T) {\n  x['extraKey'];\n}\n      ",
+          "tsconfig": "tsconfig.noPropertyAccessFromIndexSignature.json"
+        },
+        {
+          "code": "\ntype Foo = {\n  [key: string]: number;\n};\ndeclare const foo: Foo;\nfoo[`key_baz`];\n      ",
+          "tsconfig": "tsconfig.noPropertyAccessFromIndexSignature.json"
+        },
+        {
+          "code": "a['X-Amzn-Trace-Id'];"
+        },
+        {
+          "code": "a['X-Amzn-Trace-Id'];",
+          "tsx": true
+        },
+        {
+          "code": "a['Prénom'];"
+        },
+        {
+          "code": "a['π'];"
+        },
+        {
+          "code": "a['has space'];"
+        },
+        {
+          "code": "\nclass Example {\n  private _a = 0;\n  public get prot(): number {\n    return this._a;\n  }\n  protected set prot(v: number) {\n    this._a = v;\n  }\n}\n\ndeclare const obj: Example;\n\nobj['prot'] = 1;",
+          "options": {
+            "allowProtectedClassPropertyAccess": true
+          }
+        },
+        {
+          "code": "\nclass Example {\n  private _b = 0;\n  public get priv(): number {\n    return this._b;\n  }\n  private set priv(v: number) {\n    this._b = v;\n  }\n}\n\ndeclare const obj: Example;\n\nobj['priv'] = 1;",
+          "options": {
+            "allowPrivateClassPropertyAccess": true
+          }
+        },
+        {
+          "code": "\nclass Example {\n  private _a = 0;\n  public get prot(): number {\n    return this._a;\n  }\n  protected set prot(v: number) {\n    this._a = v;\n  }\n\n  private _b = 0;\n  public get priv(): number {\n    return this._b;\n  }\n  private set priv(v: number) {\n    this._b = v;\n  }\n}\n\ndeclare const obj: Example;\n\nobj['prot'] = 1;\nobj['priv'] = 1;",
+          "options": {
+            "allowPrivateClassPropertyAccess": true,
+            "allowProtectedClassPropertyAccess": true
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nclass X {\n  private priv_prop = 123;\n}\n\nconst x = new X();\nx['priv_prop'] = 123;\n      ",
+          "options": {
+            "allowPrivateClassPropertyAccess": false
+          },
+          "output": [
+            "\nclass X {\n  private priv_prop = 123;\n}\n\nconst x = new X();\nx.priv_prop = 123;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass X {\n  public pub_prop = 123;\n}\n\nconst x = new X();\nx['pub_prop'] = 123;\n      ",
+          "output": [
+            "\nclass X {\n  public pub_prop = 123;\n}\n\nconst x = new X();\nx.pub_prop = 123;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "a['true'];",
+          "output": [
+            "a.true;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "a['time'];",
+          "output": [
+            "a.time;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "a[null];",
+          "output": [
+            "a.null;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "a[true];",
+          "output": [
+            "a.true;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "a[false];",
+          "output": [
+            "a.false;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "a['b'];",
+          "output": [
+            "a.b;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "a.b['c'];",
+          "output": [
+            "a.b.c;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "a['_dangle'];",
+          "options": {
+            "allowPattern": "^[a-z]+(_[a-z]+)+$"
+          },
+          "output": [
+            "a._dangle;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "a['SHOUT_CASE'];",
+          "options": {
+            "allowPattern": "^[a-z]+(_[a-z]+)+$"
+          },
+          "output": [
+            "a.SHOUT_CASE;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\na\n  ['SHOUT_CASE'];\n      ",
+          "output": [
+            "\na\n  .SHOUT_CASE;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "line": 3,
+              "column": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "getResource()\n    .then(function(){})\n    [\"catch\"](function(){})\n    .then(function(){})\n    [\"catch\"](function(){});",
+          "output": [
+            "getResource()\n    .then(function(){})\n    .catch(function(){})\n    .then(function(){})\n    .catch(function(){});"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "line": 3,
+              "column": 6,
+              "suggestions": []
+            },
+            {
+              "messageId": "useDot",
+              "line": 5,
+              "column": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfoo\n  .while;\n      ",
+          "options": {
+            "allowKeywords": false
+          },
+          "output": [
+            "\nfoo\n  [\"while\"];\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useBrackets",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "foo[/* comment */ 'bar'];",
+          "output": [
+            "foo.bar;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "foo['bar' /* comment */];",
+          "output": [
+            "foo.bar;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "foo['bar'];",
+          "output": [
+            "foo.bar;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "foo./* comment */ while;",
+          "options": {
+            "allowKeywords": false
+          },
+          "output": [
+            "foo/* comment */ [\"while\"];"
+          ],
+          "errors": [
+            {
+              "messageId": "useBrackets",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "foo[null];",
+          "output": [
+            "foo.null;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "foo['bar'] instanceof baz;",
+          "output": [
+            "foo.bar instanceof baz;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let.if();",
+          "options": {
+            "allowKeywords": false
+          },
+          "errors": [
+            {
+              "messageId": "useBrackets",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass X {\n  protected protected_prop = 123;\n}\n\nconst x = new X();\nx['protected_prop'] = 123;\n      ",
+          "options": {
+            "allowProtectedClassPropertyAccess": false
+          },
+          "output": [
+            "\nclass X {\n  protected protected_prop = 123;\n}\n\nconst x = new X();\nx.protected_prop = 123;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass X {\n  prop: string;\n  [key: string]: number;\n}\n\nconst x = new X();\nx['prop'] = 'hello';\n      ",
+          "options": {
+            "allowIndexSignaturePropertyAccess": true
+          },
+          "output": [
+            "\nclass X {\n  prop: string;\n  [key: string]: number;\n}\n\nconst x = new X();\nx.prop = 'hello';\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = {\n  bar: boolean;\n  [key: `key_${string}`]: number;\n};\nfoo['key_baz'];\n      ",
+          "output": [
+            "\ntype Foo = {\n  bar: boolean;\n  [key: `key_${string}`]: number;\n};\nfoo.key_baz;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype ExtraKey = `extra${string}`;\n\ntype Foo = {\n  foo: string;\n  [extraKey: ExtraKey]: number;\n};\n\nfunction f\u003cT extends Foo\u003e(x: T) {\n  x['extraKey'];\n}\n      ",
+          "output": [
+            "\ntype ExtraKey = `extra${string}`;\n\ntype Foo = {\n  foo: string;\n  [extraKey: ExtraKey]: number;\n};\n\nfunction f\u003cT extends Foo\u003e(x: T) {\n  x.extraKey;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = {\n  prop: boolean;\n  [key: string]: number | boolean;\n};\ndeclare const foo: Foo;\nfoo[`prop`];\n      ",
+          "tsconfig": "tsconfig.noPropertyAccessFromIndexSignature.json",
+          "output": [
+            "\ntype Foo = {\n  prop: boolean;\n  [key: string]: number | boolean;\n};\ndeclare const foo: Foo;\nfoo.prop;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "foo?.['bar'];",
+          "output": [
+            "foo?.bar;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Example {\n  private _a = 0;\n  public get prot(): number {\n    return this._a;\n  }\n  protected set prot(v: number) {\n    this._a = v;\n  }\n}\n\ndeclare const obj: Example;\n\nobj['prot'];",
+          "options": {
+            "allowProtectedClassPropertyAccess": true
+          },
+          "output": [
+            "\nclass Example {\n  private _a = 0;\n  public get prot(): number {\n    return this._a;\n  }\n  protected set prot(v: number) {\n    this._a = v;\n  }\n}\n\ndeclare const obj: Example;\n\nobj.prot;"
+          ],
+          "errors": [
+            {
+              "messageId": "useDot",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

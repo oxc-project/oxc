@@ -1,0 +1,260 @@
+{
+  "source": "prefer_reduce_type_parameter_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n      new (class Mine {\n        reduce() {}\n      })().reduce(() =\u003e {}, 1 as any);\n    "
+        },
+        {
+          "code": "\n      class Mine {\n        reduce() {}\n      }\n\n      new Mine().reduce(() =\u003e {}, 1 as any);\n    "
+        },
+        {
+          "code": "\n      import { Reducable } from './class';\n\n      new Reducable().reduce(() =\u003e {}, 1 as any);\n    "
+        },
+        {
+          "code": "[1, 2, 3]['reduce']((sum, num) =\u003e sum + num, 0);"
+        },
+        {
+          "code": "[1, 2, 3][null]((sum, num) =\u003e sum + num, 0);"
+        },
+        {
+          "code": "[1, 2, 3]?.[null]((sum, num) =\u003e sum + num, 0);"
+        },
+        {
+          "code": "[1, 2, 3].reduce((sum, num) =\u003e sum + num, 0);"
+        },
+        {
+          "code": "[1, 2, 3].reduce\u003cnumber[]\u003e((a, s) =\u003e a.concat(s * 2), []);"
+        },
+        {
+          "code": "[1, 2, 3]?.reduce\u003cnumber[]\u003e((a, s) =\u003e a.concat(s * 2), []);"
+        },
+        {
+          "code": "\n      declare const tuple: [number, number, number];\n      tuple.reduce\u003cnumber[]\u003e((a, s) =\u003e a.concat(s * 2), []);\n    "
+        },
+        {
+          "code": "\n      type Reducer = { reduce: (callback: (arg: any) =\u003e any, arg: any) =\u003e any };\n      declare const tuple: [number, number, number] | Reducer;\n      tuple.reduce(a =\u003e {\n        return a.concat(1);\n      }, [] as number[]);\n    "
+        },
+        {
+          "code": "\n      type Reducer = { reduce: (callback: (arg: any) =\u003e any, arg: any) =\u003e any };\n      declare const arrayOrReducer: number[] \u0026 Reducer;\n      arrayOrReducer.reduce(a =\u003e {\n        return a.concat(1);\n      }, [] as number[]);\n    "
+        },
+        {
+          "code": "\n      ['a', 'b'].reduce(\n        (accum, name) =\u003e ({\n          ...accum,\n          [name]: true,\n        }),\n        {} as Record\u003c'a' | 'b', boolean\u003e,\n      );\n    "
+        },
+        {
+          "code": "\n      ['a', 'b'].reduce(\n        (accum, name) =\u003e ({\n          ...accum,\n          [name]: true,\n        }),\n        { a: true, b: false, c: true } as Record\u003c'a' | 'b', boolean\u003e,\n      );\n    "
+        },
+        {
+          "code": "\n      function f\u003cT extends Record\u003cstring, boolean\u003e\u003e() {\n        ['a', 'b'].reduce(\n          (accum, name) =\u003e ({\n            ...accum,\n            [name]: true,\n          }),\n          {} as T,\n        );\n      }\n    "
+        },
+        {
+          "code": "\n      function f\u003cT\u003e() {\n        ['a', 'b'].reduce(\n          (accum, name) =\u003e ({\n            ...accum,\n            [name]: true,\n          }),\n          {} as T,\n        );\n      }\n    "
+        },
+        {
+          "code": "\n      ['a', 'b'].reduce((accum, name) =\u003e `${accum} | hello ${name}!`);\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const arr: string[];\narr.reduce\u003cstring | undefined\u003e(acc =\u003e acc, arr.shift() as string | undefined);\n      ",
+          "output": [
+            "\ndeclare const arr: string[];\narr.reduce\u003cstring | undefined\u003e(acc =\u003e acc, arr.shift());\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 3,
+              "column": 44,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "[1, 2, 3].reduce((a, s) =\u003e a.concat(s * 2), [] as number[]);",
+          "output": [
+            "[1, 2, 3].reduce\u003c number[]\u003e((a, s) =\u003e a.concat(s * 2), []);"
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 1,
+              "column": 45,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "[1, 2, 3].reduce((a, s) =\u003e a.concat(s * 2), \u003cnumber[]\u003e[]);",
+          "output": [
+            "[1, 2, 3].reduce\u003cnumber[]\u003e((a, s) =\u003e a.concat(s * 2),[]);"
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 1,
+              "column": 45,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "[1, 2, 3]?.reduce((a, s) =\u003e a.concat(s * 2), [] as number[]);",
+          "output": [
+            "[1, 2, 3]?.reduce\u003c number[]\u003e((a, s) =\u003e a.concat(s * 2), []);"
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 1,
+              "column": 46,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "[1, 2, 3]?.reduce((a, s) =\u003e a.concat(s * 2), \u003cnumber[]\u003e[]);",
+          "output": [
+            "[1, 2, 3]?.reduce\u003cnumber[]\u003e((a, s) =\u003e a.concat(s * 2),[]);"
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 1,
+              "column": 46,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst names = ['a', 'b', 'c'];\n\nnames.reduce(\n  (accum, name) =\u003e ({\n    ...accum,\n    [name]: true,\n  }),\n  {} as Record\u003cstring, boolean\u003e,\n);\n      ",
+          "output": [
+            "\nconst names = ['a', 'b', 'c'];\n\nnames.reduce\u003c Record\u003cstring, boolean\u003e\u003e(\n  (accum, name) =\u003e ({\n    ...accum,\n    [name]: true,\n  }),\n  {},\n);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 9,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n['a', 'b'].reduce(\n  (accum, name) =\u003e ({\n    ...accum,\n    [name]: true,\n  }),\n  \u003cRecord\u003cstring, boolean\u003e\u003e{},\n);\n      ",
+          "output": [
+            "\n['a', 'b'].reduce\u003cRecord\u003cstring, boolean\u003e\u003e(\n  (accum, name) =\u003e ({\n    ...accum,\n    [name]: true,\n  }),{},\n);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 7,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n['a', 'b']['reduce'](\n  (accum, name) =\u003e ({\n    ...accum,\n    [name]: true,\n  }),\n  {} as Record\u003cstring, boolean\u003e,\n);\n      ",
+          "output": [
+            "\n['a', 'b']['reduce']\u003c Record\u003cstring, boolean\u003e\u003e(\n  (accum, name) =\u003e ({\n    ...accum,\n    [name]: true,\n  }),\n  {},\n);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 7,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction f\u003cT, U extends T[]\u003e(a: U) {\n  return a.reduce(() =\u003e {}, {} as Record\u003cstring, boolean\u003e);\n}\n      ",
+          "output": [
+            "\nfunction f\u003cT, U extends T[]\u003e(a: U) {\n  return a.reduce\u003c Record\u003cstring, boolean\u003e\u003e(() =\u003e {}, {});\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 3,
+              "column": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const tuple: [number, number, number];\ntuple.reduce((a, s) =\u003e a.concat(s * 2), [] as number[]);\n      ",
+          "output": [
+            "\ndeclare const tuple: [number, number, number];\ntuple.reduce\u003c number[]\u003e((a, s) =\u003e a.concat(s * 2), []);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 3,
+              "column": 41,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const tupleOrArray: [number, number, number] | number[];\ntupleOrArray.reduce((a, s) =\u003e a.concat(s * 2), [] as number[]);\n      ",
+          "output": [
+            "\ndeclare const tupleOrArray: [number, number, number] | number[];\ntupleOrArray.reduce\u003c number[]\u003e((a, s) =\u003e a.concat(s * 2), []);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 3,
+              "column": 48,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const tuple: [number, number, number] \u0026 number[];\ntuple.reduce((a, s) =\u003e a.concat(s * 2), [] as number[]);\n      ",
+          "output": [
+            "\ndeclare const tuple: [number, number, number] \u0026 number[];\ntuple.reduce\u003c number[]\u003e((a, s) =\u003e a.concat(s * 2), []);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 3,
+              "column": 41,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n['a', 'b'].reduce(\n  (accum, name) =\u003e ({\n    ...accum,\n    [name]: true,\n  }),\n  {} as Record\u003cstring, boolean\u003e,\n);\n      ",
+          "output": [
+            "\n['a', 'b'].reduce\u003c Record\u003cstring, boolean\u003e\u003e(\n  (accum, name) =\u003e ({\n    ...accum,\n    [name]: true,\n  }),\n  {},\n);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 7,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction f\u003cT extends Record\u003cstring, boolean\u003e\u003e(t: T) {\n  ['a', 'b'].reduce(\n    (accum, name) =\u003e ({\n      ...accum,\n      [name]: true,\n    }),\n    t as Record\u003cstring, boolean | number\u003e,\n  );\n}\n      ",
+          "output": [
+            "\nfunction f\u003cT extends Record\u003cstring, boolean\u003e\u003e(t: T) {\n  ['a', 'b'].reduce\u003c Record\u003cstring, boolean | number\u003e\u003e(\n    (accum, name) =\u003e ({\n      ...accum,\n      [name]: true,\n    }),\n    t,\n  );\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferTypeParameter",
+              "line": 8,
+              "column": 5,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

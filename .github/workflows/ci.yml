@@ -157,7 +157,7 @@ jobs:
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
       # `--skip prettier_conformance`: suite provisioning needs curl/tar, absent in the cross container
-      - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf -- --skip prettier_conformance
+      - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxc_linter_tsrs --exclude oxlint --target armv7-unknown-linux-gnueabihf -- --skip prettier_conformance
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads

@@ -1,0 +1,1447 @@
+{
+  "source": "no_misused_spread_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "const a = [...[1, 2, 3]];"
+        },
+        {
+          "code": "const a = [...([1, 2, 3] as const)];"
+        },
+        {
+          "code": "\n      declare const data: any;\n      const a = [...data];\n    "
+        },
+        {
+          "code": "\n      declare const data: unknown;\n      const a = [...data];\n    "
+        },
+        {
+          "code": "\n      const a = [1, 2, 3];\n      const b = [...a];\n    "
+        },
+        {
+          "code": "\n      const a = [1, 2, 3] as const;\n      const b = [...a];\n    "
+        },
+        {
+          "code": "\n      declare function getArray(): number[];\n      const a = [...getArray()];\n    "
+        },
+        {
+          "code": "\n      declare function getTuple(): readonly number[];\n      const a = [...getTuple()];\n    "
+        },
+        {
+          "code": "\n      const iterator = {\n        *[Symbol.iterator]() {\n          yield 1;\n          yield 2;\n          yield 3;\n        },\n      };\n\n      const a = [...iterator];\n    "
+        },
+        {
+          "code": "\n      declare const data: Iterable\u003cnumber\u003e | number[];\n\n      const a = [...data];\n    "
+        },
+        {
+          "code": "\n      declare const data: Iterable\u003cnumber\u003e \u0026 number[];\n\n      const a = [...data];\n    "
+        },
+        {
+          "code": "\n      declare function getIterable(): Iterable\u003cnumber\u003e;\n\n      const a = [...getIterable()];\n    "
+        },
+        {
+          "code": "\n      declare const data: Uint8Array;\n\n      const a = [...data];\n    "
+        },
+        {
+          "code": "\n      declare const data: TypedArray;\n\n      const a = [...data];\n    "
+        },
+        {
+          "code": "const o = { ...{ a: 1, b: 2 } };"
+        },
+        {
+          "code": "const o = { ...({ a: 1, b: 2 } as const) };"
+        },
+        {
+          "code": "\n      declare const obj: any;\n\n      const o = { ...obj };\n    "
+        },
+        {
+          "code": "\n      declare const obj: { a: number; b: number } | any;\n\n      const o = { ...obj };\n    "
+        },
+        {
+          "code": "\n      declare const obj: { a: number; b: number } \u0026 any;\n\n      const o = { ...obj };\n    "
+        },
+        {
+          "code": "\n      const obj = { a: 1, b: 2 };\n      const o = { ...obj };\n    "
+        },
+        {
+          "code": "\n      declare const obj: { a: number; b: number };\n      const o = { ...obj };\n    "
+        },
+        {
+          "code": "\n      declare function getObject(): { a: number; b: number };\n      const o = { ...getObject() };\n    "
+        },
+        {
+          "code": "\n      function f() {}\n\n      f.prop = 1;\n\n      const o = { ...f };\n    "
+        },
+        {
+          "code": "\n      const f = () =\u003e {};\n\n      f.prop = 1;\n\n      const o = { ...f };\n    "
+        },
+        {
+          "code": "\n      function* generator() {}\n\n      generator.prop = 1;\n\n      const o = { ...generator };\n    "
+        },
+        {
+          "code": "\n      declare const promiseLike: PromiseLike\u003cnumber\u003e;\n\n      const o = { ...promiseLike };\n    "
+        },
+        {
+          "code": "\n        const obj = { a: 1, b: 2 };\n        const o = \u003cdiv {...x} /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\n        declare const obj: { a: number; b: number } | any;\n        const o = \u003cdiv {...x} /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\n        const promise = new Promise(() =\u003e {});\n        const o = { ...promise };\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "lib",
+                "name": "Promise"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n      interface A {}\n\n      declare const a: A;\n\n      const o = { ...a };\n    "
+        },
+        {
+          "code": "\n      const o = { ...'test' };\n    "
+        },
+        {
+          "code": "\n        const str: string = 'test';\n        const a = [...str];\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "lib",
+                "name": "string"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        function f() {}\n\n        const a = { ...f };\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "f"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        declare const iterator: Iterable\u003cstring\u003e;\n\n        const a = { ...iterator };\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "lib",
+                "name": "Iterable"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        type BrandedString = string \u0026 { __brand: 'safe' };\n\n        declare const brandedString: BrandedString;\n\n        const spreadBrandedString = [...brandedString];\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "BrandedString"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        type CustomIterable = {\n          [Symbol.iterator]: () =\u003e Generator\u003cstring\u003e;\n        };\n\n        declare const iterator: CustomIterable;\n\n        const a = { ...iterator };\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "CustomIterable"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        type CustomIterable = {\n          [Symbol.iterator]: () =\u003e string;\n        };\n\n        declare const iterator: CustomIterable;\n\n        const a = { ...iterator };\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "CustomIterable"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        declare module 'module' {\n          export type CustomIterable = {\n            [Symbol.iterator]: () =\u003e string;\n          };\n        }\n\n        import { CustomIterable } from 'module';\n\n        declare const iterator: CustomIterable;\n\n        const a = { ...iterator };\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "CustomIterable",
+                "package": "module"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        class A {\n          a = 1;\n        }\n\n        const a = new A();\n\n        const o = { ...a };\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "A"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        const a = {\n          ...class A {\n            static value = 1;\n          },\n        };\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "A"
+              }
+            ]
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "const a = [...'test'];",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 1,
+              "column": 12,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function withText\u003cText extends string\u003e(text: Text) {\n          return [...text];\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 3,
+              "column": 19,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const test = 'hello';\n        const a = [...test];\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 3,
+              "column": 20,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const test = `he${'ll'}o`;\n        const a = [...test];\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 3,
+              "column": 20,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const test: string;\n        const a = [...test];\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 3,
+              "column": 20,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const test: string | number[];\n        const a = [...test];\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 3,
+              "column": 20,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const test: string \u0026 { __brand: 'test' };\n        const a = [...test];\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 3,
+              "column": 20,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const test: number | (boolean | (string \u0026 { __brand: true }));\n        const a = [...test];\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 3,
+              "column": 20,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getString(): string;\n        const a = [...getString()];\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 3,
+              "column": 20,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function textIdentity(...args: string[]);\n\n        declare const text: string;\n\n        textIdentity(...text);\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 6,
+              "column": 22,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function textIdentity(...args: string[]);\n\n        declare const text: string;\n\n        textIdentity(...text, 'and', ...text);\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 6,
+              "column": 22,
+              "endColumn": 29,
+              "suggestions": []
+            },
+            {
+              "messageId": "noStringSpread",
+              "line": 6,
+              "column": 38,
+              "endColumn": 45,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function textIdentity(...args: string[]);\n\n        function withText\u003cText extends string\u003e(text: Text) {\n          textIdentity(...text);\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 5,
+              "column": 24,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getString\u003cT extends string\u003e(): T;\n        const a = [...getString()];\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 3,
+              "column": 20,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getString(): string \u0026 { __brand: 'test' };\n        const a = [...getString()];\n      ",
+          "errors": [
+            {
+              "messageId": "noStringSpread",
+              "line": 3,
+              "column": 20,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const o = { ...[1, 2, 3] };",
+          "errors": [
+            {
+              "messageId": "noArraySpreadInObject",
+              "line": 1,
+              "column": 13,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const arr = [1, 2, 3];\n        const o = { ...arr };\n      ",
+          "errors": [
+            {
+              "messageId": "noArraySpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const arr = [1, 2, 3] as const;\n        const o = { ...arr };\n      ",
+          "errors": [
+            {
+              "messageId": "noArraySpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const arr: number[];\n        const o = { ...arr };\n      ",
+          "errors": [
+            {
+              "messageId": "noArraySpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const arr: readonly number[];\n        const o = { ...arr };\n      ",
+          "errors": [
+            {
+              "messageId": "noArraySpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const arr: number[] | string[];\n        const o = { ...arr };\n      ",
+          "errors": [
+            {
+              "messageId": "noArraySpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const arr: number[] \u0026 string[];\n        const o = { ...arr };\n      ",
+          "errors": [
+            {
+              "messageId": "noArraySpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getArray(): number[];\n        const o = { ...getArray() };\n      ",
+          "errors": [
+            {
+              "messageId": "noArraySpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getArray(): readonly number[];\n        const o = { ...getArray() };\n      ",
+          "errors": [
+            {
+              "messageId": "noArraySpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const o = { ...new Set([1, 2, 3]) };",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 1,
+              "column": 13,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const set = new Set([1, 2, 3]);\n        const o = { ...set };\n      ",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const set: Set\u003cnumber\u003e;\n        const o = { ...set };\n      ",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const set: WeakSet\u003cobject\u003e;\n        const o = { ...set };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const set: ReadonlySet\u003cnumber\u003e;\n        const o = { ...set };\n      ",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const set: Set\u003cnumber\u003e | { a: number };\n        const o = { ...set };\n      ",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getSet(): Set\u003cnumber\u003e;\n        const o = { ...getSet() };\n      ",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 32,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const o = {\n          ...new Map([\n            ['test-1', 1],\n            ['test-2', 2],\n          ]),\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 3,
+              "column": 11,
+              "endLine": 6,
+              "endColumn": 13,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        const o = \n          Object.fromEntries(new Map([\n            ['test-1', 1],\n            ['test-2', 2],\n          ]))\n        ;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const map = new Map([\n          ['test-1', 1],\n          ['test-2', 2],\n        ]);\n\n        const o = { ...map };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 7,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        const map = new Map([\n          ['test-1', 1],\n          ['test-2', 2],\n        ]);\n\n        const o =  Object.fromEntries(map) ;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const map: Map\u003cstring, number\u003e;\n        const o = { ...map };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        declare const map: Map\u003cstring, number\u003e;\n        const o =  Object.fromEntries(map) ;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const map: Map\u003cstring, number\u003e;\n        const o = { ...(map) };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 29,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        declare const map: Map\u003cstring, number\u003e;\n        const o =  Object.fromEntries((map)) ;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const map: Map\u003cstring, number\u003e;\n        const o = { ...(map, map) };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 34,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        declare const map: Map\u003cstring, number\u003e;\n        const o =  Object.fromEntries((map, map)) ;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const map: Map\u003cstring, number\u003e;\n        const others = { a: 1 };\n        const o = { ...map, ...others };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        declare const map: Map\u003cstring, number\u003e;\n        const others = { a: 1 };\n        const o = { ...Object.fromEntries(map), ...others };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const map: Map\u003cstring, number\u003e;\n        const o = { other: 1, ...map };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 3,
+              "column": 31,
+              "endColumn": 37,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        declare const map: Map\u003cstring, number\u003e;\n        const o = { other: 1, ...Object.fromEntries(map) };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const map: ReadonlyMap\u003cstring, number\u003e;\n        const o = { ...map };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        declare const map: ReadonlyMap\u003cstring, number\u003e;\n        const o =  Object.fromEntries(map) ;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const map: WeakMap\u003c{ a: number }, string\u003e;\n        const o = { ...map };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        declare const map: WeakMap\u003c{ a: number }, string\u003e;\n        const o =  Object.fromEntries(map) ;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const map: Map\u003cstring, number\u003e | { a: number };\n        const o = { ...map };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getMap(): Map\u003cstring, number\u003e;\n        const o = { ...getMap() };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 32,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        declare function getMap(): Map\u003cstring, number\u003e;\n        const o =  Object.fromEntries(getMap()) ;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: Map\u003cboolean, string\u003e \u0026 Set\u003cnumber\u003e;\n        const o = { ...a };\n      ",
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        declare const a: Map\u003cboolean, string\u003e \u0026 Set\u003cnumber\u003e;\n        const o =  Object.fromEntries(a) ;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const ref = new WeakRef({ a: 1 });\n        const o = { ...ref };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const promise = new Promise(() =\u003e {});\n        const o = { ...promise };\n      ",
+          "errors": [
+            {
+              "messageId": "noPromiseSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 31,
+              "suggestions": [
+                {
+                  "messageId": "addAwait",
+                  "output": "\n        const promise = new Promise(() =\u003e {});\n        const o = { ...await promise };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const promise: Promise\u003c{ a: 1 }\u003e;\n        async function foo() {\n          return { ...(promise || {}) };\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "noPromiseSpreadInObject",
+              "line": 4,
+              "column": 20,
+              "endColumn": 38,
+              "suggestions": [
+                {
+                  "messageId": "addAwait",
+                  "output": "\n        declare const promise: Promise\u003c{ a: 1 }\u003e;\n        async function foo() {\n          return { ...(await (promise || {})) };\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const promise: Promise\u003cany\u003e;\n        async function foo() {\n          return { ...(Math.random() \u003c 0.5 ? promise : {}) };\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "noPromiseSpreadInObject",
+              "line": 4,
+              "column": 20,
+              "endColumn": 59,
+              "suggestions": [
+                {
+                  "messageId": "addAwait",
+                  "output": "\n        declare const promise: Promise\u003cany\u003e;\n        async function foo() {\n          return { ...(await (Math.random() \u003c 0.5 ? promise : {})) };\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function withPromise\u003cP extends Promise\u003cvoid\u003e\u003e(promise: P) {\n          return { ...promise };\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "noPromiseSpreadInObject",
+              "line": 3,
+              "column": 20,
+              "endColumn": 30,
+              "suggestions": [
+                {
+                  "messageId": "addAwait",
+                  "output": "\n        function withPromise\u003cP extends Promise\u003cvoid\u003e\u003e(promise: P) {\n          return { ...await promise };\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const maybePromise: Promise\u003cnumber\u003e | { a: number };\n        const o = { ...maybePromise };\n      ",
+          "errors": [
+            {
+              "messageId": "noPromiseSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 36,
+              "suggestions": [
+                {
+                  "messageId": "addAwait",
+                  "output": "\n        declare const maybePromise: Promise\u003cnumber\u003e | { a: number };\n        const o = { ...await maybePromise };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const promise: Promise\u003cnumber\u003e \u0026 { a: number };\n        const o = { ...promise };\n      ",
+          "errors": [
+            {
+              "messageId": "noPromiseSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 31,
+              "suggestions": [
+                {
+                  "messageId": "addAwait",
+                  "output": "\n        declare const promise: Promise\u003cnumber\u003e \u0026 { a: number };\n        const o = { ...await promise };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getPromise(): Promise\u003cnumber\u003e;\n        const o = { ...getPromise() };\n      ",
+          "errors": [
+            {
+              "messageId": "noPromiseSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 36,
+              "suggestions": [
+                {
+                  "messageId": "addAwait",
+                  "output": "\n        declare function getPromise(): Promise\u003cnumber\u003e;\n        const o = { ...await getPromise() };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getPromise\u003cT extends Promise\u003cnumber\u003e\u003e(arg: T): T;\n        const o = { ...getPromise() };\n      ",
+          "errors": [
+            {
+              "messageId": "noPromiseSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 36,
+              "suggestions": [
+                {
+                  "messageId": "addAwait",
+                  "output": "\n        declare function getPromise\u003cT extends Promise\u003cnumber\u003e\u003e(arg: T): T;\n        const o = { ...await getPromise() };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function f() {}\n\n        const o = { ...f };\n      ",
+          "errors": [
+            {
+              "messageId": "noFunctionSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface FunctionWithProps {\n          (): string;\n          prop: boolean;\n        }\n\n        type FunctionWithoutProps = () =\u003e string;\n\n        declare const obj: FunctionWithProps | FunctionWithoutProps | object;\n\n        const o = { ...obj };\n      ",
+          "errors": [
+            {
+              "messageId": "noFunctionSpreadInObject",
+              "line": 11,
+              "column": 21,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const f = () =\u003e {};\n\n        const o = { ...f };\n      ",
+          "errors": [
+            {
+              "messageId": "noFunctionSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function f(): void;\n\n        const o = { ...f };\n      ",
+          "errors": [
+            {
+              "messageId": "noFunctionSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getFunction(): () =\u003e void;\n\n        const o = { ...getFunction() };\n      ",
+          "errors": [
+            {
+              "messageId": "noFunctionSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 37,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const f: () =\u003e void;\n\n        const o = { ...f };\n      ",
+          "errors": [
+            {
+              "messageId": "noFunctionSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const f: () =\u003e void | { a: number };\n\n        const o = { ...f };\n      ",
+          "errors": [
+            {
+              "messageId": "noFunctionSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function* generator() {}\n\n        const o = { ...generator };\n      ",
+          "errors": [
+            {
+              "messageId": "noFunctionSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const iterator = {\n          *[Symbol.iterator]() {\n            yield 'test';\n          },\n        };\n\n        const o = { ...iterator };\n      ",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 8,
+              "column": 21,
+              "endColumn": 32,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type CustomIterable = {\n          [Symbol.iterator]: () =\u003e Generator\u003cstring\u003e;\n        };\n\n        const iterator: CustomIterable = {\n          *[Symbol.iterator]() {\n            yield 'test';\n          },\n        };\n\n        const a = { ...iterator };\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "AnotherIterable"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 12,
+              "column": 21,
+              "endColumn": 32,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare module 'module' {\n          export type CustomIterable = {\n            [Symbol.iterator]: () =\u003e string;\n          };\n        }\n\n        import { CustomIterable } from 'module';\n\n        declare const iterator: CustomIterable;\n\n        const a = { ...iterator };\n      ",
+          "skip": true,
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "Nothing",
+                "package": "module"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 12,
+              "column": 21,
+              "endColumn": 32,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const iterator: Iterable\u003cstring\u003e;\n\n        const o = { ...iterator };\n      ",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 32,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const iterator: Iterable\u003cstring\u003e | { a: number };\n\n        const o = { ...iterator };\n      ",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 32,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function getIterable(): Iterable\u003cstring\u003e;\n\n        const o = { ...getIterable() };\n      ",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 37,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          [Symbol.iterator]() {\n            return {\n              next() {\n                return { done: true, value: undefined };\n              },\n            };\n          }\n        }\n\n        const a = { ...new A() };\n      ",
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 12,
+              "column": 21,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const o = { ...new Date() };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 2,
+              "column": 21,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class HTMLElementLike {}\n        declare const element: HTMLElementLike;\n        const o = { ...element };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const regex: RegExp;\n        const o = { ...regex };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 3,
+              "column": 21,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          a = 1;\n          public b = 2;\n          private c = 3;\n          protected d = 4;\n          static e = 5;\n        }\n\n        const o = { ...new A() };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 10,
+              "column": 21,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          a = 1;\n        }\n\n        const a = new A();\n\n        const o = { ...a };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 8,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          a = 1;\n        }\n\n        declare const a: A;\n\n        const o = { ...a };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 8,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          a = 1;\n        }\n\n        declare function getA(): A;\n\n        const o = { ...getA() };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 8,
+              "column": 21,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          a = 1;\n        }\n\n        declare function getA\u003cT extends A\u003e(arg: T): T;\n\n        const o = { ...getA() };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 8,
+              "column": 21,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          a = 1;\n        }\n\n        class B extends A {}\n\n        const o = { ...new B() };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 8,
+              "column": 21,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          a = 1;\n        }\n\n        declare const a: A | { b: string };\n\n        const o = { ...a };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 8,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          a = 1;\n        }\n\n        declare const a: A \u0026 { b: string };\n\n        const o = { ...a };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 8,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {}\n\n        const o = { ...A };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassDeclarationSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const A = class {};\n\n        const o = { ...A };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassDeclarationSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Declaration {\n          declaration?: boolean;\n        }\n        const Expression = class {\n          expression?: boolean;\n        };\n\n        declare const either: typeof Declaration | typeof Expression;\n\n        const o = { ...either };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassDeclarationSpreadInObject",
+              "line": 11,
+              "column": 21,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const A = Set\u003cnumber\u003e;\n\n        const o = { ...A };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassDeclarationSpreadInObject",
+              "line": 4,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = {\n          ...class A {\n            static value = 1;\n            nonStatic = 2;\n          },\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassDeclarationSpreadInObject",
+              "line": 3,
+              "column": 11,
+              "endLine": 6,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = { ...(class A { static value = 1 }) }\n      ",
+          "errors": [
+            {
+              "messageId": "noClassDeclarationSpreadInObject",
+              "line": 2,
+              "column": 21,
+              "endColumn": 54,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = { ...new (class A { static value = 1; })() };\n      ",
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 2,
+              "column": 21,
+              "endColumn": 61,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const o = \u003cdiv {...[1, 2, 3]} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "noArraySpreadInObject",
+              "line": 2,
+              "column": 24,
+              "endColumn": 38,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {}\n\n        const o = \u003cdiv {...A} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "noClassDeclarationSpreadInObject",
+              "line": 4,
+              "column": 24,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const o = \u003cdiv {...new Date()} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "noClassInstanceSpreadInObject",
+              "line": 2,
+              "column": 24,
+              "endColumn": 39,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f() {}\n\n        const o = \u003cdiv {...f} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "noFunctionSpreadInObject",
+              "line": 4,
+              "column": 24,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const o = \u003cdiv {...new Set([1, 2, 3])} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "noIterableSpreadInObject",
+              "line": 2,
+              "column": 24,
+              "endColumn": 47,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const map: Map\u003cstring, number\u003e;\n\n        const o = \u003cdiv {...map} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "noMapSpreadInObject",
+              "line": 4,
+              "column": 24,
+              "endColumn": 32,
+              "suggestions": [
+                {
+                  "messageId": "replaceMapSpreadInObject",
+                  "output": "\n        declare const map: Map\u003cstring, number\u003e;\n\n        const o = \u003cdiv {...Object.fromEntries(map)} /\u003e;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const promise = new Promise(() =\u003e {});\n\n        const o = \u003cdiv {...promise} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "noPromiseSpreadInObject",
+              "line": 4,
+              "column": 24,
+              "endColumn": 36,
+              "suggestions": [
+                {
+                  "messageId": "addAwait",
+                  "output": "\n        const promise = new Promise(() =\u003e {});\n\n        const o = \u003cdiv {...await promise} /\u003e;\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

@@ -1,0 +1,468 @@
+{
+  "source": "no_unnecessary_boolean_literal_compare_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n      declare const varAny: any;\n      varAny === true;\n    "
+        },
+        {
+          "code": "\n      declare const varAny: any;\n      varAny == false;\n    "
+        },
+        {
+          "code": "\n      declare const varString: string;\n      varString === false;\n    "
+        },
+        {
+          "code": "\n      declare const varString: string;\n      varString === true;\n    "
+        },
+        {
+          "code": "\n      declare const varObject: {};\n      varObject === true;\n    "
+        },
+        {
+          "code": "\n      declare const varObject: {};\n      varObject == false;\n    "
+        },
+        {
+          "code": "\n      declare const varNullOrUndefined: null | undefined;\n      varNullOrUndefined === false;\n    "
+        },
+        {
+          "code": "\n      declare const varBooleanOrString: boolean | string;\n      varBooleanOrString === false;\n    "
+        },
+        {
+          "code": "\n      declare const varBooleanOrString: boolean | string;\n      varBooleanOrString == true;\n    "
+        },
+        {
+          "code": "\n      declare const varTrueOrStringOrUndefined: true | string | undefined;\n      varTrueOrStringOrUndefined == true;\n    "
+        },
+        {
+          "code": "\n      const test: \u003cT\u003e(someCondition: T) =\u003e void = someCondition =\u003e {\n        if (someCondition === true) {\n        }\n      };\n    "
+        },
+        {
+          "code": "\n      const test: \u003cT\u003e(someCondition: boolean | string) =\u003e void = someCondition =\u003e {\n        if (someCondition === true) {\n        }\n      };\n    "
+        },
+        {
+          "code": "\n      declare const varBooleanOrUndefined: boolean | undefined;\n      varBooleanOrUndefined === true;\n    "
+        },
+        {
+          "code": "\n        declare const varBooleanOrUndefined: boolean | undefined;\n        varBooleanOrUndefined === true;\n      ",
+          "options": {
+            "allowComparingNullableBooleansToFalse": false
+          }
+        },
+        {
+          "code": "\n        declare const varBooleanOrUndefined: boolean | undefined;\n        varBooleanOrUndefined === false;\n      ",
+          "options": {
+            "allowComparingNullableBooleansToTrue": false
+          }
+        },
+        {
+          "code": "\n        const test: \u003cT extends boolean | undefined\u003e(\n          someCondition: T,\n        ) =\u003e void = someCondition =\u003e {\n          if (someCondition === true) {\n          }\n        };\n      ",
+          "options": {
+            "allowComparingNullableBooleansToFalse": false
+          }
+        },
+        {
+          "code": "\n        const test: \u003cT extends boolean | undefined\u003e(\n          someCondition: T,\n        ) =\u003e void = someCondition =\u003e {\n          if (someCondition === false) {\n          }\n        };\n      ",
+          "options": {
+            "allowComparingNullableBooleansToTrue": false
+          }
+        },
+        {
+          "code": "'false' === true;"
+        },
+        {
+          "code": "'true' === false;"
+        },
+        {
+          "code": "\nconst unconstrained: \u003cT\u003e(someCondition: T) =\u003e void = someCondition =\u003e {\n  if (someCondition === true) {\n  }\n};\n    "
+        },
+        {
+          "code": "\nconst extendsUnknown: \u003cT extends unknown\u003e(\n  someCondition: T,\n) =\u003e void = someCondition =\u003e {\n  if (someCondition === true) {\n  }\n};\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "true === true;",
+          "output": [
+            "true;"
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "false !== true;",
+          "output": [
+            "!false;"
+          ],
+          "errors": [
+            {
+              "messageId": "negated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBoolean: boolean;\n        if (varBoolean !== false) {\n        }\n      ",
+          "output": [
+            "\n        declare const varBoolean: boolean;\n        if (varBoolean) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "negated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varTrue: true;\n        if (varTrue !== true) {\n        }\n      ",
+          "output": [
+            "\n        declare const varTrue: true;\n        if (!varTrue) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "negated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varTrueOrUndefined: true | undefined;\n        if (varTrueOrUndefined === true) {\n        }\n      ",
+          "options": {
+            "allowComparingNullableBooleansToTrue": false
+          },
+          "output": [
+            "\n        declare const varTrueOrUndefined: true | undefined;\n        if (varTrueOrUndefined) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "comparingNullableToTrueDirect",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varFalseOrNull: false | null;\n        if (varFalseOrNull !== true) {\n        }\n      ",
+          "options": {
+            "allowComparingNullableBooleansToTrue": false
+          },
+          "output": [
+            "\n        declare const varFalseOrNull: false | null;\n        if (!varFalseOrNull) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "comparingNullableToTrueNegated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBooleanOrNull: boolean | null;\n        declare const otherBoolean: boolean;\n        if (varBooleanOrNull === false \u0026\u0026 otherBoolean) {\n        }\n      ",
+          "options": {
+            "allowComparingNullableBooleansToFalse": false
+          },
+          "output": [
+            "\n        declare const varBooleanOrNull: boolean | null;\n        declare const otherBoolean: boolean;\n        if (!(varBooleanOrNull ?? true) \u0026\u0026 otherBoolean) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "comparingNullableToFalse",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBooleanOrNull: boolean | null;\n        declare const otherBoolean: boolean;\n        if (!(varBooleanOrNull === false) || otherBoolean) {\n        }\n      ",
+          "options": {
+            "allowComparingNullableBooleansToFalse": false
+          },
+          "output": [
+            "\n        declare const varBooleanOrNull: boolean | null;\n        declare const otherBoolean: boolean;\n        if ((varBooleanOrNull ?? true) || otherBoolean) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "comparingNullableToFalse",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varTrueOrFalseOrUndefined: true | false | undefined;\n        declare const otherBoolean: boolean;\n        if (varTrueOrFalseOrUndefined !== false \u0026\u0026 !otherBoolean) {\n        }\n      ",
+          "options": {
+            "allowComparingNullableBooleansToFalse": false
+          },
+          "output": [
+            "\n        declare const varTrueOrFalseOrUndefined: true | false | undefined;\n        declare const otherBoolean: boolean;\n        if ((varTrueOrFalseOrUndefined ?? true) \u0026\u0026 !otherBoolean) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "comparingNullableToFalse",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBoolean: boolean;\n        if (false !== varBoolean) {\n        }\n      ",
+          "output": [
+            "\n        declare const varBoolean: boolean;\n        if ( varBoolean) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "negated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBoolean: boolean;\n        if (true !== varBoolean) {\n        }\n      ",
+          "output": [
+            "\n        declare const varBoolean: boolean;\n        if (! varBoolean) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "negated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const x;\n        if ((x instanceof Error) === false) {\n        }\n      ",
+          "output": [
+            "\n        declare const x;\n        if (!(x instanceof Error)) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const x;\n        if (false === (x instanceof Error)) {\n        }\n      ",
+          "output": [
+            "\n        declare const x;\n        if (! (x instanceof Error)) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const x;\n        if (x instanceof Error === false) {\n        }\n      ",
+          "output": [
+            "\n        declare const x;\n        if (!(x instanceof Error)) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const x;\n        if (typeof x === 'string' === false) {\n        }\n      ",
+          "output": [
+            "\n        declare const x;\n        if (!(typeof x === 'string')) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const x;\n        if (x instanceof Error === (false)) {\n        }\n      ",
+          "output": [
+            "\n        declare const x;\n        if (!(x instanceof Error)) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const x;\n        if ((false) === x instanceof Error) {\n        }\n      ",
+          "output": [
+            "\n        declare const x;\n        if (!( x instanceof Error)) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBoolean: boolean;\n        if (!(varBoolean !== false)) {\n        }\n      ",
+          "output": [
+            "\n        declare const varBoolean: boolean;\n        if (!varBoolean) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "negated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBoolean: boolean;\n        if (!(varBoolean === false)) {\n        }\n      ",
+          "output": [
+            "\n        declare const varBoolean: boolean;\n        if (varBoolean) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBoolean: boolean;\n        if (!(varBoolean instanceof Event == false)) {\n        }\n      ",
+          "output": [
+            "\n        declare const varBoolean: boolean;\n        if (varBoolean instanceof Event) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBoolean: boolean;\n        if (varBoolean instanceof Event == false) {\n        }\n      ",
+          "output": [
+            "\n        declare const varBoolean: boolean;\n        if (!(varBoolean instanceof Event)) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBoolean: boolean;\n        if (!((varBoolean ?? false) !== false)) {\n        }\n      ",
+          "output": [
+            "\n        declare const varBoolean: boolean;\n        if (!(varBoolean ?? false)) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "negated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBoolean: boolean;\n        if (!((varBoolean ?? false) === false)) {\n        }\n      ",
+          "output": [
+            "\n        declare const varBoolean: boolean;\n        if ((varBoolean ?? false)) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const varBoolean: boolean;\n        if (!((varBoolean ?? true) !== false)) {\n        }\n      ",
+          "output": [
+            "\n        declare const varBoolean: boolean;\n        if (!(varBoolean ?? true)) {\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "negated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const test: \u003cT extends boolean\u003e(someCondition: T) =\u003e void = someCondition =\u003e {\n          if (someCondition === true) {\n          }\n        };\n      ",
+          "output": [
+            "\n        const test: \u003cT extends boolean\u003e(someCondition: T) =\u003e void = someCondition =\u003e {\n          if (someCondition) {\n          }\n        };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "direct",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const test: \u003cT extends boolean\u003e(someCondition: T) =\u003e void = someCondition =\u003e {\n          if (!(someCondition !== false)) {\n          }\n        };\n      ",
+          "output": [
+            "\n        const test: \u003cT extends boolean\u003e(someCondition: T) =\u003e void = someCondition =\u003e {\n          if (!someCondition) {\n          }\n        };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "negated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const test: \u003cT extends boolean\u003e(someCondition: T) =\u003e void = someCondition =\u003e {\n          if (!((someCondition ?? true) !== false)) {\n          }\n        };\n      ",
+          "output": [
+            "\n        const test: \u003cT extends boolean\u003e(someCondition: T) =\u003e void = someCondition =\u003e {\n          if (!(someCondition ?? true)) {\n          }\n        };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "negated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(): boolean {}\n      ",
+          "tsconfig": "tsconfig.unstrict.json",
+          "errors": [
+            {
+              "messageId": "noStrictNullCheck",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function check(foo: boolean | null | undefined, func: (value?: true) =\u003e boolean): boolean {\n          if (func() || foo === true) {}\n          const conjunction = foo === true \u0026\u0026 func(foo);\n          const negated = !(foo !== true);\n          if ((foo === true) ?? func()) {}\n          return foo === true;\n        }\n      ",
+          "options": {
+            "allowComparingNullableBooleansToTrue": false
+          },
+          "output": [
+            "\n        function check(foo: boolean | null | undefined, func: (value?: true) =\u003e boolean): boolean {\n          if (func() ||  foo) {}\n          const conjunction = (!!foo) \u0026\u0026 func(foo);\n          const negated = (!!foo);\n          if (((!!foo)) ?? func()) {}\n          return (!!foo);\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "comparingNullableToTrueDirect",
+              "suggestions": []
+            },
+            {
+              "messageId": "comparingNullableToTrueDirect",
+              "suggestions": []
+            },
+            {
+              "messageId": "comparingNullableToTrueNegated",
+              "suggestions": []
+            },
+            {
+              "messageId": "comparingNullableToTrueDirect",
+              "suggestions": []
+            },
+            {
+              "messageId": "comparingNullableToTrueDirect",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

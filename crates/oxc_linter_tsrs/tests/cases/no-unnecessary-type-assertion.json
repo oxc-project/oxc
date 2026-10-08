@@ -1,0 +1,3390 @@
+{
+  "source": "no_unnecessary_type_assertion_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\nimport { TSESTree } from '@typescript-eslint/utils';\ndeclare const member: TSESTree.TSEnumMember;\nif (\n  member.id.type === AST_NODE_TYPES.Literal \u0026\u0026\n  typeof member.id.value === 'string'\n) {\n  const name = member.id as TSESTree.StringLiteral;\n}\n    "
+        },
+        {
+          "code": "\n      const c = 1;\n      let z = c as number;\n    "
+        },
+        {
+          "code": "\n      const c = 1;\n      let z = c as const;\n    "
+        },
+        {
+          "code": "\n      const c = 1;\n      let z = c as 1;\n    "
+        },
+        {
+          "code": "\n      type Bar = 'bar';\n      const data = {\n        x: 'foo' as 'foo',\n        y: 'bar' as Bar,\n      };\n    "
+        },
+        {
+          "code": "[1, 2, 3, 4, 5].map(x =\u003e [x, 'A' + x] as [number, string]);"
+        },
+        {
+          "code": "\n      let x: Array\u003c[number, string]\u003e = [1, 2, 3, 4, 5].map(\n        x =\u003e [x, 'A' + x] as [number, string],\n      );\n    "
+        },
+        {
+          "code": "let y = 1 as 1;"
+        },
+        {
+          "code": "const foo = 3 as number;"
+        },
+        {
+          "code": "const foo = \u003cnumber\u003e3;"
+        },
+        {
+          "code": "\ntype Tuple = [3, 'hi', 'bye'];\nconst foo = [3, 'hi', 'bye'] as Tuple;\n    "
+        },
+        {
+          "code": "\ntype PossibleTuple = {};\nconst foo = {} as PossibleTuple;\n    "
+        },
+        {
+          "code": "\ntype PossibleTuple = { hello: 'hello' };\nconst foo = { hello: 'hello' } as PossibleTuple;\n    "
+        },
+        {
+          "code": "\ntype PossibleTuple = { 0: 'hello'; 5: 'hello' };\nconst foo = { 0: 'hello', 5: 'hello' } as PossibleTuple;\n    "
+        },
+        {
+          "code": "\nlet bar: number | undefined = x;\nlet foo: number = bar!;\n    "
+        },
+        {
+          "code": "\ndeclare const a: { data?: unknown };\n\nconst x = a.data!;\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg?: number): number | void;\nconst bar: number = foo()!;\n    "
+        },
+        {
+          "code": "\ntype Foo = number;\nconst foo = (3 + 5) as Foo;\n      ",
+          "options": {
+            "typesToIgnore": [
+              "Foo"
+            ]
+          }
+        },
+        {
+          "code": "const foo = (3 + 5) as any;",
+          "options": {
+            "typesToIgnore": [
+              "any"
+            ]
+          }
+        },
+        {
+          "code": "(Syntax as any).ArrayExpression = 'foo';",
+          "options": {
+            "typesToIgnore": [
+              "any"
+            ]
+          }
+        },
+        {
+          "code": "const foo = (3 + 5) as string;",
+          "options": {
+            "typesToIgnore": [
+              "string"
+            ]
+          }
+        },
+        {
+          "code": "\ntype Foo = number;\nconst foo = \u003cFoo\u003e(3 + 5);\n      ",
+          "options": {
+            "typesToIgnore": [
+              "Foo"
+            ]
+          }
+        },
+        {
+          "code": "\nlet bar: number;\nbar! + 1;\n    "
+        },
+        {
+          "code": "\nlet bar: undefined | number;\nbar! + 1;\n    "
+        },
+        {
+          "code": "\nlet bar: number, baz: number;\nbar! + 1;\n    "
+        },
+        {
+          "code": "\nfunction foo\u003cT extends string | undefined\u003e(bar: T) {\n  return bar!;\n}\n    "
+        },
+        {
+          "code": "\ndeclare function nonNull(s: string);\nlet s: string | null = null;\nnonNull(s!);\n    "
+        },
+        {
+          "code": "\nconst x: number | null = null;\nconst y: number = x!;\n    "
+        },
+        {
+          "code": "\nconst x: number | null = null;\nclass Foo {\n  prop: number = x!;\n}\n    "
+        },
+        {
+          "code": "\nclass T {\n  a = 'a' as const;\n}\n    "
+        },
+        {
+          "code": "\nclass T {\n  a = 3 as 3;\n}\n    "
+        },
+        {
+          "code": "\nconst foo = 'foo';\n\nclass T {\n  readonly test = `${foo}` as const;\n}\n    "
+        },
+        {
+          "code": "\nclass T {\n  readonly a = { foo: 'foo' } as const;\n}\n    "
+        },
+        {
+          "code": "\n      declare const y: number | null;\n      console.log(y!);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(str?: string): void;\ndeclare const str: string | null;\n\nfoo(str!);\n    "
+        },
+        {
+          "code": "\ndeclare function a(a: string): any;\ndeclare const b: string | null;\nclass Mx {\n  @a(b!)\n  private prop = 1;\n}\n    "
+        },
+        {
+          "code": "\nfunction testFunction(_param: string | undefined): void {\n  /* noop */\n}\nconst value = 'test' as string | null | undefined;\ntestFunction(value!);\n    "
+        },
+        {
+          "code": "\nfunction testFunction(_param: string | null): void {\n  /* noop */\n}\nconst value = 'test' as string | null | undefined;\ntestFunction(value!);\n    "
+        },
+        {
+          "code": "\ndeclare namespace JSX {\n  interface IntrinsicElements {\n    div: { key?: string | number };\n  }\n}\n\nfunction Test(props: { id?: null | string | number }) {\n  return \u003cdiv key={props.id!} /\u003e;\n}\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\nconst a = [1, 2];\nconst b = [3, 4];\nconst c = [...a, ...b] as const;\n      "
+        },
+        {
+          "code": "const a = [1, 2] as const;"
+        },
+        {
+          "code": "const a = { foo: 'foo' } as const;"
+        },
+        {
+          "code": "\nconst a = [1, 2];\nconst b = [3, 4];\nconst c = \u003cconst\u003e[...a, ...b];\n      "
+        },
+        {
+          "code": "const a = \u003cconst\u003e[1, 2];"
+        },
+        {
+          "code": "const a = \u003cconst\u003e{ foo: 'foo' };"
+        },
+        {
+          "code": "\nlet a: number | undefined;\nlet b: number | undefined;\nlet c: number;\na = b;\nc = b!;\na! -= 1;\n      "
+        },
+        {
+          "code": "\nlet a: { b?: string } | undefined;\na!.b = '';\n      "
+        },
+        {
+          "code": "\nlet value: number | undefined;\nlet values: number[] = [];\n\nvalue = values.pop()!;\n    "
+        },
+        {
+          "code": "\ndeclare function foo(): number | undefined;\nconst a = foo()!;\n    "
+        },
+        {
+          "code": "\ndeclare function foo(): number | undefined;\nconst a = foo() as number;\n    "
+        },
+        {
+          "code": "\ndeclare function foo(): number | undefined;\nconst a = \u003cnumber\u003efoo();\n    "
+        },
+        {
+          "code": "\ndeclare const arr: (object | undefined)[];\nconst item = arr[0]!;\n    "
+        },
+        {
+          "code": "\ndeclare const arr: (object | undefined)[];\nconst item = arr[0] as object;\n    "
+        },
+        {
+          "code": "\ndeclare const arr: (object | undefined)[];\nconst item = \u003cobject\u003earr[0];\n    "
+        },
+        {
+          "code": "\nfunction foo(item: string) {}\nfunction bar(items: string[]) {\n  for (let i = 0; i \u003c items.length; i++) {\n    foo(items[i]!);\n  }\n}\n      ",
+          "tsconfig": "./tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ndeclare const myString: 'foo';\nconst templateLiteral = `${myString}-somethingElse` as const;\n    "
+        },
+        {
+          "code": "\ndeclare const myString: 'foo';\nconst templateLiteral = \u003cconst\u003e`${myString}-somethingElse`;\n    "
+        },
+        {
+          "code": "\nconst myString = 'foo';\nconst templateLiteral = `${myString}-somethingElse` as const;\n    "
+        },
+        {
+          "code": "let a = `a` as const;"
+        },
+        {
+          "code": "\ndeclare const foo: {\n  a?: string;\n};\nconst bar = foo.a as string;\n      ",
+          "tsconfig": "./tsconfig.exactOptionalPropertyTypes.json"
+        },
+        {
+          "code": "\ndeclare const foo: {\n  a?: string | undefined;\n};\nconst bar = foo.a as string;\n      ",
+          "tsconfig": "./tsconfig.exactOptionalPropertyTypes.json"
+        },
+        {
+          "code": "\ndeclare const foo: {\n  a: string;\n};\nconst bar = foo.a as string | undefined;\n      ",
+          "tsconfig": "./tsconfig.exactOptionalPropertyTypes.json"
+        },
+        {
+          "code": "\ndeclare const foo: {\n  a?: string | null | number;\n};\nconst bar = foo.a as string | undefined;\n      ",
+          "tsconfig": "./tsconfig.exactOptionalPropertyTypes.json"
+        },
+        {
+          "code": "\ndeclare const foo: {\n  a?: string | number;\n};\nconst bar = foo.a as string | undefined | bigint;\n      ",
+          "tsconfig": "./tsconfig.exactOptionalPropertyTypes.json"
+        },
+        {
+          "code": "\nif (Math.random()) {\n  {\n    var x = 1;\n  }\n}\nx!;\n      "
+        },
+        {
+          "code": "\nenum T {\n  Value1,\n  Value2,\n}\n\ndeclare const a: T.Value1;\nconst b = a as T.Value2;\n      "
+        },
+        {
+          "code": "\nenum T {\n  Value1,\n  Value2,\n}\n\ndeclare const a: T.Value1;\nconst b = a as T;\n      "
+        },
+        {
+          "code": "\nenum T {\n  Value1 = 0,\n  Value2 = 1,\n}\n\nconst b = 1 as T.Value2;\n      "
+        },
+        {
+          "code": "\nconst foo: unknown = {};\nconst baz: {} = foo!;\n    "
+        },
+        {
+          "code": "\nconst foo: unknown = {};\nconst bar: object = foo!;\n    "
+        },
+        {
+          "code": "\ndeclare function foo\u003cT extends unknown\u003e(bar: T): T;\nconst baz: unknown = {};\nfoo(baz!);\n    "
+        },
+        {
+          "code": "\ndeclare const foo: any;\nfoo!;\n\t\t"
+        },
+        {
+          "code": "const a = `a` as const;"
+        },
+        {
+          "code": "const a = 'a' as const;"
+        },
+        {
+          "code": "\u003cconst\u003e'a';"
+        },
+        {
+          "code": "\nclass T {\n  readonly a = 'a' as const;\n}\n\t\t"
+        },
+        {
+          "code": "\nenum T {\n  Value1,\n  Value2,\n}\ndeclare const a: T.Value1;\nconst b = a as const;\n\t\t"
+        },
+        {
+          "code": "\nfunction filterProps(props: PropertyKey[]): string[] {\n  return props.filter((prop) =\u003e\n    !['foo', 'bar'].includes(prop as string)\n  ) as string[];\n}\n\t\t"
+        },
+        {
+          "code": "\nfunction filterProps(props: PropertyKey[]): string[] {\n  return \u003cstring[]\u003eprops.filter((prop) =\u003e\n    !['foo', 'bar'].includes(\u003cstring\u003eprop)\n  );\n}\n\t\t"
+        },
+        {
+          "code": "\nasync function mergeWithDefaults(loadModule: () =\u003e Promise\u003cunknown\u003e) {\n  const mod = (await loadModule()) as Record\u003cstring, unknown\u003e;\n  return { ...mod, extra: true };\n}\n\t\t"
+        },
+        {
+          "code": "\nasync function mergeWithDefaults(loadModule: () =\u003e Promise\u003cunknown\u003e) {\n  const mod = \u003cRecord\u003cstring, unknown\u003e\u003e(await loadModule());\n  return { ...mod, extra: true };\n}\n\t\t"
+        },
+        {
+          "code": "\ntype Wrapper\u003cT\u003e = { value: number; meta: T };\n\nfunction unwrap\u003cT\u003e(input: number | string | Wrapper\u003cT\u003e): number {\n  return typeof input === 'string' ? parseFloat(input) : (input as number);\n}\n\t\t"
+        },
+        {
+          "code": "\ntype Wrapper\u003cT\u003e = { value: number; meta: T };\n\nfunction unwrap\u003cT\u003e(input: number | string | Wrapper\u003cT\u003e): number {\n  return typeof input === 'string' ? parseFloat(input) : \u003cnumber\u003einput;\n}\n\t\t"
+        },
+        {
+          "code": "\nconst value = ((\u003cT\u003e(input: T): T | undefined =\u003e input)(1)) as number;\n\t\t"
+        },
+        {
+          "code": "\ninterface Element {\n  tagName: string;\n}\n\ninterface HTMLCanvasElement extends Element {\n  getContext(contextId: string): unknown;\n}\n\ninterface HTMLElementTagNameMap {\n  canvas: HTMLCanvasElement;\n}\n\ndeclare const document: {\n  querySelector\u003cK extends keyof HTMLElementTagNameMap\u003e(selectors: K): HTMLElementTagNameMap[K] | null;\n  querySelector\u003cE extends Element = Element\u003e(selectors: string): E | null;\n};\n\nexport const a = document.querySelector('.foo') as HTMLCanvasElement | null;\n\t\t"
+        },
+        {
+          "code": "\ninterface Element { tagName: string; }\n\ninterface HTMLCanvasElement extends Element { getContext(contextId: string): unknown; }\n\ninterface Factory { new \u003cE extends Element = Element\u003e(): E | null; }\n\ndeclare const CanvasFactory: Factory;\n\nexport const a = new CanvasFactory() as HTMLCanvasElement | null;\n\t\t"
+        },
+        {
+          "code": "\ninterface Element { tagName: string; }\n\ninterface HTMLCanvasElement extends Element { getContext(contextId: string): unknown; }\n\ndeclare const query: { \u003cE extends Element = Element\u003e(strings: TemplateStringsArray): E | null; };\n\nexport const a = query`.foo` as HTMLCanvasElement | null;\n\t\t"
+        },
+        {
+          "code": "\ndeclare function load\u003cT = unknown\u003e(): Promise\u003cT\u003e;\n\nexport async function main() {\n  const actual = (await load()) as Record\u003cstring, unknown\u003e;\n  return { ...actual };\n}\n\t\t"
+        },
+        {
+          "code": "\ndeclare function load\u003cT = unknown\u003e(): Promise\u003cPromise\u003cT\u003e\u003e;\n\nexport async function main() {\n  const actual = (await await load()) as Record\u003cstring, unknown\u003e;\n  return { ...actual };\n}\n\t\t"
+        },
+        {
+          "code": "\ndeclare function load\u003cT = unknown\u003e(): Promise\u003cT\u003e;\nexport async function main() {\n  const actual = \u003cRecord\u003cstring, unknown\u003e\u003e(await load());\n  return { ...actual };\n}\n\t\t"
+        },
+        {
+          "code": "\ntype NumberValueType = number | string;\ntype NumberValuePairType = [NumberValueType, NumberValueType];\n\ntype NumberCellValueType\u003cT extends NumberValuePairType | NumberValueType\u003e =\n  T extends NumberValuePairType ? NumberValuePairType : NumberValueType;\n\nfunction processValue\u003cT extends NumberValuePairType | NumberValueType\u003e(\n  value: NumberCellValueType\u003cT\u003e\n): number {\n  if (Array.isArray(value)) {\n    return 0;\n  }\n\n  const numberValue = typeof value === \"string\" ? parseFloat(value) : (value as number);\n  //                                                                   ^^^^^^^^^^^^^^^^\n  // tsgolint: \"This assertion is unnecessary since it does not change the type of the expression.\"\n  const negative = numberValue \u003c 0;\n  return negative ? -1 : 1;\n}\n\t\t"
+        },
+        {
+          "code": "const cb = async (importOriginal: unknown) =\u003e { const actual = (await importOriginal()) as Record\u003cstring, unknown\u003e; return { ...actual, useLocation: vi.fn() }; });"
+        },
+        {
+          "code": "\ntype Data\u003cT\u003e = { value?: T };\ntype ValueType\u003cTData\u003e = TData extends Data\u003cinfer T\u003e ? T : never;\n\nexport const foo = \u003cTData extends Data\u003cany\u003e\u003e(data: TData) =\u003e {\n  const getValue = () =\u003e data.value as ValueType\u003cTData\u003e | undefined;\n  const value: ValueType\u003cTData\u003e = getValue()!;\n  return value;\n};\n    "
+        },
+        {
+          "code": "\nfunction bar\u003cT extends any\u003e(value: T | undefined): T {\n  return value!;\n}\n    "
+        },
+        {
+          "code": "\nconst array: object[] = [{}];\n\nlet nullish: object | undefined;\nnullish ??= array[1] as object | undefined;\n\nlet falsy: object | undefined;\nfalsy ||= array[1] as object | undefined;\n\nlet truthy: object | undefined = {};\ntruthy \u0026\u0026= array[1] as object | undefined;\n    "
+        },
+        {
+          "code": "const a = \u003cconst\u003e'a';"
+        },
+        {
+          "code": "\nclass T {\n  readonly a = 'a' as const;\n}\n      "
+        },
+        {
+          "code": "\nenum T {\n  Value1,\n  Value2,\n}\ndeclare const a: T.Value1;\nconst b = a as const;\n      "
+        },
+        {
+          "code": "\n(() =\u003e {})() as undefined;\n      "
+        },
+        {
+          "code": "\nconst f = () =\u003e {};\nf() as undefined;\n      "
+        },
+        {
+          "code": "\n(function () {})() as undefined;\n      "
+        },
+        {
+          "code": "\ninterface Overloaded {\n  (): undefined;\n  (value: string): void;\n}\n\n((value =\u003e {}) as Overloaded)('') as undefined;\n      "
+        },
+        {
+          "code": "\ninterface Overloaded {\n  (): void;\n  (value: string): undefined;\n}\n\n((() =\u003e {}) as Overloaded)() as undefined;\n      "
+        },
+        {
+          "code": "\ninterface GenericOverloaded {\n  \u003cT extends string\u003e(value: T): void;\n  (): undefined;\n}\n((value =\u003e {}) as GenericOverloaded)('') as undefined;\n      "
+        },
+        {
+          "code": "\ninterface Unioned {\n  (): undefined | void;\n}\n\n((() =\u003e {}) as Unioned)() as undefined;\n      "
+        },
+        {
+          "code": "\nfunction fn\u003cT\u003e(items: ReadonlyArray\u003cT\u003e) {}\nfn([42] as const);\n      "
+        },
+        {
+          "code": "\ndeclare const a: any;\ndeclare function foo(arg: string): void;\nfoo(a as string);\n    "
+        },
+        {
+          "code": "\ndeclare const a: object;\nconst b = a as { id?: number };\n    "
+        },
+        {
+          "code": "\ndeclare const array: any[];\nfunction foo(strings: string[]): void {}\nfoo(array as string[]);\n    "
+        },
+        {
+          "code": "\ndeclare const record: Record\u003cstring, unknown\u003e;\nconst obj = record as { id?: number };\n    "
+        },
+        {
+          "code": "\ndeclare const obj: { [key: string]: unknown };\nconst foo = obj as {};\n    "
+        },
+        {
+          "code": "\ninterface Empty {}\ndeclare function getAny(): any;\nconst result = getAny() as Empty;\n    "
+        },
+        {
+          "code": "\ninterface Empty {}\ndeclare function getObject(): object;\nconst result = getObject() as Empty;\n    "
+        },
+        {
+          "code": "\ninterface Obj {\n  id: number;\n}\ndeclare const obj: Readonly\u003cObj\u003e;\nconst obj2 = obj as Obj;\n    "
+        },
+        {
+          "code": "\ndeclare const record: Record\u003cstring, unknown\u003e;\nconst obj = record as { [additionalProperties: string]: unknown; id?: number };\n    "
+        },
+        {
+          "code": "\ninterface PropsA {\n  a?: number;\n}\ninterface PropsB extends PropsA {\n  b?: string;\n}\ndeclare const propsB: PropsB;\nconst propsA = propsB as PropsA;\n    "
+        },
+        {
+          "code": "\ninterface PropsA {\n  a?: number;\n}\ninterface PropsB extends PropsA {\n  b?: string;\n}\ndeclare const propsB: PropsB[];\nconst propsA = propsB as PropsA[];\n    "
+        },
+        {
+          "code": "\nclass Box\u003cT\u003e {\n  value: T;\n}\nclass PairBox\u003cT, U\u003e {\n  value: T;\n}\ndeclare const pairBox: PairBox\u003cstring, number\u003e;\nconst box = pairBox as Box\u003cstring\u003e;\n    "
+        },
+        {
+          "code": "\ntype ObjectLike = Record\u003cstring, unknown\u003e;\ndeclare const result: ObjectLike;\ndeclare const key: string;\nresult[key] = { ...(result[key] as ObjectLike) };\n    "
+        },
+        {
+          "code": "\ninterface AST {\n  comments: string[] | undefined;\n}\nconst ast: AST = {\n  comments: [],\n};\nconst { comments } = ast as { comments: string[] };\n    "
+        },
+        {
+          "code": "\ntype Tuple = [string | undefined, number];\nconst tuple: Tuple = ['hello', 42];\nconst [first, second] = tuple as [string, number];\n    "
+        },
+        {
+          "code": "\ninterface Wide {\n  name?: string;\n}\ninterface Narrow {\n  name: string;\n}\ndeclare const narrow: Narrow;\nconst obj = { value: narrow as Wide } satisfies Record\u003cstring, Wide\u003e;\n    "
+        },
+        {
+          "code": "\ninterface Wide {\n  name?: string;\n}\ninterface Narrow {\n  name: string;\n}\ndeclare const narrow: Narrow;\nconst value = narrow as Wide satisfies Wide;\n    "
+        },
+        {
+          "code": "\ninterface Wide {\n  name?: string;\n}\ninterface Narrow {\n  name: string;\n}\ndeclare const narrow: Narrow;\ndeclare function identity\u003cT\u003e(x: T): T;\nconst result = identity({ value: narrow as Wide }) satisfies { value: Wide };\n    "
+        },
+        {
+          "code": "\ndeclare const x: string | number;\nconst result: { tag: string; value: string | number } | { value: number } = {\n  value: x as number,\n};\n    "
+        },
+        {
+          "code": "\ndeclare const x: string | number;\nfunction fn(): { tag: string; value: string | number } | { value: number } {\n  return {\n    value: x as number,\n  };\n}\n    "
+        },
+        {
+          "code": "\ninterface A {\n  a: string;\n}\ninterface B extends A {\n  b: string;\n}\ndeclare const a: A;\nlet result;\nresult = a as B;\nresult.b;\n    "
+        },
+        {
+          "code": "\ninterface A {\n  a: string;\n}\ninterface B extends A {\n  b: string;\n}\ninterface C extends B {\n  c: string;\n}\ndeclare let a: A;\ndeclare let b: B;\nconst c = (a = b as C);\nc.c;\n    "
+        },
+        {
+          "code": "\ntype NumberRecord = { readonly [P in number]: number };\nfunction fn\u003cT extends NumberRecord\u003e(record: T) {\n  for (const key of Object.keys(record)) {\n    const index = +key as keyof T \u0026 number;\n    record[index] = record[index] + 1;\n  }\n}\n    "
+        },
+        {
+          "code": "\ninterface ReadonlyMap\u003cK, V\u003e {\n  get(key: K): V | undefined;\n}\ntype T = { get\u003cK\u003e(key: K): K };\ndeclare const x: ReadonlyMap\u003cstring, string\u003e;\ndeclare let y: T;\ny = x as T;\n    "
+        },
+        {
+          "code": "\ndeclare function find\u003cT\u003e(array: readonly T[] | undefined): T | undefined;\ndeclare const array: string[] | number[];\nfind(array as (string | number)[]);\n    "
+        },
+        {
+          "code": "\ninterface A {\n  a: string;\n}\ninterface B extends A {\n  b: string;\n}\ndeclare function mapDefined\u003cT\u003e(fn: () =\u003e T): T;\ndeclare const b: B;\ndeclare const arrayA: A[];\nconst a = mapDefined(() =\u003e b as A);\n[a].concat(arrayA);\n    "
+        },
+        {
+          "code": "\ninterface A {\n  a: string;\n}\ninterface B extends A {\n  b: string;\n}\ndeclare function mapDefined\u003cT\u003e(fn: () =\u003e T): T;\ndeclare const b: B;\ndeclare const arrayA: A[];\nconst a = mapDefined(() =\u003e\n  Math.random() \u003e 0.5 ? (b as A) : (null as unknown as A),\n);\n[a].concat(arrayA);\n    "
+        },
+        {
+          "code": "\ninterface Params {\n  a?: string;\n  b?: string;\n}\ndeclare const params: Omit\u003cParams, 'a'\u003e \u0026 { c?: string };\n(params as Params).a = 'c';\n    "
+        },
+        {
+          "code": "\nconst text: string | null = null as string | null;\nif (text) {\n  text.toLowerCase();\n}\n    "
+        },
+        {
+          "code": "\nconst text: string | undefined = undefined as string | undefined;\nif (text) {\n  text.toLowerCase();\n}\n    "
+        },
+        {
+          "code": "\ntype Infer\u003cT\u003e = T extends ObjectConstructor\n  ? never\n  : T extends () =\u003e infer V\n    ? V\n    : never;\ndeclare function fn\u003cT\u003e(o: { p: T }): { [K in keyof T]: Infer\u003cT[K]\u003e };\nconst result = fn({ p: { a: Object as () =\u003e string } });\nresult.a.toLowerCase();\n    "
+        },
+        {
+          "code": "\ntype Accessor\u003cT\u003e = () =\u003e T;\ndeclare function inner\u003cT\u003e(): Accessor\u003cT\u003e;\nfunction outer\u003cT\u003e(): Accessor\u003cT\u003e {\n  return inner\u003cstring\u003e() as Accessor\u003cany\u003e;\n}\n    "
+        },
+        {
+          "code": "\ninterface InjectionConstraint\u003cT\u003e {}\ntype InjectionKey\u003cT\u003e = symbol \u0026 InjectionConstraint\u003cT\u003e;\ndeclare function inject\u003cT\u003e(key: InjectionKey\u003cT\u003e): T;\nconst context = Symbol('ctx') as InjectionKey\u003c{ value: string }\u003e;\ninject(context).value;\n    "
+        },
+        {
+          "code": "\ndeclare function fn\u003cU\u003e(g: (memo: U) =\u003e U, initial: U): U;\ndeclare function fn\u003cT\u003e(g: (memo: T) =\u003e T): T | undefined;\nenum E {\n  A = 1,\n}\nconst x: E = fn(n =\u003e n | 0, 0 as E);\n    "
+        },
+        {
+          "code": "\ntype BasePayload = { id: string };\n\nabstract class AbstractHandler {\n  constructor(_ctx: { token: number }) {}\n}\n\nabstract class AbstractPayloadHandler\u003c\n  TPayload extends BasePayload = BasePayload,\n\u003e extends AbstractHandler {}\n\ntype HandlerCtor = new (ctx: { token: number }) =\u003e AbstractHandler;\n\ndeclare const registeredHandlers: HandlerCtor[];\n\nfunction example\u003cTItem extends BasePayload\u003e(\n  handlerClass: typeof AbstractPayloadHandler\u003cTItem\u003e,\n) {\n  registeredHandlers.includes(\n    handlerClass as new (...args: any[]) =\u003e AbstractPayloadHandler\u003cTItem\u003e,\n  );\n}\n    "
+        },
+        {
+          "code": "\nfunction fn\u003cT extends { type: string }, K extends string, V\u003e(\n  node: T,\n): T \u0026 Record\u003cK, V\u003e {\n  return node as T \u0026 Record\u003cK, V\u003e;\n}\n    "
+        },
+        {
+          "code": "\ndeclare function fn\u003cT extends boolean\u003e(\n  options: {\n    a: T extends true ? never : unknown;\n  } \u0026 {\n    b: T;\n  },\n): void;\n\nfn({\n  a: true,\n  b: true as any,\n});\n    "
+        },
+        {
+          "code": "\ndeclare const a: number[] | number | undefined;\nconst b: number[] = a ?? ([0] as any);\n    "
+        },
+        {
+          "code": "\nconst context: { meta: Record\u003cstring, unknown\u003e | undefined } = { meta: {} };\nconst meta = context.meta as { schema?: object } | undefined;\n    "
+        },
+        {
+          "code": "\ntype Test\u003cT extends Record\u003cstring, unknown\u003e\u003e = {};\n\nfunction inferred\u003cT extends Test\u003cnever\u003e[]\u003e(_input: {\n  addons?: T;\n}): {\n  options: T extends Test\u003cinfer C\u003e[] ? C : never;\n} {\n  return {\n    options: {} as T extends Test\u003cinfer C\u003e[] ? C : never,\n  };\n}\n\nconst test = inferred({\n  addons: [{} as Test\u003c{ parameters: { potato: boolean } }\u003e],\n});\n\nconsole.log(test.options.parameters.potato);\n    "
+        },
+        {
+          "code": "\ndeclare function fn(value: string | null): void;\nfn((null) as string | null);\n    "
+        },
+        {
+          "code": "\nconst value: undefined = (() =\u003e {})() as undefined;\n    "
+        },
+        {
+          "code": "\ntype RecursiveConditional\u003cT\u003e =\n  (value: T extends string ? any : number) =\u003e RecursiveConditional\u003cstring\u003e;\n\ndeclare const callable: RecursiveConditional\u003cnumber\u003e;\ndeclare function consume(value: unknown): void;\nconsume(callable as unknown);\n    "
+        },
+        {
+          "code": "\ntype RecursiveCallable\u003cOptions = {}\u003e =\n  \u0026 (\u003cNewOptions = {}\u003e(options: NewOptions) =\u003e RecursiveCallable\u003cOptions \u0026 NewOptions\u003e)\n  \u0026 ((command: string) =\u003e void);\n\ndeclare const callable: RecursiveCallable;\nconst value = callable as unknown;\nconst contextualValue: unknown = callable as unknown;\ndeclare function consume(value: unknown): void;\nconsume(callable as unknown);\n    "
+        },
+        {
+          "code": "\ntype Item = { id: string | number };\n\ndeclare function combine\u003cT1, T2 extends T1\u003e(a: readonly T1[], b: readonly T2[]): T1[];\n\ndeclare const items: Item[];\n\nconst result = combine([{ id: 0 } as Item], items);\n    "
+        },
+        {
+          "code": "\ntype Item = { id: string | number };\n\ninterface Combiner {\n  new \u003cT1, T2 extends T1\u003e(a: readonly T1[], b: readonly T2[]): unknown;\n}\n\ndeclare const Combiner: Combiner;\ndeclare const items: Item[];\n\nconst result = new Combiner([{ id: 0 } as Item], items);\n    "
+        },
+        {
+          "code": "\ntype Item = { id: string | number };\n\ndeclare function combine\u003cT1, T2 extends T1\u003e(\n  ...args: [label: string, a: readonly T1[], b: readonly T2[]]\n): T1[];\n\ndeclare const items: Item[];\n\nconst result = combine('items', [{ id: 0 } as Item], items);\n    "
+        },
+        {
+          "code": "\ntype Item = { id: string | number };\n\ndeclare function combine\u003cT\u003e(\n  enabled: boolean,\n  ...args: [a: readonly T[], b: readonly Item[]]\n): T[];\n\ndeclare const items: Item[];\n\nconst result = combine(true, [{ id: 0 } as Item], items);\nresult[0].id = 'x';\n    "
+        },
+        {
+          "code": "\ntype Item = { id: string | number };\n\ndeclare function combine\u003cT1, T2 extends T1\u003e(\n  ...args: [a: readonly T1[], b: readonly T2[]]\n): T1[];\n\ndeclare const items: Item[];\n\nconst result = combine(...[[{ id: 0 } as Item], items]);\nresult[0].id = 'x';\n    "
+        },
+        {
+          "code": "\ntype IAnyObject = Record\u003cany, any\u003e;\n\nconst { isArray } = Array;\n\nconst isPlainObject = \u003cInferredType extends IAnyObject = IAnyObject\u003e(\n  val: unknown,\n): val is InferredType =\u003e Object.prototype.toString.call(val) === '[object Object]';\n\nexport const deepAssign = \u003c\n  TargetObject extends IAnyObject,\n  MergedObject extends IAnyObject = TargetObject,\n  FinalObject extends Partial\u003cTargetObject\u003e \u0026 Partial\u003cMergedObject\u003e = TargetObject \u0026 MergedObject,\n\u003e(\n  originObject: TargetObject,\n  ...overrideObjects: (MergedObject | null | undefined)[]\n): FinalObject =\u003e {\n  if (overrideObjects.length === 0) return originObject as unknown as FinalObject;\n\n  const assignObject = overrideObjects.shift();\n\n  if (assignObject) {\n    Object.entries(assignObject).forEach(([property, value]) =\u003e {\n      if (property === '__proto__' || property === 'constructor') return;\n      if (isPlainObject(originObject[property]) \u0026\u0026 isPlainObject(value)) {\n        deepAssign(originObject[property], value);\n      } else if (isArray(value)) {\n        (originObject as IAnyObject)[property] = [...(value as unknown[])];\n      } else if (isPlainObject(value)) {\n        (originObject as IAnyObject)[property] = {\n          ...value,\n        };\n      } else {\n        (originObject as IAnyObject)[property] = assignObject[property] as unknown;\n      }\n    });\n  }\n\n  return deepAssign(originObject, ...overrideObjects);\n};\n    "
+        },
+        {
+          "code": "\ntype AccountId = string \u0026 { __brand: 'AccountId' };\n\ninterface Req {\n  params: Record\u003cstring, string\u003e;\n  query: Record\u003cstring, string\u003e;\n  method: string;\n}\n\ndeclare const accountId: AccountId;\n\nexport const req = {\n  params: { id: accountId } as any,\n  query: {},\n} as Req;\n    "
+        },
+        {
+          "code": "\nenum Lang {\n  EN = 'en-US',\n  SV = 'sv-SE',\n}\n\nconst LANGUAGE_NAMES: Record\u003cLang, string\u003e = {\n  [Lang.EN]: 'English',\n  [Lang.SV]: 'Svenska',\n};\n\nexport const options = Object.values(Lang)\n  .map(lang =\u003e ({\n    label: LANGUAGE_NAMES[lang],\n    value: lang as string,\n  }))\n  .concat([{ label: 'български език', value: 'bg-BG' }]);\n    "
+        },
+        {
+          "code": "\ntype AnyObject = Record\u003cstring, any\u003e;\n\ndeclare function isEditArray(item: unknown): item is { type: string }[];\n\nexport function getEdits(bucket: { data: unknown }): { type: string }[] {\n  const { data } = bucket;\n  if (!data) return [];\n\n  const { edits } = data as AnyObject;\n\n  if (!isEditArray(edits)) return [];\n  return edits;\n}\n    "
+        },
+        {
+          "code": "\nenum AppTracker {\n  MOOD = 1,\n  ENERGY = 2,\n}\n\nexport function categoryFor(tracker: string): string {\n  return AppTracker[Number(tracker) as AppTracker];\n}\n    ",
+          "tsconfig": "./tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\nenum GuideId {\n  MEASURE = 'measure',\n}\n\ninterface Guide {\n  id: GuideId;\n  title: string;\n  thumbnailUrl: string;\n}\n\ninterface GlossaryItem {\n  id: string;\n  title: string;\n}\n\nexport const item: { content: Guide | GlossaryItem } = {\n  content: {\n    id: 'how-to-measure' as any,\n    title: 'How to measure',\n    thumbnailUrl: 'https://example.com/thumb.jpg',\n  },\n};\n    "
+        },
+        {
+          "code": "\ninterface Node { id: string }\nfunction transform\u003cNodeOut extends Node | null\u003e(\n  nodeIn: Node,\n  visit: (node: Node) =\u003e NodeOut,\n): NodeOut {\n  let transformedNode = visit(nodeIn);\n  if (!transformedNode) return transformedNode;\n  if (transformedNode === nodeIn) {\n    transformedNode = { ...transformedNode };\n  }\n  transformedNode = transformedNode as NonNullable\u003cNodeOut\u003e;\n  console.log(transformedNode.id);\n  return transformedNode;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined) {\n  value = value as string;\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined) {\n  value = ((\u003cstring\u003evalue));\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined) {\n  value = value as unknown as string;\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined, condition: boolean) {\n  value = condition ? (value as string) : \"\";\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined) {\n  value = (value as string) \u0026\u0026 \"\";\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined) {\n  value ||= (value as string);\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined) {\n  value ??= (value as unknown as string);\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nenum NumericEnum { a = 1, b = 2 }\nconst key: \"a\" | \"b\" = \"a\";\nexport const widened = NumericEnum[key] as number;\nexport const narrowed = (1 as number) as NumericEnum;\n"
+        },
+        {
+          "code": "\nenum NumericEnum { a = 1, b = 2 }\ndeclare const value: NumericEnum | undefined;\ndeclare const numberValue: number | undefined;\nexport const widened = value as number | undefined;\nexport const narrowed = numberValue as NumericEnum | undefined;\n"
+        },
+        {
+          "code": "\nenum NumericEnum { a = 1, b = 2 }\ndeclare const value: NumericEnum;\ndeclare const numberValue: number;\nexport const widened = \u003cnumber\u003evalue;\nexport const narrowed = \u003cNumericEnum\u003enumberValue;\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined) {\n  value = (console.log(), value as string);\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined) {\n  [value] = [value as string];\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined) {\n  ({ value } = { value: value as string });\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nenum E { A = 1, B = 2 }\ndeclare const value: number \u0026 { brand: \"x\" };\nconst result = value as E \u0026 { brand: \"x\" };\nconst onlyMembers: 1 | 2 = result;\n"
+        },
+        {
+          "code": "\nenum E { A = 1, B = 2 }\ndeclare const value: E \u0026 { brand: \"x\" };\nconst result = value as number \u0026 { brand: \"x\" };\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined) {\n  ({ value } = { ...{ value: value as string } });\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined, condition: boolean) {\n  let x: unknown, y: unknown;\n  [x, y, value] = condition\n    ? [...[\"a\", \"b\"] as const, value as string]\n    : [undefined, undefined, \"\"];\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | null | undefined) {\n  ({ value = '' } = { value: value as string });\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined, fallback: { value?: string }) {\n  ({ value } = { ...{ value: value as string }, ...fallback });\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nclass Fallback {\n  get value() { return ''; }\n}\nfunction narrow(value: string | undefined) {\n  ({ value } = { ...{ value: value as string }, ...new Fallback() });\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined, other: string) {\n  value = other \u0026\u0026 (value as string);\n  return value.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined, a: string | undefined, b: string | undefined) {\n  ({ value: a = '', value: b } = { value: value as string });\n  return b.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined, a: string | undefined, b: string | undefined) {\n  ({ nested: { value: a = '' }, nested: { value: b } } = { nested: { value: value as string } });\n  return b.length;\n}\n"
+        },
+        {
+          "code": "\nfunction narrow(value: string | undefined, a: string | undefined, b: string | undefined) {\n  ({ value: a = '', ['value']: b } = { value: value as string });\n  return b.length;\n}\n"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "const foo = \u003c3\u003e3;",
+          "output": [
+            "const foo = 3;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 13,
+              "endLine": 1,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const foo = 3 as 3;",
+          "output": [
+            "const foo = 3;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 13,
+              "endLine": 1,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst num = 42;\nconst alsoRedundant = num as 42;\n      ",
+          "output": [
+            "\nconst num = 42;\nconst alsoRedundant = num;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 23,
+              "endLine": 3,
+              "endColumn": 32,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst str: string = 'hello';\nconst redundant =  str as string;\n\t      ",
+          "output": [
+            "\nconst str: string = 'hello';\nconst redundant =  str;\n\t      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 20,
+              "endLine": 3,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type Foo = 3;\n        const foo = \u003cFoo\u003e3;\n      ",
+          "output": [
+            "\n        type Foo = 3;\n        const foo = 3;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 21,
+              "endLine": 3,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type Foo = 3;\n        const foo = 3 as Foo;\n      ",
+          "output": [
+            "\n        type Foo = 3;\n        const foo = 3;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 21,
+              "endLine": 3,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = 3;\nconst bar = foo!;\n      ",
+          "output": [
+            "\nconst foo = 3;\nconst bar = foo;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 13,
+              "endLine": 3,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = (3 + 5) as number;\n      ",
+          "output": [
+            "\nconst foo = (3 + 5);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = \u003cnumber\u003e(3 + 5);\n      ",
+          "output": [
+            "\nconst foo = (3 + 5);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = number;\nconst foo = (3 + 5) as Foo;\n      ",
+          "output": [
+            "\ntype Foo = number;\nconst foo = (3 + 5);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 13,
+              "endLine": 3,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = number;\nconst foo = \u003cFoo\u003e(3 + 5);\n      ",
+          "output": [
+            "\ntype Foo = number;\nconst foo = (3 + 5);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 13,
+              "endLine": 3,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet bar: number = 1;\nbar! + 1;\n      ",
+          "output": [
+            "\nlet bar: number = 1;\nbar + 1;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 1,
+              "endLine": 3,
+              "endColumn": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet bar!: number;\nbar! + 1;\n      ",
+          "output": [
+            "\nlet bar!: number;\nbar + 1;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 1,
+              "endLine": 3,
+              "endColumn": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet bar: number | undefined;\nbar = 1;\nbar! + 1;\n      ",
+          "output": [
+            "\nlet bar: number | undefined;\nbar = 1;\nbar + 1;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const y: number;\n        console.log(y!);\n      ",
+          "output": [
+            "\n        declare const y: number;\n        console.log(y);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 21,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "Proxy!;",
+          "output": [
+            "Proxy;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 1,
+              "endLine": 1,
+              "endColumn": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT extends string\u003e(bar: T) {\n  return bar!;\n}\n      ",
+          "output": [
+            "\nfunction foo\u003cT extends string\u003e(bar: T) {\n  return bar;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 10,
+              "endLine": 3,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: Foo;\nconst bar = \u003cFoo\u003efoo;\n      ",
+          "output": [
+            "\ndeclare const foo: Foo;\nconst bar = foo;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 13,
+              "endLine": 3,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const prop: string;\n['foo', 'bar'].includes(prop as string);\n      ",
+          "output": [
+            "\ndeclare const prop: string;\n['foo', 'bar'].includes(prop);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 25,
+              "endLine": 3,
+              "endColumn": 39,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function mergeWithDefaults(loadModule: () =\u003e Promise\u003cRecord\u003cstring, unknown\u003e\u003e) {\n  const mod = (await loadModule()) as Record\u003cstring, unknown\u003e;\n  return { ...mod, extra: true };\n}\n      ",
+          "output": [
+            "\nasync function mergeWithDefaults(loadModule: () =\u003e Promise\u003cRecord\u003cstring, unknown\u003e\u003e) {\n  const mod = (await loadModule());\n  return { ...mod, extra: true };\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 15,
+              "endLine": 3,
+              "endColumn": 62,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction unwrap(input: string | number): number {\n  return typeof input === 'string' ? parseFloat(input) : (input as number);\n}\n      ",
+          "output": [
+            "\nfunction unwrap(input: string | number): number {\n  return typeof input === 'string' ? parseFloat(input) : (input);\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 59,
+              "endLine": 3,
+              "endColumn": 74,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function nonNull(s: string | null);\nlet s: string | null = null;\nnonNull(s!);\n      ",
+          "output": [
+            "\ndeclare function nonNull(s: string | null);\nlet s: string | null = null;\nnonNull(s);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 4,
+              "column": 9,
+              "endLine": 4,
+              "endColumn": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst x: number | null = null;\nconst y: number | null = x!;\n      ",
+          "output": [
+            "\nconst x: number | null = null;\nconst y: number | null = x;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 26,
+              "endLine": 3,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst x: number | null = null;\nclass Foo {\n  prop: number | null = x!;\n}\n      ",
+          "output": [
+            "\nconst x: number | null = null;\nclass Foo {\n  prop: number | null = x;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 4,
+              "column": 25,
+              "endLine": 4,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function a(a: string): any;\nconst b = 'asdf';\nclass Mx {\n  @a(b!)\n  private prop = 1;\n}\n      ",
+          "output": [
+            "\ndeclare function a(a: string): any;\nconst b = 'asdf';\nclass Mx {\n  @a(b)\n  private prop = 1;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 5,
+              "column": 6,
+              "endLine": 5,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare namespace JSX {\n  interface IntrinsicElements {\n    div: { key?: string | number };\n  }\n}\n\nfunction Test(props: { id?: string | number }) {\n  return \u003cdiv key={props.id!} /\u003e;\n}\n      ",
+          "tsx": true,
+          "output": [
+            "\ndeclare namespace JSX {\n  interface IntrinsicElements {\n    div: { key?: string | number };\n  }\n}\n\nfunction Test(props: { id?: string | number }) {\n  return \u003cdiv key={props.id} /\u003e;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 9,
+              "column": 20,
+              "endLine": 9,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet x: number | undefined;\nlet y: number | undefined;\ny = x!;\ny! = 0;\n      ",
+          "output": [
+            "\nlet x: number | undefined;\nlet y: number | undefined;\ny = x!;\ny = 0;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 5,
+              "column": 1,
+              "endLine": 5,
+              "endColumn": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg?: number): number | void;\nconst bar: number | void = foo()!;\n      ",
+          "output": [
+            "\ndeclare function foo(arg?: number): number | void;\nconst bar: number | void = foo();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 28,
+              "endLine": 3,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(): number;\nconst a = foo()!;\n      ",
+          "output": [
+            "\ndeclare function foo(): number;\nconst a = foo();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst b = new Date()!;\n      ",
+          "output": [
+            "\nconst b = new Date();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 11,
+              "endLine": 2,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst b = (1 + 1)!;\n      ",
+          "output": [
+            "\nconst b = (1 + 1);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 11,
+              "endLine": 2,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(): number;\nconst a = foo() as number;\n      ",
+          "output": [
+            "\ndeclare function foo(): number;\nconst a = foo();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(): number;\nconst a = \u003cnumber\u003efoo();\n      ",
+          "output": [
+            "\ndeclare function foo(): number;\nconst a = foo();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype RT = { log: () =\u003e void };\ndeclare function foo(): RT;\n(foo() as RT).log;\n      ",
+          "output": [
+            "\ntype RT = { log: () =\u003e void };\ndeclare function foo(): RT;\n(foo()).log;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 4,
+              "column": 2,
+              "endLine": 4,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: object[];\nconst item = arr[0]!;\n      ",
+          "output": [
+            "\ndeclare const arr: object[];\nconst item = arr[0];\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 14,
+              "endLine": 3,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = (  3 + 5  ) as number;\n      ",
+          "output": [
+            "\nconst foo = (  3 + 5  );\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = (  3 + 5  ) /*as*/ as number;\n      ",
+          "output": [
+            "\nconst foo = (  3 + 5  ) /*as*/;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 41,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "// Preserve the comment before as.\nconst foo = (  3 + 5\n  ) /*as*/ as //as\n  (\n    number\n  );\n      ",
+          "output": [
+            "// Preserve the comment before as.\nconst foo = (  3 + 5\n  ) /*as*/;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 6,
+              "endColumn": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = (3 + (5 as number) ) as number;\n      ",
+          "output": [
+            "\nconst foo = (3 + (5 as number) );\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 43,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = 3 + 5/*as*/ as number;\n      ",
+          "output": [
+            "\nconst foo = 3 + 5/*as*/;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = 3 + 5/*a*/ /*b*/ as number;\n      ",
+          "output": [
+            "\nconst foo = 3 + 5/*a*/ /*b*/;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 39,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = \u003c(number)\u003e(3 + 5);\n      ",
+          "output": [
+            "\nconst foo = (3 + 5);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = \u003c ( number ) \u003e( 3 + 5 );\n      ",
+          "output": [
+            "\nconst foo = ( 3 + 5 );\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 36,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = \u003cnumber\u003e /* a */ (3 + 5);\n      ",
+          "output": [
+            "\nconst foo =  /* a */ (3 + 5);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 37,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = \u003cnumber /* a */\u003e(3 + 5);\n      ",
+          "output": [
+            "\nconst foo = (3 + 5);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 13,
+              "endLine": 2,
+              "endColumn": 36,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(item: string) {}\nfunction bar(items: string[]) {\n  for (let i = 0; i \u003c items.length; i++) {\n    foo(items[i]!);\n  }\n}\n      ",
+          "output": [
+            "\nfunction foo(item: string) {}\nfunction bar(items: string[]) {\n  for (let i = 0; i \u003c items.length; i++) {\n    foo(items[i]);\n  }\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 5,
+              "column": 9,
+              "endLine": 5,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: {\n  a?: string;\n};\nconst bar = foo.a as string | undefined;\n      ",
+          "tsconfig": "./tsconfig.exactOptionalPropertyTypes.json",
+          "output": [
+            "\ndeclare const foo: {\n  a?: string;\n};\nconst bar = foo.a;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 5,
+              "column": 13,
+              "endLine": 5,
+              "endColumn": 40,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: {\n  a?: string | undefined;\n};\nconst bar = foo.a as string | undefined;\n      ",
+          "tsconfig": "./tsconfig.exactOptionalPropertyTypes.json",
+          "output": [
+            "\ndeclare const foo: {\n  a?: string | undefined;\n};\nconst bar = foo.a;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 5,
+              "column": 13,
+              "endLine": 5,
+              "endColumn": 40,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nvarDeclarationFromFixture!;\n      ",
+          "output": [
+            "\nvarDeclarationFromFixture;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nvar x = 1;\nx!;\n      ",
+          "output": [
+            "\nvar x = 1;\nx;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 1,
+              "endLine": 3,
+              "endColumn": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nvar x = 1;\n{\n  x!;\n}\n      ",
+          "output": [
+            "\nvar x = 1;\n{\n  x;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 4,
+              "column": 3,
+              "endLine": 4,
+              "endColumn": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass T {\n  readonly a = 3 as 3;\n}\n      ",
+          "output": [
+            "\nclass T {\n  readonly a = 3;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype S = 10;\n\nclass T {\n  readonly a = 10 as S;\n}\n      ",
+          "output": [
+            "\ntype S = 10;\n\nclass T {\n  readonly a = 10;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 5,
+              "column": 16,
+              "endLine": 5,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass T {\n  readonly a = (3 + 5) as number;\n}\n      ",
+          "output": [
+            "\nclass T {\n  readonly a = (3 + 5);\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst a = '';\nconst b: string | undefined = (a ? undefined : a)!;\n      ",
+          "output": [
+            "\nconst a = '';\nconst b: string | undefined = (a ? undefined : a);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 31,
+              "endLine": 3,
+              "endColumn": 51,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nenum T {\n  Value1,\n  Value2,\n}\n\ndeclare const a: T.Value1;\nconst b = a as T.Value1;\n      ",
+          "output": [
+            "\nenum T {\n  Value1,\n  Value2,\n}\n\ndeclare const a: T.Value1;\nconst b = a;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 8,
+              "column": 11,
+              "endLine": 8,
+              "endColumn": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: unknown = {};\nconst bar: unknown = foo!;\n      ",
+          "output": [
+            "\nconst foo: unknown = {};\nconst bar: unknown = foo;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 22,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(bar: unknown) {}\nconst baz: unknown = {};\nfoo(baz!);\n      ",
+          "output": [
+            "\nfunction foo(bar: unknown) {}\nconst baz: unknown = {};\nfoo(baz);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 4,
+              "column": 5,
+              "endLine": 4,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: string | RegExp;\n\ndeclare function isString(v: unknown): v is string\n\nif (isString(foo)) {\n  \u003cstring\u003efoo;\n}\n\t\t\t",
+          "output": [
+            "\ndeclare const foo: string | RegExp;\n\ndeclare function isString(v: unknown): v is string\n\nif (isString(foo)) {\n  foo;\n}\n\t\t\t"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 7,
+              "column": 3,
+              "endLine": 7,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo extends Promise {}\ndeclare const bar: Promise\u003cFoo\u003e;\n\u003cPromise\u003cFoo\u003e\u003ebar;\n\t\t\t",
+          "output": [
+            "\nclass Foo extends Promise {}\ndeclare const bar: Promise\u003cFoo\u003e;\nbar;\n\t\t\t"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const a = true as const;",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "const a = true;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 11,
+              "endLine": 1,
+              "endColumn": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const a = \u003cconst\u003etrue;",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "const a = true;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 11,
+              "endLine": 1,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const a = 1 as const;",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "const a = 1;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 11,
+              "endLine": 1,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const a = \u003cconst\u003e1;",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "const a = 1;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 11,
+              "endLine": 1,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const a = 1n as const;",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "const a = 1n;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 11,
+              "endLine": 1,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const a = \u003cconst\u003e1n;",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "const a = 1n;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 11,
+              "endLine": 1,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const a = `a` as const;",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "const a = `a`;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 11,
+              "endLine": 1,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const a = 'a' as const;",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "const a = 'a';"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 11,
+              "endLine": 1,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const a = \u003cconst\u003e'a';",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "const a = 'a';"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 11,
+              "endLine": 1,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass T {\n  readonly a = 'a' as const;\n}\n      ",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "\nclass T {\n  readonly a = 'a';\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nenum T {\n  Value1,\n  Value2,\n}\n\ndeclare const a: T.Value1;\nconst b = a as const;\n      ",
+          "options": {
+            "checkLiteralConstAssertions": true
+          },
+          "output": [
+            "\nenum T {\n  Value1,\n  Value2,\n}\n\ndeclare const a: T.Value1;\nconst b = a;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 8,
+              "column": 11,
+              "endLine": 8,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "/** @type {string} */\nconst s = \"foo\";\n\nconst s2 = /** @type {string} */ (s);\n",
+          "fileName": "repro.js",
+          "tsconfig": "./tsconfig.checkJs.json",
+          "output": [
+            "/** @type {string} */\nconst s = \"foo\";\n\nconst s2 = (s);\n"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 4,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n((): undefined =\u003e {})() as undefined;\n      ",
+          "output": [
+            "\n((): undefined =\u003e {})();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 1,
+              "endLine": 2,
+              "endColumn": 37,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n(() =\u003e 1)() as number;\n      ",
+          "output": [
+            "\n(() =\u003e 1)();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 1,
+              "endLine": 2,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Overloaded {\n  (): void;\n  (value: string): undefined;\n}\n\n((value =\u003e {}) as Overloaded)('') as undefined;\n      ",
+          "output": [
+            "\ninterface Overloaded {\n  (): void;\n  (value: string): undefined;\n}\n\n((value =\u003e {}) as Overloaded)('');\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 7,
+              "column": 1,
+              "endLine": 7,
+              "endColumn": 47,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction doThing(a: number) {}\ndoThing(5 as any);\n      ",
+          "output": [
+            "\nfunction doThing(a: number) {}\ndoThing(5);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 9,
+              "endLine": 3,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface A {\n  required: string;\n  alsoRequired: number;\n}\nfunction doThing(a: A) {}\ndoThing({ required: 'yes', alsoRequired: 1 } as any);\n      ",
+          "output": [
+            "\ninterface A {\n  required: string;\n  alsoRequired: number;\n}\nfunction doThing(a: A) {}\ndoThing({ required: 'yes', alsoRequired: 1 });\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 7,
+              "column": 9,
+              "endLine": 7,
+              "endColumn": 52,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const x = 5 as any as 5;",
+          "output": [
+            "const x = 5;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 11,
+              "endLine": 1,
+              "endColumn": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst v: number = 5;\nconst x = v as unknown as number;\n      ",
+          "output": [
+            "\nconst v: number = 5;\nconst x = v;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst v: number = 5;\nconst x = v as any as number;\n      ",
+          "output": [
+            "\nconst v: number = 5;\nconst x = v;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst x = (1 + 1) as any as number;\n      ",
+          "output": [
+            "\nconst x = 1 + 1;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 11,
+              "endLine": 2,
+              "endColumn": 35,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst x = 2 * ((1 + 1) as any as number);\n      ",
+          "output": [
+            "\nconst x = 2 * (1 + 1);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 16,
+              "endLine": 2,
+              "endColumn": 40,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst v: number = 5;\nconst x = \u003cnumber\u003e(\u003cany\u003ev);\n      ",
+          "output": [
+            "\nconst v: number = 5;\nconst x = v;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst obj = { id: '' };\nconst obj2 = obj as { id: string };\n      ",
+          "output": [
+            "\nconst obj = { id: '' };\nconst obj2 = obj;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 14,
+              "endLine": 3,
+              "endColumn": 35,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst obj = { id: '' };\nconst obj2 = obj as any as { id: string };\n      ",
+          "output": [
+            "\nconst obj = { id: '' };\nconst obj2 = obj;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 14,
+              "endLine": 3,
+              "endColumn": 42,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst obj = { id: '' };\nconst obj2 = obj as unknown as { id: string };\n      ",
+          "output": [
+            "\nconst obj = { id: '' };\nconst obj2 = obj;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 14,
+              "endLine": 3,
+              "endColumn": 46,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst array = ['a', 'b'];\nconst array2 = array as any as string[];\n      ",
+          "output": [
+            "\nconst array = ['a', 'b'];\nconst array2 = array;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 40,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst array = ['a', 'b'];\nconst array2 = array as unknown as string[];\n      ",
+          "output": [
+            "\nconst array = ['a', 'b'];\nconst array2 = array;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 44,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'a';\ntype B = 'b';\ntype AorB = A | B;\nfunction fn(aorb: AorB) {}\nconst a: A = 'a';\nfn(a as AorB);\n      ",
+          "output": [
+            "\ntype A = 'a';\ntype B = 'b';\ntype AorB = A | B;\nfunction fn(aorb: AorB) {}\nconst a: A = 'a';\nfn(a);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 7,
+              "column": 4,
+              "endLine": 7,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Props {\n  a: number;\n}\nconst x = { a: 1 } as unknown as Props;\n      ",
+          "output": [
+            "\ninterface Props {\n  a: number;\n}\nconst x = { a: 1 };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 5,
+              "column": 11,
+              "endLine": 5,
+              "endColumn": 39,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Props {\n  a: number;\n}\nconst x = { a: 1 } as Props;\n      ",
+          "output": [
+            "\ninterface Props {\n  a: number;\n}\nconst x = { a: 1 };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 5,
+              "column": 11,
+              "endLine": 5,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Props {\n  a: number;\n}\nconst fn = (): Props =\u003e ({ a: 1 }) as unknown as Props;\n      ",
+          "output": [
+            "\ninterface Props {\n  a: number;\n}\nconst fn = (): Props =\u003e ({ a: 1 });\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 5,
+              "column": 25,
+              "endLine": 5,
+              "endColumn": 55,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function fn(param: number): void;\nfn(42 as unknown as number);\n      ",
+          "output": [
+            "\ndeclare function fn(param: number): void;\nfn(42);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 4,
+              "endLine": 3,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function fn(param: number): void;\nfn(42 as any as number);\n      ",
+          "output": [
+            "\ndeclare function fn(param: number): void;\nfn(42);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 4,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function fn(params: { param: number });\nfn({ param: 42 as number });\n      ",
+          "output": [
+            "\ndeclare function fn(params: { param: number });\nfn({ param: 42 });\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 13,
+              "endLine": 3,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function fn(params: { param: number });\nfn({ param: 42 as any });\n      ",
+          "output": [
+            "\ndeclare function fn(params: { param: number });\nfn({ param: 42 });\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 13,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype StringOrNumber = string | number;\ndeclare function fn(param: StringOrNumber);\nfn(42 as any as StringOrNumber);\n      ",
+          "output": [
+            "\ntype StringOrNumber = string | number;\ndeclare function fn(param: StringOrNumber);\nfn(42);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 4,
+              "column": 4,
+              "endLine": 4,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype NumbersRecord = { [key: string]: number };\ndeclare function fn(params: { data: NumbersRecord });\nconst data = { a: 1 };\nfn({ data: data as NumbersRecord });\n      ",
+          "output": [
+            "\ntype NumbersRecord = { [key: string]: number };\ndeclare function fn(params: { data: NumbersRecord });\nconst data = { a: 1 };\nfn({ data: data });\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 5,
+              "column": 12,
+              "endLine": 5,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype NumbersRecord = { [key: string]: number };\ndeclare function fn(params: { data: NumbersRecord });\nfn({\n  data: {\n    a: 1,\n  } as NumbersRecord,\n});\n      ",
+          "output": [
+            "\ntype NumbersRecord = { [key: string]: number };\ndeclare function fn(params: { data: NumbersRecord });\nfn({\n  data: {\n    a: 1,\n  },\n});\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 5,
+              "column": 9,
+              "endLine": 7,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Json = string | number | boolean | null | { [key: string]: Json } | Json[];\ntype Tables\u003cT extends 'my_table'\u003e = { my_table: { my_column: Json } }[T];\ndeclare const updatedColumn: Json;\nconst result = updatedColumn as unknown as Tables\u003c'my_table'\u003e['my_column'];\n      ",
+          "output": [
+            "\ntype Json = string | number | boolean | null | { [key: string]: Json } | Json[];\ntype Tables\u003cT extends 'my_table'\u003e = { my_table: { my_column: Json } }[T];\ndeclare const updatedColumn: Json;\nconst result = updatedColumn;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 5,
+              "column": 16,
+              "endLine": 5,
+              "endColumn": 75,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface T {\n  a: string;\n}\ndeclare function fn\u003cU extends T\u003e(args: Pick\u003cU, 'a'\u003e): void;\nfn\u003cT\u003e({ a: '' as string });\n      ",
+          "output": [
+            "\ninterface T {\n  a: string;\n}\ndeclare function fn\u003cU extends T\u003e(args: Pick\u003cU, 'a'\u003e): void;\nfn\u003cT\u003e({ a: '' });\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 6,
+              "column": 12,
+              "endLine": 6,
+              "endColumn": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function update\u003cT extends string\u003e(value: T): void;\nupdate('hi' as unknown as string);\n      ",
+          "output": [
+            "\ndeclare function update\u003cT extends string\u003e(value: T): void;\nupdate('hi');\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 8,
+              "endLine": 3,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function update\u003cT extends string\u003e(value: T): void;\nupdate('hi' as string);\n      ",
+          "output": [
+            "\ndeclare function update\u003cT extends string\u003e(value: T): void;\nupdate('hi');\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 8,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function fn(x: string[]): void;\nfn(['hello'] as any);\n      ",
+          "output": [
+            "\ndeclare function fn(x: string[]): void;\nfn(['hello']);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 4,
+              "endLine": 3,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype ChatMessage = { message: string };\ntype Json = string | { [key: string]: Json };\ndeclare function update(values: { chat: Json[] }): void;\ndeclare const chat: ChatMessage[];\nupdate({ chat: chat as Json[] });\n      ",
+          "output": [
+            "\ntype ChatMessage = { message: string };\ntype Json = string | { [key: string]: Json };\ndeclare function update(values: { chat: Json[] }): void;\ndeclare const chat: ChatMessage[];\nupdate({ chat: chat });\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 6,
+              "column": 16,
+              "endLine": 6,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype ChatMessage = { message: string };\ntype Json = string | { [key: string]: Json };\ndeclare function update\u003cRow extends { chat: Json[] }\u003e(values: Row): void;\ndeclare const chat: ChatMessage[];\nupdate({ chat: chat as Json[] });\n      ",
+          "output": [
+            "\ntype ChatMessage = { message: string };\ntype Json = string | { [key: string]: Json };\ndeclare function update\u003cRow extends { chat: Json[] }\u003e(values: Row): void;\ndeclare const chat: ChatMessage[];\nupdate({ chat: chat });\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 6,
+              "column": 16,
+              "endLine": 6,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Node {\n  parent: Node;\n}\ndeclare function fn\u003cT extends Node\u003e(node: T): T;\nfunction fn2\u003cT extends Node\u003e(node: T): void {\n  fn(node as NonNullable\u003cT\u003e);\n}\n      ",
+          "output": [
+            "\ninterface Node {\n  parent: Node;\n}\ndeclare function fn\u003cT extends Node\u003e(node: T): T;\nfunction fn2\u003cT extends Node\u003e(node: T): void {\n  fn(node);\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 7,
+              "column": 6,
+              "endLine": 7,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface A {\n  a: string;\n}\ninterface B extends A {\n  b: string;\n}\ndeclare function fn(a: A): A;\ndeclare function fn(a: A): A | undefined;\ndeclare const a: A;\nfn(a as B);\n      ",
+          "output": [
+            "\ninterface A {\n  a: string;\n}\ninterface B extends A {\n  b: string;\n}\ndeclare function fn(a: A): A;\ndeclare function fn(a: A): A | undefined;\ndeclare const a: A;\nfn(a);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 11,
+              "column": 4,
+              "endLine": 11,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: string[];\ndeclare const b: readonly string[];\nconst fileNames: string[] = a.concat(b as string[]);\n      ",
+          "output": [
+            "\ndeclare const a: string[];\ndeclare const b: readonly string[];\nconst fileNames: string[] = a.concat(b);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 4,
+              "column": 38,
+              "endLine": 4,
+              "endColumn": 51,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function fn(text: any): void;\ndeclare const value: string | number;\nfn(value as number);\n      ",
+          "output": [
+            "\ndeclare function fn(text: any): void;\ndeclare const value: string | number;\nfn(value);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 4,
+              "column": 4,
+              "endLine": 4,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface A {\n  type: 'a';\n  a: string;\n}\ninterface B {\n  type: 'b';\n}\ndeclare const a: '1' | '2';\nconst schema: A | B = {\n  type: 'a',\n  a: a as string,\n};\n      ",
+          "output": [
+            "\ninterface A {\n  type: 'a';\n  a: string;\n}\ninterface B {\n  type: 'b';\n}\ndeclare const a: '1' | '2';\nconst schema: A | B = {\n  type: 'a',\n  a: a,\n};\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 12,
+              "column": 6,
+              "endLine": 12,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface A {\n  type: 'a';\n  a?: string;\n}\ninterface B {\n  type: 'b';\n}\ndeclare const a: '1' | '2';\nconst schema: A | B = {\n  type: 'a',\n  a: a as string,\n};\n      ",
+          "output": [
+            "\ninterface A {\n  type: 'a';\n  a?: string;\n}\ninterface B {\n  type: 'b';\n}\ndeclare const a: '1' | '2';\nconst schema: A | B = {\n  type: 'a',\n  a: a,\n};\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 12,
+              "column": 6,
+              "endLine": 12,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function fn1\u003cT\u003e(fn: () =\u003e void): void;\ndeclare function fn2(text: string): void;\nfn1(() =\u003e {\n  fn2('hi' as any);\n});\n      ",
+          "output": [
+            "\ndeclare function fn1\u003cT\u003e(fn: () =\u003e void): void;\ndeclare function fn2(text: string): void;\nfn1(() =\u003e {\n  fn2('hi');\n});\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 5,
+              "column": 7,
+              "endLine": 5,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Empty\u003cT\u003e = {};\ndeclare function fn(value: Empty\u003cstring\u003e): void;\nfn({} as Empty\u003cnumber\u003e);\n      ",
+          "output": [
+            "\ntype Empty\u003cT\u003e = {};\ndeclare function fn(value: Empty\u003cstring\u003e): void;\nfn({});\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 4,
+              "column": 4,
+              "endLine": 4,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Empty\u003cT\u003e = {};\ntype Box\u003cT\u003e = { value: T };\ndeclare const box: Box\u003cEmpty\u003cnumber\u003e\u003e;\ndeclare function identity\u003cT\u003e(value: T): T;\nconst result: { item: Box\u003cEmpty\u003cstring\u003e\u003e } = identity({\n  item: box as Box\u003cEmpty\u003cboolean\u003e\u003e,\n});\n      ",
+          "output": [
+            "\ntype Empty\u003cT\u003e = {};\ntype Box\u003cT\u003e = { value: T };\ndeclare const box: Box\u003cEmpty\u003cnumber\u003e\u003e;\ndeclare function identity\u003cT\u003e(value: T): T;\nconst result: { item: Box\u003cEmpty\u003cstring\u003e\u003e } = identity({\n  item: box,\n});\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 7,
+              "column": 9,
+              "endLine": 7,
+              "endColumn": 35,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: (text: string) =\u003e string;\nconst callback: \u003cT extends string\u003e(value: T) =\u003e void =\n  value as (text: string) =\u003e void;",
+          "output": [
+            "\ndeclare const value: (text: string) =\u003e string;\nconst callback: \u003cT extends string\u003e(value: T) =\u003e void =\n  value;"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 4,
+              "column": 3,
+              "endLine": 4,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction f\u003cT extends string\u003e(value: string) {\n  const target: string = value as T;\n}",
+          "output": [
+            "\nfunction f\u003cT extends string\u003e(value: string) {\n  const target: string = value;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 26,
+              "endLine": 3,
+              "endColumn": 36,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function fn(value: {}): void;\nfn({} as string extends string ? {} : never);\n      ",
+          "output": [
+            "\ndeclare function fn(value: {}): void;\nfn({});\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 4,
+              "endLine": 3,
+              "endColumn": 44,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function fn(value: void): void;\nfn((() =\u003e {})() as undefined);\n      ",
+          "output": [
+            "\ndeclare function fn(value: void): void;\nfn((() =\u003e {})());\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 4,
+              "endLine": 3,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function fn(value: unknown): void;\nfn((() =\u003e {})() as undefined);",
+          "output": [
+            "\ndeclare function fn(value: unknown): void;\nfn((() =\u003e {})());"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 4,
+              "endLine": 3,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const x: string | null = 'a' as string | null;\nvoid x;",
+          "output": [
+            "const x: string | null = 'a';\nvoid x;"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 1,
+              "column": 26,
+              "endLine": 1,
+              "endColumn": 46,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function consume(value: unknown): void;\nconsume(42 as unknown);\nconst value: unknown = 42 as unknown;",
+          "output": [
+            "\ndeclare function consume(value: unknown): void;\nconsume(42);\nconst value: unknown = 42;"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 9,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            },
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 4,
+              "column": 24,
+              "endLine": 4,
+              "endColumn": 37,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "declare function f\u003cT\u003e(xs: string[], tag: T): void;\nf(['x' as string], 1);",
+          "output": [
+            "declare function f\u003cT\u003e(xs: string[], tag: T): void;\nf(['x'], 1);"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 4,
+              "endLine": 2,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type StringsWithMeta\u003cT\u003e = string[] \u0026 { meta?: T };\ndeclare function f\u003cT\u003e(xs: StringsWithMeta\u003cT\u003e, tag: T): void;\nf(['x' as string], 1);",
+          "output": [
+            "type StringsWithMeta\u003cT\u003e = string[] \u0026 { meta?: T };\ndeclare function f\u003cT\u003e(xs: StringsWithMeta\u003cT\u003e, tag: T): void;\nf(['x'], 1);"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 4,
+              "endLine": 3,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function f(xs: string[]): void;\ndeclare function f\u003cT\u003e(value: T): void;\nf(['x' as string]);",
+          "output": [
+            "\ndeclare function f(xs: string[]): void;\ndeclare function f\u003cT\u003e(value: T): void;\nf(['x']);"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 4,
+              "column": 4,
+              "endLine": 4,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function f\u003cT\u003e(pair: readonly [T, string], tag: T): void;\nf([1, 'x' as string], 1);",
+          "output": [
+            "\ndeclare function f\u003cT\u003e(pair: readonly [T, string], tag: T): void;\nf([1, 'x'], 1);"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 7,
+              "endLine": 3,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype AnyRecord = Record\u003cany, any\u003e;\ndeclare const value: AnyRecord;\n(value as AnyRecord)['property'] = 1;",
+          "output": [
+            "\ntype AnyRecord = Record\u003cany, any\u003e;\ndeclare const value: AnyRecord;\n(value)['property'] = 1;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 4,
+              "column": 2,
+              "endLine": 4,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction identity\u003cT\u003e(value: T): T {\n  return value as unknown as T;\n}",
+          "output": [
+            "\nfunction identity\u003cT\u003e(value: T): T {\n  return value;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 10,
+              "endLine": 3,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction upcast\u003cT, U extends T\u003e(value: U): T {\n  return value as unknown as T;\n}",
+          "output": [
+            "\nfunction upcast\u003cT, U extends T\u003e(value: U): T {\n  return value;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 10,
+              "endLine": 3,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction upcast\u003cT, U extends T \u0026 { id: string }\u003e(value: U): T {\n  return value as unknown as T;\n}",
+          "output": [
+            "\nfunction upcast\u003cT, U extends T \u0026 { id: string }\u003e(value: U): T {\n  return value;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 3,
+              "column": 10,
+              "endLine": 3,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst alreadyNumber: number = 1;\nexport const genuineNoOp = alreadyNumber as number;",
+          "output": [
+            "\nconst alreadyNumber: number = 1;\nexport const genuineNoOp = alreadyNumber;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 28,
+              "endLine": 3,
+              "endColumn": 51,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction unchanged(value: string) {\n  value = value as string;\n  return value.length;\n}",
+          "output": [
+            "\nfunction unchanged(value: string) {\n  value = value;\n  return value.length;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nenum NumericEnum { a = 1, b = 2 }\nconst value = NumericEnum.a;\nexport const sameMember = value as NumericEnum.a;",
+          "output": [
+            "\nenum NumericEnum { a = 1, b = 2 }\nconst value = NumericEnum.a;\nexport const sameMember = value;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 4,
+              "column": 27,
+              "endLine": 4,
+              "endColumn": 49,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nenum NumericEnum { a = 1, b = 2 }\ndeclare const value: NumericEnum | undefined;\nexport const sameEnum = value as NumericEnum | undefined;",
+          "output": [
+            "\nenum NumericEnum { a = 1, b = 2 }\ndeclare const value: NumericEnum | undefined;\nexport const sameEnum = value;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 4,
+              "column": 25,
+              "endLine": 4,
+              "endColumn": 57,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let value: number;\nvalue = 1 as number;",
+          "output": [
+            "let value: number;\nvalue = 1;"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 9,
+              "endLine": 2,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let value: string | undefined;\nvalue = 'x' as string;\nconsole.log(value.length);",
+          "output": [
+            "let value: string | undefined;\nvalue = 'x';\nconsole.log(value.length);"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 9,
+              "endLine": 2,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let value: unknown;\nvalue = 1 as number;",
+          "output": [
+            "let value: unknown;\nvalue = 1;"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 9,
+              "endLine": 2,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let value: string | undefined;\n[value] = ['x' as string];",
+          "output": [
+            "let value: string | undefined;\n[value] = ['x'];"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 12,
+              "endLine": 2,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let value: string | undefined;\n({ value } = { value: 'x' as string });",
+          "output": [
+            "let value: string | undefined;\n({ value } = { value: 'x' });"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 23,
+              "endLine": 2,
+              "endColumn": 36,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function narrow(value: string | undefined) {\n  value = (value as string) || \"\";\n  return value.length;\n}",
+          "output": [
+            "function narrow(value: string | undefined) {\n  value = (value) || \"\";\n  return value.length;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 12,
+              "endLine": 2,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function narrow(value: string | undefined) {\n  value = (value as string) ?? \"\";\n  return value.length;\n}",
+          "output": [
+            "function narrow(value: string | undefined) {\n  value = (value) ?? \"\";\n  return value.length;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 12,
+              "endLine": 2,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function narrow(value: string | undefined, condition: boolean) {\n  value = condition ? value as string : undefined;\n}",
+          "output": [
+            "function narrow(value: string | undefined, condition: boolean) {\n  value = condition ? value : undefined;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 23,
+              "endLine": 2,
+              "endColumn": 38,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function narrow(value: string | undefined, condition: boolean) {\n  value = condition ? undefined : value as string;\n}",
+          "output": [
+            "function narrow(value: string | undefined, condition: boolean) {\n  value = condition ? undefined : value;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 35,
+              "endLine": 2,
+              "endColumn": 50,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let value: string | undefined;\n({ value } = { ...{ value: 'x' as string } });",
+          "output": [
+            "let value: string | undefined;\n({ value } = { ...{ value: 'x' } });"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 28,
+              "endLine": 2,
+              "endColumn": 41,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function narrow(value: string | undefined) {\n  ({ value } = { ...{ value: value as string }, value: '' });\n  return value.length;\n}",
+          "output": [
+            "function narrow(value: string | undefined) {\n  ({ value } = { ...{ value: value }, value: '' });\n  return value.length;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 30,
+              "endLine": 2,
+              "endColumn": 45,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function narrow(value: string | undefined, condition: boolean) {\n  ({ value } = condition ? { value: value as string } : { value: undefined });\n}",
+          "output": [
+            "function narrow(value: string | undefined, condition: boolean) {\n  ({ value } = condition ? { value: value } : { value: undefined });\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 37,
+              "endLine": 2,
+              "endColumn": 52,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function narrow(value: string | undefined, condition: boolean) {\n  [value] = condition ? [value as string] : [undefined];\n}",
+          "output": [
+            "function narrow(value: string | undefined, condition: boolean) {\n  [value] = condition ? [value] : [undefined];\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 26,
+              "endLine": 2,
+              "endColumn": 41,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function narrow(value: string | undefined) {\n  ({ value = '' } = { value: value as string });\n  return value.length;\n}",
+          "output": [
+            "function narrow(value: string | undefined) {\n  ({ value = '' } = { value: value });\n  return value.length;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 30,
+              "endLine": 2,
+              "endColumn": 45,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function narrow(value: string | undefined) {\n  ({ value } = { ...{ value: value as string }, ...{ value: '' } });\n  return value.length;\n}",
+          "output": [
+            "function narrow(value: string | undefined) {\n  ({ value } = { ...{ value: value }, ...{ value: '' } });\n  return value.length;\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 30,
+              "endLine": 2,
+              "endColumn": 45,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function narrow(value: string | undefined, other: string | undefined) {\n  value = other \u0026\u0026 (value as string);\n}",
+          "output": [
+            "function narrow(value: string | undefined, other: string | undefined) {\n  value = other \u0026\u0026 (value);\n}"
+          ],
+          "errors": [
+            {
+              "messageId": "contextuallyUnnecessary",
+              "line": 2,
+              "column": 21,
+              "endLine": 2,
+              "endColumn": 36,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "const value = (1 + 2) as (number);",
+          "options": {
+            "typesToIgnore": [
+              "number"
+            ]
+          }
+        },
+        {
+          "code": "const value = \u003c(number)\u003e(1 + 2);",
+          "options": {
+            "typesToIgnore": [
+              "number"
+            ]
+          }
+        },
+        {
+          "code": "const value = (1 + 2) as (/*keep*/ number);",
+          "options": {
+            "typesToIgnore": [
+              "number"
+            ]
+          }
+        },
+        {
+          "code": "const value = \u003c(/*keep*/ number)\u003e(1 + 2);",
+          "options": {
+            "typesToIgnore": [
+              "number"
+            ]
+          }
+        },
+        {
+          "code": "const value = (1 + 2) as /*before*/ (/*inside*/ number /*after*/);",
+          "options": {
+            "typesToIgnore": [
+              "number"
+            ]
+          }
+        },
+        {
+          "code": "const value = (1 + 2) as /*keep*/ number;",
+          "options": {
+            "typesToIgnore": [
+              "number"
+            ]
+          }
+        },
+        {
+          "code": "const value = \u003c/*keep*/ number\u003e(1 + 2);",
+          "options": {
+            "typesToIgnore": [
+              "number"
+            ]
+          }
+        },
+        {
+          "code": "let value: string; (value)!.length;"
+        },
+        {
+          "code": "function narrow(value: string | undefined) {\n  value = ((value!));\n  return value.length;\n }"
+        },
+        {
+          "code": "type ValuePath = 'values' | `values.${string}`;\ndeclare function apply(paths: ValuePath[]): void;\nexport function update(ids: string[]) {\n  apply(ids.map(id =\u003e `values.${id}` as ValuePath));\n}"
+        },
+        {
+          "code": "declare const items: string[] | undefined;\nconst counts = items?.reduce((acc, item) =\u003e {\n  acc[item] = (acc[item] ?? 0) + 1;\n  return acc;\n}, {} as Record\u003cstring, number\u003e);"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "const value = (3 as 3);",
+          "output": [
+            "const value = (3);"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 16,
+              "endLine": 1,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const foo = 3 as 3;",
+          "output": [
+            "const foo = 3;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 13,
+              "endLine": 1,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const foo = \u003c3\u003e3;",
+          "output": [
+            "const foo = 3;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 13,
+              "endLine": 1,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const s = 'x';\nconst t = s!;",
+          "output": [
+            "const s = 'x';\nconst t = s;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 2,
+              "column": 11,
+              "endLine": 2,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const foo = (3 + 5) /*before*/ as /*after*/ number;",
+          "output": [
+            "const foo = (3 + 5) /*before*/;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 13,
+              "endLine": 1,
+              "endColumn": 51,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cnumber\u003e{ lol: 32 as number }.lol;",
+          "output": [
+            "({ lol: 32 as number }.lol);"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 1,
+              "endLine": 1,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cnumber\u003efunction Fun() {}.length;",
+          "output": [
+            "(function Fun() {}.length);"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 1,
+              "endLine": 1,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cnumber\u003eclass Clazz {}.length;",
+          "output": [
+            "(class Clazz {}.length);"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 1,
+              "endLine": 1,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const foo = () =\u003e \u003cnumber\u003e{ lol: 123 as number }.lol + 54321;",
+          "output": [
+            "const foo = () =\u003e ({ lol: 123 as number }.lol) + 54321;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "line": 1,
+              "column": 19,
+              "endLine": 1,
+              "endColumn": 53,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [],
+      "invalid": [
+        {
+          "code": "\u003cnumber\u003easync function() {}.length;",
+          "output": [
+            "(async function() {}.length);"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cnumber\u003easync function named() {}.length;",
+          "output": [
+            "(async function named() {}.length);"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cnumber\u003easync function*() {}.length;",
+          "output": [
+            "(async function*() {}.length);"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cnumber\u003easync /* comment */ function() {}.length;",
+          "output": [
+            "(async /* comment */ function() {}.length);"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const length = () =\u003e \u003cnumber\u003easync function() {}.length;",
+          "output": [
+            "const length = () =\u003e async function() {}.length;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cnumber\u003e(async function() {}.length);",
+          "output": [
+            "(async function() {}.length);"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const length = \u003cnumber\u003easync function() {}.length;",
+          "output": [
+            "const length = async function() {}.length;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "declare const async: { length: number };\n\u003cnumber\u003easync.length;",
+          "output": [
+            "declare const async: { length: number };\nasync.length;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(\u003cnumber\u003easync function() {}.length);",
+          "output": [
+            "(async function() {}.length);"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "declare const async: number;\n\u003cnumber\u003easync\nfunction named() {}",
+          "output": [
+            "declare const async: number;\nasync\nfunction named() {}"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryAssertion",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

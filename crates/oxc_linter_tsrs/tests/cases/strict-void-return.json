@@ -1,0 +1,1559 @@
+{
+  "source": "strict_void_return_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ndeclare function foo(cb: {}): void;\nfoo(() =\u003e () =\u003e []);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\ntype Void = void;\nfoo((): Void =\u003e {\n  return;\n});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo((): ReturnType\u003ctypeof foo\u003e =\u003e {\n  return;\n});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: any): void;\nfoo(() =\u003e () =\u003e []);\n      "
+        },
+        {
+          "code": "\ndeclare class Foo {\n  constructor(cb: unknown): void;\n}\nnew Foo(() =\u003e ({}));\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e {}): void;\nfoo(() =\u003e 1 as any);\n      ",
+          "options": {
+            "allowReturnAny": true
+          }
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e {\n  throw new Error('boom');\n});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\ndeclare function boom(): never;\nfoo(() =\u003e boom());\nfoo(boom);\n      "
+        },
+        {
+          "code": "\ndeclare const Foo: {\n  new (cb: () =\u003e any): void;\n};\nnew Foo(function () {\n  return 1;\n});\n      "
+        },
+        {
+          "code": "\ndeclare const Foo: {\n  new (cb: () =\u003e unknown): void;\n};\nnew Foo(function () {\n  return 1;\n});\n      "
+        },
+        {
+          "code": "\ndeclare const foo: {\n  bar(cb1: () =\u003e unknown, cb2: () =\u003e void): void;\n};\nfoo.bar(\n  function () {\n    return 1;\n  },\n  function () {\n    return;\n  },\n);\n      "
+        },
+        {
+          "code": "\ndeclare const Foo: {\n  new (cb: () =\u003e string | void): void;\n};\nnew Foo(() =\u003e {\n  if (maybe) {\n    return 'a';\n  } else {\n    return 'b';\n  }\n});\n      "
+        },
+        {
+          "code": "\ndeclare function foo\u003cCb extends (...args: any[]) =\u003e void\u003e(cb: Cb): void;\nfoo(() =\u003e {\n  console.log('a');\n});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: (() =\u003e void) | (() =\u003e string)): void;\nfoo(() =\u003e {\n  label: while (maybe) {\n    for (let i = 0; i \u003c 10; i++) {\n      switch (i) {\n        case 0:\n          continue;\n        case 1:\n          return 'a';\n      }\n    }\n  }\n});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: (() =\u003e void) | null): void;\nfoo(null);\n      "
+        },
+        {
+          "code": "\ninterface Cb {\n  (): void;\n  (): string;\n}\ndeclare const Foo: {\n  new (cb: Cb): void;\n};\nnew Foo(() =\u003e {\n  do {\n    try {\n      throw 1;\n    } catch {\n      return 'a';\n    }\n  } while (maybe);\n});\n      "
+        },
+        {
+          "code": "\ndeclare const foo: ((cb: () =\u003e boolean) =\u003e void) | ((cb: () =\u003e void) =\u003e void);\nfoo(() =\u003e false);\n      "
+        },
+        {
+          "code": "\ndeclare const foo: {\n  (cb: () =\u003e boolean): void;\n  (cb: () =\u003e void): void;\n};\nfoo(function () {\n  with ({}) {\n    return false;\n  }\n});\n      "
+        },
+        {
+          "code": "\ndeclare const Foo: {\n  new (cb: () =\u003e void): void;\n  (cb: () =\u003e unknown): void;\n};\nFoo(() =\u003e false);\n      "
+        },
+        {
+          "code": "\ndeclare const Foo: {\n  new (cb: () =\u003e any): void;\n  (cb: () =\u003e void): void;\n};\nnew Foo(() =\u003e false);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e boolean): void;\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e false);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\ndeclare function foo(cb: () =\u003e boolean): void;\nfoo(() =\u003e false);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e Promise\u003cvoid\u003e): void;\ndeclare function foo(cb: () =\u003e void): void;\nfoo(async () =\u003e {});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(fn: () =\u003e void): void;\ndeclare function foo(fn: () =\u003e Promise\u003cvoid\u003e): void;\nfoo(async () =\u003e {});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e 1 as any);\n      ",
+          "options": {
+            "allowReturnAny": true
+          }
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e {});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nconst cb = () =\u003e {};\nfoo(cb);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(function () {});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(cb);\nfunction cb() {}\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e undefined);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(function () {\n  return;\n});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(function () {\n  return void 0;\n});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e {\n  return;\n});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\ndeclare function cb(): never;\nfoo(cb);\n      "
+        },
+        {
+          "code": "\ndeclare class Foo {\n  constructor(cb: () =\u003e void): any;\n}\ndeclare function cb(): void;\nnew Foo(cb);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(cb);\nfunction cb() {\n  throw new Error('boom');\n}\n      "
+        },
+        {
+          "code": "\ndeclare function foo(arg: string, cb: () =\u003e void): void;\ndeclare function cb(): undefined;\nfoo('arg', cb);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb?: () =\u003e void): void;\nfoo();\n      "
+        },
+        {
+          "code": "\ndeclare class Foo {\n  constructor(cb?: () =\u003e void): void;\n}\ndeclare function cb(): void;\nnew Foo(cb);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(...cbs: Array\u003c() =\u003e void\u003e): void;\nfoo(\n  () =\u003e {},\n  () =\u003e void null,\n  () =\u003e undefined,\n);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(...cbs: Array\u003c() =\u003e void\u003e): void;\ndeclare const cbs: Array\u003c() =\u003e void\u003e;\nfoo(...cbs);\n      "
+        },
+        {
+          "code": "\ndeclare function foo(...cbs: [() =\u003e any, () =\u003e void, (() =\u003e void)?]): void;\nfoo(\n  async () =\u003e {},\n  () =\u003e void null,\n  () =\u003e undefined,\n);\n      "
+        },
+        {
+          "code": "\nlet cb;\ncb = async () =\u003e 10;\n      "
+        },
+        {
+          "code": "\nconst foo: () =\u003e void = () =\u003e {};\n      "
+        },
+        {
+          "code": "\ndeclare function cb(): void;\nconst foo: () =\u003e void = cb;\n      "
+        },
+        {
+          "code": "\nconst foo: () =\u003e void = function () {\n  throw new Error('boom');\n};\n      "
+        },
+        {
+          "code": "\nconst foo: { (): string; (): void } = () =\u003e {\n  return 'a';\n};\n      "
+        },
+        {
+          "code": "\nconst foo: (() =\u003e void) | (() =\u003e number) = () =\u003e {\n  return 1;\n};\n      "
+        },
+        {
+          "code": "\ntype Foo = () =\u003e void;\nconst foo: Foo = cb;\nfunction cb() {\n  return void null;\n}\n      "
+        },
+        {
+          "code": "\ninterface Foo {\n  (): void;\n}\nconst foo: Foo = cb;\nfunction cb() {\n  return undefined;\n}\n      "
+        },
+        {
+          "code": "\ndeclare function cb(): void;\ndeclare let foo: () =\u003e void;\nfoo = cb;\n      "
+        },
+        {
+          "code": "\ndeclare let foo: () =\u003e void;\nfoo += () =\u003e 1;\n      "
+        },
+        {
+          "code": "\ndeclare function defaultCb(): object;\ndeclare let foo: { cb?: () =\u003e void };\nconst { cb = defaultCb } = foo;\n      "
+        },
+        {
+          "code": "\nlet foo: (() =\u003e void) | null = null;\nfoo \u0026\u0026= null;\n      "
+        },
+        {
+          "code": "\ndeclare function cb(): void;\nlet foo: (() =\u003e void) | boolean = false;\nfoo ||= cb;\n      "
+        },
+        {
+          "code": "\ndeclare function Foo(props: { cb: () =\u003e void }): unknown;\nconst _ = \u003cFoo cb={() =\u003e {}} /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ndeclare function Foo(props: { cb: () =\u003e void }): unknown;\nconst _ = \u003cFoo cb=\"() =\u003e {}\" /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ndeclare function Foo(props: { cb: () =\u003e void }): unknown;\nconst _ = \u003cFoo cb={} /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ndeclare function Foo(props: { cb: () =\u003e void }): unknown;\nconst _ = \u003cBar children={\u003cFoo cb={() =\u003e {}} /\u003e} /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ntype Cb = () =\u003e void;\ndeclare function Foo(props: { cb: Cb; s: string }): unknown;\nconst _ = \u003cFoo cb={function () {}} s=\"asd\" /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ntype Cb = () =\u003e void;\ndeclare function Foo(props: { x: number; cb?: Cb }): unknown;\nconst _ = \u003cFoo x={123} /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ntype Cb = (() =\u003e void) | (() =\u003e number);\ndeclare function Foo(props: { cb?: Cb }): unknown;\nconst _ = (\n  \u003cFoo\n    cb={function (arg) {\n      return 123;\n    }}\n  /\u003e\n);\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ninterface Props {\n  cb: ((arg: unknown) =\u003e void) | boolean;\n}\ndeclare function Foo(props: Props): unknown;\nconst _ = \u003cFoo cb /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ninterface Props {\n  cb: (() =\u003e void) | (() =\u003e Promise\u003cvoid\u003e);\n}\ndeclare function Foo(props: Props): any;\nconst _ = \u003cFoo cb={async () =\u003e {}} /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ninterface Props {\n  children: (arg: unknown) =\u003e void;\n}\ndeclare function Foo(props: Props): unknown;\ndeclare function cb(): void;\nconst _ = \u003cFoo\u003e{cb}\u003c/Foo\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ndeclare function foo(cbs: { arg: number; cb: () =\u003e void }): void;\nfoo({ arg: 1, cb: () =\u003e undefined });\n      "
+        },
+        {
+          "code": "\ndeclare let foo: { arg?: string; cb: () =\u003e void };\nfoo = {\n  cb: () =\u003e {\n    return something;\n  },\n};\n      ",
+          "options": {
+            "allowReturnAny": true
+          }
+        },
+        {
+          "code": "\ndeclare let foo: { cb: () =\u003e void };\nfoo = {\n  cb() {\n    return something;\n  },\n};\n      ",
+          "options": {
+            "allowReturnAny": true
+          }
+        },
+        {
+          "code": "\ndeclare let foo: { cb: () =\u003e void };\nfoo = {\n  cb = () =\u003e 1,\n};\n      "
+        },
+        {
+          "code": "\ndeclare let foo: { cb: (n: number) =\u003e void };\nlet method = 'cb';\nfoo = {\n  [method](n) {\n    return n;\n  },\n};\n      "
+        },
+        {
+          "code": "\nlet foo = {\n  cb(n) {\n    return n;\n  },\n};\n      "
+        },
+        {
+          "code": "\ninterface Foo {\n  fn(): void;\n}\nlet foo: Foo = {\n  cb(n) {\n    return n;\n  },\n};\n      "
+        },
+        {
+          "code": "\ndeclare let foo: { cb: (() =\u003e void) | number };\nfoo = {\n  cb: 0,\n};\n      "
+        },
+        {
+          "code": "\ndeclare function cb(): void;\nconst foo: Record\u003cstring, () =\u003e void\u003e = {\n  cb1: cb,\n  cb2: cb,\n};\n      "
+        },
+        {
+          "code": "\ndeclare function cb(): string;\nconst foo: Record\u003cstring, () =\u003e void\u003e = {\n  ...cb,\n};\n      "
+        },
+        {
+          "code": "\ndeclare function cb(): string;\nconst foo: Record\u003cstring, () =\u003e void\u003e = {\n  ...cb,\n  ...{},\n};\n      "
+        },
+        {
+          "code": "\ndeclare function cb(): void;\nconst foo: Array\u003c(() =\u003e void) | false\u003e = [false, cb, () =\u003e cb()];\n      "
+        },
+        {
+          "code": "\ndeclare function cb(): void;\nconst foo: [string, () =\u003e void, (() =\u003e void)?] = ['asd', cb];\n      "
+        },
+        {
+          "code": "\nconst foo: { cbs: Array\u003c() =\u003e void\u003e | null } = {\n  cbs: [\n    function () {\n      return undefined;\n    },\n    () =\u003e {\n      return void 0;\n    },\n    null,\n  ],\n};\n      "
+        },
+        {
+          "code": "\nconst foo: { cb: () =\u003e void } = class {\n  static cb = () =\u003e {};\n};\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  foo;\n}\n      "
+        },
+        {
+          "code": "\nclass Bar {\n  foo() {}\n}\nclass Foo extends Bar {\n  foo();\n}\n      "
+        },
+        {
+          "code": "\ninterface Bar {\n  foo(): void;\n}\nclass Foo implements Bar {\n  get foo() {\n    return new Date();\n  }\n  set foo() {\n    return new Date('wtf');\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  foo: () =\u003e void = () =\u003e undefined;\n}\n      "
+        },
+        {
+          "code": "\nclass Bar {}\nclass Foo extends Bar {\n  foo = () =\u003e 1;\n}\n      "
+        },
+        {
+          "code": "\nclass Foo extends Wtf {\n  foo = () =\u003e 1;\n}\n      "
+        },
+        {
+          "code": "\nclass Foo extends Wtf {\n  [unknown] = () =\u003e 1;\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  cb = () =\u003e {\n    console.log('siema');\n  };\n}\nclass Bar extends Foo {\n  cb = () =\u003e {\n    console.log('nara');\n  };\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  cb1 = () =\u003e {};\n}\nclass Bar extends Foo {\n  cb2() {}\n}\nclass Baz extends Bar {\n  cb1 = () =\u003e {\n    console.log('siema');\n  };\n  cb2() {\n    console.log('nara');\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  fn() {\n    return 'a';\n  }\n  cb() {}\n}\nvoid class extends Foo {\n  cb() {\n    if (maybe) {\n      console.log('siema');\n    } else {\n      console.log('nara');\n    }\n  }\n};\n      "
+        },
+        {
+          "code": "\nabstract class Foo {\n  abstract cb(): void;\n}\nclass Bar extends Foo {\n  cb() {\n    console.log('a');\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass Bar implements Foo {\n  cb = () =\u003e 1;\n}\n      "
+        },
+        {
+          "code": "\ninterface Foo {\n  cb: () =\u003e void;\n}\nclass Bar implements Foo {\n  cb = () =\u003e {};\n}\n      "
+        },
+        {
+          "code": "\ninterface Foo {\n  cb: () =\u003e void;\n}\nclass Bar implements Foo {\n  get cb() {\n    return () =\u003e {};\n  }\n}\n      "
+        },
+        {
+          "code": "\ninterface Foo {\n  cb(): void;\n}\nclass Bar implements Foo {\n  cb() {\n    return undefined;\n  }\n}\n      "
+        },
+        {
+          "code": "\ninterface Foo1 {\n  cb1(): void;\n}\ninterface Foo2 {\n  cb2: () =\u003e void;\n}\nclass Bar implements Foo1, Foo2 {\n  cb1() {}\n  cb2() {}\n}\n      "
+        },
+        {
+          "code": "\ninterface Foo1 {\n  cb1(): void;\n}\ninterface Foo2 extends Foo1 {\n  cb2: () =\u003e void;\n}\nclass Bar implements Foo2 {\n  cb1() {}\n  cb2() {}\n}\n      "
+        },
+        {
+          "code": "\ndeclare let foo: () =\u003e () =\u003e void;\nfoo = () =\u003e () =\u003e {};\n      "
+        },
+        {
+          "code": "\ndeclare let foo: { f(): () =\u003e void };\nfoo = {\n  f() {\n    return () =\u003e undefined;\n  },\n};\nfunction cb() {}\n      "
+        },
+        {
+          "code": "\ndeclare let foo: { f(): () =\u003e void };\nfoo.f = function () {\n  return () =\u003e {};\n};\n      "
+        },
+        {
+          "code": "\ndeclare let foo: () =\u003e (() =\u003e void) | string;\nfoo = () =\u003e 'asd' + 'zxc';\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e () =\u003e void): void;\nfoo(function () {\n  return () =\u003e {};\n});\n      "
+        },
+        {
+          "code": "\ndeclare function foo(cb: (arg: string) =\u003e () =\u003e void): void;\ndeclare function foo(cb: (arg: number) =\u003e () =\u003e boolean): void;\nfoo((arg: number) =\u003e {\n  return cb;\n});\nfunction cb() {\n  return true;\n}\n      "
+        },
+        {
+          "code": "\ndeclare function f\u003cT extends void\u003e(arg: T, cb: () =\u003e T): void;\ndeclare function f\u003cT extends string\u003e(arg: T, cb: () =\u003e T): void;\n\nf('test', () =\u003e 'test');\nf(undefined, () =\u003e {});\n      "
+        },
+        {
+          "code": "\ninterface HookFunction\u003cT extends void | Hook = void\u003e {\n  (fn: () =\u003e void): T;\n  (fn: () =\u003e Promise\u003cvoid\u003e): T;\n}\n\nclass Hook {}\n\ndeclare var beforeEach: HookFunction\u003cHook\u003e;\n\nbeforeEach(() =\u003e {});\nbeforeEach(async () =\u003e {});\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e null);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e (((true))));\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e {\n  if (maybe) {\n    return (((1) + 1));\n  }\n});\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg: number, cb: () =\u003e void): void;\nfoo(0, () =\u003e 0);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb?: { (): void }): void;\nfoo(() =\u003e () =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const obj: { foo(cb: () =\u003e void): void } | null;\nobj?.foo(() =\u003e JSON.parse('{}'));\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n((cb: () =\u003e void) =\u003e cb())!(() =\u003e 1);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: { (): void }): void;\ndeclare function cb(): string;\nfoo(cb);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype AnyFunc = (...args: unknown[]) =\u003e unknown;\ndeclare function foo\u003cF extends AnyFunc\u003e(cb: F): void;\nfoo(async () =\u003e ({}));\nfoo\u003c() =\u003e void\u003e(async () =\u003e ({}));\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT extends {}\u003e(arg: T, cb: () =\u003e T);\nfunction foo(arg: null, cb: () =\u003e void);\nfunction foo(arg: any, cb: () =\u003e any) {}\n\nfoo(null, () =\u003e Math.random());\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo\u003cT extends {}\u003e(arg: T, cb: () =\u003e T): void;\ndeclare function foo(arg: any, cb: () =\u003e void): void;\n\nfoo(null, async () =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\ndeclare function foo(cb: () =\u003e any): void;\nfoo(async () =\u003e {\n  return Math.random();\n});\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: { (): void }): void;\nfoo(cb);\nasync function cb() {}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo\u003cCb extends (...args: any[]) =\u003e void\u003e(cb: Cb): void;\nfoo(() =\u003e {\n  console.log('a');\n  return 1;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfunction bar\u003cCb extends () =\u003e number\u003e(cb: Cb) {\n  foo(cb);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: { (): void }): void;\nconst cb = () =\u003e dunno;\nfoo!(cb);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: {\n  (arg: boolean, cb: () =\u003e void): void;\n};\nfoo(false, () =\u003e Promise.resolve(undefined));\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: {\n  bar(cb1: () =\u003e any, cb2: () =\u003e void): void;\n};\nfoo.bar(\n  () =\u003e Promise.resolve(1),\n  () =\u003e Promise.resolve(1),\n);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const Foo: {\n  new (cb: () =\u003e void): void;\n};\nnew Foo(async () =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e {\n  label: while (maybe) {\n    for (const i of [1, 2, 3]) {\n      if (maybe) return null;\n      else return null;\n    }\n  }\n  return void 0;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(() =\u003e {\n  do {\n    try {\n      throw 1;\n    } catch (e) {\n      return null;\n    } finally {\n      console.log('finally');\n    }\n  } while (maybe);\n});\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e void): void;\nfoo(async () =\u003e {\n  try {\n    await Promise.resolve();\n  } catch {\n    console.error('fail');\n  }\n});\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const Foo: {\n  new (cb: () =\u003e void): void;\n  (cb: () =\u003e unknown): void;\n};\nnew Foo(() =\u003e false);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const Foo: {\n  new (cb: () =\u003e any): void;\n  (cb: () =\u003e void): void;\n};\nFoo(() =\u003e false);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Cb {\n  (arg: string): void;\n  (arg: number): void;\n}\ndeclare function foo(cb: Cb): void;\nfoo(cb);\nfunction cb() {\n  return true;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(\n  cb: ((arg: number) =\u003e void) | ((arg: string) =\u003e void),\n): void;\nfoo(cb);\nfunction cb() {\n  return 1 + 1;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: (() =\u003e void) | null): void;\ndeclare function cb(): boolean;\nfoo(cb);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(...cbs: Array\u003c() =\u003e void\u003e): void;\nfoo(\n  () =\u003e {},\n  () =\u003e false,\n  () =\u003e 0,\n  () =\u003e '',\n);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 5,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(...cbs: [() =\u003e void, () =\u003e void, (() =\u003e void)?]): void;\nfoo(\n  () =\u003e {},\n  () =\u003e Math.random(),\n  () =\u003e (1).toString(),\n);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 5,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Ev {}\ninterface EvMap {\n  DOMContentLoaded: Ev;\n}\ntype EvListOrEvListObj = EvList | EvListObj;\ninterface EvList {\n  (evt: Event): void;\n}\ninterface EvListObj {\n  handleEvent(object: Ev): void;\n}\ninterface Win {\n  addEventListener\u003cK extends keyof EvMap\u003e(\n    type: K,\n    listener: (ev: EvMap[K]) =\u003e any,\n  ): void;\n  addEventListener(type: string, listener: EvListOrEvListObj): void;\n}\ndeclare const win: Win;\nwin.addEventListener('DOMContentLoaded', ev =\u003e ev);\nwin.addEventListener('custom', ev =\u003e ev);\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 21,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(x: null, cb: () =\u003e void): void;\ndeclare function foo(x: unknown, cb: () =\u003e any): void;\nfoo({}, async () =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst arr = [1, 2];\narr.forEach(async x =\u003e {\n  console.log(x);\n});\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[1, 2].forEach(async x =\u003e console.log(x));\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: () =\u003e void = () =\u003e false;\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst { name }: () =\u003e void = function foo() {\n  return false;\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: Record\u003cstring, () =\u003e void\u003e;\nfoo['a' + 'b'] = () =\u003e true;\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: () =\u003e void = async () =\u003e Promise.resolve(true);\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const cb: () =\u003e void = (): Array\u003cnumber\u003e =\u003e [];",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst cb: () =\u003e void = (): Array\u003cnumber\u003e =\u003e {\n  return [];\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const cb: () =\u003e void = function* foo() {}",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const cb: () =\u003e void = (): Promise\u003cnumber\u003e =\u003e Promise.resolve(1);",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst cb: () =\u003e void = async (): Promise\u003cnumber\u003e =\u003e {\n  try {\n    return Promise.resolve(1);\n  } catch {}\n};\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const cb: () =\u003e void = async (): Promise\u003cnumber\u003e =\u003e Promise.resolve(1);",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: () =\u003e void = async () =\u003e {\n  try {\n    return 1;\n  } catch {}\n};\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: () =\u003e void = async (): Promise\u003cvoid\u003e =\u003e {\n  try {\n    await Promise.resolve();\n  } finally {\n  }\n};\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: () =\u003e void = async () =\u003e {\n  try {\n    await Promise.resolve();\n  } catch (err) {\n    console.error(err);\n  }\n  console.log('ok');\n};\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const foo: () =\u003e void = (): number =\u003e {};",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function cb(): boolean;\nconst foo: () =\u003e void = cb;\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: () =\u003e void = function () {\n  if (maybe) {\n    return null;\n  } else {\n    return null;\n  }\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 4,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: () =\u003e void = function () {\n  if (maybe) {\n    console.log('elo');\n    return { [1]: Math.random() };\n  }\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: { (arg: number): void; (arg: string): void } = arg =\u003e {\n  console.log('foo');\n  switch (typeof arg) {\n    case 'number':\n      return 0;\n    case 'string':\n      return '';\n  }\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: ((arg: number) =\u003e void) | ((arg: string) =\u003e void) = async () =\u003e {\n  return 1;\n};\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = () =\u003e void;\nconst foo: Foo = cb;\nfunction cb() {\n  return [1, 2, 3];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Foo {\n  (): void;\n}\nconst foo: Foo = cb;\nfunction cb() {\n  return { a: 1 };\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function cb(): unknown;\ndeclare let foo: () =\u003e void;\nfoo = cb;\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: { arg?: string; cb?: () =\u003e void };\nfoo.cb = () =\u003e {\n  return 'siema';\n  console.log('siema');\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function cb(): unknown;\nlet foo: (() =\u003e void) | null = null;\nfoo ??= cb;\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function cb(): unknown;\nlet foo: (() =\u003e void) | boolean = false;\nfoo ||= cb;\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function cb(): unknown;\nlet foo: (() =\u003e void) | boolean = false;\nfoo \u0026\u0026= cb;\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function Foo(props: { cb: () =\u003e void }): unknown;\nconst _ = \u003cFoo cb={() =\u003e 1} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function Foo(props: { cb: () =\u003e void }): unknown;\ndeclare function getNull(): null;\nconst _ = (\n  \u003cFoo\n    cb={() =\u003e {\n      if (maybe) return Math.random();\n      else return getNull();\n    }}\n  /\u003e\n);\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 7,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Cb = () =\u003e void;\ndeclare function Foo(props: { cb: Cb; s: string }): unknown;\nconst _ = \u003cFoo cb={async function () {}} s=\"!@#jp2gmd\" /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Cb = () =\u003e void;\ndeclare function Foo(props: { n: number; cb?: Cb }): unknown;\nconst _ = \u003cFoo n={2137} cb={function* () {}} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Cb = ((arg: string) =\u003e void) | ((arg: number) =\u003e void);\ndeclare function Foo(props: { cb?: Cb }): unknown;\nconst _ = (\n  \u003cFoo\n    cb={async function* (arg) {\n      await arg;\n      yield arg;\n    }}\n  /\u003e\n);\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Props {\n  cb: ((arg: unknown) =\u003e void) | boolean;\n}\ndeclare function Foo(props: Props): unknown;\nconst _ = \u003cFoo cb={x =\u003e x} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype EventHandler\u003cE\u003e = { bivarianceHack(event: E): void }['bivarianceHack'];\ninterface ButtonProps {\n  onClick?: EventHandler\u003cunknown\u003e | undefined;\n}\ndeclare function Button(props: ButtonProps): unknown;\nfunction App() {\n  return \u003cButton onClick={x =\u003e x} /\u003e;\n}\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cbs: { arg: number; cb: () =\u003e void }): void;\nfoo({ arg: 1, cb: () =\u003e 1 });\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: { arg?: string; cb: () =\u003e void };\nfoo = {\n  cb: () =\u003e {\n    let x = 'siema';\n    return x;\n  },\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: { cb: (n: number) =\u003e void };\nfoo = {\n  cb(n) {\n    return n;\n  },\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: { 1234: (n: number) =\u003e void };\nfoo = {\n  1234(n) {\n    return n;\n  },\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: { '1e+21': () =\u003e void };\nfoo = {\n  1_000_000_000_000_000_000_000: () =\u003e 1,\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: { cb: (() =\u003e void) | number };\nfoo = {\n  cb: async () =\u003e {\n    if (maybe) {\n      return 'asd';\n    }\n  },\n};\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function cb(): number;\nconst foo: Record\u003cstring, () =\u003e void\u003e = {\n  cb1: cb,\n  cb2: cb,\n  ...cb,\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidFunc",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function cb(): number;\nconst foo: Array\u003c(() =\u003e void) | false\u003e = [false, cb, () =\u003e cb()];\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 3,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function cb(): number;\nconst foo: [string, () =\u003e void, (() =\u003e void)?] = ['asd', cb];\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: { cbs: Array\u003c() =\u003e void\u003e | null } = {\n  cbs: [\n    function* () {\n      yield 1;\n    },\n    async () =\u003e {\n      await 1;\n    },\n    null,\n  ],\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            },
+            {
+              "messageId": "asyncFunc",
+              "line": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: { cb: () =\u003e void } = class {\n  static cb = () =\u003e ({});\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  foo: () =\u003e void = () =\u003e [];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  static foo: () =\u003e void = Math.random;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  cb = () =\u003e {};\n}\nclass Bar extends Foo {\n  cb = Math.random;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = () =\u003e\n  class {\n    cb = () =\u003e {};\n  };\nclass Bar extends foo() {\n  cb = Math.random;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  cb() {\n    console.log('siema');\n  }\n}\nconst method = 'cb' as const;\nclass Bar extends Foo {\n  [method]() {\n    return 'nara';\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Bar {\n  foo() {}\n}\nclass Foo extends Bar {\n  get foo() {\n    return () =\u003e 1;\n  }\n}\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  cb() {}\n}\nvoid class extends Foo {\n  cb() {\n    return Math.random();\n  }\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  cb1 = () =\u003e {};\n}\nclass Bar extends Foo {\n  cb2() {}\n}\nclass Baz extends Bar {\n  cb1 = () =\u003e Math.random();\n  cb2() {\n    return Math.random();\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 9,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function f(): Promise\u003cvoid\u003e;\ninterface Foo {\n  cb: () =\u003e void;\n}\nclass Bar {\n  cb = () =\u003e {};\n}\nclass Baz extends Bar implements Foo {\n  cb: () =\u003e void = f;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  fn() {\n    return 'a';\n  }\n  cb() {}\n}\nclass Bar extends Foo {\n  cb() {\n    if (maybe) {\n      return Promise.resolve('siema');\n    } else {\n      return Promise.resolve('nara');\n    }\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 11,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nabstract class Foo {\n  abstract cb(): void;\n}\nclass Bar extends Foo {\n  async cb() {}\n}\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  fn() {\n    return 'a';\n  }\n  cb() {}\n}\nclass Bar extends Foo {\n  *cb() {}\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Foo {\n  cb: () =\u003e void;\n}\nclass Bar implements Foo {\n  cb = Math.random;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst o = { cb() {} };\ntype O = typeof o;\nclass Bar implements O {\n  cb = Math.random;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  cb() {}\n}\nclass Bar extends Foo {\n  async*cb() {}\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Foo {\n  cb(): void;\n}\nclass Bar implements Foo {\n  async cb(): Promise\u003cstring\u003e {\n    return Promise.resolve('siema');\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Foo {\n  cb(): void;\n}\nclass Bar implements Foo {\n  async cb() {\n    try {\n      return { a: ['asdf', 1234] };\n    } catch {\n      console.error('error');\n    }\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Foo {\n  cb(): void;\n}\nclass Bar implements Foo {\n  cb() {\n    if (maybe) {\n      return Promise.resolve(1);\n    } else {\n      return;\n    }\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Foo1 {\n  cb1(): void;\n}\ninterface Foo2 {\n  cb2: () =\u003e void;\n}\nclass Bar implements Foo1, Foo2 {\n  async cb1() {}\n  async *cb2() {}\n}\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 9,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidFunc",
+              "line": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Foo1 {\n  cb1(): void;\n}\ninterface Foo2 {\n  cb2: () =\u003e void;\n}\nclass Baz {\n  cb3() {}\n}\nclass Bar extends Baz implements Foo1, Foo2 {\n  async cb1() {}\n  async *cb2() {}\n  cb3() {\n    return Math.random();\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidFunc",
+              "line": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass A extends class {\n  cb() {}\n} {\n  cb() {\n    return Math.random();\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass A extends class B {\n  cb() {}\n} {\n  cb() {\n    return Math.random();\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Foo1 {\n  cb1(): void;\n}\ninterface Foo2 extends Foo1 {\n  cb2: () =\u003e void;\n}\nclass Bar implements Foo2 {\n  async cb1() {}\n  async *cb2() {}\n}\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 9,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidFunc",
+              "line": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: () =\u003e () =\u003e void;\nfoo = () =\u003e () =\u003e 1 + 1;\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: () =\u003e () =\u003e void;\nfoo = () =\u003e () =\u003e Math.random();\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: () =\u003e () =\u003e void;\ndeclare const cb: () =\u003e null | false;\nfoo = () =\u003e cb;\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: { f(): () =\u003e void };\nfoo = {\n  f() {\n    return () =\u003e cb;\n  },\n};\nfunction cb() {}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: { f(): () =\u003e void };\nfoo.f = function () {\n  return () =\u003e {\n    return null;\n  };\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: () =\u003e (() =\u003e void) | string;\nfoo = () =\u003e () =\u003e {\n  return 'asd' + 'zxc';\n};\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e () =\u003e void): void;\nfoo(function () {\n  return async () =\u003e {};\n});\n      ",
+          "errors": [
+            {
+              "messageId": "asyncFunc",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: () =\u003e () =\u003e void): void;\nfoo(() =\u003e () =\u003e {\n  if (n == 1) {\n    console.log('asd')\n    return [1].map(x =\u003e x)\n  }\n  if (n == 2) {\n    console.log('asd')\n    return -Math.random()\n  }\n  if (n == 3) {\n    console.log('asd')\n    return \"x\".toUpperCase()\n  }\n  return \u003ci\u003e{Math.random()}\u003c/i\u003e\n});\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 6,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 10,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "nonVoidReturn",
+              "line": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(cb: (arg: string) =\u003e () =\u003e void): void;\ndeclare function foo(cb: (arg: number) =\u003e () =\u003e boolean): void;\nfoo((arg: string) =\u003e {\n  return cb;\n});\nasync function* cb() {\n  yield true;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidFunc",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function f\u003cT extends void\u003e(arg: T, cb: () =\u003e T): void;\n\nf(undefined, () =\u003e 'test');\n      ",
+          "errors": [
+            {
+              "messageId": "nonVoidReturn",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}
