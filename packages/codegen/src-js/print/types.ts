@@ -18,6 +18,9 @@ export interface UnknownNode {
   type: "<unknown node>";
 }
 
+/** An `Expression` which is a literal. */
+export type Literal = Extract<ESTree.Expression, { type: "Literal" }>;
+
 /**
  * Properties which only some literals carry. `printLiteral` reads them on any literal to tell
  * regexes and bigints apart from the rest.

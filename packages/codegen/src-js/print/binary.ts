@@ -5,11 +5,10 @@ import { CAT_CLOSE_BRACKET, CAT_OTHER } from "./categories.ts";
 import { write } from "./write.ts";
 import { printPrivateInExpression, printExpression } from "./expression.ts";
 import { BIN_PRECEDENCE, CTX_FORBID_IN, PADDED_BIN_OPERATORS } from "./operators.ts";
-import { withoutParens } from "./parens.ts";
 import { PREC_CALL, PREC_EXPONENTIATION, PREC_LOWEST, PREC_PREFIX } from "./precedence.ts";
 
 import type { State } from "../state.ts";
-import type { LiteralExtras } from "./types.ts";
+import type { Literal, LiteralExtras } from "./types.ts";
 import type {
   BinaryExpression,
   BinaryOperator,
@@ -77,12 +76,12 @@ export function printBinaryish(
 
   // At the top of each iteration, `left` is `v.e.left`, and `leftType` is its `type`
   for (;;) {
-    binCheckAndPrepare(v, state);
-
     while (leftType === "ParenthesizedExpression") {
       left = (left as ParenthesizedExpression).expression;
       leftType = left.type;
     }
+
+    binCheckAndPrepare(v, state, left, leftType);
 
     let nextLeft;
     if (leftType === "BinaryExpression") {
@@ -137,8 +136,19 @@ export function printBinaryish(
  *
  * `**` is right associative, so its left operand binds tighter, and the rest are the other way round.
  * `??` may not sit unparenthesized beside `&&` or `||`, which is why either operand can be forced up to `PREC_PREFIX`.
+ *
+ * @param v - The level being prepared. Its `operator` holds the parent level's operator on entry,
+ *   and is replaced with this level's own.
+ * @param state - Printer state
+ * @param left - `v.e.left`, with any parens unwrapped
+ * @param leftType - `left.type`
  */
-function binCheckAndPrepare(v: BinaryVisitor, state: State): void {
+function binCheckAndPrepare(
+  v: BinaryVisitor,
+  state: State,
+  left: Expression,
+  leftType: string,
+): void {
   const { e } = v;
   const eOperator = e.operator;
   const ePrecedence = BIN_PRECEDENCE[eOperator];
@@ -169,27 +179,33 @@ function binCheckAndPrepare(v: BinaryVisitor, state: State): void {
     v.rightPrecedence = ePrecedence;
   }
 
+  // The operands can be any expression, so reading their `type` is a megamorphic load.
+  // The left operand arrives from `printBinaryish` already unwrapped, with its `type` already read.
+  // The right operand's `type` is read only once, while unwrapping parens.
   if (eOperator === "??") {
     // Nullish coalescing cannot mix with && / || unparenthesized
-    const left = withoutParens(e.left);
-    if (left.type === "LogicalExpression" && left.operator !== "??") {
+    if (leftType === "LogicalExpression" && (left as LogicalExpression).operator !== "??") {
       v.leftPrecedence = PREC_PREFIX;
     }
 
-    const right = withoutParens(e.right);
-    if (right.type === "LogicalExpression" && right.operator !== "??") {
+    let { right } = e;
+    let rightType = right.type;
+    while (rightType === "ParenthesizedExpression") {
+      right = (right as ParenthesizedExpression).expression;
+      rightType = right.type;
+    }
+    if (rightType === "LogicalExpression" && (right as LogicalExpression).operator !== "??") {
       v.rightPrecedence = PREC_PREFIX;
     }
   } else if (eOperator === "**") {
     // The base of `**` must be an `UpdateExpression`.
     // Unary/await bases and negative-printing literals must be parenthesized.
-    const left = withoutParens(e.left);
     if (
-      left.type === "UnaryExpression"
-      || left.type === "AwaitExpression"
-      || (TS && left.type === "TSTypeAssertion")
-      || (left.type === "Literal"
-        && (typeof left.value === "number" || (left as LiteralExtras).bigint != null))
+      leftType === "UnaryExpression"
+      || leftType === "AwaitExpression"
+      || (TS && leftType === "TSTypeAssertion")
+      || (leftType === "Literal"
+        && (typeof (left as Literal).value === "number" || (left as LiteralExtras).bigint != null))
     ) {
       v.leftPrecedence = PREC_CALL;
     }
