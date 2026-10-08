@@ -231,7 +231,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     #[inline]
-    pub(crate) fn leading_node_comments(&self) -> Option<(u32, NonZeroU32)> {
+    pub(crate) fn leading_node_comments(&self) -> Option<NonZeroU32> {
         if !self.cur_token().has_preceding_comment() {
             return None;
         }
@@ -243,7 +243,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         clippy::cast_possible_truncation,
         reason = "Comments fit within the parser's u32 source offsets"
     )]
-    fn leading_node_comments_at(&self, start: u32) -> Option<(u32, NonZeroU32)> {
+    fn leading_node_comments_at(&self, start: u32) -> Option<NonZeroU32> {
         let comments = &self.lexer.trivia_builder.comments;
         let end = if comments.last().is_none_or(|comment| comment.span.end <= start) {
             comments.len()
@@ -254,10 +254,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         while begin != 0 && comments[begin - 1].attached_to == start {
             begin -= 1;
         }
-        (begin != end).then(|| (begin as u32, NonZeroU32::new(end as u32).unwrap()))
+        (begin != end).then(|| NonZeroU32::new(begin as u32 + 1).unwrap())
     }
 
-    fn assign_statement_comments(&mut self, stmt: &Statement<'a>, comments: (u32, NonZeroU32)) {
+    fn assign_statement_comments(&mut self, stmt: &Statement<'a>, comments: NonZeroU32) {
         self.assign_node_leading_comments(stmt.node_id(), stmt.span().start, comments);
     }
 
@@ -265,12 +265,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         node_id: NodeId,
         start: u32,
-        (begin, end): (u32, NonZeroU32),
+        begin: NonZeroU32,
     ) {
+        // Comments preceding one token form a contiguous group. Keeping only
+        // its first index avoids carrying a range through recursive parsing.
         // Decorators can move a node's start past the token at entry.
-        for comment in &mut self.lexer.trivia_builder.comments[begin as usize..end.get() as usize] {
+        for comment in &mut self.lexer.trivia_builder.comments[begin.get() as usize - 1..] {
             if comment.attached_to != start {
-                continue;
+                break;
             }
             if matches!(
                 comment.content,

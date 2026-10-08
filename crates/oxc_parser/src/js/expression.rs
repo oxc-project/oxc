@@ -1577,7 +1577,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn finish_expression_comments(
         &mut self,
         expression: Expression<'a>,
-        comments: Option<(u32, std::num::NonZeroU32)>,
+        comments: Option<std::num::NonZeroU32>,
     ) -> Expression<'a> {
         if let Some(comments) = comments {
             self.assign_node_leading_comments(
