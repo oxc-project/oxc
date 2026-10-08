@@ -14,6 +14,10 @@ use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
+// Keep generated chains shallow enough for parsers and recursive AST consumers. This also bounds
+// the work of inspecting an existing chain when checking an adjacent assignment.
+const MAX_ASSIGNMENT_CHAIN_DEPTH: usize = 100;
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum AssignmentGroup {
     Identifiers,
@@ -113,6 +117,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    pub(super) fn conflate_assignment_expression(
+        expression: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !ctx.is_tree_shake_only()
+            && let Expression::SequenceExpression(sequence) = expression
+            && Self::conflate_assignments(sequence, ctx)
+        {
+            Self::remove_sequence_expression(expression, ctx);
+        }
+    }
+
     /// `x = value, y = value` -> `y = x = value`
     ///
     /// The outer assignment target moves before the inner assignment, so this is restricted to
@@ -132,54 +148,63 @@ impl<'a> PeepholeOptimizations {
         // `symbol_is_mutated` scans a symbol's references when no `SymbolValue` cache exists
         // (notably for parameters). Memoize those queries so long assignment runs stay linear.
         let mut stable_symbol_cache = StableSymbolCache::default();
+        Self::conflate_assignments_with_cache(sequence, ctx, &mut stable_symbol_cache)
+    }
+
+    fn conflate_assignments_with_cache(
+        sequence: &mut SequenceExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+        stable_symbol_cache: &mut StableSymbolCache,
+    ) -> bool {
+        let mut changed = false;
+        // Fusion deliberately nests sequences instead of reallocating their arena vectors.
+        // Finish them with the same cache before inspecting their newly adjacent boundaries.
+        for expression in &mut sequence.expressions {
+            if let Expression::SequenceExpression(inner) = expression {
+                changed |= Self::conflate_assignments_with_cache(inner, ctx, stable_symbol_cache);
+            }
+        }
 
         // Keep short run lists on the stack. Large sequence expressions with more than eight
         // disjoint conflation runs spill once, instead of allocating once per transformed run.
         let mut ranges: SmallVec<[std::ops::Range<usize>; 8]> = SmallVec::new();
-        let mut start = 0;
-        while start + 1 < sequence.expressions.len() {
-            let Some((group, rhs)) = can_start_run(
-                &sequence.expressions[start],
-                &sequence.expressions[start + 1],
-                ctx,
-                &mut stable_symbol_cache,
-            ) else {
-                start += 1;
-                continue;
-            };
-            let mut end = start + 2;
-            while end < sequence.expressions.len()
-                && assignment_chain(&sequence.expressions[end], ctx).is_some_and(
-                    |(next_group, next_rhs)| next_group == group && rhs.content_eq(next_rhs),
-                )
-            {
-                end += 1;
-            }
-            ranges.push(start..end);
-            start = end;
-        }
-        if ranges.is_empty() {
-            return false;
-        }
-
         // Move each preceding assignment into the next assignment's RHS with a swap. The duplicate
         // RHS moves into the now-dead preceding slot, so no dummy AST nodes or arena allocations are
         // needed. All dead slots are compacted out of the existing vector in one retain pass below.
-        for range in &ranges {
-            for index in range.start + 1..range.end {
-                let (before, current_and_after) = sequence.expressions.split_at_mut(index);
-                let previous = &mut before[index - 1];
-                let current_rhs = assignment_chain_rhs_mut(&mut current_and_after[0]);
-                std::mem::swap(previous, current_rhs);
-                ctx.drop_expression(previous);
+        for index in 1..sequence.expressions.len() {
+            let (before, current_and_after) = sequence.expressions.split_at_mut(index);
+            let previous = &mut before[index - 1];
+            if !Self::conflate_assignment_boundary(
+                previous,
+                &mut current_and_after[0],
+                ctx,
+                stable_symbol_cache,
+            ) {
+                continue;
             }
+            changed = true;
+            if let Expression::SequenceExpression(previous) = previous {
+                Self::pop_expression_from_sequence(previous);
+                if !previous.expressions.is_empty() {
+                    continue;
+                }
+            }
+            if let Some(range) = ranges.last_mut()
+                && range.end == index - 1
+            {
+                range.end = index;
+            } else {
+                ranges.push(index - 1..index);
+            }
+        }
+        if ranges.is_empty() {
+            return changed;
         }
 
         let mut index = 0;
         let mut ranges = ranges.into_iter().peekable();
         sequence.expressions.retain(|_| {
-            let keep =
-                ranges.peek().is_none_or(|range| index < range.start || index + 1 == range.end);
+            let keep = ranges.peek().is_none_or(|range| index < range.start);
             index += 1;
             if ranges.peek().is_some_and(|range| index == range.end) {
                 ranges.next();
@@ -189,71 +214,74 @@ impl<'a> PeepholeOptimizations {
         true
     }
 
-    /// Merge the equal assignments at the boundary of two sequences without flattening either
-    /// arena vector. Codegen prints nested sequences flat, so leaving an eligible boundary for a
-    /// reparse would make compression non-idempotent.
-    pub(super) fn conflate_assignment_sequence_boundary(
-        previous: &mut SequenceExpression<'a>,
-        current: &mut SequenceExpression<'a>,
+    /// Conflate adjacent assignments in a completed sequence, descending through
+    /// nested sequences because codegen prints them flat. On success, the caller must remove the
+    /// previous boundary expression, which now holds the discarded duplicate RHS.
+    fn conflate_assignment_boundary(
+        mut previous: &mut Expression<'a>,
+        mut current: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
+        stable_symbol_cache: &mut StableSymbolCache,
     ) -> bool {
-        if ctx.current_scope_flags().contains(ScopeFlags::DirectEval) {
-            return false;
+        while let Expression::SequenceExpression(sequence) = previous {
+            let Some(last) = sequence.expressions.last_mut() else { return false };
+            previous = last;
         }
-        let Some(previous_expression) = previous.expressions.last() else { return false };
-        let Some(current_expression) = current.expressions.first() else { return false };
-        let mut stable_symbol_cache = StableSymbolCache::default();
-        if can_start_run(previous_expression, current_expression, ctx, &mut stable_symbol_cache)
-            .is_none()
-        {
+        while let Expression::SequenceExpression(sequence) = current {
+            let Some(first) = sequence.expressions.first_mut() else { return false };
+            current = first;
+        }
+        if can_conflate(previous, current, ctx, stable_symbol_cache).is_none() {
             return false;
         }
 
-        let previous_expression = previous.expressions.last_mut().unwrap();
-        let current_rhs = assignment_chain_rhs_mut(current.expressions.first_mut().unwrap());
-        std::mem::swap(previous_expression, current_rhs);
-        ctx.drop_expression(previous_expression);
-        previous.expressions.pop();
+        let current_rhs = assignment_chain_rhs_mut(current);
+        std::mem::swap(previous, current_rhs);
+        ctx.drop_expression(previous);
         true
     }
 }
 
-fn can_start_run<'b, 'a>(
-    previous: &'b Expression<'a>,
+fn can_conflate<'a>(
+    previous: &Expression<'a>,
     current: &Expression<'a>,
     ctx: &TraverseCtx<'a>,
     stable_symbol_cache: &mut StableSymbolCache,
-) -> Option<(AssignmentGroup, &'b Expression<'a>)> {
-    let (group, rhs) = assignment_chain(previous, ctx)?;
-    let (next_group, next_rhs) = assignment_chain(current, ctx)?;
-    (group == next_group
+) -> Option<()> {
+    let (group, rhs, depth) = assignment_chain(previous, ctx)?;
+    let (next_group, next_rhs, next_depth) = assignment_chain(current, ctx)?;
+    (depth + next_depth <= MAX_ASSIGNMENT_CHAIN_DEPTH
+        && group == next_group
         && rhs.content_eq(next_rhs)
         && assignment_group_is_stable(group, ctx, stable_symbol_cache)
         && rhs_is_repeatable(rhs, ctx, stable_symbol_cache))
-    .then_some((group, rhs))
+    .then_some(())
 }
 
 fn assignment_chain<'b, 'a>(
     expression: &'b Expression<'a>,
     ctx: &TraverseCtx<'a>,
-) -> Option<(AssignmentGroup, &'b Expression<'a>)> {
+) -> Option<(AssignmentGroup, &'b Expression<'a>, usize)> {
     let Expression::AssignmentExpression(assignment) = expression else { return None };
     if assignment.operator != AssignmentOperator::Assign {
         return None;
     }
     let group = assignment_group(&assignment.left, ctx)?;
     let mut rhs = &assignment.right;
+    let mut depth = 1;
     while let Expression::AssignmentExpression(assignment) = rhs {
-        if assignment.operator != AssignmentOperator::Assign {
+        if depth == MAX_ASSIGNMENT_CHAIN_DEPTH || assignment.operator != AssignmentOperator::Assign
+        {
             return None;
         }
         let next_group = assignment_group(&assignment.left, ctx)?;
         if group != next_group {
             return None;
         }
+        depth += 1;
         rhs = &assignment.right;
     }
-    Some((group, rhs))
+    Some((group, rhs, depth))
 }
 
 fn assignment_chain_rhs_mut<'b, 'a>(expression: &'b mut Expression<'a>) -> &'b mut Expression<'a> {

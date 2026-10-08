@@ -78,6 +78,57 @@ fn late_statement_fusion_is_idempotent() {
     );
 }
 
+fn assignment_chain(depth: usize) -> String {
+    format!("{} = 0", std::iter::repeat_n("obj.x", depth).collect::<Vec<_>>().join(" = "))
+}
+
+#[test]
+fn long_assignment_runs_are_bounded() {
+    let chain = assignment_chain(100);
+    let expected = format!("export function f(obj) {{ {chain}, {chain}; }}");
+    for separator in [",", ";"] {
+        let assignments = std::iter::repeat_n("obj.x = 0", 200).collect::<Vec<_>>().join(separator);
+        test(&format!("export function f(obj) {{ {assignments}; }}"), &expected);
+    }
+}
+
+#[test]
+fn existing_assignment_chains_respect_depth_limit() {
+    let first = assignment_chain(60);
+    let second = assignment_chain(41);
+    test_same(&format!("export function f(obj) {{ {first}, {second}; }}"));
+    test(
+        &format!("export function f(obj) {{ before(), {first}; {second}, after(); }}"),
+        &format!("export function f(obj) {{ before(), {first}, {second}, after(); }}"),
+    );
+}
+
+#[test]
+fn repeated_sequence_boundaries_are_idempotent() {
+    test_options_with_iterations(
+        "export let a, b, c, d; export function f(value) { before(), a = value; b = value, c = value; d = value; after(); }",
+        "export let a, b, c, d; export function f(value) { before(), d = c = b = a = value, after(); }",
+        1,
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
+fn conflate_completed_runs_before_control_flow() {
+    test(
+        "export function f(obj) { obj.x = 0; obj.y = 0; return result(); }",
+        "export function f(obj) { return obj.y = obj.x = 0, result(); }",
+    );
+    test(
+        "export function f(obj) { obj.x = 0; obj.y = 0; throw result(); }",
+        "export function f(obj) { throw obj.y = obj.x = 0, result(); }",
+    );
+    test(
+        "export function f(obj) { obj.x = 0; obj.y = 0; for (; condition();) work(); }",
+        "export function f(obj) { for (obj.y = obj.x = 0; condition();) work(); }",
+    );
+}
+
 #[test]
 fn conflate_static_member_assignments() {
     test(
