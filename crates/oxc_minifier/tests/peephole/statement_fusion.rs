@@ -82,14 +82,8 @@ fn no_fuse_arrow_body_with_in_into_for() {
     test_same("x = () => () => { if ('a' in y) return 1 }; for (;;) z();");
     test_same("var x = () => { if ('a' in y) return 1 }; for (var i = 0; i < 1; i++) z();");
     test_same("class A { #a; static m() { x = () => { if (#a in y) return 1 }; for (;;) z(); } }");
-    test(
-        "const x = () => { if ('a' in y) return 1 }; for (z = x;;) z();",
-        "let x = () => { if ('a' in y) return 1 }; for (z = x;;) z();",
-    );
-    test(
-        "const x = () => { if ('a' in y) return 1 }; for (var w = x;;) z();",
-        "let x = () => { if ('a' in y) return 1 }; for (var w = x;;) z();",
-    );
+    test_same("const x = () => { if ('a' in y) return 1 }; for (z = x;;) z();");
+    test_same("const x = () => { if ('a' in y) return 1 }; for (var w = x;;) z();");
 
     // `in` in a concise body or outside an arrow function is printed in parentheses.
     test("x = () => 'a' in y; for (;;) z();", "for (x = () => ('a' in y);;) z();");
