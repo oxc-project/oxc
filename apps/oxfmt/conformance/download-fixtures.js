@@ -39,6 +39,12 @@ const sources = [
     repo: "sveltejs/prettier-plugin-svelte/test/formatting/samples",
     version: `prettier-plugin-svelte@${pkg.dependencies["prettier-plugin-svelte"]}`,
   },
+  // astro
+  {
+    name: "plugin-astro",
+    repo: "withastro/prettier-plugin-astro/test/fixtures",
+    version: `v${pkg.dependencies["prettier-plugin-astro"]}`,
+  },
   // graphql
   {
     name: "gitlab",

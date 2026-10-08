@@ -64,6 +64,7 @@ pub fn route(language: &str) -> Route {
         "angular" | "angular-html" => Route::Prettier(PrettierLanguage::Angular),
         "vue" => Route::Prettier(PrettierLanguage::Vue),
         "svelte" => Route::Prettier(PrettierLanguage::Svelte),
+        "astro" => Route::Prettier(PrettierLanguage::Astro),
         "handlebars" | "hbs" => Route::Prettier(PrettierLanguage::Handlebars),
         "mdx" => Route::Prettier(PrettierLanguage::Mdx),
         "markdown" | "md" => Route::Native(NativeLanguage::Markdown),
@@ -255,7 +256,7 @@ impl ResolvedDispatchConfig {
     }
 
     /// [`Self::prettier_options`] for one `language`: its parser, plus the payload of the plugin it needs.
-    /// `None` when that plugin is not enabled (svelte without the `svelte` config key): the part stays as-is.
+    /// `None` when that plugin is not enabled (svelte / astro without the config key): the part stays as-is.
     pub fn prettier_options_for(&self, language: PrettierLanguage) -> Option<serde_json::Value> {
         if language.missing_plugin(&self.config).is_some() {
             return None;
@@ -263,12 +264,8 @@ impl ResolvedDispatchConfig {
 
         let mut options = self.prettier_options().clone();
         crate::core::options::inject_parser(&mut options, language.parser());
-        // Embedded parts only (whole files go through `format_by_prettier`):
-        // - svelte-in-md: a ```svelte code block
-        // - svelte-in-mdx-in-md: `mdx` allows ```svelte code blocks
-        if matches!(language, PrettierLanguage::Svelte | PrettierLanguage::Mdx) {
-            crate::core::options::inject_svelte_plugin_payload(&mut options, &self.config);
-        }
+        // e.g. svelte-in-md (a ```svelte code block), svelte-in-mdx-in-md
+        crate::core::options::inject_opt_in_plugin_payloads(&mut options, language, &self.config);
         Some(options)
     }
 

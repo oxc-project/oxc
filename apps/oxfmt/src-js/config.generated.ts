@@ -4,6 +4,8 @@
  */
 
 export type ArrowParensConfig = "always" | "avoid";
+export type AstroUserConfig = boolean | AstroConfig;
+export type AstroCompressHtmlConfig = "jsx" | "html" | "none";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type OperatorPositionConfig = "start" | "end";
@@ -62,10 +64,25 @@ export interface Oxfmtrc {
    */
   arrowParens?: ArrowParensConfig;
   /**
+   * Options for `prettier-plugin-astro`.
+   *
+   * Pass `true` or an object to enable `.astro` file formatting,
+   * or `false` (handy in overrides) / omit to disable.
+   * Setting `true` resets to defaults — any options inherited from a parent scope are dropped.
+   *
+   * NOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime,
+   * but Oxfmt does NOT bundle or auto-install it.
+   * You must install `@astrojs/compiler-rs` yourself in your project, formatting will fail at runtime otherwise.
+   *
+   * - Languages: Astro
+   * - Default: Disabled
+   */
+  astro?: AstroUserConfig;
+  /**
    * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
    *
-   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
+   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro
    * - Default: `false`
    */
   bracketSameLine?: boolean;
@@ -85,8 +102,12 @@ export interface Oxfmtrc {
    * - YAML-in-CSS/Markdown: front matter
    *
    * With `"off"`, these parts are kept as-is.
+   * NOTE: Except for some languages:
+   * - Svelte: formatting fails with "off", this is a limitation of `prettier-plugin-svelte`
+   * - Astro: the frontmatter is still formatted, but by Prettier instead of Oxfmt
+   * (use `astro.skipFrontmatter` to keep it as-is)
    *
-   * - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
+   * - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Astro, Markdown, MDX (languages with embedded code)
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
@@ -206,7 +227,7 @@ export interface Oxfmtrc {
   /**
    * Enforce single attribute per line in HTML, Vue, and JSX.
    *
-   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
+   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro
    * - Default: `false`
    */
   singleAttributePerLine?: boolean;
@@ -215,7 +236,7 @@ export interface Oxfmtrc {
    *
    * For JSX, you can set the `jsxSingleQuote` option.
    *
-   * - Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte
+   * - Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro
    * - Default: `false`
    * - Overrides `.editorconfig.quote_type`
    */
@@ -252,7 +273,7 @@ export interface Oxfmtrc {
    *
    * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
    *
-   * - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte
+   * - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte, Astro
    * - Default: Disabled
    */
   sortTailwindcss?: SortTailwindcssUserConfig;
@@ -303,6 +324,29 @@ export interface Oxfmtrc {
    * - Default: `false`
    */
   vueIndentScriptAndStyle?: boolean;
+  [k: string]: unknown;
+}
+export interface AstroConfig {
+  /**
+   * Whether to normalize matching identifier attributes to shorthand or explicit form.
+   * When unset, the form that was written stays as-is.
+   *
+   * - Default: Unset
+   */
+  allowShorthand?: boolean;
+  /**
+   * Mirror of Astro's `compressHTML` config.
+   * Tells the formatter which whitespace the compiler will collapse.
+   *
+   * - Default: `"jsx"`
+   */
+  compressHTML?: AstroCompressHtmlConfig;
+  /**
+   * Whether to skip formatting the frontmatter.
+   *
+   * - Default: `false`
+   */
+  skipFrontmatter?: boolean;
   [k: string]: unknown;
 }
 export interface JsdocConfig {
@@ -406,10 +450,25 @@ export interface FormatConfig {
    */
   arrowParens?: ArrowParensConfig;
   /**
+   * Options for `prettier-plugin-astro`.
+   *
+   * Pass `true` or an object to enable `.astro` file formatting,
+   * or `false` (handy in overrides) / omit to disable.
+   * Setting `true` resets to defaults — any options inherited from a parent scope are dropped.
+   *
+   * NOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime,
+   * but Oxfmt does NOT bundle or auto-install it.
+   * You must install `@astrojs/compiler-rs` yourself in your project, formatting will fail at runtime otherwise.
+   *
+   * - Languages: Astro
+   * - Default: Disabled
+   */
+  astro?: AstroUserConfig;
+  /**
    * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
    *
-   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
+   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro
    * - Default: `false`
    */
   bracketSameLine?: boolean;
@@ -429,8 +488,12 @@ export interface FormatConfig {
    * - YAML-in-CSS/Markdown: front matter
    *
    * With `"off"`, these parts are kept as-is.
+   * NOTE: Except for some languages:
+   * - Svelte: formatting fails with "off", this is a limitation of `prettier-plugin-svelte`
+   * - Astro: the frontmatter is still formatted, but by Prettier instead of Oxfmt
+   * (use `astro.skipFrontmatter` to keep it as-is)
    *
-   * - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
+   * - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Astro, Markdown, MDX (languages with embedded code)
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
@@ -535,7 +598,7 @@ export interface FormatConfig {
   /**
    * Enforce single attribute per line in HTML, Vue, and JSX.
    *
-   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
+   * - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro
    * - Default: `false`
    */
   singleAttributePerLine?: boolean;
@@ -544,7 +607,7 @@ export interface FormatConfig {
    *
    * For JSX, you can set the `jsxSingleQuote` option.
    *
-   * - Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte
+   * - Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro
    * - Default: `false`
    * - Overrides `.editorconfig.quote_type`
    */
@@ -581,7 +644,7 @@ export interface FormatConfig {
    *
    * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
    *
-   * - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte
+   * - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte, Astro
    * - Default: Disabled
    */
   sortTailwindcss?: SortTailwindcssUserConfig;

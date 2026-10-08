@@ -21,12 +21,14 @@
   },
   "dependencies": {
     "prettier": "3.9.9",
+    "prettier-plugin-astro": "1.1.0",
     "prettier-plugin-svelte": "4.1.1",
-    "prettier-plugin-tailwindcss": "0.0.0-insiders.19faf8b",
+    "prettier-plugin-tailwindcss": "0.0.0-insiders.5b27f94",
     "tinypool": "2.2.0"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
+    "@astrojs/compiler-rs": "^0.5.1",
     "@napi-rs/cli": "catalog:",
     "@oxapps/shared": "workspace:*",
     "@types/node": "catalog:",

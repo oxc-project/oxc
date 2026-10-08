@@ -13,10 +13,19 @@
       ],
       "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`"
     },
+    "astro": {
+      "description": "Options for `prettier-plugin-astro`.\n\nPass `true` or an object to enable `.astro` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `@astrojs/compiler-rs` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Astro\n- Default: Disabled",
+      "allOf": [
+        {
+          "$ref": "#/definitions/AstroUserConfig"
+        }
+      ],
+      "markdownDescription": "Options for `prettier-plugin-astro`.\n\nPass `true` or an object to enable `.astro` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `@astrojs/compiler-rs` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Astro\n- Default: Disabled"
+    },
     "bracketSameLine": {
-      "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`",
+      "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro\n- Default: `false`",
       "type": "boolean",
-      "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`"
+      "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro\n- Default: `false`"
     },
     "bracketSpacing": {
       "description": "Print spaces between brackets in object literals.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML\n- Default: `true`",
@@ -24,13 +33,13 @@
       "markdownDescription": "Print spaces between brackets in object literals.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML\n- Default: `true`"
     },
     "embeddedLanguageFormatting": {
-      "description": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`",
+      "description": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\nNOTE: Except for some languages:\n- Svelte: formatting fails with \"off\", this is a limitation of `prettier-plugin-svelte`\n- Astro: the frontmatter is still formatted, but by Prettier instead of Oxfmt\n(use `astro.skipFrontmatter` to keep it as-is)\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Astro, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`",
       "allOf": [
         {
           "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
         }
       ],
-      "markdownDescription": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
+      "markdownDescription": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\nNOTE: Except for some languages:\n- Svelte: formatting fails with \"off\", this is a limitation of `prettier-plugin-svelte`\n- Astro: the frontmatter is still formatted, but by Prettier instead of Oxfmt\n(use `astro.skipFrontmatter` to keep it as-is)\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Astro, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
     },
     "endOfLine": {
       "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
@@ -134,14 +143,14 @@
       "markdownDescription": "Print semicolons at the ends of statements.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `true`"
     },
     "singleAttributePerLine": {
-      "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`",
+      "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro\n- Default: `false`",
       "type": "boolean",
-      "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`"
+      "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro\n- Default: `false`"
     },
     "singleQuote": {
-      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
+      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
       "type": "boolean",
-      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
+      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
     },
     "sortImports": {
       "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
@@ -162,13 +171,13 @@
       "markdownDescription": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Languages: JSON (`package.json` only)\n- Default: `true`"
     },
     "sortTailwindcss": {
-      "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte\n- Default: Disabled",
+      "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte, Astro\n- Default: Disabled",
       "allOf": [
         {
           "$ref": "#/definitions/SortTailwindcssUserConfig"
         }
       ],
-      "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte\n- Default: Disabled"
+      "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte, Astro\n- Default: Disabled"
     },
     "svelte": {
       "description": "Options for `prettier-plugin-svelte`.\n\nPass `true` or an object to enable `.svelte` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `svelte` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Svelte\n- Default: Disabled",
@@ -214,6 +223,68 @@
       "enum": [
         "always",
         "avoid"
+      ]
+    },
+    "AstroCompressHtmlConfig": {
+      "oneOf": [
+        {
+          "description": "Whitespace runs containing a newline are dropped; same-line spaces are content.",
+          "type": "string",
+          "enum": [
+            "jsx"
+          ],
+          "markdownDescription": "Whitespace runs containing a newline are dropped; same-line spaces are content."
+        },
+        {
+          "description": "Browser HTML whitespace rules.",
+          "type": "string",
+          "enum": [
+            "html"
+          ],
+          "markdownDescription": "Browser HTML whitespace rules."
+        },
+        {
+          "description": "No collapsing.",
+          "type": "string",
+          "enum": [
+            "none"
+          ],
+          "markdownDescription": "No collapsing."
+        }
+      ]
+    },
+    "AstroConfig": {
+      "type": "object",
+      "properties": {
+        "allowShorthand": {
+          "description": "Whether to normalize matching identifier attributes to shorthand or explicit form.\nWhen unset, the form that was written stays as-is.\n\n- Default: Unset",
+          "type": "boolean",
+          "markdownDescription": "Whether to normalize matching identifier attributes to shorthand or explicit form.\nWhen unset, the form that was written stays as-is.\n\n- Default: Unset"
+        },
+        "compressHTML": {
+          "description": "Mirror of Astro's `compressHTML` config.\nTells the formatter which whitespace the compiler will collapse.\n\n- Default: `\"jsx\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AstroCompressHtmlConfig"
+            }
+          ],
+          "markdownDescription": "Mirror of Astro's `compressHTML` config.\nTells the formatter which whitespace the compiler will collapse.\n\n- Default: `\"jsx\"`"
+        },
+        "skipFrontmatter": {
+          "description": "Whether to skip formatting the frontmatter.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Whether to skip formatting the frontmatter.\n\n- Default: `false`"
+        }
+      }
+    },
+    "AstroUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/AstroConfig"
+        }
       ]
     },
     "CommentLineStrategyConfig": {
@@ -288,10 +359,19 @@
           ],
           "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`"
         },
+        "astro": {
+          "description": "Options for `prettier-plugin-astro`.\n\nPass `true` or an object to enable `.astro` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `@astrojs/compiler-rs` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Astro\n- Default: Disabled",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AstroUserConfig"
+            }
+          ],
+          "markdownDescription": "Options for `prettier-plugin-astro`.\n\nPass `true` or an object to enable `.astro` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `@astrojs/compiler-rs` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Astro\n- Default: Disabled"
+        },
         "bracketSameLine": {
-          "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`",
+          "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro\n- Default: `false`",
           "type": "boolean",
-          "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`"
+          "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro\n- Default: `false`"
         },
         "bracketSpacing": {
           "description": "Print spaces between brackets in object literals.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML\n- Default: `true`",
@@ -299,13 +379,13 @@
           "markdownDescription": "Print spaces between brackets in object literals.\n\n- Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML\n- Default: `true`"
         },
         "embeddedLanguageFormatting": {
-          "description": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`",
+          "description": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\nNOTE: Except for some languages:\n- Svelte: formatting fails with \"off\", this is a limitation of `prettier-plugin-svelte`\n- Astro: the frontmatter is still formatted, but by Prettier instead of Oxfmt\n(use `astro.skipFrontmatter` to keep it as-is)\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Astro, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`",
           "allOf": [
             {
               "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
             }
           ],
-          "markdownDescription": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
+          "markdownDescription": "Control whether to format embedded parts in the file.\nFor example:\n- CSS-in-JS: template literal\n- JS-in-Vue: `<script>` block\n- JS-in-Markdown: code fence\n- YAML-in-CSS/Markdown: front matter\n\nWith `\"off\"`, these parts are kept as-is.\nNOTE: Except for some languages:\n- Svelte: formatting fails with \"off\", this is a limitation of `prettier-plugin-svelte`\n- Astro: the frontmatter is still formatted, but by Prettier instead of Oxfmt\n(use `astro.skipFrontmatter` to keep it as-is)\n\n- Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Astro, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
         },
         "endOfLine": {
           "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
@@ -393,14 +473,14 @@
           "markdownDescription": "Print semicolons at the ends of statements.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `true`"
         },
         "singleAttributePerLine": {
-          "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`",
+          "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro\n- Default: `false`",
           "type": "boolean",
-          "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`"
+          "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro\n- Default: `false`"
         },
         "singleQuote": {
-          "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
+          "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro\n- Default: `false`\n- Overrides `.editorconfig.quote_type`",
           "type": "boolean",
-          "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
+          "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
         },
         "sortImports": {
           "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
@@ -421,13 +501,13 @@
           "markdownDescription": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Languages: JSON (`package.json` only)\n- Default: `true`"
         },
         "sortTailwindcss": {
-          "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte\n- Default: Disabled",
+          "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte, Astro\n- Default: Disabled",
           "allOf": [
             {
               "$ref": "#/definitions/SortTailwindcssUserConfig"
             }
           ],
-          "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte\n- Default: Disabled"
+          "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte, Astro\n- Default: Disabled"
         },
         "svelte": {
           "description": "Options for `prettier-plugin-svelte`.\n\nPass `true` or an object to enable `.svelte` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `svelte` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Svelte\n- Default: Disabled",

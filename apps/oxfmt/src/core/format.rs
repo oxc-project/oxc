@@ -10,7 +10,7 @@ use oxc_formatter_yaml::YamlFormatOptions;
 
 #[cfg(feature = "napi")]
 use super::options::{
-    inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_svelte_plugin_payload,
+    inject_filepath, inject_opt_in_plugin_payloads, inject_oxfmt_plugin_payload, inject_parser,
     inject_tailwind_plugin_payload, to_prettier,
 };
 #[cfg(feature = "napi")]
@@ -254,25 +254,22 @@ impl SourceFormatter {
         language: PrettierLanguage,
         config: &FormatConfig,
     ) -> Result<String, OxcDiagnostic> {
-        use PrettierLanguage::{Angular, Handlebars, Html, Mdx, Svelte, Vue};
+        use PrettierLanguage::{Angular, Astro, Handlebars, Html, Svelte, Vue};
 
         let mut prettier_options = to_prettier(config);
         inject_parser(&mut prettier_options, language.parser());
         inject_filepath(&mut prettier_options, path);
 
         // CSS/SCSS/Less also benefit, but they are formatted by `oxc_formatter_css`
-        if matches!(language, Html | Vue | Angular | Handlebars | Svelte) {
+        if matches!(language, Html | Vue | Angular | Handlebars | Svelte | Astro) {
             inject_tailwind_plugin_payload(&mut prettier_options, config);
         }
         // Languages that embed JS/TS code.
         // Expressions like `__vue_expression` and `__ng_directive` are not supported yet.
-        if matches!(language, Vue | Svelte) {
+        if matches!(language, Vue | Svelte | Astro) {
             inject_oxfmt_plugin_payload(&mut prettier_options, config, path);
         }
-        // `mdx` allows ```svelte code blocks
-        if matches!(language, Svelte | Mdx) {
-            inject_svelte_plugin_payload(&mut prettier_options, config);
-        }
+        inject_opt_in_plugin_payloads(&mut prettier_options, language, config);
 
         self.external_services().format_file(prettier_options, source_text).map_err(|err| {
             // NOTE: We are trying to make the error from oxc_formatter(_xxx) and Prettier look similar.

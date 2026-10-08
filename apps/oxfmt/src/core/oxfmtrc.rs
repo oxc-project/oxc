@@ -94,7 +94,7 @@ pub struct FormatConfig {
     ///
     /// For JSX, you can set the `jsxSingleQuote` option.
     ///
-    /// - Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte
+    /// - Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro
     /// - Default: `false`
     /// - Overrides `.editorconfig.quote_type`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -140,7 +140,7 @@ pub struct FormatConfig {
     /// Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
     /// instead of being alone on the next line (does not apply to self closing elements).
     ///
-    /// - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
+    /// - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_same_line: Option<bool>,
@@ -155,7 +155,7 @@ pub struct FormatConfig {
     pub object_wrap: Option<ObjectWrapConfig>,
     /// Enforce single attribute per line in HTML, Vue, and JSX.
     ///
-    /// - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte
+    /// - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
@@ -185,8 +185,12 @@ pub struct FormatConfig {
     /// - YAML-in-CSS/Markdown: front matter
     ///
     /// With `"off"`, these parts are kept as-is.
+    /// NOTE: Except for some languages:
+    /// - Svelte: formatting fails with "off", this is a limitation of `prettier-plugin-svelte`
+    /// - Astro: the frontmatter is still formatted, but by Prettier instead of Oxfmt
+    ///   (use `astro.skipFrontmatter` to keep it as-is)
     ///
-    /// - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)
+    /// - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Astro, Markdown, MDX (languages with embedded code)
     /// - Default: `"auto"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
@@ -262,7 +266,7 @@ pub struct FormatConfig {
     ///
     /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
     ///
-    /// - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte
+    /// - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte, Astro
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
@@ -295,6 +299,21 @@ pub struct FormatConfig {
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     pub svelte: Option<SvelteUserConfig>,
+
+    /// Options for `prettier-plugin-astro`.
+    ///
+    /// Pass `true` or an object to enable `.astro` file formatting,
+    /// or `false` (handy in overrides) / omit to disable.
+    /// Setting `true` resets to defaults — any options inherited from a parent scope are dropped.
+    ///
+    /// NOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime,
+    /// but Oxfmt does NOT bundle or auto-install it.
+    /// You must install `@astrojs/compiler-rs` yourself in your project, formatting will fail at runtime otherwise.
+    ///
+    /// - Languages: Astro
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub astro: Option<AstroUserConfig>,
 }
 
 impl FormatConfig {
@@ -312,6 +331,14 @@ impl FormatConfig {
     /// disabled when unset or `false`.
     pub fn is_svelte_enabled(&self) -> bool {
         matches!(self.svelte, Some(SvelteUserConfig::Bool(true) | SvelteUserConfig::Object(_)))
+    }
+
+    /// Whether `prettier-plugin-astro` is enabled by this config.
+    ///
+    /// Enabled when `astro` is set to `true` or an object;
+    /// disabled when unset or `false`.
+    pub fn is_astro_enabled(&self) -> bool {
+        matches!(self.astro, Some(AstroUserConfig::Bool(true) | AstroUserConfig::Object(_)))
     }
 
     /// Whether Tailwind class sorting is enabled by this config.
@@ -950,6 +977,58 @@ pub struct SvelteConfig {
     /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub indent_script_and_style: Option<bool>,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum AstroUserConfig {
+    Bool(bool),
+    Object(AstroConfig),
+}
+
+impl AstroUserConfig {
+    pub fn into_config(self) -> Option<AstroConfig> {
+        match self {
+            Self::Bool(true) => Some(AstroConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct AstroConfig {
+    /// Whether to normalize matching identifier attributes to shorthand or explicit form.
+    /// When unset, the form that was written stays as-is.
+    ///
+    /// - Default: Unset
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allow_shorthand: Option<bool>,
+    /// Whether to skip formatting the frontmatter.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skip_frontmatter: Option<bool>,
+    /// Mirror of Astro's `compressHTML` config.
+    /// Tells the formatter which whitespace the compiler will collapse.
+    ///
+    /// - Default: `"jsx"`
+    #[serde(rename = "compressHTML", skip_serializing_if = "Option::is_none")]
+    pub compress_html: Option<AstroCompressHtmlConfig>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum AstroCompressHtmlConfig {
+    /// Whitespace runs containing a newline are dropped; same-line spaces are content.
+    Jsx,
+    /// Browser HTML whitespace rules.
+    Html,
+    /// No collapsing.
+    None,
 }
 
 // ---

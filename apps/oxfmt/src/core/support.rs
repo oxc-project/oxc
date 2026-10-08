@@ -149,6 +149,8 @@ pub enum PrettierLanguage {
     Vue,
     /// Formatted only when `prettier-plugin-svelte` is enabled (`svelte` config key).
     Svelte,
+    /// Formatted only when `prettier-plugin-astro` is enabled (`astro` config key).
+    Astro,
     Handlebars,
     Mdx,
     /// Whole files only: [`route`](super::embed::dispatcher::route) never returns it.
@@ -166,6 +168,7 @@ impl PrettierLanguage {
             Self::Angular => "angular",
             Self::Vue => "vue",
             Self::Svelte => "svelte",
+            Self::Astro => "astro",
             Self::Handlebars => "glimmer",
             Self::Mdx => "mdx",
             Self::Mjml => "mjml",
@@ -174,10 +177,14 @@ impl PrettierLanguage {
 
     /// The config key of the opt-in plugin this language requires, when `config` does NOT enable it.
     ///
-    /// `svelte` cannot be formatted without `prettier-plugin-svelte`,
-    /// which is enabled by the `svelte` config key.
+    /// `svelte` / `astro` cannot be formatted without `prettier-plugin-svelte` / `prettier-plugin-astro`,
+    /// which are enabled by the `svelte` / `astro` config keys.
     pub fn missing_plugin(self, config: &FormatConfig) -> Option<&'static str> {
-        (matches!(self, Self::Svelte) && !config.is_svelte_enabled()).then_some("svelte")
+        match self {
+            Self::Svelte if !config.is_svelte_enabled() => Some("svelte"),
+            Self::Astro if !config.is_astro_enabled() => Some("astro"),
+            _ => None,
+        }
     }
 
     /// Whether the Doc→IR conversion must surface `HtmlEmbedMeta`
@@ -379,9 +386,10 @@ fn prettier_language(file_name: &str, ext: &str) -> Option<PrettierLanguage> {
     Some(match ext {
         "html" | "hta" | "htm" | "inc" | "xht" | "xhtml" => PrettierLanguage::Html,
         "vue" => PrettierLanguage::Vue,
-        // Formatting is gated by `ResolveOutcome::MissingPlugin` (requires `svelte` config),
+        // Formatting is gated by `ResolveOutcome::MissingPlugin` (requires `svelte` / `astro` config),
         // classified here so that each caller can surface a friendly error or skip.
         "svelte" => PrettierLanguage::Svelte,
+        "astro" => PrettierLanguage::Astro,
         "mdx" => PrettierLanguage::Mdx,
         "mjml" => PrettierLanguage::Mjml,
         "handlebars" | "hbs" => PrettierLanguage::Handlebars,
