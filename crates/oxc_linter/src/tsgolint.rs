@@ -13,7 +13,7 @@ use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, NamedSource, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
@@ -1063,6 +1063,8 @@ struct DiagnosticHandler {
     silent: bool,
     should_fix: bool,
     source_text_cache: SourceTextCache,
+    /// One source per file, shared by every diagnostic of that file that is sent as it arrives.
+    named_sources: FxHashMap<PathBuf, Arc<NamedSource<String>>>,
     error_sender: DiagnosticSender,
     /// Messages requiring fixes, grouped by file path: messages.
     messages_requiring_fixes: FxHashMap<PathBuf, Vec<Message>>,
@@ -1076,6 +1078,7 @@ impl DiagnosticHandler {
             silent,
             should_fix,
             source_text_cache: SourceTextCache::default(),
+            named_sources: FxHashMap::default(),
             error_sender,
             messages_requiring_fixes: FxHashMap::default(),
             messages_not_requiring_fixes: FxHashMap::default(),
@@ -1145,19 +1148,25 @@ impl DiagnosticHandler {
         oxc_diagnostic: OxcDiagnostic,
         severity: AllowWarnDeny,
     ) {
-        let source_text = self.get_source_text(path).to_string();
         let oxc_diagnostic = oxc_diagnostic.with_severity(if severity == AllowWarnDeny::Deny {
             Severity::Error
         } else {
             Severity::Warning
         });
-        let diagnostics = DiagnosticService::wrap_diagnostics(
-            &self.cwd,
-            path,
-            &source_text,
-            vec![oxc_diagnostic],
-        );
-        self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
+        let source = self.named_source(path);
+        self.error_sender
+            .send(vec![oxc_diagnostic.with_source_code(source)])
+            .expect("Failed to send diagnostics");
+    }
+
+    fn named_source(&mut self, path: &Path) -> Arc<NamedSource<String>> {
+        if let Some(source) = self.named_sources.get(path) {
+            return Arc::clone(source);
+        }
+        let cwd = self.cwd.clone();
+        let source = DiagnosticService::named_source(cwd, path, self.get_source_text(path));
+        self.named_sources.insert(path.to_path_buf(), Arc::clone(&source));
+        source
     }
 
     /// Consume the handler and return collected messages requiring fixes.
