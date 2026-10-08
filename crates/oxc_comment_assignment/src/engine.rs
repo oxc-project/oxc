@@ -2,7 +2,10 @@ use std::{cell::Cell, ops::Range};
 
 use oxc_ast::{
     AstKind, Comment, CommentAttachment, CommentContent, CommentPlacement,
-    ast::{Declaration, ExportDefaultDeclarationKind, Program, Statement, TemplateElement},
+    ast::{
+        BindingPattern, Declaration, ExportDefaultDeclarationKind, Expression, JSXChild, Program,
+        Statement, TSType, TemplateElement,
+    },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_span::{GetSpan, Span};
@@ -382,6 +385,36 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
 }
 
 impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
+    // Union visitors do not enter a node themselves. Once a parent has an empty
+    // comment window, stop here before dispatching into its descendants.
+    #[inline]
+    fn visit_expression(&mut self, expression: &Expression<'a>) {
+        if self.skipped_depth == 0 {
+            walk::walk_expression(self, expression);
+        }
+    }
+
+    #[inline]
+    fn visit_binding_pattern(&mut self, pattern: &BindingPattern<'a>) {
+        if self.skipped_depth == 0 {
+            walk::walk_binding_pattern(self, pattern);
+        }
+    }
+
+    #[inline]
+    fn visit_ts_type(&mut self, ty: &TSType<'a>) {
+        if self.skipped_depth == 0 {
+            walk::walk_ts_type(self, ty);
+        }
+    }
+
+    #[inline]
+    fn visit_jsx_child(&mut self, child: &JSXChild<'a>) {
+        if self.skipped_depth == 0 {
+            walk::walk_jsx_child(self, child);
+        }
+    }
+
     #[inline]
     fn visit_statement(&mut self, statement: &Statement<'a>) {
         if self.skipped_depth == 0 {
