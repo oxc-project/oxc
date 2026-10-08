@@ -321,6 +321,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.assign_node_leading_comments(stmt.node_id(), stmt.span().start, comments);
     }
 
+    #[cold]
+    #[inline(never)]
     pub(crate) fn assign_node_leading_comments(
         &mut self,
         node_id: NodeId,
@@ -347,6 +349,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    #[cold]
+    #[inline(never)]
     pub(crate) fn assign_expression_leading_comments(
         &mut self,
         node_id: NodeId,
@@ -373,6 +377,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    #[cold]
+    #[inline(never)]
     pub(crate) fn assign_sibling_comments(
         &mut self,
         left_id: NodeId,
@@ -399,6 +405,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    #[cold]
+    #[inline(never)]
     pub(crate) fn mark_pure_comments_applied(
         &mut self,
         node_id: NodeId,
@@ -433,6 +441,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    #[cold]
+    #[inline(never)]
     fn assign_trailing_comments(&mut self, node_id: NodeId, boundary: u32) {
         let next_start = self.cur_start();
         let comments = &mut self.lexer.trivia_builder.comments;
@@ -458,11 +468,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    #[inline]
     pub(crate) fn assign_body_end_comments(&mut self, node_id: NodeId, span: Span, start: u32) {
-        let comments = &mut self.lexer.trivia_builder.comments;
-        if comments.last().is_none_or(|comment| comment.span.start < start) {
+        if self
+            .lexer
+            .trivia_builder
+            .comments
+            .last()
+            .is_none_or(|comment| comment.span.start < start)
+        {
             return;
         }
+        self.assign_body_end_comments_cold(node_id, span, start);
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn assign_body_end_comments_cold(&mut self, node_id: NodeId, span: Span, start: u32) {
+        let comments = &mut self.lexer.trivia_builder.comments;
         let end = if comments.last().is_some_and(|comment| comment.span.end <= span.end) {
             comments.len()
         } else {
