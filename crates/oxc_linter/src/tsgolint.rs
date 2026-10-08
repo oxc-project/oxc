@@ -1372,7 +1372,6 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
     // Since `cmd` is the most compatible one with older systems, we use that one first,
     // then check for `exe` which is also common. Bun, for example, does not create a `cmd`
     // file but still produces an `exe` file (https://github.com/oxc-project/oxc/issues/13784).
-    // Names must match the casing package managers write, as NTFS directories can be case-sensitive.
     #[cfg(windows)]
     let files = &["tsgolint.cmd", "tsgolint.exe"];
     #[cfg(not(windows))]
