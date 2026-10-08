@@ -214,7 +214,7 @@ Prettier formats it when a space separates the language, and keeps `js{1,3}` as 
 ```
 ````
 
-A Markdown code block's language is looked up in Shiki's ids and aliases (`route()` in `src/core/embed/dispatcher.rs`);
+A Markdown code block's language is looked up in Shiki's ids and aliases (`route_embedded()` in `src/core/language.rs`);
 `lwc` is none of them, so the block stays as written.
 Prettier looks it up in linguist, where `lwc` is an alias of its Lightning Web Components language.
 

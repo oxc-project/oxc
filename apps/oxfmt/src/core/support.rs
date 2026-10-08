@@ -107,7 +107,7 @@ impl FileKind {
 }
 
 /// Languages formatted by a Rust formatter (`oxc_formatter_*`),
-/// both embedded parts ([`route`](super::embed::dispatcher::route)) and whole files ([`FileKind::Native`]).
+/// both embedded parts ([`route_embedded`](super::language::route_embedded)) and whole files ([`FileKind::Native`]).
 #[derive(Debug)]
 pub enum NativeLanguage {
     Js(SourceType),
@@ -137,7 +137,7 @@ impl NativeLanguage {
 }
 
 /// Languages Prettier still formats for us (no Rust formatter yet),
-/// both embedded parts ([`route`](super::embed::dispatcher::route)) and whole files ([`FileKind::Prettier`]).
+/// both embedded parts ([`route_embedded`](super::language::route_embedded)) and whole files ([`FileKind::Prettier`]).
 ///
 /// The Prettier paths receive this instead of a raw string,
 /// so they can never be handed an unknown language.
@@ -153,7 +153,7 @@ pub enum PrettierLanguage {
     Astro,
     Handlebars,
     Mdx,
-    /// Whole files only: [`route`](super::embed::dispatcher::route) never returns it.
+    /// Whole files only: [`route_embedded`](super::language::route_embedded) never returns it.
     #[cfg(feature = "napi")]
     Mjml,
 }

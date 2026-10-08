@@ -1,4 +1,4 @@
-//! The embedded routing table ([`route`]) and the `FormatDispatcher` assembly shared by every build.
+//! The `FormatDispatcher` assembly shared by every build, routed by [`route_embedded`].
 //!
 //! Each language maps to a Rust formatter where available;
 //! the [`PrettierLanguage`] set goes to the napi-only Prettier Doc→IR channel ([`super::prettier_doc`]) when one is supplied,
@@ -19,9 +19,9 @@ use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_markdown::{MarkdownFormatOptions, XxxInMarkdownCodeBlock};
 use oxc_formatter_toml::TomlFormatOptions;
 use oxc_formatter_yaml::YamlFormatOptions;
-use oxc_span::SourceType;
 
 use crate::core::{
+    language::{Route, route_embedded},
     options::{
         ValidatedOptions, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
         to_oxc_formatter_json, to_oxc_formatter_markdown, to_oxc_formatter_toml,
@@ -30,59 +30,6 @@ use crate::core::{
     oxfmtrc::FormatConfig,
     support::{NativeLanguage, PrettierLanguage},
 };
-
-/// Where a language identifier routes.
-pub enum Route {
-    /// A Rust formatter branch in [`build_dispatcher`]; never re-routed to Prettier.
-    Native(NativeLanguage),
-    /// Prettier serves it (napi Doc→IR fallback / string channel);
-    /// the pure build preserves it as-is.
-    Prettier(PrettierLanguage),
-    /// No formatter anywhere: the part deliberately stays as-is in every build.
-    Unsupported,
-}
-
-/// THE routing table: "which formatter serves this language?" answered in one place.
-/// [`build_dispatcher`] and the napi string channel's fence routing both consult it,
-/// so their notions of who formats what can never drift,
-/// and aliases are resolved here and nowhere else.
-///
-/// A code fence's name arrives as written: the aliases are Shiki's ids and aliases,
-/// what Markdown tooling (VitePress, Astro, ...) highlights with.
-/// <https://shiki.style/languages>
-pub fn route(language: &str) -> Route {
-    match language {
-        "graphql" | "gql" => Route::Native(NativeLanguage::Graphql),
-        "css" | "postcss" => Route::Native(NativeLanguage::Css(CssVariant::Css)),
-        "scss" => Route::Native(NativeLanguage::Css(CssVariant::Scss)),
-        "less" => Route::Native(NativeLanguage::Css(CssVariant::Less)),
-        "yaml" | "yml" => Route::Native(NativeLanguage::Yaml),
-        "json" => Route::Native(NativeLanguage::Json(JsonVariant::Json)),
-        "jsonc" => Route::Native(NativeLanguage::Json(JsonVariant::Jsonc)),
-        "json5" => Route::Native(NativeLanguage::Json(JsonVariant::Json5)),
-        "html" => Route::Prettier(PrettierLanguage::Html),
-        "angular" | "angular-html" => Route::Prettier(PrettierLanguage::Angular),
-        "vue" => Route::Prettier(PrettierLanguage::Vue),
-        "svelte" => Route::Prettier(PrettierLanguage::Svelte),
-        "astro" => Route::Prettier(PrettierLanguage::Astro),
-        "handlebars" | "hbs" => Route::Prettier(PrettierLanguage::Handlebars),
-        "mdx" => Route::Prettier(PrettierLanguage::Mdx),
-        "markdown" | "md" => Route::Native(NativeLanguage::Markdown),
-        "toml" => Route::Native(NativeLanguage::Toml),
-        // JS / TS by file extension, which carries the module kind and JSX.
-        // A component's inline template is found from its decorator, not from the fence (`angular-ts`).
-        _ => {
-            let extension = match language {
-                "javascript" => "js",
-                "typescript" | "angular-ts" => "ts",
-                extension => extension,
-            };
-            SourceType::from_extension(extension).map_or(Route::Unsupported, |source_type| {
-                Route::Native(NativeLanguage::Js(source_type))
-            })
-        }
-    }
-}
 
 /// Per-root context shared by every embedded service (dispatcher, string embedder, Tailwind sorter):
 /// the host file's resolved config plus lazily-mapped per-language options.
@@ -304,7 +251,7 @@ pub fn build_dispatcher(
 ) -> FormatDispatcher {
     Arc::new(move |session: &FormatSession<'_>, request: DispatchRequest<'_>| {
         let text = request.text;
-        match route(request.language) {
+        match route_embedded(request.language) {
             Route::Native(language) => {
                 Ok(format_native(language.trace_label(), || match language {
                     NativeLanguage::Js(source_type) => {
@@ -432,7 +379,7 @@ mod tests {
 
     /// Every language the routing table claims as native must format
     /// WITHOUT a fallback installed
-    /// (an accidentally dropped [`super::route`] entry would fall through to `PreserveOriginal` and fail here).
+    /// (an accidentally dropped [`route_embedded`](crate::core::language::route_embedded) entry would fall through to `PreserveOriginal` and fail here).
     #[test]
     fn every_native_language_dispatches() {
         let allocator = Allocator::default();

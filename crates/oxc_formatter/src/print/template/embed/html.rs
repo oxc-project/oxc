@@ -34,7 +34,7 @@ pub(super) fn format_html_doc<'a>(
     f: &mut JsFormatter<'_, 'a>,
     is_angular: bool,
 ) -> bool {
-    let embedded_language = if is_angular { "angular" } else { "html" };
+    let embedded_language = if is_angular { "angular-html" } else { "html" };
     let quasis = &quasi.quasis;
     let expressions: Vec<_> = quasi.expressions().iter().collect();
 
