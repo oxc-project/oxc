@@ -80,6 +80,9 @@ pub struct LintCommandInfo {
     pub oxlint_suppression_file_action: OxlintSuppressionFileAction,
     /// Optional per-rule timing records for debug timing output.
     pub rule_timings: Option<RuleTimings>,
+    /// Optional per-rule allocation records for debug memory output.
+    #[cfg(feature = "memory")]
+    pub rule_memory: Option<Vec<RuleTimingRecord>>,
 }
 
 pub struct RuleTimings {

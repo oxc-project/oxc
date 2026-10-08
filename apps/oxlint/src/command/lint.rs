@@ -298,6 +298,9 @@ pub enum DebugOption {
 
     /// Enable per-rule timing information
     Timings,
+
+    /// Enable per-rule heap allocation information (requires the `memory` Cargo feature)
+    Memory,
 }
 
 impl DebugOption {
@@ -305,6 +308,8 @@ impl DebugOption {
     const FILES_HELP: &str = "Print the list of files that will be linted, then exit";
     const TIMINGS_NAME: &str = "timings";
     const TIMINGS_HELP: &str = "Enable per-rule timing information";
+    const MEMORY_NAME: &str = "memory";
+    const MEMORY_HELP: &str = "Enable native per-rule allocation counts and bytes (requires a build with the `memory` Cargo feature and `--format default`)";
 }
 
 impl FromStr for DebugOption {
@@ -314,6 +319,7 @@ impl FromStr for DebugOption {
         match option {
             Self::FILES_NAME => Ok(Self::Files),
             Self::TIMINGS_NAME => Ok(Self::Timings),
+            Self::MEMORY_NAME => Ok(Self::Memory),
             _ => Err(format!("'{option}' is not a known debug option")),
         }
     }
@@ -339,6 +345,11 @@ impl DebugOptions {
         (DebugOption::TIMINGS_NAME, Style::Text),
         ("` - ", Style::Text),
         (DebugOption::TIMINGS_HELP, Style::Text),
+        (".\n", Style::Text),
+        ("  * `", Style::Text),
+        (DebugOption::MEMORY_NAME, Style::Text),
+        ("` - ", Style::Text),
+        (DebugOption::MEMORY_HELP, Style::Text),
         (".", Style::Text),
     ];
 
@@ -361,6 +372,13 @@ impl FromStr for DebugOptions {
             && options.iter().any(|option| *option != DebugOption::Files)
         {
             return Err("debug option 'files' cannot be combined with other debug options".into());
+        }
+
+        if !cfg!(feature = "memory") && options.contains(&DebugOption::Memory) {
+            return Err(
+                "debug option 'memory' requires a profiling build: cargo build -p oxlint --release --features memory"
+                    .into(),
+            );
         }
 
         Ok(Self { options })
@@ -748,6 +766,24 @@ mod lint_options {
             result.is_err_and(|err| err.unwrap_stderr()
                 == "couldn't parse `foo`: 'foo' is not a known debug option")
         );
+    }
+
+    #[cfg(feature = "memory")]
+    #[test]
+    fn debug_memory() {
+        let options = get_lint_options("--debug memory src");
+        assert!(options.output_options.debug.contains(DebugOption::Memory));
+        assert!(!options.output_options.debug.contains(DebugOption::Timings));
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
+    }
+
+    #[cfg(feature = "memory")]
+    #[test]
+    fn debug_memory_and_timings() {
+        let options = get_lint_options("--debug memory,timings src");
+        assert!(options.output_options.debug.contains(DebugOption::Memory));
+        assert!(options.output_options.debug.contains(DebugOption::Timings));
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
     }
 
     #[test]

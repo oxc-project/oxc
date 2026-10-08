@@ -46,7 +46,12 @@ impl RuleTimingKey {
                 plugin_name: Cow::Owned(record.plugin_name),
                 rule_name: Cow::Owned(record.rule_name),
             },
-            RuleTimingStat { duration: record.duration, calls: record.calls },
+            RuleTimingStat {
+                duration: record.duration,
+                calls: record.calls,
+                #[cfg(feature = "memory")]
+                memory: record.memory,
+            },
         )
     }
 }
@@ -55,12 +60,16 @@ impl RuleTimingKey {
 pub struct RuleTimingStat {
     pub duration: Duration,
     pub calls: u64,
+    #[cfg(feature = "memory")]
+    pub memory: crate::memory::AllocationStats,
 }
 
 impl RuleTimingStat {
     fn add(&mut self, other: Self) {
         self.duration += other.duration;
         self.calls += other.calls;
+        #[cfg(feature = "memory")]
+        self.memory.add(other.memory);
     }
 
     #[inline]
@@ -69,7 +78,11 @@ impl RuleTimingStat {
         F: FnOnce(),
     {
         let start = Instant::now();
+        #[cfg(feature = "memory")]
+        let before = crate::memory::AllocationStats::current();
         f();
+        #[cfg(feature = "memory")]
+        self.memory.add(crate::memory::AllocationStats::current().since(before));
         self.duration += start.elapsed();
         self.calls += 1;
     }
@@ -82,6 +95,9 @@ pub struct RuleTimingRecord {
     pub rule_name: String,
     pub duration: Duration,
     pub calls: u64,
+    /// Only native callbacks have allocation measurements.
+    #[cfg(feature = "memory")]
+    pub memory: crate::memory::AllocationStats,
 }
 
 #[expect(
@@ -167,6 +183,8 @@ impl RuleTimingStore {
                 rule_name: key.rule_name.to_string(),
                 duration: stat.duration,
                 calls: stat.calls,
+                #[cfg(feature = "memory")]
+                memory: stat.memory,
             })
             .collect::<Vec<_>>();
 
