@@ -129,6 +129,16 @@ declare_oxc_lint!(
     /// defineProps()
     /// </script>
     /// ```
+    ///
+    /// Runtime declarations can use expressions such as calls with imported schemas.
+    /// They cannot capture `<script setup>` bindings declared outside the argument.
+    ///
+    /// ```vue
+    /// <script setup>
+    /// import { PropsSchema } from './schema'
+    /// defineProps(Object.keys(PropsSchema.entries))
+    /// </script>
+    /// ```
     ValidDefineProps,
     vue,
     correctness,
@@ -308,6 +318,34 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            r#"<script setup lang="ts">
+            import { PropsSchema } from "./schema.ts";
+            const props = defineProps(Object.keys(PropsSchema.entries));
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"<script setup>
+            import propsDef from "./defs";
+            import * as defs from "./other-defs";
+            defineProps(propsDef || defs.propsDef);
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"<script setup>
+            const value = { msg: String };
+            defineProps({ msg: { default(value) { return value; } } });
+            </script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
@@ -369,6 +407,33 @@ fn test() {
                     defineProps()
                   </script>
                   ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"<script setup>
+            const PropsSchema = { entries: { msg: String } };
+            defineProps(Object.keys(PropsSchema.entries));
+            </script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"<script setup>
+            const propType = String;
+            defineProps({ msg: propType });
+            </script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"<script setup>
+            const defaultValue = getDefaultValue();
+            defineProps({ msg: { default: () => defaultValue } });
+            </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),

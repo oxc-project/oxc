@@ -7,6 +7,7 @@ use oxc_ast::{
         ObjectExpression, ObjectProperty, ObjectPropertyKind, TSSignature, TSType, TSTypeName,
     },
 };
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -147,29 +148,51 @@ pub fn check_define_macro_call_expression(
         return Some(DefineMacroProblem::DefineInBoth);
     }
 
-    match expression {
-        Expression::ArrayExpression(_) | Expression::ObjectExpression(_) => None,
-        Expression::Identifier(identifier) => {
-            if !is_non_local_reference(identifier, ctx) {
-                return Some(DefineMacroProblem::ReferencingLocally);
-            }
-            None
-        }
-        _ => Some(DefineMacroProblem::EventsNotDefined),
-    }
+    let mut checker = DefineMacroReferenceChecker {
+        ctx,
+        argument_span: expression.span(),
+        referencing_locally: false,
+    };
+    checker.visit_expression(expression);
+    checker.referencing_locally.then_some(DefineMacroProblem::ReferencingLocally)
 }
 
-fn is_non_local_reference(identifier: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    if let Some(symbol_id) = ctx.semantic().scoping().get_root_binding(identifier.name) {
-        return matches!(
-            ctx.semantic().symbol_declaration(symbol_id).kind(),
-            AstKind::ImportSpecifier(_)
-        );
+struct DefineMacroReferenceChecker<'a, 'b> {
+    ctx: &'b LintContext<'a>,
+    argument_span: Span,
+    referencing_locally: bool,
+}
+
+impl<'a> VisitJs<'a> for DefineMacroReferenceChecker<'_, '_> {
+    fn visit_expression(&mut self, expression: &Expression<'a>) {
+        if !self.referencing_locally {
+            walk_js::walk_expression(self, expression);
+        }
     }
 
-    // variables outside the current `<script>` block are valid.
-    // This is the same for unresolved variables.
-    true
+    fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
+        if self.referencing_locally {
+            return;
+        }
+
+        let Some(symbol_id) =
+            self.ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
+        else {
+            // Unresolved values can come from a sibling `<script>`.
+            return;
+        };
+
+        if self.argument_span.contains_inclusive(self.ctx.scoping().symbol_span(symbol_id)) {
+            return;
+        }
+
+        self.referencing_locally = !matches!(
+            self.ctx.semantic().symbol_declaration(symbol_id).kind(),
+            AstKind::ImportSpecifier(_)
+                | AstKind::ImportDefaultSpecifier(_)
+                | AstKind::ImportNamespaceSpecifier(_)
+        );
+    }
 }
 
 /// Check if the given node is inside a Vue component instance method.
