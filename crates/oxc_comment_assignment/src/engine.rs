@@ -188,6 +188,29 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
                 span = window;
                 substitution = true;
             }
+            // Ordered children entirely before the next comment cannot own any
+            // comments. Record the boundary without constructing a frame or
+            // scanning gaps. Inherited annotation prefixes use the full path.
+            if parent.leading_end == parent.window.start
+                && span.start >= parent.high_water_start
+                && (parent.cursor == parent.window.end
+                    || self.comments[parent.cursor].span.start >= span.end)
+            {
+                if parent.cursor < parent.window.end {
+                    let pending = &mut self.pending[parent.cursor];
+                    if parent.accepts(parent.cursor, pending) {
+                        pending.previous = pending.previous.filter(|neighbor| {
+                            parent.node.span().contains_inclusive(neighbor.span())
+                        });
+                        if pending.previous.is_none_or(|previous| previous.end < span.end) {
+                            pending.previous = Some(Neighbor::new(kind.node_id(), span));
+                        }
+                    }
+                }
+                parent.high_water_start = span.start;
+                self.skipped_depth = 1;
+                return;
+            }
             let comments = &self.comments[parent.window.clone()];
             let child = Neighbor::new(kind.node_id(), span);
             let mut gap_begin;
