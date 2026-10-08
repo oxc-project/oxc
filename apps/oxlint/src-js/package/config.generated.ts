@@ -798,12 +798,16 @@ export interface OxlintOptions {
    * Ensure warnings produce a non-zero exit code.
    *
    * Equivalent to passing `--deny-warnings` on the CLI.
+   * Only supported in the root configuration file: it decides the exit code of the whole run.
+   * Setting it in a nested config warns and ignores it.
    */
   denyWarnings?: boolean;
   /**
    * Specify a warning threshold. Exits with an error status if warnings exceed this value.
    *
    * Equivalent to passing `--max-warnings` on the CLI.
+   * Only supported in the root configuration file: it decides the exit code of the whole run.
+   * Setting it in a nested config warns and ignores it.
    */
   maxWarnings?: number;
   /**
@@ -811,7 +815,8 @@ export interface OxlintOptions {
    *
    * Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
    * CLI flags take precedence over this value when both are set.
-   * Only supported in the root configuration file.
+   * Resolved from the config which governs each file, and not inherited from the root config:
+   * share it with `extends`.
    */
   reportUnusedDisableDirectives?: AllowWarnDeny;
   /**
@@ -819,13 +824,19 @@ export interface OxlintOptions {
    * directives in addition to its native `oxlint-*` directives.
    *
    * Defaults to `true`.
-   * Only supported in the root configuration file.
+   * Resolved from the config which governs each file, and not inherited from the root config:
+   * share it with `extends`.
    */
   respectEslintDisableDirectives?: boolean;
   /**
    * Enable rules that require type information.
    *
    * Equivalent to passing `--type-aware` on the CLI.
+   *
+   * Resolved from the config which governs each file, so a nested config may enable
+   * type-aware linting for its own directory. It is *not* inherited from the root config:
+   * share it with `extends`, which a child config can still override. The `--type-aware` CLI
+   * flag and the editor setting apply to every file.
    *
    * Note that this requires the `oxlint-tsgolint` package to be installed.
    */
@@ -835,7 +846,18 @@ export interface OxlintOptions {
    *
    * Equivalent to passing `--type-check` on the CLI.
    *
-   * Note that this requires the `oxlint-tsgolint` package to be installed.
+   * Resolved from the config which governs each file, so a nested config may type-check its
+   * own directory. It is *not* inherited from the root config: a nested config which does not
+   * set it does not pick up the root's value, so share it with `extends`, which a child config
+   * can still override. The `--type-check` CLI flag and the editor's `typeCheck` setting
+   * override it for every file that is handed to `tsgolint`, which is every file linted with
+   * type-aware rules.
+   *
+   * It has no effect without `typeAware`, which is what hands a file to `tsgolint` in the
+   * first place: neither this option nor `--type-check` enables type-aware linting.
+   *
+   * Note that this requires the `oxlint-tsgolint` package to be installed, in a release which
+   * honours per-file type checking; older releases type-check every file of the run.
    */
   typeCheck?: boolean;
 }

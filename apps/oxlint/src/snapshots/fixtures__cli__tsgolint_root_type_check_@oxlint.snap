@@ -1,0 +1,29 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/tsgolint_root_type_check
+----------
+
+  ! packages/app/.oxlintrc.json does not set `options.typeCheck`, so its files are not type-checked although .oxlintrc.json enables it.
+  help: Set `options.typeCheck` to `true` in this config, or share it through `extends`. It is not inherited from the config above it.
+
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[index.ts:1:14]
+ 1 | export const root: number = "42";
+   :              ^^^^
+   `----
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[packages/app/index.ts:1:14]
+ 1 | export const app: number = "42";
+   :              ^^^
+   `----
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

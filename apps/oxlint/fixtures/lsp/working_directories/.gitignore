@@ -1,0 +1,5 @@
+generated/
+dist/
+build/
+vendor/
+!vendor/keep.ts
