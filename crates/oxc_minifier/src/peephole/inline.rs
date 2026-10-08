@@ -10,14 +10,29 @@ use crate::symbol_value::FreshValueKind;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    /// Seed parameter constants before traversing an immediately invoked arrow.
+    /// Seed parameter constants before traversing an immediately invoked function.
     /// The arguments stay at the call site, preserving their evaluation order.
-    pub fn init_arrow_iife_parameter_values(call: &CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ArrowFunctionExpression(arrow) = &call.callee else { return };
-        if arrow.params.items.is_empty()
-            || arrow.params.rest.is_some()
-            || arrow
-                .params
+    pub fn init_iife_parameter_values(call: &CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let params = match &call.callee {
+            Expression::ArrowFunctionExpression(arrow) => &arrow.params,
+            Expression::FunctionExpression(function) => {
+                // Sloppy functions expose mapped arguments and caller introspection.
+                // A referenced function name can escape or recurse with other arguments.
+                if !ctx.scoping().scope_flags(function.scope_id()).is_strict_mode()
+                    || function
+                        .id
+                        .as_ref()
+                        .is_some_and(|id| !ctx.scoping().symbol_is_unused(id.symbol_id()))
+                {
+                    return;
+                }
+                &function.params
+            }
+            _ => return,
+        };
+        if params.items.is_empty()
+            || params.rest.is_some()
+            || params
                 .items
                 .iter()
                 .any(|param| !param.pattern.is_binding_identifier() || param.initializer.is_some())
@@ -25,7 +40,7 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
-        for (param, argument) in arrow.params.items.iter().zip(&call.arguments) {
+        for (param, argument) in params.items.iter().zip(&call.arguments) {
             let BindingPattern::BindingIdentifier(id) = &param.pattern else { unreachable!() };
             let symbol_id = id.symbol_id();
             // A body declaration can replace a parameter before its first read.

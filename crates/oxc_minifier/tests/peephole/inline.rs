@@ -1,7 +1,8 @@
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, test_options, test_options_source_type, test_same_options, test_smallest,
+    CompressOptions, test_options, test_options_source_type, test_same_options,
+    test_same_options_source_type, test_smallest,
 };
 
 #[test]
@@ -59,6 +60,79 @@ fn inline_iife_arguments_preserves_side_effects() {
         "(x => { function read() { effect(x) } function x() { sideEffect() } read() })(1);",
         "(x => { function read() { effect(x) } function x() { sideEffect() } read() })(1);",
     );
+}
+
+#[test]
+fn inline_constant_function_iife_arguments() {
+    test_smallest("(function (x) { return x + 1 })(1);", "");
+    test_smallest("const f = function (x) { return x + 1 }; f(1);", "");
+    test_smallest("(function unused(x, y) { return x + y })(1, 2);", "");
+    test_smallest("(function (x) { effect(x + 1) })(1);", "(function (x) { effect(2) })(1);");
+    test_smallest(
+        "(function (x) { effect(x + 1) })((sideEffect(), 1));",
+        "(function (x) { effect(2) })((sideEffect(), 1));",
+    );
+    test_smallest(
+        "use((function (x) { return () => x + 1 })(1));",
+        "use((function (x) { return () => 2 })(1));",
+    );
+    test_smallest(
+        "(function (x) { effect(x) })('a long string with many characters');",
+        "(function (x) { effect(x) })('a long string with many characters');",
+    );
+
+    // Explicit strict mode also makes regular script IIFEs eligible.
+    test_options_source_type(
+        "(function (x) { 'use strict'; effect(x + 1) })(1);",
+        "(function (x) { 'use strict'; effect(2) })(1);",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
+fn inline_function_iife_arguments_preserves_arguments_aliasing() {
+    let options = CompressOptions::smallest();
+    // Sloppy-mode parameters can change through mapped arguments or caller
+    // introspection, without a resolved write to the parameter binding.
+    for source in [
+        "(function (x) { effect(x + 1) })(1);",
+        "(function (x) { arguments[0] = 2, effect(x + 1) })(1);",
+        "(function (x) { use(arguments), effect(x + 1) })(1);",
+        "(function (x) { use(() => (arguments[0] = 2, x + 1)) })(1);",
+        "(function (x) { var arguments; arguments[0] = 2, effect(x + 1) })(1);",
+        "(function (x, x) { effect(x + 1) })(1, value);",
+        "(function (x) { mutateCaller(), effect(x + 1) })(1);",
+    ] {
+        test_same_options_source_type(source, SourceType::cjs(), &options);
+    }
+
+    // Strict arguments objects do not alias the parameters, even in closures.
+    test_smallest(
+        "(function (x) { arguments[0] = 2, effect(x + 1) })(1);",
+        "(function (x) { arguments[0] = 2, effect(2) })(1);",
+    );
+    test_smallest(
+        "use((function (x) { return () => (arguments[0] = 2, x + 1) })(1));",
+        "use((function (x) { return () => (arguments[0] = 2, 2) })(1));",
+    );
+}
+
+#[test]
+fn inline_function_iife_arguments_preserves_reentry_and_writes() {
+    let options = CompressOptions::smallest();
+    // The function's own name may be used to call it with different arguments.
+    for source in [
+        "(function f(x) { x && f(0), effect(x + 1) })(1);",
+        "use((function f(x) { return () => (use(f), x + 1) })(1));",
+        "(function (x) { use(() => x++), effect(x + 1) })(1);",
+        "(function (x) { eval('x = 2'), effect(x + 1) })(1);",
+        "(function (x) { function x() {} effect(x + 1) })(1);",
+        "(function (x) { return x + 1 })(1n);",
+        "(function (x) { return x + 1 })(value);",
+    ] {
+        test_same_options(source, &options);
+    }
 }
 
 // https://github.com/oxc-project/oxc/issues/24531

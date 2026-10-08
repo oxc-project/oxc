@@ -673,7 +673,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
 
     fn enter_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if !ctx.is_tree_shake_only() {
-            Self::init_arrow_iife_parameter_values(e, ctx);
+            Self::init_iife_parameter_values(e, ctx);
         }
     }
 
