@@ -161,6 +161,20 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Parameter evaluation has no statement list for per-call temporaries. Wrap before
+        // capturing object keys so their declarations are inserted inside the fresh scope.
+        if matches!(ctx.parent(), Ancestor::FormalParameterInitializer(_))
+            && NeedsTemporaryScope::check(expr)
+        {
+            if let Expression::ClassExpression(class) = expr.get_inner_expression() {
+                if class.id.is_none() {
+                    self.record_contextual_class_name(class, ctx);
+                }
+                self.scoped_classes.insert(class.body.address());
+            }
+            *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
+            return;
+        }
         match expr {
             Expression::ObjectExpression(object) => {
                 for prop in &mut object.properties {
@@ -181,40 +195,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 if class.id.is_none()
                     && (Self::has_trailing_blocks(class) || Self::needs_name_scope(class)) =>
             {
-                let already_named = self.class_names.contains_key(&class.body.address());
-                let name = ctx
-                    .ancestors()
-                    .find_map(|ancestor| match ancestor {
-                        Ancestor::ParenthesizedExpressionExpression(_) => None,
-                        Ancestor::VariableDeclaratorInit(decl) => {
-                            Some(decl.id().get_identifier_name().map(Str::from))
-                        }
-                        Ancestor::AssignmentPatternRight(pattern) => {
-                            Some(pattern.left().get_identifier_name().map(Str::from))
-                        }
-                        Ancestor::FormalParameterInitializer(param) => {
-                            Some(param.pattern().get_identifier_name().map(Str::from))
-                        }
-                        Ancestor::AssignmentExpressionRight(assign)
-                            if assign.operator().is_assign() || assign.operator().is_logical() =>
-                        {
-                            Some(Self::assignment_name(assign.left()))
-                        }
-                        Ancestor::AssignmentTargetWithDefaultInit(target) => {
-                            Some(Self::assignment_name(target.binding()))
-                        }
-                        Ancestor::AssignmentTargetPropertyIdentifierInit(target) => {
-                            Some(Some(Str::from(target.binding().name)))
-                        }
-                        Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                            Some(Some(Str::from("default")))
-                        }
-                        _ => Some(None),
-                    })
-                    .flatten();
-                if !already_named && let Some(name) = name {
-                    self.class_names.insert(class.body.address(), InferredName::Static(name));
-                }
+                self.record_contextual_class_name(class, ctx);
             }
             _ => {}
         }
@@ -231,12 +212,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
             }
         }
-        // Parameter initializers have no statement list in which to declare per-call temps.
-        if matches!(ctx.parent(), Ancestor::FormalParameterInitializer(_))
-            && NeedsTemporaryScope::check(expr)
-        {
-            *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
-        }
     }
 
     fn enter_property_definition(
@@ -247,7 +222,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
         let wrap = !prop.r#static && prop.value.as_ref().is_some_and(NeedsTemporaryScope::check);
         let class = prop.value.as_ref().and_then(|value| {
             if wrap {
-                match value.without_parentheses() {
+                match value.get_inner_expression() {
                     Expression::ClassExpression(class) if class.id.is_none() => Some(&**class),
                     _ => None,
                 }
@@ -297,9 +272,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             }
         }
 
-        let has_static_property = body.body.iter().any(
-            |element| matches!(element, ClassElement::PropertyDefinition(prop) if prop.r#static),
-        );
+        let has_static_property = body.body.iter().any(|element| {
+            matches!(element, ClassElement::PropertyDefinition(prop) if prop.r#static && !prop.declare)
+        });
 
         if has_static_property {
             let mut pending = Vec::new();
@@ -310,7 +285,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                     ClassElement::StaticBlock(block) => {
                         pending.push(Self::convert_block_to_expression(block, ctx));
                     }
-                    ClassElement::PropertyDefinition(prop) if prop.r#static => {
+                    ClassElement::PropertyDefinition(prop) if prop.r#static && !prop.declare => {
                         last_static_property = Some(index);
                         if !pending.is_empty() {
                             self.prepend_to_initializer(
@@ -427,13 +402,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 ctx,
             );
             let object = Expression::new_object_expression(SPAN, [property], ctx);
-            *expr = Expression::new_computed_member_expression(
-                SPAN,
-                object,
-                name.expression(ctx),
-                false,
-                ctx,
-            );
+            let key = name.expression(ctx);
+            *expr = if matches!(name, InferredName::Computed(_)) {
+                Self::computed_name_lookup(key, object, ctx)
+            } else {
+                Expression::new_computed_member_expression(SPAN, object, key, false, ctx)
+            };
         }
         if let Some(deferred) = deferred {
             let class = expr.take_in(ctx);
@@ -444,6 +418,107 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
 }
 
 impl<'a> ClassStaticBlock<'a> {
+    fn record_contextual_class_name(&mut self, class: &Class<'a>, ctx: &TraverseCtx<'a>) {
+        if self.class_names.contains_key(&class.body.address()) {
+            return;
+        }
+        let name = ctx
+            .ancestors()
+            .find_map(|ancestor| match ancestor {
+                Ancestor::ParenthesizedExpressionExpression(_) => None,
+                Ancestor::VariableDeclaratorInit(decl) => {
+                    Some(decl.id().get_identifier_name().map(Str::from))
+                }
+                Ancestor::AssignmentPatternRight(pattern) => {
+                    Some(pattern.left().get_identifier_name().map(Str::from))
+                }
+                Ancestor::FormalParameterInitializer(param) => {
+                    Some(param.pattern().get_identifier_name().map(Str::from))
+                }
+                Ancestor::AssignmentExpressionRight(assign)
+                    if assign.operator().is_assign() || assign.operator().is_logical() =>
+                {
+                    Some(Self::assignment_name(assign.left()))
+                }
+                Ancestor::AssignmentTargetWithDefaultInit(target) => {
+                    Some(Self::assignment_name(target.binding()))
+                }
+                Ancestor::AssignmentTargetPropertyIdentifierInit(target) => {
+                    Some(Some(Str::from(target.binding().name)))
+                }
+                Ancestor::ExportDefaultDeclarationDeclaration(_) => {
+                    Some(Some(Str::from("default")))
+                }
+                _ => Some(None),
+            })
+            .flatten();
+        if let Some(name) = name {
+            self.class_names.insert(class.body.address(), InferredName::Static(name));
+        }
+    }
+
+    /// Capture the lookup key before class evaluation can recursively overwrite it.
+    /// User expressions remain in the call arguments, preserving their surrounding scope.
+    fn computed_name_lookup(
+        key: Expression<'a>,
+        object: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let scope_id = ctx
+            .create_child_scope(ctx.current_scope_id(), ScopeFlags::Function | ScopeFlags::Arrow);
+        let key_binding = ctx.generate_uid("name", scope_id, SymbolFlags::FunctionScopedVariable);
+        let object_binding =
+            ctx.generate_uid("object", scope_id, SymbolFlags::FunctionScopedVariable);
+        let params = [&key_binding, &object_binding].map(|binding| {
+            FormalParameter::new(
+                SPAN,
+                [],
+                binding.create_binding_pattern(ctx),
+                None,
+                None,
+                false,
+                None,
+                false,
+                false,
+                ctx,
+            )
+        });
+        let params = FormalParameters::boxed(
+            SPAN,
+            FormalParameterKind::ArrowFormalParameters,
+            params,
+            None,
+            ctx,
+        );
+        let body = Expression::new_computed_member_expression(
+            SPAN,
+            object_binding.create_read_expression(ctx),
+            key_binding.create_read_expression(ctx),
+            false,
+            ctx,
+        );
+        let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
+            SPAN,
+            false,
+            None,
+            params,
+            None,
+            ArrowFunctionBody::from(body),
+            scope_id,
+            false,
+            false,
+            ctx,
+        );
+        Expression::new_call_expression(
+            SPAN,
+            arrow,
+            None,
+            [Argument::from(key), Argument::from(object)],
+            false,
+            ctx,
+        )
+    }
+
     /// Keep the outer declaration in its TDZ until all static initialization finishes.
     /// The class expression's separate inner binding remains available inside the class.
     fn class_declaration_initializer(
@@ -490,7 +565,8 @@ impl<'a> ClassStaticBlock<'a> {
                 if prop.r#static || !prop.computed {
                     return None;
                 }
-                let Expression::ClassExpression(value) = prop.value.as_ref()?.without_parentheses()
+                let Expression::ClassExpression(value) =
+                    prop.value.as_ref()?.get_inner_expression()
                 else {
                     return None;
                 };
@@ -525,7 +601,7 @@ impl<'a> ClassStaticBlock<'a> {
             let prop = &mut **prop;
             let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
             let Expression::ClassExpression(value) =
-                prop.value.as_ref().unwrap().without_parentheses()
+                prop.value.as_ref().unwrap().get_inner_expression()
             else {
                 unreachable!();
             };
@@ -640,7 +716,9 @@ impl<'a> ClassStaticBlock<'a> {
         for element in class.body.body.iter().rev() {
             match element {
                 ClassElement::StaticBlock(_) => return true,
-                ClassElement::PropertyDefinition(prop) if prop.r#static => return false,
+                ClassElement::PropertyDefinition(prop) if prop.r#static && !prop.declare => {
+                    return false;
+                }
                 _ => {}
             }
         }
@@ -648,7 +726,7 @@ impl<'a> ClassStaticBlock<'a> {
     }
 
     fn anonymous_deferred_class<'e>(expr: &'e Expression<'a>) -> Option<&'e Class<'a>> {
-        match expr.without_parentheses() {
+        match expr.get_inner_expression() {
             Expression::ClassExpression(class)
                 if class.id.is_none()
                     && (Self::has_trailing_blocks(class) || Self::needs_name_scope(class)) =>
@@ -676,7 +754,7 @@ impl<'a> ClassStaticBlock<'a> {
         for element in &class.body.body {
             match element {
                 ClassElement::StaticBlock(_) => pending_blocks = true,
-                ClassElement::PropertyDefinition(prop) if prop.r#static => {
+                ClassElement::PropertyDefinition(prop) if prop.r#static && !prop.declare => {
                     last_needs_name = Self::needs_name_temp(prop);
                     if pending_blocks && last_needs_name {
                         return true;
@@ -695,7 +773,32 @@ impl<'a> ClassStaticBlock<'a> {
             PropertyKey::StaticIdentifier(_)
                 | PropertyKey::PrivateIdentifier(_)
                 | PropertyKey::StringLiteral(_)
-        ) && prop.value.as_ref().is_some_and(Expression::is_anonymous_function_definition)
+        ) && prop
+            .value
+            .as_ref()
+            .is_some_and(|value| value.get_inner_expression().is_anonymous_function_definition())
+    }
+
+    /// Scope of the statement list into which the declarations store inserts temporaries.
+    fn declaration_scope_id(ctx: &TraverseCtx<'a>) -> ScopeId {
+        let mut in_switch_consequent = false;
+        ctx.ancestors()
+            .find_map(|ancestor| match ancestor {
+                Ancestor::ProgramBody(program) => program.scope_id().get(),
+                Ancestor::BlockStatementBody(block) => block.scope_id().get(),
+                Ancestor::StaticBlockBody(block) => block.scope_id().get(),
+                Ancestor::SwitchCaseConsequent(_) => {
+                    in_switch_consequent = true;
+                    None
+                }
+                Ancestor::SwitchStatementCases(switch) if in_switch_consequent => {
+                    switch.scope_id().get()
+                }
+                Ancestor::FunctionBody(function) => function.scope_id().get(),
+                Ancestor::ArrowFunctionExpressionBody(arrow) => arrow.scope_id().get(),
+                _ => None,
+            })
+            .expect("an enclosing statement list")
     }
 
     fn property_name(
@@ -723,8 +826,10 @@ impl<'a> ClassStaticBlock<'a> {
             ArenaVec::from_value_in(Argument::from(value), ctx),
             ctx,
         );
-        let binding =
-            ctx.generate_uid("key", ctx.current_block_scope_id(), SymbolFlags::BlockScopedVariable);
+        // Parameter patterns have no statement list. Their declarations are emitted into
+        // the surrounding body, so the symbol must belong to that same scope.
+        let scope_id = Self::declaration_scope_id(ctx);
+        let binding = ctx.generate_uid("key", scope_id, SymbolFlags::BlockScopedVariable);
         ctx.state.var_declarations.insert_let(&binding, None, &ctx.ast);
         *key = PropertyKey::from(create_assignment(&binding, value, SPAN, ctx));
         InferredName::Computed(binding)
@@ -751,9 +856,9 @@ impl<'a> ClassStaticBlock<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         if let Some(mut value) = prop.value.take() {
-            if value.is_anonymous_function_definition() {
+            if value.get_inner_expression().is_anonymous_function_definition() {
                 let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
-                if let Expression::ClassExpression(class) = value.without_parentheses() {
+                if let Expression::ClassExpression(class) = value.get_inner_expression() {
                     self.class_names.insert(class.body.address(), name);
                 } else {
                     let name = name.expression(ctx);
@@ -835,7 +940,14 @@ impl<'a> ClassStaticBlock<'a> {
         returns_class: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> (BoundIdentifier<'a>, Expression<'a>) {
-        let binding = ctx.generate_uid_in_current_hoist_scope("staticBlock");
+        let declaration_scope = Self::declaration_scope_id(ctx);
+        let hoist_scope = ctx
+            .scoping()
+            .scope_ancestors(declaration_scope)
+            .find(|scope_id| ctx.scoping().scope_flags(*scope_id).is_var())
+            .expect("an enclosing hoist scope");
+        let binding =
+            ctx.generate_uid("staticBlock", hoist_scope, SymbolFlags::FunctionScopedVariable);
         ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
         if returns_class {
             expressions.push(Expression::new_this_expression(SPAN, ctx));

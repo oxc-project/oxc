@@ -5,9 +5,9 @@ for (const key of ["a", "b"]) {
     return class {
       [_key = babelHelpers.toPropertyKey(key)] = (() => {
         var _staticBlock;
-        return { [_key]: class {
+        return ((_name, _object) => _object[_name])(_key, { [_key]: class {
           static #_ = _staticBlock = () => (this.seen = this.name, this);
-        } }[_key], _staticBlock();
+        } }), _staticBlock();
       })();
     };
   })());
