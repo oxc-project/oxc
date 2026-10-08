@@ -10,7 +10,13 @@ import { PREC_CALL, PREC_EXPONENTIATION, PREC_LOWEST, PREC_PREFIX } from "./prec
 
 import type { State } from "../state.ts";
 import type { LiteralExtras } from "./types.ts";
-import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
+import type {
+  BinaryExpression,
+  BinaryOperator,
+  LogicalExpression,
+  LogicalOperator,
+  PrivateInExpression,
+} from "../../../../npm/oxc-types/types.d.ts";
 
 /**
  * One level of the binary/logical expression chain.
@@ -19,11 +25,11 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * its own operator and right operand.
  */
 interface BinaryVisitor {
-  e: ESTree.BinaryExpression | ESTree.LogicalExpression;
+  e: BinaryExpression | LogicalExpression;
   precedence: number;
   ctx: number;
   leftPrecedence: number;
-  operator: ESTree.BinaryOperator | ESTree.LogicalOperator;
+  operator: BinaryOperator | LogicalOperator;
   wrap: boolean;
   rightPrecedence: number;
   parent: BinaryVisitor | null;
@@ -42,7 +48,7 @@ interface BinaryVisitor {
  * @param ctx - Context flags, carrying whether `in` is forbidden and calls are
  */
 export function printBinaryish(
-  node: ESTree.BinaryExpression | ESTree.LogicalExpression,
+  node: BinaryExpression | LogicalExpression,
   state: State,
   precedence: number,
   ctx: number,
@@ -66,13 +72,13 @@ export function printBinaryish(
     if (left.type === "BinaryExpression" || left.type === "LogicalExpression") {
       if (left.type === "BinaryExpression" && left.left.type === "PrivateIdentifier") {
         // Private-in expression as the left operand
-        typeAssertIs<ESTree.PrivateInExpression>(left);
+        typeAssertIs<PrivateInExpression>(left);
         printPrivateInExpression(left, state, v.leftPrecedence);
         binVisitRightAndFinish(v, state);
         break;
       }
 
-      typeAssertIs<ESTree.BinaryExpression | ESTree.LogicalExpression>(left);
+      typeAssertIs<BinaryExpression | LogicalExpression>(left);
 
       v = {
         e: left,
