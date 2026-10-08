@@ -431,7 +431,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Context::Yield | Context::Return,
             Self::parse_block,
         );
-        ClassElement::new_static_block(self.end_span(start), block.unbox().body, self)
+        let gap_start =
+            block.body.last().map_or(block.span.start, |statement| statement.span().end);
+        let element =
+            ClassElement::new_static_block(self.end_span(start), block.unbox().body, self);
+        self.assign_body_end_comments(element.node_id(), element.span(), gap_start);
+        element
     }
 
     /// <https://github.com/tc39/proposal-decorators>

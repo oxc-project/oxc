@@ -1397,7 +1397,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             self.bump_any(); // bump operator
             let rhs_start = self.cur_start();
+            let leading_comments = self.leading_node_comments();
             let rhs = self.parse_binary_expression_or_higher(left_precedence);
+            let rhs = self.finish_expression_comments(rhs, leading_comments);
 
             lhs = if kind.is_logical_operator() {
                 let span = self.end_span(lhs_start);

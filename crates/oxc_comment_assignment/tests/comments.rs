@@ -886,6 +886,13 @@ fn parser_exit_assignment_matches_the_complete_pass() {
             SourceType::mjs(),
         ),
         ("function f() { /* istanbul ignore file */ }", SourceType::mjs()),
+        (
+            "{ first();\n /* gap */ } function f() { work();\n /* gap */ }\n\
+             try { work();\n /* try */ } catch { /* catch */ } finally { /* finally */ }\n\
+             class C { static { work();\n /* static */ } }",
+            SourceType::mjs(),
+        ),
+        ("export const x = left + /* operand */ right;", SourceType::mjs()),
         ("f(/* argument */ true, /* conditional */ (ready ? yes : no));", SourceType::mjs()),
         (
             "class A { static [(/* sequence */ class {}, /* assignment */ value = () => 0)]; }",

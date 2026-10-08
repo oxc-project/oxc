@@ -14,8 +14,8 @@ App.tsx:
   sys allocs: 21
   sys reallocs: 13
   sys deallocs: 21
-  sys alloc bytes: 13676 # 13.68 kB
-  sys peak growth: 10316 # 10.32 kB
+  sys alloc bytes: 8984 # 8.98 kB
+  sys peak growth: 5624 # 5.62 kB
   arena allocs: 44037
   arena reallocs: 3537
   arena size: 2247136 # 2.25 MB
@@ -47,17 +47,17 @@ antd.js:
   sys allocs: 188
   sys reallocs: 222
   sys deallocs: 188
-  sys alloc bytes: 852360 # 852.36 kB
-  sys peak growth: 758300 # 758.30 kB
+  sys alloc bytes: 684060 # 684.06 kB
+  sys peak growth: 590000 # 590 kB
   arena allocs: 528577
   arena reallocs: 55355
   arena size: 30470456 # 30.47 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB
-  sys allocs: 3
-  sys reallocs: 0
-  sys deallocs: 3
+  sys allocs: 2
+  sys reallocs: 1
+  sys deallocs: 2
   sys alloc bytes: 4160 # 4.16 kB
   sys peak growth: 4160 # 4.16 kB
   arena allocs: 16587
@@ -69,8 +69,8 @@ kitchen-sink.tsx:
   sys allocs: 186
   sys reallocs: 160
   sys deallocs: 186
-  sys alloc bytes: 43993 # 43.99 kB
-  sys peak growth: 12168 # 12.17 kB
+  sys alloc bytes: 38621 # 38.62 kB
+  sys peak growth: 6796 # 6.80 kB
   arena allocs: 136453
   arena reallocs: 11898
   arena size: 6456232 # 6.46 MB

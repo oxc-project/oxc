@@ -40,9 +40,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.expect_closing(Kind::RCurly, opening_span);
         let body = FunctionBody::boxed(self.end_span(start), directives, statements, self);
-        if body.directives.is_empty() && body.statements.is_empty() {
-            self.assign_empty_body_comments(body.node_id.get(), body.span);
-        }
+        let start = body.statements.last().map_or_else(
+            || body.directives.last().map_or(body.span.start, |directive| directive.span.end),
+            |statement| statement.span().end,
+        );
+        self.assign_body_end_comments(body.node_id.get(), body.span, start);
         body
     }
 

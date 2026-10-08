@@ -258,11 +258,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn assign_statement_comments(&mut self, stmt: &Statement<'a>, comments: (u32, NonZeroU32)) {
-        // Export decorators can extend the effective span around the keyword.
-        if matches!(stmt, Statement::ExportDeclaration(_) | Statement::ExportDefaultDeclaration(_))
-        {
-            return;
-        }
         self.assign_node_leading_comments(stmt.node_id(), stmt.span().start, comments);
     }
 
@@ -340,17 +335,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn assign_empty_body_comments(&mut self, node_id: NodeId, span: Span) {
+    pub(crate) fn assign_body_end_comments(&mut self, node_id: NodeId, span: Span, start: u32) {
         let comments = &mut self.lexer.trivia_builder.comments;
-        if comments.last().is_none_or(|comment| comment.span.end <= span.start) {
+        if comments.last().is_none_or(|comment| comment.span.start < start) {
             return;
         }
-        let end = comments.partition_point(|comment| comment.span.end <= span.end);
+        let end = if comments.last().is_some_and(|comment| comment.span.end <= span.end) {
+            comments.len()
+        } else {
+            comments.partition_point(|comment| comment.span.end <= span.end)
+        };
         for comment in comments[..end].iter_mut().rev() {
-            if comment.span.start < span.start {
+            if comment.span.start < start {
                 break;
             }
-            if comment.content != CommentContent::CoverageIgnoreFile {
+            if comment.attachment.is_none() && comment.content != CommentContent::CoverageIgnoreFile
+            {
                 comment.attachment = Some(CommentAttachment {
                     node_id: Cell::new(node_id),
                     placement: CommentPlacement::Dangling,
@@ -430,10 +430,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_block_statement(&mut self) -> Statement<'a> {
         let block = self.parse_block();
-        if block.body.is_empty() {
-            self.assign_empty_body_comments(block.node_id.get(), block.span);
-        }
+        self.assign_block_end_comments(&block);
         Statement::BlockStatement(block)
+    }
+
+    fn assign_block_end_comments(&mut self, block: &BlockStatement<'a>) {
+        let start = block.body.last().map_or(block.span.start, |statement| statement.span().end);
+        self.assign_body_end_comments(block.node_id.get(), block.span, start);
     }
 
     /// Section 14.3.2 Variable Statement
@@ -999,10 +1002,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump `try`
 
         let block = self.parse_block();
+        self.assign_block_end_comments(&block);
 
         let handler = self.at(Kind::Catch).then(|| self.parse_catch_clause());
 
-        let finalizer = self.eat(Kind::Finally).then(|| self.parse_block());
+        let finalizer = self.eat(Kind::Finally).then(|| {
+            let block = self.parse_block();
+            self.assign_block_end_comments(&block);
+            block
+        });
 
         if handler.is_none() && finalizer.is_none() {
             let range = Span::empty(block.span.end);
@@ -1023,6 +1031,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         };
         let body = self.parse_block();
+        self.assign_block_end_comments(&body);
         let param = pattern.map(|(pattern, type_annotation)| {
             CatchParameter::new(
                 Span::new(
