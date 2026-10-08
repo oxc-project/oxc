@@ -1,5 +1,6 @@
 use std::{cell::Cell, ops::Range};
 
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind, Comment, CommentAttachment, CommentContent, CommentPlacement,
     ast::{
@@ -408,6 +409,29 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
 }
 
 impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
+    #[inline]
+    fn visit_statements(&mut self, statements: &ArenaVec<'a, Statement<'a>>) {
+        if self.skipped_depth != 0 {
+            return;
+        }
+        let mut remaining = statements.as_slice();
+        while !remaining.is_empty() {
+            let parent = self.frames.last().unwrap();
+            if parent.leading_end == parent.window.start {
+                if parent.cursor == parent.window.end {
+                    break;
+                }
+                // Only the last sibling before a comment can be its previous
+                // neighbor. Skip earlier siblings without descending into them.
+                let comment_start = self.comments[parent.cursor].span.start;
+                let before = remaining.partition_point(|node| node.span().end <= comment_start);
+                remaining = &remaining[before.saturating_sub(1)..];
+            }
+            self.visit_statement(&remaining[0]);
+            remaining = &remaining[1..];
+        }
+    }
+
     // Union visitors do not enter a node themselves. Once a parent has an empty
     // comment window, stop here before dispatching into its descendants.
     #[inline]
