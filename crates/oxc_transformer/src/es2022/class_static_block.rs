@@ -40,11 +40,9 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-class-static-block>
 //! * Class static initialization blocks TC39 proposal: <https://github.com/tc39/proposal-class-static-block>
 
-use std::collections::hash_map::Entry;
-
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn};
+use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_span::SPAN;
@@ -55,7 +53,7 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
@@ -68,10 +66,22 @@ use crate::{
 };
 
 pub struct ClassStaticBlock<'a> {
-    deferred: Vec<Option<BoundIdentifier<'a>>>,
-    class_expression_deferred: Vec<Option<BoundIdentifier<'a>>>,
-    class_names: FxHashMap<Address, InferredName<'a>>,
-    scoped_classes: FxHashSet<Address>,
+    classes: Vec<ClassState<'a>>,
+    pending_classes: FxHashMap<Address, PendingClass<'a>>,
+}
+
+/// State discovered before the class body is entered, including by its parent.
+#[derive(Default)]
+struct PendingClass<'a> {
+    inferred_name: Option<InferredName<'a>>,
+    scoped: bool,
+}
+
+/// Pushed on body entry. Expression frames stay until `exit_expression`; declarations
+/// are popped at `exit_class`.
+struct ClassState<'a> {
+    inferred_name: Option<InferredName<'a>>,
+    deferred: Option<BoundIdentifier<'a>>,
 }
 
 /// A property key that has already been evaluated and converted to a string or symbol.
@@ -99,12 +109,7 @@ impl<'a> InferredName<'a> {
 
 impl ClassStaticBlock<'_> {
     pub fn new() -> Self {
-        Self {
-            deferred: Vec::new(),
-            class_expression_deferred: Vec::new(),
-            class_names: FxHashMap::default(),
-            scoped_classes: FxHashSet::default(),
-        }
+        Self { classes: Vec::new(), pending_classes: FxHashMap::default() }
     }
 }
 
@@ -170,7 +175,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 if class.id.is_none() {
                     self.record_contextual_class_name(class, ctx);
                 }
-                self.scoped_classes.insert(class.body.address());
+                self.pending_classes.entry(class.body.address()).or_default().scoped = true;
             }
             *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
             return;
@@ -187,7 +192,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                     if let Some(class) = Self::anonymous_deferred_class(&prop.value) {
                         let address = class.body.address();
                         let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
-                        self.class_names.insert(address, name);
+                        self.pending_classes.entry(address).or_default().inferred_name = Some(name);
                     }
                 }
             }
@@ -206,10 +211,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 // Await/yield must stay in the surrounding function. Store names used by
                 // instance initializers in the class itself instead of wrapping evaluation.
                 self.capture_suspended_names(class, ctx);
-            } else if self.scoped_classes.insert(class.body.address()) {
-                // An expression can run repeatedly without re-entering its enclosing block,
-                // e.g. in a loop test. Capture names in a fresh class-evaluation scope.
-                *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
+            } else {
+                let pending = self.pending_classes.entry(class.body.address()).or_default();
+                if !pending.scoped {
+                    pending.scoped = true;
+                    // An expression can run repeatedly without re-entering its enclosing block,
+                    // e.g. in a loop test. Capture names in a fresh class-evaluation scope.
+                    *expr = wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx);
+                }
             }
         }
     }
@@ -233,9 +242,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
         if let Some(class) = class {
             let address = class.body.address();
             // A folded initializer has already supplied the original name.
-            if let Entry::Vacant(entry) = self.class_names.entry(address) {
+            let pending = self.pending_classes.entry(address).or_default();
+            if pending.inferred_name.is_none() {
                 let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
-                entry.insert(name);
+                pending.inferred_name = Some(name);
             }
         }
         // Instance initializers run on every construction, not when the enclosing class is
@@ -247,22 +257,38 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Heritage classes have already exited, and the pre-body scope guard is no
+        // longer needed. Keep only the state consumed after this body is traversed.
+        // Class bodies are boxed, so this address matches the parent's `body.address()`.
+        let inferred_name = self
+            .pending_classes
+            .remove(&body.unstable_address())
+            .and_then(|pending| pending.inferred_name);
+        self.classes.push(ClassState { inferred_name, deferred: None });
+
         // Loop through class body elements and:
         // 1. Find if there are any `StaticBlock`s.
-        // 2. Collate list of private keys matching `#_` or `#_[1-9]...`.
+        // 2. Find the last runtime static property.
+        // 3. Collate list of private keys matching `#_` or `#_[1-9]...`.
         //
         // Don't collate private keys list conditionally only if a static block is found, as usually
         // there will be no matching private keys, so those checks are cheap and will not allocate.
         let mut has_static_block = false;
+        let mut last_static_property = None;
         let mut keys = Keys::default();
-        for element in &body.body {
+        for (index, element) in body.body.iter().enumerate() {
             let key = match element {
                 ClassElement::StaticBlock(_) => {
                     has_static_block = true;
                     continue;
                 }
                 ClassElement::MethodDefinition(def) => &def.key,
-                ClassElement::PropertyDefinition(def) => &def.key,
+                ClassElement::PropertyDefinition(def) => {
+                    if def.r#static && !def.declare {
+                        last_static_property = Some(index);
+                    }
+                    &def.key
+                }
                 ClassElement::AccessorProperty(def) => &def.key,
                 ClassElement::TSIndexSignature(_) => continue,
             };
@@ -272,28 +298,26 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             }
         }
 
-        let has_static_property = body.body.iter().any(|element| {
-            matches!(element, ClassElement::PropertyDefinition(prop) if prop.r#static && !prop.declare)
-        });
+        if !has_static_block {
+            return;
+        }
 
-        if has_static_property {
+        if let Some(index) = last_static_property {
             let mut pending = Vec::new();
-            let mut last_static_property = None;
 
-            for (index, element) in body.body.iter_mut().enumerate() {
+            for element in &mut body.body {
                 match element {
                     ClassElement::StaticBlock(block) => {
                         pending.push(Self::convert_block_to_expression(block, ctx));
                     }
-                    ClassElement::PropertyDefinition(prop) if prop.r#static && !prop.declare => {
-                        last_static_property = Some(index);
-                        if !pending.is_empty() {
-                            self.prepend_to_initializer(
-                                prop,
-                                std::mem::take(&mut pending).into_iter(),
-                                ctx,
-                            );
-                        }
+                    ClassElement::PropertyDefinition(prop)
+                        if prop.r#static && !prop.declare && !pending.is_empty() =>
+                    {
+                        self.prepend_to_initializer(
+                            prop,
+                            std::mem::take(&mut pending).into_iter(),
+                            ctx,
+                        );
                     }
                     _ => {}
                 }
@@ -302,7 +326,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             let deferred = if pending.is_empty() {
                 None
             } else {
-                let index = last_static_property.expect("static property must exist");
                 let expressions = std::mem::take(&mut pending);
                 let is_class_expression = matches!(
                     ctx.parent(),
@@ -318,12 +341,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             };
 
             body.body.retain(|element| !matches!(element, ClassElement::StaticBlock(_)));
-            self.deferred.push(deferred);
-            return;
-        }
-
-        if !has_static_block {
-            self.deferred.push(None);
+            self.classes.last_mut().unwrap().deferred = deferred;
             return;
         }
 
@@ -364,27 +382,23 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
         );
         body.body.retain(|element| !matches!(element, ClassElement::StaticBlock(_)));
         body.body.push(property);
-        self.deferred.push(Some(binding));
+        self.classes.last_mut().unwrap().deferred = Some(binding);
     }
 
     fn exit_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        let deferred = self.deferred.pop().expect("class body must be entered first");
-        if class.r#type == ClassType::ClassExpression {
-            self.class_expression_deferred.push(deferred);
-        } else {
+        if class.r#type == ClassType::ClassDeclaration {
+            let state = self.classes.pop().expect("class body must be entered first");
             debug_assert!(
-                deferred.is_none(),
+                state.deferred.is_none(),
                 "declarations with trailing blocks become initializers"
             );
         }
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ClassExpression(class) = expr else { return };
-        self.scoped_classes.remove(&class.body.address());
-        let name = self.class_names.remove(&class.body.address());
-        let deferred = self.class_expression_deferred.pop().flatten();
-        if let Some(name) = name {
+        let Expression::ClassExpression(_) = expr else { return };
+        let state = self.classes.pop().expect("class body must be entered first");
+        if let Some(name) = state.inferred_name {
             // Let the engine perform NamedEvaluation before static initialization. Setting
             // `.name` afterwards is too late, and would overwrite a user-defined static name.
             // A computed key also handles symbols and the special `__proto__` spelling.
@@ -409,7 +423,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 Expression::new_computed_member_expression(SPAN, object, key, false, ctx)
             };
         }
-        if let Some(deferred) = deferred {
+        if let Some(deferred) = state.deferred {
             let class = expr.take_in(ctx);
             let call = Self::create_deferred_call(&deferred, ctx);
             *expr = Expression::new_sequence_expression(SPAN, [class, call], ctx);
@@ -419,7 +433,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
 
 impl<'a> ClassStaticBlock<'a> {
     fn record_contextual_class_name(&mut self, class: &Class<'a>, ctx: &TraverseCtx<'a>) {
-        if self.class_names.contains_key(&class.body.address()) {
+        if self
+            .pending_classes
+            .get(&class.body.address())
+            .is_some_and(|pending| pending.inferred_name.is_some())
+        {
             return;
         }
         let name = ctx
@@ -453,7 +471,8 @@ impl<'a> ClassStaticBlock<'a> {
             })
             .flatten();
         if let Some(name) = name {
-            self.class_names.insert(class.body.address(), InferredName::Static(name));
+            self.pending_classes.entry(class.body.address()).or_default().inferred_name =
+                Some(InferredName::Static(name));
         }
     }
 
@@ -469,27 +488,6 @@ impl<'a> ClassStaticBlock<'a> {
         let key_binding = ctx.generate_uid("name", scope_id, SymbolFlags::FunctionScopedVariable);
         let object_binding =
             ctx.generate_uid("object", scope_id, SymbolFlags::FunctionScopedVariable);
-        let params = [&key_binding, &object_binding].map(|binding| {
-            FormalParameter::new(
-                SPAN,
-                [],
-                binding.create_binding_pattern(ctx),
-                None,
-                None,
-                false,
-                None,
-                false,
-                false,
-                ctx,
-            )
-        });
-        let params = FormalParameters::boxed(
-            SPAN,
-            FormalParameterKind::ArrowFormalParameters,
-            params,
-            None,
-            ctx,
-        );
         let body = Expression::new_computed_member_expression(
             SPAN,
             object_binding.create_read_expression(ctx),
@@ -497,26 +495,7 @@ impl<'a> ClassStaticBlock<'a> {
             false,
             ctx,
         );
-        let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
-            SPAN,
-            false,
-            None,
-            params,
-            None,
-            ArrowFunctionBody::from(body),
-            scope_id,
-            false,
-            false,
-            ctx,
-        );
-        Expression::new_call_expression(
-            SPAN,
-            arrow,
-            None,
-            [Argument::from(key), Argument::from(object)],
-            false,
-            ctx,
-        )
+        Self::create_arrow_call(scope_id, [&key_binding, &object_binding], body, [key, object], ctx)
     }
 
     /// Keep the outer declaration in its TDZ until all static initialization finishes.
@@ -606,8 +585,8 @@ impl<'a> ClassStaticBlock<'a> {
                 unreachable!();
             };
             let key = keys.get_unique(ctx);
-            self.class_names
-                .insert(value.body.address(), InferredName::Captured(binding.clone(), key));
+            self.pending_classes.entry(value.body.address()).or_default().inferred_name =
+                Some(InferredName::Captured(binding.clone(), key));
             captures.push(ClassElement::new_property_definition(
                 SPAN,
                 PropertyDefinitionType::PropertyDefinition,
@@ -629,8 +608,9 @@ impl<'a> ClassStaticBlock<'a> {
 
         if anonymous {
             let name = self
-                .class_names
-                .remove(&class.body.address())
+                .pending_classes
+                .get_mut(&class.body.address())
+                .and_then(|pending| pending.inferred_name.take())
                 .unwrap_or(InferredName::Static(Str::from("")));
             // An explicit inner binding must not change the original inferred name. Static
             // methods named `name` suppress NamedEvaluation, including computed methods.
@@ -859,7 +839,8 @@ impl<'a> ClassStaticBlock<'a> {
             if value.get_inner_expression().is_anonymous_function_definition() {
                 let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
                 if let Expression::ClassExpression(class) = value.get_inner_expression() {
-                    self.class_names.insert(class.body.address(), name);
+                    self.pending_classes.entry(class.body.address()).or_default().inferred_name =
+                        Some(name);
                 } else {
                     let name = name.expression(ctx);
                     value = helper_call_expr(
@@ -889,28 +870,40 @@ impl<'a> ClassStaticBlock<'a> {
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode,
         );
         let binding = ctx.generate_uid("value", scope_id, SymbolFlags::FunctionScopedVariable);
-        let param = FormalParameter::new(
-            SPAN,
-            [],
-            binding.create_binding_pattern(ctx),
-            None,
-            None,
-            false,
-            None,
-            false,
-            false,
-            ctx,
-        );
-        let params = FormalParameters::boxed(
-            SPAN,
-            FormalParameterKind::ArrowFormalParameters,
-            [param],
-            None,
-            ctx,
-        );
         let body = Expression::new_sequence_expression(
             SPAN,
             [assignment, binding.create_read_expression(ctx)],
+            ctx,
+        );
+        prop.value = Some(Self::create_arrow_call(scope_id, [&binding], body, [value], ctx));
+    }
+
+    fn create_arrow_call<const N: usize>(
+        scope_id: ScopeId,
+        bindings: [&BoundIdentifier<'a>; N],
+        body: Expression<'a>,
+        arguments: [Expression<'a>; N],
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let params = bindings.map(|binding| {
+            FormalParameter::new(
+                SPAN,
+                [],
+                binding.create_binding_pattern(ctx),
+                None,
+                None,
+                false,
+                None,
+                false,
+                false,
+                ctx,
+            )
+        });
+        let params = FormalParameters::boxed(
+            SPAN,
+            FormalParameterKind::ArrowFormalParameters,
+            params,
+            None,
             ctx,
         );
         let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
@@ -925,14 +918,14 @@ impl<'a> ClassStaticBlock<'a> {
             false,
             ctx,
         );
-        prop.value = Some(Expression::new_call_expression(
+        Expression::new_call_expression(
             SPAN,
             arrow,
             None,
-            [Argument::from(value)],
+            arguments.map(Argument::from),
             false,
             ctx,
-        ));
+        )
     }
 
     fn create_deferred_initializer(
