@@ -9,7 +9,7 @@ use oxc_ecmascript::{
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
 use super::PeepholeOptimizations;
 
@@ -361,6 +361,17 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Division => Self::try_fold_safe_integer_numeric_expression(e, ctx)
                 .or_else(|| {
                     Self::extract_numeric_values(e, ctx)
+                        .filter(|(left, right)| {
+                            if left.is_nan()
+                                || right.is_nan()
+                                || (*left == 0.0 && *right == 0.0)
+                                || (left.is_infinite() && right.is_infinite())
+                            {
+                                !matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
+                            } else {
+                                true
+                            }
+                        })
                         .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
                         .and_then(|_| ctx.eval_binary(e))
                 }),
