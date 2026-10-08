@@ -1112,16 +1112,6 @@ fn test_fold_division() {
     fold_same("x = 4n / 2");
     fold_same("x = 4n / 0n");
     fold_same("x = y / 2 / 4");
-
-    fold("delete (5 / 0)", "delete (0, Infinity)"); // we could compress it to `delete (1 / 0)`
-    fold_same("delete (1 / 0)");
-    fold_same("delete (0 / -0)");
-    fold_same("delete (0 / 0)");
-    fold_same("delete (Infinity / Infinity)");
-    fold_same("delete (NaN / 0)");
-    fold_same("delete (1 / NaN)");
-    fold_same("delete (0, NaN)");
-    fold_same("delete (0, Infinity)");
 }
 
 #[test]
@@ -1481,6 +1471,20 @@ fn test_fold_keep_side_effects_in_typeof_comparison() {
 #[test]
 fn test_issue_8782() {
     fold("+(void unknown())", "+void unknown()");
+}
+
+#[test]
+fn test_fold_delete_number() {
+    fold("delete (+'x')", "delete 0");
+    fold("delete (5 / 0)", "delete 0");
+    fold_same("delete (1 / 0)");
+    fold("delete (0 / -0)", "delete 0");
+    fold("delete (0 / 0)", "delete 0");
+    fold("delete (Infinity / Infinity)", "delete 0");
+    fold("delete (NaN / 0)", "delete 0");
+    fold("delete (1 / NaN)", "delete 0");
+    fold_same("delete (0, NaN)");
+    fold_same("delete (0, Infinity)");
 }
 
 #[test]
