@@ -38,12 +38,15 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
             }
             Expression::ParenthesizedExpression(expr) => {
                 let span = expr.span;
-                match expr.unbox().expression {
+                let original_id = expr.node_id.get();
+                let target = match expr.unbox().expression {
                     Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
                         p.fatal_error(diagnostics::invalid_assignment(span))
                     }
                     expr => SimpleAssignmentTarget::cover(expr, p),
-                }
+                };
+                p.remap_leading_comment_owner(span.start, original_id, target.node_id());
+                target
             }
             Expression::TSAsExpression(expr) => match expr.expression.get_inner_expression() {
                 Expression::Identifier(_)
@@ -97,6 +100,7 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
     // would otherwise carry this body's large stack frame + callee-saved spills on every call.
     #[inline(never)]
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        let original_id = expr.node_id.get();
         let len = expr.elements.len();
         let mut elements = ArenaVec::with_capacity_in(len, p);
         let mut rest = None;
@@ -137,7 +141,9 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
             }
         }
 
-        ArrayAssignmentTarget::new(expr.span, elements, rest, p)
+        let target = ArrayAssignmentTarget::new(expr.span, elements, rest, p);
+        p.remap_leading_comment_owner(expr.span.start, original_id, target.node_id.get());
+        target
     }
 }
 
@@ -165,7 +171,10 @@ impl<'a, C: Config> CoverGrammar<'a, AssignmentExpression<'a>, C>
     for AssignmentTargetWithDefault<'a>
 {
     fn cover(expr: AssignmentExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        AssignmentTargetWithDefault::new(expr.span, expr.left, expr.right, p)
+        let original_id = expr.node_id.get();
+        let target = AssignmentTargetWithDefault::new(expr.span, expr.left, expr.right, p);
+        p.remap_leading_comment_owner(expr.span.start, original_id, target.node_id.get());
+        target
     }
 }
 
@@ -174,6 +183,7 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
     // inlining this large body into the hot `AssignmentTarget::cover` dispatcher.
     #[inline(never)]
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        let original_id = expr.node_id.get();
         let len = expr.properties.len();
         let mut properties = ArenaVec::with_capacity_in(len, p);
         let mut rest = None;
@@ -209,7 +219,9 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
             }
         }
 
-        ObjectAssignmentTarget::new(expr.span, properties, rest, p)
+        let target = ObjectAssignmentTarget::new(expr.span, properties, rest, p);
+        p.remap_leading_comment_owner(expr.span.start, original_id, target.node_id.get());
+        target
     }
 }
 

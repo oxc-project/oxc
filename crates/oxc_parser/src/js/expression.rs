@@ -64,7 +64,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return lhs;
         }
 
+        let original_id = lhs.node_id();
         let expr = self.parse_sequence_expression(start, lhs);
+        self.remap_leading_comment_owner(start, original_id, expr.node_id());
 
         if has_decorator {
             self.ctx = self.ctx.and_decorator(true);
@@ -306,7 +308,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut expression = if expressions.len() == 1 {
             expressions.remove(0)
         } else {
-            Expression::new_sequence_expression(expr_span, expressions, self)
+            let original_id = expressions[0].node_id();
+            let expression = Expression::new_sequence_expression(expr_span, expressions, self);
+            self.remap_leading_comment_owner(expr_span.start, original_id, expression.node_id());
+            expression
         };
 
         match &mut expression {
@@ -1482,7 +1487,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
+    #[inline]
     pub(crate) fn parse_assignment_expression_or_higher_impl(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        let Some(comments) = self.leading_node_comments() else {
+            return self.parse_assignment_expression_core(allow_return_type_in_arrow_function);
+        };
+        let expression = self.parse_assignment_expression_core(allow_return_type_in_arrow_function);
+        self.assign_node_leading_comments(expression.node_id(), expression.span().start, comments);
+        expression
+    }
+
+    fn parse_assignment_expression_core(
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {

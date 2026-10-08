@@ -880,6 +880,22 @@ fn parser_exit_assignment_matches_the_complete_pass() {
             SourceType::ts(),
         ),
         ("enum E { /* first */ A = 1, /* second */ B }", SourceType::ts()),
+        ("first(); /* string */ 'value';", SourceType::mjs()),
+        ("f(/* argument */ true, /* conditional */ (ready ? yes : no));", SourceType::mjs()),
+        (
+            "class A { static [(/* sequence */ class {}, /* assignment */ value = () => 0)]; }",
+            SourceType::mjs(),
+        ),
+        (
+            "({ key: /* array */ [a], other: /* object */ { b }, last: /* default */ value = 1 } = source);",
+            SourceType::mjs(),
+        ),
+        ("({ key: /* parenthesized */ (target) } = source);", SourceType::mjs()),
+        (
+            "const lazy = import(/* webpackChunkName: 'name' */ './module');\n\
+             const eager = /*#__PURE__*/ factory(/* argument */ value);",
+            SourceType::mjs(),
+        ),
         ("switch (value) { default: /* leading */ break; /* trailing */ }", SourceType::mjs()),
         (
             "switch (value) { case 0: first(); // statement\n\

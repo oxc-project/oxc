@@ -258,12 +258,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn assign_statement_comments(&mut self, stmt: &Statement<'a>, comments: (u32, NonZeroU32)) {
-        // String expression statements can become directives, replacing their
-        // IDs. Leave these and annotations that target descendants to the pass.
-        if matches!(stmt, Statement::ExpressionStatement(node) if matches!(node.expression, Expression::StringLiteral(_)))
-        {
-            return;
-        }
+        // Export decorators can extend the effective span around the keyword.
         if matches!(stmt, Statement::ExportDeclaration(_) | Statement::ExportDefaultDeclaration(_))
         {
             return;
@@ -288,6 +283,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     | CommentContent::NoSideEffects
                     | CommentContent::PropertyKey
                     | CommentContent::CoverageIgnoreFile
+                    | CommentContent::Webpack
+                    | CommentContent::Vite
+                    | CommentContent::Turbopack
             ) {
                 continue;
             }
