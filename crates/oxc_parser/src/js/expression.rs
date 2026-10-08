@@ -1492,17 +1492,34 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_assignment_expression_or_higher_impl(
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let leading_comments = self.leading_expression_comments();
+        if self.cur_token().has_preceding_comment() {
+            self.parse_assignment_expression_with_comments::<true>(
+                allow_return_type_in_arrow_function,
+            )
+        } else {
+            self.parse_assignment_expression_with_comments::<false>(
+                allow_return_type_in_arrow_function,
+            )
+        }
+    }
+
+    fn parse_assignment_expression_with_comments<const HAS_COMMENTS: bool>(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        let leading_comments = if HAS_COMMENTS { self.leading_expression_comments() } else { None };
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
             let expression = self.parse_yield_expression();
-            return self.finish_expression_comments(expression, leading_comments);
+            return self.finish_expression_comments::<HAS_COMMENTS>(expression, leading_comments);
         }
         // `() => {}`, `(x) => {}`
         if let Some(mut arrow_expr) = self
@@ -1514,7 +1531,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 func.pure = true;
                 self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
-            return self.finish_expression_comments(arrow_expr, leading_comments);
+            return self.finish_expression_comments::<HAS_COMMENTS>(arrow_expr, leading_comments);
         }
         // `async x => {}`
         if let Some(mut arrow_expr) = self
@@ -1526,7 +1543,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 func.pure = true;
                 self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
-            return self.finish_expression_comments(arrow_expr, leading_comments);
+            return self.finish_expression_comments::<HAS_COMMENTS>(arrow_expr, leading_comments);
         }
 
         let start = self.cur_start();
@@ -1551,7 +1568,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 func.pure = true;
                 self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
-            return self.finish_expression_comments(arrow_expr, leading_comments);
+            return self.finish_expression_comments::<HAS_COMMENTS>(arrow_expr, leading_comments);
         }
 
         if kind.is_assignment_operator() {
@@ -1561,7 +1578,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 lhs_parenthesized_span,
                 allow_return_type_in_arrow_function,
             );
-            return self.finish_expression_comments(expression, leading_comments);
+            return self.finish_expression_comments::<HAS_COMMENTS>(expression, leading_comments);
         }
 
         let mut expr =
@@ -1573,16 +1590,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
         }
 
-        self.finish_expression_comments(expr, leading_comments)
+        self.finish_expression_comments::<HAS_COMMENTS>(expr, leading_comments)
     }
 
     #[inline]
-    fn finish_expression_comments(
+    fn finish_expression_comments<const HAS_COMMENTS: bool>(
         &mut self,
         expression: Expression<'a>,
         comments: Option<std::num::NonZeroU32>,
     ) -> Expression<'a> {
-        if let Some(comments) = comments {
+        if HAS_COMMENTS && let Some(comments) = comments {
             self.assign_expression_leading_comments(
                 expression.node_id(),
                 expression.span().start,
