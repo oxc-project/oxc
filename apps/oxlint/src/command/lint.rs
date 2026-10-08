@@ -309,6 +309,7 @@ impl DebugOption {
     const TIMINGS_NAME: &str = "timings";
     const TIMINGS_HELP: &str = "Enable per-rule timing information";
     const MEMORY_NAME: &str = "memory";
+    #[cfg(feature = "debug_allocs")]
     const MEMORY_HELP: &str = "Enable native per-rule allocation counts and bytes";
 }
 
@@ -345,11 +346,16 @@ impl DebugOptions {
         (DebugOption::TIMINGS_NAME, Style::Text),
         ("` - ", Style::Text),
         (DebugOption::TIMINGS_HELP, Style::Text),
-        (".\n", Style::Text),
-        ("  * `", Style::Text),
+        (".", Style::Text),
+        #[cfg(feature = "debug_allocs")]
+        ("\n  * `", Style::Text),
+        #[cfg(feature = "debug_allocs")]
         (DebugOption::MEMORY_NAME, Style::Text),
+        #[cfg(feature = "debug_allocs")]
         ("` - ", Style::Text),
+        #[cfg(feature = "debug_allocs")]
         (DebugOption::MEMORY_HELP, Style::Text),
+        #[cfg(feature = "debug_allocs")]
         (".", Style::Text),
     ];
 
@@ -372,13 +378,6 @@ impl FromStr for DebugOptions {
             && options.iter().any(|option| *option != DebugOption::Files)
         {
             return Err("debug option 'files' cannot be combined with other debug options".into());
-        }
-
-        if !cfg!(feature = "debug_allocs") && options.contains(&DebugOption::Memory) {
-            return Err(
-                "debug option 'memory' requires a profiling build: cargo build -p oxlint --release --features debug_allocs"
-                    .into(),
-            );
         }
 
         Ok(Self { options })
