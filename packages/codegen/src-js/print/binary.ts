@@ -1,6 +1,6 @@
 // Binary/logical expressions (port of `binary_expr_visitor.rs`).
 
-import { typeAssertIs } from "../asserts.ts";
+import { debugAssert, typeAssertIs } from "../asserts.ts";
 import { CAT_CLOSE_BRACKET, CAT_OTHER } from "./categories.ts";
 import { write } from "./write.ts";
 import { printPrivateInExpression, printExpression } from "./expression.ts";
@@ -17,7 +17,6 @@ import type {
   LogicalExpression,
   LogicalOperator,
   ParenthesizedExpression,
-  PrivateIdentifier,
   PrivateInExpression,
 } from "../../../../npm/oxc-types/types.d.ts";
 
@@ -49,12 +48,14 @@ interface BinaryVisitor {
  * @param state - Printer state
  * @param precedence - Precedence of the position this expression sits in, deciding parenthesisation
  * @param ctx - Context flags, carrying whether `in` is forbidden and calls are
+ * @param leftType - `node.left.type`, which the caller has already read
  */
 export function printBinaryish(
   node: BinaryExpression | LogicalExpression,
   state: State,
   precedence: number,
   ctx: number,
+  leftType: string,
 ): void {
   // The pending outer levels are threaded through `parent` rather than a separate stack array
   let v: BinaryVisitor | null = {
@@ -70,8 +71,9 @@ export function printBinaryish(
 
   // An operand can be any expression, so reading its `type` is a megamorphic load.
   // Each left operand's `type` is read once, and carried down the left spine to the next level.
+  // The root's is read by the caller, for its private-in check, and passed in as `leftType`.
   let { left } = node;
-  let leftType: (Expression | PrivateIdentifier)["type"] = left.type;
+  debugAssert(leftType === left.type, "`leftType` must be the `type` of `node.left`");
 
   // At the top of each iteration, `left` is `v.e.left`, and `leftType` is its `type`
   for (;;) {

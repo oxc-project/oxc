@@ -110,17 +110,22 @@ export function printExpression(
     case "Literal":
       printLiteral(node, state, precedence, ctx);
       break;
-    case "BinaryExpression":
-      if (node.left.type === "PrivateIdentifier") {
+    case "BinaryExpression": {
+      // `node.left` can be any expression, so reading its `type` is a megamorphic load.
+      // Read it once here, for both the private-in check and `printBinaryish`.
+      const leftType = node.left.type;
+      if (leftType === "PrivateIdentifier") {
         typeAssertIs<ESTree.PrivateInExpression>(node);
         printPrivateInExpression(node, state, precedence);
       } else {
         typeAssertIs<ESTree.BinaryExpression>(node);
-        printBinaryish(node, state, precedence, ctx);
+        printBinaryish(node, state, precedence, ctx, leftType);
       }
       break;
+    }
     case "LogicalExpression":
-      printBinaryish(node, state, precedence, ctx);
+      // The left operand of a logical expression can't be a private name, so no private-in check
+      printBinaryish(node, state, precedence, ctx, node.left.type);
       break;
     case "ObjectExpression":
       printObjectExpression(node, state);
