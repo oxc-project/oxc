@@ -37,3 +37,12 @@ const outer = /** @type {U} */ (/** @type {T} */ (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = /** @type {T} */ (cccccccccccccccc = /** @type {S} */ (dddddddddddddddd = eeeeeeeeeeeeeeee));
 // A chain inside a call-argument cast with doubled source parens.
 foo(/** @type {T} */ ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = cccccccccccccccc)));
+
+// Arrow body: a cast-wrapped object / array body is not hugged and goes on its own line.
+const [api] = useState(() => /** @type {Api} */ ({ setBlocker(id) { record(id); }, }));
+foo(() => /** @type {T[]} */ ([aaaaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, ccccccccccccccccccccccc]));
+foo((a) => (b) => /** @type {Api} */ ({ setBlocker(id) { record(id); }, }));
+const chain = (a) => (b) => /** @type {Api} */ ({ setBlocker(id) { record(id); }, });
+// A plain comment keeps the hug; a short cast body fits inline.
+foo(() => /* c */ ({ setBlocker(id) { record(id); }, }));
+const short_body = () => /** @type {Api} */ ({ a: 1 });

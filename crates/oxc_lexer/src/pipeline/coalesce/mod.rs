@@ -1,23 +1,29 @@
+use std::{ptr, slice};
+
 use crate::{
-    error::diag_code,
+    error::DiagCode,
     lanes::Lanes,
-    opmap::{KwSet, OP_QDOT},
-    tables::{Tables, is_digit, is_op_char, is_word, is_ws},
+    token::{TokenKind, tk},
 };
 
-use super::{
-    NUM,
+use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
-    find::scan_number,
-    regex_div::{gt_run_split, lt_run_split},
+    bytes::{is_digit, is_word, is_ws},
+    disambiguate::{gt_run_split, lt_run_split},
+    operators::{is_op_char, opmap_longest, opmap_pack2, opmap_pack3},
+    scan::scan_number,
+    token_view,
 };
 
 mod keywords;
 pub use keywords::KWB;
-use keywords::kw_flush;
+use keywords::{kw_flush, kw_match_word};
 
+/// [`glue_number`] computes the kind as `NUM + is_bigint` - keep them adjacent.
+const _: () = assert!(tk!(BigInt) == tk!(Number) + 1);
+
+#[inline(never)]
 pub unsafe fn coalesce(
-    t: &Tables,
     src: *const u8,
     n: usize,
     st: *mut u64,
@@ -31,7 +37,7 @@ pub unsafe fn coalesce(
     ts: bool,
     lanes: &mut Lanes,
 ) {
-    let kw = if ts { &t.kwts } else { &t.kwjs };
+    lanes.disambiguate.restart(lanes.module);
     let nw = (n + 63) >> 6;
     let mut opprev: u64 = 0;
     let mut dtprev: u64 = 0;
@@ -120,40 +126,64 @@ pub unsafe fn coalesce(
                         continue;
                     }
                 }
-                cursor = glue_number(t, kw, src, n, st, opch, word, kind, p, lanes);
+                cursor = glue_number(ts, src, n, st, opch, word, kind, p, lanes);
             } else {
                 let y2 = (op >> bit) | ((opnext << (63 - bit)) << 1);
                 let run = (!y2).trailing_zeros() as usize;
-                let q = core::ptr::read_unaligned(src.add(p) as *const u32);
+                let q = ptr::read_unaligned(src.add(p) as *const u32);
                 let b0 = q as u8;
                 let b1 = (q >> 8) as u8;
                 // In TS, `>` may close nested type args including `Foo<T>= 1`, so fusing can diverge.
                 // Cheap inline byte checks handle this
                 if b0 == b'>'
-                    && kw.ts_key
+                    && ts
                     && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1))))
                 {
-                    let g = gt_run_split(t, src, st, opch, kind, n, p, run);
+                    let kw_final = (w & !(KWB - 1)) << 6;
+                    let tokens = token_view(
+                        src,
+                        st,
+                        opch,
+                        kind,
+                        n,
+                        true,
+                        kw_final,
+                        lanes.module,
+                        &lanes.disambiguate.brackets,
+                        &lanes.disambiguate.closers,
+                    );
+                    let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, p, run);
                     if g != 0 {
                         // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
-                        cursor = munch_walk(t, src, n, st, opch, kind, p + g);
+                        cursor = munch_walk(src, n, st, opch, kind, p + g);
                         continue;
                     }
                 }
                 // Mirror case: `Array<<T>(x: T) => T>` opens two lists, not `<<` shift-left.
-                if b0 == b'<' && b1 == b'<' && kw.ts_key {
-                    if lt_run_split(src, st, opch, kind, n, p) {
-                        cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
+                if b0 == b'<' && b1 == b'<' && ts {
+                    let tokens = token_view(
+                        src,
+                        st,
+                        opch,
+                        kind,
+                        n,
+                        true,
+                        0,
+                        lanes.module,
+                        &lanes.disambiguate.brackets,
+                        &lanes.disambiguate.closers,
+                    );
+                    if lt_run_split(&tokens, p) {
+                        cursor = munch_walk(src, n, st, opch, kind, p + 2);
                         continue;
                     }
                 }
                 if run == 2 {
-                    let key = (q & 0xFFFF) | (2u32 << 24);
-                    let pack = t.op2_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                    let want = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
-                    let mut ok = ((pack ^ want) & 0x00FF_FFFF) == 0;
+                    let key = q & 0xFFFF;
+                    let pack = opmap_pack2(key);
+                    let mut ok = pack as u16 == q as u16;
                     let kk = (pack >> 24) as u8;
-                    ok &= !((kk == OP_QDOT) && is_digit((q >> 16) as u8));
+                    ok &= !((kk == tk!(OptionalChain)) && is_digit((q >> 16) as u8));
                     let hm: u8 = 0u8.wrapping_sub(ok as u8);
                     *kind.add(p) = (*kind.add(p) & !hm) | (kk & hm);
                     let clr = (ok as u64) << ((p + 1) & 63);
@@ -162,55 +192,49 @@ pub unsafe fn coalesce(
                     continue;
                 }
                 if run > 3 {
-                    cursor = munch_walk(t, src, n, st, opch, kind, p);
+                    cursor = munch_walk(src, n, st, opch, kind, p);
                     continue;
                 }
                 let b2 = (q >> 16) as u8;
-                let key3 = (q & 0xFF_FFFF) | (3u32 << 24);
-                let p3 = t.op3_pack[(key3.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                let want3 = 3u64 | ((b0 as u64) << 8) | ((b1 as u64) << 16) | ((b2 as u64) << 24);
-                let ok3 = ((p3 ^ want3) & 0xFFFF_FFFF) == 0;
-                let key2a = (q & 0xFFFF) | (2u32 << 24);
-                let pa = t.op2_pack[(key2a.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                let wanta = 2u32 | ((b0 as u32) << 8) | ((b1 as u32) << 16);
+                let key3 = q & 0xFF_FFFF;
+                let p3 = opmap_pack3(key3);
+                let ok3 = ((p3 ^ q) & 0xFF_FFFF) == 0;
+                let key2a = q & 0xFFFF;
+                let pa = opmap_pack2(key2a);
                 let ka = (pa >> 24) as u8;
-                let mut ok2a = ((pa ^ wanta) & 0x00FF_FFFF) == 0;
-                ok2a &= !((ka == OP_QDOT) && is_digit(b2));
-                let key2b = ((q >> 8) & 0xFFFF) | (2u32 << 24);
-                let pb = t.op2_pack[(key2b.wrapping_mul(t.op.opmap_mul) >> 24) as usize];
-                let wantb = 2u32 | ((b1 as u32) << 8) | ((b2 as u32) << 16);
+                let mut ok2a = pa as u16 == q as u16;
+                ok2a &= !((ka == tk!(OptionalChain)) && is_digit(b2));
+                let key2b = key3 >> 8;
+                let pb = opmap_pack2(key2b);
                 let kb = (pb >> 24) as u8;
-                let mut ok2b = ((pb ^ wantb) & 0x00FF_FFFF) == 0;
-                ok2b &= !((kb == OP_QDOT) && is_digit((q >> 24) as u8));
-                let sel3 = ok3;
-                let sel2a = !ok3 && ok2a;
-                let sel2b = !ok3 && !ok2a && ok2b;
-                let m0: u8 = 0u8.wrapping_sub((sel3 || sel2a) as u8);
-                let k0v: u8 = if sel3 { (p3 >> 32) as u8 } else { ka };
+                let mut ok2b = pb as u16 == key2b as u16;
+                ok2b &= !((kb == tk!(OptionalChain)) && is_digit((q >> 24) as u8));
+                let c1 = ok3 | ok2a; // token at `p` is 2+ bytes
+                let sel2b = !c1 & ok2b; // 2-byte token starts at `p + 1`
+                let c2 = ok3 | sel2b; // `p + 2` is not a token start
+                let m0: u8 = 0u8.wrapping_sub(c1 as u8);
+                let k0v: u8 = if ok3 { (p3 >> 24) as u8 } else { ka };
                 *kind.add(p) = (*kind.add(p) & !m0) | (k0v & m0);
                 let m1: u8 = 0u8.wrapping_sub(sel2b as u8);
                 *kind.add(p + 1) = (*kind.add(p + 1) & !m1) | (kb & m1);
-                let clr1 = ((sel3 || sel2a) as u64) << ((p + 1) & 63);
+                let clr1 = (c1 as u64) << ((p + 1) & 63);
                 *st.add((p + 1) >> 6) &= !clr1;
-                let clr2 = ((sel3 || sel2b) as u64) << ((p + 2) & 63);
+                let clr2 = (c2 as u64) << ((p + 2) & 63);
                 *st.add((p + 2) >> 6) &= !clr2;
-                let mut adv = if sel3 { 3 } else { run - 1 };
-                adv = if sel2a { 2 } else { adv };
-                adv = if sel2b { 3 } else { adv };
-                cursor = p + adv;
+                // `run == 3` in this arm
+                cursor = p + 2 + c2 as usize;
             }
         }
         if w & (KWB - 1) == KWB - 1 {
-            kw_flush(kw, src, word, kind, kwpos, k);
+            kw_flush(ts, src, word, kind, kwpos, k);
             k = 0;
         }
     }
-    kw_flush(kw, src, word, kind, kwpos, k);
+    kw_flush(ts, src, word, kind, kwpos, k);
 }
 
 unsafe fn glue_number(
-    t: &Tables,
-    kw: &KwSet,
+    ts: bool,
     src: *const u8,
     n: usize,
     st: *mut u64,
@@ -222,7 +246,7 @@ unsafe fn glue_number(
 ) -> usize {
     loop {
         let e2 = scan_number(src, n, p);
-        *kind.add(p) = NUM + (*src.add(e2 - 1) == b'n') as u8;
+        *kind.add(p) = tk!(Number) + (*src.add(e2 - 1) == b'n') as u8;
         if e2 > p + 1 {
             bm_clear_range(st, p + 1, e2 - 1);
             bm_clear_range(opch, p, e2 - 1);
@@ -236,14 +260,14 @@ unsafe fn glue_number(
         // is a spec-invalid adjacency. Never true on valid input, so the
         // whole arm is cold.
         if is_word(c) {
-            let srcs = core::slice::from_raw_parts(src, n);
+            let srcs = slice::from_raw_parts(src, n);
             if c < 0x80 {
                 // A surviving `n` is a misplaced bigint suffix; scan_number
                 // consumes legal ones. Token spans are unchanged either way.
                 let code = if c == b'n' {
-                    diag_code::INVALID_BIGINT
+                    DiagCode::InvalidBigint
                 } else {
-                    diag_code::INVALID_NUMERIC_LITERAL
+                    DiagCode::InvalidNumericLiteral
                 };
                 lanes.push_num_end_diag(srcs, e2, code);
                 if is_digit(c) {
@@ -258,10 +282,8 @@ unsafe fn glue_number(
                 // word bitmap, no match right after a member `.` (a number
                 // ending in `.` is that dot-run's first dot).
                 if *src.add(e2 - 1) != b'.' {
-                    let wb = word as *const u8;
-                    let x = core::ptr::read_unaligned(wb.add(e2 >> 3) as *const u64) >> (e2 & 7);
-                    let kk = kw.lookup(src.add(e2), (!x).trailing_zeros() as usize);
-                    if kk != 0 {
+                    let kk = kw_match_word(ts, src, word, e2);
+                    if kk != TokenKind::Ident {
                         *kind.add(e2) = kk as u8;
                     }
                 }
@@ -274,16 +296,30 @@ unsafe fn glue_number(
         if e2 + 1 < n && is_op_char(c) && bm_get(opch, e2 + 1) {
             // A numeric literal type ends its type argument list here (`Map<A, 1.5>>`); without this the number's own munch
             // reaches the `>` run before `coalesce` ever raises it as an event.
-            if c == b'>' && kw.ts_key && matches!(*src.add(e2 + 1), b'>' | b'=') {
+            if c == b'>' && ts && matches!(*src.add(e2 + 1), b'>' | b'=') {
                 let end = bm_next0(opch, e2, n);
-                let g = gt_run_split(t, src, st, opch, kind, n, e2, end - e2);
+                // Keyword kinds are final only below this window's batch.
+                let kw_final = ((e2 >> 6) & !(KWB - 1)) << 6;
+                let tokens = token_view(
+                    src,
+                    st,
+                    opch,
+                    kind,
+                    n,
+                    true,
+                    kw_final,
+                    lanes.module,
+                    &lanes.disambiguate.brackets,
+                    &lanes.disambiguate.closers,
+                );
+                let g = gt_run_split(&tokens, &mut lanes.disambiguate.walks, e2, end - e2);
                 if g != 0 {
                     // The split `>`s stay single tokens, but whatever borders on them is still an operator run and has to be
                     // munched, or a following `&&` / `??` / `**` is emitted a byte at a time.
-                    return munch_walk(t, src, n, st, opch, kind, e2 + g);
+                    return munch_walk(src, n, st, opch, kind, e2 + g);
                 }
             }
-            let q = munch_walk(t, src, n, st, opch, kind, e2);
+            let q = munch_walk(src, n, st, opch, kind, e2);
             if q < n && *src.add(q) == b'.' && is_digit(*src.add(q + 1)) && bm_get(st, q) {
                 p = q;
                 continue;
@@ -294,8 +330,9 @@ unsafe fn glue_number(
     }
 }
 
+// Cold path; kept out of line so it does not slow the coalesce loop.
+#[inline(never)]
 unsafe fn munch_walk(
-    t: &Tables,
     src: *const u8,
     n: usize,
     st: *mut u64,
@@ -307,24 +344,9 @@ unsafe fn munch_walk(
     while end - pos >= 2 {
         bm_set(st, pos);
         let rem = end - pos;
-        let lmax: u32 = if rem < 4 { rem as u32 } else { 4 };
-        let b0 = *src.add(pos);
-        let b1 = *src.add(pos + 1);
-        let b2 = *src.add(pos + 2);
-        let b3 = *src.add(pos + 3);
-        let mut opk: u32 = 0;
-        let mut opl: u32 = 0;
-        let mut l = lmax;
-        while l >= 2 {
-            let k = t.op.opmap_lookup(b0, b1, b2, b3, l);
-            if k != 0 && !(k == OP_QDOT as u32 && pos + 2 < n && is_digit(*src.add(pos + 2))) {
-                opk = k;
-                opl = l;
-                break;
-            }
-            l -= 1;
-        }
-        if opk != 0 {
+        let bytes = *src.add(pos).cast::<[u8; 4]>();
+        let (opk, opl) = opmap_longest(bytes, rem as u32);
+        if let Some(opk) = opk {
             *kind.add(pos) = opk as u8;
             let mut j = 1usize;
             while j < opl as usize {
@@ -344,12 +366,23 @@ unsafe fn munch_walk(
 
 #[inline(always)]
 fn prefetch(p: *const u8) {
-    #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+    #[cfg(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ))]
     unsafe {
-        core::arch::x86_64::_mm_prefetch(p as *const i8, core::arch::x86_64::_MM_HINT_T0)
+        use std::arch::x86_64;
+        x86_64::_mm_prefetch(p as *const i8, x86_64::_MM_HINT_T0)
     }
 
-    #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    )))]
     {
         // No-op
         let _ = p;

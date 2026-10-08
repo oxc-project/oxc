@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.69.0] - 2026-09-21
+
+### 📚 Documentation
+
+- 97dc427 formatter_graphql: Unify DIVERGENCES reference (#26747) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- dc45cc3 formatter_test: Test Prettier dynamic snippet tests (#26469) (leaysgur)
+
 ## [0.67.0] - 2026-09-07
 
 ### 🐛 Bug Fixes

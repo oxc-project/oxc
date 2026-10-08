@@ -1,3 +1,0 @@
-# Oxc Type Checker
-
-Experimental.

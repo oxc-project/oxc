@@ -6,10 +6,9 @@
 //! * The [`DisplayDocument`] wrapper exposed via [`Document::display`].
 //!
 //! The rendering is language-agnostic and works with any `C: FormatContext`.
-//! Languages that support Tailwind sorting can override
-//! [`FormatContext::get_tailwind_class`] to surface class names; languages
-//! without Tailwind support get the default `None` and an `<UNKNOWN_TAILWIND_CLASS_INDEX<..>>`
-//! marker if a `FormatElement::TailwindClass` ever appears.
+//! [`DisplayDocument`] surfaces class names through its `SimpleFormatContext`
+//! ([`FormatContext::get_tailwind_class`], fed from the document's sorted classes);
+//! a context returning the default `None` prints an `<UNKNOWN_TAILWIND_CLASS_INDEX<..>>` marker.
 
 #![expect(clippy::mutable_key_type)]
 
@@ -91,9 +90,10 @@ where
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, EndPrefix,
+            StartAlign, StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup,
+            StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            StartPrefix,
         };
 
         w!(f, [ContentArrayStart]);
@@ -322,6 +322,23 @@ where
                             );
                         }
 
+                        StartPrefix(prefix) => {
+                            let (name, arg) = if prefix.is_spaces() {
+                                ("space_align(", prefix.text().len().to_string())
+                            } else {
+                                ("prefix_align(", format!("{:?}", prefix.text()))
+                            };
+                            w!(
+                                f,
+                                [
+                                    token(name),
+                                    text(f.allocator().alloc_str(&arg)),
+                                    token(","),
+                                    space(),
+                                ]
+                            );
+                        }
+
                         StartLineSuffix => {
                             w!(f, [token("line_suffix(")]);
                         }
@@ -423,6 +440,7 @@ where
                         | EndConditionalContent
                         | EndIndentIfGroupBreaks(_)
                         | EndAlign
+                        | EndPrefix
                         | EndIndent
                         | EndGroup
                         | EndLineSuffix

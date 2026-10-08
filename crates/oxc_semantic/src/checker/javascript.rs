@@ -2,9 +2,9 @@ use memchr::memchr_iter;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_allocator::GetAddress;
-use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
+use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
-use oxc_span::{GetSpan, ModuleKind, Span, best_match};
+use oxc_span::{Span, best_match};
 use oxc_str::Ident;
 use oxc_syntax::{
     class::{ClassId, ElementKind},
@@ -519,44 +519,6 @@ pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
         if !params.is_simple_parameter_list())
     {
         ctx.error(diagnostics::illegal_use_strict(directive.span));
-    }
-}
-
-pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuilder<'_>) {
-    // It is ambiguous between script and module for `TypeScript`, skipping this check for now.
-    // Basically we need to "upgrade" from script to module if we see any module syntax inside the
-    // semantic builder
-    if ctx.source_type.is_typescript() {
-        return;
-    }
-
-    let text = match decl {
-        ModuleDeclarationKind::Import(_) => "import statement",
-        ModuleDeclarationKind::ExportAll(_)
-        | ModuleDeclarationKind::Export(_)
-        | ModuleDeclarationKind::ExportDefault(_)
-        | ModuleDeclarationKind::ExportNamed(_)
-        | ModuleDeclarationKind::ExportFrom(_)
-        | ModuleDeclarationKind::TSExportAssignment(_)
-        | ModuleDeclarationKind::TSNamespaceExport(_) => "export statement",
-    };
-    let start = decl.span().start;
-    let span = Span::sized(start, 6);
-    match ctx.source_type.module_kind() {
-        ModuleKind::Unambiguous => {
-            #[cfg(debug_assertions)]
-            panic!("Technically unreachable, omit to avoid panic.");
-        }
-        // CommonJS uses require/module.exports, not import/export statements
-        ModuleKind::Script | ModuleKind::CommonJS => {
-            ctx.error(diagnostics::module_code(text, span));
-        }
-        ModuleKind::Module => {
-            if matches!(ctx.ancestry().parent_kind(), AstKind::Program(_)) {
-                return;
-            }
-            ctx.error(diagnostics::top_level(text, span));
-        }
     }
 }
 

@@ -114,8 +114,8 @@ impl<'a> TriviaBuilder<'a> {
         self.irregular_whitespaces.push(Span::new(start, end));
     }
 
-    pub fn add_line_comment(&mut self, start: u32, end: u32, source_text: &str) {
-        self.add_comment(Comment::new(start, end, CommentKind::Line), source_text);
+    pub fn add_line_comment(&mut self, start: u32, end: u32, kind: CommentKind, source_text: &str) {
+        self.add_comment(Comment::new(start, end, kind), source_text);
     }
 
     pub fn add_block_comment(
@@ -667,6 +667,21 @@ token /* Trailing 1 */
     }
 
     #[test]
+    fn html_comment_content() {
+        let allocator = Allocator::default();
+        let source = "<!--a\n-->\n<!--";
+        let ret = Parser::new(&allocator, source, SourceType::script()).parse();
+        assert!(ret.diagnostics.is_empty());
+        assert_eq!(ret.program.comments.len(), 3);
+        let expected = [(Span::new(0, 5), "a"), (Span::new(6, 9), ""), (Span::new(10, 14), "")];
+        for (comment, (span, content)) in ret.program.comments.iter().zip(expected) {
+            assert!(comment.is_line());
+            assert_eq!(comment.span, span);
+            assert_eq!(comment.content_span().source_text(source), content);
+        }
+    }
+
+    #[test]
     fn html_close_comments_after_irregular_line_terminators_are_leading() {
         for line_terminator in ['\u{2028}', '\u{2029}'] {
             let allocator = Allocator::default();
@@ -1097,6 +1112,29 @@ function bar() {}";
         for source_text in cases {
             let comments = get_comments(source_text);
             assert_eq!(comments[0].content, CommentContent::NoSideEffects, "{source_text}");
+        }
+    }
+
+    #[test]
+    fn block_comment_line_terminators() {
+        for (separator, kind) in [
+            ("\u{2028}", CommentKind::MultiLineBlock),
+            ("\u{2029}", CommentKind::MultiLineBlock),
+            ("\n", CommentKind::MultiLineBlock),
+            ("\r", CommentKind::MultiLineBlock),
+            ("\r\n", CommentKind::MultiLineBlock),
+            ("", CommentKind::SingleLineBlock),
+            ("\u{2027}", CommentKind::SingleLineBlock),
+            ("\u{202a}", CommentKind::SingleLineBlock),
+            ("\u{00a0}", CommentKind::SingleLineBlock),
+        ] {
+            // A newline before the comment must not affect its kind.
+            for prefix in ["", "let a;", "let a;\n"] {
+                let source = format!("{prefix}/* first{separator}second */ let b;");
+                let comments = get_comments(&source);
+                assert_eq!(comments.len(), 1, "{source:?}");
+                assert_eq!(comments[0].kind, kind, "{source:?}");
+            }
         }
     }
 

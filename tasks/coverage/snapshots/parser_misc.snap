@@ -1,7 +1,40 @@
 parser_misc Summary:
-AST Parsed     : 98/98 (100.00%)
-Positive Passed: 98/98 (100.00%)
-Negative Passed: 201/201 (100.00%)
+AST Parsed     : 113/113 (100.00%)
+Positive Passed: 113/113 (100.00%)
+Negative Passed: 249/249 (100.00%)
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
+ 1 │ abstract class C { abstract accessor x(): void; }
+   ·                             ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-async-method.ts:1:11]
+ 1 │ class C { accessor async x() {} }
+   ·           ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-getter.ts:1:18]
+ 1 │ class C { static accessor get x() { return 0; } }
+   ·                  ────────
+   ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-method.ts:1:18]
+ 1 │ class C { static accessor x() {} }
+   ·                  ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-setter.ts:1:18]
+ 1 │ class C { static accessor set x(value: number) {} }
+   ·                  ────────
+   ╰────
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -375,6 +408,57 @@ Negative Passed: 201/201 (100.00%)
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
+  × TS(1093): Type annotation cannot appear on a constructor declaration.
+   ╭─[misc/fail/constructor-overload-return-type.ts:2:18]
+ 1 │ class C {
+ 2 │   constructor(): C;
+   ·                  ─
+ 3 │   constructor() {}
+   ╰────
+
+  × Expected `)` but found `:`
+   ╭─[misc/fail/contextual-binding-lookahead-function-reserved.ts:1:15]
+ 1 │ let fn: (break: number) => void;
+   ·               ┬
+   ·               ╰── `)` expected
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:2:18]
+ 1 │ function* generatorInterface() {
+ 2 │   interface I { [yield: string]: unknown }
+   ·                  ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:5:14]
+ 4 │ function* generatorClass() {
+ 5 │   class C { [yield: string]: unknown }
+   ·              ─────
+ 6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:8:14]
+ 7 │ async function asyncClass() {
+ 8 │   class C { [await: string]: unknown }
+   ·              ─────
+ 9 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/contextual-binding-lookahead-index-modifier.ts:1:23]
+ 1 │ interface I { [public await: string]: unknown }
+   ·                       ─────
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/contextual-binding-lookahead-index-reserved.ts:1:16]
+ 1 │ interface I { [break: string]: unknown }
+   ·                ─────
+   ╰────
+
   × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
    ╭─[misc/fail/continue-label-chain-non-iteration.js:1:1]
  1 │ a: b: {
@@ -383,6 +467,14 @@ Negative Passed: 201/201 (100.00%)
  2 │     continue a;
    ·              ┬
    ·              ╰── for this label
+ 3 │ }
+   ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+   ╭─[misc/fail/decorated-export-in-block.mjs:2:8]
+ 1 │ {
+ 2 │   @dec export class C {}
+   ·        ──────
  3 │ }
    ╰────
 
@@ -442,6 +534,36 @@ Negative Passed: 201/201 (100.00%)
    ·                         ─────
    ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:1:8]
+ 1 │ import s\u006furce wasm from "m";
+   ·        ───────────
+ 2 │ import d\u0065fer * as ns from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:2:8]
+ 1 │ import s\u006furce wasm from "m";
+ 2 │ import d\u0065fer * as ns from "m";
+   ·        ──────────
+ 3 │ import source fr\u006fm "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:3:15]
+ 2 │ import d\u0065fer * as ns from "m";
+ 3 │ import source fr\u006fm "m";
+   ·               ─────────
+ 4 │ import s\u006furce from from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:4:8]
+ 3 │ import source fr\u006fm "m";
+ 4 │ import s\u006furce from from "m";
+   ·        ───────────
+   ╰────
 
   × Keywords cannot contain escape characters
    ╭─[misc/fail/escaped-type-import.ts:1:8]
@@ -605,6 +727,25 @@ Negative Passed: 201/201 (100.00%)
    ·                ──
    ╰────
 
+  × An export name cannot include a unicode lone surrogate
+   ╭─[misc/fail/export-name-lone-surrogate-from.js:1:10]
+ 1 │ export { "\uDC00" as y } from "m";
+   ·          ────────
+   ╰────
+
+  × An export name cannot include a unicode lone surrogate
+   ╭─[misc/fail/export-name-lone-surrogate-star.js:1:13]
+ 1 │ export * as "\uD800" from "m";
+   ·             ────────
+   ╰────
+
+  × An export name cannot include a unicode lone surrogate
+   ╭─[misc/fail/export-name-lone-surrogate.js:2:15]
+ 1 │ const x = 1;
+ 2 │ export { x as "\uD800" };
+   ·               ────────
+   ╰────
+
   × The left-hand side of a for...in statement cannot be an await using declaration.
    ╭─[misc/fail/for-await-using-in-initializer.js:2:8]
  1 │ async function f() {
@@ -622,6 +763,27 @@ Negative Passed: 201/201 (100.00%)
    ·       │                      ╰── `)` expected
    ·       ╰── Opened here
  3 │ }
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x = 0;;);
+   ·               ┬
+   ·               ╰── `;` expected
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-in-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x in {});
+   ·               ┬
+   ·               ╰── `;` expected
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-of-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x of []);
+   ·               ┬
+   ·               ╰── `;` expected
    ╰────
 
   × The left-hand side of a for...in statement cannot be an using declaration.
@@ -801,6 +963,62 @@ Negative Passed: 201/201 (100.00%)
    ·                  ╰── `from` expected
    ╰────
 
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-abstract-type-require.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ abstract import type X = require("external");
+   · ────────
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-abstract.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ abstract import X = A.B;
+   · ────────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-declare-abstract.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ declare abstract import X = A.B;
+   · ───────
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-declare-abstract.ts:2:9]
+ 1 │ namespace A { export class B {} }
+ 2 │ declare abstract import X = A.B;
+   ·         ────────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-declare-require.ts:2:1]
+ 1 │ namespace A { export class B {} }
+ 2 │ declare import X = require("external");
+   · ───────
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[misc/fail/import-equals-modifier-export-abstract.ts:2:8]
+ 1 │ namespace A { export class B {} }
+ 2 │ export abstract import X = A.B;
+   ·        ────────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-export-declare-type-require.ts:2:8]
+ 1 │ namespace A { export class B {} }
+ 2 │ export declare import type X = require("external");
+   ·        ───────
+   ╰────
+
+  × TS(1079): A 'declare' modifier cannot be used with an import declaration.
+   ╭─[misc/fail/import-equals-modifier-export-declare.ts:2:8]
+ 1 │ namespace A { export class B {} }
+ 2 │ export declare import X = A.B;
+   ·        ───────
+   ╰────
+
   × Identifier expected. 'this' is a reserved word that cannot be used here.
    ╭─[misc/fail/import-equals-this.ts:2:12]
  1 │ // `this` is not valid in import equals declaration
@@ -813,6 +1031,12 @@ Negative Passed: 201/201 (100.00%)
  1 │ import from 'module';
    ·             ────┬───
    ·                 ╰── `from` expected
+   ╰────
+
+  × An export name cannot include a unicode lone surrogate
+   ╭─[misc/fail/import-name-lone-surrogate.js:1:10]
+ 1 │ import { "\uD800" as y } from "m";
+   ·          ────────
    ╰────
 
   × Expected `from` but found `Identifier`
@@ -931,6 +1155,40 @@ Negative Passed: 201/201 (100.00%)
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:1:5]
+ 1 │ <A>{a, b}</A>;
+   ·     ────
+ 2 │ <A x={a, b} />;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:2:7]
+ 1 │ <A>{a, b}</A>;
+ 2 │ <A x={a, b} />;
+   ·       ────
+ 3 │ <A>{(a, b), c}</A>;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:3:5]
+ 2 │ <A x={a, b} />;
+ 3 │ <A>{(a, b), c}</A>;
+   ·     ─────────
+ 4 │ <A x={(a, b), c} />;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:4:7]
+ 3 │ <A>{(a, b), c}</A>;
+ 4 │ <A x={(a, b), c} />;
+   ·       ─────────
+   ╰────
+  help: Did you mean to write an array?
+
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:4:1]
  3 │ 
@@ -1028,15 +1286,6 @@ Negative Passed: 201/201 (100.00%)
    ·                      │               ╰── It can not be redeclared here
    ·                      ╰── `b` has already been declared here
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/oxc-10503.ts:4:6]
- 3 │ 
- 4 │ await using
-   ·      ▲
- 5 │ foo = bar();
-   ╰────
-  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[misc/fail/oxc-10638.js:2:1]
@@ -4400,6 +4649,121 @@ Negative Passed: 201/201 (100.00%)
  7 │ }
    ╰────
 
+  × TS(8009): The 'declare' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-declare.js:2:3]
+ 1 │ class A {
+ 2 │   declare y;
+   ·   ───────
+ 3 │ }
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/oxc-27290-escaped.js:2:3]
+ 1 │ class A {
+ 2 │   pr\u0069vate x;
+   ·   ────────────
+ 3 │   publ\u0069c f() {}
+   ╰────
+
+  × TS(8009): The 'private' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-escaped.js:2:3]
+ 1 │ class A {
+ 2 │   pr\u0069vate x;
+   ·   ───────
+ 3 │   publ\u0069c f() {}
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/oxc-27290-escaped.js:3:3]
+ 2 │   pr\u0069vate x;
+ 3 │   publ\u0069c f() {}
+   ·   ───────────
+ 4 │ }
+   ╰────
+
+  × TS(8009): The 'public' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-escaped.js:3:3]
+ 2 │   pr\u0069vate x;
+ 3 │   publ\u0069c f() {}
+   ·   ──────
+ 4 │ }
+   ╰────
+
+  × TS(8009): The 'private' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-private.js:2:3]
+ 1 │ class A {
+ 2 │   private g() {}
+   ·   ───────
+ 3 │ }
+   ╰────
+
+  × TS(8009): The 'protected' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-protected.js:2:3]
+ 1 │ class A {
+ 2 │   protected f() {}
+   ·   ─────────
+ 3 │ }
+   ╰────
+
+  × TS(8009): The 'readonly' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-readonly.js:2:3]
+ 1 │ class A {
+ 2 │   readonly x = 1;
+   ·   ────────
+ 3 │ }
+   ╰────
+
+  × TS(1028): Accessibility modifier already seen.
+   ╭─[misc/fail/oxc-27290-repeated.js:2:11]
+ 1 │ class A {
+ 2 │   private private x = 1;
+   ·           ───────
+ 3 │   public public f() {}
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(8009): The 'private' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-repeated.js:2:11]
+ 1 │ class A {
+ 2 │   private private x = 1;
+   ·           ───────
+ 3 │   public public f() {}
+   ╰────
+
+  × TS(1028): Accessibility modifier already seen.
+   ╭─[misc/fail/oxc-27290-repeated.js:3:10]
+ 2 │   private private x = 1;
+ 3 │   public public f() {}
+   ·          ──────
+ 4 │   readonly readonly y = 1;
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(8009): The 'public' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-repeated.js:3:10]
+ 2 │   private private x = 1;
+ 3 │   public public f() {}
+   ·          ──────
+ 4 │   readonly readonly y = 1;
+   ╰────
+
+  × TS(1030): 'readonly' modifier already seen.
+   ╭─[misc/fail/oxc-27290-repeated.js:4:12]
+ 3 │   public public f() {}
+ 4 │   readonly readonly y = 1;
+   ·            ────────
+ 5 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(8009): The 'readonly' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-repeated.js:4:12]
+ 3 │   public public f() {}
+ 4 │   readonly readonly y = 1;
+   ·            ────────
+ 5 │ }
+   ╰────
+
   × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]
  1 │ m< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< mm< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< m$<{3[  $<{3[ m< m$<{3[
@@ -4569,13 +4933,14 @@ Negative Passed: 201/201 (100.00%)
    ╰────
   help: Remove the `?`
 
-  × Unexpected token
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/oxc-5955-2.ts:3:8]
  2 │ interface B {
  3 │     e()?: number;
-   ·        ─
+   ·        ▲
  4 │ }
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1021): An index signature must have a type annotation.
    ╭─[misc/fail/oxc-5955-3.ts:2:5]
@@ -4636,6 +5001,32 @@ Negative Passed: 201/201 (100.00%)
  1 │ class A {constructor(public constructor){}}
  2 │ class B {constructor(readonly constructor){}}
    ·                               ───────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-ambient.ts:1:19]
+ 1 │ declare class C { readonly constructor(); }
+   ·                   ────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-overload.ts:2:3]
+ 1 │ class C {
+ 2 │   readonly constructor(value: number);
+   ·   ────────
+ 3 │   constructor(value: number) {}
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-quoted.ts:1:18]
+ 1 │ class C { public readonly "constructor"() {} }
+   ·                  ────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor.ts:1:11]
+ 1 │ class C { readonly constructor() {} }
+   ·           ────────
    ╰────
 
   × Invalid rest element target in destructuring assignment
@@ -4729,6 +5120,62 @@ Negative Passed: 201/201 (100.00%)
    ·                         ╰── `,` expected
    ╰────
 
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-abstract-constructor-type-colon-separator.ts:1:26]
+ 1 │ type F = abstract new () : number;
+   ·                          ┬
+   ·                          ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `number`
+   ╭─[misc/fail/ts-abstract-constructor-type-missing-separator.ts:1:27]
+ 1 │ type F = abstract new ()  number;
+   ·                           ───┬──
+   ·                              ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-abstract-constructor-type-plus-separator.ts:1:26]
+ 1 │ type F = abstract new () + number;
+   ·                          ┬
+   ·                          ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-constructor-type-colon-separator.ts:1:17]
+ 1 │ type F = new () : number;
+   ·                 ┬
+   ·                 ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `number`
+   ╭─[misc/fail/ts-constructor-type-missing-separator.ts:1:18]
+ 1 │ type F = new ()  number;
+   ·                  ───┬──
+   ·                     ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-constructor-type-plus-separator.ts:1:17]
+ 1 │ type F = new () + number;
+   ·                 ┬
+   ·                 ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-function-type-colon-separator.ts:1:13]
+ 1 │ type F = () : number;
+   ·             ┬
+   ·             ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-function-type-plus-separator.ts:1:13]
+ 1 │ type F = () + number;
+   ·             ┬
+   ·             ╰── `=>` expected
+   ╰────
+
   × TS(1009): Trailing comma not allowed.
    ╭─[misc/fail/ts-interface-invalid-heritage.ts:1:22]
  1 │ interface A extends B, {}
@@ -4750,6 +5197,41 @@ Negative Passed: 201/201 (100.00%)
  3 │ interface C extends this.D {}
    ·                     ──────
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-call-missing-separator.ts:1:20]
+ 1 │ type T = { (): void next: string };
+   ·                    ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-construct-missing-separator.ts:1:29]
+ 1 │ interface T { new (): object next: string }
+   ·                             ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-getter-missing-separator.ts:1:31]
+ 1 │ type T = { get value(): string next: string };
+   ·                               ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-method-missing-separator.ts:1:29]
+ 1 │ interface T { method(): void next: string }
+   ·                             ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-type-member-setter-missing-separator.ts:1:36]
+ 1 │ type T = { set value(value: string) next: string };
+   ·                                    ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]
@@ -4774,44 +5256,6 @@ Negative Passed: 201/201 (100.00%)
    ·                                 ▲
    ╰────
   help: Try inserting a semicolon here
-
-  × TS(1266): An optional element cannot follow a rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:1:27]
- 1 │ type OptionalAfterRest = [...a: string[], b?: number];
-   ·                           ───────┬──────  ─────┬────
-   ·                                  │             ╰── Optional element here
-   ·                                  ╰── Rest element seen here
- 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
-   ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:2:23]
- 1 │ type OptionalAfterRest = [...a: string[], b?: number];
- 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
-   ·                       ───────┬──────  ───────┬──────
-   ·                              │               ╰── Second rest element here
-   ·                              ╰── First seen here
- 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
-   ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:3:35]
- 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
- 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
-   ·                                   ─────┬─────  ───────┬──────
-   ·                                        │              ╰── Second rest element here
-   ·                                        ╰── First seen here
- 4 │ type UnnamedRestAfterNamedRest = [...a: string[], ...number[]];
-   ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[misc/fail/tuple-named-rest.ts:4:35]
- 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
- 4 │ type UnnamedRestAfterNamedRest = [...a: string[], ...number[]];
-   ·                                   ───────┬──────  ─────┬─────
-   ·                                          │             ╰── Second rest element here
-   ·                                          ╰── First seen here
-   ╰────
 
   × TS(8011): Type arguments can only be used in TypeScript files.
    ╭─[misc/fail/type-arguments-in-js.js:1:18]

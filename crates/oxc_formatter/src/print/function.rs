@@ -197,3 +197,16 @@ where
         }
     }
 }
+
+/// A bodyless function (`declare function f(): void;`, an overload, an abstract method) ends at its signature,
+/// extended over dropped source parens; one with a body has no terminator.
+pub fn function_content_end(function: &Function<'_>, f: &JsFormatter<'_, '_>) -> Option<u32> {
+    function.body.is_none().then(|| function_signature_end(function, f))
+}
+
+/// The end of a function's signature (its return type, else its parameters), extended over dropped source parens.
+pub fn function_signature_end(function: &Function<'_>, f: &JsFormatter<'_, '_>) -> u32 {
+    let signature_end =
+        function.return_type.as_ref().map_or(function.params.span.end, |rt| rt.span.end);
+    f.comments().end_including_source_parens(signature_end, function.span.end)
+}

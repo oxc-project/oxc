@@ -3,7 +3,9 @@
 // A return/throw argument's parentheses survive in the output, so comments
 // inside them stay there (moving them behind the `;` would cross the `)` and,
 // when the group breaks, a line boundary too — breaking line directives);
-// only comments after the closing paren move behind the semicolon
+// only comments after the closing paren move behind the semicolon.
+// DIVERGES: the comment inside the parens is Prettier's second-pass fixpoint,
+// printed directly; see DIVERGENCES.md#paren-comment-fixpoint
 function multiLineReturn() {
   return (
     aLongLongLongLongLongCondition &&

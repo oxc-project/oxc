@@ -1,5 +1,5 @@
-commit: be13516f
+commit: 7ab7fafa
 
 lexer_test262 Summary:
-AST Parsed     : 52086/52086 (100.00%)
-Positive Passed: 52086/52086 (100.00%)
+AST Parsed     : 52108/52108 (100.00%)
+Positive Passed: 52108/52108 (100.00%)

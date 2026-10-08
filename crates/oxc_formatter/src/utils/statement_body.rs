@@ -9,6 +9,7 @@ use crate::{
         prelude::{empty_line, format_once, hard_line_break, soft_line_indent_or_space, space},
         trivia::{FormatCommentBeforeContent, FormatLeadingComments, FormatTrailingComments},
     },
+    print::semicolon::write_suppressed_statement,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
@@ -85,6 +86,26 @@ pub fn write_node_with_terminator<'a, T>(
     if needs_flush {
         write!(f, hard_line_break());
     }
+}
+
+/// Formats a call's callee, then [`write_comments_before_opener`] for its `opener` (`?.`, `<` or `(`).
+pub struct FormatBeforeOpener<'b, T>(pub &'b T, pub u8);
+
+impl<'a, T> Format<'a, JsFormatContext<'a>> for FormatBeforeOpener<'_, T>
+where
+    T: Format<'a, JsFormatContext<'a>> + GetSpan,
+{
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        FormatNodeWithoutTrailingComments(self.0).fmt(f);
+        write_comments_before_opener(self.0.span().end, self.1, f);
+    }
+}
+
+/// Prints the pending comments before a call's `opener` (`?.`, `<` or `(`) on the callee side,
+/// the same as before a `}`-to-keyword gap's keyword ([`write_comments_between_blocks`]).
+pub fn write_comments_before_opener(start: u32, opener: u8, f: &mut JsFormatter<'_, '_>) {
+    let comments = f.context().comments().comments_before_character(start, opener);
+    write_comments_between_blocks(comments, f);
 }
 
 /// The node-less half of [`write_node_with_trailing_comments_before`]:
@@ -207,7 +228,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
                         if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
                     );
                     if is_consequent_of_if_statement_parent {
-                        write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        // A suppressed consequent still hands its terminator to the formatter
+                        if !write_suppressed_statement(self.body, f) {
+                            write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        }
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);
                         FormatTrailingComments::Comments(comments).fmt(f);

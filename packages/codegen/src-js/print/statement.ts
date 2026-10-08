@@ -639,8 +639,8 @@ function printDoWhileStatement(node: ESTree.DoWhileStatement, state: State): voi
     printBlockStatement(body, state);
     write(state, " ", CAT_OTHER);
   } else if (body.type === "EmptyStatement") {
-    printIndent(state);
     writeWithMap(state, ";\n", CAT_OTHER, body.start, body.end, body);
+    printIndent(state);
   } else {
     write(state, "\n", CAT_OTHER);
     state.indentLevel++;

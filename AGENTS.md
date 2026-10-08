@@ -48,14 +48,14 @@ Avoid editing `generated` subdirectories.
 
 ## Development Commands
 
-Prerequisites: Rust (MSRV: 1.96), Node.js, pnpm, just
+Prerequisites: Rust (MSRV: 1.97), Node.js, pnpm, just
 
 **Setup Notes:**
 
 - All tools already installed (`cargo-insta`, `typos-cli`, `cargo-shear`, `ast-grep`)
 - Rust components already installed (`clippy`, `rust-docs`, `rustfmt`)
 - Use Conventional Commits for commit messages; `.github/workflows/pr.yml` requires a scoped title like `fix(parser): handle trailing comma`
-- Run `just ready` after commits for final checks
+- Choose verification from the changed code; reserve `just ready` for an optional broad integration checkpoint as described below.
 - You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang rust -p '<pattern>'` (or set `--lang` appropriately) and avoid falling back to text-only tools like `rg` or `grep` unless I explicitly request a plain-text search.
 
 ### Essential Commands
@@ -64,7 +64,7 @@ Prerequisites: Rust (MSRV: 1.96), Node.js, pnpm, just
 just fmt             # Format code (run after modifications)
 just test            # Run unit/integration tests
 just conformance     # Run conformance tests
-just ready           # Run all checks (use after commits)
+just ready           # Optional broad integration checkpoint (see below)
 cargo lintgen        # Regenerate linter rules enum and impls after adding/modifying rules
 cargo lint-timings   # Update linter timing data after changing linter rule codegen
 
@@ -79,6 +79,14 @@ just example tool    # Run tool example (e.g., just example linter)
 ```
 
 More commands can be found in `justfile`.
+
+### Local and stacked development
+
+Before selecting verification checks, read the [verification guidance](.agents/verification.md).
+
+- Select checks from changed code and affected consumers; for a stack, use each PR's diff against its parent.
+- Reuse passing results while tested inputs remain unchanged. Reserve `just ready` for stable integration checkpoints when broad validation is needed.
+- Preserve required subsystem checks and per-PR CI; a passing stack tip does not establish that intermediate PRs pass.
 
 ## Manual Testing & Examples
 

@@ -8,7 +8,7 @@ a {
   .mixin(1) /* before */ ! /* inside */ important;
 }
 
-// DIVERGENCE (DIVERGENCES.md "less-variable-value-comments"):
+// DIVERGENCE (DIVERGENCES.md#less-variable-value-comments):
 // Prettier DROPS the comment (`@var: red ! important;`).
 @var: red ! /* Less variable */ important;
 
@@ -22,7 +22,7 @@ a {
   .mixin(1) /* before */ ! /* inside */ important;
 }
 
-// DIVERGENCE (DIVERGENCES.md "less-variable-value-comments"):
+// DIVERGENCE (DIVERGENCES.md#less-variable-value-comments):
 // Prettier DROPS the comment (`@var: red ! important;`).
 @var: red ! /* Less variable */ important;
 
@@ -35,7 +35,7 @@ a {
   .mixin(1) /* before */ ! /* inside */ important;
 }
 
-// DIVERGENCE (DIVERGENCES.md "less-variable-value-comments"):
+// DIVERGENCE (DIVERGENCES.md#less-variable-value-comments):
 // Prettier DROPS the comment (`@var: red ! important;`).
 @var: red ! /* Less variable */ important;
 

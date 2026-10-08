@@ -1,4 +1,4 @@
-# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting).
+# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting); see DIVERGENCES.md#tab-width-zero
 map:
   key: value
   block: |

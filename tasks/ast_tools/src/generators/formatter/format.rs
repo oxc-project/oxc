@@ -4,10 +4,9 @@
 //!
 //! - The node lists here decide which fragments of the `fmt` skeleton are EMITTED (comment-printing ownership, parentheses frames)
 //!   - they change the shape of the generated code, nothing else
-//! - Behavior the skeleton queries per node lives on `FormatWrite` (`write`, `suppressed_span`, `write_suppressed`)
+//! - Behavior the skeleton queries per node lives on `FormatWrite` (`write`, `leading_comments_start`)
 //!   - defaults cover the common case, overrides sit next to the node's `write` and need no regeneration
-//!   - EXCEPT: expression-shaped nodes bypass `write_suppressed` entirely
-//!     (their suppressed path goes to `write_suppressed_expression`, see below),
+//!   - EXCEPT: expression-shaped nodes bypass the suppressed hooks entirely (their suppressed path goes to `write_suppressed_expression`, see below),
 //!     so an override on such a node would silently never be called
 //!
 //! Add a new list only for a variation the emitted shape must express;
@@ -97,7 +96,7 @@ impl Generator for FormatterFormatGenerator {
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
                 utils::{suppressed::{FormatSuppressedNode, write_suppressed_expression}, typecast::{format_type_cast_comment_node, format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren}},
-                print::FormatWrite,
+                print::{FormatWrite, semicolon::write_suppressed_statement},
             };
 
             #impls
@@ -186,55 +185,52 @@ fn generate_struct_implementation(
 
         // `Program` can't be suppressed.
         // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic.
-        //
-        // The check, the suppressed leading comments, and the printed range are all bounded by
-        // `FormatWrite::suppressed_span` (default: the node's span),
-        // which nodes override when the ignored range starts before their span (class decorators before `export`).
-        // `FormatWrite::write_suppressed` (default: print `suppressed_span` verbatim) is overridden by
-        // statements whose ignored range excludes the trailing semicolon.
-        let suppressed_check = (!matches!(struct_name, "Program" | "JSXElement" | "JSXFragment"))
-            .then(|| {
+        // Statements are decided before their own `fmt`
+        // (the `Statement` fmt below hands them to `write_suppressed_statement` first, which owns their terminator);
+        // the two export kinds are skipped here as well because their ignored range starts at a pre-`export` decorator,
+        // which only `write_suppressed_statement` (via `statement_span`) knows.
+        let suppressed_check = (!matches!(
+            struct_name,
+            "Program"
+                | "JSXElement"
+                | "JSXFragment"
+                | "ExportDeclaration"
+                | "ExportDefaultDeclaration"
+        ))
+        .then(|| quote! { let is_suppressed = f.comments().is_span_suppressed(self.span()); });
+
+        // Expression-shaped nodes (formatter parens + own comment printing) hand the whole suppressed sequence to one owner,
+        // so the cast-target decision is made once while every comment is still unprinted (see `write_suppressed_expression`).
+        // A node that prints its own leading comments never runs its `write` when suppressed, so it takes the same path.
+        let suppressed_expression_return =
+            (suppressed_check.is_some() && needs_parentheses).then(|| {
                 quote! {
-                    let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+                    if is_suppressed {
+                        write_suppressed_expression(
+                            self.span(),
+                            self.leading_comments_start(),
+                            self.needs_parentheses(f),
+                            f,
+                        );
+                        self.format_trailing_comments(f);
+                        return;
+                    }
                 }
             });
-
-        // Expression-shaped nodes (formatter parens + own comment printing) hand the whole
-        // suppressed sequence to one owner, so the cast-target decision is made once
-        // while every comment is still unprinted (see `write_suppressed_expression`).
-        // These nodes have no `suppressed_span`/`write_suppressed` overrides (those are statements).
-        let suppressed_expression_return =
-            (suppressed_check.is_some() && needs_parentheses && !do_not_print_leading_comment)
-                .then(|| {
-                    quote! {
-                        if is_suppressed {
-                            write_suppressed_expression(
-                                self.span(),
-                                self.leading_comments_start(),
-                                self.needs_parentheses(f),
-                                f,
-                            );
-                            self.format_trailing_comments(f);
-                            return;
-                        }
-                    }
-                });
 
         let write_implementation =
             if suppressed_check.is_none() || suppressed_expression_return.is_some() {
                 write_call
             } else {
-                // When `fmt` doesn't print leading comments itself,
-                // the suppressed path delegates them to the node;
-                // see `FormatWrite::write_suppressed_leading_comments`.
+                // When `fmt` doesn't print leading comments itself, the suppressed path prints them here.
                 let suppressed_write_call = if do_not_print_leading_comment {
                     quote! {
-                        self.write_suppressed_leading_comments(f);
-                        self.write_suppressed(f);
+                        format_leading_comments(self.span()).fmt(f);
+                        FormatSuppressedNode(self.span()).fmt(f);
                     }
                 } else {
                     quote! {
-                        self.write_suppressed(f);
+                        FormatSuppressedNode(self.span()).fmt(f);
                     }
                 };
                 let suppressed_trailing_comments = do_not_print_comment.then(|| {
@@ -262,17 +258,9 @@ fn generate_struct_implementation(
                     quote! { false }
                 };
 
-            // With the suppressed early return above, the flag is trivially false here
-            let suppressed_check_for_typecast = (suppressed_check.is_some()
-                && suppressed_expression_return.is_none())
-            .then(|| {
-                quote! {
-                    !is_suppressed &&
-                }
-            });
-
+            // A suppressed node returned above, so no guard is needed here
             quote! {
-                if #suppressed_check_for_typecast format_type_cast_comment_node(self, #is_object_or_array_argument, f) {
+                if format_type_cast_comment_node(self, #is_object_or_array_argument, f) {
                     return;
                 }
             }
@@ -355,25 +343,10 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
     let inline_trailing_suppression = match enum_def.name() {
         "Statement" => {
-            // Expression statements need specialized ASI-safe suppression handling in
-            // `AstNode<ExpressionStatement>::write`.
+            // A suppressed statement (leading or trailing comment) prints its content verbatim
+            // and hands its terminator back to the formatter, decided once per statement here.
             quote! {
-                if !matches!(self.inner, Statement::ExpressionStatement(_))
-                    && f.comments().has_trailing_suppression_comment(self.span().end)
-                {
-                    format_leading_comments(self.span()).fmt(f);
-                    FormatSuppressedNode(self.span()).fmt(f);
-                    format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
-                        .fmt(f);
-                    return;
-                }
-            }
-        }
-        "Expression" => {
-            quote! {
-                if f.comments().has_trailing_suppression_comment(self.span().end) {
-                    format_leading_comments(self.span()).fmt(f);
-                    FormatSuppressedNode(self.span()).fmt(f);
+                if write_suppressed_statement(self, f) {
                     format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
                         .fmt(f);
                     return;

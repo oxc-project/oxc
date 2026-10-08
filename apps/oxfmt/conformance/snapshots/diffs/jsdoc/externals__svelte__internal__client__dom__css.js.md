@@ -1,7 +1,5 @@
 # externals/svelte/internal/client/dom/css.js
 
-> cast comment prints inside the formatter-added parens. See crates/oxc_formatter/DIVERGENCES.md#cast-comment-inside-added-parens
-
 ## Option 1
 
 `````json

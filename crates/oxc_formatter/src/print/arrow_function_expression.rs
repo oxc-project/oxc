@@ -7,11 +7,13 @@ use crate::{
     format_args,
     formatter::{JsFormatContext, JsFormatter, prelude::*, trivia::FormatTrailingComments},
     options::FormatTrailingCommas,
-    print::function::FormatContentWithCacheMode,
+    print::{embed_hug, function::FormatContentWithCacheMode},
     utils::{
-        assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
+        assignment_like::AssignmentLikeLayout,
+        expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        suppressed::write_suppressed_expression, typecast::format_leading_comments_and_open_paren,
+        suppressed::write_suppressed_expression,
+        typecast::{format_leading_comments_and_open_paren, is_cast_target},
     },
     write,
 };
@@ -154,19 +156,21 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                 write!(f, formatted_signature);
 
-                let body_has_soft_line_break =
-                    arrow_expression.is_none_or(|expression| match expression {
+                let body_has_soft_line_break = arrow_expression.is_none_or(|expression| {
+                    let body_kind_hugs = match expression {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_) => {
                             !has_own_line_comment_before_body(arrow, f)
                         }
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
-                        _ => {
+                        _ => embed_hug(expression, None, f).unwrap_or_else(|| {
                             is_multiline_template_starting_on_same_line(expression, f.source_text())
-                                || is_huggable_html_embed(expression, f)
-                        }
-                    });
+                        }),
+                    };
+                    // A cast-wrapped body has no kind (see `is_cast_target`)
+                    body_kind_hugs && !is_cast_target(expression.span(), f)
+                });
 
                 if body_has_soft_line_break {
                     // A block body pushed down by its head-side comments is indented under the arrow:
@@ -375,71 +379,6 @@ pub fn is_multiline_template_starting_on_same_line(
         && !source_text.has_line_terminator_before(start)
 }
 
-/// Returns `true` if the expression is an HTML embed template that should be hugged.
-///
-/// This covers both ``html`...` `` tagged templates and ``/* HTML */ `...` `` comment-annotated templates.
-/// It is needed when the source is single-line but HTML formatting introduces line breaks.
-/// Without this, `ExpandParent` emitted by the HTML formatter causes `will_break()` to return `true`,
-/// expanding the surrounding construct instead of hugging.
-///
-/// Prettier hugs HTML embed templates when the content has leading AND trailing whitespace,
-/// or when `htmlWhitespaceSensitivity` is `"ignore"`.
-/// In these cases, the template stays on the same line as the parent construct:
-/// - Call arguments: ``foo(html`<div>...</div>`)``
-/// - Arrow function body: ``const a = (b) => html`<div>...</div>` ``
-///
-/// When there is no leading+trailing whitespace,
-/// `hug: false` is set and the template is expanded (not hugged).
-///
-/// Prettier achieves this via `label({ embed: true, hug })` + `shouldExpandLastArg`.
-/// We replicate it by detecting the same conditions on the expression.
-pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    let template = match expression {
-        Expression::TaggedTemplateExpression(tagged) => {
-            if !matches!(&tagged.tag, Expression::Identifier(id) if id.name.as_str() == "html") {
-                return false;
-            }
-            // Exclude cases where a line comment between tag and quasi forces a line break
-            // e.g., ``html // oops \n`...` ``
-            if f.source_text()
-                .contains_newline_between(tagged.tag.span().end, tagged.quasi.span.start)
-            {
-                return false;
-            }
-            &tagged.quasi
-        }
-        Expression::TemplateLiteral(template) => {
-            // Check for `/* HTML */` leading comment
-            let comments = f.comments().comments_before(template.span.start);
-            if !comments.last().is_some_and(|comment| {
-                comment.is_block() && f.source_text().text_for(&comment.content_span()) == " HTML "
-            }) {
-                return false;
-            }
-            template.as_ref()
-        }
-        _ => return false,
-    };
-
-    // Always hug when htmlWhitespaceSensitivity is "ignore"
-    if f.options().html_whitespace_sensitivity_ignore {
-        return true;
-    }
-
-    // Hug when the cooked content has both leading and trailing whitespace
-    let has_leading_ws = template
-        .quasis
-        .first()
-        .and_then(|q| q.value.cooked.as_ref())
-        .is_some_and(|s| s.starts_with(|c: char| c.is_ascii_whitespace()));
-    let has_trailing_ws = template
-        .quasis
-        .last()
-        .and_then(|q| q.value.cooked.as_ref())
-        .is_some_and(|s| s.ends_with(|c: char| c.is_ascii_whitespace()));
-    has_leading_ws && has_trailing_ws
-}
-
 struct ArrowChain<'a, 'b> {
     /// The top most arrow function in the chain
     head: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
@@ -499,6 +438,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         // If the body is _not_ one of those kinds, then we'll want to insert a
         // soft line break before the body so that it prints on a separate line
         // in its entirety.
+        // A cast-wrapped body has no kind (see `is_cast_target`).
         let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
             matches!(
                 expression,
@@ -507,7 +447,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
                     | Expression::SequenceExpression(_)
                     | Expression::JSXElement(_)
                     | Expression::JSXFragment(_)
-            )
+            ) && !is_cast_target(expression.span(), f)
         });
 
         // An own-line comment before the tail body forces the body onto its own line even for the kinds above,

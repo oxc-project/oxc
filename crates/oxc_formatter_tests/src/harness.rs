@@ -1,7 +1,6 @@
 //! Language-agnostic fixture-test runtime.
 //!
-//! Implements the snapshot-test machinery shared by every formatter crate's
-//! `tests/fixtures/mod.rs`:
+//! Implements the snapshot-test machinery shared by every formatter crate's `tests/fixtures/mod.rs`:
 //!
 //! - walks up to find an `options.json` and parses it into `OptionSet`s
 //! - drives one format pass per option-set × per printWidth (80 + 100)
@@ -11,8 +10,7 @@
 //! - assembles the canonical `==== Input ==== ... ==== Output ==== ...` snapshot
 //! - returns the body for the consumer's `insta::assert_snapshot!`
 //!
-//! Each formatter crate provides language-specific behavior by implementing
-//! [`FixtureFormatter`].
+//! Each formatter crate provides language-specific behavior by implementing [`FixtureFormatter`].
 
 use std::{
     env::current_dir,
@@ -107,9 +105,8 @@ pub trait FixtureFormatter {
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Self::Fingerprint;
 }
 
-/// Resolves format options for `test_file` by walking up the directory tree
-/// looking for `options.json`. Stops at the first one found, or at the `fixtures`
-/// directory, whichever comes first.
+/// Resolves format options for `test_file` by walking up the directory tree looking for `options.json`.
+/// Stops at the first one found, or at the `fixtures` directory, whichever comes first.
 ///
 /// Returns a single empty option-set when no file is found.
 #[must_use]
@@ -174,10 +171,10 @@ fn assert_line_ending_applied(option_json: &OptionSet, formatted: &str, path: &P
 
 /// Generates the canonical snapshot body for `path`/`source_text`.
 ///
-/// For each resolved option-set, exercises Prettier's default (`printWidth: 80`) and
-/// oxc's default (`LineWidth::default()`). If the option-set pins a non-default width,
-/// that variant is emitted first, giving 3 rows total; pinning to one of the defaults
-/// is treated as a no-op to avoid emitting an identical duplicate row.
+/// For each resolved option-set,
+/// exercises Prettier's default (`printWidth: 80`) and oxc's default (`LineWidth::default()`).
+/// If the option-set pins a non-default width, that variant is emitted first, giving 3 rows total;
+/// pinning to one of the defaults is treated as a no-op to avoid emitting an identical duplicate row.
 fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> String {
     let option_sets = resolve_options(path);
 
@@ -189,10 +186,6 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
     snapshot.push_str("==================== Output ====================\n");
 
     let option_sets = option_sets.into_iter().flat_map(|original| {
-        // Always exercise Prettier's default (80) and oxc's default
-        // (`LineWidth::default()`). If the original pins a non-default `printWidth`
-        // we also emit a row for it; pinning to 80 or 100 is a no-op since the
-        // default rows already cover that width.
         const PRETTIER_DEFAULT_WIDTH: u64 = 80;
         let oxc_default_width = u64::from(LineWidth::default().value());
 
@@ -270,11 +263,10 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
 
 /// Materialized snapshot for `insta::assert_snapshot!`.
 ///
-/// `insta` records the call site of the macro into the snapshot header (`source:` /
-/// `assertion_line:`). We deliberately do NOT call the macro here so each consumer
-/// crate can invoke it from its own `tests/fixtures/mod.rs`, keeping the `source:`
-/// path stable when the harness is shared across crates. This matters in CI where
-/// `INSTA_REQUIRE_FULL_MATCH=1` makes the header part of the equality check.
+/// `insta` records the call site of the macro into the snapshot header (`source:` / `assertion_line:`).
+/// We deliberately do NOT call the macro here so each consumer crate can invoke it from its own `tests/fixtures/mod.rs`,
+/// keeping the `source:` path stable when the harness is shared across crates.
+/// This matters in CI where `INSTA_REQUIRE_FULL_MATCH=1` makes the header part of the equality check.
 pub struct FixtureSnapshot {
     /// Snapshot body — feed to `insta::assert_snapshot!`.
     pub body: String,

@@ -25,6 +25,20 @@ pub fn test(source_text: &str, expected: &str) {
 }
 
 #[track_caller]
+pub fn test_ascii(source_text: &str, expected: &str) {
+    test_options(source_text, expected, CodegenOptions { ascii_only: true, ..default_options() });
+}
+
+#[track_caller]
+pub fn test_minify_ascii(source_text: &str, expected: &str) {
+    test_options(
+        source_text,
+        expected,
+        CodegenOptions { ascii_only: true, minify: true, ..CodegenOptions::default() },
+    );
+}
+
+#[track_caller]
 pub fn test_same(source_text: &str) {
     test(source_text, source_text);
 }

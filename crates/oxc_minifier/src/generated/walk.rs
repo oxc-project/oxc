@@ -4950,12 +4950,6 @@ unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_method_signature(&mut *node, ctx);
-    let previous_scope_id = ctx.current_scope_id();
-    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
-        as *mut Cell<Option<ScopeId>>))
-        .get()
-        .unwrap();
-    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::TSMethodSignatureKey(
         ancestor::TSMethodSignatureWithoutKey(node, PhantomData),
     ));
@@ -4964,6 +4958,12 @@ unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_KEY) as *mut PropertyKey,
         ctx,
     );
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
         as *mut Option<ArenaBox<TSTypeParameterDeclaration>>)

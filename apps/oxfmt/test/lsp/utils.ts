@@ -6,12 +6,15 @@ import {
   createMessageConnection,
   DidChangeConfigurationNotification,
   DidChangeTextDocumentNotification,
+  DidChangeWatchedFilesNotification,
   DidOpenTextDocumentNotification,
   DocumentFormattingRequest,
   ExitNotification,
+  FileChangeType,
   InitializedNotification,
   InitializeRequest,
   RegistrationRequest,
+  ShowMessageNotification,
   ShutdownRequest,
   StreamMessageReader,
   StreamMessageWriter,
@@ -20,6 +23,7 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 import type {
   ClientCapabilities,
+  FileEvent,
   Registration,
   TextEdit,
 } from "vscode-languageserver-protocol/node";
@@ -60,6 +64,12 @@ export function createLspConnection(env: Record<string, string> = {}) {
       await connection.sendNotification(DidChangeConfigurationNotification.type, { settings });
     },
 
+    async didChangeWatchedFiles(uris: string[]) {
+      await connection.sendNotification(DidChangeWatchedFilesNotification.type, {
+        changes: uris.map((uri): FileEvent => ({ uri, type: FileChangeType.Changed })),
+      });
+    },
+
     async didOpen(uri: string, languageId: string, text: string) {
       await connection.sendNotification(DidOpenTextDocumentNotification.type, {
         textDocument: { uri, languageId, version: 1, text },
@@ -86,6 +96,15 @@ export function createLspConnection(env: Record<string, string> = {}) {
       return await new Promise((resolve) => {
         const disposer = connection.onRequest(RegistrationRequest.type, (params) => {
           resolve(params.registrations);
+          disposer.dispose();
+        });
+      });
+    },
+
+    getShowMessage(): Promise<{ type: number; message: string }> {
+      return new Promise((resolve) => {
+        const disposer = connection.onNotification(ShowMessageNotification.type, (params) => {
+          resolve(params);
           disposer.dispose();
         });
       });
@@ -164,19 +183,36 @@ export async function formatFixtureContent(
   }
   await clientOrConfig.didOpen(fileUri, languageId, content);
 
-  const edits = await clientOrConfig.format(fileUri);
+  try {
+    const edits = await clientOrConfig.format(fileUri);
 
-  if (innerClient) {
-    await innerClient[Symbol.asyncDispose]();
-  }
+    if (innerClient) {
+      await innerClient[Symbol.asyncDispose]();
+    }
 
-  return `${uriSnapshotHeader(fileUri, fixturesDir)}
+    return `${uriSnapshotHeader(fileUri, fixturesDir)}
 --- BEFORE ---------
 ${content}
 --- AFTER ----------
 ${applyEdits(content, edits, languageId)}
 --------------------
 `.trim();
+  } catch (error) {
+    const msg =
+      error instanceof Error ? sanitizeMessage(error.message) : sanitizeMessage(error as string);
+
+    if (innerClient) {
+      await innerClient[Symbol.asyncDispose]();
+    }
+
+    return `${uriSnapshotHeader(fileUri, fixturesDir)}
+--- BEFORE ---------
+${content}
+--- ERROR ----------
+${msg}
+--------------------
+`.trim();
+  }
 }
 
 export async function formatMultipleFixtures(
@@ -292,4 +328,21 @@ function uriSnapshotHeader(fileUri: string, fixtureDir: string): string {
   return `
   --- URI -----------
 ${safeUri}`;
+}
+
+export function snapshotShowMessages(messages: { type: number; message: string }[]): string {
+  if (messages.length === 0) {
+    return "--- Show Messages ---------\n(none)";
+  }
+
+  return [
+    "--- Show Messages ---------",
+    ...messages.map(
+      ({ type, message }, index) => `[${index}] type=${type}\n${sanitizeMessage(message)}`,
+    ),
+  ].join("\n");
+}
+
+function sanitizeMessage(message: string): string {
+  return message.replaceAll(process.cwd(), "<cwd>");
 }

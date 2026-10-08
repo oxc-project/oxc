@@ -38,7 +38,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut statements = ArenaVec::new_in(self);
 
         let is_top_level = self.ctx.has_top_level();
-        let stmt_ctx = StatementContext::StatementList;
+        let stmt_ctx =
+            if is_top_level { StatementContext::Program } else { StatementContext::StatementList };
         let is_ambient_block = (is_top_level || in_ts_namespace_body) && self.ctx.has_ambient();
         let mut reported_ambient_statement = false;
 
@@ -155,7 +156,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 &Modifiers::empty(),
                 ArenaVec::new_in(self),
             ),
-            Kind::Export => self.parse_export_declaration(self.cur_start(), ArenaVec::new_in(self)),
+            Kind::Export => {
+                self.parse_export_declaration(self.cur_start(), ArenaVec::new_in(self), stmt_ctx)
+            }
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
             Kind::Var => {
@@ -170,7 +173,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::At => self.parse_decorated_statement(stmt_ctx),
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
             Kind::Async => self.parse_async_statement(self.cur_start(), stmt_ctx),
-            Kind::Import => self.parse_import_statement(),
+            Kind::Import => self.parse_import_statement(stmt_ctx),
             Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(stmt_ctx),
             Kind::Await if self.is_using_statement() => self.parse_using_statement(stmt_ctx),
@@ -403,7 +406,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     r#await,
                 );
             }
-            Kind::Let => {
+            Kind::Let if !self.cur_token().escaped() => {
                 // `for (let`
                 let decl_start = self.cur_start();
                 // disallow `for (let in ...`
@@ -422,17 +425,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => {}
         }
 
-        // [+Using, +Await] await [no LineTerminator here] using [no LineTerminator here]
-        if self.at(Kind::Await)
-            && self.lookahead(|p| {
-                p.bump_any();
-                if !p.at(Kind::Using) || p.cur_token().is_on_new_line() {
-                    return false;
-                }
-                p.bump_any();
-                !p.cur_token().is_on_new_line()
-            })
-        {
+        // [+Using, +Await] await [no LineTerminator here] using [no LineTerminator here] ForBinding[?Yield, ?Await, ~Pattern]
+        if self.at(Kind::Await) && self.is_using_statement() {
             return self.parse_using_declaration_for_statement(
                 for_start,
                 parenthesis_opening_span,
@@ -469,7 +463,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_for_loop(for_start, parenthesis_opening_span, None, r#await);
         }
 
-        let is_let = self.at(Kind::Let);
+        let is_let = self.at(Kind::Let) && !self.cur_token().escaped();
         // `async` is allowed as `for (async of ...)` if `async` is escaped
         let is_async = self.at(Kind::Async) && !self.cur_token().escaped();
         let expr_start = self.cur_start();
@@ -898,12 +892,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Parse import statement or import expression.
-    fn parse_import_statement(&mut self) -> Statement<'a> {
+    fn parse_import_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let start = self.cur_start();
         if matches!(self.lexer.peek_token().kind(), Kind::Dot | Kind::LParen) {
             // Parse the whole expression `import.meta.url`.
             self.parse_expression_or_labeled_statement()
         } else {
+            self.check_module_declaration(stmt_ctx);
             self.bump_any(); // bump `import`
             self.parse_import_declaration(start, self.ctx.has_top_level())
         }
@@ -929,7 +924,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let kind = self.cur_kind();
         if kind == Kind::Export {
             // Export span.start starts after decorators.
-            return self.parse_export_declaration(self.cur_start(), decorators);
+            return self.parse_export_declaration(self.cur_start(), decorators, stmt_ctx);
         }
         let modifiers = self.parse_modifiers(false, false);
         if self.at(Kind::Class) {

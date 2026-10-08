@@ -85,12 +85,24 @@ const;
  */
 const;
 
-// A union's own-line leading comment is indented by the union printer itself;
-// no extra break on the operator.
-// Note: a same-line line comment before a union still moves behind the
-// statement (union comment claiming is its own subsystem)
+// A union claims the after-operator comments as its leading comments and breaks +
+// indents for them itself, the same placement as after a type alias's `=`:
+// own-line and line comments lead the members, an inline block goes behind the `|`
+// (the pinned Prettier relocates the glued line comment across the type and the `;`)
 const union = 1 as
 // c
 A | B;
 const unionEol = 1 as // c
 A | B;
+const unionEolBreak = 1 as // c
+Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | Bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb | C;
+const unionGluedBlock = 1 as /* c */ Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | Bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb | C;
+// A riding line comment before the operator still breaks on this side;
+// the union then hands its indent over. A glued block there leaves the break to the union
+const unionPreOpLine = (foo // pre line
+) as Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | Bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb | C;
+const unionPreOpEolBlock = (foo /* c */
+) as Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | Bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb | C;
+const unionPreOpOwnLine = (foo
+// pre own line
+) as A | B;

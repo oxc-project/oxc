@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
 use crate::{
-    ParserConfig as Config, ParserImpl, diagnostics,
+    ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierKind, Modifiers},
 };
@@ -174,9 +174,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else if token_after_import.kind() == Kind::Source {
             if self.cur_kind().is_binding_identifier() {
                 // `import source something ...`
-                let kind = self.cur_kind();
+                let token = self.cur_token();
                 let identifier_after_source = self.parse_binding_identifier();
-                if kind == Kind::From {
+                if token.kind() == Kind::From {
                     // `import source from ...`
                     if self.at(Kind::From) {
                         // `import source from from ...`
@@ -185,6 +185,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         has_default_specifier = true;
                     } else if self.at(Kind::Str) {
                         // `import source from 'source'`
+                        if token.escaped() {
+                            self.error(diagnostics::escaped_keyword(token.span()));
+                        }
                         has_default_specifier = true;
                         should_parse_specifiers = false;
                     }
@@ -211,6 +214,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 has_default_specifier = false;
             }
             // else: `import source from 'source'` - source is the binding name, no phase
+        }
+
+        // The first identifier is a keyword only after resolving the import phase.
+        if phase.is_some() && token_after_import.escaped() {
+            self.error(diagnostics::escaped_keyword(token_after_import.span()));
         }
 
         let specifiers = if self.at(Kind::Str) {
@@ -444,12 +452,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         TSNamespaceExportDeclaration::boxed(self.end_span(start), id, self)
     }
 
+    /// Check the parse goal and placement of the `import` / `export` declaration at the current token.
+    pub(crate) fn check_module_declaration(&mut self, stmt_ctx: StatementContext) {
+        // TypeScript cannot tell script from module by syntax,
+        // and permits module declarations in namespaces and ambient modules.
+        if self.is_ts {
+            return;
+        }
+        let statement = if self.at(Kind::Import) { "import statement" } else { "export statement" };
+        let span = self.cur_token().span();
+        if self.source_type.is_script() || self.source_type.is_commonjs() {
+            self.error(diagnostics::module_code(statement, span));
+        } else if stmt_ctx != StatementContext::Program {
+            self.error(diagnostics::top_level(statement, span));
+        }
+    }
+
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
     pub(crate) fn parse_export_declaration(
         &mut self,
         start: u32,
         mut decorators: ArenaVec<'a, Decorator<'a>>,
+        stmt_ctx: StatementContext,
     ) -> Statement<'a> {
+        self.check_module_declaration(stmt_ctx);
         self.bump_any(); // bump `export`
         // `export` is unambiguously module syntax (ECMA-262 §16.2.3): commit to the
         // Module goal so the declaration parses under `Await` on the first pass and
@@ -974,8 +1000,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let literal = self.parse_literal_string();
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
+                // The error is fatal so that no AST ever carries an ill-formed export name.
                 if !literal.is_string_well_formed_unicode() {
-                    self.error(diagnostics::export_lone_surrogate(literal.span));
+                    let error = diagnostics::export_lone_surrogate(literal.span);
+                    return self.fatal_error(error);
                 }
                 ModuleExportName::StringLiteral(literal)
             }

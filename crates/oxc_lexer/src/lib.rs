@@ -1,5 +1,10 @@
 #![cfg(target_endian = "little")]
-#![allow(unsafe_code)]
+
+use std::{cell::RefCell, mem, ptr, slice};
+
+use oxc_ast::ast::RegExpFlags;
+use oxc_span::Span;
+use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 pub mod arena;
 mod comment_meta;
@@ -7,33 +12,33 @@ mod comment_meta;
 pub mod diagnostics;
 pub mod error;
 mod lanes;
-mod opmap;
 pub mod options;
 mod pipeline;
-mod tables;
 pub mod token;
 
 pub use arena::{Arena, LexResult, LineEntry};
-pub use error::{Diagnostic, diag_code, diag_severity};
+pub use error::{DiagCode, DiagSeverity, Diagnostic};
 pub use lanes::Lanes;
-pub use options::{LexOptions, default_options};
+pub use options::LexOptions;
 pub use pipeline::Lexer;
-pub use token::{KW_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
-
-use core::cell::RefCell;
+pub use token::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
 
 pub const PAD: usize = 64;
 
 /// `true` if the SIMD core is compiled in, `false` if the scalar fallback is.
 /// Used by CI to ensure it's testing the implementation it thinks it is.
-pub const IS_SIMD: bool =
-    cfg!(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"));
+pub const IS_SIMD: bool = cfg!(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+));
 
 thread_local! {
     static SCRATCH: RefCell<Lexer> = RefCell::new(Lexer::new());
 }
 
-const _: () = assert!(core::mem::size_of::<oxc_ast::ast::RegExpFlags>() == 1);
+const _: () = assert!(size_of::<RegExpFlags>() == 1);
 
 /// # Panics
 /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `len`,
@@ -44,8 +49,8 @@ pub fn lex_utf8_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Are
 
 /// # Panics
 /// Panics if `src` does not extend at least [`PAD`] zeroed bytes past `len`.
-#[expect(clippy::cast_possible_truncation, reason = "PAD is a small constant")]
 pub fn lex_utf8(src: &[u8], len: u32, options: LexOptions) -> (LexResult, Arena) {
+    #[expect(clippy::cast_possible_truncation, reason = "PAD is a small constant")]
     let tok_cap = len + PAD as u32;
     let diag_cap =
         if options.max_diagnostic_count > 0 { options.max_diagnostic_count } else { 1024 };
@@ -55,7 +60,6 @@ pub fn lex_utf8(src: &[u8], len: u32, options: LexOptions) -> (LexResult, Arena)
     (r, arena)
 }
 
-#[expect(clippy::cast_possible_truncation, reason = "token counts are bounded by MAX_SOURCE_LEN")]
 fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) -> LexResult {
     arena.ensure_token_capacity();
     let n = len as usize;
@@ -67,7 +71,7 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
         arena.tok_kinds_capacity as usize >= n + PAD
             && arena.tok_spans_capacity as usize >= n + PAD,
         "lexer: arena token capacity too small for source len {n} (tok_kinds={}, tok_spans={}); need >= n + {PAD} \
-         — build_spans writes a full 4-lane group past the last token and the pipeline appends EOF sentinels",
+         - build_spans writes a full 4-lane group past the last token and the pipeline appends EOF sentinels",
         arena.tok_kinds_capacity,
         arena.tok_spans_capacity
     );
@@ -98,8 +102,8 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
             // SAFETY: `lex_raw` wrote `k` kinds and `k` spans.
             let (kind_bytes, spans_all) = unsafe {
                 (
-                    core::slice::from_raw_parts(arena.tok_kinds, k),
-                    core::slice::from_raw_parts(arena.tok_spans, k),
+                    slice::from_raw_parts(arena.tok_kinds, k),
+                    slice::from_raw_parts(arena.tok_spans, k),
                 )
             };
             token::debug_assert_kind_bytes(kind_bytes);
@@ -125,13 +129,19 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
         let n_cr = copy_lane(&l.comments, arena.comments, arena.comments_capacity);
         let n_diag = copy_lane(&l.diags, arena.diags, arena.diags_capacity);
 
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "token counts are bounded by MAX_SOURCE_LEN"
+        )]
+        let token_count = k as u32;
+
         LexResult {
             diagnostics: arena.diags,
             diagnostic_count: n_diag,
             lines: arena.lines,
             line_count: 0,
             hit_resource_limit: false,
-            token_count: k as u32,
+            token_count,
             numbers_count: n_num,
             atoms_count: n_atm,
             strings_count: n_str,
@@ -144,15 +154,14 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
     })
 }
 
-#[expect(clippy::cast_possible_truncation, reason = "char lengths are 1..=4")]
 fn resolve_unicode_leads(
     lanes: &mut Lanes,
     src: &[u8],
     kinds_all: &[TokenKind],
-    spans_all: &[oxc_span::Span],
+    spans_all: &[Span],
 ) {
     let k = kinds_all.len();
-    let mut leads = core::mem::take(&mut lanes.unicode_leads);
+    let mut leads = mem::take(&mut lanes.unicode_leads);
     let mut ti = 0usize;
     for &off in &leads {
         while ti + 1 < k && spans_all[ti].end <= off {
@@ -170,26 +179,19 @@ fn resolve_unicode_leads(
                 kinds_all[ti],
                 TokenKind::PrivateIdent | TokenKind::PrivateIdentEscaped
             ));
-        let ok = if off == name_start {
-            oxc_syntax::identifier::is_identifier_start(ch)
-        } else {
-            oxc_syntax::identifier::is_identifier_part(ch)
-        };
+        let ok = if off == name_start { is_identifier_start(ch) } else { is_identifier_part(ch) };
         if ok {
             continue;
         }
         let code = if ch == '\u{FFFD}' {
             // oxc_parser treats a code-level replacement char as a binary file.
-            error::diag_code::INVALID_UTF8
+            DiagCode::InvalidUtf8
         } else {
-            error::diag_code::UNEXPECTED_CHARACTER
+            DiagCode::UnexpectedCharacter
         };
-        lanes.diags.push(error::Diagnostic {
-            off,
-            len: ch.len_utf8() as u32,
-            code,
-            severity: error::diag_severity::ERROR,
-        });
+        #[expect(clippy::cast_possible_truncation, reason = "char lengths are 1..=4")]
+        let len = ch.len_utf8() as u32;
+        lanes.diags.push(Diagnostic { off, len, code, severity: DiagSeverity::Error });
     }
     leads.clear();
     lanes.unicode_leads = leads;
@@ -225,7 +227,6 @@ fn empty_result(arena: &Arena) -> LexResult {
 }
 
 #[inline]
-#[expect(clippy::cast_possible_truncation, reason = "lane lengths are bounded by u32 capacities")]
 fn copy_lane<T: Copy>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
     if dst.is_null() {
         return 0;
@@ -233,12 +234,19 @@ fn copy_lane<T: Copy>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
 
     assert!(
         srcv.len() <= cap as usize,
-        "lexer: lane overflow ({} entries, capacity {cap}) — arena lane sizing out of date",
+        "lexer: lane overflow ({} entries, capacity {cap}) - arena lane sizing out of date",
         srcv.len()
     );
+
     // SAFETY: `dst` is non-null with capacity >= srcv.len(), asserted above.
     unsafe {
-        core::ptr::copy_nonoverlapping(srcv.as_ptr(), dst, srcv.len());
+        ptr::copy_nonoverlapping(srcv.as_ptr(), dst, srcv.len());
     }
-    srcv.len() as u32
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "lane lengths are bounded by u32 capacities"
+    )]
+    let len = srcv.len() as u32;
+    len
 }

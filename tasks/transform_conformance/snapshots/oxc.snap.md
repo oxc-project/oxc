@@ -1,6 +1,6 @@
-commit: 1eac4481
+commit: 4f4ef5d4
 
-Passed: 276/404
+Passed: 298/426
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -21,7 +21,7 @@ Passed: 276/404
 * plugin-tagged-template-transform
 
 
-# babel-plugin-transform-explicit-resource-management (3/4)
+# babel-plugin-transform-explicit-resource-management (5/6)
 * export-class-name/input.js
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(7)]
@@ -34,7 +34,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (29/33)
+# babel-plugin-transform-class-properties (31/35)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (41/60)
+# babel-plugin-transform-typescript (43/62)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]

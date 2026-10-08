@@ -375,16 +375,18 @@ pub fn is_same_member_expression(
         (Some(_), None) | (None, Some(_)) => {
             return false;
         }
-        (None, None) => {
-            if let (
+        (None, None) => match (left, right) {
+            (
                 MemberExpression::PrivateFieldExpression(left),
                 MemberExpression::PrivateFieldExpression(right),
-            ) = (left, right)
-            {
+            ) => {
                 return left.field.name == right.field.name
                     && is_same_expression(&left.object, &right.object, ctx);
             }
-        }
+            (MemberExpression::PrivateFieldExpression(_), _)
+            | (_, MemberExpression::PrivateFieldExpression(_)) => return false,
+            _ => {}
+        },
     }
 
     if let (

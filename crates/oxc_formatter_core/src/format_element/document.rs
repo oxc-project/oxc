@@ -215,9 +215,6 @@ impl FormatElements for [FormatElement<'_>] {
                 FormatElement::Tag(EndLineSuffix) => {
                     ignore_depth -= 1;
                 }
-                FormatElement::Interned(interned) if ignore_depth == 0 && interned.will_break() => {
-                    return true;
-                }
                 // No `ignore_depth` guard on purpose: like Prettier's `willBreak`,
                 // any always-breaking line counts — even directly inside a line suffix,
                 // and independently of whether it propagates expansion
@@ -325,5 +322,32 @@ impl FormatElements for [FormatElement<'_>] {
 
     fn end_tag(&self, kind: TagKind) -> Option<&Tag> {
         self.last().and_then(|element| element.end_tag(kind))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::{Allocator, ArenaVec};
+
+    use crate::{FormatElement, FormatElements, LineMode, format_element::Interned};
+
+    #[test]
+    fn will_break_deeply_nested_interned() {
+        let allocator = &Allocator::new();
+
+        for (line, expected) in [(LineMode::Soft, false), (LineMode::Hard, true)] {
+            let mut elements = ArenaVec::from_array_in([FormatElement::Line(line)], &allocator);
+
+            // The non-breaking path must traverse each interned slice only once.
+            // Repeating it after a failed match guard makes this exponential in depth.
+            for _ in 0..64 {
+                elements = ArenaVec::from_array_in(
+                    [FormatElement::Interned(Interned::new(elements))],
+                    &allocator,
+                );
+            }
+
+            assert_eq!(elements.will_break(), expected);
+        }
     }
 }

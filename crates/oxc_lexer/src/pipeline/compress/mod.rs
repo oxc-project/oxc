@@ -1,17 +1,52 @@
 use oxc_span::Span;
 
-use crate::{lanes::Lanes, tables::Tables, token::SPAN_SENTINELS};
+use crate::{
+    lanes::Lanes,
+    token::{SPAN_SENTINELS, tk},
+};
 
-use super::EOF;
-
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 mod avx2;
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
+pub(super) use avx2::init_pair_luts;
+#[cfg(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+))]
 use avx2::{build_spans, compress_blocks, lanes_post};
 
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 mod generic;
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
+pub(super) use generic::init_pair_luts;
+#[cfg(not(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)))]
 use generic::{build_spans, compress_blocks, lanes_post};
 
 mod common;
@@ -19,8 +54,8 @@ mod common;
 const STAGE_BLOCKS: usize = 32;
 pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 
+#[inline(never)]
 pub unsafe fn compress(
-    t: &Tables,
     src: &[u8],
     n: usize,
     nb: usize,
@@ -37,7 +72,7 @@ pub unsafe fn compress(
     let mut b = 0usize;
     while b < nb {
         let b1 = (b + STAGE_BLOCKS).min(nb);
-        c += compress_blocks(t, st, kind, b, b1, stage_pos.add(c), stage_kind.add(c));
+        c += compress_blocks(st, kind, b, b1, stage_pos.add(c), stage_kind.add(c));
         b = b1;
         if c > 1 {
             w += build_spans(stage_kind, stage_pos, c - 1, out_spans.add(w), out_kinds.add(w));
@@ -59,9 +94,6 @@ pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8) {
     let eof = u64::from(n) | (u64::from(n) << 32);
     for s in 0..SPAN_SENTINELS {
         *spans.cast::<u64>().add(s) = eof;
-        *sig_kinds.add(s) = EOF;
+        *sig_kinds.add(s) = tk!(Eof);
     }
 }
-
-#[cfg(test)]
-mod tests;

@@ -3,7 +3,8 @@ use oxc_span::Span;
 
 use crate::{
     Buffer, Format,
-    formatter::prelude::*,
+    formatter::{prelude::*, trivia::FormatTrailingComments},
+    print::write_comments_before_closing_paren,
     utils::typecast::{format_leading_comments_and_open_paren, write_suppressed_cast_target},
     write,
 };
@@ -32,8 +33,37 @@ pub fn write_suppressed_expression(
     format_leading_comments_and_open_paren(span, leading_comments_start, needs_parentheses, f);
     FormatSuppressedNode(span).fmt(f);
     if needs_parentheses {
+        // The trailing run before a surviving source `)` prints inside the pair (the verbatim node is one line, no group breaks for it);
+        // a line comment there forces the `)` onto the next line, as it forces a body's `{`.
+        // ```ts
+        // type T = (A | B // prettier-ignore
+        // ) & C;
+        // ```
+        let run = write_comments_before_closing_paren(f, span.end);
+        if run.and_then(<[_]>::last).is_some_and(|comment| comment.is_line()) {
+            write!(f, [hard_line_break()]);
+        }
         write!(f, ")");
     }
+}
+
+/// Prints a suppressed node whose terminator the formatter owns: the source text up to `content_end`,
+/// then the same-line comments before a later-line source `;` (they stay on the content's line),
+/// and returns `true` so the caller prints its terminator per `semi`.
+/// Without a content end (no terminator of its own) the whole span prints and nothing follows.
+pub fn write_suppressed_content(
+    span: Span,
+    content_end: Option<u32>,
+    f: &mut JsFormatter<'_, '_>,
+) -> bool {
+    let Some(content_end) = content_end else {
+        FormatSuppressedNode(span).fmt(f);
+        return false;
+    };
+    FormatSuppressedNode(Span::new(span.start, content_end)).fmt(f);
+    let comments = f.context().comments().end_of_line_comments_after(content_end);
+    FormatTrailingComments::Comments(comments).fmt(f);
+    true
 }
 
 pub struct FormatSuppressedNode(pub Span);

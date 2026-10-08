@@ -4,6 +4,73 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 7d0e54d formatter_markdown: Preserve line breaks around Chinese/Japanese characters in all `proseWrap` (#27331) (leaysgur)
+- e9ae2d8 formatter_css: Fix layouts found in mdn-content repo (css-in-md) (#27326) (leaysgur)
+- df85b4c oxfmt: Keep blank lines after a line break in Prettier Doc to IR (#27325) (leaysgur)
+- dd72fbf formatter_markdown: Keep container columns as spaces under `useTabs` (#27277) (leaysgur)
+- 1686018 oxfmt: Make one state `conditionalGroup` fit up to first `hardline` (#27275) (leaysgur)
+- 267557c formatter,oxfmt: Embed only original JSDoc plugin supported languages (#27241) (leaysgur)
+- 2606c60 oxfmt: Do not re-include a file below an excluded directory with a negated pattern (#27237) (Nicolas Le Cam)
+- c2de02b formatter: Decide embedded template layout from AST, not source shape (#27218) (leaysgur)
+- 6da7657 oxfmt: Render diagnostics with source in Stdin mode (#27130) (leaysgur)
+- e9b2ec5 oxfmt/lsp: Reload `.prettierignore` on watched file change (#27129) (leaysgur)
+- 30eb463 oxfmt: Check global ignores before resolving nested config in Stdin mode (#27128) (leaysgur)
+
+### ⚡ Performance
+
+- 0aba566 oxfmt: Do not resolve root js config from nested context (#27147) (leaysgur)
+
+### 📚 Documentation
+
+- af4b269 oxfmt: Document why `format()` API does not take cwd (#27131) (leaysgur)
+
+## [0.71.0] - 2026-09-28
+
+### 🚀 Features
+
+- e0b1f9f oxfmt: Bump bundled Prettier version to 3.9.9 (#27002) (leaysgur)
+- 342527d oxfmt: Bump bundled Prettier version to 3.9.8 (#26999) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 1f7b8ad oxfmt: Allow repeated CLI calls in the same process (#27051) (Liang)
+
+## [0.70.0] - 2026-09-21
+
+### 🚀 Features
+
+- 415b742 oxlint,oxfmt: Do not discover nested config in Vite+ mode (#26763) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 809090c oxlint,oxfmt: Find all `vite.config.*` variants (#26755) (leaysgur)
+
+### 📚 Documentation
+
+- 8fa3617 oxfmt: Unify DIVERGENCES reference and drop notes (#26750) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- 586f27a formatter_core: Add `prefix_align` builder and `Tag::(Start|End)Prefix` (#26520) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d35d89f oxfmt: Skip shutdown delay on fixed Node 24 releases (#26518) (Pablo García)
+- aef8b4a formatter_css: Handle less-test-suites failures (#26513) (leaysgur)
+- 876fbe3 oxfmt: Expand `Fill` parts in tsx-in-vue (#26427) (leaysgur)
+
 ## [0.67.0] - 2026-09-07
 
 ### 🐛 Bug Fixes

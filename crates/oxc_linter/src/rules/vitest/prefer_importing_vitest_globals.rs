@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, ImportOrExportKind},
+    ast::{BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -138,7 +138,7 @@ impl Rule for PreferImportingVitestGlobals {
             };
 
             if is_vitest_import_source(import_decl.source.value.as_str())
-                && import_decl.import_kind == ImportOrExportKind::Value
+                && import_decl.import_kind.is_value()
             {
                 continue;
             }

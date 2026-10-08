@@ -30,7 +30,6 @@ pub fn is_boolean_call(kind: &AstKind) -> bool {
 pub fn is_boolean_call_argument<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let arg_id = ctx.nodes().parent_id(node.id());
     let parent = ctx.nodes().parent_kind(arg_id);
-    // println!("{parent:#?}");
     is_boolean_call(&parent)
 }
 

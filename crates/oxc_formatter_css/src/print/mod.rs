@@ -54,6 +54,17 @@ fn write_placeholder<'a>(placeholder: &Placeholder<'a>, f: &mut CssFormatter<'_,
     }
 }
 
+/// No source gap between two spans (postcss's `hasEmptyRawBefore`):
+/// the signal for a glued `and(` / `not(`, a `(` that makes a function, and the like.
+pub fn is_glued(left: &oxc_css_parser::pos::Span, right: &oxc_css_parser::pos::Span) -> bool {
+    left.end == right.start
+}
+
+/// Any still-unclaimed comment in `start..end` (a prelude, a selector, a value)
+pub fn has_comments_between(start: u32, end: u32, f: &CssFormatter<'_, '_>) -> bool {
+    f.context().comments().iter_before(end).any(|c| c.span.start >= start)
+}
+
 /// Collapses any whitespace run in `raw` to a single space.
 pub fn normalize_whitespace(raw: &str) -> String {
     let mut out = String::with_capacity(raw.len());

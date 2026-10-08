@@ -1,7 +1,10 @@
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { createLspConnection } from "../utils";
+import { createLspConnection, initializationMessagesFixture } from "../utils";
 import { WatchKind } from "vscode-languageserver-protocol/node";
+
+const FIXTURES_DIR = join(import.meta.dirname, "fixtures");
 
 describe("LSP initialization", () => {
   it("should start LSP server and respond to initialize request", async () => {
@@ -64,11 +67,28 @@ describe("LSP initialization", () => {
       ["**/.oxlintrc.json", "**/.oxlintrc.jsonc", "**/oxlint.config.ts", "**/oxlint.config.mts"],
     ],
     [{ configPath: "./custom-config.json" }, ["custom-config.json"]],
+    [
+      { disableNestedConfig: true },
+      [".oxlintrc.json", ".oxlintrc.jsonc", "oxlint.config.ts", "oxlint.config.mts"],
+    ],
+    // Vite+ mode: only `vite.config.*`, and nested configs are never discovered
+    [
+      undefined,
+      [
+        "vite.config.js",
+        "vite.config.mjs",
+        "vite.config.ts",
+        "vite.config.cjs",
+        "vite.config.mts",
+        "vite.config.cts",
+      ],
+      { VP_VERSION: "1" },
+    ],
   ])(
     "should send correct dynamic watch pattern registration for config: %s",
-    async (lspConfig, expectedPatterns) => {
+    async (lspConfig, expectedPatterns, env?: Record<string, string>) => {
       const dirUri = pathToFileURL(import.meta.dirname).href;
-      await using client = createLspConnection();
+      await using client = createLspConnection(env);
       await client.initialize(
         [{ uri: dirUri, name: "test" }],
         {
@@ -98,4 +118,29 @@ describe("LSP initialization", () => {
       ]);
     },
   );
+
+  it("should show an error message when the root config is invalid", async () => {
+    expect(
+      await initializationMessagesFixture(FIXTURES_DIR, "invalid-config-root/test.ts"),
+    ).toMatchSnapshot();
+  });
+
+  it("should show an error message when the nested config is invalid", async () => {
+    expect(
+      await initializationMessagesFixture(FIXTURES_DIR, "invalid-config-nested/test.ts"),
+    ).toMatchSnapshot();
+  });
+
+  it.skipIf(
+    // skip this test on Windows due to different not found messages
+    // on linux the message is "No such file or directory"
+    // on windows the message is "The system cannot find the file specified."
+    () => process.platform === "win32",
+  )("should show an error message when configPath points to an invalid config", async () => {
+    expect(
+      await initializationMessagesFixture(FIXTURES_DIR, "invalid-custom-config-path/test.ts", {
+        configPath: "./not-found.json",
+      }),
+    ).toMatchSnapshot();
+  });
 });

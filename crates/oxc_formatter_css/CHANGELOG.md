@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🚀 Features
+
+- b538e3c formatter_css: Parse embedded CSS as a block's contents (#27284) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e9ae2d8 formatter_css: Fix layouts found in mdn-content repo (css-in-md) (#27326) (leaysgur)
+- 6c08f2a formatter_css: Apply the `url()` import exception to a lone comma group (#27288) (leaysgur)
+- 1967302 formatter_css: Hug a spaced `ident (` only at the at-rule prelude head (#27283) (leaysgur)
+
+### 📚 Documentation
+
+- 51506c6 formatter_css: Record divergences found in mdn-content (css-in-md) (#27327) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 📚 Documentation
+
+- d8a716c formatter_css: Unify DIVERGENCES reference (#26749) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- dc45cc3 formatter_test: Test Prettier dynamic snippet tests (#26469) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- aef8b4a formatter_css: Handle less-test-suites failures (#26513) (leaysgur)
+
 ## [0.67.0] - 2026-09-07
 
 ### 🚀 Features

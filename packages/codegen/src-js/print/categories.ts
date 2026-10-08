@@ -45,8 +45,8 @@ import { debugAssert } from "../asserts.ts";
 //    9  CAT_CLOSE_BRACKET              `)` or `]`
 //   10  CAT_OP_UN_NOT                  `!`
 //
-// Group 11 to 15: Operators `printSpaceBeforeOperatorSlow` needs to tell apart (`last >= CAT_OP_UN_NOT_AFTER_LT`)
-//   11  CAT_OP_UN_NOT_AFTER_LT         `!` written straight after a `<`
+// Group 11 to 15: Operators `printSpaceBeforeOperatorSlow` needs to tell apart (`last >= CAT_OP_LT_THEN_UN_NOT`)
+//   11  CAT_OP_LT_THEN_UN_NOT          `<` with `!` written immediately after it
 //   12  CAT_OP_UN_PLUS                 `+`
 //   13  CAT_OP_UPD_INC                 `++`
 //   14  CAT_OP_UN_NEG                  `-`
@@ -68,7 +68,7 @@ export type Category =
   | typeof CAT_START_OF_DEFAULT_EXPORT
   | typeof CAT_CLOSE_BRACKET
   | typeof CAT_OP_UN_NOT
-  | typeof CAT_OP_UN_NOT_AFTER_LT
+  | typeof CAT_OP_LT_THEN_UN_NOT
   | typeof CAT_OP_UN_PLUS
   | typeof CAT_OP_UPD_INC
   | typeof CAT_OP_UN_NEG
@@ -152,13 +152,13 @@ export const CAT_CLOSE_BRACKET = 9;
 export const CAT_OP_UN_NOT = 10;
 
 /**
- * `!` written immediately after a `<`, which is the `<!--` hazard.
+ * `<` with `!` written immediately after it, which is the `<!--` hazard.
  * Folding the check on the preceding character into the code saves tracking the second-last character.
  *
  * The first of the operators `printSpaceBeforeOperator` gates on - writing one of these
  * is what records it, so no separate field tracks which operator came last.
  */
-export const CAT_OP_UN_NOT_AFTER_LT = 11;
+export const CAT_OP_LT_THEN_UN_NOT = 11;
 
 /** `+`, which must not merge with a following `+` or `++`. */
 export const CAT_OP_UN_PLUS = 12;
@@ -190,7 +190,7 @@ export const ALL_CATEGORIES: Category[] = [
   CAT_START_OF_ARROW_EXPR,
   CAT_CLOSE_BRACKET,
   CAT_OP_UN_NOT,
-  CAT_OP_UN_NOT_AFTER_LT,
+  CAT_OP_LT_THEN_UN_NOT,
   CAT_OP_UN_PLUS,
   CAT_OP_UPD_INC,
   CAT_OP_UN_NEG,

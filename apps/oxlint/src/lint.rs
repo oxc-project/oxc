@@ -28,7 +28,8 @@ use crate::{
         CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
     },
     config_loader::{
-        CliConfigLoadError, ConfigLoadError, ConfigLoader, materialize_default_plugins,
+        CliConfigLoadError, ConfigLoadError, ConfigLoader, config_discovery,
+        materialize_default_plugins,
     },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -247,7 +248,8 @@ impl CliRunner {
             // as the passed config file takes absolute precedence.
             basic_options.config.is_none() &&
             !misc_options.print_config &&
-            !self.options.list_rules;
+            !self.options.list_rules &&
+            config_discovery().nested_configs();
 
         let config_result = {
             let mut config_loader =
@@ -587,7 +589,12 @@ impl CliRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
             oxlint_suppression_file_action,
-            rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
+            rule_timings: rule_timing_store.as_ref().map(|store| {
+                crate::output_formatter::RuleTimings {
+                    records: store.collect(),
+                    js_plugin_runtime: store.js_plugin_runtime(),
+                }
+            }),
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -1788,6 +1795,17 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_skips_rules() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_rules".into())
+            .test_and_snapshot_multiple(&[
+                &["--type-check-only", "index.ts"],
+                &["--type-check-only", "type-error.ts"],
+            ]);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_only_reports_syntax_errors() {
         let args = &["--type-check-only"];
         Tester::new()
@@ -2061,6 +2079,12 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_tuple_rules".into())
             .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_no_js_runtime() {
+        let args = &[];
+        Tester::new().with_cwd("fixtures/cli/no_js_runtime".into()).test_and_snapshot(args);
     }
 }
 

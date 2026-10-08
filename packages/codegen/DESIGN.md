@@ -124,11 +124,11 @@ This has 3 advantages over storing the last character:
 
 That one `last` field replaces all of this:
 
-| Rust                                  | Question it answers                 | JS                       |
-| :------------------------------------ | :---------------------------------- | :----------------------- |
-| `last_byte()` + `is_identifier_part`  | Would a following identifier merge? | `CAT_IDENT`              |
-| `last_byte() == Some(b'?')`           | Would a following `?` make `??`?    | `CAT_QUESTION`           |
-| `peek_nth_byte_back(1) == Some(b'<')` | Is this `!` the `!` of a `<!`?      | `CAT_OP_UN_NOT_AFTER_LT` |
+| Rust                                  | Question it answers                 | JS                      |
+| :------------------------------------ | :---------------------------------- | :---------------------- |
+| `last_byte()` + `is_identifier_part`  | Would a following identifier merge? | `CAT_IDENT`             |
+| `last_byte() == Some(b'?')`           | Would a following `?` make `??`?    | `CAT_QUESTION`          |
+| `peek_nth_byte_back(1) == Some(b'<')` | Is this `!` the `!` of a `<!`?      | `CAT_OP_LT_THEN_UN_NOT` |
 
 ### Extending this scheme to operators
 
@@ -235,7 +235,7 @@ Three properties are relied on. Adding a code without preserving them will silen
 
 1. **Identifier hazards are the lowest codes.** So `printSpaceBeforeIdentifier` is `last <= CAT_REGEX_SLASH` -
    one compare, no table, no branch tree. The operators `printSpaceBeforeOperator` must distinguish are the highest,
-   for the same reason (`last >= CAT_OP_UN_NOT_AFTER_LT`).
+   for the same reason (`last >= CAT_OP_LT_THEN_UN_NOT`).
 2. **The `CAT_START_OF_*` codes sit between those two ranges**, which is what makes both range checks
    treat them as "nothing to separate".
 3. **`CAT_START_OF_STMT` is odd, with the other two marks either side.** The five reader sites each ask

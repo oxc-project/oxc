@@ -12,16 +12,13 @@ use oxc_diagnostics::{DiagnosticService, GraphicalTheme};
 use super::{
     command::{FormatCommand, Mode, OutputMode},
     reporter::DefaultReporter,
-    resolve::resolve_ignore_paths,
     result::CliRunResult,
     service::{FormatService, SuccessResult},
     walk::ScopedWalker,
 };
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{
-    ConfigResolver, FormatStrategy, SourceFormatter, resolve_editorconfig_path, utils,
-};
+use crate::core::{ConfigScopes, FormatPlan, SourceFormatter, resolve_ignore_paths, utils};
 
 pub struct WalkRunner {
     options: FormatCommand,
@@ -86,27 +83,19 @@ impl WalkRunner {
         let num_of_threads = rayon::current_num_threads();
 
         // Find and load root config file
-        let editorconfig_path = resolve_editorconfig_path(&cwd);
-        let mut root_config_resolver = match ConfigResolver::from_config(
+        let config_scopes = match ConfigScopes::load(
             &cwd,
             config_options.config.as_deref(),
-            editorconfig_path.as_deref(),
+            config_options.use_nested_configs(),
             #[cfg(feature = "napi")]
             self.js_config_loader.as_ref(),
         ) {
-            Ok(r) => r,
+            Ok(scopes) => scopes,
             Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to load configuration file.\n{err}\n"),
-                );
+                utils::print_and_flush(stderr, &format!("{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        if let Err(err) = root_config_resolver.build_and_validate() {
-            utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
-            return CliRunResult::InvalidOptionConfig;
-        }
 
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
@@ -133,7 +122,7 @@ impl WalkRunner {
         };
 
         // Shared channel for format entries from all scopes
-        let (tx_entry, rx_entry) = mpsc::channel::<FormatStrategy>();
+        let (tx_entry, rx_entry) = mpsc::channel::<FormatPlan>();
         // Collect format results (changed paths or unchanged count)
         let (tx_success, rx_success) = mpsc::channel();
         // Diagnostic from formatting service
@@ -173,20 +162,16 @@ impl WalkRunner {
             }
         };
         let any_config_found = match walker.run(
-            root_config_resolver,
+            &config_scopes,
             &resolved_ignore_paths,
             ignore_options.with_node_modules,
-            config_options.config.is_none() && !config_options.disable_nested_config,
-            editorconfig_path.as_deref(),
-            #[cfg(feature = "napi")]
-            self.js_config_loader.as_ref(),
             &tx_entry,
             &tx_error,
         ) {
-            Ok(found) => {
+            Ok(()) => {
                 drop(tx_entry);
                 drop(tx_error);
-                found
+                config_scopes.any_config_found()
             }
             Err(err) => {
                 drop(tx_entry);
@@ -259,7 +244,7 @@ impl WalkRunner {
                 ),
             );
             // Config stats: only show when no config is found
-            if !any_config_found && editorconfig_path.is_none() {
+            if !any_config_found {
                 #[cfg(feature = "napi")]
                 let hint = "No config found, using defaults. Please add a config file or try `oxfmt --init` if needed.\n";
                 #[cfg(not(feature = "napi"))]
