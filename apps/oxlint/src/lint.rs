@@ -596,7 +596,7 @@ impl CliRunner {
                     js_plugin_runtime: store.js_plugin_runtime(),
                 }
             }),
-            #[cfg(feature = "memory")]
+            #[cfg(feature = "debug_allocs")]
             rule_memory: rule_timing_store
                 .as_ref()
                 .filter(|_| debug_memory)
@@ -678,7 +678,7 @@ impl CliRunner {
             start_time: now.elapsed(),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
             rule_timings: None,
-            #[cfg(feature = "memory")]
+            #[cfg(feature = "debug_allocs")]
             rule_memory: None,
         }) {
             print_and_flush_stdout(stdout, &end);
@@ -1175,7 +1175,7 @@ mod test {
         ]);
     }
 
-    #[cfg(feature = "memory")]
+    #[cfg(feature = "debug_allocs")]
     #[test]
     fn debug_memory() {
         let tester = Tester::new();

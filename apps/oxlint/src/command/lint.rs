@@ -299,7 +299,7 @@ pub enum DebugOption {
     /// Enable per-rule timing information
     Timings,
 
-    /// Enable per-rule heap allocation information (requires the `memory` Cargo feature)
+    /// Enable per-rule heap allocation information (requires the `debug_allocs` Cargo feature)
     Memory,
 }
 
@@ -309,7 +309,7 @@ impl DebugOption {
     const TIMINGS_NAME: &str = "timings";
     const TIMINGS_HELP: &str = "Enable per-rule timing information";
     const MEMORY_NAME: &str = "memory";
-    const MEMORY_HELP: &str = "Enable native per-rule allocation counts and bytes (requires a build with the `memory` Cargo feature and `--format default`)";
+    const MEMORY_HELP: &str = "Enable native per-rule allocation counts and bytes";
 }
 
 impl FromStr for DebugOption {
@@ -374,9 +374,9 @@ impl FromStr for DebugOptions {
             return Err("debug option 'files' cannot be combined with other debug options".into());
         }
 
-        if !cfg!(feature = "memory") && options.contains(&DebugOption::Memory) {
+        if !cfg!(feature = "debug_allocs") && options.contains(&DebugOption::Memory) {
             return Err(
-                "debug option 'memory' requires a profiling build: cargo build -p oxlint --release --features memory"
+                "debug option 'memory' requires a profiling build: cargo build -p oxlint --release --features debug_allocs"
                     .into(),
             );
         }
@@ -768,7 +768,7 @@ mod lint_options {
         );
     }
 
-    #[cfg(feature = "memory")]
+    #[cfg(feature = "debug_allocs")]
     #[test]
     fn debug_memory() {
         let options = get_lint_options("--debug memory src");
@@ -777,7 +777,7 @@ mod lint_options {
         assert_eq!(options.paths, vec![PathBuf::from("src")]);
     }
 
-    #[cfg(feature = "memory")]
+    #[cfg(feature = "debug_allocs")]
     #[test]
     fn debug_memory_and_timings() {
         let options = get_lint_options("--debug memory,timings src");

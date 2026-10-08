@@ -38,7 +38,7 @@ impl InternalFormatter for DefaultOutputFormatter {
             }
         }
 
-        #[cfg(feature = "memory")]
+        #[cfg(feature = "debug_allocs")]
         if let Some(rule_memory) = &lint_command_info.rule_memory {
             output.push_str(&format_rule_memory_table(rule_memory));
         }
@@ -133,7 +133,7 @@ fn format_rule_timing_table(rule_timings: &[RuleTimingRecord]) -> String {
     output
 }
 
-#[cfg(feature = "memory")]
+#[cfg(feature = "debug_allocs")]
 fn format_rule_memory_table(records: &[RuleTimingRecord]) -> String {
     let mut records = records
         .iter()
@@ -330,7 +330,7 @@ mod test {
         default::{DefaultOutputFormatter, GraphicalReporter, format_js_plugin_timing_summary},
     };
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
-    #[cfg(feature = "memory")]
+    #[cfg(feature = "debug_allocs")]
     use oxc_linter::memory::AllocationStats;
     use oxc_linter::{RuleTimingRecord, RuleTimingSource};
     use rustc_hash::FxHashSet;
@@ -353,7 +353,7 @@ mod test {
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
             rule_timings: None,
-            #[cfg(feature = "memory")]
+            #[cfg(feature = "debug_allocs")]
             rule_memory: None,
         });
 
@@ -374,7 +374,7 @@ mod test {
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
             rule_timings: None,
-            #[cfg(feature = "memory")]
+            #[cfg(feature = "debug_allocs")]
             rule_memory: None,
         });
 
@@ -392,7 +392,7 @@ mod test {
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::Created,
             rule_timings: None,
-            #[cfg(feature = "memory")]
+            #[cfg(feature = "debug_allocs")]
             rule_memory: None,
         });
 
@@ -413,7 +413,7 @@ mod test {
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::Updated,
             rule_timings: None,
-            #[cfg(feature = "memory")]
+            #[cfg(feature = "debug_allocs")]
             rule_memory: None,
         });
 
@@ -441,7 +441,7 @@ mod test {
                         rule_name: "no-debugger".to_string(),
                         duration: Duration::from_micros(1500),
                         calls: 3,
-                        #[cfg(feature = "memory")]
+                        #[cfg(feature = "debug_allocs")]
                         memory: AllocationStats::default(),
                     },
                     RuleTimingRecord {
@@ -450,13 +450,13 @@ mod test {
                         rule_name: "no-floating-promises".to_string(),
                         duration: Duration::from_micros(500),
                         calls: 0,
-                        #[cfg(feature = "memory")]
+                        #[cfg(feature = "debug_allocs")]
                         memory: AllocationStats::default(),
                     },
                 ],
                 js_plugin_runtime: Duration::ZERO,
             }),
-            #[cfg(feature = "memory")]
+            #[cfg(feature = "debug_allocs")]
             rule_memory: None,
         });
 
@@ -467,7 +467,7 @@ mod test {
         );
     }
 
-    #[cfg(feature = "memory")]
+    #[cfg(feature = "debug_allocs")]
     #[test]
     fn memory_table_sorts_and_totals_native_rules() {
         let record = |source, plugin: &str, rule: &str, bytes| RuleTimingRecord {
@@ -511,7 +511,7 @@ mod test {
                 rule_name: "rule".to_string(),
                 duration: Duration::from_micros(700),
                 calls: 2,
-                #[cfg(feature = "memory")]
+                #[cfg(feature = "debug_allocs")]
                 memory: AllocationStats::default(),
             }],
             js_plugin_runtime: Duration::from_millis(1),

@@ -127,7 +127,7 @@ mod test {
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: oxc_linter::OxlintSuppressionFileAction::None,
             rule_timings: None,
-            #[cfg(feature = "memory")]
+            #[cfg(feature = "debug_allocs")]
             rule_memory: None,
         });
 
@@ -147,7 +147,7 @@ mod test {
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: oxc_linter::OxlintSuppressionFileAction::None,
             rule_timings: None,
-            #[cfg(feature = "memory")]
+            #[cfg(feature = "debug_allocs")]
             rule_memory: None,
         });
 

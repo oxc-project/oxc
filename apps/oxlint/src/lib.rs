@@ -58,11 +58,11 @@ cfg_select! {
     ) => {
         use mimalloc_safe::MiMalloc as BaseAllocator;
 
-        #[cfg(not(feature = "memory"))]
+        #[cfg(not(feature = "debug_allocs"))]
         #[global_allocator]
         static GLOBAL: BaseAllocator = BaseAllocator;
     }
-    feature = "memory" => {
+    feature = "debug_allocs" => {
         use std::alloc::System as BaseAllocator;
     }
     _ => {}
@@ -70,7 +70,7 @@ cfg_select! {
 
 // Use a `TrackingAllocator` as the global allocator when the `memory` feature is enabled
 // so we can report on allocation stats.
-#[cfg(feature = "memory")]
+#[cfg(feature = "debug_allocs")]
 #[global_allocator]
 static GLOBAL: oxc_linter::memory::TrackingAllocator<BaseAllocator> =
     oxc_linter::memory::TrackingAllocator(BaseAllocator);

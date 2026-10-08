@@ -49,7 +49,7 @@ mod tsgolint;
 mod utils;
 
 pub mod loader;
-#[cfg(feature = "memory")]
+#[cfg(feature = "debug_allocs")]
 pub mod memory;
 pub mod rules;
 pub mod table;
@@ -71,7 +71,7 @@ pub use crate::disable_directives::{
     DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
 };
-#[cfg(feature = "memory")]
+#[cfg(feature = "debug_allocs")]
 use crate::memory::AllocationStats;
 pub use crate::{
     config::{
@@ -540,7 +540,7 @@ impl Linter {
                     rule_name: key.rule_name.into_owned(),
                     duration: stat.duration,
                     calls: stat.calls,
-                    #[cfg(feature = "memory")]
+                    #[cfg(feature = "debug_allocs")]
                     memory: stat.memory,
                 }),
             );
@@ -1013,7 +1013,7 @@ impl Linter {
             rule_name: rule_name.to_string(),
             duration,
             calls: timing.calls,
-            #[cfg(feature = "memory")]
+            #[cfg(feature = "debug_allocs")]
             memory: AllocationStats::default(),
         })
     }
