@@ -12,6 +12,24 @@ const x = 1;
 --------------------"
 `;
 
+exports[`LSP formatting > basic formatting > should handle format/test.astro 1`] = `
+"--- URI -----------
+file://<fixture>/format/test.astro
+--- BEFORE ---------
+---
+const   count=1
+---
+<button onclick={()=>count}>{count}</button>
+
+--- AFTER ----------
+---
+const   count=1
+---
+<button onclick={()=>count}>{count}</button>
+
+--------------------"
+`;
+
 exports[`LSP formatting > basic formatting > should handle format/test.json 1`] = `
 "--- URI -----------
 file://<fixture>/format/test.json
@@ -88,6 +106,25 @@ file://<fixture>/format/test.vue
 <script>
 const x = 1;
 </script>
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-astro/test.astro 1`] = `
+"--- URI -----------
+file://<fixture>/config-astro/test.astro
+--- BEFORE ---------
+---
+const   count=1
+---
+<button onclick={()=>count}>{count}</button>
+
+--- AFTER ----------
+---
+const count = 1;
+---
+
+<button onclick={() => count}>{count}</button>
 
 --------------------"
 `;
