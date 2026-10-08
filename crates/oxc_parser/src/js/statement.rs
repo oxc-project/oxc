@@ -239,6 +239,46 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     #[inline]
+    #[expect(clippy::cast_possible_truncation, reason = "Comments fit within u32 source offsets")]
+    pub(crate) fn leading_expression_comments(&self) -> Option<NonZeroU32> {
+        if !self.cur_token().has_preceding_comment() {
+            return None;
+        }
+        // Commas and `?` have no AST node of their own. Comments immediately
+        // after them lead the following expression even when lexer trivia
+        // classifies them as trailing the punctuation.
+        if self.prev_token_end == 0
+            || !matches!(self.source_text.as_bytes()[self.prev_token_end as usize - 1], b',' | b'?')
+        {
+            return self.leading_node_comments_at(self.cur_start());
+        }
+        let comments = &self.lexer.trivia_builder.comments;
+        let end = if comments.last().is_none_or(|comment| comment.span.end <= self.cur_start()) {
+            comments.len()
+        } else {
+            comments.partition_point(|comment| comment.span.end <= self.cur_start())
+        };
+        let mut begin = end;
+        while begin != 0 && comments[begin - 1].span.start >= self.prev_token_end {
+            begin -= 1;
+        }
+        (begin != end).then(|| NonZeroU32::new(begin as u32 + 1).unwrap())
+    }
+
+    fn comment_needs_assignment_pass(content: CommentContent) -> bool {
+        matches!(
+            content,
+            CommentContent::Pure
+                | CommentContent::NoSideEffects
+                | CommentContent::PropertyKey
+                | CommentContent::CoverageIgnoreFile
+                | CommentContent::Webpack
+                | CommentContent::Vite
+                | CommentContent::Turbopack
+        )
+    }
+
+    #[inline]
     #[expect(
         clippy::cast_possible_truncation,
         reason = "Comments fit within the parser's u32 source offsets"
@@ -274,16 +314,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if comment.attached_to != start {
                 break;
             }
-            if matches!(
-                comment.content,
-                CommentContent::Pure
-                    | CommentContent::NoSideEffects
-                    | CommentContent::PropertyKey
-                    | CommentContent::CoverageIgnoreFile
-                    | CommentContent::Webpack
-                    | CommentContent::Vite
-                    | CommentContent::Turbopack
-            ) {
+            if Self::comment_needs_assignment_pass(comment.content) {
                 continue;
             }
             if comment.is_leading() {
@@ -296,18 +327,71 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    pub(crate) fn assign_expression_leading_comments(
+        &mut self,
+        node_id: NodeId,
+        start: u32,
+        begin: NonZeroU32,
+    ) {
+        for comment in &mut self.lexer.trivia_builder.comments[begin.get() as usize - 1..] {
+            if comment.span.end > start {
+                break;
+            }
+            if Self::comment_needs_assignment_pass(comment.content)
+                || comment
+                    .attachment
+                    .as_ref()
+                    .is_some_and(|attachment| attachment.placement == CommentPlacement::Trailing)
+            {
+                continue;
+            }
+            comment.attachment = Some(CommentAttachment {
+                node_id: Cell::new(node_id),
+                placement: CommentPlacement::Leading,
+            });
+            self.comment_assignment_epoch += 1;
+        }
+    }
+
+    pub(crate) fn assign_binary_operand_comments(
+        &mut self,
+        left: &Expression<'a>,
+        right: &Expression<'a>,
+        prefix_end: u32,
+    ) {
+        let left_end = left.span().end;
+        let comments = &mut self.lexer.trivia_builder.comments;
+        let end = comments.partition_point(|comment| comment.span.end <= prefix_end);
+        for comment in comments[..end].iter_mut().rev() {
+            if comment.span.start < left_end {
+                break;
+            }
+            if Self::comment_needs_assignment_pass(comment.content) {
+                continue;
+            }
+            let (node_id, placement) = if comment.is_trailing() && comment.attached_to == left_end {
+                (left.node_id(), CommentPlacement::Trailing)
+            } else {
+                (right.node_id(), CommentPlacement::Leading)
+            };
+            comment.attachment = Some(CommentAttachment { node_id: Cell::new(node_id), placement });
+            self.comment_assignment_epoch += 1;
+        }
+    }
+
     pub(crate) fn remap_leading_comment_owner(&mut self, start: u32, from: NodeId, to: NodeId) {
         let comments = &mut self.lexer.trivia_builder.comments;
         let end = comments.partition_point(|comment| comment.span.end <= start);
         for comment in comments[..end].iter_mut().rev() {
-            if comment.attached_to != start {
-                break;
-            }
             if let Some(attachment) = &comment.attachment
                 && attachment.node_id.get() == from
             {
                 attachment.node_id.set(to);
                 self.comment_assignment_epoch += 1;
+            } else if comment.attached_to != start
+                && !Self::comment_needs_assignment_pass(comment.content)
+            {
+                break;
             }
         }
     }

@@ -3,8 +3,8 @@ checker.ts:
   sys allocs: 22
   sys reallocs: 10
   sys deallocs: 22
-  sys alloc bytes: 20304 # 20.30 kB
-  sys peak growth: 17928 # 17.93 kB
+  sys alloc bytes: 14864 # 14.86 kB
+  sys peak growth: 12488 # 12.49 kB
   arena allocs: 262590
   arena reallocs: 22858
   arena size: 13054768 # 13.05 MB

@@ -893,6 +893,15 @@ fn parser_exit_assignment_matches_the_complete_pass() {
             SourceType::mjs(),
         ),
         ("export const x = left + /* operand */ right;", SourceType::mjs()),
+        (
+            "f(first, // argument\n (left + right));\n\
+             const x = ready ? // consequent\n yes : no;\n\
+             const y = left /* trailing */ + // operand\n right;\n\
+             { // block prefix\n /* statement prefix */ work(); }",
+            SourceType::mjs(),
+        ),
+        ("[first, /* array */ [second], /* default */ third = 1] = source;", SourceType::mjs()),
+        ("[first, // array\n [second], // default\n third = 1] = source;", SourceType::mjs()),
         ("f(/* argument */ true, /* conditional */ (ready ? yes : no));", SourceType::mjs()),
         (
             "class A { static [(/* sequence */ class {}, /* assignment */ value = () => 0)]; }",

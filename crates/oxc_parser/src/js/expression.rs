@@ -1395,11 +1395,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 continue;
             }
 
+            let has_comments = self.cur_token().has_preceding_comment();
             self.bump_any(); // bump operator
             let rhs_start = self.cur_start();
-            let leading_comments = self.leading_node_comments();
+            let has_comments = has_comments || self.cur_token().has_preceding_comment();
             let rhs = self.parse_binary_expression_or_higher(left_precedence);
-            let rhs = self.finish_expression_comments(rhs, leading_comments);
+            if has_comments {
+                self.assign_binary_operand_comments(&lhs, &rhs, rhs_start);
+            }
 
             lhs = if kind.is_logical_operator() {
                 let span = self.end_span(lhs_start);
@@ -1493,7 +1496,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let leading_comments = self.leading_node_comments();
+        let leading_comments = self.leading_expression_comments();
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         // [+Yield] YieldExpression
@@ -1580,7 +1583,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         comments: Option<std::num::NonZeroU32>,
     ) -> Expression<'a> {
         if let Some(comments) = comments {
-            self.assign_node_leading_comments(
+            self.assign_expression_leading_comments(
                 expression.node_id(),
                 expression.span().start,
                 comments,
