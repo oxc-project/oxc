@@ -12,7 +12,7 @@ use oxc_syntax::node::NodeId;
 /// checkpoint can still survive in the returned AST.
 pub struct ParserAstBuilder<'a> {
     allocator: &'a Allocator,
-    next_node_id: Cell<usize>,
+    next_node_id: Cell<u32>,
 }
 
 impl<'a> ParserAstBuilder<'a> {
@@ -25,9 +25,11 @@ impl<'a> AstBuild<'a> for ParserAstBuilder<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         let index = self.next_node_id.get();
-        assert!(index <= NodeId::MAX_INDEX, "Too many AST nodes");
+        // Check the reserved maximum before incrementing, so the u32 counter
+        // cannot wrap and reuse an ID.
+        let node_id = NodeId::new(index as usize);
         self.next_node_id.set(index + 1);
-        NodeId::new(index)
+        node_id
     }
 }
 
@@ -44,5 +46,20 @@ impl<'a> GetAllocator<'a> for ParserAstBuilder<'a> {
     #[inline]
     fn allocator(&self) -> &'a Allocator {
         self.allocator
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "index_vec index overflow")]
+    fn node_ids_reject_the_reserved_maximum() {
+        let allocator = Allocator::default();
+        let builder = ParserAstBuilder::new(&allocator);
+        builder.next_node_id.set(u32::MAX - 1);
+        assert_eq!(builder.node_id().index(), NodeId::MAX_INDEX);
+        builder.node_id();
     }
 }
