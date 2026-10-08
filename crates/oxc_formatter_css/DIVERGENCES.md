@@ -1415,8 +1415,11 @@ a {
 
 A `;`-less declaration runs to the next `;`: `oxc-css-parser` reads one declaration, a value being any component-value run (css-syntax-3; its README "Acceptance");
 postcss rejects a value with a `word:` after its first word.
-Same tokens, so same meaning: a browser drops the whole declaration either way.
+Same tokens, so same meaning: a browser drops the declaration,
+or keeps it the same way when the value holds an arbitrary substitution function (`var()`, `env()`).
 SCSS / Less keep rejecting it (dart-sass / lessc), so those stay as-is.
+lessc's `anonymousValue()` shortcut stores some `;`-terminated runs (no `(`, `.`, `-`, ...) as text without parsing them;
+that is not its value grammar, so it is not followed.
 
 ## combinator-spacing
 
