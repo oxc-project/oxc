@@ -226,7 +226,7 @@ impl Tool for ServerFormatter {
                 &file_content
             };
 
-            let Some(result) = self.format_file(&path, source_text) else {
+            let Some(result) = self.format_file(&path, source_text)? else {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
@@ -238,7 +238,7 @@ impl Tool for ServerFormatter {
                 .ok_or_else(|| "In-memory formatting requires content".to_string())?;
 
             let Some(result) =
-                self.format_in_memory(document.uri, source_text, &document.language_id)
+                self.format_in_memory(document.uri, source_text, &document.language_id)?
             else {
                 return Ok(vec![]); // currently not supported
             };
@@ -346,7 +346,7 @@ impl ServerFormatter {
         scopes: &ConfigScopes,
         path: &Path,
         source_text: &str,
-    ) -> Option<FormatResult> {
+    ) -> Result<Option<FormatResult>, String> {
         let resolver = match scopes.resolve(path) {
             Ok(r) => r,
             Err(err) => {
@@ -360,37 +360,35 @@ impl ServerFormatter {
 
         if resolver.is_path_ignored(path, false) {
             debug!("File is ignored by config ignorePatterns: {}", path.display());
-            return None;
+            return Ok(None);
         }
 
         let Some(strategy) = classify_file(path) else {
             debug!("Unsupported file type for formatting: {}", path.display());
-            return None;
+            return Ok(None);
         };
         let plan = match resolver.resolve(path, strategy) {
             Ok(ResolveOutcome::Format(plan)) => plan,
             Ok(ResolveOutcome::MissingPlugin(plugin)) => {
-                warn!(
-                    "Skipping `.{plugin}`: `{plugin}` plugin is not enabled in resolved config: {}",
+                return Err(format!(
+                    "`{plugin}` plugin is not enabled in resolved config: {}",
                     path.display()
-                );
-                return None;
+                ));
             }
             Err(err) => {
-                debug!("Config resolve error for {}: {err}", path.display());
-                return None;
+                return Err(format!("Config resolve error for {}: {err}", path.display()));
             }
         };
         debug!("plan = {plan:?}");
 
-        Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, plan)))
+        Ok(Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, plan))))
     }
 
-    fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+    fn format_file(&self, path: &Path, source_text: &str) -> Result<Option<FormatResult>, String> {
         let state = self.snapshot();
         if is_ignored(&state.ignore_matchers, path, false, true) {
             debug!("File is ignored by .prettierignore: {}", path.display());
-            return None;
+            return Ok(None);
         }
         self.resolve_and_format(&state.scopes, path, source_text)
     }
@@ -400,11 +398,11 @@ impl ServerFormatter {
         uri: &Uri,
         source_text: &str,
         language_id: &LanguageId,
-    ) -> Option<FormatResult> {
+    ) -> Result<Option<FormatResult>, String> {
         let Some(path) = create_fake_file_path_from_language_id(language_id, &self.root_path, uri)
         else {
             debug!("Unsupported language id for in-memory formatting: {language_id:?}");
-            return None;
+            return Ok(None);
         };
         self.resolve_and_format(&self.snapshot().scopes, &path, source_text)
     }
