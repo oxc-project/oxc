@@ -8,6 +8,8 @@ use std::{
 };
 
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, GetAllocator};
+#[cfg(feature = "serialize")]
+use oxc_estree::{ESTree, LoneSurrogatesString, Serializer as ESTreeSerializer};
 
 use crate::{Ident, JSChar, JSStrBuilder, Str, wtf8::*};
 
@@ -146,6 +148,16 @@ impl<'a> JSStr<'a> {
             builder.push_js_str(value);
         }
         builder.into_js_str()
+    }
+
+    /// Borrow the value as an arena [`Str`], or return `None` if it contains a lone surrogate.
+    ///
+    /// This is [`as_str`] for consumers that store the value in the AST.
+    ///
+    /// [`as_str`]: Self::as_str
+    #[inline]
+    pub fn as_arena_str(self) -> Option<Str<'a>> {
+        self.as_str().map(Str::from)
     }
 
     /// Borrow the value as UTF-8, or return `None` if it contains a lone surrogate.
@@ -367,6 +379,18 @@ impl Debug for JSStr<'_> {
             }
         }
         f.write_char('"')
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl ESTree for JSStr<'_> {
+    #[inline]
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        if let Some(value) = self.as_str() {
+            value.serialize(serializer);
+        } else {
+            LoneSurrogatesString(self.chars().map(JSChar::to_u32)).serialize(serializer);
+        }
     }
 }
 

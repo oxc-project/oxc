@@ -745,7 +745,9 @@ fn string_elements(arr: &oxc_ast::ast::ArrayExpression) -> Vec<String> {
     arr.elements
         .iter()
         .filter_map(|el| match el {
-            ArrayExpressionElement::StringLiteral(literal) => Some(literal.value.to_string()),
+            ArrayExpressionElement::StringLiteral(literal) => {
+                literal.value.as_str().map(str::to_owned)
+            }
             _ => None,
         })
         .collect()
@@ -865,9 +867,10 @@ impl Visit<'_> for SpecParser<'_> {
                                     .map(serde_json::Value::Number)
                             }
                         }
-                        Expression::StringLiteral(literal) => {
-                            Some(serde_json::Value::String(literal.value.to_string()))
-                        }
+                        Expression::StringLiteral(literal) => literal
+                            .value
+                            .as_str()
+                            .map(|value| serde_json::Value::String(value.to_owned())),
                         _ => None,
                     };
                     if let Some(value) = value {

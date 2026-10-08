@@ -8,6 +8,11 @@ fn preserve_source_imports() {
 #[test]
 fn merge_imports() {
     test(
+        r"import { foo } from '\uD800'; import { bar } from '\uD800';",
+        r"import { foo, bar } from '\uD800';",
+    );
+    test_same(r"import { foo } from '\uD800'; import { bar } from '\uD801';");
+    test(
         "import { foo } from 'foo'; import { bar } from 'foo';",
         "import { foo, bar } from 'foo';",
     );

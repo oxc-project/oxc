@@ -5,7 +5,7 @@ use std::{
 
 use oxc_allocator::Box as ArenaBox;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr, Str};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
@@ -467,6 +467,7 @@ impl<'a> ObjectPropertyKind<'a> {
 
 impl<'a> PropertyKey<'a> {
     /// Returns the static name of this property, if it has one, or `None` otherwise.
+    /// Names containing lone surrogates cannot be represented as UTF-8 and return `None`.
     ///
     /// ## Example
     ///
@@ -477,12 +478,14 @@ impl<'a> PropertyKey<'a> {
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
-            Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
+            Self::StringLiteral(lit) => lit.value.as_str().map(Cow::Borrowed),
             Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
             Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => lit.single_quasi().map(Into::into),
+            Self::TemplateLiteral(lit) => {
+                lit.single_quasi().and_then(JSStr::as_str).map(Cow::Borrowed)
+            }
             _ => None,
         }
     }
@@ -573,7 +576,7 @@ impl<'a> TemplateLiteral<'a> {
     }
 
     /// Get single quasi from `template`
-    pub fn single_quasi(&self) -> Option<Str<'a>> {
+    pub fn single_quasi(&self) -> Option<JSStr<'a>> {
         if self.is_no_substitution_template() { self.quasis[0].value.cooked } else { None }
     }
 }
@@ -614,6 +617,7 @@ impl<'a> MemberExpression<'a> {
     }
 
     /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
+    /// Names containing lone surrogates cannot be represented as UTF-8 and return `None`.
     ///
     /// If you need the [`Span`] of the property name, use [`MemberExpression::static_property_info`] instead.
     ///
@@ -640,10 +644,10 @@ impl<'a> MemberExpression<'a> {
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str()?)),
                 Expression::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                        Some((lit.span, lit.quasis[0].value.cooked?.as_str()?))
                     } else {
                         None
                     }
@@ -684,10 +688,13 @@ impl<'a> MemberExpression<'a> {
 
 impl<'a> ComputedMemberExpression<'a> {
     /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
+    /// Names containing lone surrogates cannot be represented as UTF-8 and return `None`.
     pub fn static_property_name(&self) -> Option<Str<'a>> {
         match &self.expression {
-            Expression::StringLiteral(lit) => Some(lit.value),
-            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
+            Expression::StringLiteral(lit) => lit.value.as_arena_str(),
+            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
+                lit.quasis[0].value.cooked.and_then(JSStr::as_arena_str)
+            }
             Expression::RegExpLiteral(lit) => lit.raw,
             _ => None,
         }
@@ -698,9 +705,9 @@ impl<'a> ComputedMemberExpression<'a> {
     /// If you don't need the [`Span`], use [`ComputedMemberExpression::static_property_name`] instead.
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match &self.expression {
-            Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+            Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str()?)),
             Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
-                lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                Some((lit.span, lit.quasis[0].value.cooked?.as_str()?))
             }
             Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
             _ => None,
@@ -2043,7 +2050,7 @@ impl<'a> ImportDeclarationSpecifier<'a> {
 
 impl<'a> ImportAttributeKey<'a> {
     /// Returns the string value of this import attribute key.
-    pub fn as_arena_str(&self) -> Str<'a> {
+    pub fn as_js_str(&self) -> JSStr<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name.into(),
             Self::StringLiteral(literal) => literal.value,
@@ -2114,7 +2121,11 @@ impl Display for ModuleExportName<'_> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.fmt(f),
             Self::IdentifierReference(identifier) => identifier.name.fmt(f),
-            Self::StringLiteral(literal) => write!(f, r#""{}""#, literal.value),
+            Self::StringLiteral(literal) => write!(
+                f,
+                "\"{}\"",
+                literal.value.as_str().expect("module export names are well-formed Unicode")
+            ),
         }
     }
 }
@@ -2127,11 +2138,17 @@ impl<'a> ModuleExportName<'a> {
     /// - `export { foo }` => `"foo"`
     /// - `export { foo as bar }` => `"bar"`
     /// - `export { foo as "anything" }` => `"anything"`
+    ///
+    /// ## Panics
+    ///
+    /// Panics if a string name contains a lone surrogate. The parser rejects such names.
     pub fn name(&self) -> Str<'a> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.into(),
             Self::IdentifierReference(identifier) => identifier.name.into(),
-            Self::StringLiteral(literal) => literal.value,
+            Self::StringLiteral(literal) => Str::from(
+                literal.value.as_str().expect("module export names are well-formed Unicode"),
+            ),
         }
     }
 

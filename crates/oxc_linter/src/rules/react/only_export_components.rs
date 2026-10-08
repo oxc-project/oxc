@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSChar;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -261,9 +262,13 @@ impl OnlyExportComponents {
                         PropertyKey::StaticIdentifier(ident) => {
                             is_react_component_name(&ident.name)
                         }
-                        PropertyKey::StringLiteral(literal) => {
-                            is_react_component_name(&literal.value)
-                        }
+                        // Only the first character decides a component name.
+                        PropertyKey::StringLiteral(literal) => literal
+                            .value
+                            .chars()
+                            .next()
+                            .and_then(JSChar::to_char)
+                            .is_some_and(|c| c.is_ascii_uppercase()),
                         _ => false,
                     };
                 self.is_compound_component_value(&property.value, has_component_name)
@@ -1057,6 +1062,10 @@ export function Button(props: PropsWithChildren): ReactNode {
         ),
         (
             "const Tag = { Root: () => <div /> }; export default Tag as Components;",
+            Some(serde_json::json!([{ "allowCompoundComponents": true }])),
+        ),
+        (
+            r#"export const Foo = () => {}; const Tag = { "R\uD800": () => <div /> }; export { Tag };"#,
             Some(serde_json::json!([{ "allowCompoundComponents": true }])),
         ),
         (

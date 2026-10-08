@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_str::JSStr;
 
 use crate::{
     DetermineValueType, ToBigInt, ToIntegerIndex, ValueType,
@@ -423,7 +424,7 @@ impl<'a> MayHaveSideEffects<'a> for MemberExpression<'a> {
 
 impl<'a> MayHaveSideEffects<'a> for StaticMemberExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        property_access_may_have_side_effects(&self.object, &self.property.name, ctx)
+        property_access_may_have_side_effects(&self.object, self.property.name.into(), ctx)
     }
 }
 
@@ -431,10 +432,10 @@ impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match &self.expression {
             Expression::StringLiteral(s) => {
-                property_access_may_have_side_effects(&self.object, &s.value, ctx)
+                property_access_may_have_side_effects(&self.object, s.value, ctx)
             }
             Expression::TemplateLiteral(t) => t.single_quasi().is_none_or(|quasi| {
-                property_access_may_have_side_effects(&self.object, &quasi, ctx)
+                property_access_may_have_side_effects(&self.object, quasi, ctx)
             }),
             Expression::NumericLiteral(n) => !n.value.to_integer_index().is_some_and(|n| {
                 !integer_index_property_access_may_have_side_effects(&self.object, n, ctx)
@@ -464,7 +465,7 @@ impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
 
 fn property_access_may_have_side_effects<'a>(
     object: &Expression<'a>,
-    property: &str,
+    property: JSStr<'a>,
     ctx: &impl MayHaveSideEffectsContext<'a>,
 ) -> bool {
     if object.may_have_side_effects(ctx) {
@@ -473,6 +474,8 @@ fn property_access_may_have_side_effects<'a>(
     if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
         return false;
     }
+
+    let Some(property) = property.as_str() else { return true };
 
     // Check known global property reads (e.g. Math.PI, console.log)
     if let Expression::Identifier(ident) = object
@@ -657,7 +660,8 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
                     Expression::StringLiteral(s) => {
-                        (member.object.get_identifier_reference(), s.value.as_str())
+                        let Some(name) = s.value.as_str() else { return true };
+                        (member.object.get_identifier_reference(), name)
                     }
                     _ => return true,
                 }

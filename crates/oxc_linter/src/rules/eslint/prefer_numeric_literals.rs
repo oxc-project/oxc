@@ -181,7 +181,7 @@ fn is_fixable(
 
 fn get_string_argument(call_expr: &CallExpression) -> Option<String> {
     if let Argument::StringLiteral(ident) = &call_expr.arguments[0] {
-        return Some(ident.value.to_string());
+        return ident.value.as_str().map(str::to_owned);
     } else if let Argument::TemplateLiteral(temp) = &call_expr.arguments[0] {
         if temp.quasis.is_empty() {
             return None;
