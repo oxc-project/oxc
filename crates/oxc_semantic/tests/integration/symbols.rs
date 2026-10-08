@@ -44,7 +44,7 @@ fn test_delete_member_write_target() {
         let scoping = semantic.scoping();
         let symbol = scoping.get_root_binding("a".into()).unwrap();
         let flags: Vec<_> =
-            scoping.get_resolved_references(symbol).map(|reference| reference.flags()).collect();
+            scoping.get_resolved_references(symbol).map(oxc_semantic::Reference::flags).collect();
         assert_eq!(flags, vec![ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget], "{code}");
     }
 
