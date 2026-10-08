@@ -4,6 +4,63 @@ use crate::{
     CompressOptions, test_options, test_options_source_type, test_same_options, test_smallest,
 };
 
+#[test]
+fn inline_constant_iife_arguments() {
+    // https://github.com/oxc-project/oxc/issues/27379
+    test_smallest("const f = x => x + 1; f(1);", "");
+    test_smallest("const foo = x => x + 1; foo(1); export const bar = 1;", "export const bar = 1;");
+    test_smallest("(x => x + 1)(1);", "");
+    test_smallest("((x, y) => x + y)(1, 2);", "");
+    test_smallest("(x => x + 1)(1 + 2);", "");
+    test_smallest("(x => { return x + 1 })(1);", "");
+    test_smallest("(x => x + 'b')('a');", "");
+    test_smallest("(x => x + 1n)(1n);", "");
+
+    // Parameter facts also reach nested closures, respecting shadowing.
+    test_smallest("use((x => () => x + 1)(1));", "use((x => () => 2)(1));");
+    test_smallest("use((x => x + (x => x + 1)(2))(1));", "use((x => x + (x => 3)(2))(1));");
+    // Recording the argument must not duplicate it at a bare parameter read.
+    test_smallest(
+        "(x => effect(x))('a long string with many characters');",
+        "(x => effect(x))('a long string with many characters');",
+    );
+}
+
+#[test]
+fn inline_iife_arguments_preserves_side_effects() {
+    test_smallest("(x => effect(x + 1))(1);", "(x => effect(2))(1);");
+    test_smallest(
+        "(x => effect(x + 1))((sideEffect(), 1));",
+        "(x => effect(2))((sideEffect(), 1));",
+    );
+    test_smallest("(x => x + 1)(1, sideEffect());", "(x => 2)(1, sideEffect());");
+
+    // The type of a nonconstant argument is unknown; a mixed BigInt addition throws.
+    test_smallest("(x => x + 1)(value);", "(x => x + 1)(value);");
+    test_smallest("(x => x + 1)(1n);", "(x => x + 1)(1n);");
+    test_smallest("(x => x + 1)(Symbol());", "(x => x + 1)(Symbol());");
+
+    let options = CompressOptions::smallest();
+    for source in [
+        "use((x => (x++, () => x))(1));",
+        "use((x => () => x++)(1));",
+        "(x => (eval('x = 2'), effect(x)))(1);",
+        "((x = sideEffect()) => effect(x))(1);",
+        "(({ x }) => effect(x))(1);",
+        "((...x) => effect(x))(1);",
+        "((x, y) => effect(x, y))(...values, 1);",
+        "((x, y) => effect(x, y))(1, ...values);",
+    ] {
+        test_same_options(source, &options);
+    }
+
+    // Redeclarations may replace the parameter before an earlier closure reads it.
+    test_smallest(
+        "(x => { function read() { effect(x) } function x() { sideEffect() } read() })(1);",
+        "(x => { function read() { effect(x) } function x() { sideEffect() } read() })(1);",
+    );
+}
+
 // https://github.com/oxc-project/oxc/issues/24531
 // A `var` assigned only inside a conditional holds its hoisted `undefined`
 // on the untaken path; single-statement block flattening produces a

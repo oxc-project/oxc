@@ -10,6 +10,37 @@ use crate::symbol_value::FreshValueKind;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
+    /// Seed parameter constants before traversing an immediately invoked arrow.
+    /// The arguments stay at the call site, preserving their evaluation order.
+    pub fn init_arrow_iife_parameter_values(call: &CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::ArrowFunctionExpression(arrow) = &call.callee else { return };
+        if arrow.params.items.is_empty()
+            || arrow.params.rest.is_some()
+            || arrow
+                .params
+                .items
+                .iter()
+                .any(|param| !param.pattern.is_binding_identifier() || param.initializer.is_some())
+            || call.arguments.iter().any(Argument::is_spread)
+        {
+            return;
+        }
+        for (param, argument) in arrow.params.items.iter().zip(&call.arguments) {
+            let BindingPattern::BindingIdentifier(id) = &param.pattern else { unreachable!() };
+            let symbol_id = id.symbol_id();
+            // A body declaration can replace a parameter before its first read.
+            if !ctx.scoping().symbol_redeclarations(symbol_id).is_empty() {
+                continue;
+            }
+            if let Some(value) = argument.to_expression().evaluate_value(ctx) {
+                // `init_value` and its consumers reject direct eval and writes,
+                // including writes from nested closures.
+                ctx.init_value(symbol_id, Some(value), FreshValueKind::None, false, false)
+                    .allow_constant_inlining = false;
+            }
+        }
+    }
+
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
         let Ancestor::VariableDeclarationDeclarations(declaration) = ctx.parent() else {
             unreachable!();
