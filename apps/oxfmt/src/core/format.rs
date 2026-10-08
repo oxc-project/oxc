@@ -254,14 +254,14 @@ impl SourceFormatter {
         language: PrettierLanguage,
         config: &FormatConfig,
     ) -> Result<String, OxcDiagnostic> {
-        use PrettierLanguage::{Angular, Astro, Handlebars, Html, Svelte, Vue};
+        use PrettierLanguage::{Angular, Astro, Glimmer, Html, Svelte, Vue};
 
         let mut prettier_options = to_prettier(config);
         inject_parser(&mut prettier_options, language.parser());
         inject_filepath(&mut prettier_options, path);
 
         // CSS/SCSS/Less also benefit, but they are formatted by `oxc_formatter_css`
-        if matches!(language, Html | Vue | Angular | Handlebars | Svelte | Astro) {
+        if matches!(language, Html | Vue | Angular | Glimmer | Svelte | Astro) {
             inject_tailwind_plugin_payload(&mut prettier_options, config);
         }
         // Languages that embed JS/TS code.

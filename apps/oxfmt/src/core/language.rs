@@ -160,7 +160,7 @@ impl Language {
             Self::Vue => Route::Prettier(PrettierLanguage::Vue),
             Self::Svelte => Route::Prettier(PrettierLanguage::Svelte),
             Self::Astro => Route::Prettier(PrettierLanguage::Astro),
-            Self::Handlebars => Route::Prettier(PrettierLanguage::Handlebars),
+            Self::Handlebars => Route::Prettier(PrettierLanguage::Glimmer),
             Self::Mdx => Route::Prettier(PrettierLanguage::Mdx),
         }
     }

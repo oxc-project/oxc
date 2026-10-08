@@ -144,6 +144,7 @@ impl NativeLanguage {
 /// The set shrinks as Rust ports land, and the type disappears with the last port.
 #[derive(Debug, Clone, Copy)]
 pub enum PrettierLanguage {
+    Mdx,
     Html,
     Angular,
     Vue,
@@ -151,27 +152,29 @@ pub enum PrettierLanguage {
     Svelte,
     /// Formatted only when `prettier-plugin-astro` is enabled (`astro` config key).
     Astro,
-    Handlebars,
-    Mdx,
     /// Whole files only: [`route_embedded`](super::language::route_embedded) never returns it.
     #[cfg(feature = "napi")]
     Mjml,
+    /// Handlebars files (`.hbs` / `.handlebars`), following Prettier's convention of formatting them with its `glimmer` parser.
+    /// They are parsed as classic Ember (Glimmer) templates,
+    /// so loose Handlebars outside that subset (e.g. partials `{{> name}}`) is not supported.
+    /// Glimmer's template tag components (`.gjs` / `.gts`) are not supported either.
+    Glimmer,
 }
 
 #[cfg(feature = "napi")]
 impl PrettierLanguage {
     /// The Prettier `parser` name injected into the options JSON.
-    /// The only map from languages to Prettier parsers (e.g. `Handlebars` → `glimmer`).
     pub fn parser(self) -> &'static str {
         match self {
+            Self::Mdx => "mdx",
             Self::Html => "html",
             Self::Angular => "angular",
             Self::Vue => "vue",
             Self::Svelte => "svelte",
             Self::Astro => "astro",
-            Self::Handlebars => "glimmer",
-            Self::Mdx => "mdx",
             Self::Mjml => "mjml",
+            Self::Glimmer => "glimmer",
         }
     }
 
@@ -392,7 +395,7 @@ fn prettier_language(file_name: &str, ext: &str) -> Option<PrettierLanguage> {
         "astro" => PrettierLanguage::Astro,
         "mdx" => PrettierLanguage::Mdx,
         "mjml" => PrettierLanguage::Mjml,
-        "handlebars" | "hbs" => PrettierLanguage::Handlebars,
+        "handlebars" | "hbs" => PrettierLanguage::Glimmer,
         _ => return None,
     })
 }
