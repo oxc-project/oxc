@@ -36,6 +36,8 @@ interface BinaryVisitor {
  * at the mercy of the input. This walks down the left spine iteratively instead, and unwinds
  * through each level's `parent` to print the operators and right operands on the way back up.
  *
+ * @param node - Binary or logical expression to print
+ * @param state - Printer state
  * @param precedence - Precedence of the position this expression sits in, deciding parenthesisation
  * @param ctx - Context flags, carrying whether `in` is forbidden and calls are
  */
@@ -45,7 +47,7 @@ export function printBinaryish(
   precedence: number,
   ctx: number,
 ): void {
-  // The pending outer levels are threaded through `parent` rather than a separate stack array.
+  // The pending outer levels are threaded through `parent` rather than a separate stack array
   let v: BinaryVisitor | null = {
     e: node,
     precedence,
