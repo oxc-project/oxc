@@ -42,12 +42,13 @@ pub fn parse_jest_fn_call<'a>(
     // Test files still need the slow path because unknown roots are rejected by
     // `is_valid_jest_call` / `is_valid_vitest_call`. For example, `setTimeout`
     // should not be treated as a Vitest call just because it wraps an `expect`.
-    // Leave `each` on the slow path so its special outer-call handling stays
-    // centralized.
+    // Leave `each` / `for` / `runIf` / `skipIf` on the slow path so their
+    // special outer-call handling stays centralized.
     if !ctx.frameworks().is_jest()
         && !ctx.frameworks().is_vitest()
         && matches!(callee, Expression::Identifier(_))
         && name != "each"
+        && name != "for"
         && JestFnKind::from(name) == JestFnKind::Unknown
         && !super::JEST_METHOD_NAMES.contains(&name)
     {
@@ -80,8 +81,10 @@ pub fn parse_jest_fn_call<'a>(
         });
 
     if let Some(last) = chain.last() {
-        // If we're an `each()`, ensure we're the outer CallExpression (i.e `.each()()`)
-        if last.is_name_equal("each")
+        // Members that take arguments (or a tagged template) and return a test
+        // function must be parsed at the outer call: `.each()()`, `.for()()`,
+        // `.runIf()()`, `.skipIf()()`.
+        if is_args_then_test_member(last)
             && !matches!(
                 callee,
                 Expression::CallExpression(_) | Expression::TaggedTemplateExpression(_)
@@ -90,7 +93,9 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        if matches!(callee, Expression::TaggedTemplateExpression(_)) && last.is_name_unequal("each")
+        if matches!(callee, Expression::TaggedTemplateExpression(_))
+            && last.is_name_unequal("each")
+            && last.is_name_unequal("for")
         {
             return None;
         }
@@ -364,6 +369,15 @@ pub struct ExpectFnCallOptions<'a, 'b> {
     pub head: KnownMemberExpressionProperty<'a>,
     pub node: &'b AstNode<'a>,
     pub ctx: &'b LintContext<'a>,
+}
+
+/// Vitest modifiers that accept arguments (or a tagged template) and return the
+/// actual `test`/`it`/`describe` function, matching Jest's `.each()`.
+fn is_args_then_test_member(member: &KnownMemberExpressionProperty<'_>) -> bool {
+    member.is_name_equal("each")
+        || member.is_name_equal("for")
+        || member.is_name_equal("runIf")
+        || member.is_name_equal("skipIf")
 }
 
 // If find a match in `VALID_JEST_FN_CALL_CHAINS`, return true.
@@ -661,10 +675,19 @@ static VALID_JEST_FN_CALL_CHAINS: &[[&str; 4]] = &[
     ["bench", "", "", ""],
     ["describe", "", "", ""],
     ["describe", "each", "", ""],
+    ["describe", "for", "", ""],
     ["describe", "only", "", ""],
     ["describe", "only", "each", ""],
+    ["describe", "only", "for", ""],
+    ["describe", "only", "runIf", ""],
+    ["describe", "only", "skipIf", ""],
+    ["describe", "runIf", "", ""],
     ["describe", "skip", "", ""],
     ["describe", "skip", "each", ""],
+    ["describe", "skip", "for", ""],
+    ["describe", "skip", "runIf", ""],
+    ["describe", "skip", "skipIf", ""],
+    ["describe", "skipIf", "", ""],
     ["fdescribe", "", "", ""],
     ["fdescribe", "each", "", ""],
     ["fit", "", "", ""],
@@ -674,36 +697,64 @@ static VALID_JEST_FN_CALL_CHAINS: &[[&str; 4]] = &[
     ["it", "", "", ""],
     ["it", "concurrent", "", ""],
     ["it", "concurrent", "each", ""],
+    ["it", "concurrent", "for", ""],
     ["it", "concurrent", "only", "each"],
+    ["it", "concurrent", "only", "for"],
+    ["it", "concurrent", "runIf", ""],
     ["it", "concurrent", "skip", "each"],
+    ["it", "concurrent", "skip", "for"],
+    ["it", "concurrent", "skipIf", ""],
     ["it", "each", "", ""],
     ["it", "failing", "", ""],
     ["it", "fails", "", ""],
+    ["it", "for", "", ""],
     ["it", "only", "", ""],
     ["it", "only", "each", ""],
     ["it", "only", "failing", ""],
     ["it", "only", "fails", ""],
+    ["it", "only", "for", ""],
+    ["it", "only", "runIf", ""],
+    ["it", "only", "skipIf", ""],
+    ["it", "runIf", "", ""],
     ["it", "skip", "", ""],
     ["it", "skip", "each", ""],
     ["it", "skip", "failing", ""],
     ["it", "skip", "fails", ""],
+    ["it", "skip", "for", ""],
+    ["it", "skip", "runIf", ""],
+    ["it", "skip", "skipIf", ""],
+    ["it", "skipIf", "", ""],
     ["it", "todo", "", ""],
     ["test", "", "", ""],
     ["test", "concurrent", "", ""],
     ["test", "concurrent", "each", ""],
+    ["test", "concurrent", "for", ""],
     ["test", "concurrent", "only", "each"],
+    ["test", "concurrent", "only", "for"],
+    ["test", "concurrent", "runIf", ""],
     ["test", "concurrent", "skip", "each"],
+    ["test", "concurrent", "skip", "for"],
+    ["test", "concurrent", "skipIf", ""],
     ["test", "each", "", ""],
     ["test", "failing", "", ""],
     ["test", "fails", "", ""],
+    ["test", "for", "", ""],
     ["test", "only", "", ""],
     ["test", "only", "each", ""],
     ["test", "only", "failing", ""],
     ["test", "only", "fails", ""],
+    ["test", "only", "for", ""],
+    ["test", "only", "runIf", ""],
+    ["test", "only", "skipIf", ""],
+    ["test", "runIf", "", ""],
     ["test", "skip", "", ""],
     ["test", "skip", "each", ""],
     ["test", "skip", "failing", ""],
     ["test", "skip", "fails", ""],
+    ["test", "skip", "for", ""],
+    ["test", "skip", "runIf", ""],
+    ["test", "skip", "skipIf", ""],
+    ["test", "skipIf", "", ""],
     ["test", "todo", "", ""],
     ["xdescribe", "", "", ""],
     ["xdescribe", "each", "", ""],
