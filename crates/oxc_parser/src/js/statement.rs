@@ -169,9 +169,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut stmt = self.parse_statement_core(stmt_ctx);
         self.statement_comment_start = previous_start;
         if let Some(comments) = no_side_effects_comments
-            && Self::set_pure_on_function_stmt(&mut stmt)
+            && let Some(node_id) = Self::set_pure_on_function_stmt(&mut stmt)
         {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+            self.mark_no_side_effects_comments_applied(node_id, comments);
         }
         if let Some(comments) = comments {
             self.assign_statement_comments(&stmt, comments);
@@ -438,6 +438,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn mark_no_side_effects_comments_applied(
+        &mut self,
+        node_id: NodeId,
+        (begin, end): (u32, NonZeroU32),
+    ) {
+        for comment in &mut self.lexer.trivia_builder.comments[begin as usize..end.get() as usize] {
+            if matches!(
+                comment.content,
+                CommentContent::NoSideEffectsNotApplied | CommentContent::NoSideEffects
+            ) {
+                comment.content = CommentContent::NoSideEffects;
+                comment.attachment = Some(CommentAttachment {
+                    node_id: Cell::new(node_id),
+                    placement: CommentPlacement::Leading,
+                });
+                self.comment_assignment_epoch += 1;
+            }
+        }
+    }
+
     pub(crate) fn remap_leading_comment_owner(&mut self, start: u32, from: NodeId, to: NodeId) {
         let comments = &mut self.lexer.trivia_builder.comments;
         let end = comments.partition_point(|comment| comment.span.end <= start);
@@ -520,47 +542,47 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
+    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> Option<NodeId> {
         match stmt {
             Statement::FunctionDeclaration(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id.get())
             }
             Statement::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
                 ExportDefaultDeclarationKind::FunctionExpression(func)
                 | ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id.get())
                 }
                 ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id.get())
                 }
-                _ => false,
+                _ => None,
             },
             Statement::ExportDeclaration(decl) => match &mut decl.declaration {
                 Declaration::FunctionDeclaration(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id.get())
                 }
                 Declaration::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                     if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init)
                     {
                         Self::set_pure_on_function_expr(expr)
                     } else {
-                        false
+                        None
                     }
                 }
-                _ => false,
+                _ => None,
             },
             Statement::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                 if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init) {
                     Self::set_pure_on_function_expr(expr)
                 } else {
-                    false
+                    None
                 }
             }
-            _ => false,
+            _ => None,
         }
     }
 

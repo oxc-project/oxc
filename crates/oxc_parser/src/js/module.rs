@@ -762,7 +762,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     );
                     if let Some(comments) = no_side_effects_comments {
                         func.pure = true;
-                        self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                        self.mark_no_side_effects_comments_applied(func.node_id.get(), comments);
                     }
                     return ExportDefaultDeclarationKind::FunctionDeclaration(func);
                 }
@@ -805,7 +805,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
             if let Some(comments) = no_side_effects_comments {
                 func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                self.mark_no_side_effects_comments_applied(func.node_id.get(), comments);
             }
             return ExportDefaultDeclarationKind::FunctionDeclaration(func);
         }

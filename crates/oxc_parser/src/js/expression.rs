@@ -320,14 +320,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 arrow_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     arrow_expr.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    self.mark_no_side_effects_comments_applied(arrow_expr.node_id.get(), comments);
                 }
             }
             Expression::FunctionExpression(func_expr) => {
                 func_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     func_expr.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    self.mark_no_side_effects_comments_applied(func_expr.node_id.get(), comments);
                 }
             }
             _ => {}
@@ -1560,9 +1560,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut expression =
             self.parse_assignment_expression_core(allow_return_type_in_arrow_function);
         if let Some(comments) = no_side_effects_comments
-            && Self::set_pure_on_function_expr(&mut expression)
+            && let Some(node_id) = Self::set_pure_on_function_expr(&mut expression)
         {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+            self.mark_no_side_effects_comments_applied(node_id, comments);
         }
         if let Some(comments) = comments {
             self.assign_expression_leading_comments(
@@ -1658,17 +1658,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) -> bool {
+    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) -> Option<NodeId> {
         match expr {
             Expression::FunctionExpression(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id.get())
             }
             Expression::ArrowFunctionExpression(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id.get())
             }
-            _ => false,
+            _ => None,
         }
     }
 

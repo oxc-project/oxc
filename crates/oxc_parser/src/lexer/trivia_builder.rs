@@ -86,14 +86,6 @@ impl<'a> TriviaBuilder<'a> {
         self.no_side_effects_comments = None;
     }
 
-    pub fn mark_no_side_effects_comments_applied(&mut self, (start, end): (u32, NonZeroU32)) {
-        for comment in &mut self.comments[start as usize..end.get() as usize] {
-            if comment.content == CommentContent::NoSideEffectsNotApplied {
-                comment.content = CommentContent::NoSideEffects;
-            }
-        }
-    }
-
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
         // The irregular whitespaces array is ordered; only add if not added before, to avoid
         // duplicates when the parser looks ahead (e.g. `peek_token`) and rewinds, then re-lexes the
