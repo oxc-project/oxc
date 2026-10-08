@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use oxc_config::GlobSet;
 
-use crate::core::utils;
+use crate::core::{Language, utils};
 
 /// Configuration options for Oxfmt.
 ///
@@ -23,6 +23,13 @@ pub struct Oxfmtrc {
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub overrides: Option<Vec<OxfmtOverrideConfig>>,
+    /// Format matched files as the given language, instead of detecting it from the file name.
+    /// e.g. Angular templates named `*.html`, or `*.wxml` files formatted as HTML.
+    /// When a file matches multiple associations, the later one takes precedence (array order matters).
+    ///
+    /// - Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub associations: Option<Vec<OxfmtAssociationConfig>>,
     /// Ignore files matching these glob patterns.
     /// Patterns use gitignore-style matching, rooted at the directory containing the configuration file.
     /// Files outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.
@@ -46,6 +53,20 @@ pub struct OxfmtOverrideConfig {
     /// Accepts the same options as the top-level format options.
     #[serde(default)]
     pub options: FormatConfig,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct OxfmtAssociationConfig {
+    /// Glob patterns to match files for this association.
+    pub files: GlobSet,
+    /// Glob patterns to exclude from this association.
+    #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
+    pub exclude_files: GlobSet,
+    /// The language to format matched files as, named by its Shiki id (as in Markdown code fences).
+    pub language: Language,
 }
 
 // ---

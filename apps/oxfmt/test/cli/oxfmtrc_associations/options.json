@@ -1,0 +1,5 @@
+[
+  { "args": ["."] },
+  { "args": ["--stdin-filepath", "src/app/user.html"], "stdin": "src/app/user.html" },
+  { "args": ["-c", "invalid_language.json", "--check", "page.wxml"] }
+]
