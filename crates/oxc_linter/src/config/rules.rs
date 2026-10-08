@@ -245,6 +245,11 @@ fn transform_rule_and_plugin_name<'a>(
     rule_name: &'a str,
     plugin_name: &'a str,
 ) -> (&'a str, &'a str) {
+    let rule_name = match (plugin_name, rule_name) {
+        ("unicorn", "no-for-each") => "no-array-for-each",
+        ("unicorn", "dom-node-dataset") => "prefer-dom-node-dataset",
+        _ => rule_name,
+    };
     let plugin_name = match plugin_name {
         "typescript" if is_eslint_rule_adapted_to_typescript(rule_name) => "eslint",
         _ => plugin_name,
@@ -900,6 +905,33 @@ mod test {
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
             assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
         }
+    }
+
+    #[test]
+    fn test_override_unicorn_renamed_rule_aliases() {
+        let mut rules = RuleSet::default();
+
+        r#override(
+            &mut rules,
+            &json!({
+                "unicorn/no-for-each": "error",
+                "unicorn/dom-node-dataset": "error",
+            }),
+        );
+
+        assert_eq!(rules.len(), 2);
+
+        assert!(rules.iter().any(|(rule, severity)| {
+            rule.plugin_name() == "unicorn"
+                && rule.name() == "no-array-for-each"
+                && severity == &AllowWarnDeny::Deny
+        }));
+
+        assert!(rules.iter().any(|(rule, severity)| {
+            rule.plugin_name() == "unicorn"
+                && rule.name() == "prefer-dom-node-dataset"
+                && severity == &AllowWarnDeny::Deny
+        }));
     }
 
     #[test]
