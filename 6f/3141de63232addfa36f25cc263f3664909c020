@@ -1,0 +1,25 @@
+napi/playground/playground.wasi-browser.js
+  s_427976f0aefefe::t_7e5fb709494309 1344-1373,1404,1420-1423
+napi/playground/playground.wasi.cjs
+  s_427976f0aefefe::t_c13be255488a48 142-148,164-457,1059-1067,1075,1086,1409,1505,1514,1523,1560-1562,1579-1581,1593-1595,1631,1700,1704,1730,1778-1826,1930-1939,2054-2058,2102
+napi/playground/wasi-worker-browser.mjs
+  s_427976f0aefefe::t_87f16847381853 41-59,61-65
+napi/playground/wasi-worker.mjs
+  s_427976f0aefefe::t_e7e675c3ece3e8 5,9-21,23-41,44,46-52,54-63,65-90,92-107,109-182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6f3141de63232addfa36f25cc263f3664909c020",
+  "prompts": {},
+  "sessions": {
+    "s_427976f0aefefe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10b30-2c51-73a3-8d4e-d54dbca123e8",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

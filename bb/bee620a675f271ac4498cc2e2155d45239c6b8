@@ -1,0 +1,23 @@
+crates/oxc_minifier/src/peephole/mod.rs
+  s_5e50cdd54a27ab::t_7e9e269343621c 594
+crates/oxc_minifier/src/peephole/substitute_alternate_syntax.rs
+  s_5e50cdd54a27ab::t_abd7c668fc1c07 1052-1059
+crates/oxc_minifier/tests/peephole/substitute_alternate_syntax.rs
+  s_5e50cdd54a27ab::t_cba0585fbcc6bc 1143
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bbbee620a675f271ac4498cc2e2155d45239c6b8",
+  "prompts": {},
+  "sessions": {
+    "s_5e50cdd54a27ab": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10b1e-918e-7600-9b3b-03ee6f069464",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
