@@ -361,17 +361,6 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Division => Self::try_fold_safe_integer_numeric_expression(e, ctx)
                 .or_else(|| {
                     Self::extract_numeric_values(e, ctx)
-                        .filter(|(left, right)| {
-                            if left.is_nan()
-                                || right.is_nan()
-                                || (*left == 0.0 && *right == 0.0)
-                                || (left.is_infinite() && right.is_infinite())
-                            {
-                                !matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
-                            } else {
-                                true
-                            }
-                        })
                         .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
                         .and_then(|_| ctx.eval_binary(e))
                 }),
@@ -397,7 +386,13 @@ impl<'a> PeepholeOptimizations {
             }
             BinaryOperator::In => None,
         };
-        if let Some(changed) = changed {
+        if let Some(mut changed) = changed {
+            if let Expression::NumericLiteral(num_expr) = &mut changed
+                && (num_expr.value.is_nan() || num_expr.value.is_infinite())
+                && matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
+            {
+                num_expr.value = 0.0;
+            }
             ctx.replace_expression(expr, changed);
         }
     }
@@ -832,8 +827,8 @@ impl<'a> PeepholeOptimizations {
                         // so only fold when the object's string value is statically known
                         // to not be a typeof result
                         || (ty == ValueType::Object
-                            && !is_strict
-                            && right.to_js_string(ctx).is_none_or(|s| is_typeof_string(&s)))
+                        && !is_strict
+                        && right.to_js_string(ctx).is_none_or(|s| is_typeof_string(&s)))
                 }
             };
 
