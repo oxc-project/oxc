@@ -3,7 +3,7 @@ use std::{cell::Cell, ops::Range};
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind, Comment, CommentAttachment, CommentContent, CommentPlacement,
-    ast::{Declaration, ExportDefaultDeclarationKind, Program, Statement, TemplateElement},
+    ast::{Declaration, ExportDefaultDeclarationKind, Program, TemplateElement},
 };
 use oxc_ast_visit::Visit;
 use oxc_span::{GetSpan, Span};
@@ -167,6 +167,31 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
         debug_assert!(self.frames.is_empty());
         debug_assert!(!self.skip_children);
         debug_assert!(self.pending.iter().all(|pending| pending.attachment.is_some()));
+    }
+
+    #[inline]
+    fn visit_siblings<T: GetSpan>(
+        &mut self,
+        mut remaining: &[T],
+        mut visit: impl FnMut(&mut Self, &T),
+    ) {
+        while !remaining.is_empty() {
+            let parent = self.frames.last().unwrap();
+            if parent.leading_end == parent.window.start
+                && remaining[0].span().start >= parent.high_water_start
+            {
+                if parent.cursor == parent.window.end {
+                    break;
+                }
+                // Only the last sibling before a comment can be its previous
+                // neighbor. Skip earlier siblings without descending into them.
+                let comment_start = self.comments[parent.cursor].span.start;
+                let before = remaining.partition_point(|node| node.span().end <= comment_start);
+                remaining = &remaining[before.saturating_sub(1)..];
+            }
+            visit(self, &remaining[0]);
+            remaining = &remaining[1..];
+        }
     }
 
     #[inline(never)]
@@ -405,25 +430,34 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
     }
 }
 
-impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
-    #[inline]
-    fn visit_statements(&mut self, statements: &ArenaVec<'a, Statement<'a>>) {
-        let mut remaining = statements.as_slice();
-        while !remaining.is_empty() {
-            let parent = self.frames.last().unwrap();
-            if parent.leading_end == parent.window.start {
-                if parent.cursor == parent.window.end {
-                    break;
-                }
-                // Only the last sibling before a comment can be its previous
-                // neighbor. Skip earlier siblings without descending into them.
-                let comment_start = self.comments[parent.cursor].span.start;
-                let before = remaining.partition_point(|node| node.span().end <= comment_start);
-                remaining = &remaining[before.saturating_sub(1)..];
+macro_rules! visit_sibling_lists {
+    ($($list:ident, $item:ident, $visit:ident;)*) => {
+        $(
+            #[inline]
+            fn $list(&mut self, nodes: &ArenaVec<'a, oxc_ast::ast::$item<'a>>) {
+                self.visit_siblings(nodes, Self::$visit);
             }
-            self.visit_statement(&remaining[0]);
-            remaining = &remaining[1..];
-        }
+        )*
+    };
+}
+
+impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
+    visit_sibling_lists! {
+        visit_statements, Statement, visit_statement;
+        visit_array_expression_elements, ArrayExpressionElement, visit_array_expression_element;
+        visit_object_property_kinds, ObjectPropertyKind, visit_object_property_kind;
+        visit_expressions, Expression, visit_expression;
+        visit_arguments, Argument, visit_argument;
+        visit_variable_declarators, VariableDeclarator, visit_variable_declarator;
+        visit_switch_cases, SwitchCase, visit_switch_case;
+        visit_binding_properties, BindingProperty, visit_binding_property;
+        visit_formal_parameter_list, FormalParameter, visit_formal_parameter;
+        visit_class_elements, ClassElement, visit_class_element;
+        visit_jsx_children, JSXChild, visit_jsx_child;
+        visit_ts_types, TSType, visit_ts_type;
+        visit_ts_tuple_elements, TSTupleElement, visit_ts_tuple_element;
+        visit_ts_type_parameters, TSTypeParameter, visit_ts_type_parameter;
+        visit_ts_signatures, TSSignature, visit_ts_signature;
     }
 
     #[inline]
