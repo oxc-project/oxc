@@ -16,6 +16,7 @@ pub struct ParserCheckpoint<'a> {
     cur_token: Token,
     prev_token_end: u32,
     errors_pos: usize,
+    comment_assignment_epoch: usize,
     fatal_error: Option<FatalError<'a>>,
 }
 
@@ -312,6 +313,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             cur_token: self.token,
             prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
+            comment_assignment_epoch: self.comment_assignment_epoch,
             fatal_error: self.fatal_error.take(),
         }
     }
@@ -322,13 +324,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             cur_token: self.token,
             prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
+            comment_assignment_epoch: self.comment_assignment_epoch,
             fatal_error: self.fatal_error.take(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_token_end, errors_pos, fatal_error } =
-            checkpoint;
+        let ParserCheckpoint {
+            lexer,
+            cur_token,
+            prev_token_end,
+            errors_pos,
+            fatal_error,
+            comment_assignment_epoch,
+        } = checkpoint;
+
+        if self.comment_assignment_epoch != comment_assignment_epoch {
+            // Speculation may discard completed statements. Fall back to the
+            // ownership pass rather than retaining IDs from the discarded AST.
+            for comment in &mut self.lexer.trivia_builder.comments {
+                comment.attachment = None;
+            }
+            self.comment_assignment_epoch = comment_assignment_epoch;
+        }
 
         self.lexer.rewind(lexer);
         self.token = cur_token;

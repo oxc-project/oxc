@@ -659,6 +659,9 @@ struct ParserImpl<'a, C: ParserConfig> {
     /// The end range of the previous token
     prev_token_end: u32,
 
+    /// Changes to ownership established when statements finish parsing.
+    comment_assignment_epoch: usize,
+
     /// Parser state
     state: ParserState<'a>,
 
@@ -700,6 +703,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
+            comment_assignment_epoch: 0,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
             ast: ParserAstBuilder::new(allocator),
@@ -789,7 +793,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         };
 
         program.comments = self.lexer.trivia_builder.comments;
-        CommentAssignment::new().assign(&mut program);
+        if has_fatal_error {
+            CommentAssignment::new().assign(&mut program);
+        } else {
+            CommentAssignment::new().assign_remaining(&mut program);
+        }
 
         ParserReturn {
             program,

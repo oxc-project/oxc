@@ -1,3 +1,5 @@
+use std::{cell::Cell, ops::Range};
+
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
@@ -133,6 +135,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
+        let leading_comments = self.leading_statement_comments();
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
 
@@ -204,7 +207,62 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
         }
 
+        if !leading_comments.is_empty() {
+            self.assign_statement_comments(&stmt, leading_comments);
+        }
         stmt
+    }
+
+    #[inline]
+    fn leading_statement_comments(&self) -> Range<usize> {
+        let comments = &self.lexer.trivia_builder.comments;
+        let start = self.cur_start();
+        let end = if comments.last().is_none_or(|comment| comment.span.end <= start) {
+            comments.len()
+        } else {
+            comments.partition_point(|comment| comment.span.end <= start)
+        };
+        let mut begin = end;
+        while begin != 0 && comments[begin - 1].attached_to == start {
+            begin -= 1;
+        }
+        begin..end
+    }
+
+    fn assign_statement_comments(&mut self, stmt: &Statement<'a>, range: Range<usize>) {
+        // String expression statements can become directives, replacing their
+        // IDs. Leave these and annotations that target descendants to the pass.
+        if matches!(stmt, Statement::ExpressionStatement(node) if matches!(node.expression, Expression::StringLiteral(_)))
+        {
+            return;
+        }
+        if matches!(stmt, Statement::ExportDeclaration(_) | Statement::ExportDefaultDeclaration(_))
+        {
+            return;
+        }
+        // Decorators can move the statement's start past the token at entry.
+        let start = stmt.span().start;
+        for comment in &mut self.lexer.trivia_builder.comments[range] {
+            if comment.attached_to != start {
+                continue;
+            }
+            if matches!(
+                comment.content,
+                CommentContent::Pure
+                    | CommentContent::NoSideEffects
+                    | CommentContent::PropertyKey
+                    | CommentContent::CoverageIgnoreFile
+            ) {
+                continue;
+            }
+            if comment.is_leading() {
+                comment.attachment = Some(CommentAttachment {
+                    node_id: Cell::new(stmt.node_id()),
+                    placement: CommentPlacement::Leading,
+                });
+                self.comment_assignment_epoch += 1;
+            }
+        }
     }
 
     fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {

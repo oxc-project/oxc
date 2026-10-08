@@ -38,6 +38,7 @@ struct Pending {
     previous: Option<Neighbor>,
     next: Option<Neighbor>,
     attachment: Option<(NodeId, CommentPlacement)>,
+    unresolved_end: usize,
 }
 
 impl Pending {
@@ -47,6 +48,7 @@ impl Pending {
             previous: None,
             next: None,
             attachment: None,
+            unresolved_end: 0,
         }
     }
 }
@@ -123,18 +125,36 @@ pub struct AssignmentVisitor<'a, 'p> {
 }
 
 impl<'a, 'p> AssignmentVisitor<'a, 'p> {
-    pub fn assign(program: &mut Program<'a>) {
+    pub fn assign<const PRESERVE: bool>(program: &mut Program<'a>) {
         let comment_count = program.comments.len();
         if comment_count <= INLINE_COMMENTS {
             let mut pending = [Pending::new(); INLINE_COMMENTS];
-            Self::assign_with_pending(program, &mut pending[..comment_count]);
+            Self::assign_with_pending::<PRESERVE>(program, &mut pending[..comment_count]);
         } else {
             let mut pending = vec![Pending::new(); comment_count];
-            Self::assign_with_pending(program, &mut pending);
+            Self::assign_with_pending::<PRESERVE>(program, &mut pending);
         }
     }
 
-    fn assign_with_pending(program: &mut Program<'a>, pending: &mut [Pending]) {
+    fn assign_with_pending<const PRESERVE: bool>(
+        program: &mut Program<'a>,
+        pending: &mut [Pending],
+    ) {
+        let mut unresolved = 0;
+        for (comment, pending) in program.comments.iter().zip(pending.iter_mut()) {
+            if PRESERVE && let Some(attachment) = &comment.attachment {
+                pending.attachment = Some((attachment.node_id.get(), attachment.placement));
+                // A zero-sized container prevents later overlapping frames from
+                // replacing ownership established while parsing.
+                pending.container = Neighbor::new(NodeId::ROOT, Span::new(0, 0));
+            } else {
+                unresolved += 1;
+            }
+            pending.unresolved_end = unresolved;
+        }
+        if unresolved == 0 {
+            return;
+        }
         {
             // Select inline or heap storage once. The traversal uses the same
             // slice in both cases, without checking the storage kind per access.
@@ -324,7 +344,13 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             (0, 0, self.comments.len())
         };
 
-        if begin == end {
+        let unresolved = if inside_begin == end {
+            0
+        } else {
+            self.pending[end - 1].unresolved_end
+                - if inside_begin == 0 { 0 } else { self.pending[inside_begin - 1].unresolved_end }
+        } + leading_count;
+        if unresolved == 0 {
             // Descendants of a comment-free child need no ownership work.
             self.skip_children = true;
             return;
@@ -352,7 +378,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             substitution,
             // Already resolved comments in overlapping windows can make this an
             // overestimate. They never contribute to the resolved count again.
-            unresolved: end - inside_begin + leading_count,
+            unresolved,
             resolved: 0,
         });
     }
@@ -366,7 +392,7 @@ impl<'a, 'p> AssignmentVisitor<'a, 'p> {
             parent.unresolved -= frame.resolved;
             parent.resolved += frame.resolved;
         } else {
-            debug_assert_eq!(frame.resolved, self.comments.len());
+            debug_assert_eq!(frame.resolved, self.pending.last().unwrap().unresolved_end);
         }
     }
 

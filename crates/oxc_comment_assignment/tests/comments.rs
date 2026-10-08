@@ -864,3 +864,44 @@ fn ast_cloning_keeps_attachments_only_with_semantic_ids() {
     cloned.comments[0].attachment = None;
     assert_eq!(attachment(&program, "// leading"), owner);
 }
+
+#[test]
+fn parser_exit_assignment_matches_the_complete_pass() {
+    for (source, source_type) in [
+        ("/* directive */ 'use strict'; /* statement */ first();", SourceType::mjs()),
+        ("switch (value) { default: /* leading */ break; /* trailing */ }", SourceType::mjs()),
+        ("@dec /* export */ export class C {}", SourceType::ts()),
+        ("/* export */ export default @dec /* class */ class C {}", SourceType::ts()),
+        ("const f = (a = () => { /* body */ work(); }) => a;", SourceType::ts()),
+        ("const f = async (a = () => { /* body */ work(); }) => a;", SourceType::ts()),
+        (
+            "/* before */ before(); /* await */ await /x/u; export {}; /* after */ after();",
+            SourceType::unambiguous(),
+        ),
+        ("/* before */ before(); function invalid( {", SourceType::mjs()),
+    ] {
+        let allocator = Allocator::default();
+        let mut program = Parser::new(&allocator, source, source_type).parse().program;
+        let actual = attachments(&program);
+        assign(&mut program);
+        assert_eq!(actual, attachments(&program), "{source}");
+    }
+}
+
+#[test]
+fn remaining_assignment_handles_partially_attached_windows() {
+    let allocator = Allocator::default();
+    let source = "/* first */ const a = call(/* argument */ value);\n\
+                  /* second */ const b = { /* property */ key: value };\n\
+                  /* third */ last(); // tail";
+    let mut program = parse(&allocator, source, SourceType::mjs());
+    assign(&mut program);
+    let expected = attachments(&program);
+    for (index, comment) in program.comments.iter_mut().enumerate() {
+        if index % 2 == 0 {
+            comment.attachment = None;
+        }
+    }
+    CommentAssignment::new().assign_remaining(&mut program);
+    assert_eq!(expected, attachments(&program));
+}

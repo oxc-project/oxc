@@ -35,7 +35,17 @@ impl CommentAssignment {
     )]
     pub fn assign(self, program: &mut Program<'_>) {
         if !program.comments.is_empty() {
-            AssignmentVisitor::assign(program);
+            AssignmentVisitor::assign::<false>(program);
+        }
+    }
+
+    /// Assign comments not already attached by the parser.
+    ///
+    /// Existing attachments must refer to valid owners in the unmodified AST.
+    #[expect(clippy::unused_self, reason = "Preserve the assignment pass API")]
+    pub fn assign_remaining(self, program: &mut Program<'_>) {
+        if !program.comments.is_empty() {
+            AssignmentVisitor::assign::<true>(program);
         }
     }
 }
