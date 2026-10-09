@@ -57,26 +57,20 @@ impl Rule for ApproxConstant {
             return;
         };
 
-        let number_lit_str = number_literal.value.to_string();
-        for (constant, name, min_digits) in &KNOWN_CONSTS {
-            if is_approx_const(*constant, &number_lit_str, *min_digits) {
-                ctx.diagnostic_with_suggestion(
-                    approx_constant_diagnostic(number_literal.span, name),
-                    |fixer| {
-                        if ctx
-                            .scoping()
-                            .find_binding(node.scope_id(), static_ident!("Math"))
-                            .is_some()
-                        {
-                            fixer.noop()
-                        } else {
-                            Self::fix_with_math_constant(fixer, number_literal.span, name)
-                        }
-                    },
-                );
-                break;
-            }
-        }
+        let Some(name) = find_approx_const(number_literal.value) else {
+            return;
+        };
+
+        ctx.diagnostic_with_suggestion(
+            approx_constant_diagnostic(number_literal.span, name),
+            |fixer| {
+                if ctx.scoping().find_binding(node.scope_id(), static_ident!("Math")).is_some() {
+                    fixer.noop()
+                } else {
+                    Self::fix_with_math_constant(fixer, number_literal.span, name)
+                }
+            },
+        );
     }
 }
 
@@ -90,22 +84,55 @@ impl ApproxConstant {
     }
 }
 
-const KNOWN_CONSTS: [(f64, &str, usize); 8] = [
-    (f64::E, "E", 4),
-    (f64::LN_10, "LN10", 4),
-    (f64::LN_2, "LN2", 4),
-    (f64::LOG2_E, "LOG2E", 4),
-    (f64::LOG10_E, "LOG10E", 4),
-    (f64::PI, "PI", 4),
-    (f64::FRAC_1_SQRT_2, "SQRT1_2", 4),
-    (f64::SQRT_2, "SQRT2", 4),
+struct KnownConst {
+    value: f64,
+    /// `value.to_string()`, precomputed. Checked against `value` in a test.
+    text: &'static str,
+    name: &'static str,
+    min_digits: usize,
+}
+
+const KNOWN_CONSTS: [KnownConst; 8] = [
+    KnownConst { value: f64::E, text: "2.718281828459045", name: "E", min_digits: 4 },
+    KnownConst { value: f64::LN_10, text: "2.302585092994046", name: "LN10", min_digits: 4 },
+    KnownConst { value: f64::LN_2, text: "0.6931471805599453", name: "LN2", min_digits: 4 },
+    KnownConst { value: f64::LOG2_E, text: "1.4426950408889634", name: "LOG2E", min_digits: 4 },
+    KnownConst { value: f64::LOG10_E, text: "0.4342944819032518", name: "LOG10E", min_digits: 4 },
+    KnownConst { value: f64::PI, text: "3.141592653589793", name: "PI", min_digits: 4 },
+    KnownConst {
+        value: f64::FRAC_1_SQRT_2,
+        text: "0.7071067811865476",
+        name: "SQRT1_2",
+        min_digits: 4,
+    },
+    KnownConst { value: f64::SQRT_2, text: "1.4142135623730951", name: "SQRT2", min_digits: 4 },
 ];
 
+/// Every known constant, and every approximation of one, lies in this range.
+/// The smallest candidate is `0.434` (a 5-character truncation of `LOG10_E`) and the largest
+/// is `3.142` (`PI` rounded to 3 decimals), so a literal outside it can't match.
+const APPROX_RANGE: std::ops::Range<f64> = 0.4..3.2;
+
+/// The name of the `Math` constant that `value` approximates, if any.
+fn find_approx_const(value: f64) -> Option<&'static str> {
+    // Cheap rejection for nearly all numeric literals (integers, large numbers, ...),
+    // which avoids formatting them into a string.
+    if !APPROX_RANGE.contains(&value) {
+        return None;
+    }
+
+    let value = value.to_string();
+    KNOWN_CONSTS
+        .iter()
+        .find(|known| is_approx_const(known.value, known.text, &value, known.min_digits))
+        .map(|known| known.name)
+}
+
 #[must_use]
-fn is_approx_const(constant: f64, value: &str, min_digits: usize) -> bool {
+fn is_approx_const(constant: f64, constant_text: &str, value: &str, min_digits: usize) -> bool {
     if value.len() <= min_digits {
         false
-    } else if constant.to_string().starts_with(value) {
+    } else if constant_text.starts_with(value) {
         // The value is a truncated constant
         true
     } else {
@@ -183,4 +210,126 @@ fn test() {
     Tester::new(ApproxConstant::NAME, ApproxConstant::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[cfg(test)]
+mod equivalence_tests {
+    use super::{APPROX_RANGE, KNOWN_CONSTS, find_approx_const};
+
+    /// The implementation before the range check and precomputed strings were added.
+    fn reference(value: f64) -> Option<&'static str> {
+        fn is_approx_const(constant: f64, value: &str, min_digits: usize) -> bool {
+            if value.len() <= min_digits {
+                false
+            } else if constant.to_string().starts_with(value) {
+                true
+            } else {
+                let round_const = format!("{constant:.*}", value.len() - 2);
+                value == round_const
+            }
+        }
+
+        let value = value.to_string();
+        KNOWN_CONSTS
+            .iter()
+            .find(|known| is_approx_const(known.value, &value, known.min_digits))
+            .map(|known| known.name)
+    }
+
+    fn assert_same(value: f64) {
+        assert_eq!(find_approx_const(value), reference(value), "value: {value:?}");
+    }
+
+    #[test]
+    fn precomputed_text_matches_value() {
+        for known in &KNOWN_CONSTS {
+            assert_eq!(known.value.to_string(), known.text, "{}", known.name);
+        }
+    }
+
+    #[test]
+    fn range_contains_every_constant() {
+        for known in &KNOWN_CONSTS {
+            assert!(APPROX_RANGE.contains(&known.value), "{}", known.name);
+        }
+    }
+
+    /// Every truncation and every rounding of every constant, and their neighbors.
+    #[test]
+    fn truncations_and_roundings_of_constants() {
+        for known in &KNOWN_CONSTS {
+            for decimals in 0..=20 {
+                let rounded: f64 = format!("{:.*}", decimals, known.value).parse().unwrap();
+                let truncated_text = &known.text[..known.text.len().min(decimals + 2)];
+                let truncated: f64 = truncated_text.parse().unwrap();
+
+                for value in [rounded, truncated] {
+                    assert_same(value);
+                    assert_same(value.next_up());
+                    assert_same(value.next_down());
+                    let step = 10f64.powi(-i32::try_from(decimals).unwrap());
+                    assert_same(value + step);
+                    assert_same(value - step);
+                }
+            }
+        }
+    }
+
+    /// Values at and around the edges of the range, and non-finite values.
+    #[test]
+    fn range_boundaries_and_special_values() {
+        let mut values = vec![
+            0.0,
+            -0.0,
+            f64::MIN_POSITIVE,
+            f64::EPSILON,
+            f64::MAX,
+            f64::INFINITY,
+            f64::NAN,
+            1e21,
+            1e-7,
+        ];
+        for edge in [APPROX_RANGE.start, APPROX_RANGE.end] {
+            values.extend([edge, edge.next_up(), edge.next_down()]);
+        }
+        for value in values {
+            if value.is_nan() {
+                assert_eq!(find_approx_const(value), None);
+                assert_eq!(reference(value), None);
+            } else {
+                assert_same(value);
+            }
+        }
+    }
+
+    /// Integers and decimals with a fixed number of digits, across and beyond the range.
+    #[test]
+    fn many_generated_values() {
+        for n in 0..=10_000_u32 {
+            assert_same(f64::from(n));
+        }
+
+        // Deterministic xorshift, so failures are reproducible.
+        let mut state = 0x2545_F491_4F6C_DD1D_u64;
+        let mut next_u64 = || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+
+        for _ in 0..20_000 {
+            // 32 random bits mapped to [0, 1)
+            let unit = f64::from(u32::try_from(next_u64() >> 32).unwrap()) / 4_294_967_296.0;
+            let decimals = i32::try_from(next_u64() % 17).unwrap();
+            let scale = 10f64.powi(decimals);
+
+            // Mostly inside and just outside the range, some far outside.
+            for base in [unit * 4.0, unit.mul_add(3.0, 0.3), unit * 100.0, unit * 1e9] {
+                assert_same(base);
+                assert_same((base * scale).round() / scale);
+                assert_same((base * scale).trunc() / scale);
+            }
+        }
+    }
 }
