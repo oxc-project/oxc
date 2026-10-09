@@ -32,7 +32,7 @@ impl Generator for AstKindGenerator {
     /// Visited structs with a `NodeId` have an `AstKind`.
     /// Enums do not have an `AstKind`.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
-        // Set `has_kind = true` for visited structs with a `NodeId`.
+        // Set `has_kind = true` for visited structs with a `NodeId`
         let node_id_cell_type_id =
             schema.type_by_name("NodeId").as_struct().unwrap().containers.cell_id.unwrap();
 
