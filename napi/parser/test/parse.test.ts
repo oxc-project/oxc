@@ -282,7 +282,7 @@ describe("parse", () => {
 
   describe("`RegExpLiteral`", () => {
     it.each(["js", "ts"])("preserves flag spelling across ESTree transfer modes in %s", (lang) => {
-      const code = "/* 😀 */ /\\w/yvsimg; /a\\/é/ig; /a/";
+      const code = "/* 😀 */ /\\w/yvsimg; /a\\/😀é/ig; /a/";
       for (const options of [
         { experimentalRawTransfer: false },
         { experimentalRawTransfer: true, range: false },

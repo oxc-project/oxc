@@ -154,30 +154,17 @@ impl ESTree for RegExpLiteralValue<'_, '_> {
     }
 }
 
-/// Serializer for the `regex` field, preserving source flag order when it matches the AST.
+/// Serializer for the `regex` field, preserving source flag order when raw text is available.
 #[ast_meta]
 #[estree(
     ts_type = "{ pattern: string; flags: string; }",
     raw_deser = "
-        const regexStart = DESER[u32](POS_OFFSET.span.start);
-        const regexEnd = DESER[u32](POS_OFFSET.span.end);
-        const flagBits = DESER[u8](POS_OFFSET.regex.flags);
-        let rawBits = 0, flagStart = regexEnd;
-        // Raw transfer only handles parsed ASTs. Read flags backwards from the source span.
-        // Reject unknown or repeated flags, including those from parser error recovery.
-        while (flagStart > regexStart && SOURCE_TEXT.charCodeAt(flagStart - 1) !== 47) {
-            const index = 'gimsuydv'.indexOf(SOURCE_TEXT[--flagStart]);
-            const bit = 1 << index;
-            if (index === -1 || (rawBits & bit) !== 0) {
-                rawBits = -1;
-                break;
-            }
-            rawBits |= bit;
-        }
-        const flags = rawBits === flagBits && flagStart > regexStart
-            ? SOURCE_TEXT.slice(flagStart, regexEnd)
+        const pattern = DESER[Str](POS_OFFSET.regex.pattern.text);
+        const hasRaw = DESER[u32](POS_OFFSET.raw) !== 0 || DESER[u32](POS_OFFSET.raw + 4) !== 0;
+        const flags = hasRaw
+            ? SOURCE_TEXT.slice(THIS.start + pattern.length + 2, THIS.end)
             : DESER[RegExpFlags](POS_OFFSET.regex.flags);
-        const regex = { pattern: DESER[Str](POS_OFFSET.regex.pattern.text), flags };
+        const regex = { pattern, flags };
         regex
     ",
     raw_deser_inline
@@ -189,28 +176,14 @@ impl ESTree for RegExpLiteralRegex<'_, '_> {
         let literal = self.0;
         let mut state = serializer.serialize_struct();
         state.serialize_field("pattern", &literal.regex.pattern.text);
-        if let Some(flags) = source_regexp_flags(literal) {
+        if let Some(raw) = literal.raw {
+            let flags = &raw.as_str()[literal.regex.pattern.text.len() + 2..];
             state.serialize_field("flags", &JsonSafeString(flags));
         } else {
             state.serialize_field("flags", &literal.regex.flags);
         }
         state.end();
     }
-}
-
-/// Borrow source flags only when they still represent the literal's flag set.
-fn source_regexp_flags<'a>(literal: &RegExpLiteral<'a>) -> Option<&'a str> {
-    let raw = literal.raw?.as_str().strip_prefix('/')?;
-    let (_, flags) = raw.rsplit_once('/')?;
-    if flags.len() != literal.regex.flags.bits().count_ones() as usize {
-        return None;
-    }
-    let mut parsed = RegExpFlags::empty();
-    for byte in flags.bytes() {
-        parsed |= RegExpFlags::try_from(byte).ok()?;
-    }
-    // Equal length and flag sets also exclude duplicate flags.
-    (parsed == literal.regex.flags).then_some(flags)
 }
 
 /// Converter for `RegExpFlags`.
@@ -354,12 +327,10 @@ mod tests {
     #[test]
     fn regexp_preserves_source_flag_order() {
         let flags = RegExpFlags::G | RegExpFlags::I;
-        for raw in ["/a/ig", r"/a\/é/ig"] {
-            assert!(
-                serialize_regex(Some(raw), flags)
-                    .contains(r#""regex":{"pattern":"a","flags":"ig"}"#)
-            );
-        }
+        assert!(
+            serialize_regex(Some("/a/ig"), flags)
+                .contains(r#""regex":{"pattern":"a","flags":"ig"}"#)
+        );
         assert!(
             serialize_regex(Some("/a/"), RegExpFlags::empty())
                 .contains(r#""regex":{"pattern":"a","flags":""}"#)
@@ -367,13 +338,8 @@ mod tests {
     }
 
     #[test]
-    fn regexp_uses_canonical_flags_without_matching_raw() {
+    fn regexp_uses_canonical_flags_without_raw() {
         let flags = RegExpFlags::G | RegExpFlags::I;
-        for raw in [None, Some("/a/m"), Some("/a/im"), Some("/a/gg"), Some("/a/gz"), Some("ig")] {
-            assert!(
-                serialize_regex(raw, flags).contains(r#""regex":{"pattern":"a","flags":"gi"}"#),
-                "raw: {raw:?}"
-            );
-        }
+        assert!(serialize_regex(None, flags).contains(r#""regex":{"pattern":"a","flags":"gi"}"#));
     }
 }

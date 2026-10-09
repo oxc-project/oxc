@@ -2833,29 +2833,13 @@ function deserializeBigIntLiteral(pos) {
 function deserializeRegExpLiteral(pos) {
   let start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
-    regexStart = deserializeU32(pos),
-    regexEnd = deserializeU32(pos + 4),
-    flagBits = deserializeU8(pos + 40),
-    rawBits = 0,
-    flagStart = regexEnd;
-  // Raw transfer only handles parsed ASTs. Read flags backwards from the source span.
-  // Reject unknown or repeated flags, including those from parser error recovery.
-  for (; flagStart > regexStart && sourceText.charCodeAt(flagStart - 1) !== 47;) {
-    let index = "gimsuydv".indexOf(sourceText[--flagStart]),
-      bit = 1 << index;
-    if (index === -1 || (rawBits & bit) !== 0) {
-      rawBits = -1;
-      break;
-    }
-    rawBits |= bit;
-  }
-  let flags =
-      rawBits === flagBits && flagStart > regexStart
-        ? sourceText.slice(flagStart, regexEnd)
-        : deserializeRegExpFlags(pos + 40),
+    pattern = deserializeStr(pos + 16),
     regex = {
-      pattern: deserializeStr(pos + 16),
-      flags,
+      pattern,
+      flags:
+        deserializeU32(pos + 48) !== 0 || deserializeU32(pos + 52) !== 0
+          ? sourceText.slice(start + pattern.length + 2, end)
+          : deserializeRegExpFlags(pos + 40),
     },
     previousParent = parent,
     node = (parent = {

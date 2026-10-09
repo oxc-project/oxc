@@ -318,7 +318,7 @@ describe("bigints", () => {
 describe("regexes", () => {
   checkCases([
     ["no-flags", e(regex("a", "")), "/a/;\n"],
-    ["flags", e(regex("a", "g")), "/a/g;\n"],
+    ["flags", e(regex("a", "ig")), "/a/gi;\n"],
     ["member-no-flags", e(call(member(regex("a", ""), id("test")), [id("x")])), "/a/.test(x);\n"],
     ["member-flags", e(call(member(regex("a", "gi"), id("test")), [id("x")])), "/a/gi.test(x);\n"],
     ["in-array", e(arr(regex("a", ""), regex("b", "g"))), "[/a/, /b/g];\n"],

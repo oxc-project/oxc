@@ -183,7 +183,8 @@ function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
     write(state, "/", CAT_REGEX_SLASH);
   } else {
     writeNoLast(state, "/");
-    writeIdent(state, flags);
+    // Match Rust codegen without discarding source order in the parser AST.
+    writeIdent(state, flags.length === 1 ? flags : flags.split("").sort().join(""));
   }
 }
 
