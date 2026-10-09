@@ -1,6 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::number::NumberBase;
 
@@ -64,7 +65,11 @@ impl Rule for PreferBigintLiterals {
             return;
         };
 
-        if reference.name != "BigInt" || call.optional || call.arguments.len() != 1 {
+        if reference.name != "BigInt"
+            || !reference.is_global_reference(ctx.scoping())
+            || call.optional
+            || call.arguments.len() != 1
+        {
             return;
         }
 
@@ -215,6 +220,11 @@ fn test() {
         r"BigInt?.(1)",
         r"BigInt(1.1)",
         r"typeof BigInt",
+        r"((BigInt) => BigInt(1n))(() => 2n)",
+        r"function f(BigInt) { return BigInt(1); }",
+        r"const BigInt = () => 2n; BigInt(1n);",
+        r"import BigInt from 'custom-bigint'; BigInt('1');",
+        r"function BigInt() { return 2n; } BigInt(1n);",
         r#"BigInt("not-number")"#,
         r#"BigInt("1_2")"#,
         r#"BigInt("1\\\n2")"#,
