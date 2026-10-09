@@ -343,23 +343,28 @@ jobs:
           cache: |
             rust
             pnpm
-      - if: steps.filter.outputs.changed == 'true'
-        name: Run tests
-        run: |
-          pnpm --filter "./apps/oxfmt" build-test
-          pnpm --filter "./apps/oxfmt" test
       # Conformance ---
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        id: conformance-fixtures
         if: steps.filter-conformance.outputs.changed == 'true'
         with:
           # Warm fixtures skip download entirely (`.version` stamps in download-fixtures.js)
           path: ./apps/oxfmt/conformance/fixtures/externals
+        background: true
+      - if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
+        name: Build tests
+        run: pnpm --filter "./apps/oxfmt" build-test
+      - wait: conformance-fixtures
       - if: steps.filter-conformance.outputs.changed == 'true'
         name: Download conformance fixtures
         run: pnpm --filter "./apps/oxfmt" download-fixtures
-      - if: steps.filter-conformance.outputs.changed == 'true'
-        name: Run conformance tests
-        run: pnpm --filter "./apps/oxfmt" conformance
+      - parallel:
+          - if: steps.filter.outputs.changed == 'true'
+            name: Run tests
+            run: pnpm --filter "./apps/oxfmt" test
+          - if: steps.filter-conformance.outputs.changed == 'true'
+            name: Run conformance tests
+            run: pnpm --filter "./apps/oxfmt" conformance
       # --- Conformance
       - if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
         run: |

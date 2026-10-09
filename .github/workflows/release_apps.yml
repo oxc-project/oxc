@@ -147,18 +147,18 @@ jobs:
       - if: ${{ contains(matrix.os, 'windows') }}
         run: git config --system core.longpaths true
 
-      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-
       - name: Install cross
+        id: install-cross
         uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         with:
           tool: cross # cross installs the latest rust toolchain
+        background: true
+
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       # No Rust cache is provided, to avoid cache poisoning attack.
 
       - parallel:
-          - name: Add Rust Target
-            run: rustup target add ${{ matrix.target }}
           - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
           # For cargo-zigbuild in musl builds.
           - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -168,6 +168,11 @@ jobs:
           - name: Setup OpenHarmony SDK
             if: ${{ contains(matrix.target, 'ohos') }}
             uses: Boshen/setup-ohos-sdk@edb865a89a712f1f15dbad932dfa9cfce849d95c # v1.0.0
+
+      - wait: install-cross
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
 
       - name: Build oxlint for node.js
         working-directory: apps/oxlint
@@ -435,18 +440,18 @@ jobs:
       - if: ${{ contains(matrix.os, 'windows') }}
         run: git config --system core.longpaths true
 
-      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-
       - name: Install cross
+        id: install-cross
         uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         with:
           tool: cross # cross installs the latest rust toolchain
+        background: true
+
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       # No Rust cache is provided, to avoid cache poisoning attack.
 
       - parallel:
-          - name: Add Rust Target
-            run: rustup target add ${{ matrix.target }}
           - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
           # For cargo-zigbuild in musl builds.
           - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -456,6 +461,11 @@ jobs:
           - name: Setup OpenHarmony SDK
             if: ${{ contains(matrix.target, 'ohos') }}
             uses: Boshen/setup-ohos-sdk@edb865a89a712f1f15dbad932dfa9cfce849d95c # v1.0.0
+
+      - wait: install-cross
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
 
       - name: Build oxfmt for node.js
         working-directory: apps/oxfmt
