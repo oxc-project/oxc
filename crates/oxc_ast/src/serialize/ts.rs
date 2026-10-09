@@ -512,8 +512,14 @@ impl ESTree for TSIndexSignatureParameters<'_, '_> {
 pub struct TSCallSignatureDeclarationParams<'a, 'b>(pub &'b TSCallSignatureDeclaration<'a>);
 
 impl ESTree for TSCallSignatureDeclarationParams<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
         let decl = self.0;
+        serializer.record_comment_owner(
+            decl.params.node_id.get().raw().get(),
+            "FormalParameters",
+            decl.params.span.start,
+            decl.params.span.end,
+        );
         Concat2(&decl.this_param, decl.params.as_ref()).serialize(serializer);
     }
 }
@@ -534,8 +540,14 @@ impl ESTree for TSCallSignatureDeclarationParams<'_, '_> {
 pub struct TSMethodSignatureParams<'a, 'b>(pub &'b TSMethodSignature<'a>);
 
 impl ESTree for TSMethodSignatureParams<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
         let sig = self.0;
+        serializer.record_comment_owner(
+            sig.params.node_id.get().raw().get(),
+            "FormalParameters",
+            sig.params.span.start,
+            sig.params.span.end,
+        );
         Concat2(&sig.this_param, sig.params.as_ref()).serialize(serializer);
     }
 }
@@ -556,8 +568,14 @@ impl ESTree for TSMethodSignatureParams<'_, '_> {
 pub struct TSFunctionTypeParams<'a, 'b>(pub &'b TSFunctionType<'a>);
 
 impl ESTree for TSFunctionTypeParams<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
         let fn_type = self.0;
+        serializer.record_comment_owner(
+            fn_type.params.node_id.get().raw().get(),
+            "FormalParameters",
+            fn_type.params.span.start,
+            fn_type.params.span.end,
+        );
         Concat2(&fn_type.this_param, fn_type.params.as_ref()).serialize(serializer);
     }
 }

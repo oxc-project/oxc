@@ -2,6 +2,7 @@
 
 use std::borrow::Cow;
 
+use cow_utils::CowUtils;
 use itertools::Itertools;
 use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 
@@ -29,6 +30,9 @@ impl Generator for TypescriptGenerator {
         let code = generate_ts_type_defs(schema, codegen);
 
         let standard_code = amend_standard_types(&code);
+        let standard_code = standard_code
+            .cow_replace("extends Span {", "extends Span {\n comments?: NodeComments | null;");
+        let standard_code = format!("{COMMENT_TYPES}{standard_code}");
         let oxlint_code = amend_oxlint_types(&code);
 
         vec![
@@ -509,3 +513,32 @@ fn amend_oxlint_types(code: &str) -> String {
 
     code
 }
+
+/// Attachment metadata is specific to the public ESTree representation.
+const COMMENT_TYPES: &str = r"
+export interface Comment {
+  type: 'Line' | 'Block';
+  value: string;
+  start: number;
+  end: number;
+  range?: [number, number];
+  /** Original syntax: 0 line, 1 single-line block, 2 multiline block, 3 HTML close, 4 HTML open. */
+  kind?: 0 | 1 | 2 | 3 | 4;
+  /** Newline flags: bit 0 before the comment, bit 1 after it. */
+  newlines?: number;
+  /** Original annotation classification from Oxc's CommentContent. */
+  content?: number;
+  /** Native owner folded into this ESTree node. Positions use UTF-16 offsets. */
+  container?: {
+    kind: string;
+    placement: 'leading' | 'trailing' | 'dangling';
+    start: number;
+    end: number;
+  } | null;
+}
+export interface NodeComments {
+  leading: Comment[] | null;
+  trailing: Comment[] | null;
+  dangling: Comment[] | null;
+}
+";

@@ -353,11 +353,29 @@ fn generate_impl_for_type(type_def: StructOrEnum, schema: &Schema) -> TokenStrea
         }
     };
 
+    let owner = match type_def {
+        StructOrEnum::Struct(def) if def.fields.iter().any(|f| f.name() == "node_id") => {
+            let kind = def.name();
+            let kind = if kind == "ImportDeclaration" {
+                quote!(if self.specifiers.is_some() {
+                    "ImportSpecifiers"
+                } else {
+                    "ImportDeclaration"
+                })
+            } else {
+                quote!(#kind)
+            };
+            quote!(serializer.record_comment_owner(self.node_id.get().raw().get(), #kind, self.span.start, self.span.end);)
+        }
+        _ => quote!(),
+    };
+    let mutability = if owner.is_empty() { quote!() } else { quote!(mut) };
     let ty = type_def.ty_anon(schema);
 
     quote! {
         impl ESTree for #ty {
-            fn serialize<S: Serializer>(&self, serializer: S) {
+            fn serialize<S: Serializer>(&self, #mutability serializer: S) {
+                #owner
                 #body
             }
         }

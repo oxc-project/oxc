@@ -63,7 +63,7 @@ export function parseSync(filename, sourceText, options) {
     loadRawTransferLazy();
     return parseSyncLazy(filename, sourceText, options);
   }
-  return wrap(parseSyncBinding(filename, sourceText, options));
+  return wrap(parseSyncBinding(filename, sourceText, options), options?.attachComments === true);
 }
 
 /**
@@ -95,7 +95,7 @@ export async function parse(filename, sourceText, options) {
     loadRawTransferLazy();
     return await parseLazy(filename, sourceText, options);
   }
-  return wrap(await parseBinding(filename, sourceText, options));
+  return wrap(await parseBinding(filename, sourceText, options), options?.attachComments === true);
 }
 
 /**

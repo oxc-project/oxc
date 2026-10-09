@@ -41,7 +41,7 @@ export function parse(filename, sourceText, options) {
 // Deserializers are large files, so lazy-loaded.
 // `deserialize` functions are stored in this array once loaded.
 // Index into these arrays is `isJs * 1 + range * 2 + experimentalParent * 4`.
-const deserializers = [null, null, null, null, null, null, null, null];
+const deserializers = Array.from({ length: 16 }, () => null);
 const deserializerNames = [
   "ts",
   "js",
@@ -52,6 +52,7 @@ const deserializerNames = [
   "ts_range_parent",
   "js_range_parent",
 ];
+deserializerNames.push(...deserializerNames.map((name) => `${name}_comments`));
 
 /**
  * Deserialize whole AST from buffer.
@@ -69,7 +70,8 @@ function deserialize(buffer, sourceText, sourceStartPos, sourceByteLen, options)
     parent = !!options.experimentalParent;
 
   // Lazy load deserializer, and deserialize buffer to JS objects
-  const deserializerIndex = +isJs | (+range << 1) | (+parent << 2);
+  const deserializerIndex =
+    +isJs | (+range << 1) | (+parent << 2) | (+(options.attachComments === true) << 3);
   let deserializeThis = deserializers[deserializerIndex];
   if (deserializeThis === null) {
     deserializeThis = deserializers[deserializerIndex] = require(

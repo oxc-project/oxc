@@ -20,7 +20,7 @@ use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
-pub use config::{Config, ConfigFixes, ConfigNoFixes};
+pub use config::{CommentRecord, Config, ConfigCommentFixes, ConfigFixes, ConfigNoFixes};
 pub use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
@@ -62,6 +62,10 @@ pub trait Serializer {
     /// These nodes cannot be serialized to JSON, because JSON doesn't support `BigInt`s or `RegExp`s.
     /// "Fix paths" can be used on JS side to locate these nodes and set their `value` fields correctly.
     fn record_fix_path(&mut self);
+
+    /// Record native ownership at the current ESTree path. Default serializers do no work.
+    fn record_comment_owner(&mut self, _node_id: u32, _kind: &'static str, _start: u32, _end: u32) {
+    }
 
     /// Get mutable reference to buffer.
     fn buffer_mut(&mut self) -> &mut CodeBuffer;
@@ -146,7 +150,15 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             // Omit leading `,`
             self.buffer.print_str(&fixes_buffer[1..]);
         }
-        self.buffer.print_str("]}");
+        self.buffer.print_ascii_byte(b']');
+        if let Some(fixes) = self.config.comment_fixes() {
+            self.buffer.print_str(",\"commentFixes\":[");
+            if !fixes.is_empty() {
+                self.buffer.print_str(&fixes.as_str()[1..]);
+            }
+            self.buffer.print_ascii_byte(b']');
+        }
+        self.buffer.print_ascii_byte(b'}');
 
         self.buffer.into_string()
     }
@@ -227,6 +239,60 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
         self.fixes_buffer.print_ascii_byte(b']');
     }
 
+    fn record_comment_owner(&mut self, node_id: u32, kind: &'static str, start: u32, end: u32) {
+        if !C::COMMENTS {
+            return;
+        }
+        let Some(comments) = self.config.take_comments(node_id) else {
+            return;
+        };
+        let parent = matches!(kind, "FormalParameters" | "WithClause");
+        let elision = kind == "Elision";
+        let projected = parent
+            || elision
+            || matches!(kind, "FormalParameter" | "CatchParameter" | "FormalParameterRest");
+        let parts = self.trace_path.as_slice();
+        // The first trace element is the root sentinel. Array-only containers
+        // project to the node containing the current field.
+        let parts = &parts[1..parts.len() - if elision { 2 } else { usize::from(parent) }];
+        let fixes = self.config.comment_fixes().unwrap();
+        for comment in comments {
+            fixes.print_str(",[ [");
+            for (index, part) in parts.iter().enumerate() {
+                if index != 0 {
+                    fixes.print_ascii_byte(b',');
+                }
+                match part {
+                    TracePathPart::Key(key) => fixes.print_strs_array(["\"", key, "\""]),
+                    TracePathPart::Index(index) => {
+                        fixes.print_str(itoa::Buffer::new().format(*index));
+                    }
+                }
+            }
+            fixes.print_str("],");
+            for value in [
+                comment.index,
+                u32::from(comment.placement),
+                u32::from(comment.kind),
+                u32::from(comment.newlines),
+                u32::from(comment.content),
+            ] {
+                fixes.print_str(itoa::Buffer::new().format(value));
+                fixes.print_ascii_byte(b',');
+            }
+            if projected || (kind == "ImportSpecifiers" && comment.placement == 2) {
+                fixes.print_strs_array(["[\"", kind, "\","]);
+                fixes.print_str(itoa::Buffer::new().format(start));
+                fixes.print_ascii_byte(b',');
+                fixes.print_str(itoa::Buffer::new().format(end));
+                fixes.print_ascii_byte(b']');
+            } else {
+                fixes.print_str("null");
+            }
+            fixes.print_ascii_byte(b']');
+        }
+    }
+
     /// Get mutable reference to buffer.
     #[inline(always)]
     fn buffer_mut(&mut self) -> &mut CodeBuffer {
@@ -249,4 +315,13 @@ pub enum TracePathPart {
 
 impl TracePathPart {
     pub const DUMMY: Self = TracePathPart::Index(0);
+}
+
+impl<F: Formatter> ESTreeSerializer<ConfigCommentFixes, F> {
+    /// Configure the sparse source comment index.
+    #[must_use]
+    pub fn with_comments(mut self, comments: impl Iterator<Item = CommentRecord>) -> Self {
+        self.config.set_comments(comments);
+        self
+    }
 }

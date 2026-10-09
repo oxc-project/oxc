@@ -21,8 +21,15 @@ use crate::ast::*;
 pub struct JSXElementOpeningElement<'a, 'b>(pub &'b JSXElement<'a>);
 
 impl ESTree for JSXElementOpeningElement<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
         let element = self.0;
+        let opening = &element.opening_element;
+        serializer.record_comment_owner(
+            opening.node_id.get().raw().get(),
+            "JSXOpeningElement",
+            opening.span.start,
+            opening.span.end,
+        );
         let opening_element = element.opening_element.as_ref();
 
         let mut state = serializer.serialize_struct();

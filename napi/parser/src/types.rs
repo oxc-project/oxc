@@ -7,6 +7,10 @@ use oxc_napi::{Comment, OxcError};
 #[napi(object)]
 #[derive(Default)]
 pub struct ParserOptions {
+    /// Attach source comments to AST nodes as leading, trailing, or dangling comments.
+    /// Supported by JSON and eager raw transfer. Default `false`.
+    pub attach_comments: Option<bool>,
+
     /// Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`.
     #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx' | 'dts'")]
     pub lang: Option<String>,
@@ -76,7 +80,7 @@ impl ParseResult {
         mem::take(&mut self.module)
     }
 
-    #[napi(getter)]
+    #[napi(getter, ts_return_type = "import(\"@oxc-project/types\").Comment[]")]
     pub fn comments(&mut self) -> Vec<Comment> {
         mem::take(&mut self.comments)
     }

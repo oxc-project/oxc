@@ -67,6 +67,44 @@ impl Program<'_> {
         serializer.serialize_with_fixes(self)
     }
 
+    /// Serialize AST with sparse comment ownership fixups for the JS parser.
+    /// Ownership must be established before converting AST spans to UTF-16.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a manually built AST contains more than `u32::MAX` comments.
+    pub fn to_estree_json_with_comment_fixes(
+        &self,
+        include_ts_fields: bool,
+        ranges: bool,
+    ) -> String {
+        let hashbang_offset = u32::from(!include_ts_fields && self.hashbang.is_some());
+        let records = self.comments.iter().enumerate().filter_map(|(index, comment)| {
+            if comment.node_id.get() == crate::Comment::UNASSIGNED_NODE_ID {
+                return None;
+            }
+            Some(oxc_estree::CommentRecord {
+                node_id: comment.node_id.get().raw().get(),
+                index: u32::try_from(index).expect("Comment index exceeds source size")
+                    + hashbang_offset,
+                placement: comment.placement as u8,
+                kind: comment.kind as u8,
+                newlines: comment.newlines.bits(),
+                content: comment.content as u8,
+            })
+        });
+        let serializer = oxc_estree::ESTreeSerializer::<
+            oxc_estree::ConfigCommentFixes,
+            oxc_estree::CompactFormatter,
+        >::with_capacity(
+            self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT,
+            include_ts_fields,
+            ranges,
+        )
+        .with_comments(records);
+        serializer.serialize_with_fixes(self)
+    }
+
     /// Serialize AST to pretty-printed ESTree JSON, with list of fixes.
     pub fn to_pretty_estree_json_with_fixes(
         &self,

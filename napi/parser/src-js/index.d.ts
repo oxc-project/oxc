@@ -53,7 +53,7 @@ export declare const enum Severity {
 export declare class ParseResult {
   get program(): import("@oxc-project/types").Program
   get module(): EcmaScriptModule
-  get comments(): Array<Comment>
+  get comments(): import("@oxc-project/types").Comment[]
   get errors(): Array<OxcError>
 }
 
@@ -167,6 +167,11 @@ export declare const enum ImportNameKind {
 export declare function parse(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
 
 export interface ParserOptions {
+  /**
+   * Attach source comments to AST nodes as leading, trailing, or dangling comments.
+   * Supported by JSON and eager raw transfer. Default `false`.
+   */
+  attachComments?: boolean
   /** Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`. */
   lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts'
   /** Treat the source text as `script` or `module` code. */

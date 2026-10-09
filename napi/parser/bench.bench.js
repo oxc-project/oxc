@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join as pathJoin } from "node:path";
 import { describe, test } from "vitest";
 import { parseRawSync } from "./src-js/bindings.js";

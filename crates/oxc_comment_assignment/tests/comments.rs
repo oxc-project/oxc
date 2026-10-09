@@ -1117,3 +1117,18 @@ fn remaining_assignment_handles_partially_attached_windows() {
     assign_remaining(&mut program);
     assert_eq!(expected, attachments(&program));
 }
+
+#[test]
+fn empty_import_specifier_comments_belong_to_the_declaration() {
+    let allocator = Allocator::default();
+    let source = "import { /* inside */ } from 'module';";
+    let mut program = parse(&allocator, source, SourceType::mjs());
+    assign(&mut program);
+    assert_eq!(
+        attachment(&program, "/* inside */"),
+        Attachment {
+            node_id: Cell::new(node_id(&program, AstType::ImportDeclaration, source)),
+            placement: CommentPlacement::Dangling,
+        },
+    );
+}

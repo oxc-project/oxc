@@ -2038,6 +2038,7 @@ dependencies = [
  "dragonbox_ecma",
  "itoa",
  "oxc_data_structures",
+ "rustc-hash",
 ]
 
 [[package]]

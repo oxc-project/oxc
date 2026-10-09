@@ -51,6 +51,27 @@ Fields omitted by the selected `astType` do not change the relative order of the
 A generic walker which recursively inspects `Object.keys(node)` therefore visits standard ESTree
 children in the same relative order as Oxc's `Visitor` and the exported `visitorKeys`.
 
+### Attached comments
+
+Pass `attachComments: true` to expose comment ownership on ESTree nodes.
+The native parser assigns ownership unconditionally; this option controls serialization. This is supported by ordinary JSON
+transfer and eager `experimentalRawTransfer`; lazy raw transfer is excluded.
+
+```js
+const { program, comments } = parseSync("input.js", "const values = [/* inside */];", {
+  attachComments: true,
+});
+```
+
+Every node then has `comments: null` or `{ leading, trailing, dangling }`. Empty buckets are `null`;
+nonempty buckets contain the same objects as the flat result's `comments` array, in source order.
+Without this option, node comment properties and attachment metadata are omitted.
+
+Attached comments include their original `kind`, `newlines` flags and `content` classification.
+Comments owned by native containers absent from ESTree carry `container` metadata describing that
+owner's kind, placement and UTF-16 span. For example, comments inside an empty parameter list are
+function dangling comments tagged `FormalParameters`. Hashbangs remain in `Program.hashbang`.
+
 ### AST Types
 
 [@oxc-project/types](https://npmx.dev/package/@oxc-project/types) can be used. For example:
@@ -185,3 +206,5 @@ All options are optional.
 - `range`: `true` | `false`. If `true`, AST nodes contain a `range` field. Defaults to `false`.
 - `preserveParens`: `true` | `false`. If `true`, parenthesized expressions are represented by (non-standard) `ParenthesizedExpression` and `TSParenthesizedType` AST nodes. Defaults to `true`.
 - `showSemanticErrors`: `true` | `false`. If `true`, check file for semantic errors which parser does not otherwise emit e.g. `let x; let x;`. Has a small performance cost. Defaults to `false`.
+
+- `attachComments`: `true` | `false`. Expose source comment ownership on ESTree nodes. Defaults to `false`.
