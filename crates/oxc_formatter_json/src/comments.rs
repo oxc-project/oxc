@@ -69,10 +69,10 @@ fn write_comment_text(comment: &Comment, f: &mut JsonFormatter<'_, '_>) {
 /// Callers today pass block comments only; the line branch keeps the contract uniform.
 #[must_use = "formatted comments must be written to the formatter"]
 #[derive(Clone, Copy, Debug)]
-pub struct FormatCommentBeforeContent<'a>(&'a Comment);
+pub struct FormatCommentBeforeContent<'c>(&'c Comment);
 
-impl<'a> FormatCommentBeforeContent<'a> {
-    pub const fn new(comment: &'a Comment) -> Self {
+impl<'c> FormatCommentBeforeContent<'c> {
+    pub const fn new(comment: &'c Comment) -> Self {
         Self(comment)
     }
 }
@@ -90,13 +90,13 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FormatCommentBeforeContent<'_> {
 /// cannot swallow later tokens, not measured.
 #[must_use = "formatted comments must be written to the formatter"]
 #[derive(Clone, Copy, Debug)]
-pub struct FormatLineCommentSuffix<'a> {
-    comment: &'a Comment,
+pub struct FormatLineCommentSuffix<'c> {
+    comment: &'c Comment,
     leading_space: bool,
 }
 
-impl<'a> FormatLineCommentSuffix<'a> {
-    pub const fn new(comment: &'a Comment) -> Self {
+impl<'c> FormatLineCommentSuffix<'c> {
+    pub const fn new(comment: &'c Comment) -> Self {
         Self { comment, leading_space: false }
     }
 
