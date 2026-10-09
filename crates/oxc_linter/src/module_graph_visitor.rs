@@ -205,9 +205,10 @@ impl ModuleGraphVisitor {
             }
 
             let path = &loaded_module_record.resolved_absolute_path;
-            if !self.traversed.insert(path.clone()) {
+            if self.traversed.contains(path) {
                 continue;
             }
+            self.traversed.insert(path.clone());
 
             self.depth += 1;
 
