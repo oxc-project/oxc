@@ -14,7 +14,7 @@ use unicode_width::UnicodeWidthChar;
 use crate::{
     ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
     IndentWidth, InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextWidth,
-    format_element::tag::Prefix,
+    format_element::{flat::Flat, tag::Prefix},
 };
 
 use self::call_stack::{
@@ -137,11 +137,7 @@ impl<'a> Printer<'a> {
 
         let args = stack.top();
         match element {
-            FormatElement::Space => {
-                if self.state.line_width > 0 {
-                    self.state.pending_space = true;
-                }
-            }
+            FormatElement::Space => self.print_space(),
 
             FormatElement::Token { text } => self.print_text(Text::Token(text)),
             FormatElement::Text { text, width } => {
@@ -151,8 +147,8 @@ impl<'a> Printer<'a> {
                 if args.mode().is_flat() {
                     match line_mode {
                         LineMode::Soft | LineMode::SoftOrSpace => {
-                            if line_mode == &LineMode::SoftOrSpace && self.state.line_width > 0 {
-                                self.state.pending_space = true;
+                            if line_mode == &LineMode::SoftOrSpace {
+                                self.print_space();
                             }
                             return Ok(());
                         }
@@ -241,6 +237,7 @@ impl<'a> Printer<'a> {
             }
 
             FormatElement::Tag(StartGroup(group)) => {
+                let flat = flat_in_place(group, queue.current());
                 let group_mode = if group.mode().is_flat() {
                     match args.mode() {
                         PrintMode::Flat if self.state.measured_group_fits => {
@@ -259,9 +256,14 @@ impl<'a> Printer<'a> {
 
                             // Measure to see if the group fits up on a single line. If that's the case,
                             // print the group in "flat" mode, otherwise continue in expanded mode
-                            stack.push(TagKind::Group, args.with_print_mode(PrintMode::Flat));
-                            let fits = self.fits(queue, stack, indent_stack)?;
-                            stack.pop(TagKind::Group)?;
+                            let fits = if flat.is_some() {
+                                self.fits(queue, stack, indent_stack, flat)?
+                            } else {
+                                stack.push(TagKind::Group, args.with_print_mode(PrintMode::Flat));
+                                let fits = self.fits(queue, stack, indent_stack, None)?;
+                                stack.pop(TagKind::Group)?;
+                                fits
+                            };
 
                             if fits { PrintMode::Flat } else { PrintMode::Expanded }
                         }
@@ -270,10 +272,17 @@ impl<'a> Printer<'a> {
                     PrintMode::Expanded
                 };
 
-                stack.push(TagKind::Group, args.with_print_mode(group_mode));
-
                 if let Some(id) = group.id() {
                     self.state.group_modes.insert_print_mode(id, group_mode);
+                }
+
+                if group_mode.is_flat()
+                    && let Some((_, len)) = flat
+                {
+                    self.print_flat(&queue.current()[..len]);
+                    queue.skip(len + 1);
+                } else {
+                    stack.push(TagKind::Group, args.with_print_mode(group_mode));
                 }
             }
 
@@ -402,14 +411,19 @@ impl<'a> Printer<'a> {
         Ok(())
     }
 
+    /// `flat_group`: the [`Group::flat`](crate::format_element::tag::Group::flat) of a group whose content the queue starts with, to skip it.
     fn fits(
         &mut self,
         queue: &PrintQueue<'a>,
         stack: &PrintCallStack,
         indent_stack: &PrintIndentStack,
+        flat_group: Option<(Flat, usize)>,
     ) -> PrintResult<bool> {
         let mut measure = FitsMeasurer::new(queue, stack, indent_stack, self);
-        let result = measure.fits(&mut AllPredicate);
+        let result = match flat_group.map(|(flat, len)| measure.skip_flat_group(flat, len)) {
+            Some(Fits::No) => Ok(false),
+            _ => measure.fits(&mut AllPredicate),
+        };
         measure.finish();
         result
     }
@@ -480,7 +494,7 @@ impl<'a> Printer<'a> {
 
                 queue.extend_back(content);
                 stack.push(TagKind::Entry, entry_args);
-                let variant_fits = self.fits(queue, stack, indent_stack)?;
+                let variant_fits = self.fits(queue, stack, indent_stack, None)?;
                 stack.pop(TagKind::Entry)?;
 
                 // Remove the content slice because printing needs the variant WITH the start entry
@@ -748,6 +762,85 @@ impl<'a> Printer<'a> {
         invalid_end_tag(TagKind::Entry, stack.top_kind())
     }
 
+    fn print_space(&mut self) {
+        if self.state.line_width > 0 {
+            self.state.pending_space = true;
+        }
+    }
+
+    /// Prints the content of a group flat that has a [`Group::flat`](crate::format_element::tag::Group::flat):
+    /// nothing in it depends on the state of the printer, and it has no line break,
+    /// so what is printed is its texts and spaces.
+    fn print_flat(&mut self, elements: &'a [FormatElement<'a>]) {
+        // The depth of the conditional content that is left out
+        let mut left_out = 0usize;
+        for element in elements {
+            if left_out > 0 {
+                match element {
+                    FormatElement::Tag(Tag::StartConditionalContent(_)) => left_out += 1,
+                    FormatElement::Tag(Tag::EndConditionalContent) => left_out -= 1,
+                    _ => {}
+                }
+                continue;
+            }
+            match element {
+                FormatElement::Space | FormatElement::Line(LineMode::SoftOrSpace) => {
+                    self.print_space();
+                }
+                FormatElement::Token { text } => self.print_text(Text::Token(text)),
+                FormatElement::Text { text, width } => {
+                    self.print_text(Text::Text { text, width: *width });
+                }
+                FormatElement::Interned(content) => self.print_flat(content),
+                FormatElement::BestFitting(best_fitting) => {
+                    self.print_flat(best_fitting.most_flat());
+                }
+                FormatElement::Tag(Tag::StartConditionalContent(condition)) => {
+                    debug_assert!(condition.group_id.is_none());
+                    if condition.mode == PrintMode::Expanded {
+                        left_out = 1;
+                    }
+                }
+                // Soft line breaks do nothing on one line, nor do tags:
+                // the groups in it are printed flat and have no ids, indents only apply after a line break,
+                // and a fill fits on the line as a whole
+                FormatElement::Line(LineMode::Soft)
+                | FormatElement::Tag(
+                    Tag::EndConditionalContent
+                    | Tag::StartGroup(_)
+                    | Tag::EndGroup
+                    | Tag::StartIndent
+                    | Tag::EndIndent
+                    | Tag::StartAlign(_)
+                    | Tag::EndAlign
+                    | Tag::StartPrefix(_)
+                    | Tag::EndPrefix
+                    | Tag::StartDedent(_)
+                    | Tag::EndDedent(_)
+                    | Tag::StartIndentIfGroupBreaks(_)
+                    | Tag::EndIndentIfGroupBreaks(_)
+                    | Tag::StartFill
+                    | Tag::EndFill
+                    | Tag::StartEntry
+                    | Tag::EndEntry
+                    | Tag::StartLabelled(_)
+                    | Tag::EndLabelled
+                    | Tag::StartMarkAsRoot
+                    | Tag::EndMarkAsRoot,
+                )
+                | FormatElement::EmbedPlaceholder(_) => {}
+                // A group with any of these has no `Group::flat`
+                FormatElement::Line(_)
+                | FormatElement::ExpandParent
+                | FormatElement::LineSuffixBoundary
+                | FormatElement::TailwindClass(_)
+                | FormatElement::Tag(Tag::StartLineSuffix | Tag::EndLineSuffix) => {
+                    debug_assert!(false, "{element:?} in a group with a flat summary");
+                }
+            }
+        }
+    }
+
     /// Prints `indention` (prefix chain, indent levels, align spaces) and adds its width to the current line.
     #[inline]
     fn print_indention(&mut self, indention: Indention) {
@@ -897,6 +990,17 @@ enum FillPairLayout {
     /// The item fits but the separator does not in flat mode. If the separator fits in expanded mode then
     /// print the item in flat and the separator in expanded mode, otherwise print both in expanded mode.
     ItemMaybeFlat,
+}
+
+/// [`Group::flat`](crate::format_element::tag::Group::flat) of `group`, if `current` holds its content up to its end tag.
+/// A flushed line suffix is queued one element at a time, so a group in it is not in one slice.
+fn flat_in_place(
+    group: &crate::format_element::tag::Group,
+    current: &[FormatElement],
+) -> Option<(Flat, usize)> {
+    group
+        .flat()
+        .filter(|&(_, len)| matches!(current.get(len), Some(FormatElement::Tag(Tag::EndGroup))))
 }
 
 /// Printer state that is global to all elements.
@@ -1395,11 +1499,17 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 let group_mode =
                     if group.mode().is_flat() { args.mode() } else { PrintMode::Expanded };
 
-                self.stack.push(TagKind::Group, args.with_print_mode(group_mode));
-
                 if let Some(id) = group.id() {
                     self.group_modes_mut().insert_print_mode(id, group_mode);
                 }
+
+                if group_mode.is_flat()
+                    && let Some((flat, len)) = flat_in_place(group, self.queue.current())
+                {
+                    return Ok(self.skip_flat_group(flat, len));
+                }
+
+                self.stack.push(TagKind::Group, args.with_print_mode(group_mode));
             }
 
             FormatElement::Tag(StartConditionalContent(condition)) => {
@@ -1515,6 +1625,22 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         }
 
         Ok(Fits::Maybe)
+    }
+
+    /// Measures the content of a group printed flat, which the queue starts with, by what it does ([`Group::flat`](crate::format_element::tag::Group::flat)),
+    /// and skips it up to and including its end tag.
+    fn skip_flat_group(&mut self, flat: Flat, len: usize) -> Fits {
+        self.queue.skip(len + 1);
+
+        self.state.pending_space =
+            flat.leads_with_space(self.state.pending_space, self.state.line_width);
+        if !flat.has_text {
+            return Fits::Maybe;
+        }
+        // Its texts as one
+        let fits = self.fits_text(Text::Text { text: "", width: TextWidth::single(flat.width) });
+        self.state.pending_space = flat.trailing;
+        fits
     }
 
     fn fits_text(&mut self, text: Text) -> Fits {
@@ -2197,7 +2323,7 @@ a",
                 line_suffix(&group(&format_args!(
                     token(" b"),
                     soft_line_break_or_space(),
-                    token("c")
+                    group(&token("c"))
                 ))),
                 hard_line_break(),
                 token("d")

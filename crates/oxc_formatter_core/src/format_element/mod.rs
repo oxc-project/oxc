@@ -1,5 +1,6 @@
 pub mod debug;
 pub mod document;
+pub(crate) mod flat;
 pub(crate) mod formatted;
 pub(crate) mod group_id;
 pub mod tag;

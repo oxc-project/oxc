@@ -2,7 +2,7 @@ use std::{cell::Cell, num::NonZeroU8};
 
 use crate::GroupId;
 
-use super::PrintMode;
+use super::{PrintMode, flat::Flat};
 
 /// A Tag marking the start and end of some content to which some special formatting should be applied.
 ///
@@ -167,15 +167,46 @@ impl GroupMode {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Group {
     id: Option<GroupId>,
     mode: Cell<GroupMode>,
+    /// See [Self::flat].
+    /// Kept apart in two cells, so that they fill the padding.
+    flat: Cell<u16>,
+    flat_len: Cell<u32>,
 }
+
+/// `Group::flat` is derived from the content, not part of the group.
+impl PartialEq for Group {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id && self.mode == other.mode
+    }
+}
+
+impl Eq for Group {}
 
 impl Group {
     pub fn new() -> Self {
-        Self { id: None, mode: Cell::new(GroupMode::Flat) }
+        Self {
+            id: None,
+            mode: Cell::new(GroupMode::Flat),
+            flat: Cell::new(0),
+            flat_len: Cell::new(0),
+        }
+    }
+
+    /// What the content printed flat does to the line, and its number of elements up to the end tag,
+    /// for a fits measurement to skip it.
+    /// Set by `Document::propagate_expand`, if the content has a [Flat] and the end tag is in the same slice.
+    pub(crate) fn flat(&self) -> Option<(Flat, usize)> {
+        Flat::unpack(self.flat.get()).map(|flat| (flat, self.flat_len.get() as usize))
+    }
+
+    pub(crate) fn set_flat(&self, flat: Option<Flat>, len: usize) {
+        let len = u32::try_from(len).ok();
+        self.flat.set(if len.is_some() { Flat::pack(flat) } else { 0 });
+        self.flat_len.set(len.unwrap_or(0));
     }
 
     #[must_use]
