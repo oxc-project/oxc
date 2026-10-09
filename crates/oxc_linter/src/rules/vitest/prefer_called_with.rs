@@ -53,7 +53,11 @@ fn test() {
         ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None),
         ("expect(fn).resolves.toBeCalled();", "expect(fn).resolves.toBeCalledWith();", None),
         ("expect(fn).toHaveBeenCalled();", "expect(fn).toHaveBeenCalledWith();", None),
-        ("expect(fn).toHaveBeenCalledOnce();", "expect(fn).toHaveBeenCalledExactlyOnceWith();", None),
+        (
+            "expect(fn).toHaveBeenCalledOnce();",
+            "expect(fn).toHaveBeenCalledExactlyOnceWith();",
+            None,
+        ),
     ];
 
     let vitest_pass = vec![
@@ -83,7 +87,11 @@ fn test() {
         ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None),
         ("expect(fn).resolves.toBeCalled();", "expect(fn).resolves.toBeCalledWith();", None),
         ("expect(fn).toHaveBeenCalled();", "expect(fn).toHaveBeenCalledWith();", None),
-        ("expect(fn).toHaveBeenCalledOnce();", "expect(fn).toHaveBeenCalledExactlyOnceWith();", None),
+        (
+            "expect(fn).toHaveBeenCalledOnce();",
+            "expect(fn).toHaveBeenCalledExactlyOnceWith();",
+            None,
+        ),
     ];
 
     pass.extend(vitest_pass);
