@@ -75,7 +75,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    if: ${{ github.ref_name == 'main' }}
+    if: ${{ github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
     name: Test Windows
     runs-on: windows-latest
     steps:
@@ -109,15 +109,23 @@ jobs:
               rustup show
               git restore .
 
-      - parallel:
-          - name: Install dependencies on Dev Drive
-            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-            run: pnpm install --frozen-lockfile --ignore-scripts
-          - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-            with:
-              workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
-              save-if: ${{ github.ref_name == 'main' }}
-              shared-key: windows-latest
+      - name: Install dependencies on Dev Drive
+        id: dependencies
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        background: true
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          save-if: ${{ github.ref_name == 'main' }}
+          shared-key: windows-latest
+
+      - name: Compile tests
+        run: cargo test --all-features --no-run
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+
+      - wait: dependencies
 
       - name: Run tests
         # No need for `cargo ck` because it's already checked in linux
@@ -360,7 +368,7 @@ jobs:
   test-napi-compiler-windows:
     name: Test NAPI Compiler (windows)
     runs-on: windows-latest
-    if: ${{ github.ref_name == 'main' }}
+    if: ${{ github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
     steps:
       - run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -401,7 +409,29 @@ jobs:
       - if: steps.filter.outputs.changed == 'true'
         name: Build packages
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
+        shell: bash
+        run: |
+          cargo build --profile coverage \
+            -p oxc_parser_napi \
+            -p oxc_minify_napi \
+            -p oxc_transform_napi \
+            -p oxc_transform_react_napi \
+            -p oxc_transform_relay_napi \
+            --features oxc_parser_napi/tokens
+
+          artifacts=(
+            "oxc_parser_napi.dll:napi/parser/src-js/parser.win32-x64-msvc.node"
+            "oxc_minify_napi.dll:napi/minify/minify.win32-x64-msvc.node"
+            "oxc_transform_napi.dll:napi/transform/transform.win32-x64-msvc.node"
+            "oxc_transform_react_napi.dll:napi/transform-react/transform-react.win32-x64-msvc.node"
+            "oxc_transform_relay_napi.dll:napi/transform-relay/transform-relay.win32-x64-msvc.node"
+          )
+          for artifact in "${artifacts[@]}"; do
+            IFS=: read -r source destination <<< "$artifact"
+            source="target/coverage/$source"
+            test -f "$source"
+            cp "$source" "$destination"
+          done
       - parallel:
           - if: steps.filter.outputs.changed == 'true'
             name: Run tests
