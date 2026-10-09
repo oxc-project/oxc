@@ -2,7 +2,7 @@
 
 use std::{cell::RefCell, mem, ptr, slice};
 
-use oxc_ast::ast::{Comment, RegExpFlags};
+use oxc_ast::ast::RegExpFlags;
 use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
@@ -126,7 +126,7 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
         let n_rxf =
             copy_lane(&l.regex_flags, arena.regex_flags.cast::<u8>(), arena.regex_flags_capacity);
         let n_cm = copy_lane(&l.comment_meta, arena.comment_meta, arena.comment_meta_capacity);
-        let n_cr = clone_comments(&l.comments, arena.comments, arena.comments_capacity);
+        let n_cr = copy_lane(&l.comments, arena.comments, arena.comments_capacity);
         let n_diag = copy_lane(&l.diags, arena.diags, arena.diags_capacity);
 
         #[expect(
@@ -226,8 +226,15 @@ fn empty_result(arena: &Arena) -> LexResult {
     }
 }
 
+/// Move a lane's entries into the arena with a bitwise copy.
+///
+/// This is a move, not a clone, so `T` need not be `Copy`.
+/// The arena owns the entries from here on. The source lane is never read again,
+/// and the clear at the start of the next run runs no destructors because `T` has none.
 #[inline]
-fn copy_lane<T: Copy>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
+fn copy_lane<T>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
+    const { assert!(!mem::needs_drop::<T>()) };
+
     if dst.is_null() {
         return 0;
     }
@@ -248,38 +255,5 @@ fn copy_lane<T: Copy>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
         reason = "lane lengths are bounded by u32 capacities"
     )]
     let len = srcv.len() as u32;
-    len
-}
-
-/// Clone comments into the arena without requiring them to implement `Copy`.
-#[inline]
-fn clone_comments(comments: &[Comment], dst: *mut Comment, cap: u32) -> u32 {
-    // The arena overwrites and deallocates comment slots without running destructors.
-    const {
-        assert!(!mem::needs_drop::<Comment>());
-    }
-    if dst.is_null() {
-        return 0;
-    }
-
-    assert!(
-        comments.len() <= cap as usize,
-        "lexer: lane overflow ({} entries, capacity {cap}) - arena lane sizing out of date",
-        comments.len()
-    );
-
-    for (index, comment) in comments.iter().enumerate() {
-        // SAFETY: `dst` has capacity for every comment, asserted above. Each slot is
-        // initialized independently and `Comment` does not require dropping old values.
-        unsafe {
-            dst.add(index).write(comment.clone());
-        }
-    }
-
-    #[expect(
-        clippy::cast_possible_truncation,
-        reason = "lane lengths are bounded by u32 capacities"
-    )]
-    let len = comments.len() as u32;
     len
 }
