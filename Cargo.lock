@@ -2391,6 +2391,7 @@ dependencies = [
  "oxc_traverse",
  "pico-args",
  "rustc-hash",
+ "smallvec",
 ]
 
 [[package]]

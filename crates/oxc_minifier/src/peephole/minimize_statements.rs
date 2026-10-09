@@ -116,6 +116,7 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
         *stmts = new_stmts;
+        Self::conflate_assignments_after_statement_fusion(stmts, ctx);
     }
 
     /// Some parsers cannot parse long conditional expressions.
@@ -678,6 +679,8 @@ impl<'a> PeepholeOptimizations {
         }
 
         // `a; b;` => `a, b;`
+        // Conflate the completed expression-statement run at the statement-list boundary. Doing
+        // it after every append repeatedly scans both the prefix and uncached symbol references.
         Self::merge_last_expression_into_sequence(&mut expr_stmt.expression, result, ctx);
 
         // `var a; a = b();` => `var a = b();`
@@ -830,6 +833,7 @@ impl<'a> PeepholeOptimizations {
 
         // `a; switch(b){}` => `switch(a, b){}`
         Self::merge_last_expression_into_sequence(&mut switch_stmt.discriminant, result, ctx);
+        Self::conflate_assignment_expression(&mut switch_stmt.discriminant, ctx);
 
         // `var a; switch (a = b(), c) {}` => `var a = b(); switch (c) {}`
         Self::merge_leading_assignments_to_declaration(
@@ -903,6 +907,7 @@ impl<'a> PeepholeOptimizations {
 
         // `a; if (b) c;` => `if (a, b) c;`
         Self::merge_last_expression_into_sequence(&mut if_stmt.test, result, ctx);
+        Self::conflate_assignment_expression(&mut if_stmt.test, ctx);
 
         if ctx.options().sequences {
             if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
@@ -1040,6 +1045,7 @@ impl<'a> PeepholeOptimizations {
         } else if let Some(argument) = &mut ret_stmt.argument {
             // `a; return b;` => `return b, c;`
             Self::merge_last_expression_into_sequence(argument, result, ctx);
+            Self::conflate_assignment_expression(argument, ctx);
         }
 
         // `if (a) return b; return c;` => `return a ? b : c;`
@@ -1132,6 +1138,7 @@ impl<'a> PeepholeOptimizations {
 
         // `a; throw b;` => `throw a, b;`
         Self::merge_last_expression_into_sequence(&mut throw_stmt.argument, result, ctx);
+        Self::conflate_assignment_expression(&mut throw_stmt.argument, ctx);
 
         // `var a; throw a = b(), c;` => `var a = b(); throw c;`
         Self::merge_leading_assignments_to_declaration(
@@ -1248,12 +1255,14 @@ impl<'a> PeepholeOptimizations {
                         if let Some(init) = init.as_expression_mut() {
                             // `a; for (b;;) c;` => `for (a, b;;) c;`
                             Self::merge_last_expression_into_sequence(init, result, ctx);
+                            Self::conflate_assignment_expression(init, ctx);
                         }
                     } else {
                         let previous = result.pop().unwrap();
-                        let Statement::ExpressionStatement(previous) = previous else {
+                        let Statement::ExpressionStatement(mut previous) = previous else {
                             unreachable!()
                         };
+                        Self::conflate_assignment_expression(&mut previous.expression, ctx);
                         for_stmt.init = Some(ForStatementInit::from(previous.unbox().expression));
                         ctx.notice_change();
                     }
@@ -1349,6 +1358,7 @@ impl<'a> PeepholeOptimizations {
                             result,
                             ctx,
                         );
+                        Self::conflate_assignment_expression(&mut for_in_stmt.right, ctx);
                     }
                 }
                 // "var a; for (a in b) c" => "for (var a in b) c"
