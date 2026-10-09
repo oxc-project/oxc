@@ -379,7 +379,7 @@ impl CodeBuffer {
     #[inline]
     pub fn print_char(&mut self, ch: char) {
         let mut b = [0; 4];
-        self.buf.extend_from_slice(ch.encode_utf8(&mut b).as_bytes());
+        self.extend(ch.encode_utf8(&mut b).as_bytes());
     }
 
     /// Push a string into the buffer.
@@ -392,7 +392,7 @@ impl CodeBuffer {
     /// ```
     #[inline]
     pub fn print_str<S: AsRef<str>>(&mut self, s: S) {
-        self.buf.extend_from_slice(s.as_ref().as_bytes());
+        self.extend(s.as_ref().as_bytes());
     }
 
     /// Push a sequence of ASCII characters into the buffer.
@@ -448,7 +448,46 @@ impl CodeBuffer {
     /// [`into_string`]: CodeBuffer::into_string
     #[inline]
     pub unsafe fn print_bytes_unchecked(&mut self, bytes: &[u8]) {
-        self.buf.extend_from_slice(bytes);
+        self.extend(bytes);
+    }
+
+    /// Appends `bytes`, copying up to 16 bytes inline:
+    /// for the few bytes most prints are, a call to `memcpy` costs more than the copy.
+    #[inline]
+    fn extend(&mut self, bytes: &[u8]) {
+        #[cold]
+        #[inline(never)]
+        fn extend_slow(buf: &mut Vec<u8>, bytes: &[u8]) {
+            buf.extend_from_slice(bytes);
+        }
+
+        let len = bytes.len();
+        if len > 16 || self.buf.capacity() - self.buf.len() < len {
+            extend_slow(&mut self.buf, bytes);
+            return;
+        }
+        // SAFETY: `buf` has room for `len` more bytes, and every read is within `bytes`.
+        // Overlapping copies of the head and the tail cover all `len` bytes.
+        unsafe {
+            let src = bytes.as_ptr();
+            let dst = self.buf.as_mut_ptr().add(self.buf.len());
+            if len >= 8 {
+                dst.cast::<u64>().write_unaligned(src.cast::<u64>().read_unaligned());
+                dst.add(len - 8)
+                    .cast::<u64>()
+                    .write_unaligned(src.add(len - 8).cast::<u64>().read_unaligned());
+            } else if len >= 4 {
+                dst.cast::<u32>().write_unaligned(src.cast::<u32>().read_unaligned());
+                dst.add(len - 4)
+                    .cast::<u32>()
+                    .write_unaligned(src.add(len - 4).cast::<u32>().read_unaligned());
+            } else if len > 0 {
+                *dst = *src;
+                *dst.add(len / 2) = *src.add(len / 2);
+                *dst.add(len - 1) = *src.add(len - 1);
+            }
+            self.buf.set_len(self.buf.len() + len);
+        }
     }
 
     /// Print a series of strings into the buffer.
@@ -798,6 +837,21 @@ mod test {
         assert_eq!(code.len(), 3);
         assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
         assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    fn print_str_of_every_short_length() {
+        let text = "0123456789abcdefghijklmnopqrstuvwxyz";
+        for len in 0..=20 {
+            // With room to spare, and with exactly the room it takes
+            for capacity in [64, len + 2] {
+                let mut code = CodeBuffer::with_capacity(capacity);
+                code.print_str("<");
+                code.print_str(&text[..len]);
+                code.print_str(">");
+                assert_eq!(code.into_string(), format!("<{}>", &text[..len]));
+            }
+        }
     }
 
     #[test]
