@@ -1505,12 +1505,18 @@ fn test_fold_delete() {
     fold("delete null", "!0");
     fold("delete (0, x)", "(x, !0)");
 
+    fold("delete a()", "(a(), !0)");
+    fold("delete new a()", "(new a(), !0)");
+    fold("delete a.b()", "(a.b(), !0)");
+
     fold_same("delete a");
-    fold_same("delete a()");
+    fold_same("delete a().b");
+    fold_same("delete a()?.b");
+    fold_same("delete new a().b");
+    fold_same("delete new a()?.b");
     fold_same("delete a[0]");
     fold_same("delete a?.[0]");
     fold_same("delete a.b");
-    fold_same("delete a.b()");
     fold_same("delete a?.b");
     fold_same("delete a?.b()");
 

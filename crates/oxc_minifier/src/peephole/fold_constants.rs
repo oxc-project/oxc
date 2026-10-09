@@ -38,9 +38,9 @@ impl<'a> PeepholeOptimizations {
                         false
                     }
                     Expression::SequenceExpression(seq) if seq.expressions.len() > 1 => true,
-                    Expression::CallExpression(_)
-                    | Expression::ComputedMemberExpression(_)
+                    Expression::ComputedMemberExpression(_)
                     | Expression::ChainExpression(_)
+                    | Expression::PrivateFieldExpression(_)
                     | Expression::StaticMemberExpression(_)
                     | Expression::Identifier(_)
                     | Expression::SequenceExpression(_) => {

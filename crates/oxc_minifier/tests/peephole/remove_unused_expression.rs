@@ -255,7 +255,7 @@ fn test_fold_unary_expression_statement() {
 
     test_same("delete x");
     test_same("delete x.y");
-    test_same("delete x.y.z()");
+    test("delete x.y.z()", "x.y.z()");
     test_same("+0n"); // Uncaught TypeError: Cannot convert a BigInt value to a number
     test("-0n", "");
     test("-1n", "");
