@@ -143,7 +143,13 @@ fn non_base_ten_literal_is_exact(raw: &str) -> bool {
             (8, raw.trim_start_matches('0'))
         };
 
+    let bits_per_digit = match radix {
+        2 => 1,
+        8 => 3,
+        _ => 4,
+    };
     let mut bit_len = 0;
+    let mut trailing_zero_bits = 0;
     for byte in digits.bytes() {
         if byte == b'_' {
             continue;
@@ -175,19 +181,19 @@ fn non_base_ten_literal_is_exact(raw: &str) -> bool {
                 },
             };
         } else {
-            bit_len += match radix {
-                2 => 1,
-                8 => 3,
-                _ => 4,
-            };
+            bit_len += bits_per_digit;
         }
 
-        if bit_len > 53 {
-            return false;
-        }
+        trailing_zero_bits = if digit == 0 {
+            trailing_zero_bits + bits_per_digit
+        } else {
+            digit.trailing_zeros() as usize
+        };
     }
 
-    true
+    // A Number can represent up to 53 significant binary digits. Trailing zero bits
+    // are carried by its exponent and do not consume significand precision.
+    bit_len - trailing_zero_bits <= 53
 }
 
 fn base_ten_literal_is_safe(raw: &str, value: f64) -> bool {
@@ -247,23 +253,7 @@ fn base_ten_literal_is_safe(raw: &str, value: f64) -> bool {
 
 fn not_base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
     let raw = node.raw.as_ref().unwrap().as_str();
-    if non_base_ten_literal_is_exact(raw) {
-        return false;
-    }
-
-    let raw = strip_numeric_separators(raw);
-    let raw = raw.cow_to_ascii_uppercase();
-    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    // AST always store number as f64, need a cast to format in bin/oct/hex
-    let value = node.value as u64;
-    let suffix = if raw.starts_with("0B") {
-        format!("{value:b}")
-    } else if raw.starts_with("0X") {
-        format!("{value:x}")
-    } else {
-        format!("{value:o}")
-    };
-    !raw.ends_with(&suffix.cow_to_ascii_uppercase().as_ref())
+    !node.value.is_finite() || !non_base_ten_literal_is_exact(raw)
 }
 
 fn base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {

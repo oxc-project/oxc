@@ -187,6 +187,38 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
    ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0xffffffffffffffff)
+   ·        ──────────────────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+  note: Integer literal loses precision
+
+  ⚠ unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0xffffffffffffffffffff)
+   ·        ──────────────────────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+  note: Integer literal loses precision
+
+  ⚠ unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0b1111111111111111111111111111111111111111111111111111111111111111)
+   ·        ──────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+  note: Integer literal loses precision
+
+  ⚠ unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
+ 1 │ BigInt(0o1777777777777777777777)
+   ·        ────────────────────────
+   ╰────
+  help: Use a bigint literal (e.g. `123n`) instead of calling `BigInt` with a literal argument.
+  note: Integer literal loses precision
+
+  ⚠ unicorn(prefer-bigint-literals): Prefer bigint literals over `BigInt(...)`.
+   ╭─[prefer_bigint_literals.tsx:1:8]
  1 │ BigInt(9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999)
    ·        ────────────────────────────────────────────────────────────────────────────────────────────────────
    ╰────
