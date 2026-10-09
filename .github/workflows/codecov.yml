@@ -26,9 +26,12 @@ jobs:
       - name: Checkout
         uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
+      - name: Clone submodules
+        id: fixtures
+        uses: $/.github/actions/clone-submodules
+        background: true
+
       - parallel:
-          - name: Clone submodules
-            uses: $/.github/actions/clone-submodules
           - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
             with:
               path: /home/runner/.rustup
@@ -39,6 +42,8 @@ jobs:
       - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         with:
           tool: cargo-llvm-cov
+
+      - wait: fixtures
 
       - name: Run
         env:

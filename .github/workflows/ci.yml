@@ -183,6 +183,12 @@ jobs:
           cache: |
             rust
             pnpm
+      - name: Install Playwright Chromium
+        id: playwright
+        if: steps.filter.outputs.changed == 'true'
+        working-directory: napi/parser
+        run: pnpm exec playwright install chromium
+        background: true
       - name: Build
         if: steps.filter.outputs.changed == 'true'
         run: |
@@ -191,12 +197,12 @@ jobs:
           pnpm run build-wasm-dev
           pnpm run build-wasip1-dev
           git diff --exit-code # Must commit everything
+      - wait: playwright
       - name: Test wasi in browser
         if: steps.filter.outputs.changed == 'true'
         working-directory: napi/parser
         run: |
           rm -rf *.wasm
-          pnpm exec playwright install chromium
           pnpm run build-wasi
           pnpm run build-wasm-dev
           pnpm run build-wasip1-dev
@@ -216,14 +222,15 @@ jobs:
           paths: napi/parser/,napi/minify/,napi/transform/,napi/transform-react/,napi/transform-relay/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - parallel:
-          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-            if: steps.filter.outputs.changed == 'true'
-          - uses: $/.github/actions/clone-submodules
-            if: steps.filter.outputs.changed == 'true'
-            with:
-              babel: false
-              node-compat-table: false
+      - uses: $/.github/actions/clone-submodules
+        id: napi-fixtures
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          babel: false
+          node-compat-table: false
+        background: true
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -231,18 +238,21 @@ jobs:
           cache: |
             rust
             pnpm
+      - wait: napi-fixtures
       - if: steps.filter.outputs.changed == 'true'
-        name: Run tests
-        env:
-          RUN_RAW_RANGE_TESTS: "true"
-          RUN_RAW_TOKENS_TESTS: "true"
-        run: |
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
-      - if: steps.filter.outputs.changed == 'true'
-        name: Run e2e tests
-        working-directory: tasks/e2e
-        run: pnpm run test
+        name: Build packages
+        run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
+      - parallel:
+          - if: steps.filter.outputs.changed == 'true'
+            name: Run tests
+            env:
+              RUN_RAW_RANGE_TESTS: "true"
+              RUN_RAW_TOKENS_TESTS: "true"
+            run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
+          - if: steps.filter.outputs.changed == 'true'
+            name: Run e2e tests
+            working-directory: tasks/e2e
+            run: pnpm run test
       - if: steps.filter.outputs.changed == 'true'
         run: |
           git diff --exit-code # Must commit everything
@@ -389,19 +399,22 @@ jobs:
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: pnpm install --frozen-lockfile --ignore-scripts
       - if: steps.filter.outputs.changed == 'true'
-        name: Run tests
+        name: Build packages
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        env:
-          RUN_RAW_RANGE_TESTS: "true"
-        run: |
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
-      - if: steps.filter.outputs.changed == 'true'
-        name: Run e2e tests
-        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm run test
+        run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
+      - parallel:
+          - if: steps.filter.outputs.changed == 'true'
+            name: Run tests
+            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+            env:
+              RUN_RAW_RANGE_TESTS: "true"
+            run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
+          - if: steps.filter.outputs.changed == 'true'
+            name: Run e2e tests
+            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
+            run: |
+              pnpm install --frozen-lockfile
+              pnpm run test
       - if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: |
@@ -522,6 +535,14 @@ jobs:
           cache: |
             rust
             pnpm
+      - name: JavaScript lint
+        id: javascript-lint
+        run: |
+          pnpm --filter oxlint-app build-js
+          pnpm --filter oxfmt-app build-js
+          pnpm --filter oxc-codegen build
+          node --run lint
+        background: true
       - run: rustup component add clippy
       - run: cargo lint
       # Catch lints which only fire with `debug_assertions` off (i.e. release mode),
@@ -532,10 +553,7 @@ jobs:
       # with warnings denied.
       - if: ${{ github.ref_name == 'main' }}
         run: cargo clippy --all-features --profile dev-no-debug-assertions
-      - run: pnpm --filter oxlint-app build-js
-      - run: pnpm --filter oxfmt-app build-js
-      - run: pnpm --filter oxc-codegen build
-      - run: node --run lint
+      - wait: javascript-lint
 
   doc:
     name: Doc
@@ -567,13 +585,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - parallel:
-          - uses: $/.github/actions/clone-submodules
-            if: steps.filter.outputs.changed == 'true'
-            with:
-              node-compat-table: false
-          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-            if: steps.filter.outputs.changed == 'true'
+      - uses: $/.github/actions/clone-submodules
+        id: conformance-fixtures
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          node-compat-table: false
+        background: true
+
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
 
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
@@ -587,6 +607,8 @@ jobs:
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just
+
+      - wait: conformance-fixtures
 
       - name: Check Conformance
         if: steps.filter.outputs.changed == 'true'
@@ -631,16 +653,18 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - parallel:
-          - uses: $/.github/actions/clone-submodules
-            if: steps.filter.outputs.changed == 'true'
-            with:
-              node-compat-table: false
-          - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-            if: steps.filter.outputs.changed == 'true'
-            with:
-              path: /home/runner/.rustup
-              cache: rust
+      - uses: $/.github/actions/clone-submodules
+        id: lexer-fixtures
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          node-compat-table: false
+        background: true
+
+      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          path: /home/runner/.rustup
+          cache: rust
 
       - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         if: steps.filter.outputs.changed == 'true'
@@ -660,6 +684,8 @@ jobs:
         # No need to run on scalar fallback - already covered by "Test Linux" job
         if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
         run: just test-lexer-simd
+
+      - wait: lexer-fixtures
 
       - name: Conformance
         # Run on both SIMD and scalar fallback - neither is run anywhere else.
@@ -737,13 +763,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - parallel:
-          - uses: $/.github/actions/clone-submodules
-            if: steps.filter.outputs.changed == 'true'
-            with:
-              node-compat-table: false
-          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-            if: steps.filter.outputs.changed == 'true'
+      - uses: $/.github/actions/clone-submodules
+        id: codegen-fixtures
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          node-compat-table: false
+        background: true
+
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
 
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
@@ -752,6 +780,8 @@ jobs:
           cache: |
             rust
             pnpm
+
+      - wait: codegen-fixtures
 
       - name: Run codegen tests
         if: steps.filter.outputs.changed == 'true'
