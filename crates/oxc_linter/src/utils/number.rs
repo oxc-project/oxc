@@ -1,5 +1,6 @@
 use cow_utils::CowUtils;
 use oxc_ast::ast::NumericLiteral;
+use oxc_syntax::number::NumberBase;
 use std::borrow::Cow;
 
 const MAX_OBVIOUSLY_SAFE_SIGNIFICANT_DIGITS: usize = 15;
@@ -304,6 +305,25 @@ pub fn loses_precision(node: &'_ NumericLiteral) -> bool {
     } else {
         not_base_ten_loses_precision(node)
     }
+}
+
+/// Unlike `loses_precision`, integer fixes must preserve every digit, including trailing zeros.
+pub fn integer_literal_loses_precision(node: &NumericLiteral) -> bool {
+    let raw = node.raw.as_ref().unwrap().as_str();
+    if node.base != NumberBase::Decimal || raw.contains(['e', 'E']) {
+        return loses_precision(node);
+    }
+
+    // Decimal integer literals in the safe integer range are always exact.
+    if node.value <= 9_007_199_254_740_991.0 {
+        return false;
+    }
+
+    let stored = format!("{:.0}", node.value);
+    !raw.bytes()
+        .filter(|&byte| byte != b'_')
+        .skip_while(|&byte| byte == b'0')
+        .eq(stored.bytes().skip_while(|&byte| byte == b'0'))
 }
 
 /// `flt_str_to_exp` - used in `to_precision`

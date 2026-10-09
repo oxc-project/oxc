@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::number::NumberBase;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::loses_precision};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::integer_literal_loses_precision};
 
 fn prefer_bigint_literals_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer bigint literals over `BigInt(...)`.")
@@ -104,7 +104,7 @@ impl Rule for PreferBigintLiterals {
                     |raw| raw.as_str(),
                 );
 
-                if loses_precision(numeric_literal) {
+                if integer_literal_loses_precision(numeric_literal) {
                     ctx.diagnostic(
                         prefer_bigint_literals_diagnostic(arg.span())
                             .with_note("Integer literal loses precision"),
@@ -244,6 +244,9 @@ fn test() {
         r"BigInt(9_007_199_254_740_993)",
         r"BigInt(0x20_00_00_00_00_00_01)",
         r"BigInt(0777777777777777777)",
+        r"BigInt(1000000000000000100)",
+        r"BigInt(100000000000000000000000)",
+        r"BigInt(100_000_000_000_000_010_000)",
         r"BigInt(9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999)",
     ];
 
@@ -256,6 +259,12 @@ fn test() {
         (r"BigInt(0O777_777)", "0O777_777n"),
         (r"BigInt(0777)", "0o777n"),
         (r"BigInt(0888)", "888n"),
+        (r"BigInt(1000000000000000100)", r"BigInt(1000000000000000100)"),
+        (r"BigInt(100000000000000000000000)", r"BigInt(100000000000000000000000)"),
+        (r"BigInt(100_000_000_000_000_010_000)", r"BigInt(100_000_000_000_000_010_000)"),
+        (r"BigInt(1000000000000000000)", "1000000000000000000n"),
+        (r"BigInt(9007199254740992)", "9007199254740992n"),
+        (r"BigInt(9_007_199_254_740_992)", "9_007_199_254_740_992n"),
         (r#"BigInt("0777")"#, "777n"),
         (r#"BigInt("0888")"#, "888n"),
         (r#"BigInt("0b1010")"#, "0b1010n"),
