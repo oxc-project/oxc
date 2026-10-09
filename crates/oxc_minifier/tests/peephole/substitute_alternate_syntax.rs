@@ -1150,3 +1150,29 @@ fn test_substitute_yield_expression() {
     test("function* a() { yield* fn(); }", "function* a() { yield* fn(); }");
     test_same("function* a(undefined) { yield undefined; }");
 }
+
+#[test]
+fn test_compress_object_destructuring() {
+    test(
+        "const { foo } = { foo: 'foo' }; console.log(foo)",
+        "const foo = 'foo'; console.log('foo')",
+    );
+    test("let { foo: bar } = { foo: value() }", "let bar = value()");
+    test("var { foo } = { foo }", "var foo = foo");
+    test("const { 'foo': bar } = { foo: 1 }", "const bar = 1");
+    test("const { foo: { bar } } = { foo: { bar: 1 } }", "const bar = 1");
+    test("const { foo: [bar] } = { foo: value() }", "const [bar] = value()");
+    test_same("const { foo = fallback() } = { foo: value() }");
+    test_same("const { foo, ...rest } = { foo: value() }");
+    test_same("const { foo } = { ...value() }");
+    test_same("const { foo } = { get foo() { return this } }");
+    test_same("const { foo } = { foo() { return super.foo } }");
+    test_same("const { foo } = { bar: value() }");
+    test_same("const { [key()]: foo } = { foo: value() }");
+    test_same("const { foo } = { [key()]: value() }");
+    test_same("const { foo } = { foo: first(), bar: second() }");
+    test_same("const { __proto__: foo } = { __proto__: value() }");
+    test_same("const { foo: bar } = { foo: function() {} }");
+    test_same("const { foo: bar } = { foo: () => 1 }");
+    test_same("const { foo: bar } = { foo: class {} }");
+}

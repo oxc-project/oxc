@@ -1062,6 +1062,7 @@ impl<'a> PeepholeOptimizations {
         kind: VariableDeclarationKind,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        Self::compress_object_destructuring(decl, ctx);
         // Destructuring Pattern has error throwing side effect.
         if matches!(
             kind,
@@ -1078,6 +1079,37 @@ impl<'a> PeepholeOptimizations {
         {
             ctx.drop_expression(&old);
         }
+    }
+
+    /// `const { foo: bar } = { foo: value }` -> `const bar = value`.
+    fn compress_object_destructuring(decl: &mut VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
+        let BindingPattern::ObjectPattern(pattern) = &mut decl.id else { return };
+        let Some(Expression::ObjectExpression(object)) = &mut decl.init else { return };
+        if pattern.rest.is_some() || pattern.properties.len() != 1 || object.properties.len() != 1 {
+            return;
+        }
+        let binding = &mut pattern.properties[0];
+        let ObjectPropertyKind::ObjectProperty(property) = &mut object.properties[0] else {
+            return;
+        };
+        // Only own data properties with static keys are safe. Defaults require
+        // a separate undefined check, and methods retain their home object.
+        if binding.computed
+            || property.computed
+            || property.method
+            || property.kind != PropertyKind::Init
+            || matches!(binding.value, BindingPattern::AssignmentPattern(_))
+            || property.key.is_specific_static_name("__proto__")
+            || binding.key.static_name().is_none()
+            || binding.key.static_name() != property.key.static_name()
+            // Moving an anonymous function/class can change its inferred name.
+            || property.value.is_anonymous_function_definition()
+        {
+            return;
+        }
+        let value = property.value.take_in(ctx);
+        decl.id = binding.value.take_in(ctx);
+        ctx.replace_expression(decl.init.as_mut().unwrap(), value);
     }
 
     /// Fold `Boolean`, ///
