@@ -1,6 +1,7 @@
 // JSX.
 // Port of `gen.rs` JSX section.
 
+import { startNodeComments, finishNodeComments, printInsideComments } from "./comments.ts";
 import { CAT_OTHER } from "./categories.ts";
 import {
   write,
@@ -26,6 +27,7 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * a space is required before the slash.
  */
 export function printJSXElement(node: ESTree.JSXElement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { openingElement } = node;
 
   writeWithMapNoLast(state, "<", openingElement.start, openingElement.end, openingElement);
@@ -47,9 +49,11 @@ export function printJSXElement(node: ESTree.JSXElement, state: State): void {
     }
   }
 
+  if (COMMENTS) printInsideComments(openingElement, state);
   const { closingElement } = node;
   if (closingElement == null) {
     write(state, " />", CAT_OTHER);
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -63,7 +67,10 @@ export function printJSXElement(node: ESTree.JSXElement, state: State): void {
 
   writeWithMapNoLast(state, "</", closingElement.start, closingElement.end, closingElement);
   printJSXElementName(closingElement.name, state);
+  if (COMMENTS) printInsideComments(closingElement, state);
   write(state, ">", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -73,9 +80,14 @@ function printJSXElementName(
   node: ESTree.JSXElementName | ESTree.ThisExpression | UnknownNode,
   state: State,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   switch (node.type) {
     case "JSXIdentifier":
-      writeWithMapNamedJSXNoLast(state, node.name, node.start, node.end, node);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(node, state);
+        writeWithMapNamedJSXNoLast(state, node.name, node.start, node.end, node);
+        if (nameCommentOwner) finishNodeComments(node, state);
+      }
       break;
     case "JSXMemberExpression":
       printJSXElementName(node.object, state);
@@ -83,15 +95,29 @@ function printJSXElementName(
       printJSXElementName(node.property, state);
       break;
     case "JSXNamespacedName":
-      writeWithMapNamedJSXNoLast(
-        state,
-        node.namespace.name,
-        node.namespace.start,
-        node.namespace.end,
-        node.namespace,
-      );
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(node.namespace, state);
+        writeWithMapNamedJSXNoLast(
+          state,
+          node.namespace.name,
+          node.namespace.start,
+          node.namespace.end,
+          node.namespace,
+        );
+        if (nameCommentOwner) finishNodeComments(node.namespace, state);
+      }
       writeNoLast(state, ":");
-      writeWithMapNamedJSXNoLast(state, node.name.name, node.name.start, node.name.end, node.name);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(node.name, state);
+        writeWithMapNamedJSXNoLast(
+          state,
+          node.name.name,
+          node.name.start,
+          node.name.end,
+          node.name,
+        );
+        if (nameCommentOwner) finishNodeComments(node.name, state);
+      }
       break;
     case "ThisExpression":
       writeWithMapNoLast(state, "this", node.start, node.end, node);
@@ -99,29 +125,44 @@ function printJSXElementName(
     default:
       throw new Error(`Unknown JSX name type: ${node.type}`);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print one attribute, with its value where it has one - a bare attribute is `true`.
  */
 function printJSXAttribute(node: ESTree.JSXAttribute, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   // Attribute names never update `last`.
   // Everything which can follow one - `=`, the next attribute's leading space, `>`, ` />` -
   // is punctuation needing no separation from what precedes it, and nothing between here
   // and the next real write reads `last`.
   const { name } = node;
   if (name.type === "JSXNamespacedName") {
-    writeWithMapNamedJSXNoLast(
-      state,
-      name.namespace.name,
-      name.namespace.start,
-      name.namespace.end,
-      name.namespace,
-    );
+    {
+      const nameCommentOwner = COMMENTS && startNodeComments(name.namespace, state);
+      writeWithMapNamedJSXNoLast(
+        state,
+        name.namespace.name,
+        name.namespace.start,
+        name.namespace.end,
+        name.namespace,
+      );
+      if (nameCommentOwner) finishNodeComments(name.namespace, state);
+    }
     writeNoLast(state, ":");
-    writeWithMapNamedJSXNoLast(state, name.name.name, name.name.start, name.name.end, name.name);
+    {
+      const nameCommentOwner = COMMENTS && startNodeComments(name.name, state);
+      writeWithMapNamedJSXNoLast(state, name.name.name, name.name.start, name.name.end, name.name);
+      if (nameCommentOwner) finishNodeComments(name.name, state);
+    }
   } else {
-    writeWithMapNamedJSXNoLast(state, name.name, name.start, name.end, name);
+    {
+      const nameCommentOwner = COMMENTS && startNodeComments(name, state);
+      writeWithMapNamedJSXNoLast(state, name.name, name.start, name.end, name);
+      if (nameCommentOwner) finishNodeComments(name, state);
+    }
   }
 
   const { value } = node;
@@ -129,6 +170,8 @@ function printJSXAttribute(node: ESTree.JSXAttribute, state: State): void {
     writeNoLast(state, "=");
     printJSXAttributeValue(value, state);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -138,6 +181,7 @@ function printJSXAttribute(node: ESTree.JSXAttribute, state: State): void {
  * have no escape sequences - the quote is picked to suit the contents instead.
  */
 function printJSXAttributeValue(node: ESTree.JSXAttributeValue | UnknownNode, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   switch (node.type) {
     case "Literal": {
       // JSX strings have no escape sequences and HTML entities are not decoded by parser at present.
@@ -169,35 +213,49 @@ function printJSXAttributeValue(node: ESTree.JSXAttributeValue | UnknownNode, st
     default:
       throw new Error(`Unknown JSX attribute value type: ${node.type}`);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print a `{ … }` container, which may hold nothing but a comment.
  */
 function printJSXExpressionContainer(node: ESTree.JSXExpressionContainer, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   write(state, "{", CAT_OTHER);
 
   if (node.expression.type !== "JSXEmptyExpression") {
-    printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
+    printExpression(node.expression, state, PREC_COMMA, CTX_NONE);
   }
 
   // `}` needs no category. What follows it in either caller context (attribute value, child)
   // is punctuation or JSX text, none of which needs separating from it, and nothing reads
   // `last` before the next real write.
+  if (COMMENTS) {
+    const emptyOwner = startNodeComments(node.expression, state);
+    printInsideComments(node.expression, state);
+    printInsideComments(node, state);
+    if (emptyOwner) finishNodeComments(node.expression, state);
+  }
   writeNoLast(state, "}");
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print a `<>...</>` fragment.
  */
 export function printJSXFragment(node: ESTree.JSXFragment, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   writeWithMapNoLast(
     state,
-    "<>",
+    "<",
     node.openingFragment.start,
     node.openingFragment.end,
     node.openingFragment,
   );
+  if (COMMENTS) printInsideComments(node.openingFragment, state);
+  writeNoLast(state, ">");
 
   const { children } = node;
   const { length } = children;
@@ -205,14 +263,28 @@ export function printJSXFragment(node: ESTree.JSXFragment, state: State): void {
     printJSXChild(children[i], state);
   }
 
-  writeWithMap(
-    state,
-    "</>",
-    CAT_OTHER,
-    node.closingFragment.start,
-    node.closingFragment.end,
-    node.closingFragment,
-  );
+  if (COMMENTS) {
+    writeWithMapNoLast(
+      state,
+      "</",
+      node.closingFragment.start,
+      node.closingFragment.end,
+      node.closingFragment,
+    );
+    printInsideComments(node.closingFragment, state);
+    write(state, ">", CAT_OTHER);
+  } else {
+    writeWithMap(
+      state,
+      "</>",
+      CAT_OTHER,
+      node.closingFragment.start,
+      node.closingFragment.end,
+      node.closingFragment,
+    );
+  }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -222,6 +294,7 @@ export function printJSXFragment(node: ESTree.JSXFragment, state: State): void {
  * and any entities in it must survive untouched.
  */
 function printJSXChild(node: ESTree.JSXChild | UnknownNode, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   switch (node.type) {
     case "JSXText":
       writeWithMapNoLast(
@@ -244,9 +317,17 @@ function printJSXChild(node: ESTree.JSXChild | UnknownNode, state: State): void 
     case "JSXSpreadChild":
       write(state, "{...", CAT_OTHER);
       printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
+      if (COMMENTS) {
+        const emptyOwner = startNodeComments(node.expression, state);
+        printInsideComments(node.expression, state);
+        printInsideComments(node, state);
+        if (emptyOwner) finishNodeComments(node.expression, state);
+      }
       writeNoLast(state, "}");
       break;
     default:
       throw new Error(`Unknown JSX child type: ${node.type}`);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }

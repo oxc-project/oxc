@@ -1,5 +1,6 @@
 // Literals.
 
+import { startNodeComments, finishNodeComments } from "./comments.ts";
 import { typeAssertIs } from "../asserts.ts";
 import {
   CAT_CLOSE_BRACKET,
@@ -44,6 +45,7 @@ export function printLiteral(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   // Ordered for the hot path - `value` is a `RegExp` / `null` for regexes and a `BigInt` / `null` for bigints,
   // so a string or number `value` identifies a plain string/numeric literal without touching `regex` / `bigint` first.
   const { value } = node;
@@ -74,6 +76,8 @@ export function printLiteral(
       }
       break;
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -91,6 +95,7 @@ function printNumericLiteral(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { value } = node;
   if ((ctx & CTX_TYPESCRIPT) !== 0 && node.raw != null) {
     // A number's raw text can only end 3 ways: a digit, a hex letter, or a trailing `.` as in `1.`.
@@ -107,6 +112,7 @@ function printNumericLiteral(
       node.end,
       node,
     );
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -145,6 +151,8 @@ function printNumericLiteral(
     writeNoLast(state, "-");
     printNonNegativeFloat(state, -value, node.start, node.end, node);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -154,6 +162,7 @@ function printNumericLiteral(
  * immediately after it would open a comment.
  */
 function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   // Neither of the separating spaces below can be needed in pretty mode, so the check is not made.
   // Both guard against a regex being written immediately after something, and nothing can be
   // immediately before a regex here: every operator which could put one after a `/` or a `<` is
@@ -185,6 +194,8 @@ function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
     writeNoLast(state, "/");
     writeIdent(state, flags);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -195,12 +206,14 @@ function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
  * the same way a unary minus is, so `-(-1n)` prints as `- -1n`, not `--1n`.
  */
 function printBigIntLiteral(node: ESTree.BigIntLiteral, state: State, precedence: number): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const value = node.bigint;
   if (value.startsWith("-")) {
     if (precedence >= PREC_PREFIX) {
       writeWithMapNoLast(state, "(", node.start, node.end, node);
       writeNoLast(state, value);
       write(state, "n)", CAT_CLOSE_BRACKET);
+      if (commentOwner) finishNodeComments(node, state);
       return;
     }
 
@@ -211,4 +224,6 @@ function printBigIntLiteral(node: ESTree.BigIntLiteral, state: State, precedence
 
   writeWithMapNoLast(state, value, node.start, node.end, node);
   writeIdent(state, "n");
+
+  if (commentOwner) finishNodeComments(node, state);
 }

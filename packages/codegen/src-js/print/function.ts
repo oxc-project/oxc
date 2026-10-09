@@ -1,5 +1,13 @@
 // Functions.
 
+import {
+  startNodeComments,
+  finishNodeComments,
+  hasInsideComments,
+  printInsideComments,
+  printContainerComments,
+  printDeferredLeadingComments,
+} from "./comments.ts";
 import { typeAssertIs } from "../asserts.ts";
 import { printBindingPattern } from "./binding_pattern.ts";
 import { CAT_CLOSE_BRACKET, CAT_IDENT, CAT_OTHER, CAT_START_OF_STMT } from "./categories.ts";
@@ -71,6 +79,7 @@ const ANONYMOUS_FUNCTION_PREFIXES = TS
  * since it would otherwise be read as a declaration.
  */
 export function printFunction(node: ESTree.Function, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   let wrap = false;
   if (node.type === "FunctionExpression") {
     debugAssertLastFresh(state);
@@ -79,6 +88,8 @@ export function printFunction(node: ESTree.Function, state: State): void {
   }
 
   if (wrap) write(state, "(", CAT_OTHER);
+
+  if (COMMENTS) printDeferredLeadingComments(node, state);
 
   printSpaceBeforeIdentifier(state);
 
@@ -101,7 +112,9 @@ export function printFunction(node: ESTree.Function, state: State): void {
   const { id } = node;
   if (id != null) {
     writeWithMapNoLast(state, NAMED_FUNCTION_PREFIXES[prefixIndex], node.start, node.end, node);
+    const nameCommentOwner = COMMENTS && startNodeComments(id, state);
     writeWithMapNamed(state, id.name, id.start, id.end, id);
+    if (nameCommentOwner) finishNodeComments(id, state);
   } else {
     writeWithMap(
       state,
@@ -116,7 +129,7 @@ export function printFunction(node: ESTree.Function, state: State): void {
 
   if (TS) printTypeParameters(node.typeParameters, state);
 
-  printParenParams(node.params, state);
+  printParenParams(node.params, state, COMMENTS ? node : undefined);
 
   if (TS && node.returnType != null) printTypeAnnotation(node.returnType, state);
 
@@ -128,21 +141,34 @@ export function printFunction(node: ESTree.Function, state: State): void {
   }
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print a parameter list in parentheses.
  */
-export function printParenParams(params: ESTree.ParamPattern[], state: State): void {
+export function printParenParams(
+  params: ESTree.ParamPattern[],
+  state: State,
+  owner?: ESTree.Node,
+): void {
   // `(params)`, as a single write when there are none
-  if (params.length === 0) {
+  if (params.length === 0 && (!COMMENTS || !hasInsideComments(owner, state, "FormalParameters"))) {
     write(state, "()", CAT_CLOSE_BRACKET);
     return;
   }
 
+  if (COMMENTS && owner != null) {
+    printContainerComments(owner, state, "FormalParameters", "leading");
+  }
   write(state, "(", CAT_OTHER);
   printParams(params, state);
+  if (COMMENTS) printInsideComments(owner, state, "FormalParameters");
   write(state, ")", CAT_CLOSE_BRACKET);
+  if (COMMENTS && owner != null) {
+    printContainerComments(owner, state, "FormalParameters", "trailing");
+  }
 }
 
 /**
@@ -157,6 +183,9 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
     if (i > 0) write(state, ", ", CAT_OTHER);
 
     const param = params[i];
+    const commentOwner = COMMENTS && startNodeComments(param, state);
+    const container = param.type === "RestElement" ? "FormalParameterRest" : "FormalParameter";
+    if (COMMENTS) printContainerComments(param, state, container, "leading");
 
     // Oxc stores TypeScript's special `this` parameter separately from formal parameters
     // and prints it without a source mapping.
@@ -195,6 +224,11 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
       typeAssertIs<Exclude<typeof param, ESTree.TSParameterProperty>>(param);
       printBindingPattern(param, state);
     }
+    if (COMMENTS) {
+      printInsideComments(param, state, container);
+      printContainerComments(param, state, container, "trailing");
+    }
+    if (commentOwner) finishNodeComments(param, state);
   }
 }
 
@@ -205,21 +239,29 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
  * rather than through the block statement printer.
  */
 export function printFunctionBody(body: ESTree.FunctionBody, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(body, state);
   // `body` is a BlockStatement holding directives + statements.
   const statements = body.body;
-  if (statements.length === 0) {
+  if (statements.length === 0 && (!COMMENTS || !hasInsideComments(body, state))) {
     writeWithMapNoLast(state, "{", body.start, body.end, body);
     writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
+    if (commentOwner) finishNodeComments(body, state);
     return;
   }
 
   writeWithMap(state, "{\n", CAT_OTHER, body.start, body.end, body);
   state.indentLevel++;
   printDirectivesAndStatements(statements, state);
+  if (COMMENTS) {
+    printInsideComments(body, state);
+    if (state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
+  }
   state.indentLevel--;
   printIndent(state);
 
   writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
+
+  if (commentOwner) finishNodeComments(body, state);
 }
 
 /**
@@ -227,14 +269,26 @@ export function printFunctionBody(body: ESTree.FunctionBody, state: State): void
  *
  * Oxc keeps the parentheses even around a lone parameter, so there is no single-parameter form.
  */
-export function printParenParamsArrow(params: ESTree.ParamPattern[], state: State): void {
+export function printParenParamsArrow(
+  params: ESTree.ParamPattern[],
+  state: State,
+  owner?: ESTree.Node,
+): void {
   // `(params) => `, as a single write when there are none
-  if (params.length === 0) {
+  if (params.length === 0 && (!COMMENTS || !hasInsideComments(owner, state, "FormalParameters"))) {
     write(state, "() => ", CAT_OTHER);
     return;
   }
 
+  if (COMMENTS && owner != null) {
+    printContainerComments(owner, state, "FormalParameters", "leading");
+  }
   write(state, "(", CAT_OTHER);
   printParams(params, state);
-  write(state, ") => ", CAT_OTHER);
+  if (COMMENTS) printInsideComments(owner, state, "FormalParameters");
+  write(state, ")", CAT_CLOSE_BRACKET);
+  if (COMMENTS && owner != null) {
+    printContainerComments(owner, state, "FormalParameters", "trailing");
+  }
+  write(state, " => ", CAT_OTHER);
 }

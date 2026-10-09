@@ -677,3 +677,16 @@ fn unapplied_annotations_do_not_become_applied_when_printed() {
         assert!(!printed.contains("__NO_SIDE_EFFECTS__"), "{printed}");
     }
 }
+
+#[test]
+fn comments_preserve_expression_start_markers() {
+    for source in [
+        "const f = () => /* object */ ({ answer: 42 });",
+        "/* expression */ ({ answer: 42 });",
+        "export default /* function */ (function () {});",
+    ] {
+        for minify in [false, true] {
+            check(source, SourceType::mjs(), minify);
+        }
+    }
+}

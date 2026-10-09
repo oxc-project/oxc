@@ -67,7 +67,11 @@ type MappedName = keyof typeof REWRITES;
  * @param debug - `true` if is a debug build
  * @returns The plugin
  */
-export default function unmapWritesPlugin(sourcemaps: boolean, debug: boolean): Plugin {
+export default function unmapWritesPlugin(
+  sourcemaps: boolean,
+  debug: boolean,
+  comments = false,
+): Plugin {
   return {
     name: "unmap-writes",
     transform: {
@@ -97,6 +101,8 @@ export default function unmapWritesPlugin(sourcemaps: boolean, debug: boolean): 
             if (callee.type !== "Identifier") return;
 
             const name = callee.name as MappedName;
+            // String literals also print their ownership buckets in comments builds.
+            if (comments && name === "printString") return;
             const rewrite = REWRITES[name];
             if (rewrite === undefined) return;
 
@@ -128,6 +134,7 @@ export default function unmapWritesPlugin(sourcemaps: boolean, debug: boolean): 
             if (id === null) return;
 
             const name = id.name as MappedName;
+            if (comments && name === "printString") return;
             const rewrite = REWRITES[name];
             if (rewrite === undefined) return;
 

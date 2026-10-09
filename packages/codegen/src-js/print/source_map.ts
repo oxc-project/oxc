@@ -106,7 +106,11 @@ export function generateSourceMap(state: State, output: string, options: Options
 
   for (let index = 0, positionIndex = 0; index < mappingCount; index++, positionIndex += 2) {
     const offset = mapPositions[positionIndex];
-    while (offset >= nextLineStart) {
+    // Trimming a separator after a mapping was recorded does not move that
+    // native mapping to the next line. Its original column is still `offset`.
+    const lineOffset =
+      offset - (COMMENTS ? (state.commentMapCorrections?.get(positionIndex) ?? 0) : 0);
+    while (lineOffset >= nextLineStart) {
       lineStart = nextLineStart;
       nextLineStart = findNextLineStart(output, lineStart, useOutputLineFeedFastPath);
       previousGeneratedColumn = 0;

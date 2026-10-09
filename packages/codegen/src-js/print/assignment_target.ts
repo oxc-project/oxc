@@ -1,5 +1,6 @@
 // Assignment targets.
 
+import { startNodeComments, finishNodeComments, printInsideComments } from "./comments.ts";
 import { typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
 import { CAT_CLOSE_BRACKET, CAT_OTHER } from "./categories.ts";
@@ -19,12 +20,17 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * with their own rules - which is why they are printed here rather than by the expression printer.
  */
 export function printAssignmentTarget(node: ESTree.AssignmentTarget, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   switch (node.type) {
     // A simple target is only ever a name, a member access, or (in TS) one of the assertion expressions below.
     // For speed, the two common ones are printed here instead of through the expression printer's own dispatch.
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, node.name, node.start, node.end, node);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(node, state);
+        writeWithMapNamed(state, node.name, node.start, node.end, node);
+        if (nameCommentOwner) finishNodeComments(node, state);
+      }
       break;
     case "MemberExpression":
       printMemberExpression(node, state, CTX_NONE);
@@ -48,12 +54,15 @@ export function printAssignmentTarget(node: ESTree.AssignmentTarget, state: Stat
     default:
       printExpression(node, state, PREC_COMMA, CTX_NONE);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print an object destructuring target, as in `({ a, b: c } = obj)`.
  */
 function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   writeWithMap(state, "{", CAT_OTHER, node.start, node.end, node);
 
   const { properties } = node;
@@ -70,13 +79,18 @@ function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state:
     }
   }
 
+  if (COMMENTS) printInsideComments(node, state);
+
   write(state, "}", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print one property of an object destructuring target, in shorthand where the AST says so.
  */
 function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   // Shorthand from the AST flag (assignment targets are not re-derived).
   if (node.shorthand) {
     // `{ a }` or `{ a = 1 }`
@@ -84,12 +98,20 @@ function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, st
     if (value.type === "AssignmentPattern") {
       typeAssertIs<ESTree.IdentifierReference>(value.left);
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, value.left.name, value.left.start, value.left.end, value.left);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(value.left, state);
+        writeWithMapNamed(state, value.left.name, value.left.start, value.left.end, value.left);
+        if (nameCommentOwner) finishNodeComments(value.left, state);
+      }
       write(state, " = ", CAT_OTHER);
       printExpression(value.right, state, PREC_COMMA, CTX_NONE);
     } else {
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, value.name, value.start, value.end, value);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(value, state);
+        writeWithMapNamed(state, value.name, value.start, value.end, value);
+        if (nameCommentOwner) finishNodeComments(value, state);
+      }
     }
   } else {
     const { key } = node;
@@ -97,7 +119,9 @@ function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, st
     if (node.computed) {
       write(state, "[", CAT_OTHER);
       typeAssertIs<ESTree.Expression>(key);
+      const keyOwner = COMMENTS && startNodeComments(key, state, false);
       printExpression(key, state, PREC_COMMA, CTX_NONE);
+      if (keyOwner) finishNodeComments(key, state);
       write(state, "]", CAT_CLOSE_BRACKET);
     } else {
       printPropertyKey(key, state);
@@ -106,6 +130,8 @@ function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, st
     write(state, ": ", CAT_OTHER);
     printAssignmentTargetMaybeDefault(node.value, state);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -115,6 +141,7 @@ function printAssignmentTargetMaybeDefault(
   node: ESTree.AssignmentTargetMaybeDefault,
   state: State,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   if (node.type === "AssignmentPattern") {
     printAssignmentTarget(node.left, state);
     write(state, " = ", CAT_OTHER);
@@ -122,12 +149,15 @@ function printAssignmentTargetMaybeDefault(
   } else {
     printAssignmentTarget(node, state);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print an array destructuring target, holes and rest element included.
  */
 function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { elements } = node;
   let { length } = elements;
 
@@ -160,5 +190,9 @@ function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: S
     printAssignmentTarget(rest.argument, state);
   }
 
+  if (COMMENTS) printInsideComments(node, state);
+
   write(state, "]", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }

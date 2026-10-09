@@ -1,6 +1,6 @@
 // Build configuration.
 //
-// 5 builds out of one source tree - the entry point, and the printer over the 2 build-time feature flags.
+// 9 builds out of one source tree - the entry point, and the printer over the 3 build-time feature flags.
 // The plugin order matters: `strip_ts` is a text transform, so it has to run before the plugins which parse.
 
 import { defineConfig } from "tsdown";
@@ -41,7 +41,7 @@ const commonConfig = defineConfig({
   hash: false,
   fixedExtension: false,
   // `scripts/build.ts` deletes `dist` before TSDown runs.
-  // This allows generating all 5 builds into the same directory.
+  // This allows generating all 9 builds into the same directory.
   clean: false,
   plugins: [...assertPlugins],
   inputOptions: {
@@ -61,10 +61,11 @@ const minifyConfig = DEBUG
     }
   : true;
 
-// One printer build. The printer is built 4 times from `src-js/print/index.ts`,
-// over 2 build-time feature flags (see `src-js/globals.d.ts`):
+// One printer build. The printer is built 8 times from `src-js/print/index.ts`,
+// over 3 build-time feature flags (see `src-js/globals.d.ts`):
 //
 // - `SOURCEMAPS`: Source map support costs a little speed even when unused.
+// - `COMMENTS`: Attached comment printing. Disabled builds remove all comment handling.
 // - `TS`: TypeScript syntax support. JS-only builds lose all the TS field checks (via minifier dead-code removal)
 //   and the TS switch arms + printer functions (via `strip_ts.ts`).
 //
@@ -76,7 +77,10 @@ const minifyConfig = DEBUG
 //
 // In sourcemap release builds the same plugin removes only the trailing `node` argument,
 // which nothing but the debug asserts those builds have lost ever read.
-const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; ts: boolean }) => ({
+const printerConfig = (
+  name: string,
+  { sourcemaps, ts, comments = false }: { sourcemaps: boolean; ts: boolean; comments?: boolean },
+) => ({
   ...commonConfig,
   minify: minifyConfig,
   // Only the entry point's types are published
@@ -86,13 +90,14 @@ const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; 
     ...definedGlobals,
     SOURCEMAPS: sourcemaps ? "true" : "false",
     TS: ts ? "true" : "false",
+    COMMENTS: comments ? "true" : "false",
   },
   plugins: [
     // `strip_ts` is a text transform, so must run before the AST-based plugins.
     // `const_functions` runs last, so the plugins before it still see function declarations.
     ...(ts ? [] : [stripTsPlugin()]),
     ...assertPlugins,
-    unmapWritesPlugin(sourcemaps, DEBUG),
+    unmapWritesPlugin(sourcemaps, DEBUG, comments),
     constFunctionsPlugin,
   ],
 });
@@ -107,7 +112,16 @@ export default defineConfig([
     define: definedGlobals,
     deps: {
       // The printer builds are loaded at runtime, so must not be bundled in
-      neverBundle: ["./print_js.js", "./print_js_maps.js", "./print_ts.js", "./print_ts_maps.js"],
+      neverBundle: [
+        "./print_js.js",
+        "./print_js_maps.js",
+        "./print_ts.js",
+        "./print_ts_maps.js",
+        "./print_js_comments.js",
+        "./print_ts_comments.js",
+        "./print_js_maps_comments.js",
+        "./print_ts_maps_comments.js",
+      ],
     },
   },
 
@@ -116,4 +130,8 @@ export default defineConfig([
   printerConfig("print_js_maps", { sourcemaps: true, ts: false }),
   printerConfig("print_ts", { sourcemaps: false, ts: true }),
   printerConfig("print_ts_maps", { sourcemaps: true, ts: true }),
+  printerConfig("print_js_comments", { sourcemaps: false, ts: false, comments: true }),
+  printerConfig("print_js_maps_comments", { sourcemaps: true, ts: false, comments: true }),
+  printerConfig("print_ts_comments", { sourcemaps: false, ts: true, comments: true }),
+  printerConfig("print_ts_maps_comments", { sourcemaps: true, ts: true, comments: true }),
 ]);

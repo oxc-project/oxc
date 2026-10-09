@@ -1,5 +1,12 @@
 // Binary/logical expressions (port of `binary_expr_visitor.rs`).
 
+import {
+  startNodeComments,
+  finishNodeComments,
+  hasAttachedComments,
+  printDeferredLeadingComments,
+  printTrailingCommentsInsideParens,
+} from "./comments.ts";
 import { debugAssert, typeAssertIs } from "../asserts.ts";
 import { CAT_CLOSE_BRACKET, CAT_OTHER } from "./categories.ts";
 import { write } from "./write.ts";
@@ -76,6 +83,9 @@ export function printBinaryish(
 
   // At the top of each iteration, `left` is `v.e.left`, and `leftType` is its `type`
   for (;;) {
+    if (COMMENTS && v.e !== node) startNodeComments(v.e, state);
+    const preserveLeftParens =
+      COMMENTS && leftType === "ParenthesizedExpression" && hasAttachedComments(state);
     while (leftType === "ParenthesizedExpression") {
       left = (left as ParenthesizedExpression).expression;
       leftType = left.type;
@@ -84,7 +94,7 @@ export function printBinaryish(
     binCheckAndPrepare(v, state, left, leftType);
 
     let nextLeft;
-    if (leftType === "BinaryExpression") {
+    if (!preserveLeftParens && leftType === "BinaryExpression") {
       nextLeft = (left as BinaryExpression | PrivateInExpression).left;
       leftType = nextLeft.type;
 
@@ -92,12 +102,13 @@ export function printBinaryish(
         // Private-in expression as the left operand
         printPrivateInExpression(left as PrivateInExpression, state, v.leftPrecedence);
         binVisitRightAndFinish(v, state);
+        if (COMMENTS && v.e !== node && v.e.comments != null) finishNodeComments(v.e, state);
         break;
       }
 
       typeAssertIs<BinaryExpression>(left);
       typeAssertIs<Expression>(nextLeft);
-    } else if (leftType === "LogicalExpression") {
+    } else if (!preserveLeftParens && leftType === "LogicalExpression") {
       typeAssertIs<LogicalExpression>(left);
       nextLeft = left.left;
       leftType = nextLeft.type;
@@ -108,6 +119,7 @@ export function printBinaryish(
       // this precedence and `ctx` unchanged.
       printExpression(v.e.left, state, v.leftPrecedence, v.ctx);
       binVisitRightAndFinish(v, state);
+      if (COMMENTS && v.e !== node && v.e.comments != null) finishNodeComments(v.e, state);
       break;
     }
 
@@ -127,6 +139,7 @@ export function printBinaryish(
 
   while ((v = v.parent) !== null) {
     binVisitRightAndFinish(v, state);
+    if (COMMENTS && v.e !== node && v.e.comments != null) finishNodeComments(v.e, state);
   }
 }
 
@@ -164,6 +177,7 @@ function binCheckAndPrepare(
     write(state, "(", CAT_OTHER);
     v.ctx &= ~CTX_FORBID_IN;
   }
+  if (COMMENTS) printDeferredLeadingComments(e, state);
   // One level below the operator's own precedence. The precedence scale has no gaps, so this is
   // subtraction rather than a second table - `BinaryOperator::lower_precedence` in `oxc_syntax`
   // names the adjacent variant for each operator, which comes to the same thing.
@@ -231,5 +245,8 @@ function binVisitRightAndFinish(v: BinaryVisitor, state: State): void {
   write(state, PADDED_BIN_OPERATORS[v.operator], CAT_OTHER);
   // Any `ParenthesizedExpression` wrapper is kept, for the same reason as on the left operand
   printExpression(v.e.right, state, v.rightPrecedence, v.ctx);
-  if (v.wrap) write(state, ")", CAT_CLOSE_BRACKET);
+  if (v.wrap) {
+    if (COMMENTS) printTrailingCommentsInsideParens(v.e, state);
+    write(state, ")", CAT_CLOSE_BRACKET);
+  }
 }

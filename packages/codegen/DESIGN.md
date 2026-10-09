@@ -15,7 +15,7 @@ Everything here is also documented at the point it applies. This is an overview.
 - [What this is](#what-this-is)
 - [What it is not at present](#what-it-is-not-at-present)
 - [`state.last`](#statelast)
-- [Four builds from one source tree](#four-builds-from-one-source-tree)
+- [Eight builds from one source tree](#eight-builds-from-one-source-tree)
 - [Other things which make it fast](#other-things-which-make-it-fast)
 - [Where the ESTree AST differs](#where-the-estree-ast-differs)
 - [How it is tested](#how-it-is-tested)
@@ -66,7 +66,6 @@ The conformance suites check this on every fixture. It is what makes the two pri
 `oxc_codegen` (Rust printer) is more capable than this one.
 
 - No minify mode.
-- No support for comments.
 - No symbol mangling.
 
 Many of these features can be added in future, and we should be able to do so without _much_ impact on performance.
@@ -321,21 +320,39 @@ mechanisms guard them, all removed from release builds.
 
 This is why the debug build is the one to run the conformance suites against - `pnpm run build-test`.
 
-## Four builds from one source tree
+## Eight builds from one source tree
 
-`dist` holds the printer compiled four times, plus an entry point which picks between them.
+`dist` holds eight printer builds, plus an entry point which picks one from the caller's
+`ts`, `sourcemap`, and `comments` options. Each combination is compiled separately.
+`COMMENTS: false` removes attachment lookups, comment state updates, and formatting work.
 
-| Build              | `TS`  | `SOURCEMAPS` |  Size |
-| :----------------- | :---- | :----------- | ----: |
-| `print_js.js`      | false | false        | 25 KB |
-| `print_js_maps.js` | false | true         | 26 KB |
-| `print_ts.js`      | true  | false        | 39 KB |
-| `print_ts_maps.js` | true  | true         | 40 KB |
+The entry point `require`s the selected build on first use, because `printSync` is synchronous.
+A caller printing only JavaScript never loads the TypeScript printers.
 
-`index.ts` picks one from the caller's `ts` and `sourcemap` options and `require`s it on first use -
-`require` rather than `import()`, because `printSync` is synchronous.
+### Attached comments
 
-A caller printing only JavaScript never loads, parses or compiles the TypeScript printers at all.
+Nodes carry optional `comments` buckets. Leading and trailing comments wrap node printers;
+dangling comments are emitted by the construct's content printer. Native containers erased by
+ESTree conversion carry a `container` tag, so parameter and import-clause comments reach the
+correct content site. The parser reuses each flat comment object in exactly one owner bucket.
+
+Per-print sets prevent aliases and nested dispatchers from printing an owner twice. They are
+allocated only when needed and leave the caller's AST unchanged. Unprinted comments on syntax
+elided by a direct printer use the same source-ordered EOF fallback as Rust. Array-hole comments
+remain outside the supported printing cases.
+
+Comment whitespace tracking reads newly appended fragments, never characters of `state.output`.
+A final newline is held until the next write, so trailing comments can precede it without truncating
+and flattening the rope. Mapping positions include that virtual newline, and the final output flushes it.
+Comments also preserve expression-start token categories, so leading comments cannot change
+whether a function or object expression needs parentheses. Explicit parentheses are retained
+when the print has attached comments, as in Rust. A cached presence check is deferred until a
+parenthesis or decorator needs that decision; it does not reconstruct ownership.
+
+Expression printers emit leading groups inside generated parentheses where Rust does, including
+applied PURE annotations on calls and constructors. Argument, array-element, property-key, and
+method wrappers claim their groups before entering the expression printer, preserving their
+position around those parentheses.
 
 ### Why separate TS and JS builds
 
@@ -369,7 +386,7 @@ it was compiled away. The TS build only ever sees TS ASTs, so what the branch pr
 The same argument, one level up.
 
 `State` is defined in `src-js/state.ts`, which is **not** part of any printer build. The printers import
-it as a type only; the entry point constructs it. So all four builds share one class, and therefore one
+it as a type only; the entry point constructs it. So all eight builds share one class, and therefore one
 hidden class, for the object they thread through every single function.
 
 This is why **a build-time flag must never add or remove a field on `State`**.
@@ -407,8 +424,9 @@ and rewrites the import to match.
 instead of taking it. `writePrivate` exists only for the rewrite to land on.
 
 `printString` and `printNonNegativeFloat` take the offsets and the node only to hand them on to a mapped write.
-They keep their names, but the arguments come off every call, and the parameters off their declarations -
-which, unlike the mapped writes, survive into the build.
+In comments-disabled builds, they keep their names, but the arguments come off every call, and the parameters off their declarations -
+which, unlike the mapped writes, survive into the build. Comments-enabled `printString` retains the node
+argument because a direct string printer can own comments.
 
 **With source maps**, in release builds only, just the trailing `node` comes off - from every call,
 and from every declaration. The mappings are real in these builds so the offsets stay, but `node` isn't read
@@ -622,7 +640,9 @@ so that arm can run.
 - `assert {...}` versus `with {...}`
 - The span of a `with {...}` clause (only its individual attributes have ESTree locations)
 
-The conformance harness normalizes the Rust AST down to what ESTree can express before printing,
+Attached comment container tags preserve comment-bearing empty import and attribute clauses, including
+the original attribute-clause span. Without tags, the conformance harness normalizes the Rust AST down
+to what ESTree can express before printing,
 rather than expecting the JS side to reproduce information it was never given.
 See `Normalize` in `tasks/codegen_conformance/src/lib.rs`.
 
@@ -635,7 +655,8 @@ See `Normalize` in `tasks/codegen_conformance/src/lib.rs`.
 
 `oxc-codegen` is tested against all Test262, Acorn-JSX, and TypeScript test cases - about 62,000 fixtures.
 
-Every fixture is printed three times:
+Each fixture runs with comments disabled and enabled, in both `preserveParens` modes. Each run
+prints three times:
 
 1. In Rust, with a source map, via the `oxc-codegen-conformance` NAPI addon (`tasks/codegen_conformance`).
 2. In JS, through the no-maps build.

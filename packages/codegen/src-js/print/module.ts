@@ -1,5 +1,12 @@
 // Modules.
 
+import {
+  startNodeComments,
+  finishNodeComments,
+  hasInsideComments,
+  printInsideComments,
+  printContainerComments,
+} from "./comments.ts";
 import { CAT_IDENT, CAT_OTHER, CAT_START_OF_DEFAULT_EXPORT } from "./categories.ts";
 import { write, writeIdent, writeNoLast, writeWithMap, writeWithMapNamed } from "./write.ts";
 import { printClass } from "./class.ts";
@@ -30,6 +37,7 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * braces, so the braces are opened and closed around a run rather than around the whole list.
  */
 export function printImportDeclaration(node: ESTree.ImportDeclaration, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
 
   printSpaceBeforeIdentifier(state);
@@ -45,17 +53,25 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
   const { specifiers } = node;
   const { length } = specifiers;
   if (length === 0) {
+    if (COMMENTS && hasInsideComments(node, state, "ImportSpecifiers")) {
+      write(state, " {", CAT_OTHER);
+      printInsideComments(node, state, "ImportSpecifiers");
+      write(state, "} from", CAT_IDENT);
+    }
     // `import "source";`
     write(state, " ", CAT_OTHER);
     printString(state, node.source.value, node.source.start, node.source.end, node.source);
-    printImportAttributes(node.attributes, state);
+    printImportAttributes(node.attributes, state, COMMENTS ? node : undefined);
+    if (COMMENTS) printInsideComments(node, state);
     write(state, ";\n", CAT_OTHER);
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
   let inBlock = false;
   for (let i = 0; i < length; i++) {
     const specifier = specifiers[i];
+    let specifierOwner = false;
     switch (specifier.type) {
       case "ImportDefaultSpecifier":
         if (inBlock) {
@@ -67,6 +83,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
           write(state, ", ", CAT_OTHER);
         }
 
+        specifierOwner = COMMENTS && startNodeComments(specifier, state);
         printSpaceBeforeIdentifier(state);
         writeWithMap(
           state,
@@ -90,14 +107,19 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
           write(state, ", ", CAT_OTHER);
         }
 
+        specifierOwner = COMMENTS && startNodeComments(specifier, state);
         write(state, "* as ", CAT_OTHER);
-        writeWithMapNamed(
-          state,
-          specifier.local.name,
-          specifier.local.start,
-          specifier.local.end,
-          specifier.local,
-        );
+        {
+          const nameCommentOwner = COMMENTS && startNodeComments(specifier.local, state);
+          writeWithMapNamed(
+            state,
+            specifier.local.name,
+            specifier.local.start,
+            specifier.local.end,
+            specifier.local,
+          );
+          if (nameCommentOwner) finishNodeComments(specifier.local, state);
+        }
         write(state, " ", CAT_OTHER);
         break;
       default: {
@@ -112,28 +134,47 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
           write(state, " { ", CAT_OTHER);
         }
 
+        specifierOwner = COMMENTS && startNodeComments(specifier, state);
         if (TS && specifier.importKind === "type") write(state, "type ", CAT_OTHER);
 
         const { imported, local } = specifier;
         if (imported.type === "Literal" && imported.value === local.name) {
           printSpaceBeforeIdentifier(state);
-          writeWithMapNamed(state, local.name, local.start, local.end, local);
+          {
+            const nameCommentOwner = COMMENTS && startNodeComments(local, state);
+            writeWithMapNamed(state, local.name, local.start, local.end, local);
+            if (nameCommentOwner) finishNodeComments(local, state);
+          }
           break;
         }
         const importedName = moduleExportName(imported, state);
         if (importedName !== local.name) {
           write(state, " as ", CAT_OTHER);
-          writeWithMapNamed(state, local.name, local.start, local.end, local);
+          {
+            const nameCommentOwner = COMMENTS && startNodeComments(local, state);
+            writeWithMapNamed(state, local.name, local.start, local.end, local);
+            if (nameCommentOwner) finishNodeComments(local, state);
+          }
         }
         break;
       }
     }
+    if (specifierOwner) finishNodeComments(specifier, state);
   }
 
-  write(state, inBlock ? " } from " : "from ", CAT_OTHER);
+  if (COMMENTS && inBlock) {
+    write(state, " ", CAT_OTHER);
+    printInsideComments(node, state, "ImportSpecifiers");
+    write(state, "} from ", CAT_OTHER);
+  } else {
+    write(state, inBlock ? " } from " : "from ", CAT_OTHER);
+  }
   printString(state, node.source.value, node.source.start, node.source.end, node.source);
-  printImportAttributes(node.attributes, state);
+  printImportAttributes(node.attributes, state, COMMENTS ? node : undefined);
+  if (COMMENTS) printInsideComments(node, state);
   write(state, ";\n", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -145,16 +186,35 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
 function printImportAttributes(
   attributes: ESTree.ImportAttribute[] | null | undefined,
   state: State,
+  owner?: { comments?: ESTree.NodeComments | null },
 ): void {
   if (attributes == null) return;
 
   const { length } = attributes;
-  if (length === 0) return;
+  const container = COMMENTS
+    ? (owner?.comments?.dangling?.find((c) => c.container?.kind === "WithClause")?.container
+      ?? undefined)
+    : undefined;
+  if (length === 0 && container === undefined) return;
 
   // ESTree omits the `WithClause` wrapper. The Rust reference normalizes its mapping anchor
   // to the first attribute, which is the first location both representations carry.
   writeNoLast(state, " ");
-  writeWithMap(state, "with { ", CAT_OTHER, attributes[0].start, attributes[0].end, attributes[0]);
+  if (COMMENTS && container !== undefined) {
+    if (owner !== undefined) printContainerComments(owner, state, "WithClause", "leading");
+    const mapping = { type: "WithClause", start: container.start, end: container.end };
+    writeWithMap(state, "with {", CAT_OTHER, mapping.start, mapping.end, mapping);
+    if (length > 0) write(state, " ", CAT_OTHER);
+  } else {
+    writeWithMap(
+      state,
+      "with { ",
+      CAT_OTHER,
+      attributes[0].start,
+      attributes[0].end,
+      attributes[0],
+    );
+  }
 
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
@@ -162,7 +222,11 @@ function printImportAttributes(
     const attribute = attributes[i];
     const { key } = attribute;
     if (key.type === "Identifier") {
+      const keyOwner = COMMENTS && startNodeComments(key, state);
+      // Rust prints attribute names without adding identifier source mappings.
+      printSpaceBeforeIdentifier(state);
       writeIdent(state, key.name);
+      if (keyOwner) finishNodeComments(key, state);
     } else {
       printString(state, key.value, key.start, key.end, key);
     }
@@ -178,7 +242,12 @@ function printImportAttributes(
     );
   }
 
-  write(state, " }", CAT_OTHER);
+  if (length > 0) write(state, " ", CAT_OTHER);
+  if (COMMENTS) printInsideComments(owner, state, "WithClause");
+  write(state, "}", CAT_OTHER);
+  if (COMMENTS && owner !== undefined) {
+    printContainerComments(owner, state, "WithClause", "trailing");
+  }
 }
 
 /**
@@ -190,13 +259,20 @@ function printImportAttributes(
  * @returns The name printed
  */
 function moduleExportName(node: ESTree.ModuleExportName, state: State): string {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   if (node.type === "Identifier") {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, node.name, node.start, node.end, node);
+    {
+      const nameCommentOwner = COMMENTS && startNodeComments(node, state);
+      writeWithMapNamed(state, node.name, node.start, node.end, node);
+      if (nameCommentOwner) finishNodeComments(node, state);
+    }
+    if (commentOwner) finishNodeComments(node, state);
     return node.name;
   }
 
   printString(state, node.value, node.start, node.end, node);
+  if (commentOwner) finishNodeComments(node, state);
   return node.value;
 }
 
@@ -205,6 +281,7 @@ function moduleExportName(node: ESTree.ModuleExportName, state: State): string {
  * a list of specifiers, or a list re-exported from another module.
  */
 export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
 
   writeWithMap(state, "export ", CAT_OTHER, node.start, node.end, node);
@@ -252,6 +329,7 @@ export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, st
       default:
         throw new Error(`Unknown export declaration type: ${declaration.type}`);
     }
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -266,6 +344,7 @@ export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, st
     for (let i = 0; i < length; i++) {
       if (i > 0) write(state, ", ", CAT_OTHER);
       const specifier = specifiers[i];
+      const specifierOwner = COMMENTS && startNodeComments(specifier, state);
       if (TS && specifier.exportKind === "type") {
         write(state, "type ", CAT_OTHER);
       }
@@ -278,25 +357,30 @@ export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, st
         write(state, " as ", CAT_OTHER);
         moduleExportName(specifier.exported, state);
       }
+      if (specifierOwner) finishNodeComments(specifier, state);
     }
     write(state, " ", CAT_OTHER);
   }
 
+  if (COMMENTS) printInsideComments(node, state);
   write(state, "}", CAT_OTHER);
 
   if (node.source != null) {
     write(state, " from ", CAT_OTHER);
     printString(state, node.source.value, node.source.start, node.source.end, node.source);
-    printImportAttributes(node.attributes, state);
+    printImportAttributes(node.attributes, state, COMMENTS ? node : undefined);
   }
 
   write(state, ";\n", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print `export * from "…"`, with the `as name` form where the AST has one.
  */
 export function printExportAllDeclaration(node: ESTree.ExportAllDeclaration, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
 
   writeWithMap(
@@ -315,8 +399,11 @@ export function printExportAllDeclaration(node: ESTree.ExportAllDeclaration, sta
 
   write(state, " from ", CAT_OTHER);
   printString(state, node.source.value, node.source.start, node.source.end, node.source);
-  printImportAttributes(node.attributes, state);
+  printImportAttributes(node.attributes, state, COMMENTS ? node : undefined);
+  if (COMMENTS) printInsideComments(node, state);
   write(state, ";\n", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -329,6 +416,7 @@ export function printExportDefaultDeclaration(
   node: ESTree.ExportDefaultDeclaration,
   state: State,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printIndent(state);
 
   writeWithMap(state, "export default ", CAT_OTHER, node.start, node.end, node);
@@ -358,4 +446,6 @@ export function printExportDefaultDeclaration(
       write(state, ";\n", CAT_OTHER);
       break;
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }

@@ -1,17 +1,18 @@
 // Printer state.
 //
 // One object, created here and handed to whichever printer build `index.ts` selects.
-// It is deliberately outside `print/`, so that all 4 builds share this one class and therefore one
+// It is deliberately outside `print/`, so that all 8 builds share this one class and therefore one
 // object shape - a build-time flag must never add or remove a field, or the printers would each
 // see a different hidden class for the object they thread through every function.
 //
 // The printers only ever receive it, so they import it as a type.
-// Nothing in `print/` constructs one, and none of the 4 printer builds bundles this file.
+// Nothing in `print/` constructs one, and none of the 8 printer builds bundles this file.
 
 import { CAT_OTHER } from "./print/categories.ts";
 import { debugAssert } from "./asserts.ts";
 
 import type { Category } from "./print/categories.ts";
+import type * as ESTree from "../../../npm/oxc-types/types.d.ts";
 import type { Options } from "./print/options.ts";
 
 /**
@@ -22,7 +23,7 @@ let indentString = "\t";
 /**
  * Indentation cache, holding the string for each level - `indents[2]` is two levels' worth.
  *
- * There is one per process, and every `State` carries it, so all 4 printer builds grow and read
+ * There is one per process, and every `State` carries it, so all 8 printer builds grow and read
  * the same array - the cache a build fills is there for the next build to use.
  *
  * It survives across prints and is discarded only when `indentString` changes.
@@ -115,7 +116,35 @@ export class State {
   // Original source text, used to preserve names in source maps when the caller provides it.
   declare sourceText: string | null;
 
+  // Comment bookkeeping is allocated only after finding an owner. Every build
+  // receives the same state shape; disabled writes never update these fields.
+  declare commentRoot: ESTree.Node | null;
+  declare hasAttachedComments: boolean | null;
+  declare commentOwners: Set<object> | null;
+  declare unclaimedComments: Set<ESTree.Comment> | null;
+  declare printedComments: Set<ESTree.Comment> | null;
+  declare commentPendingNewline: boolean;
+  declare commentPendingWhitespace: string;
+  declare commentBeforeWhitespace: string;
+  // Native mappings retain their columns when a subsequent comment trims spacing.
+  declare commentMapCorrections: Map<number, number> | null;
+  declare commentLastChar: string;
+  declare commentBeforeNewline: string;
+  declare commentLineStart: boolean;
+
   constructor(options: Options) {
+    this.commentRoot = null;
+    this.hasAttachedComments = null;
+    this.commentOwners = null;
+    this.unclaimedComments = null;
+    this.printedComments = null;
+    this.commentPendingNewline = false;
+    this.commentPendingWhitespace = "";
+    this.commentBeforeWhitespace = "";
+    this.commentMapCorrections = null;
+    this.commentLastChar = "";
+    this.commentBeforeNewline = "";
+    this.commentLineStart = true;
     this.output = "";
     this.outputChunks = null;
     this.spilledOutputLength = 0;

@@ -1,5 +1,12 @@
 // TypeScript (port of `gen.rs` TS sections).
 
+import {
+  rememberComments,
+  startNodeComments,
+  finishNodeComments,
+  hasInsideComments,
+  printInsideComments,
+} from "./comments.ts";
 import { typeAssertIs } from "../asserts.ts";
 import {
   CAT_CLOSE_BRACKET,
@@ -57,6 +64,7 @@ export function printTSAsOrSatisfiesExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_COMPARE;
   if (wrap) write(state, "(", CAT_OTHER);
 
@@ -65,6 +73,8 @@ export function printTSAsOrSatisfiesExpression(
   printTSType(node.typeAnnotation, state);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -81,6 +91,7 @@ function printTSType(
   node: ESTree.TSTupleElement | ESTree.TSQualifiedName | UnknownNode,
   state: State,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   switch (node.type) {
     case "TSTypeReference":
       printTSTypeName(node.typeName, state);
@@ -169,7 +180,7 @@ function printTSType(
       if (node.abstract) write(state, "abstract ", CAT_OTHER);
       write(state, "new ", CAT_OTHER);
       printTypeParameters(node.typeParameters, state);
-      printParenParamsArrow(node.params, state);
+      printParenParamsArrow(node.params, state, COMMENTS ? node : undefined);
       printTSType(tsTypeAnnotationOf(node.returnType), state);
       break;
     case "TSTupleType": {
@@ -180,6 +191,7 @@ function printTSType(
         if (i > 0) write(state, ", ", CAT_OTHER);
         printTSTupleElement(elementTypes[i], state);
       }
+      if (COMMENTS) printInsideComments(node, state);
       write(state, "]", CAT_CLOSE_BRACKET);
       break;
     }
@@ -197,6 +209,7 @@ function printTSType(
       if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
       write(state, "[", CAT_OTHER);
       printTSType(node.indexType, state);
+      if (COMMENTS) printInsideComments(node, state);
       write(state, "]", CAT_CLOSE_BRACKET);
       break;
     }
@@ -235,6 +248,7 @@ function printTSType(
     case "TSParenthesizedType":
       write(state, "(", CAT_OTHER);
       printTSType(node.typeAnnotation, state);
+      if (COMMENTS) printInsideComments(node, state);
       write(state, ")", CAT_CLOSE_BRACKET);
       break;
     case "TSNamedTupleMember":
@@ -282,6 +296,8 @@ function printTSType(
     default:
       throw new Error(`Unknown type node: ${node.type}`);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -294,17 +310,29 @@ function printTSTypeName(
   node: ESTree.TSTypeName | ESTree.IdentifierName | ESTree.BindingIdentifier,
   state: State,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   if (node.type === "TSQualifiedName") {
     printTSTypeName(node.left, state);
     write(state, ".", CAT_OTHER);
-    writeWithMapNamed(state, node.right.name, node.right.start, node.right.end, node.right);
+    {
+      const nameCommentOwner = COMMENTS && startNodeComments(node.right, state);
+      writeWithMapNamed(state, node.right.name, node.right.start, node.right.end, node.right);
+      if (nameCommentOwner) finishNodeComments(node.right, state);
+    }
   } else if (node.type === "ThisExpression") {
     printSpaceBeforeIdentifier(state);
     writeWithMap(state, "this", CAT_IDENT, node.start, node.end, node);
   } else {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, node.name, node.start, node.end, node);
+    {
+      const nameCommentOwner = COMMENTS && startNodeComments(node, state);
+      writeWithMapNamed(state, node.name, node.start, node.end, node);
+      if (nameCommentOwner) finishNodeComments(node, state);
+    }
   }
+
+  if (COMMENTS) printInsideComments(node, state);
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -317,6 +345,7 @@ export function printTypeArguments(
   state: State,
 ): void {
   if (typeArguments == null) return;
+  const commentOwner = COMMENTS && startNodeComments(typeArguments, state);
 
   write(state, "<", CAT_LT);
 
@@ -328,6 +357,7 @@ export function printTypeArguments(
   }
 
   write(state, ">", CAT_OTHER);
+  if (commentOwner) finishNodeComments(typeArguments, state);
 }
 
 /**
@@ -337,6 +367,7 @@ export function printTypeArguments(
  * A unary operand such as `-1` prints at `PREC_COMMA` precedence so it is not wrapped, as in Oxc.
  */
 function printTSLiteral(literal: ESTree.TSLiteral, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(literal, state);
   // A literal type holds a `Literal`, a `TemplateLiteral` or a `UnaryExpression` and nothing else,
   // and the first of those is what a literal type nearly always is, so it goes straight to its
   // printer rather than back through the expression dispatch.
@@ -350,6 +381,8 @@ function printTSLiteral(literal: ESTree.TSLiteral, state: State): void {
       CTX_TYPESCRIPT,
     );
   }
+
+  if (commentOwner) finishNodeComments(literal, state);
 }
 
 /**
@@ -357,6 +390,7 @@ function printTSLiteral(literal: ESTree.TSLiteral, state: State): void {
  * No leading `|` is printed, so a union node holding a single member prints as that member alone.
  */
 function printTSUnionType(node: ESTree.TSUnionType, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { types } = node;
   const { length } = types;
   for (let i = 0; i < length; i++) {
@@ -367,6 +401,8 @@ function printTSUnionType(node: ESTree.TSUnionType, state: State): void {
     printTSType(types[i], state);
     if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -397,6 +433,7 @@ function parenthesizeTypeOfUnionType(ty: ESTree.TSType): boolean {
  * which are not themselves intersections.
  */
 function printTSIntersectionType(node: ESTree.TSIntersectionType, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { types } = node;
   const { length } = types;
   for (let i = 0; i < length; i++) {
@@ -407,6 +444,8 @@ function printTSIntersectionType(node: ESTree.TSIntersectionType, state: State):
     printTSType(types[i], state);
     if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -444,11 +483,14 @@ function parenthesizeTypeOfPostfixType(ty: ESTree.TSType): boolean {
  * with `;`, and the closing brace is indented back to the level of whatever contains it.
  */
 function printTSTypeLiteral(node: ESTree.TSTypeLiteral, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { members } = node;
   const { length } = members;
-  if (length === 0) {
+  if (length === 0 && (!COMMENTS || !hasInsideComments(node, state))) {
     writeWithMapNoLast(state, "{", node.start, node.end, node);
+    if (COMMENTS) printInsideComments(node, state);
     writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -457,13 +499,22 @@ function printTSTypeLiteral(node: ESTree.TSTypeLiteral, state: State): void {
 
   for (let i = 0; i < length; i++) {
     printIndent(state);
+    const memberOwner = COMMENTS && startNodeComments(members[i], state);
     printTSSignature(members[i], state, CTX_TYPESCRIPT);
     write(state, ";\n", CAT_OTHER);
+    if (memberOwner) finishNodeComments(members[i], state);
   }
 
+  if (COMMENTS) {
+    printInsideComments(node, state);
+    if (state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
+  }
   state.indentLevel--;
   printIndent(state);
+  if (COMMENTS) printInsideComments(node, state);
   writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -474,13 +525,16 @@ function printTSTypeLiteral(node: ESTree.TSTypeLiteral, state: State): void {
  * and an unrecognized member type throws.
  */
 function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, ctx: number): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   switch (node.type) {
     case "TSPropertySignature":
       if (node.readonly) write(state, "readonly ", CAT_OTHER);
       if (node.computed) {
         write(state, "[", CAT_OTHER);
         typeAssertIs<ESTree.Expression>(node.key);
+        const keyOwner = COMMENTS && startNodeComments(node.key, state, false);
         printExpression(node.key, state, PREC_COMMA, ctx);
+        if (keyOwner) finishNodeComments(node.key, state);
         write(state, "]", CAT_CLOSE_BRACKET);
       } else {
         printSignatureKey(node.key, state, ctx);
@@ -501,7 +555,9 @@ function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, 
       if (node.computed) {
         write(state, "[", CAT_OTHER);
         typeAssertIs<ESTree.Expression>(node.key);
+        const keyOwner = COMMENTS && startNodeComments(node.key, state, false);
         printExpression(node.key, state, PREC_COMMA, ctx);
+        if (keyOwner) finishNodeComments(node.key, state);
         write(state, "]", CAT_CLOSE_BRACKET);
       } else {
         printSignatureKey(node.key, state, ctx);
@@ -509,23 +565,25 @@ function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, 
 
       if (node.optional) write(state, "?", CAT_QUESTION);
       printTypeParameters(node.typeParameters, state);
-      printParenParams(node.params, state);
+      printParenParams(node.params, state, COMMENTS ? node : undefined);
       if (node.returnType != null) printTypeAnnotation(node.returnType, state);
       break;
     case "TSCallSignatureDeclaration":
       printTypeParameters(node.typeParameters, state);
-      printParenParams(node.params, state);
+      printParenParams(node.params, state, COMMENTS ? node : undefined);
       if (node.returnType != null) printTypeAnnotation(node.returnType, state);
       break;
     case "TSConstructSignatureDeclaration":
       write(state, "new ", CAT_OTHER);
       printTypeParameters(node.typeParameters, state);
-      printParenParams(node.params, state);
+      printParenParams(node.params, state, COMMENTS ? node : undefined);
       if (node.returnType != null) printTypeAnnotation(node.returnType, state);
       break;
     default:
       throw new Error(`Unknown signature type: ${node.type}`);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -534,13 +592,22 @@ function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, 
  * so it comes out in the printer's own quotes instead of whatever the source used.
  */
 function printSignatureKey(key: ESTree.PropertyKey, state: State, ctx: number): void {
+  const commentOwner = COMMENTS && startNodeComments(key, state, false);
   switch (key.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, key.name, key.start, key.end, key);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(key, state);
+        writeWithMapNamed(state, key.name, key.start, key.end, key);
+        if (nameCommentOwner) finishNodeComments(key, state);
+      }
       break;
     case "PrivateIdentifier":
-      writeWithMapNamedPrivate(state, key.name, key.start, key.end, key);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(key, state);
+        writeWithMapNamedPrivate(state, key.name, key.start, key.end, key);
+        if (nameCommentOwner) finishNodeComments(key, state);
+      }
       break;
     case "Literal":
       if (typeof key.value === "string") {
@@ -552,6 +619,8 @@ function printSignatureKey(key: ESTree.PropertyKey, state: State, ctx: number): 
     default:
       printExpression(key, state, PREC_COMMA, ctx);
   }
+
+  if (commentOwner) finishNodeComments(key, state);
 }
 
 /**
@@ -561,7 +630,10 @@ function printSignatureKey(key: ESTree.PropertyKey, state: State, ctx: number): 
  */
 export function printTypeAnnotation(annotation: ESTree.TSTypeAnnotation, state: State): void {
   write(state, ": ", CAT_OTHER);
+  const commentOwner = COMMENTS && startNodeComments(annotation, state);
   printTSType(tsTypeAnnotationOf(annotation), state);
+
+  if (commentOwner) finishNodeComments(annotation, state);
 }
 
 /**
@@ -581,12 +653,14 @@ function tsTypeAnnotationOf(annotation: ESTree.TSTypeAnnotation | ESTree.TSType)
  * Oxc's own AST stores a single parameter - so only the first entry is read.
  */
 export function printTSIndexSignature(node: ESTree.TSIndexSignature, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   if (node.static) write(state, "static ", CAT_OTHER);
   if (node.readonly) write(state, "readonly ", CAT_OTHER);
 
   write(state, "[", CAT_OTHER);
 
   const parameter = node.parameters[0];
+  if (COMMENTS) rememberComments(parameter, state);
   writeIdent(state, parameter.name);
 
   write(state, ": ", CAT_OTHER);
@@ -596,6 +670,8 @@ export function printTSIndexSignature(node: ESTree.TSIndexSignature, state: Stat
   write(state, "]: ", CAT_OTHER);
 
   printTSType(tsTypeAnnotationOf(node.typeAnnotation), state);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -609,6 +685,7 @@ export function printTypeParameters(
   state: State,
 ): void {
   if (typeParameters == null) return;
+  const commentOwner = COMMENTS && startNodeComments(typeParameters, state);
 
   const { params } = typeParameters;
   const { length } = params;
@@ -639,6 +716,7 @@ export function printTypeParameters(
   }
 
   write(state, ">", CAT_OTHER);
+  if (commentOwner) finishNodeComments(typeParameters, state);
 }
 
 /**
@@ -646,6 +724,7 @@ export function printTypeParameters(
  * the fixed print order here - `const`, `in`, `out` - is what gives them an order at all.
  */
 function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   // No `printSpaceBeforeIdentifier` needed, either here or before the name.
   //
   // All 3 callers leave `last` as `CAT_LT` or `CAT_OTHER`:
@@ -661,7 +740,11 @@ function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void 
   if (node.in) writeNoLast(state, "in ");
   if (node.out) writeNoLast(state, "out ");
 
-  writeWithMapNamed(state, node.name.name, node.name.start, node.name.end, node.name);
+  {
+    const nameCommentOwner = COMMENTS && startNodeComments(node.name, state);
+    writeWithMapNamed(state, node.name.name, node.name.start, node.name.end, node.name);
+    if (nameCommentOwner) finishNodeComments(node.name, state);
+  }
 
   if (node.constraint != null) {
     write(state, " extends ", CAT_OTHER);
@@ -672,6 +755,8 @@ function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void 
     write(state, " = ", CAT_OTHER);
     printTSType(node.default, state);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -680,9 +765,18 @@ function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void 
  * rather than through `printTypeAnnotation`, which would put a `:` in front of it.
  */
 function printTSFunctionType(node: ESTree.TSFunctionType, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printTypeParameters(node.typeParameters, state);
-  printParenParamsArrow(node.params, state);
+  printParenParamsArrow(node.params, state, COMMENTS ? node : undefined);
+  if (COMMENTS && node.returnType.type === "TSTypeAnnotation") {
+    startNodeComments(node.returnType, state);
+  }
   printTSType(tsTypeAnnotationOf(node.returnType), state);
+  if (COMMENTS && node.returnType.type === "TSTypeAnnotation") {
+    finishNodeComments(node.returnType, state);
+  }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -692,6 +786,7 @@ function printTSFunctionType(node: ESTree.TSFunctionType, state: State): void {
  * The optional form borrows the postfix wrapping rule, since a trailing `?` binds as tightly as `[]`.
  */
 function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   switch (node.type) {
     case "TSOptionalType": {
       const wrap = parenthesizeTypeOfPostfixType(node.typeAnnotation);
@@ -706,7 +801,11 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
       printTSType(node.typeAnnotation, state);
       break;
     case "TSNamedTupleMember":
-      writeWithMapNamed(state, node.label.name, node.label.start, node.label.end, node.label);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(node.label, state);
+        writeWithMapNamed(state, node.label.name, node.label.start, node.label.end, node.label);
+        if (nameCommentOwner) finishNodeComments(node.label, state);
+      }
       if (node.optional) write(state, "?", CAT_QUESTION);
       write(state, ": ", CAT_OTHER);
       printTSType(node.elementType, state);
@@ -714,6 +813,8 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
     default:
       printTSType(node, state);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -722,6 +823,7 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
  * this conditional's.
  */
 function printTSConditionalType(node: ESTree.TSConditionalType, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { checkType, extendsType } = node;
   const checkWrap =
     checkType.type === "TSFunctionType"
@@ -745,6 +847,8 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
 
   write(state, " : ", CAT_OTHER);
   printTSType(node.falseType, state);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -755,6 +859,7 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
  * The braces are padded with spaces and the whole type stays on one line, however large it is.
  */
 function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   writeNoLast(state, "{ ");
 
   const { readonly } = node;
@@ -768,7 +873,11 @@ function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
 
   writeNoLast(state, "[");
 
-  writeWithMapNamedNoLast(state, node.key.name, node.key.start, node.key.end, node.key);
+  {
+    const nameCommentOwner = COMMENTS && startNodeComments(node.key, state);
+    writeWithMapNamedNoLast(state, node.key.name, node.key.start, node.key.end, node.key);
+    if (nameCommentOwner) finishNodeComments(node.key, state);
+  }
   write(state, " in ", CAT_OTHER);
   printTSType(node.constraint, state);
 
@@ -793,7 +902,11 @@ function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
     printTSType(tsTypeAnnotationOf(node.typeAnnotation), state);
   }
 
-  write(state, " }", CAT_OTHER);
+  if (!COMMENTS || state.commentLastChar !== "\n") write(state, " ", CAT_OTHER);
+  if (COMMENTS) printInsideComments(node, state);
+  write(state, "}", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -802,6 +915,7 @@ function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
  * bind to only part of it.
  */
 function printTSTypeOperator(node: ESTree.TSTypeOperator, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   writeIdent(state, node.operator);
 
   write(state, " ", CAT_OTHER);
@@ -818,6 +932,8 @@ function printTSTypeOperator(node: ESTree.TSTypeOperator, state: State): void {
   if (wrap) write(state, "(", CAT_OTHER);
   printTSType(ty, state);
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -825,6 +941,7 @@ function printTSTypeOperator(node: ESTree.TSTypeOperator, state: State): void {
  * The `is T` half is optional too, which is what makes a bare `asserts x` print.
  */
 function printTSTypePredicate(node: ESTree.TSTypePredicate, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   if (node.asserts) write(state, "asserts ", CAT_OTHER);
 
   const { parameterName } = node;
@@ -832,19 +949,25 @@ function printTSTypePredicate(node: ESTree.TSTypePredicate, state: State): void 
     writeIdent(state, "this");
   } else {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(
-      state,
-      parameterName.name,
-      parameterName.start,
-      parameterName.end,
-      parameterName,
-    );
+    {
+      const nameCommentOwner = COMMENTS && startNodeComments(parameterName, state);
+      writeWithMapNamed(
+        state,
+        parameterName.name,
+        parameterName.start,
+        parameterName.end,
+        parameterName,
+      );
+      if (nameCommentOwner) finishNodeComments(parameterName, state);
+    }
   }
 
   if (node.typeAnnotation != null) {
     write(state, " is ", CAT_OTHER);
     printTSType(tsTypeAnnotationOf(node.typeAnnotation), state);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -852,11 +975,14 @@ function printTSTypePredicate(node: ESTree.TSTypePredicate, state: State): void 
  * an import type can stand where a name would.
  */
 function printTSTypeQueryExprName(node: ESTree.TSTypeQueryExprName, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   if (node.type === "TSImportType") {
     printTSImportType(node, state);
   } else {
     printTSTypeName(node, state);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -869,6 +995,7 @@ function printTSTypeQueryExprName(node: ESTree.TSTypeQueryExprName, state: State
  * and both the qualifier and the type arguments are optional.
  */
 function printTSImportType(node: ESTree.TSImportType, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   write(state, "import(", CAT_OTHER);
 
   printString(state, node.source.value, node.source.start, node.source.end, node.source);
@@ -886,6 +1013,8 @@ function printTSImportType(node: ESTree.TSImportType, state: State): void {
   }
 
   printTypeArguments(node.typeArguments, state);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -894,6 +1023,7 @@ function printTSImportType(node: ESTree.TSImportType, state: State): void {
  * no space-before-identifier check is needed.
  */
 function printTSImportTypeQualifier(node: ESTree.TSImportTypeQualifier, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   if (node.type === "TSQualifiedName") {
     printTSImportTypeQualifier(node.left, state);
     write(state, ".", CAT_OTHER);
@@ -901,6 +1031,8 @@ function printTSImportTypeQualifier(node: ESTree.TSImportTypeQualifier, state: S
   } else {
     writeIdent(state, node.name);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -916,6 +1048,7 @@ export function printTSTypeAssertion(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_PREFIX;
   if (wrap) write(state, "(", CAT_OTHER);
 
@@ -932,6 +1065,8 @@ export function printTSTypeAssertion(
   printExpression(node.expression, state, PREC_EXPONENTIATION, ctx);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -944,6 +1079,7 @@ export function printTSModuleDeclaration(
   node: ESTree.TSModuleDeclaration | ESTree.TSGlobalDeclaration,
   state: State,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   if (node.declare) write(state, "declare ", CAT_OTHER);
 
   const { kind } = node;
@@ -962,12 +1098,15 @@ export function printTSModuleDeclaration(
   const { body } = node;
   if (body == null) {
     write(state, ";", CAT_OTHER);
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
   write(state, " ", CAT_OTHER);
 
   printModuleBlock(body, state);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -975,10 +1114,13 @@ export function printTSModuleDeclaration(
  * plain statement loop, so a directive prologue inside a module block is still recognized.
  */
 function printModuleBlock(body: ESTree.TSModuleBlock, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(body, state);
   const statements = body.body;
-  if (statements.length === 0) {
+  if (statements.length === 0 && (!COMMENTS || !hasInsideComments(body, state))) {
     writeWithMapNoLast(state, "{", body.start, body.end, body);
+    if (COMMENTS) printInsideComments(body, state);
     writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
+    if (commentOwner) finishNodeComments(body, state);
     return;
   }
 
@@ -986,10 +1128,17 @@ function printModuleBlock(body: ESTree.TSModuleBlock, state: State): void {
 
   state.indentLevel++;
   printDirectivesAndStatements(statements, state);
+  if (COMMENTS) {
+    printInsideComments(body, state);
+    if (state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
+  }
   state.indentLevel--;
 
   printIndent(state);
+  if (COMMENTS) printInsideComments(body, state);
   writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
+
+  if (commentOwner) finishNodeComments(body, state);
 }
 
 /**
@@ -1004,13 +1153,18 @@ export function printTSInterfaceDeclaration(
   node: ESTree.TSInterfaceDeclaration,
   state: State,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printSpaceBeforeIdentifier(state);
 
   if (node.declare) write(state, "declare ", CAT_OTHER);
 
   write(state, "interface ", CAT_OTHER);
 
-  writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+  {
+    const nameCommentOwner = COMMENTS && startNodeComments(node.id, state);
+    writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+    if (nameCommentOwner) finishNodeComments(node.id, state);
+  }
 
   printTypeParameters(node.typeParameters, state);
 
@@ -1022,19 +1176,27 @@ export function printTSInterfaceDeclaration(
     for (let i = 0; i < length; i++) {
       if (i > 0) write(state, ", ", CAT_OTHER);
       const clause = extendsClauses[i];
+      const clauseOwner = COMMENTS && startNodeComments(clause, state);
       printExpression(clause.expression, state, PREC_CALL, CTX_NONE);
       printTypeArguments(clause.typeArguments, state);
+      if (clauseOwner) finishNodeComments(clause, state);
     }
   }
 
   write(state, " ", CAT_OTHER);
 
   const members = node.body.body;
+  const bodyOwner = COMMENTS && startNodeComments(node.body, state);
   const { length } = members;
-  if (length === 0) {
+  if (length === 0 && (!COMMENTS || !hasInsideComments(node.body, state))) {
     writeWithMapNoLast(state, "{", node.body.start, node.body.end, node.body);
+    if (COMMENTS) printInsideComments(node.body, state);
     writeWithMapEnd(state, "}", CAT_OTHER, node.body.start, node.body.end, node.body);
-    return;
+    {
+      if (bodyOwner) finishNodeComments(node.body, state);
+      if (commentOwner) finishNodeComments(node, state);
+      return;
+    }
   }
 
   writeWithMap(state, "{\n", CAT_OTHER, node.body.start, node.body.end, node.body);
@@ -1042,13 +1204,23 @@ export function printTSInterfaceDeclaration(
 
   for (let i = 0; i < length; i++) {
     printIndent(state);
+    const memberOwner = COMMENTS && startNodeComments(members[i], state);
     printTSSignature(members[i], state, CTX_NONE);
     write(state, ";\n", CAT_OTHER);
+    if (memberOwner) finishNodeComments(members[i], state);
   }
 
+  if (COMMENTS) {
+    printInsideComments(node.body, state);
+    if (state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
+  }
   state.indentLevel--;
   printIndent(state);
+  if (COMMENTS) printInsideComments(node.body, state);
   writeWithMapEnd(state, "}", CAT_OTHER, node.body.start, node.body.end, node.body);
+
+  if (bodyOwner) finishNodeComments(node.body, state);
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -1060,11 +1232,16 @@ export function printTSTypeAliasDeclaration(
   node: ESTree.TSTypeAliasDeclaration,
   state: State,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   if (node.declare) write(state, "declare ", CAT_OTHER);
 
   write(state, "type ", CAT_OTHER);
 
-  writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+  {
+    const nameCommentOwner = COMMENTS && startNodeComments(node.id, state);
+    writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+    if (nameCommentOwner) finishNodeComments(node.id, state);
+  }
 
   printTypeParameters(node.typeParameters, state);
 
@@ -1076,6 +1253,8 @@ export function printTSTypeAliasDeclaration(
   if (needsParens) write(state, "(", CAT_OTHER);
   printTSType(node.typeAnnotation, state);
   if (needsParens) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -1122,6 +1301,7 @@ function isLeftmostIntrinsicReference(ty: ESTree.TSType): boolean {
  *
  */
 export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printSpaceBeforeIdentifier(state);
 
   if (node.declare) write(state, "declare ", CAT_OTHER);
@@ -1129,17 +1309,27 @@ export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: St
 
   write(state, "enum ", CAT_OTHER);
 
-  writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+  {
+    const nameCommentOwner = COMMENTS && startNodeComments(node.id, state);
+    writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+    if (nameCommentOwner) finishNodeComments(node.id, state);
+  }
 
   write(state, " ", CAT_OTHER);
 
   const { body } = node;
   const { members } = body;
+  const bodyOwner = COMMENTS && startNodeComments(node.body, state);
   const { length } = members;
-  if (length === 0) {
+  if (length === 0 && (!COMMENTS || !hasInsideComments(node.body, state))) {
     writeWithMapNoLast(state, "{", body.start, body.end, body);
+    if (COMMENTS) printInsideComments(node.body, state);
     writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
-    return;
+    {
+      if (bodyOwner) finishNodeComments(node.body, state);
+      if (commentOwner) finishNodeComments(node, state);
+      return;
+    }
   }
 
   writeWithMap(state, "{\n", CAT_OTHER, body.start, body.end, body);
@@ -1149,12 +1339,21 @@ export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: St
   for (let i = 0; i < length; i++) {
     printIndent(state);
     printTSEnumMember(members[i], state);
-    write(state, i !== lastIndex ? ",\n" : "\n", CAT_OTHER);
+    if (i !== lastIndex) write(state, ",\n", CAT_OTHER);
+    else if (!COMMENTS || state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
   }
 
+  if (COMMENTS) {
+    printInsideComments(node.body, state);
+    if (state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
+  }
   state.indentLevel--;
   printIndent(state);
+  if (COMMENTS) printInsideComments(node.body, state);
   writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
+
+  if (bodyOwner) finishNodeComments(node.body, state);
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -1163,10 +1362,15 @@ export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: St
  * and so has no substitutions.
  */
 function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { id } = node;
   if (id.type === "Identifier") {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, id.name, id.start, id.end, id);
+    {
+      const nameCommentOwner = COMMENTS && startNodeComments(id, state);
+      writeWithMapNamed(state, id.name, id.start, id.end, id);
+      if (nameCommentOwner) finishNodeComments(id, state);
+    }
   } else if (id.type === "Literal") {
     printString(state, id.value, id.start, id.end, id);
   } else {
@@ -1187,6 +1391,8 @@ function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
     write(state, " = ", CAT_OTHER);
     printExpression(node.initializer, state, PREC_LOWEST, CTX_NONE);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -1198,11 +1404,16 @@ export function printTSImportEqualsDeclaration(
   node: ESTree.TSImportEqualsDeclaration,
   state: State,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   write(state, "import ", CAT_OTHER);
 
   if (node.importKind === "type") write(state, "type ", CAT_OTHER);
 
-  writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+  {
+    const nameCommentOwner = COMMENTS && startNodeComments(node.id, state);
+    writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+    if (nameCommentOwner) finishNodeComments(node.id, state);
+  }
 
   write(state, " = ", CAT_OTHER);
 
@@ -1220,4 +1431,6 @@ export function printTSImportEqualsDeclaration(
   } else {
     printTSTypeName(ref, state);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }

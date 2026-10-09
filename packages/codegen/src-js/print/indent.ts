@@ -23,8 +23,17 @@ export function printIndent(state: State): void {
   if (state.output.length >= OUTPUT_CHUNK_LENGTH) spillOutputChunk(state);
 
   if (state.pendingIndentAsSpace) {
-    write(state, " ", CAT_OTHER);
+    if (!COMMENTS || !" \t\n".includes(state.commentLastChar)) write(state, " ", CAT_OTHER);
     state.pendingIndentAsSpace = false;
+    return;
+  }
+
+  if (
+    COMMENTS
+    && state.commentOwners !== null
+    && state.commentLastChar !== ""
+    && state.commentLastChar !== "\n"
+  ) {
     return;
   }
 

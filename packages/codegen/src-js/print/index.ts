@@ -9,6 +9,7 @@
 //
 // Reference: `oxc/crates/oxc_codegen/src/{gen.rs,lib.rs,str.rs,binary_expr_visitor.rs}`
 
+import { flushCommentWhitespace, printUnclaimedComments } from "./comments.ts";
 import { debugAssert, typeAssertIs } from "../asserts.ts";
 import { flattenString } from "./flatten.ts";
 import { generateSourceMap } from "./source_map.ts";
@@ -26,16 +27,22 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  *
  * The result is an object so that further outputs (a source map) can be added without a breaking change.
  *
- * @param state - Created by the entry point, so that all 4 builds share one class and so one object shape
+ * @param state - Created by the entry point, so that all 8 builds share one class and so one object shape
  * @param options - The same options `state` was created from, for the parts only this build acts on
  * @returns Object holding the generated code
  */
 export function printSync(node: ESTree.Node, state: State, options: Options): CodegenResult {
+  if (COMMENTS) state.commentRoot = node;
   if (node.type === "Program") {
     printProgram(node, state);
   } else {
     typeAssertIs<ESTree.Statement>(node);
     printStatement(node, state);
+  }
+
+  if (COMMENTS) {
+    printUnclaimedComments(state);
+    flushCommentWhitespace(state);
   }
 
   // Flatten the output before handing it on - see `flatten.ts` for why, and why this way.

@@ -4,17 +4,18 @@
 // a native one here, where this port diverges from Rust `oxc_codegen` (notably `state.last`),
 // and what makes it fast. Read it before changing anything below, or in `print`.
 //
-// The printer is built 4 times from `print/`, over 2 build-time feature flags.
+// The printer is built 8 times from `print/`, over 3 build-time feature flags.
 //
 // 1. Source map support - costs a little speed even when it's unused.
 // 2. TypeScript support - costs JS-only ASTs a swathe of field checks and switch arms.
+// 3. Attached comment printing - removed from disabled builds.
 //
 // The most important effect of separate JS and TS builds is not the reduced logic when printing a JS AST,
 // but that they receive differently-shaped AST node objects. If both JS-shape and TS-shape ASTs
 // pass through the same functions, every function becomes polymorphic, which is a large slow-down.
 // Having specialized code paths for JS and TS-shape ASTs avoids this problem - most functions remain monomorphic.
 //
-// Each combination is its own build, lazy-loaded depending on the `sourcemap` and `ts` options.
+// Each combination is its own build, lazy-loaded depending on the `sourcemap`, `ts`, and `comments` options.
 //
 // `require` rather than `import()` because the printer is synchronous.
 // All builds are ESM, which `require` can load on the Node versions in this package's `engines` field.
@@ -40,19 +41,23 @@ const require = createRequire(import.meta.url);
 const EMPTY_OPTIONS: Options = {};
 
 /**
- * Printer builds, indexed by `(ts ? 1 : 0) + (sourcemap ? 2 : 0)`. Lazily loaded as needed.
+ * Printer builds, indexed by `(ts ? 1 : 0) + (sourcemap ? 2 : 0) + (comments ? 4 : 0)`. Lazily loaded as needed.
  */
 const PRINTER_PATHS = [
   "./print_js.js",
   "./print_ts.js",
   "./print_js_maps.js",
   "./print_ts_maps.js",
+  "./print_js_comments.js",
+  "./print_ts_comments.js",
+  "./print_js_maps_comments.js",
+  "./print_ts_maps_comments.js",
 ];
 
 /**
  * The loaded builds, in the same order as `PRINTER_PATHS`, and `null` until first used.
  */
-const printers: (PrintModule["printSync"] | null)[] = [null, null, null, null];
+const printers: (PrintModule["printSync"] | null)[] = Array(8).fill(null);
 
 /**
  * Print `node`, returning an object including the generated code.
@@ -65,14 +70,15 @@ export function printSync(
   node: ESTree.Program | ESTree.Statement,
   options?: Options,
 ): CodegenResult {
-  // The printer is built 4 times, over whether the AST may contain TypeScript and whether
-  // source mappings are wanted. This picks the build the options call for and loads it on first use,
+  // The printer is built 8 times, over TypeScript, source maps, and attached comments.
+  // This picks the build the options call for and loads it on first use,
   // so a caller printing only JavaScript never pays for the TypeScript printers.
   let index = 0;
   if (options == null) {
     options = EMPTY_OPTIONS;
   } else {
     if (options.ts === true) index = 1;
+    if (options.comments === true) index |= 4;
     if (options.sourcemap === true) {
       if (typeof options.sourceText !== "string") {
         throw new TypeError("`sourceText` must be a string when `sourcemap` is true");
@@ -90,7 +96,7 @@ export function printSync(
     printers[index] = print;
   }
 
-  // State is created here, not in the printer, so that all 4 builds share one class
+  // State is created here, not in the printer, so that all 8 builds share one class
   // and therefore see one object shape
   return print(node, new State(options), options);
 }

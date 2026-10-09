@@ -1,5 +1,11 @@
 // Binding patterns.
 
+import {
+  startNodeComments,
+  finishNodeComments,
+  hasInsideComments,
+  printInsideComments,
+} from "./comments.ts";
 import { typeAssertIs } from "../asserts.ts";
 import { CAT_CLOSE_BRACKET, CAT_OTHER, CAT_QUESTION } from "./categories.ts";
 import { write, writeWithMap, writeWithMapNamed, writeWithMapNamedPrivate } from "./write.ts";
@@ -29,10 +35,15 @@ type BindingPatternNode =
  * Print anything which can be bound to - a name, a destructuring pattern, or one carrying a default.
  */
 export function printBindingPattern(node: BindingPatternNode | UnknownNode, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   switch (node.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, node.name, node.start, node.end, node);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(node, state);
+        writeWithMapNamed(state, node.name, node.start, node.end, node);
+        if (nameCommentOwner) finishNodeComments(node, state);
+      }
       if (TS && node.optional) write(state, "?", CAT_QUESTION);
       if (TS && node.typeAnnotation != null) printTypeAnnotation(node.typeAnnotation, state);
       break;
@@ -59,17 +70,27 @@ export function printBindingPattern(node: BindingPatternNode | UnknownNode, stat
     default:
       throw new Error(`Unknown binding pattern type: ${node.type}`);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print an object destructuring pattern, as in `const { a, b } = obj`.
  */
 function printObjectBindingPattern(node: ESTree.ObjectPattern, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { properties } = node;
   const { length } = properties;
 
   if (length === 0) {
-    writeWithMap(state, "{}", CAT_OTHER, node.start, node.end, node);
+    if (COMMENTS && hasInsideComments(node, state)) {
+      writeWithMap(state, "{", CAT_OTHER, node.start, node.end, node);
+      printInsideComments(node, state);
+      write(state, "}", CAT_OTHER);
+    } else {
+      writeWithMap(state, "{}", CAT_OTHER, node.start, node.end, node);
+    }
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -79,20 +100,27 @@ function printObjectBindingPattern(node: ESTree.ObjectPattern, state: State): vo
     if (i > 0) write(state, ", ", CAT_OTHER);
     const property = properties[i];
     if (property.type === "RestElement") {
+      const restOwner = COMMENTS && startNodeComments(property, state);
       writeWithMap(state, "...", CAT_OTHER, property.start, property.end, property);
       printBindingPattern(property.argument, state);
+      if (restOwner) finishNodeComments(property, state);
     } else {
       printBindingProperty(property, state);
     }
   }
 
-  write(state, " }", CAT_OTHER);
+  if (!COMMENTS || state.commentLastChar !== "\n") write(state, " ", CAT_OTHER);
+  if (COMMENTS) printInsideComments(node, state);
+  write(state, "}", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print one property of an object pattern, in shorthand where the key and the binding agree.
  */
 function printBindingProperty(node: ESTree.BindingProperty, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   // Shorthand is re-derived from names (matching Oxc), not from the flag.
   const { key, value } = node;
 
@@ -113,7 +141,9 @@ function printBindingProperty(node: ESTree.BindingProperty, state: State): void 
     if (node.computed) {
       write(state, "[", CAT_OTHER);
       typeAssertIs<ESTree.Expression>(key);
+      const keyOwner = COMMENTS && startNodeComments(key, state, false);
       printExpression(key, state, PREC_COMMA, CTX_NONE);
+      if (keyOwner) finishNodeComments(key, state);
       write(state, "]", CAT_CLOSE_BRACKET);
     } else {
       printPropertyKey(key, state);
@@ -121,7 +151,25 @@ function printBindingProperty(node: ESTree.BindingProperty, state: State): void 
     write(state, ": ", CAT_OTHER);
   }
 
-  printBindingPattern(value, state);
+  if (COMMENTS && shorthand) {
+    if (value.type === "AssignmentPattern") {
+      const patternOwner = startNodeComments(value, state);
+      const keyOwner = startNodeComments(key, state);
+      printBindingPattern(value.left, state);
+      if (keyOwner) finishNodeComments(key, state);
+      write(state, " = ", CAT_OTHER);
+      printExpression(value.right, state, PREC_COMMA, CTX_NONE);
+      if (patternOwner) finishNodeComments(value, state);
+    } else {
+      const keyOwner = startNodeComments(key, state);
+      printBindingPattern(value, state);
+      if (keyOwner) finishNodeComments(key, state);
+    }
+  } else {
+    printBindingPattern(value, state);
+  }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -131,13 +179,22 @@ function printBindingProperty(node: ESTree.BindingProperty, state: State): void 
  * because whether a key must be computed depends on what it is, not on how the source wrote it.
  */
 export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(key, state, false);
   switch (key.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, key.name, key.start, key.end, key);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(key, state);
+        writeWithMapNamed(state, key.name, key.start, key.end, key);
+        if (nameCommentOwner) finishNodeComments(key, state);
+      }
       break;
     case "PrivateIdentifier":
-      writeWithMapNamedPrivate(state, key.name, key.start, key.end, key);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(key, state);
+        writeWithMapNamedPrivate(state, key.name, key.start, key.end, key);
+        if (nameCommentOwner) finishNodeComments(key, state);
+      }
       break;
     case "Literal":
       if (typeof key.value === "string") {
@@ -149,12 +206,15 @@ export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
     default:
       printExpression(key, state, PREC_COMMA, CTX_NONE);
   }
+
+  if (commentOwner) finishNodeComments(key, state);
 }
 
 /**
  * Print an array destructuring pattern, holes and rest element included.
  */
 function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   // Oxc stores the rest element separately from the other elements.
   // A trailing comma is printed before it, and a space always precedes it.
   const { elements } = node;
@@ -185,5 +245,9 @@ function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void
     printBindingPattern(rest, state);
   }
 
+  if (COMMENTS) printInsideComments(node, state);
+
   write(state, "]", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }

@@ -1,5 +1,13 @@
 // Classes.
 
+import {
+  hasAttachedComments,
+  startNodeComments,
+  finishNodeComments,
+  hasInsideComments,
+  printInsideComments,
+  printDeferredLeadingComments,
+} from "./comments.ts";
 import { typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
 import {
@@ -51,6 +59,7 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * as `printFunction` does for functions.
  */
 export function printClass(node: ESTree.Class, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   let wrap = false;
   if (node.type === "ClassExpression") {
     debugAssertLastFresh(state);
@@ -58,6 +67,8 @@ export function printClass(node: ESTree.Class, state: State): void {
     wrap = (state.last | 1) === CAT_START_OF_STMT;
   }
   if (wrap) write(state, "(", CAT_OTHER);
+
+  if (COMMENTS) printDeferredLeadingComments(node, state);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
@@ -84,7 +95,11 @@ export function printClass(node: ESTree.Class, state: State): void {
 
   if (node.id != null) {
     write(state, " ", CAT_OTHER);
-    writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+    {
+      const nameCommentOwner = COMMENTS && startNodeComments(node.id, state);
+      writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
+      if (nameCommentOwner) finishNodeComments(node.id, state);
+    }
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);
@@ -113,6 +128,8 @@ export function printClass(node: ESTree.Class, state: State): void {
   printClassBody(node.body, state);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -122,15 +139,22 @@ export function printDecorators(decorators: ESTree.Decorator[], state: State): v
   const { length } = decorators;
   for (let i = 0; i < length; i++) {
     const decorator = decorators[i];
+    const decoratorOwner = COMMENTS && startNodeComments(decorator, state);
 
     writeWithMap(state, "@", CAT_OTHER, decorator.start, decorator.end, decorator);
 
     const { expression } = decorator;
-    const wrap = decoratorNeedsWrap(expression);
+    const wrap =
+      decoratorNeedsWrap(expression)
+      && (!COMMENTS
+        || !hasAttachedComments(state)
+        || expression.type !== "ParenthesizedExpression");
     if (wrap) write(state, "(", CAT_OTHER);
     printExpression(expression, state, PREC_LOWEST, CTX_NONE);
     if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 
+    if (COMMENTS) printInsideComments(decorator, state);
+    if (decoratorOwner) finishNodeComments(decorator, state);
     write(state, " ", CAT_OTHER);
   }
 }
@@ -162,11 +186,13 @@ function decoratorNeedsWrap(expr: ESTree.Expression): boolean {
  * Print the members of a class in braces, empty ones tight.
  */
 function printClassBody(node: ClassBodyNode, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { body } = node;
   const { length } = body;
-  if (length === 0) {
+  if (length === 0 && (!COMMENTS || !hasInsideComments(node, state))) {
     writeWithMapNoLast(state, "{", node.start, node.end, node);
     writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -178,6 +204,7 @@ function printClassBody(node: ClassBodyNode, state: State): void {
     printIndent(state);
 
     const element = body[i];
+    const elementOwner = COMMENTS && startNodeComments(element, state);
     switch (element.type) {
       case "MethodDefinition":
       /* IF TS */
@@ -191,6 +218,7 @@ function printClassBody(node: ClassBodyNode, state: State): void {
       case "TSAbstractPropertyDefinition":
         /* END_IF */
         printPropertyDefinition(element, state);
+        if (COMMENTS) printInsideComments(element, state);
         write(state, ";\n", CAT_OTHER);
         break;
       case "StaticBlock":
@@ -202,29 +230,39 @@ function printClassBody(node: ClassBodyNode, state: State): void {
       case "TSAbstractAccessorProperty":
         /* END_IF */
         printAccessorProperty(element, state);
+        if (COMMENTS) printInsideComments(element, state);
         write(state, ";\n", CAT_OTHER);
         break;
       /* IF TS */
       case "TSIndexSignature":
         printTSIndexSignature(element, state);
+        if (COMMENTS) printInsideComments(element, state);
         write(state, ";\n", CAT_OTHER);
         break;
       /* END_IF */
       default:
         throw new Error(`Unknown class element type: ${element.type}`);
     }
+    if (elementOwner) finishNodeComments(element, state);
   }
 
+  if (COMMENTS) {
+    printInsideComments(node, state);
+    if (state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
+  }
   state.indentLevel--;
 
   printIndent(state);
   writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print a method, including getters, setters, constructors and their modifiers.
  */
 function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   markMapStart(state, node.start, node.end, node);
 
   const { decorators } = node;
@@ -269,17 +307,21 @@ function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
   if (node.computed) {
     write(state, "[", CAT_OTHER);
     typeAssertIs<ESTree.Expression>(node.key);
+    const keyOwner = COMMENTS && startNodeComments(node.key, state, false);
     printExpression(node.key, state, PREC_COMMA, CTX_NONE);
+    if (keyOwner) finishNodeComments(node.key, state);
     write(state, "]", CAT_CLOSE_BRACKET);
+    if (COMMENTS) printInsideComments(node, state);
   } else {
     printPropertyKey(node.key, state);
   }
 
   if (TS && node.optional) write(state, "?", CAT_QUESTION);
 
+  const functionOwner = COMMENTS && startNodeComments(func, state, false);
   if (TS) printTypeParameters(func.typeParameters, state);
 
-  printParenParams(func.params, state);
+  printParenParams(func.params, state, COMMENTS ? func : undefined);
 
   if (TS && func.returnType != null) {
     printTypeAnnotation(func.returnType, state);
@@ -291,12 +333,16 @@ function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
   } else {
     write(state, ";", CAT_OTHER);
   }
+
+  if (functionOwner) finishNodeComments(func, state);
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print a class field, with its modifiers and initializer.
  */
 function printPropertyDefinition(node: PropertyDefinitionNode, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   markMapStart(state, node.start, node.end, node);
 
   const { decorators } = node;
@@ -334,8 +380,11 @@ function printPropertyDefinition(node: PropertyDefinitionNode, state: State): vo
   if (node.computed) {
     write(state, "[", CAT_OTHER);
     typeAssertIs<ESTree.Expression>(node.key);
+    const keyOwner = COMMENTS && startNodeComments(node.key, state, false);
     printExpression(node.key, state, PREC_COMMA, CTX_NONE);
+    if (keyOwner) finishNodeComments(node.key, state);
     write(state, "]", CAT_CLOSE_BRACKET);
+    if (COMMENTS) printInsideComments(node, state);
   } else {
     printPropertyKey(node.key, state);
   }
@@ -349,6 +398,8 @@ function printPropertyDefinition(node: PropertyDefinitionNode, state: State): vo
     write(state, " = ", CAT_OTHER);
     printExpression(node.value, state, PREC_COMMA, CTX_NONE);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -358,15 +409,17 @@ function printPropertyDefinition(node: PropertyDefinitionNode, state: State): vo
  * one needs no protection from being read back as a directive.
  */
 function printStaticBlock(node: ESTree.StaticBlock, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   printSpaceBeforeIdentifier(state);
 
   writeWithMap(state, "static ", CAT_OTHER, node.start, node.end, node);
 
   const { body } = node;
   const { length } = body;
-  if (length === 0) {
+  if (length === 0 && (!COMMENTS || !hasInsideComments(node, state))) {
     writeWithMapNoLast(state, "{", node.start, node.end, node);
     writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -378,21 +431,29 @@ function printStaticBlock(node: ESTree.StaticBlock, state: State): void {
     printStatement(body[i], state);
   }
 
+  if (COMMENTS) {
+    printInsideComments(node, state);
+    if (state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
+  }
   state.indentLevel--;
 
   printIndent(state);
   writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
  * Print an `accessor` field.
  */
 function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   markMapStart(state, node.start, node.end, node);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
 
+  const keyOwner = COMMENTS && startNodeComments(node.key, state);
   if (TS && node.accessibility != null) {
     printSpaceBeforeIdentifier(state);
     writeNoLast(state, node.accessibility);
@@ -419,13 +480,17 @@ function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
   if (node.computed) {
     write(state, " [", CAT_OTHER);
     typeAssertIs<ESTree.Expression>(node.key);
+    const keyOwner = COMMENTS && startNodeComments(node.key, state, false);
     printExpression(node.key, state, PREC_COMMA, CTX_NONE);
+    if (keyOwner) finishNodeComments(node.key, state);
     write(state, "]", CAT_CLOSE_BRACKET);
+    if (COMMENTS) printInsideComments(node, state);
   } else {
     write(state, " ", CAT_OTHER);
     printPropertyKey(node.key, state);
   }
 
+  if (keyOwner) finishNodeComments(node.key, state);
   if (TS && node.definite) write(state, "!", CAT_OP_UN_NOT);
   if (TS && node.typeAnnotation != null) printTypeAnnotation(node.typeAnnotation, state);
 
@@ -433,4 +498,6 @@ function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
     write(state, " = ", CAT_OTHER);
     printExpression(node.value, state, PREC_COMMA, CTX_NONE);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }

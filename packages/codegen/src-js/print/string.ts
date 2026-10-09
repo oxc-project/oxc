@@ -1,5 +1,6 @@
 // String literal printing (port of `str.rs`, pretty mode: fixed quote).
 
+import { startNodeComments, finishNodeComments } from "./comments.ts";
 import { CAT_OTHER } from "./categories.ts";
 import { write, writeNoLast, writeWithMapNoLast } from "./write.ts";
 import { debugAssert } from "../asserts.ts";
@@ -30,6 +31,11 @@ export function printString(
   end: number,
   node: UnnamedMappableNode,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
+  if (COMMENTS && state.pendingIndentAsSpace) {
+    state.pendingIndentAsSpace = false;
+    if (!" \t\n".includes(state.commentLastChar)) write(state, " ", CAT_OTHER);
+  }
   // Quote is fixed - double, matching `oxc_codegen`'s default option
   writeWithMapNoLast(state, '"', start, end, node);
 
@@ -41,6 +47,7 @@ export function printString(
   }
 
   write(state, '"', CAT_OTHER);
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**

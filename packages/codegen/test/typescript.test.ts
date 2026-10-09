@@ -43,7 +43,7 @@ const SKIPPED_PATHS = new Set([
   "compiler/braceEscapedSurrogatePairLiteralType.ts",
 ]);
 
-describe.concurrent("TypeScript", () => {
+describe.concurrent.for([false, true])("TypeScript comments=%s", (comments) => {
   // oxlint-disable-next-line vitest/expect-expect
   it.for(fixturePaths)("%s", async (path, ctx) => {
     if (SKIPPED_PATHS.has(path)) ctx.skip();
@@ -67,6 +67,7 @@ describe.concurrent("TypeScript", () => {
         lang,
         sourceType.module ? "module" : "unambiguous",
         "ts",
+        comments,
       );
       if (checkedUnit) checked++;
     }

@@ -1,5 +1,15 @@
 // Expressions.
 
+import {
+  rememberComments,
+  hasAttachedComments,
+  startNodeComments,
+  finishNodeComments,
+  printInsideComments,
+  printDeferredLeadingComments,
+  printTrailingCommentsInsideParens,
+  expressionStartsWithCommentNewline,
+} from "./comments.ts";
 import { typeAssertIs } from "../asserts.ts";
 import { printAssignmentTarget } from "./assignment_target.ts";
 import { printBinaryish } from "./binary.ts";
@@ -93,13 +103,18 @@ export function printExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   // Arms are ordered roughly in order of most common nodes.
   // V8 turns this into (essentially) as chain of `if ... else if ... else if...`,
   // so making common nodes short-circuit early is a large perf boost.
   switch (node.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, node.name, node.start, node.end, node);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(node, state);
+        writeWithMapNamed(state, node.name, node.start, node.end, node);
+        if (nameCommentOwner) finishNodeComments(node, state);
+      }
       break;
     case "MemberExpression":
       printMemberExpression(node, state, ctx);
@@ -187,6 +202,10 @@ export function printExpression(
       printImportExpression(node, state, precedence, ctx);
       break;
     case "MetaProperty":
+      if (COMMENTS) {
+        rememberComments(node.meta, state);
+        rememberComments(node.property, state);
+      }
       printSpaceBeforeIdentifier(state);
       writeWithMapNoLast(state, node.meta.name, node.start, node.end, node);
       writeNoLast(state, ".");
@@ -199,7 +218,12 @@ export function printExpression(
       // Parens around function/arrow expressions are preserved (Oxc `pife`)
       const { expression } = node;
       const inner = withoutParens(expression);
-      if (inner.type === "FunctionExpression" || inner.type === "ArrowFunctionExpression") {
+      if (COMMENTS && hasAttachedComments(state)) {
+        write(state, "(", CAT_OTHER);
+        printExpression(expression, state, PREC_LOWEST, ctx & ~(CTX_FORBID_CALL | CTX_FORBID_IN));
+        printInsideComments(node, state);
+        write(state, ")", CAT_CLOSE_BRACKET);
+      } else if (inner.type === "FunctionExpression" || inner.type === "ArrowFunctionExpression") {
         write(state, "(", CAT_OTHER);
         printExpression(inner, state, PREC_LOWEST, CTX_NONE);
         write(state, ")", CAT_CLOSE_BRACKET);
@@ -259,6 +283,8 @@ export function printExpression(
   if (SOURCEMAPS && precedence === PREC_POSTFIX && state.last === CAT_CLOSE_BRACKET) {
     markMapAfter(state, node.start, node.end, node);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -274,6 +300,7 @@ export function printMemberExpression(
   state: State,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { object } = node;
   if (node.computed) {
     // `(let)[0]` - a bare `let` object must be wrapped
@@ -288,6 +315,7 @@ export function printMemberExpression(
 
     write(state, "[", CAT_OTHER);
     printExpression(node.property, state, PREC_LOWEST, CTX_NONE);
+    if (COMMENTS) printInsideComments(node, state);
     write(state, "]", CAT_CLOSE_BRACKET);
   } else {
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
@@ -306,11 +334,21 @@ export function printMemberExpression(
 
     const { property } = node;
     if (property.type === "PrivateIdentifier") {
-      writeWithMapNamedPrivate(state, property.name, property.start, property.end, property);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(property, state);
+        writeWithMapNamedPrivate(state, property.name, property.start, property.end, property);
+        if (nameCommentOwner) finishNodeComments(property, state);
+      }
     } else {
-      writeWithMapNamed(state, property.name, property.start, property.end, property);
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(property, state);
+        writeWithMapNamed(state, property.name, property.start, property.end, property);
+        if (nameCommentOwner) finishNodeComments(property, state);
+      }
     }
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -326,6 +364,7 @@ function printCallExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_NEW || (ctx & CTX_FORBID_CALL) !== 0;
 
   if (wrap) {
@@ -342,6 +381,7 @@ function printCallExpression(
     if (DEBUG) state.lastIsStale = false;
   }
 
+  if (COMMENTS) printDeferredLeadingComments(node, state);
   printExpression(node.callee, state, PREC_POSTFIX, CTX_NONE);
 
   if (node.optional) write(state, "?.", CAT_OTHER);
@@ -351,6 +391,8 @@ function printCallExpression(
   printArguments(node, node.arguments, state);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -363,10 +405,13 @@ function printArguments(
   args: ESTree.Argument[],
   state: State,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { length } = args;
   if (length === 0) {
     writeNoLast(state, "(");
+    if (COMMENTS) printInsideComments(node, state);
     writeWithMapEnd(state, ")", CAT_CLOSE_BRACKET, node.start, node.end, node);
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -376,15 +421,20 @@ function printArguments(
     if (i > 0) write(state, ", ", CAT_OTHER);
 
     const arg = args[i];
+    const argumentOwner = COMMENTS && startNodeComments(arg, state, false);
     if (arg.type === "SpreadElement") {
       writeWithMap(state, "...", CAT_OTHER, arg.start, arg.end, arg);
       printExpression(arg.argument, state, PREC_COMMA, CTX_NONE);
     } else {
       printExpression(arg, state, PREC_COMMA, CTX_NONE);
     }
+    if (argumentOwner) finishNodeComments(arg, state);
   }
 
+  if (COMMENTS) printInsideComments(node, state);
   writeWithMapEnd(state, ")", CAT_CLOSE_BRACKET, node.start, node.end, node);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -400,15 +450,22 @@ export function printPrivateInExpression(
   state: State,
   precedence: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_COMPARE;
   if (wrap) write(state, "(", CAT_OTHER);
 
   markMapStart(state, node.start, node.end, node);
-  writeWithMapNamedPrivate(state, node.left.name, node.left.start, node.left.end, node.left);
+  {
+    const nameCommentOwner = COMMENTS && startNodeComments(node.left, state);
+    writeWithMapNamedPrivate(state, node.left.name, node.left.start, node.left.end, node.left);
+    if (nameCommentOwner) finishNodeComments(node.left, state);
+  }
   write(state, " in ", CAT_OTHER);
   printExpression(node.right, state, PREC_COMPARE, CTX_FORBID_IN);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -419,11 +476,13 @@ export function printPrivateInExpression(
  * inside spaces on a single line, and none gives `{}`.
  */
 function printObjectExpression(node: ESTree.ObjectExpression, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   debugAssertLastFresh(state);
   // `CAT_START_OF_STMT` or `CAT_START_OF_ARROW_EXPR`, which are adjacent - see `categories.ts`
   const wrap = ((state.last - 1) | 1) === CAT_START_OF_STMT;
 
   if (wrap) write(state, "(", CAT_OTHER);
+  if (COMMENTS) printDeferredLeadingComments(node, state);
 
   const { properties } = node;
   const { length } = properties;
@@ -440,18 +499,25 @@ function printObjectExpression(node: ESTree.ObjectExpression, state: State): voi
       printObjectProperty(properties[i], state);
     }
 
-    write(state, "\n", CAT_OTHER);
+    if (!COMMENTS || state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
     state.indentLevel--;
     printIndent(state);
   } else if (length === 1) {
     write(state, " ", CAT_OTHER);
     printObjectProperty(properties[0], state);
-    write(state, " ", CAT_OTHER);
+    if (!COMMENTS || state.commentLastChar !== "\n") write(state, " ", CAT_OTHER);
   }
+
+  if (COMMENTS) printInsideComments(node, state);
 
   writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
 
-  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+  if (wrap) {
+    if (COMMENTS) printTrailingCommentsInsideParens(node, state);
+    write(state, ")", CAT_CLOSE_BRACKET);
+  }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -461,9 +527,11 @@ function printObjectExpression(node: ESTree.ObjectExpression, state: State): voi
  * so the output stays valid however a transform left those flags.
  */
 function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   if (node.type === "SpreadElement") {
     writeWithMap(state, "...", CAT_OTHER, node.start, node.end, node);
     printExpression(node.argument, state, PREC_COMMA, CTX_NONE);
+    if (commentOwner) finishNodeComments(node, state);
     return;
   }
 
@@ -489,15 +557,18 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
       if (node.computed) {
         write(state, "[", CAT_OTHER);
         typeAssertIs<ESTree.Expression>(key);
+        const keyOwner = COMMENTS && startNodeComments(key, state, false);
         printExpression(key, state, PREC_COMMA, CTX_NONE);
+        if (keyOwner) finishNodeComments(key, state);
         write(state, "]", CAT_CLOSE_BRACKET);
       } else {
         printPropertyKey(key, state);
       }
 
+      const functionOwner = COMMENTS && startNodeComments(value, state, false);
       if (TS) printTypeParameters(value.typeParameters, state);
 
-      printParenParams(value.params, state);
+      printParenParams(value.params, state, COMMENTS ? value : undefined);
 
       if (TS && value.returnType != null) printTypeAnnotation(value.returnType, state);
 
@@ -506,6 +577,8 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
         printFunctionBody(value.body, state);
       }
 
+      if (functionOwner) finishNodeComments(value, state);
+      if (commentOwner) finishNodeComments(node, state);
       return;
     }
   }
@@ -543,13 +616,17 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   if (shorthand) {
     if (shorthandIdentifier !== null) {
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(
-        state,
-        shorthandIdentifier.name,
-        shorthandIdentifier.start,
-        shorthandIdentifier.end,
-        shorthandIdentifier,
-      );
+      {
+        const nameCommentOwner = COMMENTS && startNodeComments(shorthandIdentifier, state);
+        writeWithMapNamed(
+          state,
+          shorthandIdentifier.name,
+          shorthandIdentifier.start,
+          shorthandIdentifier.end,
+          shorthandIdentifier,
+        );
+        if (nameCommentOwner) finishNodeComments(shorthandIdentifier, state);
+      }
     } else {
       // `__proto__` shorthand, whose value can be anything. Print through any parens around it.
       printExpression(withoutParens(value), state, PREC_COMMA, CTX_NONE);
@@ -558,7 +635,9 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
     if (computed) {
       write(state, "[", CAT_OTHER);
       typeAssertIs<ESTree.Expression>(key);
+      const keyOwner = COMMENTS && startNodeComments(key, state, false);
       printExpression(key, state, PREC_COMMA, CTX_NONE);
+      if (keyOwner) finishNodeComments(key, state);
       write(state, "]", CAT_CLOSE_BRACKET);
     } else {
       printPropertyKey(key, state);
@@ -568,6 +647,8 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
 
     printExpression(value, state, PREC_COMMA, CTX_NONE);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -577,6 +658,7 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
  * written after it, since `[a,]` holds one element and `[a,,]` holds two.
  */
 function printArrayExpression(node: ESTree.ArrayExpression, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { elements } = node;
   const { length } = elements;
   const isMultiLine = length > 2;
@@ -595,12 +677,16 @@ function printArrayExpression(node: ESTree.ArrayExpression, state: State): void 
 
     const element = elements[i];
     if (element != null) {
+      const elementOwner = COMMENTS && startNodeComments(element, state, false);
       if (element.type === "SpreadElement") {
+        const spreadOwner = COMMENTS && startNodeComments(element, state);
         writeWithMap(state, "...", CAT_OTHER, element.start, element.end, element);
         printExpression(element.argument, state, PREC_COMMA, CTX_NONE);
+        if (spreadOwner) finishNodeComments(element, state);
       } else {
         printExpression(element, state, PREC_COMMA, CTX_NONE);
       }
+      if (elementOwner) finishNodeComments(element, state);
     }
 
     if (i === length - 1 && element == null) {
@@ -609,12 +695,16 @@ function printArrayExpression(node: ESTree.ArrayExpression, state: State): void 
   }
 
   if (isMultiLine) {
-    write(state, "\n", CAT_OTHER);
+    if (!COMMENTS || state.commentLastChar !== "\n") write(state, "\n", CAT_OTHER);
     state.indentLevel--;
     printIndent(state);
   }
 
+  if (COMMENTS) printInsideComments(node, state);
+
   writeWithMapEnd(state, "]", CAT_CLOSE_BRACKET, node.start, node.end, node);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -630,6 +720,7 @@ function printAssignmentExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const { left } = node;
 
   let wrap = precedence >= PREC_ASSIGN;
@@ -640,6 +731,7 @@ function printAssignmentExpression(
   }
 
   if (wrap) write(state, "(", CAT_OTHER);
+  if (COMMENTS) printDeferredLeadingComments(node, state);
 
   markMapStart(state, node.start, node.end, node);
 
@@ -647,7 +739,12 @@ function printAssignmentExpression(
   write(state, PADDED_ASSIGN_OPERATORS[node.operator], CAT_OTHER);
   printExpression(node.right, state, PREC_COMMA, ctx);
 
-  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+  if (wrap) {
+    if (COMMENTS) printTrailingCommentsInsideParens(node, state);
+    write(state, ")", CAT_CLOSE_BRACKET);
+  }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -663,6 +760,7 @@ function printUpdateExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const selfPrecedence = node.prefix ? PREC_PREFIX : PREC_POSTFIX;
   const wrap = precedence >= selfPrecedence;
   if (wrap) write(state, "(", CAT_OTHER);
@@ -670,17 +768,21 @@ function printUpdateExpression(
   const operatorCode = updateOperatorCode(node.operator);
 
   if (node.prefix) {
+    if (COMMENTS) printInsideComments(node, state);
     printSpaceBeforeOperator(state, operatorCode);
     writeWithMap(state, node.operator, operatorCode, node.start, node.end, node);
     printExpression(node.argument, state, PREC_PREFIX, ctx);
   } else {
     markMapStart(state, node.start, node.end, node);
     printExpression(node.argument, state, PREC_POSTFIX, ctx);
+    if (COMMENTS) printInsideComments(node, state);
     printSpaceBeforeOperator(state, operatorCode);
     write(state, node.operator, operatorCode);
   }
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -696,6 +798,7 @@ function printUnaryExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_PREFIX;
   if (wrap) write(state, "(", CAT_OTHER);
 
@@ -724,6 +827,8 @@ function printUnaryExpression(
   if (isDeleteInfinity) write(state, ")", CAT_CLOSE_BRACKET);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -739,6 +844,7 @@ function printConditionalExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_CONDITIONAL;
 
   // The parens the wrap adds are themselves enough to escape a `for` head,
@@ -749,6 +855,7 @@ function printConditionalExpression(
   } else {
     innerCtx = ctx & CTX_FORBID_IN;
   }
+  if (COMMENTS) printDeferredLeadingComments(node, state);
 
   // Keep an `as` or `satisfies` test grouped, by printing it at the precedence which makes it
   // parenthesize itself. Without those parentheses a regexp consequent does not survive a
@@ -767,7 +874,12 @@ function printConditionalExpression(
   write(state, " : ", CAT_OTHER);
   printExpression(node.alternate, state, PREC_YIELD, innerCtx);
 
-  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+  if (wrap) {
+    if (COMMENTS) printTrailingCommentsInsideParens(node, state);
+    write(state, ")", CAT_CLOSE_BRACKET);
+  }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -781,8 +893,10 @@ function printSequenceExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_COMMA;
   if (wrap) write(state, "(", CAT_OTHER);
+  if (COMMENTS) printDeferredLeadingComments(node, state);
 
   const innerCtx = ctx & ~CTX_FORBID_CALL;
   const { expressions } = node;
@@ -792,7 +906,12 @@ function printSequenceExpression(
     printExpression(expressions[i], state, PREC_LOWEST, innerCtx);
   }
 
-  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+  if (wrap) {
+    if (COMMENTS) printTrailingCommentsInsideParens(node, state);
+    write(state, ")", CAT_CLOSE_BRACKET);
+  }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -809,10 +928,12 @@ function printArrowFunctionExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_ASSIGN;
   const bodyCtx = wrap ? ctx & ~CTX_FORBID_IN : ctx;
 
   if (wrap) write(state, "(", CAT_OTHER);
+  if (COMMENTS) printDeferredLeadingComments(node, state);
 
   if (node.async) {
     printSpaceBeforeIdentifier(state);
@@ -823,11 +944,11 @@ function printArrowFunctionExpression(
 
   const { returnType } = node;
   if (TS && returnType != null) {
-    printParenParams(node.params, state);
+    printParenParams(node.params, state, COMMENTS ? node : undefined);
     printTypeAnnotation(returnType, state);
     write(state, " => ", CAT_OTHER);
   } else {
-    printParenParamsArrow(node.params, state);
+    printParenParamsArrow(node.params, state, COMMENTS ? node : undefined);
   }
 
   const { body } = node;
@@ -839,6 +960,8 @@ function printArrowFunctionExpression(
   }
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -848,8 +971,10 @@ function printArrowFunctionExpression(
  * rather than being taken for this `new`'s own argument list.
  */
 function printNewExpression(node: ESTree.NewExpression, state: State, precedence: number): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_CALL;
   if (wrap) write(state, "(", CAT_OTHER);
+  if (COMMENTS) printDeferredLeadingComments(node, state);
 
   printSpaceBeforeIdentifier(state);
   writeWithMap(state, "new ", CAT_OTHER, node.start, node.end, node);
@@ -858,6 +983,8 @@ function printNewExpression(node: ESTree.NewExpression, state: State, precedence
   printArguments(node, node.arguments, state);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -867,6 +994,7 @@ function printNewExpression(node: ESTree.NewExpression, state: State, precedence
  * Substitutions print from `PREC_LOWEST` with no context flags, since `${` and `}` fence them from everything around.
  */
 function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   writeWithMapNoLast(state, "`", node.start, node.end, node);
 
   const { quasis, expressions } = node;
@@ -888,6 +1016,8 @@ function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void 
   }
 
   write(state, "`", CAT_OTHER);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -914,6 +1044,7 @@ function printAwaitExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_PREFIX;
   if (wrap) write(state, "(", CAT_OTHER);
 
@@ -922,6 +1053,8 @@ function printAwaitExpression(
   printExpression(node.argument, state, PREC_EXPONENTIATION, ctx);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -934,6 +1067,7 @@ function printYieldExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_ASSIGN;
   const argumentCtx = wrap ? CTX_NONE : ctx & CTX_FORBID_IN;
   if (wrap) write(state, "(", CAT_OTHER);
@@ -945,10 +1079,15 @@ function printYieldExpression(
 
   if (node.argument != null) {
     write(state, " ", CAT_OTHER);
+    const wrapComment = COMMENTS && expressionStartsWithCommentNewline(node.argument, state);
+    if (wrapComment) write(state, "(", CAT_OTHER);
     printExpression(node.argument, state, PREC_YIELD, argumentCtx);
+    if (wrapComment) write(state, ")", CAT_CLOSE_BRACKET);
   }
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -963,6 +1102,7 @@ function printImportExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_NEW || (ctx & CTX_FORBID_CALL) !== 0;
   if (wrap) write(state, "(", CAT_OTHER);
 
@@ -975,6 +1115,10 @@ function printImportExpression(
   }
 
   write(state, "(", CAT_OTHER);
+  if (COMMENTS) {
+    printInsideComments(node, state);
+    if (state.commentLastChar === "/") state.pendingIndentAsSpace = true;
+  }
   printExpression(node.source, state, PREC_COMMA, CTX_NONE);
   if (node.options != null) {
     write(state, ", ", CAT_OTHER);
@@ -983,6 +1127,8 @@ function printImportExpression(
   write(state, ")", CAT_CLOSE_BRACKET);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+
+  if (commentOwner) finishNodeComments(node, state);
 }
 
 /**
@@ -999,6 +1145,7 @@ function printChainExpression(
   precedence: number,
   ctx: number,
 ): void {
+  const commentOwner = COMMENTS && startNodeComments(node, state);
   const wrap = precedence >= PREC_POSTFIX || (ctx & CTX_FORBID_CALL) !== 0;
   if (wrap) {
     write(state, "(", CAT_OTHER);
@@ -1007,4 +1154,6 @@ function printChainExpression(
   } else {
     printExpression(node.expression, state, precedence, ctx);
   }
+
+  if (commentOwner) finishNodeComments(node, state);
 }
