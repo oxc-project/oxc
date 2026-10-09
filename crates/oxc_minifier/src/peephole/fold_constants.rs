@@ -57,7 +57,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.replace_expression_with(expr, |e, ctx| {
                         Self::join_sequence(e, new_expr, ctx)
                     });
-                };
+                }
             }
             _ if e.may_have_side_effects(ctx) => {}
             _ => {
