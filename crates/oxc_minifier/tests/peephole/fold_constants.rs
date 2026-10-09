@@ -6,7 +6,6 @@ static NEG_MAX_SAFE_INT: i64 = -9_007_199_254_740_991_i64;
 
 use crate::{test, test_same};
 
-// wrap with a function call so it doesn't get removed.
 fn fold(source_text: &str, expected: &str) {
     let source_text = format!("NOOP({source_text})");
     let expected = format!("NOOP({expected})");
@@ -1474,17 +1473,48 @@ fn test_issue_8782() {
 }
 
 #[test]
-fn test_fold_delete_number() {
-    fold("delete (+'x')", "delete 0");
-    fold("delete (5 / 0)", "delete 0");
-    fold_same("delete (1 / 0)");
-    fold("delete (0 / -0)", "delete 0");
-    fold("delete (0 / 0)", "delete 0");
-    fold("delete (Infinity / Infinity)", "delete 0");
-    fold("delete (NaN / 0)", "delete 0");
-    fold("delete (1 / NaN)", "delete 0");
-    fold_same("delete (0, NaN)");
-    fold_same("delete (0, Infinity)");
+fn test_fold_delete() {
+    fold("delete 0", "!0");
+    fold("delete 1", "!0");
+    fold("delete 1n", "!0");
+    fold("delete (+'x')", "!0");
+    fold("delete (1 / -1)", "!0");
+    fold("delete (5 / 0)", "!0");
+    fold("delete (1 / 0)", "!0");
+    fold("delete (0 / -0)", "!0");
+    fold("delete (-1 / 0)", "!0");
+    fold("delete (0 / 0)", "!0");
+    fold("delete (Infinity / Infinity)", "!0");
+    fold("delete (NaN / 0)", "!0");
+    fold("delete (1 / NaN)", "!0");
+    fold("delete undefined", "!1");
+    fold("delete NaN", "!1");
+    fold("delete Infinity", "!1");
+    fold("delete -Infinity", "!0");
+    fold("delete void 0", "!0");
+    fold("delete +a", "(+a, !0)");
+    fold("delete void a", "(a, !0)");
+    fold("delete Math.sqrt(-1)", "!0");
+    fold("delete Math.sqrt(0)", "!0");
+    fold("delete Number('a')", "!0");
+    fold("delete 'a'", "!0");
+    fold("delete (0, NaN)", "!0");
+    fold("delete (0, Infinity)", "!0");
+    fold("delete true", "!0");
+    fold("delete false", "!0");
+    fold("delete null", "!0");
+    fold("delete (0, x)", "(x, !0)");
+
+    fold_same("delete a");
+    fold_same("delete a()");
+    fold_same("delete a[0]");
+    fold_same("delete a?.[0]");
+    fold_same("delete a.b");
+    fold_same("delete a.b()");
+    fold_same("delete a?.b");
+    fold_same("delete a?.b()");
+
+    fold_same("function(NaN){ return delete NaN; }");
 }
 
 #[test]

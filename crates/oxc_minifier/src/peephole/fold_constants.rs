@@ -6,6 +6,7 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
     with_number_literal,
 };
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
@@ -28,12 +29,39 @@ impl<'a> PeepholeOptimizations {
                 {}
             // Do not fold big int.
             UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => {}
+            UnaryOperator::Delete => {
+                let new_value = match &e.argument {
+                    Expression::Identifier(ident)
+                        if matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
+                            && ident.is_global_reference(ctx.scoping()) =>
+                    {
+                        false
+                    }
+                    Expression::SequenceExpression(seq) if seq.expressions.len() > 1 => true,
+                    Expression::CallExpression(_)
+                    | Expression::ComputedMemberExpression(_)
+                    | Expression::ChainExpression(_)
+                    | Expression::StaticMemberExpression(_)
+                    | Expression::Identifier(_)
+                    | Expression::SequenceExpression(_) => {
+                        return;
+                    }
+                    _ => true,
+                };
+                let new_expr = Expression::new_boolean_literal(e.span, new_value, ctx);
+                if Self::remove_unused_expression(&mut e.argument, ctx) {
+                    ctx.drop_expression(&e.argument);
+                    ctx.replace_expression(expr, new_expr);
+                } else {
+                    ctx.replace_expression_with(expr, Self::unwrap_unary);
+                    ctx.replace_expression_with(expr, |e, ctx| {
+                        Self::join_sequence(e, new_expr, ctx)
+                    });
+                };
+            }
             _ if e.may_have_side_effects(ctx) => {}
             _ => {
-                if let Some(mut changed) =
-                    e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v))
-                {
-                    Self::normalize_non_finite_number_for_delete(&mut changed, ctx);
+                if let Some(changed) = e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v)) {
                     ctx.replace_expression(expr, changed);
                 }
             }
@@ -284,6 +312,7 @@ impl<'a> PeepholeOptimizations {
         if e.operator == BinaryOperator::Division
             && matches!(&e.right, Expression::NumericLiteral(r) if r.value == 0.0 && r.value.is_sign_positive())
             && matches!(&e.left, Expression::NumericLiteral(l) if l.value.abs() == 1.0)
+            && !matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
         {
             return;
         }
@@ -364,7 +393,14 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Division => Self::try_fold_safe_integer_numeric_expression(e, ctx)
                 .or_else(|| {
                     Self::extract_numeric_values(e, ctx)
-                        .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
+                        .filter(|(left, right)| {
+                            *left == 0.0
+                                || left.is_nan()
+                                || left.is_infinite()
+                                || *right == 0.0
+                                || right.is_nan()
+                                || right.is_infinite()
+                        })
                         .and_then(|_| ctx.eval_binary(e))
                 }),
             BinaryOperator::ShiftLeft => {
@@ -389,8 +425,7 @@ impl<'a> PeepholeOptimizations {
             }
             BinaryOperator::In => None,
         };
-        if let Some(mut changed) = changed {
-            Self::normalize_non_finite_number_for_delete(&mut changed, ctx);
+        if let Some(changed) = changed {
             ctx.replace_expression(expr, changed);
         }
     }
@@ -1021,15 +1056,6 @@ impl<'a> PeepholeOptimizations {
             if next_quasi.is_some_and(|q| q.tail) {
                 quasi.tail = true;
             }
-        }
-    }
-
-    fn normalize_non_finite_number_for_delete(expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
-        if let Expression::NumericLiteral(num_expr) = expr
-            && (num_expr.value.is_nan() || num_expr.value.is_infinite())
-            && matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
-        {
-            num_expr.value = 0.0;
         }
     }
 }
