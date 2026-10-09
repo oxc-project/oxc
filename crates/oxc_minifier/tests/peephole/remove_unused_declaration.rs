@@ -659,15 +659,15 @@ fn recursive_function_with_var_redeclaration() {
 }
 
 #[test]
-fn recursive_function_var_redeclaration_converges_on_count_pass() {
+fn recursive_function_var_redeclaration_uses_current_pass_reference_count() {
     let options = CompressOptions::smallest();
-    test_options_with_iterations("function f() { f() } var f;", "", 2, &options);
+    test_options_with_iterations("function f() { f() } var f;", "", 1, &options);
 
-    // The first pass removes the function using published graph deadness.
-    // Its body reference is pruned only at the following flush, so a capped
-    // run conservatively retains the sibling `var` declaration.
+    // The first pass removes the function using published graph deadness. The
+    // sibling `var` observes the function body's reference in the current
+    // pass removal journal, so both declarations disappear before the flush.
     let options = CompressOptions { max_iterations: Some(0), ..CompressOptions::smallest() };
-    test_options_once_with_iterations("function f() { f() } var f;", "var f;", 0, &options);
+    test_options_once_with_iterations("function f() { f() } var f;", "", 0, &options);
 }
 
 // ---- Export observability ----
