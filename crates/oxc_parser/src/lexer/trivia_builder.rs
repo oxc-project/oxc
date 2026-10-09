@@ -550,9 +550,15 @@ fn is_coverage_ignore_file(source: &[u8]) -> bool {
 
 #[cfg(test)]
 mod test {
+    use std::cell::Cell;
+
     use oxc_allocator::Allocator;
-    use oxc_ast::{Comment, CommentContent, CommentKind, CommentPosition, ast::CommentNewlines};
+    use oxc_ast::{
+        Comment, CommentContent, CommentKind, CommentPlacement, CommentPosition,
+        ast::CommentNewlines,
+    };
     use oxc_span::{SourceType, Span};
+    use oxc_syntax::node::NodeId;
 
     use crate::Parser;
 
@@ -589,7 +595,8 @@ mod test {
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(33, 45),
@@ -598,7 +605,8 @@ mod test {
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(54, 69),
@@ -607,7 +615,8 @@ mod test {
                 attached_to: 70,
                 newlines: CommentNewlines::Leading,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(76, 92),
@@ -616,7 +625,8 @@ mod test {
                 attached_to: 75,
                 newlines: CommentNewlines::None,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(93, 106),
@@ -625,7 +635,8 @@ mod test {
                 attached_to: 75,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(115, 138),
@@ -634,7 +645,8 @@ mod test {
                 attached_to: 147,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
         ];
 
@@ -659,7 +671,8 @@ token /* Trailing 1 */
                 attached_to: 36,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(42, 58),
@@ -668,7 +681,8 @@ token /* Trailing 1 */
                 attached_to: 41,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
         ];
         assert_eq!(comments, expected);
@@ -772,7 +786,8 @@ token /* Trailing 1 */
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(14, 26),
@@ -781,7 +796,8 @@ token /* Trailing 1 */
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
         ];
         assert_eq!(comments, expected);
@@ -894,7 +910,8 @@ function bar() {}";
                 attached_to: 57,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(96, 116),
@@ -903,7 +920,8 @@ function bar() {}";
                 attached_to: 129,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
         ];
         assert_eq!(comments, expected);
@@ -926,7 +944,8 @@ function bar() {}";
                 attached_to: 55,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(79, 99),
@@ -935,7 +954,8 @@ function bar() {}";
                 attached_to: 116,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
-                attachment: None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
         ];
         assert_eq!(comments, expected);
@@ -954,7 +974,8 @@ function bar() {}";
             attached_to: 34,
             newlines: CommentNewlines::Trailing,
             content: CommentContent::None,
-            attachment: None,
+            node_id: Cell::new(NodeId::DUMMY),
+            placement: CommentPlacement::Leading,
         }];
         assert_eq!(comments, expected);
     }

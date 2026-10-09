@@ -5206,10 +5206,10 @@ function deserializeCommentKind(pos) {
 }
 
 function deserializeComment(pos) {
-  let type = deserializeCommentKind(pos + 20),
+  let type = deserializeCommentKind(pos + 17),
     start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
-    kind = deserializeU8(pos + 20);
+    kind = deserializeU8(pos + 17);
   return {
     type,
     value: sourceText.slice(start + (kind < 3 ? 2 : kind), end - (type === "Line" ? 0 : 2)),

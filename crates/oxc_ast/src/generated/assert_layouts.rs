@@ -1842,21 +1842,16 @@ const _: () = {
     assert!(align_of::<CommentPlacement>() == 1);
 
     // Padding: 3 bytes
-    assert!(size_of::<CommentAttachment>() == 8);
-    assert!(align_of::<CommentAttachment>() == 4);
-    assert!(offset_of!(CommentAttachment, node_id) == 0);
-    assert!(offset_of!(CommentAttachment, placement) == 4);
-
-    // Padding: 0 bytes
     assert!(size_of::<Comment>() == 24);
     assert!(align_of::<Comment>() == 8);
     assert!(offset_of!(Comment, span) == 0);
-    assert!(offset_of!(Comment, attached_to) == 8);
-    assert!(offset_of!(Comment, attachment) == 12);
-    assert!(offset_of!(Comment, kind) == 20);
-    assert!(offset_of!(Comment, position) == 21);
-    assert!(offset_of!(Comment, newlines) == 22);
-    assert!(offset_of!(Comment, content) == 23);
+    assert!(offset_of!(Comment, node_id) == 8);
+    assert!(offset_of!(Comment, attached_to) == 12);
+    assert!(offset_of!(Comment, placement) == 16);
+    assert!(offset_of!(Comment, kind) == 17);
+    assert!(offset_of!(Comment, position) == 18);
+    assert!(offset_of!(Comment, newlines) == 19);
+    assert!(offset_of!(Comment, content) == 20);
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -3694,21 +3689,16 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<CommentPlacement>() == 1);
 
     // Padding: 3 bytes
-    assert!(size_of::<CommentAttachment>() == 8);
-    assert!(align_of::<CommentAttachment>() == 4);
-    assert!(offset_of!(CommentAttachment, node_id) == 0);
-    assert!(offset_of!(CommentAttachment, placement) == 4);
-
-    // Padding: 0 bytes
     assert!(size_of::<Comment>() == 24);
     assert!(align_of::<Comment>() == 4);
     assert!(offset_of!(Comment, span) == 0);
-    assert!(offset_of!(Comment, attached_to) == 8);
-    assert!(offset_of!(Comment, attachment) == 12);
-    assert!(offset_of!(Comment, kind) == 20);
-    assert!(offset_of!(Comment, position) == 21);
-    assert!(offset_of!(Comment, newlines) == 22);
-    assert!(offset_of!(Comment, content) == 23);
+    assert!(offset_of!(Comment, node_id) == 8);
+    assert!(offset_of!(Comment, attached_to) == 12);
+    assert!(offset_of!(Comment, placement) == 16);
+    assert!(offset_of!(Comment, kind) == 17);
+    assert!(offset_of!(Comment, position) == 18);
+    assert!(offset_of!(Comment, newlines) == 19);
+    assert!(offset_of!(Comment, content) == 20);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
