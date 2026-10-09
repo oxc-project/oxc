@@ -85,8 +85,10 @@ fn plain_non_jest_call_is_not_reported_as_jest_global() {
 fn settimeout_wrapper_in_vitest_file_is_not_reported() {
     let source = "import { test, expect } from 'vitest';\nsetTimeout(() => {\n  expect(x).toHaveBeenCalledOnce();\n  expect(x).toHaveBeenCalledWith('hoge');\n});\n";
     let diagnostics = lint_all_rules(source, "src/app.ts");
+    // Match this rule's diagnostic, not `prefer-called-with`, which also names
+    // `toHaveBeenCalledExactlyOnceWith` when it reports `toHaveBeenCalledOnce()`.
     assert!(
-        !diagnostics.iter().any(|m| m.contains("toHaveBeenCalledExactlyOnceWith")),
+        !diagnostics.iter().any(|m| m.contains("on the same target")),
         "prefer-called-exactly-once-with must NOT fire for a `setTimeout` wrapper on a Vitest file; got: {diagnostics:#?}",
     );
 }
@@ -97,7 +99,7 @@ fn settimeout_wrapper_in_dot_test_file_is_not_reported() {
     let source = "setTimeout(() => {\n  expect(x).toHaveBeenCalledOnce();\n  expect(x).toHaveBeenCalledWith('hoge');\n});\n";
     let diagnostics = lint_all_rules(source, "src/app.test.ts");
     assert!(
-        !diagnostics.iter().any(|m| m.contains("toHaveBeenCalledExactlyOnceWith")),
+        !diagnostics.iter().any(|m| m.contains("on the same target")),
         "prefer-called-exactly-once-with must NOT fire for a `setTimeout` wrapper on a *.test.ts file; got: {diagnostics:#?}",
     );
 }
