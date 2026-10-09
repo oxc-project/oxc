@@ -155,7 +155,7 @@ async function readAllFiles(
     if (entry.isFile()) {
       files.set(relPath, await fs.readFile(fullPath, "utf8"));
     } else if (entry.isSymbolicLink()) {
-      symlinks.set(relPath, await fs.readlink(fullPath));
+      symlinks.set(relPath, (await fs.readlink(fullPath)).replace(/\\/g, "/"));
     }
   }
 
