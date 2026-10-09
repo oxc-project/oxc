@@ -156,8 +156,8 @@ pub fn filter_suppressions_that_affect_function(
     suppressions: &[SuppressionRange],
     fn_start: u32,
     fn_end: u32,
-) -> Vec<SuppressionRange> {
-    let mut suppressions_in_scope: Vec<SuppressionRange> = Vec::new();
+) -> Vec<&SuppressionRange> {
+    let mut suppressions_in_scope = Vec::new();
 
     for suppression in suppressions {
         let disable_start = suppression.disable_comment.span.start;
@@ -165,12 +165,12 @@ pub fn filter_suppressions_that_affect_function(
 
         // The suppression is within the function
         if disable_start > fn_start && enable_end.is_none_or(|end| end < fn_end) {
-            suppressions_in_scope.push(suppression.clone());
+            suppressions_in_scope.push(suppression);
         }
 
         // The suppression wraps the function
         if disable_start < fn_start && enable_end.is_none_or(|end| end > fn_end) {
-            suppressions_in_scope.push(suppression.clone());
+            suppressions_in_scope.push(suppression);
         }
     }
 
@@ -179,7 +179,7 @@ pub fn filter_suppressions_that_affect_function(
 
 /// Convert suppression ranges to diagnostics.
 pub fn suppressions_to_diagnostics(
-    suppressions: &[SuppressionRange],
+    suppressions: &[&SuppressionRange],
     source_text: &str,
 ) -> Diagnostics {
     assert!(!suppressions.is_empty(), "Expected at least one suppression comment source range");
