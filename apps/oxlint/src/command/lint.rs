@@ -309,8 +309,7 @@ impl DebugOption {
     const TIMINGS_NAME: &str = "timings";
     const TIMINGS_HELP: &str = "Enable per-rule timing information";
     const MEMORY_NAME: &str = "memory";
-    #[cfg(feature = "debug_allocs")]
-    const MEMORY_HELP: &str = "Enable native per-rule allocation counts and bytes";
+    const MEMORY_HELP: &str = "Enable native per-rule allocation counts and bytes (requires compiling oxlint with the `debug_allocs` Cargo feature enabled)";
 }
 
 impl FromStr for DebugOption {
@@ -320,7 +319,11 @@ impl FromStr for DebugOption {
         match option {
             Self::FILES_NAME => Ok(Self::Files),
             Self::TIMINGS_NAME => Ok(Self::Timings),
-            Self::MEMORY_NAME => Ok(Self::Memory),
+            Self::MEMORY_NAME if cfg!(feature = "debug_allocs") => Ok(Self::Memory),
+            Self::MEMORY_NAME => Err(
+                "memory profiling requires compiling oxlint with the `debug_allocs` Cargo feature enabled"
+                    .to_string(),
+            ),
             _ => Err(format!("'{option}' is not a known debug option")),
         }
     }
@@ -347,15 +350,10 @@ impl DebugOptions {
         ("` - ", Style::Text),
         (DebugOption::TIMINGS_HELP, Style::Text),
         (".", Style::Text),
-        #[cfg(feature = "debug_allocs")]
         ("\n  * `", Style::Text),
-        #[cfg(feature = "debug_allocs")]
         (DebugOption::MEMORY_NAME, Style::Text),
-        #[cfg(feature = "debug_allocs")]
         ("` - ", Style::Text),
-        #[cfg(feature = "debug_allocs")]
         (DebugOption::MEMORY_HELP, Style::Text),
-        #[cfg(feature = "debug_allocs")]
         (".", Style::Text),
     ];
 
@@ -765,6 +763,26 @@ mod lint_options {
             result.is_err_and(|err| err.unwrap_stderr()
                 == "couldn't parse `foo`: 'foo' is not a known debug option")
         );
+    }
+
+    #[cfg(not(feature = "debug_allocs"))]
+    #[test]
+    fn debug_memory_requires_feature() {
+        for value in ["memory", "memory,timings", "timings,memory"] {
+            let args = ["--debug", value, "src"].map(String::from);
+            let result = lint_command().run_inner(args.as_slice());
+            assert_eq!(
+                result
+                    .unwrap_err()
+                    .unwrap_stderr()
+                    .split_whitespace()
+                    .collect::<Vec<_>>()
+                    .join(" "),
+                format!(
+                    "couldn't parse `{value}`: memory profiling requires compiling oxlint with the `debug_allocs` Cargo feature enabled"
+                )
+            );
+        }
     }
 
     #[cfg(feature = "debug_allocs")]
