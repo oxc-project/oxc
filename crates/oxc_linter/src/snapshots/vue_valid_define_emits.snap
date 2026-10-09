@@ -60,3 +60,21 @@ source: crates/oxc_linter/src/tester.rs
  5 │                   </script>
    ╰────
   help: Define at least one event in `defineEmits`.
+
+  ⚠ vue(valid-define-emits): `defineEmits` is referencing locally declared variables.
+   ╭─[valid_define_emits.tsx:3:13]
+ 2 │             const EmitsSchema = { entries: { notify: null } };
+ 3 │             defineEmits(Object.keys(EmitsSchema.entries));
+   ·             ─────────────────────────────────────────────
+ 4 │             </script>
+   ╰────
+  help: inline the variable or import it from another module.
+
+  ⚠ vue(valid-define-emits): `defineEmits` is referencing locally declared variables.
+   ╭─[valid_define_emits.tsx:3:13]
+ 2 │             const validate = () => true;
+ 3 │             defineEmits({ notify: validate });
+   ·             ─────────────────────────────────
+ 4 │             </script>
+   ╰────
+  help: inline the variable or import it from another module.

@@ -129,6 +129,16 @@ declare_oxc_lint!(
     /// defineEmits()
     /// </script>
     /// ```
+    ///
+    /// Runtime declarations can use expressions such as calls with imported schemas.
+    /// They cannot capture `<script setup>` bindings declared outside the argument.
+    ///
+    /// ```vue
+    /// <script setup>
+    /// import { EmitsSchema } from './schema'
+    /// defineEmits(Object.keys(EmitsSchema.entries))
+    /// </script>
+    /// ```
     ValidDefineEmits,
     vue,
     correctness,
@@ -326,6 +336,15 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            r#"<script setup>
+            import { EmitsSchema } from "./schema";
+            defineEmits(Object.keys(EmitsSchema.entries));
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
@@ -401,6 +420,24 @@ fn test() {
                     defineEmits()
                   </script>
                   ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"<script setup>
+            const EmitsSchema = { entries: { notify: null } };
+            defineEmits(Object.keys(EmitsSchema.entries));
+            </script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"<script setup>
+            const validate = () => true;
+            defineEmits({ notify: validate });
+            </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
