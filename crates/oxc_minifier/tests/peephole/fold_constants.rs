@@ -1474,6 +1474,20 @@ fn test_issue_8782() {
 }
 
 #[test]
+fn test_fold_delete_number() {
+    fold("delete (+'x')", "delete 0");
+    fold("delete (5 / 0)", "delete 0");
+    fold_same("delete (1 / 0)");
+    fold("delete (0 / -0)", "delete 0");
+    fold("delete (0 / 0)", "delete 0");
+    fold("delete (Infinity / Infinity)", "delete 0");
+    fold("delete (NaN / 0)", "delete 0");
+    fold("delete (1 / NaN)", "delete 0");
+    fold_same("delete (0, NaN)");
+    fold_same("delete (0, Infinity)");
+}
+
+#[test]
 fn test_inline_values_in_template_literal() {
     fold("`foo${1}`", "'foo1'");
     fold("`foo${1}bar`", "'foo1bar'");

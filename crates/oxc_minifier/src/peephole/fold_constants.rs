@@ -9,7 +9,7 @@ use oxc_ecmascript::{
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
 use super::PeepholeOptimizations;
 
@@ -30,7 +30,10 @@ impl<'a> PeepholeOptimizations {
             UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => {}
             _ if e.may_have_side_effects(ctx) => {}
             _ => {
-                if let Some(changed) = e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v)) {
+                if let Some(mut changed) =
+                    e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v))
+                {
+                    Self::normalize_non_finite_number_for_delete(&mut changed, ctx);
                     ctx.replace_expression(expr, changed);
                 }
             }
@@ -386,7 +389,8 @@ impl<'a> PeepholeOptimizations {
             }
             BinaryOperator::In => None,
         };
-        if let Some(changed) = changed {
+        if let Some(mut changed) = changed {
+            Self::normalize_non_finite_number_for_delete(&mut changed, ctx);
             ctx.replace_expression(expr, changed);
         }
     }
@@ -1017,6 +1021,15 @@ impl<'a> PeepholeOptimizations {
             if next_quasi.is_some_and(|q| q.tail) {
                 quasi.tail = true;
             }
+        }
+    }
+
+    fn normalize_non_finite_number_for_delete(expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
+        if let Expression::NumericLiteral(num_expr) = expr
+            && (num_expr.value.is_nan() || num_expr.value.is_infinite())
+            && matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
+        {
+            num_expr.value = 0.0;
         }
     }
 }
