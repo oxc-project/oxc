@@ -13,6 +13,8 @@ use oxc_span::Span;
 use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
 
+type SortedLoadedModules = Arc<[(CompactStr, Weak<ModuleRecord>)]>;
+
 /// ESM Module Record
 ///
 /// All data inside this data structure are for ESM, no commonjs data is allowed.
@@ -50,6 +52,8 @@ pub struct ModuleRecord {
     ///
     /// Use [ModuleRecord::get_loaded_module] to get a `ModuleRecord`.
     loaded_modules: RwLock<FxHashMap<CompactStr, Weak<ModuleRecord>>>,
+
+    sorted_loaded_modules: RwLock<Option<SortedLoadedModules>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -105,6 +109,7 @@ impl fmt::Debug for ModuleRecord {
             .field("resolved_absolute_path", &self.resolved_absolute_path)
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
+            .field("sorted_loaded_modules", &self.sorted_loaded_modules)
             .field("import_entries", &self.import_entries)
             .field("local_export_entries", &self.local_export_entries)
             .field("indirect_export_entries", &self.indirect_export_entries)
@@ -518,13 +523,43 @@ impl ModuleRecord {
         self.loaded_modules.read().unwrap()
     }
 
+    /// Returns a cached snapshot of loaded modules sorted by specifier.
+    ///
+    /// Stable ordering makes graph walks deterministic despite parallel insertion into the map.
+    /// Existing snapshots remain valid after changes through [`Self::write_loaded_modules`].
+    ///
     /// # Panics
     ///
-    /// * If the RwLock is poisoned (which only happens if a thread panicked while holding the lock).
+    /// * If either RwLock is poisoned.
+    pub(crate) fn sorted_loaded_modules(&self) -> SortedLoadedModules {
+        if let Some(sorted) = self.sorted_loaded_modules.read().unwrap().as_ref() {
+            return Arc::clone(sorted);
+        }
+
+        // Keep the map locked until publication, using the same lock order as the writer.
+        let loaded_modules = self.loaded_modules();
+        let mut sorted = self.sorted_loaded_modules.write().unwrap();
+        Arc::clone(sorted.get_or_insert_with(|| {
+            let mut entries: Vec<_> = loaded_modules
+                .iter()
+                .map(|(key, module)| (key.clone(), Weak::clone(module)))
+                .collect();
+            entries.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+            entries.into()
+        }))
+    }
+
+    /// Invalidates the sorted snapshot before granting write access.
+    ///
+    /// # Panics
+    ///
+    /// * If either RwLock is poisoned.
     pub fn write_loaded_modules(
         &self,
     ) -> RwLockWriteGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
-        self.loaded_modules.write().unwrap()
+        let loaded_modules = self.loaded_modules.write().unwrap();
+        *self.sorted_loaded_modules.write().unwrap() = None;
+        loaded_modules
     }
 
     /// Get a loaded module by upgrading the weak reference to an Arc.
