@@ -513,7 +513,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
                             binary_like_expression.left().span().end < comment.span.start
                                 && right.span().start > comment.span.end
                         })
-                        .any(|comment| comment.is_line());
+                        .any(Comment::is_line);
 
                     write!(f, [group(&operator_and_right_expression).should_expand(should_break)]);
                 } else {

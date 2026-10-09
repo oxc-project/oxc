@@ -286,12 +286,12 @@ impl<'a> Comments<'a> {
 
     /// Returns the line comments that end before or at the given position.
     pub fn line_comments_before(&self, pos: u32) -> &'a [Comment] {
-        self.comments_before_while(pos, |c| c.is_line())
+        self.comments_before_while(pos, Comment::is_line)
     }
 
     /// Returns comments that are on their own line and end before or at the given position.
     pub fn own_line_comments_before(&self, pos: u32) -> &'a [Comment] {
-        self.comments_before_while(pos, |c| c.preceded_by_newline())
+        self.comments_before_while(pos, Comment::preceded_by_newline)
     }
 
     /// The leading run of [`Self::comments_before_iter`] satisfying `predicate`, as a slice.
@@ -531,7 +531,7 @@ impl<'a> Comments<'a> {
 
     /// Checks if there are any leading own-line comments before the given position.
     pub fn has_leading_own_line_comment(&self, start: u32) -> bool {
-        self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
+        self.comments_before_iter(start).any(Comment::followed_by_newline)
     }
 
     /// The last printed comment when it is a line comment starting after `pos`:
@@ -665,7 +665,7 @@ impl<'a> Comments<'a> {
 
     /// Position-based analog of [`Self::has_leading_own_line_comment`], over a range.
     pub fn has_own_line_comment_in_range(&self, start: u32, end: u32) -> bool {
-        self.all_comments_in_range(start, end).any(|comment| comment.followed_by_newline())
+        self.all_comments_in_range(start, end).any(Comment::followed_by_newline)
     }
 
     /// Whether the first non-whitespace byte after `pos` outside comments is `)`.

@@ -561,7 +561,7 @@ mod test {
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
-        ret.program.comments.iter().copied().collect::<Vec<_>>()
+        ret.program.comments.into_iter().collect::<Vec<_>>()
     }
 
     fn get_comments_typescript(source_text: &str) -> Vec<Comment> {
@@ -569,7 +569,7 @@ mod test {
         let source_type = SourceType::default().with_typescript(true);
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
-        ret.program.comments.iter().copied().collect::<Vec<_>>()
+        ret.program.comments.into_iter().collect::<Vec<_>>()
     }
 
     #[test]
@@ -633,7 +633,7 @@ mod test {
         ];
 
         assert_eq!(comments.len(), expected.len());
-        for (comment, expected) in comments.iter().copied().zip(expected) {
+        for (comment, expected) in comments.iter().zip(&expected) {
             assert_eq!(comment, expected, "{}", comment.content_span().source_text(source_text));
         }
     }

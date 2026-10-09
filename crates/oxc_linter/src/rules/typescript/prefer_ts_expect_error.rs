@@ -68,7 +68,7 @@ impl Rule for PreferTsExpectError {
         for comment in comments {
             let raw = ctx.source_range(comment.content_span());
 
-            if !is_valid_ts_ignore_present(*comment, raw) {
+            if !is_valid_ts_ignore_present(comment, raw) {
                 continue;
             }
 
@@ -97,7 +97,7 @@ impl Rule for PreferTsExpectError {
     }
 }
 
-fn get_last_comment_line(comment: Comment, raw: &str) -> &str {
+fn get_last_comment_line<'a>(comment: &Comment, raw: &'a str) -> &'a str {
     if comment.is_line() {
         return raw;
     }
@@ -105,7 +105,7 @@ fn get_last_comment_line(comment: Comment, raw: &str) -> &str {
     raw.lines().last().unwrap_or(raw)
 }
 
-fn is_valid_ts_ignore_present(comment: Comment, raw: &str) -> bool {
+fn is_valid_ts_ignore_present(comment: &Comment, raw: &str) -> bool {
     let line = get_last_comment_line(comment, raw);
 
     if comment.is_line() { test_single_line_comment(line) } else { test_multi_line_comment(line) }

@@ -145,8 +145,8 @@ fn format_left_trailing_comments(start: u32, f: &mut JsFormatter<'_, '_>) {
 
     let comments = if end_of_line_comments.is_empty() {
         let comments = f.context().comments().comments_before_character(start, b'=');
-        if comments.iter().any(|c| c.preceded_by_newline()) { &[] } else { comments }
-    } else if end_of_line_comments.last().is_some_and(|c| c.is_multiline_block()) {
+        if comments.iter().any(Comment::preceded_by_newline) { &[] } else { comments }
+    } else if end_of_line_comments.last().is_some_and(Comment::is_multiline_block) {
         // A line-ending multiline block is promoted own-line above the right-hand side
         &[]
     } else {
@@ -549,7 +549,7 @@ impl<'a> AssignmentLike<'a, '_> {
             return &[];
         }
         let run = f.context().comments().end_of_line_comments_after(operator_end);
-        if run.last().is_some_and(|c| c.is_line()) { run } else { &[] }
+        if run.last().is_some_and(Comment::is_line) { run } else { &[] }
     }
 
     /// End of the left-hand side (type annotation included), before the operator and any comments around it.

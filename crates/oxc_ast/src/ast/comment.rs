@@ -157,9 +157,11 @@ impl<'alloc> CloneIn<'alloc> for CommentNewlines {
 }
 
 /// A comment in source code.
+///
+/// Borrow comments when reading them, or use [`Clone::clone`] to obtain an owned value.
 #[ast]
 #[generate_derive(CloneIn, ContentEq, ESTree, GetSpan)]
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
 #[estree(add_fields(value = CommentValue), no_ts_def, no_parent)]
 pub struct Comment {
     /// The span of the comment text, with leading and trailing delimiters.
@@ -229,43 +231,43 @@ impl Comment {
 
     /// Returns `true` if this is a line comment.
     #[inline]
-    pub fn is_line(self) -> bool {
+    pub fn is_line(&self) -> bool {
         matches!(self.kind, CommentKind::Line | CommentKind::HtmlOpen | CommentKind::HtmlClose)
     }
 
     /// Returns `true` if this is a block comment (either single-line or multi-line).
     #[inline]
-    pub fn is_block(self) -> bool {
+    pub fn is_block(&self) -> bool {
         matches!(self.kind, CommentKind::SingleLineBlock | CommentKind::MultiLineBlock)
     }
 
     /// Returns `true` if this is a multi-line block comment.
     #[inline]
-    pub fn is_multiline_block(self) -> bool {
+    pub fn is_multiline_block(&self) -> bool {
         self.kind == CommentKind::MultiLineBlock
     }
 
     /// Returns `true` if this comment is before a token.
     #[inline]
-    pub fn is_leading(self) -> bool {
+    pub fn is_leading(&self) -> bool {
         self.position == CommentPosition::Leading
     }
 
     /// Returns `true` if this comment is after a token.
     #[inline]
-    pub fn is_trailing(self) -> bool {
+    pub fn is_trailing(&self) -> bool {
         self.position == CommentPosition::Trailing
     }
 
     /// Is comment without a special meaning.
     #[inline]
-    pub fn is_normal(self) -> bool {
+    pub fn is_normal(&self) -> bool {
         self.content == CommentContent::None
     }
 
     /// Is comment with special meaning.
     #[inline]
-    pub fn is_annotation(self) -> bool {
+    pub fn is_annotation(&self) -> bool {
         self.content != CommentContent::None
             && self.content != CommentContent::Legal
             && self.content != CommentContent::Jsdoc
@@ -274,7 +276,7 @@ impl Comment {
 
     /// Returns `true` if this comment is a JSDoc comment. Implies `is_leading` and `is_block`.
     #[inline]
-    pub fn is_jsdoc(self) -> bool {
+    pub fn is_jsdoc(&self) -> bool {
         matches!(self.content, CommentContent::Jsdoc | CommentContent::JsdocLegal)
             && self.is_leading()
     }
@@ -286,75 +288,75 @@ impl Comment {
     ///
     /// <https://esbuild.github.io/api/#legal-comments>
     #[inline]
-    pub fn is_legal(self) -> bool {
+    pub fn is_legal(&self) -> bool {
         matches!(self.content, CommentContent::Legal | CommentContent::JsdocLegal)
             && self.is_leading()
     }
 
     /// Is `/* @__PURE__*/`.
     #[inline]
-    pub fn is_pure(self) -> bool {
+    pub fn is_pure(&self) -> bool {
         self.content == CommentContent::Pure
     }
 
     /// Is `/* @__NO_SIDE_EFFECTS__*/`.
     #[inline]
-    pub fn is_no_side_effects(self) -> bool {
+    pub fn is_no_side_effects(&self) -> bool {
         self.content == CommentContent::NoSideEffects
     }
 
     /// Is a leading `/* @__KEY__ */` or `/* #__KEY__ */` annotation.
     #[inline]
-    pub fn is_property_key_annotation(self) -> bool {
+    pub fn is_property_key_annotation(&self) -> bool {
         self.content == CommentContent::PropertyKey && self.is_leading()
     }
 
     /// Is webpack magic comment.
     #[inline]
-    pub fn is_webpack(self) -> bool {
+    pub fn is_webpack(&self) -> bool {
         self.content == CommentContent::Webpack
     }
 
     /// Is turbopack magic comment.
     #[inline]
-    pub fn is_turbopack(self) -> bool {
+    pub fn is_turbopack(&self) -> bool {
         self.content == CommentContent::Turbopack
     }
 
     /// Is vite special comment.
     #[inline]
-    pub fn is_vite(self) -> bool {
+    pub fn is_vite(&self) -> bool {
         self.content == CommentContent::Vite
     }
 
     /// Is coverage ignore comment.
     #[inline]
-    pub fn is_coverage_ignore(self) -> bool {
+    pub fn is_coverage_ignore(&self) -> bool {
         matches!(self.content, CommentContent::CoverageIgnore | CommentContent::CoverageIgnoreFile)
             && self.is_leading()
     }
 
     /// Is a file-level coverage ignore comment.
     #[inline]
-    pub fn is_coverage_ignore_file(self) -> bool {
+    pub fn is_coverage_ignore_file(&self) -> bool {
         self.content == CommentContent::CoverageIgnoreFile && self.is_leading()
     }
 
     /// Returns `true` if this comment is preceded by a newline.
     #[inline]
-    pub fn preceded_by_newline(self) -> bool {
+    pub fn preceded_by_newline(&self) -> bool {
         self.newlines.contains(CommentNewlines::Leading)
     }
 
     /// Returns `true` if this comment is followed by a newline.
     #[inline]
-    pub fn followed_by_newline(self) -> bool {
+    pub fn followed_by_newline(&self) -> bool {
         self.newlines.contains(CommentNewlines::Trailing)
     }
 
     /// Returns `true` if this comment has newlines either before or after it.
     #[inline]
-    pub fn has_newlines_around(self) -> bool {
+    pub fn has_newlines_around(&self) -> bool {
         self.newlines != CommentNewlines::None
     }
 

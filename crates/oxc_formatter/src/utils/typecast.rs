@@ -403,7 +403,7 @@ pub fn format_outer_leading_comments_and_open_paren(
             outside_len = index + 1;
         }
     }
-    while leading.get(outside_len).is_some_and(|comment| comment.preceded_by_newline()) {
+    while leading.get(outside_len).is_some_and(Comment::preceded_by_newline) {
         outside_len += 1;
     }
     write!(f, [FormatLeadingComments::Comments(&leading[..outside_len]), "("]);
