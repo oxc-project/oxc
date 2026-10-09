@@ -1664,6 +1664,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-ternary"?: RuleNoConfig | [AllowWarnDeny, PreferTernaryOption];
   "unicorn/prefer-top-level-await"?: RuleNoConfig;
   "unicorn/prefer-type-error"?: RuleNoConfig;
+  "unicorn/prefer-url-can-parse"?: RuleNoConfig;
   "unicorn/relative-url-style"?: RuleNoConfig | [AllowWarnDeny, RelativeUrlStyleConfig];
   "unicorn/require-array-join-separator"?: RuleNoConfig;
   "unicorn/require-module-attributes"?: RuleNoConfig;
