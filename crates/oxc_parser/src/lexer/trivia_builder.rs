@@ -1100,6 +1100,10 @@ function bar() {}";
             "/* #__NO_SIDE_EFFECTS__ */ let foo = () => {};",
             "/* #__NO_SIDE_EFFECTS__ */ var foo = function() {};",
             "const foo /* #__NO_SIDE_EFFECTS__ */ = () => {};",
+            "export /* #__NO_SIDE_EFFECTS__ */ class Foo {}",
+            "export /* #__NO_SIDE_EFFECTS__ */ let foo = () => {};",
+            "export /* #__NO_SIDE_EFFECTS__ */ var foo = function() {};",
+            "export /* #__NO_SIDE_EFFECTS__ */ const foo = 1, bar = () => {};",
         ];
         for source_text in cases {
             let comments = get_comments(source_text);
@@ -1117,11 +1121,18 @@ function bar() {}";
             "/* #__NO_SIDE_EFFECTS__ */ function foo() {}",
             "/* #__NO_SIDE_EFFECTS__ */ async function foo() {}",
             "/* #__NO_SIDE_EFFECTS__ */ export function foo() {}",
+            "export /*@__NO_SIDE_EFFECTS__*/ function foo() {}",
+            "export /* #__NO_SIDE_EFFECTS__ */ async function foo() {}",
+            "export /* #__NO_SIDE_EFFECTS__ */ function* foo() {}",
+            "export /* #__NO_SIDE_EFFECTS__ */ async function* foo() {}",
+            "export /* #__NO_SIDE_EFFECTS__ */ default function foo() {}",
             "export default /* #__NO_SIDE_EFFECTS__ */ function foo() {}",
             "const foo = /* #__NO_SIDE_EFFECTS__ */ function() {};",
             "const foo = /* #__NO_SIDE_EFFECTS__ */ () => {};",
             "/* #__NO_SIDE_EFFECTS__ */ const foo = () => {};",
             "/* #__NO_SIDE_EFFECTS__ */ export const foo = () => {};",
+            "export /* #__NO_SIDE_EFFECTS__ */ const foo = () => {};",
+            "export /* #__NO_SIDE_EFFECTS__ */ const foo = function() {};",
             "[/* #__NO_SIDE_EFFECTS__ */ function() {}];",
         ];
         for source_text in cases {

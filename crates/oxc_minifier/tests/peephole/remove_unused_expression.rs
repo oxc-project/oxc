@@ -626,6 +626,10 @@ fn no_side_effects() {
     }
     check("/* @__NO_SIDE_EFFECTS__ */ function f() {}");
     check("/* @__NO_SIDE_EFFECTS__ */ export function f() {}");
+    check("export /*@__NO_SIDE_EFFECTS__*/ function f() { sideEffect() }");
+    check("export /* @__NO_SIDE_EFFECTS__ */ async function f() { sideEffect() }");
+    check("export /* @__NO_SIDE_EFFECTS__ */ function* f() { sideEffect() }");
+    check("export /* @__NO_SIDE_EFFECTS__ */ async function* f() { sideEffect() }");
     check("/* @__NO_SIDE_EFFECTS__ */ export default function f() {}");
     check("export default /* @__NO_SIDE_EFFECTS__ */ function f() {}");
     check("const f = /* @__NO_SIDE_EFFECTS__ */ function() {}");
