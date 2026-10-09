@@ -1,0 +1,87 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:1]
+ 1 │ 2 ^ 32
+   · ──────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:1]
+ 1 │ 3 ^ 3
+   · ─────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:1]
+ 1 │ 10 ^ 6
+   · ──────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:1]
+ 1 │ 0 ^ 0
+   · ─────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:1]
+ 1 │ 2 ^ 8
+   · ─────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:1]
+ 1 │ 2  ^  8
+   · ───────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:11]
+ 1 │ const x = 2 ^ 8;
+   ·           ─────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:5]
+ 1 │ foo(2 ^ 8)
+   ·     ─────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:1]
+ 1 │ 10 ^ 1_000
+   · ──────────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:1]
+ 1 │ 2 ^ 8 ^ 2
+   · ─────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:1]
+ 1 │ 2 /* comment */ ^ 8
+   · ───────────────────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
+
+  ⚠ unicorn(no-xor-as-exponentiation): Probable confusion of XOR operator with exponentiation
+   ╭─[no_xor_as_exponentiation.tsx:1:1]
+ 1 │ 2 ^ 8
+   · ─────
+   ╰────
+  help: If not intended to be a XOR operation, replace the operator with '**' for exponentiation.
