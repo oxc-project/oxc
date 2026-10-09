@@ -167,6 +167,8 @@ impl Rule for NoCycle {
             .collect::<Vec<_>>();
         direct_imports.sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
+        let mut stack = Vec::new();
+        let mut traversed = FxHashSet::default();
         for (key, loaded_module_record) in direct_imports {
             if !self.should_traverse_module(&key, &loaded_module_record, module_record) {
                 continue;
@@ -174,7 +176,8 @@ impl Rule for NoCycle {
 
             let requested_module = module_record.requested_modules[&key][0];
             let span = requested_module.span;
-            let mut stack = vec![(key.clone(), Arc::clone(&loaded_module_record))];
+            stack.clear();
+            stack.push((key.clone(), Arc::clone(&loaded_module_record)));
 
             if loaded_module_record.resolved_absolute_path == *needle {
                 ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
@@ -183,6 +186,7 @@ impl Rule for NoCycle {
 
             let visitor_result = ModuleGraphVisitorBuilder::default()
                 .max_depth(self.max_depth.saturating_sub(1))
+                .reuse_traversed(traversed)
                 .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
                 .event(|event, (key, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
@@ -200,6 +204,7 @@ impl Rule for NoCycle {
                     }
                 });
 
+            traversed = visitor_result.traversed;
             if visitor_result.result {
                 ctx.diagnostic(no_cycle_diagnostic(
                     span,
