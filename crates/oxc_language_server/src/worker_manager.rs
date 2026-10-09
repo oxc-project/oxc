@@ -189,7 +189,7 @@ impl WorkerManager {
     }
 
     /// Returns `true` when the server was started without any workspace folders.
-    pub fn is_single_file_mode(&self) -> bool {
+    fn is_single_file_mode(&self) -> bool {
         matches!(&self.mode, ManagerMode::DynamicNoWorkspaces(flag) if flag.load(Ordering::Relaxed))
     }
 
@@ -423,20 +423,18 @@ impl WorkerManager {
         (registration, client_messages)
     }
 
-    /// In single-file mode, shut down and remove the [`WorkspaceWorker`] whose
-    /// root URI matches `worker_root_uri` when no open files remain associated
-    /// with that workspace.
+    /// Close a file and shut down its single-file workspace worker when no
+    /// other open files remain associated with that workspace.
     ///
-    /// `open_uris` should be a snapshot of the currently open file URIs (read
-    /// from the in-memory file system *before* acquiring the workers write
-    /// lock, to avoid cross-lock deadlocks).
+    /// `open_uris` should be a snapshot of the currently open file URIs, taken
+    /// after removing the closed file from the in-memory file system.
     ///
     /// Returns `Some((uris_to_clear, unregistrations))` when the worker was
     /// shut down, `None` when there are still open files or the worker was not
     /// found.
-    pub async fn try_shutdown_empty_workspace(
+    pub async fn close_file(
         &self,
-        worker_root_uri: &Uri,
+        uri: &Uri,
         open_uris: &[Uri],
     ) -> Option<(Vec<Uri>, Vec<Unregistration>)> {
         // Bail out immediately if we are not in single-file mode.
@@ -444,19 +442,26 @@ impl WorkerManager {
             return None;
         }
 
+        let worker = self.get_worker_for_uri(uri).await?;
+        worker.remove_uri_cache(uri).await;
+        let worker_root_uri = worker.get_root_uri().clone();
+
+        // Release the read lock before acquiring the workers write lock.
+        drop(worker);
+
         let worker = {
             let mut workers = self.workers.write().await;
 
             let has_open_files = open_uris.iter().any(|open_uri| {
                 Self::find_worker_for_uri(&workers, open_uri)
-                    .is_some_and(|w| w.get_root_uri() == worker_root_uri)
+                    .is_some_and(|w| w.get_root_uri() == &worker_root_uri)
             });
 
             if has_open_files {
                 return None;
             }
 
-            let idx = workers.iter().position(|w| w.get_root_uri() == worker_root_uri)?;
+            let idx = workers.iter().position(|w| w.get_root_uri() == &worker_root_uri)?;
             debug!("single file mode: shutting down empty workspace {worker_root_uri}");
             workers.swap_remove(idx)
         }; // write lock released here

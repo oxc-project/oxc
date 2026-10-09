@@ -733,45 +733,22 @@ impl LanguageServer for Backend {
         let uri = &params.text_document.uri;
         self.file_system.remove(uri);
 
-        let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
-            return;
-        };
+        let open_uris = self.file_system.keys();
+        let result = self.worker_manager.close_file(uri, &open_uris).await;
 
-        worker.remove_uri_cache(&params.text_document.uri).await;
+        if let Some((uris, unregistrations)) = result {
+            let diagnostic_mode =
+                self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
 
-        // Clone the root URI now so we can use it after dropping the read lock.
-        let worker_root_uri = if self.worker_manager.is_single_file_mode() {
-            Some(worker.get_root_uri().clone())
-        } else {
-            None
-        };
+            if diagnostic_mode == DiagnosticMode::Push && !uris.is_empty() {
+                self.clear_diagnostics(uris).await;
+            }
 
-        // Drop the read lock before potentially acquiring the write lock in
-        // try_shutdown_empty_workspace.
-        drop(worker);
-
-        if let Some(root_uri) = worker_root_uri {
-            let open_uris = self.file_system.keys();
-            let result =
-                self.worker_manager.try_shutdown_empty_workspace(&root_uri, &open_uris).await;
-
-            if let Some((uris, unregistrations)) = result {
-                let diagnostic_mode = self
-                    .capabilities
-                    .get()
-                    .map(|cap| cap.diagnostic_mode.clone())
-                    .unwrap_or_default();
-
-                if diagnostic_mode == DiagnosticMode::Push && !uris.is_empty() {
-                    self.clear_diagnostics(uris).await;
-                }
-
-                if self.capabilities.get().is_some_and(|cap| cap.dynamic_watchers)
-                    && !unregistrations.is_empty()
-                    && let Err(err) = self.client.unregister_capability(unregistrations).await
-                {
-                    warn!("unregistering file watchers for single-file workspace failed: {err}");
-                }
+            if self.capabilities.get().is_some_and(|cap| cap.dynamic_watchers)
+                && !unregistrations.is_empty()
+                && let Err(err) = self.client.unregister_capability(unregistrations).await
+            {
+                warn!("unregistering file watchers for single-file workspace failed: {err}");
             }
         }
     }
