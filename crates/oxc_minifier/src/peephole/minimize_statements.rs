@@ -972,9 +972,7 @@ impl<'a> PeepholeOptimizations {
                     if let Statement::BlockStatement(block) = &mut if_stmt.consequent {
                         ctx.drop_statement(&block.body.pop().unwrap());
                         // after removal check if there is one remaining stmt and if it requires block
-                        // IfStatement is excluded as we would add it afterward in `try_minimize_if`
                         if block.body.len() == 1
-                            && !matches!(&block.body[0], Statement::IfStatement(_))
                             && !Self::statement_cares_about_scope(&block.body[0])
                         {
                             let new_stmt = block.body.remove(0);
@@ -1436,7 +1434,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9839>
-    fn handle_block(
+    pub(super) fn handle_block(
         result: &mut ArenaVec<'a, Statement<'a>>,
         block_stmt: ArenaBox<'a, BlockStatement<'a>>,
         ctx: &mut TraverseCtx<'a>,
