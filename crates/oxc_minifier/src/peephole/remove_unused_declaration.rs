@@ -52,7 +52,8 @@ impl<'a> PeepholeOptimizations {
             return false;
         };
 
-        // Covers exports, Script-root bindings, Annex B aliases, and `using`.
+        // Covers exports, Script-root bindings, mapped arguments, Annex B
+        // aliases, and `using`.
         if ctx.state.symbols.is_implicitly_observable(symbol_id) {
             return false;
         }

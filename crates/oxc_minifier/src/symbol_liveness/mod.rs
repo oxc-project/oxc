@@ -29,10 +29,10 @@
 //! 3. **Implicit observability** is stable metadata for bindings whose runtime
 //!    value can be observed without a resolved reference in this AST. A symbol
 //!    here may have any number of references; the bit records that an observer
-//!    remains even if every reference disappears. The four channels are module
-//!    exports, Script-root bindings, Annex B aliases, and `using` disposal. This
-//!    metadata protects every count-based removal consumer, not only
-//!    declaration removal.
+//!    remains even if every reference disappears. The five channels are module
+//!    exports, Script-root bindings, mapped arguments, Annex B aliases, and
+//!    `using` disposal. This metadata protects every count-based removal
+//!    consumer, not only declaration removal.
 //! 4. **Analysis runs after scoping is flushed.** Every result is derived from
 //!    the settled resolved-reference lists, so AST rewrites need no parallel
 //!    collection hooks or behind-the-cursor repair log.
@@ -95,7 +95,7 @@ use oxc_allocator::{Allocator, ArenaVec, BitSet, GetAllocator};
 use oxc_ast::ast::*;
 #[cfg(debug_assertions)]
 use oxc_ast_visit::{VisitJs, walk_js::walk_function};
-use oxc_ecmascript::BoundNames;
+use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
@@ -104,22 +104,28 @@ use crate::{CompressOptions, CompressOptionsUnused, TraverseCtx};
 
 /// Stable program-wide symbol facts plus the optional recursive-function graph.
 ///
-/// This is always present for ES modules because exported-binding implicit
-/// observability must protect count-based optimizations even when recursive
-/// function removal is disabled. For CommonJS and Script sources it exists
-/// whenever unused-declaration removal is enabled, and a `using` declaration
-/// creates it lazily even otherwise, because disposal observes its binding
-/// without an ordinary reference.
+/// This is always present for ES modules and Script sources because the
+/// implicit observability of exported and Script-root bindings must protect
+/// count-based optimizations even when recursive function removal is
+/// disabled. For CommonJS sources it exists whenever unused-declaration
+/// removal is enabled. Otherwise a `using` declaration or a sloppy function
+/// with a simple parameter list creates it lazily, because disposal and
+/// mapped arguments observe those bindings without an ordinary reference.
 pub struct SymbolLiveness<'a> {
     /// Bindings with a runtime observer independent of resolved references:
-    /// module exports, Script roots, Annex B aliases, and `using` disposal.
+    /// module exports, Script roots, mapped arguments, Annex B aliases, and
+    /// `using` disposal.
     implicitly_observable: BitSet<'a>,
     recursive_functions: Option<FunctionGraph<'a>>,
 }
 
 impl<'a> SymbolLiveness<'a> {
-    /// Return `None` when the configuration needs no symbol liveness: a
-    /// non-module source with unused-declaration removal disabled.
+    /// Return `None` only for a CommonJS source with unused-declaration
+    /// removal disabled. Its fresh state has nothing seeded, so Normalize
+    /// creates it when it finds a `using` binding or a parameter exposed
+    /// through mapped arguments. A Script source always has the state because
+    /// later scripts observe its root bindings regardless of the `unused`
+    /// option.
     pub fn new_if_enabled(
         source_type: SourceType,
         options: &CompressOptions,
@@ -127,7 +133,7 @@ impl<'a> SymbolLiveness<'a> {
         allocator: &'a Allocator,
     ) -> Option<Self> {
         let recursive_functions_enabled = options.unused != CompressOptionsUnused::Keep;
-        if !source_type.is_module() && !recursive_functions_enabled {
+        if !source_type.is_module() && !source_type.is_script() && !recursive_functions_enabled {
             return None;
         }
         Some(Self::new(source_type, scoping, allocator))
@@ -453,19 +459,30 @@ impl<'a> GraphScratch<'a> {
     }
 }
 
-/// Normalize hook: register a function declaration as a potential graph
-/// candidate.
+/// Normalize hook: record parameters exposed through mapped arguments and
+/// register function declarations as potential graph candidates.
 pub fn register_function(function: &Function<'_>, ctx: &mut TraverseCtx<'_>) {
-    if !function.is_declaration() {
-        return;
-    }
-    if ctx.options().unused == CompressOptionsUnused::Keep {
-        return;
-    }
+    let recursive_functions_enabled = ctx.options().unused != CompressOptionsUnused::Keep;
     let source_type = ctx.source_type();
     let allocator = ctx.allocator();
     let TraverseCtx { state, scoping, .. } = ctx;
-    if let Some(liveness) = state.symbols.liveness_mut() {
+    // Sloppy functions with simple parameter lists alias their parameters
+    // through `arguments`, even when a parameter has no resolved reads.
+    // A `var` or function redeclaration must not make its writes removable.
+    // Single-use substitution runs even when unused declarations are kept, so
+    // the parameters are marked regardless of the `unused` option.
+    if !scoping.scoping().scope_flags(function.scope_id()).is_strict_mode()
+        && function.params.is_simple_parameter_list()
+    {
+        let liveness = state
+            .symbols
+            .ensure_liveness(|| SymbolLiveness::new(source_type, scoping.scoping(), allocator));
+        liveness.mark_bound_names(&*function.params);
+    }
+    if recursive_functions_enabled
+        && function.is_declaration()
+        && let Some(liveness) = state.symbols.liveness_mut()
+    {
         liveness.register_function(function, source_type, scoping.scoping(), allocator);
     }
 }

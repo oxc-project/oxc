@@ -1,8 +1,8 @@
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, test_options, test_options_source_type, test_same_options,
-    test_same_options_source_type, test_smallest,
+    CompressOptions, CompressOptionsUnused, test_options, test_options_source_type,
+    test_same_options, test_same_options_source_type, test_smallest,
 };
 
 #[test]
@@ -115,6 +115,74 @@ fn inline_function_iife_arguments_preserves_arguments_aliasing() {
     test_smallest(
         "use((function (x) { return () => (arguments[0] = 2, x + 1) })(1));",
         "use((function (x) { return () => (arguments[0] = 2, 2) })(1));",
+    );
+}
+
+#[test]
+fn parameter_writes_preserve_mapped_arguments() {
+    // https://github.com/oxc-project/oxc/issues/27473
+    let options = CompressOptions::smallest();
+    for source_type in [SourceType::script(), SourceType::cjs()] {
+        test_same_options_source_type(
+            "(function (a) { console.log(a = 'foo', arguments[0]) })('bar');",
+            source_type,
+            &options,
+        );
+        // Redeclarations create symbol-value metadata, but the parameter is
+        // still observable through the mapped arguments object.
+        for source in [
+            "(function (a) { var a; console.log(a = 'foo', arguments[0]) })('bar');",
+            "(function (a) { var a = 'baz'; console.log(a = 'foo', arguments[0]) })('bar');",
+            "(function (a) { function a() {} console.log(a = 'foo', arguments[0]) })('bar');",
+            "(function (a) { var a = 'foo'; console.log(arguments[0]) })('bar');",
+            "(function (a, b) { var a, b; console.log(a = 'foo', b = 2, arguments[0], arguments[1]) })('bar', 1);",
+            "(function (a, a) { var a; console.log(a = 'foo', arguments[0], arguments[1]) })('bar', 'baz');",
+        ] {
+            test_same_options_source_type(source, source_type, &options);
+        }
+    }
+}
+
+#[test]
+fn parameter_writes_preserve_mapped_arguments_when_keeping_unused() {
+    // Single-use substitution still runs when unused declarations are kept.
+    let options =
+        CompressOptions { unused: CompressOptionsUnused::Keep, ..CompressOptions::smallest() };
+    for source_type in [SourceType::script(), SourceType::cjs()] {
+        for source in [
+            "function f(a) { var a = function() {}; return [arguments, a]; } use(f);",
+            "function s3(a) { var a = arguments; return a; } use(s3);",
+            "(function (a) { var a = 'foo'; console.log(arguments[0]) })('bar');",
+        ] {
+            test_same_options_source_type(source, source_type, &options);
+        }
+    }
+}
+
+#[test]
+fn unmapped_parameters_allow_unused_writes() {
+    let options = CompressOptions::smallest();
+    test_options_source_type(
+        "(function (a) { 'use strict'; var a; console.log(a = 'foo', arguments[0]) })('bar');",
+        "(function (a) { 'use strict'; console.log('foo', arguments[0]) })('bar');",
+        SourceType::cjs(),
+        &options,
+    );
+    test_options_source_type(
+        "(function (a = 'baz') { var a; console.log(a = 'foo', arguments[0]) })('bar');",
+        "(function (a = 'baz') { console.log('foo', arguments[0]) })('bar');",
+        SourceType::cjs(),
+        &options,
+    );
+    test_options_source_type(
+        "(function (outer) { (a => { var a; console.log(a = 'foo', arguments[0]) })('bar') })('outer');",
+        "(function (outer) { (a => { console.log('foo', arguments[0]) })('bar') })('outer');",
+        SourceType::cjs(),
+        &options,
+    );
+    test_smallest(
+        "(function (a) { var a; console.log(a = 'foo', arguments[0]) })('bar');",
+        "(function (a) { console.log('foo', arguments[0]) })('bar');",
     );
 }
 
