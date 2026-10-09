@@ -20,6 +20,7 @@ type LeaveFn<'a> = dyn FnMut(ModulePair, &ModuleRecord) + 'a;
 /// A builder for creating visitors that walk through the module graph
 pub struct ModuleGraphVisitorBuilder<'a, T> {
     max_depth: u32,
+    traversed: FxHashSet<PathBuf>,
     filter: Option<Box<FilterFn<'a>>>,
     event: Option<Box<EventFn<'a>>>,
     enter: Option<Box<EnterFn<'a>>>,
@@ -60,6 +61,14 @@ impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
         self
     }
 
+    /// Reuses a previous traversal's set, clearing its contents but retaining its capacity.
+    #[must_use]
+    pub fn reuse_traversed(mut self, mut traversed: FxHashSet<PathBuf>) -> Self {
+        traversed.clear();
+        self.traversed = traversed;
+        self
+    }
+
     /// Sets the filter closure.
     #[must_use]
     pub fn filter<F: (Fn(ModulePair, &ModuleRecord) -> bool) + 'a>(mut self, filter: F) -> Self {
@@ -84,11 +93,8 @@ impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
         module: &ModuleRecord,
         visit: V,
     ) -> ModuleGraphVisitResult<T> {
-        let mut visitor = ModuleGraphVisitor {
-            traversed: FxHashSet::default(),
-            depth: 0,
-            max_depth: self.max_depth,
-        };
+        let mut visitor =
+            ModuleGraphVisitor { traversed: self.traversed, depth: 0, max_depth: self.max_depth };
         let filter = self.filter.unwrap_or_else(|| Box::new(|_, _| true));
         let event = self.event.unwrap_or_else(|| Box::new(|_, _, _| {}));
         let enter = self.enter.unwrap_or_else(|| Box::new(|_, _| {}));
@@ -104,6 +110,7 @@ impl<T> Default for ModuleGraphVisitorBuilder<'_, T> {
     fn default() -> Self {
         Self {
             max_depth: u32::MAX,
+            traversed: FxHashSet::default(),
             filter: None,
             event: None,
             enter: None,
@@ -115,13 +122,13 @@ impl<T> Default for ModuleGraphVisitorBuilder<'_, T> {
 
 pub struct ModuleGraphVisitResult<T> {
     pub result: T,
-    pub _traversed: FxHashSet<PathBuf>,
+    pub traversed: FxHashSet<PathBuf>,
     pub _max_depth: u32,
 }
 
 impl<T> ModuleGraphVisitResult<T> {
     fn with_result(result: T, visitor: ModuleGraphVisitor) -> Self {
-        Self { result, _traversed: visitor.traversed, _max_depth: visitor.max_depth }
+        Self { result, traversed: visitor.traversed, _max_depth: visitor.max_depth }
     }
 }
 
@@ -233,5 +240,42 @@ impl ModuleGraphVisitor {
         }
 
         accumulator
+    }
+}
+
+#[test]
+fn test_reuse_traversed_clears_contents_and_retains_capacity() {
+    let mut root = ModuleRecord::default();
+    root.resolved_absolute_path = PathBuf::from("root.js");
+    let root = Arc::new(root);
+    let mut dependency = ModuleRecord::default();
+    dependency.resolved_absolute_path = PathBuf::from("dependency.js");
+    let dependency = Arc::new(dependency);
+    root.write_loaded_modules()
+        .insert(CompactStr::from("./dependency.js"), Arc::downgrade(&dependency));
+    dependency.write_loaded_modules().insert(CompactStr::from("./root.js"), Arc::downgrade(&root));
+
+    let mut traversed = FxHashSet::default();
+    traversed.reserve(16);
+    traversed.insert(dependency.resolved_absolute_path.clone());
+    let capacity = traversed.capacity();
+
+    for stop_early in [true, false, true, false] {
+        let builder = ModuleGraphVisitorBuilder::default().reuse_traversed(traversed);
+        assert!(builder.traversed.is_empty());
+        assert_eq!(builder.traversed.capacity(), capacity);
+
+        let result = builder.visit_fold(0, &root, |count, _, _| {
+            if stop_early {
+                VisitFoldWhile::Stop(count + 1)
+            } else {
+                VisitFoldWhile::Next(count + 1)
+            }
+        });
+        let expected = if stop_early { 1 } else { 2 };
+        assert_eq!(result.result, expected);
+        assert_eq!(result.traversed.len(), expected);
+        assert_eq!(result.traversed.capacity(), capacity);
+        traversed = result.traversed;
     }
 }
