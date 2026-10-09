@@ -3,6 +3,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+use cow_utils::CowUtils;
 use ignore::gitignore::Gitignore;
 use tower_lsp_server::gen_lsp_types::{
     DocumentFormattingProvider, MessageType, Pattern, Range, ServerCapabilities, TextEdit, Uri,
@@ -325,7 +326,10 @@ impl ServerFormatter {
             Ok(scopes) => scopes,
             Err(err) => {
                 client_message.push(ClientMessage {
-                    message: format!("{}: {err}", root_path.display()),
+                    message: format!(
+                        "{}: {err}",
+                        root_path.to_string_lossy().cow_replace('\\', "/")
+                    ),
                     r#type: MessageType::Error,
                 });
                 ConfigScopes::with_default_root(

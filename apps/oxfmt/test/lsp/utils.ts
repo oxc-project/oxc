@@ -344,5 +344,11 @@ export function snapshotShowMessages(messages: { type: number; message: string }
 }
 
 function sanitizeMessage(message: string): string {
-  return message.replaceAll(process.cwd(), "<cwd>");
+  return message.replaceAll(
+    process
+      .cwd()
+      // replace current cwd with forward slashes, the `oxfmt` backend output in test-mode uses forward slashes.
+      .replaceAll("\\", "/"),
+    "<cwd>",
+  );
 }
