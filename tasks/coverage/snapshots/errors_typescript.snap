@@ -1,27 +1,13 @@
-commit: 7539c04d
+commit: c975de50
 
 errors_typescript Summary:
-AST Parsed     : 7699/7699 (100.00%)
-Positive Passed: 7251/7699 (94.18%)
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/ArrowFunctionExpression1.ts
-
+AST Parsed     : 6850/6850 (100.00%)
+Positive Passed: 6398/6850 (93.40%)
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/ClassDeclaration26.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/MemberAccessorDeclaration15.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/ParameterList13.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/ParameterList4.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/ParameterList5.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/ParameterList6.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/TransportStream.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/accessorParameterAccessibilityModifier.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/accessorWithInitializer.ts
 
@@ -53,6 +39,8 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/comm
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/complicatedPrivacy.ts
 
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/computedEnumMemberKeyNoCrash1.ts
+
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constDeclarations-invalidContexts.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constDeclarations-scopes.ts
@@ -61,9 +49,17 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/cons
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constInClassExpression.ts
 
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateMethodSignatures.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateNameInTypeQuery.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitSetAccessorNoParameter.ts
+
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/decoratorInJsFile.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/decoratorInJsFile1.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/disallowUnerasableAssertion.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/downlevelLetConst11.ts
 
@@ -131,8 +127,6 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/fata
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/fillInMissingTypeArgsOnJSConstructCalls.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/functionTypesLackingReturnTypes.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/functionsWithModifiersInBlocks1.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/genericCallWithoutArgs.ts
@@ -144,6 +138,26 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/gian
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/implementClausePrecedingExtends.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/implementsClauseAlreadySeen.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeArbitraryExtension.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeModuleAugmentations.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributePlainStringAmbientModule.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeType1.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeType2.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeOnlyImports.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeReadonly.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeScope.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypesJsImports.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importDeclWithDeclareModifier.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importDeclWithDeclareModifierInAmbientContext.ts
 
@@ -181,6 +195,8 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/inva
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/invalidUnicodeEscapeSequance4.ts
 
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsDocAugmentsEmptyExtends.ts
+
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationAbstractModifier.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationAmbientVarDeclarationSyntax.ts
@@ -192,8 +208,6 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFi
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationEnumSyntax.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationExportAssignmentSyntax.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationFunctionOverloadSyntax.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationInterfaceSyntax.ts
 
@@ -261,8 +275,6 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/opti
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/optionalSetterParam.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/parameterPropertyOutsideConstructor.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/parseInvalidNames.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts
@@ -275,21 +287,25 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/pars
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/parserPrivateIdentifierInArrayAssignment.ts
 
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/patternAmbientModuleAugmentationMergedSymbol.ts
+
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/prettyContextNotDebugAssertion.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/privacyGloImportParseErrors.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/privacyImportParseErrors.ts
 
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/privateNameInTypeQuery.ts
+
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/privateNameJsx.tsx
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/propertyWrappedInTry.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/readonlyInNonPropertyParameters.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/restParamModifier2.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/restParameterWithBindingPattern3.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/shebangError.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/shorthandPropertyAssignmentsInDestructuring.ts
 
@@ -309,6 +325,8 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/stri
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/superAccess2.ts
 
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/superCallInJSWithWrongBaseTypeArgumentCount1.ts
+
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/superErrors.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/superInLambdas.ts
@@ -327,8 +345,6 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/tagg
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/taggedTemplatesWithIncompleteNoSubstitutionTemplate2.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions2.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/templateLiteralEscapeSequence.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/thisAssignmentInNamespaceDeclaration1.ts
@@ -346,6 +362,8 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/unca
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/unclosedExportClause01.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/unclosedExportClause02.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/unicodeSpellingSuggestions.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/unparenthesizedConstructorTypeInUnionOrIntersection.ts
 
@@ -371,6 +389,10 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/a
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/async/es6/asyncConstructor_es6.ts
 
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructor.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts
+
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/classDeclarations/classBody/classBodyWithStatements.ts
@@ -380,8 +402,6 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/c
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/classStaticBlock/classStaticBlock6.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/classStaticBlock/classStaticBlock7.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyInAmbientClass.ts
 
@@ -425,6 +445,8 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/d
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/decorators/invalid/decoratorOnVar.ts
 
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/dynamicImport/importCallExpressionGrammarError.ts
+
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/dynamicImport/importCallExpressionIncorrect2.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/dynamicImport/importCallExpressionWithTypeArgument.ts
@@ -444,6 +466,8 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/e
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/destructuring/restElementWithInitializer1.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/destructuring/restElementWithInitializer2.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/for-ofStatements/for-of-excess-declarations.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/templates/templateStringInModuleName.ts
 
@@ -501,17 +525,7 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/e
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/variableDeclarations/VariableDeclaration11_es6.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext1.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext2.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext3.d.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext4.d.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads1.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts
 
@@ -607,8 +621,6 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/n
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportAssignment.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/override/overrideParameterProperty.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2018/forAwait/parser.forAwait.es2018.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.binaryNegative.ts
@@ -633,8 +645,6 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/p
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeParameters1.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression1.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression10.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression13.ts
@@ -656,8 +666,6 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/p
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration5.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName6.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration10.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts
 
@@ -739,8 +747,6 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/p
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration14.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration15.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration16.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts
@@ -753,19 +759,9 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/p
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ObjectTypes/parserObjectType6.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList13.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList4.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList5.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList6.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509668.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509669.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser512084.ts
 
@@ -815,7 +811,19 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/p
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement21.ts
 
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement3.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement6.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement7.ts
+
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement2.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement3.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement6.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement7.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Statements/parserReturnStatement1.d.ts
 
@@ -845,6 +853,12 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/p
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement21.ts
 
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement3.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement6.ts
+
+Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement7.ts
+
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/salsa/plainJSBinderErrors.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/salsa/plainJSGrammarErrors.ts
@@ -860,8 +874,6 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/s
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts
 
@@ -879,11 +891,7 @@ Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/s
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/import/importWithTypeArguments.ts
 
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts
-
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithParameterInitializers2.ts
-
-Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts
 
 Error Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts
 
