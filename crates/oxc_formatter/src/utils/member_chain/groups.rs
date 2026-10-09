@@ -11,7 +11,9 @@ use crate::formatter::{JsFormatter, prelude::*};
 /// Sized for the common cases: `a.b()` (3 members) and `a.b.c()` (4).
 /// Longer chains spill to the heap, same as `Vec` did before.
 pub(super) type ChainMembers<'a, 'b> = SmallVec<[ChainMember<'a, 'b>; 4]>;
-type Groups<'a, 'b> = SmallVec<[MemberChainGroup<'a, 'b>; 4]>;
+/// One inline: a group is large (its members are inline), so more inline slots cost more in moves than they save in heap allocations.
+/// Measured on vscode against 2 and 4 inline slots.
+type Groups<'a, 'b> = SmallVec<[MemberChainGroup<'a, 'b>; 1]>;
 
 #[derive(Default)]
 pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
