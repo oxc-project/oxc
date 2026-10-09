@@ -37,9 +37,109 @@ impl ExternalOptionsId {
     pub const NONE: Self = Self::from_usize(0);
 }
 
+/// Identity of the plugin a config asks to load: which entry point of which package, at which
+/// version, under which name.
+///
+/// The same package at the same version can be installed at several paths: npm, and Yarn with the
+/// `node_modules` linker, nest a copy of a package under each dependent which cannot share a
+/// hoisted one, and pnpm gives each peer dependency variant of a version its own store entry.
+/// Each copy has its own realpath, so deduplication by path does not recognise them as one
+/// plugin. The identity is read from the plugin's own `package.json`, which every copy carries
+/// unchanged, so all copies of one package share one identity.
+///
+/// The alias is part of the identity because the name a plugin is registered under depends on it:
+/// without an alias the plugin names itself, via `meta.name` or its package name.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExternalPluginIdentity {
+    key: ExternalPluginKey,
+    /// `version` field of the plugin package's `package.json`.
+    version: String,
+}
+
+impl ExternalPluginIdentity {
+    pub fn new(
+        package_name: &str,
+        version: &str,
+        entry_path: PathBuf,
+        alias: Option<&str>,
+    ) -> Self {
+        Self {
+            key: ExternalPluginKey {
+                package_name: package_name.to_string(),
+                entry_path,
+                alias: alias.map(ToString::to_string),
+            },
+            version: version.to_string(),
+        }
+    }
+
+    /// `name` field of the plugin package's `package.json`.
+    pub fn package_name(&self) -> &str {
+        &self.key.package_name
+    }
+
+    /// `version` field of the plugin package's `package.json`.
+    pub fn version(&self) -> &str {
+        &self.version
+    }
+}
+
+/// Part of [`ExternalPluginIdentity`] which determines the name the plugin is registered under.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct ExternalPluginKey {
+    /// `name` field of the plugin package's `package.json`.
+    package_name: String,
+    /// Path of the plugin's entry point, relative to the directory containing that `package.json`.
+    /// A package can contain several plugins, which all share its `package.json`.
+    entry_path: PathBuf,
+    /// Alias the config gives the plugin, if any.
+    alias: Option<String>,
+}
+
+/// Registered installation of a plugin package.
+#[derive(Debug)]
+struct RegisteredPluginPackage {
+    version: String,
+    /// Resolved path of the plugin's entry point.
+    path: PathBuf,
+}
+
+/// Two installations of the same plugin entry point, requested under the same name,
+/// have different versions.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExternalPluginIdentityConflict {
+    pub registered_identity: ExternalPluginIdentity,
+    pub registered_path: PathBuf,
+    pub requested_identity: ExternalPluginIdentity,
+    pub requested_path: PathBuf,
+}
+
+/// Store of the external (JS) plugins loaded for one workspace, and of their rules and options.
+///
+/// # Semantics
+///
+/// Deduplication of plugins:
+///
+/// 1. A plugin whose resolved path is already registered is reused
+///    ([`ExternalPluginStore::is_plugin_registered`]).
+/// 2. A plugin whose resolved path is new is reused when a plugin with the same
+///    [`ExternalPluginIdentity`] is registered. The JS module is not imported a second time.
+/// 3. Two requests with different aliases have different identities. The plugin is loaded and
+///    registered under each name.
+/// 4. When a plugin with the same package, entry point and alias is registered at a different
+///    version, [`ExternalPluginStore::try_reuse_plugin`] returns an
+///    [`ExternalPluginIdentityConflict`] and the plugin is not loaded.
+/// 5. A `package.json` providing no `name` or no `version` yields no identity. The plugin is then
+///    loaded, and a name clash is reported by the JS side as before.
+/// 6. Deduplication is scoped to one store. The language server creates one store per workspace
+///    folder, matching the per-workspace plugin registry on JS side.
+/// 7. Rules of a reused plugin keep the [`ExternalRuleId`]s of the first registration.
 #[derive(Debug)]
 pub struct ExternalPluginStore {
     registered_plugin_paths: FxHashSet<PathBuf>,
+    /// Installations of plugin packages registered so far, keyed by the part of their identity
+    /// which determines the name they are registered under.
+    registered_plugin_packages: FxHashMap<ExternalPluginKey, RegisteredPluginPackage>,
 
     plugins: IndexVec<ExternalPluginId, ExternalPlugin>,
     plugin_names: FxHashMap<String, ExternalPluginId>,
@@ -63,6 +163,7 @@ impl ExternalPluginStore {
 
         Self {
             registered_plugin_paths: FxHashSet::default(),
+            registered_plugin_packages: FxHashMap::default(),
             plugins: IndexVec::default(),
             plugin_names: FxHashMap::default(),
             rules: IndexVec::default(),
@@ -85,7 +186,52 @@ impl ExternalPluginStore {
         self.registered_plugin_paths.contains(plugin_path)
     }
 
+    /// Reuse an already registered plugin for the plugin resolved at `plugin_path`, if it is
+    /// another installation of a plugin already registered.
+    ///
+    /// Returns `true` if the plugin is reused. The caller must then not load the plugin on JS side:
+    /// importing the module a second time would ask the JS side to register its rules under a name
+    /// which is already taken, which it rejects.
+    ///
+    /// Returns `false` when `identity` is `None`, or no plugin with the same package, entry point
+    /// and alias is registered. See [`ExternalPluginStore`] for the full semantics.
+    ///
+    /// `plugin_path` is recorded when the plugin is reused, so a later config resolving to the same
+    /// path is matched by [`ExternalPluginStore::is_plugin_registered`].
+    ///
+    /// # Errors
+    /// Returns [`ExternalPluginIdentityConflict`] if a plugin with the same package, entry point
+    /// and alias is registered at a different version.
+    pub fn try_reuse_plugin(
+        &mut self,
+        plugin_path: &Path,
+        identity: Option<&ExternalPluginIdentity>,
+    ) -> Result<bool, ExternalPluginIdentityConflict> {
+        let Some(identity) = identity else { return Ok(false) };
+        let Some(registered) = self.registered_plugin_packages.get(&identity.key) else {
+            return Ok(false);
+        };
+
+        if registered.version != identity.version {
+            return Err(ExternalPluginIdentityConflict {
+                registered_identity: ExternalPluginIdentity {
+                    key: identity.key.clone(),
+                    version: registered.version.clone(),
+                },
+                registered_path: registered.path.clone(),
+                requested_identity: identity.clone(),
+                requested_path: plugin_path.to_path_buf(),
+            });
+        }
+
+        self.registered_plugin_paths.insert(plugin_path.to_path_buf());
+        Ok(true)
+    }
+
     /// Register plugin.
+    ///
+    /// `identity` is `None` when the plugin's `package.json` does not provide the fields an
+    /// identity is made of. The plugin then takes part in deduplication by path only.
     ///
     /// # Panics
     /// Panics if:
@@ -95,11 +241,19 @@ impl ExternalPluginStore {
         &mut self,
         plugin_path: PathBuf,
         plugin_name: String,
+        identity: Option<ExternalPluginIdentity>,
         offset: usize,
         rule_names: Vec<String>,
     ) {
-        let newly_inserted = self.registered_plugin_paths.insert(plugin_path);
+        let newly_inserted = self.registered_plugin_paths.insert(plugin_path.clone());
         assert!(newly_inserted, "register_plugin: plugin already registered");
+
+        if let Some(identity) = identity {
+            self.registered_plugin_packages.insert(
+                identity.key,
+                RegisteredPluginPackage { version: identity.version, path: plugin_path },
+            );
+        }
 
         let plugin_id = self
             .plugins
