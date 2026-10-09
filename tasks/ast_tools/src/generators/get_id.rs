@@ -80,6 +80,11 @@ fn generate_for_struct(
                 return None;
             }
 
+            // Comment attachments store an owner ID, rather than identifying an AST node.
+            if inner_type.name() == "NodeId" && !struct_def.kind.has_kind {
+                return None;
+            }
+
             let field_name = field.name();
             let field_ident = field.ident();
             let inner_type_ident = inner_type.ident();

@@ -5768,10 +5768,10 @@ function deserializeCommentKind(pos) {
 }
 
 function deserializeComment(pos) {
-  let type = deserializeCommentKind(pos + 12),
+  let type = deserializeCommentKind(pos + 20),
     start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
-    kind = deserializeU8(pos + 12);
+    kind = deserializeU8(pos + 20);
   return {
     type,
     value: sourceText.slice(start + (kind < 3 ? 2 : kind), end - (type === "Line" ? 0 : 2)),
@@ -6225,10 +6225,10 @@ function deserializeVecComment(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + (int32[pos32 + 2] << 4);
+  let endPos = pos + int32[pos32 + 2] * 24;
   for (; pos !== endPos;) {
     arr.push(deserializeComment(pos));
-    pos += 16;
+    pos += 24;
   }
   return arr;
 }
