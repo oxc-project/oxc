@@ -1648,6 +1648,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-optional-catch-binding"?: RuleNoConfig;
   "unicorn/prefer-prototype-methods"?: RuleNoConfig;
   "unicorn/prefer-query-selector"?: RuleNoConfig | [AllowWarnDeny, PreferQuerySelector];
+  "unicorn/prefer-queue-microtask"?: RuleNoConfig | [AllowWarnDeny, PreferQueueMicrotaskConfig];
   "unicorn/prefer-reflect-apply"?: RuleNoConfig;
   "unicorn/prefer-regexp-test"?: RuleNoConfig;
   "unicorn/prefer-response-static-json"?: RuleNoConfig;
@@ -2113,6 +2114,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, PreferNumberPropertiesConfig]
     | [AllowWarnDeny, PreferObjectFromEntriesConfig]
     | [AllowWarnDeny, PreferQuerySelector]
+    | [AllowWarnDeny, PreferQueueMicrotaskConfig]
     | [AllowWarnDeny, PreferSingleCallConfig]
     | [AllowWarnDeny, PreferStructuredCloneConfig]
     | [AllowWarnDeny, PreferTernaryOption]
@@ -7001,6 +7003,16 @@ export interface PreferQuerySelector {
    * This avoids the need to manually compose a CSS selector string, which can be less readable.
    */
   allowWithVariables?: boolean;
+}
+export interface PreferQueueMicrotaskConfig {
+  /**
+   * Whether to also check `setImmediate(callback)`.
+   */
+  checkSetImmediate?: boolean;
+  /**
+   * Whether to also check `setTimeout(callback, 0)`.
+   */
+  checkSetTimeout?: boolean;
 }
 export interface PreferSingleCallConfig {
   /**
