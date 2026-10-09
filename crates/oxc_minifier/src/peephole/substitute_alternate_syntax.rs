@@ -1083,6 +1083,10 @@ impl<'a> PeepholeOptimizations {
 
     /// `const { foo: bar } = { foo: value }` -> `const bar = value`.
     fn compress_object_destructuring(decl: &mut VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
+        // An object type annotation cannot be transferred to the extracted binding.
+        if decl.type_annotation.is_some() {
+            return;
+        }
         let BindingPattern::ObjectPattern(pattern) = &mut decl.id else { return };
         let Some(Expression::ObjectExpression(object)) = &mut decl.init else { return };
         if pattern.rest.is_some() || pattern.properties.len() != 1 || object.properties.len() != 1 {
@@ -1100,11 +1104,21 @@ impl<'a> PeepholeOptimizations {
             || property.kind != PropertyKind::Init
             || matches!(binding.value, BindingPattern::AssignmentPattern(_))
             || property.key.is_specific_static_name("__proto__")
-            || binding.key.static_name().is_none()
-            || binding.key.static_name() != property.key.static_name()
             // Moving an anonymous function/class can change its inferred name.
-            || property.value.is_anonymous_function_definition()
+            || property.value.get_inner_expression().is_anonymous_function_definition()
         {
+            return;
+        }
+        // Numeric keys use ECMAScript stringification, not Rust's float formatting.
+        let binding_name = match &binding.key {
+            PropertyKey::NumericLiteral(number) => number.to_js_string(ctx),
+            key => key.static_name(),
+        };
+        let property_name = match &property.key {
+            PropertyKey::NumericLiteral(number) => number.to_js_string(ctx),
+            key => key.static_name(),
+        };
+        if binding_name.is_none() || binding_name != property_name {
             return;
         }
         let value = property.value.take_in(ctx);

@@ -1176,3 +1176,28 @@ fn test_compress_object_destructuring() {
     test_same("const { foo: bar } = { foo: () => 1 }");
     test_same("const { foo: bar } = { foo: class {} }");
 }
+
+#[test]
+fn test_compress_object_destructuring_numeric_keys() {
+    test_same("const { '0.0000001': x } = { 1e-7: 1 }; console.log(x)");
+    test_same("const { 1e-7: x } = { '0.0000001': 1 }; console.log(x)");
+    test_same("const { '1000000000000000000000': x } = { 1e21: 1 }; console.log(x)");
+    test("const { '1e-7': x } = { 1e-7: 1 }", "const x = 1");
+    test("const { 1e-7: x } = { '1e-7': 1 }", "const x = 1");
+    test("const { '1e+21': x } = { 1e21: 1 }", "const x = 1");
+    test("const { 1e-7: x } = { 1e-7: 1 }", "const x = 1");
+}
+
+#[test]
+fn test_compress_object_destructuring_typescript() {
+    for source in [
+        "export const { foo }: { foo: number } = { foo: 1 }",
+        "export const { foo: bar } = { foo: (function() {}) as any }",
+        "export const { foo: bar } = { foo: (() => 1) satisfies Function }",
+        "export const { foo: bar } = { foo: (class {})! }",
+        "export const { foo: bar } = { foo: <any>(function() {}) }",
+        "export const { foo: bar } = { foo: ((class {}) as any)! }",
+    ] {
+        test_same_options_source_type(source, SourceType::ts(), &default_options());
+    }
+}
