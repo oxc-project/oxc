@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 112/112 (100.00%)
-Positive Passed: 112/112 (100.00%)
-Negative Passed: 243/243 (100.00%)
+AST Parsed     : 113/113 (100.00%)
+Positive Passed: 113/113 (100.00%)
+Negative Passed: 249/249 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -4647,6 +4647,121 @@ Negative Passed: 243/243 (100.00%)
  6 │   get 'constructor'<T>() {}
    ·                    ───
  7 │ }
+   ╰────
+
+  × TS(8009): The 'declare' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-declare.js:2:3]
+ 1 │ class A {
+ 2 │   declare y;
+   ·   ───────
+ 3 │ }
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/oxc-27290-escaped.js:2:3]
+ 1 │ class A {
+ 2 │   pr\u0069vate x;
+   ·   ────────────
+ 3 │   publ\u0069c f() {}
+   ╰────
+
+  × TS(8009): The 'private' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-escaped.js:2:3]
+ 1 │ class A {
+ 2 │   pr\u0069vate x;
+   ·   ───────
+ 3 │   publ\u0069c f() {}
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/oxc-27290-escaped.js:3:3]
+ 2 │   pr\u0069vate x;
+ 3 │   publ\u0069c f() {}
+   ·   ───────────
+ 4 │ }
+   ╰────
+
+  × TS(8009): The 'public' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-escaped.js:3:3]
+ 2 │   pr\u0069vate x;
+ 3 │   publ\u0069c f() {}
+   ·   ──────
+ 4 │ }
+   ╰────
+
+  × TS(8009): The 'private' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-private.js:2:3]
+ 1 │ class A {
+ 2 │   private g() {}
+   ·   ───────
+ 3 │ }
+   ╰────
+
+  × TS(8009): The 'protected' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-protected.js:2:3]
+ 1 │ class A {
+ 2 │   protected f() {}
+   ·   ─────────
+ 3 │ }
+   ╰────
+
+  × TS(8009): The 'readonly' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-readonly.js:2:3]
+ 1 │ class A {
+ 2 │   readonly x = 1;
+   ·   ────────
+ 3 │ }
+   ╰────
+
+  × TS(1028): Accessibility modifier already seen.
+   ╭─[misc/fail/oxc-27290-repeated.js:2:11]
+ 1 │ class A {
+ 2 │   private private x = 1;
+   ·           ───────
+ 3 │   public public f() {}
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(8009): The 'private' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-repeated.js:2:11]
+ 1 │ class A {
+ 2 │   private private x = 1;
+   ·           ───────
+ 3 │   public public f() {}
+   ╰────
+
+  × TS(1028): Accessibility modifier already seen.
+   ╭─[misc/fail/oxc-27290-repeated.js:3:10]
+ 2 │   private private x = 1;
+ 3 │   public public f() {}
+   ·          ──────
+ 4 │   readonly readonly y = 1;
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(8009): The 'public' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-repeated.js:3:10]
+ 2 │   private private x = 1;
+ 3 │   public public f() {}
+   ·          ──────
+ 4 │   readonly readonly y = 1;
+   ╰────
+
+  × TS(1030): 'readonly' modifier already seen.
+   ╭─[misc/fail/oxc-27290-repeated.js:4:12]
+ 3 │   public public f() {}
+ 4 │   readonly readonly y = 1;
+   ·            ────────
+ 5 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(8009): The 'readonly' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-27290-repeated.js:4:12]
+ 3 │   public public f() {}
+ 4 │   readonly readonly y = 1;
+   ·            ────────
+ 5 │ }
    ╰────
 
   × Expected `:` but found `[`

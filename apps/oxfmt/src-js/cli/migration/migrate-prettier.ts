@@ -1,161 +1,110 @@
 /* oxlint-disable no-console */
 
-import { join } from "node:path";
-import { readFile } from "node:fs/promises";
+import { basename, extname, join } from "node:path";
+import { readdir, readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 import { hasOxfmtrcFile, createBlankOxfmtrcFile, saveOxfmtrcFile, exitWithError } from "./shared";
-import { Options } from "prettier";
 
 /**
- * Run the `--migrate prettier` command to migrate various Prettier's config to `.oxfmtrc.json` file.
+ * Run the `--migrate prettier` command to migrate Prettier's config in the cwd to `.oxfmtrc.json` file.
  * https://prettier.io/docs/configuration
  */
 export async function runMigratePrettier() {
   const cwd = process.cwd();
 
   if (await hasOxfmtrcFile(cwd)) {
-    return exitWithError("Oxfmt configuration file already exists.");
+    return exitWithError("Oxfmt config file already exists.\nRemove it and re-run.");
   }
 
-  // XXX: If you statically import `prettier` here,
-  // completely unsure why, but Prettier hangs forever when run via `napi`...
-  const { resolveConfigFile, resolveConfig } = await import("prettier");
-
-  // TODO: Support nested config?
-  // For now, we assume the config for a dummy file at the `cwd`.
-  const prettierConfigPath = await resolveConfigFile(join(cwd, "dummy.js"));
-
-  // No Prettier config found, fallback with `--init` behavior
+  // Only the cwd is searched, nested configs need to be migrated by running in each directory.
+  const prettierConfigPath = await findPrettierConfigFile(cwd);
   if (!prettierConfigPath) {
-    console.log("No Prettier configuration file found.");
-
-    const oxfmtrc = await createBlankOxfmtrcFile(cwd);
-    const jsonStr = JSON.stringify(oxfmtrc, null, 2);
-
-    // TODO: Create napi `validateConfig()` and use to ensure validity?
-
-    try {
-      await saveOxfmtrcFile(cwd, jsonStr);
-      console.log("Created `.oxfmtrc.json` instead.");
-    } catch {
-      exitWithError("Failed to create `.oxfmtrc.json`.");
-    }
-
-    return;
+    return exitWithError(
+      "No Prettier config file found in the current directory.\nRun `oxfmt --migrate prettier` in the directory where the Prettier config is, or use `--init` to create a blank `.oxfmtrc.json`.",
+    );
   }
 
-  let prettierConfig;
+  let prettierConfig: Record<string, unknown>;
   try {
-    prettierConfig = await resolveConfig(prettierConfigPath, {
-      // Avoid merging `.editorconfig` values
-      editorconfig: false,
-    });
-    console.log("Found Prettier configuration at:", prettierConfigPath);
-  } catch {
-    return exitWithError(`Failed to parse: ${prettierConfigPath}`);
+    prettierConfig = await loadPrettierConfig(prettierConfigPath);
+    console.log("Found Prettier config at:", prettierConfigPath);
+  } catch (err) {
+    return exitWithError(
+      `Failed to load Prettier config at: ${prettierConfigPath}\n${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 
   // Start with blank, then fill in from `prettierConfig`.
   const oxfmtrc = await createBlankOxfmtrcFile(cwd);
 
-  let hasTailwindcssPlugin = false;
-  let hasSortPackageJsonPlugin = false;
-  let hasSveltePlugin = false;
-  for (const [key, value] of Object.entries(prettierConfig ?? {})) {
-    // Handle plugins - check for known plugins and warn about others
-    if (key === "plugins" && Array.isArray(value)) {
-      for (const plugin of (value as Options["plugins"])!) {
-        if (plugin === "prettier-plugin-tailwindcss") {
-          hasTailwindcssPlugin = true;
-        } else if (plugin === "prettier-plugin-packagejson") {
-          hasSortPackageJsonPlugin = true;
-        } else if (plugin === "prettier-plugin-svelte") {
-          hasSveltePlugin = true;
-        } else if (typeof plugin === "string") {
-          console.error(`  - plugins: "${plugin}" is not supported, skipping...`);
-        } else {
-          console.error(`  - plugins: custom plugin module is not supported, skipping...`);
-        }
-      }
-      continue;
-    }
-    // Per-file options that should not appear in a shared config; drop if leaked in
-    if (key === "parser" || key === "filepath") {
-      continue;
-    }
-    // Prettier-only options without an Oxfmt equivalent
-    if (key === "requirePragma" || key === "insertPragma") {
-      console.error(`  - "${key}" is not supported, skipping...`);
-      continue;
-    }
-    // Oxfmt does not support this, fallback to default
-    if (key === "endOfLine" && value === "auto") {
-      console.error(`  - "endOfLine: auto" is not supported, skipping...`);
-      continue;
-    }
-    // Oxfmt does not support this experimental option yet
-    if (key === "experimentalTernaries") {
-      console.error(`  - "${key}" is not supported yet`);
-      continue;
-    }
+  const { plugins, overrides, $schema: _, ...options } = prettierConfig;
 
-    // Skip plugin-specific options - handled separately
-    if (key.startsWith("tailwind") || key.startsWith("svelte")) {
-      continue;
+  // Handle plugins - check for known plugins and warn about others
+  const enabledPlugins = new Set<string>();
+  for (const plugin of Array.isArray(plugins) ? plugins : []) {
+    if (KNOWN_PLUGINS.has(plugin)) {
+      enabledPlugins.add(plugin);
+    } else if (typeof plugin === "string") {
+      warnings.push(`plugins: "${plugin}" is not supported, skipping...`);
+    } else {
+      warnings.push(`plugins: custom plugin module is not supported, skipping...`);
     }
-
-    // Otherwise, copy the value.
-    // This may include options that do not affect Oxfmt, like `vueIndentScriptAndStyle`.
-    oxfmtrc[key] = value;
   }
+
+  Object.assign(oxfmtrc, migrateOptions(options, true));
 
   // `printWidth` has different default between Prettier and Oxfmt.
   // Oxfmt default is 100, Prettier default is 80.
   if (typeof oxfmtrc.printWidth !== "number") {
-    console.error(
-      `  - "printWidth" is not set in Prettier config, defaulting to 80 (Oxfmt default: 100)`,
+    warnings.push(
+      `"printWidth" is not set in Prettier config, defaulting to 80 (Oxfmt default: 100)`,
     );
     oxfmtrc.printWidth = 80;
   }
   // `sortPackageJson` is enabled by default in Oxfmt, but Prettier does not have this.
   // Only enable if `prettier-plugin-packagejson` is used.
-  if (hasSortPackageJsonPlugin) {
+  if (enabledPlugins.has("prettier-plugin-packagejson")) {
     oxfmtrc.sortPackageJson = {};
-    console.error(`  - Migrated "prettier-plugin-packagejson" to "sortPackageJson"`);
+    console.log(`  - Migrated "prettier-plugin-packagejson" to "sortPackageJson"`);
   } else {
     oxfmtrc.sortPackageJson = false;
   }
-  // Plugin options: only enable when the corresponding Prettier plugin is used.
-  // Empty object means "enabled with defaults"; both Tailwind and Svelte are disabled by default.
-  if (hasTailwindcssPlugin) {
-    oxfmtrc.sortTailwindcss = migrateMappedOptions(
-      prettierConfig!,
-      TAILWIND_OPTION_MAPPING,
-      filterTailwindRegex,
-    );
-    console.log("Migrated prettier-plugin-tailwindcss options to sortTailwindcss");
-  }
-  if (hasSveltePlugin) {
-    oxfmtrc.svelte = migrateMappedOptions(prettierConfig!, SVELTE_OPTION_MAPPING);
-    console.log("Migrated prettier-plugin-svelte options to svelte");
+  Object.assign(oxfmtrc, migratePluginOptions(options, enabledPlugins, true));
+
+  if (Array.isArray(overrides)) {
+    const oxfmtOverrides = [];
+    for (const { files, excludeFiles, options = {} } of overrides) {
+      const migrated = {
+        ...migrateOptions(options, false),
+        ...migratePluginOptions(options, enabledPlugins, false),
+      };
+      // e.g. `{ files: "*.svg", options: { parser: "html" } }`
+      if (Object.keys(migrated).length === 0) continue;
+      oxfmtOverrides.push({
+        files: [files].flat(),
+        ...(excludeFiles !== undefined && { excludeFiles: [excludeFiles].flat() }),
+        options: migrated,
+      });
+    }
+    if (oxfmtOverrides.length > 0) {
+      oxfmtrc.overrides = oxfmtOverrides;
+      console.log(`  - Migrated "overrides"`);
+    }
   }
 
   // Migrate `ignorePatterns` from `.prettierignore`
   const ignores = await resolvePrettierIgnore(cwd);
   if (ignores.length > 0) {
-    console.log("Migrated ignore patterns from `.prettierignore`");
+    console.log("  - Migrated ignore patterns from `.prettierignore`");
   }
   // Keep ignorePatterns at the bottom
   delete oxfmtrc.ignorePatterns;
   oxfmtrc.ignorePatterns = ignores;
 
-  // TODO: Oxfmt now supports `overrides`,
-  // but `overrides` field is stripped from `resolveConfig()` result.
-  // Automatic migration requires reading the raw config file and handling each format
-  // (JSON, JSONC, YAML, JS/CJS/MJS, TOML, package.json).
-  // See: https://github.com/oxc-project/oxc/issues/18215
-  if (await rawConfigHasOverrides(prettierConfigPath)) {
-    console.warn(
-      `  - "overrides" cannot be migrated automatically. See: https://github.com/oxc-project/oxc/issues/18215`,
+  if (JS_EXTENSIONS.has(extname(prettierConfigPath))) {
+    warnings.push(
+      `\`${basename(prettierConfigPath)}\` was evaluated and migrated as static values, any logic in it is not preserved,\n    port it to \`oxfmt.config.ts\` manually if needed`,
     );
   }
 
@@ -165,13 +114,100 @@ export async function runMigratePrettier() {
 
   try {
     await saveOxfmtrcFile(cwd, jsonStr);
-    console.log("Created `.oxfmtrc.json`.");
+    console.log("Created `.oxfmtrc.json`.\nIt may not be formatted yet, run `oxfmt` to format it.");
+    if (warnings.length > 0) {
+      console.error(`\nPlease review:\n${warnings.map((w) => `  - ${w}`).join("\n")}`);
+    }
   } catch {
     return exitWithError("Failed to create `.oxfmtrc.json`.");
   }
 }
 
 // ---
+
+// Collected and printed at the end, not to be mixed with progress logs
+const warnings: string[] = [];
+
+// Same order as Prettier's config searcher.
+// https://github.com/prettier/prettier/blob/main/src/config/prettier-config/config-searcher.js
+const CONFIG_FILES = [
+  "package.json",
+  // ponytail: `package.yaml` is not searched, since checking its `prettier` field requires YAML parser
+  ".prettierrc",
+  ".prettierrc.json",
+  ".prettierrc.yml",
+  ".prettierrc.yaml",
+  ".prettierrc.json5",
+  ".prettierrc.js",
+  "prettier.config.js",
+  ".prettierrc.ts",
+  "prettier.config.ts",
+  ".prettierrc.mjs",
+  "prettier.config.mjs",
+  ".prettierrc.mts",
+  "prettier.config.mts",
+  ".prettierrc.cjs",
+  "prettier.config.cjs",
+  ".prettierrc.cts",
+  "prettier.config.cts",
+  ".prettierrc.toml",
+];
+
+const JS_EXTENSIONS = new Set([".js", ".mjs", ".cjs", ".ts", ".mts", ".cts"]);
+
+async function findPrettierConfigFile(cwd: string) {
+  const names = new Set(await readdir(cwd));
+  for (const name of CONFIG_FILES) {
+    if (!names.has(name)) continue;
+    const path = join(cwd, name);
+    // oxlint-disable-next-line no-await-in-loop -- only for `package.json`
+    if (name === "package.json" && (await importJson(path)).prettier === undefined) continue;
+    return path;
+  }
+  return null;
+}
+
+// Only the formats loadable without extra parsers are supported.
+async function loadPrettierConfig(path: string): Promise<Record<string, unknown>> {
+  const name = basename(path);
+  const ext = extname(path);
+
+  let config;
+  if (name === "package.json") {
+    config = (await importJson(path)).prettier;
+  } else if (name === ".prettierrc") {
+    try {
+      config = JSON.parse(await readFile(path, "utf8"));
+    } catch {
+      throw new Error(
+        "Only JSON format is supported for `.prettierrc`. Convert it to JSON and re-run.",
+      );
+    }
+  } else if (ext === ".json") {
+    config = await importJson(path);
+  } else if (JS_EXTENSIONS.has(ext)) {
+    config = (await import(pathToFileURL(path).href)).default;
+  } else {
+    throw new Error(
+      "YAML, JSON5 and TOML formats are not supported. Convert it to JSON or JS and re-run.",
+    );
+  }
+
+  // Shareable config, e.g. `"prettier": "@company/prettier-config"`
+  if (typeof config === "string") {
+    const mod = createRequire(path)(config);
+    config = mod?.__esModule ? mod.default : mod;
+  }
+
+  if (typeof config !== "object" || config === null || Array.isArray(config)) {
+    throw new Error("Config must be an object.");
+  }
+  return config;
+}
+
+async function importJson(path: string) {
+  return (await import(pathToFileURL(path).href, { with: { type: "json" } })).default;
+}
 
 async function resolvePrettierIgnore(cwd: string) {
   const ignores = [];
@@ -192,26 +228,82 @@ async function resolvePrettierIgnore(cwd: string) {
   return ignores;
 }
 
-// Best-effort detection of a top-level `overrides` key in the raw config file.
-// Uses string matching to cover all config formats (JSON/JSONC/JSON5/YAML/JS/TOML)
-// Matches:
-// - JSON/JSONC/JSON5/JS: `"overrides":` / `overrides:`
-// - YAML: `overrides:`
-// - TOML: `[[overrides]]` / `overrides =`
-async function rawConfigHasOverrides(configPath: string): Promise<boolean> {
-  try {
-    const content = await readFile(configPath, "utf8");
-    return /^\s*(?:\[\[\s*overrides\s*\]\]|["']?overrides["']?\s*[:=])/mv.test(content);
-  } catch {
-    return false;
+// ---
+
+// Prettier options that Oxfmt supports as-is.
+const COMPATIBLE_OPTIONS = new Set([
+  "arrowParens",
+  "bracketSameLine",
+  "bracketSpacing",
+  "embeddedLanguageFormatting",
+  "endOfLine",
+  "experimentalOperatorPosition",
+  "htmlWhitespaceSensitivity",
+  "jsxSingleQuote",
+  "objectWrap",
+  "printWidth",
+  "proseWrap",
+  "quoteProps",
+  "semi",
+  "singleAttributePerLine",
+  "singleQuote",
+  "tabWidth",
+  "trailingComma",
+  "useTabs",
+  "vueIndentScriptAndStyle",
+]);
+
+// Migrate top-level or `overrides[].options` Prettier options, except plugin-specific ones.
+function migrateOptions(
+  options: Record<string, unknown>,
+  isTopLevel: boolean,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  const prefix = isTopLevel ? "" : "overrides: ";
+
+  for (const [key, value] of Object.entries(options)) {
+    // Plugin-specific options - handled by `migratePluginOptions()`
+    if (PLUGIN_OPTIONS.has(key)) continue;
+    if (!COMPATIBLE_OPTIONS.has(key)) {
+      warnings.push(`${prefix}"${key}" is not supported, skipping...`);
+      continue;
+    }
+    // Oxfmt does not support this, fallback to default
+    if (key === "endOfLine" && value === "auto") {
+      warnings.push(`${prefix}"endOfLine": "auto" is not supported, skipping...`);
+      continue;
+    }
+    result[key] = value;
   }
+
+  return result;
+}
+
+// Plugin options: only enable when the corresponding Prettier plugin is used.
+// Empty object means "enabled with defaults"; Tailwind, Svelte and Astro are disabled by default.
+// In overrides, namespaces are deep-merged with top-level, so only set ones are needed.
+function migratePluginOptions(
+  options: Record<string, unknown>,
+  enabledPlugins: Set<string>,
+  isTopLevel: boolean,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [plugin, oxfmtKey, mapping, transform] of NAMESPACED_PLUGINS) {
+    if (!enabledPlugins.has(plugin)) continue;
+    const migrated = migrateMappedOptions(options, mapping, transform);
+    if (!isTopLevel && Object.keys(migrated).length === 0) continue;
+    result[oxfmtKey] = migrated;
+    if (isTopLevel) console.log(`  - Migrated "${plugin}" options to "${oxfmtKey}"`);
+  }
+
+  return result;
 }
 
 // ---
 
 // Map Oxfmt's namespaced option keys (left) to Prettier's flat option keys (right).
-// Used by `migrateMappedOptions` to copy values from Prettier's flat config
-// into a single Oxfmt namespace (e.g. `sortTailwindcss`, `svelte`).
+// Used by `migrateMappedOptions` to copy values from Prettier's flat options
+// into a single Oxfmt namespace (e.g. `sortTailwindcss`, `svelte`, `astro`).
 const TAILWIND_OPTION_MAPPING: Record<string, string> = {
   config: "tailwindConfig",
   stylesheet: "tailwindStylesheet",
@@ -227,14 +319,35 @@ const SVELTE_OPTION_MAPPING: Record<string, string> = {
   sortOrder: "svelteSortOrder",
 };
 
+const ASTRO_OPTION_MAPPING: Record<string, string> = {
+  allowShorthand: "astroAllowShorthand",
+  skipFrontmatter: "astroSkipFrontmatter",
+  compressHTML: "astroCompressHTML",
+};
+
+const NAMESPACED_PLUGINS = [
+  ["prettier-plugin-tailwindcss", "sortTailwindcss", TAILWIND_OPTION_MAPPING, filterTailwindRegex],
+  ["prettier-plugin-svelte", "svelte", SVELTE_OPTION_MAPPING, undefined],
+  ["prettier-plugin-astro", "astro", ASTRO_OPTION_MAPPING, normalizeAstroCompressHTML],
+] as const;
+
+const KNOWN_PLUGINS = new Set<unknown>([
+  "prettier-plugin-packagejson",
+  ...NAMESPACED_PLUGINS.map(([plugin]) => plugin),
+]);
+
+const PLUGIN_OPTIONS = new Set(
+  NAMESPACED_PLUGINS.flatMap(([, , mapping]) => Object.values(mapping)),
+);
+
 function migrateMappedOptions(
-  prettierConfig: Record<string, unknown>,
+  options: Record<string, unknown>,
   mapping: Record<string, string>,
   transform?: (prettierKey: string, value: unknown) => unknown,
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [oxfmtKey, prettierKey] of Object.entries(mapping)) {
-    const value = prettierConfig[prettierKey];
+    const value = options[prettierKey];
     if (value === undefined) continue;
     result[oxfmtKey] = transform ? transform(prettierKey, value) : value;
   }
@@ -254,8 +367,15 @@ function filterTailwindRegex(prettierKey: string, value: unknown): unknown {
     if (typeof item !== "string") return false;
     const isRegex = item.startsWith("/") && item.endsWith("/");
     if (isRegex) {
-      console.warn(`  - Regexp in "${prettierKey}" option is not supported, skipping: ${item}`);
+      warnings.push(`Regexp in "${prettierKey}" option is not supported, skipping: "${item}"`);
     }
     return !isRegex;
   });
+}
+
+// `astroCompressHTML` also accepts `true` / `false` as aliases of `"html"` / `"none"`.
+// Oxfmt accepts only the canonical strings.
+function normalizeAstroCompressHTML(prettierKey: string, value: unknown): unknown {
+  if (prettierKey !== "astroCompressHTML" || typeof value !== "boolean") return value;
+  return value ? "html" : "none";
 }

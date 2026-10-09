@@ -35,7 +35,7 @@ fn script_html_open_comment_anywhere() {
         !ks.contains(&TokenKind::Lt) && !ks.contains(&TokenKind::Bang),
         "script comment: {ks:?}"
     );
-    assert!(diag_codes("x <!-- y\nz;", false).is_empty());
+    assert_eq!(diag_codes("x <!-- y\nz;", false), []);
 }
 
 #[test]
@@ -60,7 +60,7 @@ fn module_html_open_comment_mid_expression_is_lt() {
     assert!(ks.contains(&TokenKind::Lt), "expected `<` operator: {ks:?}");
     assert!(ks.contains(&TokenKind::Bang), "expected `!` operator: {ks:?}");
     assert!(ks.contains(&TokenKind::MinusMinus), "expected `--` operator: {ks:?}");
-    assert!(diag_codes("x <!-- y;", true).is_empty());
+    assert_eq!(diag_codes("x <!-- y;", true), []);
 }
 
 #[test]
@@ -82,7 +82,7 @@ fn module_html_close_comment_is_operators() {
     let module = kinds_of(src, true);
     assert!(module.contains(&TokenKind::MinusMinus), "expected `--`: {module:?}");
     assert!(module.contains(&TokenKind::Gt), "expected `>`: {module:?}");
-    assert!(diag_codes(src, true).is_empty());
+    assert_eq!(diag_codes(src, true), []);
 }
 
 #[test]

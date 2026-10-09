@@ -33,7 +33,7 @@ fn number_literal(value: f64) -> LiteralString {
     let mut is_hex = false;
     if value.fract() == 0.0 {
         let integer = value as u128;
-        let hex_digits = (128 - integer.leading_zeros() as usize).div_ceil(4);
+        let hex_digits = (integer.bit_width() as usize).div_ceil(4);
         let hex_len = 2 + hex_digits;
         if hex_len < best_candidate.len_usize() {
             let mut candidate = LiteralString::new();

@@ -273,24 +273,31 @@ Prettier keeps it verbatim because postcss swallows the run as an opaque prelude
 Selector-position Sass interpolation normalizes inner spaces like value-position interpolation does in both formatters;
 Prettier keeps SELECTOR interpolation verbatim.
 
-## warn-error-requote
+## prelude-string-requote
 
 - Why: uniform-rule (option governs: singleQuote)
-- Pin: `tests/fixtures/format/scss/unknown-at-rule-edges.scss`
+- Pin: `tests/fixtures/format/scss/unknown-at-rule-edges.scss`, `tests/fixtures/format/css/prelude-string-requote.css`
+- Oxfmt: `externals/mdn-css-guides/values_and_units/textual_data_types/index.md`
 
 ```scss
 /* input */
 @error 'single quotes get normalized';
+@keyframes 'validString' {}
 
 /* ours */
 @error "single quotes get normalized";
+@keyframes "validString" {
+}
 
 /* prettier */
 @error 'single quotes get normalized';
+@keyframes 'validString' {
+}
 ```
 
-`@warn` / `@error` prelude strings re-quote per the `singleQuote` option: `oxc-css-parser` parses them as `SassExpr`, so they go through the structured printer (see `at_rule.rs`);
-Prettier keeps them as a raw string verbatim.
+A string in an at-rule prelude we parse typed re-quotes per the `singleQuote` option:
+the `@warn` / `@error` prelude (a `SassExpr`) and a `@keyframes` name (`at_rule.rs` `write_keyframes_name`) go through the structured printer;
+Prettier keeps the at-rule params as a raw string verbatim.
 Every other string in a declaration value re-quotes per the same option in both formatters.
 
 ## call-after-line-comment-indent
@@ -845,6 +852,44 @@ Prettier glues the sign to the number (removing the source space, a postcss word
 Matching that gluing is ad-hoc work for a torture-test-only shape.
 A sign GLUED in the source never gains a space in either implementation (that direction is the parser's folded-sign handling, not a divergence).
 
+## signed-value-resplit
+
+- Why: uniform-rule (same construct, same output: the item in first position, an unsigned item)
+- Pin: `tests/fixtures/format/css/signed-value-resplit.css`
+- Conformance: `css/fill-value/fill.css`
+- Oxfmt: `externals/gitlab/stylesheets/framework/variables.scss`, `externals/ng-zorro-antd/components/table/style/index.less`
+
+```css
+/* input */
+font-family: Arial, -apple-system;
+-webkit-mask-position-x: 50px, 25%, -3em;
+background: url("/shared-assets/images/examples/web-animations/cat_sprite.png") -600px 0 no-repeat;
+
+/* ours */
+font-family: Arial, -apple-system;
+-webkit-mask-position-x: 50px, 25%, -3em;
+background: url("/shared-assets/images/examples/web-animations/cat_sprite.png")
+  -600px 0 no-repeat;
+
+/* prettier */
+font-family:
+  Arial,
+  -apple-system;
+-webkit-mask-position-x:
+  50px,
+  25%,
+  -3em;
+background: url("/shared-assets/images/examples/web-animations/cat_sprite.png") -600px
+  0 no-repeat;
+```
+
+postcss-values splits a signed word (`-apple-system`, `-3em`, `-@var`) past the first position into an operator + word,
+the re-split word AGENTS.md's "Acceptance" does not follow:
+- as a two-node item, it breaks the comma list one item per line (`shouldBreakList`), though `-apple-system, Arial` and `50px, 25%, 3em` stay on one line
+- as a math operator, it glues to the word before it, overflowing the line
+
+Ours prints a signed item as one word, like the same item in first position or unsigned.
+
 ## css-glued-minus-paren
 
 - Why: uniform-rule (same construct, same output: the `-(` shapes Prettier keeps glued)
@@ -873,29 +918,33 @@ Css mode only (hence the prefix): in Less and Scss, Prettier keeps `3px -(4px)` 
 ## fill-break-position
 
 - Why: cost
-- Pin: `tests/fixtures/format/css/fill-math-chunk-break.css`
-- Conformance: `css/fill-value/fill.css`
+- Pin: `tests/fixtures/format/scss/fill-break-position.scss`
 - Oxfmt: `externals/webawesome/number-input/number-input.styles.ts`, `externals/webawesome/page/page.styles.ts`,
-  `externals/ng-zorro-antd/components/style/themes/compact.less`, `externals/ng-zorro-antd/components/style/themes/default.less`, `externals/ng-zorro-antd/components/style/themes/variable.less`, `externals/ng-zorro-antd/components/table/style/index.less`, `externals/ng-zorro-antd/components/table/style/rtl.less`,
+  `externals/ng-zorro-antd/components/style/themes/default.less`, `externals/ng-zorro-antd/components/style/themes/variable.less`, `externals/ng-zorro-antd/components/table/style/rtl.less`,
   `externals/gitlab/stylesheets/components/content_editor.scss`, `externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss`, `externals/gitlab/stylesheets/framework/sidebar.scss`
 
-```css
-/* input (nested one level, print width 80) */
-margin-left: sg-layout-width(logo-shopify) / 2 * -1 + sg-offset-x(page-nav) / 2;
+```scss
+/* input (nested three levels, print width 80) */
+height: calc(#{$calc-application-viewport-height} - #{$mr-sticky-header-height} - var(--mr-review-bar-height));
 
 /* ours */
-margin-left: sg-layout-width(logo-shopify) / 2 * -1 + sg-offset-x(page-nav)
-  / 2;
+height: calc(
+  #{$calc-application-viewport-height} - #{$mr-sticky-header-height} -
+    var(--mr-review-bar-height)
+);
 
 /* prettier */
-margin-left: sg-layout-width(logo-shopify) / 2 * -1 +
-  sg-offset-x(page-nav) / 2;
+height: calc(
+  #{$calc-application-viewport-height} -
+    #{$mr-sticky-header-height} - var(--mr-review-bar-height)
+);
 ```
 
-An over-wide math-y value run (css token soup here):
-Prettier's fill fit-check breaks INSIDE the wide chunk;
-our core `fill` (biome semantics) breaks the SEPARATOR instead.
+A math-y value run (token soup here):
+Prettier's fill breaks at an earlier separator, though the next chunk still fits;
+our core `fill` (biome semantics) breaks only at the last fitting separator.
 Layout-only, the principled fix is the shared core-fill fit-check change (needs a JS-conformance impact experiment first).
+A spaced `/` is not part of this: it glues to its left operand and breaks after, as in Prettier (`tests/fixtures/format/css/fill-math-chunk-break.css`).
 
 ## less-value-interpolation-rejected
 
@@ -1343,3 +1392,152 @@ At-rule names, property names, media feature names and the prelude keywords next
 Values keep their case (`LANDSCAPE`, `FLEX`), as in any declaration: a value may be a case-sensitive custom ident (`animation-name`, `grid-area`).
 So do case-sensitive names (`layer(FOO)`) and any identifier carrying a variable or interpolation marker (`@media @PHONE`, `#{$Q}`).
 Prettier lowercases only what its `maybeToLowerCase` reaches (at-rule names, `media-feature`, declaration props) and prints the neighbouring keywords as its media-query parser or value parser hands them over: verbatim.
+
+## missed-semicolon-accepted
+
+- Why: uniform-rule (acceptance: the grammar owner decides)
+- Pin: `tests/fixtures/format/css/missed-semicolon-accepted.css`
+
+```css
+/* input */
+a {
+  left: 0
+  top: 0;
+}
+
+/* ours */
+a {
+  left: 0 top: 0;
+}
+
+/* prettier: CssSyntaxError: Missed semicolon, the input is left as-is */
+```
+
+A `;`-less declaration runs to the next `;`: `oxc-css-parser` reads one declaration, a value being any component-value run (css-syntax-3; its README "Acceptance");
+postcss rejects a value with a `word:` after its first word.
+Same tokens, so same meaning: a browser drops the declaration,
+or keeps it the same way when the value holds an arbitrary substitution function (`var()`, `env()`).
+SCSS / Less keep rejecting it (dart-sass / lessc), so those stay as-is.
+lessc's `anonymousValue()` shortcut stores some `;`-terminated runs (no `(`, `.`, `-`, ...) as text without parsing them;
+that is not its value grammar, so it is not followed.
+
+## combinator-spacing
+
+- Why: uniform-rule (same construct, same output: the `>` / `+` / `~` combinators)
+- Pin: `tests/fixtures/format/css/combinator-spacing.css`
+
+```css
+/* input */
+col.selected||td {}
+col.selected || td {}
+.a^b {}
+.a^^b {}
+
+/* ours */
+col.selected || td {
+}
+col.selected || td {
+}
+.a ^ b {
+}
+.a ^^ b {
+}
+
+/* prettier */
+col.selected||td {
+}
+col.selected||td {
+}
+.a^b {
+}
+.a^^b {
+}
+```
+
+Every combinator other than the descendant one prints with a space on each side (`selector.rs` `write_combinator`);
+Prettier spaces only `>` / `+` / `~` / `>>>`, prints the others as written, and glues a spaced `||` too.
+
+## document-url-brace
+
+- Why: uniform-rule (same construct, same output: `@document url("x") {`)
+- Pin: `tests/fixtures/format/css/document-url-brace.css`
+
+```css
+/* input */
+@document url("https://www.example.com/") {}
+
+/* ours */
+@document url("https://www.example.com/") {
+}
+
+/* prettier */
+@document url("https://www.example.com/")
+{
+}
+```
+
+The typed `@document` / `@-moz-document` prelude keeps the `{` on its line;
+Prettier takes the `//` of `https://` for a line comment and moves the `{` to its own line.
+A raw prelude (unknown at-rule params) still takes the same `//` test as Prettier (`comments.rs` `last_line_has_inline_comment`), so there the two agree.
+
+## value-semicolon-glue
+
+- Why: uniform-rule (same construct, same output: the SCSS `if()` branch separator; prettier/prettier#19384)
+- Pin: `tests/fixtures/format/css/value-semicolon-glue.css`
+- Oxfmt: `externals/mdn-css-guides/custom_functions_and_mixins/using_custom_functions/index.md`
+
+```css
+/* input */
+a {
+  b: if(media(width < 700px): 1 ; else: 2);
+  c: foo(x ; y);
+}
+
+/* ours */
+a {
+  b: if(media(width < 700px): 1; else: 2);
+  c: foo(x; y);
+}
+
+/* prettier */
+a {
+  b: if(media(width < 700px): 1 ; else: 2);
+  c: foo(x ; y);
+}
+```
+
+A `;` in a value glues to what precedes it, in every dialect (`value.rs` `base_separator`);
+Prettier glues it only between SCSS `if()` branches and keeps the source space elsewhere.
+
+## supports-function-args-indent
+
+- Why: uniform-rule (same construct, same output: the function in a declaration value)
+- Pin: `tests/fixtures/format/css/supports-function-args-indent.css`
+
+```css
+/* input */
+@supports not (clip-path: shape(from center left, curve by 200px 0 with 50% -50% from start / 50% 0 from origin, close)) {}
+
+/* ours */
+@supports not (
+  clip-path: shape(
+    from center left,
+    curve by 200px 0 with 50% -50% from start / 50% 0 from origin,
+    close
+  )
+) {
+}
+
+/* prettier */
+@supports not (
+  clip-path: shape(
+      from center left,
+      curve by 200px 0 with 50% -50% from start / 50% 0 from origin,
+      close
+    )
+) {
+}
+```
+
+A broken function call inside a `@supports` declaration indents its arguments one level, as the same declaration does inside a rule;
+Prettier indents the arguments and `)` one level further there, its prelude value group adding its own indent.

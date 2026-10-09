@@ -17,7 +17,7 @@ pub struct ES2022<'a> {
     options: ES2022Options,
 
     // Plugins
-    class_static_block: Option<ClassStaticBlock>,
+    class_static_block: Option<ClassStaticBlock<'a>>,
     class_properties: Option<ClassProperties<'a>>,
 }
 
@@ -43,6 +43,12 @@ impl ES2022<'_> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_statement(stmt, ctx);
+        }
+    }
+
     #[inline] // Because this is a no-op in release mode
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
@@ -54,12 +60,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_expression(expr, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_expression(expr, ctx);
         }
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_expression(expr, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.exit_expression(expr, ctx);
         }
     }
 
@@ -79,6 +89,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_class(class, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.exit_class(class, ctx);
         }
     }
 
@@ -99,6 +111,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     ) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_property_definition(prop, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_property_definition(prop, ctx);
         }
     }
 

@@ -9,6 +9,7 @@ mod minimize_for_statement;
 mod minimize_if_statement;
 mod minimize_logical_expression;
 mod minimize_not_expression;
+mod minimize_sequences;
 mod minimize_statements;
 mod minimize_switch_statements;
 mod normalize;
@@ -389,8 +390,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::merge_imports(&mut program.body, ctx);
-        Self::merge_import_export(&mut program.body, ctx);
+        // skip merging import / export for cjs and scripts as they can't contain import stmt
+        if !ctx.source_type().is_script() && !ctx.source_type().is_commonjs() {
+            Self::merge_imports(&mut program.body, ctx);
+            Self::merge_import_export(&mut program.body, ctx);
+        }
         // Private member usage is collected only in full optimization mode.
         debug_assert!(ctx.is_tree_shake_only() || ctx.state.private_member_usage.is_at_root());
     }
@@ -589,7 +593,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_unary_plus(expr, ctx);
                     Self::fold_sequence_expression(expr, ctx);
                 }
-                Expression::YieldExpression(_) | Expression::AwaitExpression(_) => {
+                Expression::YieldExpression(e) => {
+                    Self::substitute_yield_expression(e);
+                    Self::fold_sequence_expression(expr, ctx);
+                }
+                Expression::AwaitExpression(_) => {
                     Self::fold_sequence_expression(expr, ctx);
                 }
                 Expression::StaticMemberExpression(_) => {
@@ -660,6 +668,12 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         }
         if expr.operator.is_not() {
             Self::minimize_expression_in_boolean_context(&mut expr.argument, ctx);
+        }
+    }
+
+    fn enter_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !ctx.is_tree_shake_only() {
+            Self::init_iife_parameter_values(e, ctx);
         }
     }
 

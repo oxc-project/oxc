@@ -1,4 +1,4 @@
-//! The embedded routing table ([`route`]) and the `FormatDispatcher` assembly shared by every build.
+//! The `FormatDispatcher` assembly shared by every build, routed by [`route_embedded`].
 //!
 //! Each language maps to a Rust formatter where available;
 //! the [`PrettierLanguage`] set goes to the napi-only Prettier Doc→IR channel ([`super::prettier_doc`]) when one is supplied,
@@ -8,102 +8,28 @@ use std::sync::{Arc, OnceLock};
 
 use tracing::{debug, debug_span};
 
-use oxc_formatter::CssInJsTemplate;
+use oxc_formatter::{CssInJsTemplate, JsEmbeddedIn, JsFormatOptions, MarkdownInJsTemplate};
 use oxc_formatter_core::{
-    CoreFormatOptions, DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher,
-    FormatSession,
+    DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher, FormatSession,
 };
 use oxc_formatter_core::{FormatOptions, PrinterOptions};
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
+use oxc_formatter_markdown::{MarkdownFormatOptions, XxxInMarkdownCodeBlock};
+use oxc_formatter_toml::TomlFormatOptions;
 use oxc_formatter_yaml::YamlFormatOptions;
 
 use crate::core::{
+    language::{Route, route_embedded},
     options::{
-        to_oxc_formatter_css, to_oxc_formatter_graphql, to_oxc_formatter_json,
+        ValidatedOptions, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
+        to_oxc_formatter_json, to_oxc_formatter_markdown, to_oxc_formatter_toml,
         to_oxc_formatter_yaml,
     },
     oxfmtrc::FormatConfig,
+    support::{NativeLanguage, PrettierLanguage},
 };
-
-/// The native half of the routing table:
-/// a request/fence language routed to [`Route::Native`] parses to its Rust formatter branch here.
-pub enum NativeLanguage {
-    Graphql,
-    /// The fence-derived variant;
-    /// the css-in-js typed context overrides it to Scss + placeholders at dispatch time (see the css branch).
-    Css(CssVariant),
-    Yaml,
-    Json(JsonVariant),
-}
-
-/// Languages Prettier still formats for us (no Rust formatter yet).
-///
-/// [`PrettierDocFallback`] receives this instead of a raw string,
-/// so the fallback can never be handed a language the table did not route to it.
-/// The set shrinks as Rust ports land (markdown first), and the type disappears with the last port.
-#[derive(Clone, Copy)]
-pub enum PrettierLanguage {
-    Html,
-    Angular,
-    Markdown,
-}
-
-#[cfg(feature = "napi")]
-impl PrettierLanguage {
-    /// The Prettier `parser` name injected into the options JSON.
-    ///
-    /// NOTE: language identifiers happen to overlap with some Prettier parser names,
-    /// but `oxc_formatter` treats them as generic language names;
-    /// this method is the only place mapping EMBEDDED language identifiers to Prettier parsers
-    /// (the whole-file Tier 3/4 path has its own filename-keyed map in `core::support`).
-    pub fn parser(self) -> &'static str {
-        match self {
-            Self::Html => "html",
-            Self::Angular => "angular",
-            Self::Markdown => "markdown",
-        }
-    }
-
-    /// Whether the Doc→IR conversion must surface `HtmlEmbedMeta`
-    /// (`htmlHasMultipleRootElements`) to the embed site.
-    pub fn wants_html_meta(self) -> bool {
-        matches!(self, Self::Html | Self::Angular)
-    }
-}
-
-/// Where a language identifier routes.
-pub enum Route {
-    /// A Rust formatter branch in [`build_dispatcher`]; never re-routed to Prettier.
-    Native(NativeLanguage),
-    /// Prettier serves it (napi Doc→IR fallback / string channel);
-    /// the pure build preserves it as-is.
-    Prettier(PrettierLanguage),
-    /// No formatter anywhere: the part deliberately stays as-is in every build.
-    Unsupported,
-}
-
-/// THE routing table: "which formatter serves this language?" answered in one place.
-/// [`build_dispatcher`] and the napi string channel's fence routing both consult it,
-/// so their notions of who formats what can never drift,
-/// and aliases (`"gql"` / `"yml"` / `"md"`) are resolved here and nowhere else.
-pub fn route(language: &str) -> Route {
-    match language {
-        "graphql" | "gql" => Route::Native(NativeLanguage::Graphql),
-        "css" => Route::Native(NativeLanguage::Css(CssVariant::Css)),
-        "scss" => Route::Native(NativeLanguage::Css(CssVariant::Scss)),
-        "less" => Route::Native(NativeLanguage::Css(CssVariant::Less)),
-        "yaml" | "yml" => Route::Native(NativeLanguage::Yaml),
-        "json" => Route::Native(NativeLanguage::Json(JsonVariant::Json)),
-        "jsonc" => Route::Native(NativeLanguage::Json(JsonVariant::Jsonc)),
-        "json5" => Route::Native(NativeLanguage::Json(JsonVariant::Json5)),
-        "html" => Route::Prettier(PrettierLanguage::Html),
-        "angular" => Route::Prettier(PrettierLanguage::Angular),
-        "markdown" | "md" => Route::Prettier(PrettierLanguage::Markdown),
-        _ => Route::Unsupported,
-    }
-}
 
 /// Per-root context shared by every embedded service (dispatcher, string embedder, Tailwind sorter):
 /// the host file's resolved config plus lazily-mapped per-language options.
@@ -116,15 +42,20 @@ pub struct ResolvedDispatchConfig {
     /// Embedded children inherit it, mirroring Prettier's `textToDoc` (parent-options spread);
     /// never a re-resolution for a virtual path.
     config: Arc<FormatConfig>,
-    /// Core options validated once by the config-resolution gate (`options::validate`).
+    /// The config-resolution gate's artifacts (`options::validate`), shared with the resolver's cache.
     /// Holding them pre-validated is what lets the per-language mappers be infallible.
-    core: CoreFormatOptions,
+    /// `sort_imports` is for JS children too: a Markdown code block is a whole program,
+    /// sorted like the host's own imports (and a Vue `<script>`'s).
+    validated: Arc<ValidatedOptions>,
+    js: OnceLock<JsFormatOptions>,
     graphql: OnceLock<GraphqlFormatOptions>,
     /// One cell per [`CssVariant`]: JSDoc fences dispatch css/scss/less as-is, while css-in-js always uses Scss.
     css: [OnceLock<CssFormatOptions>; 3],
     yaml: OnceLock<YamlFormatOptions>,
-    /// One cell per fence-reachable [`JsonVariant`] (json / jsonc / json5; `JsonStringify` is `package.json`-only).
-    json: [OnceLock<JsonFormatOptions>; 3],
+    /// One cell per [`JsonVariant`].
+    json: [OnceLock<JsonFormatOptions>; 4],
+    markdown: OnceLock<MarkdownFormatOptions>,
+    toml: OnceLock<TomlFormatOptions>,
     /// The options handed to Prettier; see [`PrettierOptions`].
     #[cfg(feature = "napi")]
     prettier: PrettierOptions,
@@ -147,17 +78,18 @@ struct PrettierOptions {
 }
 
 impl ResolvedDispatchConfig {
-    /// `core` is the pre-validated bundle carried from the config-resolution gate (`options::validate`);
-    /// it never gets re-derived here.
     /// Private so [`Self::for_root`] stays the only construction recipe.
-    fn new(config: Arc<FormatConfig>, core: CoreFormatOptions) -> Self {
+    fn new(config: Arc<FormatConfig>, validated: Arc<ValidatedOptions>) -> Self {
         Self {
             config,
-            core,
+            validated,
+            js: OnceLock::new(),
             graphql: OnceLock::new(),
             css: [OnceLock::new(), OnceLock::new(), OnceLock::new()],
             yaml: OnceLock::new(),
-            json: [OnceLock::new(), OnceLock::new(), OnceLock::new()],
+            json: [OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new()],
+            markdown: OnceLock::new(),
+            toml: OnceLock::new(),
             #[cfg(feature = "napi")]
             prettier: PrettierOptions::default(),
         }
@@ -166,12 +98,14 @@ impl ResolvedDispatchConfig {
     /// The one construction recipe for a root formatter run at `path`:
     /// [`Self::new`] plus the napi-only path recording
     /// (the pure build has no JS-side consumers, so `path` goes unused there).
+    /// `validated` is the config-resolution gate's artifacts (`options::validate`),
+    /// carried from resolution so they never get re-derived (or re-fail) here.
     pub fn for_root(
-        config: &Arc<FormatConfig>,
-        core: CoreFormatOptions,
+        config: Arc<FormatConfig>,
+        validated: Arc<ValidatedOptions>,
         path: &std::path::Path,
     ) -> Arc<Self> {
-        let dispatch_config = Self::new(Arc::clone(config), core);
+        let dispatch_config = Self::new(config, validated);
         #[cfg(feature = "napi")]
         let dispatch_config = dispatch_config.with_path(path.to_path_buf());
         #[cfg(not(feature = "napi"))]
@@ -196,8 +130,20 @@ impl ResolvedDispatchConfig {
         self.config.is_embedded_formatting_enabled()
     }
 
+    pub fn js_options(&self) -> JsFormatOptions {
+        self.js
+            .get_or_init(|| {
+                to_oxc_formatter(
+                    &self.config,
+                    self.validated.core,
+                    self.validated.sort_imports.clone(),
+                )
+            })
+            .clone()
+    }
+
     pub fn graphql_options(&self) -> GraphqlFormatOptions {
-        *self.graphql.get_or_init(|| to_oxc_formatter_graphql(&self.config, self.core))
+        *self.graphql.get_or_init(|| to_oxc_formatter_graphql(&self.config, self.validated.core))
     }
 
     pub fn css_options(&self, variant: CssVariant) -> CssFormatOptions {
@@ -206,11 +152,11 @@ impl ResolvedDispatchConfig {
             CssVariant::Scss => &self.css[1],
             CssVariant::Less => &self.css[2],
         };
-        *cell.get_or_init(|| to_oxc_formatter_css(&self.config, self.core, variant))
+        *cell.get_or_init(|| to_oxc_formatter_css(&self.config, self.validated.core, variant))
     }
 
     pub fn yaml_options(&self) -> YamlFormatOptions {
-        *self.yaml.get_or_init(|| to_oxc_formatter_yaml(&self.config, self.core))
+        *self.yaml.get_or_init(|| to_oxc_formatter_yaml(&self.config, self.validated.core))
     }
 
     pub fn json_options(&self, variant: JsonVariant) -> JsonFormatOptions {
@@ -218,20 +164,24 @@ impl ResolvedDispatchConfig {
             JsonVariant::Json => &self.json[0],
             JsonVariant::Jsonc => &self.json[1],
             JsonVariant::Json5 => &self.json[2],
-            JsonVariant::JsonStringify => {
-                unreachable!(
-                    "JsonStringify is the package.json pipeline's variant, never dispatched"
-                )
-            }
+            JsonVariant::JsonStringify => &self.json[3],
         };
-        *cell.get_or_init(|| to_oxc_formatter_json(&self.config, self.core, variant))
+        *cell.get_or_init(|| to_oxc_formatter_json(&self.config, self.validated.core, variant))
+    }
+
+    pub fn markdown_options(&self) -> MarkdownFormatOptions {
+        *self.markdown.get_or_init(|| to_oxc_formatter_markdown(&self.config, self.validated.core))
+    }
+
+    pub fn toml_options(&self) -> TomlFormatOptions {
+        *self.toml.get_or_init(|| to_oxc_formatter_toml(&self.config, self.validated.core))
     }
 
     /// Printer options from the shared resolved core bundle;
     /// the fence adapter ([`super::jsdoc_fence`]) derives its per-fence options from these
     /// (width overridden to the fence's effective width).
     pub fn print_options(&self) -> PrinterOptions {
-        self.core.as_print_options()
+        self.validated.core.as_print_options()
     }
 }
 
@@ -250,6 +200,20 @@ impl ResolvedDispatchConfig {
     /// (the sorter is napi-only; the pure build has no JS-side class order source).
     pub fn is_tailwind_enabled(&self) -> bool {
         self.config.is_tailwind_enabled()
+    }
+
+    /// [`Self::prettier_options`] for one `language`: its parser, plus the payload of the plugin it needs.
+    /// `None` when that plugin is not enabled (svelte / astro without the config key): the part stays as-is.
+    pub fn prettier_options_for(&self, language: PrettierLanguage) -> Option<serde_json::Value> {
+        if language.missing_plugin(&self.config).is_some() {
+            return None;
+        }
+
+        let mut options = self.prettier_options().clone();
+        crate::core::options::inject_parser(&mut options, language.parser());
+        // e.g. svelte-in-md (a ```svelte code block), svelte-in-mdx-in-md
+        crate::core::options::inject_opt_in_plugin_payloads(&mut options, language, &self.config);
+        Some(options)
     }
 
     /// The options JSON handed to Prettier
@@ -287,44 +251,73 @@ pub fn build_dispatcher(
 ) -> FormatDispatcher {
     Arc::new(move |session: &FormatSession<'_>, request: DispatchRequest<'_>| {
         let text = request.text;
-        match route(request.language) {
-            Route::Native(NativeLanguage::Graphql) => Ok(format_native("graphql", || {
-                oxc_formatter_graphql::format_to_ir(
-                    session,
-                    text,
-                    dispatch_config.graphql_options(),
-                )
-            })),
-            Route::Native(NativeLanguage::Css(variant)) => {
-                // css-in-js (typed `CssInJsTemplate` context) is always parsed as SCSS with `${}` placeholder markers.
-                // Any other caller gets the strict standalone grammar with the fence/request language's variant.
-                let (variant, template_placeholders) = if request
-                    .parent_context
-                    .is_some_and(|c| c.downcast_ref::<CssInJsTemplate>().is_some())
-                {
-                    (CssVariant::Scss, true)
-                } else {
-                    (variant, false)
-                };
-                Ok(format_native("css", || {
-                    oxc_formatter_css::format_to_ir(
+        match route_embedded(request.language) {
+            Route::Native(language) => {
+                Ok(format_native(language.trace_label(), || match language {
+                    NativeLanguage::Js(source_type) => {
+                        let embedded_in = request
+                            .parent_context_as::<XxxInMarkdownCodeBlock>()
+                            .map(|_| JsEmbeddedIn::MarkdownCodeBlock);
+                        oxc_formatter::format_to_ir(
+                            session,
+                            text,
+                            source_type,
+                            dispatch_config.js_options(),
+                            embedded_in,
+                        )
+                    }
+                    NativeLanguage::Graphql => oxc_formatter_graphql::format_to_ir(
                         session,
                         text,
-                        dispatch_config.css_options(variant),
-                        template_placeholders,
-                    )
+                        dispatch_config.graphql_options(),
+                    ),
+                    NativeLanguage::Css(variant) => {
+                        // css-in-js (typed `CssInJsTemplate` context) is always parsed as SCSS with `${}` placeholder markers.
+                        // Any other caller gets the strict standalone grammar with the fence/request language's variant.
+                        let (variant, template_placeholders) =
+                            if request.parent_context_as::<CssInJsTemplate>().is_some() {
+                                (CssVariant::Scss, true)
+                            } else {
+                                (variant, false)
+                            };
+                        oxc_formatter_css::format_to_ir(
+                            session,
+                            text,
+                            dispatch_config.css_options(variant),
+                            template_placeholders,
+                        )
+                    }
+                    NativeLanguage::Yaml => oxc_formatter_yaml::format_to_ir(
+                        session,
+                        text,
+                        dispatch_config.yaml_options(),
+                    ),
+                    NativeLanguage::Json(variant) => oxc_formatter_json::format_to_ir(
+                        session,
+                        text,
+                        dispatch_config.json_options(variant),
+                    ),
+                    NativeLanguage::Markdown => {
+                        // `~` fences in a JS template, and in Markdown nested in one (md-in-md-in-js)
+                        let in_js_template =
+                            request.parent_context_as::<MarkdownInJsTemplate>().is_some()
+                                || request
+                                    .parent_context_as::<XxxInMarkdownCodeBlock>()
+                                    .is_some_and(|c| c.in_js_template);
+                        oxc_formatter_markdown::format_to_ir(
+                            session,
+                            text,
+                            dispatch_config.markdown_options(),
+                            in_js_template,
+                        )
+                    }
+                    NativeLanguage::Toml => oxc_formatter_toml::format_to_ir(
+                        session,
+                        text,
+                        dispatch_config.toml_options(),
+                    ),
                 }))
             }
-            Route::Native(NativeLanguage::Yaml) => Ok(format_native("yaml", || {
-                oxc_formatter_yaml::format_to_ir(session, text, dispatch_config.yaml_options())
-            })),
-            Route::Native(NativeLanguage::Json(variant)) => Ok(format_native("json", || {
-                oxc_formatter_json::format_to_ir(
-                    session,
-                    text,
-                    dispatch_config.json_options(variant),
-                )
-            })),
 
             // Prettier-served languages: Doc→IR fallback when available (napi),
             // deliberate skip otherwise (pure build).
@@ -340,7 +333,7 @@ pub fn build_dispatcher(
                 }
             }
 
-            // A language without a formatter is a deliberate skip, in every build.
+            // A language without a formatter is a deliberate skip, in every build
             Route::Unsupported => {
                 debug!("No formatter for language '{}', part stays as-is", request.language);
                 Ok(DispatchResponse::PreserveOriginal)
@@ -375,18 +368,18 @@ mod tests {
     };
 
     use super::{ResolvedDispatchConfig, build_dispatcher};
-    use crate::core::oxfmtrc::FormatConfig;
+    use crate::core::{options::ValidatedOptions, oxfmtrc::FormatConfig};
 
     fn dispatch_config() -> Arc<ResolvedDispatchConfig> {
         Arc::new(ResolvedDispatchConfig::new(
             Arc::new(FormatConfig::default()),
-            CoreFormatOptions::default(),
+            Arc::new(ValidatedOptions { core: CoreFormatOptions::default(), sort_imports: None }),
         ))
     }
 
-    /// Every fence language the routing table claims as native must format
+    /// Every language the routing table claims as native must format
     /// WITHOUT a fallback installed
-    /// (an accidentally dropped [`super::route`] entry would fall through to `PreserveOriginal` and fail here).
+    /// (an accidentally dropped [`route_embedded`](crate::core::language::route_embedded) entry would fall through to `PreserveOriginal` and fail here).
     #[test]
     fn every_native_language_dispatches() {
         let allocator = Allocator::default();
@@ -399,15 +392,40 @@ mod tests {
             },
         );
 
-        for language in
-            ["graphql", "gql", "css", "scss", "less", "yaml", "yml", "json", "jsonc", "json5"]
-        {
+        for language in [
+            "js",
+            "javascript",
+            "jsx",
+            "mjs",
+            "cjs",
+            "ts",
+            "typescript",
+            "angular-ts",
+            "mts",
+            "cts",
+            "tsx",
+            "graphql",
+            "gql",
+            "css",
+            "postcss",
+            "scss",
+            "less",
+            "yaml",
+            "yml",
+            "json",
+            "jsonc",
+            "json5",
+            "markdown",
+            "md",
+            "toml",
+        ] {
             let text = match language {
                 "graphql" | "gql" => "{ a }",
-                "css" | "scss" | "less" => "a { color: red }",
+                "css" | "postcss" | "scss" | "less" => "a { color: red }",
                 "yaml" | "yml" => "a: 1",
                 "json" | "jsonc" | "json5" => "{ \"a\": 1 }",
-                other => panic!("no sample input for native language '{other}'"),
+                "markdown" | "md" => "#  a",
+                _ => "a  =  1",
             };
             let response = session.dispatch(DispatchRequest {
                 language,
@@ -458,7 +476,7 @@ mod tests {
             },
         );
 
-        for (language, text) in [("html", "<div></div>"), ("toml", "a = 1")] {
+        for (language, text) in [("html", "<div></div>"), ("ini", "a = 1")] {
             let response = session.dispatch(DispatchRequest {
                 language,
                 text,

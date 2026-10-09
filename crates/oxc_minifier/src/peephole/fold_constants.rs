@@ -9,7 +9,7 @@ use oxc_ecmascript::{
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
 use super::PeepholeOptimizations;
 
@@ -30,7 +30,10 @@ impl<'a> PeepholeOptimizations {
             UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => {}
             _ if e.may_have_side_effects(ctx) => {}
             _ => {
-                if let Some(changed) = e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v)) {
+                if let Some(mut changed) =
+                    e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v))
+                {
+                    Self::normalize_non_finite_number_for_delete(&mut changed, ctx);
                     ctx.replace_expression(expr, changed);
                 }
             }
@@ -261,7 +264,7 @@ impl<'a> PeepholeOptimizations {
     /// filters anyway.
     fn is_cheap_to_number_operand(e: &Expression<'a>) -> bool {
         matches!(
-            e.get_inner_expression(),
+            e,
             Expression::NumericLiteral(_)
                 | Expression::StringLiteral(_)
                 | Expression::BooleanLiteral(_)
@@ -386,7 +389,8 @@ impl<'a> PeepholeOptimizations {
             }
             BinaryOperator::In => None,
         };
-        if let Some(changed) = changed {
+        if let Some(mut changed) = changed {
+            Self::normalize_non_finite_number_for_delete(&mut changed, ctx);
             ctx.replace_expression(expr, changed);
         }
     }
@@ -411,7 +415,7 @@ impl<'a> PeepholeOptimizations {
     /// Lower bound for the minified size of a numeric expression. Parentheses are deliberately
     /// omitted, so accepting a fold based on this count cannot make the output longer.
     fn numeric_expression_size_lower_bound(expr: &Expression<'a>) -> Option<usize> {
-        match expr.get_inner_expression() {
+        match expr {
             Expression::NumericLiteral(lit) => Self::number_literal_source_len(lit.value),
             Expression::UnaryExpression(e)
                 if matches!(
@@ -484,7 +488,7 @@ impl<'a> PeepholeOptimizations {
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(usize, bool)> {
-        let result = match expr.get_inner_expression() {
+        let result = match expr {
             Expression::StringLiteral(lit) => (lit.value.len() + 2, false),
             Expression::NumericLiteral(lit) => (Self::number_literal_source_len(lit.value)?, false),
             Expression::BooleanLiteral(_) => (2, false),
@@ -1019,6 +1023,15 @@ impl<'a> PeepholeOptimizations {
             }
         }
     }
+
+    fn normalize_non_finite_number_for_delete(expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
+        if let Expression::NumericLiteral(num_expr) = expr
+            && (num_expr.value.is_nan() || num_expr.value.is_infinite())
+            && matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
+        {
+            num_expr.value = 0.0;
+        }
+    }
 }
 
 /// Outcome of folding an optional-chain at the deepest optional position.
@@ -1063,7 +1076,7 @@ fn try_fold_chain_at_element<'a>(
 }
 
 fn try_fold_chain_at_expr<'a>(expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) -> ChainFold<'a> {
-    match expr.get_inner_expression_mut() {
+    match expr {
         Expression::CallExpression(c) => try_fold_call_expression(c, ctx),
         match_member_expression!(Expression) => {
             try_fold_member_expression(expr.to_member_expression_mut(), ctx)
@@ -1161,7 +1174,7 @@ fn try_fold_at_optional<'a>(
 /// [`cjs-module-lexer`]: https://github.com/nodejs/cjs-module-lexer
 /// [esbuild]: https://github.com/evanw/esbuild/blob/v0.28.0/internal/linker/linker.go#L5127-L5138
 pub(super) fn is_cjs_module_exports_hint(expr: &Expression<'_>) -> bool {
-    let Expression::AssignmentExpression(assign) = expr.get_inner_expression() else {
+    let Expression::AssignmentExpression(assign) = expr else {
         return false;
     };
     assign.operator == AssignmentOperator::Assign

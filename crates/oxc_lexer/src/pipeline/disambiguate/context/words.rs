@@ -55,10 +55,10 @@ impl Walk {
             _ => {
                 // A statement keyword right after a completed type is an error on the same line
                 // and was handled by the break rule on a new one; read it as an atom.
+                let query = self.prev_kw == tk!(KwTypeof);
                 self.type_atom(false);
-                if keyword_type(kw) {
-                    self.prev_kw = kw;
-                }
+                // A name takes type arguments, a keyword type only in a type query.
+                self.no_type_args = keyword_type(kw) && !query;
             }
         }
     }
@@ -68,61 +68,44 @@ impl Walk {
     /// `satisfies`, `static`, `implements`, `from`) is a plain name (0) unless its position and
     /// the token after it say otherwise; every other code stands.
     fn resolve_keyword(&mut self, tokens: &Tokens, end: usize, kw: u8) -> u8 {
-        match kw {
-            tk!(KwYield | KwAwait) => {
-                if !self.scoped_keyword(kw == tk!(KwYield)) {
-                    return 0;
-                }
-            }
+        let keyword = match kw {
+            tk!(KwYield | KwAwait) => self.scoped_keyword(kw == tk!(KwYield)),
             tk!(KwOf) => {
                 // tsc reads of after any value that ends the first expression of the head.
-                if !(self.top_kind() == FrameKind::Head
+                self.top_kind() == FrameKind::Head
                     && self.top().state == F_OF
-                    && !self.operand_allowed())
-                {
-                    return 0;
-                }
+                    && !self.operand_allowed()
             }
             tk!(KwLet) => {
                 let nx = tokens.peek(end);
-                let ok = nx.kind == tk!(Ident)
+                let binding = nx.kind == tk!(Ident)
                     || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'[' | b'{'));
-                let at_stmt = self.at_stmt_start() || self.top_kind() == FrameKind::Head;
-                if !ok || !at_stmt {
-                    return 0;
-                }
+                binding && (self.at_stmt_start() || self.top_kind() == FrameKind::Head)
             }
             tk!(KwUsing) => {
                 let nx = tokens.peek(end);
-                let ok = nx.kind == tk!(Ident)
+                nx.kind == tk!(Ident)
                     && !tokens.line_break_between(end, nx.pos)
-                    && self.at_stmt_start();
-                if !ok {
-                    return 0;
-                }
+                    && self.at_stmt_start()
             }
             tk!(KwAsync) => {
                 // `async` is a modifier only when the next token is on the same line and continues
                 // a function / arrow head.
                 let nx = tokens.peek(end);
-                let follows = (matches_tk!(nx.kind, Ident | String | Number | PrivateIdent)
+                (matches_tk!(nx.kind, Ident | String | Number | PrivateIdent)
                     || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'*' | b'[')))
-                    && !tokens.line_break_between(end, nx.pos);
-                if !follows {
-                    return 0;
-                }
+                    && !tokens.line_break_between(end, nx.pos)
             }
             tk!(KwType | KwInterface | KwNamespace | KwModule | KwDeclare) => {
                 // Statement-level TS declarations only.
                 let nx = tokens.peek(end);
-                let starts_decl = matches_tk!(nx.kind, Ident | String)
-                    && !tokens.line_break_between(end, nx.pos);
                 let at_stmt = self.at_stmt_start()
                     || self.prev_kw == tk!(KwDefault)
                     || (kw == tk!(KwNamespace) && self.stmt_reg() == S_EXPORT_AS);
-                if !(tokens.ts && starts_decl && at_stmt) {
-                    return 0;
-                }
+                tokens.ts
+                    && matches_tk!(nx.kind, Ident | String)
+                    && !tokens.line_break_between(end, nx.pos)
+                    && at_stmt
             }
             tk!(KwAs | KwSatisfies) => {
                 // Only after a value in an expression, in TS; `export as` opens `export as
@@ -130,26 +113,16 @@ impl Walk {
                 let export_as = kw == tk!(KwAs) && self.prev_kw == tk!(KwExport);
                 let in_module_clause = self.top_kind() == FrameKind::ModuleSpec
                     || matches!(self.stmt_reg(), S_IMPORT | S_EXPORT);
-                if !export_as && (!tokens.ts || self.operand_allowed() || in_module_clause) {
-                    return 0;
-                }
+                export_as || (tokens.ts && !self.operand_allowed() && !in_module_clause)
             }
             tk!(KwStatic) => {
-                if !(self.top_kind() == FrameKind::ClassBody && self.top().state == M_KEY_POS) {
-                    return 0;
-                }
+                self.top_kind() == FrameKind::ClassBody && self.top().state == M_KEY_POS
             }
-            tk!(KwImplements) => {
-                if self.top_kind() != FrameKind::ClassHead {
-                    return 0;
-                }
-            }
-            tk!(KwFrom) if !matches!(self.stmt_reg(), S_IMPORT | S_EXPORT) => {
-                return 0;
-            }
-            _ => {}
-        }
-        kw
+            tk!(KwImplements) => self.top_kind() == FrameKind::ClassHead,
+            tk!(KwFrom) => matches!(self.stmt_reg(), S_IMPORT | S_EXPORT),
+            _ => true,
+        };
+        if keyword { kw } else { 0 }
     }
 
     /// True when a statement register takes the word as its name (break label, type X, import x).
@@ -184,7 +157,6 @@ impl Walk {
                 let f = self.push(FrameKind::FnHead);
                 f.is_value = value;
                 f.is_async = is_async;
-                f.is_generator = false;
                 self.value_done();
                 self.prev_kw = tk!(KwFunction);
                 self.export_default = false;
@@ -228,16 +200,10 @@ impl Walk {
                 self.keyword(tk!(KwCase));
             }
             tk!(KwDefault) => {
-                if self.prev_kw == tk!(KwExport) {
-                    self.export_default = true;
-                    self.set_stmt_reg(S_NONE);
-                    self.set_operand();
-                } else {
-                    self.set_stmt_reg(S_CASE);
-                    self.set_operand();
-                }
-                self.clear_prev();
-                self.prev_kw = tk!(KwDefault);
+                let export = self.prev_kw == tk!(KwExport);
+                self.export_default |= export;
+                self.set_stmt_reg(if export { S_NONE } else { S_CASE });
+                self.keyword(kw);
             }
             tk!(KwBreak | KwContinue) => {
                 self.set_stmt_reg(S_BREAK);
@@ -298,9 +264,7 @@ impl Walk {
             tk!(KwInterface) => {
                 // Same head frame as a class: `extends`, `<` and the body may follow on later
                 // lines.
-                let f = self.push(FrameKind::ClassHead);
-                f.is_value = false;
-                f.reg = C_INTERFACE;
+                self.push(FrameKind::ClassHead).reg = C_INTERFACE;
                 self.value_done();
                 self.prev_kw = tk!(KwInterface);
             }

@@ -1,4 +1,4 @@
-commit: 0a888ef3
+commit: 7ab7fafa
 
 runtime Summary:
 AST Parsed     : 18281/18281 (100.00%)
@@ -1035,9 +1035,6 @@ Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be t
 transform Error: tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
-minify Error: tasks/coverage/test262/test/language/expressions/class/ident-name-method-def-protected-escaped.js
-timeout: global
-
 minify Error: tasks/coverage/test262/test/language/expressions/class/name.js
 Test262Error: name descriptor value should be cls; name value should be cls
 
@@ -1379,6 +1376,9 @@ TypeError: Cannot read properties of undefined (reading 'enumerable')
 
 minify Error: tasks/coverage/test262/test/language/expressions/optional-chaining/member-expression.js
 Test262Error: Expected SameValue(«"a"», «""») to be true
+
+transform Error: tasks/coverage/test262/test/language/expressions/typeof/symbol.js
+timeout: global
 
 minify Error: tasks/coverage/test262/test/language/function-code/block-decl-onlystrict.js
 TypeError: Cannot read properties of undefined (reading 'constructor')

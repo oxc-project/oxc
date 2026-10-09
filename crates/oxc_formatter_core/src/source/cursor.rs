@@ -43,6 +43,13 @@ impl<'a, T: GetSpan> SpanCursor<'a, T> {
         &self.inner[start..end]
     }
 
+    /// Borrows unprinted items whose `span.end <= upper_bound` without advancing the cursor.
+    /// Call [`Self::take_before`] to consume them instead.
+    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = &'a T> {
+        let start = self.cursor.get();
+        self.inner[start..].iter().take_while(move |item| item.span().end <= upper_bound)
+    }
+
     /// Drains all remaining unprinted items and returns them.
     pub fn take_remaining(&self) -> &'a [T] {
         let start = self.cursor.get();
@@ -55,14 +62,6 @@ impl<T: GetSpan + Copy> SpanCursor<'_, T> {
     /// Returns the next unprinted item without consuming it.
     pub fn peek(&self) -> Option<T> {
         self.inner.get(self.cursor.get()).copied()
-    }
-
-    /// Iterator over unprinted items whose `span.end <= upper_bound`.
-    /// Does NOT advance the cursor;
-    /// callers that want to mark these as printed must call [`Self::take_before`] instead.
-    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = T> {
-        let start = self.cursor.get();
-        self.inner[start..].iter().copied().take_while(move |item| item.span().end <= upper_bound)
     }
 
     /// Iterator over every unprinted item ([`Self::take_remaining`] without advancing the cursor).
@@ -109,6 +108,25 @@ mod tests {
         assert_eq!(cursor.iter_before(5).count(), 1);
         // Cursor unchanged: everything still pending.
         assert_eq!(cursor.take_remaining().len(), 3);
+    }
+
+    #[test]
+    fn iter_before_borrows_non_copy_items() {
+        struct Item(Span);
+
+        impl oxc_span::GetSpan for Item {
+            fn span(&self) -> Span {
+                self.0
+            }
+        }
+
+        let items = [Item(Span::new(0, 2)), Item(Span::new(4, 6))];
+        let cursor = SpanCursor::new(&items);
+        let first = cursor.iter_before(2).next().unwrap();
+        assert!(std::ptr::eq(first, &raw const items[0]));
+        assert_eq!(cursor.iter_before(6).count(), 2);
+        assert_eq!(cursor.take_before(2).len(), 1);
+        assert!(std::ptr::eq(cursor.iter_before(6).next().unwrap(), &raw const items[1]));
     }
 
     #[test]

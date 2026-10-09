@@ -30,6 +30,7 @@ pub enum AssignmentLike<'a, 'b> {
     AssignmentExpression(&'b AstNode<'a, AssignmentExpression<'a>>),
     ObjectProperty(&'b AstNode<'a, ObjectProperty<'a>>),
     BindingProperty(&'b AstNode<'a, BindingProperty<'a>>),
+    AssignmentTargetPropertyProperty(&'b AstNode<'a, AssignmentTargetPropertyProperty<'a>>),
     PropertyDefinition(&'b AstNode<'a, PropertyDefinition<'a>>),
     AccessorProperty(&'b AstNode<'a, AccessorProperty<'a>>),
     TSTypeAliasDeclaration(&'b AstNode<'a, TSTypeAliasDeclaration<'a>>),
@@ -144,8 +145,8 @@ fn format_left_trailing_comments(start: u32, f: &mut JsFormatter<'_, '_>) {
 
     let comments = if end_of_line_comments.is_empty() {
         let comments = f.context().comments().comments_before_character(start, b'=');
-        if comments.iter().any(|c| c.preceded_by_newline()) { &[] } else { comments }
-    } else if end_of_line_comments.last().is_some_and(|c| c.is_multiline_block()) {
+        if comments.iter().any(Comment::preceded_by_newline) { &[] } else { comments }
+    } else if end_of_line_comments.last().is_some_and(Comment::is_multiline_block) {
         // A line-ending multiline block is promoted own-line above the right-hand side
         &[]
     } else {
@@ -228,6 +229,19 @@ impl<'a> AssignmentLike<'a, '_> {
                     f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
                 } else {
                     let width = write_member_name(property.key(), f);
+
+                    width < text_width_for_break
+                }
+            }
+            AssignmentLike::AssignmentTargetPropertyProperty(property) => {
+                let text_width_for_break =
+                    (f.options().indent_width.value() + MIN_OVERLAP_FOR_BREAK) as usize;
+
+                if property.computed {
+                    write!(f, ["[", property.name(), "]"]);
+                    f.source_text().span_width(property.name.span()) + 2 < text_width_for_break
+                } else {
+                    let width = write_member_name(property.name(), f);
 
                     width < text_width_for_break
                 }
@@ -331,6 +345,9 @@ impl<'a> AssignmentLike<'a, '_> {
                     write!(f, [":"]);
                 }
             }
+            Self::AssignmentTargetPropertyProperty(_) => {
+                write!(f, [":"]);
+            }
             Self::PropertyDefinition(property_class_member) => {
                 debug_assert!(property_class_member.value().is_some());
                 write!(f, [space(), "="]);
@@ -360,6 +377,9 @@ impl<'a> AssignmentLike<'a, '_> {
             }
             Self::BindingProperty(property) => {
                 write!(f, property.value());
+            }
+            Self::AssignmentTargetPropertyProperty(property) => {
+                write!(f, property.binding());
             }
             Self::PropertyDefinition(property) => {
                 write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
@@ -481,6 +501,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::AssignmentExpression(assignment) => assignment.right.span(),
             AssignmentLike::ObjectProperty(property) => property.value.span(),
             AssignmentLike::BindingProperty(property) => property.value.span(),
+            AssignmentLike::AssignmentTargetPropertyProperty(property) => property.binding.span(),
             AssignmentLike::PropertyDefinition(property) => property.value.as_ref()?.span(),
             AssignmentLike::AccessorProperty(property) => property.value.as_ref()?.span(),
             AssignmentLike::TSTypeAliasDeclaration(decl) => decl.type_annotation.span(),
@@ -497,7 +518,9 @@ impl<'a> AssignmentLike<'a, '_> {
                 property_class_member.value()
             }
             AssignmentLike::AccessorProperty(property) => property.value(),
-            AssignmentLike::BindingProperty(_) | AssignmentLike::TSTypeAliasDeclaration(_) => None,
+            AssignmentLike::BindingProperty(_)
+            | AssignmentLike::AssignmentTargetPropertyProperty(_)
+            | AssignmentLike::TSTypeAliasDeclaration(_) => None,
         }
     }
 
@@ -510,7 +533,9 @@ impl<'a> AssignmentLike<'a, '_> {
             return None;
         }
         let operator = match self {
-            Self::ObjectProperty(_) | Self::BindingProperty(_) => b':',
+            Self::ObjectProperty(_)
+            | Self::BindingProperty(_)
+            | Self::AssignmentTargetPropertyProperty(_) => b':',
             _ => b'=',
         };
         Some(comments.position_after_character(self.left_end(), operator))
@@ -524,7 +549,7 @@ impl<'a> AssignmentLike<'a, '_> {
             return &[];
         }
         let run = f.context().comments().end_of_line_comments_after(operator_end);
-        if run.last().is_some_and(|c| c.is_line()) { run } else { &[] }
+        if run.last().is_some_and(Comment::is_line) { run } else { &[] }
     }
 
     /// End of the left-hand side (type annotation included), before the operator and any comments around it.
@@ -538,6 +563,7 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::AssignmentExpression(assignment) => assignment.left.span().end,
             Self::ObjectProperty(property) => property.key.span().end,
             Self::BindingProperty(property) => property.key.span().end,
+            Self::AssignmentTargetPropertyProperty(property) => property.name.span().end,
             Self::PropertyDefinition(property) => property
                 .type_annotation
                 .as_ref()
@@ -554,7 +580,9 @@ impl<'a> AssignmentLike<'a, '_> {
     /// when a [variable declarator](VariableDeclarator) doesn't have initializer.
     fn has_only_left_hand_side(&self) -> bool {
         match self {
-            Self::AssignmentExpression(_) | Self::TSTypeAliasDeclaration(_) => false,
+            Self::AssignmentExpression(_)
+            | Self::AssignmentTargetPropertyProperty(_)
+            | Self::TSTypeAliasDeclaration(_) => false,
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
             Self::PropertyDefinition(property) => property.value().is_none(),
             Self::AccessorProperty(property) => property.value().is_none(),
@@ -709,7 +737,8 @@ impl<'a> AssignmentLike<'a, '_> {
                 }
             }
         } else {
-            false
+            // A pattern on the right side: only comments on their own line force the break
+            self.right_start().is_some_and(|start| comments.has_leading_own_line_comment(start))
         }
     }
 
@@ -763,6 +792,7 @@ impl<'a> AssignmentLike<'a, '_> {
             }
             AssignmentLike::ObjectProperty(_)
             | AssignmentLike::BindingProperty(_)
+            | AssignmentLike::AssignmentTargetPropertyProperty(_)
             | AssignmentLike::PropertyDefinition(_)
             | AssignmentLike::AccessorProperty(_)
             | AssignmentLike::TSTypeAliasDeclaration(_) => false,

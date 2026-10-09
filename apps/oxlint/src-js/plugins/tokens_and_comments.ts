@@ -8,6 +8,7 @@ import {
   comments,
   commentsInt32,
   commentsLen,
+  COMMENT_SIZE32,
   deserializeComments,
   getComment,
   initComments,
@@ -23,8 +24,8 @@ import {
   tokens,
   tokensLen,
   tokensInt32,
+  TOKEN_SIZE32,
 } from "./tokens.ts";
-import { COMMENT_SIZE } from "../generated/constants.ts";
 import { EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
@@ -62,7 +63,6 @@ const MERGED_SIZE = 16;
 export const MERGED_SIZE32_SHIFT = 2; // 4 x u32s per entry (16 bytes)
 export const MERGED_SIZE32 = 1 << MERGED_SIZE32_SHIFT; // 4 x u32s per entry
 debugAssert(MERGED_SIZE === MERGED_SIZE32 * 4);
-debugAssert(MERGED_SIZE === COMMENT_SIZE, "Size of token, comment, and merged entry must be equal");
 
 export const MERGED_ORIGINAL_INDEX_OFFSET32 = 1; // u32 index of the `original_index` field within an entry
 export const MERGED_TYPE_OFFSET32 = 2; // u32 index of the `is_comment` field within an entry
@@ -102,12 +102,12 @@ const MERGED_BACKING_MIN_CAPACITY = 256;
  *
  * Creates a buffer containing tokens and comments interleaved in ascending order of `start`.
  *
- * Each token/comment in the input buffers is 16 bytes, with `start` as the first `u32`.
+ * Tokens and comments use their own strides, with `start` as the first `u32`.
  *
  * `tokensAndCommentsInt32` contains 16-byte entries with the layout:
  * `{ start: u32, index: u32, type: u32, 4 bytes padding }`.
  *
- * `index` is the index of the token/comment within its original buffer (in 16-byte units).
+ * `index` is the index of the token/comment within its original buffer.
  */
 export function initTokensAndCommentsBuffer(): void {
   debugAssert(tokensAndCommentsInt32 === null, "`tokensAndComments` already initialized");
@@ -177,7 +177,7 @@ function mergeTokensAndComments(tokensInt32: Int32Array, commentsInt32: Int32Arr
       fillMergedEntries(MERGED_TYPE_TOKEN, tokensInt32, mergedPos32, tokenIndex, tokensLen);
       return;
     }
-    commentStart = commentsInt32[commentIndex << MERGED_SIZE32_SHIFT];
+    commentStart = commentsInt32[commentIndex * COMMENT_SIZE32];
   }
 
   // Alternate between runs of tokens and runs of comments
@@ -196,7 +196,7 @@ function mergeTokensAndComments(tokensInt32: Int32Array, commentsInt32: Int32Arr
         );
         return;
       }
-      tokenStart = tokensInt32[tokenIndex << MERGED_SIZE32_SHIFT];
+      tokenStart = tokensInt32[tokenIndex * TOKEN_SIZE32];
     } while (tokenStart < commentStart);
 
     // Process run of comments
@@ -207,7 +207,7 @@ function mergeTokensAndComments(tokensInt32: Int32Array, commentsInt32: Int32Arr
         fillMergedEntries(MERGED_TYPE_TOKEN, tokensInt32, mergedPos32, tokenIndex, tokensLen);
         return;
       }
-      commentStart = commentsInt32[commentIndex << MERGED_SIZE32_SHIFT];
+      commentStart = commentsInt32[commentIndex * COMMENT_SIZE32];
     } while (commentStart < tokenStart);
   }
 }
@@ -258,14 +258,15 @@ function fillMergedEntries(
   srcIndex: number,
   srcLen: number,
 ): void {
-  let srcPos32 = srcIndex << MERGED_SIZE32_SHIFT;
+  const srcSize32 = type === MERGED_TYPE_TOKEN ? TOKEN_SIZE32 : COMMENT_SIZE32;
+  let srcPos32 = srcIndex * srcSize32;
 
   for (; srcIndex < srcLen; srcIndex++) {
     tokensAndCommentsInt32![mergedPos32] = srcInt32[srcPos32];
     tokensAndCommentsInt32![mergedPos32 + MERGED_ORIGINAL_INDEX_OFFSET32] = srcIndex;
     tokensAndCommentsInt32![mergedPos32 + MERGED_TYPE_OFFSET32] = type;
     mergedPos32 += MERGED_SIZE32;
-    srcPos32 += MERGED_SIZE32;
+    srcPos32 += srcSize32;
   }
 }
 
@@ -295,11 +296,9 @@ export function getTokenOrComment(index: number): TokenOrComment {
 export function getTokenOrCommentEnd(entryIndex: number): number {
   const pos32 = entryIndex << MERGED_SIZE32_SHIFT;
   const originalIndex = tokensAndCommentsInt32![pos32 + MERGED_ORIGINAL_INDEX_OFFSET32];
-  const originalEndPos32 = (originalIndex << MERGED_SIZE32_SHIFT) + 1;
-
   return tokensAndCommentsInt32![pos32 + MERGED_TYPE_OFFSET32] === MERGED_TYPE_TOKEN
-    ? tokensInt32![originalEndPos32]
-    : commentsInt32![originalEndPos32];
+    ? tokensInt32![originalIndex * TOKEN_SIZE32 + 1]
+    : commentsInt32![originalIndex * COMMENT_SIZE32 + 1];
 }
 
 /**

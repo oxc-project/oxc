@@ -4039,9 +4039,9 @@ pub mod walk_mut {
     ) {
         let kind = AstType::TSMethodSignature;
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.key);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }

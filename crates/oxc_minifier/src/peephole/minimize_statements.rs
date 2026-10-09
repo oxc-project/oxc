@@ -230,10 +230,6 @@ impl<'a> PeepholeOptimizations {
                 continue;
             };
 
-            {
-                let source_stmt = stmts.get(statement_index).unwrap();
-                ctx.drop_statement(source_stmt);
-            }
             let Statement::ImportDeclaration(source_import) =
                 stmts.get_mut(statement_index).unwrap()
             else {
@@ -272,7 +268,8 @@ impl<'a> PeepholeOptimizations {
         // Remove imports in reverse order so removing a later import does not
         // shift the indices of any merge that is still waiting to be applied.
         for &source_index in merges.iter().rev() {
-            stmts.remove(source_index);
+            let source_stmt = stmts.remove(source_index);
+            ctx.drop_statement(&source_stmt);
         }
     }
 
@@ -576,27 +573,6 @@ impl<'a> PeepholeOptimizations {
         let Statement::ExpressionStatement(prev_expr_stmt) = last_epr else { unreachable!() };
         let a = prev_expr_stmt.unbox().expression;
         ctx.replace_expression_with(target, |b, ctx| Self::join_sequence(a, b, ctx));
-    }
-
-    pub fn join_sequence(
-        a: Expression<'a>,
-        b: Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        if let Expression::SequenceExpression(mut sequence_expr) = a {
-            // `(a, b); c`
-            sequence_expr.expressions.push(b);
-            return Expression::SequenceExpression(sequence_expr);
-        }
-        let span = a.span();
-        let exprs = if let Expression::SequenceExpression(sequence_expr) = b {
-            // `a; (b, c)`
-            ArenaVec::from_iter_in(std::iter::once(a).chain(sequence_expr.unbox().expressions), ctx)
-        } else {
-            // `a; b`
-            ArenaVec::from_array_in([a, b], ctx)
-        };
-        Expression::new_sequence_expression(span, exprs, ctx)
     }
 
     /// For variable declarations:

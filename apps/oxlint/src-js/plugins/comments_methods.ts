@@ -7,6 +7,7 @@ import {
   comments,
   commentsInt32,
   commentsLen,
+  COMMENT_SIZE32,
   getComment,
   initComments,
   initCommentsBuffer,
@@ -181,10 +182,10 @@ export function getCommentsInside(node: Node): Comment[] {
     rangeEnd = range[1];
 
   // Binary search for first comment within `node`'s range
-  const sliceStart = firstTokenAtOrAfter(commentsInt32, rangeStart, 0, commentsLen);
+  const sliceStart = firstCommentAtOrAfter(commentsInt32, rangeStart, 0, commentsLen);
   // Binary search for first comment outside `node`'s range.
   // Its index is used as `sliceEnd`, which is exclusive of the slice.
-  const sliceEnd = firstTokenAtOrAfter(commentsInt32, rangeEnd, sliceStart, commentsLen);
+  const sliceEnd = firstCommentAtOrAfter(commentsInt32, rangeEnd, sliceStart, commentsLen);
 
   // Deserialize only the comments we're returning
   for (let i = sliceStart; i < sliceEnd; i++) {
@@ -211,14 +212,37 @@ export function commentsExistBetween(
 
   // Find the first comment after `nodeOrToken1` ends.
   const betweenRangeStart = nodeOrToken1.range[1];
-  const firstCommentBetween = firstTokenAtOrAfter(commentsInt32, betweenRangeStart, 0, commentsLen);
+  const firstCommentBetween = firstCommentAtOrAfter(
+    commentsInt32,
+    betweenRangeStart,
+    0,
+    commentsLen,
+  );
 
   // Check if its end is before `nodeOrToken2` starts.
   // Read `end` from buffer: u32 at offset 1 of the entry.
   return (
     firstCommentBetween < commentsLen
-    && commentsInt32[(firstCommentBetween << 2) + 1] <= nodeOrToken2.range[0]
+    && commentsInt32[firstCommentBetween * COMMENT_SIZE32 + 1] <= nodeOrToken2.range[0]
   );
+}
+
+/** Find the first comment whose `start` is at or after `offset`. */
+function firstCommentAtOrAfter(
+  int32: Int32Array,
+  offset: number,
+  startIndex: number,
+  length: number,
+): number {
+  for (let endIndex = length; startIndex < endIndex;) {
+    const mid = (startIndex + endIndex) >> 1;
+    if (int32[mid * COMMENT_SIZE32] < offset) {
+      startIndex = mid + 1;
+    } else {
+      endIndex = mid;
+    }
+  }
+  return startIndex;
 }
 
 /**

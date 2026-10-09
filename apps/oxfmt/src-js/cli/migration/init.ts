@@ -9,7 +9,7 @@ export async function runInit() {
   const cwd = process.cwd();
 
   if (await hasOxfmtrcFile(cwd)) {
-    return exitWithError("Oxfmt configuration file already exists.");
+    return exitWithError("Oxfmt config file already exists.\nRemove it and re-run.");
   }
 
   // Create blank config

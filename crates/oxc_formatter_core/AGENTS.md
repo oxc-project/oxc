@@ -29,7 +29,7 @@ Every Prettier doc primitive its own language printers emit has a counterpart he
   that manual wiring is `ifBreak({groupId})` there and `if_group_breaks(..).with_group_id(..)` here
   See `oxc_formatter_yaml`'s `mapping_item.rs` for the full pattern.
   Oxfmt's Doc→IR mechanical conversion maps `expandedStates` to the same `BestFitting` primitive.
-- `align` is `prefix_align()`
+- A string `align` is `prefix_align()` (a visible token) or `space_align()` (spaces, which stay spaces under `useTabs` where a number `align` becomes a tab)
 
 ### The printer never trims
 
@@ -84,7 +84,10 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - A child adds classes straight into the parent's index space, so its doc is written as-is (no remap)
   - A root formatter opens a fresh scope (`with_new_tailwind_scope`) and sorts it when finalizing its `Document` (`take_sorted_tailwind_classes`)
 - A language crate's `format_to_ir` entry returns `EmbeddedIr`, one shape for every child language, no per-crate tuples
-- Only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`), core never learns concrete languages
+- Only language-pair specific data crosses as `dyn Any`, core never learns concrete languages:
+  - When the parent picks the child language, it passes the pair's own data (css-in-js's `CssInJsTemplate`, html-in-js's `has_multiple_root_elements`)
+  - When it cannot (a Markdown code block's name resolves in the host), it passes a fact about itself to every child,
+    and the host translates it into the pair's data once the child language is known (`XxxInMarkdownCodeBlock` → `JsEmbeddedIn`)
 - `FormatSession` (`session/mod.rs`) is the execution unit:
   - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), one Tailwind class scope (`Rc<RefCell<Vec<String>>>`), the host's `SessionServices`, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
   - `SessionServices` names the three per-run duties, one field each: `dispatcher` (IR channel), `string_embedder` (string-out channel, `(language, code, print_width)`; temporary, see domain (4)'s exit criterion), `tailwind_sorter` (print-time batch sort). Core only transports them
@@ -119,7 +122,7 @@ Output targets Prettier compatibility, but the domain is defined by what it is, 
 
 Admission: core stores the service and hands it back (or applies it mechanically at finalize);
 every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
-`string_embedder` additionally carries an exit criterion: it is removed when (a) md/html/angular gain IR-capable formatters AND (b) the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half); until then it is the string-out channel's transport.
+`string_embedder` additionally carries an exit criterion: it is removed when (a) html gains an IR-capable formatter AND (b) the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half); until then it is the string-out channel's transport.
 
 - (5) `envelope/`: IR-composing behavior shared by document-envelope hosts (`write_front_matter`)
 

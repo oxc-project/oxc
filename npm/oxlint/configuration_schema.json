@@ -9514,7 +9514,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/prefer-query-selector": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferQuerySelector"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/prefer-reflect-apply": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -18038,6 +18055,18 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to allow rejecting Promises with values typed as `unknown`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferQuerySelector": {
+      "type": "object",
+      "properties": {
+        "allowWithVariables": {
+          "description": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable."
         }
       },
       "additionalProperties": false

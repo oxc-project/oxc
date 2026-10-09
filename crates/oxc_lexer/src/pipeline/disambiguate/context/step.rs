@@ -15,57 +15,13 @@ fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
         if (c == b'+' || c == b'-') && c1 == c {
             return false;
         }
-        return matches!(
-            c,
-            b'+' | b'-'
-                | b'*'
-                | b'/'
-                | b'%'
-                | b'&'
-                | b'|'
-                | b'^'
-                | b'<'
-                | b'>'
-                | b'='
-                | b'?'
-                | b'.'
-                | b','
-                | b'('
-                | b'['
-                | b':'
-                | b')'
-                | b']'
-                | b'}'
-        );
+        return b"+-*/%&|^<>=?.,([:)]}".contains(&c) || (c == b'!' && c1 == b'=');
     }
+    // tsc ends the expression before an as or satisfies on a new line.
     if k == tk!(Ident) {
-        let kw = tokens.ident_kw(pos);
-        return matches_tk!(kw, KwIn | KwInstanceof)
-            || (tokens.ts && matches_tk!(kw, KwAs | KwSatisfies));
+        return matches_tk!(tokens.ident_kw(pos), KwIn | KwInstanceof);
     }
     matches_tk!(k, TemplateHead | TemplateNoSub)
-}
-
-/// Can `pos` continue a type after a completed type atom on the previous line? `.`, `|`, `&` may
-/// follow a line break; `[`, `<`, `extends` may not.
-fn continues_type_after_break(tokens: &Tokens, pos: usize) -> bool {
-    let k = tokens.base_kind(pos);
-    if k >= OP_KIND_BASE {
-        let c = tokens.src[pos];
-        let c1 = tokens.src[pos + 1];
-        return (c == b'.' && c1 != b'.')
-            || (c == b'|' && c1 != b'|')
-            || (c == b'&' && c1 != b'&')
-            || c == b'?'
-            || c == b':'
-            || c == b','
-            || c == b')'
-            || c == b']'
-            || c == b'}'
-            || c == b'>'
-            || (c == b'=' && c1 == b'>');
-    }
-    false
 }
 
 impl Walk {
@@ -95,11 +51,10 @@ impl Walk {
         if newline && !self.operand_allowed() && !continues_expression(tokens, pos) {
             self.asi(tokens, pos);
         }
-        // `let x` then a line break: only `=`, `,`, `;`, `:` and `!` can continue the declarator,
-        // anything else starts a new statement.
+        // A binding that ended the line goes on with =, a comma or a type annotation only.
         if newline && !self.operand_allowed() && self.top_declarator() == D_BOUND {
             let c = tokens.src[pos];
-            if !(k >= OP_KIND_BASE && matches!(c, b'=' | b',' | b';' | b':' | b'!')) {
+            if !(k >= OP_KIND_BASE && matches!(c, b'=' | b',' | b':')) {
                 self.end_statement();
             }
         }
@@ -108,7 +63,7 @@ impl Walk {
         if newline
             && self.top_kind() == FrameKind::TypeRegion
             && self.top().atom
-            && !continues_type_after_break(tokens, pos)
+            && !self.continues_after_type_break(tokens, pos)
         {
             self.end_region_by_break();
         }
@@ -122,6 +77,13 @@ impl Walk {
             && self.top_kind() != FrameKind::TypeRegion
         {
             self.end_statement();
+        }
+        // A token that cannot continue a completed type ends it, as in x as T - 1.
+        if self.top_kind() == FrameKind::TypeRegion
+            && self.top().atom
+            && !self.continues_type(tokens, pos, k)
+        {
+            self.end_region_for();
         }
         let end = match k {
             tk!(Ident) => self.step_word(tokens, pos),
@@ -175,21 +137,18 @@ impl Walk {
         // A head continues onto the next line when its body (or more head) follows; otherwise the
         // break ends a bodiless signature.
         if matches!(self.top_kind(), FrameKind::FnHead | FrameKind::ClassHead) {
-            let c = tokens.src[pos];
             let k = tokens.base_kind(pos);
-            if k >= OP_KIND_BASE && (c == b'{' || c == b'<' || c == b'(') {
-                return;
-            }
             // Right after `function` / `class`, the name (or a generator's `*`) may follow a
             // line break: nothing has been declared yet, so there is no signature to end.
             let unnamed = matches_tk!(self.prev_kw, KwFunction | KwClass);
-            if unnamed && (k == tk!(Ident) || (k >= OP_KIND_BASE && c == b'*')) {
-                return;
+            let goes_on = if k == tk!(Ident) {
+                unnamed || matches_tk!(tokens.ident_kw(pos), KwExtends | KwImplements)
+            } else {
+                k >= OP_KIND_BASE && tokens.src[pos] == b'{'
+            };
+            if !goes_on {
+                self.end_statement();
             }
-            if k == tk!(Ident) && matches_tk!(tokens.ident_kw(pos), KwExtends | KwImplements) {
-                return;
-            }
-            self.end_statement();
             return;
         }
         match self.top_kind() {
@@ -201,6 +160,23 @@ impl Walk {
             k if k.is_stmt_holder() => self.end_statement(),
             // Lists, calls, literals and types hold no statements: nothing ends.
             _ => {}
+        }
+    }
+
+    /// Can the token at pos go on after a type that ended the previous line?
+    fn continues_after_type_break(&self, tokens: &Tokens, pos: usize) -> bool {
+        if tokens.base_kind(pos) < OP_KIND_BASE {
+            return false;
+        }
+        let (c, c1) = (tokens.src[pos], tokens.src[pos + 1]);
+        match c {
+            b'.' | b'|' | b'&' => c1 != c,
+            b'?' | b':' | b',' | b')' | b']' | b'}' | b'>' => true,
+            // An initializer, or the arrow of a function type.
+            b'=' => c1 != b'=',
+            // The body after a return type.
+            b'{' => self.frames[self.frames.len() - 2].kind == FrameKind::FnHead,
+            _ => false,
         }
     }
 

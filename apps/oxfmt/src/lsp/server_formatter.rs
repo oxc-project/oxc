@@ -3,9 +3,10 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+use cow_utils::CowUtils;
 use ignore::gitignore::Gitignore;
 use tower_lsp_server::gen_lsp_types::{
-    DocumentFormattingProvider, Pattern, Range, ServerCapabilities, TextEdit, Uri,
+    DocumentFormattingProvider, MessageType, Pattern, Range, ServerCapabilities, TextEdit, Uri,
 };
 use tracing::{debug, error, warn};
 
@@ -17,8 +18,8 @@ use oxc_language_server::{
 
 use crate::core::{
     ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
-    SourceFormatter, build_global_ignore_matchers, classify_file_kind, config_discovery,
-    is_ignored, resolve_ignore_paths, utils,
+    SourceFormatter, build_global_ignore_matchers, classify_file, config_discovery, is_ignored,
+    resolve_ignore_paths, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -77,16 +78,15 @@ impl ServerFormatterBuilder {
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_services(Some(self.external_services.clone()));
 
-        (
-            ServerFormatter::new(
-                root_path.to_path_buf(),
-                source_formatter,
-                JsConfigLoaderCb::clone(&self.js_config_loader),
-                explicit_config_path,
-                use_nested_config,
-            ),
-            Vec::new(),
-        )
+        let (formatter, client_message) = ServerFormatter::new(
+            root_path.to_path_buf(),
+            source_formatter,
+            JsConfigLoaderCb::clone(&self.js_config_loader),
+            explicit_config_path,
+            use_nested_config,
+        );
+
+        (formatter, client_message.into_iter().collect())
     }
 }
 
@@ -200,7 +200,7 @@ impl Tool for ServerFormatter {
         // and only the root resolver, `.editorconfig` and `.prettierignore` do eager file IO.
         // The trade-off is over-eviction, a config change in one nested dir also drops cached probes elsewhere.
         // But format requests are sporadic enough that lazy re-population costs nothing observable.
-        let new_state = Self::build_state(
+        let (new_state, client_message) = Self::build_state(
             &self.root_path,
             self.explicit_config_path.as_deref(),
             self.use_nested_config,
@@ -208,7 +208,11 @@ impl Tool for ServerFormatter {
         );
         *self.state.write().expect("state rwlock poisoned") = Arc::new(new_state);
 
-        ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() }
+        ToolRestartChanges {
+            tool: None,
+            watch_patterns: None,
+            client_messages: client_message.into_iter().collect(),
+        }
     }
 
     fn run_format(&self, document: TextDocument) -> Result<Vec<TextEdit>, String> {
@@ -226,7 +230,7 @@ impl Tool for ServerFormatter {
                 &file_content
             };
 
-            let Some(result) = self.format_file(&path, source_text) else {
+            let Some(result) = self.format_file(&path, source_text)? else {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
@@ -238,7 +242,7 @@ impl Tool for ServerFormatter {
                 .ok_or_else(|| "In-memory formatting requires content".to_string())?;
 
             let Some(result) =
-                self.format_in_memory(document.uri, source_text, &document.language_id)
+                self.format_in_memory(document.uri, source_text, &document.language_id)?
             else {
                 return Ok(vec![]); // currently not supported
             };
@@ -277,21 +281,24 @@ impl ServerFormatter {
         js_config_loader: JsConfigLoaderCb,
         explicit_config_path: Option<PathBuf>,
         use_nested_config: bool,
-    ) -> Self {
-        let state = Self::build_state(
+    ) -> (Self, Vec<ClientMessage>) {
+        let (state, client_message) = Self::build_state(
             &root_path,
             explicit_config_path.as_deref(),
             use_nested_config,
             &js_config_loader,
         );
-        Self {
-            root_path,
-            source_formatter,
-            js_config_loader,
-            explicit_config_path,
-            use_nested_config,
-            state: RwLock::new(Arc::new(state)),
-        }
+        (
+            Self {
+                root_path,
+                source_formatter,
+                js_config_loader,
+                explicit_config_path,
+                use_nested_config,
+                state: RwLock::new(Arc::new(state)),
+            },
+            client_message,
+        )
     }
 
     /// Build a fresh [`FormatterState`] from scratch.
@@ -308,29 +315,48 @@ impl ServerFormatter {
         explicit_config_path: Option<&Path>,
         use_nested_config: bool,
         js_config_loader: &JsConfigLoaderCb,
-    ) -> FormatterState {
-        let scopes = ConfigScopes::load(
+    ) -> (FormatterState, Vec<ClientMessage>) {
+        let mut client_message = vec![];
+        let scopes = match ConfigScopes::load(
             root_path,
             explicit_config_path,
             use_nested_config,
             Some(js_config_loader),
-        )
-        .unwrap_or_else(|err| {
-            warn!("{err}\nFalling back to default config for {}", root_path.display());
-            ConfigScopes::with_default_root(root_path, use_nested_config, Some(js_config_loader))
-        });
+        ) {
+            Ok(scopes) => scopes,
+            Err(err) => {
+                client_message.push(ClientMessage {
+                    message: format!(
+                        "{}: {err}",
+                        root_path.to_string_lossy().cow_replace('\\', "/")
+                    ),
+                    r#type: MessageType::Error,
+                });
+                ConfigScopes::with_default_root(
+                    root_path,
+                    use_nested_config,
+                    Some(js_config_loader),
+                )
+            }
+        };
 
         // NOTE: `.gitignore` is intentionally NOT included here.
         // An LSP document is explicitly formatted by the user.
         // (CLI also formats explicitly specified git ignored files.)
-        let ignore_matchers = resolve_ignore_paths(root_path, &[])
+        let ignore_matchers = match resolve_ignore_paths(root_path, &[])
             .and_then(|paths| build_global_ignore_matchers(root_path, &[], &paths))
-            .unwrap_or_else(|err| {
-                warn!("Failed to load .prettierignore: {err}, proceeding without ignore globs");
+        {
+            Ok(matchers) => matchers,
+            Err(err) => {
+                client_message.push(ClientMessage {
+                    message: format!("Failed to load .prettierignore: {err}"),
+                    r#type: MessageType::Error,
+                });
                 vec![]
-            });
+            }
+        };
 
-        FormatterState { scopes, ignore_matchers }
+        (FormatterState { scopes, ignore_matchers }, client_message)
     }
 
     /// Snapshot the current state.
@@ -346,7 +372,7 @@ impl ServerFormatter {
         scopes: &ConfigScopes,
         path: &Path,
         source_text: &str,
-    ) -> Option<FormatResult> {
+    ) -> Result<Option<FormatResult>, String> {
         let resolver = match scopes.resolve(path) {
             Ok(r) => r,
             Err(err) => {
@@ -360,37 +386,35 @@ impl ServerFormatter {
 
         if resolver.is_path_ignored(path, false) {
             debug!("File is ignored by config ignorePatterns: {}", path.display());
-            return None;
+            return Ok(None);
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(path)) else {
+        let Some(strategy) = classify_file(path) else {
             debug!("Unsupported file type for formatting: {}", path.display());
-            return None;
+            return Ok(None);
         };
-        let strategy = match resolver.resolve(kind) {
-            Ok(ResolveOutcome::Format(strategy)) => strategy,
+        let plan = match resolver.resolve(path, strategy) {
+            Ok(ResolveOutcome::Format(plan)) => plan,
             Ok(ResolveOutcome::MissingPlugin(plugin)) => {
-                warn!(
-                    "Skipping `.{plugin}`: `{plugin}` plugin is not enabled in resolved config: {}",
+                return Err(format!(
+                    "`{plugin}` plugin is not enabled in resolved config: {}",
                     path.display()
-                );
-                return None;
+                ));
             }
             Err(err) => {
-                debug!("Config resolve error for {}: {err}", path.display());
-                return None;
+                return Err(format!("Config resolve error for {}: {err}", path.display()));
             }
         };
-        debug!("strategy = {strategy:?}");
+        debug!("plan = {plan:?}");
 
-        Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, strategy)))
+        Ok(Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, plan))))
     }
 
-    fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+    fn format_file(&self, path: &Path, source_text: &str) -> Result<Option<FormatResult>, String> {
         let state = self.snapshot();
         if is_ignored(&state.ignore_matchers, path, false, true) {
             debug!("File is ignored by .prettierignore: {}", path.display());
-            return None;
+            return Ok(None);
         }
         self.resolve_and_format(&state.scopes, path, source_text)
     }
@@ -400,11 +424,11 @@ impl ServerFormatter {
         uri: &Uri,
         source_text: &str,
         language_id: &LanguageId,
-    ) -> Option<FormatResult> {
+    ) -> Result<Option<FormatResult>, String> {
         let Some(path) = create_fake_file_path_from_language_id(language_id, &self.root_path, uri)
         else {
             debug!("Unsupported language id for in-memory formatting: {language_id:?}");
-            return None;
+            return Ok(None);
         };
         self.resolve_and_format(&self.snapshot().scopes, &path, source_text)
     }

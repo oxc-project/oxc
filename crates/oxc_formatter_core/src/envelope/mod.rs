@@ -18,13 +18,13 @@ use crate::{
 
 /// Writes a front matter block.
 ///
-/// The body dispatches through the session when its resolved language is in `embeddable_languages`,
-/// the whole block stays verbatim otherwise.
+/// The body dispatches through the session when a dispatcher is installed
+/// and its resolved language is in `embeddable_languages`, the whole block stays verbatim otherwise.
 /// Membership means "gets the frame treatment", not "gets formatted":
 /// a member language without a serving formatter keeps its body verbatim (`PreserveOriginal`),
-/// but its EMPTY block still normalizes through the frame.
-/// Never fails; any refusal (`PreserveOriginal`, operational error, non-embeddable language) keeps the block's bytes as-is
-/// while the host document still formats.
+/// but its EMPTY block still normalizes through the frame when a dispatcher is installed.
+/// Never fails; any refusal (`PreserveOriginal`, operational error, no dispatcher, non-embeddable language)
+/// keeps the block's bytes as-is while the host document still formats.
 ///
 /// The composed shape (Prettier `embed.js` + its css/markdown printers):
 /// opening delimiter with the explicit language re-emitted (`---yaml`),
@@ -36,7 +36,7 @@ pub fn write_front_matter<'a, C: FormatContext>(
     f: &mut Formatter<'_, 'a, C>,
 ) {
     let language = fm.language();
-    if embeddable_languages.contains(&language) {
+    if f.session().has_dispatcher() && embeddable_languages.contains(&language) {
         let body = fm.value.trim();
         if body.is_empty() {
             write_frame(fm, None, f);

@@ -2239,7 +2239,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Set Write so `visit_member_expression` can detect it and mark MemberWriteTarget.
         // Only for member expressions — `delete x` (bare identifier in sloppy mode)
         // is not a property modification.
-        if it.operator == UnaryOperator::Delete && it.argument.is_member_expression() {
+        // `is_member_expression` misses `delete a?.b` (a `ChainExpression`) and
+        // `delete (a.b)` (a `ParenthesizedExpression`). Unwrap those so the
+        // member still sees the write context.
+        if it.operator == UnaryOperator::Delete && is_delete_member_target(&it.argument) {
             self.current_reference_flags = ReferenceFlags::Write;
         }
         self.visit_expression(&it.argument);
@@ -2444,7 +2447,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_ts_method_signature(&mut self, sig: &TSMethodSignature<'a>) {
         let kind = AstKind::TSMethodSignature(self.alloc(sig));
         self.enter_node(kind);
-        self.enter_scope(ScopeFlags::empty(), &sig.scope_id);
         self.visit_span(&sig.span);
         if sig.computed {
             // interface A { [prop](): string }
@@ -2453,6 +2455,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.visit_property_key(&sig.key);
         self.current_reference_flags = ReferenceFlags::empty();
+        self.enter_scope(ScopeFlags::empty(), &sig.scope_id);
         if let Some(type_parameters) = &sig.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
@@ -2930,6 +2933,23 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&it.span);
         self.visit_export_default_declaration_kind(&it.declaration);
         self.leave_node(kind);
+    }
+}
+
+/// `delete` only modifies a property when its argument is a member expression.
+///
+/// Optional chains (`delete a?.b`) are `ChainExpression`, and parentheses or
+/// type assertions wrap the member (`delete (a.b)`, `delete (a as T).b`).
+/// Bare `delete x` is not a property modification.
+fn is_delete_member_target(expr: &Expression<'_>) -> bool {
+    match expr.get_inner_expression() {
+        Expression::ChainExpression(chain) => match &chain.expression {
+            ChainElement::StaticMemberExpression(_)
+            | ChainElement::ComputedMemberExpression(_)
+            | ChainElement::PrivateFieldExpression(_) => true,
+            ChainElement::CallExpression(_) | ChainElement::TSNonNullExpression(_) => false,
+        },
+        inner => inner.is_member_expression(),
     }
 }
 

@@ -19,7 +19,7 @@ jobs:
   release:
     if: github.repository == 'oxc-project/oxc'
     name: Release NAPI Relay Transform
-    uses: ./.github/workflows/reusable_release_napi.yml
+    uses: $/.github/workflows/reusable_release_napi.yml
     with:
       name: transform-relay
     permissions:

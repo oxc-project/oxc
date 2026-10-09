@@ -1,6 +1,7 @@
-use oxc_allocator::{ArenaBox, ArenaVec, Dummy, GetAllocator};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Ident;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
@@ -1492,7 +1493,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut parameter_count = 0;
         let mut comma_start = None;
         let parameter = if self.at(Kind::RBrack) || self.has_fatal_error() {
-            TSIndexSignatureName::dummy(self.allocator())
+            let ty = TSType::new_ts_any_keyword(SPAN, self);
+            let annotation = TSTypeAnnotation::boxed(SPAN, ty, self);
+            TSIndexSignatureName::new(SPAN, Ident::empty(), annotation, self)
         } else {
             parameter_count = 1;
             let parameter = self.parse_ts_index_signature_name();

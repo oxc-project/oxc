@@ -23,6 +23,7 @@ mod object_like;
 mod object_pattern_like;
 mod parameters;
 mod program;
+pub use program::FormatProgramBody;
 mod return_or_throw_statement;
 pub mod semicolon;
 mod sequence_expression;
@@ -438,8 +439,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyIdentifier<'a>>
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_property_key(self.name(), self.computed(), f);
-        write!(f, [":", space(), self.binding()]);
+        AssignmentLike::AssignmentTargetPropertyProperty(self).fmt(f);
     }
 }
 
@@ -530,6 +530,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, EmptyStatement> {
     }
 }
 
+/// Whether the embedding decided this program's sole statement prints without its semicolon (see `crate::format_to_ir`):
+/// no trailing one, and no ASI guard under `semi: false` either.
+fn is_semicolon_omitted_by_embedding(
+    stmt: &AstNode<'_, ExpressionStatement<'_>>,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    f.context().embedding_omits_semicolon() && matches!(stmt.parent(), AstNodes::Program(_))
+}
+
 /// Returns `true` if the expression needs a leading semicolon to prevent ASI issues.
 ///
 /// `verbatim` is set for a suppressed statement, whose printed form is the source text:
@@ -539,6 +548,10 @@ fn expression_statement_needs_semicolon<'a>(
     f: &JsFormatter<'_, 'a>,
     verbatim: bool,
 ) -> bool {
+    if is_semicolon_omitted_by_embedding(stmt, f) {
+        return false;
+    }
+
     if matches!(
         stmt.parent(),
         // `if (true) (() => {})`
@@ -662,6 +675,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
         write_leading_comments_with_asi_guard(self, false, f);
 
         let expression = self.expression();
+        if is_semicolon_omitted_by_embedding(self, f) {
+            write!(f, expression);
+            return;
+        }
+
         let content_end = semicolon_terminated_expression_content_end(
             f,
             expression.as_ref(),

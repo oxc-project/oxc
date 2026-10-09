@@ -1464,8 +1464,8 @@ struct Constants {
     /// Offset of `kind` field within `Comment` struct
     comment_kind_offset: u32,
     /// Offset of `content` field within `Comment` struct.
-    /// JS side uses this byte as a "deserialized" flag for lazy deserialization of tokens/comments.
-    deserialized_flag_offset: u32,
+    /// JS side uses this byte as a "deserialized" flag for lazy deserialization of comments.
+    comment_deserialized_flag_offset: u32,
     /// Discriminant value for `CommentKind::Line`
     comment_line_kind: u8,
     /// Size of `RawTransferMetadata` in bytes
@@ -1492,7 +1492,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         comments_len_offset,
         comment_size,
         comment_kind_offset,
-        deserialized_flag_offset,
+        comment_deserialized_flag_offset,
         comment_line_kind,
         raw_metadata_size,
         raw_metadata_align,
@@ -1595,12 +1595,12 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         export const COMMENT_KIND_OFFSET = {comment_kind_offset};
 
         /**
-         * Byte offset of the deserialized flag within each token/comment entry.
+         * Byte offset of the deserialized flag within each comment entry.
          *
-         * Corresponds to `content` field of `Comment` struct, and unused bytes in `Token`.
+         * Corresponds to the `content` field of `Comment` struct.
          * Initialized to 0 by Rust. JS side sets to 1 after deserialization.
          */
-        export const DESERIALIZED_FLAG_OFFSET = {deserialized_flag_offset};
+        export const COMMENT_DESERIALIZED_FLAG_OFFSET = {comment_deserialized_flag_offset};
 
         /**
          * Discriminant value for `CommentKind::Line`.
@@ -1748,7 +1748,7 @@ fn get_constants(schema: &Schema) -> Constants {
     let comment_struct = schema.type_by_name("Comment").as_struct().unwrap();
     let comment_size = comment_struct.layout_64().size;
     let comment_kind_offset = comment_struct.field_by_name("kind").offset_64();
-    let deserialized_flag_offset = comment_struct.field_by_name("content").offset_64();
+    let comment_deserialized_flag_offset = comment_struct.field_by_name("content").offset_64();
 
     let comment_kind_enum = schema.type_by_name("CommentKind").as_enum().unwrap();
     let comment_line_kind =
@@ -1770,7 +1770,7 @@ fn get_constants(schema: &Schema) -> Constants {
         comments_len_offset,
         comment_size,
         comment_kind_offset,
-        deserialized_flag_offset,
+        comment_deserialized_flag_offset,
         comment_line_kind,
         raw_metadata_size,
         raw_metadata_align,

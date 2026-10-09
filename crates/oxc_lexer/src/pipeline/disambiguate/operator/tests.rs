@@ -1082,3 +1082,37 @@ fn walk_past_a_function_expression() {
     division("x = { f: class {}, g: {} / 2 };", ScriptJS);
     division("x = { f: function() {}, g: [{} / 2] };", ScriptJS);
 }
+
+#[test]
+fn not_equal_at_a_line_start_continues_the_expression() {
+    division("x = c ? a\n!= b : {} / 2;", ScriptJS);
+    regex("let y = a\n!== b, z\n/re/g", ScriptJS);
+    regex("f = async x => x\n!== null && await /re/g", ScriptJS);
+}
+
+#[test]
+fn as_at_a_line_start_is_a_name() {
+    // tsc ends the expression before an as or satisfies on a new line.
+    regex("let as;\nx = y\nas\n{}\n/re/g", ScriptTS);
+    regex("let satisfies;\nx = y\nsatisfies\n{}\n/re/g", ScriptTS);
+}
+
+#[test]
+fn declaration_goes_on_after_a_type_that_ends_a_line() {
+    regex("let a: T\n= 1, b\n/re/g", ScriptTS);
+    division("x = function (): T\n{} / 2;", ScriptTS);
+    regex("class A { async m(): T\n{ await /re/g } }", ScriptTS);
+    regex("import x = require(\"y\")\n/re/g", ScriptTS);
+}
+
+#[test]
+fn as_type_ends_at_an_expression_operator() {
+    regex("x = a as T - void /re/g;", ScriptTS);
+    regex("x = c ? a as T : void /re/g;", ScriptTS);
+    regex("x = a satisfies T * void /re/g;", ScriptTS);
+    regex("x = a as T in void /re/g;", ScriptTS);
+    regex("async function f() { x = a as T == b && await /re/g }", ScriptTS);
+    regex("async function f() { x = a as T <= b\nawait /re/g }", ScriptTS);
+    regex("async function f() { x = a as T[] < b\nawait /re/g }", ScriptTS);
+    division("x = c ? a as T : function () {} / 2;", ScriptTS);
+}

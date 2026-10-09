@@ -6,6 +6,26 @@ source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
 <a>
 > c
 
+- a
+<a>
+    b
+
+* a\
+      # x
+<a>
+    b
+
+1. a
+<a>
+   b
+
+2. c
+
+- # h
+  a
+<a>
+    b
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -15,6 +35,27 @@ source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
 > <a>
 > c
 
+- a
+<a>
+    b
+
+* a\
+      # x
+<a>
+    b
+
+1. a
+
+   <a>
+   b
+
+2. c
+
+- # h
+  a
+<a>
+    b
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -22,5 +63,26 @@ source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
 >
 > <a>
 > c
+
+- a
+<a>
+    b
+
+* a\
+      # x
+<a>
+    b
+
+1. a
+
+   <a>
+   b
+
+2. c
+
+- # h
+  a
+<a>
+    b
 
 ===================== End =====================

@@ -5,7 +5,7 @@ use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_formatter_core::{
     Buffer, Format,
     builders::{
-        dedent_to_root, hard_line_break, literal_line_break, mark_as_root, soft_line_break,
+        dedent_to_root, hard_line_break, literal_line_break, mark_as_root,
         soft_line_break_or_space, text,
     },
     write,
@@ -46,8 +46,6 @@ impl<'a> Format<'a, MarkdownFormatContext<'a>> for Atom<'a> {
 /// A fill separator.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Sep {
-    /// A break or nothing (a line break between CJ characters).
-    SoftLine,
     Line,
     HardLine,
 }
@@ -55,7 +53,6 @@ pub enum Sep {
 impl<'a> Format<'a, MarkdownFormatContext<'a>> for Sep {
     fn fmt(&self, f: &mut MarkdownFormatter<'_, 'a>) {
         match self {
-            Sep::SoftLine => write!(f, soft_line_break()),
             Sep::Line => write!(f, soft_line_break_or_space()),
             Sep::HardLine => write!(f, hard_line_break()),
         }
@@ -79,13 +76,12 @@ pub struct Parts<'a> {
 }
 
 impl<'a> Item<'a> {
-    /// The item as the parser will read it: a break is a newline, a soft line between CJ letters nothing.
+    /// The item as the parser will read it: a break is a newline, a line a space.
     fn flat(&self) -> &'a str {
         match self {
             Item::Atom(Atom::Str(s)) => s,
             Item::Atom(_) | Item::Sep(Sep::HardLine) => "\n",
             Item::Sep(Sep::Line) => " ",
-            Item::Sep(Sep::SoftLine) => "",
         }
     }
 }

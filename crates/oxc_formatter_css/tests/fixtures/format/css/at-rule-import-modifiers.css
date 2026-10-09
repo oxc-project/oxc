@@ -11,3 +11,11 @@
 /* a wrap inside a comma group sits one indent deeper than a wrap between comma groups */
 @import "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa.css" some-modifier another-modifier yet-another-one, "bbbbbbbbbbbbbbbbbb.css" tail-word;
 @import url("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.css") tail-word, "b.css" x y;
+/* an unparsed `supports()` condition keeps the source's `ident (` gap */
+@import url("a.css") supports(not (display: grid) and (display: flex));
+@import url("a.css") supports(foo (display: grid));
+/* `url(...)` plus one word wraps without indent, alone or as a comma group; a string href indents */
+@import url("very-very-very-very-very-very-very-very-very-very-long-name.css") layer(base);
+@import "very-very-very-very-very-very-very-very-very-very-long-name-xxxxx.css" layer(base);
+@import url("very-very-very-very-very-very-very-very-very-very-long-name.css") projection,tv;
+@import "very-very-very-very-very-very-very-very-very-very-long-name-xxxxx.css" projection,tv;

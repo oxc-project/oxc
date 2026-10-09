@@ -14,6 +14,7 @@ describe("LSP formatting", () => {
       ["format/test.json", "json"],
       ["format/test.vue", "vue"],
       ["format/test.svelte", "svelte"],
+      ["format/test.astro", "astro"],
       ["format/test.toml", "toml"],
       ["format/formatted.ts", "typescript"],
       ["format/test.txt", "plaintext"],
@@ -25,10 +26,12 @@ describe("LSP formatting", () => {
   describe("config options", () => {
     it.each([
       ["config-semi/test.ts", "typescript"],
+      ["config-symlink/test.ts", "typescript"],
       ["config-js-semi/test.ts", "typescript"],
       ["config-no-sort-package-json/package.json", "json"],
       ["config-vue-indent/test.vue", "vue"],
       ["config-svelte/test.svelte", "svelte"],
+      ["config-astro/test.astro", "astro"],
       ["config-sort-imports/test.js", "javascript"],
       ["config-sort-tailwindcss/test.tsx", "typescriptreact"],
       ["config-sort-tailwindcss/test.vue", "vue"],
@@ -161,6 +164,15 @@ describe("LSP formatting", () => {
         await fs.rm(dir, { recursive: true, force: true });
       }
     });
+  });
+
+  describe("error handling on format", () => {
+    it.each([["config-invalid-override/test.ts", "typescript"]])(
+      "should handle %s",
+      async (path, languageId) => {
+        expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
+      },
+    );
   });
 
   describe("initializationOptions", () => {
