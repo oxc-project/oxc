@@ -5,7 +5,12 @@ use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::number::NumberBase;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::integer_literal_loses_precision};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{integer_literal_loses_precision, pad_fix_with_token_boundary},
+};
 
 fn prefer_bigint_literals_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer bigint literals over `BigInt(...)`.")
@@ -80,8 +85,9 @@ impl Rule for PreferBigintLiterals {
         };
 
         if argument_expression.is_big_int_literal() {
-            let replacement = ctx.source_range(argument_expression.span()).to_string();
             ctx.diagnostic_with_fix(prefer_bigint_literals_diagnostic(arg.span()), |fixer| {
+                let mut replacement = ctx.source_range(argument_expression.span()).to_string();
+                pad_fix_with_token_boundary(ctx.source_text(), call.span, &mut replacement);
                 fixer.replace(call.span, replacement)
             });
             return;
@@ -89,10 +95,17 @@ impl Rule for PreferBigintLiterals {
 
         match argument_expression.get_inner_expression() {
             Expression::StringLiteral(string_literal) => {
-                if let Some(replacement) = bigint_literal_from_string(&string_literal.value) {
+                if let Some(mut replacement) = bigint_literal_from_string(&string_literal.value) {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
-                        |fixer| fixer.replace(call.span, replacement),
+                        |fixer| {
+                            pad_fix_with_token_boundary(
+                                ctx.source_text(),
+                                call.span,
+                                &mut replacement,
+                            );
+                            fixer.replace(call.span, replacement)
+                        },
                     );
                 }
             }
@@ -114,12 +127,19 @@ impl Rule for PreferBigintLiterals {
                         prefer_bigint_literals_diagnostic(arg.span())
                             .with_note("Integer literal loses precision"),
                     );
-                } else if let Some(replacement) =
+                } else if let Some(mut replacement) =
                     bigint_literal_from_numeric(raw_text, numeric_literal.base)
                 {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
-                        |fixer| fixer.replace(call.span, replacement),
+                        |fixer| {
+                            pad_fix_with_token_boundary(
+                                ctx.source_text(),
+                                call.span,
+                                &mut replacement,
+                            );
+                            fixer.replace(call.span, replacement)
+                        },
                     );
                 } else {
                     ctx.diagnostic(prefer_bigint_literals_diagnostic(arg.span()));
@@ -269,6 +289,13 @@ fn test() {
         (r"BigInt('  0xFF  ')", "0xFFn"),
         (r"BigInt(0)", "0n"),
         (r"BigInt(1n)", r"1n"),
+        (r"BigInt(1n)in {'1':0}", r"1n in {'1':0}"),
+        (r"BigInt(1n)instanceof Object", r"1n instanceof Object"),
+        (r"BigInt(1n)as bigint", r"1n as bigint"),
+        (r"BigInt(1n)satisfies bigint", r"1n satisfies bigint"),
+        (r"BigInt(1)in {'1':0}", r"1n in {'1':0}"),
+        (r"BigInt('1')instanceof Object", r"1n instanceof Object"),
+        (r"BigInt(1n).toString()", r"1n.toString()"),
         (r"BigInt(0B11_11)", "0B11_11n"),
         (r"BigInt(0O777_777)", "0O777_777n"),
         (r"BigInt(0777)", "0o777n"),
