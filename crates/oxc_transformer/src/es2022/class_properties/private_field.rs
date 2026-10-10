@@ -1914,12 +1914,29 @@ impl<'a> ClassProperties<'a> {
         if is_static {
             let class_binding = class_bindings.get_or_init_static_binding(ctx);
             let class_ident = class_binding.create_read_expression(ctx);
+            let prop_ident = (!is_method).then(|| prop_binding.create_read_expression(ctx));
             let left = self.create_check_in_rhs(right, ctx);
-            return Expression::new_binary_expression(
+            let brand_check = Expression::new_binary_expression(
                 span,
                 left,
                 BinaryOperator::StrictEquality,
                 class_ident,
+                ctx,
+            );
+            let Some(prop_ident) = prop_ident else { return brand_check };
+
+            let initialized_check = Expression::new_binary_expression(
+                span,
+                prop_ident,
+                BinaryOperator::StrictInequality,
+                Expression::new_void_0(SPAN, ctx),
+                ctx,
+            );
+            return Expression::new_logical_expression(
+                span,
+                brand_check,
+                LogicalOperator::And,
+                initialized_check,
                 ctx,
             );
         }
