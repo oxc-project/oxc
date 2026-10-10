@@ -52,10 +52,11 @@ impl<'a> Normalize {
 }
 
 impl<'a> Traverse<'a> for Normalize {
-    fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
             node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
         }
+        symbol_liveness::finish_registration(ctx);
     }
 
     // Normalize is the only traversal that builds stable liveness metadata:
@@ -64,6 +65,16 @@ impl<'a> Traverse<'a> for Normalize {
     // current semantic references.
     fn enter_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         symbol_liveness::register_function(node, ctx);
+    }
+
+    fn enter_identifier_reference(
+        &mut self,
+        node: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if node.name == "arguments" {
+            symbol_liveness::register_arguments_reference(ctx);
+        }
     }
 
     fn enter_variable_declaration(
