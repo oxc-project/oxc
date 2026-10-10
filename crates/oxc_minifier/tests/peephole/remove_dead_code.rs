@@ -62,8 +62,8 @@ fn test_remove_no_op_labelled_statement() {
     test("a: { break a; console.log('unreachable'); }", "");
     test("a: { break a; var x = 1; } x = 2;", "var x = 2;");
 
-    test("b: { var x = 1; } x = 2;", "b: var x = 1; x = 2;");
-    test("a: b: { var x = 1; } x = 2;", "a: b: var x = 1; x = 2;");
+    test("b: { var x = 1; } x = 2;", "var x = 1; x = 2;");
+    test("a: b: { var x = 1; } x = 2;", "var x = 1; x = 2;");
     test("foo:;", "");
 }
 
