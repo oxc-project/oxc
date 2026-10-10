@@ -8,7 +8,13 @@ use oxc_span::Span;
 
 use itertools::Itertools;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case};
+use crate::{
+    AstNode,
+    context::LintContext,
+    globals::HTML_TAG,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_ignore_case},
+};
 
 fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{role}` role is missing required aria props {props}."))
@@ -65,6 +71,10 @@ static ROLE_TO_REQUIRED_ARIA_PROPS: &[(&str, &[&str])] = &[
 impl Rule for RoleHasRequiredAriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
+            let element_type = get_element_type(ctx, jsx_el);
+            if !HTML_TAG.contains(element_type.as_ref()) {
+                return;
+            }
             let Some(role_prop) = has_jsx_prop_ignore_case(jsx_el, "role") else {
                 return;
             };
@@ -109,8 +119,16 @@ fn test() {
         })
     }
 
+    fn polymorphic_settings() -> serde_json::Value {
+        serde_json::json!({
+            "settings": { "jsx-a11y": { "polymorphicPropName": "as" } }
+        })
+    }
+
     let pass = vec![
         ("<Bar baz />", None, None),
+        ("<MyComponent role='combobox' />", None, None),
+        ("<Foo role='slider' />", None, Some(polymorphic_settings())),
         ("<div />", None, None),
         ("<div></div>", None, None),
         ("<div role={role} />", None, None),
@@ -163,6 +181,7 @@ fn test() {
         ("<div role='menuitemradio' />", None, None),
         ("<div role='menuitemcheckbox' />", None, None),
         ("<MyComponent role='combobox' />", None, Some(settings())),
+        ("<Foo role='combobox' as='div' />", None, Some(polymorphic_settings())),
     ];
 
     Tester::new(RoleHasRequiredAriaProps::NAME, RoleHasRequiredAriaProps::PLUGIN, pass, fail)
