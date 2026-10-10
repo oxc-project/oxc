@@ -2016,7 +2016,7 @@ mod tests {
         assert!(res.is_some());
         let (key, reason) = res.unwrap();
         assert_eq!(key, "eslint/no-dupe-args");
-        assert!(!reason.is_empty());
+        assert_ne!(reason, "");
     }
 
     #[test]
@@ -2032,7 +2032,7 @@ mod tests {
         assert!(res.is_some());
         let (key, reason) = res.unwrap();
         assert_eq!(key, "n/no-hide-core-modules");
-        assert!(!reason.is_empty());
+        assert_ne!(reason, "");
     }
 
     #[test]

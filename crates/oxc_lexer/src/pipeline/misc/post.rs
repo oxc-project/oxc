@@ -1,6 +1,6 @@
 use crate::token::{KW_KIND_BASE, tk};
 
-use super::super::bitmap::{bm_clear, bm_get, bm_prev1};
+use crate::pipeline::bitmap::{bm_clear, bm_get, bm_prev1};
 
 #[inline]
 pub unsafe fn misc_post(
@@ -17,6 +17,7 @@ pub unsafe fn misc_post(
     }
 }
 
+#[inline(never)]
 unsafe fn misc_post_impl(
     src: *const u8,
     n: usize,

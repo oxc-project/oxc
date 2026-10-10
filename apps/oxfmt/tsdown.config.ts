@@ -29,10 +29,14 @@ export default defineConfig({
       "@prettier/plugin-pug",
       "@shopify/prettier-plugin-liquid",
       "@zackad/prettier-plugin-twig",
-      "prettier-plugin-astro",
       "prettier-plugin-marko",
+
       // prettier-plugin-svelte's peer dependency; must be installed by the user
       "svelte/compiler",
+      // prettier-plugin-astro's dependency (native binding); must be installed by the user
+      // NOTE: The plugin depends on `^0.4.0`, but our peer range (`npm/oxfmt/package.json`) also allows `^0.5.0`,
+      // which Astro 7.3.5+ and our tests use. Drop `^0.4.0` once the plugin itself depends on `^0.5.0`.
+      "@astrojs/compiler-rs",
     ],
     alwaysBundle: [
       // Bundle it to control version
@@ -46,6 +50,7 @@ export default defineConfig({
       "prettier-plugin-tailwindcss",
       "prettier-plugin-tailwindcss/sorter",
       "prettier-plugin-svelte",
+      "prettier-plugin-astro",
 
       // Cannot bundle: `cli-worker.js` runs in separate thread and can't resolve bundled chunks
       // Be sure to add it to "dependencies" in `npm/oxfmt/package.json`!
@@ -67,4 +72,38 @@ export default defineConfig({
       },
     },
   },
+  plugins: [
+    {
+      // Patch `prettier-plugin-astro`:
+      // - Disable Sass formatting, see `DIVERGENCES.md#astro-style-lang-sass` for details.
+      //   - `<style lang="sass">` takes the unknown `lang` path (`printVerbatim()`)
+      //   - Also, `sass-formatter` is not bundled (tree-shaken)
+      // - Drop `PRETTIER_DEBUG`, which this plugin sets on an embed error to surface it
+      //   - It is never reset, so in our long-lived process,
+      //     later embed errors (even in other files like `.vue`) throw instead of falling back
+      //   - This makes a failed embed kept as-is, same as Vue / Svelte
+      name: "patch-prettier-plugin-astro",
+      transform: {
+        filter: { id: /\/prettier-plugin-astro\/dist\/index\.js$/ },
+        handler(code) {
+          for (const [target, replacement] of [
+            ["import { SassFormatter } from 'sass-formatter';", ""],
+            [
+              "return (_textToDoc, print) => wrapContent(print, embedSass(source, options), false);",
+              "return printVerbatim(source);",
+            ],
+            ["process.env.PRETTIER_DEBUG = 'true';", ""],
+          ]) {
+            if (!code.includes(target)) {
+              throw new Error(
+                `\`${target}\` not found in \`prettier-plugin-astro\`, update this patch`,
+              );
+            }
+            code = code.replace(target, replacement);
+          }
+          return code;
+        },
+      },
+    },
+  ],
 });

@@ -1929,17 +1929,6 @@ fn test_ambient_export_modifiers() {
         .test();
 }
 
-// #[test]
-// fn test_template() {
-//     let pass = vec![];
-
-//     let fail = vec![];
-
-//     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
-//         .with_snapshot_suffix("<replace>")
-//         .test_and_snapshot();
-// }
-
 #[test]
 fn test_remove_array_element_before_rest() {
     let fix = vec![(
@@ -1979,5 +1968,152 @@ fn removing_an_import_preserves_comments_before_the_separator() {
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, Vec::<&str>::new(), Vec::<&str>::new())
         .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_root_exports_do_not_export_namespace_bindings() {
+    let pass = vec![
+        "export const value = 1; export namespace NS { export const value = 2; }",
+        "const value = 1; export { value as renamed }; export namespace NS { export const value = 2; }",
+        "export const value = 1; export namespace NS { const value = 2; export const used = value; }",
+    ];
+    let fail = vec![
+        "export const value = 1; export namespace NS { const value = 2; }",
+        "const value = 1; export { value as renamed }; export namespace NS { const value = 2; }",
+        "export const value = 1; export namespace NS { export namespace Inner { const value = 2; } }",
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn consumed_update_values_are_usages() {
+    let pass = vec![
+        "let a = 0; new Foo(a++);",
+        "const a = 0; new Foo(a++);",
+        "const a = 0; new Foo((0, a++));",
+        "const a = class {}; new (a ??= Fallback)();",
+        "let a = class {}; new (a ??= Fallback)();",
+        "let a = class {}; (new (a ||= Fallback)(), 0);",
+        "let a = 0; switch (value) { case a++: break; }",
+        "let a = 0; switch (value) { case (a = a + 1): break; }",
+        "let a = 0; (a++).toString();",
+        "let a = 0; ((a++).toString, 0);",
+        "let a = 0; (a = a + 1).toString();",
+        "class C { #value; next = this; static f() { let a = new C(); ((a = a.next).#value, 0); } } C.f();",
+        "let a = 0; (a++ && foo(), 0);",
+        "let a = 0; (a++ || foo(), 0);",
+        "let a = 0; (a++ ?? foo(), 0);",
+        "let a = 0; (object[a++], 0);",
+        "let a = 0; (object[a = a + 1], 0);",
+        "let a = 0; (a++ ? foo() : bar(), 0);",
+        "let a = 0; object[a++];",
+        "let a = 0; switch (a++) {}",
+        "let a = 0; a++ ? foo() : bar();",
+        "let a = 0; a++ && foo();",
+        "let a = 0; a++ || foo();",
+        "let a = 0; a++ ?? foo();",
+        "let a = 0; new Foo(a = a + 1);",
+        "let a = 0; object[a = a + 1];",
+    ];
+    let fail = vec![
+        "let a = 0; a++;",
+        "let a = 0; (a++, 0);",
+        "let a = 0; (a++, 0) && foo();",
+        "let a = 0; flag && a++;",
+        "let a = 0; (a++, 0).toString();",
+        "let a = 0; ((a++, 0).toString, 0);",
+        "let a = 0; a = (a++).toString();",
+        "let a = 0; (flag && a++, 0);",
+        "let a = 0; ((a++, 0) && foo(), 0);",
+        "let a = 0; (object[(a++, 0)], 0);",
+        "let a = 0; flag || a++;",
+        "let a = 0; flag ?? a++;",
+        "let a = 0; flag ? a++ : foo();",
+        "let a = 0; flag ? foo() : a++;",
+        "let a = 0; new Foo((a++, 0));",
+        "const a = 0; new Foo((a++, 0));",
+        "const a = 0; new Foo(((a++, 0), 1));",
+        "const a = class {}; new (a ??= Fallback, Other)();",
+        "let a = class {}; new (a ??= Fallback, Other)();",
+        "let a = 0; switch (value) { case (a++, 0): break; }",
+        "let a = 0; switch (value) { case 0: a++; break; }",
+        "let a = 0; object[(a++, 0)];",
+        "let a = 0; switch ((a++, 0)) {}",
+        // Consuming an intermediate value does not make an outer self-assignment used.
+        "let a = 0; a = a || 1;",
+        "let a = 0; a = a ? 1 : 2;",
+        "let a = 0; a = a++ || 1;",
+        "let a = 0; a = object[a++];",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn ignore_patterns_in_array_rest() {
+    let array_options = Some(json!([{ "destructuredArrayIgnorePattern": "^_" }]));
+    let object_options = Some(json!([{ "ignoreRestSiblings": true }]));
+    let pass = vec![
+        ("const [...[_rest]] = items;", array_options.clone()),
+        ("function f([...[_rest]]) {} f();", array_options.clone()),
+        ("const [...{length, ...rest}] = items; use(rest);", object_options.clone()),
+    ];
+    let fail = vec![
+        // A rest identifier itself is not an array element covered by this option.
+        ("const [..._rest] = items;", array_options.clone()),
+        ("const [...[rest]] = items;", array_options),
+        ("const [...{length}] = items;", object_options),
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn disabled_arguments_do_not_report_used_ignore_patterns() {
+    let options = Some(json!([{
+        "args": "none", "argsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+    }]));
+    let pass = vec![
+        ("function f(_a) { return _a; } f();", options.clone()),
+        ("function f(..._args) { return _args; } f();", options.clone()),
+        ("function f({_a}) { return _a; } f();", options.clone()),
+        ("function f([_a]) { return _a; } f();", options),
+    ];
+    let fail = vec![
+        (
+            "function f([_a]) { return _a; } f();",
+            Some(json!([{
+                "args": "none", "destructuredArrayIgnorePattern": "^_",
+                "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "function f(...[_a]) { return _a; } f();",
+            Some(json!([{
+                "args": "none", "argsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "function f(_a) { return _a; } f();",
+            Some(json!([{
+                "args": "all", "argsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "const _a = 1; use(_a);",
+            Some(json!([{
+                "args": "none", "varsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .test();
 }

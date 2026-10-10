@@ -1372,6 +1372,12 @@ fn test_fold_logical_expression_to_assignment_expression() {
     test("x || (a, x = g())", "x ||= (a, g())");
     test("x && (a, x = g())", "x &&= (a, g())");
     test("x ?? (a, x = g())", "x ??= (a, g())");
+    test("x || (a, (b, x = 3))", "x ||= (a, b, 3)");
+    test("x && (a, (b, x = 3))", "x &&= (a, b, 3)");
+    test("x ?? (a, (b, x = 3))", "x ??= (a, b, 3)");
+    test("x || (a, b, (x = 3))", "x ||= (a, b, 3)");
+    test("x && (a, b, (x = 3))", "x &&= (a, b, 3)");
+    test("x ?? (a, b, (x = 3))", "x ??= (a, b, 3)");
     test("var x; x.y || (a, x.y = 3)", "var x; x.y ||= (a, 3)");
     test("var x; x.y && (a, x.y = 3)", "var x; x.y &&= (a, 3)");
     test("var x; x.y ?? (a, x.y = 3)", "var x; x.y ??= (a, 3)");

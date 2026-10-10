@@ -49,7 +49,7 @@ declare_oxc_lint!(
     NoUselessSwitchCase,
     unicorn,
     pedantic,
-    pending,
+    suggestion,
     version = "0.0.18",
     short_description = "Disallows useless `default` cases in `switch` statements.",
 );
@@ -83,7 +83,10 @@ impl Rule for NoUselessSwitchCase {
             .take_while(|case| case.consequent.iter().all(|stmt| is_empty_stmt(stmt)));
 
         for useless_case in useless_cases {
-            ctx.diagnostic(no_useless_switch_case_diagnostic(useless_case.span));
+            ctx.diagnostic_with_suggestion(
+                no_useless_switch_case_diagnostic(useless_case.span),
+                |fixer| fixer.delete(useless_case).with_message("Remove this case."),
+            );
         }
     }
 }
@@ -163,6 +166,22 @@ fn test() {
     ];
 
     let fail = vec![
+        "
+        switch (foo) {
+            case undefined:
+            default:
+                handleDefaultCase();
+                break;
+        }
+        ",
+        "
+        switch (foo) {
+            case null:
+            default:
+                handleDefaultCase();
+                break;
+        }
+        ",
         "
         switch (foo) {
             case a:
@@ -249,6 +268,181 @@ fn test() {
         ",
     ];
 
+    let fix = vec![
+        (
+            "switch (foo) {
+                case undefined:
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+            "switch (foo) {
+                
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+        ),
+        (
+            "switch (foo) {
+                case null:
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+            "switch (foo) {
+                
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+        ),
+        (
+            "switch (foo) {
+                case a:
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+            "switch (foo) {
+                
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+        ),
+        (
+            "switch (foo) {
+                case a: {
+                }
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+            "switch (foo) {
+                
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+        ),
+        (
+            "switch (foo) {
+                case a: {
+                    ;;
+                    {
+                        ;;
+                        {
+                            ;;
+                        }
+                    }
+                }
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+            "switch (foo) {
+                
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+        ),
+        (
+            "switch (foo) {
+                case a:
+                case (( b ))         :
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+            "switch (foo) {
+                
+                
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+        ),
+        (
+            "switch (foo) {
+                case a:
+                case b:
+                    handleCaseAB();
+                    break;
+                case d:
+                case d:
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+            "switch (foo) {
+                case a:
+                case b:
+                    handleCaseAB();
+                    break;
+                
+                
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+        ),
+        (
+            "switch (foo) {
+                case a:
+                case b:
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+            "switch (foo) {
+                
+                
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+        ),
+        (
+            "switch (foo) {
+                // eslint-disable-next-line
+                case a:
+                case b:
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+            "switch (foo) {
+                // eslint-disable-next-line
+                case a:
+                
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+        ),
+        (
+            "switch (foo) {
+                case a:
+                // eslint-disable-next-line
+                case b:
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+            "switch (foo) {
+                
+                // eslint-disable-next-line
+                case b:
+                default:
+                    handleDefaultCase();
+                    break;
+            }",
+        ),
+    ];
+
     Tester::new(NoUselessSwitchCase::NAME, NoUselessSwitchCase::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

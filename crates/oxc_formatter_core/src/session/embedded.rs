@@ -7,20 +7,25 @@
 //! every further embedded call goes through a [`FormatDispatcher`] that the orchestrator assembles,
 //! mapping a language name to a formatter implementation (or a fallback).
 //!
-//! Core only carries the shared plumbing (arena, group-id space, recursion handle)
-//! and the cross-language contract field ([`DispatchPayload::tailwind_classes`]);
+//! Core only carries the shared plumbing (arena, group-id space, Tailwind class scope, recursion handle);
 //! anything truly language-pair specific crosses as a `dyn Any` passthrough.
 //! Core knows nothing about any concrete language.
 
 use std::{any::Any, sync::Arc};
 
-use oxc_allocator::ArenaVec;
+use rustc_hash::FxHashMap;
 
-use crate::{FormatContext, FormatElement, FormatSession, Formatter, InputKind};
+use oxc_allocator::{Allocator, ArenaVec};
+
+use crate::{
+    FormatContext, FormatElement, FormatSession, Formatter, IndentWidth, InputKind, LineMode,
+    format_element::{BestFittingElement, Interned, TextWidth},
+    write::formatter::intern_exact,
+};
 
 /// One embedded-language formatting request, as the host formatter states it.
 pub struct DispatchRequest<'r> {
-    /// Generic language identifier (e.g. `"css"`, `"graphql"`);
+    /// Generic language identifier (e.g. `"css"`, `"graphql"`), or a code fence's name as written;
     /// the dispatcher implementation maps it to its own parser/language names.
     pub language: &'r str,
     /// The code to format.
@@ -32,6 +37,13 @@ pub struct DispatchRequest<'r> {
     /// The borrowed counterpart of [`DispatchPayload::child_context`]
     /// (borrowed because the parent outlives the dispatch call).
     pub parent_context: Option<&'r dyn Any>,
+}
+
+impl DispatchRequest<'_> {
+    /// [`Self::parent_context`] as a `T`, when the parent passed one.
+    pub fn parent_context_as<T: Any>(&self) -> Option<&T> {
+        self.parent_context.and_then(|c| c.downcast_ref::<T>())
+    }
 }
 
 /// The dispatcher's answer to a [`DispatchRequest`].
@@ -72,34 +84,22 @@ pub type FormatDispatcher = Arc<
 /// so a new child language only has to fill in the fields (no per-crate tuple conventions).
 pub struct EmbeddedIr<'a> {
     /// The formatter IR, arena-allocated alongside its elements.
+    /// Its `FormatElement::TailwindClass` indices point into the session's class scope.
     pub ir: ArenaVec<'a, FormatElement<'a>>,
-    /// Pre-sort Tailwind classes referenced by the IR's
-    /// `FormatElement::TailwindClass` indices (0-based, local to this IR).
-    /// Empty unless the language collects classes (e.g. CSS `@apply`).
-    pub tailwind_classes: Vec<String>,
 }
 
-/// One [`EmbeddedIr`] becomes a payload,
-/// carrying the child's Tailwind classes through (hand-rolling the literal invites silently dropping them).
 impl<'a> From<EmbeddedIr<'a>> for DispatchPayload<'a> {
     fn from(embedded: EmbeddedIr<'a>) -> Self {
-        Self { doc: embedded.ir, tailwind_classes: embedded.tailwind_classes, child_context: None }
+        Self { doc: embedded.ir, child_context: None }
     }
 }
 
 /// The child's formatted product, carried by [`DispatchResponse::Formatted`].
-///
-/// Consume through [`Self::into_doc`] when a parent index space exists
-/// (every IR-channel embed site); only a parent-less consumer
-/// (the fence adapter, which sorts locally) destructures the fields directly.
 pub struct DispatchPayload<'a> {
     /// The formatted IR, arena-allocated alongside its elements.
+    /// Its `FormatElement::TailwindClass` indices already point into the parent's class scope
+    /// (the child session shares it), so the parent writes it as-is.
     pub doc: ArenaVec<'a, FormatElement<'a>>,
-    /// Pre-sort Tailwind classes referenced by the doc's
-    /// `FormatElement::TailwindClass` indices (0-based, local to this result).
-    /// The receiving parent MUST merge them into its own class space ([`Self::into_doc`] does);
-    /// the printer's `debug_assert` catches a forgotten merge.
-    pub tailwind_classes: Vec<String>,
     /// Child→parent language-pair specific data,
     /// downcast by the parent (`None` for most pairs; e.g. HTML's `has_multiple_root_elements`).
     /// The owned counterpart of [`DispatchRequest::parent_context`]
@@ -107,106 +107,126 @@ pub struct DispatchPayload<'a> {
     pub child_context: Option<Box<dyn Any>>,
 }
 
-impl<'a> DispatchPayload<'a> {
-    /// Consumes the result:
-    /// moves the child's pre-sort Tailwind classes into the parent's class space and hands out the doc.
-    /// Folding the merge into the only way to get the doc makes a forgotten merge unrepresentable.
-    /// The entry formatter's document then sorts all collected classes in one host-supplied batch.
-    ///
-    /// A consumer may DISCARD the returned doc afterwards (an all-or-nothing embed site keeping its template verbatim):
-    /// the already-merged classes stay as unreferenced collector entries, which are inert.
-    /// The sorter reorders classes WITHIN each string, never the vector,
-    /// so indices stay stable and unprinted entries never reach the output.
-    pub fn into_doc(
-        mut self,
-        collector: &mut dyn TailwindCollector,
-    ) -> ArenaVec<'a, FormatElement<'a>> {
-        // The remap below reaches only top-level elements;
-        // a `TailwindClass` below an `Interned` / `BestFitting` boundary is unrewritable
-        // (`Interned` targets are shared `&[FormatElement]`),
-        // its stale index would print the WRONG classes with no assert.
-        // If this ever fires, that is the trigger to revisit the session-shared collector
-        // (see the NOTE on `TailwindCollector`).
-        debug_assert!(
-            self.tailwind_classes.is_empty() || !has_nested_tailwind_class(&self.doc),
-            "child IR holds a TailwindClass inside an Interned/BestFitting subtree; the flat remap cannot reach it"
-        );
-        let mut classes = std::mem::take(&mut self.tailwind_classes).into_iter();
-        if let Some(first) = classes.next() {
-            // The collector hands out consecutive indices,
-            // so the first one is the base offset for every local index.
-            let base = collector.add_class(first);
-            for class in classes {
-                collector.add_class(class);
-            }
-            for element in &mut self.doc {
-                if let FormatElement::TailwindClass(index) = element {
-                    *index += base;
-                }
-            }
-        }
-        self.doc
-    }
-}
-
-/// Whether a `TailwindClass` sits below an `Interned` / `BestFitting` boundary,
-/// where [`DispatchPayload::into_doc`]'s flat remap cannot rewrite it
-/// (a top-level `TailwindClass` is the remap's normal input, not a hit).
-fn has_nested_tailwind_class(elements: &[FormatElement<'_>]) -> bool {
-    fn contains(element: &FormatElement<'_>) -> bool {
-        matches!(element, FormatElement::TailwindClass(_)) || descends(element)
-    }
-    fn descends(element: &FormatElement<'_>) -> bool {
-        match element {
-            FormatElement::Interned(interned) => interned.iter().any(contains),
-            FormatElement::BestFitting(best_fitting) => {
-                best_fitting.variants().iter().any(|variant| variant.iter().any(contains))
-            }
-            _ => false,
-        }
-    }
-    elements.iter().any(descends)
-}
-
-/// Dispatches one embedded fragment and consumes the result into the parent.
-///
-/// `InputKind::Fragment` + the [`DispatchPayload::into_doc`] Tailwind merge in one place,
-/// so an embed site cannot re-derive the pair and skip the merge.
-/// `None` covers [`DispatchResponse::PreserveOriginal`] and operational errors alike;
-/// the caller keeps its original source.
-/// Embed sites that must inspect [`DispatchPayload::child_context`] first stay manual.
-pub fn dispatch_fragment_ir<'a, C>(
-    f: &mut Formatter<'_, 'a, C>,
+/// Dispatches one embedded fragment and hands out its doc:
+/// [`dispatch_ir`] with `InputKind::Fragment`.
+pub fn dispatch_fragment_ir<'a, C: FormatContext>(
+    f: &Formatter<'_, 'a, C>,
     language: &str,
     text: &str,
     parent_context: Option<&dyn Any>,
-) -> Option<ArenaVec<'a, FormatElement<'a>>>
-where
-    C: FormatContext + TailwindCollector,
-{
-    let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
-        language,
-        text,
-        input_kind: InputKind::Fragment,
-        parent_context,
-    }) else {
-        return None;
-    };
-    Some(result.into_doc(f.context_mut()))
+) -> Option<ArenaVec<'a, FormatElement<'a>>> {
+    dispatch_ir(
+        f,
+        DispatchRequest { language, text, input_kind: InputKind::Fragment, parent_context },
+    )
 }
 
-/// Index-space provider for batched Tailwind class sorting.
+/// Dispatches one embedded request and hands out its doc.
 ///
-/// `FormatElement::TailwindClass(usize)` holds pre-sort class strings by index;
-/// sorting happens in one host-supplied batch when the entry formatter's document is finalized.
-/// A child formatter collects classes locally (0-based) and returns them in [`DispatchPayload::tailwind_classes`];
-/// the receiving parent implements this trait on its format context and receives them through [`DispatchPayload::into_doc`].
+/// `None` covers [`DispatchResponse::PreserveOriginal`] and operational errors alike;
+/// the caller keeps its original source.
+/// Embed sites that must inspect [`DispatchPayload::child_context`] first stay manual.
+pub fn dispatch_ir<'a, C: FormatContext>(
+    f: &Formatter<'_, 'a, C>,
+    request: DispatchRequest<'_>,
+) -> Option<ArenaVec<'a, FormatElement<'a>>> {
+    let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(request) else {
+        return None;
+    };
+    Some(result.doc)
+}
+
+/// Rebuild an embedded IR, descending into BestFitting variants and interned content.
 ///
-/// NOTE: an alternative design (threading one shared collector through [`FormatSession`]
-/// so children allocate parent indices directly) was considered and deferred:
-/// it needs interior mutability plumbing through every format context for no current gain.
-/// Revisit if deep embedding nests (e.g. css-in-html-in-js at plan Step 8/9) make per-boundary remapping burdensome.
-pub trait TailwindCollector {
-    /// Register a class string, returning its index in the collector's space.
-    fn add_class(&mut self, class: String) -> usize;
+/// `map_text` receives each `Text` and `Token` run (a child may print any character as a token, e.g. JS's `` ` ``);
+/// it either pushes replacement elements into the output and returns `true`, or returns `false` to keep the element unchanged.
+/// A shared `Interned` subtree is rebuilt once and the rebuilt element re-shared.
+#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
+pub fn map_text_in_ir<'a, F>(
+    ir: &[FormatElement<'a>],
+    allocator: &'a Allocator,
+    map_text: &mut F,
+) -> ArenaVec<'a, FormatElement<'a>>
+where
+    F: FnMut(&'a str, &mut ArenaVec<'a, FormatElement<'a>>) -> bool,
+{
+    let mut interned_cache = FxHashMap::default();
+    map_text_in_ir_impl(ir, allocator, map_text, &mut interned_cache)
+}
+
+#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
+fn map_text_in_ir_impl<'a, F>(
+    ir: &[FormatElement<'a>],
+    allocator: &'a Allocator,
+    map_text: &mut F,
+    interned_cache: &mut FxHashMap<Interned<'a>, Option<FormatElement<'a>>>,
+) -> ArenaVec<'a, FormatElement<'a>>
+where
+    F: FnMut(&'a str, &mut ArenaVec<'a, FormatElement<'a>>) -> bool,
+{
+    let mut out = ArenaVec::with_capacity_in(ir.len(), &allocator);
+    for element in ir {
+        match element {
+            FormatElement::Text { text, .. } | FormatElement::Token { text } => {
+                if !map_text(text, &mut out) {
+                    out.push(element.clone());
+                }
+            }
+            FormatElement::BestFitting(best_fitting) => {
+                let mut variants =
+                    ArenaVec::with_capacity_in(best_fitting.variants().len(), &allocator);
+                for variant in best_fitting.variants() {
+                    let mapped = map_text_in_ir_impl(variant, allocator, map_text, interned_cache);
+                    variants.push(mapped.into_arena_slice());
+                }
+                // SAFETY: This rebuild preserves the original BestFitting's variant count.
+                out.push(FormatElement::BestFitting(unsafe {
+                    BestFittingElement::from_vec_unchecked(variants)
+                }));
+            }
+            FormatElement::Interned(interned) => {
+                let mapped = if let Some(mapped) = interned_cache.get(interned) {
+                    mapped.clone()
+                } else {
+                    let mapped = map_text_in_ir_impl(interned, allocator, map_text, interned_cache);
+                    let mapped = intern_exact(allocator, mapped.into_iter());
+                    interned_cache.insert(interned.clone(), mapped.clone());
+                    mapped
+                };
+                out.extend(mapped);
+            }
+            _ => out.push(element.clone()),
+        }
+    }
+    out
+}
+
+/// Pushes `text` with each newline as a literal line (Prettier's `replaceEndOfLine()`).
+///
+/// For a [`map_text_in_ir`] callback:
+/// a literal line adds no indentation of its own, it resumes at the enclosing root (`mark_as_root`).
+///
+/// TODO: An embedding boundary rewrites the child IR with this, because a newline inside a `Text` has two readings:
+/// - the printer prints it as is (column 0), as Prettier prints a string
+/// - the IR to Prettier Doc conversion (oxfmt's `to_prettier_doc`) always makes it a `literalline`
+///
+/// A boundary scope tag (a `mark_as_root` variant whose `Text` newlines resume at the root) would replace the rewrite.
+/// Revisit once the Vue and HTML ports remove the Doc conversion path, which leaves the printer as the only reader.
+pub fn push_text_with_literal_lines<'a>(
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
+    text: &'a str,
+    indent_width: IndentWidth,
+) {
+    // Splitting on `\n` is safe because the IR only contains normalized linebreaks
+    for (i, line) in text.split('\n').enumerate() {
+        if i > 0 {
+            out.push(FormatElement::Line(LineMode::Literal));
+        }
+        if !line.is_empty() {
+            out.push(FormatElement::Text {
+                text: line,
+                width: TextWidth::from_text(line, indent_width),
+            });
+        }
+    }
 }

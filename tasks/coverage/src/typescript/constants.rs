@@ -167,6 +167,7 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "1361", // 'D' cannot be used as a value because it was imported using 'import type'.
     "1362", // 'Foo' cannot be used as a value because it was exported using 'export type'.
     "1378", // Top-level 'await' expressions are only allowed when the 'module' option is set to 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', 'nodenext', or 'preserve', and the 'target' option is set to 'es2017' or higher.
+    "1379", // An import alias cannot reference a declaration that was exported using 'export type'.
     "1380", // An import alias cannot reference a declaration that was imported using 'import type'.
     "1432", // Top-level 'for await' loops are only allowed when the 'module' option is set to 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', 'nodenext', or 'preserve', and the 'target' option is set to 'es2017' or higher.
     "1448", // 'CC' resolves to a type-only declaration and must be re-exported using a type-only re-export when 'isolatedModules' is enabled.
@@ -235,6 +236,7 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "2367", // This comparison appears to be unintentional because the types '0' and '1' have no overlap.
     "2370", // A rest parameter must be of an array type.
     "2375", // Type '{ value: undefined; }' is not assignable to type 'A' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    "2379", // Argument of type '{ y: undefined; }' is not assignable to parameter of type '{ y?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
     "2403", // Subsequent variable declarations must have the same type.  Variable 'x' must be of type 'any', but here has type 'any[]'.
     "2407", // The right-hand side of a 'for...in' statement must be of type 'any', an object type or a type parameter, but here has type 'Color.Blue'.
     "2409", // Return type of constructor signature must be assignable to the instance type of the class.
@@ -441,6 +443,7 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "2806", // Private accessor was defined without a getter.
     "2807", // This syntax requires an imported helper named '__spreadArray' with 3 parameters, which is not compatible with the one in 'tslib'. Consider upgrading your version of 'tslib'.
     "2808", // A get accessor must be at least as accessible as the setter
+    "2810", // Expected 1 argument, but got 0. 'new Promise()' needs a JSDoc hint to produce a 'resolve' that can be called without arguments.
     "2812", // Property 'textContent' does not exist on type 'Element'. Try changing the 'lib' compiler option to include 'dom'.
     "2813", // Class declaration cannot implement overload list for 'c2'.
     "2814", // Function with bodies can only merge with classes that are ambient.
@@ -486,6 +489,7 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "4023", // Exported variable 'foo' has or is using name 'Foo' from external module "type" but cannot be named.
     "4025", // Exported variable 'b' has or is using private name 'a'.
     "4032", // Property 'val' of exported interface has or is using name 'I' from private module '"a"'.
+    "4060", // Return type of exported function has or is using private name 'T'.
     "4081", // Exported type alias 'MyClass' has or is using private name 'myClass'.
     "4094", // Property '_assertIsStripped' of exported anonymous class type may not be private or protected.
     "4104", // The type 'readonly string[]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
@@ -505,6 +509,8 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "4122", // This member cannot have a JSDoc comment with an '@override' tag because it is not declared in the base class 'A'.
     "4123", // This member cannot have a JSDoc comment with an 'override' tag because it is not declared in the base class 'A'. Did you mean 'doSomething'?
     "5009", // Cannot find the common subdirectory path for the input files.
+    "5023", // Unknown compiler option 'noImplicitUseStrict'.
+    "5024", // Compiler option 'files' requires a value of type Array.
     "5052", // Option 'checkJs' cannot be specified without specifying option 'allowJs'.
     "5053", // Option 'mapRoot' cannot be specified with option 'inlineSourceMap'.
     "5055", // Cannot write file 'a.d.ts' because it would overwrite input file.
@@ -534,6 +540,7 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "5108", // Option 'target=ES3' has been removed. Please remove it from your configuration.
     "5109", // Option 'moduleResolution' must be set to 'Node16' (or left unspecified) when option 'module' is set to 'Node18'.
     "5110", // Option 'module' must be set to 'Node16' when option 'moduleResolution' is set to 'Node16'.
+    "6046", // Argument for '--target' option must be: 'es6', 'es2015', 'es2016', 'es2017', 'es2018', 'es2019', 'es2020', 'es2021', 'es2022', 'es2023', 'es2024', 'es2025', 'esnext'.
     "6053", // File 'invalid.ts' not found.
     "6054", // File 'b.js.map' has an unsupported extension. The only supported extensions are '.ts', '.tsx', '.d.ts', '.js', '.jsx', '.cts', '.d.cts', '.cjs', '.mts', '.d.mts', '.mjs'.
     "6082", // Only 'amd' and 'system' modules are supported alongside --outFile.
@@ -554,6 +561,7 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "6234", // This expression is not callable because it is a 'get' accessor. Did you mean to use it without '()'?
     "6263", // Module './dir/native.node' was resolved to 'dir/native.d.node.ts', but '--allowArbitraryExtensions' is not set.
     "6379", // Composite projects may not disable incremental compilation.
+    "6424", // Multiple 'module.exports' assignments cannot be serialized for declaration emit.
     "7005", // Variable 'x' implicitly has an 'any' type.
     "7006", // Parameter 'x' implicitly has an 'any' type.
     "7008", // Member 'v' implicitly has an 'any' type.
@@ -590,6 +598,7 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "7055", // 'h', which lacks return-type annotation, implicitly has an 'any' yield type.
     "7056", // The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed.
     "7057", // 'yield' expression implicitly results in an 'any' type because its containing generator lacks a return-type annotation.
+    "7080", // Declaration emit elides private members, but '#a' refers to a private member. Write an explicit type here.
     "8021", // JSDoc '@typedef' tag should either have a type annotation or be followed by '@property' or '@member' tags.
     "8022", // JSDoc '@extends' is not attached to a class.
     "8023", // JSDoc '@extends Mismatch' does not match the 'extends B' clause.
@@ -618,6 +627,7 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "9021", // ExtenDeclads clause can't contain an expression with --isolatedDeclarations.
     "9022", // InferDeclaence from class expressions is not supported with --isolatedDeclarations.
     "9023", // AssigDeclaning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
+    "9025", // Declaration emit for this parameter requires implicitly adding undefined to its type. This is not supported with --isolatedDeclarations.
     "9026", // DeclaDeclaration emit for this file requires preserving this import for augmentations. This is not supported with --isolatedDeclarations.
     "9037", // DefauDeclalt exports can't be inferred with --isolatedDeclarations.
     "9038", // CompuDeclated property names on class or object literals cannot be inferred with --isolatedDeclarations.
@@ -636,6 +646,8 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "18049", // 'x' is possibly 'null' or 'undefined'.
     "18055", // 'A.a' has a string type, but must have syntactically recognizable string syntax when 'isolatedModules' is enabled.
     "18057", // String literal import and export names are not supported when the '--module' flag is set to 'es2015' or 'es2020'.
+    "18062", // Regular expression pattern modifiers are only available when targeting 'es2025' or later.
+    "18063", // Duplicate named capturing groups are only available when targeting 'es2025' or later.
 ];
 // spellchecker:on
 

@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- dd72fbf formatter_markdown: Keep container columns as spaces under `useTabs` (#27277) (leaysgur)
+- c2de02b formatter: Decide embedded template layout from AST, not source shape (#27218) (leaysgur)
+- 36e14df formatter: Keep comments between callee and its opener on the callee side (#27172) (leaysgur)
+
+### ⚡ Performance
+
+- cea47e3 formatter_core: Avoid exponential `will_break` check on nested interned (#27211) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 7717813 formatter_markdown: Implement markdown formatter (#26434) (leaysgur)
+
+### 📚 Documentation
+
+- e012542 formatter_core: Add note for blanked front matter (#26786) (leaysgur)
+- 11ff089 formatter_markdown: Follow updated DIVERGENCES policy (#26776) (leaysgur)
+- 0c16983 formatter_core: Clean up FORMATTER_POLICY (#26745) (leaysgur)
+
 ## [0.68.0] - 2026-09-14
 
 ### 🚀 Features

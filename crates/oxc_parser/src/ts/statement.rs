@@ -1,6 +1,6 @@
-use oxc_allocator::{ArenaBox, ArenaVec, Dummy, GetAllocator};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::{FileExtension, GetSpan};
+use oxc_span::{FileExtension, GetSpan, SPAN};
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
@@ -243,7 +243,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers,
             ModifierKinds::new([ModifierKind::Declare]),
             true,
-            diagnostics::modifier_cannot_be_used_here,
+            |modifier, allowed| match modifier.kind {
+                ModifierKind::Abstract => diagnostics::illegal_abstract_modifier(modifier.span()),
+                _ => diagnostics::modifier_cannot_be_used_here(modifier, allowed),
+            },
         );
         if let Some((implements_kw_span, _)) = implements {
             self.error(diagnostics::interface_implements(implements_kw_span));
@@ -340,7 +343,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let expression = self.parse_assignment_expression_or_higher();
         let expression_span = expression.span();
         self.error(diagnostics::interface_extend(expression_span));
-        TSTypeName::dummy(self.allocator())
+        TSTypeName::new_this_expression(SPAN, self)
     }
 
     fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {

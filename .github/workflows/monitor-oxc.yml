@@ -75,6 +75,8 @@ jobs:
         with:
           client-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-actions: write
+          permission-issues: write
           owner: oxc-project
           repositories: |
             ${{ github.event.repository.name }}

@@ -2,8 +2,8 @@ use itertools::Itertools;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, Expression, ImportDeclarationSpecifier, ImportOrExportKind,
-        VariableDeclarationKind, VariableDeclarator,
+        Argument, BindingPattern, Expression, ImportDeclarationSpecifier, VariableDeclarationKind,
+        VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -165,7 +165,7 @@ impl Rule for NoImportingVitestGlobals {
                         ImportDeclarationSpecifier::ImportDefaultSpecifier(_)
                         | ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {}
                         ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                            if specifier.import_kind == ImportOrExportKind::Type {
+                            if specifier.import_kind.is_type() {
                                 new_imports.push(ctx.source_range(specifier.span).to_string());
                                 continue;
                             }

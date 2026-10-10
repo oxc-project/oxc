@@ -20,7 +20,7 @@ jobs:
       name: ${{ inputs.name }}
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-version
+      - uses: $/.github/actions/check-version
         id: check
         with:
           file-name: napi/${{ inputs.name }}/package.json
@@ -81,6 +81,10 @@ jobs:
             build: pnpm build-wasm
 
           - os: ubuntu-latest
+            target: wasm32-wasip1
+            build: pnpm build-wasip1
+
+          - os: ubuntu-latest
             target: s390x-unknown-linux-gnu
             build: |
               export CFLAGS="-fuse-ld=lld"
@@ -134,18 +138,16 @@ jobs:
 
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-
-      - run: rustup target add ${{ matrix.target }}
-
-      - name: Setup OpenHarmony SDK
-        if: ${{ contains(matrix.target, 'ohos') }}
-        uses: Boshen/setup-ohos-sdk@edb865a89a712f1f15dbad932dfa9cfce849d95c # v1.0.0
-
-      - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
-        if: ${{ contains(matrix.target, 'musl') }}
-        with:
-          version: 0.13.0
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+          - run: rustup target add ${{ matrix.target }}
+          - name: Setup OpenHarmony SDK
+            if: ${{ contains(matrix.target, 'ohos') }}
+            uses: Boshen/setup-ohos-sdk@edb865a89a712f1f15dbad932dfa9cfce849d95c # v1.0.0
+          - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
+            if: ${{ contains(matrix.target, 'musl') }}
+            with:
+              version: 0.13.0
 
       - name: Build
         working-directory: napi/${{ inputs.name }}
@@ -174,19 +176,17 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-
-      - run: rustup target add x86_64-unknown-freebsd
-
-      - name: Install Zig
-        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
-        with:
-          version: "0.15.2"
-
-      - name: Install cargo-zigbuild
-        uses: jaxxstorm/action-install-gh-release@25e24d2d23ae098373794ef1d6faecb48ee52da8 # v3.0.0
-        with:
-          repo: rust-cross/cargo-zigbuild
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+          - run: rustup target add x86_64-unknown-freebsd
+          - name: Install Zig
+            uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+            with:
+              version: "0.15.2"
+          - name: Install cargo-zigbuild
+            uses: jaxxstorm/action-install-gh-release@25e24d2d23ae098373794ef1d6faecb48ee52da8 # v3.0.0
+            with:
+              repo: rust-cross/cargo-zigbuild
 
       - name: Build
         working-directory: napi/${{ inputs.name }}
@@ -205,7 +205,7 @@ jobs:
     needs:
       - build
       - build-freebsd
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       id-token: write # for `pnpm publish --provenance`
     env:
@@ -216,11 +216,11 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          path: artifacts
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+          - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+            with:
+              path: artifacts
 
       - run: mkdir -p ${npm_dir}
 
@@ -243,4 +243,6 @@ jobs:
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to `package_path`.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          # npm publish can finish before package metadata and tarballs are available.
+          node .github/scripts/wait-for-npm-packages.mjs ${npm_dir}/*
           bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}

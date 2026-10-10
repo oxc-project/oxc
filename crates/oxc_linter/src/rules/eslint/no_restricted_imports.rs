@@ -13,8 +13,7 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, ImportExpression, ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration,
-        TSModuleReference,
+        Expression, ImportExpression, StringLiteral, TSImportEqualsDeclaration, TSModuleReference,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -1259,7 +1258,7 @@ impl NoRestrictedImports {
             ctx,
             entry.span,
             &reference.expression,
-            entry.import_kind == ImportOrExportKind::Type,
+            entry.import_kind.is_type(),
             false,
         );
     }

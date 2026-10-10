@@ -233,7 +233,7 @@ impl ReplaceGlobalDefinesConfig {
 
         let parts: Vec<&str> = key.split('.').collect();
 
-        assert!(!parts.is_empty());
+        assert_ne!(parts.len(), 0);
 
         if parts.len() == 1 {
             if !is_identifier_name(parts[0]) {
@@ -781,7 +781,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 _ => return false,
             }
         }
-        debug_assert!(!meta_define.parts.is_empty());
+        debug_assert_ne!(meta_define.parts.len(), 0);
 
         let mut current_part_member_expression = Some(member);
         let mut cur_part_name: &str = &member.property.name;
@@ -912,6 +912,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         return;
                     }
                     current = Some(&c.callee);
+                }
+                Expression::TSNonNullExpression(non_null) => {
+                    current = Some(&non_null.expression);
                 }
                 _ => break,
             }

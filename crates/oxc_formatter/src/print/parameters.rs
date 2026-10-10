@@ -67,7 +67,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
                 // Check if parent is a test call, but exclude angular test wrappers
                 // like `inject`, `async`, `fakeAsync`, `waitForAsync` because their
                 // inner function parameters should still be allowed to break.
-                is_test_call_expression(call) && !is_angular_test_wrapper(call)
+                is_test_call_expression(call, f.comments()) && !is_angular_test_wrapper(call)
             } else {
                 false
             }

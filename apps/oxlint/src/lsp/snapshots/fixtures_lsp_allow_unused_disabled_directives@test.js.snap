@@ -9,7 +9,7 @@ File URI: file://<variable>/fixtures/lsp/allow_unused_disabled_directives/test.j
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
-message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
+message: String("`debugger` statement is not allowed\nhelp: Remove the debugger statement")
 range: Range { start: Position { line: 2, character: 2 }, end: Position { line: 2, character: 11 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/allow_unused_disabled_directives/test.js"
@@ -20,7 +20,7 @@ tags: None
 
 code: "eslint(no-console)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
-message: "Unexpected console statement.\nhelp: Delete this console statement."
+message: String("Unexpected console statement.\nhelp: Delete this console statement.")
 range: Range { start: Position { line: 9, character: 0 }, end: Position { line: 9, character: 11 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/allow_unused_disabled_directives/test.js"

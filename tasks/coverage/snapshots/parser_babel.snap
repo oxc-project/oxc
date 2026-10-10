@@ -1,9 +1,9 @@
-commit: 1eac4481
+commit: 4f4ef5d4
 
 parser_babel Summary:
-AST Parsed     : 2234/2234 (100.00%)
-Positive Passed: 2218/2234 (99.28%)
-Negative Passed: 1728/1742 (99.20%)
+AST Parsed     : 2239/2239 (100.00%)
+Positive Passed: 2222/2239 (99.24%)
+Negative Passed: 1732/1746 (99.20%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -132,6 +132,24 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │     n()
    ·     ─
  5 │ }
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts
+
+  × TS(1243): 'async' modifier cannot be used with 'abstract' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts:3:14]
+ 2 │ abstract class C {
+ 3 │     abstract async a();
+   ·              ─────
+ 4 │     static async s() {}
+   ╰────
+
+  × TS(1243): 'async' modifier cannot be used with 'abstract' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts:5:21]
+ 4 │     static async s() {}
+ 5 │     public abstract async pua();
+   ·                     ─────
+ 6 │     public static async pus() {}
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
@@ -3885,12 +3903,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·    ─
    ╰────
 
-  × Invalid Character `9`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/208/input.js:1:3]
- 1 │ 0b9
-   ·   ▲
-   ╰────
-
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/209/input.js:1:4]
  1 │ 0b18
@@ -4388,10 +4400,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Invalid Character `𫠞`
+  × Invalid Character `𯿾`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/327/input.js:1:5]
- 1 │ var 𫠞_ = 12;
-   ·     ──
+ 1 │ var 𯿾_ = 12;
+   ·     ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4712,6 +4724,30 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ import default from "foo"
    ·        ───┬───
    ·           ╰── `from` expected
+   ╰────
+
+  × Invalid Character `9`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-binary-radix-leading/input.js:1:3]
+ 1 │ 0b9
+   ·   ▲
+   ╰────
+
+  × Invalid Character `9`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-binary-radix-leading-errorRecovery-false/input.js:1:3]
+ 1 │ 0b9
+   ·   ▲
+   ╰────
+
+  × Invalid characters after number
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-binary-radix-trailing/input.js:1:4]
+ 1 │ 0b19
+   ·    ─
+   ╰────
+
+  × Invalid characters after number
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-binary-radix-trailing-errorRecovery-false/input.js:1:4]
+ 1 │ 0b19
+   ·    ─
    ╰────
 
   × Cannot use `yield` as an identifier in a generator context
@@ -5438,16 +5474,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                     ──────────
    ╰────
 
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-export-async-function/input.js:1:8]
- 1 │ export \u0061sync function y() { await x }
-   ·        ──────────
-   ╰────
-
   × Cannot use export statement outside a module
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-export-async-function/input.js:1:1]
  1 │ export \u0061sync function y() { await x }
    · ──────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-export-async-function/input.js:1:8]
+ 1 │ export \u0061sync function y() { await x }
+   ·        ──────────
    ╰────
 
   × Keywords cannot contain escape characters
@@ -5970,6 +6006,60 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:1:5]
  1 │ new import("foo");
    ·     ─────────────
+ 2 │ 
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:3:5]
+ 2 │ 
+ 3 │ new import("foo").bar;
+   ·     ─────────────────
+ 4 │ new import("foo")[bar];
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:4:5]
+ 3 │ new import("foo").bar;
+ 4 │ new import("foo")[bar];
+   ·     ──────────────────
+ 5 │ new import("foo")`bar`;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:5:5]
+ 4 │ new import("foo")[bar];
+ 5 │ new import("foo")`bar`;
+   ·     ──────────────────
+ 6 │ new import("foo").bar(qux);
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:6:5]
+ 5 │ new import("foo")`bar`;
+ 6 │ new import("foo").bar(qux);
+   ·     ──────────────────────
+ 7 │ new import("foo")[bar](qux);
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:7:5]
+ 6 │ new import("foo").bar(qux);
+ 7 │ new import("foo")[bar](qux);
+   ·     ───────────────────────
+ 8 │ new import("foo")`bar`(qux);
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-new/input.js:8:5]
+ 7 │ new import("foo")[bar](qux);
+ 8 │ new import("foo")`bar`(qux);
+   ·     ───────────────────────
    ╰────
   help: Wrap this with parenthesis
 
@@ -12361,11 +12451,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/bigInt/invalid-float/input.js:1:4]
+ 1 │ 0e0n;
+   ·    ▲
+   ╰────
+  help: Try inserting a semicolon here
+
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
-   ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts:2:12]
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts:2:3]
  1 │ abstract class TSAbstractClass {
  2 │   abstract #foo: boolean;
-   ·            ────
+   ·   ────────
  3 │ }
    ╰────
 
@@ -13625,10 +13722,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
 
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts:2:12]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts:2:3]
  1 │ abstract class A {
  2 │   abstract #a;
-   ·            ──
+   ·   ────────
  3 │ }
    ╰────
 
@@ -14233,13 +14330,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ──────────────────
    ╰────
 
-  × 'abstract' modifier cannot be used here.
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/abstract/input.ts:1:1]
  1 │ abstract interface Foo {
    · ────────
  2 │   foo: string;
    ╰────
-  help: Only 'declare' modifier is allowed here.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/declare-new-line/input.ts:1:8]
@@ -14249,13 +14345,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × 'abstract' modifier cannot be used here.
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/export-abstract-interface/input.ts:1:8]
  1 │ export abstract interface I {
    ·        ────────
  2 │ 
    ╰────
-  help: Only 'declare' modifier is allowed here.
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/export-default/input.ts:1:26]
@@ -14563,11 +14658,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/property-initializer/input.ts:1:25]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/property-initializer/input.ts:1:24]
  1 │ interface I { x: number = 1;}
-   ·                         ─
+   ·                        ▲
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1063): An export assignment cannot be used in a namespace.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-assignment/input.ts:2:3]

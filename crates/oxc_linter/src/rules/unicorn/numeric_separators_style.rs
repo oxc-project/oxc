@@ -265,7 +265,7 @@ impl Rule for NumericSeparatorsStyle {
 
                 let formatted = self.format_bigint(number, raw);
 
-                if formatted.len() != number.span.size() as usize {
+                if formatted != raw {
                     ctx.diagnostic_with_fix(
                         numeric_separators_style_diagnostic(number.span),
                         |fixer| fixer.replace(number.span, formatted),
@@ -737,6 +737,8 @@ fn test() {
         ("const foo = 1_9_223n", None),
         ("const foo = 80_7n", None),
         ("const foo = 123456789_100n", None),
+        ("const foo = 12_34_567n", None),
+        ("const foo = 0xA_BCDn", None),
         ("const foo = 1_2_345_678", None),
         ("const foo = 12_3", None),
         ("const foo = 1234567890", None),
@@ -828,6 +830,8 @@ fn test() {
         ("const foo = 1_9_223n", "const foo = 19_223n", None),
         ("const foo = 80_7n", "const foo = 807n", None),
         ("const foo = 123456789_100n", "const foo = 123_456_789_100n", None),
+        ("const foo = 12_34_567n", "const foo = 1_234_567n", None),
+        ("const foo = 0xA_BCDn", "const foo = 0xAB_CDn", None),
         ("const foo = 1_2_345_678", "const foo = 12_345_678", None),
         ("const foo = 12_3", "const foo = 123", None),
         ("const foo = 1234567890", "const foo = 1_234_567_890", None),

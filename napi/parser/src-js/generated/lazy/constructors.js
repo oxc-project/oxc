@@ -12022,6 +12022,10 @@ function constructCommentKind(pos, ast) {
       return "Block";
     case 2:
       return "Block";
+    case 3:
+      return "Line";
+    case 4:
+      return "Line";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for CommentKind`);
   }
@@ -12053,7 +12057,7 @@ export class Comment {
 
   get type() {
     const internal = this.#internal;
-    return constructCommentKind(internal.pos + 12, internal.ast);
+    return constructCommentKind(internal.pos + 17, internal.ast);
   }
 
   toJSON() {
@@ -12936,7 +12940,7 @@ function constructStr(pos, ast) {
 function constructVecComment(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructComment, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 24, constructComment, ast);
 }
 
 function constructComment(pos, ast) {

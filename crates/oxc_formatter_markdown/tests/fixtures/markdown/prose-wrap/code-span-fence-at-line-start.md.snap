@@ -1,0 +1,70 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+In order to submit this form to a web application, call ```submit(url, [callback])``` method:
+
+A stray ` and a lone `` then
+```x``` at a line start.
+
+An escaped \` pairs with nothing, so `a` keeps one backtick.
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+In order to submit this form to a web application, call
+`submit(url, [callback])` method:
+
+A stray ` and a lone `` then ```x``` at a line start.
+
+An escaped \` pairs with nothing, so `a` keeps one backtick.
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+In order to submit this form to a web application, call `submit(url, [callback])` method:
+
+A stray ` and a lone `` then ```x``` at a line start.
+
+An escaped \` pairs with nothing, so `a` keeps one backtick.
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+In order to submit this form to a web application, call `submit(url, [callback])` method:
+
+A stray ` and a lone `` then ```x``` at a line start.
+
+An escaped \` pairs with nothing, so `a` keeps one backtick.
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+In order to submit this form to a web application, call `submit(url, [callback])` method:
+
+A stray ` and a lone `` then ```x``` at a line start.
+
+An escaped \` pairs with nothing, so `a` keeps one backtick.
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+In order to submit this form to a web application, call `submit(url, [callback])` method:
+
+A stray ` and a lone `` then
+```x``` at a line start.
+
+An escaped \` pairs with nothing, so `a` keeps one backtick.
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+In order to submit this form to a web application, call `submit(url, [callback])` method:
+
+A stray ` and a lone `` then
+```x``` at a line start.
+
+An escaped \` pairs with nothing, so `a` keeps one backtick.
+
+===================== End =====================

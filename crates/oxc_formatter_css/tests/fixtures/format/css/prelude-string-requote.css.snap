@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* DIVERGENCES.md#prelude-string-requote */
+@keyframes 'validString' {
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* DIVERGENCES.md#prelude-string-requote */
+@keyframes "validString" {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* DIVERGENCES.md#prelude-string-requote */
+@keyframes "validString" {
+}
+
+===================== End =====================

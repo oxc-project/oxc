@@ -1,9 +1,9 @@
-commit: be13516f
+commit: 7ab7fafa
 
 parser_test262 Summary:
-AST Parsed     : 47435/47435 (100.00%)
-Positive Passed: 47435/47435 (100.00%)
-Negative Passed: 4651/4651 (100.00%)
+AST Parsed     : 47455/47455 (100.00%)
+Positive Passed: 47455/47455 (100.00%)
+Negative Passed: 4653/4653 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -22379,6 +22379,13 @@ Negative Passed: 4651/4651 (100.00%)
     ·           ─────────
     ╰────
 
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:1]
+ 33 │ 
+ 34 │ import defer x, * as ns from "./dep_FIXTURE.js";
+    · ──────
+    ╰────
+
   × TS(18058): Default imports are not allowed in a deferred import.
     ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:8]
  33 │ 
@@ -22387,9 +22394,9 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
 
   × Cannot use import statement outside a module
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-default-and-defer-namespace.js:34:1]
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-as-with-no-asterisk.js:34:1]
  33 │ 
- 34 │ import defer x, * as ns from "./dep_FIXTURE.js";
+ 34 │ import defer as ns from "./dep_FIXTURE.js";
     · ──────
     ╰────
 
@@ -22401,11 +22408,25 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ╰── `from` expected
     ╰────
 
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default-and-namespace.js:34:1]
+ 33 │ 
+ 34 │ import x, defer * as ns from "./dep_FIXTURE.js";
+    · ──────
+    ╰────
+
   × Unexpected token
     ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default-and-namespace.js:34:11]
  33 │ 
  34 │ import x, defer * as ns from "./dep_FIXTURE.js";
     ·           ─────
+    ╰────
+
+  × Cannot use import statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default.js:34:1]
+ 33 │ 
+ 34 │ import defer x from "./dep_FIXTURE.js";
+    · ──────
     ╰────
 
   × TS(18058): Default imports are not allowed in a deferred import.
@@ -22416,9 +22437,9 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
 
   × Cannot use import statement outside a module
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-default.js:34:1]
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-named.js:34:1]
  33 │ 
- 34 │ import defer x from "./dep_FIXTURE.js";
+ 34 │ import defer { default as x } from "./dep_FIXTURE.js";
     · ──────
     ╰────
 
@@ -22429,10 +22450,10 @@ Negative Passed: 4651/4651 (100.00%)
     ·        ─────
     ╰────
 
-  × Cannot use import statement outside a module
-    ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-named.js:34:1]
- 33 │ 
- 34 │ import defer { default as x } from "./dep_FIXTURE.js";
+  × Cannot use export statement outside a module
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-export-defer-namespace.js:33:1]
+ 32 │ 
+ 33 │ export defer * as ns from "./dep_FIXTURE.js";
     · ──────
     ╰────
 
@@ -24443,6 +24464,14 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
+  × Invalid regular expression: Numbers out of order in braced quantifier
+    ╭─[test262/test/language/literals/regexp/invalid-quantifier-out-of-order.js:26:3]
+ 25 │ 
+ 26 │ /a{2,1}/;
+    ·   ─────
+    ╰────
+  help: In `{n,m}`, the minimum `n` must be less than or equal to the maximum `m`
+
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/invalid-range-lookbehind.js:21:9]
  20 │ 
@@ -25067,6 +25096,14 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Quantifiers must follow an expression. To match literally, escape it with `\`
 
+  × Invalid regular expression: Numbers out of order in braced quantifier
+    ╭─[test262/test/language/literals/regexp/u-invalid-quantifier-out-of-order.js:23:3]
+ 22 │ 
+ 23 │ /a{2,1}/u;
+    ·   ─────
+    ╰────
+  help: In `{n,m}`, the minimum `n` must be less than or equal to the maximum `m`
+
   × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[test262/test/language/literals/regexp/u-invalid-range-lookahead.js:21:8]
  20 │ 
@@ -25585,34 +25622,6 @@ Negative Passed: 4651/4651 (100.00%)
  21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
     ·                 ────────
  22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
-    ╰────
-
-  × An export name cannot include a unicode lone surrogate
-    ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:22:9]
- 21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
-    ·         ────────
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
-    ╰────
-
-  × An export name cannot include a unicode lone surrogate
-    ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:23:9]
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
-    ·         ────────
- 24 │ 
-    ╰────
-
-  × Duplicated export '�d83c'
-    ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:21:17]
- 20 │ // 🌙 is '\uD83C\uDF19'
- 21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
-    ·                 ────┬───
-    ·                     ╰── Export has already been declared here
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
-    ·         ────┬───
-    ·             ╰── It cannot be redeclared here
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
     ╰────
 
   × Export 'unresolvable' is not defined

@@ -251,7 +251,7 @@ fn is_empty_object(expr: &Expression) -> bool {
                 .expect("call expression must have 1 argument")
                 .as_expression()
                 .map(oxc_ast::ast::Expression::get_inner_expression)
-                .is_some_and(|expr| matches!(expr, Expression::NullLiteral(_))) =>
+                .is_some_and(Expression::is_null) =>
         {
             true
         }

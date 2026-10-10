@@ -1,6 +1,6 @@
 use oxc_span::Span;
 
-use crate::{error::diag_code, lanes::Lanes, token::tk};
+use crate::{error::DiagCode, lanes::Lanes, token::tk};
 
 #[inline(always)]
 pub(super) unsafe fn emit_value(
@@ -56,11 +56,11 @@ pub(super) unsafe fn invalid_diags(
             let (s, e) = (sp.start, sp.end);
             let b0 = src[s as usize];
             if b0 == b'\\' {
-                lanes.push_diag(s + 1, char_after(s + 1), diag_code::INVALID_IDENTIFIER_ESCAPE);
+                lanes.push_diag(s + 1, char_after(s + 1), DiagCode::InvalidIdentifierEscape);
             } else if b0 == b'#' {
-                lanes.push_diag(s + 1, char_after(s + 1), diag_code::UNEXPECTED_CHARACTER);
+                lanes.push_diag(s + 1, char_after(s + 1), DiagCode::UnexpectedCharacter);
             } else {
-                lanes.push_diag(s, e - s, diag_code::UNEXPECTED_CHARACTER);
+                lanes.push_diag(s, e - s, DiagCode::UnexpectedCharacter);
             }
         }
     }

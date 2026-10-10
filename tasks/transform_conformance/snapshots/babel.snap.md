@@ -1,6 +1,6 @@
-commit: 1eac4481
+commit: 4f4ef5d4
 
-Passed: 731/1162
+Passed: 741/1166
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -369,37 +369,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (11/24)
-* class-static-block/before-static-fields/input.js
-x Output mismatch
-
-* class-static-block/class-binding/input.js
-x Output mismatch
-
-* class-static-block/class-declaration/input.js
-x Output mismatch
-
-* class-static-block/class-inferred-name/input.js
-x Output mismatch
-
-* class-static-block/in-class-heritage/input.js
-x Output mismatch
-
-* class-static-block/multiple-static-initializers/input.js
-x Output mismatch
-
-* class-static-block/name-conflict/input.js
-x Output mismatch
-
-* class-static-block/new-target/input.js
-x Output mismatch
-
-* class-static-block/preserve-comments/input.js
-x Output mismatch
-
-* class-static-block/var-scope/input.js
-x Output mismatch
-
+# babel-plugin-transform-class-static-block (21/24)
 * integration/in-class-heritage/input.js
 x Output mismatch
 
@@ -765,7 +735,10 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (24/59)
+# babel-plugin-transform-private-property-in-object (24/60)
+* assumption-noUninitializedPrivateFieldAccess/static-field/input.js
+x Output mismatch
+
 * assumption-privateFieldsAsProperties/accessor/input.js
 x Output mismatch
 
@@ -1155,7 +1128,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (110/155)
+# babel-plugin-transform-typescript (110/158)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1238,6 +1211,20 @@ rebuilt        : ScopeId(0): []
 Bindings mismatch:
 after transform: ScopeId(0): ["P"]
 rebuilt        : ScopeId(0): []
+
+* enum/enum-after-const-fail/input.ts
+
+  x Identifier `N` has already been declared
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/enum-after-const-fail/input.ts:1:7]
+ 1 | const N = 1;
+   :       |
+   :       `-- `N` has already been declared here
+ 2 | enum N {
+   :      |
+   :      `-- It can not be redeclared here
+ 3 |   A = 2,
+   `----
+
 
 * enum/enum-merging-inner-references/input.ts
 Symbol redeclarations mismatch for "Animals":
@@ -1384,6 +1371,11 @@ Bindings mismatch:
 after transform: ScopeId(12): ["D", "_d"]
 rebuilt        : ScopeId(4): ["_d"]
 
+* namespace/enum-after-namespace/input.ts
+Symbol redeclarations mismatch for "N":
+after transform: SymbolId(0): [Span { start: 17, end: 18 }, Span { start: 57, end: 58 }]
+rebuilt        : SymbolId(0): []
+
 * namespace/export-type-only/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["Platform"]
@@ -1412,6 +1404,11 @@ rebuilt        : ScopeId(0): []
    : ^^^^^^^^^^^^^^
    `----
 
+
+* namespace/nested-enum-after-namespace/input.ts
+Symbol redeclarations mismatch for "N":
+after transform: SymbolId(1): [Span { start: 37, end: 38 }, Span { start: 83, end: 84 }]
+rebuilt        : SymbolId(2): []
 
 * namespace/nested-namespace/input.ts
 Bindings mismatch:

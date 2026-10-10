@@ -39,7 +39,7 @@ use crate::{
 /// the printer coalesces consecutive spaces and drops them at a line start.
 pub fn write_head_body_separator(body_start: u32, f: &mut JsFormatter<'_, '_>) {
     let comments = f.context().comments().comments_before(body_start);
-    if comments.first().is_some_and(|comment| comment.preceded_by_newline()) {
+    if comments.first().is_some_and(Comment::preceded_by_newline) {
         write!(f, hard_line_break());
     } else {
         write!(f, space());
@@ -88,6 +88,26 @@ pub fn write_node_with_terminator<'a, T>(
     }
 }
 
+/// Formats a call's callee, then [`write_comments_before_opener`] for its `opener` (`?.`, `<` or `(`).
+pub struct FormatBeforeOpener<'b, T>(pub &'b T, pub u8);
+
+impl<'a, T> Format<'a, JsFormatContext<'a>> for FormatBeforeOpener<'_, T>
+where
+    T: Format<'a, JsFormatContext<'a>> + GetSpan,
+{
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        FormatNodeWithoutTrailingComments(self.0).fmt(f);
+        write_comments_before_opener(self.0.span().end, self.1, f);
+    }
+}
+
+/// Prints the pending comments before a call's `opener` (`?.`, `<` or `(`) on the callee side,
+/// the same as before a `}`-to-keyword gap's keyword ([`write_comments_between_blocks`]).
+pub fn write_comments_before_opener(start: u32, opener: u8, f: &mut JsFormatter<'_, '_>) {
+    let comments = f.context().comments().comments_before_character(start, opener);
+    write_comments_between_blocks(comments, f);
+}
+
 /// The node-less half of [`write_node_with_trailing_comments_before`]:
 /// prints the pending comments bounded at the next `character` as trailing comments
 /// (e.g. an empty for-head slot's comments before its `;`),
@@ -119,7 +139,7 @@ pub fn write_trailing_comments_before(
         write!(f, FormatCommentBeforeContent::new(comment));
     }
     // The own-line loop's breaks have already flushed a pending same-line line comment
-    own_line.is_empty() && same_line.last().is_some_and(|comment| comment.is_line())
+    own_line.is_empty() && same_line.last().is_some_and(Comment::is_line)
 }
 
 /// Comments between a block's `}` and a following keyword (`else`/`catch`/`finally`)
@@ -151,7 +171,7 @@ pub fn write_comments_between_blocks<'a>(
         }
         FormatLeadingComments::Comments(own_line).fmt(f);
         false
-    } else if same_line.last().is_some_and(|comment| comment.is_line()) {
+    } else if same_line.last().is_some_and(Comment::is_line) {
         // Only the last same-line comment can be a line comment
         // (anything after one starts a new line, landing in `own_line`)
         write!(f, hard_line_break());

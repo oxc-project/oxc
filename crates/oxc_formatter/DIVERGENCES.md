@@ -205,13 +205,14 @@ Prettier moves the comment inside for `keyof`/type-operator operands while keepi
 
 - Why: invariant (prettier/prettier#14617)
 - Pin: `tests/fixtures/js/comments/assignment-eol-line-comment.js`, `tests/fixtures/ts/comments/operator-eol-line-comment.ts`
+- Conformance: `js/comments/array-and-object.js`, `js/comments/assignment/variable-declarator.js`, `js/comments/variable-declarator.js`, `typescript/comments/type-literals.ts`
 
-Prettier's output crosses user content (the value the comment precedes, then the `;`) or changes line (own-lined in TS).
+Prettier's output crosses user content (the value the comment precedes, then the `;`) or changes line (own-lined).
 An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break).
-Block comments glued after the operator before it stay there, in order;
-Prettier prints the line comment first and the block on the value's line, crossing the block.
-A line comment before the operator rides its `line_suffix` past the operator and gets the same break;
-Prettier flushes it past the value.
+Block comments glued after the operator before it stay there, in order; Prettier prints the line comment first and the block on the value's line, crossing the block.
+A line comment before the operator rides its `line_suffix` past the operator and gets the same break; Prettier flushes it past the value.
+A single-line block comment ending the left side's line trails the left side; Prettier moves it across the operator.
+Comments the left side defers (own-line, or a multiline block ending its line) lead the value, the line comment follows them in source order, as Prettier prints type aliases; for JS values, Prettier prints the line comment before them.
 
 ```ts
 // input
@@ -221,6 +222,10 @@ const v2 = /* c */ // d
   1;
 const v3 // c
   = 1;
+const v4 /* c */
+  = 1;
+const v5 = // c
+  { a: 1 };
 type Alias = // c
   "VALUE";
 
@@ -231,6 +236,9 @@ const v2 = /* c */ // d
   1;
 const v3 = // c
   1;
+const v4 /* c */ = 1;
+const v5 = // c
+  { a: 1 };
 type Alias = // c
   "VALUE";
 
@@ -239,14 +247,19 @@ const v1 = 1; // c
 const v2 = // d
   /* c */ 1;
 const v3 = 1; // c
+const v4 = /* c */ 1;
+const v5 =
+  // c
+  { a: 1 };
 type Alias =
   // c
   "VALUE";
 ```
 
-Prettier treats the same shape three ways:
+Prettier treats the same shape differently:
 
-- JS keeps it only when the right-hand side breaks and flushes it past a fitting one (the prettier/prettier#14617-family attachment artifact)
+- JS keeps it only when the right-hand side breaks and flushes it past a fitting one (the prettier/prettier#14617-family attachment artifact),
+  except an object, array or template value, which gets it own-lined (`handleAssignmentLikeComments`)
 - TS type aliases and union-valued property signatures get it own-lined (the 3.9 union rewrite)
 - simple-typed property signatures get it flushed past the member and its `;` separator
 
@@ -558,6 +571,7 @@ In the head the declaration has no terminator of its own; we keep it verbatim an
 
 - Why: uniform-rule (same construct, same output: suppressed statement)
 - Pin: `tests/fixtures/js/semicolons/suppressed-statement.js`, `tests/fixtures/ts/semicolons/suppressed-class-member.ts`
+- Oxfmt: `externals/prettier/markdown/markdown/real-world-case.md`
 
 ```js
 // input (semi: true)
@@ -661,3 +675,107 @@ var target = x ? y : /** @type {Document} */ ((root).head ?? fallback);
 A cast comment types the parenthesized expression directly after it.
 When the comment binds to an inner expression and the formatter adds parentheses around the whole (a `??` in a conditional branch, a sequence, a return argument), it prints inside the added pair so the cast keeps its target.
 Printed outside, the cast covers the whole expression and tsc types `root` as its uncast type again (`Property 'head' does not exist on type 'Node'`).
+
+## triple-star-jsdoc-hard-break
+
+- Why: uniform-rule (a block comment starting with `/**` is JSDoc)
+- Pin: `tests/fixtures/js/comments/jsdoc-trailing-double-space.js`
+
+```js
+// input
+/***
+ * a··
+ * b
+ */
+
+// ours
+/***
+ * a··
+ * b
+ */
+
+// prettier
+/***
+ * a
+ * b
+ */
+```
+
+`·` marks a trailing space.
+Prettier keeps the Markdown hard break in `/**` only, following jsdoc3.
+Tools disagree on `/***`: TypeScript (`isJSDocLikeText`, so editor hovers) treats it as JSDoc, jsdoc3 ignores it.
+Formatting it as JSDoc does not break jsdoc3, which ignores it either way.
+Type cast comments already follow the rule, in Prettier too.
+
+## test-call-comment-order
+
+- Why: invariant (prettier/prettier#20029, prettier/prettier#20043)
+- Pin: `tests/fixtures/js/calls/test-call-comment-order.js`
+
+```js
+// input
+test("x", () => {
+  run();
+}, // first
+// second
+60000);
+
+// ours
+test(
+  "x",
+  () => {
+    run();
+  }, // first
+  // second
+  60000,
+);
+
+// prettier
+test("x", () => {
+  run();
+}, // second // first
+60000);
+```
+
+Prettier's compact test call layout merges and reverses the comments, and is not a fixpoint.
+We fall back to the regular argument layout when comments sit around the arguments, following prettier/prettier#20043.
+A same-line block comment also falls back, the same output as the other special call layouts (React hook, `require`).
+
+## callee-arguments-gap-comment
+
+- Why: invariant
+- Pin: `tests/fixtures/js/calls/callee-opener-comment.js`, `tests/fixtures/ts/calls/callee-opener-comment.ts`
+- Conformance: `js/last-argument-expansion/edge_case.js`, `typescript/call/callee-comments.ts`
+
+A call's `(` and `<` are delimiters (see AGENTS.md "Head-body and operator gaps (class 3)"), so a comment between the callee and the opener stays on the callee side (except AGENTS.md "Open debts").
+
+```js
+// input
+foo /* c */ (a);
+foo
+// c
+(a);
+foo
+/* c */ (a);
+
+// ours
+foo /* c */(a);
+foo
+// c
+(a);
+foo
+/* c */ (a);
+
+// prettier
+foo(/* c */ a);
+foo(
+  // c
+  a,
+);
+foo(/* c */ a);
+```
+
+Prettier keeps an end-of-line comment there (`foo // c` + `(a)`, the same as ours) but moves a same-line block comment and an own-line comment into the arguments.
+Its function declarations keep the same-line block comment outside (`function foo /* c */(a) {}`).
+Before `<`, Prettier glues an own-line comment back onto the callee's line (`foo// c` + `<T>(a)`); we keep it own-line.
+Before an optional call's `?.`, Prettier moves an own-line comment into the arguments as well; we keep it own-line.

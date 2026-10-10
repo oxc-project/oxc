@@ -113,9 +113,11 @@
 //! ## References
 //! - [Prettier handles special comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js)
 //! - [Prettier pre-processes comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/main/comments/attach.js)
-use oxc_ast::{Comment, CommentContent};
+use oxc_ast::Comment;
 use oxc_formatter_core::SourceText;
 use oxc_span::{GetSpan, Span};
+
+use super::trivia::is_jsdoc_comment;
 
 /// Saved comment cursor state for [`Comments::snapshot`] / [`Comments::restore`].
 #[derive(Clone, Copy)]
@@ -200,7 +202,12 @@ impl<'a> Comments<'a> {
     /// This is automatically called by the trivia formatting functions, but must be
     /// called manually if comments are formatted through other means.
     #[inline]
-    pub fn increment_printed_count(&mut self) {
+    pub fn increment_printed_count(&mut self, comment: &Comment) {
+        debug_assert_eq!(
+            self.first_unprinted_span(),
+            Some(comment.span),
+            "the claimed comment must be the first unprinted one"
+        );
         self.printed_count += 1;
     }
 
@@ -279,12 +286,12 @@ impl<'a> Comments<'a> {
 
     /// Returns the line comments that end before or at the given position.
     pub fn line_comments_before(&self, pos: u32) -> &'a [Comment] {
-        self.comments_before_while(pos, |c| c.is_line())
+        self.comments_before_while(pos, Comment::is_line)
     }
 
     /// Returns comments that are on their own line and end before or at the given position.
     pub fn own_line_comments_before(&self, pos: u32) -> &'a [Comment] {
-        self.comments_before_while(pos, |c| c.preceded_by_newline())
+        self.comments_before_while(pos, Comment::preceded_by_newline)
     }
 
     /// The leading run of [`Self::comments_before_iter`] satisfying `predicate`, as a slice.
@@ -524,7 +531,7 @@ impl<'a> Comments<'a> {
 
     /// Checks if there are any leading own-line comments before the given position.
     pub fn has_leading_own_line_comment(&self, start: u32) -> bool {
-        self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
+        self.comments_before_iter(start).any(Comment::followed_by_newline)
     }
 
     /// The last printed comment when it is a line comment starting after `pos`:
@@ -658,7 +665,7 @@ impl<'a> Comments<'a> {
 
     /// Position-based analog of [`Self::has_leading_own_line_comment`], over a range.
     pub fn has_own_line_comment_in_range(&self, start: u32, end: u32) -> bool {
-        self.all_comments_in_range(start, end).any(|comment| comment.followed_by_newline())
+        self.all_comments_in_range(start, end).any(Comment::followed_by_newline)
     }
 
     /// Whether the first non-whitespace byte after `pos` outside comments is `)`.
@@ -713,7 +720,7 @@ impl Comments<'_> {
                     .is_some_and(|&byte| byte.is_ascii_whitespace() || byte == b'{')
         }
 
-        if !matches!(comment.content, CommentContent::Jsdoc) {
+        if !is_jsdoc_comment(comment) {
             return false;
         }
 

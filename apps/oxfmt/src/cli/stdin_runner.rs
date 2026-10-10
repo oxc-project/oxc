@@ -2,17 +2,15 @@ use std::{
     env,
     io::{self, BufWriter, Read},
     path::PathBuf,
-    sync::Arc,
 };
 
-use super::{
-    CliRunResult, FormatCommand, Mode,
-    resolve::{build_global_ignore_matchers, is_ignored, resolve_ignore_paths},
-};
+use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
+
+use super::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
-    ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
-    ResolveOutcome, SourceFormatter, classify_file_kind, resolve_editorconfig_path,
-    resolve_file_scope_config, utils,
+    ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
+    SourceFormatter, build_global_ignore_matchers, classify_file, is_ignored, resolve_ignore_paths,
+    utils,
 };
 
 pub struct StdinRunner {
@@ -61,26 +59,18 @@ impl StdinRunner {
         }
 
         // Load config
-        let editorconfig_path = resolve_editorconfig_path(&cwd);
-        let mut config_resolver = match ConfigResolver::from_config(
+        let config_scopes = match ConfigScopes::load(
             &cwd,
             config_options.config.as_deref(),
-            editorconfig_path.as_deref(),
+            config_options.use_nested_configs(),
             Some(&self.js_config_loader),
         ) {
-            Ok(r) => r,
+            Ok(scopes) => scopes,
             Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to load configuration file.\n{err}\n"),
-                );
+                utils::print_and_flush(stderr, &format!("{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        if let Err(err) = config_resolver.build_and_validate() {
-            utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
-            return CliRunResult::InvalidOptionConfig;
-        }
 
         // Use `block_in_place()` to avoid nested async runtime access
         if let Err(err) =
@@ -93,31 +83,9 @@ impl StdinRunner {
         // Resolve filepath to absolute for nested config resolution and ignore check
         let filepath = utils::normalize_relative_path(&cwd, &filepath);
 
-        // Follow the same logic as `walk_runner` to resolve `config_resolver`.
-        let nested_ctx = (config_options.config.is_none() && !config_options.disable_nested_config)
-            .then(|| {
-                NestedConfigCtx::new(
-                    editorconfig_path.as_deref().map(Arc::from),
-                    Some(Arc::clone(&self.js_config_loader)),
-                )
-            });
-        let config_resolver = match resolve_file_scope_config(
-            &filepath,
-            &Arc::new(config_resolver),
-            nested_ctx.as_ref(),
-        ) {
-            Ok(resolved) => resolved,
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to load configuration file.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
-
-        // Check if the file is ignored by tool-ignores or config's `ignorePatterns`.
+        // Check if the file is ignored by tool-ignores.
         // `.gitignore` is deliberately not consulted, stdin is an explicitly requested document.
+        // Checked before resolving the scope, so configs under ignored dirs are never loaded.
         let global_matchers = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path)
             .and_then(|paths| build_global_ignore_matchers(&cwd, &[], &paths))
         {
@@ -127,19 +95,33 @@ impl StdinRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        if is_ignored(&global_matchers, &filepath, false, true)
-            || config_resolver.is_path_ignored(&filepath, false)
-        {
+        if is_ignored(&global_matchers, &filepath, false, true) {
             utils::print_and_flush(stdout, &source_text);
             return CliRunResult::FormatSucceeded;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+        let config_resolver = match config_scopes.resolve(&filepath) {
+            Ok(resolved) => resolved,
+            Err(err) => {
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to load configuration file.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+        // Then config's `ignorePatterns`
+        if config_resolver.is_path_ignored(&filepath, false) {
+            utils::print_and_flush(stdout, &source_text);
+            return CliRunResult::FormatSucceeded;
+        }
+
+        let Some(strategy) = classify_file(&filepath) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };
-        let strategy = match config_resolver.resolve(kind) {
-            Ok(ResolveOutcome::Format(strategy)) => strategy,
+        let plan = match config_resolver.resolve(&filepath, strategy) {
+            Ok(ResolveOutcome::Format(plan)) => plan,
             Ok(ResolveOutcome::MissingPlugin(_)) => {
                 utils::print_and_flush(stdout, &source_text);
                 return CliRunResult::FormatSucceeded;
@@ -155,15 +137,21 @@ impl StdinRunner {
             .with_external_services(Some(self.external_services));
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| source_formatter.format(&source_text, strategy)) {
+        match tokio::task::block_in_place(|| source_formatter.format(&source_text, plan)) {
             FormatResult::Success { code, .. } => {
                 utils::print_and_flush(stdout, &code);
                 CliRunResult::FormatSucceeded
             }
-            FormatResult::Error(errors) => {
-                for err in errors {
-                    utils::print_and_flush(stderr, &format!("{err}\n"));
+            FormatResult::Error(diagnostics) => {
+                let handler = GraphicalReportHandler::new();
+                let mut output = String::new();
+                for error in
+                    DiagnosticService::wrap_diagnostics(&cwd, &filepath, &source_text, diagnostics)
+                {
+                    // Writing to `String` never fails
+                    let _ = handler.render_report(&mut output, error.as_ref());
                 }
+                utils::print_and_flush(stderr, &output);
                 CliRunResult::FormatFailed
             }
         }

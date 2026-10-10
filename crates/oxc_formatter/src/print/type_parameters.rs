@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_formatter_core::{Buffer, Format, GroupId};
-use oxc_span::FileExtension;
+use oxc_span::{FileExtension, GetSpan};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -147,7 +147,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSTypeParameters<'a, '_> {
             write!(
                 f,
                 [group(&format_args!("<", format_with(|f| {
-                    if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call))
+                    if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call, f.comments()))
                     {
                         f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit);
                     } else {
@@ -169,7 +169,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
         if params.is_empty() {
             // This shouldn't happen in valid TypeScript code, but handle it gracefully
             let comments = f.context().comments().comments_before(self.span.end);
-            let indent = if comments.iter().any(|c| c.is_line()) {
+            let indent = if comments.iter().any(Comment::is_line) {
                 DanglingIndentMode::Soft
             } else {
                 DanglingIndentMode::None
@@ -180,17 +180,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
         // Check if this is in the context of an arrow function variable
         let is_arrow_function_vars = is_arrow_function_variable_type_argument(self);
 
-        // Check if the first (and only) argument can be hugged
-        let first_arg_can_be_hugged = if params.len() == 1 {
-            if let Some(first_type) = params.first() {
-                matches!(first_type.as_ref(), TSType::TSNullKeyword(_))
-                    || should_hug_single_type(first_type.as_ref(), f)
-            } else {
-                false
-            }
-        } else {
-            false
-        };
+        // Check if the first (and only) argument can be hugged.
+        // `f<T // c` + `>()`: a comment before the `>` needs the broken layout to stay in place.
+        let first_arg_can_be_hugged = params.len() == 1
+            && params.first().is_some_and(|first_type| {
+                (matches!(first_type.as_ref(), TSType::TSNullKeyword(_))
+                    || should_hug_single_type(first_type.as_ref(), f))
+                    && !f.comments().has_comment_in_range(first_type.span().end, self.span.end)
+            });
 
         let format_params = format_with(|f| {
             f.join_with(&soft_line_break_or_space()).entries_with_trailing_separator(

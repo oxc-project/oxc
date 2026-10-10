@@ -10,7 +10,93 @@ pub use parser_impl::{ConstructorParser, LiteralParser};
 mod test {
     use oxc_allocator::Allocator;
 
-    use crate::{ConstructorParser, LiteralParser, Options};
+    use crate::{ConstructorParser, LiteralParser, Options, ast::Term};
+
+    #[test]
+    fn escaped_group_names() {
+        let allocator = Allocator::default();
+
+        for (pattern, flags, expected_name) in [
+            (r"(?<Ꭰ>)\k<\u13A0>", "", "Ꭰ"),
+            (r"(?<\u13A0>)\k<Ꭰ>", "", "Ꭰ"),
+            (r"(?<\u{13A0}>)\k<\u13A0>", "u", "Ꭰ"),
+            (r"(?<𝒜>)\k<\uD835\uDC9C>", "u", "𝒜"),
+        ] {
+            let parsed = LiteralParser::new(&allocator, pattern, Some(flags), Options::default())
+                .parse()
+                .unwrap_or_else(|error| panic!("/{pattern}/{flags}: {error}"));
+            let terms = &parsed.body.body[0].body;
+            let Term::CapturingGroup(group) = &terms[0] else {
+                panic!("expected capturing group in /{pattern}/{flags}");
+            };
+            let Term::NamedReference(reference) = &terms[1] else {
+                panic!("expected named reference in /{pattern}/{flags}");
+            };
+            assert_eq!(group.name.as_ref().unwrap().as_str(), expected_name);
+            assert_eq!(reference.name.as_str(), expected_name);
+        }
+
+        for pattern in [r"(?<Ꭰ>)(?<\u13A0>)", r"(?<\u13A0>)(?<Ꭰ>)"] {
+            assert!(
+                LiteralParser::new(&allocator, pattern, Some(""), Options::default())
+                    .parse()
+                    .is_err(),
+                "/{pattern}/ should reject duplicate capture names"
+            );
+        }
+
+        let alternative_names = r"(?<Ꭰ>)|(?<\u13A0>)";
+        assert!(
+            LiteralParser::new(&allocator, alternative_names, Some(""), Options::default())
+                .parse()
+                .is_ok(),
+            "duplicate capture names in separate alternatives are valid"
+        );
+
+        for (pattern, expected) in [
+            (r"(?<⽇>)(?<\u2F47>)", "Unterminated capturing group name"),
+            (r"(?<_⽇>)(?<_\u2F47>)", "Unterminated capturing group name"),
+            (r"(?<🌚>)(?<\u{1F31A}>)", "Invalid surrogate pair"),
+            (r"(?<_🌚>)(?<_\u{1F31A}>)", "Invalid surrogate pair"),
+        ] {
+            let error = LiteralParser::new(&allocator, pattern, Some(""), Options::default())
+                .parse()
+                .unwrap_err();
+            assert!(error.to_string().contains(expected), "/{pattern}/: {error}");
+        }
+    }
+
+    #[test]
+    fn escaped_group_names_in_constructor() {
+        let allocator = Allocator::default();
+
+        for (source, expected_name) in [
+            (r#""(?<\\u13A0>)\\k<\\u13A0>""#, "Ꭰ"),
+            (r#""(?<\\u13A0>)\\k<Ꭰ>""#, "Ꭰ"),
+            (r#""(?<\x61>)\\k<a>""#, "a"),
+        ] {
+            let parsed = ConstructorParser::new(&allocator, source, None, Options::default())
+                .parse()
+                .unwrap_or_else(|error| panic!("{source}: {error}"));
+            let terms = &parsed.body.body[0].body;
+            let Term::CapturingGroup(group) = &terms[0] else {
+                panic!("expected capturing group in {source}");
+            };
+            let Term::NamedReference(reference) = &terms[1] else {
+                panic!("expected named reference in {source}");
+            };
+            assert_eq!(group.name.as_ref().unwrap().as_str(), expected_name);
+            assert_eq!(reference.name.as_str(), expected_name);
+        }
+
+        let duplicate = r#""(?<\\u13A0>)(?<Ꭰ>)""#;
+        assert!(
+            ConstructorParser::new(&allocator, duplicate, None, Options::default())
+                .parse()
+                .is_err(),
+            "{duplicate} should reject duplicate capture names"
+        );
+    }
 
     #[test]
     fn should_pass() {
@@ -123,6 +209,83 @@ mod test {
             (r"(?si-m:.)", ""),
             (r"(?im-s:.)", "v"),
             (r"(?ims-:.)", ""),
+            // Buffer boundaries
+            (r"\A", ""),
+            (r"\A", "u"),
+            (r"\A", "v"),
+            (r"\z", ""),
+            (r"\z", "u"),
+            (r"\z", "v"),
+            (r"\Z", ""),
+            (r"\Z", "u"),
+            (r"\Z", "v"),
+            (r"\A\z", ""),
+            (r"\A\z", "u"),
+            (r"\A\z", "v"),
+            (r"\A\Z", ""),
+            (r"\A\Z", "u"),
+            (r"\A\Z", "v"),
+            (r"\A\Z\z", ""),
+            (r"\A\Z\z", "u"),
+            (r"\A\Z\z", "v"),
+            (r"\Afoo\z", ""),
+            (r"\Afoo\z", "u"),
+            (r"\Afoo\z", "v"),
+            (r"\Afoo\Z", ""),
+            (r"\Afoo\Z", "u"),
+            (r"\Afoo\Z", "v"),
+            (r"\A|\z", ""),
+            (r"\A|\z", "u"),
+            (r"\A|\z", "v"),
+            (r"(\A)", ""),
+            (r"(\A)", "u"),
+            (r"(\A)", "v"),
+            (r"(?=\A)", ""),
+            (r"(?=\A)", "u"),
+            (r"(?=\A)", "v"),
+            (r"\A*", ""),
+            (r"\z+", ""),
+            (r"\Z{2}", ""),
+            (r"[\A]", ""),
+            (r"[\z\Z]", ""),
+            (r"\\A", ""),
+            (r"\\A", "u"),
+            (r"\\A", "v"),
+            (r"a\Zb", ""),
+            (r"a\Zb", "u"),
+            (r"a\Zb", "v"),
+            (r"(?i:\A)", ""),
+            (r"(?i:\A)", "u"),
+            (r"(?i:\A)", "v"),
+            (r"(?m:\z)", ""),
+            (r"(?m:\z)", "u"),
+            (r"(?m:\z)", "v"),
+            (r"(?s:\Z)", ""),
+            (r"(?s:\Z)", "u"),
+            (r"(?s:\Z)", "v"),
+            (r"(?-i:\A)", ""),
+            (r"(?-i:\A)", "u"),
+            (r"(?-i:\A)", "v"),
+            (r"(?-m:\Z)", ""),
+            (r"(?-m:\Z)", "u"),
+            (r"(?-m:\Z)", "v"),
+            (r"(?m-s:\Afoo\z)", ""),
+            (r"(?m-s:\Afoo\z)", "u"),
+            (r"(?m-s:\Afoo\z)", "v"),
+            (r"(?ims:a\Zb)", ""),
+            (r"(?ims:a\Zb)", "u"),
+            (r"(?ims:a\Zb)", "v"),
+            (r"(?i:\A|\z)", ""),
+            (r"(?i:\A|\z)", "u"),
+            (r"(?i:\A|\z)", "v"),
+            (r"(?m:\Z)+", ""),
+            (r"(?m:\Z)+", "u"),
+            (r"(?m:\Z)+", "v"),
+            (r"(?m:\A*)", ""),
+            (r"(?i:[\z])", ""),
+            (r"(?m:(?-m:\A)\z)", ""),
+            (r"(?m:(?-m:\A)\z)", "u"),
+            (r"(?m:(?-m:\A)\z)", "v"),
         ] {
             let res =
                 LiteralParser::new(&allocator, pattern_text, Some(flags_text), Options::default())
@@ -218,6 +381,21 @@ mod test {
             (r"(?i", ""),
             (r"(?i-", ""),
             (r"(?i-s", ""),
+            // Buffer boundaries
+            (r"\A*", "u"),
+            (r"\A*", "v"),
+            (r"\z+", "u"),
+            (r"\z+", "v"),
+            (r"\Z{2}", "u"),
+            (r"\Z{2}", "v"),
+            (r"[\A]", "u"),
+            (r"[\A]", "v"),
+            (r"[\z\Z]", "u"),
+            (r"[\z\Z]", "v"),
+            (r"(?m:\A*)", "u"),
+            (r"(?m:\A*)", "v"),
+            (r"(?i:[\z])", "u"),
+            (r"(?i:[\z])", "v"),
         ] {
             assert!(
                 LiteralParser::new(&allocator, pattern_text, Some(flags_text), Options::default())

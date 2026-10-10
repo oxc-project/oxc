@@ -1,6 +1,6 @@
-commit: 1eac4481
+commit: 4f4ef5d4
 
-Passed: 280/408
+Passed: 298/426
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -21,7 +21,7 @@ Passed: 280/408
 * plugin-tagged-template-transform
 
 
-# babel-plugin-transform-explicit-resource-management (3/4)
+# babel-plugin-transform-explicit-resource-management (5/6)
 * export-class-name/input.js
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(7)]
@@ -55,12 +55,7 @@ after transform: ["dce"]
 rebuilt        : []
 
 * computed-constant-value/input.ts
-Unresolved references mismatch:
-after transform: ["Infinity", "NaN"]
-rebuilt        : ["Infinity"]
-Unresolved reference IDs mismatch for "Infinity":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(18)]
-rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
+x Output mismatch
 
 * declare-and-definite-with-initializer/input.ts
 

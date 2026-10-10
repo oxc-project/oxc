@@ -4,9 +4,8 @@ static NEG_MAX_SAFE_FLOAT: f64 = -9_007_199_254_740_991_f64;
 static MAX_SAFE_INT: i64 = 9_007_199_254_740_991_i64;
 static NEG_MAX_SAFE_INT: i64 = -9_007_199_254_740_991_i64;
 
-use crate::test;
+use crate::{test, test_same};
 
-// wrap with a function call so it doesn't get removed.
 fn fold(source_text: &str, expected: &str) {
     let source_text = format!("NOOP({source_text})");
     let expected = format!("NOOP({expected})");
@@ -15,10 +14,6 @@ fn fold(source_text: &str, expected: &str) {
 
 fn fold_same(source_text: &str) {
     fold(source_text, source_text);
-}
-
-fn test_same(source_text: &str) {
-    test(source_text, source_text);
 }
 
 #[test]
@@ -855,12 +850,12 @@ fn test_fold_bitwise_op2() {
     fold("x = y | 3 | 3", "x = y | 3");
     fold("x = 3 | y | 3", "x = y | 3");
 
-    fold("x = y ^ 1 ^ 1", "x = y ^ 0");
+    fold("x = y ^ 1 ^ 1", "x = y | 0");
     fold("x = y ^ 1 ^ 2", "x = y ^ 3");
     fold("x = y ^ 3 ^ 1", "x = y ^ 2");
     fold("x = 3 ^ y ^ 1", "x = y ^ 2");
-    fold("x = y ^ 3 ^ 3", "x = y ^ 0");
-    fold("x = 3 ^ y ^ 3", "x = y ^ 0");
+    fold("x = y ^ 3 ^ 3", "x = y | 0");
+    fold("x = 3 ^ y ^ 3", "x = y | 0");
 
     fold("x = Infinity | NaN", "x=0");
     fold("x = 12 | NaN", "x=12");
@@ -1506,6 +1501,57 @@ fn test_fold_keep_side_effects_in_typeof_comparison() {
 #[test]
 fn test_issue_8782() {
     fold("+(void unknown())", "+void unknown()");
+}
+
+#[test]
+fn test_fold_delete() {
+    fold("delete 0", "!0");
+    fold("delete 1", "!0");
+    fold("delete 1n", "!0");
+    fold("delete (+'x')", "!0");
+    fold("delete (1 / -1)", "!0");
+    fold("delete (5 / 0)", "!0");
+    fold("delete (1 / 0)", "!0");
+    fold("delete (0 / -0)", "!0");
+    fold("delete (-1 / 0)", "!0");
+    fold("delete (0 / 0)", "!0");
+    fold("delete (Infinity / Infinity)", "!0");
+    fold("delete (NaN / 0)", "!0");
+    fold("delete (1 / NaN)", "!0");
+    fold("delete undefined", "!1");
+    fold("delete NaN", "!1");
+    fold("delete Infinity", "!1");
+    fold("delete -Infinity", "!0");
+    fold("delete void 0", "!0");
+    fold("delete +a", "(+a, !0)");
+    fold("delete void a", "(a, !0)");
+    fold("delete Math.sqrt(-1)", "!0");
+    fold("delete Math.sqrt(0)", "!0");
+    fold("delete Number('a')", "!0");
+    fold("delete 'a'", "!0");
+    fold("delete (0, NaN)", "!0");
+    fold("delete (0, Infinity)", "!0");
+    fold("delete true", "!0");
+    fold("delete false", "!0");
+    fold("delete null", "!0");
+    fold("delete (0, x)", "(x, !0)");
+
+    fold("delete a()", "(a(), !0)");
+    fold("delete new a()", "(new a(), !0)");
+    fold("delete a.b()", "(a.b(), !0)");
+
+    fold_same("delete a");
+    fold_same("delete a().b");
+    fold_same("delete a()?.b");
+    fold_same("delete new a().b");
+    fold_same("delete new a()?.b");
+    fold_same("delete a[0]");
+    fold_same("delete a?.[0]");
+    fold_same("delete a.b");
+    fold_same("delete a?.b");
+    fold_same("delete a?.b()");
+
+    fold_same("function(NaN){ return delete NaN; }");
 }
 
 #[test]

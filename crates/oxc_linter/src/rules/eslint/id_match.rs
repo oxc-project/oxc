@@ -600,7 +600,7 @@ fn export_specifier_is_duplicate_clone<'a>(
         return false;
     }
     match &specifier.exported {
-        ModuleExportName::IdentifierName(inner) => inner.node_id.get() == current_node.id(),
+        ModuleExportName::IdentifierName(inner) => inner.node_id() == current_node.id(),
         _ => false,
     }
 }
@@ -691,7 +691,7 @@ fn object_property_is_import_options_with<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    let property_node = ctx.nodes().get_node(property.node_id.get());
+    let property_node = ctx.nodes().get_node(property.node_id());
     let object_node = ctx.nodes().parent_node(property_node.id());
     matches!(
         ctx.nodes().parent_kind(object_node.id()),
@@ -704,7 +704,7 @@ fn object_property_is_inside_dynamic_import_with<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    let property_node = ctx.nodes().get_node(property.node_id.get());
+    let property_node = ctx.nodes().get_node(property.node_id());
     let object_node = ctx.nodes().parent_node(property_node.id());
     let outer_property_node = ctx.nodes().parent_node(object_node.id());
     let AstKind::ObjectProperty(outer_property) = outer_property_node.kind() else {

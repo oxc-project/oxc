@@ -320,7 +320,9 @@ fn for_stmt() {
 #[test]
 fn do_while_stmt() {
     test("do ; while (true)", "do;\nwhile (true);\n");
+    test("function f() { do; while (test()); }", "function f() {\n\tdo;\n\twhile (test());\n}\n");
     test_minify("do ; while (true)", "do;while(true);");
+    test_minify("function f() { do; while (test()); }", "function f(){do;while(test())}");
     test_minify("do break; while (true)", "do break;while(true);");
     test_minify("do continue; while (true)", "do continue;while(true);");
     test_minify("do debugger; while (true)", "do debugger;while(true);");
@@ -780,6 +782,93 @@ fn big_int() {
     test_minify("function a() { return 1n }", "function a(){return 1n}");
 }
 
+/// A negative `BigIntLiteral` never comes from the parser (`-1n` parses as a unary minus around `1n`),
+/// but the minifier creates one when it folds e.g. `~0n` to `-1n`.
+/// Its `-` must not run into a `-` printed before it, which would make `--`.
+/// After a keyword it needs no space, whether it starts with `-` or is wrapped in `(...)`,
+/// as neither can continue the keyword.
+#[test]
+fn negative_big_int_literal() {
+    let allocator = Allocator::default();
+    let ast = AstBuilder::new(&allocator);
+
+    let negative_one =
+        || Expression::new_big_int_literal(SPAN, "-1", None, BigintBase::Decimal, &ast);
+    let expr_stmt = |expr| Statement::new_expression_statement(SPAN, expr, &ast);
+    let cases = [
+        // `-(-1n)`
+        (
+            expr_stmt(Expression::new_unary_expression(
+                SPAN,
+                UnaryOperator::UnaryNegation,
+                negative_one(),
+                &ast,
+            )),
+            "- -1n;\n",
+            "- -1n;",
+        ),
+        // `+(-1n)` needs no space
+        (
+            expr_stmt(Expression::new_unary_expression(
+                SPAN,
+                UnaryOperator::UnaryPlus,
+                negative_one(),
+                &ast,
+            )),
+            "+-1n;\n",
+            "+-1n;",
+        ),
+        // `y - (-1n)`
+        (
+            expr_stmt(Expression::new_binary_expression(
+                SPAN,
+                Expression::new_identifier(SPAN, "y", &ast),
+                BinaryOperator::Subtraction,
+                negative_one(),
+                &ast,
+            )),
+            "y - -1n;\n",
+            "y- -1n;",
+        ),
+        // `return -1n` needs no space when minified
+        (
+            Statement::new_return_statement(SPAN, Some(negative_one()), &ast),
+            "return -1n;\n",
+            "return-1n;",
+        ),
+        // `return (-1n).x` needs no space when minified either
+        (
+            Statement::new_return_statement(
+                SPAN,
+                Some(Expression::new_static_member_expression(
+                    SPAN,
+                    negative_one(),
+                    IdentifierName::new(SPAN, "x", &ast),
+                    false,
+                    &ast,
+                )),
+                &ast,
+            ),
+            "return (-1n).x;\n",
+            "return(-1n).x;",
+        ),
+    ];
+
+    for (stmt, expected, expected_minified) in cases {
+        let program =
+            Program::new(SPAN, oxc_span::SourceType::mjs(), "", [], None, [], [stmt], &ast);
+
+        let result = Codegen::new().build(&program).code;
+        assert_eq!(result, expected);
+
+        let result = Codegen::new()
+            .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+            .build(&program)
+            .code;
+        assert_eq!(result, expected_minified);
+    }
+}
+
 #[test]
 #[ignore = "Minify bigint is not implemented."]
 fn big_int_minify() {
@@ -1132,4 +1221,48 @@ fn html_comments() {
         "const x = 1;\n--> comment\nconst y = 2;\n",
         "const x = 1;\n--> comment\nconst y = 2;\n",
     );
+}
+
+#[test]
+fn template_literal_dollar_escapes() {
+    for (source, expected) in [
+        (r"`\$`;", r"`$`;"),
+        (r"`^${pattern}\$`;", r"`^${pattern}$`;"),
+        (r"`\$a\$${value}\$`;", r"`$a$${value}$`;"),
+        (r"`\${value}`;", r"`\${value}`;"),
+        (r"`\$\{value}`;", r"`$\{value}`;"),
+        (r"`\$\u007bvalue}`;", r"`$\u007bvalue}`;"),
+        (r"`\\$`;", r"`\\$`;"),
+        (r"`\\\$`;", r"`\\$`;"),
+        (r"`\\\\$`;", r"`\\\\$`;"),
+        (r"`\\\\\$`;", r"`\\\\$`;"),
+        (r"`\\\${value}`;", r"`\\\${value}`;"),
+        (r"`\\${value}\$`;", r"`\\${value}$`;"),
+        (r"`\$${{value}}\$`;", r"`$${{value}}$`;"),
+        (r"tag`\$${value}\$`;", r"tag`\$${value}\$`;"),
+        (r"String.raw`\$${value}\$`;", r"String.raw`\$${value}\$`;"),
+        (r"tag`\$${`\$`}\$`;", r"tag`\$${`$`}\$`;"),
+    ] {
+        test_minify(source, expected);
+        test_minify_same(expected);
+    }
+    test_same("`^${pattern}\\$`;\n");
+    test_same("tag`\\$`;\n");
+
+    for ascii_only in [false, true] {
+        test_options(
+            r"`é\$</script>${value}\$é`;",
+            if ascii_only {
+                r"`\u00E9$<\/script>${value}$\u00E9`;"
+            } else {
+                r"`é$<\/script>${value}$é`;"
+            },
+            CodegenOptions { minify: true, ascii_only, ..CodegenOptions::default() },
+        );
+        test_options(
+            r"String.raw`é\$`;",
+            r"String.raw`é\$`;",
+            CodegenOptions { minify: true, ascii_only, ..CodegenOptions::default() },
+        );
+    }
 }

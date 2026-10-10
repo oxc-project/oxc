@@ -26,6 +26,8 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
 - `format_program`: Special-purpose AST-in entry point
 - `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
   - the dispatcher (IR channel), the string embedder (JSDoc fences), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
+- `format_to_ir`: Format a whole program as a dispatched child (e.g. a Markdown code block), returning IR for the parent's document
+  - `JsEmbeddedIn` carries what it is embedded in, translated by the orchestrator from the parent's marker
 
 ### Generated code
 
@@ -45,7 +47,8 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 - See `tests/jsdoc/fixtures` for the covered behavior
   - See also `tests/jsdoc/upstream-jsdoc-bugs.md`
 - Implemented in Rust as a comment-text rewrite at print time (`formatter/trivia.rs`), not an IR transform
-- Non-JS fenced code blocks go through the session's optional `StringEmbedder`; without it (or on failure) they stay verbatim
+- Non-JS fenced code blocks of the `prettier-plugin-jsdoc` set go through the session's optional `StringEmbedder`;
+  without it (or on failure), and for any other language, they stay verbatim
 - Covered by plain fixture-pair tests (`--test jsdoc`, committed input/expected pairs);
   a mismatch is a failing test, not a tracked conformance-report entry
 
@@ -68,6 +71,8 @@ As the JS host, this crate also owns the parent-side concerns in `print/template
 - `.raw` vs `.cooked` selection
 
 Language formatter crates stay free of these rules.
+Without a dispatcher (`embeddedLanguageFormatting: off`), templates print verbatim.
+With one, the layout around an embedded template (a sole argument, an arrow body) is decided from the AST (`embed_hug`), not from the source shape or whether its content formats.
 See `embed/mod.rs` for the shared helpers and `embed/{css,html,graphql,markdown}.rs` for each site's wiring.
 
 js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`. See `apps/oxfmt` in details.
@@ -109,7 +114,7 @@ Three token classes decide a comment's freedom of movement:
   Formatter-owned, so the same-line trailing run moves behind it, block and line comments alike ("Moving behind a terminator (class 1)")
 - (2) Separator and in-head terminator: list separators (`,`, interface / type literal members' `;` ⇄ `,`), the for-head's `;`s, a label's or a single-block case test's `:`.
   The comment stays before the token; only a same-line line comment rides its `line_suffix` past it (`for (a // c\n; b;)` -> `a; // c`, `foo // c\n: b();` -> `foo: // c` + break)
-- (3) Delimiter: a body's `{` `}`, a head's `(` `)`, the `}`-to-keyword gap.
+- (3) Delimiter: a body's `{` `}`, a head's `(` `)`, a call's argument `(` `)` and type argument `<` `>`, the `}`-to-keyword gap.
   User content: comments never cross it in either direction ("Head-body and operator gaps (class 3)")
 
 Redundant expression parens are formatter-owned, not delimiters (FORMATTER_POLICY):
@@ -139,19 +144,24 @@ so a comment between a head and its body keeps its side of each, uniformly acros
 - own-line comment keeps its own line
 - comments before a `}`-to-keyword gap (`else`/`catch`/`finally`/`while`) split at the keyword and keep their side
 
+A call's callee-opener gap (callee to `?.`, `<` or `(`; `new`'s callee to `<`) follows the same policy (`FormatBeforeOpener` in `utils/statement_body.rs`, DIVERGENCES.md#callee-arguments-gap-comment), except the cases in "Open debts".
+
 The `as`/`satisfies` operator gap follows the same policy (`as_or_satisfies_expression.rs`, DIVERGENCES.md#binary-cast-own-line-comment), with two additions:
 
 - the pre-operator slot is grammar-bounded (no line terminator may precede the operator, a multiline comment's interior counts),
   so once the expression's source parens are dropped, only same-line single-line block comments stay on the expression side;
   everything else normalizes to the type side so the output re-parses
 - paragraph-like promotion: a line-ending multiline block goes own-line above the type.
-  `=`/`:` reach the same outputs through `AssignmentLike` (DIVERGENCES.md#eol-comment-after-assign-colon);
+  Declarators, assignments and type aliases reach the same outputs at `=` through `AssignmentLike` (DIVERGENCES.md#eol-comment-after-assign-colon);
+  property keys and class fields keep it on the left;
   the head-body `write_*` helpers split on `preceded_by_newline` alone and do not promote
 - a union type claims the after-operator comments itself, the same placement as after a type alias's `=` (`union_type.rs`);
   the operator side breaks only for a riding line comment before the operator.
   A suppressed union never runs that printer, so the cast site and `AssignmentLike` lay it out like any other type
 - an assignment-like's `=` / `:` (`AssignmentLike`): the left side's trailing run stops at the operator (comments past it are hidden while it prints);
-  a glued run ending in a line comment prints right after the operator (`operator_line_run`), a block-ending one leads the right-hand side
+  a glued run ending in a line comment prints right after the operator (`operator_line_run`), a block-ending one leads the right-hand side;
+  a line-ending single-line block before the operator trails the left side;
+  with comments the left side deferred still pending, nothing glues (same as the cast site)
 
 Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`);
 their rustdocs cover how the head's generic trailing pass is kept from claiming the gap.
@@ -203,7 +213,7 @@ The second line of each item is the drift symptom.
 
 ### Open debts
 
-Behavior that follows Prettier where our own rules want one answer. Not accepted, only not fixed yet; each fix is a uniform-rule DIVERGENCES entry plus a fixture pin.
+Behavior our own rules want otherwise, mostly where it follows Prettier. Not accepted, only not fixed yet; each fix is a DIVERGENCES entry plus a fixture pin.
 
 - TS-only statements (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`)
   and class index signatures keep a same-line comment before their `;` (`import A = B /* c */;`), instead of the glued `;` above.
@@ -213,6 +223,11 @@ Behavior that follows Prettier where our own rules want one answer. Not accepted
 - A type annotation's `:` has no operator-line rule of its own: after `let a: // c` the type prints from column 0 (Prettier too),
   while `type A = // c` breaks + indents (`AssignmentLike`) and only a union indents itself there (`union_type.rs`).
   The fix is the `=` rule at the `TSTypeAnnotation` site (break + indent after a line comment), which also aligns a suppressed union with `type =`
+- The callee-opener gap is not bounded at the `(` for the type arguments and `new`'s callee, nor for a chain's computed-member, call, or optional-call callee:
+  they still claim comments across the `(` (`foo<T> // c` + break + `(a)` -> `foo<T>(a); // c`).
+  Bounding them also moves a same-line comment right after the `(` own-line (`f<T>( // eslint-disable-line`), so it waits for the opener exception (FORMATTER_POLICY) to be revisited
+- A line comment right after the `<` of a hugged single type argument keeps the unbreakable hug: `f<// c` + break + `T>()` prints `T` at column 0.
+  Breaking the hug also decides whether the comment goes own-line or stays on the `<` line, so it waits for the same revisit
 
 The flat JSX arrow body is a limitation, not a debt: the paren decision is a group fit, unknowable at comment time (DIVERGENCES.md#paren-comment-fixpoint).
 

@@ -7,6 +7,7 @@ Shared policy for every formatter crate in the oxc ecosystem:
 - `oxc_formatter_css`
 - `oxc_formatter_graphql`
 - `oxc_formatter_yaml`
+- `oxc_formatter_markdown`
 
 using `oxc_formatter_core`, integrated by `apps/oxfmt`.
 
@@ -62,8 +63,9 @@ Rules:
 - Every divergence has an entry in the owning layer's `DIVERGENCES.md` and a pin fixture
   - The owning layer decides the behavior: a language crate for single-language behavior, `apps/oxfmt` for embedding
   - The pin is a minimal fixture in the owner's `tests/fixtures/`, distilled from whatever exposed the divergence; a conformance file is never the pin, it stays a regression net
-  - The fixture carries a one-line marker: which lines deviate + `see DIVERGENCES.md#<slug>`; the why lives in the entry
-    - `DIVERGENCES.md#<slug>` is the one reference form everywhere (docs, source, fixtures); never a quoted or bare slug, never an upstream issue alone
+  - The fixture points back at its entry: it is named after the slug, or carries a one-line `DIVERGENCES.md#<slug>` marker
+    (a fixture pinning several entries, or a language where a comment is content); the why and the deviating lines live in the entry
+    - `DIVERGENCES.md#<slug>` is the one reference form everywhere (docs, source, fixture markers); never a quoted or bare slug, never an upstream issue alone
 - Entry format, with OUR behavior as the spec
   - H2 slug: the stable anchor
   - `Why:` required; the reason keyword, its parenthetical, then upstream issues as bare references: `uniform-rule (same construct, same output: X; prettier/prettier#NNNN)`
@@ -102,7 +104,7 @@ The invariants (placement only; losing a comment is the lossless contract under 
     - Comments may move behind a terminator (per-language compat tables decide when); they always stay before a separator
       - Except a same-line line comment: it rides a `line_suffix` and lands just past the separator (`a // c\n, b` -> `a, // c`), the separator cannot follow it on the line;
       - an own-line comment leads what follows the separator instead
-  - Grammar-fixed DELIMITER (braces, a head's parens) is neither: it bounds a region and stays user content, never crossed
+  - Grammar-fixed DELIMITER (braces, a head's parens, an argument list's parens) is neither: it bounds a region and stays user content, never crossed
   - (JS/TS) Redundant expression parentheses are NOT delimiters: the formatter drops them and re-derives parens by its own rules, so any paren in the output is formatter-owned
     - Trailing comment inside the dropped pair moves behind the terminator, even across a re-printed pair
     - The source pair stays user content only where a sub-printer claims it and prints the comment inside (per-language keeps tables)

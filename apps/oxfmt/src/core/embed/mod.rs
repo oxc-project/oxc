@@ -1,18 +1,17 @@
 //! Embedded-language formatting orchestration.
 //!
 //! `oxc_formatter_core` holds the abstract contract
-//! (`FormatSession`, `FormatDispatcher`, `DispatchRequest`/`DispatchResponse`, `TailwindCollector`);
+//! (`FormatSession`, `FormatDispatcher`, `DispatchRequest`/`DispatchResponse`);
 //! this module is its concrete counterpart owned by the orchestrator (Oxfmt).
 //!
 //! - [`dispatcher`] (every build):
-//!   the routing table (`route`: one function answering "which formatter serves this language?"),
+//!   routed by `language::route_embedded` (one function answering "which formatter serves this language?"),
 //!   `ResolvedDispatchConfig` (lazy per-language options) + `build_dispatcher` with a Rust branch per `NativeLanguage`;
 //!   IR integrates into the parent's arena / `GroupId` space
 //! - [`services`] (every build): the root `SessionServices` assembly (`for_root`, one definition per build)
 //! - [`jsdoc_fence`] (every build): the JSDoc native-fence string adapter over the registry
 //! - [`prettier_doc`] (napi only): Prettier Doc→IR path for the `Route::Prettier` set
-//! - [`prettier_string`] (napi only): the Prettier string paths of the string-out channel
-//!   (md/html/angular JSDoc fences; results re-embed line-by-line)
+//! - [`prettier_string`] (napi only): the Prettier string paths of the string-out channel (html JSDoc fences; results re-embed line-by-line)
 
 #[cfg(feature = "napi")]
 use std::sync::Arc;

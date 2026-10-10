@@ -169,7 +169,7 @@ struct RuleBuckets {
 
 impl RuleBuckets {
     fn clear(&mut self) {
-        for bucket in self.by_type.iter_mut() {
+        for bucket in &mut *self.by_type {
             bucket.clear();
         }
         self.any_type.clear();
@@ -672,7 +672,7 @@ impl Linter {
 
         // If file has a hashbang, add it to comments.
         // It will be converted to a `Shebang` comment on JS side.
-        // Clear the original `Vec<Comment>` to avoid cloning it again below.
+        // Move the original comments out to avoid cloning them again below.
         let comments = if let Some(hashbang) = &original_program.hashbang {
             let mut comments_with_hashbang =
                 ArenaVec::with_capacity_in(original_program.comments.len() + 1, &js_allocator);
@@ -681,9 +681,7 @@ impl Linter {
                 hashbang.span.end,
                 CommentKind::Line,
             ));
-            comments_with_hashbang.extend_from_slice_copy(&original_program.comments);
-
-            original_program.comments.clear();
+            comments_with_hashbang.extend(original_program.comments.drain(..));
 
             Some(comments_with_hashbang)
         } else {
@@ -794,7 +792,7 @@ impl Linter {
         span_converter.convert_program(program);
 
         // Convert comment spans to UTF-16.
-        // Also set the `content` field (byte 15) of each comment to `None` (0).
+        // Also set the `content` field of each comment to `None` (0).
         // JS side uses this byte as a "deserialized" flag for tracking lazy deserialization.
         if let Some(mut converter) = span_converter.converter() {
             for comment in &mut program.comments {

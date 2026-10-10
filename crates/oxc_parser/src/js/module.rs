@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
 use crate::{
-    ParserConfig as Config, ParserImpl, diagnostics,
+    ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierKind, Modifiers},
 };
@@ -452,13 +452,34 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         TSNamespaceExportDeclaration::boxed(self.end_span(start), id, self)
     }
 
+    /// Check the parse goal and placement of the `import` / `export` declaration at the current token.
+    pub(crate) fn check_module_declaration(&mut self, stmt_ctx: StatementContext) {
+        // TypeScript cannot tell script from module by syntax,
+        // and permits module declarations in namespaces and ambient modules.
+        if self.is_ts {
+            return;
+        }
+        let statement = if self.at(Kind::Import) { "import statement" } else { "export statement" };
+        let span = self.cur_token().span();
+        if self.source_type.is_script() || self.source_type.is_commonjs() {
+            self.error(diagnostics::module_code(statement, span));
+        } else if stmt_ctx != StatementContext::Program {
+            self.error(diagnostics::top_level(statement, span));
+        }
+    }
+
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
     pub(crate) fn parse_export_declaration(
         &mut self,
         start: u32,
         mut decorators: ArenaVec<'a, Decorator<'a>>,
+        stmt_ctx: StatementContext,
     ) -> Statement<'a> {
+        self.check_module_declaration(stmt_ctx);
         self.bump_any(); // bump `export`
+        // export /* @__NO_SIDE_EFFECTS__ */ ...
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         // `export` is unambiguously module syntax (ECMA-262 §16.2.3): commit to the
         // Module goal so the declaration parses under `Await` on the first pass and
         // isn't reparsed. e.g. `@foo export default class C { x = await + 1 }`
@@ -549,7 +570,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 )
             }
         };
-        Statement::from(decl)
+        let mut stmt = Statement::from(decl);
+        if let Some(comments) = no_side_effects_comments
+            && Self::set_pure_on_function_stmt(&mut stmt)
+        {
+            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        }
+        stmt
     }
 
     // export NamedExports ;
@@ -982,8 +1009,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let literal = self.parse_literal_string();
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
+                // The error is fatal so that no AST ever carries an ill-formed export name.
                 if !literal.is_string_well_formed_unicode() {
-                    self.error(diagnostics::export_lone_surrogate(literal.span));
+                    let error = diagnostics::export_lone_surrogate(literal.span);
+                    return self.fatal_error(error);
                 }
                 ModuleExportName::StringLiteral(literal)
             }

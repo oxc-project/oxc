@@ -20,8 +20,13 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_statement_with(stmt, |stmt, ctx| {
                     let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                     let IfStatement { mut test, span, .. } = if_stmt.unbox();
-                    Self::remove_unused_expression(&mut test, ctx);
-                    Statement::new_expression_statement(span, test, ctx)
+                    if Self::remove_unused_expression(&mut test, ctx) {
+                        // `if (0) {}` => `;`
+                        ctx.drop_expression(&test);
+                        Statement::new_empty_statement(span, ctx)
+                    } else {
+                        Statement::new_expression_statement(span, test, ctx)
+                    }
                 });
                 return;
             }
@@ -127,13 +132,9 @@ impl<'a> PeepholeOptimizations {
             && if2.alternate.is_some()
         {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-            let new_consequent = Statement::new_block_statement_with_scope_id(
-                if_stmt.consequent.span(),
-                [if_stmt.consequent.take_in(ctx)],
-                scope_id,
-                ctx,
-            );
-            ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
+            ctx.replace_statement_with(&mut if_stmt.consequent, |e, ctx| {
+                Statement::new_block_statement_with_scope_id(e.span(), [e], scope_id, ctx)
+            });
         }
     }
 

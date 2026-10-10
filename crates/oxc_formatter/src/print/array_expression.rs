@@ -37,7 +37,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
                     f.comments()
                         .comments_in_range(last.span().end, self.array.span.end)
                         .iter()
-                        .any(|comment| comment.is_line())
+                        .any(Comment::is_line)
                 })
             };
             let should_expand = !self.options.is_force_flat_mode

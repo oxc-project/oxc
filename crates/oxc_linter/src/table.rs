@@ -255,11 +255,11 @@ mod test {
         let options = Options::gfm();
         for section in &table().sections {
             let rendered_table = section.render_markdown_table();
-            assert!(!rendered_table.is_empty());
+            assert_ne!(rendered_table, "");
             assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
 
             let html = to_html_with_options(&rendered_table, &options).unwrap();
-            assert!(!html.is_empty());
+            assert_ne!(html, "");
             assert!(html.contains("<table>"));
         }
     }
@@ -274,7 +274,7 @@ mod test {
             }
 
             let rendered_table = section.render_markdown_table_cli(&enabled);
-            assert!(!rendered_table.is_empty());
+            assert_ne!(rendered_table, "");
             // same number of lines as other renderer (header + desc + separator + rows + trailing newline)
             assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
             assert!(rendered_table.contains("Enabled?"));

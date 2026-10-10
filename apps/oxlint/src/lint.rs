@@ -28,7 +28,8 @@ use crate::{
         CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
     },
     config_loader::{
-        CliConfigLoadError, ConfigLoadError, ConfigLoader, materialize_default_plugins,
+        CliConfigLoadError, ConfigLoadError, ConfigLoader, config_discovery,
+        materialize_default_plugins,
     },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -247,7 +248,8 @@ impl CliRunner {
             // as the passed config file takes absolute precedence.
             basic_options.config.is_none() &&
             !misc_options.print_config &&
-            !self.options.list_rules;
+            !self.options.list_rules &&
+            config_discovery().nested_configs();
 
         let config_result = {
             let mut config_loader =
@@ -1789,6 +1791,17 @@ mod test {
     fn test_tsgolint_type_check_only() {
         let args = &["--type-check-only"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_skips_rules() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_rules".into())
+            .test_and_snapshot_multiple(&[
+                &["--type-check-only", "index.ts"],
+                &["--type-check-only", "type-error.ts"],
+            ]);
     }
 
     #[test]

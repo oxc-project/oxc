@@ -1,6 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, RemoveSoftLinesBuffer, SourceText, format_element};
+use oxc_formatter_core::{FormatElement, RemoveSoftLinesBuffer, format_element};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -19,9 +19,10 @@ use crate::{
         FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
         array_element_list::can_concisely_print_array_list,
         arrow_function_expression::{
-            FunctionCacheMode, GroupedCallArgumentLayout, is_huggable_html_embed,
+            FunctionCacheMode, GroupedCallArgumentLayout,
             is_multiline_template_starting_on_same_line,
         },
+        embed_hug,
         function::FormatFunction,
         parameters::has_only_simple_parameters,
     },
@@ -61,6 +62,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
                 None
             };
 
+        let call = call_expression.map(AsRef::as_ref);
+
         if is_simple_module_import
             || call_expression.is_some_and(|call| {
                 is_commonjs_or_amd_call(self, call, f)
@@ -73,11 +76,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
                                     | Argument::TaggedTemplateExpression(_)
                             )
                         ))
-                        && is_test_call_expression(call))
+                        && is_test_call_expression(call, f.comments()))
             })
-            || is_multiline_template_only_args(self, f.source_text())
-            || is_graphql_call_with_single_template_arg(self, call_expression)
-            || is_huggable_html_embed_single_arg(self, f)
+            || is_verbatim_multiline_template_sole_arg(arguments, call, f)
             || is_react_hook_with_deps_array(self, f.comments())
         {
             return write!(
@@ -118,7 +119,17 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
             return format_all_args_broken_out(self, true, f);
         }
 
-        if let Some(group_layout) = arguments_grouped_layout(self, f) {
+        // A sole embedded template expands like a last argument (unlike a verbatim one)
+        let group_layout = match arguments.as_slice() {
+            [argument]
+                if argument.as_expression().and_then(|expr| embed_hug(expr, call, f))
+                    == Some(true) =>
+            {
+                Some(GroupedCallArgumentLayout::GroupedLastArgument)
+            }
+            _ => arguments_grouped_layout(self, f),
+        };
+        if let Some(group_layout) = group_layout {
             write_grouped_arguments(self, group_layout, f);
         } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
             let trailing_operator = FormatTrailingCommas::All.trailing_separator(f.options());
@@ -347,7 +358,7 @@ fn should_group_first_argument(
         || f.comments()
             .comments_in_range(first_span.end, second.span().start)
             .iter()
-            .any(|c| c.followed_by_newline())
+            .any(Comment::followed_by_newline)
     {
         return false;
     }
@@ -1014,38 +1025,17 @@ fn is_commonjs_or_amd_call(
     }
 }
 
-/// Returns `true` if `arguments` contains a single [multiline template literal argument that starts on its own ](is_multiline_template_starting_on_same_line).
-fn is_multiline_template_only_args(arguments: &[Argument], source_text: SourceText) -> bool {
-    if arguments.len() != 1 {
-        return false;
-    }
-
-    arguments
-        .first()
-        .unwrap()
-        .as_expression()
-        .is_some_and(|expr| is_multiline_template_starting_on_same_line(expr, source_text))
-}
-
-/// Returns `true` if `arguments` is a single template literal inside a `graphql()` call.
-/// This triggers the "hugging" layout where the backtick is adjacent to `(`.
-fn is_graphql_call_with_single_template_arg<'a>(
+/// Returns `true` for a sole template argument printed verbatim (not embedded)
+/// that [starts on the same line and spans lines](is_multiline_template_starting_on_same_line).
+pub fn is_verbatim_multiline_template_sole_arg(
     arguments: &[Argument],
-    call: Option<&&AstNode<'a, CallExpression<'a>>>,
+    call: Option<&CallExpression>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
-    arguments.len() == 1
-        && matches!(arguments.first(), Some(Argument::TemplateLiteral(_)))
-        && call.is_some_and(
-            |c| matches!(&c.callee, Expression::Identifier(id) if id.name.as_str() == "graphql"),
-        )
-}
-
-/// Returns `true` if the single argument is an HTML embed template that should be hugged.
-fn is_huggable_html_embed_single_arg(arguments: &[Argument], f: &JsFormatter<'_, '_>) -> bool {
-    if arguments.len() != 1 {
-        return false;
-    }
-    arguments.first().unwrap().as_expression().is_some_and(|expr| is_huggable_html_embed(expr, f))
+    matches!(arguments, [argument] if argument.as_expression().is_some_and(|expr| {
+        embed_hug(expr, call, f).is_none()
+            && is_multiline_template_starting_on_same_line(expr, f.source_text())
+    }))
 }
 
 /// This function is used to check if the code is a hook-like code:

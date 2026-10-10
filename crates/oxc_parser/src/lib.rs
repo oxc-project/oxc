@@ -66,6 +66,7 @@
 
 use std::any::Any;
 
+mod ast_builder;
 pub mod config;
 mod context;
 mod cursor;
@@ -98,6 +99,7 @@ use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
+    ast_builder::ParserAstBuilder,
     config::{
         LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
     },
@@ -164,6 +166,10 @@ pub struct ParserReturn<'a> {
     /// The parsed AST.
     ///
     /// Will be empty (e.g. no statements, directives, etc) if the parser encountered a fatal error.
+    ///
+    /// Every node has a unique node ID within this AST. Program has ID zero;
+    /// other IDs follow construction order and may have gaps from discarded nodes.
+    /// Semantic analysis replaces these with its own dense node IDs.
     ///
     /// ## Validity
     /// It is possible for the AST to be present and semantically invalid. This will happen if
@@ -415,6 +421,9 @@ mod parser_parse {
 
         /// Parse a single [`Expression`].
         ///
+        /// Every node receives a unique, nonzero node ID. IDs follow construction
+        /// order and may have gaps from discarded nodes.
+        ///
         /// # Example
         ///
         /// ```rust
@@ -654,7 +663,7 @@ struct ParserImpl<'a, C: ParserConfig> {
     ctx: Context,
 
     /// Ast builder for creating AST nodes
-    ast: AstBuilder<'a>,
+    ast: ParserAstBuilder<'a>,
 
     /// Module Record Builder
     module_record_builder: ModuleRecordBuilder<'a>,
@@ -690,7 +699,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             prev_token_end: 0,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
-            ast: AstBuilder::new(allocator),
+            ast: ParserAstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
         }
@@ -847,7 +856,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             hashbang,
             directives,
             statements,
-            self,
+            // The default builder assigns ID zero (NodeId::ROOT) to Program.
+            // ParserAstBuilder starts at one, keeping every child ID distinct.
+            &AstBuilder::new(self.allocator()),
         )
     }
 
@@ -886,7 +897,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
             // Parse the statement with await context enabled (TopLevel context is already set)
             let stmt = self.context_add(Context::Await, |p| {
-                p.parse_statement_list_item(StatementContext::StatementList)
+                p.parse_statement_list_item(StatementContext::Program)
             });
 
             // Replace the statement if the index is valid
@@ -1017,10 +1028,10 @@ impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
 }
 
 impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
-    type Builder = AstBuilder<'a>;
+    type Builder = ParserAstBuilder<'a>;
 
     #[inline]
-    fn builder(&self) -> &AstBuilder<'a> {
+    fn builder(&self) -> &ParserAstBuilder<'a> {
         &self.ast
     }
 }
