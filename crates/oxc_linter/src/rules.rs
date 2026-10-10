@@ -672,6 +672,7 @@ pub(crate) mod unicorn {
     pub mod prefer_optional_catch_binding;
     pub mod prefer_prototype_methods;
     pub mod prefer_query_selector;
+    pub mod prefer_queue_microtask;
     pub mod prefer_reflect_apply;
     pub mod prefer_regexp_test;
     pub mod prefer_response_static_json;
