@@ -66,6 +66,7 @@ impl<'a> AstNodeStore<'a> {
     /// Allocate the next [`NodeId`] from the standalone counter.
     #[inline]
     pub fn alloc_node_id(&mut self) -> NodeId {
+        assert!((self.node_count as usize) < NodeId::ORPHANED.index(), "Too many AST nodes");
         let node_id = NodeId::new(self.node_count as usize);
         self.node_count += 1;
         node_id
@@ -99,5 +100,19 @@ impl<'a> AstNodeStore<'a> {
             AstNodeStoreKind::Full(nodes) => nodes,
             AstNodeStoreKind::Ancestry(_) => AstNodes::default(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AstNodeStore;
+    use oxc_syntax::node::NodeId;
+
+    #[test]
+    #[should_panic(expected = "Too many AST nodes")]
+    fn allocator_reserves_the_orphaned_owner_id() {
+        let mut store = AstNodeStore { node_count: u32::MAX - 3, ..AstNodeStore::default() };
+        assert_eq!(store.alloc_node_id(), NodeId::new(NodeId::MAX_INDEX - 2));
+        store.alloc_node_id();
     }
 }

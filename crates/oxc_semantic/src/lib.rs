@@ -31,6 +31,7 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
+mod comments;
 mod diagnostics;
 mod is_global_reference;
 #[cfg(feature = "jsdoc")]
