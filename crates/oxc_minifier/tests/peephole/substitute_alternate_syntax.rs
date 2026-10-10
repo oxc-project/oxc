@@ -1150,3 +1150,54 @@ fn test_substitute_yield_expression() {
     test("function* a() { yield* fn(); }", "function* a() { yield* fn(); }");
     test_same("function* a(undefined) { yield undefined; }");
 }
+
+#[test]
+fn test_compress_object_destructuring() {
+    test(
+        "const { foo } = { foo: 'foo' }; console.log(foo)",
+        "const foo = 'foo'; console.log('foo')",
+    );
+    test("let { foo: bar } = { foo: value() }", "let bar = value()");
+    test("var { foo } = { foo }", "var foo = foo");
+    test("const { 'foo': bar } = { foo: 1 }", "const bar = 1");
+    test("const { foo: { bar } } = { foo: { bar: 1 } }", "const bar = 1");
+    test("const { foo: [bar] } = { foo: value() }", "const [bar] = value()");
+    test_same("const { foo = fallback() } = { foo: value() }");
+    test_same("const { foo, ...rest } = { foo: value() }");
+    test_same("const { foo } = { ...value() }");
+    test_same("const { foo } = { get foo() { return this } }");
+    test_same("const { foo } = { foo() { return super.foo } }");
+    test_same("const { foo } = { bar: value() }");
+    test_same("const { [key()]: foo } = { foo: value() }");
+    test_same("const { foo } = { [key()]: value() }");
+    test_same("const { foo } = { foo: first(), bar: second() }");
+    test_same("const { __proto__: foo } = { __proto__: value() }");
+    test_same("const { foo: bar } = { foo: function() {} }");
+    test_same("const { foo: bar } = { foo: () => 1 }");
+    test_same("const { foo: bar } = { foo: class {} }");
+}
+
+#[test]
+fn test_compress_object_destructuring_numeric_keys() {
+    test_same("const { '0.0000001': x } = { 1e-7: 1 }; console.log(x)");
+    test_same("const { 1e-7: x } = { '0.0000001': 1 }; console.log(x)");
+    test_same("const { '1000000000000000000000': x } = { 1e21: 1 }; console.log(x)");
+    test("const { '1e-7': x } = { 1e-7: 1 }", "const x = 1");
+    test("const { 1e-7: x } = { '1e-7': 1 }", "const x = 1");
+    test("const { '1e+21': x } = { 1e21: 1 }", "const x = 1");
+    test("const { 1e-7: x } = { 1e-7: 1 }", "const x = 1");
+}
+
+#[test]
+fn test_compress_object_destructuring_typescript() {
+    for source in [
+        "export const { foo }: { foo: number } = { foo: 1 }",
+        "export const { foo: bar } = { foo: (function() {}) as any }",
+        "export const { foo: bar } = { foo: (() => 1) satisfies Function }",
+        "export const { foo: bar } = { foo: (class {})! }",
+        "export const { foo: bar } = { foo: <any>(function() {}) }",
+        "export const { foo: bar } = { foo: ((class {}) as any)! }",
+    ] {
+        test_same_options_source_type(source, SourceType::ts(), &default_options());
+    }
+}
