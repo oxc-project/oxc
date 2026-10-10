@@ -488,7 +488,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Lower bound for the minified size of a string addition operand, along with
     /// whether folding it would materialize a non-inlineable tracked constant.
-    fn string_expression_size_lower_bound(
+    pub(super) fn string_expression_size_lower_bound(
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(usize, bool)> {
@@ -549,28 +549,6 @@ impl<'a> PeepholeOptimizations {
             return Some(expr);
         }
 
-        // 'a' + ('b' + x + y) -> 'ab' + x + y. Literal prefixes have no
-        // observable evaluation, so merging them preserves evaluation order and
-        // each remaining operand's coercion. Also descend through a sequence's
-        // final expression, where the sequence's earlier side effects stay put.
-        if matches!(&e.left, Expression::StringLiteral(_))
-            && (matches!(
-                &e.right,
-                Expression::BinaryExpression(right) if right.operator == BinaryOperator::Addition
-            ) || matches!(
-                &e.right,
-                Expression::SequenceExpression(sequence)
-                    if matches!(
-                        sequence.expressions.last(),
-                        Some(Expression::BinaryExpression(last))
-                            if last.operator == BinaryOperator::Addition
-                    )
-            ))
-            && Self::try_fold_nested_addition_prefix(&mut e.left, &mut e.right, e.span, ctx)
-        {
-            return Some(e.right.take_in(ctx));
-        }
-
         // a + 'b' + 'c' -> a + 'bc'
         // Only sound when the inner operator is also `+`: for e.g. `(x - 'b') + 'c'` the inner
         // string operand is numerically coerced (`x - 'b'` is `x - NaN`), so the literals must
@@ -607,65 +585,6 @@ impl<'a> PeepholeOptimizations {
         }
 
         None
-    }
-
-    fn try_fold_nested_addition_prefix(
-        prefix_expr: &mut Expression<'a>,
-        expr: &mut Expression<'a>,
-        parent_span: Span,
-        ctx: &TraverseCtx<'a>,
-    ) -> bool {
-        match expr {
-            Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
-                if !Self::try_fold_nested_addition_prefix(
-                    prefix_expr,
-                    &mut binary.left,
-                    parent_span,
-                    ctx,
-                ) {
-                    return false;
-                }
-                binary.span = binary
-                    .span
-                    .merge_within(prefix_expr.span(), parent_span)
-                    .unwrap_or(parent_span);
-                true
-            }
-            Expression::SequenceExpression(sequence) => {
-                let Some(last) = sequence.expressions.last_mut() else { return false };
-                if !Self::try_fold_nested_addition_prefix(prefix_expr, last, parent_span, ctx) {
-                    return false;
-                }
-                sequence.span = sequence
-                    .span
-                    .merge_within(prefix_expr.span(), parent_span)
-                    .unwrap_or(parent_span);
-                true
-            }
-            Expression::StringLiteral(right_literal) => {
-                let Expression::StringLiteral(left_literal) = prefix_expr else { return false };
-                if left_literal.lone_surrogates || right_literal.lone_surrogates {
-                    return false;
-                }
-                let span =
-                    left_literal.span.merge_within(right_literal.span, parent_span).unwrap_or(SPAN);
-                let value = Str::from_strs_array_in(
-                    [left_literal.value.as_str(), right_literal.value.as_str()],
-                    ctx,
-                );
-                *expr = Expression::new_string_literal(span, value, None, ctx);
-                true
-            }
-            Expression::TemplateLiteral(_) => {
-                let Some(replacement) = Self::try_fold_add_op(prefix_expr, expr, parent_span, ctx)
-                else {
-                    return false;
-                };
-                *expr = replacement;
-                true
-            }
-            _ => false,
-        }
     }
 
     fn try_fold_add_op(
