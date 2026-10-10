@@ -7,6 +7,7 @@ import {
   IS_TS_FLAG_POS,
 } from "../generated/constants.js";
 import {
+  createRawTransferBuffer,
   getBufferOffset,
   parseRaw as parseRawBinding,
   parseRawSync as parseRawSyncBinding,
@@ -64,14 +65,15 @@ export function parseSyncRawImpl(filename, sourceText, options, convert) {
 // In most cases, that'd just result in a bit of degraded performance, and higher memory use because
 // of loading sources into memory prematurely.
 //
-// However, raw transfer uses a 6 GiB buffer for each parsing operation.
+// However, raw transfer uses a large buffer for each parsing operation (2 GiB, or 6 GiB where buffers
+// cannot be allocated on Rust side - see `createBuffer` below).
 // Most of the memory pages in those buffers are never touched, so this does not consume a huge amount
 // of physical memory, but it does still consume virtual memory.
 //
-// If we allowed creating a large number of 6 GiB buffers simultaneously, it would quickly consume
-// virtual memory space and risk memory exhaustion. The code above would exhaust all of bottom half
-// (heap) of 48-bit virtual memory space if `files.length >= 21_845`. This is not a number which
-// is unrealistic in real world code.
+// If we allowed creating a large number of buffers simultaneously, it would quickly consume
+// virtual memory space and risk memory exhaustion. Buffers must be aligned on 4 GiB, so the code above
+// would exhaust all of bottom half (heap) of 48-bit virtual memory space if `files.length >= 32_768`
+// (or `>= 21_845` with 6 GiB buffers). This is not a number which is unrealistic in real world code.
 //
 // To guard against this possibility, we implement a simple queue.
 // No more than `os.availableParallelism()` files can be parsed simultaneously, and any further calls to
@@ -272,10 +274,14 @@ function clearBuffersCache() {
 /**
  * Create a `Uint8Array` which is 2 GiB in size, with its start aligned on 4 GiB.
  *
- * Achieve this by creating a 6 GiB `ArrayBuffer`, getting the offset within it that's aligned to 4 GiB,
- * chopping off that number of bytes from the start, and shortening to 2 GiB.
+ * Preferably, the buffer is allocated on Rust side by `createRawTransferBuffer`, which reserves
+ * only 2 GiB of virtual memory for it. Rust frees the memory when the `ArrayBuffer` is garbage collected.
  *
- * It's always possible to obtain a 2 GiB slice aligned on 4 GiB within a 6 GiB buffer,
+ * Where that's not possible (e.g. on Windows, or Electron which does not support external `ArrayBuffer`s),
+ * `createRawTransferBuffer` returns `null`, and we allocate the buffer on JS side instead.
+ * JS cannot allocate an `ArrayBuffer` with a specific alignment, so we create a 6 GiB `ArrayBuffer`,
+ * get the offset within it that's aligned to 4 GiB, chop off that number of bytes from the start,
+ * and shorten to 2 GiB. It's always possible to obtain a 2 GiB slice aligned on 4 GiB within a 6 GiB buffer,
  * no matter how the 6 GiB buffer is aligned.
  *
  * `buffer` itself, and `int32` and `float64` views of `buffer`, are `BUFFER_SIZE` bytes,
@@ -284,15 +290,20 @@ function clearBuffersCache() {
  * `block` is `BLOCK_SIZE` bytes, which includes `FixedSizeAllocatorMetadata` and `ChunkFooter`.
  * `block` is what we pass to Rust, which needs to write `ChunkFooter`.
  *
- * Note: On systems with virtual memory, this only consumes 6 GiB of *virtual* memory.
+ * Note: On systems with virtual memory, the buffer only consumes *virtual* memory.
  * It does not consume physical memory until data is actually written to the `Uint8Array`.
  * Physical memory consumed corresponds to the quantity of data actually written.
  *
  * @returns {Uint8Array} - Buffer
  */
 function createBuffer() {
-  const arrayBuffer = new ArrayBuffer(ARRAY_BUFFER_SIZE);
-  const offset = getBufferOffset(new Uint8Array(arrayBuffer));
+  let arrayBuffer = createRawTransferBuffer(),
+    offset = 0;
+  if (arrayBuffer === null) {
+    arrayBuffer = new ArrayBuffer(ARRAY_BUFFER_SIZE);
+    offset = getBufferOffset(new Uint8Array(arrayBuffer));
+  }
+
   const buffer = new Uint8Array(arrayBuffer, offset, BUFFER_SIZE);
   buffer.int32 = new Int32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
   buffer.float64 = new Float64Array(arrayBuffer, offset, BUFFER_SIZE / 8);

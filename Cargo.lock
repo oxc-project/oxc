@@ -2477,6 +2477,7 @@ dependencies = [
 name = "oxc_parser_napi"
 version = "0.153.0"
 dependencies = [
+ "libc",
  "mimalloc-safe",
  "napi",
  "napi-build",

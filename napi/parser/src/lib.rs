@@ -36,9 +36,13 @@ static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 // but it's all dead code on unsupported platforms, and will be excluded from binary.
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 mod raw_transfer;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+mod raw_transfer_buffer;
 mod raw_transfer_types;
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 pub use raw_transfer::{get_buffer_offset, parse_raw, parse_raw_sync};
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+pub use raw_transfer_buffer::create_raw_transfer_buffer;
 
 /// Returns `true` if raw transfer is supported on this platform.
 #[napi]
