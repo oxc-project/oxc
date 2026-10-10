@@ -4,6 +4,9 @@
   "private": true,
   "description": "Internal development package for oxlint. For the published package.json template, see `npm/oxlint/package.json`.",
   "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "imports": {

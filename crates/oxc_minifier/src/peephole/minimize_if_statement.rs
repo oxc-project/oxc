@@ -21,6 +21,7 @@ impl<'a> PeepholeOptimizations {
                     let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                     let IfStatement { mut test, span, .. } = if_stmt.unbox();
                     if Self::remove_unused_expression(&mut test, ctx) {
+                        // `if (0) {}` => `;`
                         ctx.drop_expression(&test);
                         Statement::new_empty_statement(span, ctx)
                     } else {

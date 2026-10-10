@@ -54,6 +54,7 @@ pub(super) fn write_sass_variable_declaration<'a>(
         .comments()
         .iter_before(value_start)
         .next()
+        .copied()
         .is_some_and(|c| value::comment_is_own_line(c, source));
     let hard_list = top_level_value_breaks_hard(&decl.value, ctx, f);
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {

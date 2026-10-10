@@ -84,7 +84,7 @@ fn format_export_specifiers_block<'a>(
     let needs_space = f.options().bracket_spacing.value();
     if specifiers.is_empty() {
         let comments = f.context().comments().comments_before_character(span.start, b'{');
-        let has_line_comment = comments.iter().any(|c| c.is_line());
+        let has_line_comment = comments.iter().any(Comment::is_line);
         // Block comment example:
         // Input:  `export /* comment */ {}`
         // Output: `export /* comment */ {}`

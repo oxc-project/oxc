@@ -226,8 +226,15 @@ fn empty_result(arena: &Arena) -> LexResult {
     }
 }
 
+/// Move a lane's entries into the arena with a bitwise copy.
+///
+/// This is a move, not a clone, so `T` need not be `Copy`.
+/// The arena owns the entries from here on. The source lane is never read again,
+/// and the clear at the start of the next run runs no destructors because `T` has none.
 #[inline]
-fn copy_lane<T: Copy>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
+fn copy_lane<T>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
+    const { assert!(!mem::needs_drop::<T>()) };
+
     if dst.is_null() {
         return 0;
     }

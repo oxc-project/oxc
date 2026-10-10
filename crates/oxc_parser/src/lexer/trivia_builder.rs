@@ -550,9 +550,15 @@ fn is_coverage_ignore_file(source: &[u8]) -> bool {
 
 #[cfg(test)]
 mod test {
+    use std::cell::Cell;
+
     use oxc_allocator::Allocator;
-    use oxc_ast::{Comment, CommentContent, CommentKind, CommentPosition, ast::CommentNewlines};
+    use oxc_ast::{
+        Comment, CommentContent, CommentKind, CommentPlacement, CommentPosition,
+        ast::CommentNewlines,
+    };
     use oxc_span::{SourceType, Span};
+    use oxc_syntax::node::NodeId;
 
     use crate::Parser;
 
@@ -561,7 +567,7 @@ mod test {
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
-        ret.program.comments.iter().copied().collect::<Vec<_>>()
+        ret.program.comments.into_iter().collect::<Vec<_>>()
     }
 
     fn get_comments_typescript(source_text: &str) -> Vec<Comment> {
@@ -569,7 +575,7 @@ mod test {
         let source_type = SourceType::default().with_typescript(true);
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
-        ret.program.comments.iter().copied().collect::<Vec<_>>()
+        ret.program.comments.into_iter().collect::<Vec<_>>()
     }
 
     #[test]
@@ -589,6 +595,8 @@ mod test {
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(33, 45),
@@ -597,6 +605,8 @@ mod test {
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(54, 69),
@@ -605,6 +615,8 @@ mod test {
                 attached_to: 70,
                 newlines: CommentNewlines::Leading,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(76, 92),
@@ -613,6 +625,8 @@ mod test {
                 attached_to: 75,
                 newlines: CommentNewlines::None,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(93, 106),
@@ -621,6 +635,8 @@ mod test {
                 attached_to: 75,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(115, 138),
@@ -629,11 +645,13 @@ mod test {
                 attached_to: 147,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
         ];
 
         assert_eq!(comments.len(), expected.len());
-        for (comment, expected) in comments.iter().copied().zip(expected) {
+        for (comment, expected) in comments.iter().zip(&expected) {
             assert_eq!(comment, expected, "{}", comment.content_span().source_text(source_text));
         }
     }
@@ -653,6 +671,8 @@ token /* Trailing 1 */
                 attached_to: 36,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(42, 58),
@@ -661,6 +681,8 @@ token /* Trailing 1 */
                 attached_to: 41,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
         ];
         assert_eq!(comments, expected);
@@ -764,6 +786,8 @@ token /* Trailing 1 */
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(14, 26),
@@ -772,6 +796,8 @@ token /* Trailing 1 */
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
         ];
         assert_eq!(comments, expected);
@@ -884,6 +910,8 @@ function bar() {}";
                 attached_to: 57,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(96, 116),
@@ -892,6 +920,8 @@ function bar() {}";
                 attached_to: 129,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
         ];
         assert_eq!(comments, expected);
@@ -914,6 +944,8 @@ function bar() {}";
                 attached_to: 55,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
             Comment {
                 span: Span::new(79, 99),
@@ -922,6 +954,8 @@ function bar() {}";
                 attached_to: 116,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
             },
         ];
         assert_eq!(comments, expected);
@@ -940,6 +974,8 @@ function bar() {}";
             attached_to: 34,
             newlines: CommentNewlines::Trailing,
             content: CommentContent::None,
+            node_id: Cell::new(NodeId::DUMMY),
+            placement: CommentPlacement::Leading,
         }];
         assert_eq!(comments, expected);
     }
@@ -1085,6 +1121,10 @@ function bar() {}";
             "/* #__NO_SIDE_EFFECTS__ */ let foo = () => {};",
             "/* #__NO_SIDE_EFFECTS__ */ var foo = function() {};",
             "const foo /* #__NO_SIDE_EFFECTS__ */ = () => {};",
+            "export /* #__NO_SIDE_EFFECTS__ */ class Foo {}",
+            "export /* #__NO_SIDE_EFFECTS__ */ let foo = () => {};",
+            "export /* #__NO_SIDE_EFFECTS__ */ var foo = function() {};",
+            "export /* #__NO_SIDE_EFFECTS__ */ const foo = 1, bar = () => {};",
         ];
         for source_text in cases {
             let comments = get_comments(source_text);
@@ -1102,11 +1142,18 @@ function bar() {}";
             "/* #__NO_SIDE_EFFECTS__ */ function foo() {}",
             "/* #__NO_SIDE_EFFECTS__ */ async function foo() {}",
             "/* #__NO_SIDE_EFFECTS__ */ export function foo() {}",
+            "export /*@__NO_SIDE_EFFECTS__*/ function foo() {}",
+            "export /* #__NO_SIDE_EFFECTS__ */ async function foo() {}",
+            "export /* #__NO_SIDE_EFFECTS__ */ function* foo() {}",
+            "export /* #__NO_SIDE_EFFECTS__ */ async function* foo() {}",
+            "export /* #__NO_SIDE_EFFECTS__ */ default function foo() {}",
             "export default /* #__NO_SIDE_EFFECTS__ */ function foo() {}",
             "const foo = /* #__NO_SIDE_EFFECTS__ */ function() {};",
             "const foo = /* #__NO_SIDE_EFFECTS__ */ () => {};",
             "/* #__NO_SIDE_EFFECTS__ */ const foo = () => {};",
             "/* #__NO_SIDE_EFFECTS__ */ export const foo = () => {};",
+            "export /* #__NO_SIDE_EFFECTS__ */ const foo = () => {};",
+            "export /* #__NO_SIDE_EFFECTS__ */ const foo = function() {};",
             "[/* #__NO_SIDE_EFFECTS__ */ function() {}];",
         ];
         for source_text in cases {

@@ -358,7 +358,7 @@ fn should_group_first_argument(
         || f.comments()
             .comments_in_range(first_span.end, second.span().start)
             .iter()
-            .any(|c| c.followed_by_newline())
+            .any(Comment::followed_by_newline)
     {
         return false;
     }

@@ -43,11 +43,12 @@ jobs:
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
-        with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: warm-aarch64
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+          - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+            with:
+              save-cache: ${{ github.ref_name == 'main' }}
+              cache-key: warm-aarch64
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
@@ -58,22 +59,23 @@ jobs:
     runs-on: namespace-profile-mac-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
       # `cache: pnpm` is intentionally omitted. On Mac OS, `cache: pnpm` replaces the pnpm store directory
       # (`~/setup-pnpm/node_modules/.bin/store/v11`) with a symlink into the Namespace cache volume.
       # But `oxc-project/setup-node` also caches that same path via `actions/cache`, and at job end
       # `tar` archives the symlink record itself rather than the store contents - producing a faulty cache.
       # `actions/cache` already handles pnpm correctly here, only `rust` needs the NS volume.
       # Note: On Linux this action uses bind-mounts, which don't have this problem - it's a Mac OS problem only.
-      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        with:
-          cache: rust
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+          - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+            with:
+              cache: rust
       - run: cargo ck
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    if: ${{ github.ref_name == 'main' }}
+    if: ${{ github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
     name: Test Windows
     runs-on: windows-latest
     steps:
@@ -91,30 +93,39 @@ jobs:
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+          - name: Install Rust
+            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+            shell: bash
+            run: |
+              # This `awk` command will find the value of our Minimum Supported Rust Version and store it as `MSRV`.
+              # NOTE: this will fail if there are any other items named `rust-version`. We assume there is only one in our `Cargo.toml`.
+              MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml)
+              # Set profile to minimal and channel to our Minimum Supported Rust Version.
+              # Running our tests on this channel ensures that our code uses APIs that are supported in our `MSRV`.
+              sed -i -e 's/profile = "default"/profile = "minimal"/g' -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml
+              rustup set profile minimal
+              rustup show
+              git restore .
+
       - name: Install dependencies on Dev Drive
+        id: dependencies
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: pnpm install --frozen-lockfile --ignore-scripts
-
-      - name: Install Rust
-        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        shell: bash
-        run: |
-          # This `awk` command will find the value of our Minimum Supported Rust Version and store it as `MSRV`.
-          # NOTE: this will fail if there are any other items named `rust-version`. We assume there is only one in our `Cargo.toml`.
-          MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml)
-          # Set profile to minimal and channel to our Minimum Supported Rust Version.
-          # Running our tests on this channel ensures that our code uses APIs that are supported in our `MSRV`.
-          sed -i -e 's/profile = "default"/profile = "minimal"/g' -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml
-          rustup set profile minimal
-          rustup show
-          git restore .
-
+        background: true
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
           shared-key: windows-latest
+
+      - name: Compile tests
+        run: cargo test --all-features --no-run
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+
+      - wait: dependencies
 
       - name: Run tests
         # No need for `cargo ck` because it's already checked in linux
@@ -164,7 +175,7 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           exclude: oxc_linter
@@ -180,6 +191,12 @@ jobs:
           cache: |
             rust
             pnpm
+      - name: Install Playwright Chromium
+        id: playwright
+        if: steps.filter.outputs.changed == 'true'
+        working-directory: napi/parser
+        run: pnpm exec playwright install chromium
+        background: true
       - name: Build
         if: steps.filter.outputs.changed == 'true'
         run: |
@@ -188,12 +205,12 @@ jobs:
           pnpm run build-wasm-dev
           pnpm run build-wasip1-dev
           git diff --exit-code # Must commit everything
+      - wait: playwright
       - name: Test wasi in browser
         if: steps.filter.outputs.changed == 'true'
         working-directory: napi/parser
         run: |
           rm -rf *.wasm
-          pnpm exec playwright install chromium
           pnpm run build-wasi
           pnpm run build-wasm-dev
           pnpm run build-wasip1-dev
@@ -206,13 +223,20 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           exclude: oxc_linter,oxc_language_server
           paths: napi/parser/,napi/minify/,napi/transform/,napi/transform-react/,napi/transform-relay/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
+      - uses: $/.github/actions/clone-submodules
+        id: napi-fixtures
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          babel: false
+          node-compat-table: false
+        background: true
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
@@ -222,23 +246,21 @@ jobs:
           cache: |
             rust
             pnpm
-      - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          babel: false
-          node-compat-table: false
+      - wait: napi-fixtures
       - if: steps.filter.outputs.changed == 'true'
-        name: Run tests
-        env:
-          RUN_RAW_RANGE_TESTS: "true"
-          RUN_RAW_TOKENS_TESTS: "true"
-        run: |
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
-      - if: steps.filter.outputs.changed == 'true'
-        name: Run e2e tests
-        working-directory: tasks/e2e
-        run: pnpm run test
+        name: Build packages
+        run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
+      - parallel:
+          - if: steps.filter.outputs.changed == 'true'
+            name: Run tests
+            env:
+              RUN_RAW_RANGE_TESTS: "true"
+              RUN_RAW_TOKENS_TESTS: "true"
+            run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
+          - if: steps.filter.outputs.changed == 'true'
+            name: Run e2e tests
+            working-directory: tasks/e2e
+            run: pnpm run test
       - if: steps.filter.outputs.changed == 'true'
         run: |
           git diff --exit-code # Must commit everything
@@ -248,7 +270,7 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           paths: apps/shared/,pnpm-lock.yaml,package.json
@@ -271,7 +293,7 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           paths: apps/oxlint/,apps/shared/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,crates/oxc_config/,pnpm-lock.yaml,package.json
@@ -300,13 +322,13 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_toml/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter-conformance
         with:
           paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_toml/,pnpm-lock.yaml,package.json
@@ -321,23 +343,28 @@ jobs:
           cache: |
             rust
             pnpm
-      - if: steps.filter.outputs.changed == 'true'
-        name: Run tests
-        run: |
-          pnpm --filter "./apps/oxfmt" build-test
-          pnpm --filter "./apps/oxfmt" test
       # Conformance ---
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        id: conformance-fixtures
         if: steps.filter-conformance.outputs.changed == 'true'
         with:
           # Warm fixtures skip download entirely (`.version` stamps in download-fixtures.js)
           path: ./apps/oxfmt/conformance/fixtures/externals
+        background: true
+      - if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
+        name: Build tests
+        run: pnpm --filter "./apps/oxfmt" build-test
+      - wait: conformance-fixtures
       - if: steps.filter-conformance.outputs.changed == 'true'
         name: Download conformance fixtures
         run: pnpm --filter "./apps/oxfmt" download-fixtures
-      - if: steps.filter-conformance.outputs.changed == 'true'
-        name: Run conformance tests
-        run: pnpm --filter "./apps/oxfmt" conformance
+      - parallel:
+          - if: steps.filter.outputs.changed == 'true'
+            name: Run tests
+            run: pnpm --filter "./apps/oxfmt" test
+          - if: steps.filter-conformance.outputs.changed == 'true'
+            name: Run conformance tests
+            run: pnpm --filter "./apps/oxfmt" conformance
       # --- Conformance
       - if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
         run: |
@@ -346,11 +373,11 @@ jobs:
   test-napi-compiler-windows:
     name: Test NAPI Compiler (windows)
     runs-on: windows-latest
-    if: ${{ github.ref_name == 'main' }}
+    if: ${{ github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
     steps:
       - run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           exclude: oxc_linter,oxc_language_server
@@ -367,36 +394,62 @@ jobs:
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-        if: steps.filter.outputs.changed == 'true'
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+            if: steps.filter.outputs.changed == 'true'
+          - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+            if: steps.filter.outputs.changed == 'true'
+            with:
+              cache-key: napi
+              save-cache: ${{ github.ref_name == 'main' }}
+          - uses: $/.github/actions/clone-submodules
+            if: steps.filter.outputs.changed == 'true'
+            with:
+              babel: false
+              node-compat-table: false
       - name: Install dependencies on Dev Drive
         if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: pnpm install --frozen-lockfile --ignore-scripts
-      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
-      - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          babel: false
-          node-compat-table: false
       - if: steps.filter.outputs.changed == 'true'
-        name: Run tests
+        name: Build packages
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        env:
-          RUN_RAW_RANGE_TESTS: "true"
+        shell: bash
         run: |
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
-      - if: steps.filter.outputs.changed == 'true'
-        name: Run e2e tests
-        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm run test
+          cargo build --profile coverage \
+            -p oxc_parser_napi \
+            -p oxc_minify_napi \
+            -p oxc_transform_napi \
+            -p oxc_transform_react_napi \
+            -p oxc_transform_relay_napi \
+            --features oxc_parser_napi/tokens
+
+          artifacts=(
+            "oxc_parser_napi.dll:napi/parser/src-js/parser.win32-x64-msvc.node"
+            "oxc_minify_napi.dll:napi/minify/minify.win32-x64-msvc.node"
+            "oxc_transform_napi.dll:napi/transform/transform.win32-x64-msvc.node"
+            "oxc_transform_react_napi.dll:napi/transform-react/transform-react.win32-x64-msvc.node"
+            "oxc_transform_relay_napi.dll:napi/transform-relay/transform-relay.win32-x64-msvc.node"
+          )
+          for artifact in "${artifacts[@]}"; do
+            IFS=: read -r source destination <<< "$artifact"
+            source="target/coverage/$source"
+            test -f "$source"
+            cp "$source" "$destination"
+          done
+      - parallel:
+          - if: steps.filter.outputs.changed == 'true'
+            name: Run tests
+            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+            env:
+              RUN_RAW_RANGE_TESTS: "true"
+            run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
+          - if: steps.filter.outputs.changed == 'true'
+            name: Run e2e tests
+            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
+            run: |
+              pnpm install --frozen-lockfile
+              pnpm run test
       - if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: |
@@ -409,7 +462,7 @@ jobs:
     steps:
       - run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           paths: apps/oxlint/,apps/shared/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,crates/oxc_config/,pnpm-lock.yaml,package.json
@@ -425,17 +478,18 @@ jobs:
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-        if: steps.filter.outputs.changed == 'true'
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+            if: steps.filter.outputs.changed == 'true'
+          - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+            if: steps.filter.outputs.changed == 'true'
+            with:
+              cache-key: napi
+              save-cache: ${{ github.ref_name == 'main' }}
       - name: Install dependencies on Dev Drive
         if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: pnpm install --frozen-lockfile --ignore-scripts
-      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -454,7 +508,7 @@ jobs:
     steps:
       - run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_toml/,crates/oxc_config/,pnpm-lock.yaml,package.json
@@ -470,17 +524,18 @@ jobs:
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-        if: steps.filter.outputs.changed == 'true'
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+            if: steps.filter.outputs.changed == 'true'
+          - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+            if: steps.filter.outputs.changed == 'true'
+            with:
+              cache-key: napi
+              save-cache: ${{ github.ref_name == 'main' }}
       - name: Install dependencies on Dev Drive
         if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: pnpm install --frozen-lockfile --ignore-scripts
-      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
-        if: steps.filter.outputs.changed == 'true'
-        with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -497,7 +552,7 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: crate-ci/typos@00f422f3b19c57bc6338715ebfe3316d38768461 # v1.50.3
+      - uses: crate-ci/typos@7f9d0819ca1c008ade73f4b41fa9d258d48f605b # v1.51.1
         with:
           files: .
 
@@ -515,6 +570,14 @@ jobs:
           cache: |
             rust
             pnpm
+      - name: JavaScript lint
+        id: javascript-lint
+        run: |
+          pnpm --filter oxlint-app build-js
+          pnpm --filter oxfmt-app build-js
+          pnpm --filter oxc-codegen build
+          node --run lint
+        background: true
       - run: rustup component add clippy
       - run: cargo lint
       # Catch lints which only fire with `debug_assertions` off (i.e. release mode),
@@ -525,10 +588,7 @@ jobs:
       # with warnings denied.
       - if: ${{ github.ref_name == 'main' }}
         run: cargo clippy --all-features --profile dev-no-debug-assertions
-      - run: pnpm --filter oxlint-app build-js
-      - run: pnpm --filter oxfmt-app build-js
-      - run: pnpm --filter oxc-codegen build
-      - run: node --run lint
+      - wait: javascript-lint
 
   doc:
     name: Doc
@@ -553,17 +613,19 @@ jobs:
 
       - name: Check if conformance should run
         id: filter
-        uses: ./.github/actions/check-changes
+        uses: $/.github/actions/check-changes
         with:
           packages: oxc_coverage,oxc_transform_conformance
           paths: tasks/coverage/,tasks/common/,tasks/transform_conformance/,pnpm-lock.yaml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: ./.github/actions/clone-submodules
+      - uses: $/.github/actions/clone-submodules
+        id: conformance-fixtures
         if: steps.filter.outputs.changed == 'true'
         with:
           node-compat-table: false
+        background: true
 
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
@@ -580,6 +642,8 @@ jobs:
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just
+
+      - wait: conformance-fixtures
 
       - name: Check Conformance
         if: steps.filter.outputs.changed == 'true'
@@ -617,17 +681,19 @@ jobs:
 
       - name: Check if lexer checks should run
         id: filter
-        uses: ./.github/actions/check-changes
+        uses: $/.github/actions/check-changes
         with:
           packages: oxc_lexer,oxc_coverage
           paths: crates/oxc_lexer/,tasks/coverage/,.cargo/lexer-simd.toml,justfile,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: ./.github/actions/clone-submodules
+      - uses: $/.github/actions/clone-submodules
+        id: lexer-fixtures
         if: steps.filter.outputs.changed == 'true'
         with:
           node-compat-table: false
+        background: true
 
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         if: steps.filter.outputs.changed == 'true'
@@ -653,6 +719,8 @@ jobs:
         # No need to run on scalar fallback - already covered by "Test Linux" job
         if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
         run: just test-lexer-simd
+
+      - wait: lexer-fixtures
 
       - name: Conformance
         # Run on both SIMD and scalar fallback - neither is run anywhere else.
@@ -683,7 +751,7 @@ jobs:
 
       - name: Check if lexer benchmark should run
         id: filter
-        uses: ./.github/actions/check-changes
+        uses: $/.github/actions/check-changes
         with:
           paths: crates/oxc_lexer/,tasks/benchmark/benches/lexer_wallclock_old.rs,tasks/benchmark/benches/lexer_wallclock_new.rs,tasks/benchmark/benches/lexer_common.rs,.cargo/lexer-simd.toml,justfile,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -723,17 +791,19 @@ jobs:
 
       - name: Check if codegen tests should run
         id: filter
-        uses: ./.github/actions/check-changes
+        uses: $/.github/actions/check-changes
         with:
           packages: oxc_codegen_conformance,oxc_parser_napi
           paths: .github/workflows/ci.yml,packages/codegen/,tasks/codegen_conformance/,napi/parser/,npm/oxc-types/,tasks/coverage/,pnpm-lock.yaml,pnpm-workspace.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: ./.github/actions/clone-submodules
+      - uses: $/.github/actions/clone-submodules
+        id: codegen-fixtures
         if: steps.filter.outputs.changed == 'true'
         with:
           node-compat-table: false
+        background: true
 
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true'
@@ -745,6 +815,8 @@ jobs:
           cache: |
             rust
             pnpm
+
+      - wait: codegen-fixtures
 
       - name: Run codegen tests
         if: steps.filter.outputs.changed == 'true'
@@ -759,7 +831,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           packages: oxc_minsize
@@ -825,7 +897,7 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           packages: oxc_track_memory_allocations
@@ -883,7 +955,7 @@ jobs:
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: ./.github/actions/check-changes
+      - uses: $/.github/actions/check-changes
         id: filter
         with:
           packages: oxc_linter,oxc_track_linter_timings

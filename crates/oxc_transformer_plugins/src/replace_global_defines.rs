@@ -913,6 +913,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     }
                     current = Some(&c.callee);
                 }
+                Expression::TSNonNullExpression(non_null) => {
+                    current = Some(&non_null.expression);
+                }
                 _ => break,
             }
         }

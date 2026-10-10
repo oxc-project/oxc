@@ -382,12 +382,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         self.x4_regexp.enter_expression(expr, ctx);
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.common.exit_expression(expr, ctx);
-        self.x1_jsx.exit_expression(expr, ctx);
-        self.x2_es2022.exit_expression(expr, ctx);
-        self.x2_es2018.exit_expression(expr, ctx);
-        self.x2_es2017.exit_expression(expr, ctx);
+        // The exit plugins only act on these expression kinds. Keep the no-op path in the walker.
+        if matches!(
+            expr,
+            Expression::ArrowFunctionExpression(_)
+                | Expression::AwaitExpression(_)
+                | Expression::CallExpression(_)
+                | Expression::ClassExpression(_)
+                | Expression::FunctionExpression(_)
+                | Expression::JSXElement(_)
+                | Expression::JSXFragment(_)
+                | Expression::YieldExpression(_)
+        ) {
+            self.exit_expression_impl(expr, ctx);
+        }
     }
 
     fn enter_simple_assignment_target(
@@ -777,5 +787,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_catch_parameter(node, ctx);
         }
+    }
+}
+
+impl<'a> TransformerImpl<'a> {
+    #[inline(never)]
+    fn exit_expression_impl(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.exit_expression(expr, ctx);
+        self.x1_jsx.exit_expression(expr, ctx);
+        self.x2_es2022.exit_expression(expr, ctx);
+        self.x2_es2018.exit_expression(expr, ctx);
+        self.x2_es2017.exit_expression(expr, ctx);
     }
 }

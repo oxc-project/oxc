@@ -323,7 +323,7 @@ fn test_fold_unary_expression_statement() {
 
     test_same("delete x");
     test_same("delete x.y");
-    test_same("delete x.y.z()");
+    test("delete x.y.z()", "x.y.z()");
     test_same("+0n"); // Uncaught TypeError: Cannot convert a BigInt value to a number
     test("-0n", "");
     test("-1n", "");
@@ -694,6 +694,10 @@ fn no_side_effects() {
     }
     check("/* @__NO_SIDE_EFFECTS__ */ function f() {}");
     check("/* @__NO_SIDE_EFFECTS__ */ export function f() {}");
+    check("export /*@__NO_SIDE_EFFECTS__*/ function f() { sideEffect() }");
+    check("export /* @__NO_SIDE_EFFECTS__ */ async function f() { sideEffect() }");
+    check("export /* @__NO_SIDE_EFFECTS__ */ function* f() { sideEffect() }");
+    check("export /* @__NO_SIDE_EFFECTS__ */ async function* f() { sideEffect() }");
     check("/* @__NO_SIDE_EFFECTS__ */ export default function f() {}");
     check("export default /* @__NO_SIDE_EFFECTS__ */ function f() {}");
     check("const f = /* @__NO_SIDE_EFFECTS__ */ function() {}");

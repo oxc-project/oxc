@@ -1138,7 +1138,7 @@ pub(super) fn write_comma_group<'a>(
         // Snapshot of pending comments inside the value
         // (for separator decisions; consumption happens inside the entries).
         let pending: Vec<comments::CssComment> =
-            f.context().comments().iter_before(upper_bound).collect();
+            f.context().comments().iter_before(upper_bound).copied().collect();
         let tail_bound = ctx.tail_bound;
         let ctx = ValueContext { tail_bound: None, ..ctx };
         let tail_comments: Vec<comments::CssComment> = tail_bound
@@ -1147,6 +1147,7 @@ pub(super) fn write_comma_group<'a>(
                     .comments()
                     .iter_before(bound)
                     .filter(|c| c.span.start >= upper_bound)
+                    .copied()
                     .collect()
             })
             .unwrap_or_default();

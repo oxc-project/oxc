@@ -44,6 +44,14 @@ impl ES2022<'_> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !matches!(
+            stmt,
+            Statement::ClassDeclaration(_)
+                | Statement::ExportDeclaration(_)
+                | Statement::ExportDefaultDeclaration(_)
+        ) {
+            return;
+        }
         if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.enter_statement(stmt, ctx);
         }
@@ -66,6 +74,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !matches!(expr, Expression::ClassExpression(_)) {
+            return;
+        }
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_expression(expr, ctx);
         } else if let Some(class_static_block) = &mut self.class_static_block {

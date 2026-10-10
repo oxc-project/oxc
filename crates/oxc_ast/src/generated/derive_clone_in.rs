@@ -5784,6 +5784,19 @@ impl<'new_alloc> CloneIn<'new_alloc> for CommentContent {
     }
 }
 
+impl<'new_alloc> CloneIn<'new_alloc> for CommentPlacement {
+    type Cloned = CommentPlacement;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
+    }
+}
+
 impl<'new_alloc> CloneIn<'new_alloc> for Comment {
     type Cloned = Comment;
 
@@ -5795,6 +5808,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for Comment {
         Comment {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             attached_to: CloneIn::clone_in_impl(&self.attached_to, with_semantic_ids, allocator),
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            placement: CloneIn::clone_in_impl(&self.placement, with_semantic_ids, allocator),
             kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
             position: CloneIn::clone_in_impl(&self.position, with_semantic_ids, allocator),
             newlines: CloneIn::clone_in_impl(&self.newlines, with_semantic_ids, allocator),

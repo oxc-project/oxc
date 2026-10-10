@@ -915,7 +915,8 @@ fn write_import_path_list<'a>(
         // Prettier's fill treats a chunk with a hardline as never-fitting,
         // our core fill measures up to the hardline and calls it fit.
         // So the separator breaks are simulated here with static widths.
-        let all: Vec<comments::CssComment> = f.context().comments().iter_before(last_end).collect();
+        let all: Vec<comments::CssComment> =
+            f.context().comments().iter_before(last_end).copied().collect();
         let n = paths.len();
         let source = f.context().source_text();
         // A `//` on a path's comma line stays there (`"a", // c`, `value::flush_line_comment_after_comma`):
