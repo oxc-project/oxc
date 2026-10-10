@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::BlockStatement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -92,8 +92,19 @@ impl Rule for NoEmpty {
                 });
             }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
+                // Only the braces are reported, and comments inside them make the switch valid.
+                let discriminant_end = switch.discriminant.span().end;
+                let Some(offset) =
+                    ctx.find_next_token_within(discriminant_end, switch.span.end, "{")
+                else {
+                    return;
+                };
+                let braces_span = Span::new(discriminant_end + offset, switch.span.end);
+                if ctx.has_comments_between(braces_span) {
+                    return;
+                }
                 ctx.diagnostic_with_suggestion(
-                    no_empty_diagnostic("switch", switch.span),
+                    no_empty_diagnostic("switch", braces_span),
                     |fixer| fixer.delete(switch),
                 );
             }
@@ -147,6 +158,8 @@ fn test() {
         ("function foo() { }", None),
         ("if (foo) {/* empty */}", None),
         ("while (foo) {/* empty */}", None),
+        ("switch (foo) {/* empty */}", None),
+        ("switch (foo) { /* empty */ }", None),
         ("for (;foo;) {/* empty */}", None),
         ("try { foo() } catch (ex) {/* empty */}", None),
         ("try { foo() } catch (ex) {// empty\n}", None),
@@ -172,7 +185,7 @@ fn test() {
         ("while (foo) {}", None),
         ("for (;foo;) {}", None),
         ("switch(foo) {}", None),
-        ("switch (foo) { /* empty */ }", None),
+        ("switch /* empty */ (/* empty */ foo /* empty */) /* empty */ {} /* empty */", None),
         ("try {} catch (ex) {}", Some(json!([ { "allowEmptyCatch": true }]))),
         ("try { foo(); } catch (ex) {} finally {}", Some(json!([ { "allowEmptyCatch": true }]))),
         ("try {} catch (ex) {} finally {}", Some(json!([ { "allowEmptyCatch": true }]))),
@@ -192,7 +205,11 @@ fn test() {
         ("while (foo) {}", "", None),
         ("for (;foo;) {}", "", None),
         ("switch(foo) {}", "", None),
-        ("switch (foo) { /* empty */ }", "", None),
+        (
+            "switch /* empty */ (/* empty */ foo /* empty */) /* empty */ {} /* empty */",
+            " /* empty */",
+            None,
+        ),
         ("try {} catch (ex) {}", "", Some(json!([ { "allowEmptyCatch": true }]))),
         (
             "try { foo(); } catch (ex) {} finally {}",
