@@ -272,3 +272,26 @@ npm install
 
 # Return to `submodules` directory
 cd ..
+
+###############################################################################
+# TSDoc
+###############################################################################
+
+clone_repo tsdoc
+
+# Load the plugin source directly, with published versions of its workspace
+# dependencies. Omit the build rig and Heft: this suite does not need a Rush build.
+node <<'NODE'
+const fs = require("node:fs");
+const file = "eslint-plugin/package.json";
+const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+for (const dir of ["tsdoc", "tsdoc-config"]) {
+  const { name, version } = require(`./${dir}/package.json`);
+  pkg.dependencies[name] = version;
+}
+pkg.devDependencies = { eslint: pkg.devDependencies.eslint };
+fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
+NODE
+npm install --prefix eslint-plugin --ignore-scripts
+
+cd ..
