@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression, VariableDeclarationKind},
+    ast::{Expression, IdentifierReference, MemberExpression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,12 +9,13 @@ use oxc_semantic::ScopeId;
 use oxc_span::Span;
 
 use crate::{
-    AstNode, ast_util::is_method_call, ast_util::variable_declaration_kind, context::LintContext,
+    AstNode,
+    ast_util::{get_symbol_id_of_variable, is_method_call, variable_declaration_kind},
+    context::LintContext,
     rule::Rule,
 };
 
-const ARRAY_METHODS_RETURNS_ARRAY: [&str; 15] = [
-    "concat",
+const ARRAY_METHODS_RETURNS_ARRAY: [&str; 13] = [
     "copyWithin",
     "fill",
     "filter",
@@ -22,7 +23,6 @@ const ARRAY_METHODS_RETURNS_ARRAY: [&str; 15] = [
     "flatMap",
     "map",
     "reverse",
-    "slice",
     "sort",
     "splice",
     "toReversed",
@@ -30,6 +30,13 @@ const ARRAY_METHODS_RETURNS_ARRAY: [&str; 15] = [
     "toSpliced",
     "with",
 ];
+
+/// Methods that exist on both `Array` and `String`.
+/// See <https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2216>
+const ARRAY_OR_STRING_METHODS: [&str; 2] = ["concat", "slice"];
+
+/// Maximum number of `const` initializers followed when resolving a `concat`/`slice` receiver.
+const MAX_RESOLVE_DEPTH: u8 = 8;
 
 fn prefer_set_has_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("should be a `Set`, and use `.has()` to check existence or non-existence.")
@@ -79,7 +86,32 @@ fn is_array_of_or_from(callee: &MemberExpression) -> bool {
         || callee.is_specific_member_access("Array", "from")
 }
 
-fn is_kind_of_array_expr(expr: &Expression) -> bool {
+/// Whether the receiver of a `concat`/`slice` call should be treated as an array.
+/// String literals, and identifiers not initialized with an array, could be strings.
+fn is_receiver_array(receiver: &Expression, ctx: &LintContext, depth: u8) -> bool {
+    match receiver.without_parentheses() {
+        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => false,
+        Expression::Identifier(ident) => {
+            depth < MAX_RESOLVE_DEPTH && is_const_initialized_with_array(ident, ctx, depth + 1)
+        }
+        _ => true,
+    }
+}
+
+fn is_const_initialized_with_array(
+    ident: &IdentifierReference,
+    ctx: &LintContext,
+    depth: u8,
+) -> bool {
+    let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else { return false };
+    let declaration = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+    let AstKind::VariableDeclarator(declarator) = declaration.kind() else { return false };
+    variable_declaration_kind(declarator, ctx).is_const()
+        && declarator.id.is_binding_identifier()
+        && declarator.init.as_ref().is_some_and(|init| is_kind_of_array_expr(init, ctx, depth))
+}
+
+fn is_kind_of_array_expr(expr: &Expression, ctx: &LintContext, depth: u8) -> bool {
     match expr {
         Expression::NewExpression(new_expr) => {
             new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "Array")
@@ -95,7 +127,10 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
 
             let Some(name) = callee.static_property_name() else { return false };
 
-            is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
+            is_array_of_or_from(callee)
+                || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
+                || (ARRAY_OR_STRING_METHODS.contains(&name)
+                    && is_receiver_array(callee.object(), ctx, depth))
         }
         Expression::ArrayExpression(_) => true,
         _ => false,
@@ -143,12 +178,6 @@ impl Rule for PreferSetHas {
         let Some(init) = declarator.init.as_ref() else {
             return;
         };
-
-        let is_kind_of_array = is_kind_of_array_expr(init);
-
-        if !is_kind_of_array {
-            return;
-        }
 
         let Some(ident) = declarator.id.get_binding_identifier() else {
             return;
@@ -217,6 +246,11 @@ impl Rule for PreferSetHas {
             );
             !is_method
         }) {
+            return;
+        }
+
+        // Checked last, as it may follow `const` initializers.
+        if !is_kind_of_array_expr(init, ctx, 0) {
             return;
         }
 
@@ -611,6 +645,86 @@ fn test() {
             )
             export default class A {}
         ",
+        // `concat` and `slice` can return a string
+        // https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2216
+        "
+            const foo = bar.concat();
+            function unicorn() {
+                return foo.includes(1);
+            }
+        ",
+        "
+            const foo = bar.slice();
+            function unicorn() {
+                return foo.includes(1);
+            }
+        ",
+        "
+            const text = 'abc'.slice();
+            text.includes('ab') || text.includes('bc');
+        ",
+        "
+            const text = `abc`.concat('def');
+            text.includes('ab') || text.includes('bc');
+        ",
+        "
+            const text = `${a}bc`.slice();
+            text.includes('ab') || text.includes('bc');
+        ",
+        "
+            const items = 'abc';
+            const foo = items.slice();
+            foo.includes('ab') || foo.includes('bc');
+        ",
+        "
+            let items = [1, 2, 3];
+            items = 'abc';
+            const foo = items.slice();
+            foo.includes('ab') || foo.includes('bc');
+        ",
+        "
+            const foo = Iterator.concat(bar);
+            foo.includes(1) || foo.includes(2);
+        ",
+        "
+            const prefix = 'hello world'.slice(0, 5);
+            export function f(x) {
+                return prefix.includes(x);
+            }
+        ",
+        "
+            const [items] = ['abc'];
+            const foo = items.slice();
+            foo.includes('ab') || foo.includes('bc');
+        ",
+        "
+            const items = [1, 2, 3];
+            function unicorn() {
+                const items = 'abc';
+                const foo = items.slice();
+                return foo.includes('ab') || foo.includes('bc');
+            }
+        ",
+        // Circular initializers must not recurse forever
+        "
+            const a = b.slice();
+            const b = a.slice();
+            const foo = a.slice();
+            function unicorn() {
+                return foo.includes(1);
+            }
+        ",
+        // Stop following `const` initializers after `MAX_RESOLVE_DEPTH`
+        "
+            const a0 = [1, 2, 3];
+            const a1 = a0.slice(); const a2 = a1.slice(); const a3 = a2.slice();
+            const a4 = a3.slice(); const a5 = a4.slice(); const a6 = a5.slice();
+            const a7 = a6.slice(); const a8 = a7.slice(); const a9 = a8.slice();
+            const foo = a9.slice();
+            function unicorn() {
+                return foo.includes(1);
+            }
+        ",
     ];
 
     let fail = vec![
@@ -806,6 +920,46 @@ fn test() {
                 }
             }
         ",
+        "
+            const foo = [1, 2, 3].slice();
+            foo.includes(1) || foo.includes(2);
+        ",
+        "
+            const foo = [1, 2, 3].concat(4);
+            foo.includes(1) || foo.includes(2);
+        ",
+        "
+            const items = [1, 2, 3];
+            const foo = items.slice();
+            foo.includes(1) || foo.includes(2);
+        ",
+        "
+            const items = [1, 2, 3];
+            const foo = items.concat(4);
+            foo.includes(1) || foo.includes(2);
+        ",
+        "
+            const items = [1, 2, 3];
+            const copy = items.slice();
+            const foo = copy.concat(4);
+            function unicorn() {
+                return foo.includes(1);
+            }
+        ",
+        "
+            const items = 'abc';
+            function unicorn() {
+                const items = [1, 2, 3];
+                const foo = items.slice();
+                return foo.includes(1) || foo.includes(2);
+            }
+        ",
+        "
+            const foo = bar.baz.slice();
+            function unicorn() {
+                return foo.includes(1);
+            }
+        ",
     ];
 
     let fix = vec![
@@ -892,6 +1046,36 @@ fn test() {
             ",
             "
                 const foo = new Set(Array.of(1, 2));
+                function unicorn() {
+                    return foo.has(1);
+                }
+            ",
+        ),
+        (
+            "
+                const foo = [1, 2, 3].slice();
+                function unicorn() {
+                    return foo.includes(1);
+                }
+            ",
+            "
+                const foo = new Set([1, 2, 3].slice());
+                function unicorn() {
+                    return foo.has(1);
+                }
+            ",
+        ),
+        (
+            "
+                const items = [1, 2, 3];
+                const foo = items.concat(4);
+                function unicorn() {
+                    return foo.includes(1);
+                }
+            ",
+            "
+                const items = [1, 2, 3];
+                const foo = new Set(items.concat(4));
                 function unicorn() {
                     return foo.has(1);
                 }
