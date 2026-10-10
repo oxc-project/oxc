@@ -882,12 +882,22 @@ fn optional_catch_binding() {
 
     // Regression tests for https://github.com/oxc-project/oxc/issues/17307
     test(
-        "try {} catch (e) { try {} catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
-        "try {} catch (e) { var e } console.log(e === void 0)",
+        "try {} catch (e) { try {} catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e)",
+        "try {} catch { var e } console.log(e)",
     );
     test(
         "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === undefined)",
-        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
+        "try { throw 1 } catch { try { throw 2 } catch (e) { var e = 'e'; console.log(e === 'e') } } console.log(e === void 0)",
+    );
+
+    // The inner `console.log(e)` reads the inner catch parameter, so the `var e = 'inner'` must stay.
+    // The outer catch parameter has no reads, so it can be dropped.
+    test(
+        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'inner'; console.log(e) } }",
+        "try { throw 1 } catch { try { throw 2 } catch (e) { var e = 'inner'; console.log(e) } }",
+    );
+    test_same(
+        "try { throw 1 } catch (e) { try { throw 2 } catch (e) { var e = 'inner'; console.log(e) } console.log(e) } console.log(e)",
     );
 
     test_target_same("try { foo } catch(e) {}", "chrome65");
