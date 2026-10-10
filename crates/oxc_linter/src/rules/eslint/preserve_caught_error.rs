@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -11,8 +14,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{IsGlobalReference, ScopeFlags};
 use oxc_span::{GetSpan, Span};
 use oxc_str::static_ident;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
