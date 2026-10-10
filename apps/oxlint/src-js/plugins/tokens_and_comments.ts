@@ -25,6 +25,7 @@ import {
   tokensLen,
   tokensInt32,
   TOKEN_SIZE32,
+  TOKEN_SIZE32_SHIFT,
 } from "./tokens.ts";
 import { EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
@@ -196,7 +197,7 @@ function mergeTokensAndComments(tokensInt32: Int32Array, commentsInt32: Int32Arr
         );
         return;
       }
-      tokenStart = tokensInt32[tokenIndex * TOKEN_SIZE32];
+      tokenStart = tokensInt32[tokenIndex << TOKEN_SIZE32_SHIFT];
     } while (tokenStart < commentStart);
 
     // Process run of comments
@@ -297,7 +298,7 @@ export function getTokenOrCommentEnd(entryIndex: number): number {
   const pos32 = entryIndex << MERGED_SIZE32_SHIFT;
   const originalIndex = tokensAndCommentsInt32![pos32 + MERGED_ORIGINAL_INDEX_OFFSET32];
   return tokensAndCommentsInt32![pos32 + MERGED_TYPE_OFFSET32] === MERGED_TYPE_TOKEN
-    ? tokensInt32![originalIndex * TOKEN_SIZE32 + 1]
+    ? tokensInt32![(originalIndex << TOKEN_SIZE32_SHIFT) + 1]
     : commentsInt32![originalIndex * COMMENT_SIZE32 + 1];
 }
 

@@ -12,6 +12,8 @@ import {
   initComments,
   initCommentsBuffer,
 } from "./comments.ts";
+// oxlint-disable-next-line no-unused-vars -- used in inlined `firstTokenAtOrAfter`
+import { TOKEN_SIZE32_SHIFT } from "./tokens.ts";
 import {
   initTokensAndCommentsBuffer,
   tokensAndCommentsInt32,

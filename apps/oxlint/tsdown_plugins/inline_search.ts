@@ -30,6 +30,8 @@ const { fnParams, returnParamIndex, fnBodySource } = extractInlinedFunction(
  *
  * The function is inlined into all call sites in `FILES` list above.
  *
+ * `TOKEN_SIZE32_SHIFT` constant must be in scope at all call sites.
+ *
  * ```ts
  * // Original code
  * const index = firstTokenAtOrAfter(int32, rangeStart, searchFromIndex, length);
@@ -38,7 +40,7 @@ const { fnParams, returnParamIndex, fnBodySource } = extractInlinedFunction(
  * let index = searchFromIndex;
  * for (let endIndex = length; index < endIndex; ) {
  *   const mid = (index + endIndex) >> 1;
- *   if (int32[mid << 2] < rangeStart) {
+ *   if (int32[mid << TOKEN_SIZE32_SHIFT] < rangeStart) {
  *     index = mid + 1;
  *   } else {
  *     endIndex = mid;

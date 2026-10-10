@@ -2,13 +2,21 @@
  * `SourceCode` methods related to tokens.
  */
 
-import { cachedTokens, tokensInt32, tokensLen, initTokensBuffer, getToken } from "./tokens.ts";
+import {
+  cachedTokens,
+  tokensInt32,
+  tokensLen,
+  initTokensBuffer,
+  getToken,
+  TOKEN_SIZE32_SHIFT,
+} from "./tokens.ts";
 import {
   tokensAndCommentsInt32,
   tokensAndCommentsLen,
   getTokenOrComment,
   getTokenOrCommentEnd,
   initTokensAndCommentsBuffer,
+  MERGED_SIZE32_SHIFT,
 } from "./tokens_and_comments.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
@@ -1290,7 +1298,7 @@ export function getTokenByRangeStart<Options extends RangeOptions | null | undef
   // This makes it safe to use `>> 1` for division by 2 (which is faster than `>>> 1`).
   for (let lo = 0, hi = len; lo < hi;) {
     const mid = (lo + hi) >> 1;
-    const tokenStart = int32[mid << 2];
+    const tokenStart = int32[mid << TOKEN_SIZE32_SHIFT];
     if (tokenStart < offset) {
       lo = mid + 1;
     } else if (tokenStart > offset) {
@@ -1357,7 +1365,7 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
   let index = firstTokenAtOrAfter(tokensAndCommentsInt32, rangeStart, 0, tokensAndCommentsLen);
 
   for (let lastTokenEnd = rangeStart; index < tokensAndCommentsLen; index++) {
-    const tokenStart = tokensAndCommentsInt32[index << 2];
+    const tokenStart = tokensAndCommentsInt32[index << MERGED_SIZE32_SHIFT];
     // The first token of the later node should undergo the check in the second branch
     if (tokenStart > rangeEnd) break;
     if (tokenStart !== lastTokenEnd) return true;
@@ -1413,7 +1421,7 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
   let index = firstTokenAtOrAfter(tokensAndCommentsInt32, rangeStart, 0, tokensAndCommentsLen);
 
   for (let lastTokenEnd = rangeStart; index < tokensAndCommentsLen; index++) {
-    const tokenStart = tokensAndCommentsInt32[index << 2];
+    const tokenStart = tokensAndCommentsInt32[index << MERGED_SIZE32_SHIFT];
 
     // The first token of the later node should undergo the check in the second branch
     if (tokenStart > rangeEnd) break;
@@ -1471,7 +1479,7 @@ function getEntry(index: number, includeComments: boolean): TokenOrComment {
  * @returns Start offset in source text
  */
 function entryStart(index: number, int32: Int32Array): number {
-  return int32[index << 2];
+  return int32[index << TOKEN_SIZE32_SHIFT];
 }
 
 /**
@@ -1483,7 +1491,9 @@ function entryStart(index: number, int32: Int32Array): number {
  * @returns End offset in source text
  */
 function entryEnd(index: number, includeComments: boolean): number {
-  return includeComments === true ? getTokenOrCommentEnd(index) : tokensInt32![(index << 2) + 1];
+  return includeComments === true
+    ? getTokenOrCommentEnd(index)
+    : tokensInt32![(index << TOKEN_SIZE32_SHIFT) + 1];
 }
 
 /**
@@ -1550,7 +1560,7 @@ export function firstTokenAtOrAfter(
 ): number {
   for (let endIndex = length; startIndex < endIndex;) {
     const mid = (startIndex + endIndex) >> 1;
-    if (int32[mid << 2] < offset) {
+    if (int32[mid << TOKEN_SIZE32_SHIFT] < offset) {
       startIndex = mid + 1;
     } else {
       endIndex = mid;

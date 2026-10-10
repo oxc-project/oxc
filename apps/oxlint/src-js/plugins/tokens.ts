@@ -267,6 +267,8 @@ const TOKEN_DESERIALIZED_FLAG_OFFSET = TOKEN_SIZE - 1;
 
 const TOKEN_SIZE_SHIFT = 4;
 debugAssert(TOKEN_SIZE === 1 << TOKEN_SIZE_SHIFT);
+export const TOKEN_SIZE32_SHIFT = TOKEN_SIZE_SHIFT - 2;
+debugAssert(TOKEN_SIZE32 === 1 << TOKEN_SIZE32_SHIFT);
 
 const KIND_FIELD_OFFSET = 8;
 const IS_ESCAPED_FIELD_OFFSET = 10;
@@ -350,7 +352,7 @@ export function initTokensBuffer(): void {
   const arrayBuffer = buffer.buffer,
     absolutePos = buffer.byteOffset + tokensPos;
   tokensUint8 = new Uint8Array(arrayBuffer, absolutePos, tokensLen << TOKEN_SIZE_SHIFT);
-  tokensInt32 = new Int32Array(arrayBuffer, absolutePos, tokensLen << (TOKEN_SIZE_SHIFT - 2));
+  tokensInt32 = new Int32Array(arrayBuffer, absolutePos, tokensLen << TOKEN_SIZE32_SHIFT);
 
   // Grow caches if needed. After first few files, caches should have grown large enough to service all files.
   // Later files will skip this step, and allocations stop.
@@ -514,7 +516,7 @@ function debugCheckValidRanges(): void {
 
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
-    const pos32 = i << 2;
+    const pos32 = i << TOKEN_SIZE32_SHIFT;
     const start = tokensInt32![pos32];
     const end = tokensInt32![pos32 + 1];
     if (end <= start) throw new Error(`Invalid token range: ${start}-${end}`);
