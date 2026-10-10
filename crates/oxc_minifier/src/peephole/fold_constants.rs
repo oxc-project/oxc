@@ -519,7 +519,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Lower bound for the minified size of a string addition operand, along with
     /// whether folding it would materialize a non-inlineable tracked constant.
-    fn string_expression_size_lower_bound(
+    pub(super) fn string_expression_size_lower_bound(
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(usize, bool)> {
