@@ -117,7 +117,10 @@ impl<'a> ClassBindings<'a> {
         &mut self,
         ctx: &mut TraverseCtx<'a>,
     ) -> &BoundIdentifier<'a> {
-        if self.static_private_fields_use_temp {
+        // Use temp binding if the class name is shadowed by a local binding at this point.
+        // e.g. `class C { static #x; static m(o) { const C = 1; return o.#x; } }`
+        // `C` in `_assertClassBrand(C, o, _x)` would refer to the local, not the class.
+        if self.static_private_fields_use_temp || self.name_is_shadowed(ctx) {
             // Create temp binding if doesn't already exist
             self.temp.get_or_insert_with(|| {
                 Self::create_temp_binding(self.name.as_ref(), self.outer_hoist_scope_id, ctx)
@@ -128,6 +131,13 @@ impl<'a> ClassBindings<'a> {
             // So `unwrap` here cannot panic.
             self.name.as_ref().unwrap()
         }
+    }
+
+    /// Returns `true` if the class name binding is shadowed by another binding
+    /// in the current scope, so a reference to the class name here would resolve to something else.
+    fn name_is_shadowed(&self, ctx: &TraverseCtx<'a>) -> bool {
+        let Some(name) = &self.name else { return false };
+        ctx.scoping().find_binding(ctx.current_scope_id(), name.name) != Some(name.symbol_id)
     }
 
     /// Generate binding for temp var.
