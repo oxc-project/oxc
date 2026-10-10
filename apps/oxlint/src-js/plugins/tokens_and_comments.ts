@@ -59,7 +59,7 @@ export type TokenOrComment = Token | Comment;
 // ```
 //
 // These constants define the shape of the data stored in `tokensAndCommentsInt32` as per the above.
-const MERGED_SIZE = 16;
+export const MERGED_SIZE = 16;
 export const MERGED_SIZE32_SHIFT = 2; // 4 x u32s per entry (16 bytes)
 export const MERGED_SIZE32 = 1 << MERGED_SIZE32_SHIFT; // 4 x u32s per entry
 debugAssert(MERGED_SIZE === MERGED_SIZE32 * 4);

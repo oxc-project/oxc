@@ -4,6 +4,7 @@
 
 import { buffer, initSourceText, sourceText } from "./source_code.ts";
 import { computeLoc } from "./location.ts";
+import { MERGED_SIZE } from "./tokens_and_comments.ts";
 import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
 import { EMPTY_INT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
@@ -258,6 +259,8 @@ const TOKEN_TYPES: TokenType["type"][] = [
 // Details of Rust `Token` type
 export const TOKEN_SIZE = 16;
 export const TOKEN_SIZE32 = TOKEN_SIZE >> 2;
+
+debugAssert(TOKEN_SIZE === MERGED_SIZE, "Size of token and merged entry must be equal");
 
 // The final byte of Rust's `Token` is unused and initialized to 0.
 const TOKEN_DESERIALIZED_FLAG_OFFSET = TOKEN_SIZE - 1;
