@@ -15,11 +15,11 @@ working directory: fixtures/cli/report_unused_directives_oxlint_only
    `----
   help: Delete this console statement.
 
-  ! Unused oxlint-disable directive (no problems were reported).
-   ,-[test.js:7:1]
+  ! Unused oxlint-disable directive (no problems were reported from no-debugger).
+   ,-[test.js:7:29]
  6 | 
  7 | // oxlint-disable-next-line no-debugger
-   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   :                             ^^^^^^^^^^^
  8 | console.log("oxlint unused");
    `----
 
@@ -32,11 +32,11 @@ working directory: fixtures/cli/report_unused_directives_oxlint_only
    `----
   help: Delete this console statement.
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[test.js:10:1]
+  ! Unused oxlint-disable directive (no problems were reported from no-console).
+    ,-[test.js:10:29]
   9 | 
  10 | // oxlint-disable-next-line no-console
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^
  11 | debugger;
     `----
 
@@ -65,11 +65,11 @@ working directory: fixtures/cli/report_unused_directives_oxlint_only
    `----
   help: Delete this console statement.
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[test.vue:9:1]
+  ! Unused oxlint-disable directive (no problems were reported from no-debugger).
+    ,-[test.vue:9:29]
   8 | 
   9 | // oxlint-disable-next-line no-debugger
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
  10 | console.log("oxlint unused");
     `----
 
@@ -82,11 +82,11 @@ working directory: fixtures/cli/report_unused_directives_oxlint_only
     `----
   help: Delete this console statement.
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[test.vue:12:1]
+  ! Unused oxlint-disable directive (no problems were reported from no-console).
+    ,-[test.vue:12:29]
  11 | 
  12 | // oxlint-disable-next-line no-console
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^
  13 | debugger;
     `----
 
