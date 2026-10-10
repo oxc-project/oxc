@@ -12,6 +12,10 @@ use super::{InternalFormatter, xml_utils::xml_escape};
 pub struct JUnitOutputFormatter;
 
 impl InternalFormatter for JUnitOutputFormatter {
+    fn is_machine_readable(&self) -> bool {
+        true
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(JUnitReporter::default())
     }

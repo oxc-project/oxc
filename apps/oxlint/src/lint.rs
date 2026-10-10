@@ -14,6 +14,7 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_config::GitignoreChecker;
 use oxc_diagnostics::{
     DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
+    reporter::DiagnosticResult,
 };
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
@@ -658,11 +659,26 @@ impl CliRunner {
         number_of_rules: Option<usize>,
         no_error_on_unmatched_pattern: bool,
     ) -> CliRunResult {
+        let is_machine_readable = output_formatter.is_machine_readable();
+
         if !no_error_on_unmatched_pattern {
-            print_and_flush_stdout(
-                stdout,
-                "No files found to lint. Please check your paths and ignore patterns.\n",
-            );
+            let message = "No files found to lint. Please check your paths and ignore patterns.\n";
+            if is_machine_readable {
+                // Keep stdout parseable, e.g. for `--format json`.
+                print_and_flush_stdout(&mut std::io::stderr().lock(), message);
+            } else {
+                print_and_flush_stdout(stdout, message);
+            }
+        }
+
+        // Some machine-readable formats (SARIF, Checkstyle, ...) render their whole document
+        // when the diagnostic reporter finishes. Emit that empty document so consumers
+        // always get valid output.
+        if is_machine_readable
+            && let Some(output) =
+                output_formatter.get_diagnostic_reporter().finish(&DiagnosticResult::default())
+        {
+            print_and_flush_stdout(stdout, &output);
         }
 
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
@@ -847,6 +863,41 @@ mod test {
             "fixtures/cli/linter/nan.js",
         ];
         Tester::new().test_and_snapshot(args);
+    }
+
+    /// Machine-readable formats must stay parseable when every file is ignored.
+    /// See https://github.com/oxc-project/oxc/issues/27441
+    #[test]
+    fn ignore_file_overrides_explicit_args_machine_readable_formats() {
+        use crate::cli::CliRunResult;
+
+        let ignore_args =
+            ["--ignore-path", "fixtures/cli/linter/.customignore", "fixtures/cli/linter/nan.js"];
+
+        for format in ["--format=json", "--format=sarif"] {
+            let mut args = vec![format];
+            args.extend(ignore_args);
+
+            let (stdout, result) = Tester::new().test_output(&args);
+            assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+            serde_json::from_str::<serde_json::Value>(&stdout)
+                .unwrap_or_else(|err| panic!("{format} output is not valid JSON: {err}\n{stdout}"));
+        }
+
+        Tester::new().test_and_snapshot_multiple(&[
+            &[
+                "--format=json",
+                "--ignore-path",
+                "fixtures/cli/linter/.customignore",
+                "fixtures/cli/linter/nan.js",
+            ],
+            &[
+                "--format=sarif",
+                "--ignore-path",
+                "fixtures/cli/linter/.customignore",
+                "fixtures/cli/linter/nan.js",
+            ],
+        ]);
     }
 
     #[test]

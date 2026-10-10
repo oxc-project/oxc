@@ -38,6 +38,10 @@ struct GitlabErrorJson {
 }
 
 impl InternalFormatter for GitlabOutputFormatter {
+    fn is_machine_readable(&self) -> bool {
+        true
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(GitlabReporter::default())
     }
