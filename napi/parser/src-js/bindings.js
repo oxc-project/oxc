@@ -783,5 +783,5 @@ export { parse }
 export { parseSync }
 export { rawTransferSupported }
 export const __napiBindingTarget = __napiLoadedBindingTarget
-const { getBufferBase, getBufferOffset, parseRaw, parseRawSync } = nativeBinding
-export { getBufferBase, getBufferOffset, parseRaw, parseRawSync }
+const { getBufferOffset, parseRaw, parseRawSync } = nativeBinding
+export { getBufferOffset, parseRaw, parseRawSync }

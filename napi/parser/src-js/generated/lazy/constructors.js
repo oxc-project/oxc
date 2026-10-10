@@ -12910,7 +12910,7 @@ function constructStr(pos, ast) {
     len = int32[pos32 + 2];
   if (len === 0) return "";
 
-  pos = (int32[pos32] ^ buffer.ptrFlip) - buffer.ptrBase;
+  pos = int32[pos32];
   if (ast.sourceIsAscii) {
     const { sourceStartPos } = ast;
     if (pos >= sourceStartPos) return ast.sourceText.substr(pos - sourceStartPos, len);
@@ -12938,15 +12938,9 @@ function constructStr(pos, ast) {
 }
 
 function constructVecComment(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    24,
-    constructComment,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 24, constructComment, ast);
 }
 
 function constructComment(pos, ast) {
@@ -12959,15 +12953,9 @@ function constructOptionHashbang(pos, ast) {
 }
 
 function constructVecDirective(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    80,
-    constructDirective,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 80, constructDirective, ast);
 }
 
 function constructDirective(pos, ast) {
@@ -12975,271 +12963,197 @@ function constructDirective(pos, ast) {
 }
 
 function constructVecStatement(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructStatement,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructStatement, ast);
 }
 
 function constructBoxBooleanLiteral(pos, ast) {
-  const { buffer } = ast;
-  return new BooleanLiteral((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new BooleanLiteral(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxNullLiteral(pos, ast) {
-  const { buffer } = ast;
-  return new NullLiteral((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new NullLiteral(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxNumericLiteral(pos, ast) {
-  const { buffer } = ast;
-  return new NumericLiteral((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new NumericLiteral(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxBigIntLiteral(pos, ast) {
-  const { buffer } = ast;
-  return new BigIntLiteral((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new BigIntLiteral(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxRegExpLiteral(pos, ast) {
-  const { buffer } = ast;
-  return new RegExpLiteral((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new RegExpLiteral(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxStringLiteral(pos, ast) {
-  const { buffer } = ast;
-  return new StringLiteral((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new StringLiteral(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTemplateLiteral(pos, ast) {
-  const { buffer } = ast;
-  return new TemplateLiteral((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TemplateLiteral(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxIdentifierReference(pos, ast) {
-  const { buffer } = ast;
-  return new IdentifierReference((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new IdentifierReference(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxSuper(pos, ast) {
-  const { buffer } = ast;
-  return new Super((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new Super(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxArrayExpression(pos, ast) {
-  const { buffer } = ast;
-  return new ArrayExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ArrayExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxArrowFunctionExpression(pos, ast) {
-  const { buffer } = ast;
-  return new ArrowFunctionExpression(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new ArrowFunctionExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxAssignmentExpression(pos, ast) {
-  const { buffer } = ast;
-  return new AssignmentExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new AssignmentExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxAwaitExpression(pos, ast) {
-  const { buffer } = ast;
-  return new AwaitExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new AwaitExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxBinaryExpression(pos, ast) {
-  const { buffer } = ast;
-  return new BinaryExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new BinaryExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxCallExpression(pos, ast) {
-  const { buffer } = ast;
-  return new CallExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new CallExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxChainExpression(pos, ast) {
-  const { buffer } = ast;
-  return new ChainExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ChainExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxClass(pos, ast) {
-  const { buffer } = ast;
-  return new Class((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new Class(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxConditionalExpression(pos, ast) {
-  const { buffer } = ast;
-  return new ConditionalExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ConditionalExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxFunction(pos, ast) {
-  const { buffer } = ast;
-  return new Function((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new Function(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxImportExpression(pos, ast) {
-  const { buffer } = ast;
-  return new ImportExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ImportExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxLogicalExpression(pos, ast) {
-  const { buffer } = ast;
-  return new LogicalExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new LogicalExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxNewExpression(pos, ast) {
-  const { buffer } = ast;
-  return new NewExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new NewExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxObjectExpression(pos, ast) {
-  const { buffer } = ast;
-  return new ObjectExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ObjectExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxParenthesizedExpression(pos, ast) {
-  const { buffer } = ast;
-  return new ParenthesizedExpression(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new ParenthesizedExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxSequenceExpression(pos, ast) {
-  const { buffer } = ast;
-  return new SequenceExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new SequenceExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTaggedTemplateExpression(pos, ast) {
-  const { buffer } = ast;
-  return new TaggedTemplateExpression(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TaggedTemplateExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxThisExpression(pos, ast) {
-  const { buffer } = ast;
-  return new ThisExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ThisExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxUnaryExpression(pos, ast) {
-  const { buffer } = ast;
-  return new UnaryExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new UnaryExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxUpdateExpression(pos, ast) {
-  const { buffer } = ast;
-  return new UpdateExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new UpdateExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxYieldExpression(pos, ast) {
-  const { buffer } = ast;
-  return new YieldExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new YieldExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxPrivateInExpression(pos, ast) {
-  const { buffer } = ast;
-  return new PrivateInExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new PrivateInExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxImportMeta(pos, ast) {
-  const { buffer } = ast;
-  return new ImportMeta((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ImportMeta(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxNewTarget(pos, ast) {
-  const { buffer } = ast;
-  return new NewTarget((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new NewTarget(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSXElement(pos, ast) {
-  const { buffer } = ast;
-  return new JSXElement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXElement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSXFragment(pos, ast) {
-  const { buffer } = ast;
-  return new JSXFragment((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXFragment(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSAsExpression(pos, ast) {
-  const { buffer } = ast;
-  return new TSAsExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSAsExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSSatisfiesExpression(pos, ast) {
-  const { buffer } = ast;
-  return new TSSatisfiesExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSSatisfiesExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSTypeAssertion(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypeAssertion((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSTypeAssertion(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSNonNullExpression(pos, ast) {
-  const { buffer } = ast;
-  return new TSNonNullExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSNonNullExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSInstantiationExpression(pos, ast) {
-  const { buffer } = ast;
-  return new TSInstantiationExpression(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSInstantiationExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxV8IntrinsicExpression(pos, ast) {
-  const { buffer } = ast;
-  return new V8IntrinsicExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new V8IntrinsicExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecArrayExpressionElement(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructArrayExpressionElement,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructArrayExpressionElement, ast);
 }
 
 function constructBoxSpreadElement(pos, ast) {
-  const { buffer } = ast;
-  return new SpreadElement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new SpreadElement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxElision(pos, ast) {
-  const { buffer } = ast;
-  return new Elision((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new Elision(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecObjectPropertyKind(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructObjectPropertyKind,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructObjectPropertyKind, ast);
 }
 
 function constructBoxObjectProperty(pos, ast) {
-  const { buffer } = ast;
-  return new ObjectProperty((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ObjectProperty(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBool(pos, ast) {
@@ -13247,25 +13161,17 @@ function constructBool(pos, ast) {
 }
 
 function constructBoxIdentifierName(pos, ast) {
-  const { buffer } = ast;
-  return new IdentifierName((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new IdentifierName(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxPrivateIdentifier(pos, ast) {
-  const { buffer } = ast;
-  return new PrivateIdentifier((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new PrivateIdentifier(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecTemplateElement(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    48,
-    constructTemplateElement,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 48, constructTemplateElement, ast);
 }
 
 function constructTemplateElement(pos, ast) {
@@ -13273,23 +13179,13 @@ function constructTemplateElement(pos, ast) {
 }
 
 function constructVecExpression(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructExpression,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructExpression, ast);
 }
 
 function constructBoxTSTypeParameterInstantiation(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypeParameterInstantiation(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSTypeParameterInstantiation(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxTSTypeParameterInstantiation(pos, ast) {
@@ -13303,52 +13199,29 @@ function constructOptionStr(pos, ast) {
 }
 
 function constructBoxComputedMemberExpression(pos, ast) {
-  const { buffer } = ast;
-  return new ComputedMemberExpression(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new ComputedMemberExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxStaticMemberExpression(pos, ast) {
-  const { buffer } = ast;
-  return new StaticMemberExpression(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new StaticMemberExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxPrivateFieldExpression(pos, ast) {
-  const { buffer } = ast;
-  return new PrivateFieldExpression(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new PrivateFieldExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecArgument(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructArgument,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructArgument, ast);
 }
 
 function constructBoxArrayAssignmentTarget(pos, ast) {
-  const { buffer } = ast;
-  return new ArrayAssignmentTarget((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ArrayAssignmentTarget(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxObjectAssignmentTarget(pos, ast) {
-  const { buffer } = ast;
-  return new ObjectAssignmentTarget(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new ObjectAssignmentTarget(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionAssignmentTargetMaybeDefault(pos, ast) {
@@ -13357,10 +13230,10 @@ function constructOptionAssignmentTargetMaybeDefault(pos, ast) {
 }
 
 function constructVecOptionAssignmentTargetMaybeDefault(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
+    int32[pos32],
     int32[pos32 + 2],
     16,
     constructOptionAssignmentTargetMaybeDefault,
@@ -13369,8 +13242,7 @@ function constructVecOptionAssignmentTargetMaybeDefault(pos, ast) {
 }
 
 function constructBoxAssignmentTargetRest(pos, ast) {
-  const { buffer } = ast;
-  return new AssignmentTargetRest((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new AssignmentTargetRest(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxAssignmentTargetRest(pos, ast) {
@@ -13379,39 +13251,21 @@ function constructOptionBoxAssignmentTargetRest(pos, ast) {
 }
 
 function constructVecAssignmentTargetProperty(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructAssignmentTargetProperty,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructAssignmentTargetProperty, ast);
 }
 
 function constructBoxAssignmentTargetWithDefault(pos, ast) {
-  const { buffer } = ast;
-  return new AssignmentTargetWithDefault(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new AssignmentTargetWithDefault(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxAssignmentTargetPropertyIdentifier(pos, ast) {
-  const { buffer } = ast;
-  return new AssignmentTargetPropertyIdentifier(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new AssignmentTargetPropertyIdentifier(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxAssignmentTargetPropertyProperty(pos, ast) {
-  const { buffer } = ast;
-  return new AssignmentTargetPropertyProperty(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new AssignmentTargetPropertyProperty(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionExpression(pos, ast) {
@@ -13420,160 +13274,113 @@ function constructOptionExpression(pos, ast) {
 }
 
 function constructBoxBlockStatement(pos, ast) {
-  const { buffer } = ast;
-  return new BlockStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new BlockStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxBreakStatement(pos, ast) {
-  const { buffer } = ast;
-  return new BreakStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new BreakStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxContinueStatement(pos, ast) {
-  const { buffer } = ast;
-  return new ContinueStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ContinueStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxDebuggerStatement(pos, ast) {
-  const { buffer } = ast;
-  return new DebuggerStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new DebuggerStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxDoWhileStatement(pos, ast) {
-  const { buffer } = ast;
-  return new DoWhileStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new DoWhileStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxEmptyStatement(pos, ast) {
-  const { buffer } = ast;
-  return new EmptyStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new EmptyStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxExpressionStatement(pos, ast) {
-  const { buffer } = ast;
-  return new ExpressionStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ExpressionStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxForInStatement(pos, ast) {
-  const { buffer } = ast;
-  return new ForInStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ForInStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxForOfStatement(pos, ast) {
-  const { buffer } = ast;
-  return new ForOfStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ForOfStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxForStatement(pos, ast) {
-  const { buffer } = ast;
-  return new ForStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ForStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxIfStatement(pos, ast) {
-  const { buffer } = ast;
-  return new IfStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new IfStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxLabeledStatement(pos, ast) {
-  const { buffer } = ast;
-  return new LabeledStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new LabeledStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxReturnStatement(pos, ast) {
-  const { buffer } = ast;
-  return new ReturnStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ReturnStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxSwitchStatement(pos, ast) {
-  const { buffer } = ast;
-  return new SwitchStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new SwitchStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxThrowStatement(pos, ast) {
-  const { buffer } = ast;
-  return new ThrowStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ThrowStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTryStatement(pos, ast) {
-  const { buffer } = ast;
-  return new TryStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TryStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxWhileStatement(pos, ast) {
-  const { buffer } = ast;
-  return new WhileStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new WhileStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxWithStatement(pos, ast) {
-  const { buffer } = ast;
-  return new WithStatement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new WithStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxVariableDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new VariableDeclaration((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new VariableDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSTypeAliasDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypeAliasDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSTypeAliasDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSInterfaceDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSInterfaceDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSInterfaceDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSEnumDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSEnumDeclaration((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSEnumDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSExternalModuleDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSExternalModuleDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSExternalModuleDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSNamespaceDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSNamespaceDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSNamespaceDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSGlobalDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSGlobalDeclaration((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSGlobalDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSImportEqualsDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSImportEqualsDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSImportEqualsDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecVariableDeclarator(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    56,
-    constructVariableDeclarator,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 56, constructVariableDeclarator, ast);
 }
 
 function constructVariableDeclarator(pos, ast) {
@@ -13581,8 +13388,7 @@ function constructVariableDeclarator(pos, ast) {
 }
 
 function constructBoxTSTypeAnnotation(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypeAnnotation((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSTypeAnnotation(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxTSTypeAnnotation(pos, ast) {
@@ -13606,15 +13412,9 @@ function constructOptionLabelIdentifier(pos, ast) {
 }
 
 function constructVecSwitchCase(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    56,
-    constructSwitchCase,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 56, constructSwitchCase, ast);
 }
 
 function constructSwitchCase(pos, ast) {
@@ -13622,8 +13422,7 @@ function constructSwitchCase(pos, ast) {
 }
 
 function constructBoxCatchClause(pos, ast) {
-  const { buffer } = ast;
-  return new CatchClause((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new CatchClause(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxCatchClause(pos, ast) {
@@ -13642,35 +13441,25 @@ function constructOptionCatchParameter(pos, ast) {
 }
 
 function constructBoxBindingIdentifier(pos, ast) {
-  const { buffer } = ast;
-  return new BindingIdentifier((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new BindingIdentifier(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxObjectPattern(pos, ast) {
-  const { buffer } = ast;
-  return new ObjectPattern((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ObjectPattern(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxArrayPattern(pos, ast) {
-  const { buffer } = ast;
-  return new ArrayPattern((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ArrayPattern(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxAssignmentPattern(pos, ast) {
-  const { buffer } = ast;
-  return new AssignmentPattern((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new AssignmentPattern(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecBindingProperty(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    48,
-    constructBindingProperty,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 48, constructBindingProperty, ast);
 }
 
 function constructBindingProperty(pos, ast) {
@@ -13678,8 +13467,7 @@ function constructBindingProperty(pos, ast) {
 }
 
 function constructBoxBindingRestElement(pos, ast) {
-  const { buffer } = ast;
-  return new BindingRestElement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new BindingRestElement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxBindingRestElement(pos, ast) {
@@ -13693,15 +13481,9 @@ function constructOptionBindingPattern(pos, ast) {
 }
 
 function constructVecOptionBindingPattern(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructOptionBindingPattern,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructOptionBindingPattern, ast);
 }
 
 function constructOptionBindingIdentifier(pos, ast) {
@@ -13710,11 +13492,7 @@ function constructOptionBindingIdentifier(pos, ast) {
 }
 
 function constructBoxTSTypeParameterDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypeParameterDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSTypeParameterDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxTSTypeParameterDeclaration(pos, ast) {
@@ -13723,8 +13501,7 @@ function constructOptionBoxTSTypeParameterDeclaration(pos, ast) {
 }
 
 function constructBoxTSThisParameter(pos, ast) {
-  const { buffer } = ast;
-  return new TSThisParameter((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSThisParameter(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxTSThisParameter(pos, ast) {
@@ -13733,13 +13510,11 @@ function constructOptionBoxTSThisParameter(pos, ast) {
 }
 
 function constructBoxFormalParameters(pos, ast) {
-  const { buffer } = ast;
-  return new FormalParameters((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new FormalParameters(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxFunctionBody(pos, ast) {
-  const { buffer } = ast;
-  return new FunctionBody((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new FunctionBody(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxFunctionBody(pos, ast) {
@@ -13748,15 +13523,9 @@ function constructOptionBoxFunctionBody(pos, ast) {
 }
 
 function constructVecFormalParameter(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    72,
-    constructFormalParameter,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 72, constructFormalParameter, ast);
 }
 
 function constructFormalParameter(pos, ast) {
@@ -13764,15 +13533,9 @@ function constructFormalParameter(pos, ast) {
 }
 
 function constructVecDecorator(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    32,
-    constructDecorator,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 32, constructDecorator, ast);
 }
 
 function constructDecorator(pos, ast) {
@@ -13780,8 +13543,7 @@ function constructDecorator(pos, ast) {
 }
 
 function constructBoxExpression(pos, ast) {
-  const { buffer } = ast;
-  return constructExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return constructExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxExpression(pos, ast) {
@@ -13795,15 +13557,9 @@ function constructOptionTSAccessibility(pos, ast) {
 }
 
 function constructVecTSClassImplements(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    40,
-    constructTSClassImplements,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 40, constructTSClassImplements, ast);
 }
 
 function constructTSClassImplements(pos, ast) {
@@ -13811,94 +13567,65 @@ function constructTSClassImplements(pos, ast) {
 }
 
 function constructBoxClassBody(pos, ast) {
-  const { buffer } = ast;
-  return new ClassBody((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ClassBody(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecClassElement(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructClassElement,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructClassElement, ast);
 }
 
 function constructBoxStaticBlock(pos, ast) {
-  const { buffer } = ast;
-  return new StaticBlock((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new StaticBlock(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxMethodDefinition(pos, ast) {
-  const { buffer } = ast;
-  return new MethodDefinition((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new MethodDefinition(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxPropertyDefinition(pos, ast) {
-  const { buffer } = ast;
-  return new PropertyDefinition((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new PropertyDefinition(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxAccessorProperty(pos, ast) {
-  const { buffer } = ast;
-  return new AccessorProperty((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new AccessorProperty(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSIndexSignature(pos, ast) {
-  const { buffer } = ast;
-  return new TSIndexSignature((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSIndexSignature(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxImportDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new ImportDeclaration((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ImportDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxExportAllDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new ExportAllDeclaration((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ExportAllDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxExportDefaultDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new ExportDefaultDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new ExportDefaultDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxExportDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new ExportDeclaration((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ExportDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxExportNamedDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new ExportNamedDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new ExportNamedDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxExportFromDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new ExportFromDeclaration((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ExportFromDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSExportAssignment(pos, ast) {
-  const { buffer } = ast;
-  return new TSExportAssignment((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSExportAssignment(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSNamespaceExportDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSNamespaceExportDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSNamespaceExportDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionImportPhase(pos, ast) {
@@ -13907,10 +13634,10 @@ function constructOptionImportPhase(pos, ast) {
 }
 
 function constructVecImportDeclarationSpecifier(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
+    int32[pos32],
     int32[pos32 + 2],
     16,
     constructImportDeclarationSpecifier,
@@ -13924,8 +13651,7 @@ function constructOptionVecImportDeclarationSpecifier(pos, ast) {
 }
 
 function constructBoxWithClause(pos, ast) {
-  const { buffer } = ast;
-  return new WithClause((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new WithClause(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxWithClause(pos, ast) {
@@ -13934,36 +13660,21 @@ function constructOptionBoxWithClause(pos, ast) {
 }
 
 function constructBoxImportSpecifier(pos, ast) {
-  const { buffer } = ast;
-  return new ImportSpecifier((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new ImportSpecifier(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxImportDefaultSpecifier(pos, ast) {
-  const { buffer } = ast;
-  return new ImportDefaultSpecifier(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new ImportDefaultSpecifier(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxImportNamespaceSpecifier(pos, ast) {
-  const { buffer } = ast;
-  return new ImportNamespaceSpecifier(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new ImportNamespaceSpecifier(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecImportAttribute(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    120,
-    constructImportAttribute,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 120, constructImportAttribute, ast);
 }
 
 function constructImportAttribute(pos, ast) {
@@ -13971,15 +13682,9 @@ function constructImportAttribute(pos, ast) {
 }
 
 function constructVecExportSpecifier(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    128,
-    constructExportSpecifier,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 128, constructExportSpecifier, ast);
 }
 
 function constructExportSpecifier(pos, ast) {
@@ -14000,25 +13705,17 @@ function constructU8(pos, ast) {
 }
 
 function constructBoxJSXOpeningElement(pos, ast) {
-  const { buffer } = ast;
-  return new JSXOpeningElement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXOpeningElement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecJSXChild(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructJSXChild,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructJSXChild, ast);
 }
 
 function constructBoxJSXClosingElement(pos, ast) {
-  const { buffer } = ast;
-  return new JSXClosingElement((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXClosingElement(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxJSXClosingElement(pos, ast) {
@@ -14027,45 +13724,33 @@ function constructOptionBoxJSXClosingElement(pos, ast) {
 }
 
 function constructVecJSXAttributeItem(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructJSXAttributeItem,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructJSXAttributeItem, ast);
 }
 
 function constructBoxJSXIdentifier(pos, ast) {
-  const { buffer } = ast;
-  return new JSXIdentifier((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXIdentifier(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSXNamespacedName(pos, ast) {
-  const { buffer } = ast;
-  return new JSXNamespacedName((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXNamespacedName(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSXMemberExpression(pos, ast) {
-  const { buffer } = ast;
-  return new JSXMemberExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXMemberExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSXEmptyExpression(pos, ast) {
-  const { buffer } = ast;
-  return new JSXEmptyExpression((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXEmptyExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSXAttribute(pos, ast) {
-  const { buffer } = ast;
-  return new JSXAttribute((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXAttribute(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSXSpreadAttribute(pos, ast) {
-  const { buffer } = ast;
-  return new JSXSpreadAttribute((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXSpreadAttribute(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionJSXAttributeValue(pos, ast) {
@@ -14074,33 +13759,21 @@ function constructOptionJSXAttributeValue(pos, ast) {
 }
 
 function constructBoxJSXExpressionContainer(pos, ast) {
-  const { buffer } = ast;
-  return new JSXExpressionContainer(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new JSXExpressionContainer(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSXText(pos, ast) {
-  const { buffer } = ast;
-  return new JSXText((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXText(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSXSpreadChild(pos, ast) {
-  const { buffer } = ast;
-  return new JSXSpreadChild((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSXSpreadChild(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecTSEnumMember(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    48,
-    constructTSEnumMember,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 48, constructTSEnumMember, ast);
 }
 
 function constructTSEnumMember(pos, ast) {
@@ -14108,227 +13781,175 @@ function constructTSEnumMember(pos, ast) {
 }
 
 function constructBoxTSAnyKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSAnyKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSAnyKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSBigIntKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSBigIntKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSBigIntKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSBooleanKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSBooleanKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSBooleanKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSIntrinsicKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSIntrinsicKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSIntrinsicKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSNeverKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSNeverKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSNeverKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSNullKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSNullKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSNullKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSNumberKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSNumberKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSNumberKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSObjectKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSObjectKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSObjectKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSStringKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSStringKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSStringKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSSymbolKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSSymbolKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSSymbolKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSUndefinedKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSUndefinedKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSUndefinedKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSUnknownKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSUnknownKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSUnknownKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSVoidKeyword(pos, ast) {
-  const { buffer } = ast;
-  return new TSVoidKeyword((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSVoidKeyword(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSArrayType(pos, ast) {
-  const { buffer } = ast;
-  return new TSArrayType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSArrayType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSConditionalType(pos, ast) {
-  const { buffer } = ast;
-  return new TSConditionalType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSConditionalType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSConstructorType(pos, ast) {
-  const { buffer } = ast;
-  return new TSConstructorType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSConstructorType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSFunctionType(pos, ast) {
-  const { buffer } = ast;
-  return new TSFunctionType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSFunctionType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSImportType(pos, ast) {
-  const { buffer } = ast;
-  return new TSImportType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSImportType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSIndexedAccessType(pos, ast) {
-  const { buffer } = ast;
-  return new TSIndexedAccessType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSIndexedAccessType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSInferType(pos, ast) {
-  const { buffer } = ast;
-  return new TSInferType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSInferType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSIntersectionType(pos, ast) {
-  const { buffer } = ast;
-  return new TSIntersectionType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSIntersectionType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSLiteralType(pos, ast) {
-  const { buffer } = ast;
-  return new TSLiteralType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSLiteralType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSMappedType(pos, ast) {
-  const { buffer } = ast;
-  return new TSMappedType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSMappedType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSNamedTupleMember(pos, ast) {
-  const { buffer } = ast;
-  return new TSNamedTupleMember((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSNamedTupleMember(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSTemplateLiteralType(pos, ast) {
-  const { buffer } = ast;
-  return new TSTemplateLiteralType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSTemplateLiteralType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSThisType(pos, ast) {
-  const { buffer } = ast;
-  return new TSThisType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSThisType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSTupleType(pos, ast) {
-  const { buffer } = ast;
-  return new TSTupleType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSTupleType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSTypeLiteral(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypeLiteral((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSTypeLiteral(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSTypeOperator(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypeOperator((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSTypeOperator(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSTypePredicate(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypePredicate((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSTypePredicate(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSTypeQuery(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypeQuery((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSTypeQuery(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSTypeReference(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypeReference((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSTypeReference(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSUnionType(pos, ast) {
-  const { buffer } = ast;
-  return new TSUnionType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSUnionType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSParenthesizedType(pos, ast) {
-  const { buffer } = ast;
-  return new TSParenthesizedType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSParenthesizedType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSDocNullableType(pos, ast) {
-  const { buffer } = ast;
-  return new JSDocNullableType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSDocNullableType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSDocNonNullableType(pos, ast) {
-  const { buffer } = ast;
-  return new JSDocNonNullableType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSDocNonNullableType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxJSDocUnknownType(pos, ast) {
-  const { buffer } = ast;
-  return new JSDocUnknownType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new JSDocUnknownType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecTSType(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructTSType,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructTSType, ast);
 }
 
 function constructVecTSTupleElement(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructTSTupleElement,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructTSTupleElement, ast);
 }
 
 function constructBoxTSOptionalType(pos, ast) {
-  const { buffer } = ast;
-  return new TSOptionalType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSOptionalType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSRestType(pos, ast) {
-  const { buffer } = ast;
-  return new TSRestType((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSRestType(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSQualifiedName(pos, ast) {
-  const { buffer } = ast;
-  return new TSQualifiedName((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSQualifiedName(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionTSType(pos, ast) {
@@ -14337,15 +13958,9 @@ function constructOptionTSType(pos, ast) {
 }
 
 function constructVecTSTypeParameter(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    80,
-    constructTSTypeParameter,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 80, constructTSTypeParameter, ast);
 }
 
 function constructTSTypeParameter(pos, ast) {
@@ -14353,15 +13968,9 @@ function constructTSTypeParameter(pos, ast) {
 }
 
 function constructVecTSInterfaceHeritage(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    40,
-    constructTSInterfaceHeritage,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 40, constructTSInterfaceHeritage, ast);
 }
 
 function constructTSInterfaceHeritage(pos, ast) {
@@ -14369,51 +13978,33 @@ function constructTSInterfaceHeritage(pos, ast) {
 }
 
 function constructBoxTSInterfaceBody(pos, ast) {
-  const { buffer } = ast;
-  return new TSInterfaceBody((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSInterfaceBody(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructVecTSSignature(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructTSSignature,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructTSSignature, ast);
 }
 
 function constructBoxTSPropertySignature(pos, ast) {
-  const { buffer } = ast;
-  return new TSPropertySignature((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSPropertySignature(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSCallSignatureDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSCallSignatureDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSCallSignatureDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSConstructSignatureDeclaration(pos, ast) {
-  const { buffer } = ast;
-  return new TSConstructSignatureDeclaration(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSConstructSignatureDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSMethodSignature(pos, ast) {
-  const { buffer } = ast;
-  return new TSMethodSignature((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSMethodSignature(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSModuleBlock(pos, ast) {
-  const { buffer } = ast;
-  return new TSModuleBlock((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSModuleBlock(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxTSModuleBlock(pos, ast) {
@@ -14422,8 +14013,7 @@ function constructOptionBoxTSModuleBlock(pos, ast) {
 }
 
 function constructBoxTSTypeParameter(pos, ast) {
-  const { buffer } = ast;
-  return new TSTypeParameter((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
+  return new TSTypeParameter(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionBoxObjectExpression(pos, ast) {
@@ -14437,11 +14027,7 @@ function constructOptionTSImportTypeQualifier(pos, ast) {
 }
 
 function constructBoxTSImportTypeQualifiedName(pos, ast) {
-  const { buffer } = ast;
-  return new TSImportTypeQualifiedName(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSImportTypeQualifiedName(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionTSMappedTypeModifierOperator(pos, ast) {
@@ -14450,11 +14036,7 @@ function constructOptionTSMappedTypeModifierOperator(pos, ast) {
 }
 
 function constructBoxTSExternalModuleReference(pos, ast) {
-  const { buffer } = ast;
-  return new TSExternalModuleReference(
-    (buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase,
-    ast,
-  );
+  return new TSExternalModuleReference(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructU32(pos, ast) {
@@ -14482,15 +14064,9 @@ function constructOptionNameSpan(pos, ast) {
 }
 
 function constructVecError(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    80,
-    constructError,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 80, constructError, ast);
 }
 
 function constructError(pos, ast) {
@@ -14498,15 +14074,9 @@ function constructError(pos, ast) {
 }
 
 function constructVecErrorLabel(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    24,
-    constructErrorLabel,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 24, constructErrorLabel, ast);
 }
 
 function constructErrorLabel(pos, ast) {
@@ -14514,15 +14084,9 @@ function constructErrorLabel(pos, ast) {
 }
 
 function constructVecStaticImport(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    56,
-    constructStaticImport,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 56, constructStaticImport, ast);
 }
 
 function constructStaticImport(pos, ast) {
@@ -14530,15 +14094,9 @@ function constructStaticImport(pos, ast) {
 }
 
 function constructVecStaticExport(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    32,
-    constructStaticExport,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 32, constructStaticExport, ast);
 }
 
 function constructStaticExport(pos, ast) {
@@ -14546,15 +14104,9 @@ function constructStaticExport(pos, ast) {
 }
 
 function constructVecDynamicImport(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    16,
-    constructDynamicImport,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructDynamicImport, ast);
 }
 
 function constructDynamicImport(pos, ast) {
@@ -14562,9 +14114,9 @@ function constructDynamicImport(pos, ast) {
 }
 
 function constructVecSpan(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray((int32[pos32] ^ ptrFlip) - ptrBase, int32[pos32 + 2], 8, constructSpan, ast);
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 8, constructSpan, ast);
 }
 
 function constructSpan(pos, ast) {
@@ -14572,15 +14124,9 @@ function constructSpan(pos, ast) {
 }
 
 function constructVecImportEntry(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    96,
-    constructImportEntry,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 96, constructImportEntry, ast);
 }
 
 function constructImportEntry(pos, ast) {
@@ -14588,15 +14134,9 @@ function constructImportEntry(pos, ast) {
 }
 
 function constructVecExportEntry(pos, ast) {
-  const { int32, ptrFlip, ptrBase } = ast.buffer,
+  const { int32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    (int32[pos32] ^ ptrFlip) - ptrBase,
-    int32[pos32 + 2],
-    144,
-    constructExportEntry,
-    ast,
-  );
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 144, constructExportEntry, ast);
 }
 
 function constructExportEntry(pos, ast) {

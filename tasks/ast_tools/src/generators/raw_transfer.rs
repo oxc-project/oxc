@@ -152,12 +152,6 @@ fn generate_deserializers(
         let uint8, int32, float64, sourceText, sourceTextLatin,
             sourceStartPos = 0, firstNonAsciiPos = 0;
 
-        /* IF !LINTER */
-        // Used to convert pointers (lower 32 bits) to offsets within buffer: `(ptr ^ ptrFlip) - ptrBase`.
-        // See `createBuffer` in `napi/parser/src-js/raw-transfer/common.js`.
-        let ptrFlip = 0, ptrBase = 0;
-        /* END_IF */
-
         let parent = null;
 
         const {{ fromCharCode }} = String,
@@ -200,10 +194,6 @@ fn generate_deserializers(
             uint8 = buffer;
             int32 = buffer.int32;
             float64 = buffer.float64;
-            /* IF !LINTER */
-            ptrFlip = buffer.ptrFlip;
-            ptrBase = buffer.ptrBase;
-            /* END_IF */
 
             sourceText = sourceTextInput;
             sourceStartPos = sourceStartPosInput;
@@ -969,12 +959,7 @@ static STR_DESERIALIZER_BODY: &str = "
 
     if (len === 0) return '';
 
-    /* IF LINTER */
     pos = int32[pos32];
-    /* END_IF */
-    /* IF !LINTER */
-    pos = (int32[pos32] ^ ptrFlip) - ptrBase;
-    /* END_IF */
 
     const end = pos + len;
 
@@ -1098,12 +1083,10 @@ fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId,
     let fn_name = box_def.deser_name(schema);
     let inner_fn_name = inner_type.deser_name(schema);
 
-    let ptr_pos = ptr_to_pos("int32[pos >> 2]");
-
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos) {{
-            return {inner_fn_name}({ptr_pos});
+            return {inner_fn_name}(int32[pos >> 2]);
         }}
     ");
 }
@@ -1121,7 +1104,6 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
 
     let ptr_pos32 = pos32_offset(VEC_PTR_FIELD_OFFSET);
     let len_pos32 = pos32_offset(VEC_LEN_FIELD_OFFSET);
-    let ptr_pos = ptr_to_pos(&format!("int32[{ptr_pos32}]"));
 
     // Use shift if possible (stride is a power of 2)
     let end_pos_offset = if inner_type_size.is_power_of_two() {
@@ -1135,7 +1117,7 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
         function {fn_name}(pos) {{
             const arr = [],
                 pos32 = pos >> 2;
-            pos = {ptr_pos};
+            pos = int32[{ptr_pos32}];
             const endPos = pos + {end_pos_offset};
             while (pos !== endPos) {{
                 arr.push({inner_fn_name}(pos));
@@ -1161,18 +1143,6 @@ pub(super) fn should_skip_innermost_type(
         }
         _ => false,
     }
-}
-
-/// Wrap a JS expression which reads the lower 32 bits of a pointer from the buffer,
-/// to convert the pointer to an offset within the buffer.
-///
-/// * Parser: Buffer can be at any address. Convert with `(ptr ^ ptrFlip) - ptrBase`,
-///   which never overflows 32-bit signed integer range (see `napi/parser/src/raw_transfer.rs`).
-/// * Linter: Buffers are aligned on 4 GiB, so lower 32 bits of a pointer is already the offset.
-fn ptr_to_pos(read_expr: &str) -> String {
-    format!(
-        "/* IF LINTER */ {read_expr} /* END_IF */ /* IF !LINTER */ (({read_expr} ^ ptrFlip) - ptrBase) /* END_IF */"
-    )
 }
 
 /// Generate pos offset string.

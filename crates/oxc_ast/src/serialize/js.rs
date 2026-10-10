@@ -360,12 +360,7 @@ impl ESTree for CatchParameterConverter<'_, '_> {
         const params = DESER[Vec<FormalParameter>](POS_OFFSET.items);
         const restFieldPos32 = POS_OFFSET.rest >> 2;
         if (int32[restFieldPos32] !== 0 && int32[restFieldPos32 + 1] !== 0) {
-            /* IF LINTER */
             pos = int32[restFieldPos32];
-            /* END_IF */
-            /* IF !LINTER */
-            pos = (int32[restFieldPos32] ^ ptrFlip) - ptrBase;
-            /* END_IF */
 
             let start, end,
                 previousParent = parent,

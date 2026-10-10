@@ -26,25 +26,9 @@ use crate::{
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData, RawTransferMetadata},
 };
 
-// For raw transfer, use a buffer 2 GiB in size. The buffer can be at any address
-// (it only needs to be aligned on `Allocator::RAW_MIN_ALIGN`).
-//
-// JS reads only the lower 32 bits of each 64-bit pointer (as a signed 32-bit integer), and converts it
-// to an offset within the buffer by subtracting the lower 32 bits of the buffer's start address.
-// `lo32(x) == x mod 2^32`, so `lo32(ptr) - lo32(buffer_start) == (ptr - buffer_start) mod 2^32`,
-// which is the real offset, because the offset is always less than buffer size (< 2^31).
-// This holds even if the buffer crosses a 4 GiB boundary.
-//
-// The subtraction must not overflow signed 32-bit integer range, because although the result would still be
-// correct after `| 0`, overflow degrades V8's type feedback and makes deserialization much slower.
-// Overflow happens only if lower 32 bits of addresses in the buffer cross `0x80000000`. For such buffers,
-// JS flips the top bit of both values first, which moves the crossing point to `0` (harmless).
-// A buffer < 2 GiB cannot cross both. So JS uses `offset = (lo32(ptr) ^ ptrFlip) - ptrBase`,
-// where `ptrFlip` is `0` or `0x80000000`, and `ptrBase = lo32(buffer_start) ^ ptrFlip`.
-// See `createBuffer` in `src-js/raw-transfer/common.js`.
-//
-// Metadata at end of buffer (`RawTransferMetadata`) stores offsets which are already relative
-// to start of buffer, so JS doesn't need to convert them.
+// For raw transfer, use a buffer 2 GiB in size, with 4 GiB alignment.
+// This ensures that all 64-bit pointers have the same value in upper 32 bits,
+// so JS only needs to read the lower 32 bits to get an offset into the buffer.
 //
 // Buffer size only 2 GiB so 32-bit offsets don't have the highest bit set.
 // This is advantageous for 2 reasons:
@@ -55,34 +39,14 @@ use crate::{
 // 2. JS bitwise operators work only on signed 32-bit integers, with 32nd bit as sign bit.
 //    So avoiding the 32nd bit being set enables using `>>` bitshift operator,
 //    which is cheaper than `>>>`, and does not risk offsets being interpreted as negative.
-//
-// Previously the buffer was aligned on 4 GiB (`BLOCK_ALIGN`), so lower 32 bits of every pointer
-// *was* the offset, with no subtraction. That required JS to allocate a 6 GiB `ArrayBuffer`
-// to find an aligned 2 GiB region within it. Buffers aligned on 4 GiB are still accepted
-// (subtracting a base of 0 is a no-op).
 
-/// Layout describing the JS-owned buffer (`BLOCK_SIZE` bytes, aligned on `Allocator::RAW_MIN_ALIGN`).
-const BLOCK_LAYOUT: Layout = match Layout::from_size_align(BLOCK_SIZE, Allocator::RAW_MIN_ALIGN) {
+/// Layout describing the JS-owned buffer (`BLOCK_SIZE` bytes, aligned on `BLOCK_ALIGN`).
+const BLOCK_LAYOUT: Layout = match Layout::from_size_align(BLOCK_SIZE, BLOCK_ALIGN) {
     Ok(layout) => layout,
     Err(_) => unreachable!(),
 };
 
-/// Get lower 32 bits of address of start of a `Uint8Array`, as a signed 32-bit integer.
-///
-/// JS side uses this to convert pointers in the buffer to offsets within the buffer.
-/// Also, the low bits are used to align the buffer on `Allocator::RAW_MIN_ALIGN`.
-#[napi(skip_typescript)]
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-pub fn get_buffer_base(buffer: Uint8Array) -> i32 {
-    let buffer = &*buffer;
-    #[expect(clippy::cast_possible_truncation)]
-    return (buffer.as_ptr().addr() as u32).cast_signed();
-}
-
 /// Get offset within a `Uint8Array` which is aligned on `BLOCK_ALIGN`.
-///
-/// Not used by JS side any more, now that buffer doesn't need to be aligned on 4 GiB.
-/// Retained only so that benchmarks can compare against buffers aligned on 4 GiB.
 ///
 /// Does not check that the offset is within bounds of `buffer`.
 /// To ensure it always is, provide a `Uint8Array` of at least `BLOCK_SIZE + BLOCK_ALIGN` bytes.
@@ -233,11 +197,10 @@ unsafe fn parse_raw_impl(
     source_len: u32,
     options: Option<ParserOptions>,
 ) {
-    // Check buffer has expected size and alignment.
-    // Buffer does not need to be aligned on `BLOCK_ALIGN` (see comment at top of this file).
+    // Check buffer has expected size and alignment
     assert_eq!(buffer.len(), BLOCK_SIZE);
     let buffer_ptr = NonNull::from_mut(buffer).cast::<u8>();
-    assert!(buffer_ptr.addr().get().is_multiple_of(Allocator::RAW_MIN_ALIGN));
+    assert!(buffer_ptr.addr().get().is_multiple_of(BLOCK_ALIGN));
 
     const _: () = {
         assert!(BLOCK_SIZE.is_multiple_of(Allocator::RAW_MIN_ALIGN));
@@ -253,7 +216,7 @@ unsafe fn parse_raw_impl(
     // but the safety contract requires the chunk region to lie within them, so we describe the buffer itself.
     //
     // SAFETY: `buffer_ptr` and `BLOCK_SIZE` outline the entirety of `buffer`.
-    // `buffer_ptr` and `BLOCK_SIZE` are multiples of `Allocator::RAW_MIN_ALIGN`.
+    // `buffer_ptr` and `BLOCK_SIZE` are multiples of `ARENA_ALIGN`.
     // `BLOCK_SIZE` is `>= Allocator::RAW_MIN_SIZE`.
     // `buffer_ptr` is derived from a `&mut [u8]` slice, so has permission for writes.
     let allocator =
@@ -339,9 +302,7 @@ unsafe fn parse_raw_impl(
             let mut tokens = ret.tokens;
             update_tokens(&mut tokens, &program, &span_converter, ESTreeTokenOptions::new(is_ts));
 
-            // If there are no tokens, `tokens.as_ptr()` is a dangling pointer, which is not within the buffer
-            let tokens_offset =
-                if tokens.is_empty() { 0 } else { offset_in_buffer(tokens.as_ptr(), buffer_ptr) };
+            let tokens_offset = tokens.as_ptr() as u32;
             #[expect(clippy::cast_possible_truncation)]
             let tokens_len = tokens.len() as u32;
             (tokens_offset, tokens_len)
@@ -370,7 +331,7 @@ unsafe fn parse_raw_impl(
         // Write `RawTransferData` to arena, and return pointer to it
         let data = RawTransferData { program, comments, module, errors };
         let data = allocator.alloc(data);
-        let data_offset = offset_in_buffer(ptr::from_ref(data), buffer_ptr);
+        let data_offset = ptr::from_ref(data).cast::<u8>() as u32;
 
         (data_offset, tokens_offset, tokens_len)
     };
@@ -384,15 +345,4 @@ unsafe fn parse_raw_impl(
         debug_assert!(metadata_ptr.addr().get().is_multiple_of(align_of::<RawTransferMetadata>()));
         metadata_ptr.write(metadata);
     }
-}
-
-/// Get offset of `ptr` relative to start of buffer.
-///
-/// `ptr` must point within the buffer, which is less than 2 GiB in size, so offset always fits in a `u32`.
-/// Note: Pointer of an empty `Vec` is dangling, so is not within the buffer.
-#[expect(clippy::cast_possible_truncation)]
-fn offset_in_buffer<T>(ptr: *const T, buffer_ptr: NonNull<u8>) -> u32 {
-    let buffer_addr = buffer_ptr.addr().get();
-    debug_assert!(ptr.addr() >= buffer_addr && ptr.addr() - buffer_addr < BLOCK_SIZE);
-    (ptr.addr() - buffer_addr) as u32
 }
