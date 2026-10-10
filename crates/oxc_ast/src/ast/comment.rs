@@ -163,7 +163,7 @@ impl<'alloc> CloneIn<'alloc> for CommentNewlines {
 ///
 /// This is separate from the token-relative position stored on the source comment.
 #[ast]
-#[generate_derive(ContentEq)]
+#[generate_derive(ContentEq, CloneIn)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CommentPlacement {
     /// Before the node.
@@ -199,7 +199,7 @@ pub enum CommentPlacement {
 ///
 /// Borrow comments when reading them, or use [`Clone::clone`] to obtain an owned value.
 #[ast]
-#[generate_derive(ContentEq, ESTree, GetSpan)]
+#[generate_derive(ContentEq, CloneIn, ESTree, GetSpan)]
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
 #[estree(add_fields(value = CommentValue), no_ts_def, no_parent)]
 pub struct Comment {
@@ -419,17 +419,5 @@ impl Comment {
     #[inline]
     pub fn set_followed_by_newline(&mut self, followed_by_newline: bool) {
         self.newlines.set(CommentNewlines::Trailing, followed_by_newline);
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for Comment {
-    type Cloned = Self;
-
-    fn clone_in_impl(&self, with_semantic_ids: CloneInSemanticIds, _: &'alloc Allocator) -> Self {
-        let comment = self.clone();
-        if with_semantic_ids == CloneInSemanticIds::Without {
-            comment.node_id.set(NodeId::DUMMY);
-        }
-        comment
     }
 }
