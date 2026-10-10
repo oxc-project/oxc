@@ -1028,6 +1028,7 @@ export interface DummyRuleMap {
   "jsdoc/implements-on-classes"?: RuleNoConfig;
   "jsdoc/no-blank-blocks"?: RuleNoConfig | [AllowWarnDeny, NoBlankBlocks];
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
+  "jsdoc/no-multi-asterisks"?: RuleNoConfig | [AllowWarnDeny, NoMultiAsterisks];
   "jsdoc/require-param"?: RuleNoConfig | [AllowWarnDeny, RequireParamConfig];
   "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
   "jsdoc/require-param-name"?: RuleNoConfig;
@@ -1871,6 +1872,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, EmptyTagsConfig]
     | [AllowWarnDeny, NoBlankBlocks]
     | [AllowWarnDeny, NoDefaultsConfig]
+    | [AllowWarnDeny, NoMultiAsterisks]
     | [AllowWarnDeny, RequireParamConfig]
     | [AllowWarnDeny, RequireParamDescriptionConfig]
     | [AllowWarnDeny, RequireParamTypeConfig]
@@ -2946,6 +2948,29 @@ export interface NoDefaultsConfig {
    * If true, report the presence of optional param names (square brackets) on `@param` tags.
    */
   noOptionalParamNames?: boolean;
+}
+export interface NoMultiAsterisks {
+  /**
+   * Whether to allow asterisks after a space, as with Markdown emphasis such as `*bold*`
+   * at the start of a line's text.
+   *
+   * Defaults to `false`.
+   */
+  allowWhitespace?: boolean;
+  /**
+   * Whether to report extra asterisks at the end of a comment, for example when it is closed
+   * with two asterisks and a slash.
+   *
+   * Defaults to `true`.
+   */
+  preventAtEnd?: boolean;
+  /**
+   * Whether to report extra asterisks at the start of the lines in the middle of a comment,
+   * for example a line that starts with `**`.
+   *
+   * Defaults to `true`.
+   */
+  preventAtMiddleLines?: boolean;
 }
 export interface RequireParamConfig {
   /**
