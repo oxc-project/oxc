@@ -1,0 +1,988 @@
+{
+  "source": "prefer_readonly_parameter_types_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "function foo() {}"
+        },
+        {
+          "code": "function foo(arg: boolean) {}"
+        },
+        {
+          "code": "function foo(arg: true) {}"
+        },
+        {
+          "code": "function foo(arg: string) {}"
+        },
+        {
+          "code": "function foo(arg: 'a') {}"
+        },
+        {
+          "code": "function foo(arg: number) {}"
+        },
+        {
+          "code": "function foo(arg: 1) {}"
+        },
+        {
+          "code": "function foo(arg: symbol) {}"
+        },
+        {
+          "code": "function foo(arg: any) {}"
+        },
+        {
+          "code": "function foo(arg: unknown) {}"
+        },
+        {
+          "code": "function foo(arg: never) {}"
+        },
+        {
+          "code": "function foo(arg: null) {}"
+        },
+        {
+          "code": "function foo(arg: undefined) {}"
+        },
+        {
+          "code": "\n      const symb = Symbol('a');\n      function foo(arg: typeof symb) {}\n    "
+        },
+        {
+          "code": "\n      enum Enum {\n        a,\n        b,\n      }\n      function foo(arg: Enum) {}\n    "
+        },
+        {
+          "code": "function foo(arg: readonly string[]) {}"
+        },
+        {
+          "code": "function foo(arg: Readonly\u003cstring[]\u003e) {}"
+        },
+        {
+          "code": "function foo(arg: ReadonlyArray\u003cstring\u003e) {}"
+        },
+        {
+          "code": "function foo(arg: readonly [string]) {}"
+        },
+        {
+          "code": "function foo(arg: Readonly\u003c[string]\u003e) {}"
+        },
+        {
+          "code": "function foo(arg: readonly (readonly string[])[]) {}"
+        },
+        {
+          "code": "function foo(arg: Readonly\u003cReadonly\u003cstring[]\u003e[]\u003e) {}"
+        },
+        {
+          "code": "function foo(arg: ReadonlyArray\u003cReadonlyArray\u003cstring\u003e\u003e) {}"
+        },
+        {
+          "code": "function foo(arg: () =\u003e void) {}"
+        },
+        {
+          "code": "function foo(arg: string | null) {}"
+        },
+        {
+          "code": "function foo(arg: string | ReadonlyArray\u003cstring\u003e) {}"
+        },
+        {
+          "code": "function foo(arg: string | (() =\u003e void)) {}"
+        },
+        {
+          "code": "function foo(arg: ReadonlyArray\u003cstring\u003e | ReadonlyArray\u003cnumber\u003e) {}"
+        },
+        {
+          "code": "function foo(arg: Readonly\u003c{ foo: '' }\u003e) {}"
+        },
+        {
+          "code": "function foo(arg: Readonly\u003c{ foo: readonly string[] }\u003e) {}"
+        },
+        {
+          "code": "function foo(arg: Readonly\u003c{ foo(): void }\u003e) {}"
+        },
+        {
+          "code": "\n      function foo(arg: {\n        readonly foo: {\n          readonly bar: string;\n        };\n      }) {}\n    "
+        },
+        {
+          "code": "\n      function foo(arg: { readonly [k: string]: string }) {}\n    "
+        },
+        {
+          "code": "\n      function foo(arg: { readonly [k: number]: string }) {}\n    "
+        },
+        {
+          "code": "\n      interface Empty {}\n      function foo(arg: Empty) {}\n    "
+        },
+        {
+          "code": "\ninterface Test {\n  (): void;\n  readonly property: boolean;\n}\nfunction foo(arg: Test) {}\n    "
+        },
+        {
+          "code": "\ntype Test = (() =\u003e void) \u0026 {\n  readonly property: boolean;\n};\nfunction foo(arg: Test) {}\n    "
+        },
+        {
+          "code": "\n      interface Test extends ReadonlyArray\u003cstring\u003e {\n        readonly property: boolean;\n      }\n      function foo(arg: Readonly\u003cTest\u003e) {}\n    "
+        },
+        {
+          "code": "\n      type Test = readonly string[] \u0026 {\n        readonly property: boolean;\n      };\n      function foo(arg: Readonly\u003cTest\u003e) {}\n    "
+        },
+        {
+          "code": "\n      type Test = string \u0026 number;\n      function foo(arg: Test) {}\n    "
+        },
+        {
+          "code": "\n      class Foo {\n        readonly bang = 1;\n      }\n      interface Foo {\n        readonly prop: string;\n      }\n      interface Foo {\n        readonly prop2: string;\n      }\n      function foo(arg: Foo) {}\n    "
+        },
+        {
+          "code": "\n      class Foo {\n        method() {}\n      }\n      function foo(arg: Readonly\u003cFoo\u003e) {}\n    "
+        },
+        {
+          "code": "\n      type MyType = Readonly\u003c{\n        prop: string;\n        method(): string;\n      }\u003e;\n      function foo(arg: MyType) {}\n    "
+        },
+        {
+          "code": "\n      type MyType = {\n        readonly prop: string;\n        readonly method: () =\u003e string;\n      };\n      function bar(arg: MyType) {}\n    "
+        },
+        {
+          "code": "\n        class Foo {\n          #privateField: string[] = [];\n          #privateMember() {}\n        }\n        function foo(arg: Foo) {}\n      "
+        },
+        {
+          "code": "\n        class HasText {\n          readonly #text: string;\n        }\n\n        export function onDone(task: HasText): void {}\n      "
+        },
+        {
+          "code": "\n        class PrivateMutable {\n          private values = new Map\u003cstring, unknown\u003e();\n        }\n        function f(value: Readonly\u003cPrivateMutable\u003e): void {}\n\n        class PrivateReadonly {\n          private readonly values = new Map\u003cstring, unknown\u003e();\n        }\n        function g(value: Readonly\u003cPrivateReadonly\u003e): void {}\n      ",
+          "options": {
+            "checkParameterProperties": true,
+            "ignoreInferredTypes": false,
+            "treatMethodsAsReadonly": true
+          }
+        },
+        {
+          "code": "\n        class PrivateMutableArray {\n          private values: string[] = [];\n        }\n        function f(value: Readonly\u003cPrivateMutableArray\u003e): void {}\n      ",
+          "options": {
+            "treatMethodsAsReadonly": true
+          }
+        },
+        {
+          "code": "\n        type MyType = {\n          readonly prop: string;\n          method(): string;\n        };\n        function foo(arg: MyType) {}\n      ",
+          "options": {
+            "treatMethodsAsReadonly": true
+          }
+        },
+        {
+          "code": "\n        class Foo {\n          method() {}\n        }\n        function foo(arg: Foo) {}\n      ",
+          "options": {
+            "treatMethodsAsReadonly": true
+          }
+        },
+        {
+          "code": "\n        interface Foo {\n          method(): void;\n        }\n        function foo(arg: Foo) {}\n      ",
+          "options": {
+            "treatMethodsAsReadonly": true
+          }
+        },
+        {
+          "code": "\n        function foo(arg: ReadonlySet\u003cstring\u003e) {}\n        function bar(arg: ReadonlyMap\u003cstring, string\u003e) {}\n      ",
+          "options": {
+            "treatMethodsAsReadonly": true
+          }
+        },
+        {
+          "code": "\n        class Foo {\n          constructor(\n            private arg1: readonly string[],\n            public arg2: readonly string[],\n            protected arg3: readonly string[],\n            readonly arg4: readonly string[],\n          ) {}\n        }\n      ",
+          "options": {
+            "checkParameterProperties": true
+          }
+        },
+        {
+          "code": "\n        class Foo {\n          constructor(\n            private arg1: string[],\n            public arg2: string[],\n            protected arg3: string[],\n            readonly arg4: string[],\n          ) {}\n        }\n      ",
+          "options": {
+            "checkParameterProperties": false
+          }
+        },
+        {
+          "code": "\n      interface Foo {\n        (arg: readonly string[]): void;\n      }\n    "
+        },
+        {
+          "code": "\n      interface Foo {\n        new (arg: readonly string[]): void;\n      }\n    "
+        },
+        {
+          "code": "class Foo { foo(arg: readonly string[]): void; };"
+        },
+        {
+          "code": "function foo(arg: readonly string[]);"
+        },
+        {
+          "code": "type Foo = (arg: readonly string[]) =\u003e void;"
+        },
+        {
+          "code": "\n      interface Foo {\n        foo(arg: readonly string[]): void;\n      }\n    "
+        },
+        {
+          "code": "\n      interface Foo {\n        readonly prop: Foo;\n      }\n      function foo(arg: Foo) {}\n    "
+        },
+        {
+          "code": "\n      type MyType = string | readonly MyType[];\n\n      function foo\u003cA extends MyType[]\u003e(a: A): MyType[] {\n        return [];\n      }\n    "
+        },
+        {
+          "code": "\n      interface Foo {\n        readonly prop: Bar;\n      }\n      interface Bar {\n        readonly prop: Foo;\n      }\n      function foo(arg: Foo) {}\n    "
+        },
+        {
+          "code": "\n      interface Foo {\n        prop: Readonly\u003cBar\u003e;\n      }\n      interface Bar {\n        prop: Readonly\u003cFoo\u003e;\n      }\n      function foo(arg: Readonly\u003cFoo\u003e) {}\n    "
+        },
+        {
+          "code": "\n      const sym = Symbol('sym');\n\n      interface WithSymbol {\n        [sym]: number;\n      }\n\n      const willNotCrash = (foo: Readonly\u003cWithSymbol\u003e) =\u003e {};\n    "
+        },
+        {
+          "code": "\ntype TaggedBigInt = bigint \u0026 {\n  readonly __tag: unique symbol;\n};\nfunction custom1(arg: TaggedBigInt) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedNumber = number \u0026 {\n  readonly __tag: unique symbol;\n};\nfunction custom1(arg: TaggedNumber) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedString = string \u0026 {\n  readonly __tag: unique symbol;\n};\nfunction custom1(arg: TaggedString) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedString = string \u0026 {\n  readonly __tagA: unique symbol;\n  readonly __tagB: unique symbol;\n};\nfunction custom1(arg: TaggedString) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedString = string \u0026 {\n  readonly __tag: unique symbol;\n};\n\ntype OtherSpecialString = string \u0026 {\n  readonly ' __other_tag': unique symbol;\n};\n\nfunction custom1(arg: TaggedString | OtherSpecialString) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedTemplateLiteral = `${string}-${string}` \u0026 {\n  readonly __tag: unique symbol;\n};\nfunction custom1(arg: TaggedTemplateLiteral) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedNumber = 1 \u0026 {\n  readonly __tag: unique symbol;\n};\n\nfunction custom1(arg: TaggedNumber) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedNumber = (1 | 2) \u0026 {\n  readonly __tag: unique symbol;\n};\n\nfunction custom1(arg: TaggedNumber) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedString = ('a' | 'b') \u0026 {\n  readonly __tag: unique symbol;\n};\n\nfunction custom1(arg: TaggedString) {}\n    "
+        },
+        {
+          "code": "\ntype Strings = 'one' | 'two' | 'three';\n\ntype TaggedString = Strings \u0026 {\n  readonly __tag: unique symbol;\n};\n\nfunction custom1(arg: TaggedString) {}\n    "
+        },
+        {
+          "code": "\ntype Strings = 'one' | 'two' | 'three';\n\ntype TaggedString = Strings \u0026 {\n  __tag: unique symbol;\n};\n\nfunction custom1(arg: TaggedString) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedString = string \u0026 {\n  __tag: unique symbol;\n} \u0026 {\n  __tag: unique symbol;\n};\nfunction custom1(arg: TaggedString) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedString = string \u0026 {\n  __tagA: unique symbol;\n} \u0026 {\n  __tagB: unique symbol;\n};\nfunction custom1(arg: TaggedString) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedString = string \u0026\n  ({ __tag: unique symbol } | { __tag: unique symbol });\nfunction custom1(arg: TaggedString) {}\n    "
+        },
+        {
+          "code": "\ntype TaggedFunction = (() =\u003e void) \u0026 {\n  readonly __tag: unique symbol;\n};\nfunction custom1(arg: TaggedFunction) {}\n    "
+        },
+        {
+          "code": "\n        type Callback\u003cT\u003e = (options: T) =\u003e void;\n\n        declare const acceptsCallback: \u003cT\u003e(callback: Callback\u003cT\u003e) =\u003e void;\n\n        interface CallbackOptions {\n          prop: string;\n        }\n\n        acceptsCallback\u003cCallbackOptions\u003e(options =\u003e {});\n      ",
+          "options": {
+            "ignoreInferredTypes": true
+          }
+        },
+        {
+          "code": "\n        interface Obj {\n          readonly [K: string]: Obj;\n        }\n\n        function foo(event: Obj): void {}\n      ",
+          "options": {
+            "allow": [],
+            "checkParameterProperties": true,
+            "ignoreInferredTypes": false,
+            "treatMethodsAsReadonly": false
+          }
+        },
+        {
+          "code": "\n        interface Obj1 {\n          readonly [K: string]: Obj2;\n        }\n\n        interface Obj2 {\n          readonly [K: string]: Obj1;\n        }\n\n        function foo(event: Obj1): void {}\n      ",
+          "options": {
+            "allow": [],
+            "checkParameterProperties": true,
+            "ignoreInferredTypes": false,
+            "treatMethodsAsReadonly": false
+          }
+        },
+        {
+          "code": "\n        interface Foo {\n          readonly prop: RegExp;\n        }\n\n        function foo(arg: Foo) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "lib",
+                "name": "RegExp"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        interface Foo {\n          prop: RegExp;\n        }\n\n        function foo(arg: Readonly\u003cFoo\u003e) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "lib",
+                "name": "RegExp"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        interface Foo {\n          prop: string;\n        }\n\n        function foo(arg: Foo) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "Foo"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        interface Bar {\n          prop: string;\n        }\n        interface Foo {\n          readonly prop: Bar;\n        }\n\n        function foo(arg: Foo) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "Foo"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        interface Bar {\n          prop: string;\n        }\n        interface Foo {\n          readonly prop: Bar;\n        }\n\n        function foo(arg: Foo) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "Bar"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        interface ViewStyle {\n          field1: number;\n        }\n        type Falsy = undefined | null | false | '';\n\n        interface RecursiveArray\u003cT\u003e extends Array\u003c\n          T | ReadonlyArray\u003cT\u003e | RecursiveArray\u003cT\u003e\n        \u003e {}\n\n        type RegisteredStyle\u003cT\u003e = number \u0026 { __registeredStyleBrand: T };\n\n        type StyleProp\u003cT\u003e =\n          | T\n          | RegisteredStyle\u003cT\u003e\n          | RecursiveArray\u003cT | RegisteredStyle\u003cT\u003e | Falsy\u003e\n          | Falsy;\n\n        function process(arg1: ViewStyle, arg2: StyleProp\u003cViewStyle\u003e): void {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": [
+                  "StyleProp",
+                  "ViewStyle"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        type MyArray\u003cT\u003e = T | T[] | null;\n        interface Item {\n          value: string;\n        }\n        function process(items: MyArray\u003cItem\u003e): void {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": [
+                  "MyArray",
+                  "Item"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        declare function foo\u003cT\u003e(callback: (arg: T) =\u003e void): void;\n        foo\u003creadonly string[]\u003e(arg =\u003e {});\n      "
+        },
+        {
+          "code": "\n        type MyReadonlyType = Readonly\u003c{\n          prop: string;\n        }\u003e;\n\n        function foo(arg: MyReadonlyType) {}\n      ",
+          "options": {
+            "allow": [
+              "OtherType"
+            ]
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "function foo(arg: string[]) {}",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 14,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo(arg: Array\u003cstring\u003e) {}",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 14,
+              "endColumn": 32,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo(arg: [string]) {}",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 14,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo(arg: readonly string[][]) {}",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 14,
+              "endColumn": 38,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo(arg: Readonly\u003cstring[][]\u003e) {}",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 14,
+              "endColumn": 39,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo(arg: ReadonlyArray\u003cArray\u003cstring\u003e\u003e) {}",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 14,
+              "endColumn": 47,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo(arg: { foo: '' }) {}",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 14,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo(arg: { foo: readonly string[] }) {}",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 14,
+              "endColumn": 45,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo(arg: { foo(): void }) {}",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 14,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(arg: {\n          readonly foo: {\n            bar: string;\n          };\n        }) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 2,
+              "column": 22,
+              "endLine": 6,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(arg: { [key: string]: string }) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 2,
+              "column": 22,
+              "endLine": 2,
+              "endColumn": 52,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(arg: { [key: number]: string }) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 2,
+              "column": 22,
+              "endLine": 2,
+              "endColumn": 52,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Test {\n  (): void;\n  property: boolean;\n}\nfunction foo(arg: Test) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 6,
+              "column": 14,
+              "endLine": 6,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Test = (() =\u003e void) \u0026 {\n  property: boolean;\n};\nfunction foo(arg: Test) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 5,
+              "column": 14,
+              "endLine": 5,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Test extends Array\u003cstring\u003e {\n          readonly property: boolean;\n        }\n        function foo(arg: Test) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 5,
+              "column": 22,
+              "endLine": 5,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Test extends Array\u003cstring\u003e {\n          property: boolean;\n        }\n        function foo(arg: Test) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 5,
+              "column": 22,
+              "endLine": 5,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Foo {\n          constructor(\n            private arg1: string[],\n            public arg2: string[],\n            protected arg3: string[],\n            readonly arg4: string[],\n          ) {}\n        }\n      ",
+          "options": {
+            "checkParameterProperties": true
+          },
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 4,
+              "column": 21,
+              "endLine": 4,
+              "endColumn": 35,
+              "suggestions": []
+            },
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 5,
+              "column": 20,
+              "endLine": 5,
+              "endColumn": 34,
+              "suggestions": []
+            },
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 6,
+              "column": 23,
+              "endLine": 6,
+              "endColumn": 37,
+              "suggestions": []
+            },
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 7,
+              "column": 22,
+              "endLine": 7,
+              "endColumn": 36,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Foo {\n          constructor(\n            private arg1: readonly string[],\n            public arg2: readonly string[],\n            protected arg3: readonly string[],\n            readonly arg4: readonly string[],\n            arg5: string[],\n          ) {}\n        }\n      ",
+          "options": {
+            "checkParameterProperties": false
+          },
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 8,
+              "column": 13,
+              "endLine": 8,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          (arg: string[]): void;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 12,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          new (arg: string[]): void;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 16,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "class Foo { foo(arg: string[]): void; };",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 17,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo(arg: string[]);",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 14,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type Foo = (arg: string[]) =\u003e void;",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 13,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          foo(arg: string[]): void;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "column": 15,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          prop: Foo;\n        }\n        function foo(arg: Foo) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 5,
+              "column": 22,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          prop: Foo;\n        }\n        function foo(arg: Readonly\u003cFoo\u003e) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 5,
+              "column": 22,
+              "endColumn": 40,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          prop: Bar;\n        }\n        interface Bar {\n          readonly prop: Foo;\n        }\n        function foo(arg: Foo) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 8,
+              "column": 22,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          prop: Bar;\n        }\n        interface Bar {\n          readonly prop: Foo;\n        }\n        function foo(arg: Readonly\u003cFoo\u003e) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 8,
+              "column": 22,
+              "endColumn": 40,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          prop: Readonly\u003cBar\u003e;\n        }\n        interface Bar {\n          prop: Readonly\u003cFoo\u003e;\n        }\n        function foo(arg: Foo) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 8,
+              "column": 22,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass ClassExample {}\ntype Test = typeof ClassExample \u0026 {\n  readonly property: boolean;\n};\nfunction foo(arg: Test) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 6,
+              "column": 14,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const sym = Symbol('sym');\n\n        interface WithSymbol {\n          [sym]: number;\n        }\n\n        const willNot = (foo: WithSymbol) =\u003e {};\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 8,
+              "column": 26,
+              "endColumn": 41,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type Callback\u003cT\u003e = (options: T) =\u003e void;\n\n        declare const acceptsCallback: \u003cT\u003e(callback: Callback\u003cT\u003e) =\u003e void;\n\n        interface CallbackOptions {\n          prop: string;\n        }\n\n        acceptsCallback\u003cCallbackOptions\u003e((options: CallbackOptions) =\u003e {});\n      ",
+          "options": {
+            "ignoreInferredTypes": true
+          },
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 10,
+              "column": 43,
+              "endColumn": 67,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type MyType = {\n          readonly prop: string;\n          method(): string;\n        };\n        function foo(arg: MyType) {}\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 6,
+              "column": 22,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type MyType\u003cT\u003e = {\n          [K in keyof T]: 'cat' | 'dog' | T[K];\n        };\n\n        function method\u003cA extends any[] = string[]\u003e(value: MyType\u003cA\u003e) {\n          return value;\n        }\n\n        method(['cat', 'dog']);\n        method\u003c'mouse'[]\u003e(['cat', 'mouse']);\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const fooFactory: \u003cT\u003e(x: readonly T[]) =\u003e (f: (x: T) =\u003e void) =\u003e void;\n        fooFactory([{ abc: 42 }])(x =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(arg: RegExp) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "Foo"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 2,
+              "column": 22,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          readonly prop: RegExp;\n        }\n\n        function foo(arg: Foo) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "Bar"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 6,
+              "column": 22,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          readonly prop: RegExp;\n        }\n\n        function foo(arg: Foo) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "lib",
+                "name": "Foo"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 6,
+              "column": 22,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Foo {\n          readonly prop: RegExp;\n        }\n\n        function foo(arg: Foo) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "Foo",
+                "package": "foo-lib"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 6,
+              "column": 22,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(arg: RegExp) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "RegExp",
+                "path": "internal/rules"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 2,
+              "column": 22,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(arg: RegExp) {}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "RegExp",
+                "package": "regexp-lib"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 2,
+              "column": 22,
+              "endColumn": 33,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function foo\u003cT\u003e(callback: (arg: T) =\u003e void): void;\n        foo\u003cstring[]\u003e(arg =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 3,
+              "column": 23,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "class PrivateMutable { private values = new Map\u003cstring, unknown\u003e(); }\nfunction f(value: PrivateMutable): void {}",
+          "options": {
+            "treatMethodsAsReadonly": true
+          },
+          "errors": [
+            {
+              "messageId": "shouldBeReadonly",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

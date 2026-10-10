@@ -2300,6 +2300,7 @@ dependencies = [
  "oxc_ecmascript",
  "oxc_estree_tokens",
  "oxc_index",
+ "oxc_linter_tsrs",
  "oxc_macros",
  "oxc_parser",
  "oxc_react_compiler",
@@ -2333,6 +2334,26 @@ dependencies = [
  "quote",
  "rustc-hash",
  "syn 3.0.5",
+]
+
+[[package]]
+name = "oxc_linter_tsrs"
+version = "0.0.0"
+dependencies = [
+ "rayon",
+ "regex",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "tsrs_ast",
+ "tsrs_checker",
+ "tsrs_compiler",
+ "tsrs_core",
+ "tsrs_diagnostics",
+ "tsrs_parser",
+ "tsrs_scanner",
+ "tsrs_tsoptions",
+ "tsrs_vfs",
 ]
 
 [[package]]
@@ -4049,6 +4070,263 @@ dependencies = [
 ]
 
 [[package]]
+name = "tsrs_ast"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "hashbrown 0.17.1",
+ "memchr",
+ "rustc-hash",
+ "tsrs_core",
+ "tsrs_diagnostics",
+]
+
+[[package]]
+name = "tsrs_astnav"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "tsrs_ast",
+ "tsrs_core",
+ "tsrs_scanner",
+]
+
+[[package]]
+name = "tsrs_binder"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_core",
+ "tsrs_diagnostics",
+ "tsrs_scanner",
+]
+
+[[package]]
+name = "tsrs_checker"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "hashbrown 0.17.1",
+ "indexmap",
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_astnav",
+ "tsrs_binder",
+ "tsrs_core",
+ "tsrs_diagnostics",
+ "tsrs_module",
+ "tsrs_modulespecifiers",
+ "tsrs_parser",
+ "tsrs_printer",
+ "tsrs_pseudochecker",
+ "tsrs_scanner",
+ "tsrs_tsoptions",
+ "xxhash-rust",
+]
+
+[[package]]
+name = "tsrs_compiler"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "indexmap",
+ "rayon",
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_binder",
+ "tsrs_checker",
+ "tsrs_core",
+ "tsrs_declarations",
+ "tsrs_diagnostics",
+ "tsrs_module",
+ "tsrs_modulespecifiers",
+ "tsrs_parser",
+ "tsrs_printer",
+ "tsrs_scanner",
+ "tsrs_sourcemap",
+ "tsrs_transformers",
+ "tsrs_tsoptions",
+ "tsrs_vfs",
+]
+
+[[package]]
+name = "tsrs_core"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "indexmap",
+ "libc",
+ "memchr",
+ "rustc-hash",
+]
+
+[[package]]
+name = "tsrs_declarations"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_checker",
+ "tsrs_core",
+ "tsrs_diagnostics",
+ "tsrs_modulespecifiers",
+ "tsrs_printer",
+ "tsrs_scanner",
+ "tsrs_transformers",
+ "tsrs_tsoptions",
+]
+
+[[package]]
+name = "tsrs_diagnostics"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "rustc-hash",
+ "tsrs_core",
+]
+
+[[package]]
+name = "tsrs_module"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "indexmap",
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_core",
+ "tsrs_diagnostics",
+ "tsrs_vfs",
+]
+
+[[package]]
+name = "tsrs_modulespecifiers"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "regex",
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_core",
+ "tsrs_module",
+ "tsrs_tsoptions",
+]
+
+[[package]]
+name = "tsrs_parser"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_core",
+ "tsrs_diagnostics",
+ "tsrs_scanner",
+]
+
+[[package]]
+name = "tsrs_printer"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "indexmap",
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_core",
+ "tsrs_scanner",
+ "tsrs_sourcemap",
+]
+
+[[package]]
+name = "tsrs_pseudochecker"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "tsrs_ast",
+ "tsrs_core",
+]
+
+[[package]]
+name = "tsrs_scanner"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "memchr",
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_core",
+ "tsrs_diagnostics",
+ "unicode-ident",
+]
+
+[[package]]
+name = "tsrs_sourcemap"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_core",
+ "tsrs_scanner",
+]
+
+[[package]]
+name = "tsrs_transformers"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_binder",
+ "tsrs_checker",
+ "tsrs_core",
+ "tsrs_diagnostics",
+ "tsrs_printer",
+ "tsrs_scanner",
+ "tsrs_tsoptions",
+]
+
+[[package]]
+name = "tsrs_tsoptions"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "indexmap",
+ "rustc-hash",
+ "tsrs_ast",
+ "tsrs_core",
+ "tsrs_diagnostics",
+ "tsrs_module",
+ "tsrs_parser",
+ "tsrs_scanner",
+ "tsrs_vfs",
+]
+
+[[package]]
+name = "tsrs_vfs"
+version = "0.4.0"
+source = "git+https://github.com/maschwenk/tsrs?rev=30b259a8d985022f96b745f0348b6b2db03fcac8#30b259a8d985022f96b745f0348b6b2db03fcac8"
+dependencies = [
+ "bitflags",
+ "rayon",
+ "rustc-hash",
+ "tsrs_core",
+]
+
+[[package]]
 name = "typenum"
 version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4536,6 +4814,12 @@ name = "writeable"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
+
+[[package]]
+name = "xxhash-rust"
+version = "0.8.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "550a2b930b62486a393c52d5c3b84bff264b28aa437ed64694d31e93b1757af7"
 
 [[package]]
 name = "yoke"

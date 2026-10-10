@@ -1,0 +1,1909 @@
+{
+  "source": "no_unnecessary_template_expression_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "const string = 'a';"
+        },
+        {
+          "code": "const string = `a`;"
+        },
+        {
+          "code": "const string = `NaN: ${/* comment */ NaN}`;"
+        },
+        {
+          "code": "const string = `undefined: ${/* comment */ undefined}`;"
+        },
+        {
+          "code": "const string = `Infinity: ${Infinity /* comment */}`;"
+        },
+        {
+          "code": "\n      declare const string: 'a';\n      `${string}b`;\n    "
+        },
+        {
+          "code": "\n      declare const number: 1;\n      `${number}b`;\n    "
+        },
+        {
+          "code": "\n      declare const boolean: true;\n      `${boolean}b`;\n    "
+        },
+        {
+          "code": "\n      declare const nullish: null;\n      `${nullish}-undefined`;\n    "
+        },
+        {
+          "code": "\n      declare const undefinedish: undefined;\n      `${undefinedish}`;\n    "
+        },
+        {
+          "code": "\n      declare const left: 'a';\n      declare const right: 'b';\n      `${left}${right}`;\n    "
+        },
+        {
+          "code": "\n      declare const left: 'a';\n      declare const right: 'c';\n      `${left}b${right}`;\n    "
+        },
+        {
+          "code": "\n      declare const left: 'a';\n      declare const center: 'b';\n      declare const right: 'c';\n      `${left}${center}${right}`;\n    "
+        },
+        {
+          "code": "`1 + 1 = ${1 + 1}`;"
+        },
+        {
+          "code": "`true \u0026\u0026 false = ${true \u0026\u0026 false}`;"
+        },
+        {
+          "code": "tag`${'a'}${'b'}`;"
+        },
+        {
+          "code": "`${function () {}}`;"
+        },
+        {
+          "code": "`${() =\u003e {}}`;"
+        },
+        {
+          "code": "`${(...args: any[]) =\u003e args}`;"
+        },
+        {
+          "code": "\n      declare const number: 1;\n      `${number}`;\n    "
+        },
+        {
+          "code": "\n      declare const boolean: true;\n      `${boolean}`;\n    "
+        },
+        {
+          "code": "\n      declare const nullish: null;\n      `${nullish}`;\n    "
+        },
+        {
+          "code": "\n      declare const union: string | number;\n      `${union}`;\n    "
+        },
+        {
+          "code": "\n      declare const unknown: unknown;\n      `${unknown}`;\n    "
+        },
+        {
+          "code": "\n      declare const never: never;\n      `${never}`;\n    "
+        },
+        {
+          "code": "\n      declare const any: any;\n      `${any}`;\n    "
+        },
+        {
+          "code": "\n      function func\u003cT extends number\u003e(arg: T) {\n        `${arg}`;\n      }\n    "
+        },
+        {
+          "code": "\n      `with\n\n      new line`;\n    "
+        },
+        {
+          "code": "\n      declare const a: 'a';\n\n      `${a} with\n\n      new line`;\n    "
+        },
+        {
+          "code": "`with windows \r new line`;"
+        },
+        {
+          "code": "\n`not a useless ${String.raw`nested interpolation ${a}`}`;\n    "
+        },
+        {
+          "code": "\n`\nthis code has trailing whitespace: ${'    '}\n    `;\n    "
+        },
+        {
+          "code": "\n`\nthis code has trailing whitespace: ${`    `}\n    `;\n    "
+        },
+        {
+          "code": "`this code has trailing whitespace with a windows \\\r new line: ${' '}\r\n`;"
+        },
+        {
+          "code": "\n`trailing position interpolated empty string also makes whitespace clear    ${''}\n`;\n    "
+        },
+        {
+          "code": "\n`\n${/* intentional comment before */ 'bar'}\n...`;\n    "
+        },
+        {
+          "code": "\n`\n${'bar' /* intentional comment after */}\n...`;\n    "
+        },
+        {
+          "code": "\n`\n${/* intentional comment before */ 'bar' /* intentional comment after */}\n...`;\n    "
+        },
+        {
+          "code": "\n`${/* intentional  before */ 'bar'}`;\n    "
+        },
+        {
+          "code": "\n`${'bar' /* intentional comment after */}`;\n    "
+        },
+        {
+          "code": "\n`${/* intentional comment before */ 'bar' /* intentional comment after */}`;\n    "
+        },
+        {
+          "code": "\n`${\n  // intentional comment before\n  'bar'\n}`;\n    "
+        },
+        {
+          "code": "\n`${\n  'bar'\n  // intentional comment after\n}`;\n    "
+        },
+        {
+          "code": "\n      function getTpl\u003cT\u003e(input: T) {\n        return `${input}`;\n      }\n    "
+        },
+        {
+          "code": "\ntype FooBarBaz = `foo${/* comment */ 'bar'}\"baz\"`;\n    "
+        },
+        {
+          "code": "\nenum Foo {\n  A = 'A',\n  B = 'B',\n}\ntype Foos = `${Foo}`;\n    "
+        },
+        {
+          "code": "\ntype Foo = 'A' | 'B';\ntype Bar = `foo${Foo}foo`;\n    "
+        },
+        {
+          "code": "\ntype Foo =\n  `trailing position interpolated empty string also makes whitespace clear    ${''}\n`;\n    "
+        },
+        {
+          "code": "type Foo = `this code has trailing whitespace with a windows \\\r new line: ${` `}\r\n`;"
+        },
+        {
+          "code": "type Foo = `${'foo' | 'bar' | null}`;"
+        },
+        {
+          "code": "\ntype StringOrNumber = string | number;\ntype Foo = `${StringOrNumber}`;\n    "
+        },
+        {
+          "code": "\nenum Foo {\n  A = 1,\n  B = 2,\n}\ntype Bar = `${Foo.A}`;\n    "
+        },
+        {
+          "code": "\nenum Enum1 {\n  A = 'A1',\n  B = 'B1',\n}\n\nenum Enum2 {\n  A = 'A2',\n  B = 'B2',\n}\n\ntype Union = `${Enum1 | Enum2}`;\n    "
+        },
+        {
+          "code": "\nenum Enum1 {\n  A = 'A1',\n  B = 'B1',\n}\n\nenum Enum2 {\n  A = 'A2',\n  B = 'B2',\n}\n\ntype Union = `${Enum1.A | Enum2.B}`;\n    "
+        },
+        {
+          "code": "\nenum Enum1 {\n  A = 'A1',\n  B = 'B1',\n}\n\nenum Enum2 {\n  A = 'A2',\n  B = 'B2',\n}\ntype Enums = Enum1 | Enum2;\ntype Union = `${Enums}`;\n    "
+        },
+        {
+          "code": "\nenum Enum {\n  A = 'A',\n  B = 'A',\n}\n\ntype Intersection = `${Enum1.A \u0026 string}`;\n    "
+        },
+        {
+          "code": "\nenum Foo {\n  A = 'A',\n  B = 'B',\n}\ntype Bar = `${Foo.A}`;\n    "
+        },
+        {
+          "code": "\nfunction foo\u003cT extends string\u003e() {\n  const a: `${T}` = 'a';\n}\n    "
+        },
+        {
+          "code": "type T\u003cA extends string\u003e = `${A}`;"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "`${1}`;",
+          "output": [
+            "`1`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${1n}`;",
+          "output": [
+            "`1`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${0o25}`;",
+          "output": [
+            "`21`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${0b1010} ${0b1111}`;",
+          "output": [
+            "`10 15`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 12,
+              "endColumn": 21,
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${0x25}`;",
+          "output": [
+            "`37`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${/a/}`;",
+          "output": [
+            "`/a/`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${/a/gim}`;",
+          "output": [
+            "`/a/gim`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${    1    }`;",
+          "output": [
+            "`1`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${    'a'    }`;",
+          "output": [
+            "'a';"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${    \"a\"    }`;",
+          "output": [
+            "\"a\";"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${    'a' + 'b'    }`;",
+          "output": [
+            "'a' + 'b';"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${true}`;",
+          "output": [
+            "`true`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${    true    }`;",
+          "output": [
+            "`true`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${null}`;",
+          "output": [
+            "`null`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${    null    }`;",
+          "output": [
+            "`null`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${undefined}`;",
+          "output": [
+            "`undefined`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${    undefined    }`;",
+          "output": [
+            "`undefined`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${Infinity}`;",
+          "output": [
+            "`Infinity`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${NaN}`;",
+          "output": [
+            "`NaN`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${'a'} ${'b'}`;",
+          "output": [
+            "`a b`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 9,
+              "endColumn": 15,
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${   'a'   } ${   'b'   }`;",
+          "output": [
+            "`a b`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`use${'less'}`;",
+          "output": [
+            "`useless`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`use${`less`}`;",
+          "output": [
+            "`useless`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n`u${\n  // hopefully this comment is not needed.\n  'se'\n\n}${\n  `le${  `ss`  }`\n}`;\n      ",
+          "output": [
+            "\n`u${\n  // hopefully this comment is not needed.\n  'se'\n\n}le${  `ss`  }`;\n      ",
+            "\n`u${\n  // hopefully this comment is not needed.\n  'se'\n\n}less`;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 6,
+              "column": 2,
+              "endLine": 8,
+              "endColumn": 2,
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 7,
+              "column": 6,
+              "endLine": 7,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n`use${\n  `less`\n}`;\n      ",
+          "output": [
+            "\n`useless`;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 2,
+              "column": 5,
+              "endLine": 4,
+              "endColumn": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${'1 + 1 ='} ${2}`;",
+          "output": [
+            "`1 + 1 = 2`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 15,
+              "endColumn": 19,
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${'a'} ${true}`;",
+          "output": [
+            "`a true`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 9,
+              "endColumn": 16,
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${String(Symbol.for('test'))}`;",
+          "output": [
+            "String(Symbol.for('test'));"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 1,
+              "column": 2,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${'`'}`;",
+          "output": [
+            "'`';"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`back${'`'}tick`;",
+          "output": [
+            "`back\\`tick`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`dollar${'${`this is test`}'}sign`;",
+          "output": [
+            "`dollar\\${\\`this is test\\`}sign`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`complex${'`${\"`${test}`\"}`'}case`;",
+          "output": [
+            "`complex\\`\\${\"\\`\\${test}\\`\"}\\`case`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${'\\\\${test}'} string`;",
+          "output": [
+            "`some \\\\\\${test} string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${'\\\\`'} string`;",
+          "output": [
+            "`some \\\\\\` string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${/`/} string`;",
+          "output": [
+            "`some /\\`/ string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${/\\`/} string`;",
+          "output": [
+            "`some /\\\\\\`/ string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${/\\\\`/} string`;",
+          "output": [
+            "`some /\\\\\\\\\\`/ string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${/\\\\\\`/} string`;",
+          "output": [
+            "`some /\\\\\\\\\\\\\\`/ string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${/${}/} string`;",
+          "output": [
+            "`some /\\${}/ string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${/$ {}/} string`;",
+          "output": [
+            "`some /$ {}/ string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${/\\\\/} string`;",
+          "output": [
+            "`some /\\\\\\\\/ string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${/\\\\\\b/} string`;",
+          "output": [
+            "`some /\\\\\\\\\\\\b/ string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`some ${/\\\\\\\\/} string`;",
+          "output": [
+            "`some /\\\\\\\\\\\\\\\\/ string`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${''} `;",
+          "output": [
+            "`  `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${\"\"} `;",
+          "output": [
+            "`  `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${``} `;",
+          "output": [
+            "`  `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'\\`'} `;",
+          "output": [
+            "` \\` `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'\\\\`'} `;",
+          "output": [
+            "` \\\\\\` `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'$'}{} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'\\$'}{} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'\\\\$'}{} `;",
+          "output": [
+            "` \\\\\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'\\\\$ '}{} `;",
+          "output": [
+            "` \\\\$ {} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'\\\\\\$'}{} `;",
+          "output": [
+            "` \\\\\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` \\\\${'\\\\$'}{} `;",
+          "output": [
+            "` \\\\\\\\\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${'{$'}{} `;",
+          "output": [
+            "` \\${\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${'${$'}{} `;",
+          "output": [
+            "` $\\${\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'foo$'}{} `;",
+          "output": [
+            "` foo\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${`$`} `;",
+          "output": [
+            "` $ `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${`$`}{} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${`$`} {} `;",
+          "output": [
+            "` $ {} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${`$`}${undefined}{} `;",
+          "output": [
+            "` $undefined{} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${`foo$`}{} `;",
+          "output": [
+            "` foo\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'$'}${''}{} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'$'}${``}{} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'foo$'}${''}${``}{} `;",
+          "output": [
+            "` foo\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${'{}'} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${undefined}${'{}'} `;",
+          "output": [
+            "` $undefined{} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${''}${undefined}${'{}'} `;",
+          "output": [
+            "` $undefined{} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` \\$${'{}'} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${'foo'}${'{'} `;",
+          "output": [
+            "` $foo{ `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${'{ foo'}${'{'} `;",
+          "output": [
+            "` \\${ foo{ `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` \\\\$${'{}'} `;",
+          "output": [
+            "` \\\\\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` \\\\\\$${'{}'} `;",
+          "output": [
+            "` \\\\\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` foo$${'{}'} `;",
+          "output": [
+            "` foo\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${''}${'{}'} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${''} `;",
+          "output": [
+            "` $ `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${`{}`} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${``}${`{}`} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${``}${`foo{}`} `;",
+          "output": [
+            "` $foo{} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${`${''}${`${``}`}`}${`{a}`} `;",
+          "output": [
+            "` \\$${''}${`${``}`}{a} `;",
+            "` \\$${``}{a} `;",
+            "` \\${a} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${''}${`{}`} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${``}${'{}'} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` $${''}${``}${'{}'} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'$'} `;",
+          "output": [
+            "` $ `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'$'}${'{}'} `;",
+          "output": [
+            "` \\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'$'}${''}${'{'} `;",
+          "output": [
+            "` \\${ `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${`\n\\$`}{} `;",
+          "output": [
+            "` \n\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${`\n\\\\$`}{} `;",
+          "output": [
+            "` \n\\\\\\${} `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${'\\u00E5'}`;",
+          "output": [
+            "'\\u00E5';"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${'\\n'}`;",
+          "output": [
+            "'\\n';"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'\\u00E5'} `;",
+          "output": [
+            "` \\u00E5 `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'\\n'} `;",
+          "output": [
+            "` \\n `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${\"\\n\"} `;",
+          "output": [
+            "` \\n `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${`\\n`} `;",
+          "output": [
+            "` \\n `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${ 'A\\u0307\\u0323' } `;",
+          "output": [
+            "` A\\u0307\\u0323 `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'👨‍👩‍👧‍👦'} `;",
+          "output": [
+            "` 👨‍👩‍👧‍👦 `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "` ${'\\ud83d\\udc68'} `;",
+          "output": [
+            "` \\ud83d\\udc68 `;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n`\nthis code does not have trailing whitespace: ${' '}\\n even though it might look it.`;\n    ",
+          "output": [
+            "\n`\nthis code does not have trailing whitespace:  \\n even though it might look it.`;\n    "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n`\nthis code has trailing position template expression ${'but it isn\\'t whitespace'}\n    `;\n    ",
+          "output": [
+            "\n`\nthis code has trailing position template expression but it isn\\'t whitespace\n    `;\n    "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n`trailing whitespace followed by escaped windows newline: ${' '}\\r\\n`;\n    ",
+          "output": [
+            "\n`trailing whitespace followed by escaped windows newline:  \\r\\n`;\n    "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n`template literal with interpolations followed by newline: ${` ${'interpolation'} `}\n`;\n    ",
+          "output": [
+            "\n`template literal with interpolations followed by newline:  ${'interpolation'} \n`;\n    ",
+            "\n`template literal with interpolations followed by newline:  interpolation \n`;\n    "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function func\u003cT extends string\u003e(arg: T) {\n          `${arg}`;\n        }\n      ",
+          "output": [
+            "\n        function func\u003cT extends string\u003e(arg: T) {\n          arg;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 3,
+              "column": 12,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const b: 'b';\n        `a${b}${'c'}`;\n      ",
+          "output": [
+            "\n        declare const b: 'b';\n        `a${b}c`;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 3,
+              "column": 15,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const nested: string, interpolation: string;\n`use${`less${nested}${interpolation}`}`;\n      ",
+          "output": [
+            "\ndeclare const nested: string, interpolation: string;\n`useless${nested}${interpolation}`;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const string: 'a';\n        `${   string   }`;\n      ",
+          "output": [
+            "\n        declare const string: 'a';\n        string;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const string: 'a';\n        `${string}`;\n      ",
+          "output": [
+            "\n        declare const string: 'a';\n        string;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 3,
+              "column": 10,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const intersection: string \u0026 { _brand: 'test-brand' };\n        `${intersection}`;\n      ",
+          "output": [
+            "\n        declare const intersection: string \u0026 { _brand: 'test-brand' };\n        intersection;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 3,
+              "column": 10,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "true ? `${'test' || ''}`.trim() : undefined;",
+          "output": [
+            "true ? ('test' || '').trim() : undefined;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type Foo = `${1}`;",
+          "output": [
+            "type Foo = `1`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type Foo = `${null}`;",
+          "output": [
+            "type Foo = `null`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type Foo = `${undefined}`;",
+          "output": [
+            "type Foo = `undefined`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type Foo = `${'foo'}`;",
+          "output": [
+            "type Foo = 'foo';"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = 'A' | 'B';\ntype Bar = `${Foo}`;\n      ",
+          "output": [
+            "\ntype Foo = 'A' | 'B';\ntype Bar = Foo;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 3,
+              "column": 13,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = 'A' | 'B';\ntype Bar = `${`${Foo}`}`;\n      ",
+          "output": [
+            "\ntype Foo = 'A' | 'B';\ntype Bar = `${Foo}`;\n      ",
+            "\ntype Foo = 'A' | 'B';\ntype Bar = Foo;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 3,
+              "column": 13,
+              "endLine": 3,
+              "endColumn": 24,
+              "suggestions": []
+            },
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type FooBarBaz = `foo${'bar'}baz`;",
+          "output": [
+            "type FooBarBaz = `foobarbaz`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type FooBar = `foo${`bar`}`;",
+          "output": [
+            "type FooBar = `foobar`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type FooBar = `${'foo' | 'bar'}`;",
+          "output": [
+            "type FooBar = 'foo' | 'bar';"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${0.000001}`;",
+          "output": [
+            "`0.000001`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${0.0000001}`;",
+          "output": [
+            "`1e-7`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${0x20000000000001}`;",
+          "output": [
+            "`9007199254740992`;"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "`${'abc' || 'def'}`[0];",
+          "output": [
+            "('abc' || 'def')[0];"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const value = \"foo\" + `${cond ? \"bar\" : \"baz\"}`;",
+          "output": [
+            "const value = \"foo\" + (cond ? \"bar\" : \"baz\");"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "declare const a: string;\n`${a || 'b'}` ?? 'c';",
+          "output": [
+            "declare const a: string;\n(a || 'b') ?? 'c';"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "declare const b: string;\n'a' ?? `${b \u0026\u0026 'c'}`;",
+          "output": [
+            "declare const b: string;\n'a' ?? (b \u0026\u0026 'c');"
+          ],
+          "errors": [
+            {
+              "messageId": "noUnnecessaryTemplateExpression",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

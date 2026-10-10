@@ -1,0 +1,362 @@
+{
+  "source": "no_mixed_enums_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n      enum Fruit {}\n    "
+        },
+        {
+          "code": "\n      enum Fruit {\n        Apple,\n      }\n    "
+        },
+        {
+          "code": "\n      enum Fruit {\n        Apple = false,\n      }\n    "
+        },
+        {
+          "code": "\n      enum Fruit {\n        Apple,\n        Banana,\n      }\n    "
+        },
+        {
+          "code": "\n      enum Fruit {\n        Apple = 0,\n        Banana,\n      }\n    "
+        },
+        {
+          "code": "\n      enum Fruit {\n        Apple,\n        Banana = 1,\n      }\n    "
+        },
+        {
+          "code": "\n      enum Fruit {\n        Apple = 0,\n        Banana = 1,\n      }\n    "
+        },
+        {
+          "code": "\n      enum Fruit {\n        Apple,\n        Banana = false,\n      }\n    "
+        },
+        {
+          "code": "\n      const getValue = () =\u003e 0;\n      enum Fruit {\n        Apple,\n        Banana = getValue(),\n      }\n    "
+        },
+        {
+          "code": "\n      const getValue = () =\u003e 0;\n      enum Fruit {\n        Apple = getValue(),\n        Banana = getValue(),\n      }\n    "
+        },
+        {
+          "code": "\n      const getValue = () =\u003e '';\n      enum Fruit {\n        Apple = '',\n        Banana = getValue(),\n      }\n    "
+        },
+        {
+          "code": "\n      const getValue = () =\u003e '';\n      enum Fruit {\n        Apple = getValue(),\n        Banana = '',\n      }\n    "
+        },
+        {
+          "code": "\n      const getValue = () =\u003e '';\n      enum Fruit {\n        Apple = getValue(),\n        Banana = getValue(),\n      }\n    "
+        },
+        {
+          "code": "\n      enum First {\n        A = 1,\n      }\n\n      enum Second {\n        A = First.A,\n        B = 2,\n      }\n    "
+        },
+        {
+          "code": "\n      enum First {\n        A = '',\n      }\n\n      enum Second {\n        A = First.A,\n        B = 'b',\n      }\n    "
+        },
+        {
+          "code": "\n      enum Foo {\n        A,\n      }\n      enum Foo {\n        B,\n      }\n    "
+        },
+        {
+          "code": "\n      enum Foo {\n        A = 0,\n      }\n      enum Foo {\n        B,\n      }\n    "
+        },
+        {
+          "code": "\n      enum Foo {\n        A,\n      }\n      enum Foo {\n        B = 1,\n      }\n    "
+        },
+        {
+          "code": "\n      enum Foo {\n        A = 0,\n      }\n      enum Foo {\n        B = 1,\n      }\n    "
+        },
+        {
+          "code": "\n      enum Foo {\n        A = 'a',\n      }\n      enum Foo {\n        B = 'b',\n      }\n    "
+        },
+        {
+          "code": "\n      declare const Foo: any;\n      enum Foo {\n        A,\n      }\n    "
+        },
+        {
+          "code": "\nenum Foo {\n  A = 1,\n}\nenum Foo {\n  B = 2,\n}\n    "
+        },
+        {
+          "code": "\nenum Foo {\n  A = `A`,\n}\nenum Foo {\n  B = `B`,\n}\n    "
+        },
+        {
+          "code": "\nenum Foo {\n  A = false, // (TS error)\n}\nenum Foo {\n  B = `B`,\n}\n    "
+        },
+        {
+          "code": "\nenum Foo {\n  A = 'A',\n}\nenum Foo {\n  B = false, // (TS error)\n}\n    "
+        },
+        {
+          "code": "\nimport { Enum } from './mixed-enums-decl';\n\ndeclare module './mixed-enums-decl' {\n  enum Enum {\n    StringLike = 'StringLike',\n  }\n}\n    "
+        },
+        {
+          "code": "\nimport { Enum } from \"module-that-does't-exist\";\n\ndeclare module \"module-that-doesn't-exist\" {\n  enum Enum {\n    StringLike = 'StringLike',\n  }\n}\n    "
+        },
+        {
+          "code": "\nnamespace Test {\n  export enum Bar {\n    A = 1,\n  }\n}\nnamespace Test {\n  export enum Bar {\n    B = 2,\n  }\n}\n    "
+        },
+        {
+          "code": "\nnamespace Outer {\n  namespace Test {\n    export enum Bar {\n      A = 1,\n    }\n  }\n}\nnamespace Outer {\n  namespace Test {\n    export enum Bar {\n      B = 'B',\n    }\n  }\n}\n    "
+        },
+        {
+          "code": "\nnamespace Outer {\n  namespace Test {\n    export enum Bar {\n      A = 1,\n    }\n  }\n}\nnamespace Different {\n  namespace Test {\n    export enum Bar {\n      B = 'B',\n    }\n  }\n}\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\n        enum Fruit {\n          Apple,\n          Banana = 'banana',\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 4,
+              "column": 20,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Fruit {\n          Apple,\n          Banana = 'banana',\n          Cherry = 'cherry',\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 4,
+              "column": 20,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Fruit {\n          Apple,\n          Banana,\n          Cherry = 'cherry',\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 5,
+              "column": 20,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Fruit {\n          Apple = 0,\n          Banana = 'banana',\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 4,
+              "column": 20,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const getValue = () =\u003e 0;\n        enum Fruit {\n          Apple = getValue(),\n          Banana = 'banana',\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 5,
+              "column": 20,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const getValue = () =\u003e '';\n        enum Fruit {\n          Apple,\n          Banana = getValue(),\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 5,
+              "column": 20,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const getValue = () =\u003e '';\n        enum Fruit {\n          Apple = getValue(),\n          Banana = 0,\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 5,
+              "column": 20,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum First {\n          A = 1,\n        }\n\n        enum Second {\n          A = First.A,\n          B = 'b',\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 8,
+              "column": 15,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum First {\n          A = 'a',\n        }\n\n        enum Second {\n          A = First.A,\n          B = 1,\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 8,
+              "column": 15,
+              "endColumn": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          A,\n        }\n        enum Foo {\n          B = 'b',\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 6,
+              "column": 15,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          A = 1,\n        }\n        enum Foo {\n          B = 'b',\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 6,
+              "column": 15,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          A = 'a',\n        }\n        enum Foo {\n          B,\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 6,
+              "column": 11,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          A = 'a',\n        }\n        enum Foo {\n          B = 0,\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 6,
+              "column": 15,
+              "endColumn": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          A,\n        }\n        enum Foo {\n          B = 'b',\n        }\n        enum Foo {\n          C = 'c',\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 6,
+              "column": 15,
+              "endColumn": 18,
+              "suggestions": []
+            },
+            {
+              "messageId": "mixed",
+              "line": 9,
+              "column": 15,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          A,\n        }\n        enum Foo {\n          B = 'b',\n        }\n        enum Foo {\n          C,\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 6,
+              "column": 15,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          A,\n        }\n        enum Foo {\n          B,\n        }\n        enum Foo {\n          C = 'c',\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 9,
+              "column": 15,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nimport { Enum } from './mixed-enums-decl';\n\ndeclare module './mixed-enums-decl' {\n  enum Enum {\n    Numeric = 0,\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 6,
+              "column": 15,
+              "endColumn": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nenum Foo {\n  A = 1,\n}\nenum Foo {\n  B = 'B',\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 6,
+              "column": 7,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nnamespace Test {\n  export enum Bar {\n    A = 1,\n  }\n}\nnamespace Test {\n  export enum Bar {\n    B = 'B',\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 9,
+              "column": 9,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nnamespace Test {\n  export enum Bar {\n    A,\n  }\n}\nnamespace Test {\n  export enum Bar {\n    B = 'B',\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 9,
+              "column": 9,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nnamespace Outer {\n  export namespace Test {\n    export enum Bar {\n      A = 1,\n    }\n  }\n}\nnamespace Outer {\n  export namespace Test {\n    export enum Bar {\n      B = 'B',\n    }\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mixed",
+              "line": 12,
+              "column": 11,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

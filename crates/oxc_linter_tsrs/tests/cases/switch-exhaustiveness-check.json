@@ -1,0 +1,1286 @@
+{
+  "source": "switch_exhaustiveness_check_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ntype Day =\n  | 'Monday'\n  | 'Tuesday'\n  | 'Wednesday'\n  | 'Thursday'\n  | 'Friday'\n  | 'Saturday'\n  | 'Sunday';\n\nconst day = 'Monday' as Day;\nlet result = 0;\n\nswitch (day) {\n  case 'Monday': {\n    result = 1;\n    break;\n  }\n  case 'Tuesday': {\n    result = 2;\n    break;\n  }\n  case 'Wednesday': {\n    result = 3;\n    break;\n  }\n  case 'Thursday': {\n    result = 4;\n    break;\n  }\n  case 'Friday': {\n    result = 5;\n    break;\n  }\n  case 'Saturday': {\n    result = 6;\n    break;\n  }\n  case 'Sunday': {\n    result = 7;\n    break;\n  }\n}\n    "
+        },
+        {
+          "code": "\ntype Num = 0 | 1 | 2;\n\nfunction test(value: Num): number {\n  switch (value) {\n    case 0:\n      return 0;\n    case 1:\n      return 1;\n    case 2:\n      return 2;\n  }\n}\n    "
+        },
+        {
+          "code": "\ntype Bool = true | false;\n\nfunction test(value: Bool): number {\n  switch (value) {\n    case true:\n      return 1;\n    case false:\n      return 0;\n  }\n}\n    "
+        },
+        {
+          "code": "\ntype Mix = 0 | 1 | 'two' | 'three' | true;\n\nfunction test(value: Mix): number {\n  switch (value) {\n    case 0:\n      return 0;\n    case 1:\n      return 1;\n    case 'two':\n      return 2;\n    case 'three':\n      return 3;\n    case true:\n      return 4;\n  }\n}\n    "
+        },
+        {
+          "code": "\ntype A = 'a';\ntype B = 'b';\ntype C = 'c';\ntype Union = A | B | C;\n\nfunction test(value: Union): number {\n  switch (value) {\n    case 'a':\n      return 1;\n    case 'b':\n      return 2;\n    case 'c':\n      return 3;\n  }\n}\n    "
+        },
+        {
+          "code": "\nconst A = 'a';\nconst B = 1;\nconst C = true;\n\ntype Union = typeof A | typeof B | typeof C;\n\nfunction test(value: Union): number {\n  switch (value) {\n    case 'a':\n      return 1;\n    case 1:\n      return 2;\n    case true:\n      return 3;\n  }\n}\n    "
+        },
+        {
+          "code": "\ntype Day =\n  | 'Monday'\n  | 'Tuesday'\n  | 'Wednesday'\n  | 'Thursday'\n  | 'Friday'\n  | 'Saturday'\n  | 'Sunday';\n\nconst day = 'Monday' as Day;\nlet result = 0;\n\nswitch (day) {\n  case 'Monday': {\n    result = 1;\n    break;\n  }\n  default: {\n    result = 42;\n  }\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": true
+          }
+        },
+        {
+          "code": "\nconst day = 'Monday' as string;\nlet result = 0;\n\nswitch (day) {\n  case 'Monday': {\n    result = 1;\n    break;\n  }\n  case 'Tuesday': {\n    result = 2;\n    break;\n  }\n}\n    "
+        },
+        {
+          "code": "\nenum Enum {\n  A,\n  B,\n}\n\nfunction test(value: Enum): number {\n  switch (value) {\n    case Enum.A:\n      return 1;\n    case Enum.B:\n      return 2;\n  }\n}\n    "
+        },
+        {
+          "code": "\ntype ObjectUnion = { a: 1 } | { b: 2 };\n\nfunction test(value: ObjectUnion): number {\n  switch (value.a) {\n    case 1:\n      return 1;\n  }\n}\n    "
+        },
+        {
+          "code": "\ndeclare const value: number;\nswitch (value) {\n  case 0:\n    return 0;\n  case 1:\n    return 1;\n  default:\n    return -1;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: string;\nswitch (value) {\n  case 'foo':\n    return 0;\n  case 'bar':\n    return 1;\n  default:\n    return -1;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: number;\nswitch (value) {\n  case 0:\n    return 0;\n  case 1:\n    return 1;\n  default:\n    return -1;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: bigint;\nswitch (value) {\n  case 0:\n    return 0;\n  case 1:\n    return 1;\n  default:\n    return -1;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: symbol;\nconst foo = Symbol('foo');\nswitch (value) {\n  case foo:\n    return 0;\n  default:\n    return -1;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: 0 | 1 | number;\nswitch (value) {\n  case 0:\n    return 0;\n  case 1:\n    return 1;\n  default:\n    return -1;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: 'literal';\nswitch (value) {\n  case 'literal':\n    return 0;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: null;\nswitch (value) {\n  case null:\n    return 0;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: undefined;\nswitch (value) {\n  case undefined:\n    return 0;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: null | undefined;\nswitch (value) {\n  case null:\n    return 0;\n  case undefined:\n    return 0;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: 'literal' \u0026 { _brand: true };\nswitch (value) {\n  case 'literal':\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: ('literal' \u0026 { _brand: true }) | 1;\nswitch (value) {\n  case 'literal':\n    break;\n  case 1:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: (1 \u0026 { _brand: true }) | 'literal' | null;\nswitch (value) {\n  case 'literal':\n    break;\n  case 1:\n    break;\n  case null:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: '1' | '2' | number;\nswitch (value) {\n  case '1':\n    break;\n  case '2':\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: '1' | '2' | number;\nswitch (value) {\n  case '1':\n    break;\n  case '2':\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: '1' | '2' | number;\nswitch (value) {\n  case '1':\n    break;\n  case '2':\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: '1' | '2' | (number \u0026 { foo: 'bar' });\nswitch (value) {\n  case '1':\n    break;\n  case '2':\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: '1' | '2' | number;\nswitch (value) {\n  case '1':\n    break;\n  case '2':\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: number | null | undefined;\nswitch (value) {\n  case null:\n    break;\n  case undefined:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "considerDefaultExhaustiveForUnions": true,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: '1' | '2' | number;\nswitch (value) {\n  case '1':\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "considerDefaultExhaustiveForUnions": true,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: (string \u0026 { foo: 'bar' }) | '1';\nswitch (value) {\n  case '1':\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\nconst a = Symbol('a');\ndeclare const value: typeof a | 2;\nswitch (value) {\n  case a:\n    break;\n  case 2:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: string | number;\nswitch (value) {\n  case 1:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: string | number;\nswitch (value) {\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: string | number;\nswitch (value) {\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: number;\ndeclare const a: number;\nswitch (value) {\n  case a:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: bigint;\nswitch (value) {\n  case 10n:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: symbol;\nconst a = Symbol('a');\nswitch (value) {\n  case a:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const value: symbol;\nconst a = Symbol('a');\nswitch (value) {\n  case a:\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\nconst a = Symbol('a');\ndeclare const value: typeof a | string;\nswitch (value) {\n  case a:\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\nconst a = Symbol('a');\ndeclare const value: typeof a | string;\nswitch (value) {\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "considerDefaultExhaustiveForUnions": true,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: boolean | 1;\nswitch (value) {\n  case 1:\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "considerDefaultExhaustiveForUnions": true,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: boolean | 1;\nswitch (value) {\n  case 1:\n    break;\n  case true:\n    break;\n  case false:\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\nenum Aaa {\n  Foo,\n  Bar,\n}\ndeclare const value: Aaa | 1;\nswitch (value) {\n  case 1:\n    break;\n  case Aaa.Foo:\n    break;\n  case Aaa.Bar:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": false
+          }
+        },
+        {
+          "code": "\ndeclare const literal: 'a' | 'b';\nswitch (literal) {\n  case 'a':\n    break;\n  case 'b':\n    break;\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": true,
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const literal: 'a' | 'b';\nswitch (literal) {\n  case 'a':\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": true
+          }
+        },
+        {
+          "code": "\ndeclare const literal: 'a' | 'b';\nswitch (literal) {\n  case 'a':\n    break;\n  case 'b':\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false
+          }
+        },
+        {
+          "code": "\nenum MyEnum {\n  Foo = 'Foo',\n  Bar = 'Bar',\n  Baz = 'Baz',\n}\n\ndeclare const myEnum: MyEnum;\n\nswitch (myEnum) {\n  case MyEnum.Foo:\n    break;\n  case MyEnum.Bar:\n    break;\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: boolean;\nswitch (value) {\n  case false:\n    break;\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": true
+          }
+        },
+        {
+          "code": "\nfunction foo(x: string[]) {\n  switch (x[0]) {\n    case 'hi':\n      break;\n    case undefined:\n      break;\n  }\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\nfunction foo(x: string[], y: string | undefined) {\n  const a = x[0];\n  if (typeof a === 'string') {\n    return;\n  }\n  switch (y) {\n    case 'hi':\n      break;\n    case a:\n      break;\n  }\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ndeclare const value: number;\nswitch (value) {\n  case 0:\n    break;\n  case 1:\n    break;\n  // no default\n}\n      ",
+          "options": {
+            "requireDefaultForNonUnion": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: 'a' | 'b';\nswitch (value) {\n  case 'a':\n    break;\n  // no default\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": true
+          }
+        },
+        {
+          "code": "\ndeclare const value: 'a' | 'b';\nswitch (value) {\n  case 'a':\n    break;\n  // skip default\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": true,
+            "defaultCaseCommentPattern": "^skip\\sdefault"
+          }
+        },
+        {
+          "code": "\ndeclare const value: number;\nswitch (value) {\n  case 0:\n    break;\n  case 1:\n    break;\n  // no default\n  // TODO: add another case\n}\n      ",
+          "options": {
+            "requireDefaultForNonUnion": true
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const value: 'literal';\nswitch (value) {\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: 'literal';\nswitch (value) {\ncase \"literal\": { throw new Error('Not implemented yet: \"literal\" case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: 'literal' \u0026 { _brand: true };\nswitch (value) {\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: 'literal' \u0026 { _brand: true };\nswitch (value) {\ncase \"literal\": { throw new Error('Not implemented yet: \"literal\" case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: ('literal' \u0026 { _brand: true }) | 1;\nswitch (value) {\n  case 'literal':\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: ('literal' \u0026 { _brand: true }) | 1;\nswitch (value) {\n  case 'literal':\n    break;\n  case 1: { throw new Error('Not implemented yet: 1 case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: '1' | '2' | number;\nswitch (value) {\n  case '1':\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": false
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: '1' | '2' | number;\nswitch (value) {\n  case '1':\n    break;\n  case \"2\": { throw new Error('Not implemented yet: \"2\" case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: '1' | '2' | number;\nswitch (value) {\n  case '1':\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: '1' | '2' | number;\nswitch (value) {\n  case '1':\n    break;\n  case \"2\": { throw new Error('Not implemented yet: \"2\" case') }\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: '1' | '2' | number;\nswitch (value) {\n  case '1':\n    break;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: (string \u0026 { foo: 'bar' }) | '1';\nswitch (value) {\n  case '1':\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: (string \u0026 { foo: 'bar' }) | '1';\nswitch (value) {\n  case '1':\n    break;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: (string \u0026 { foo: 'bar' }) | '1' | 1 | null | undefined;\nswitch (value) {\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: (string \u0026 { foo: 'bar' }) | '1' | 1 | null | undefined;\nswitch (value) {\ncase undefined: { throw new Error('Not implemented yet: undefined case') }\ncase null: { throw new Error('Not implemented yet: null case') }\ncase \"1\": { throw new Error('Not implemented yet: \"1\" case') }\ncase 1: { throw new Error('Not implemented yet: 1 case') }\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: (string \u0026 { foo: 'bar' }) | '1' | 1 | null | undefined;\nswitch (value) {\ndefault: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: string | number;\nswitch (value) {\n  case 1:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: string | number;\nswitch (value) {\n  case 1:\n    break;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: number;\ndeclare const a: number;\nswitch (value) {\n  case a:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 4,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: number;\ndeclare const a: number;\nswitch (value) {\n  case a:\n    break;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: bigint;\nswitch (value) {\n  case 10n:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: bigint;\nswitch (value) {\n  case 10n:\n    break;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: symbol;\nconst a = Symbol('a');\nswitch (value) {\n  case a:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 4,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: symbol;\nconst a = Symbol('a');\nswitch (value) {\n  case a:\n    break;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst a = Symbol('aa');\nconst b = Symbol('bb');\ndeclare const value: typeof a | typeof b | 1;\nswitch (value) {\n  case 1:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 5,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nconst a = Symbol('aa');\nconst b = Symbol('bb');\ndeclare const value: typeof a | typeof b | 1;\nswitch (value) {\n  case 1:\n    break;\n  case a: { throw new Error('Not implemented yet: a case') }\n  case b: { throw new Error('Not implemented yet: b case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst a = Symbol('a');\ndeclare const value: typeof a | string;\nswitch (value) {\n  case a:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 4,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nconst a = Symbol('a');\ndeclare const value: typeof a | string;\nswitch (value) {\n  case a:\n    break;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: boolean;\nswitch (value) {\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: boolean;\nswitch (value) {\ncase false: { throw new Error('Not implemented yet: false case') }\ncase true: { throw new Error('Not implemented yet: true case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: boolean | 1;\nswitch (value) {\n  case false:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: boolean | 1;\nswitch (value) {\n  case false:\n    break;\n  case 1: { throw new Error('Not implemented yet: 1 case') }\n  case true: { throw new Error('Not implemented yet: true case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: boolean | number;\nswitch (value) {\n  case 1:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: boolean | number;\nswitch (value) {\n  case 1:\n    break;\n  case false: { throw new Error('Not implemented yet: false case') }\n  case true: { throw new Error('Not implemented yet: true case') }\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: boolean | number;\nswitch (value) {\n  case 1:\n    break;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: object;\nswitch (value) {\n  case 1:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: object;\nswitch (value) {\n  case 1:\n    break;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nenum Aaa {\n  Foo,\n  Bar,\n}\ndeclare const value: Aaa | 1 | string;\nswitch (value) {\n  case 1:\n    break;\n  case Aaa.Foo:\n    break;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 7,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nenum Aaa {\n  Foo,\n  Bar,\n}\ndeclare const value: Aaa | 1 | string;\nswitch (value) {\n  case 1:\n    break;\n  case Aaa.Foo:\n    break;\n  case Aaa.Bar: { throw new Error('Not implemented yet: Aaa.Bar case') }\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 7,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nenum Aaa {\n  Foo,\n  Bar,\n}\ndeclare const value: Aaa | 1 | string;\nswitch (value) {\n  case 1:\n    break;\n  case Aaa.Foo:\n    break;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype Day =\n  | 'Monday'\n  | 'Tuesday'\n  | 'Wednesday'\n  | 'Thursday'\n  | 'Friday'\n  | 'Saturday'\n  | 'Sunday';\n\nconst day = 'Monday' as Day;\nlet result = 0;\n\nswitch (day) {\n  case 'Monday': {\n    result = 1;\n    break;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 14,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ntype Day =\n  | 'Monday'\n  | 'Tuesday'\n  | 'Wednesday'\n  | 'Thursday'\n  | 'Friday'\n  | 'Saturday'\n  | 'Sunday';\n\nconst day = 'Monday' as Day;\nlet result = 0;\n\nswitch (day) {\n  case 'Monday': {\n    result = 1;\n    break;\n  }\n  case \"Friday\": { throw new Error('Not implemented yet: \"Friday\" case') }\n  case \"Saturday\": { throw new Error('Not implemented yet: \"Saturday\" case') }\n  case \"Sunday\": { throw new Error('Not implemented yet: \"Sunday\" case') }\n  case \"Thursday\": { throw new Error('Not implemented yet: \"Thursday\" case') }\n  case \"Tuesday\": { throw new Error('Not implemented yet: \"Tuesday\" case') }\n  case \"Wednesday\": { throw new Error('Not implemented yet: \"Wednesday\" case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nenum Enum {\n  A,\n  B,\n}\n\nfunction test(value: Enum): number {\n  switch (value) {\n    case Enum.A:\n      return 1;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 8,
+              "column": 11,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nenum Enum {\n  A,\n  B,\n}\n\nfunction test(value: Enum): number {\n  switch (value) {\n    case Enum.A:\n      return 1;\n    case Enum.B: { throw new Error('Not implemented yet: Enum.B case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'a';\ntype B = 'b';\ntype C = 'c';\ntype Union = A | B | C;\n\nfunction test(value: Union): number {\n  switch (value) {\n    case 'a':\n      return 1;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 8,
+              "column": 11,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ntype A = 'a';\ntype B = 'b';\ntype C = 'c';\ntype Union = A | B | C;\n\nfunction test(value: Union): number {\n  switch (value) {\n    case 'a':\n      return 1;\n    case \"b\": { throw new Error('Not implemented yet: \"b\" case') }\n    case \"c\": { throw new Error('Not implemented yet: \"c\" case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst A = 'a';\nconst B = 1;\nconst C = true;\n\ntype Union = typeof A | typeof B | typeof C;\n\nfunction test(value: Union): number {\n  switch (value) {\n    case 'a':\n      return 1;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 9,
+              "column": 11,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nconst A = 'a';\nconst B = 1;\nconst C = true;\n\ntype Union = typeof A | typeof B | typeof C;\n\nfunction test(value: Union): number {\n  switch (value) {\n    case 'a':\n      return 1;\n    case 1: { throw new Error('Not implemented yet: 1 case') }\n    case true: { throw new Error('Not implemented yet: true case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype DiscriminatedUnion = { type: 'A'; a: 1 } | { type: 'B'; b: 2 };\n\nfunction test(value: DiscriminatedUnion): number {\n  switch (value.type) {\n    case 'A':\n      return 1;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 5,
+              "column": 11,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ntype DiscriminatedUnion = { type: 'A'; a: 1 } | { type: 'B'; b: 2 };\n\nfunction test(value: DiscriminatedUnion): number {\n  switch (value.type) {\n    case 'A':\n      return 1;\n    case \"B\": { throw new Error('Not implemented yet: \"B\" case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype Day =\n  | 'Monday'\n  | 'Tuesday'\n  | 'Wednesday'\n  | 'Thursday'\n  | 'Friday'\n  | 'Saturday'\n  | 'Sunday';\n\nconst day = 'Monday' as Day;\n\nswitch (day) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 13,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ntype Day =\n  | 'Monday'\n  | 'Tuesday'\n  | 'Wednesday'\n  | 'Thursday'\n  | 'Friday'\n  | 'Saturday'\n  | 'Sunday';\n\nconst day = 'Monday' as Day;\n\nswitch (day) {\ncase \"Friday\": { throw new Error('Not implemented yet: \"Friday\" case') }\ncase \"Monday\": { throw new Error('Not implemented yet: \"Monday\" case') }\ncase \"Saturday\": { throw new Error('Not implemented yet: \"Saturday\" case') }\ncase \"Sunday\": { throw new Error('Not implemented yet: \"Sunday\" case') }\ncase \"Thursday\": { throw new Error('Not implemented yet: \"Thursday\" case') }\ncase \"Tuesday\": { throw new Error('Not implemented yet: \"Tuesday\" case') }\ncase \"Wednesday\": { throw new Error('Not implemented yet: \"Wednesday\" case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst a = Symbol('a');\nconst b = Symbol('b');\nconst c = Symbol('c');\n\ntype T = typeof a | typeof b | typeof c;\n\nfunction test(value: T): number {\n  switch (value) {\n    case a:\n      return 1;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 9,
+              "column": 11,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nconst a = Symbol('a');\nconst b = Symbol('b');\nconst c = Symbol('c');\n\ntype T = typeof a | typeof b | typeof c;\n\nfunction test(value: T): number {\n  switch (value) {\n    case a:\n      return 1;\n    case b: { throw new Error('Not implemented yet: b case') }\n    case c: { throw new Error('Not implemented yet: c case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype T = 1 | 2;\n\nfunction test(value: T): number {\n  switch (value) {\n    case 1:\n      return 1;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ntype T = 1 | 2;\n\nfunction test(value: T): number {\n  switch (value) {\n    case 1:\n      return 1;\n    case 2: { throw new Error('Not implemented yet: 2 case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype T = 1 | 2;\n\nfunction test(value: T): number {\n  switch (value) {\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ntype T = 1 | 2;\n\nfunction test(value: T): number {\n  switch (value) {\n  case 1: { throw new Error('Not implemented yet: 1 case') }\n  case 2: { throw new Error('Not implemented yet: 2 case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nexport enum Enum {\n  'test-test' = 'test-test',\n  'test' = 'test',\n}\n\nfunction test(arg: Enum): string {\n  switch (arg) {\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nexport enum Enum {\n  'test-test' = 'test-test',\n  'test' = 'test',\n}\n\nfunction test(arg: Enum): string {\n  switch (arg) {\n  case Enum['test-test']: { throw new Error('Not implemented yet: Enum[\\'test-test\\'] case') }\n  case Enum.test: { throw new Error('Not implemented yet: Enum.test case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nexport enum Enum {\n  '' = 'test-test',\n  'test' = 'test',\n}\n\nfunction test(arg: Enum): string {\n  switch (arg) {\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nexport enum Enum {\n  '' = 'test-test',\n  'test' = 'test',\n}\n\nfunction test(arg: Enum): string {\n  switch (arg) {\n  case Enum['']: { throw new Error('Not implemented yet: Enum[\\'\\'] case') }\n  case Enum.test: { throw new Error('Not implemented yet: Enum.test case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nexport enum Enum {\n  '9test' = 'test-test',\n  'test' = 'test',\n}\n\nfunction test(arg: Enum): string {\n  switch (arg) {\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nexport enum Enum {\n  '9test' = 'test-test',\n  'test' = 'test',\n}\n\nfunction test(arg: Enum): string {\n  switch (arg) {\n  case Enum['9test']: { throw new Error('Not implemented yet: Enum[\\'9test\\'] case') }\n  case Enum.test: { throw new Error('Not implemented yet: Enum.test case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst value: number = Math.floor(Math.random() * 3);\nswitch (value) {\n  case 0:\n    return 0;\n  case 1:\n    return 1;\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": true,
+            "requireDefaultForNonUnion": true
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nconst value: number = Math.floor(Math.random() * 3);\nswitch (value) {\n  case 0:\n    return 0;\n  case 1:\n    return 1;\n  default: { throw new Error('default case') }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Enum {\n          'a' = 1,\n          [`key-with\n\n          new-line`] = 2,\n        }\n\n        declare const a: Enum;\n\n        switch (a) {\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\n        enum Enum {\n          'a' = 1,\n          [`key-with\n\n          new-line`] = 2,\n        }\n\n        declare const a: Enum;\n\n        switch (a) {\n        case Enum.a: { throw new Error('Not implemented yet: Enum.a case') }\n        case Enum['key-with\\n\\n          new-line']: { throw new Error('Not implemented yet: Enum[\\'key-with\\\\n\\\\n          new-line\\'] case') }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Enum {\n          'a' = 1,\n          \"'a' `b` \\\"c\\\"\" = 2,\n        }\n\n        declare const a: Enum;\n\n        switch (a) {}\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\n        enum Enum {\n          'a' = 1,\n          \"'a' `b` \\\"c\\\"\" = 2,\n        }\n\n        declare const a: Enum;\n\n        switch (a) {\n        case Enum.a: { throw new Error('Not implemented yet: Enum.a case') }\n        case Enum['\\'a\\' `b` \"c\"']: { throw new Error('Not implemented yet: Enum[\\'\\\\\\'a\\\\\\' `b` \"c\"\\'] case') }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype MyUnion = 'foo' | 'bar' | 'baz';\n\ndeclare const myUnion: MyUnion;\n\nswitch (myUnion) {\n  case 'foo':\n  case 'bar':\n  case 'baz': {\n    break;\n  }\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          },
+          "errors": [
+            {
+              "messageId": "dangerousDefaultCase",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nenum MyEnum {\n  Foo = 'Foo',\n  Bar = 'Bar',\n  Baz = 'Baz',\n}\n\ndeclare const myEnum: MyEnum;\n\nswitch (myEnum) {\n  case MyEnum.Foo:\n  case MyEnum.Bar:\n  case MyEnum.Baz: {\n    break;\n  }\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          },
+          "errors": [
+            {
+              "messageId": "dangerousDefaultCase",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nenum MyEnum {\n  Foo,\n  Bar,\n  Baz,\n}\n\ndeclare const myEnum: MyEnum;\n\nswitch (myEnum) {\n  case MyEnum.Foo:\n  case MyEnum.Bar:\n  case MyEnum.Baz: {\n    break;\n  }\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          },
+          "errors": [
+            {
+              "messageId": "dangerousDefaultCase",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const myBoolean: boolean;\n\nswitch (myBoolean) {\n  case true:\n  case false: {\n    break;\n  }\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          },
+          "errors": [
+            {
+              "messageId": "dangerousDefaultCase",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const myValue: undefined;\n\nswitch (myValue) {\n  case undefined: {\n    break;\n  }\n\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          },
+          "errors": [
+            {
+              "messageId": "dangerousDefaultCase",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const myValue: null;\n\nswitch (myValue) {\n  case null: {\n    break;\n  }\n\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          },
+          "errors": [
+            {
+              "messageId": "dangerousDefaultCase",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const myValue: 'foo' | boolean | undefined | null;\n\nswitch (myValue) {\n  case 'foo':\n  case true:\n  case false:\n  case undefined:\n  case null: {\n    break;\n  }\n\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false,
+            "requireDefaultForNonUnion": false
+          },
+          "errors": [
+            {
+              "messageId": "dangerousDefaultCase",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const literal: 'a' | 'b';\n\nswitch (literal) {\n  case 'a':\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": false
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 4,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const literal: 'a' | 'b';\n\nswitch (literal) {\n  case 'a':\n    break;\n  case \"b\": { throw new Error('Not implemented yet: \"b\" case') }\n  default:\n    break;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const literal: 'a' | 'b';\n\nswitch (literal) {\n  case 'a':\n    break;\n}\n",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 4,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const literal: 'a' | 'b';\n\nswitch (literal) {\n  case 'a':\n    break;\n  case \"b\": { throw new Error('Not implemented yet: \"b\" case') }\n}\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const literal: 'a' | 'b';\n\nswitch (literal) {\n  default:\n  case 'a':\n    break;\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": false
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 4,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const literal: 'a' | 'b';\n\nswitch (literal) {\n  case \"b\": { throw new Error('Not implemented yet: \"b\" case') }\n  default:\n  case 'a':\n    break;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const literal: 'a' | 'b' | 'c';\n\nswitch (literal) {\n  case 'a':\n    break;\n  default:\n    break;\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": false
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 4,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const literal: 'a' | 'b' | 'c';\n\nswitch (literal) {\n  case 'a':\n    break;\n  case \"b\": { throw new Error('Not implemented yet: \"b\" case') }\n  case \"c\": { throw new Error('Not implemented yet: \"c\" case') }\n  default:\n    break;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nenum MyEnum {\n  Foo = 'Foo',\n  Bar = 'Bar',\n  Baz = 'Baz',\n}\n\ndeclare const myEnum: MyEnum;\n\nswitch (myEnum) {\n  case MyEnum.Foo:\n    break;\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": false
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 10,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nenum MyEnum {\n  Foo = 'Foo',\n  Bar = 'Bar',\n  Baz = 'Baz',\n}\n\ndeclare const myEnum: MyEnum;\n\nswitch (myEnum) {\n  case MyEnum.Foo:\n    break;\n  case MyEnum.Bar: { throw new Error('Not implemented yet: MyEnum.Bar case') }\n  case MyEnum.Baz: { throw new Error('Not implemented yet: MyEnum.Baz case') }\n  default: {\n    break;\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: boolean;\nswitch (value) {\n  default: {\n    break;\n  }\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": false
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const value: boolean;\nswitch (value) {\n  case false: { throw new Error('Not implemented yet: false case') }\n  case true: { throw new Error('Not implemented yet: true case') }\n  default: {\n    break;\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: string[]) {\n  switch (x[0]) {\n    case 'hi':\n      break;\n  }\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 3,
+              "column": 11,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\nfunction foo(x: string[]) {\n  switch (x[0]) {\n    case 'hi':\n      break;\n    case undefined: { throw new Error('Not implemented yet: undefined case') }\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const myValue: 'a' | 'b';\nswitch (myValue) {\n  case 'a':\n    return 'a';\n  case 'b':\n    return 'b';\n  // no default\n}\n      ",
+          "options": {
+            "allowDefaultCaseForExhaustiveSwitch": false
+          },
+          "errors": [
+            {
+              "messageId": "dangerousDefaultCase",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const literal: 'a' | 'b' | 'c';\n\nswitch (literal) {\n  case 'a':\n    break;\n  // no default\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": false
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 4,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const literal: 'a' | 'b' | 'c';\n\nswitch (literal) {\n  case 'a':\n    break;\n  case \"b\": { throw new Error('Not implemented yet: \"b\" case') }\n  case \"c\": { throw new Error('Not implemented yet: \"c\" case') }\n  // no default\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const literal: 'a' | 'b' | 'c';\n\nswitch (literal) {\n  case 'a':\n    break;\n  // skip default\n}\n      ",
+          "options": {
+            "considerDefaultExhaustiveForUnions": false,
+            "defaultCaseCommentPattern": "^skip\\sdefault"
+          },
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 4,
+              "column": 9,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\ndeclare const literal: 'a' | 'b' | 'c';\n\nswitch (literal) {\n  case 'a':\n    break;\n  case \"b\": { throw new Error('Not implemented yet: \"b\" case') }\n  case \"c\": { throw new Error('Not implemented yet: \"c\" case') }\n  // skip default\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        export namespace A {\n          export enum B {\n            C,\n            D,\n          }\n        }\n        declare const foo: A.B;\n        switch (foo) {\n          case A.B.C: {\n            break;\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 9,
+              "column": 17,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\n        export namespace A {\n          export enum B {\n            C,\n            D,\n          }\n        }\n        declare const foo: A.B;\n        switch (foo) {\n          case A.B.C: {\n            break;\n          }\n          case B.D: { throw new Error('Not implemented yet: B.D case') }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        import { A } from './switch-exhaustiveness-check';\n        declare const foo: A.B;\n        switch (foo) {\n          case A.B.C: {\n            break;\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "switchIsNotExhaustive",
+              "line": 4,
+              "column": 17,
+              "suggestions": [
+                {
+                  "messageId": "addMissingCases",
+                  "output": "\n        import { A } from './switch-exhaustiveness-check';\n        declare const foo: A.B;\n        switch (foo) {\n          case A.B.C: {\n            break;\n          }\n          case B.D: { throw new Error('Not implemented yet: B.D case') }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

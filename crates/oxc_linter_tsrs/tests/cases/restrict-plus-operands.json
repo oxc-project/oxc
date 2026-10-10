@@ -1,0 +1,1291 @@
+{
+  "source": "restrict_plus_operands_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "let x = 5;"
+        },
+        {
+          "code": "let y = '10';"
+        },
+        {
+          "code": "let z = 8.2;"
+        },
+        {
+          "code": "let w = '6.5';"
+        },
+        {
+          "code": "let foo = 5 + 10;"
+        },
+        {
+          "code": "let foo = '5.5' + '10';"
+        },
+        {
+          "code": "let foo = parseInt('5.5', 10) + 10;"
+        },
+        {
+          "code": "let foo = parseFloat('5.5', 10) + 10;"
+        },
+        {
+          "code": "let foo = 1n + 1n;"
+        },
+        {
+          "code": "let foo = BigInt(1) + 1n;"
+        },
+        {
+          "code": "\n      let foo = 1n;\n      foo + 2n;\n    "
+        },
+        {
+          "code": "\nfunction test(s: string, n: number): number {\n  return 2;\n}\nlet foo = test('5.5', 10) + 10;\n    "
+        },
+        {
+          "code": "\nlet x = 5;\nlet z = 8.2;\nlet foo = x + z;\n    "
+        },
+        {
+          "code": "\nlet w = '6.5';\nlet y = '10';\nlet foo = y + w;\n    "
+        },
+        {
+          "code": "let foo = 1 + 1;"
+        },
+        {
+          "code": "let foo = '1' + '1';"
+        },
+        {
+          "code": "\nlet pair: { first: number; second: string } = { first: 5, second: '10' };\nlet foo = pair.first + 10;\n    "
+        },
+        {
+          "code": "\nlet pair: { first: number; second: string } = { first: 5, second: '10' };\nlet foo = pair.first + (10 as number);\n    "
+        },
+        {
+          "code": "\nlet pair: { first: number; second: string } = { first: 5, second: '10' };\nlet foo = '5.5' + pair.second;\n    "
+        },
+        {
+          "code": "\nlet pair: { first: number; second: string } = { first: 5, second: '10' };\nlet foo = ('5.5' as string) + pair.second;\n    "
+        },
+        {
+          "code": "\n      const foo =\n        'hello' +\n        (someBoolean ? 'a' : 'b') +\n        (() =\u003e (someBoolean ? 'c' : 'd'))() +\n        'e';\n    "
+        },
+        {
+          "code": "const balls = true;"
+        },
+        {
+          "code": "balls === true;"
+        },
+        {
+          "code": "\nfunction foo\u003cT extends string\u003e(a: T) {\n  return a + '';\n}\n    "
+        },
+        {
+          "code": "\nfunction foo\u003cT extends 'a' | 'b'\u003e(a: T) {\n  return a + '';\n}\n    "
+        },
+        {
+          "code": "\nfunction foo\u003cT extends number\u003e(a: T) {\n  return a + 1;\n}\n    "
+        },
+        {
+          "code": "\nfunction foo\u003cT extends 1\u003e(a: T) {\n  return a + 1;\n}\n    "
+        },
+        {
+          "code": "\ndeclare const a: {} \u0026 string;\ndeclare const b: string;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: unknown \u0026 string;\ndeclare const b: string;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: string \u0026 string;\ndeclare const b: string;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: 'string literal' \u0026 string;\ndeclare const b: string;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: {} \u0026 number;\ndeclare const b: number;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: unknown \u0026 number;\ndeclare const b: number;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: number \u0026 number;\ndeclare const b: number;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: 42 \u0026 number;\ndeclare const b: number;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: {} \u0026 bigint;\ndeclare const b: bigint;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: unknown \u0026 bigint;\ndeclare const b: bigint;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: bigint \u0026 bigint;\ndeclare const b: bigint;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\ndeclare const a: 42n \u0026 bigint;\ndeclare const b: bigint;\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\nfunction A(s: string) {\n  return `a${s}b` as const;\n}\nconst b = A('') + '!';\n    "
+        },
+        {
+          "code": "\ndeclare const a: `template${string}`;\ndeclare const b: '';\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\nconst a: `template${0}`;\ndeclare const b: '';\nconst x = a + b;\n    "
+        },
+        {
+          "code": "\n        declare const a: RegExp;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "\n        const a = /regexp/;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "\nconst f = (a: RegExp, b: RegExp) =\u003e a + b;\n      ",
+          "options": {
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "\nlet foo: string | undefined;\nfoo = foo + 'some data';\n      ",
+          "options": {
+            "allowNullish": true
+          }
+        },
+        {
+          "code": "\nlet foo: string | null;\nfoo = foo + 'some data';\n      ",
+          "options": {
+            "allowNullish": true
+          }
+        },
+        {
+          "code": "\nlet foo: string | null | undefined;\nfoo = foo + 'some data';\n      ",
+          "options": {
+            "allowNullish": true
+          }
+        },
+        {
+          "code": "\nlet foo = '';\nfoo += 0;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false,
+            "skipCompoundAssignments": true
+          }
+        },
+        {
+          "code": "\nlet foo = 0;\nfoo += '';\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false,
+            "skipCompoundAssignments": true
+          }
+        },
+        {
+          "code": "\nconst f = (a: any, b: any) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\nconst f = (a: any, b: string) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\nconst f = (a: any, b: bigint) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\nconst f = (a: any, b: number) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\nconst f = (a: any, b: boolean) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true,
+            "allowBoolean": true
+          }
+        },
+        {
+          "code": "\nconst f = (a: string, b: string | number) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true,
+            "allowBoolean": true,
+            "allowNullish": true,
+            "allowNumberAndString": true,
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "\nconst f = (a: string | number, b: number) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true,
+            "allowBoolean": true,
+            "allowNullish": true,
+            "allowNumberAndString": true,
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "\nconst f = (a: string | number, b: string | number) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true,
+            "allowBoolean": true,
+            "allowNullish": true,
+            "allowNumberAndString": true,
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "let foo = '1' + 1n;",
+          "options": {
+            "allowNumberAndString": true
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "let foo = '1' + 1;",
+          "options": {
+            "allowNumberAndString": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 1,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = '1' + 1;",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 1,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = [] + {};",
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 1,
+              "column": 11,
+              "endColumn": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "invalid",
+              "line": 1,
+              "column": 16,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = 5 + '10';",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 1,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = [] + 5;",
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 1,
+              "column": 11,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = [] + [];",
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 1,
+              "column": 11,
+              "endColumn": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "invalid",
+              "line": 1,
+              "column": 16,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = 5 + [3];",
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 1,
+              "column": 15,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = '5' + {};",
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 1,
+              "column": 17,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = 5.5 + '5';",
+          "options": {
+            "allowNumberAndString": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 1,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = '5.5' + 5;",
+          "options": {
+            "allowNumberAndString": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 1,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet x = 5;\nlet y = '10';\nlet foo = x + y;\n      ",
+          "options": {
+            "allowNumberAndString": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 4,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet x = 5;\nlet y = '10';\nlet foo = y + x;\n      ",
+          "options": {
+            "allowNumberAndString": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 4,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet x = 5;\nlet foo = x + {};\n      ",
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 3,
+              "column": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet y = '10';\nlet foo = [] + y;\n      ",
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 3,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet pair = { first: 5, second: '10' };\nlet foo = pair + pair;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 3,
+              "column": 11,
+              "endColumn": 15,
+              "suggestions": []
+            },
+            {
+              "messageId": "invalid",
+              "line": 3,
+              "column": 18,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Valued = { value: number };\nlet value: Valued = { value: 0 };\nlet combined = value + 0;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 16,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = 1n + 1;",
+          "errors": [
+            {
+              "messageId": "bigintAndNumber",
+              "line": 1,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = 1 + 1n;",
+          "errors": [
+            {
+              "messageId": "bigintAndNumber",
+              "line": 1,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        let foo = 1n;\n        foo + 1;\n      ",
+          "errors": [
+            {
+              "messageId": "bigintAndNumber",
+              "line": 3,
+              "column": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        let foo = 1;\n        foo + 1n;\n      ",
+          "errors": [
+            {
+              "messageId": "bigintAndNumber",
+              "line": 3,
+              "column": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT extends string\u003e(a: T) {\n  return a + 1;\n}\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 3,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT extends 'a' | 'b'\u003e(a: T) {\n  return a + 1;\n}\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 3,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT extends number\u003e(a: T) {\n  return a + '';\n}\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 3,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT extends 1\u003e(a: T) {\n  return a + '';\n}\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 3,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: `template${number}`;\n        declare const b: number;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: never;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: never \u0026 string;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: boolean \u0026 string;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: any \u0026 string;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: { a: 1 } \u0026 { b: 2 };\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface A {\n          a: 1;\n        }\n        declare const a: A;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 7,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface A {\n          a: 1;\n        }\n        interface A2 extends A {\n          b: 2;\n        }\n        declare const a: A2;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 10,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type A = { a: 1 } \u0026 { b: 2 };\n        declare const a: A;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 5,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: { a: 1 } \u0026 { b: 2 };\n        declare const b: number;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: never;\n        declare const b: bigint;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: any;\n        declare const b: bigint;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: { a: 1 } \u0026 { b: 2 };\n        declare const b: bigint;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: RegExp;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = /regexp/;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: Symbol;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: symbol;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: unique symbol;\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = Symbol('');\n        declare const b: string;\n        const x = a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 4,
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet foo: string | undefined;\nfoo += 'some data';\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false,
+            "skipCompoundAssignments": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 3,
+              "column": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet foo: string | null;\nfoo += 'some data';\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 3,
+              "column": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet foo: string = '';\nfoo += 1;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 3,
+              "column": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet foo = 0;\nfoo += '';\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false,
+            "allowNullish": false,
+            "allowNumberAndString": false,
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 3,
+              "column": 1,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f = (a: any, b: boolean) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true,
+            "allowBoolean": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 39,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f = (a: any, b: []) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f = (a: any, b: boolean) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": true
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 35,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f = (a: any, b: any) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 31,
+              "suggestions": []
+            },
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 35,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f = (a: any, b: string) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f = (a: any, b: bigint) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f = (a: any, b: number) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f = (a: any, b: boolean) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 35,
+              "suggestions": []
+            },
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 39,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f = (a: number, b: RegExp) =\u003e a + b;\n      ",
+          "options": {
+            "allowRegExp": true
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 41,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet foo: string | boolean;\nfoo = foo + 'some data';\n      ",
+          "options": {
+            "allowBoolean": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 3,
+              "column": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet foo: boolean;\nfoo = foo + 'some data';\n      ",
+          "options": {
+            "allowBoolean": false
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 3,
+              "column": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f = (a: any, b: unknown) =\u003e a + b;\n      ",
+          "options": {
+            "allowAny": true,
+            "allowBoolean": true,
+            "allowNullish": true,
+            "allowRegExp": true
+          },
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 39,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "let foo = '1' + 1n;",
+          "options": {
+            "allowNumberAndString": false
+          },
+          "errors": [
+            {
+              "messageId": "mismatched",
+              "line": 1,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "'' + new Date();",
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 1,
+              "column": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const d: Date;\nconst x = d + '';\n      ",
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 3,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst x = new Date() + new Date();\n      ",
+          "errors": [
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 11,
+              "endColumn": 21,
+              "suggestions": []
+            },
+            {
+              "messageId": "invalid",
+              "line": 2,
+              "column": 24,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

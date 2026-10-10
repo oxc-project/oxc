@@ -1,0 +1,2505 @@
+{
+  "source": "no_unnecessary_condition_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.json",
+      "valid": [
+        {
+          "code": "\ndeclare const b1: boolean;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\nconst t2 = b1 || b2;\nif (b1 \u0026\u0026 b2) {\n}\nwhile (b1 \u0026\u0026 b2) {}\nfor (let i = 0; b1 \u0026\u0026 b2; i++) {\n  break;\n}\nconst t1 = b1 \u0026\u0026 b2 ? 'yes' : 'no';\nif (b1 \u0026\u0026 b2) {\n}\nwhile (b1 \u0026\u0026 b2) {}\nfor (let i = 0; b1 \u0026\u0026 b2; i++) {\n  break;\n}\nconst t1 = b1 \u0026\u0026 b2 ? 'yes' : 'no';\nfor (;;) {}\nswitch (b1) {\n  case true:\n  default:\n}\n    "
+        },
+        {
+          "code": "\ndeclare function foo(): number | void;\nconst result1 = foo() === undefined;\nconst result2 = foo() == null;\n    "
+        },
+        {
+          "code": "\ndeclare const bigInt: 0n | 1n;\nif (bigInt) {\n}\n    "
+        },
+        {
+          "code": "\ndeclare const b1: false | 5;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: boolean | \"foo\";\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: 0 | boolean;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: boolean | object;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: false | object;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: null | object;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: undefined | true;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: void | true;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: string \u0026 {};\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: string \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: number \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: boolean \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: bigint \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: string \u0026 {} \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: string \u0026 { __brandA: string } \u0026 { __brandB: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: string \u0026 { __brand: string } | number;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: (string | number) \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: string \u0026 ({ __brand: string } | number);\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: (\"\" | \"foo\") \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: (string \u0026 { __brandA: string }) | (number \u0026 { __brandB: string });\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: ((string \u0026 { __brandA: string }) | (number \u0026 { __brandB: string }) \u0026 (\"\" | \"foo\"));\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: { __brandA: string} \u0026 (({ __brandB: string } \u0026 string) | ({ __brandC: string } \u0026 number));\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: (string | number) \u0026 (\"foo\" | 123 | { __brandA: string });\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: string \u0026 string;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: any;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\ndeclare const b1: unknown;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n"
+        },
+        {
+          "code": "\nfunction test\u003cT extends string\u003e(t: T) {\n  return t ? 'yes' : 'no';\n}\n    "
+        },
+        {
+          "code": "\n// Naked type param\nfunction test\u003cT\u003e(t: T) {\n  return t ? 'yes' : 'no';\n}\n    "
+        },
+        {
+          "code": "\n// Naked type param in union\nfunction test\u003cT\u003e(t: T | []) {\n  return t ? 'yes' : 'no';\n}\n    "
+        },
+        {
+          "code": "\nfunction test\u003cT\u003e(arg: T, key: keyof T) {\n  if (arg[key]?.toString()) {\n  }\n}\n    "
+        },
+        {
+          "code": "\nfunction test\u003cT\u003e(arg: T, key: keyof T) {\n  if (arg?.toString()) {\n  }\n}\n    "
+        },
+        {
+          "code": "\nfunction test\u003cT\u003e(arg: T | { value: string }) {\n  if (arg?.value) {\n  }\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a: string) {\n  const t1 = a === 'a';\n  const t2 = 'a' === a;\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a?: string) {\n  const t1 = a === undefined;\n  const t2 = undefined === a;\n  const t1 = a !== undefined;\n  const t2 = undefined !== a;\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a: null | string) {\n  const t1 = a === null;\n  const t2 = null === a;\n  const t1 = a !== null;\n  const t2 = null !== a;\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a?: null | string) {\n  const t1 = a == null;\n  const t2 = null == a;\n  const t3 = a != null;\n  const t4 = null != a;\n  const t5 = a == undefined;\n  const t6 = undefined == a;\n  const t7 = a != undefined;\n  const t8 = undefined != a;\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a?: string) {\n  const t1 = a == null;\n  const t2 = null == a;\n  const t3 = a != null;\n  const t4 = null != a;\n  const t5 = a == undefined;\n  const t6 = undefined == a;\n  const t7 = a != undefined;\n  const t8 = undefined != a;\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a: null | string) {\n  const t1 = a == null;\n  const t2 = null == a;\n  const t3 = a != null;\n  const t4 = null != a;\n  const t5 = a == undefined;\n  const t6 = undefined == a;\n  const t7 = a != undefined;\n  const t8 = undefined != a;\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a: any) {\n  const t1 = a == null;\n  const t2 = null == a;\n  const t3 = a != null;\n  const t4 = null != a;\n  const t5 = a == undefined;\n  const t6 = undefined == a;\n  const t7 = a != undefined;\n  const t8 = undefined != a;\n  const t9 = a === null;\n  const t10 = null === a;\n  const t11 = a !== null;\n  const t12 = null !== a;\n  const t13 = a === undefined;\n  const t14 = undefined === a;\n  const t15 = a !== undefined;\n  const t16 = undefined !== a;\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a: unknown) {\n  const t1 = a == null;\n  const t2 = null == a;\n  const t3 = a != null;\n  const t4 = null != a;\n  const t5 = a == undefined;\n  const t6 = undefined == a;\n  const t7 = a != undefined;\n  const t8 = undefined != a;\n  const t9 = a === null;\n  const t10 = null === a;\n  const t11 = a !== null;\n  const t12 = null !== a;\n  const t13 = a === undefined;\n  const t14 = undefined === a;\n  const t15 = a !== undefined;\n  const t16 = undefined !== a;\n}\n    "
+        },
+        {
+          "code": "\nfunction test\u003cT\u003e(a: T) {\n  const t1 = a == null;\n  const t2 = null == a;\n  const t3 = a != null;\n  const t4 = null != a;\n  const t5 = a == undefined;\n  const t6 = undefined == a;\n  const t7 = a != undefined;\n  const t8 = undefined != a;\n  const t9 = a === null;\n  const t10 = null === a;\n  const t11 = a !== null;\n  const t12 = null !== a;\n  const t13 = a === undefined;\n  const t14 = undefined === a;\n  const t15 = a !== undefined;\n  const t16 = undefined !== a;\n}\n    "
+        },
+        {
+          "code": "\nfunction foo\u003cT extends object\u003e(arg: T, key: keyof T): void {\n  arg[key] == null;\n}\n    "
+        },
+        {
+          "code": "\n// with literal arrow function\n[0, 1, 2].filter(x =\u003e x);\n\n// filter with named function\nfunction length(x: string) {\n  return x.length;\n}\n['a', 'b', ''].filter(length);\n\n// with non-literal array\nfunction nonEmptyStrings(x: string[]) {\n  return x.filter(length);\n}\n\n// filter-like predicate\nfunction count(\n  list: string[],\n  predicate: (value: string, index: number, array: string[]) =\u003e unknown,\n) {\n  return list.filter(predicate).length;\n}\n    "
+        },
+        {
+          "code": "\ndeclare const test: \u003cT\u003e() =\u003e T;\n\n[1, null].filter(test);\n    "
+        },
+        {
+          "code": "\ndeclare const test: \u003cT extends boolean\u003e() =\u003e T;\n\n[1, null].filter(test);\n    "
+        },
+        {
+          "code": "\n[1, null].filter(1 as any);\n    "
+        },
+        {
+          "code": "\n[1, null].filter(1 as never);\n    "
+        },
+        {
+          "code": "\nconst notArray = {\n  filter: (func: () =\u003e boolean) =\u003e func(),\n  find: (func: () =\u003e boolean) =\u003e func(),\n};\nnotArray.filter(() =\u003e true);\nnotArray.find(() =\u003e true);\n    "
+        },
+        {
+          "code": "\nfunction test(a: string | null) {\n  return a ?? 'default';\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a: string | undefined) {\n  return a ?? 'default';\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a: string | null | undefined) {\n  return a ?? 'default';\n}\n    "
+        },
+        {
+          "code": "\nfunction test(a: unknown) {\n  return a ?? 'default';\n}\n    "
+        },
+        {
+          "code": "\nfunction test\u003cT\u003e(a: T) {\n  return a ?? 'default';\n}\n    "
+        },
+        {
+          "code": "\nfunction test\u003cT extends string | null\u003e(a: T) {\n  return a ?? 'default';\n}\n    "
+        },
+        {
+          "code": "\nfunction foo\u003cT extends object\u003e(arg: T, key: keyof T): void {\n  arg[key] ?? 'default';\n}\n}\n    "
+        },
+        {
+          "code": "\ndeclare const arr: object[];\nif (arr[42]) {\n} // looks unnecessary from the types, but isn't\n\nconst tuple = [{}] as [object];\ndeclare const n: number;\nif (tuple[n]) {\n}\n    "
+        },
+        {
+          "code": "\ndeclare const arr: Array\u003c{ value: string } \u0026 (() =\u003e void)\u003e;\nif (arr[42]?.value) {\n}\narr[41]?.();\n\n// An array access can \"infect\" deeper into the chain\ndeclare const arr2: Array\u003c{ x: { y: { z: object } } }\u003e;\narr2[42]?.x?.y?.z;\n\nconst tuple = ['foo'] as const;\ndeclare const n: number;\ntuple[n]?.toUpperCase();\n    "
+        },
+        {
+          "code": "\ndeclare const arr: Array\u003c{ value: string } \u0026 (() =\u003e void)\u003e;\nif (arr[42]?.value) {\n}\narr[41]?.();\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\nif (arr?.[42]) {\n}\n    "
+        },
+        {
+          "code": "\ntype ItemA = { bar: string; baz: string };\ntype ItemB = { bar: string; qux: string };\ndeclare const foo: ItemA[] | ItemB[];\nfoo[0]?.bar;\n    "
+        },
+        {
+          "code": "\ntype TupleA = [string, number];\ntype TupleB = [string, number];\n\ndeclare const foo: TupleA | TupleB;\ndeclare const index: number;\nfoo[index]?.toString();\n    "
+        },
+        {
+          "code": "\ntype TupleA = [string, number];\ntype TupleB = [string, number];\n\ndeclare const foo: TupleA | TupleB;\ndeclare const index: number;\nfoo[index]?.toString();\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ndeclare const returnsArr: undefined | (() =\u003e string[]);\nif (returnsArr?.()[42]) {\n}\nreturnsArr?.()[42]?.toUpperCase();\n    "
+        },
+        {
+          "code": "\ndeclare const arr: string[][];\narr[x] ?? [];\n    "
+        },
+        {
+          "code": "\ndeclare const arr: { foo: number }[];\nconst bar = arr[42]?.foo ?? 0;\n    "
+        },
+        {
+          "code": "\ndeclare const b1: boolean;\ndeclare const b2: true;\nconst x = b1 \u0026\u0026 b2;\n      "
+        },
+        {
+          "code": "\nwhile (true) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": true
+          }
+        },
+        {
+          "code": "\nfor (; true; ) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": true
+          }
+        },
+        {
+          "code": "\ndo {} while (true);\n      ",
+          "options": {
+            "allowConstantLoopConditions": true
+          }
+        },
+        {
+          "code": "\nwhile (true) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "always"
+          }
+        },
+        {
+          "code": "\nfor (; true; ) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "always"
+          }
+        },
+        {
+          "code": "\ndo {} while (true);\n      ",
+          "options": {
+            "allowConstantLoopConditions": "always"
+          }
+        },
+        {
+          "code": "\nwhile (true) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          }
+        },
+        {
+          "code": "\nwhile (1) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          }
+        },
+        {
+          "code": "\nwhile (false) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          }
+        },
+        {
+          "code": "\nwhile (0) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          }
+        },
+        {
+          "code": "\nfor (; true; ) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          }
+        },
+        {
+          "code": "\nfor (; 0; ) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          }
+        },
+        {
+          "code": "\ndo {} while (0);\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          }
+        },
+        {
+          "code": "\nlet variable = 'abc' as string | void;\nvariable?.[0];\n    "
+        },
+        {
+          "code": "\nlet foo: undefined | { bar: true };\nfoo?.bar;\n    "
+        },
+        {
+          "code": "\nlet foo: null | { bar: true };\nfoo?.bar;\n    "
+        },
+        {
+          "code": "\nlet foo: undefined;\nfoo?.bar;\n    "
+        },
+        {
+          "code": "\nlet foo: undefined;\nfoo?.bar.baz;\n    "
+        },
+        {
+          "code": "\nlet foo: null;\nfoo?.bar;\n    "
+        },
+        {
+          "code": "\nlet anyValue: any;\nanyValue?.foo;\n    "
+        },
+        {
+          "code": "\nlet unknownValue: unknown;\nunknownValue?.foo;\n    "
+        },
+        {
+          "code": "\nlet foo: undefined | (() =\u003e {});\nfoo?.();\n    "
+        },
+        {
+          "code": "\nlet foo: null | (() =\u003e {});\nfoo?.();\n    "
+        },
+        {
+          "code": "\nlet foo: undefined;\nfoo?.();\n    "
+        },
+        {
+          "code": "\nlet foo: undefined;\nfoo?.().bar;\n    "
+        },
+        {
+          "code": "\nlet foo: null;\nfoo?.();\n    "
+        },
+        {
+          "code": "\nlet anyValue: any;\nanyValue?.();\n    "
+        },
+        {
+          "code": "\nlet unknownValue: unknown;\nunknownValue?.();\n    "
+        },
+        {
+          "code": "const foo = [1, 2, 3][0];"
+        },
+        {
+          "code": "\ndeclare const foo: { bar?: { baz: { c: string } } } | null;\nfoo?.bar?.baz;\n    "
+        },
+        {
+          "code": "\nfoo?.bar?.baz?.qux;\n    "
+        },
+        {
+          "code": "\ndeclare const foo: { bar: { baz: string } };\nfoo.bar.qux?.();\n    "
+        },
+        {
+          "code": "\ntype Foo = { baz: number } | null;\ntype Bar = { baz: null | string | { qux: string } };\ndeclare const foo: { fooOrBar: Foo | Bar } | null;\nfoo?.fooOrBar?.baz?.qux;\n    "
+        },
+        {
+          "code": "\ntype Foo = { [key: string]: string } | null;\ndeclare const foo: Foo;\n\nconst key = '1';\nfoo?.[key]?.trim();\n    "
+        },
+        {
+          "code": "\ntype Foo = { [key: string]: string; foo: 'foo'; bar: 'bar' } | null;\ntype Key = 'bar' | 'foo';\ndeclare const foo: Foo;\ndeclare const key: Key;\n\nfoo?.[key].trim();\n    "
+        },
+        {
+          "code": "\ninterface Outer {\n  inner?: {\n    [key: string]: string | undefined;\n  };\n}\n\nfunction Foo(outer: Outer, key: string): number | undefined {\n  return outer.inner?.[key]?.charCodeAt(0);\n}\n    "
+        },
+        {
+          "code": "\ninterface Outer {\n  inner?: {\n    [key: string]: string | undefined;\n    bar: 'bar';\n  };\n}\ntype Foo = 'foo';\n\nfunction Foo(outer: Outer, key: Foo): number | undefined {\n  return outer.inner?.[key]?.charCodeAt(0);\n}\n    "
+        },
+        {
+          "code": "\ntype Foo = { [key: string]: string; foo: 'foo'; bar: 'bar' } | null;\ntype Key = 'bar' | 'foo' | 'baz';\ndeclare const foo: Foo;\ndeclare const key: Key;\n\nfoo?.[key]?.trim();\n    "
+        },
+        {
+          "code": "\ntype BrandedKey = string \u0026 { __brand: string };\ntype Foo = { [key: BrandedKey]: string } | null;\ndeclare const foo: Foo;\nconst key = '1' as BrandedKey;\nfoo?.[key]?.trim();\n    "
+        },
+        {
+          "code": "\ntype BrandedKey\u003cS extends string\u003e = S \u0026 { __brand: string };\ntype Foo = { [key: string]: string; foo: 'foo'; bar: 'bar' } | null;\ntype Key = BrandedKey\u003c'bar'\u003e | BrandedKey\u003c'foo'\u003e;\ndeclare const foo: Foo;\ndeclare const key: Key;\nfoo?.[key].trim();\n    "
+        },
+        {
+          "code": "\ntype BrandedKey = string \u0026 { __brand: string };\ninterface Outer {\n  inner?: {\n    [key: BrandedKey]: string | undefined;\n  };\n}\nfunction Foo(outer: Outer, key: BrandedKey): number | undefined {\n  return outer.inner?.[key]?.charCodeAt(0);\n}\n    "
+        },
+        {
+          "code": "\ninterface Outer {\n  inner?: {\n    [key: string \u0026 { __brand: string }]: string | undefined;\n    bar: 'bar';\n  };\n}\ntype Foo = 'foo' \u0026 { __brand: string };\nfunction Foo(outer: Outer, key: Foo): number | undefined {\n  return outer.inner?.[key]?.charCodeAt(0);\n}\n    "
+        },
+        {
+          "code": "\ntype BrandedKey\u003cS extends string\u003e = S \u0026 { __brand: string };\ntype Foo = { [key: string]: string; foo: 'foo'; bar: 'bar' } | null;\ntype Key = BrandedKey\u003c'bar'\u003e | BrandedKey\u003c'foo'\u003e | BrandedKey\u003c'baz'\u003e;\ndeclare const foo: Foo;\ndeclare const key: Key;\nfoo?.[key]?.trim();\n    "
+        },
+        {
+          "code": "\ntype BrandedKey = string \u0026 { __brand: string };\ntype Foo = { [key: BrandedKey]: string } | null;\ndeclare const foo: Foo;\nconst key = '1' as BrandedKey;\nfoo?.[key]?.trim();\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype BrandedKey\u003cS extends string\u003e = S \u0026 { __brand: string };\ntype Foo = { [key: string]: string; foo: 'foo'; bar: 'bar' } | null;\ntype Key = BrandedKey\u003c'bar'\u003e | BrandedKey\u003c'foo'\u003e;\ndeclare const foo: Foo;\ndeclare const key: Key;\nfoo?.[key].trim();\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype BrandedKey = string \u0026 { __brand: string };\ninterface Outer {\n  inner?: {\n    [key: BrandedKey]: string | undefined;\n  };\n}\nfunction Foo(outer: Outer, key: BrandedKey): number | undefined {\n  return outer.inner?.[key]?.charCodeAt(0);\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ninterface Outer {\n  inner?: {\n    [key: string \u0026 { __brand: string }]: string | undefined;\n    bar: 'bar';\n  };\n}\ntype Foo = 'foo' \u0026 { __brand: string };\nfunction Foo(outer: Outer, key: Foo): number | undefined {\n  return outer.inner?.[key]?.charCodeAt(0);\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype BrandedKey\u003cS extends string\u003e = S \u0026 { __brand: string };\ntype Foo = { [key: string]: string; foo: 'foo'; bar: 'bar' } | null;\ntype Key = BrandedKey\u003c'bar'\u003e | BrandedKey\u003c'foo'\u003e | BrandedKey\u003c'baz'\u003e;\ndeclare const foo: Foo;\ndeclare const key: Key;\nfoo?.[key]?.trim();\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype Foo = {\n  key?: Record\u003cstring, { key: string }\u003e;\n};\ndeclare const foo: Foo;\nfoo.key?.someKey?.key;\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype Foo = {\n  key?: {\n    [key: string]: () =\u003e void;\n  };\n};\ndeclare const foo: Foo;\nfoo.key?.value?.();\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype A = {\n  [name in Lowercase\u003cstring\u003e]?: {\n    [name in Lowercase\u003cstring\u003e]: {\n      a: 1;\n    };\n  };\n};\n\ndeclare const a: A;\n\na.a?.a?.a;\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\nlet latencies: number[][] = [];\n\nfunction recordData(): void {\n  if (!latencies[0]) latencies[0] = [];\n  latencies[0].push(4);\n}\n\nrecordData();\n    "
+        },
+        {
+          "code": "\nlet latencies: number[][] = [];\n\nfunction recordData(): void {\n  if (latencies[0]) latencies[0] = [];\n  latencies[0].push(4);\n}\n\nrecordData();\n    "
+        },
+        {
+          "code": "\nfunction test(testVal?: boolean) {\n  if (testVal ?? true) {\n    console.log('test');\n  }\n}\n    "
+        },
+        {
+          "code": "\ndeclare const x: string[];\nif (!x[0]) {\n}\n    "
+        },
+        {
+          "code": "\nconst isEven = (val: number) =\u003e val % 2 === 0;\nif (!isEven(1)) {\n}\n    "
+        },
+        {
+          "code": "\ndeclare const booleanTyped: boolean;\ndeclare const unknownTyped: unknown;\n\nif (!(booleanTyped || unknownTyped)) {\n}\n    "
+        },
+        {
+          "code": "\ninterface Foo {\n  [key: string]: [string] | undefined;\n}\n\ntype OptionalFoo = Foo | undefined;\ndeclare const foo: OptionalFoo;\nfoo?.test?.length;\n    "
+        },
+        {
+          "code": "\ninterface Foo {\n  [key: number]: [string] | undefined;\n}\n\ntype OptionalFoo = Foo | undefined;\ndeclare const foo: OptionalFoo;\nfoo?.[1]?.length;\n    "
+        },
+        {
+          "code": "\ndeclare let foo: number | null;\nfoo ??= 1;\n    "
+        },
+        {
+          "code": "\ndeclare let foo: number;\nfoo ||= 1;\n    "
+        },
+        {
+          "code": "\ndeclare const foo: { bar: { baz?: number; qux: number } };\ntype Key = 'baz' | 'qux';\ndeclare const key: Key;\nfoo.bar[key] ??= 1;\n    "
+        },
+        {
+          "code": "\nenum Keys {\n  A = 'A',\n  B = 'B',\n}\ntype Foo = {\n  [Keys.A]: number | null;\n  [Keys.B]: number;\n};\ndeclare const foo: Foo;\ndeclare const key: Keys;\nfoo[key] ??= 1;\n    "
+        },
+        {
+          "code": "\ndeclare const foo: { bar?: number };\nfoo.bar ??= 1;\n      ",
+          "tsconfig": "tsconfig.exactOptionalPropertyTypes.json"
+        },
+        {
+          "code": "\ndeclare const foo: { bar: { baz?: number } };\nfoo['bar'].baz ??= 1;\n      ",
+          "tsconfig": "tsconfig.exactOptionalPropertyTypes.json"
+        },
+        {
+          "code": "\ndeclare const foo: { bar: { baz?: number; qux: number } };\ntype Key = 'baz' | 'qux';\ndeclare const key: Key;\nfoo.bar[key] ??= 1;\n      ",
+          "tsconfig": "tsconfig.exactOptionalPropertyTypes.json"
+        },
+        {
+          "code": "\ndeclare let foo: number;\nfoo \u0026\u0026= 1;\n    "
+        },
+        {
+          "code": "\nfunction foo\u003cT extends object\u003e(arg: T, key: keyof T): void {\n  arg[key] ??= 'default';\n}\n    "
+        },
+        {
+          "code": "\nfunction get\u003cObj, Key extends keyof Obj\u003e(obj: Obj, key: Key) {\n  const value = obj[key];\n  if (value) {\n    return value;\n  }\n  throw new Error('BOOM!');\n}\n\nget({ foo: null }, 'foo');\n    "
+        },
+        {
+          "code": "\nfunction getElem(dict: Record\u003cstring, { foo: string }\u003e, key: string) {\n  if (dict[key]) {\n    return dict[key].foo;\n  } else {\n    return '';\n  }\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype Foo = { bar: () =\u003e number | undefined } | null;\ndeclare const foo: Foo;\nfoo?.bar()?.toExponential();\n    "
+        },
+        {
+          "code": "\ntype Foo = (() =\u003e number | undefined) | null;\ndeclare const foo: Foo;\nfoo?.()?.toExponential();\n    "
+        },
+        {
+          "code": "\ntype FooUndef = () =\u003e undefined;\ntype FooNum = () =\u003e number;\ntype Foo = FooUndef | FooNum | null;\ndeclare const foo: Foo;\nfoo?.()?.toExponential();\n    "
+        },
+        {
+          "code": "\ntype Foo = { [key: string]: () =\u003e number | undefined } | null;\ndeclare const foo: Foo;\nfoo?.['bar']()?.toExponential();\n    "
+        },
+        {
+          "code": "\ndeclare function foo(): void | { key: string };\nconst bar = foo()?.key;\n    "
+        },
+        {
+          "code": "\ntype fn = () =\u003e void;\ndeclare function foo(): void | fn;\nconst bar = foo()?.();\n    "
+        },
+        {
+          "code": "\nclass ConsistentRand {\n  #rand?: number;\n\n  getCachedRand() {\n    this.#rand ??= Math.random();\n    return this.#rand;\n  }\n}\n      ",
+          "tsconfig": "tsconfig.exactOptionalPropertyTypes.json"
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): asserts x;\n\nassert(Math.random() \u003e 0.5);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          }
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown, y: unknown): asserts x;\n\nassert(Math.random() \u003e 0.5, true);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          }
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): asserts x;\nassert(true);\n      ",
+          "options": {
+            "checkTypePredicates": false
+          }
+        },
+        {
+          "code": "\nclass ThisAsserter {\n  assertThis(this: unknown, arg2: unknown): asserts this {}\n}\n\nconst thisAsserter: ThisAsserter = new ThisAsserter();\nthisAsserter.assertThis(true);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          }
+        },
+        {
+          "code": "\nclass ThisAsserter {\n  assertThis(this: unknown, arg2: unknown): asserts this {}\n}\n\nconst thisAsserter: ThisAsserter = new ThisAsserter();\nthisAsserter.assertThis(Math.random());\n      ",
+          "options": {
+            "checkTypePredicates": true
+          }
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): asserts x;\nassert(...[]);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          }
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): asserts x;\nassert(...[], {});\n      ",
+          "options": {
+            "checkTypePredicates": true
+          }
+        },
+        {
+          "code": "\ndeclare function assertString(x: unknown): asserts x is string;\ndeclare const a: string;\nassertString(a);\n      ",
+          "options": {
+            "checkTypePredicates": false
+          }
+        },
+        {
+          "code": "\ndeclare function isString(x: unknown): x is string;\ndeclare const a: string;\nisString(a);\n      ",
+          "options": {
+            "checkTypePredicates": false
+          }
+        },
+        {
+          "code": "\ndeclare function assertString(x: unknown): asserts x is string;\nassertString('falafel');\n      ",
+          "options": {
+            "checkTypePredicates": true
+          }
+        },
+        {
+          "code": "\ndeclare function isString(x: unknown): x is string;\nisString('falafel');\n      ",
+          "options": {
+            "checkTypePredicates": true
+          }
+        },
+        {
+          "code": "\ntype A = { [name in Lowercase\u003cstring\u003e]?: A };\ndeclare const a: A;\na.a?.a?.a;\n    "
+        },
+        {
+          "code": "\ninterface T {\n  [name: Lowercase\u003cstring\u003e]: {\n    [name: Lowercase\u003cstring\u003e]: {\n      [name: Lowercase\u003cstring\u003e]: {\n        value: 'value';\n      };\n    };\n  };\n  [name: Uppercase\u003cstring\u003e]: null | {\n    [name: Uppercase\u003cstring\u003e]: null | {\n      [name: Uppercase\u003cstring\u003e]: null | {\n        VALUE: 'VALUE';\n      };\n    };\n  };\n}\n\ndeclare const t: T;\n\nt.a.a.a.value;\nt.A?.A?.A?.VALUE;\n    "
+        },
+        {
+          "code": "function repro1(e: FocusEvent) { if (e.target !== window) return; }"
+        },
+        {
+          "code": "\nfunction repro2(flag: string \u0026 {}, arg: string) {\n  if (arg === flag) return true;\n  return false;\n}\n    "
+        },
+        {
+          "code": "\nconst flagPresent = Symbol();\ntype FlagPresent = typeof flagPresent;\nfunction repro3(queryFlag: string[] | FlagPresent) {\n  if (Array.isArray(queryFlag) \u0026\u0026 queryFlag.length === 0) return true;\n  if (queryFlag === flagPresent) return true;\n  return false;\n}\n    "
+        },
+        {
+          "code": "type PersonalizationId = `${string}_6_main` | `${string}_7_main`;\nfunction repro4(a: PersonalizationId, b: string) {\n  return a === b;\n}\n"
+        },
+        {
+          "code": "\nfunction test699\u003cT extends 'a' | 'b'\u003e(x: T | undefined, y: T) {\n  return x === y;\n}\n    "
+        },
+        {
+          "code": "\nfunction test\u003cT extends [string], I extends number\u003e(arr: T, i: I) {\n  return arr[i] ?? 'default';\n}\n    "
+        },
+        {
+          "code": "\nexport function groupBy\u003cT, R extends string | number\u003e(list: T[], func: (item: T) =\u003e R) {\n    return list.reduce(\n      (obj, item) =\u003e {\n        const existingItems = obj[func(item)] ?? [];\n        return { ...obj, [func(item)]: [...existingItems, item] };\n      },\n      {} as Partial\u003cRecord\u003cR, T[]\u003e\u003e\n    );\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\nexport function groupBy\u003cT, R extends string | number\u003e(list: T[], func: (item: T) =\u003e R) {\n    return list.reduce(\n      (obj, item) =\u003e {\n        const existingItems = obj[func(item)] ?? [];\n        return { ...obj, [func(item)]: [...existingItems, item] };\n      },\n      {} as Partial\u003cRecord\u003cR, T[]\u003e\u003e\n    );\n}\n    "
+        },
+        {
+          "code": "\nfunction test\u003cT extends string[], I extends number\u003e(arr: T, i: I) {\n  arr[i] ??= 'default';\n}\n    "
+        },
+        {
+          "code": "\nfunction repro5() {\n  const obj: Record\u003cstring, { name: string }\u003e = {};\n  const key: string = 'foo';\n  obj[key] ??= { name: key };\n}\n    "
+        },
+        {
+          "code": "\nfunction repro5WithNoUncheckedIndexedAccess() {\n  const obj: Record\u003cstring, { name: string }\u003e = {};\n  const key: string = 'foo';\n  obj[key] ??= { name: key };\n}\n    ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype ProviderOptions = Record\u003cstring, Record\u003cstring, unknown\u003e\u003e;\n\nfunction withNullishAssignment(opts: ProviderOptions): Record\u003cstring, unknown\u003e {\n  return opts.perplexity ??= {};\n}\n    ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype Result\u003cT\u003e = T extends null\n  ? string | null\n  : T extends string\n    ? string\n    : T extends boolean\n      ? boolean\n      : T extends number\n        ? number\n        : T;\n\nfunction processValue\u003cT extends string | null\u003e(value: Result\u003cT\u003e): string {\n  if (value == null) {\n    return 'default';\n  }\n  return String(value);\n}\n    "
+        },
+        {
+          "code": "\ntype BrandedString = string \u0026 { __brand: 'brandedString' };\n\nfunction reproBrandedRecordWithNoUncheckedIndexedAccess(key: BrandedString) {\n  const lookup: Record\u003cBrandedString, number\u003e = {};\n  lookup[key] ?? 2;\n}\n    ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype BrandedString = string \u0026 { __brand: 'brandedString' };\n\nfunction reproBrandedRecordAssignmentWithNoUncheckedIndexedAccess(key: BrandedString) {\n  const lookup: Record\u003cBrandedString, number\u003e = {};\n  lookup[key] ??= 2;\n}\n    ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json"
+        },
+        {
+          "code": "\ntype Item = { action: 'create'; value: number } | null | undefined;\n\ndeclare function getValues(): { data: Item[] };\ndeclare function getValues(name: `data.${number}`): Item;\n\nconst value = getValues(`data.0`)?.value;\n    "
+        },
+        {
+          "code": "\ntype Item = { action: 'create'; value: number } | null | undefined;\n\ntype Form =\n  | {\n      getValues(): { data: Item[] };\n      getValues(name: `data.${number}`): Item;\n    }\n  | undefined;\n\ndeclare const form: Form;\n\nconst value = form?.getValues(`data.0`)?.value;\n    "
+        },
+        {
+          "code": "\nfunction getValueOrDefault\u003cT\u003e(value: T | null | undefined, defaultValue: T): T {\n\tif (value != null \u0026\u0026 value !== '') {\n\t\treturn value;\n\t}\n\treturn defaultValue;\n}\n\nconst _result = getValueOrDefault\u003cstring\u003e('', 'fallback');\n    "
+        },
+        {
+          "code": "\ndeclare const test: true;\n\nwhile (test) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "always"
+          }
+        },
+        {
+          "code": "\ntype Foo = { bar: { baz: string } } | { bar: null };\ndeclare const foo: Foo | null;\nfoo?.bar?.baz;\n    "
+        },
+        {
+          "code": "\ntype Brand\u003cT, B extends string\u003e = T \u0026 { readonly $brand: { [K in B]: true } };\ntype IsoDateString = Brand\u003cstring, \"IsoDateString\"\u003e;\ndeclare const date: IsoDateString;\nif (date === \"2025-01-01\") {}\n    "
+        },
+        {
+          "code": "\ndeclare function isString(x: unknown): x is string;\ndeclare const a: 'falafel';\n\nif (isString(a)) {}\n      ",
+          "options": {
+            "checkTypePredicates": true
+          }
+        },
+        {
+          "code": "\ndeclare function assertSecond(x: unknown, y: unknown): asserts y;\n\nassertSecond(...[], true);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          }
+        },
+        {
+          "code": "function _foo\u003cT\u003e(value: T) {\n\tif (typeof value === 'object' \u0026\u0026 value !== null) { console.log('foo'); }\n}"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nconst b1 = true;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\nconst t2 = b1 || b2;\nif (b1 \u0026\u0026 b2) {\n}\nif (b2 \u0026\u0026 b1) {\n}\nwhile (b1 \u0026\u0026 b2) {}\nwhile (b2 \u0026\u0026 b1) {}\nfor (let i = 0; b1 \u0026\u0026 b2; i++) {\n  break;\n}\nconst t1 = b1 \u0026\u0026 b2 ? 'yes' : 'no';\nconst t1 = b2 \u0026\u0026 b1 ? 'yes' : 'no';\nswitch (b1) {\n  case true:\n  default:\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: object;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: object | true;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: \"\" | false;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: \"always truthy\";\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: undefined;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: null;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: void;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: never;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "never",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: string \u0026 number;\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "never",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const falseyBigInt: 0n;\nif (falseyBigInt) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const posbigInt: 1n;\nif (posbigInt) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const negBigInt: -2n;\nif (negBigInt) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: boolean;\ndeclare const b2: boolean;\nif (true \u0026\u0026 b1 \u0026\u0026 b2) {\n}\nif (b1 \u0026\u0026 false \u0026\u0026 b2) {\n}\nif (b1 || b2 || true) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test\u003cT extends object\u003e(t: T) {\n  return t ? 'yes' : 'no';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test\u003cT extends false\u003e(t: T) {\n  return t ? 'yes' : 'no';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test\u003cT extends 'a' | 'b'\u003e(t: T) {\n  return t ? 'yes' : 'no';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(a: 'a') {\n  return a === 'a';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "line": 3,
+              "column": 12,
+              "endLine": 3,
+              "endColumn": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: '34';\ndeclare const b: '56';\na \u003e b;\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst y = 1;\nif (y === 0) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "line": 3,
+              "column": 7,
+              "endLine": 3,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n// @ts-expect-error\nif (1 == '1') {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n2.3 \u003e 2.3;\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n2.3 \u003e= 2.3;\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n2n \u003c 2n;\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n2n \u003c= 2n;\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n-2n !== 2n;\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n// @ts-expect-error\nif (1 == '2') {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n// @ts-expect-error\nif (1 != '2') {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nenum Foo {\n  a = 1,\n  b = 2,\n}\n\nconst x = Foo.a;\nif (x === Foo.a) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "line": 8,
+              "column": 7,
+              "endLine": 8,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nenum Foo {\n  a = 1,\n  b = 2,\n}\n\nconst x = Foo.a;\nif (x === 1) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction takesMaybeValue(a: null | object) {\n  if (a) {\n  } else if (a == undefined) {\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction takesMaybeValue(a: null | object) {\n  if (a) {\n  } else if (a === undefined) {\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction takesMaybeValue(a: null | object) {\n  if (a) {\n  } else if (a != undefined) {\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction takesMaybeValue(a: null | object) {\n  if (a) {\n  } else if (a !== undefined) {\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntrue === false;\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntrue === true;\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntrue === undefined;\n      ",
+          "errors": [
+            {
+              "messageId": "comparisonBetweenLiteralTypes",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(a: string) {\n  const t1 = a === undefined;\n  const t2 = undefined === a;\n  const t3 = a !== undefined;\n  const t4 = undefined !== a;\n  const t5 = a === null;\n  const t6 = null === a;\n  const t7 = a !== null;\n  const t8 = null !== a;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(a?: string) {\n  const t1 = a === undefined;\n  const t2 = undefined === a;\n  const t3 = a !== undefined;\n  const t4 = undefined !== a;\n  const t5 = a === null;\n  const t6 = null === a;\n  const t7 = a !== null;\n  const t8 = null !== a;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(a: null | string) {\n  const t1 = a === undefined;\n  const t2 = undefined === a;\n  const t3 = a !== undefined;\n  const t4 = undefined !== a;\n  const t5 = a === null;\n  const t6 = null === a;\n  const t7 = a !== null;\n  const t8 = null !== a;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test\u003cT extends object\u003e(a: T) {\n  const t1 = a == null;\n  const t2 = null == a;\n  const t3 = a != null;\n  const t4 = null != a;\n  const t5 = a == undefined;\n  const t6 = undefined == a;\n  const t7 = a != undefined;\n  const t8 = undefined != a;\n  const t9 = a === null;\n  const t10 = null === a;\n  const t11 = a !== null;\n  const t12 = null !== a;\n  const t13 = a === undefined;\n  const t14 = undefined === a;\n  const t15 = a !== undefined;\n  const t16 = undefined !== a;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            },
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(a: string) {\n  return a ?? 'default';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(a: string | false) {\n  return a ?? 'default';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test\u003cT extends string\u003e(a: T) {\n  return a ?? 'default';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(a: { foo: string }[]) {\n  return a[0].foo ?? 'default';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(a: null) {\n  return a ?? 'default';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(a: null[]) {\n  return a[0] ?? 'default';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test\u003cT extends null\u003e(a: T) {\n  return a ?? 'default';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(a: never) {\n  return a ?? 'default';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "never",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test\u003cT extends { foo: number }, K extends 'foo'\u003e(num: T[K]) {\n  num ?? 'default';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[1, 3, 5].filter(() =\u003e true);\n[1, 2, 3].find(() =\u003e {\n  return false;\n});\n\n// with non-literal array\nfunction nothing(x: string[]) {\n  return x.filter(() =\u003e false);\n}\n// with readonly array\nfunction nothing2(x: readonly string[]) {\n  return x.filter(() =\u003e false);\n}\n// with tuple\nfunction nothing3(x: [string, string]) {\n  return x.filter(() =\u003e false);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "line": 2,
+              "column": 24,
+              "endLine": 2,
+              "endColumn": 28,
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: \u003cT extends true\u003e() =\u003e T;\n\n[1, null].filter(test);\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthyFunc",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const dict: Record\u003cstring, object\u003e;\nif (dict['mightNotExist']) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst x = [{}] as [{ foo: string }];\nif (x[0]) {\n}\nif (x[0]?.foo) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: object[];\nif (arr.filter) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction truthy() {\n  return [];\n}\nfunction falsy() {}\n[1, 3, 5].filter(truthy);\n[1, 2, 3].find(falsy);\n[1, 2, 3].findLastIndex(falsy);\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthyFunc",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysFalsyFunc",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysFalsyFunc",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: true;\n\nwhile (test) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": false
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: true;\n\nfor (; test; ) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": false
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: true;\n\ndo {} while (test);\n      ",
+          "options": {
+            "allowConstantLoopConditions": false
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: true;\n\nwhile (test) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "never"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: true;\n\nfor (; test; ) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "never"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: true;\n\ndo {} while (test);\n      ",
+          "options": {
+            "allowConstantLoopConditions": "never"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: true;\n\nwhile (test) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: 1;\n\nwhile (test) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: true;\n\nfor (; test; ) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: true;\n\ndo {} while (test);\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet shouldRun = true;\n\nwhile ((shouldRun = true)) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nwhile (2) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nwhile ('truthy') {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet foo = { bar: true };\nfoo?.bar;\nfoo ?. bar;\nfoo ?.\n  bar;\nfoo\n  ?. bar;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet foo = () =\u003e {};\nfoo?.();\nfoo ?. ();\nfoo ?.\n  ();\nfoo\n  ?. ();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet foo = () =\u003e {};\nfoo?.(bar);\nfoo ?. (bar);\nfoo ?.\n  (bar);\nfoo\n  ?. (bar);\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const foo = [1, 2, 3]?.[0];",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "line": 1,
+              "column": 22,
+              "endLine": 1,
+              "endColumn": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: { a?: { b: string } };\nx?.a?.b;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: { a: { b?: { c: string } } };\nx.a?.b?.c;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet x: { a?: string };\nx?.a;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: { bar: { baz: { c: string } } } | null;\nfoo?.bar?.baz;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: { bar?: { baz: { qux: string } } } | null;\nfoo?.bar?.baz?.qux;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: { bar: { baz: { qux?: () =\u003e {} } } } | null;\nfoo?.bar?.baz?.qux?.();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: { bar: { baz: { qux: () =\u003e {} } } } | null;\nfoo?.bar?.baz?.qux?.();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype baz = () =\u003e { qux: () =\u003e {} };\ndeclare const foo: { bar: { baz: baz } } | null;\nfoo?.bar?.baz?.().qux?.();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype baz = null | (() =\u003e { qux: () =\u003e {} });\ndeclare const foo: { bar: { baz: baz } } | null;\nfoo?.bar?.baz?.().qux?.();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype baz = null | (() =\u003e { qux: () =\u003e {} } | null);\ndeclare const foo: { bar: { baz: baz } } | null;\nfoo?.bar?.baz?.()?.qux?.();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = { baz: number };\ntype Bar = { baz: null | string | { qux: string } };\ndeclare const foo: { fooOrBar: Foo | Bar } | null;\nfoo?.fooOrBar?.baz?.qux;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: { a: { b: number } }[];\nx[0].a?.b;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = { [key: string]: string; foo: 'foo'; bar: 'bar' } | null;\ntype Key = 'bar' | 'foo';\ndeclare const foo: Foo;\ndeclare const key: Key;\n\nfoo?.[key]?.trim();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "line": 7,
+              "column": 11,
+              "endLine": 7,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = { [key: string]: string; foo: 'foo'; bar: 'bar' } | null;\ndeclare const foo: Foo;\nconst key = 'bar';\nfoo?.[key]?.trim();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Outer {\n  inner?: {\n    [key: string]: string | undefined;\n    bar: 'bar';\n  };\n}\n\nexport function test(outer: Outer): number | undefined {\n  const key = 'bar';\n  return outer.inner?.[key]?.charCodeAt(0);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Outer {\n  inner?: {\n    [key: string]: string | undefined;\n    bar: 'bar';\n  };\n}\ntype Bar = 'bar';\n\nfunction Foo(outer: Outer, key: Bar): number | undefined {\n  return outer.inner?.[key]?.charCodeAt(0);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(testVal?: true) {\n  if (testVal ?? true) {\n    console.log('test');\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst a = null;\nif (!a) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst a = true;\nif (!a) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction sayHi(): void {\n  console.log('Hi!');\n}\n\nlet speech: never = sayHi();\nif (!speech) {\n}\n      ",
+          "errors": [
+            {
+              "messageId": "never",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: string[] | null;\nif (x) {\n}\n      ",
+          "tsconfig": "tsconfig.unstrict.json",
+          "errors": [
+            {
+              "messageId": "noStrictNullCheck",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Foo {\n  test: string;\n  [key: string]: [string] | undefined;\n}\n\ntype OptionalFoo = Foo | undefined;\ndeclare const foo: OptionalFoo;\nfoo?.test?.length;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction pick\u003cObj extends Record\u003cstring, 1 | 2 | 3\u003e, Key extends keyof Obj\u003e(\n  obj: Obj,\n  key: Key,\n): Obj[Key] {\n  const k = obj[key];\n  if (obj[key]) {\n    return obj[key];\n  }\n  throw new Error('Boom!');\n}\n\npick({ foo: 1, bar: 2 }, 'bar');\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction getElem(dict: Record\u003cstring, { foo: string }\u003e, key: string) {\n  if (dict[key]) {\n    return dict[key].foo;\n  } else {\n    return '';\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: {};\nfoo ??= 1;\n      ",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: number;\nfoo ??= 1;\n      ",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: null;\nfoo ??= null;\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: {};\nfoo ||= 1;\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: null;\nfoo ||= null;\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: {};\nfoo \u0026\u0026= 1;\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare let foo: null;\nfoo \u0026\u0026= null;\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: { bar: number };\nfoo.bar ??= 1;\n      ",
+          "tsconfig": "tsconfig.exactOptionalPropertyTypes.json",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = { bar: () =\u003e number } | null;\ndeclare const foo: Foo;\nfoo?.bar()?.toExponential();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = { bar: null | { baz: () =\u003e { qux: number } } } | null;\ndeclare const foo: Foo;\nfoo?.bar?.baz()?.qux?.toExponential();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = (() =\u003e number) | null;\ndeclare const foo: Foo;\nfoo?.()?.toExponential();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = { [key: string]: () =\u003e number } | null;\ndeclare const foo: Foo;\nfoo?.['bar']()?.toExponential();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = { [key: string]: () =\u003e number } | null;\ndeclare const foo: Foo;\nfoo?.['bar']?.()?.toExponential();\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = true;\n        if (!!a) {\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): asserts x;\nassert(true);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): asserts x;\nassert(false);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          },
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown, y: unknown): asserts x;\n\nassert(true, Math.random() \u003e 0.5);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): asserts x;\nassert({});\n      ",
+          "options": {
+            "checkTypePredicates": true
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assertsString(x: unknown): asserts x is string;\ndeclare const a: string;\nassertsString(a);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          },
+          "errors": [
+            {
+              "messageId": "typeGuardAlreadyIsType",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function isString(x: unknown): x is string;\ndeclare const a: string;\nisString(a);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          },
+          "errors": [
+            {
+              "messageId": "typeGuardAlreadyIsType",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function isString(x: unknown): x is string;\ndeclare const a: string;\nisString('fa' + 'lafel');\n      ",
+          "options": {
+            "checkTypePredicates": true
+          },
+          "errors": [
+            {
+              "messageId": "typeGuardAlreadyIsType",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: \"\" \u0026 {};\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: \"\" \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: (\"\" | false) \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: ((string \u0026 { __brandA: string }) | (number \u0026 { __brandB: string })) \u0026 \"\";\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: (\"foo\" | \"bar\") \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: (123 | true) \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: (string | number) \u0026 (\"foo\" | 123) \u0026 { __brand: string };\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: ((string \u0026 { __brandA: string }) | (number \u0026 { __brandB: string })) \u0026 \"foo\";\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const b1: ((string \u0026 { __brandA: string }) | (number \u0026 { __brandB: string })) \u0026 (\"foo\" | 123);\ndeclare const b2: boolean;\nconst t1 = b1 \u0026\u0026 b2;\n",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = {\n  [name in Lowercase\u003cstring\u003e]?: {\n    [name in Lowercase\u003cstring\u003e]: {\n      a: 1;\n    };\n  };\n};\n\ndeclare const a: A;\n\na.a?.a?.a;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface T {\n  [name: Lowercase\u003cstring\u003e]: {\n    [name: Lowercase\u003cstring\u003e]: {\n      [name: Lowercase\u003cstring\u003e]: {\n        value: 'value';\n      };\n    };\n  };\n  [name: Uppercase\u003cstring\u003e]: null | {\n    [name: Uppercase\u003cstring\u003e]: null | {\n      [name: Uppercase\u003cstring\u003e]: null | {\n        VALUE: 'VALUE';\n      };\n    };\n  };\n}\n\ndeclare const t: T;\n\nt.a?.a?.a?.value;\n      ",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const test: Array\u003c{ a?: string }\u003e;\n\nif (test[0]?.a) {\n  test[0]?.a;\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr2: Array\u003c{ x: { y: { z: object } } }\u003e;\narr2[42]?.x?.y?.z;\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json",
+          "errors": [
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            },
+            {
+              "messageId": "neverOptionalChain",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: string[];\n\nif (arr[0]) {\n  arr[0] ?? 'foo';\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: object[];\n\nif (arr[42] \u0026\u0026 arr[42]) {\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfor (; 2; ) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfor (; 'truthy'; ) {}\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndo {} while (2);\n      ",
+          "options": {
+            "allowConstantLoopConditions": "only-allowed-literals"
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test\u003cT extends { foo: null }, K extends 'foo'\u003e(num: T[K]) {\n  num ?? 'default';\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test\u003cT extends { foo: null }, K extends 'foo'\u003e(num: T[K]) {\n  num ??= null;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function assert(x: unknown): asserts x;\ndeclare const a: true;\n\nassert(!!a);\n      ",
+          "options": {
+            "checkTypePredicates": true
+          },
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  [key: string]: unknown;\n  #value = 1;\n\n  method() {\n    this.#value ??= 2;\n  }\n}\n      ",
+          "tsconfig": "tsconfig.noUncheckedIndexedAccess.json",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nif (false \u0026\u0026 true) {}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nif (true || false) {}\n      ",
+          "errors": [
+            {
+              "messageId": "alwaysFalsy",
+              "suggestions": []
+            },
+            {
+              "messageId": "alwaysTruthy",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(value: string) {\n  switch (value) {\n    case undefined:\n      break;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "noOverlapBooleanExpression",
+              "line": 4,
+              "column": 10,
+              "endLine": 4,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.noUncheckedIndexedAccess.json",
+      "valid": [
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e) {\n  opts.perplexity ?? {};\n  if (opts.perplexity === undefined) {\n    opts.perplexity = {};\n  }\n}\n"
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e) {\n  (opts.perplexity) ??= {};\n  opts['other'] ??= {};\n}\n"
+        },
+        {
+          "code": "\ninterface Options {\n  [key: string]: object;\n}\nfunction test(opts: Options) {\n  opts.perplexity ??= {};\n}\n"
+        },
+        {
+          "code": "\nclass Options {\n  [key: string]: object;\n  initialize() {\n    this.perplexity ??= {};\n  }\n}\n"
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e | Record\u003cstring, number\u003e) {\n  opts.perplexity ??= {};\n}\n"
+        },
+        {
+          "code": "\nfunction test(opts: { [key: `foo${string}`]: object }) {\n  opts.fooBar ??= {};\n}\n"
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cLowercase\u003cstring\u003e, object\u003e) {\n  opts.foo ??= {};\n}\n"
+        },
+        {
+          "code": "\nfunction test(opts: { [key: `foo${string}`]: object }) {\n  opts['fooBar'] ??= {};\n}\n"
+        },
+        {
+          "code": "\nfunction test(opts: { [key: `foo${string}`]: object }, key: `foo${string}`) {\n  opts[key] ??= {};\n}\n"
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e, key: 'foo' | 'bar') {\n  opts[key] ??= {};\n}\n"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e) {\n  if (opts.perplexity) {\n    opts.perplexity ?? {};\n  }\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e) {\n  opts.perplexity = {};\n  opts.perplexity ?? {};\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e \u0026 { perplexity: object }) {\n  opts.perplexity ??= {};\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test\u003cT extends Record\u003cstring, object\u003e \u0026 { perplexity: object }\u003e(opts: T) {\n  opts.perplexity ??= {};\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003c'perplexity', object\u003e) {\n  opts.perplexity ??= {};\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e) {\n  opts.perplexity ??= {};\n}\n",
+          "tsconfig": "tsconfig.json",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e) {\n  if (opts.perplexity) {\n    opts.perplexity ??= {};\n  }\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e) {\n  opts.perplexity ??= {};\n  opts.perplexity ??= {};\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e) {\n  opts.perplexity = {};\n  (opts.perplexity) ??= {};\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: { [key: `foo${string}`]: object }) {\n  opts.fooBar ??= {};\n  opts.fooBar ??= {};\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: { [key: `foo${string}`]: object }) {\n  opts['fooBar'] ??= {};\n  opts['fooBar'] ??= {};\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e) {\n  if (opts['foo']) {\n    opts['foo'] ??= {};\n  }\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: Record\u003cstring, object\u003e) {\n  opts.foo ??= {};\n  opts['foo'] ??= {};\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(opts: { foo: object; bar: object }, key: 'foo' | 'bar') {\n  opts[key] ??= {};\n}\n",
+          "errors": [
+            {
+              "messageId": "neverNullish",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

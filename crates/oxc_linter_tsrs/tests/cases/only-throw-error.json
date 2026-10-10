@@ -1,0 +1,750 @@
+{
+  "source": "only_throw_error_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "throw new Error();"
+        },
+        {
+          "code": "throw new Error('error');"
+        },
+        {
+          "code": "throw Error('error');"
+        },
+        {
+          "code": "\nconst e = new Error();\nthrow e;\n    "
+        },
+        {
+          "code": "\ntry {\n  throw new Error();\n} catch (e) {\n  throw e;\n}\n    "
+        },
+        {
+          "code": "\nfunction foo() {\n  return new Error();\n}\nthrow foo();\n    "
+        },
+        {
+          "code": "\nconst foo = {\n  bar: new Error(),\n};\nthrow foo.bar;\n    "
+        },
+        {
+          "code": "\nconst foo = {\n  bar: new Error(),\n};\n\nthrow foo['bar'];\n    "
+        },
+        {
+          "code": "\nconst foo = {\n  bar: new Error(),\n};\n\nconst bar = 'bar';\nthrow foo[bar];\n    "
+        },
+        {
+          "code": "\nclass CustomError extends Error {}\nthrow new CustomError();\n    "
+        },
+        {
+          "code": "\nclass CustomError1 extends Error {}\nclass CustomError2 extends CustomError1 {}\nthrow new CustomError2();\n    "
+        },
+        {
+          "code": "throw (foo = new Error());"
+        },
+        {
+          "code": "throw (1, 2, new Error());"
+        },
+        {
+          "code": "throw 'literal' \u0026\u0026 new Error();"
+        },
+        {
+          "code": "throw new Error() || 'literal';"
+        },
+        {
+          "code": "throw foo ? new Error() : new Error();"
+        },
+        {
+          "code": "\nfunction* foo() {\n  let index = 0;\n  throw yield index++;\n}\n    "
+        },
+        {
+          "code": "\nasync function foo() {\n  throw await bar;\n}\n    "
+        },
+        {
+          "code": "\nimport { Error } from './missing';\nthrow Error;\n    "
+        },
+        {
+          "code": "\nclass CustomError\u003cT, C\u003e extends Error {}\nthrow new CustomError\u003cstring, string\u003e();\n    "
+        },
+        {
+          "code": "\nclass CustomError\u003cT = {}\u003e extends Error {}\nthrow new CustomError();\n    "
+        },
+        {
+          "code": "\nclass CustomError\u003cT extends object\u003e extends Error {}\nthrow new CustomError();\n    "
+        },
+        {
+          "code": "\nfunction foo() {\n  throw Object.assign(new Error('message'), { foo: 'bar' });\n}\n    "
+        },
+        {
+          "code": "\nconst foo: Error | SyntaxError = bar();\nfunction bar() {\n  throw foo;\n}\n    "
+        },
+        {
+          "code": "\ndeclare const foo: Error | string;\nthrow foo as Error;\n    "
+        },
+        {
+          "code": "throw new Error() as Error;"
+        },
+        {
+          "code": "\ndeclare const nullishError: Error | undefined;\nthrow nullishError ?? new Error();\n    "
+        },
+        {
+          "code": "\ndeclare const nullishError: Error | undefined;\nthrow nullishError || new Error();\n    "
+        },
+        {
+          "code": "\ndeclare const nullishError: Error | undefined;\nthrow nullishError ? nullishError : new Error();\n    "
+        },
+        {
+          "code": "\nfunction fun(value: any) {\n  throw value;\n}\n    "
+        },
+        {
+          "code": "\nfunction fun(value: unknown) {\n  throw value;\n}\n    "
+        },
+        {
+          "code": "\nfunction fun\u003cT extends Error\u003e(t: T): void {\n  throw t;\n}\n    "
+        },
+        {
+          "code": "\nthrow undefined;\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "lib",
+                "name": "undefined"
+              }
+            ],
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          }
+        },
+        {
+          "code": "\nclass CustomError implements Error {}\nthrow new CustomError();\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "CustomError"
+              }
+            ],
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          }
+        },
+        {
+          "code": "\nthrow new Map();\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "lib",
+                "name": "Map"
+              }
+            ],
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          }
+        },
+        {
+          "code": "\ntry {\n} catch (e) {\n  throw e;\n}\n      ",
+          "options": {
+            "allowRethrowing": true,
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          }
+        },
+        {
+          "code": "\ntry {\n} catch (eOuter) {\n  try {\n    if (Math.random() \u003e 0.5) {\n      throw eOuter;\n    }\n  } catch (eInner) {\n    if (Math.random() \u003e 0.5) {\n      throw eOuter;\n    } else {\n      throw eInner;\n    }\n  }\n}\n      ",
+          "options": {
+            "allowRethrowing": true,
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          }
+        },
+        {
+          "code": "\nPromise.reject('foo').catch(e =\u003e {\n  throw e;\n});\n      ",
+          "options": {
+            "allowRethrowing": true,
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          }
+        },
+        {
+          "code": "\n        import { createError } from 'errors';\n        throw createError();\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "ErrorLike",
+                "package": "errors"
+              }
+            ],
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "files": {
+            "node_modules/errors/index.d.ts": "\n          export interface ErrorLike extends Error {}\n          export function createError(): ErrorLike;\n        ",
+            "node_modules/errors/package.json": "{\n          \"name\": \"errors\",\n          \"version\": \"1.0.0\",\n          \"types\": \"index.d.ts\"\n        }"
+          }
+        },
+        {
+          "code": "\n        import type { ErrorLike } from '@apollo/client/core/types';\n\n        declare const error: ErrorLike;\n        throw error;\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "ErrorLike",
+                "package": "@apollo/client"
+              }
+            ],
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "files": {
+            "node_modules/@apollo/client/core/types.d.ts": "\n          export interface ErrorLike extends Error {}\n        ",
+            "node_modules/@apollo/client/package.json": "{\n          \"name\": \"@apollo/client\",\n          \"version\": \"1.0.0\",\n          \"types\": \"core/types.d.ts\"\n        }"
+          }
+        },
+        {
+          "code": "\n        import { createError } from 'errors-like';\n        throw createError();\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "ErrorLike",
+                "package": "errors-like"
+              }
+            ],
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "files": {
+            "node_modules/@types/errors-like/index.d.ts": "\n          export interface ErrorLike extends Error {}\n          export function createError(): ErrorLike;\n        ",
+            "node_modules/@types/errors-like/package.json": "{\n          \"name\": \"@types/errors-like\",\n          \"version\": \"1.0.0\",\n          \"types\": \"index.d.ts\"\n        }"
+          }
+        },
+        {
+          "code": "\nasync function foo() {\n  throw await Promise.resolve(new Error('error'));\n}\n      ",
+          "options": {
+            "allowThrowingAny": false
+          }
+        },
+        {
+          "code": "\nfunction *foo(): Generator\u003cnumber, void, Error\u003e {\n  throw yield 303;\n}\n      ",
+          "options": {
+            "allowThrowingAny": false
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "throw undefined;",
+          "errors": [
+            {
+              "messageId": "undef",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw new String('');",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw 'error';",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw 0;",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw false;",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw null;",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw {};",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw 'a' + 'b';",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst a = '';\nthrow a + 'b';\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw (foo = 'error');",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw (new Error(), 1, 2, 3);",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw 'literal' \u0026\u0026 'not an Error';",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw 'literal' || new Error();",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw new Error() \u0026\u0026 'literal';",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw 'literal' ?? new Error();",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw foo ? 'not an Error' : 'literal';",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw foo ? new Error() : 'literal';",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw foo ? 'literal' : new Error();",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "throw `${err}`;",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst err = 'error';\nthrow err;\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(msg) {}\nthrow foo('error');\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = {\n  msg: 'error',\n};\nthrow foo.msg;\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = {\n  msg: undefined,\n};\nthrow foo.msg;\n      ",
+          "errors": [
+            {
+              "messageId": "undef",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass CustomError {}\nthrow new CustomError();\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {}\nclass CustomError extends Foo {}\nthrow new CustomError();\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst Error = null;\nthrow Error;\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nimport { Error } from './class';\nthrow new Error();\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "line": 3,
+              "column": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass CustomError\u003cT extends object\u003e extends Foo {}\nthrow new CustomError();\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "line": 3,
+              "column": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT\u003e() {\n  const res: T;\n  throw res;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "line": 4,
+              "column": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT\u003e(fn: () =\u003e Promise\u003cT\u003e) {\n  const promise = fn();\n  const res = promise.then(() =\u003e {}).catch(() =\u003e {});\n  throw res;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "line": 5,
+              "column": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo() {\n  throw Object.assign({ foo: 'foo' }, { bar: 'bar' });\n}\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: Error | { bar: string } = bar();\nfunction bar() {\n  throw foo;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: Error | string;\nthrow foo as string;\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction fun(value: any) {\n  throw value;\n}\n      ",
+          "options": {
+            "allowThrowingAny": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction fun(value: unknown) {\n  throw value;\n}\n      ",
+          "options": {
+            "allowThrowingUnknown": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction fun\u003cT extends number\u003e(t: T): void {\n  throw t;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass UnknownError implements Error {}\nthrow new UnknownError();\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "CustomError"
+              }
+            ],
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  throw await bar;\n}\n\t\t\t",
+          "options": {
+            "allowThrowingAny": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  throw await Promise.resolve\u003cnumber\u003e(303);\n}\n\t\t\t",
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction *foo(): Generator\u003cnumber, void, string\u003e {\n  throw yield 303;\n}\n      ",
+          "options": {
+            "allowThrowingAny": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet x = 1;\nPromise.reject('foo').catch(e =\u003e {\n  throw x;\n});\n      ",
+          "options": {
+            "allowRethrowing": true,
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject('foo').catch((...e) =\u003e {\n  throw e;\n});\n      ",
+          "options": {
+            "allowRethrowing": true,
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: any[];\nPromise.reject('foo').catch(...x, e =\u003e {\n  throw e;\n});\n      ",
+          "options": {
+            "allowRethrowing": true,
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: any[];\nPromise.reject('foo').then(...x, e =\u003e {\n  throw e;\n});\n      ",
+          "options": {
+            "allowRethrowing": true,
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const onFulfilled: any;\ndeclare const x: any[];\nPromise.reject('foo').then(onFulfilled, ...x, e =\u003e {\n  throw e;\n});\n      ",
+          "options": {
+            "allowRethrowing": true,
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject('foo').then((...e) =\u003e {\n  throw e;\n});\n      ",
+          "options": {
+            "allowRethrowing": true,
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject('foo').then(e =\u003e {\n  throw globalThis;\n});\n      ",
+          "options": {
+            "allowRethrowing": true,
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nimport { createError } from 'errors-like';\nthrow createError();\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "ErrorLike",
+                "package": "errors"
+              }
+            ],
+            "allowThrowingAny": false,
+            "allowThrowingUnknown": false
+          },
+          "files": {
+            "node_modules/errors-like/index.d.ts": "\nexport interface ErrorLike {\n  message: string;\n}\nexport function createError(): ErrorLike;\n",
+            "node_modules/errors-like/package.json": "{\n  \"name\": \"errors-like\",\n  \"version\": \"1.0.0\",\n  \"types\": \"index.d.ts\"\n}"
+          },
+          "errors": [
+            {
+              "messageId": "object",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

@@ -1,0 +1,686 @@
+{
+  "source": "require_await_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\nfunction numberOne(): number {\n  return 1;\n}\n    "
+        },
+        {
+          "code": "\nconst numberOne = function (): number {\n  return 1;\n};\n    "
+        },
+        {
+          "code": "\n      const numberOne = (): number =\u003e 1;\n    "
+        },
+        {
+          "code": "\nconst numberOne = (): number =\u003e {\n  return 1;\n};\n    "
+        },
+        {
+          "code": "\nfunction delay() {\n  return Promise.resolve();\n}\n    "
+        },
+        {
+          "code": "\nconst delay = () =\u003e {\n  return Promise.resolve();\n};\n    "
+        },
+        {
+          "code": "const delay = () =\u003e Promise.resolve();"
+        },
+        {
+          "code": "\nasync function numberOne(): Promise\u003cnumber\u003e {\n  return await 1;\n}\n    "
+        },
+        {
+          "code": "\nconst numberOne = async function (): Promise\u003cnumber\u003e {\n  return await 1;\n};\n    "
+        },
+        {
+          "code": "const numberOne = async (): Promise\u003cnumber\u003e =\u003e await 1;"
+        },
+        {
+          "code": "\nconst numberOne = async (): Promise\u003cnumber\u003e =\u003e {\n  return await 1;\n};\n    "
+        },
+        {
+          "code": "\nasync function numberOne(): Promise\u003cnumber\u003e {\n  return Promise.resolve(1);\n}\n    "
+        },
+        {
+          "code": "\nconst numberOne = async function (): Promise\u003cnumber\u003e {\n  return Promise.resolve(1);\n};\n    "
+        },
+        {
+          "code": "const numberOne = async (): Promise\u003cnumber\u003e =\u003e Promise.resolve(1);"
+        },
+        {
+          "code": "\nconst numberOne = async (): Promise\u003cnumber\u003e =\u003e {\n  return Promise.resolve(1);\n};\n    "
+        },
+        {
+          "code": "\nasync function numberOne(): Promise\u003cnumber\u003e {\n  return getAsyncNumber(1);\n}\nasync function getAsyncNumber(x: number): Promise\u003cnumber\u003e {\n  return Promise.resolve(x);\n}\n    "
+        },
+        {
+          "code": "\nconst numberOne = async function (): Promise\u003cnumber\u003e {\n  return getAsyncNumber(1);\n};\nconst getAsyncNumber = async function (x: number): Promise\u003cnumber\u003e {\n  return Promise.resolve(x);\n};\n    "
+        },
+        {
+          "code": "\nconst numberOne = async (): Promise\u003cnumber\u003e =\u003e getAsyncNumber(1);\nconst getAsyncNumber = async function (x: number): Promise\u003cnumber\u003e {\n  return Promise.resolve(x);\n};\n    "
+        },
+        {
+          "code": "\nconst numberOne = async (): Promise\u003cnumber\u003e =\u003e {\n  return getAsyncNumber(1);\n};\nconst getAsyncNumber = async function (x: number): Promise\u003cnumber\u003e {\n  return Promise.resolve(x);\n};\n    "
+        },
+        {
+          "code": "\nasync function testFunction(): Promise\u003cvoid\u003e {\n  await Promise.all(\n    [1, 2, 3].map(\n      // this should not trigger an error on the parent function\n      async value =\u003e Promise.resolve(value),\n    ),\n  );\n}\n    "
+        },
+        {
+          "code": "\nfunction* test6() {\n  yield* syncGenerator();\n}\n    "
+        },
+        {
+          "code": "\nfunction* syncGenerator() {\n  yield 1;\n}\n    "
+        },
+        {
+          "code": "\nasync function* asyncGenerator() {\n  await Promise.resolve();\n  yield 1;\n}\nasync function* test1() {\n  yield* asyncGenerator();\n}\n    "
+        },
+        {
+          "code": "\nasync function* asyncGenerator() {\n  await Promise.resolve();\n  yield 1;\n}\nasync function* test1() {\n  yield* asyncGenerator();\n  yield* 2;\n}\n    "
+        },
+        {
+          "code": "\nasync function* test(source: AsyncIterable\u003cany\u003e) {\n  yield* source;\n}\n    "
+        },
+        {
+          "code": "\nasync function* test(source: Iterable\u003cany\u003e \u0026 AsyncIterable\u003cany\u003e) {\n  yield* source;\n}\n    "
+        },
+        {
+          "code": "\nasync function* test(source: Iterable\u003cany\u003e | AsyncIterable\u003cany\u003e) {\n  yield* source;\n}\n    "
+        },
+        {
+          "code": "\ntype MyType = {\n  [Symbol.iterator](): Iterator\u003cany\u003e;\n  [Symbol.asyncIterator](): AsyncIterator\u003cany\u003e;\n};\nasync function* test(source: MyType) {\n  yield* source;\n}\n    "
+        },
+        {
+          "code": "\ntype MyType = {\n  [Symbol.asyncIterator]: () =\u003e AsyncIterator\u003cany\u003e;\n};\nasync function* test(source: MyType) {\n  yield* source;\n}\n    "
+        },
+        {
+          "code": "\ntype MyFunctionType = () =\u003e AsyncIterator\u003cany\u003e;\ntype MyType = {\n  [Symbol.asyncIterator]: MyFunctionType;\n};\nasync function* test(source: MyType) {\n  yield* source;\n}\n    "
+        },
+        {
+          "code": "\nasync function* foo(): Promise\u003cstring\u003e {\n  return new Promise(res =\u003e res(`hello`));\n}\n    "
+        },
+        {
+          "code": "\n      async function* f() {\n        let x!: Omit\u003c\n          {\n            [Symbol.asyncIterator](): AsyncIterator\u003cany\u003e;\n          },\n          'z'\n        \u003e;\n        yield* x;\n      }\n    "
+        },
+        {
+          "code": "\n      const fn = async () =\u003e {\n        await using foo = new Bar();\n      };\n    "
+        },
+        {
+          "code": "\n      async function* test1() {\n        yield Promise.resolve(1);\n      }\n    "
+        },
+        {
+          "code": "\n      function asyncFunction() {\n        return Promise.resolve(1);\n      }\n      async function* test1() {\n        yield asyncFunction();\n      }\n    "
+        },
+        {
+          "code": "\n      declare const asyncFunction: () =\u003e Promise\u003cvoid\u003e;\n      async function* test1() {\n        yield asyncFunction();\n      }\n    "
+        },
+        {
+          "code": "\n      async function* test1() {\n        yield new Promise(() =\u003e {});\n      }\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nasync function numberOne(): Promise\u003cnumber\u003e {\n  return 1;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nfunction numberOne(): number {\n  return 1;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst numberOne = async function (): Promise\u003cnumber\u003e {\n  return 1;\n};\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nconst numberOne = function (): number {\n  return 1;\n};\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "const numberOne = async (): Promise\u003cnumber\u003e =\u003e 1;",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "const numberOne = (): number =\u003e 1;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function values(): Promise\u003cArray\u003cnumber\u003e\u003e {\n  return [1];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nfunction values(): Array\u003cnumber\u003e {\n  return [1];\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        async function foo() {\n          function nested() {\n            await doSomething();\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        function foo() {\n          function nested() {\n            await doSomething();\n          }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function* foo(): void {\n  doSomething();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nfunction* foo(): void {\n  doSomething();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function* foo() {\n  yield 1;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nfunction* foo() {\n  yield 1;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = async function* () {\n  console.log('bar');\n};\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nconst foo = function* () {\n  console.log('bar');\n};\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function* asyncGenerator() {\n  yield 1;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nfunction* asyncGenerator() {\n  yield 1;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function* asyncGenerator(source: Iterable\u003cany\u003e) {\n  yield* source;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nfunction* asyncGenerator(source: Iterable\u003cany\u003e) {\n  yield* source;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction isAsyncIterable(value: unknown): value is AsyncIterable\u003cany\u003e {\n  return true;\n}\nasync function* asyncGenerator(source: Iterable\u003cany\u003e | AsyncIterable\u003cany\u003e) {\n  if (!isAsyncIterable(source)) {\n    yield* source;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nfunction isAsyncIterable(value: unknown): value is AsyncIterable\u003cany\u003e {\n  return true;\n}\nfunction* asyncGenerator(source: Iterable\u003cany\u003e | AsyncIterable\u003cany\u003e) {\n  if (!isAsyncIterable(source)) {\n    yield* source;\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction* syncGenerator() {\n  yield 1;\n}\nasync function* asyncGenerator() {\n  yield* syncGenerator();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nfunction* syncGenerator() {\n  yield 1;\n}\nfunction* asyncGenerator() {\n  yield* syncGenerator();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function* asyncGenerator() {\n  yield* anotherAsyncGenerator(); // Unknown function.\n}\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\nfunction* asyncGenerator() {\n  yield* anotherAsyncGenerator(); // Unknown function.\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const fn = async () =\u003e {\n          using foo = new Bar();\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        const fn = () =\u003e {\n          using foo = new Bar();\n        };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        // intentional TS error\n        async function* foo(): Promise\u003cnumber\u003e {\n          yield 1;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        // intentional TS error\n        function* foo(): Promise\u003cnumber\u003e {\n          yield 1;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        async function* foo(): AsyncGenerator {\n          yield 1;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        function* foo(): Generator {\n          yield 1;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        async function* foo(): AsyncGenerator\u003cnumber\u003e {\n          yield 1;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        function* foo(): Generator\u003cnumber\u003e {\n          yield 1;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        async function foo(): globalThis.Promise\u003cnumber\u003e {\n          return 1;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        function foo(): number {\n          return 1;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare namespace Bluebird {\n          type Promise\u003cT\u003e = { value: T };\n        }\n        async function foo(): Bluebird.Promise\u003cnumber\u003e {\n          return 1;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        declare namespace Bluebird {\n          type Promise\u003cT\u003e = { value: T };\n        }\n        function foo(): Bluebird.Promise\u003cnumber\u003e {\n          return 1;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        async function* foo(): globalThis.AsyncGenerator\u003cnumber\u003e {\n          yield 1;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        function* foo(): Generator\u003cnumber\u003e {\n          yield 1;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\nasync function foo() {\n  await doSomething();\n}\n    "
+        },
+        {
+          "code": "\n(async function () {\n  await doSomething();\n});\n    "
+        },
+        {
+          "code": "\nasync () =\u003e {\n  await doSomething();\n};\n    "
+        },
+        {
+          "code": "async () =\u003e await doSomething();"
+        },
+        {
+          "code": "\n({\n  async foo() {\n    await doSomething();\n  },\n});\n    "
+        },
+        {
+          "code": "\nclass A {\n  async foo() {\n    await doSomething();\n  }\n}\n    "
+        },
+        {
+          "code": "\n(class {\n  async foo() {\n    await doSomething();\n  }\n});\n    "
+        },
+        {
+          "code": "\nasync function foo() {\n  await (async () =\u003e {\n    await doSomething();\n  });\n}\n    "
+        },
+        {
+          "code": "async function foo() {}"
+        },
+        {
+          "code": "async () =\u003e {};"
+        },
+        {
+          "code": "\nfunction foo() {\n  doSomething();\n}\n    "
+        },
+        {
+          "code": "\nasync function foo() {\n  for await (x of xs);\n}\n    "
+        },
+        {
+          "code": "await foo();"
+        },
+        {
+          "code": "\nfor await (let num of asyncIterable) {\n  console.log(num);\n}\n      "
+        },
+        {
+          "code": "\n        async function* run() {\n          await new Promise(resolve =\u003e setTimeout(resolve, 100));\n          yield 'Hello';\n          console.log('World');\n        }\n      "
+        },
+        {
+          "code": "async function* run() {}"
+        },
+        {
+          "code": "const foo = async function* () {};"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\n        async function foo() {\n          doSomething();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        function foo() {\n          doSomething();\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        (async function () {\n          doSomething();\n        });\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        (function () {\n          doSomething();\n        });\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        async () =\u003e {\n          doSomething();\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        () =\u003e {\n          doSomething();\n        };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "async () =\u003e doSomething();",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "() =\u003e doSomething();"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        ({\n          async foo() {\n            doSomething();\n          },\n        });\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        ({\n          foo() {\n            doSomething();\n          },\n        });\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          async foo() {\n            doSomething();\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        class A {\n          foo() {\n            doSomething();\n          }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          public async foo() {\n            doSomething();\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        class A {\n          public foo() {\n            doSomething();\n          }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        (class {\n          async foo() {\n            doSomething();\n          }\n        });\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        (class {\n          foo() {\n            doSomething();\n          }\n        });\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        (class {\n          async ''() {\n            doSomething();\n          }\n        });\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        (class {\n          ''() {\n            doSomething();\n          }\n        });\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        async function foo() {\n          async () =\u003e {\n            await doSomething();\n          };\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        function foo() {\n          async () =\u003e {\n            await doSomething();\n          };\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        async function foo() {\n          await (async () =\u003e {\n            doSomething();\n          });\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        async function foo() {\n          await (() =\u003e {\n            doSomething();\n          });\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const obj = {\n          async: async function foo() {\n            bar();\n          },\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        const obj = {\n          async: function foo() {\n            bar();\n          },\n        };\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        async    /* test */ function foo() {\n          doSomething();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        /* test */ function foo() {\n          doSomething();\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          a = 0\n          async [b]() {\n            return 0;\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        class A {\n          a = 0\n          ;[b]() {\n            return 0;\n          }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        foo\n        async () =\u003e {\n          return 0;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        foo\n        ;() =\u003e {\n          return 0;\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          foo() {}\n          async [bar]() {\n            baz;\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingAwait",
+              "suggestions": [
+                {
+                  "messageId": "removeAsync",
+                  "output": "\n        class A {\n          foo() {}\n          [bar]() {\n            baz;\n          }\n        }\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

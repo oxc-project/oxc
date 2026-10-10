@@ -120,6 +120,16 @@ cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"
 
 [workspace.dependencies]
+# tsrs, the Rust port of the TypeScript 7 compiler (program, binder, checker), behind oxc_linter_tsrs.
+tsrs_core = { git = "https://github.com/maschwenk/tsrs", rev = "30b259a8d985022f96b745f0348b6b2db03fcac8" }
+tsrs_ast = { git = "https://github.com/maschwenk/tsrs", rev = "30b259a8d985022f96b745f0348b6b2db03fcac8" }
+tsrs_scanner = { git = "https://github.com/maschwenk/tsrs", rev = "30b259a8d985022f96b745f0348b6b2db03fcac8" }
+tsrs_parser = { git = "https://github.com/maschwenk/tsrs", rev = "30b259a8d985022f96b745f0348b6b2db03fcac8" }
+tsrs_checker = { git = "https://github.com/maschwenk/tsrs", rev = "30b259a8d985022f96b745f0348b6b2db03fcac8" }
+tsrs_compiler = { git = "https://github.com/maschwenk/tsrs", rev = "30b259a8d985022f96b745f0348b6b2db03fcac8" }
+tsrs_tsoptions = { git = "https://github.com/maschwenk/tsrs", rev = "30b259a8d985022f96b745f0348b6b2db03fcac8" }
+tsrs_vfs = { git = "https://github.com/maschwenk/tsrs", rev = "30b259a8d985022f96b745f0348b6b2db03fcac8" }
+tsrs_diagnostics = { git = "https://github.com/maschwenk/tsrs", rev = "30b259a8d985022f96b745f0348b6b2db03fcac8" }
 # publish = true
 oxc = { version = "0.153.0", path = "crates/oxc" } # Main entry point
 oxc_allocator = { version = "0.153.0", path = "crates/oxc_allocator" } # Memory management
@@ -172,6 +182,7 @@ oxc_formatter_yaml = { path = "crates/oxc_formatter_yaml" } # YAML formatter
 oxc_language_server = { path = "crates/oxc_language_server", default-features = false } # Language server
 oxc_lexer = { path = "crates/oxc_lexer" } # JS/TS lexer (incubating; x86_64 SIMD core, scalar fallback)
 oxc_linter = { path = "crates/oxc_linter" } # Linting engine
+oxc_linter_tsrs = { path = "crates/oxc_linter_tsrs" } # Type-aware rules on tsrs
 oxc_macros = { path = "crates/oxc_macros" } # Proc macros
 oxc_tasks_common = { path = "tasks/common" } # Task utilities
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" } # Transform validation
@@ -256,6 +267,7 @@ project-root = "0.2.2" # Project root detection
 quickcheck = "1.1.0" # Property-based testing
 rand = "0.10.2" # Random number generation
 rayon = "1.12.0" # Data parallelism
+regex = "1"
 ropey = "1.6.1" # Rope text structure
 rust-lapper = "1.3.0" # Interval tree
 saphyr = "0.1.0" # YAML parser

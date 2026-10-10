@@ -1,0 +1,286 @@
+{
+  "source": "require_array_sort_compare_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n      function f(a: any[]) {\n        a.sort(undefined);\n      }\n    "
+        },
+        {
+          "code": "\n      function f(a: any[]) {\n        a.sort((a, b) =\u003e a - b);\n      }\n    "
+        },
+        {
+          "code": "\n      function f(a: Array\u003cstring\u003e) {\n        a.sort(undefined);\n      }\n    "
+        },
+        {
+          "code": "\n      function f(a: Array\u003cnumber\u003e) {\n        a.sort((a, b) =\u003e a - b);\n      }\n    "
+        },
+        {
+          "code": "\n      function f(a: { sort(): void }) {\n        a.sort();\n      }\n    "
+        },
+        {
+          "code": "\n      class A {\n        sort(): void {}\n      }\n      function f(a: A) {\n        a.sort();\n      }\n    "
+        },
+        {
+          "code": "\n      interface A {\n        sort(): void;\n      }\n      function f(a: A) {\n        a.sort();\n      }\n    "
+        },
+        {
+          "code": "\n      interface A {\n        sort(): void;\n      }\n      function f\u003cT extends A\u003e(a: T) {\n        a.sort();\n      }\n    "
+        },
+        {
+          "code": "\n      function f(a: any) {\n        a.sort();\n      }\n    "
+        },
+        {
+          "code": "\n      namespace UserDefined {\n        interface Array {\n          sort(): void;\n        }\n        function f(a: Array) {\n          a.sort();\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      function f(a: any[]) {\n        a?.sort((a, b) =\u003e a - b);\n      }\n    "
+        },
+        {
+          "code": "\n      namespace UserDefined {\n        interface Array {\n          sort(): void;\n        }\n        function f(a: Array) {\n          a?.sort();\n        }\n      }\n    "
+        },
+        {
+          "code": "\n        ['foo', 'bar', 'baz'].sort();\n      ",
+          "options": {
+            "ignoreStringArrays": true
+          }
+        },
+        {
+          "code": "\n        function getString() {\n          return 'foo';\n        }\n        [getString(), getString()].sort();\n      ",
+          "options": {
+            "ignoreStringArrays": true
+          }
+        },
+        {
+          "code": "\n        const foo = 'foo';\n        const bar = 'bar';\n        const baz = 'baz';\n        [foo, bar, baz].sort();\n      ",
+          "options": {
+            "ignoreStringArrays": true
+          }
+        },
+        {
+          "code": "\n        declare const x: string[];\n        x.sort();\n      ",
+          "options": {
+            "ignoreStringArrays": true
+          }
+        },
+        {
+          "code": "\n        function f(a: number[]) {\n          a.toSorted((a, b) =\u003e a - b);\n        }\n      "
+        },
+        {
+          "code": "declare const myArray: Array\u003c\"A\" | \"B\"\u003e; myArray.sort();",
+          "options": {
+            "ignoreStringArrays": true
+          }
+        },
+        {
+          "code": "enum Fruit { Apple = 'apple', Banana = 'banana' }; declare const fruits: Fruit[]; fruits.sort();",
+          "options": {
+            "ignoreStringArrays": true
+          }
+        },
+        {
+          "code": "\n        function f(a: [string, number]) {\n          a.sort();\n        }\n      "
+        },
+        {
+          "code": "\n        function f(a: [number, string]) {\n          a.sort();\n        }\n      "
+        },
+        {
+          "code": "\n        function f(a: readonly [string, number]) {\n          a.sort();\n        }\n      "
+        },
+        {
+          "code": "\n        function f(a: [string, ...number[]]) {\n          a.sort();\n        }\n      "
+        },
+        {
+          "code": "\n        function f(a: [string, number?]) {\n          a.sort();\n        }\n      "
+        },
+        {
+          "code": "\n        function f(a: [string, number] | number[]) {\n          a.sort();\n        }\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\n        function f(a: Array\u003cany\u003e) {\n          a.sort();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(a: number[]) {\n          a.sort();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(a: number[]) {\n          a.sort();\n        }\n      ",
+          "options": {
+            "ignoreStringArrays": false
+          },
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(a: number | number[]) {\n          if (Array.isArray(a)) a.sort();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(a: string | string[]) {\n          if (Array.isArray(a)) a.sort();\n        }\n      ",
+          "options": {
+            "ignoreStringArrays": false
+          },
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(a: number[] | string[]) {\n          a.sort();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f\u003cT extends number[]\u003e(a: T) {\n          a.sort();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f\u003cT, U extends T[]\u003e(a: U) {\n          a.sort();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(a: number[]) {\n          a?.sort();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        [1, 2, 3].sort();\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function getNumber() {\n          return 1;\n        }\n        [getNumber(), getNumber()].sort();\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const foo = 1;\n        const bar = 2;\n        const baz = 3;\n        [foo, bar, baz].sort();\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        [2, 'bar', 'baz'].sort();\n      ",
+          "options": {
+            "ignoreStringArrays": true
+          },
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function getNumber() {\n          return 2;\n        }\n        [2, 3].sort();\n      ",
+          "options": {
+            "ignoreStringArrays": true
+          },
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const one = 1;\n        const two = 2;\n        const three = 3;\n        [one, two, three].sort();\n      ",
+          "options": {
+            "ignoreStringArrays": true
+          },
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(a: number[]) {\n          a.toSorted();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "declare const myArray: (\"A\" | \"B\" | 3)[]; myArray.sort();",
+          "options": {
+            "ignoreStringArrays": true
+          },
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f(a: Array\u003c[string, number]\u003e) {\n          a.sort();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "requireCompare",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

@@ -89,3 +89,5 @@ allocator = ["dep:mimalloc-safe"]
 # - Sorts file paths before linting if oxlint is run with `--threads 1`.
 testing = ["oxc_linter/force_test_reporter"]
 ruledocs = ["oxc_linter/ruledocs"]
+# Type-aware rules in-process on tsrs; `OXLINT_TSGOLINT_PATH` still selects a `tsgolint` subprocess.
+tsrs = ["oxc_linter/tsrs"]

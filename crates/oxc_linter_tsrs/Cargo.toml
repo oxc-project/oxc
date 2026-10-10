@@ -1,0 +1,40 @@
+[package]
+name = "oxc_linter_tsrs"
+version = "0.0.0"
+authors.workspace = true
+categories.workspace = true
+edition = "2021"
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+description = "Type-aware lint rules for oxlint on tsrs, the Rust port of the TypeScript 7 checker"
+
+# No `[lints] workspace = true`: the crate is vendored from tsrslint, which lints with clippy's defaults. Adopting
+# oxc's pedantic set (about 440 warnings here) and `.clippy.toml`'s `cow_utils` methods is a follow-up.
+[lints.clippy]
+disallowed_methods = "allow"
+
+[lib]
+doctest = false
+
+[dependencies]
+tsrs_core = { workspace = true }
+tsrs_ast = { workspace = true }
+tsrs_scanner = { workspace = true }
+tsrs_checker = { workspace = true }
+tsrs_compiler = { workspace = true }
+tsrs_tsoptions = { workspace = true }
+tsrs_vfs = { workspace = true }
+tsrs_diagnostics = { workspace = true }
+
+rayon = { workspace = true }
+regex = { workspace = true }
+rustc-hash = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tsrs_parser = { workspace = true }

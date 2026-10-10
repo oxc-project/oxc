@@ -1,0 +1,1596 @@
+{
+  "source": "prefer_readonly_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "function ignore() {}"
+        },
+        {
+          "code": "const ignore = function () {};"
+        },
+        {
+          "code": "const ignore = () =\u003e {};"
+        },
+        {
+          "code": "\n      const container = { member: true };\n      container.member;\n    "
+        },
+        {
+          "code": "\n      const container = { member: 1 };\n      +container.member;\n    "
+        },
+        {
+          "code": "\n      const container = { member: 1 };\n      ++container.member;\n    "
+        },
+        {
+          "code": "\n      const container = { member: 1 };\n      container.member++;\n    "
+        },
+        {
+          "code": "\n      const container = { member: 1 };\n      -container.member;\n    "
+        },
+        {
+          "code": "\n      const container = { member: 1 };\n      --container.member;\n    "
+        },
+        {
+          "code": "\n      const container = { member: 1 };\n      container.member--;\n    "
+        },
+        {
+          "code": "class TestEmpty {}"
+        },
+        {
+          "code": "\n      class TestReadonlyStatic {\n        private static readonly correctlyReadonlyStatic = 7;\n      }\n    "
+        },
+        {
+          "code": "\n      class TestReadonlyStatic {\n        static readonly #correctlyReadonlyStatic = 7;\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableStatic {\n        private static correctlyModifiableStatic = 7;\n\n        public constructor() {\n          TestModifiableStatic.correctlyModifiableStatic += 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableStatic {\n        static #correctlyModifiableStatic = 7;\n\n        public constructor() {\n          TestModifiableStatic.#correctlyModifiableStatic += 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableByParameterProperty {\n        private static readonly correctlyModifiableByParameterProperty = 7;\n\n        public constructor(\n          public correctlyModifiablePublicParameter: number = (() =\u003e {\n            return (TestModifiableStatic.correctlyModifiableByParameterProperty += 1);\n          })(),\n        ) {}\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableByParameterProperty {\n        static readonly #correctlyModifiableByParameterProperty = 7;\n\n        public constructor(\n          public correctlyModifiablePublicParameter: number = (() =\u003e {\n            return (TestModifiableStatic.#correctlyModifiableByParameterProperty += 1);\n          })(),\n        ) {}\n      }\n    "
+        },
+        {
+          "code": "\n      class TestReadonlyInline {\n        private readonly correctlyReadonlyInline = 7;\n      }\n    "
+        },
+        {
+          "code": "\n      class TestReadonlyInline {\n        readonly #correctlyReadonlyInline = 7;\n      }\n    "
+        },
+        {
+          "code": "\n      class TestReadonlyDelayed {\n        private readonly correctlyReadonlyDelayed = 7;\n\n        public constructor() {\n          this.correctlyReadonlyDelayed += 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestReadonlyDelayed {\n        readonly #correctlyReadonlyDelayed = 7;\n\n        public constructor() {\n          this.#correctlyReadonlyDelayed += 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableInline {\n        private correctlyModifiableInline = 7;\n\n        public mutate() {\n          this.correctlyModifiableInline += 1;\n\n          return class {\n            private correctlyModifiableInline = 7;\n\n            mutate() {\n              this.correctlyModifiableInline += 1;\n            }\n          };\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableInline {\n        #correctlyModifiableInline = 7;\n\n        public mutate() {\n          this.#correctlyModifiableInline += 1;\n\n          return class {\n            #correctlyModifiableInline = 7;\n\n            mutate() {\n              this.#correctlyModifiableInline += 1;\n            }\n          };\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableDelayed {\n        private correctlyModifiableDelayed = 7;\n\n        public mutate() {\n          this.correctlyModifiableDelayed += 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableDelayed {\n        #correctlyModifiableDelayed = 7;\n\n        public mutate() {\n          this.#correctlyModifiableDelayed += 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableDeleted {\n        private correctlyModifiableDeleted = 7;\n\n        public mutate() {\n          delete this.correctlyModifiableDeleted;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructor {\n        private correctlyModifiableWithinConstructor = 7;\n\n        public constructor() {\n          (() =\u003e {\n            this.correctlyModifiableWithinConstructor += 1;\n          })();\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructor {\n        #correctlyModifiableWithinConstructor = 7;\n\n        public constructor() {\n          (() =\u003e {\n            this.#correctlyModifiableWithinConstructor += 1;\n          })();\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructorArrowFunction {\n        private correctlyModifiableWithinConstructorArrowFunction = 7;\n\n        public constructor() {\n          (() =\u003e {\n            this.correctlyModifiableWithinConstructorArrowFunction += 1;\n          })();\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructorArrowFunction {\n        #correctlyModifiableWithinConstructorArrowFunction = 7;\n\n        public constructor() {\n          (() =\u003e {\n            this.#correctlyModifiableWithinConstructorArrowFunction += 1;\n          })();\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructorInFunctionExpression {\n        private correctlyModifiableWithinConstructorInFunctionExpression = 7;\n\n        public constructor() {\n          const self = this;\n\n          (() =\u003e {\n            self.correctlyModifiableWithinConstructorInFunctionExpression += 1;\n          })();\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructorInFunctionExpression {\n        #correctlyModifiableWithinConstructorInFunctionExpression = 7;\n\n        public constructor() {\n          const self = this;\n\n          (() =\u003e {\n            self.#correctlyModifiableWithinConstructorInFunctionExpression += 1;\n          })();\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructorInGetAccessor {\n        private correctlyModifiableWithinConstructorInGetAccessor = 7;\n\n        public constructor() {\n          const self = this;\n\n          const confusingObject = {\n            get accessor() {\n              return (self.correctlyModifiableWithinConstructorInGetAccessor += 1);\n            },\n          };\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructorInGetAccessor {\n        #correctlyModifiableWithinConstructorInGetAccessor = 7;\n\n        public constructor() {\n          const self = this;\n\n          const confusingObject = {\n            get accessor() {\n              return (self.#correctlyModifiableWithinConstructorInGetAccessor += 1);\n            },\n          };\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructorInMethodDeclaration {\n        private correctlyModifiableWithinConstructorInMethodDeclaration = 7;\n\n        public constructor() {\n          const self = this;\n\n          const confusingObject = {\n            methodDeclaration() {\n              self.correctlyModifiableWithinConstructorInMethodDeclaration = 7;\n            },\n          };\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructorInMethodDeclaration {\n        #correctlyModifiableWithinConstructorInMethodDeclaration = 7;\n\n        public constructor() {\n          const self = this;\n\n          const confusingObject = {\n            methodDeclaration() {\n              self.#correctlyModifiableWithinConstructorInMethodDeclaration = 7;\n            },\n          };\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructorInSetAccessor {\n        private correctlyModifiableWithinConstructorInSetAccessor = 7;\n\n        public constructor() {\n          const self = this;\n\n          const confusingObject = {\n            set accessor(value: number) {\n              self.correctlyModifiableWithinConstructorInSetAccessor += value;\n            },\n          };\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiableWithinConstructorInSetAccessor {\n        #correctlyModifiableWithinConstructorInSetAccessor = 7;\n\n        public constructor() {\n          const self = this;\n\n          const confusingObject = {\n            set accessor(value: number) {\n              self.#correctlyModifiableWithinConstructorInSetAccessor += value;\n            },\n          };\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiablePostDecremented {\n        private correctlyModifiablePostDecremented = 7;\n\n        public mutate() {\n          this.correctlyModifiablePostDecremented -= 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiablePostDecremented {\n        #correctlyModifiablePostDecremented = 7;\n\n        public mutate() {\n          this.#correctlyModifiablePostDecremented -= 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestyModifiablePostIncremented {\n        private correctlyModifiablePostIncremented = 7;\n\n        public mutate() {\n          this.correctlyModifiablePostIncremented += 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestyModifiablePostIncremented {\n        #correctlyModifiablePostIncremented = 7;\n\n        public mutate() {\n          this.#correctlyModifiablePostIncremented += 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiablePreDecremented {\n        private correctlyModifiablePreDecremented = 7;\n\n        public mutate() {\n          --this.correctlyModifiablePreDecremented;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiablePreDecremented {\n        #correctlyModifiablePreDecremented = 7;\n\n        public mutate() {\n          --this.#correctlyModifiablePreDecremented;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiablePreIncremented {\n        private correctlyModifiablePreIncremented = 7;\n\n        public mutate() {\n          ++this.correctlyModifiablePreIncremented;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestModifiablePreIncremented {\n        #correctlyModifiablePreIncremented = 7;\n\n        public mutate() {\n          ++this.#correctlyModifiablePreIncremented;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestProtectedModifiable {\n        protected protectedModifiable = 7;\n      }\n    "
+        },
+        {
+          "code": "\n      class TestPublicModifiable {\n        public publicModifiable = 7;\n      }\n    "
+        },
+        {
+          "code": "\n      class TestReadonlyParameter {\n        public constructor(private readonly correctlyReadonlyParameter = 7) {}\n      }\n    "
+        },
+        {
+          "code": "\n      class TestCorrectlyModifiableParameter {\n        public constructor(private correctlyModifiableParameter = 7) {}\n\n        public mutate() {\n          this.correctlyModifiableParameter += 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n        class TestCorrectlyNonInlineLambdas {\n          private correctlyNonInlineLambda = 7;\n        }\n      ",
+          "options": {
+            "onlyInlineLambdas": true
+          }
+        },
+        {
+          "code": "\n        class TestCorrectlyNonInlineLambdas {\n          #correctlyNonInlineLambda = 7;\n        }\n      ",
+          "options": {
+            "onlyInlineLambdas": true
+          }
+        },
+        {
+          "code": "\n        class TestCorrectlyNoInitializer {\n          private correctlyNoInitializer: number;\n        }\n      ",
+          "options": {
+            "onlyInlineLambdas": true
+          }
+        },
+        {
+          "code": "\n        class TestCorrectlyNoInitializer {\n          #correctlyNoInitializer: number;\n        }\n      ",
+          "options": {
+            "onlyInlineLambdas": true
+          }
+        },
+        {
+          "code": "\n      class TestComputedParameter {\n        public mutate() {\n          this['computed'] = 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestComputedParameter {\n        private ['computed-ignored-by-rule'] = 1;\n      }\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  private value: number = 0;\n\n  bar(newValue: { value: number }) {\n    ({ value: this.value } = newValue);\n    return this.value;\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  #value: number = 0;\n\n  bar(newValue: { value: number }) {\n    ({ value: this.#value } = newValue);\n    return this.#value;\n  }\n}\n      "
+        },
+        {
+          "code": "\nfunction ClassWithName\u003cTBase extends new (...args: any[]) =\u003e {}\u003e(Base: TBase) {\n  return class extends Base {\n    private _name: string;\n\n    public test(value: string) {\n      this._name = value;\n    }\n  };\n}\n      "
+        },
+        {
+          "code": "\nfunction ClassWithName\u003cTBase extends new (...args: any[]) =\u003e {}\u003e(Base: TBase) {\n  return class extends Base {\n    #name: string;\n\n    public test(value: string) {\n      this.#name = value;\n    }\n  };\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  private value: Record\u003cstring, number\u003e = {};\n\n  bar(newValue: Record\u003cstring, number\u003e) {\n    ({ ...this.value } = newValue);\n    return this.value;\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  #value: Record\u003cstring, number\u003e = {};\n\n  bar(newValue: Record\u003cstring, number\u003e) {\n    ({ ...this.#value } = newValue);\n    return this.#value;\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  private value: number[] = [];\n\n  bar(newValue: number[]) {\n    [...this.value] = newValue;\n    return this.value;\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  #value: number[] = [];\n\n  bar(newValue: number[]) {\n    [...this.#value] = newValue;\n    return this.#value;\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  private value: number = 0;\n\n  bar(newValue: number[]) {\n    [this.value] = newValue;\n    return this.value;\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  #value: number = 0;\n\n  bar(newValue: number[]) {\n    [this.#value] = newValue;\n    return this.#value;\n  }\n}\n      "
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {\n            prop: '',\n          };\n\n          public test(): void {\n            this.testObj = '';\n          }\n        }\n      "
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {\n            prop: '',\n          };\n\n          public test(): void {\n            this.#testObj = '';\n          }\n        }\n      "
+        },
+        {
+          "code": "\n        class TestObject {\n          public prop: number;\n        }\n\n        class Test {\n          private testObj = new TestObject();\n\n          public test(): void {\n            this.testObj = new TestObject();\n          }\n        }\n      "
+        },
+        {
+          "code": "\n        class TestObject {\n          public prop: number;\n        }\n\n        class Test {\n          #testObj = new TestObject();\n\n          public test(): void {\n            this.#testObj = new TestObject();\n          }\n        }\n      "
+        },
+        {
+          "code": "\n      class TestIntersection {\n        private prop: number = 3;\n\n        test() {\n          const that = {} as this \u0026 { _foo: 'bar' };\n          that.prop = 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestUnion {\n        private prop: number = 3;\n\n        test() {\n          const that = {} as this | (this \u0026 { _foo: 'bar' });\n          that.prop = 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestStaticIntersection {\n        private static prop: number;\n\n        test() {\n          const that = {} as typeof TestStaticIntersection \u0026 { _foo: 'bar' };\n          that.prop = 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestStaticUnion {\n        private static prop: number = 1;\n\n        test() {\n          const that = {} as\n            | typeof TestStaticUnion\n            | (typeof TestStaticUnion \u0026 { _foo: 'bar' });\n          that.prop = 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestBothIntersection {\n        private prop1: number = 1;\n        private static prop2: number;\n\n        test() {\n          const that = {} as typeof TestBothIntersection \u0026 this;\n          that.prop1 = 1;\n          that.prop2 = 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestBothIntersection {\n        private prop1: number = 1;\n        private static prop2: number;\n\n        test() {\n          const that = {} as this \u0026 typeof TestBothIntersection;\n          that.prop1 = 1;\n          that.prop2 = 1;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      class TestStaticPrivateAccessor {\n        private static accessor staticAcc = 1;\n      }\n    "
+        },
+        {
+          "code": "\n      class TestStaticPrivateFieldAccessor {\n        static accessor #staticAcc = 1;\n      }\n    "
+        },
+        {
+          "code": "\n      class TestPrivateAccessor {\n        private accessor acc = 3;\n      }\n    "
+        },
+        {
+          "code": "\n      class TestPrivateFieldAccessor {\n        accessor #acc = 3;\n      }\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\n        class TestIncorrectlyModifiableStatic {\n          private static incorrectlyModifiableStatic = 7;\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiableStatic {\n          private static readonly incorrectlyModifiableStatic = 7;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 53,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiableStatic {\n          static #incorrectlyModifiableStatic = 7;\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiableStatic {\n          static readonly #incorrectlyModifiableStatic = 7;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 46,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiableStaticArrow {\n          private static incorrectlyModifiableStaticArrow = () =\u003e 7;\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiableStaticArrow {\n          private static readonly incorrectlyModifiableStaticArrow = () =\u003e 7;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 58,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiableStaticArrow {\n          static #incorrectlyModifiableStaticArrow = () =\u003e 7;\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiableStaticArrow {\n          static readonly #incorrectlyModifiableStaticArrow = () =\u003e 7;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 51,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiableInline {\n          private incorrectlyModifiableInline = 7;\n\n          public createConfusingChildClass() {\n            return class {\n              private incorrectlyModifiableInline = 7;\n            };\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiableInline {\n          private readonly incorrectlyModifiableInline = 7;\n\n          public createConfusingChildClass() {\n            return class {\n              private readonly incorrectlyModifiableInline = 7;\n            };\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 46,
+              "suggestions": []
+            },
+            {
+              "messageId": "preferReadonly",
+              "line": 7,
+              "column": 15,
+              "endLine": 7,
+              "endColumn": 50,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiableInline {\n          #incorrectlyModifiableInline = 7;\n\n          public createConfusingChildClass() {\n            return class {\n              #incorrectlyModifiableInline = 7;\n            };\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiableInline {\n          readonly #incorrectlyModifiableInline = 7;\n\n          public createConfusingChildClass() {\n            return class {\n              readonly #incorrectlyModifiableInline = 7;\n            };\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 39,
+              "suggestions": []
+            },
+            {
+              "messageId": "preferReadonly",
+              "line": 7,
+              "column": 15,
+              "endLine": 7,
+              "endColumn": 43,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiableDelayed {\n          private incorrectlyModifiableDelayed = 7;\n\n          public constructor() {\n            this.incorrectlyModifiableDelayed = 7;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiableDelayed {\n          private readonly incorrectlyModifiableDelayed: number = 7;\n\n          public constructor() {\n            this.incorrectlyModifiableDelayed = 7;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 47,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiableDelayed {\n          #incorrectlyModifiableDelayed = 7;\n\n          public constructor() {\n            this.#incorrectlyModifiableDelayed = 7;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiableDelayed {\n          readonly #incorrectlyModifiableDelayed = 7;\n\n          public constructor() {\n            this.#incorrectlyModifiableDelayed = 7;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 40,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestChildClassExpressionModifiable {\n          private childClassExpressionModifiable = 7;\n\n          public createConfusingChildClass() {\n            return class {\n              private childClassExpressionModifiable = 7;\n\n              mutate() {\n                this.childClassExpressionModifiable += 1;\n              }\n            };\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestChildClassExpressionModifiable {\n          private readonly childClassExpressionModifiable = 7;\n\n          public createConfusingChildClass() {\n            return class {\n              private childClassExpressionModifiable = 7;\n\n              mutate() {\n                this.childClassExpressionModifiable += 1;\n              }\n            };\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 49,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestChildClassExpressionModifiable {\n          #childClassExpressionModifiable = 7;\n\n          public createConfusingChildClass() {\n            return class {\n              #childClassExpressionModifiable = 7;\n\n              mutate() {\n                this.#childClassExpressionModifiable += 1;\n              }\n            };\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestChildClassExpressionModifiable {\n          readonly #childClassExpressionModifiable = 7;\n\n          public createConfusingChildClass() {\n            return class {\n              #childClassExpressionModifiable = 7;\n\n              mutate() {\n                this.#childClassExpressionModifiable += 1;\n              }\n            };\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 42,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiablePostMinus {\n          private incorrectlyModifiablePostMinus = 7;\n\n          public mutate() {\n            this.incorrectlyModifiablePostMinus - 1;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiablePostMinus {\n          private readonly incorrectlyModifiablePostMinus = 7;\n\n          public mutate() {\n            this.incorrectlyModifiablePostMinus - 1;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 49,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiablePostMinus {\n          #incorrectlyModifiablePostMinus = 7;\n\n          public mutate() {\n            this.#incorrectlyModifiablePostMinus - 1;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiablePostMinus {\n          readonly #incorrectlyModifiablePostMinus = 7;\n\n          public mutate() {\n            this.#incorrectlyModifiablePostMinus - 1;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 42,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiablePostPlus {\n          private incorrectlyModifiablePostPlus = 7;\n\n          public mutate() {\n            this.incorrectlyModifiablePostPlus + 1;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiablePostPlus {\n          private readonly incorrectlyModifiablePostPlus = 7;\n\n          public mutate() {\n            this.incorrectlyModifiablePostPlus + 1;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 48,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiablePostPlus {\n          #incorrectlyModifiablePostPlus = 7;\n\n          public mutate() {\n            this.#incorrectlyModifiablePostPlus + 1;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiablePostPlus {\n          readonly #incorrectlyModifiablePostPlus = 7;\n\n          public mutate() {\n            this.#incorrectlyModifiablePostPlus + 1;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 41,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiablePreMinus {\n          private incorrectlyModifiablePreMinus = 7;\n\n          public mutate() {\n            -this.incorrectlyModifiablePreMinus;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiablePreMinus {\n          private readonly incorrectlyModifiablePreMinus = 7;\n\n          public mutate() {\n            -this.incorrectlyModifiablePreMinus;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 48,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiablePreMinus {\n          #incorrectlyModifiablePreMinus = 7;\n\n          public mutate() {\n            -this.#incorrectlyModifiablePreMinus;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiablePreMinus {\n          readonly #incorrectlyModifiablePreMinus = 7;\n\n          public mutate() {\n            -this.#incorrectlyModifiablePreMinus;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 41,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiablePrePlus {\n          private incorrectlyModifiablePrePlus = 7;\n\n          public mutate() {\n            +this.incorrectlyModifiablePrePlus;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiablePrePlus {\n          private readonly incorrectlyModifiablePrePlus = 7;\n\n          public mutate() {\n            +this.incorrectlyModifiablePrePlus;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 47,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiablePrePlus {\n          #incorrectlyModifiablePrePlus = 7;\n\n          public mutate() {\n            +this.#incorrectlyModifiablePrePlus;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiablePrePlus {\n          readonly #incorrectlyModifiablePrePlus = 7;\n\n          public mutate() {\n            +this.#incorrectlyModifiablePrePlus;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 40,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestOverlappingClassVariable {\n          private overlappingClassVariable = 7;\n\n          public workWithSimilarClass(other: SimilarClass) {\n            other.overlappingClassVariable = 7;\n          }\n        }\n\n        class SimilarClass {\n          public overlappingClassVariable = 7;\n        }\n      ",
+          "output": [
+            "\n        class TestOverlappingClassVariable {\n          private readonly overlappingClassVariable = 7;\n\n          public workWithSimilarClass(other: SimilarClass) {\n            other.overlappingClassVariable = 7;\n          }\n        }\n\n        class SimilarClass {\n          public overlappingClassVariable = 7;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 43,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiableParameter {\n          public constructor(private incorrectlyModifiableParameter = 7) {}\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiableParameter {\n          public constructor(private readonly incorrectlyModifiableParameter = 7) {}\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 30,
+              "endLine": 3,
+              "endColumn": 68,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestIncorrectlyModifiableParameter {\n          public constructor(\n            public ignore: boolean,\n            private incorrectlyModifiableParameter = 7,\n          ) {}\n        }\n      ",
+          "output": [
+            "\n        class TestIncorrectlyModifiableParameter {\n          public constructor(\n            public ignore: boolean,\n            private readonly incorrectlyModifiableParameter = 7,\n          ) {}\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 5,
+              "column": 13,
+              "endLine": 5,
+              "endColumn": 51,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestCorrectlyNonInlineLambdas {\n          private incorrectlyInlineLambda = () =\u003e 7;\n        }\n      ",
+          "options": {
+            "onlyInlineLambdas": true
+          },
+          "output": [
+            "\n        class TestCorrectlyNonInlineLambdas {\n          private readonly incorrectlyInlineLambda = () =\u003e 7;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 42,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction ClassWithName\u003cTBase extends new (...args: any[]) =\u003e {}\u003e(Base: TBase) {\n  return class extends Base {\n    private _name: string;\n  };\n}\n      ",
+          "output": [
+            "\nfunction ClassWithName\u003cTBase extends new (...args: any[]) =\u003e {}\u003e(Base: TBase) {\n  return class extends Base {\n    private readonly _name: string;\n  };\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 4,
+              "column": 5,
+              "endLine": 4,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction ClassWithName\u003cTBase extends new (...args: any[]) =\u003e {}\u003e(Base: TBase) {\n  return class extends Base {\n    #name: string;\n  };\n}\n      ",
+          "output": [
+            "\nfunction ClassWithName\u003cTBase extends new (...args: any[]) =\u003e {}\u003e(Base: TBase) {\n  return class extends Base {\n    readonly #name: string;\n  };\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 4,
+              "column": 5,
+              "endLine": 4,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {\n            prop: '',\n          };\n\n          public test(): void {\n            this.testObj.prop = '';\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly testObj = {\n            prop: '',\n          };\n\n          public test(): void {\n            this.testObj.prop = '';\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {\n            prop: '',\n          };\n\n          public test(): void {\n            this.#testObj.prop = '';\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          readonly #testObj = {\n            prop: '',\n          };\n\n          public test(): void {\n            this.#testObj.prop = '';\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestObject {\n          public prop: number;\n        }\n\n        class Test {\n          private testObj = new TestObject();\n\n          public test(): void {\n            this.testObj.prop = 10;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestObject {\n          public prop: number;\n        }\n\n        class Test {\n          private readonly testObj = new TestObject();\n\n          public test(): void {\n            this.testObj.prop = 10;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 7,
+              "column": 11,
+              "endLine": 7,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class TestObject {\n          public prop: number;\n        }\n\n        class Test {\n          #testObj = new TestObject();\n\n          public test(): void {\n            this.#testObj.prop = 10;\n          }\n        }\n      ",
+          "output": [
+            "\n        class TestObject {\n          public prop: number;\n        }\n\n        class Test {\n          readonly #testObj = new TestObject();\n\n          public test(): void {\n            this.#testObj.prop = 10;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 7,
+              "column": 11,
+              "endLine": 7,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {\n            prop: '',\n          };\n          public test(): void {\n            this.testObj.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly testObj = {\n            prop: '',\n          };\n          public test(): void {\n            this.testObj.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {\n            prop: '',\n          };\n          public test(): void {\n            this.#testObj.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          readonly #testObj = {\n            prop: '',\n          };\n          public test(): void {\n            this.#testObj.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {};\n          public test(): void {\n            this.testObj?.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly testObj = {};\n          public test(): void {\n            this.testObj?.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {};\n          public test(): void {\n            this.#testObj?.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          readonly #testObj = {};\n          public test(): void {\n            this.#testObj?.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {};\n          public test(): void {\n            this.testObj!.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly testObj = {};\n          public test(): void {\n            this.testObj!.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {};\n          public test(): void {\n            this.#testObj!.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          readonly #testObj = {};\n          public test(): void {\n            this.#testObj!.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {};\n          public test(): void {\n            this.testObj.prop.prop = '';\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly testObj = {};\n          public test(): void {\n            this.testObj.prop.prop = '';\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {};\n          public test(): void {\n            this.#testObj.prop.prop = '';\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          readonly #testObj = {};\n          public test(): void {\n            this.#testObj.prop.prop = '';\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {};\n          public test(): void {\n            this.testObj.prop.doesSomething();\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly testObj = {};\n          public test(): void {\n            this.testObj.prop.doesSomething();\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {};\n          public test(): void {\n            this.#testObj.prop.doesSomething();\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          readonly #testObj = {};\n          public test(): void {\n            this.#testObj.prop.doesSomething();\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {};\n          public test(): void {\n            this.testObj?.prop.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly testObj = {};\n          public test(): void {\n            this.testObj?.prop.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {};\n          public test(): void {\n            this.#testObj?.prop.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          readonly #testObj = {};\n          public test(): void {\n            this.#testObj?.prop.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {};\n          public test(): void {\n            this.testObj?.prop?.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly testObj = {};\n          public test(): void {\n            this.testObj?.prop?.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {};\n          public test(): void {\n            this.#testObj?.prop?.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          readonly #testObj = {};\n          public test(): void {\n            this.#testObj?.prop?.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {};\n          public test(): void {\n            this.testObj.prop?.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly testObj = {};\n          public test(): void {\n            this.testObj.prop?.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {};\n          public test(): void {\n            this.#testObj.prop?.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          readonly #testObj = {};\n          public test(): void {\n            this.#testObj.prop?.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private testObj = {};\n          public test(): void {\n            this.testObj!.prop?.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly testObj = {};\n          public test(): void {\n            this.testObj!.prop?.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          #testObj = {};\n          public test(): void {\n            this.#testObj!.prop?.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          readonly #testObj = {};\n          public test(): void {\n            this.#testObj!.prop?.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop: number = 3;\n\n          test() {\n            const that = {} as this \u0026 { _foo: 'bar' };\n            that._foo = 1;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop: number = 3;\n\n          test() {\n            const that = {} as this \u0026 { _foo: 'bar' };\n            that._foo = 1;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop: number = 3;\n\n          test() {\n            const that = {} as this | (this \u0026 { _foo: 'bar' });\n            that.prop;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop: number = 3;\n\n          test() {\n            const that = {} as this | (this \u0026 { _foo: 'bar' });\n            that.prop;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop: number;\n\n          constructor() {\n            const that = {} as this \u0026 { _foo: 'bar' };\n            that.prop = 1;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop: number;\n\n          constructor() {\n            const that = {} as this \u0026 { _foo: 'bar' };\n            that.prop = 1;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = 'hello';\n\n          constructor() {\n            this.prop = 'world';\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop: string = 'hello';\n\n          constructor() {\n            this.prop = 'world';\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = 'hello';\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = 'hello';\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const hello: 'hello';\n\n        class Test {\n          private prop = hello;\n\n          constructor() {\n            this.prop = 'world';\n          }\n        }\n      ",
+          "output": [
+            "\n        declare const hello: 'hello';\n\n        class Test {\n          private readonly prop = hello;\n\n          constructor() {\n            this.prop = 'world';\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 5,
+              "column": 11,
+              "endLine": 5,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const hello: 'hello';\n\n        class Test {\n          private prop = hello;\n        }\n      ",
+          "output": [
+            "\n        declare const hello: 'hello';\n\n        class Test {\n          private readonly prop = hello;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 5,
+              "column": 11,
+              "endLine": 5,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = 10;\n\n          constructor() {\n            this.prop = 11;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop: number = 10;\n\n          constructor() {\n            this.prop = 11;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = 10;\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = 10;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const hello: 10;\n\n        class Test {\n          private prop = hello;\n\n          constructor() {\n            this.prop = 11;\n          }\n        }\n      ",
+          "output": [
+            "\n        declare const hello: 10;\n\n        class Test {\n          private readonly prop = hello;\n\n          constructor() {\n            this.prop = 11;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 5,
+              "column": 11,
+              "endLine": 5,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = true;\n\n          constructor() {\n            this.prop = false;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop: boolean = true;\n\n          constructor() {\n            this.prop = false;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = true;\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = true;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const hello: true;\n\n        class Test {\n          private prop = hello;\n\n          constructor() {\n            this.prop = false;\n          }\n        }\n      ",
+          "output": [
+            "\n        declare const hello: true;\n\n        class Test {\n          private readonly prop = hello;\n\n          constructor() {\n            this.prop = false;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 5,
+              "column": 11,
+              "endLine": 5,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        class Test {\n          private prop = Foo.Bar;\n\n          constructor() {\n            this.prop = Foo.Bazz;\n          }\n        }\n      ",
+          "output": [
+            "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        class Test {\n          private readonly prop: Foo = Foo.Bar;\n\n          constructor() {\n            this.prop = Foo.Bazz;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 8,
+              "column": 11,
+              "endLine": 8,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        class Test {\n          private prop = Foo.Bar;\n        }\n      ",
+          "output": [
+            "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        class Test {\n          private readonly prop = Foo.Bar;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 8,
+              "column": 11,
+              "endLine": 8,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        const foo = Foo.Bar;\n\n        class Test {\n          private prop = foo;\n\n          constructor() {\n            this.prop = foo;\n          }\n        }\n      ",
+          "output": [
+            "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        const foo = Foo.Bar;\n\n        class Test {\n          private readonly prop: Foo = foo;\n\n          constructor() {\n            this.prop = foo;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 10,
+              "column": 11,
+              "endLine": 10,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        const foo = Foo.Bar;\n\n        class Test {\n          private prop = foo;\n        }\n      ",
+          "output": [
+            "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        const foo = Foo.Bar;\n\n        class Test {\n          private readonly prop = foo;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 10,
+              "column": 11,
+              "endLine": 10,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        declare const foo: Foo;\n\n        class Test {\n          private prop = foo;\n        }\n      ",
+          "output": [
+            "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        declare const foo: Foo;\n\n        class Test {\n          private readonly prop = foo;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 10,
+              "column": 11,
+              "endLine": 10,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        const bar = Foo.Bar;\n\n        function wrapper() {\n          const Foo = 10;\n\n          class Test {\n            private prop = bar;\n\n            constructor() {\n              this.prop = bar;\n            }\n          }\n        }\n      ",
+          "output": [
+            "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        const bar = Foo.Bar;\n\n        function wrapper() {\n          const Foo = 10;\n\n          class Test {\n            private readonly prop = bar;\n\n            constructor() {\n              this.prop = bar;\n            }\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 13,
+              "column": 13,
+              "endLine": 13,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        const bar = Foo.Bar;\n\n        function wrapper() {\n          type Foo = 10;\n\n          class Test {\n            private prop = bar;\n\n            constructor() {\n              this.prop = bar;\n            }\n          }\n        }\n      ",
+          "output": [
+            "\n        enum Foo {\n          Bar,\n          Bazz,\n        }\n\n        const bar = Foo.Bar;\n\n        function wrapper() {\n          type Foo = 10;\n\n          class Test {\n            private readonly prop = bar;\n\n            constructor() {\n              this.prop = bar;\n            }\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 13,
+              "column": 13,
+              "endLine": 13,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const Bar = (function () {\n          enum Foo {\n            Bar,\n            Bazz,\n          }\n\n          return Foo;\n        })();\n\n        const bar = Bar.Bar;\n\n        class Test {\n          private prop = bar;\n\n          constructor() {\n            this.prop = bar;\n          }\n        }\n      ",
+          "output": [
+            "\n        const Bar = (function () {\n          enum Foo {\n            Bar,\n            Bazz,\n          }\n\n          return Foo;\n        })();\n\n        const bar = Bar.Bar;\n\n        class Test {\n          private readonly prop = bar;\n\n          constructor() {\n            this.prop = bar;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 14,
+              "column": 11,
+              "endLine": 14,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = { foo: 'bar' };\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = { foo: 'bar' };\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = { foo: 'bar' };\n\n          constructor() {\n            this.prop = { foo: 'bazz' };\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = { foo: 'bar' };\n\n          constructor() {\n            this.prop = { foo: 'bazz' };\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = [1, 2, 'three'];\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = [1, 2, 'three'];\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = [1, 2, 'three'];\n\n          constructor() {\n            this.prop = [1, 2, 'four'];\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = [1, 2, 'three'];\n\n          constructor() {\n            this.prop = [1, 2, 'four'];\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class X {\n          private _isValid = true;\n\n          getIsValid = () =\u003e this._isValid;\n\n          constructor(data?: {}) {\n            if (!data) {\n              this._isValid = false;\n            }\n          }\n        }\n      ",
+          "output": [
+            "\n        class X {\n          private readonly _isValid: boolean = true;\n\n          getIsValid = () =\u003e this._isValid;\n\n          constructor(data?: {}) {\n            if (!data) {\n              this._isValid = false;\n            }\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop: string = 'hello';\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop: string = 'hello';\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop: string | number = 'hello';\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop: string | number = 'hello';\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop: string;\n\n          constructor() {\n            this.prop = 'hello';\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop: string;\n\n          constructor() {\n            this.prop = 'hello';\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop;\n\n          constructor() {\n            this.prop = 'hello';\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop;\n\n          constructor() {\n            this.prop = 'hello';\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop;\n\n          constructor(x: boolean) {\n            if (x) {\n              this.prop = 'hello';\n            } else {\n              this.prop = 10;\n            }\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop;\n\n          constructor(x: boolean) {\n            if (x) {\n              this.prop = 'hello';\n            } else {\n              this.prop = 10;\n            }\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const hello: 'hello' | 10;\n\n        class Test {\n          private prop = hello;\n\n          constructor() {\n            this.prop = 10;\n          }\n        }\n      ",
+          "output": [
+            "\n        declare const hello: 'hello' | 10;\n\n        class Test {\n          private readonly prop = hello;\n\n          constructor() {\n            this.prop = 10;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 5,
+              "column": 11,
+              "endLine": 5,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = null;\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = null;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = null;\n\n          constructor() {\n            this.prop = null;\n          }\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = null;\n\n          constructor() {\n            this.prop = null;\n          }\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = 'hello' as string;\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = 'hello' as string;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Test {\n          private prop = Promise.resolve('hello');\n        }\n      ",
+          "output": [
+            "\n        class Test {\n          private readonly prop = Promise.resolve('hello');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "preferReadonly",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

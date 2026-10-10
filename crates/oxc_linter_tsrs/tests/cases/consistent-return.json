@@ -1,0 +1,252 @@
+{
+  "source": "consistent_return_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n      function foo() {\n        return;\n      }\n    "
+        },
+        {
+          "code": "\n      const foo = (flag: boolean) =\u003e {\n        if (flag) return true;\n        return false;\n      };\n    "
+        },
+        {
+          "code": "\n      class A {\n        foo() {\n          if (a) return true;\n          return false;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n        const foo = (flag: boolean) =\u003e {\n          if (flag) return;\n          else return undefined;\n        };\n      ",
+          "options": {
+            "treatUndefinedAsUnspecified": true
+          }
+        },
+        {
+          "code": "\n      declare function bar(): void;\n      function foo(flag: boolean): void {\n        if (flag) {\n          return bar();\n        }\n        return;\n      }\n    "
+        },
+        {
+          "code": "\n      declare function bar(): void;\n      const foo = (flag: boolean): void =\u003e {\n        if (flag) {\n          return;\n        }\n        return bar();\n      };\n    "
+        },
+        {
+          "code": "\n      function foo(flag?: boolean): number | void {\n        if (flag) {\n          return 42;\n        }\n        return;\n      }\n    "
+        },
+        {
+          "code": "\n      function foo(): boolean;\n      function foo(flag: boolean): void;\n      function foo(flag?: boolean): boolean | void {\n        if (flag) {\n          return;\n        }\n        return true;\n      }\n    "
+        },
+        {
+          "code": "\n      class Foo {\n        baz(): void {}\n        bar(flag: boolean): void {\n          if (flag) return baz();\n          return;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      declare function bar(): void;\n      function foo(flag: boolean): void {\n        function fn(): string {\n          return '1';\n        }\n        if (flag) {\n          return bar();\n        }\n        return;\n      }\n    "
+        },
+        {
+          "code": "\n      class Foo {\n        foo(flag: boolean): void {\n          const bar = (): void =\u003e {\n            if (flag) return;\n            return this.foo();\n          };\n          if (flag) {\n            return this.bar();\n          }\n          return;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      declare function bar(): void;\n      async function foo(flag?: boolean): Promise\u003cvoid\u003e {\n        if (flag) {\n          return bar();\n        }\n        return;\n      }\n    "
+        },
+        {
+          "code": "\n      declare function bar(): Promise\u003cvoid\u003e;\n      async function foo(flag?: boolean): Promise\u003cReturnType\u003ctypeof bar\u003e\u003e {\n        if (flag) {\n          return bar();\n        }\n        return;\n      }\n    "
+        },
+        {
+          "code": "\n      async function foo(flag?: boolean): Promise\u003cPromise\u003cvoid | undefined\u003e\u003e {\n        if (flag) {\n          return undefined;\n        }\n        return;\n      }\n    "
+        },
+        {
+          "code": "\n      type PromiseVoidNumber = Promise\u003cvoid | number\u003e;\n      async function foo(flag?: boolean): PromiseVoidNumber {\n        if (flag) {\n          return 42;\n        }\n        return;\n      }\n    "
+        },
+        {
+          "code": "\n      class Foo {\n        baz(): void {}\n        async bar(flag: boolean): Promise\u003cvoid\u003e {\n          if (flag) return baz();\n          return;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n        declare const undef: undefined;\n        function foo(flag: boolean) {\n          if (flag) {\n            return undef;\n          }\n          return 'foo';\n        }\n      ",
+          "options": {
+            "treatUndefinedAsUnspecified": false
+          }
+        },
+        {
+          "code": "\n        function foo(flag: boolean): undefined {\n          if (flag) {\n            return undefined;\n          }\n          return;\n        }\n      ",
+          "options": {
+            "treatUndefinedAsUnspecified": true
+          }
+        },
+        {
+          "code": "\n        declare const undef: undefined;\n        function foo(flag: boolean): undefined {\n          if (flag) {\n            return undef;\n          }\n          return;\n        }\n      ",
+          "options": {
+            "treatUndefinedAsUnspecified": true
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\n        function foo(flag: boolean): any {\n          if (flag) return true;\n          else return;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingReturnValue",
+              "line": 4,
+              "column": 16,
+              "endLine": 4,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function bar(): undefined {}\n        function foo(flag: boolean): undefined {\n          if (flag) return bar();\n          return;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingReturnValue",
+              "line": 5,
+              "column": 11,
+              "endLine": 5,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(flag: boolean) {\n          if (flag) {\n            return 1;\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingReturnValue",
+              "line": 2,
+              "column": 9,
+              "endLine": 6,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function foo(): void;\n        function bar(flag: boolean): undefined {\n          function baz(): undefined {\n            if (flag) return;\n            return undefined;\n          }\n          if (flag) return baz();\n          return;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "unexpectedReturnValue",
+              "line": 6,
+              "column": 13,
+              "endLine": 6,
+              "endColumn": 30,
+              "suggestions": []
+            },
+            {
+              "messageId": "missingReturnValue",
+              "line": 9,
+              "column": 11,
+              "endLine": 9,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(flag: boolean): Promise\u003cvoid\u003e {\n          if (flag) return Promise.resolve(void 0);\n          else return;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingReturnValue",
+              "line": 4,
+              "column": 16,
+              "endLine": 4,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        async function foo(flag: boolean): Promise\u003cstring\u003e {\n          if (flag) return;\n          else return 'value';\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "unexpectedReturnValue",
+              "line": 4,
+              "column": 16,
+              "endLine": 4,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        async function foo(flag: boolean): Promise\u003cstring | undefined\u003e {\n          if (flag) return 'value';\n          else return;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingReturnValue",
+              "line": 4,
+              "column": 16,
+              "endLine": 4,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        async function foo(flag: boolean) {\n          if (flag) return;\n          return 1;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "unexpectedReturnValue",
+              "line": 4,
+              "column": 11,
+              "endLine": 4,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(flag: boolean): Promise\u003cstring | undefined\u003e {\n          if (flag) return;\n          else return 'value';\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "unexpectedReturnValue",
+              "line": 4,
+              "column": 16,
+              "endLine": 4,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function bar(): Promise\u003cvoid\u003e;\n        function foo(flag?: boolean): Promise\u003cvoid\u003e {\n          if (flag) {\n            return bar();\n          }\n          return;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "missingReturnValue",
+              "line": 7,
+              "column": 11,
+              "endLine": 7,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo(flag: boolean): undefined | boolean {\n          if (flag) {\n            return undefined;\n          }\n          return true;\n        }\n      ",
+          "options": {
+            "treatUndefinedAsUnspecified": true
+          },
+          "errors": [
+            {
+              "messageId": "unexpectedReturnValue",
+              "line": 6,
+              "column": 11,
+              "endLine": 6,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const undefOrNum: undefined | number;\n        function foo(flag: boolean) {\n          if (flag) {\n            return;\n          }\n          return undefOrNum;\n        }\n      ",
+          "options": {
+            "treatUndefinedAsUnspecified": true
+          },
+          "errors": [
+            {
+              "messageId": "unexpectedReturnValue",
+              "line": 7,
+              "column": 11,
+              "endLine": 7,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

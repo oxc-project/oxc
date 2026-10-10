@@ -1918,6 +1918,10 @@ mod test {
 
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    #[cfg_attr(
+        feature = "tsrs",
+        ignore = "tsrs reports tsconfig errors in TypeScript 7.1 wording, at tsconfig.json:1:1"
+    )]
     fn test_tsgolint_config_error() {
         let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_config_error".into()).test_and_snapshot(args);
@@ -1925,6 +1929,10 @@ mod test {
 
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    #[cfg_attr(
+        feature = "tsrs",
+        ignore = "tsrs reports tsconfig errors in TypeScript 7.1 wording, at tsconfig.json:1:1"
+    )]
     fn test_tsgolint_tsconfig_extends_config_err() {
         let args = &["--type-aware", "-D", "no-floating-promises"];
         Tester::new()

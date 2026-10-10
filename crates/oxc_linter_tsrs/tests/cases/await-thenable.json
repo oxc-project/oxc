@@ -1,0 +1,808 @@
+{
+  "source": "await_thenable_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\nasync function test() {\n  await Promise.resolve('value');\n  await Promise.reject(new Error('message'));\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  await (async () =\u003e true)();\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  function returnsPromise() {\n    return Promise.resolve('value');\n  }\n  await returnsPromise();\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  async function returnsPromiseAsync() {}\n  await returnsPromiseAsync();\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  let anyValue: any;\n  await anyValue;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  let unknownValue: unknown;\n  await unknownValue;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  const numberPromise: Promise\u003cnumber\u003e;\n  await numberPromise;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  class Foo extends Promise\u003cnumber\u003e {}\n  const foo: Foo = Foo.resolve(2);\n  await foo;\n\n  class Bar extends Foo {}\n  const bar: Bar = Bar.resolve(2);\n  await bar;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  await (Math.random() \u003e 0.5 ? numberPromise : 0);\n  await (Math.random() \u003e 0.5 ? foo : 0);\n  await (Math.random() \u003e 0.5 ? bar : 0);\n\n  const intersectionPromise: Promise\u003cnumber\u003e \u0026 number;\n  await intersectionPromise;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  class Thenable {\n    then(callback: () =\u003e {}) {}\n  }\n  const thenable = new Thenable();\n\n  await thenable;\n}\n    "
+        },
+        {
+          "code": "\n// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/promise-polyfill/index.d.ts\n// Type definitions for promise-polyfill 6.0\n// Project: https://github.com/taylorhakes/promise-polyfill\n// Definitions by: Steve Jenkins \u003chttps://github.com/skysteve\u003e\n//                 Daniel Cassidy \u003chttps://github.com/djcsdy\u003e\n// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped\n\ninterface PromisePolyfillConstructor extends PromiseConstructor {\n  _immediateFn?: (handler: (() =\u003e void) | string) =\u003e void;\n}\n\ndeclare const PromisePolyfill: PromisePolyfillConstructor;\n\nasync function test() {\n  const promise = new PromisePolyfill(() =\u003e {});\n\n  await promise;\n}\n    "
+        },
+        {
+          "code": "\n// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/bluebird/index.d.ts\n// Type definitions for bluebird 3.5\n// Project: https://github.com/petkaantonov/bluebird\n// Definitions by: Leonard Hecker \u003chttps://github.com/lhecker\u003e\n// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped\n// TypeScript Version: 2.8\n\n/*!\n * The code following this comment originates from:\n *   https://github.com/types/npm-bluebird\n *\n * Note for browser users: use bluebird-global typings instead of this one\n * if you want to use Bluebird via the global Promise symbol.\n *\n * Licensed under:\n *   The MIT License (MIT)\n *\n *   Copyright (c) 2016 unional\n *\n *   Permission is hereby granted, free of charge, to any person obtaining a copy\n *   of this software and associated documentation files (the \"Software\"), to deal\n *   in the Software without restriction, including without limitation the rights\n *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n *   copies of the Software, and to permit persons to whom the Software is\n *   furnished to do so, subject to the following conditions:\n *\n *   The above copyright notice and this permission notice shall be included in\n *   all copies or substantial portions of the Software.\n *\n *   THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n *   THE SOFTWARE.\n */\n\ntype Constructor\u003cE\u003e = new (...args: any[]) =\u003e E;\ntype CatchFilter\u003cE\u003e = ((error: E) =\u003e boolean) | (object \u0026 E);\ntype IterableItem\u003cR\u003e = R extends Iterable\u003cinfer U\u003e ? U : never;\ntype IterableOrNever\u003cR\u003e = Extract\u003cR, Iterable\u003cany\u003e\u003e;\ntype Resolvable\u003cR\u003e = R | PromiseLike\u003cR\u003e;\ntype IterateFunction\u003cT, R\u003e = (\n  item: T,\n  index: number,\n  arrayLength: number,\n) =\u003e Resolvable\u003cR\u003e;\n\ndeclare class Bluebird\u003cR\u003e implements PromiseLike\u003cR\u003e {\n  then\u003cU\u003e(\n    onFulfill?: (value: R) =\u003e Resolvable\u003cU\u003e,\n    onReject?: (error: any) =\u003e Resolvable\u003cU\u003e,\n  ): Bluebird\u003cU\u003e; // For simpler signature help.\n  then\u003cTResult1 = R, TResult2 = never\u003e(\n    onfulfilled?: ((value: R) =\u003e Resolvable\u003cTResult1\u003e) | null,\n    onrejected?: ((reason: any) =\u003e Resolvable\u003cTResult2\u003e) | null,\n  ): Bluebird\u003cTResult1 | TResult2\u003e;\n}\n\ndeclare const bluebird: Bluebird;\n\nasync function test() {\n  await bluebird;\n}\n    "
+        },
+        {
+          "code": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  await obj1.a?.b?.c?.();\n  await obj2.a?.b?.c();\n  await obj3.a?.b.c?.();\n  await obj4.a.b.c?.();\n  await obj5.a?.().b?.c?.();\n  await obj6?.a.b.c?.();\n\n  await callback?.();\n};\n    "
+        },
+        {
+          "code": "\nasync function* asyncYieldNumbers() {\n  yield 1;\n  yield 2;\n  yield 3;\n}\nfor await (const value of asyncYieldNumbers()) {\n  console.log(value);\n}\n      "
+        },
+        {
+          "code": "\ndeclare const anee: any;\nasync function forAwait() {\n  for await (const value of anee) {\n    console.log(value);\n  }\n}\n      "
+        },
+        {
+          "code": "\ndeclare const asyncIter: AsyncIterable\u003cstring\u003e | Iterable\u003cstring\u003e;\nfor await (const s of asyncIter) {\n}\n      "
+        },
+        {
+          "code": "\ndeclare const d: AsyncDisposable;\n\nawait using foo = d;\n\nexport {};\n      "
+        },
+        {
+          "code": "\nusing foo = {\n  [Symbol.dispose]() {},\n};\n\nexport {};\n      "
+        },
+        {
+          "code": "\nawait using foo = 3 as any;\n\nexport {};\n      "
+        },
+        {
+          "code": "\nusing foo = {\n  async [Symbol.dispose]() {},\n};\n\nexport {};\n      "
+        },
+        {
+          "code": "\ndeclare const maybeAsyncDisposable: Disposable | AsyncDisposable;\nasync function foo() {\n  await using _ = maybeAsyncDisposable;\n}\n      "
+        },
+        {
+          "code": "\nasync function iterateUsing(arr: Array\u003cAsyncDisposable\u003e) {\n  for (await using foo of arr) {\n  }\n}\n      "
+        },
+        {
+          "code": "\nasync function wrapper\u003cT\u003e(value: T) {\n  return await value;\n}\n      "
+        },
+        {
+          "code": "\nasync function wrapper\u003cT extends unknown\u003e(value: T) {\n  return await value;\n}\n      "
+        },
+        {
+          "code": "\nasync function wrapper\u003cT extends any\u003e(value: T) {\n  return await value;\n}\n      "
+        },
+        {
+          "code": "\nasync function wrapper\u003cT extends Promise\u003cunknown\u003e\u003e(value: T) {\n  return await value;\n}\n      "
+        },
+        {
+          "code": "\nasync function wrapper\u003cT extends number | Promise\u003cunknown\u003e\u003e(value: T) {\n  return await value;\n}\n      "
+        },
+        {
+          "code": "\nclass C\u003cT\u003e {\n  async wrapper\u003cT\u003e(value: T) {\n    return await value;\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass C\u003cR\u003e {\n  async wrapper\u003cT extends R\u003e(value: T) {\n    return await value;\n  }\n}\n      "
+        },
+        {
+          "code": "\nclass C\u003cR extends unknown\u003e {\n  async wrapper\u003cT extends R\u003e(value: T) {\n    return await value;\n  }\n}\n      "
+        },
+        {
+          "code": "\n// @ts-expect-error\nPromise.all();\n      "
+        },
+        {
+          "code": "\nPromise.all([,]);\n      "
+        },
+        {
+          "code": "\ndeclare const x: unknown;\n\n// @ts-expect-error\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: any;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cPromise\u003cunknown\u003e\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cPromise\u003cnumber\u003e\u003e | Array\u003cPromise\u003cstring\u003e\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cPromise\u003cnumber\u003e | Promise\u003cstring\u003e\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: Array\u003cPromise\u003cT\u003e\u003e) {\n  Promise.all(x);\n}\n      "
+        },
+        {
+          "code": "\nfunction f\u003cT extends Promise\u003cunknown\u003e\u003e(x: Array\u003cT\u003e) {\n  Promise.all(x);\n}\n      "
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cunknown\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cany\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: number | Array\u003cPromise\u003cnumber\u003e\u003e;\n\n// @ts-expect-error\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: [Promise\u003cunknown\u003e, Promise\u003cvoid\u003e];\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: [Promise\u003cnumber\u003e] | [Promise\u003cstring\u003e];\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: [Promise\u003cnumber\u003e | Promise\u003cstring\u003e];\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: [Promise\u003cT\u003e]) {\n  Promise.all(x);\n}\n      "
+        },
+        {
+          "code": "\nfunction f\u003cT extends Promise\u003cunknown\u003e\u003e(x: [T]) {\n  Promise.all(x);\n}\n      "
+        },
+        {
+          "code": "\ndeclare const x: [unknown, any];\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: number | [Promise\u003cnumber\u003e];\n\n// @ts-expect-error\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cPromise\u003cunknown\u003e\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cPromise\u003cnumber\u003e\u003e | Iterable\u003cPromise\u003cstring\u003e\u003e;\n\n// @ts-expect-error\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cPromise\u003cnumber | string\u003e\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: Iterable\u003cPromise\u003cT\u003e\u003e) {\n  Promise.all(x);\n}\n      "
+        },
+        {
+          "code": "\nfunction f\u003cT extends Promise\u003cunknown\u003e\u003e(x: Iterable\u003cT\u003e) {\n  Promise.all(x);\n}\n      "
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cunknown\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cany\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: number | Iterable\u003cPromise\u003cnumber\u003e\u003e;\n\n// @ts-expect-error\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cPromise\u003cunknown\u003e, number\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare class Foo\u003cA, B\u003e implements Iterable\u003cB\u003e {\n  [Symbol.iterator](): Iterator\u003cB\u003e;\n}\ndeclare const x: Foo\u003cPromise\u003cstring\u003e, number\u003e;\n\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare class Foo\u003cA, B\u003e implements Iterable\u003cB\u003e {\n  [Symbol.iterator](): Iterator\u003cB\u003e;\n}\ndeclare const x: Foo\u003cnumber, Promise\u003cstring\u003e\u003e;\n\nPromise.all([...x]);\n      "
+        },
+        {
+          "code": "\ndeclare const x: number[] | Promise\u003cnumber\u003e[];\n\nPromise.all([...x]);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cPromise\u003cstring\u003e\u003e | Array\u003cPromise\u003cstring\u003e\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x:\n  | Iterable\u003cPromise\u003cstring\u003e\u003e\n  | [Promise\u003cstring\u003e, Promise\u003cunknown\u003e];\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cPromise\u003cstring\u003e\u003e | [Promise\u003cstring\u003e, Promise\u003cunknown\u003e];\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\n// @ts-expect-error\nPromise.all(1);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Promise\u003cnumber\u003e;\n\n// @ts-expect-error\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ninterface MyArray\u003cUnused, T\u003e extends Array\u003cT\u003e {}\ndeclare const x: MyArray\u003cnull, Promise\u003cvoid\u003e\u003e;\n\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\nfunction* x() {\n  yield Promise.resolve(1);\n  yield Promise.resolve(2);\n  yield Promise.resolve(3);\n}\n\nPromise.all(x());\n      "
+        },
+        {
+          "code": "\nfunction* x() {\n  yield 1 as unknown;\n}\n\nPromise.all(x());\n      "
+        },
+        {
+          "code": "\nfunction* x() {\n  yield 1 as any;\n}\n\nPromise.all(x());\n      "
+        },
+        {
+          "code": "\ndeclare const x: Generator\u003cPromise\u003cnumber\u003e\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Generator\u003cunknown\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: Generator\u003cany\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: ReadonlyArray\u003cPromise\u003cnumber\u003e\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: ReadonlyArray\u003cunknown\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\ndeclare const x: ReadonlyArray\u003cany\u003e;\nPromise.all(x);\n      "
+        },
+        {
+          "code": "\nPromise.all([Promise.resolve(1), Promise.resolve(2), Promise.resolve(3)]);\n      "
+        },
+        {
+          "code": "\ndeclare const _unknown_: unknown;\n\nPromise.all([\n  _unknown_,\n  Promise.resolve(1),\n  Promise.resolve(2),\n  Promise.resolve(3),\n]);\n      "
+        },
+        {
+          "code": "\ndeclare const _any_: any;\n\nPromise.all([\n  _any_,\n  Promise.resolve(1),\n  Promise.resolve(2),\n  Promise.resolve(3),\n]);\n      "
+        },
+        {
+          "code": "\ndeclare const _promise_: Promise\u003cnumber | string\u003e;\n\nPromise.all([\n  _promise_,\n  Promise.resolve(1),\n  Promise.resolve(2),\n  Promise.resolve(3),\n]);\n      "
+        },
+        {
+          "code": "\nPromise.all([\n  Promise.resolve(1),\n  Promise.resolve(2),\n  Promise.resolve(3),\n  ...[Promise.resolve(4), Promise.resolve(5), Promise.resolve(6)],\n]);\n      "
+        },
+        {
+          "code": "\ndeclare const maybePromise: Promise\u003cnumber\u003e | number;\n\nPromise.all([\n  maybePromise,\n  Promise.resolve(1),\n  Promise.resolve(2),\n  Promise.resolve(3),\n]);\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "await 0;",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 1,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": " 0;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "await 'value';",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 1,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": " 'value';"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "async () =\u003e await (Math.random() \u003e 0.5 ? '' : 0);",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 1,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "async () =\u003e  (Math.random() \u003e 0.5 ? '' : 0);"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "async () =\u003e await(Math.random() \u003e 0.5 ? '' : 0);",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 1,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "async () =\u003e (Math.random() \u003e 0.5 ? '' : 0);"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nclass NonPromise extends Array {}\nawait new NonPromise();\n      ",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "\nclass NonPromise extends Array {}\n new NonPromise();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  class IncorrectThenable {\n    then() {}\n  }\n  const thenable = new IncorrectThenable();\n\n  await thenable;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 8,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "\nasync function test() {\n  class IncorrectThenable {\n    then() {}\n  }\n  const thenable = new IncorrectThenable();\n\n   thenable;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const callback: (() =\u003e void) | undefined;\nawait callback?.();\n      ",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "\ndeclare const callback: (() =\u003e void) | undefined;\n callback?.();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const obj: { a?: { b?: () =\u003e void } };\nawait obj.a?.b?.();\n      ",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "\ndeclare const obj: { a?: { b?: () =\u003e void } };\n obj.a?.b?.();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const obj: { a: { b: { c?: () =\u003e void } } } | undefined;\nawait obj?.a.b.c?.();\n      ",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "\ndeclare const obj: { a: { b: { c?: () =\u003e void } } } | undefined;\n obj?.a.b.c?.();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction* yieldNumbers() {\n  yield 1;\n  yield 2;\n  yield 3;\n}\nfor await (const value of yieldNumbers()) {\n  console.log(value);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forAwaitOfNonAsyncIterable",
+              "line": 7,
+              "column": 1,
+              "endLine": 7,
+              "endColumn": 42,
+              "suggestions": [
+                {
+                  "messageId": "convertToOrdinaryFor",
+                  "output": "\nfunction* yieldNumbers() {\n  yield 1;\n  yield 2;\n  yield 3;\n}\nfor  (const value of yieldNumbers()) {\n  console.log(value);\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction* yieldNumberPromises() {\n  yield Promise.resolve(1);\n  yield Promise.resolve(2);\n  yield Promise.resolve(3);\n}\nfor await (const value of yieldNumberPromises()) {\n  console.log(value);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "forAwaitOfNonAsyncIterable",
+              "suggestions": [
+                {
+                  "messageId": "convertToOrdinaryFor",
+                  "output": "\nfunction* yieldNumberPromises() {\n  yield Promise.resolve(1);\n  yield Promise.resolve(2);\n  yield Promise.resolve(3);\n}\nfor  (const value of yieldNumberPromises()) {\n  console.log(value);\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const disposable: Disposable;\nasync function foo() {\n  await using d = disposable;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "awaitUsingOfNonAsyncDisposable",
+              "line": 4,
+              "column": 19,
+              "endLine": 4,
+              "endColumn": 29,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "\ndeclare const disposable: Disposable;\nasync function foo() {\n   using d = disposable;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  await using _ = {\n    async [Symbol.dispose]() {},\n  };\n}\n      ",
+          "errors": [
+            {
+              "messageId": "awaitUsingOfNonAsyncDisposable",
+              "line": 3,
+              "column": 19,
+              "endLine": 5,
+              "endColumn": 4,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "\nasync function foo() {\n   using _ = {\n    async [Symbol.dispose]() {},\n  };\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const disposable: Disposable;\ndeclare const asyncDisposable: AsyncDisposable;\nasync function foo() {\n  await using a = disposable,\n    b = asyncDisposable,\n    c = disposable,\n    d = asyncDisposable,\n    e = disposable;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "awaitUsingOfNonAsyncDisposable",
+              "line": 5,
+              "column": 19,
+              "endLine": 5,
+              "endColumn": 29,
+              "suggestions": []
+            },
+            {
+              "messageId": "awaitUsingOfNonAsyncDisposable",
+              "line": 7,
+              "column": 9,
+              "endLine": 7,
+              "endColumn": 19,
+              "suggestions": []
+            },
+            {
+              "messageId": "awaitUsingOfNonAsyncDisposable",
+              "line": 9,
+              "column": 9,
+              "endLine": 9,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const anee: any;\ndeclare const disposable: Disposable;\nasync function foo() {\n  await using a = anee,\n    b = disposable;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "awaitUsingOfNonAsyncDisposable",
+              "line": 6,
+              "column": 9,
+              "endLine": 6,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function wrapper\u003cT extends number\u003e(value: T) {\n  return await value;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 3,
+              "column": 10,
+              "endLine": 3,
+              "endColumn": 15,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "\nasync function wrapper\u003cT extends number\u003e(value: T) {\n  return  value;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nclass C\u003cT\u003e {\n  async wrapper\u003cT extends string\u003e(value: T) {\n    return await value;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 4,
+              "column": 12,
+              "endLine": 4,
+              "endColumn": 17,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "\nclass C\u003cT\u003e {\n  async wrapper\u003cT extends string\u003e(value: T) {\n    return  value;\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nclass C\u003cR extends number\u003e {\n  async wrapper\u003cT extends R\u003e(value: T) {\n    return await value;\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "await",
+              "line": 4,
+              "column": 12,
+              "endLine": 4,
+              "endColumn": 17,
+              "suggestions": [
+                {
+                  "messageId": "removeAwait",
+                  "output": "\nclass C\u003cR extends number\u003e {\n  async wrapper\u003cT extends R\u003e(value: T) {\n    return  value;\n  }\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cnumber\u003e;\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cnumber\u003e | Array\u003cPromise\u003cnumber\u003e\u003e;\nPromise.race(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cnumber\u003e | Array\u003cstring\u003e;\nPromise.allSettled(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cnumber | Promise\u003cnumber\u003e\u003e;\nPromise.any(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: [number];\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: [number] | [Promise\u003cnumber\u003e];\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: [number | Promise\u003cnumber\u003e];\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: [Promise\u003cnumber\u003e, number];\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cnumber\u003e;\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cnumber\u003e | Iterable\u003cPromise\u003cnumber\u003e\u003e;\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cnumber | Promise\u003cnumber\u003e\u003e;\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cstring\u003e | Array\u003cPromise\u003cunknown\u003e\u003e;\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Iterable\u003cPromise\u003cstring\u003e\u003e | [string, Promise\u003cunknown\u003e];\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cstring\u003e | [Promise\u003cstring\u003e, Promise\u003cunknown\u003e];\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Array\u003cArray\u003cPromise\u003cnumber\u003e\u003e\u003e;\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface MyArray\u003cUnused, T\u003e extends Array\u003cT\u003e {}\ndeclare const x: MyArray\u003cPromise\u003cvoid\u003e, null\u003e;\n\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare class Foo\u003cA, B\u003e implements Iterable\u003cB\u003e {\n  [Symbol.iterator](): Iterator\u003cB\u003e;\n}\ndeclare const x: Foo\u003cnumber, Promise\u003cstring\u003e\u003e;\n\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction* x() {\n  yield 1;\n  yield 2;\n  yield 3;\n}\n\nPromise.all(x());\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction* x() {\n  yield 1 as number;\n}\n\nPromise.all(x());\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction* x() {\n  yield 1 as number | Promise\u003cnumber\u003e;\n}\n\nPromise.all(x());\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Generator\u003cnumber\u003e;\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: ReadonlyArray\u003cnumber\u003e;\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: ReadonlyArray\u003cnumber | Promise\u003cstring\u003e\u003e;\nPromise.all(x);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.all([Promise.resolve(1), 2, Promise.resolve(3)]);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "line": 2,
+              "column": 34,
+              "endColumn": 35,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.all([1, 2, Promise.resolve(3)]);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "line": 2,
+              "column": 14,
+              "endColumn": 15,
+              "suggestions": []
+            },
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "line": 2,
+              "column": 17,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.all([...[1, 2, 3]]);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidPromiseAggregatorInput",
+              "line": 2,
+              "column": 14,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

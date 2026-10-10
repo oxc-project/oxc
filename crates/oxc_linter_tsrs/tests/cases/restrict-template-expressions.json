@@ -1,0 +1,590 @@
+{
+  "source": "restrict_template_expressions_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n      const msg = `arg = ${'foo'}`;\n    "
+        },
+        {
+          "code": "\n      const arg = 'foo';\n      const msg = `arg = ${arg}`;\n    "
+        },
+        {
+          "code": "\n      const arg = 'foo';\n      const msg = `arg = ${arg || 'default'}`;\n    "
+        },
+        {
+          "code": "\n      function test\u003cT extends string\u003e(arg: T) {\n        return `arg = ${arg}`;\n      }\n    "
+        },
+        {
+          "code": "\n      function test\u003cT extends string \u0026 { _kind: 'MyBrandedString' }\u003e(arg: T) {\n        return `arg = ${arg}`;\n      }\n    "
+        },
+        {
+          "code": "\n      tag`arg = ${null}`;\n    "
+        },
+        {
+          "code": "\n      const arg = {};\n      tag`arg = ${arg}`;\n    "
+        },
+        {
+          "code": "\n        const arg = 123;\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowNumber": true
+          }
+        },
+        {
+          "code": "\n        const arg = 123;\n        const msg = `arg = ${arg || 'default'}`;\n      ",
+          "options": {
+            "allowNumber": true
+          }
+        },
+        {
+          "code": "\n        const arg = 123n;\n        const msg = `arg = ${arg || 'default'}`;\n      ",
+          "options": {
+            "allowNumber": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends number\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowNumber": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends number \u0026 { _kind: 'MyBrandedNumber' }\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowNumber": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends bigint\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowNumber": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends string | number\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowNumber": true
+          }
+        },
+        {
+          "code": "\n        const arg = true;\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowBoolean": true
+          }
+        },
+        {
+          "code": "\n        const arg = true;\n        const msg = `arg = ${arg || 'default'}`;\n      ",
+          "options": {
+            "allowBoolean": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends boolean\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowBoolean": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends string | boolean\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowBoolean": true
+          }
+        },
+        {
+          "code": "\n        const arg = [];\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowArray": true
+          }
+        },
+        {
+          "code": "\n        const arg = [];\n        const msg = `arg = ${arg || 'default'}`;\n      ",
+          "options": {
+            "allowArray": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends string[]\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowArray": true
+          }
+        },
+        {
+          "code": "\n        declare const arg: [number, string];\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowArray": true
+          }
+        },
+        {
+          "code": "\n        const arg = [1, 'a'] as const;\n        const msg = `arg = ${arg || 'default'}`;\n      ",
+          "options": {
+            "allowArray": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends [string, string]\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowArray": true
+          }
+        },
+        {
+          "code": "\n        declare const arg: [number | undefined, string];\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowArray": true,
+            "allowNullish": true
+          }
+        },
+        {
+          "code": "\n        const arg: any = 123;\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\n        const arg: any = undefined;\n        const msg = `arg = ${arg || 'some-default'}`;\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\n        const user = JSON.parse('{ \"name\": \"foo\" }');\n        const msg = `arg = ${user.name}`;\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\n        const user = JSON.parse('{ \"name\": \"foo\" }');\n        const msg = `arg = ${user.name || 'the user with no name'}`;\n      ",
+          "options": {
+            "allowAny": true
+          }
+        },
+        {
+          "code": "\n        const arg = null;\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowNullish": true
+          }
+        },
+        {
+          "code": "\n        declare const arg: string | null | undefined;\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowNullish": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends null | undefined\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowNullish": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends string | null\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowNullish": true
+          }
+        },
+        {
+          "code": "\n        const arg = new RegExp('foo');\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "\n        const arg = /foo/;\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "\n        declare const arg: string | RegExp;\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends RegExp\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "\n        function test\u003cT extends string | RegExp\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "\n        declare const value: never;\n        const stringy = `${value}`;\n      ",
+          "options": {
+            "allowNever": true
+          }
+        },
+        {
+          "code": "\n        const arg = 'hello';\n        const msg = typeof arg === 'string' ? arg : `arg = ${arg}`;\n      ",
+          "options": {
+            "allowNever": true
+          }
+        },
+        {
+          "code": "\n        function test(arg: 'one' | 'two') {\n          switch (arg) {\n            case 'one':\n              return 1;\n            case 'two':\n              return 2;\n            default:\n              throw new Error(`Unrecognized arg: ${arg}`);\n          }\n        }\n      ",
+          "options": {
+            "allowNever": true
+          }
+        },
+        {
+          "code": "\n        // more variants may be added to Foo in the future\n        type Foo = { type: 'a'; value: number };\n\n        function checkFoosAreMatching(foo1: Foo, foo2: Foo) {\n          if (foo1.type !== foo2.type) {\n            // since Foo currently only has one variant, this code is never run, and `foo1.type` has type `never`.\n            throw new Error(`expected ${foo1.type}, found ${foo2.type}`);\n          }\n        }\n      ",
+          "options": {
+            "allowNever": true
+          }
+        },
+        {
+          "code": "\n        type All = string | number | boolean | null | undefined | RegExp | never;\n        function test\u003cT extends All\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowBoolean": true,
+            "allowNever": true,
+            "allowNullish": true,
+            "allowNumber": true,
+            "allowRegExp": true
+          }
+        },
+        {
+          "code": "const msg = `arg = ${Promise.resolve()}`;",
+          "options": {
+            "allow": [
+              {
+                "from": "lib",
+                "name": [
+                  "Promise"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        class Base {}\n        class Derived extends Base {}\n        const value = new Derived();\n        const msg = `${value}`;\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": [
+                  "Base"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        class Base {}\n        class Derived extends Base {}\n        class DerivedTwice extends Derived {}\n        const value = new DerivedTwice();\n        const msg = `${value}`;\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": [
+                  "Base"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        interface Base {\n          value: string;\n        }\n        interface Derived extends Base {\n          extra: number;\n        }\n        declare const value: Derived;\n        const msg = `${value}`;\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": [
+                  "Base"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "code": "const msg = `arg = ${new Error()}`;"
+        },
+        {
+          "code": "const msg = `arg = ${false}`;"
+        },
+        {
+          "code": "const msg = `arg = ${null}`;"
+        },
+        {
+          "code": "const msg = `arg = ${undefined}`;"
+        },
+        {
+          "code": "const msg = `arg = ${123}`;"
+        },
+        {
+          "code": "const msg = `arg = ${'abc'}`;"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\n        const msg = `arg = ${123}`;\n      ",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 2,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const msg = `arg = ${false}`;\n      ",
+          "options": {
+            "allowBoolean": false
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 2,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const msg = `arg = ${null}`;\n      ",
+          "options": {
+            "allowNullish": false
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 2,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const arg: number[];\n        const msg = `arg = ${arg}`;\n      ",
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const msg = `arg = ${[, 2]}`;\n      ",
+          "options": {
+            "allowArray": true,
+            "allowNullish": false
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 2,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const msg = `arg = ${Promise.resolve()}`;",
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const msg = `arg = ${new Error()}`;",
+          "options": {
+            "allow": []
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const arg: [number | undefined, string];\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowArray": true,
+            "allowNullish": false
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const arg: number;\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowNumber": false
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const arg: boolean;\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowBoolean": false
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const arg = {};\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowBoolean": true,
+            "allowNullish": true,
+            "allowNumber": true
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const arg: { a: string } \u0026 { b: string };\n        const msg = `arg = ${arg}`;\n      ",
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function test\u003cT extends {}\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowBoolean": true,
+            "allowNullish": true,
+            "allowNumber": true
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function test\u003cTWithNoConstraint\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": true,
+            "allowNullish": true,
+            "allowNumber": true
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function test(arg: any) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowAny": false,
+            "allowBoolean": true,
+            "allowNullish": true,
+            "allowNumber": true
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 27,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const arg = new RegExp('foo');\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const arg = /foo/;\n        const msg = `arg = ${arg}`;\n      ",
+          "options": {
+            "allowRegExp": false
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const value: never;\n        const stringy = `${value}`;\n      ",
+          "options": {
+            "allowNever": false
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function test\u003cT extends any\u003e(arg: T) {\n          return `arg = ${arg}`;\n        }\n      ",
+          "options": {
+            "allowAny": true
+          },
+          "errors": [
+            {
+              "messageId": "invalidType",
+              "line": 3,
+              "column": 27,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}
