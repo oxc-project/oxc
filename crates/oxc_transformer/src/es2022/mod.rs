@@ -44,6 +44,14 @@ impl ES2022<'_> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !matches!(
+            stmt,
+            Statement::ClassDeclaration(_)
+                | Statement::ExportDeclaration(_)
+                | Statement::ExportDefaultDeclaration(_)
+        ) {
+            return;
+        }
         if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.enter_statement(stmt, ctx);
         }
