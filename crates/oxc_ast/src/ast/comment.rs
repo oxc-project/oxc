@@ -163,7 +163,8 @@ impl<'alloc> CloneIn<'alloc> for CommentNewlines {
 ///
 /// This is separate from the token-relative position stored on the source comment.
 #[ast]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[generate_derive(ContentEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CommentPlacement {
     /// Before the node.
     ///
@@ -173,6 +174,7 @@ pub enum CommentPlacement {
     /// // leading
     /// first();
     /// ```
+    #[default]
     Leading = 0,
     /// After the node.
     ///
@@ -191,16 +193,6 @@ pub enum CommentPlacement {
     /// const values = [item, /* after the last item */];
     /// ```
     Dangling = 2,
-}
-
-/// Ownership of a source comment by an AST node.
-#[ast]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CommentAttachment {
-    /// ID of the owning node, remapped by semantic analysis through a shared reference.
-    pub node_id: Cell<NodeId>,
-    /// Where to print the comment relative to its owner.
-    pub placement: CommentPlacement,
 }
 
 /// A comment in source code.
@@ -230,6 +222,14 @@ pub struct Comment {
     #[estree(skip)]
     pub attached_to: u32,
 
+    /// ID of the owning node, remapped by semantic analysis through a shared reference.
+    #[estree(skip)]
+    pub node_id: Cell<NodeId>,
+
+    /// Where to print the comment relative to its owner.
+    #[estree(skip)]
+    pub placement: CommentPlacement,
+
     /// Line or block comment
     #[estree(rename = "type")]
     pub kind: CommentKind,
@@ -246,15 +246,6 @@ pub struct Comment {
     /// Content of the comment
     #[estree(skip)]
     pub content: CommentContent,
-
-    /// Owning AST node and placement, set by comment assignment after parsing.
-    ///
-    /// This travels with the comment when the comment vector is changed.
-    /// Reassign ownership if node IDs are rewritten or the AST structure changes.
-    /// Cloning an AST without semantic IDs clears the attachment.
-    #[content_eq(skip)]
-    #[estree(skip)]
-    pub attachment: Option<CommentAttachment>,
 }
 
 impl Comment {
@@ -269,7 +260,8 @@ impl Comment {
             position: CommentPosition::Trailing,
             newlines: CommentNewlines::None,
             content: CommentContent::None,
-            attachment: None,
+            node_id: Cell::new(NodeId::DUMMY),
+            placement: CommentPlacement::Leading,
         }
     }
 
@@ -434,35 +426,10 @@ impl<'alloc> CloneIn<'alloc> for Comment {
     type Cloned = Self;
 
     fn clone_in_impl(&self, with_semantic_ids: CloneInSemanticIds, _: &'alloc Allocator) -> Self {
-        let mut comment = self.clone();
+        let comment = self.clone();
         if with_semantic_ids == CloneInSemanticIds::Without {
-            comment.attachment = None;
+            comment.node_id.set(NodeId::DUMMY);
         }
         comment
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn clone_attachment_with_semantic_ids() {
-        let allocator = Allocator::default();
-        let comment = Comment {
-            attachment: Some(CommentAttachment {
-                node_id: Cell::new(NodeId::new(1)),
-                placement: CommentPlacement::Trailing,
-            }),
-            ..Comment::default()
-        };
-        let cloned = comment.clone_in_with_semantic_ids(&allocator);
-        let attachment = comment.attachment.as_ref().unwrap();
-        attachment.node_id.set(NodeId::new(2));
-
-        let cloned_attachment = cloned.attachment.as_ref().unwrap();
-        assert_eq!(cloned_attachment.node_id.get(), NodeId::new(1));
-        assert_eq!(cloned_attachment.placement, CommentPlacement::Trailing);
-        assert!(comment.clone_in(&allocator).attachment.is_none());
     }
 }

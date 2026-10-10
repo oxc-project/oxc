@@ -12057,7 +12057,7 @@ export class Comment {
 
   get type() {
     const internal = this.#internal;
-    return constructCommentKind(internal.pos + 20, internal.ast);
+    return constructCommentKind(internal.pos + 17, internal.ast);
   }
 
   toJSON() {
