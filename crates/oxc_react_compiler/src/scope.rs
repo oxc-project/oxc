@@ -254,6 +254,11 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         }
     }
 
+    /// Ambient bindings describe external values, not runtime local declarations.
+    pub fn is_ambient_binding(&self, symbol_id: SymbolId) -> bool {
+        self.scoping().symbol_flags(symbol_id).is_ambient()
+    }
+
     /// Map the symbol's flags and declaration node to a Babel-style binding kind.
     pub fn binding_kind(&self, symbol_id: SymbolId) -> BindingKind {
         let flags = self.scoping().symbol_flags(symbol_id);

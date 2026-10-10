@@ -274,6 +274,7 @@ fn lower_block_statement_inner<'a>(
             // "Unsupported declaration type for hoisting". See
             // `ScopeResolver::is_type_only_binding`.
             !scope.is_type_only_binding(sid)
+                && !scope.is_ambient_binding(sid)
                 && !matches!(
                     scope.binding_kind(sid),
                     AstBindingKind::Param | AstBindingKind::Module
@@ -3441,6 +3442,9 @@ fn gather_captured_context(
     > = rustc_hash::FxHashMap::default();
 
     for symbol_id in scope.symbols() {
+        if scope.is_ambient_binding(symbol_id) {
+            continue;
+        }
         // Inline enums are opaque pass-through nodes, matching upstream's
         // `UnsupportedNode`, so their bindings are not context operands.
         if matches!(
@@ -6651,6 +6655,9 @@ fn lower_variable_declaration<'a>(
     var_decl: &oxc::VariableDeclaration<'a>,
 ) -> Result<(), OxcDiagnostic> {
     use oxc::VariableDeclarationKind as VK;
+    if var_decl.declare {
+        return Ok(());
+    }
     if matches!(var_decl.kind, VK::Var) {
         builder.record_error(
             diagnostics::todo_build_hir_lower_statement_handle_var_kinds_variable_declaration(
