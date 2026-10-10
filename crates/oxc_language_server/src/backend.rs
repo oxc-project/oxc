@@ -678,16 +678,9 @@ impl LanguageServer for Backend {
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri;
 
-        // In single file mode, dynamically create a workspace worker for file:// URIs.
-        if self.worker_manager.is_single_file_mode() && uri.scheme().as_str() == "file" {
-            let capabilities = self.capabilities.get();
-            let diagnostic_mode =
-                capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
-            let dynamic_watchers = capabilities.is_some_and(|c| c.dynamic_watchers);
-            let (registrations, client_messages) = self
-                .worker_manager
-                .ensure_worker_for_file_uri(&uri, diagnostic_mode, dynamic_watchers)
-                .await;
+        if let Some(capabilities) = self.capabilities.get() {
+            let (registrations, client_messages) =
+                self.worker_manager.ensure_worker_for_file_uri(&uri, capabilities).await;
 
             if let Some(registrations) = registrations
                 && let Err(err) = self.client.register_capability(vec![registrations]).await
@@ -1057,6 +1050,10 @@ impl Backend {
     /// Send multiple messages to the client, if any.
     /// Will cap the number of messages to 5, to avoid flooding the client.
     async fn send_client_messages(&self, messages: Vec<ClientMessage>) {
+        if messages.is_empty() {
+            return;
+        }
+
         // Log every message before limiting what is shown in the client. In particular, this
         // ensures messages omitted by the client-facing cap remain available on LSP stderr.
         for message in &messages {
