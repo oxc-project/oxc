@@ -79,7 +79,6 @@ explaining why.
 ```rust
 // In peephole/mod.rs
 fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-    let ctx = &mut Ctx::new(ctx);
     match expr {
         Expression::BinaryExpression(_) => {
             Self::optimize_binary(expr, ctx);
