@@ -1,0 +1,3 @@
+{
+  "jsPlugins": [{ "name": "custom", "specifier": "./plugin.js" }]
+}
