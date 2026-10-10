@@ -1,0 +1,26 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-property-overwrite-both-branches.js
+---
+function Component(t0) {
+	const { cond } = t0;
+	let count = 0;
+	const cb = () => count++;
+	const obj = { run: async () => {
+		await 0;
+		cb();
+	} };
+	if (cond) {
+		obj.run = _temp;
+	} else {
+		obj.run = _temp2;
+	}
+	obj.run();
+	return null;
+}
+function _temp2() {
+	return 0;
+}
+function _temp() {
+	return null;
+}

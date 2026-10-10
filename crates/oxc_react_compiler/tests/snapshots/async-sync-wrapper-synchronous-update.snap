@@ -1,0 +1,12 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-sync-wrapper-synchronous-update.js
+---
+function Component() {
+	let count = 0;
+	const cb = () => count++;
+	const run = () => cb();
+	const start = () => run();
+	start();
+	return null;
+}

@@ -851,13 +851,25 @@ pub enum InstructionValue<'a> {
         value: Place,
         span: Option<Span>,
     },
-    PrefixUpdate {
+    PrefixUpdateLocal {
         lvalue: Place,
         operation: UpdateOperator,
         value: Place,
         span: Option<Span>,
     },
-    PostfixUpdate {
+    PrefixUpdateContext {
+        lvalue: Place,
+        operation: UpdateOperator,
+        value: Place,
+        span: Option<Span>,
+    },
+    PostfixUpdateLocal {
+        lvalue: Place,
+        operation: UpdateOperator,
+        value: Place,
+        span: Option<Span>,
+    },
+    PostfixUpdateContext {
         lvalue: Place,
         operation: UpdateOperator,
         value: Place,
@@ -942,8 +954,10 @@ impl<'a> InstructionValue<'a> {
             | InstructionValue::GetIterator { span, .. }
             | InstructionValue::IteratorNext { span, .. }
             | InstructionValue::NextPropertyOf { span, .. }
-            | InstructionValue::PrefixUpdate { span, .. }
-            | InstructionValue::PostfixUpdate { span, .. }
+            | InstructionValue::PrefixUpdateLocal { span, .. }
+            | InstructionValue::PrefixUpdateContext { span, .. }
+            | InstructionValue::PostfixUpdateLocal { span, .. }
+            | InstructionValue::PostfixUpdateContext { span, .. }
             | InstructionValue::Debugger { span, .. }
             | InstructionValue::TSEnumDeclaration { span, .. }
             | InstructionValue::StartMemoize { span, .. }
@@ -1978,16 +1992,32 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
             InstructionValue::NextPropertyOf { value, span } => {
                 InstructionValue::NextPropertyOf { value: *value, span: *span }
             }
-            InstructionValue::PrefixUpdate { lvalue, operation, value, span } => {
-                InstructionValue::PrefixUpdate {
+            InstructionValue::PrefixUpdateLocal { lvalue, operation, value, span } => {
+                InstructionValue::PrefixUpdateLocal {
                     lvalue: *lvalue,
                     operation: *operation,
                     value: *value,
                     span: *span,
                 }
             }
-            InstructionValue::PostfixUpdate { lvalue, operation, value, span } => {
-                InstructionValue::PostfixUpdate {
+            InstructionValue::PrefixUpdateContext { lvalue, operation, value, span } => {
+                InstructionValue::PrefixUpdateContext {
+                    lvalue: *lvalue,
+                    operation: *operation,
+                    value: *value,
+                    span: *span,
+                }
+            }
+            InstructionValue::PostfixUpdateLocal { lvalue, operation, value, span } => {
+                InstructionValue::PostfixUpdateLocal {
+                    lvalue: *lvalue,
+                    operation: *operation,
+                    value: *value,
+                    span: *span,
+                }
+            }
+            InstructionValue::PostfixUpdateContext { lvalue, operation, value, span } => {
+                InstructionValue::PostfixUpdateContext {
                     lvalue: *lvalue,
                     operation: *operation,
                     value: *value,

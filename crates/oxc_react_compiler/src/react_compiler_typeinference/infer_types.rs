@@ -520,8 +520,10 @@ fn generate_instruction_types<'a>(
             unifier.unify(left, Type::Primitive, shapes)?;
         }
 
-        InstructionValue::PostfixUpdate { value, lvalue, .. }
-        | InstructionValue::PrefixUpdate { value, lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { value, lvalue, .. }
+        | InstructionValue::PostfixUpdateContext { value, lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { value, lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { value, lvalue, .. } => {
             let value_type = get_type(value.identifier, identifiers);
             unifier.unify(value_type, Type::Primitive, shapes)?;
             let lvalue_type = get_type(lvalue.identifier, identifiers);
@@ -1119,8 +1121,10 @@ fn apply_instruction_operands<'a>(
                 resolve_identifier(sub.identifier, identifiers, types, unifier);
             }
         }
-        InstructionValue::PrefixUpdate { value: val, lvalue, .. }
-        | InstructionValue::PostfixUpdate { value: val, lvalue, .. } => {
+        InstructionValue::PrefixUpdateLocal { value: val, lvalue, .. }
+        | InstructionValue::PrefixUpdateContext { value: val, lvalue, .. }
+        | InstructionValue::PostfixUpdateLocal { value: val, lvalue, .. }
+        | InstructionValue::PostfixUpdateContext { value: val, lvalue, .. } => {
             resolve_identifier(val.identifier, identifiers, types, unifier);
             resolve_identifier(lvalue.identifier, identifiers, types, unifier);
         }
