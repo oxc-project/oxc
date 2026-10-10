@@ -160,21 +160,17 @@ impl Rule for NoCycle {
         }
 
         let needle = &module_record.resolved_absolute_path;
-        let mut direct_imports = module_record
-            .loaded_modules()
-            .iter()
-            .map(|(key, weak_module_record)| (key.clone(), weak_module_record.upgrade().unwrap()))
-            .collect::<Vec<_>>();
-        direct_imports.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+        let direct_imports = module_record.sorted_loaded_modules();
 
         let mut stack = Vec::new();
         let mut traversed = FxHashSet::default();
-        for (key, loaded_module_record) in direct_imports {
-            if !self.should_traverse_module(&key, &loaded_module_record, module_record) {
+        for (key, weak_module_record) in direct_imports.iter() {
+            let loaded_module_record = weak_module_record.upgrade().unwrap();
+            if !self.should_traverse_module(key, &loaded_module_record, module_record) {
                 continue;
             }
 
-            let requested_module = module_record.requested_modules[&key][0];
+            let requested_module = module_record.requested_modules[key][0];
             let span = requested_module.span;
             stack.clear();
             stack.push((key.clone(), Arc::clone(&loaded_module_record)));
