@@ -13,6 +13,14 @@
       ],
       "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`"
     },
+    "associations": {
+      "description": "Format matched files as the given language, instead of detecting it from the file name.\ne.g. Angular templates named `*.html`, or `*.wxml` files formatted as HTML.\nWhen a file matches multiple associations, the later one takes precedence (array order matters).\n\n- Default: `[]`",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/OxfmtAssociationConfig"
+      },
+      "markdownDescription": "Format matched files as the given language, instead of detecting it from the file name.\ne.g. Angular templates named `*.html`, or `*.wxml` files formatted as HTML.\nWhen a file matches multiple associations, the later one takes precedence (array order matters).\n\n- Default: `[]`"
+    },
     "astro": {
       "description": "Options for `prettier-plugin-astro`.\n\nPass `true` or an object to enable `.astro` file formatting, `false` to disable (handy in overrides).\nSetting `true` resets to defaults, dropping options inherited from a parent scope.\n\nNOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime.\nOxfmt does NOT bundle it, so install it in your project, otherwise formatting fails.\n\n- Languages: Astro\n- Default: Disabled",
       "allOf": [
@@ -672,6 +680,32 @@
         }
       ]
     },
+    "Language": {
+      "type": "string",
+      "enum": [
+        "javascript",
+        "jsx",
+        "typescript",
+        "tsx",
+        "json",
+        "jsonc",
+        "json5",
+        "css",
+        "scss",
+        "less",
+        "graphql",
+        "yaml",
+        "markdown",
+        "toml",
+        "html",
+        "angular-html",
+        "vue",
+        "svelte",
+        "astro",
+        "handlebars",
+        "mdx"
+      ]
+    },
     "LineWrappingStyleConfig": {
       "type": "string",
       "enum": [
@@ -705,6 +739,42 @@
         "start",
         "end"
       ]
+    },
+    "OxfmtAssociationConfig": {
+      "type": "object",
+      "required": [
+        "files",
+        "language"
+      ],
+      "properties": {
+        "excludeFiles": {
+          "description": "Glob patterns to exclude from this association.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "Glob patterns to exclude from this association."
+        },
+        "files": {
+          "description": "Glob patterns to match files for this association.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "Glob patterns to match files for this association."
+        },
+        "language": {
+          "description": "The language to format matched files as, named by its Shiki id (as in Markdown code fences).",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Language"
+            }
+          ],
+          "markdownDescription": "The language to format matched files as, named by its Shiki id (as in Markdown code fences)."
+        }
+      }
     },
     "OxfmtOverrideConfig": {
       "type": "object",

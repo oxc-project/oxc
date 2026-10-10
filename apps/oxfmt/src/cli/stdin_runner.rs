@@ -9,8 +9,7 @@ use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use super::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
     ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
-    SourceFormatter, build_global_ignore_matchers, classify_file, is_ignored, resolve_ignore_paths,
-    utils,
+    SourceFormatter, build_global_ignore_matchers, is_ignored, resolve_ignore_paths, utils,
 };
 
 pub struct StdinRunner {
@@ -116,7 +115,7 @@ impl StdinRunner {
             return CliRunResult::FormatSucceeded;
         }
 
-        let Some(strategy) = classify_file(&filepath) else {
+        let Some(strategy) = config_resolver.classify(&filepath, None) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };
