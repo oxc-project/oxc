@@ -4,7 +4,8 @@
 //! (one source, no drift; see `oxc_formatter_tests`'s AGENTS.md).
 
 use oxc_formatter_json::{
-    BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas,
+    ArrayExpand, ArrayLinePattern, BracketSpacing, Expand, JsonFormatOptions, JsonVariant,
+    QuoteProps, TrailingCommas,
 };
 use oxc_formatter_tests::{OptionSet, apply_core_options};
 
@@ -65,6 +66,37 @@ pub fn apply_json_options(options: &mut JsonFormatOptions, json: &OptionSet) {
                         "collapse" => Expand::Never,
                         _ => options.expand,
                     };
+                }
+            }
+            // NOTE: Not a Prettier option
+            "arrayWrap" => {
+                if let Some(s) = value.as_str() {
+                    options.array_expand = match s {
+                        "auto" => ArrayExpand::Auto,
+                        "preserve" => ArrayExpand::Preserve,
+                        "collapse" => ArrayExpand::Never,
+                        _ => options.array_expand,
+                    };
+                } else if let Some(object) = value.as_object() {
+                    // `serde_json` is not a direct dependency, so `Value::as_u64` cannot be named
+                    let threshold = match object.get("wrapThreshold") {
+                        Some(threshold) => threshold.as_u64(),
+                        None => None,
+                    };
+                    options.array_expand = threshold
+                        .and_then(|threshold| u32::try_from(threshold).ok())
+                        .map_or(ArrayExpand::Preserve, ArrayExpand::ForceAboveThreshold);
+                    options.array_line_pattern = object
+                        .get("linePattern")
+                        .and_then(|v| v.as_str())
+                        .and_then(|pattern| {
+                            pattern
+                                .split_whitespace()
+                                .map(str::parse)
+                                .collect::<Result<_, _>>()
+                                .ok()
+                        })
+                        .and_then(ArrayLinePattern::new);
                 }
             }
             _ => {}

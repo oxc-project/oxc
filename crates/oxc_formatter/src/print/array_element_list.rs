@@ -12,7 +12,6 @@ use crate::{
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
-    options::ArrayLinePattern,
     utils::array::write_array_node,
     write,
 };
@@ -43,14 +42,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
         // A configured line pattern applies to any array printed across
         // multiple lines, however it came to break. Holes and comments need
         // `write_array_node`'s special handling, so they opt out
-        let line_pattern = f
-            .options()
-            .array_line_pattern
-            .as_ref()
-            .filter(|_| can_use_line_pattern(self.elements.parent().span(), self.elements, f));
-
-        let layout = if let Some(pattern) = line_pattern {
-            ArrayLayout::Pattern(pattern.clone())
+        let layout = if f.options().array_line_pattern.is_some()
+            && can_use_line_pattern(self.elements.parent().span(), self.elements, f)
+        {
+            ArrayLayout::Pattern
         } else if self.force_one_per_line {
             ArrayLayout::OnePerLine
         } else if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {
@@ -60,7 +55,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
         };
 
         match layout {
-            ArrayLayout::Pattern(pattern) => {
+            ArrayLayout::Pattern => {
                 let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
 
                 let mut line_index = 0;
@@ -76,7 +71,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
                     .enumerate()
                 {
                     if index > 0 {
-                        if written_in_line >= pattern.elements_for_line(line_index) {
+                        // Looked up per element: holding the pattern across `write!` would need a clone
+                        let per_line = f
+                            .options()
+                            .array_line_pattern
+                            .as_ref()
+                            .map_or(1, |pattern| pattern.elements_for_line(line_index));
+                        if written_in_line >= per_line {
                             write!(f, soft_line_break_or_space());
                             line_index += 1;
                             written_in_line = 0;
@@ -139,7 +140,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 enum ArrayLayout {
     /// Tries to fit as many array elements on a single line as possible.
     ///
@@ -171,7 +172,7 @@ enum ArrayLayout {
     ///     4, 5,
     /// ]
     /// ```
-    Pattern(ArrayLinePattern),
+    Pattern,
 }
 
 /// A configured line pattern replaces the one-per-line layout only when the

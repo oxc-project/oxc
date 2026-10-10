@@ -1,5 +1,6 @@
 mod array_element_list;
 mod array_expression;
+mod array_like;
 mod array_pattern;
 mod arrow_function_expression;
 mod as_or_satisfies_expression;
@@ -67,7 +68,7 @@ use crate::{
             format_trailing_comments,
         },
     },
-    options::{ArrayExpand, FormatTrailingCommas, Semicolons, TrailingSeparator},
+    options::{FormatTrailingCommas, Semicolons, TrailingSeparator},
     parentheses::NeedsParentheses,
     print::parameters::can_avoid_parentheses,
     utils::{
@@ -97,6 +98,7 @@ use crate::{
 
 use self::{
     array_expression::FormatArrayExpression,
+    array_like::ArrayLike,
     block_statement::is_empty_block,
     class::format_grouped_parameters_with_return_type_for_method,
     object_like::ObjectLike,
@@ -389,29 +391,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
             write!(f, [format_dangling_comments(self.span()).with_soft_block_indent()]);
         } else {
             let element_count = self.elements.len() + usize::from(self.rest.is_some());
-
-            let force_above_threshold = matches!(f.options().array_expand, ArrayExpand::ForceAboveThreshold(threshold) if element_count >= threshold as usize);
-
-            // Leading holes have no node, so measure against the first present
-            // element (or the rest element) instead
-            let first_element_start = self
-                .elements
-                .iter()
-                .flatten()
-                .map(|e| e.span().start)
-                .next()
-                .or_else(|| self.rest.as_ref().map(|rest| rest.span.start));
-
-            let preserve_multiline = !force_above_threshold
-                && matches!(
-                    f.options().array_expand,
-                    ArrayExpand::Preserve | ArrayExpand::ForceAboveThreshold(_)
-                )
-                && first_element_start.is_some_and(|start| {
-                    f.source_text().contains_newline_between(self.span().start, start)
-                });
-
-            let should_expand = force_above_threshold || preserve_multiline;
+            let should_expand = ArrayLike::ArrayAssignmentTarget(self).should_wrap(f);
 
             write!(
                 f,

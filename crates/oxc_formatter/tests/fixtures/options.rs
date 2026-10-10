@@ -6,9 +6,9 @@
 use std::str::FromStr;
 
 use oxc_formatter::{
-    ArrayExpand, ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand,
-    JsFormatOptions, JsdocOptions, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
-    TrailingCommas,
+    ArrayExpand, ArrayLinePattern, ArrowParentheses, AttributePosition, BracketSameLine,
+    BracketSpacing, Expand, JsFormatOptions, JsdocOptions, OperatorPosition, QuoteProperties,
+    QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_tests::{OptionSet, apply_core_options};
 
@@ -89,24 +89,28 @@ pub fn apply_js_options(options: &mut JsFormatOptions, json: &OptionSet) {
             "arrayWrap" => {
                 if let Some(s) = value.as_str() {
                     options.array_expand = match s {
+                        "auto" => ArrayExpand::Auto,
                         "preserve" => ArrayExpand::Preserve,
                         "collapse" => ArrayExpand::Never,
                         _ => options.array_expand,
                     };
                 } else if let Some(object) = value.as_object() {
-                    if let Some(threshold) =
-                        object.get("minElementsToWrap").and_then(serde_json::Value::as_u64)
-                    {
-                        options.array_expand =
-                            ArrayExpand::ForceAboveThreshold(u32::try_from(threshold).unwrap());
-                    } else {
-                        options.array_expand = ArrayExpand::Preserve;
-                    }
-                    if let Some(pattern) =
-                        object.get("linePattern").and_then(serde_json::Value::as_str)
-                    {
-                        options.array_line_pattern = pattern.parse().ok();
-                    }
+                    options.array_expand = object
+                        .get("wrapThreshold")
+                        .and_then(serde_json::Value::as_u64)
+                        .and_then(|threshold| u32::try_from(threshold).ok())
+                        .map_or(ArrayExpand::Preserve, ArrayExpand::ForceAboveThreshold);
+                    options.array_line_pattern = object
+                        .get("linePattern")
+                        .and_then(serde_json::Value::as_str)
+                        .and_then(|pattern| {
+                            pattern
+                                .split_whitespace()
+                                .map(str::parse)
+                                .collect::<Result<_, _>>()
+                                .ok()
+                        })
+                        .and_then(ArrayLinePattern::new);
                 }
             }
             "arrowParens" => {

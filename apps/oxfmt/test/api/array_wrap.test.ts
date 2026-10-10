@@ -34,6 +34,31 @@ describe("arrayWrap", () => {
     });
   });
 
+  describe("auto", () => {
+    it("matches the default and collapses multiline arrays that fit", async () => {
+      const input = `const x = [
+  1,
+  2,
+  3,
+];
+`;
+      const result = await format("a.ts", input, { arrayWrap: "auto" });
+      expect(result.code).toBe("const x = [1, 2, 3];\n");
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("matches the default and expands arrays of multiple objects", async () => {
+      const input = "const x = [{ a: 1, b: 2 }, { a: 3, b: 4 }];\n";
+      const result = await format("a.ts", input, { arrayWrap: "auto" });
+      expect(result.code).toBe(`const x = [
+  { a: 1, b: 2 },
+  { a: 3, b: 4 },
+];
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+  });
+
   describe("preserve", () => {
     it("single-line stays single-line", async () => {
       const input = "const x = [1, 2, 3];\n";
@@ -417,20 +442,20 @@ describe("arrayWrap", () => {
     });
   });
 
-  describe("minElementsToWrap", () => {
-    it("below threshold stays flat", async () => {
+  describe("wrapThreshold", () => {
+    it("at or below threshold stays flat", async () => {
       const input = "const x = [1];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2 },
+        arrayWrap: { wrapThreshold: 1 },
       });
       expect(result.code).toBe("const x = [1];\n");
       expect(result.errors).toStrictEqual([]);
     });
 
-    it("at threshold forces multiline", async () => {
+    it("one above threshold forces multiline", async () => {
       const input = "const x = [1, 2];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2 },
+        arrayWrap: { wrapThreshold: 1 },
       });
       expect(result.code).toBe(`const x = [
   1,
@@ -443,7 +468,7 @@ describe("arrayWrap", () => {
     it("above threshold forces multiline", async () => {
       const input = "const x = [1, 2, 3];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2 },
+        arrayWrap: { wrapThreshold: 1 },
       });
       expect(result.code).toBe(`const x = [
   1,
@@ -457,51 +482,51 @@ describe("arrayWrap", () => {
     it("empty array stays flat", async () => {
       const input = "const x = [];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2 },
+        arrayWrap: { wrapThreshold: 1 },
       });
       expect(result.code).toBe("const x = [];\n");
       expect(result.errors).toStrictEqual([]);
     });
 
-    it("below threshold preserves multiline formatting", async () => {
+    it("at or below threshold preserves multiline formatting", async () => {
       const input = `const x = [
   z.string(),
   z.array(ContentPartSchema),
 ];
 `;
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 3 },
+        arrayWrap: { wrapThreshold: 2 },
       });
       expect(result.code).toBe(input);
       expect(result.errors).toStrictEqual([]);
     });
 
-    it("below threshold preserves multiline numeric arrays", async () => {
+    it("at or below threshold preserves multiline numeric arrays", async () => {
       const input = `const RETRYABLE_STATUS_CODES = new Set([
   429,
   503,
 ]);
 `;
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 3 },
+        arrayWrap: { wrapThreshold: 2 },
       });
       expect(result.code).toBe(input);
       expect(result.errors).toStrictEqual([]);
     });
 
-    it("below threshold collapses single-line formatting", async () => {
+    it("at or below threshold collapses single-line formatting", async () => {
       const input = "const x = [1, 2];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 3 },
+        arrayWrap: { wrapThreshold: 2 },
       });
       expect(result.code).toBe("const x = [1, 2];\n");
       expect(result.errors).toStrictEqual([]);
     });
 
-    it("below threshold keeps Prettier's object-array expansion", async () => {
+    it("at or below threshold keeps Prettier's object-array expansion", async () => {
       const input = "const x = [{ a: 1, b: 2 }, { a: 3, b: 4 }];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 10 },
+        arrayWrap: { wrapThreshold: 9 },
       });
       expect(result.code).toBe(`const x = [
   { a: 1, b: 2 },
@@ -514,7 +539,7 @@ describe("arrayWrap", () => {
     it("nested arrays are evaluated independently", async () => {
       const input = "const x = [[1, 2], [3]];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2 },
+        arrayWrap: { wrapThreshold: 1 },
       });
       expect(result.code).toBe(`const x = [
   [
@@ -530,7 +555,7 @@ describe("arrayWrap", () => {
     it("inner arrays above threshold also expand", async () => {
       const input = "const x = [[1, 2, 3]];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2 },
+        arrayWrap: { wrapThreshold: 1 },
       });
       expect(result.code).toBe(`const x = [
   [
@@ -546,7 +571,7 @@ describe("arrayWrap", () => {
     it("destructuring patterns also forced multiline", async () => {
       const input = "const [a, b] = values;\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2 },
+        arrayWrap: { wrapThreshold: 1 },
       });
       expect(result.code).toBe(`const [
   a,
@@ -556,14 +581,14 @@ describe("arrayWrap", () => {
       expect(result.errors).toStrictEqual([]);
     });
 
-    it("below threshold preserves multiline destructuring", async () => {
+    it("at or below threshold preserves multiline destructuring", async () => {
       const input = `const [
   first,
   second,
 ] = values;
 `;
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 3 },
+        arrayWrap: { wrapThreshold: 2 },
       });
       expect(result.code).toBe(input);
       expect(result.errors).toStrictEqual([]);
@@ -571,7 +596,7 @@ describe("arrayWrap", () => {
 
     it("formatting is idempotent", async () => {
       const input = "const x = [1, 2, 3];\n";
-      const opts = { arrayWrap: { minElementsToWrap: 2 } } as const;
+      const opts = { arrayWrap: { wrapThreshold: 1 } } as const;
       const first = await format("a.ts", input, opts);
       const second = await format("a.ts", first.code, opts);
       expect(second.code).toBe(first.code);
@@ -581,7 +606,7 @@ describe("arrayWrap", () => {
     it("spread elements count as elements", async () => {
       const input = "const x = [1, ...rest];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2 },
+        arrayWrap: { wrapThreshold: 1 },
       });
       expect(result.code).toBe(`const x = [
   1,
@@ -596,7 +621,7 @@ describe("arrayWrap", () => {
     it("wraps threshold arrays with the given elements per line", async () => {
       const input = "const x = [1, 2, 3, 4, 5, 6, 7];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 4, linePattern: "3" },
+        arrayWrap: { wrapThreshold: 3, linePattern: "3" },
       });
       expect(result.code).toBe(`const x = [
   1, 2, 3,
@@ -607,10 +632,10 @@ describe("arrayWrap", () => {
       expect(result.errors).toStrictEqual([]);
     });
 
-    it("below threshold stays flat", async () => {
+    it("at or below threshold stays flat", async () => {
       const input = "const x = [1, 2, 3];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 4, linePattern: "3" },
+        arrayWrap: { wrapThreshold: 3, linePattern: "3" },
       });
       expect(result.code).toBe(input);
       expect(result.errors).toStrictEqual([]);
@@ -619,7 +644,7 @@ describe("arrayWrap", () => {
     it("repeats an alternating pattern", async () => {
       const input = "const x = [1, 2, 3, 4, 5, 6, 7];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2, linePattern: "2 1" },
+        arrayWrap: { wrapThreshold: 1, linePattern: "2 1" },
       });
       expect(result.code).toBe(`const x = [
   1, 2,
@@ -660,7 +685,7 @@ describe("arrayWrap", () => {
     it("arrays with comments fall back to one element per line", async () => {
       const input = "const x = [1, 2, /* c */ 3, 4];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2, linePattern: "2" },
+        arrayWrap: { wrapThreshold: 1, linePattern: "2" },
       });
       expect(result.code).toBe(`const x = [
   1,
@@ -675,7 +700,7 @@ describe("arrayWrap", () => {
     it("arrays with holes fall back to one element per line", async () => {
       const input = "const x = [1, , 3, 4];\n";
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2, linePattern: "2" },
+        arrayWrap: { wrapThreshold: 1, linePattern: "2" },
       });
       expect(result.code).toBe(`const x = [
   1,
@@ -690,7 +715,7 @@ describe("arrayWrap", () => {
     it("formatting is idempotent", async () => {
       const input = "const x = [1, 2, 3, 4, 5, 6, 7];\n";
       const opts = {
-        arrayWrap: { minElementsToWrap: 4, linePattern: "2 1" },
+        arrayWrap: { wrapThreshold: 3, linePattern: "2 1" },
       } as const;
       const first = await format("a.ts", input, opts);
       const second = await format("a.ts", first.code, opts);
@@ -710,6 +735,89 @@ describe("arrayWrap", () => {
         arrayWrap: {},
       });
       expect(errors.length).toBe(1);
+    });
+  });
+
+  describe("tuple types", () => {
+    it("preserve keeps a multiline tuple expanded", async () => {
+      const input = `type T = [
+  string,
+  number,
+];
+`;
+      const result = await format("a.ts", input, { arrayWrap: "preserve" });
+      expect(result.code).toBe(input);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("default collapses a multiline tuple that fits", async () => {
+      const input = `type T = [
+  string,
+  number,
+];
+`;
+      const result = await format("a.ts", input);
+      expect(result.code).toBe("type T = [string, number];\n");
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("wrapThreshold expands tuples above the threshold", async () => {
+      const input = "type T = [string, number, boolean];\n";
+      const result = await format("a.ts", input, {
+        arrayWrap: { wrapThreshold: 2 },
+      });
+      expect(result.code).toBe(`type T = [
+  string,
+  number,
+  boolean,
+];
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+  });
+
+  describe("JSON", () => {
+    it("default collapses multiline arrays that fit", async () => {
+      const input = `{ "a": [
+  1,
+  2
+] }
+`;
+      const result = await format("a.json", input);
+      expect(result.code).toBe(`{ "a": [1, 2] }
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("preserve keeps multiline arrays expanded", async () => {
+      const input = `{
+  "a": [
+    1,
+    2
+  ]
+}
+`;
+      const result = await format("a.json", input, { arrayWrap: "preserve" });
+      expect(result.code).toBe(input);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("wrapThreshold and linePattern wrap long arrays", async () => {
+      const input = `{ "a": [1, 2, 3, 4, 5], "b": [1, 2] }
+`;
+      const result = await format("a.json", input, {
+        arrayWrap: { wrapThreshold: 2, linePattern: "2" },
+      });
+      expect(result.code).toBe(`{
+  "a": [
+    1, 2,
+    3, 4,
+    5
+  ],
+  "b": [1, 2]
+}
+`);
+      expect(result.errors).toStrictEqual([]);
     });
   });
 });

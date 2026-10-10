@@ -2,15 +2,20 @@ use oxc_ast::ast::{ArrayExpression, ArrayExpressionElement, Expression};
 use oxc_formatter_core::{
     Buffer, Format, FormatContext,
     builders::{
-        empty_line, group, if_group_breaks, soft_block_indent, soft_line_break_or_space, text,
+        empty_line, group, if_group_breaks, soft_block_indent, soft_line_break_or_space, space,
+        text,
     },
     write,
 };
 use oxc_span::GetSpan;
 
 use crate::{
-    comments::{FormatTrailingInsideComments, write_empty_container_comments},
+    comments::{
+        FormatTrailingInsideComments, has_line_terminator_after_skipping_comments,
+        write_empty_container_comments,
+    },
     context::JsonFormatContext,
+    options::ArrayExpand,
     separated::{TrailingSeparator, blank_line_after_comma, write_separated},
 };
 
@@ -63,7 +68,39 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
         // means a concise layout would miss-place it, so gate it out.
         let has_inner_comment =
             f.context().comments().iter_before(self.array.span.end).next().is_some();
-        if !has_inner_comment && can_concisely_print(&self.array.elements) {
+        let array_expand = f.context().options().array_expand;
+        let expand = should_expand(self.array, array_expand, f);
+
+        // `arrayWrap.linePattern` replaces both layouts below.
+        // Holes need their literal separators and comments their own lines, so those keep the defaults.
+        if f.context().options().array_line_pattern.is_some()
+            && !has_inner_comment
+            && !self
+                .array
+                .elements
+                .iter()
+                .any(|el| matches!(el, ArrayExpressionElement::Elision(_)))
+        {
+            write!(
+                f,
+                [
+                    group(&soft_block_indent(&FmtLinePattern { array: self.array }))
+                        .should_expand(expand),
+                    "]"
+                ]
+            );
+            return;
+        }
+
+        // `arrayWrap`'s preserve-based modes skip the fill layout:
+        // a fill-printed array that broke for width would read as authored multi-line on the next run
+        // and be re-laid out one element per line, so formatting would not be idempotent.
+        let preserves_source_breaks =
+            matches!(array_expand, ArrayExpand::Preserve | ArrayExpand::ForceAboveThreshold(_));
+        if !has_inner_comment
+            && !preserves_source_breaks
+            && can_concisely_print(&self.array.elements)
+        {
             let elements = &self.array.elements;
             let source = f.context().source_text();
             let last_idx = elements.len() - 1;
@@ -143,17 +180,77 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
             );
         });
 
-        // Mirrors Prettier's `shouldBreak` heuristic for arrays of arrays/objects
-        // (`language-js/print/array.js`): force-expand only when there's > 1 element,
-        // every element is the same kind of composite (all arrays or all objects),
-        // and every element has at least 2 inner items.
-        // Matrices and arrays-of-records qualify;
-        // `[[1, 2], [3]]` or a single-element wrapper does not.
-        let expand = should_force_expand(&self.array.elements);
         write!(f, [group(&soft_block_indent(&elements)).should_expand(expand), "]"]);
     }
 }
 
+/// Prints `arrayWrap.linePattern`'s elements per line, repeating the pattern.
+/// Line boundaries are soft, so an array that fits stays on one line.
+struct FmtLinePattern<'a, 'b> {
+    array: &'b ArrayExpression<'a>,
+}
+
+impl<'a> Format<'a, JsonFormatContext<'a>> for FmtLinePattern<'a, '_> {
+    fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
+        let mut line = 0;
+        let mut written_in_line = 0;
+        for (i, element) in self.array.elements.iter().enumerate() {
+            if i > 0 {
+                write!(f, ",");
+                // Looked up per element: holding the pattern across `write!` would need a clone
+                let per_line = f
+                    .context()
+                    .options()
+                    .array_line_pattern
+                    .as_ref()
+                    .map_or(1, |pattern| pattern.elements_for_line(line));
+                if written_in_line >= per_line {
+                    write!(f, soft_line_break_or_space());
+                    line += 1;
+                    written_in_line = 0;
+                } else {
+                    write!(f, space());
+                }
+            }
+            write_array_element(element, f);
+            written_in_line += 1;
+        }
+        if f.context().options().allow_trailing_comma() {
+            write!(f, if_group_breaks(&","));
+        }
+    }
+}
+
+/// Prettier's forced expansion (opted out by `arrayWrap: "collapse"`), plus `arrayWrap`'s own:
+/// the authored multi-line shape under the preserve-based modes, and the element count over `wrapThreshold`.
+fn should_expand(
+    array: &ArrayExpression<'_>,
+    array_expand: ArrayExpand,
+    f: &JsonFormatter<'_, '_>,
+) -> bool {
+    let has_leading_newline = || {
+        // `+ 1` skips the opening `[`, like the object side does for `{`.
+        let rest = f.context().source_text().slice_range(array.span.start + 1, array.span.end);
+        has_line_terminator_after_skipping_comments(rest)
+    };
+    match array_expand {
+        ArrayExpand::Auto => should_force_expand(&array.elements),
+        ArrayExpand::Never => false,
+        ArrayExpand::Preserve => should_force_expand(&array.elements) || has_leading_newline(),
+        ArrayExpand::ForceAboveThreshold(threshold) => {
+            array.elements.len() > threshold as usize
+                || should_force_expand(&array.elements)
+                || has_leading_newline()
+        }
+    }
+}
+
+/// Mirrors Prettier's `shouldBreak` heuristic for arrays of arrays/objects
+/// (`language-js/print/array.js`): force-expand only when there's > 1 element,
+/// every element is the same kind of composite (all arrays or all objects),
+/// and every element has at least 2 inner items.
+/// Matrices and arrays-of-records qualify;
+/// `[[1, 2], [3]]` or a single-element wrapper does not.
 fn should_force_expand(elements: &[ArrayExpressionElement<'_>]) -> bool {
     if elements.len() < 2 {
         return false;

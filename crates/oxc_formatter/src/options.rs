@@ -668,8 +668,8 @@ pub enum ArrayExpand {
     Preserve,
     /// Arrays are never expanded if they are shorter than the line width.
     Never,
-    /// Arrays with at least this many elements are always expanded, one element
-    /// per line. Arrays below the threshold behave like `Preserve`.
+    /// Arrays with more than this many elements are always expanded.
+    /// Arrays at or below the threshold behave like `Preserve`.
     ForceAboveThreshold(u32),
 }
 
@@ -702,7 +702,7 @@ impl fmt::Display for ArrayExpand {
 }
 
 /// A repeating per-line element count pattern for expanded array literals,
-/// e.g. `"2 1"` prints two elements on the first line, one on the second,
+/// e.g. `[2, 1]` prints two elements on the first line, one on the second,
 /// then repeats.
 ///
 /// Modeled after `prettier-plugin-multiline-arrays`' `multilineArraysLinePattern`.
@@ -710,43 +710,15 @@ impl fmt::Display for ArrayExpand {
 pub struct ArrayLinePattern(Vec<u32>);
 
 impl ArrayLinePattern {
+    /// Returns `None` unless `counts` is a non-empty list of positive integers.
+    pub fn new(counts: Vec<u32>) -> Option<Self> {
+        (!counts.is_empty() && !counts.contains(&0)).then_some(Self(counts))
+    }
+
     /// Number of elements to print on the given zero-based wrapped line;
     /// the pattern repeats once exhausted.
     pub fn elements_for_line(&self, line: usize) -> u32 {
         self.0[line % self.0.len()]
-    }
-}
-
-impl FromStr for ArrayLinePattern {
-    type Err = String;
-
-    /// Parses a whitespace-separated list of positive integers, e.g. `"2 1"`.
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let counts = s
-            .split_whitespace()
-            .map(|part| match part.parse::<u32>() {
-                Ok(count) if count >= 1 => Ok(count),
-                _ => Err(std::format!("expected a positive integer, got `{part}`")),
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        if counts.is_empty() {
-            return Err("expected at least one positive integer (e.g. \"2 1\")".to_string());
-        }
-
-        Ok(Self(counts))
-    }
-}
-
-impl fmt::Display for ArrayLinePattern {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for (index, count) in self.0.iter().enumerate() {
-            if index > 0 {
-                f.write_str(" ")?;
-            }
-            fmt::Display::fmt(count, f)?;
-        }
-        Ok(())
     }
 }
 

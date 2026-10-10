@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 67
 ---
 ==================== Input ====================
 // Wrapped arrays follow the configured elements-per-line pattern
@@ -13,9 +14,9 @@ const holes = [1, , 3, 4, 5];
 const commented = [1, 2, /* c */ 3, 4, 5];
 
 ==================== Output ====================
-------------------------------------------------------------------------
-{ arrayWrap: {"linePattern":"3","minElementsToWrap":4}, printWidth: 80 }
-------------------------------------------------------------------------
+--------------------------------------------------------------------
+{ arrayWrap: {"linePattern":"3","wrapThreshold":3}, printWidth: 80 }
+--------------------------------------------------------------------
 // Wrapped arrays follow the configured elements-per-line pattern
 const numbers = [
   1, 2, 3,
@@ -48,9 +49,9 @@ const commented = [
   5,
 ];
 
--------------------------------------------------------------------------
-{ arrayWrap: {"linePattern":"3","minElementsToWrap":4}, printWidth: 100 }
--------------------------------------------------------------------------
+---------------------------------------------------------------------
+{ arrayWrap: {"linePattern":"3","wrapThreshold":3}, printWidth: 100 }
+---------------------------------------------------------------------
 // Wrapped arrays follow the configured elements-per-line pattern
 const numbers = [
   1, 2, 3,

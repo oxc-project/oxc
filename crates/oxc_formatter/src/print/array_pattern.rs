@@ -7,12 +7,11 @@ use crate::{
     Format,
     ast_nodes::AstNode,
     formatter::{prelude::*, trivia::format_dangling_comments},
-    options::ArrayExpand,
     utils::array::write_array_node,
     write,
 };
 
-use super::FormatWrite;
+use super::{FormatWrite, array_like::ArrayLike};
 
 struct FormatArrayPattern<'a, 'b>(&'b AstNode<'a, ArrayPattern<'a>>);
 
@@ -32,29 +31,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
             write!(f, [format_dangling_comments(self.span()).with_soft_block_indent()]);
         } else {
             let element_count = self.elements.len() + usize::from(self.rest.is_some());
-
-            let force_above_threshold = matches!(f.options().array_expand, ArrayExpand::ForceAboveThreshold(threshold) if element_count >= threshold as usize);
-
-            // Leading holes have no node, so measure against the first present
-            // element (or the rest element) instead
-            let first_element_start = self
-                .elements
-                .iter()
-                .flatten()
-                .map(|e| e.span().start)
-                .next()
-                .or_else(|| self.rest.as_deref().map(|rest| rest.span.start));
-
-            let preserve_multiline = !force_above_threshold
-                && matches!(
-                    f.options().array_expand,
-                    ArrayExpand::Preserve | ArrayExpand::ForceAboveThreshold(_)
-                )
-                && first_element_start.is_some_and(|start| {
-                    f.source_text().contains_newline_between(self.span().start, start)
-                });
-
-            let should_expand = force_above_threshold || preserve_multiline;
+            let should_expand = ArrayLike::ArrayPattern(self.0).should_wrap(f);
 
             write!(
                 f,

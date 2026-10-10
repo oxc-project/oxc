@@ -25,7 +25,7 @@ pub fn to_oxc_formatter(
     config: &FormatConfig,
     core_options: CoreFormatOptions,
     sort_imports: Option<SortImportsOptions>,
-    array_line_pattern: Option<ArrayLinePattern>,
+    array_line_pattern: Option<Vec<u32>>,
 ) -> JsFormatOptions {
     let mut format_options = JsFormatOptions::default();
     format_options.apply_core(core_options);
@@ -119,17 +119,19 @@ pub fn to_oxc_formatter(
 
     // Below are our own extensions
 
+    // arrayWrap: "auto" | "preserve" | "collapse" | { wrapThreshold?, linePattern? }
     if let Some(array_wrap) = &config.array_wrap {
         format_options.array_expand = match array_wrap {
+            ArrayWrapConfig::Mode(ArrayWrapMode::Auto) => ArrayExpand::Auto,
             ArrayWrapConfig::Mode(ArrayWrapMode::Preserve) => ArrayExpand::Preserve,
             ArrayWrapConfig::Mode(ArrayWrapMode::Collapse) => ArrayExpand::Never,
             // A pattern without a threshold applies to arrays kept expanded by preserve
             ArrayWrapConfig::Options(options) => options
-                .min_elements_to_wrap
+                .wrap_threshold
                 .map_or(ArrayExpand::Preserve, ArrayExpand::ForceAboveThreshold),
         };
     }
-    format_options.array_line_pattern = array_line_pattern;
+    format_options.array_line_pattern = array_line_pattern.and_then(ArrayLinePattern::new);
 
     format_options.sort_imports = sort_imports;
     format_options.jsdoc = to_jsdoc(config);
@@ -153,33 +155,45 @@ pub fn to_oxc_formatter(
     format_options
 }
 
-/// Derive the `arrayWrap.linePattern` [`ArrayLinePattern`] from the resolved config;
+/// Derive the per-line element counts of `arrayWrap.linePattern` from the resolved config;
 /// the gate ([`super::validate::validate()`]) runs it once, like `to_core_options`.
+///
+/// The pattern is a space-separated list of positive integers (e.g. `"2 1"`),
+/// the syntax of `prettier-plugin-multiline-arrays`' `multilineArraysLinePattern`.
 ///
 /// # Errors
 /// Returns an error if the `arrayWrap` configuration is invalid.
-pub(super) fn to_array_line_pattern(
-    config: &FormatConfig,
-) -> Result<Option<ArrayLinePattern>, String> {
+pub(super) fn to_array_line_pattern(config: &FormatConfig) -> Result<Option<Vec<u32>>, String> {
     let Some(ArrayWrapConfig::Options(options)) = &config.array_wrap else {
         return Ok(None);
     };
 
-    if options.min_elements_to_wrap.is_none() && options.line_pattern.is_none() {
+    if options.wrap_threshold.is_none() && options.line_pattern.is_none() {
         return Err(
-            "Invalid `arrayWrap` value.\nExpected at least one of `minElementsToWrap` or `linePattern`.".to_string(),
+            "Invalid `arrayWrap` value.\nExpected at least one of `wrapThreshold` or `linePattern`."
+                .to_string(),
         );
     }
 
-    options
-        .line_pattern
-        .as_ref()
-        .map(|line_pattern| {
-            line_pattern
-                .parse()
-                .map_err(|err| format!("Invalid `arrayWrap.linePattern` value.\n{err}"))
+    let Some(line_pattern) = &options.line_pattern else {
+        return Ok(None);
+    };
+
+    let counts = line_pattern
+        .split_whitespace()
+        .map(|part| match part.parse::<u32>() {
+            Ok(count) if count >= 1 => Ok(count),
+            _ => Err(format!(
+                "Invalid `arrayWrap.linePattern` value.\nExpected a positive integer, got `{part}`."
+            )),
         })
-        .transpose()
+        .collect::<Result<Vec<_>, _>>()?;
+
+    if counts.is_empty() {
+        return Err("Invalid `arrayWrap.linePattern` value.\nExpected at least one positive integer (e.g. \"2 1\").".to_string());
+    }
+
+    Ok(Some(counts))
 }
 
 /// Derive [`SortImportsOptions`] from the resolved config;
@@ -497,6 +511,11 @@ mod tests {
         let format_options = build(&config).unwrap();
         assert_eq!(format_options.array_expand, ArrayExpand::Auto);
 
+        // Test "auto" -> Auto
+        let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": "auto"}"#).unwrap();
+        let format_options = build(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::Auto);
+
         // Test "preserve" -> Preserve
         let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": "preserve"}"#).unwrap();
         let format_options = build(&config).unwrap();
@@ -507,45 +526,56 @@ mod tests {
         let format_options = build(&config).unwrap();
         assert_eq!(format_options.array_expand, ArrayExpand::Never);
 
-        // Test { minElementsToWrap: 2 } -> ForceAboveThreshold(2)
+        // Test { wrapThreshold: 2 } -> ForceAboveThreshold(2)
         let config: FormatConfig =
-            serde_json::from_str(r#"{"arrayWrap": {"minElementsToWrap": 2}}"#).unwrap();
+            serde_json::from_str(r#"{"arrayWrap": {"wrapThreshold": 2}}"#).unwrap();
         let format_options = build(&config).unwrap();
         assert_eq!(format_options.array_expand, ArrayExpand::ForceAboveThreshold(2));
         assert_eq!(format_options.array_line_pattern, None);
 
-        // Test { minElementsToWrap: 2, linePattern: "2 1" } -> ForceAboveThreshold(2) + pattern
-        let config: FormatConfig = serde_json::from_str(
-            r#"{"arrayWrap": {"minElementsToWrap": 2, "linePattern": "2 1"}}"#,
-        )
-        .unwrap();
+        // Test { wrapThreshold: 2, linePattern: "2 1" } -> ForceAboveThreshold(2) + pattern
+        let config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"wrapThreshold": 2, "linePattern": "2 1"}}"#)
+                .unwrap();
         let format_options = build(&config).unwrap();
         assert_eq!(format_options.array_expand, ArrayExpand::ForceAboveThreshold(2));
-        assert_eq!(format_options.array_line_pattern, Some("2 1".parse().unwrap()));
+        assert_eq!(format_options.array_line_pattern, ArrayLinePattern::new(vec![2, 1]));
 
         // Test { linePattern: "3" } alone -> Preserve + pattern
         let config: FormatConfig =
             serde_json::from_str(r#"{"arrayWrap": {"linePattern": "3"}}"#).unwrap();
         let format_options = build(&config).unwrap();
         assert_eq!(format_options.array_expand, ArrayExpand::Preserve);
-        assert_eq!(format_options.array_line_pattern, Some("3".parse().unwrap()));
+        assert_eq!(format_options.array_line_pattern, ArrayLinePattern::new(vec![3]));
 
-        // Test {} -> error
-        let config: FormatConfig = serde_json::from_str(r#"{"arrayWrap": {}}"#).unwrap();
+        // Test {} (or only unknown keys) -> error
+        let config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"minElementsToWrap": 3}}"#).unwrap();
         let err = build(&config).unwrap_err();
-        assert!(err.contains("minElementsToWrap"), "unexpected error: {err}");
+        assert!(err.contains("wrapThreshold"), "unexpected error: {err}");
 
         // Test invalid linePattern -> error
-        let config: FormatConfig =
-            serde_json::from_str(r#"{"arrayWrap": {"linePattern": "2 x"}}"#).unwrap();
-        let err = build(&config).unwrap_err();
-        assert!(err.contains("linePattern"), "unexpected error: {err}");
+        for pattern in ["2 x", "0", "", "-1"] {
+            let config: FormatConfig = serde_json::from_value(
+                serde_json::json!({ "arrayWrap": { "linePattern": pattern } }),
+            )
+            .unwrap();
+            let err = build(&config).unwrap_err();
+            assert!(err.contains("linePattern"), "unexpected error for {pattern:?}: {err}");
+        }
+    }
 
-        // Test zero in linePattern -> error
-        let config: FormatConfig =
-            serde_json::from_str(r#"{"arrayWrap": {"linePattern": "0"}}"#).unwrap();
-        let err = build(&config).unwrap_err();
-        assert!(err.contains("linePattern"), "unexpected error: {err}");
+    #[test]
+    fn test_array_wrap_override_restores_default() {
+        let mut config: FormatConfig =
+            serde_json::from_str(r#"{"arrayWrap": {"wrapThreshold": 2, "linePattern": "2"}}"#)
+                .unwrap();
+        let overrides: FormatConfig = serde_json::from_str(r#"{"arrayWrap": "auto"}"#).unwrap();
+        config.merge(&overrides);
+
+        let format_options = build(&config).unwrap();
+        assert_eq!(format_options.array_expand, ArrayExpand::Auto);
+        assert_eq!(format_options.array_line_pattern, None);
     }
 
     #[test]

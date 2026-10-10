@@ -1,4 +1,4 @@
-use oxc_formatter::{ArrayLinePattern, SortImportsOptions};
+use oxc_formatter::SortImportsOptions;
 use oxc_formatter_core::CoreFormatOptions;
 
 use super::{
@@ -16,7 +16,8 @@ use super::{
 pub struct ValidatedOptions {
     pub core: CoreFormatOptions,
     pub sort_imports: Option<SortImportsOptions>,
-    pub array_line_pattern: Option<ArrayLinePattern>,
+    /// Per-line element counts of `arrayWrap.linePattern`.
+    pub array_line_pattern: Option<Vec<u32>>,
 }
 
 /// The eager validation gate during config resolution.
