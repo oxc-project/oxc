@@ -98,10 +98,10 @@ fn minimize_conditional_exprs() {
         "v = function(a) { return a == null ? void 0 : a.b.c[d](e) }",
         "chrome79",
     );
-    test("v = cmp !== 0 ? cmp : (bar, cmp);", "v = (cmp === 0 && bar, cmp);");
-    test("v = cmp === 0 ? cmp : (bar, cmp);", "v = (cmp === 0 || bar, cmp);");
-    test("v = cmp !== 0 ? (bar, cmp) : cmp;", "v = (cmp === 0 || bar, cmp);");
-    test("v = cmp === 0 ? (bar, cmp) : cmp;", "v = (cmp === 0 && bar, cmp);");
+    test("v = cmp !== 0 ? cmp : (bar, cmp);", "cmp === 0 && bar, v = cmp;");
+    test("v = cmp === 0 ? cmp : (bar, cmp);", "cmp === 0 || bar, v = cmp;");
+    test("v = cmp !== 0 ? (bar, cmp) : cmp;", "cmp === 0 || bar, v = cmp;");
+    test("v = cmp === 0 ? (bar, cmp) : cmp;", "cmp === 0 && bar, v = cmp;");
 }
 
 #[test]

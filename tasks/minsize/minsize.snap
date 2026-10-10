@@ -19,7 +19,7 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 2.14 MB    | 707.61 kB  | 724.14 kB  | 160.07 kB  | 181.07 kB  |          2 | victory.js
 
-3.20 MB    | 958.47 kB  | 1.01 MB    | 317.02 kB  | 331.56 kB  |          2 | echarts.js
+3.20 MB    | 958.47 kB  | 1.01 MB    | 317.03 kB  | 331.56 kB  |          2 | echarts.js
 
 6.69 MB    | 2.12 MB    | 2.31 MB    | 453.40 kB  | 488.28 kB  |          4 | antd.js
 

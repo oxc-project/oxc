@@ -414,7 +414,7 @@ fn js_parser_test() {
     test("a = !!(!b && !c)", "a = !(b || c);");
     test("a = !!(!b || !c)", "a = !(b && c);");
     test("a = !!(!b ?? !c)", "a = !b;");
-    test("a = !!(b, c)", "a = (b, !!c);");
+    test("a = !!(b, c)", "b, a = !!c;");
     test("a = Boolean(b); var Boolean", "a = Boolean(b);var Boolean;");
     test("a = Boolean()", "a = !1;");
     test("a = Boolean(b)", "a = !!b;");
