@@ -110,6 +110,13 @@ export interface TestGroup {
   shouldSkipTest?: (ruleName: string, test: TestCase, code: string, err: Error) => boolean;
 
   /**
+   * Optional runner for suites that need their own test environment.
+   * Must report individual cases through the conformance capture functions.
+   * Defaults to loading the test file with `require`.
+   */
+  runTestFile?: (path: string) => void;
+
+  /**
    * `RuleTester` instances to replace with the Oxc conformance `RuleTester`.
    *
    * - `specifier` is a module specifier which is resolved relative to the tests directory, using `require.resolve`.
@@ -317,7 +324,7 @@ function runGroup(group: TestGroup, mocks: Mocks) {
   console.log(`Found ${files.length} test files\n`);
 
   console.log(`Running tests for ${groupName}...`);
-  const results = runAllTests(files);
+  const results = runAllTests(files, group.runTestFile);
 
   // Write results to markdown file
   const snapshotPath = pathJoin(SNAPSHOTS_DIR_PATH, `${groupName}.md`);
@@ -402,16 +409,20 @@ function findTestFiles(group: TestGroup): TestFile[] {
 /**
  * Run all test files for a group.
  * @param testFiles - Test files
+ * @param runTestFile - Function to load or run a test file
  * @returns Results of running tests
  */
-function runAllTests(testFiles: TestFile[]): RuleResult[] {
+function runAllTests(
+  testFiles: TestFile[],
+  runTestFile: (path: string) => void = require,
+): RuleResult[] {
   const results = [];
 
   for (let i = 0; i < testFiles.length; i++) {
     const testFile = testFiles[i];
     process.stdout.write(`[${i + 1}/${testFiles.length}] Testing ${testFile.name}...`);
 
-    const result = runRuleTests(testFile);
+    const result = runRuleTests(testFile, runTestFile);
     results.push(result);
 
     if (result.isLoadError) {
@@ -440,9 +451,10 @@ function runAllTests(testFiles: TestFile[]): RuleResult[] {
 /**
  * Run tests for a single rule file.
  * @param testFile - Test file details
+ * @param runTestFile - Function to load or run a test file
  * @returns Results of running tests for rule
  */
-function runRuleTests(testFile: TestFile): RuleResult {
+function runRuleTests(testFile: TestFile, runTestFile: (path: string) => void): RuleResult {
   const result: RuleResult = {
     ruleName: testFile.name,
     isLoadError: false,
@@ -454,7 +466,7 @@ function runRuleTests(testFile: TestFile): RuleResult {
 
   // Load the test file - this will execute the tests
   try {
-    require(testFile.path);
+    runTestFile(testFile.path);
   } catch (err) {
     result.isLoadError = true;
     result.loadError = err as Error;

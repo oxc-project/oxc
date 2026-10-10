@@ -546,6 +546,11 @@ export class RuleTester {
 let modifyTestCase: ((test: TestCase) => void) | null = null;
 
 if (CONFORMANCE) {
+  // Run upstream suites that assert directly on `Linter.verify()` diagnostics.
+  // This is deliberately absent from public builds and type declarations.
+  (RuleTester as any).lintForConformance = (test: TestCase, plugin: Plugin) =>
+    lint(mergeConfigIntoTestCase(test, createConfigForRun(null)), plugin);
+
   (RuleTester as any).registerModifyTestCaseHook = (modify: (test: TestCase) => void) => {
     modifyTestCase = modify;
   };
