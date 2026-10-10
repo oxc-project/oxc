@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    [
+      "transform-react-jsx",
+      {
+        "runtime": "classic",
+        "pragmaFrag": "'a\\'b\\\\c.\\n'"
+      }
+    ]
+  ]
+}
