@@ -30,6 +30,23 @@ impl Rule for NoFocusedTests {
 }
 
 #[test]
+fn test_extended_tests() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let pass = vec![
+        "import { test as base } from 'vitest'; const custom = base.extend({}); custom('example', () => {});",
+        "import { test as base } from 'other'; const custom = base.extend({}); custom.only('unrelated', () => {});",
+    ];
+    let source = "import { test as base } from 'vitest'; const custom = base.extend({}); custom.only('example', () => {});";
+    let fixed = "import { test as base } from 'vitest'; const custom = base.extend({}); custom('example', () => {});";
+    Tester::new(NoFocusedTests::NAME, NoFocusedTests::PLUGIN, pass, vec![source])
+        .with_vitest_plugin(true)
+        .expect_fix(vec![(source, fixed, None, FixKind::Suggestion)])
+        .with_snapshot_suffix("extended")
+        .test_and_snapshot();
+}
+
+#[test]
 fn test() {
     use crate::fixer::FixKind;
     use crate::tester::Tester;
