@@ -7,7 +7,6 @@
 
 use std::{cell::RefCell, iter::repeat_with, mem};
 
-use oxc_syntax::node::NodeId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, ArenaVec, CloneIn, GetAllocator};
@@ -103,11 +102,11 @@ impl<'a> IsolatedDeclarations<'a> {
             source_type,
             program.source_text,
             ArenaVec::from_iter_in(
-                program.comments.iter().filter(|c| c.is_jsdoc()).map(|comment| {
-                    let comment = comment.clone();
-                    comment.node_id.set(NodeId::DUMMY);
-                    comment
-                }),
+                program
+                    .comments
+                    .iter()
+                    .filter(|c| c.is_jsdoc())
+                    .map(|comment| comment.clone_in(self.allocator())),
                 &self,
             ),
             None,
