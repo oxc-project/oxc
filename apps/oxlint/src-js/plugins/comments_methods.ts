@@ -237,6 +237,9 @@ export function commentsExistBetween(
  *
  * Note: Source text is limited to 1 GiB max, so number of comments cannot exceed 2^30.
  * This makes it safe to use `>> 1` for division by 2 below (which is faster than `>>> 1`).
+ *
+ * This function is inlined into call sites by `inline_search` TSDown plugin.
+ * All call sites must have `COMMENT_SIZE32` const in scope.
  */
 function firstCommentAtOrAfter(
   int32: Int32Array,

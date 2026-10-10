@@ -1546,6 +1546,9 @@ function collectEntries(
  * Note: Source text is limited to 1 GiB max, so number of tokens cannot exceed 2^30.
  * This makes it safe to use `>> 1` for division by 2 below (which is faster than `>>> 1`).
  *
+ * This function is inlined into call sites by `inline_search` TSDown plugin.
+ * All call sites must have `TOKEN_SIZE32_SHIFT` const in scope.
+ *
  * @param int32 - `Int32Array` buffer (tokens or tokensAndComments)
  * @param offset - Source offset to search for
  * @param startIndex - Starting entry index for the search
