@@ -2,9 +2,9 @@ use oxc_ast::ast::*;
 use oxc_formatter_core::Buffer;
 use oxc_span::GetSpan;
 
-use crate::{ast_nodes::AstNode, formatter::prelude::*, write};
+use crate::{ast_nodes::AstNode, formatter::prelude::*, options::ArrayExpand, write};
 
-use super::array_element_list::ArrayElementList;
+use super::{array_element_list::ArrayElementList, array_like::ArrayLike};
 
 #[derive(Default)]
 pub struct FormatArrayExpressionOptions {
@@ -30,8 +30,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
             write!(f, format_dangling_comments(self.array.span).with_soft_block_indent());
         } else {
             let group_id = f.group_id("array");
+            let array_expand = f.options().array_expand;
             // A line comment after the last element (e.g. after a trailing hole)
-            // is printed right before the `]` and needs the array to break
+            // is printed right before the `]` and needs the array to break,
+            // regardless of the configured expand mode
             let has_trailing_line_comment = || {
                 self.array.elements().last().is_some_and(|last| {
                     f.comments()
@@ -40,10 +42,20 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
                         .any(Comment::is_line)
                 })
             };
-            let should_expand = !self.options.is_force_flat_mode
-                && (should_break(self.array) || has_trailing_line_comment());
 
-            let elements = ArrayElementList::new(self.array.elements(), group_id);
+            // `arrayWrap: "collapse"` opts out of Prettier's forced expansion
+            let should_expand = !self.options.is_force_flat_mode
+                && ((array_expand != ArrayExpand::Never && should_break(self.array))
+                    || ArrayLike::ArrayExpression(self.array).should_wrap(f)
+                    || has_trailing_line_comment());
+
+            // Preserve-based modes never use the fill layout: a fill-printed
+            // array would be re-detected as multiline and re-laid out one per
+            // line on the next run, making formatting non-idempotent
+            let force_one_per_line =
+                matches!(array_expand, ArrayExpand::Preserve | ArrayExpand::ForceAboveThreshold(_));
+            let elements = ArrayElementList::new(self.array.elements(), group_id)
+                .with_force_one_per_line(force_one_per_line);
 
             write!(
                 f,

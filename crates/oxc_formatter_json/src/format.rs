@@ -26,7 +26,7 @@ pub fn format<'a>(
     source_text: &str,
     options: JsonFormatOptions,
 ) -> Result<Formatted<'a, JsonFormatContext<'a>>, OxcDiagnostic> {
-    let parsed = parse_for_format(allocator, source_text, options)?;
+    let parsed = parse_for_format(allocator, source_text, &options)?;
 
     let context = JsonFormatContext::new(
         options,
@@ -77,7 +77,7 @@ pub struct ParsedJson<'a> {
 pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
-    options: JsonFormatOptions,
+    options: &JsonFormatOptions,
 ) -> Result<ParsedJson<'a>, OxcDiagnostic> {
     let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
     let parsed = parse_json(allocator, source_text, options.variant)?;

@@ -1,5 +1,6 @@
 mod array_element_list;
 mod array_expression;
+mod array_like;
 mod array_pattern;
 mod arrow_function_expression;
 mod as_or_satisfies_expression;
@@ -97,6 +98,7 @@ use crate::{
 
 use self::{
     array_expression::FormatArrayExpression,
+    array_like::ArrayLike,
     block_statement::is_empty_block,
     class::format_grouped_parameters_with_return_type_for_method,
     object_like::ObjectLike,
@@ -388,13 +390,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
         if self.elements.is_empty() && self.rest.is_none() {
             write!(f, [format_dangling_comments(self.span()).with_soft_block_indent()]);
         } else {
+            let element_count = self.elements.len() + usize::from(self.rest.is_some());
+            let should_expand = ArrayLike::ArrayAssignmentTarget(self).should_wrap(f);
+
             write!(
                 f,
                 group(&soft_block_indent(&format_with(|f| {
                     let has_element = !self.elements.is_empty();
                     if has_element {
                         write_array_node(
-                            self.elements.len() + usize::from(self.rest.is_some()),
+                            element_count,
                             self.elements().iter().map(AstNode::as_ref),
                             f,
                         );
@@ -403,6 +408,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
                         write!(f, [has_element.then_some(soft_line_break_or_space()), rest]);
                     }
                 })))
+                .should_expand(should_expand)
             );
         }
 

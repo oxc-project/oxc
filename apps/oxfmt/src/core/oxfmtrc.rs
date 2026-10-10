@@ -235,6 +235,27 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_final_newline: Option<bool>,
 
+    /// How to wrap array literals, destructuring patterns, and tuple types
+    /// when they could fit on one line or span multiple lines.
+    ///
+    /// - `"auto"`: Prettier's behavior. Arrays collapse when they fit within `printWidth`,
+    ///   except arrays of multiple objects or arrays, which always expand.
+    /// - `"preserve"`: Like `"auto"`, but arrays with a newline between `[` and the first element stay expanded.
+    /// - `"collapse"`: Arrays always collapse when they fit within `printWidth`.
+    /// - `{ "wrapThreshold": N }`: Arrays with more than `N` elements always expand.
+    ///   Smaller arrays behave like `"preserve"`.
+    /// - `{ "linePattern": "2 1" }`: Expanded array literals print this many elements per line,
+    ///   repeating the pattern (2, 1, 2, 1, ...). Arrays with holes or comments still print one element per line.
+    ///   Set it alongside `wrapThreshold`, or on its own to layer it over `"preserve"`.
+    ///
+    /// `wrapThreshold` and `linePattern` work like `multilineArraysWrapThreshold` and `multilineArraysLinePattern`
+    /// from `prettier-plugin-multiline-arrays`.
+    ///
+    /// - Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5
+    /// - Default: `"auto"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub array_wrap: Option<ArrayWrapConfig>,
+
     /// Sort import statements.
     ///
     /// Uses a similar algorithm to [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
@@ -432,6 +453,33 @@ pub enum ArrowParensConfig {
 pub enum ObjectWrapConfig {
     Preserve,
     Collapse,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum ArrayWrapConfig {
+    Mode(ArrayWrapMode),
+    Options(ArrayWrapOptions),
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ArrayWrapMode {
+    Auto,
+    Preserve,
+    Collapse,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ArrayWrapOptions {
+    /// Arrays with more than this many elements always expand.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wrap_threshold: Option<u32>,
+    /// Number of elements per line for expanded array literals,
+    /// as a repeating space-separated pattern of positive integers (e.g. `"2 1"`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line_pattern: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
