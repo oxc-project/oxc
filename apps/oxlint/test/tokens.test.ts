@@ -62,10 +62,9 @@ function setup(sourceText: string) {
   setupFileContext(path);
 
   // Parse source text into buffer
-  parseRaw(path, sourceText);
+  const bufferId = parseRaw(path, sourceText);
 
-  // Set buffer (`parseRaw` adds buffer containing AST to `buffers` at index 0)
-  const buffer = buffers[0];
+  const buffer = buffers[bufferId];
   debugAssertIsNonNull(buffer);
   setupSourceForFile(buffer, /* hasBOM */ false);
 
