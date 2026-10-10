@@ -2,12 +2,26 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint(eqeqeq): Expected > and instead saw >=
+  ⚠ eslint(eqeqeq): Expected == and instead saw ===
    ╭─[eqeqeq.tsx:1:1]
- 1 │ null >= 1
-   · ─────────
+ 1 │ a === null
+   · ──────────
    ╰────
-  help: Prefer > operator
+  help: Prefer == operator
+
+  ⚠ eslint(eqeqeq): Expected != and instead saw !==
+   ╭─[eqeqeq.tsx:1:1]
+ 1 │ a !== null
+   · ──────────
+   ╰────
+  help: Prefer != operator
+
+  ⚠ eslint(eqeqeq): Expected === and instead saw ==
+   ╭─[eqeqeq.tsx:1:8]
+ 1 │ `${a}` == 'x'
+   ·        ──
+   ╰────
+  help: Prefer === operator
 
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eqeqeq.tsx:1:12]
