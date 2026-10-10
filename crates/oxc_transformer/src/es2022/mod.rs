@@ -66,6 +66,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !matches!(expr, Expression::ClassExpression(_)) {
+            return;
+        }
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_expression(expr, ctx);
         } else if let Some(class_static_block) = &mut self.class_static_block {
