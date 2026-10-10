@@ -1,5 +1,6 @@
 import { sep as pathSep } from "node:path";
 import assert from "node:assert";
+import { readFileSync } from "node:fs";
 
 import type { Diagnostic, Node, Plugin, Rule } from "#oxlint/plugins";
 
@@ -12,8 +13,13 @@ const rule: Rule = {
   create(context) {
     // Check file has not been formatted by accident.
     // We want the fixture files not to have trailing whitespace to check fixes at very end of file.
+    // Check the file on disk, not `context.sourceCode.text`, because when fixing, rules also run on
+    // fixed source text, which may end with a line break.
+    assert(
+      !readFileSync(context.filename, "utf8").endsWith("\n"),
+      "Fixture file has been formatted",
+    );
     const sourceText = context.sourceCode.text;
-    assert(!sourceText.endsWith("\n"), "Fixture file has been formatted");
 
     const path = context.filename;
     const filename = path.slice(path.lastIndexOf(pathSep) + 1);

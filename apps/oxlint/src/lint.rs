@@ -1291,6 +1291,23 @@ mod test {
         );
     }
 
+    // Fixes which conflict with each other in the first pass are applied in later passes.
+    // `test_fix` also checks that a second run does not modify the file.
+    #[test]
+    fn test_fix_multi_pass() {
+        let tester = Tester::new().with_cwd("fixtures/cli/fix_multi_pass".into());
+        tester.test_fix(
+            "fix.js",
+            "var x = new String(new String(new String('a')));\nconsole.log(x);\n",
+            "const x = String(String('a'));\nconsole.log(x);\n",
+        );
+        tester.test_fix(
+            "fix.vue",
+            "<script>var x = new String(new String('b'));\nconsole.log(x);</script>\n<script>var y = new String(new String('c'));\nconsole.log(y);</script>\n",
+            "<script>const x = String('b');\nconsole.log(x);</script>\n<script>const y = String('c');\nconsole.log(y);</script>\n",
+        );
+    }
+
     #[test]
     fn test_fix_skip_suggestion() {
         let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());

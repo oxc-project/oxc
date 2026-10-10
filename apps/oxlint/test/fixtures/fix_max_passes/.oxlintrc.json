@@ -1,0 +1,9 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "fix-max-passes-plugin/add-spaces": "error"
+  }
+}
