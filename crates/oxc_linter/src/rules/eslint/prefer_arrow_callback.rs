@@ -401,14 +401,6 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("foo(function() {} ? a : b);", None),
-        ("foo((function() {}) ? a : b);", None),
-        ("foo(function() { this; }.bind(this) ? a : b);", None),
-        ("foo(function() { this; }?.bind(this) ? a : b);", None),
-        ("foo(bar ? function() {} ? a : b : c);", None),
-        ("foo(function() {} || a ? b : c);", None),
-        ("new Foo(function() {} ? a : b);", None),
-        ("foo(async function() {} ? a : b);", None),
         ("foo(a => a);", None),
         ("foo(function*() {});", None),
         ("foo(function() { this; });", None),
@@ -435,6 +427,14 @@ fn test() {
         ),
         ("test('clean', function (this: any) { this.foo = 'Cleaned!';});", None),
         ("obj.test('clean', function (foo) { this.foo = 'Cleaned!'; });", None),
+        ("foo(function() {} ? a : b);", None),
+        ("foo((function() {}) ? a : b);", None),
+        ("foo(function() { this; }.bind(this) ? a : b);", None),
+        ("foo(function() { this; }?.bind(this) ? a : b);", None),
+        ("foo(bar ? function() {} ? a : b : c);", None),
+        ("foo(function() {} || a ? b : c);", None),
+        ("new Foo(function() {} ? a : b);", None),
+        ("foo(async function() {} ? a : b);", None),
     ];
 
     let fail = vec![
