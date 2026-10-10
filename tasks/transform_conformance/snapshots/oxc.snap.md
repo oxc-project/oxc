@@ -55,12 +55,7 @@ after transform: ["dce"]
 rebuilt        : []
 
 * computed-constant-value/input.ts
-Unresolved references mismatch:
-after transform: ["Infinity", "NaN"]
-rebuilt        : ["Infinity"]
-Unresolved reference IDs mismatch for "Infinity":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(18)]
-rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
+x Output mismatch
 
 * declare-and-definite-with-initializer/input.ts
 
