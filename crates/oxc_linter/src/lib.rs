@@ -49,6 +49,8 @@ mod tsgolint;
 mod utils;
 
 pub mod loader;
+#[cfg(feature = "debug_allocs")]
+pub mod memory;
 pub mod rules;
 pub mod table;
 
@@ -69,6 +71,8 @@ pub use crate::disable_directives::{
     DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
 };
+#[cfg(feature = "debug_allocs")]
+use crate::memory::AllocationStats;
 pub use crate::{
     config::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
@@ -536,6 +540,8 @@ impl Linter {
                     rule_name: key.rule_name.into_owned(),
                     duration: stat.duration,
                     calls: stat.calls,
+                    #[cfg(feature = "debug_allocs")]
+                    memory: stat.memory,
                 }),
             );
         }
@@ -1007,6 +1013,8 @@ impl Linter {
             rule_name: rule_name.to_string(),
             duration,
             calls: timing.calls,
+            #[cfg(feature = "debug_allocs")]
+            memory: AllocationStats::default(),
         })
     }
 

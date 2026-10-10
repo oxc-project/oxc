@@ -84,6 +84,9 @@ lazy-regex = { workspace = true }
 default = ["napi"]
 napi = ["dep:napi", "dep:napi-derive"]
 allocator = ["dep:mimalloc-safe"]
+debug_allocs = [
+  "oxc_linter/debug_allocs",
+] # Opt-in allocation instrumentation, absent from normal builds
 # For use in NAPI tests.
 # - Enables test reporter.
 # - Sorts file paths before linting if oxlint is run with `--threads 1`.

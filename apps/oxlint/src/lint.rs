@@ -79,6 +79,7 @@ impl CliRunner {
         let format_str = self.options.output_options.format;
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
+        let debug_memory = self.options.output_options.debug.contains(DebugOption::Memory);
         let output_formatter = OutputFormatter::new(format_str);
 
         let LintCommand {
@@ -537,7 +538,7 @@ impl CliRunner {
 
         let diff_manager = suppression_manager.build_diff();
 
-        let rule_timing_store = debug_timings.then(RuleTimingStore::new);
+        let rule_timing_store = (debug_timings || debug_memory).then(RuleTimingStore::new);
         let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
             lint_runner.lint_files::<true>(
                 &files_to_lint,
@@ -589,12 +590,17 @@ impl CliRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
             oxlint_suppression_file_action,
-            rule_timings: rule_timing_store.as_ref().map(|store| {
+            rule_timings: rule_timing_store.as_ref().filter(|_| debug_timings).map(|store| {
                 crate::output_formatter::RuleTimings {
                     records: store.collect(),
                     js_plugin_runtime: store.js_plugin_runtime(),
                 }
             }),
+            #[cfg(feature = "debug_allocs")]
+            rule_memory: rule_timing_store
+                .as_ref()
+                .filter(|_| debug_memory)
+                .map(RuleTimingStore::collect),
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -672,6 +678,8 @@ impl CliRunner {
             start_time: now.elapsed(),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
             rule_timings: None,
+            #[cfg(feature = "debug_allocs")]
+            rule_memory: None,
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -1165,6 +1173,47 @@ mod test {
             "no-debugger",
             "fixtures/cli/linter/debugger.js",
         ]);
+    }
+
+    #[cfg(feature = "debug_allocs")]
+    #[test]
+    fn debug_memory() {
+        let tester = Tester::new();
+        let args = [
+            "--debug",
+            "memory",
+            "--format",
+            "default",
+            "-A",
+            "all",
+            "-W",
+            "no-debugger",
+            "fixtures/cli/linter/debugger.js",
+        ];
+        let output = tester.test_output_verbose(&args);
+        assert!(!output.contains("Rule timings:"));
+        let (_, memory) = output.split_once("Rule memory (in native rules only):\n").unwrap();
+        let row = memory.lines().find(|line| line.starts_with("eslint/no-debugger ")).unwrap();
+        let columns = row.split_whitespace().collect::<Vec<_>>();
+        assert_eq!(columns.len(), 5);
+        assert!(columns[1].parse::<u64>().unwrap() > 0);
+        assert!(columns[3].parse::<u64>().unwrap() > 0);
+        assert_eq!(columns[4], "1");
+
+        let repeated = tester.test_output_verbose(&args);
+        assert_eq!(memory, repeated.split_once("Rule memory (in native rules only):\n").unwrap().1);
+
+        let mut combined_args = args;
+        combined_args[1] = "timings,memory";
+        let combined = tester.test_output_verbose(&combined_args);
+        assert!(combined.contains("Rule timings:"));
+        assert_eq!(memory, combined.split_once("Rule memory (in native rules only):\n").unwrap().1);
+
+        let (plain, plain_result) = tester.test_output(&args[2..]);
+        let (profiled, profiled_result) = tester.test_output(&args);
+        assert_eq!(format!("{plain_result:?}"), format!("{profiled_result:?}"));
+        assert!(!plain.contains("Rule memory"));
+        assert!(profiled.contains("Rule memory"));
     }
 
     #[test]

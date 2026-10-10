@@ -186,6 +186,8 @@ mod test {
                 threads_count: 1,
                 oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
                 rule_timings: None,
+                #[cfg(feature = "debug_allocs")]
+                rule_memory: None,
             })
             .unwrap();
         assert_eq!(

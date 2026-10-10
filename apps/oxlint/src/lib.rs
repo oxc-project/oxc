@@ -45,18 +45,35 @@ mod js_plugins;
 // Use Mimalloc as the global allocator if `--features allocator` is enabled.
 // Mimalloc has better performance, but this is feature-gated because it's slow to compile.
 // `--features allocator` is only used in release builds.
-#[cfg(all(
-    feature = "allocator",
-    not(any(
-        target_arch = "arm",
-        target_arch = "riscv64",
-        miri,
-        target_os = "freebsd",
-        target_family = "wasm"
-    ))
-))]
+cfg_select! {
+    all(
+        feature = "allocator",
+        not(any(
+            target_arch = "arm",
+            target_arch = "riscv64",
+            miri,
+            target_os = "freebsd",
+            target_family = "wasm"
+        ))
+    ) => {
+        use mimalloc_safe::MiMalloc as BaseAllocator;
+
+        #[cfg(not(feature = "debug_allocs"))]
+        #[global_allocator]
+        static GLOBAL: BaseAllocator = BaseAllocator;
+    }
+    feature = "debug_allocs" => {
+        use std::alloc::System as BaseAllocator;
+    }
+    _ => {}
+}
+
+// Use a `TrackingAllocator` as the global allocator when the `memory` feature is enabled
+// so we can report on allocation stats.
+#[cfg(feature = "debug_allocs")]
 #[global_allocator]
-static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
+static GLOBAL: oxc_linter::memory::TrackingAllocator<BaseAllocator> =
+    oxc_linter::memory::TrackingAllocator(BaseAllocator);
 
 const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
 
