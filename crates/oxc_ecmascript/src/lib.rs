@@ -19,6 +19,7 @@ mod string_char_at;
 mod string_char_code_at;
 mod string_index_of;
 mod string_last_index_of;
+mod string_search;
 mod string_substring;
 mod string_to_big_int;
 mod string_to_number;
