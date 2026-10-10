@@ -206,9 +206,7 @@ impl LanguageServer for Backend {
 
         let mut client_messages =
             self.pending_initialization_messages.get().cloned().unwrap_or_default();
-        let Some(capabilities) = self.capabilities.get() else {
-            return;
-        };
+        let capabilities = self.capabilities();
 
         let workspace_workers = &*self.worker_manager.read_workspace_workers().await;
         let needed_configurations =
@@ -314,7 +312,7 @@ impl LanguageServer for Backend {
         let clearing_diagnostics = self.worker_manager.stop_manager().await;
 
         // only clear diagnostics when we are using push diagnostics
-        if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push)
+        if self.capabilities().diagnostic_mode == DiagnosticMode::Push
             && !clearing_diagnostics.is_empty()
         {
             self.clear_diagnostics(clearing_diagnostics).await;
@@ -362,11 +360,7 @@ impl LanguageServer for Backend {
         let resolved_options = if let Some(options) = options {
             options
             // else check if the client support workspace configuration requests
-        } else if self
-            .capabilities
-            .get()
-            .is_some_and(|capabilities| capabilities.workspace_configuration)
-        {
+        } else if self.capabilities().workspace_configuration {
             let configs = self
                 .request_workspace_configuration(
                     workers.iter().map(WorkspaceWorker::get_root_uri).collect(),
@@ -390,8 +384,7 @@ impl LanguageServer for Backend {
         };
 
         let mut needs_diagnostics_refresh = false;
-        let diagnostic_mode =
-            self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
+        let diagnostic_mode = self.capabilities().diagnostic_mode.clone();
         let fs = if diagnostic_mode == DiagnosticMode::Push {
             Some(self.file_system.as_ref())
         } else {
@@ -455,8 +448,7 @@ impl LanguageServer for Backend {
         let mut client_messages = vec![];
 
         let mut needs_diagnostics_refresh = false;
-        let diagnostic_mode =
-            self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
+        let diagnostic_mode = self.capabilities().diagnostic_mode.clone();
         let fs = if diagnostic_mode == DiagnosticMode::Push {
             Some(self.file_system.as_ref())
         } else {
@@ -491,7 +483,7 @@ impl LanguageServer for Backend {
             self.spawn_diagnostic_refresh();
         }
 
-        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
+        if self.capabilities().dynamic_watchers {
             if !removing_registrations.is_empty()
                 && let Err(err) = self.client.unregister_capability(removing_registrations).await
             {
@@ -520,8 +512,8 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeWorkspaceFolders>
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
-        let capabilities = self.capabilities.get();
-        let diagnostic_mode = capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
+        let capabilities = self.capabilities();
+        let diagnostic_mode = capabilities.diagnostic_mode.clone();
 
         // === Phase 1: Update worker state (brief write lock, no async I/O) ===
         // Extract workers that need to be shut down and update the mode flags.
@@ -541,7 +533,7 @@ impl LanguageServer for Backend {
         }
 
         // === Phase 3: Request configuration and start new workers (no lock held) ===
-        let configurations = if capabilities.is_some_and(|c| c.workspace_configuration) {
+        let configurations = if capabilities.workspace_configuration {
             self.request_workspace_configuration(
                 params.event.added.iter().map(|w| &w.uri).collect(),
             )
@@ -569,7 +561,7 @@ impl LanguageServer for Backend {
             self.clear_diagnostics(cleared_diagnostics).await;
         }
 
-        if capabilities.is_some_and(|c| c.dynamic_watchers) {
+        if capabilities.dynamic_watchers {
             if !added_registrations.is_empty()
                 && let Err(err) = self.client.register_capability(added_registrations).await
             {
@@ -598,7 +590,7 @@ impl LanguageServer for Backend {
             self.file_system.set(uri.clone(), content);
         }
 
-        if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
+        if self.capabilities().diagnostic_mode == DiagnosticMode::Push {
             let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
                 return;
             };
@@ -650,7 +642,7 @@ impl LanguageServer for Backend {
         // Sadly, some editors/extensions have bugs, so we need to make sure the cache is cleared on change.
         worker.remove_uri_cache(&uri).await;
 
-        if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
+        if self.capabilities().diagnostic_mode == DiagnosticMode::Push {
             match worker.run_diagnostic_on_change(document).await {
                 Err(err) => {
                     error!("running diagnostics for {uri} failed: {err}");
@@ -680,13 +672,14 @@ impl LanguageServer for Backend {
 
         // In single file mode, dynamically create a workspace worker for file:// URIs.
         if self.worker_manager.is_single_file_mode() && uri.scheme().as_str() == "file" {
-            let capabilities = self.capabilities.get();
-            let diagnostic_mode =
-                capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
-            let dynamic_watchers = capabilities.is_some_and(|c| c.dynamic_watchers);
+            let capabilities = self.capabilities();
             let (registrations, client_messages) = self
                 .worker_manager
-                .ensure_worker_for_file_uri(&uri, diagnostic_mode, dynamic_watchers)
+                .ensure_worker_for_file_uri(
+                    &uri,
+                    capabilities.diagnostic_mode.clone(),
+                    capabilities.dynamic_watchers,
+                )
                 .await;
 
             if let Some(registrations) = registrations
@@ -706,7 +699,7 @@ impl LanguageServer for Backend {
             content,
         );
 
-        if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
+        if self.capabilities().diagnostic_mode == DiagnosticMode::Push {
             let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
                 return;
             };
@@ -763,17 +756,13 @@ impl LanguageServer for Backend {
                 self.worker_manager.try_shutdown_empty_workspace(&root_uri, &open_uris).await;
 
             if let Some((uris, unregistrations)) = result {
-                let diagnostic_mode = self
-                    .capabilities
-                    .get()
-                    .map(|cap| cap.diagnostic_mode.clone())
-                    .unwrap_or_default();
+                let diagnostic_mode = self.capabilities().diagnostic_mode.clone();
 
                 if diagnostic_mode == DiagnosticMode::Push && !uris.is_empty() {
                     self.clear_diagnostics(uris).await;
                 }
 
-                if self.capabilities.get().is_some_and(|cap| cap.dynamic_watchers)
+                if self.capabilities().dynamic_watchers
                     && !unregistrations.is_empty()
                     && let Err(err) = self.client.unregister_capability(unregistrations).await
                 {
@@ -824,7 +813,7 @@ impl LanguageServer for Backend {
     ) -> Result<Option<serde_json::Value>> {
         // at the moment we only support `fixAll` command, which returns text-edits.
         // move this check when we support other type of commands
-        if !self.capabilities.get().unwrap().workspace_apply_edit {
+        if !self.capabilities().workspace_apply_edit {
             return Err(Error::invalid_params("client does not support workspace apply edit"));
         }
         // Collect all edits under a brief read lock, then release it
@@ -982,6 +971,18 @@ impl Backend {
             file_system: Arc::new(LSPFileSystem::default()),
             pending_initialization_messages: OnceCell::new(),
         }
+    }
+
+    /// Get the capabilities of the language server.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the capabilities have not been initialized.
+    /// Which only happens if `initialize` request has not been processed yet.
+    /// Because the client MUST wait for the server response,
+    /// the capabilities will always be initialized before any other requests are handled.
+    pub fn capabilities(&self) -> &Capabilities {
+        self.capabilities.get().expect("capabilities not initialized")
     }
 
     /// Ask the client to refresh pull diagnostics, without awaiting its reply
